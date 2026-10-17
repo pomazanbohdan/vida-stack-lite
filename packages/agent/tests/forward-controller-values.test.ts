@@ -68,3 +68,70 @@ test('errorMessage preserves Error.message and String conversion for other value
     'Symbol(value)',
   );
 });
+
+test('errorMessage returns a stable fallback when reflection or coercion fails', () => {
+  const fallback = '[unprintable thrown value]';
+
+  assert.equal(
+    expectReturned(() => errorMessage(Object.create(null))),
+    fallback,
+  );
+
+  let getterCalls = 0;
+  const getterError = new Error();
+  Object.defineProperty(getterError, 'message', {
+    configurable: true,
+    get() {
+      getterCalls += 1;
+      throw new Error('message getter ran');
+    },
+  });
+  assert.equal(
+    expectReturned(() => errorMessage(getterError)),
+    fallback,
+  );
+  assert.equal(getterCalls, 0);
+
+  const nonStringMessage = new Error();
+  Object.defineProperty(nonStringMessage, 'message', { configurable: true, value: 42 });
+  assert.equal(
+    expectReturned(() => errorMessage(nonStringMessage)),
+    fallback,
+  );
+
+  let descriptorCalls = 0;
+  const descriptorError = new Proxy(new Error('hidden'), {
+    getOwnPropertyDescriptor(target, property) {
+      if (property === 'message') {
+        descriptorCalls += 1;
+        throw new Error('descriptor trap failed');
+      }
+      return Reflect.getOwnPropertyDescriptor(target, property);
+    },
+  });
+  assert.equal(
+    expectReturned(() => errorMessage(descriptorError)),
+    fallback,
+  );
+  assert.equal(descriptorCalls, 1);
+
+  const revocable = Proxy.revocable(new Error('revoked'), {});
+  revocable.revoke();
+  assert.equal(
+    expectReturned(() => errorMessage(revocable.proxy)),
+    fallback,
+  );
+
+  let coercionCalls = 0;
+  const throwingCoercion = {
+    toString() {
+      coercionCalls += 1;
+      throw new Error('coercion failed');
+    },
+  };
+  assert.equal(
+    expectReturned(() => errorMessage(throwingCoercion)),
+    fallback,
+  );
+  assert.equal(coercionCalls, 1);
+});

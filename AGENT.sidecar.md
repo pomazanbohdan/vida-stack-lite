@@ -79,9 +79,13 @@ Root retains Source integration, shared-file ownership, final checks and Git.
 Native blind Luna is the selected provider/model route for all delegated lanes.
 
 For test-contour repairs, assign exactly one contour to each agent and keep a
-rolling pool of up to five useful lanes. When a lane finishes, reconcile its
-findings and assign the next ready contour; continue until every discovered
-contour finding has a verified fix or an explicit unresolved disposition.
+rolling pool of three active contours under the owner's 2026-10-17 instruction.
+Each lane repeats repair, focused checks, coverage/frozen CRAP and mutation through
+[TESTING's contour cycle](packages/agent/TESTING.md#rolling-contour-repair-cycle).
+When a contour has a complete compatible passing triple, record its closure and
+immediately assign the next ready contour to that slot. A finished patch or review
+alone does not close a contour. A dependency-blocked contour remains OPEN with its
+exact prerequisite; keep its prepared bytes and use its idle slot for ready work.
 Give each code-producing lane its own checkout and exact file ownership. During
 numeric measurement, the measured checkout stays immutable: workers may prepare
 fixes in their assigned isolated checkouts, and Root integrates only after the

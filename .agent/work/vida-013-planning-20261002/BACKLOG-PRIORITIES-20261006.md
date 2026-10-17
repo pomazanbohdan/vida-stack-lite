@@ -46,6 +46,14 @@ acceptance. Complete numeric qualification and runtime cutover remain open.
 
 ## Test acceptance boundary
 
+The owner now selects the [rolling three-contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle): one blind Luna lane per contour,
+repair and affected checks before numeric qualification, immediate slot refill
+only after a compatible exact coverage/frozen-CRAP/assertion-Killed100 closure.
+Root owns final checks and integrates isolated preparation after terminal custody.
+Current audit corrections and unresolved per-field validation, cleanup analogues
+and optimization candidates are recorded once in WORK, under the existing P0/P1
+and TEST013 tasks; external report labels do not replace their stable IDs.
+
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
 
 Fixture import effects and pending/elapsed Source-repair teardown are corrected

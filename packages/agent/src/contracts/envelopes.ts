@@ -44,13 +44,14 @@ function reject(conditions: readonly boolean[], message: string): void {
   });
 }
 
-function rejectCanonical(message: string): never {
-  throw new Error('runtime envelope rejected: ' + message);
+function rejectCanonical(message: string, options?: ErrorOptions): never {
+  throw new Error('runtime envelope rejected: ' + message, options);
 }
-const canonicalAttempt = Result.fromThrowable(canonicalJsonImageWithNodeLimit, errorMessage);
-const ledgerImageAttempt = Result.fromThrowable(canonicalJsonImageWithNodeLimit);
+const canonicalAttempt = Result.fromThrowable(canonicalJsonImageWithNodeLimit);
 function assertDataOnlyJson(value: unknown): unknown {
-  return canonicalAttempt(value, 0, MAX_CANONICAL_NODES).mapErr(rejectCanonical)._unsafeUnwrap().image;
+  const captured = canonicalAttempt(value, 0, MAX_CANONICAL_NODES);
+  if (captured.isErr()) rejectCanonical(errorMessage(captured.error), { cause: captured.error });
+  return captured.value.image;
 }
 
 export function validateRuntimeEnvelope(value: unknown): RuntimeEnvelope {
@@ -336,6 +337,7 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       readonly claim: CoordinationClaim;
       readonly resourceKeys: readonly string[];
       readonly leaseExpiry: number;
+      readonly leaseSubmillisecond: number;
     }[]
   >();
   const tickets = new Map(
@@ -376,7 +378,13 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
     ledgerTimestamp(claim.created_at, `$.claims.${index}.created_at`);
     ledgerTimestamp(claim.renewed_at, `$.claims.${index}.renewed_at`);
     if (claim.status === 'active')
-      activeClaimsByTicket.get(claim.ticket_id)!.push({ claim, resourceKeys, leaseExpiry });
+      activeClaimsByTicket.get(claim.ticket_id)!.push({
+        claim,
+        resourceKeys,
+        leaseExpiry,
+        // Timestamp validation above permits nine fractional digits; Date.parse retains only three.
+        leaseSubmillisecond: Number((/\.(\d+)/u.exec(claim.lease_expires_at)?.[1] ?? '').padEnd(9, '0').slice(3)),
+      });
   });
 
   ledger.tickets.forEach((ticket, index) => {
@@ -446,7 +454,15 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       `$.tickets.${index}.active_resources`,
       'ticket active resource projection differs from claims',
     );
-    const expiry = activeClaims.map((row) => row.claim.lease_expires_at).sort()[0] ?? null;
+    const expiry =
+      activeClaims.toSorted(
+        (left, right) =>
+          left.leaseExpiry - right.leaseExpiry ||
+          left.leaseSubmillisecond - right.leaseSubmillisecond ||
+          (left.claim.lease_expires_at < right.claim.lease_expires_at
+            ? -1
+            : Number(left.claim.lease_expires_at > right.claim.lease_expires_at)),
+      )[0]?.claim.lease_expires_at ?? null;
     ledgerRequire(
       ticket.expires_at === expiry,
       'TICKET_EXPIRY_PROJECTION_INVALID',
@@ -760,7 +776,7 @@ function captureCoordinationLedgerV1(
   value: unknown,
   options: { readonly currentTimeMs?: number | null } = {},
 ): CoordinationLedgerValidationResult {
-  const captured = ledgerImageAttempt(value, 0, MAX_CANONICAL_BYTES);
+  const captured = canonicalAttempt(value, 0, MAX_CANONICAL_BYTES);
   if (captured.isErr() || Buffer.byteLength(captured.value.json) > MAX_CANONICAL_BYTES)
     return {
       ok: false,

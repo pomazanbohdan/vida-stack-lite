@@ -168,6 +168,12 @@ describe('runtime facade public boundary', () => {
         .packet_id,
     ).toBeNull();
     expect(inherited).not.toHaveProperty('documentation_clear_id');
+    const omittedDocumentation = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
+    const explicitNullDocumentation = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(assuranceInput({ documentation_clear_id: null })),
+    );
+    expect(explicitNullDocumentation).toHaveProperty('documentation_clear_id', null);
+    expect(explicitNullDocumentation.context_id).not.toBe(omittedDocumentation.context_id);
     const documented = expectObjectReturned(() =>
       runtime.buildRuntimeAssuranceContext(assuranceInput({ documentation_clear_id: 'clear-a' })),
     );
@@ -238,6 +244,94 @@ describe('runtime facade public boundary', () => {
       expect(delta.watermark).toEqual({ context_id: current.context_id, revision: current.revision });
       expect(expectReturned(() => runtime.validateStatusDelta(delta))).toBe(delta);
     }
+  });
+
+  test('compares nested artifact values while keeping next action outside identity', () => {
+    const artifactA = { path: 'docs/result.md', sha256: 'a'.repeat(64), metadata: { owner: 'agent' } };
+    const artifactB = { metadata: { owner: 'agent' }, sha256: 'a'.repeat(64), path: 'docs/result.md' };
+    const first = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(assuranceInput({ current_documentation_artifact: artifactA })),
+    );
+    const sameArtifact = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(assuranceInput({ current_documentation_artifact: artifactB })),
+    );
+    expect(first.context_id).toBe('630464eb9c32be44b9e839cae1c005ae97ac68f8f24edef6f2290792731d0255');
+    expect(first.context_id).toBe(sameArtifact.context_id);
+    expect(expectObjectReturned(() => runtime.statusDelta(first, sameArtifact))).toMatchObject({
+      status: 'unchanged',
+      changed: [],
+    });
+
+    const nextActionChanged = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext({ ...sameArtifact, next_action: 'Review the result.' }),
+    );
+    expect(nextActionChanged.context_id).toBe(sameArtifact.context_id);
+    expect(expectObjectReturned(() => runtime.statusDelta(sameArtifact, nextActionChanged))).toMatchObject({
+      status: 'changed',
+      changed: [{ field: 'next_action', value: 'Review the result.' }],
+    });
+    const withoutArtifact = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
+    const removed = expectObjectReturned(() => runtime.statusDelta(first, withoutArtifact));
+    expect(removed.changed).toContainEqual({ field: 'current_documentation_artifact', value: null });
+    expect(expectReturned(() => runtime.validateStatusDelta(removed))).toBe(removed);
+  });
+
+  test('owns a nested artifact snapshot without freezing caller input', () => {
+    const artifact = { path: 'docs/result.md', metadata: { owner: 'agent' } };
+    const context = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(assuranceInput({ current_documentation_artifact: artifact })),
+    );
+    const originalId = context.context_id;
+    artifact.metadata.owner = 'caller';
+    artifact.path = 'docs/changed.md';
+    expect(artifact.path).toBe('docs/changed.md');
+    expect(context.current_documentation_artifact).toEqual({
+      path: 'docs/result.md',
+      metadata: { owner: 'agent' },
+    });
+    expect(context.context_id).toBe(originalId);
+    expect(expectReturned(() => runtime.validateRuntimeAssuranceContext(context))).toBe(context);
+  });
+
+  test('rejects values outside canonical JSON while preserving the open artifact JSON domain', () => {
+    const valid = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(
+        assuranceInput({ current_documentation_artifact: { path: 'docs/result.md', labels: ['current'] } }),
+      ),
+    );
+    expect(valid.current_documentation_artifact).toEqual({ path: 'docs/result.md', labels: ['current'] });
+    for (const artifact of [{ value: Number.NaN }, { value: 9007199254740992 }])
+      expect(() =>
+        runtime.buildRuntimeAssuranceContext(assuranceInput({ current_documentation_artifact: artifact })),
+      ).toThrow();
+    expect(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 9007199254740992 }))).toThrow();
+  });
+
+  test('keeps the historical context digest bytes for a valid scalar context', () => {
+    const context = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
+    const historicalIdentity =
+      '{"capability_epoch":null,"documentation_skill_validation_status":null,"generation":null,"implementation_fingerprint":null,"lease_expires_at":null,"lifecycle_state":"EXECUTE","packet_id":null,"packet_version":null,"platform_knowledge_context_id":null,"platform_knowledge_digest":null,"requested_reviewers":null,"review_mode":null,"revision":1,"sealed_revision":null,"source_revision":"source-a","wave":null,"work_id":"migration-work"}';
+    expect(expectReturned(() => stable(JSON.parse(historicalIdentity)))).toBe(historicalIdentity);
+    expect(context.context_id).toBe(createHash('sha256').update(historicalIdentity).digest('hex'));
+  });
+
+  test('rejects deltas that the closed builder contract cannot produce', () => {
+    const first = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
+    const second = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 })));
+    const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
+    expect(() => runtime.validateStatusDelta({ ...delta, changed: [] })).toThrow();
+    expect(() =>
+      runtime.validateStatusDelta({
+        ...delta,
+        changed: [
+          { field: 'revision', value: 2 },
+          { field: 'revision', value: 3 },
+        ],
+      }),
+    ).toThrow();
+    expect(() =>
+      runtime.validateStatusDelta({ ...delta, changed: [{ field: 'not_a_delta_field', value: 2 }] }),
+    ).toThrow();
   });
 
   test('rejects malformed status deltas and tampered contexts', () => {

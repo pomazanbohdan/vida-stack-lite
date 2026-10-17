@@ -120,7 +120,7 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
       name: 'bun-host-state',
       environment: 'bun',
       sources: ['src/host-state.ts', 'src/trusted-host.ts', 'src/contracts/work-state-schema.ts'],
-      tests: ['tests/bun/host-state.test.ts'],
+      tests: ['tests/bun/host-state.test.ts', 'tests/stopped-source-capture.test.ts'],
       report: 'mutation-bun-host-state.json',
     },
     {

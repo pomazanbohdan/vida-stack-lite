@@ -98,6 +98,8 @@ export function readResource(root: string, relative: string) {
     `Resource file must be regular and unlinked: ${relative}`,
   );
   const descriptor = openSync(file, 'r');
+  let outcome: { readonly ok: true; readonly value: Buffer } | { readonly ok: false; readonly error: unknown };
+  let closeFailure: { readonly error: unknown } | undefined;
   try {
     const opened = fstatSync(descriptor);
     assert.ok(
@@ -114,10 +116,23 @@ export function readResource(root: string, relative: string) {
         !after.isSymbolicLink(),
       'Resource changed during read',
     );
-    return bytes;
+    outcome = { ok: true, value: bytes };
+  } catch (error) {
+    outcome = { ok: false, error };
   } finally {
-    closeSync(descriptor);
+    try {
+      closeSync(descriptor);
+    } catch (error) {
+      closeFailure = { error };
+    }
   }
+  if (closeFailure) {
+    if (!outcome.ok)
+      throw new AggregateError([outcome.error, closeFailure.error], 'Standalone resource read and close failed');
+    throw closeFailure.error;
+  }
+  if (!outcome.ok) throw outcome.error;
+  return outcome.value;
 }
 
 function isResourceIndexEntry(value: unknown): value is ResourceIndexEntry {

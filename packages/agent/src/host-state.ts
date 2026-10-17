@@ -15164,7 +15164,7 @@ export class HostStateStore {
     }).immediate();
   }
   /** Capture a stopped SOURCE invocation; failed work is terminal, never accepted. Releases no other owner and grants no rights. */
-  captureStoppedSourceObservation(input: {
+  captureStoppedSourceObservation(callerInput: {
     identity: WorkIdentity;
     attempt: number;
     expectedWork: StateVersion;
@@ -15187,10 +15187,12 @@ export class HostStateStore {
     fault?: () => void;
   }): HostStateSnapshot {
     requireState(!this.#database.inTransaction, 'nested stopped-source capture forbidden');
-    const { verifyCurrent: _verify, fault: _fault, ...boundedRequest } = input;
-    const request = snapshotEncoded(boundedRequest, sourceCaptureRequestJson);
+    const { verifyCurrent, fault, ...boundedRequest } = callerInput;
+    const request = snapshotEncoded(boundedRequest, sourceCaptureRequestJson),
+      // Keep every decision and receipt field bound to the request image across callbacks.
+      input = request;
     requireState(
-      input.attempt > 0 && Number.isSafeInteger(input.attempt) && typeof input.verifyCurrent === 'function',
+      input.attempt > 0 && Number.isSafeInteger(input.attempt) && typeof verifyCurrent === 'function',
       'stopped-source capture input invalid',
     );
     requireState(
@@ -15238,7 +15240,7 @@ export class HostStateStore {
           sourceCaptureRecord(record).digest === existing.digest && record.request_digest === requestDigest,
           'stopped-source capture retry differs',
         );
-        requireSynchronousVerification(input.verifyCurrent(), 'stopped Source proof must finish synchronously');
+        requireSynchronousVerification(verifyCurrent(), 'stopped Source proof must finish synchronously');
         const current = this.#read(input.identity);
         requireState(
           isPlainRecord(record.released_ticket) &&
@@ -15410,7 +15412,7 @@ export class HostStateStore {
           sameJson(changes, [...observation.changed_paths!].sort()),
         'candidate change outside original scope or observation differs',
       );
-      requireSynchronousVerification(input.verifyCurrent(), 'stopped Source proof must finish synchronously');
+      requireSynchronousVerification(verifyCurrent(), 'stopped Source proof must finish synchronously');
       const authorization = reservation.authorization;
       requireState(authorization, 'bound local source approval required');
       const { stored, approval } = this.#storedWorkflowApproval(authorization, 'commit_unknown');
@@ -15478,7 +15480,7 @@ export class HostStateStore {
         {
           actionId: observation.action_id,
           next: nextJournal,
-          verifyCurrent: input.verifyCurrent,
+          verifyCurrent,
           stoppedSource: true,
         },
         true,
@@ -15520,15 +15522,17 @@ export class HostStateStore {
           encoded.payload,
           encoded.digest,
         );
-      input.fault?.();
+      fault?.();
       return after;
     }).immediate();
   }
 
   /** Settle only the original reported failure after its Source owner was retired. */
-  captureRetiredSourceObservation(input: RetiredSourceCaptureRequest): RetiredSourceCaptureResult {
-    const { verifyCurrent: _verify, fault: _fault, ...bounded } = input,
+  captureRetiredSourceObservation(callerInput: RetiredSourceCaptureRequest): RetiredSourceCaptureResult {
+    const { verifyCurrent, fault, ...bounded } = callerInput,
       request = snapshotEncoded(bounded, sourceCaptureRequestJson),
+      // The verifier remains caller-owned; all capture data comes from this frozen image.
+      input = request,
       evidence = input.terminalEvidence,
       observation = input.observation;
     requireState(
@@ -15538,7 +15542,7 @@ export class HostStateStore {
         request.attempt > 0 &&
         Number.isSafeInteger(request.expectedMaintenanceGeneration) &&
         request.expectedMaintenanceGeneration >= 0 &&
-        typeof input.verifyCurrent === 'function',
+        typeof verifyCurrent === 'function',
       'retired-source capture request invalid',
     );
     requireState(
@@ -15642,7 +15646,7 @@ export class HostStateStore {
           sourceCaptureRecord(record).digest === existing.digest && record.request_digest === requestDigest,
           'retired-source capture retry differs',
         );
-        requireSynchronousVerification(input.verifyCurrent(), 'retired Source proof must finish synchronously');
+        requireSynchronousVerification(verifyCurrent(), 'retired Source proof must finish synchronously');
         requireState(
           current.work?.lease === null &&
             current.work.execution.status === 'suspended' &&
@@ -15923,7 +15927,7 @@ export class HostStateStore {
         }),
         'another uncertain Source writer remains unresolved',
       );
-      requireSynchronousVerification(input.verifyCurrent(), 'retired Source proof must finish synchronously');
+      requireSynchronousVerification(verifyCurrent(), 'retired Source proof must finish synchronously');
       const attempts = work.execution.assignment_attempts.map((entry) =>
           entry.attempt_id === attempt
             ? {
@@ -15958,7 +15962,7 @@ export class HostStateStore {
             },
             nextLedger: { ...ledger, revision: ledger.revision + 1 },
           },
-          { actionId: input.actionId, next: nextJournal, verifyCurrent: input.verifyCurrent, stoppedSource: true },
+          { actionId: input.actionId, next: nextJournal, verifyCurrent, stoppedSource: true },
           true,
           true,
         );
@@ -15980,7 +15984,7 @@ export class HostStateStore {
         runtime_acceptance: false,
         canonical_acceptance: false,
       };
-      input.fault?.();
+      fault?.();
       const encoded = sourceCaptureRecord(receipt);
       this.#database
         .query('INSERT INTO agent_host_retired_source_capture VALUES(?,?,?,?,?,?)')

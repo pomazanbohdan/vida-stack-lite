@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date: 2026-10-16. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
+Status date: 2026-10-17. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
 
 ## Objective
 
@@ -82,8 +82,11 @@ commit/push; never maintain manual duplicate percentage tables.
 
 The rolling wave follows the root sidecar's
 [one-agent-per-contour policy](../../../AGENT.sidecar.md#orchestration-and-delegation)
-for isolated preparation and review. A completed handoff releases its slot for
-the next ready contour. Root has published baseline-only per-test custody;
+for three active contours and isolated preparation. Apply
+[TESTING's repair/measurement cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle):
+repair, check, measure and repair again. Immediately refill a completely qualified
+slot. A handoff or partial diagnostic does not close it; dependency-blocked work
+remains OPEN while ready work uses the released capacity. Root has published baseline-only per-test custody;
 the actual main-host pilot passed69/69, while public body/JUnit joins remain open.
 The published integration batch moved fourteen mixed completeness cases to their
 source owners and strengthened activated-config, storage-admission, governance

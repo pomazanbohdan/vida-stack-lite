@@ -1004,6 +1004,34 @@ test(
       expect(f.ddl()).toEqual(ddl);
       expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(journalBefore);
 
+      const originalThreadStatus = c.operation.terminalEvidence.source_thread_status;
+      f.store.captureRetiredSourceObservation({
+        ...c.operation,
+        verifyCurrent: () => {
+          c.verifyCurrent();
+          expect(Reflect.set(c.operation.terminalEvidence, 'source_thread_status', 'mutated-during-verification')).toBe(
+            true,
+          );
+        },
+      });
+      const db = openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace);
+      try {
+        const row = db
+          .query<{ payload: string }, [string, string, number, string]>(
+            'SELECT payload FROM agent_host_retired_source_capture WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+          )
+          .get(f.workspace, c.operation.identity.work_id, c.operation.attempt, c.operation.actionId);
+        expect(row).not.toBeNull();
+        const receipt: unknown = JSON.parse(row!.payload);
+        expect(receipt).toMatchObject({
+          request: { terminalEvidence: { source_thread_status: originalThreadStatus } },
+          terminal_evidence: { source_thread_status: originalThreadStatus },
+        });
+      } finally {
+        closeWorkspaceDatabaseWithAdmission(db);
+        expect(Reflect.set(c.operation.terminalEvidence, 'source_thread_status', originalThreadStatus)).toBe(true);
+      }
+
       const requestRef = '.agent/work/stopped/retired-source-capture.json';
       writeJson(f.root, requestRef, { workspace_id: f.workspace, ...c.operation });
       const args = [
@@ -1313,6 +1341,53 @@ test('public stopped capture preserves failure, rolls back all fields and DDL, t
     expect(() => f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent })).toThrow(
       'dependent work write',
     );
+  } finally {
+    await f.close();
+  }
+}, 60000);
+
+test('stopped capture keeps the persisted candidate snapshot bound to the owned request after verification', async () => {
+  const f = await fixture();
+  try {
+    const c = f.captureInput(),
+      ownedCandidate = structuredClone(c.operation.candidateSnapshot),
+      changedCandidate = c.operation.candidateSnapshot.entries[0]!;
+    const observation = c.operation.observation;
+    if (!observation) throw new Error('Stopped capture fixture observation is absent.');
+    let verified = false;
+    const result = f.store.captureStoppedSourceObservation({
+      ...c.operation,
+      verifyCurrent: () => {
+        c.verifyCurrent();
+        verified = true;
+        changedCandidate.sha256 = 'a'.repeat(64);
+      },
+    });
+    expect(verified).toBe(true);
+    expect(result.work?.execution.status).toBe('suspended');
+
+    const db = openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace);
+    try {
+      const row = db
+        .query<{ payload: string }, [string, string, number, string]>(
+          'SELECT payload FROM agent_host_stopped_source_capture WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+        )
+        .get(f.workspace, c.operation.identity.work_id, c.operation.attempt, observation.action_id);
+      expect(row).not.toBeNull();
+      const receipt: unknown = JSON.parse(row!.payload);
+      if (!isRecord(receipt) || !isRecord(receipt.request)) throw new Error('Capture receipt request is not a record.');
+      expect(receipt.request.candidateSnapshot).toEqual(ownedCandidate);
+      expect(receipt.candidate_snapshot).toEqual(ownedCandidate);
+      const repeated = f.store.captureStoppedSourceObservation({
+        ...c.operation,
+        candidateSnapshot: ownedCandidate,
+        verifyCurrent: c.verifyCurrent,
+      });
+      expect(repeated.workVersion).toEqual(result.workVersion);
+      expect(repeated.work).toEqual(result.work);
+    } finally {
+      closeWorkspaceDatabaseWithAdmission(db);
+    }
   } finally {
     await f.close();
   }

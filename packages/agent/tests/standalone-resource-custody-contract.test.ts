@@ -237,3 +237,76 @@ test('unknown stage identity and cleanup custody retains stages and locks', asyn
     originalFsExports.rmSync(identityFailure.cache, { recursive: true, force: true });
   }
 });
+
+test('readResource preserves primary and close failures after the native descriptor is closed', async () => {
+  const value = fixture();
+  const directory = path.join(value.cache, 'instructions');
+  mkdirSync(directory);
+  writeFileSync(path.join(directory, 'owned.md'), 'resource bytes');
+  const closeError = new Error('injected close wrapper failure');
+
+  async function readWithCloseFault(primaryFailure?: { readonly error: unknown }, injectCloseFailure = true) {
+    let descriptor: number | undefined;
+    let closeAttempts = 0;
+    await mock.module('node:fs', () => ({
+      ...originalFsExports,
+      openSync(...args: Parameters<typeof fs.openSync>) {
+        const opened = originalFsExports.openSync(...args);
+        descriptor = opened;
+        return opened;
+      },
+      readFileSync(...args: Parameters<typeof fs.readFileSync>) {
+        if (typeof args[0] === 'number' && primaryFailure !== undefined) throw primaryFailure.error;
+        return originalFsExports.readFileSync(...args);
+      },
+      closeSync(fd: number) {
+        closeAttempts += 1;
+        originalFsExports.closeSync(fd);
+        if (injectCloseFailure) throw closeError;
+      },
+    }));
+    try {
+      const isolated = (await import(
+        '../bin/standalone-resources.ts?read-close-' + randomUUID()
+      )) as typeof import('../bin/standalone-resources.ts');
+      let outcome: unknown;
+      let rejected = false;
+      try {
+        outcome = isolated.readResource(value.cache, 'instructions/owned.md');
+      } catch (error) {
+        rejected = true;
+        outcome = error;
+      }
+      assert.equal(rejected, primaryFailure !== undefined || injectCloseFailure);
+      assert.equal(closeAttempts, 1);
+      assert.notEqual(descriptor, undefined);
+      assert.throws(() => originalFsExports.fstatSync(descriptor as number));
+      return outcome;
+    } finally {
+      await mock.module('node:fs', () => originalFsExports);
+      mock.restore();
+      const restoredFs = await import('node:fs');
+      assert.strictEqual(restoredFs.closeSync, originalFsExports.closeSync);
+      assert.strictEqual(restoredFs.readFileSync, originalFsExports.readFileSync);
+    }
+  }
+
+  try {
+    const primary = new Error('injected resource read failure');
+    const bodyAndClose = await readWithCloseFault({ error: primary });
+    assert.ok(bodyAndClose instanceof AggregateError);
+    assert.deepEqual((bodyAndClose as AggregateError).errors, [primary, closeError]);
+
+    const undefinedAndClose = await readWithCloseFault({ error: undefined });
+    assert.ok(undefinedAndClose instanceof AggregateError);
+    assert.deepEqual((undefinedAndClose as AggregateError).errors, [undefined, closeError]);
+
+    const closeOnly = await readWithCloseFault();
+    assert.strictEqual(closeOnly, closeError);
+    assert.strictEqual(await readWithCloseFault({ error: primary }, false), primary);
+    assert.strictEqual(await readWithCloseFault({ error: undefined }, false), undefined);
+    assert.deepEqual(await readWithCloseFault(undefined, false), Buffer.from('resource bytes'));
+  } finally {
+    originalFsExports.rmSync(value.cache, { recursive: true, force: true });
+  }
+});

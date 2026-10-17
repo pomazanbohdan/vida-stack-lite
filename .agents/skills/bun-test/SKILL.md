@@ -250,6 +250,12 @@ Work or version is not this control, and the stale snapshot grants no authority.
 
 ## Run focused checks safely
 
+Follow [TESTING's rolling contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle)
+with the sidecar's three active contours. Keep one writer per contour and Root as
+the sole final-check owner. Refill a verified closed slot immediately; a prepared
+patch or partial diagnostic is not closure. This working pool does not activate
+parallel numeric producers or coverage shards.
+
 Run selected package tests from the package working directory with explicit
 `./tests/...` paths. Bare filters from the repository root can also match retained
 coverage snapshots; such a mixed run is not current selected-test evidence.

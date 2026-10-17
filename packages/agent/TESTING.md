@@ -1394,10 +1394,59 @@ one kind of evidence: complete contour closure separately requires compatible
 exact coverage and100% assertion-confirmed Killed mutation evidence. UNKNOWN,
 runtime/compile errors, missing suites and timeouts remain non-kills.
 
+### Rolling contour repair cycle
+
+Use the three-contour rolling pool declared by the root
+[sidecar](../../AGENT.sidecar.md#orchestration-and-delegation). Assign one blind
+Luna writer and one isolated checkout to each active contour, including its
+product fixes and tests. Shared files have one writer. Root integrates, runs
+checks, admits numeric results and owns Git. Workers prepare independently; they
+do not start duplicate suites, scans, hashes or inventories.
+
+1. Reuse the existing contour selection, current canonical mutant map and retained
+   failures. Map each gap to the supported contract and applicable scenario. Search
+   analogous paths inside the contour before choosing the correction.
+2. Reproduce a new defect with a focused regression, repair its cause, then run
+   static and affected checks. Preserve failed artifacts and exact cleanup custody.
+3. Once the correction packet is stable, Root publishes its checked bytes and runs
+   exact F/L/S/B coverage plus same-run frozen CRAP against the original budgets.
+   Prepare the required SDK inputs through their existing owner where applicable.
+4. Run bounded mutation diagnostics for current repair IDs with one shared full
+   baseline. Repair survivors and assertion weaknesses; timeout, missing coverage,
+   compile/runtime error and UNKNOWN remain distinct failures. After repairs,
+   collect the complete compatible per-ID proof before accepting Killed100.
+5. Repeat only affected checks after a correction. Regenerate through the existing
+   projection owner after each terminal admitted result. Close a contour only with
+   exact coverage100, qualified frozen correspondence/CRAP and assertion-confirmed
+   Killed100 for the same bound inputs; retain freshness/global-admission limits.
+   Immediately fill its slot with the next ready contour.
+
+Preparation is parallel across the active contours. Numeric producers remain
+under one Root owner and their existing resource admission; this policy does not
+activate concurrent coverage shards. Freeze the measured checkout until its
+producer is terminal. Other lanes may prepare changes in their isolated checkouts;
+Root integrates them afterward. After each terminal bounded attempt, select the
+next ready measurement and return failures to their owning lane, avoiding an
+unchanged full-suite retry. A blocked prerequisite releases capacity for ready
+work while its contour remains OPEN; it is never counted as a closure.
+
+The generated contour JSON/Markdown is the single progress projection. Do not add
+a manual percentage ledger or combine diagnostic kills into a passing score.
+Build/install run no test suites. Per-case5s defaults and the existing independent
+coverage/mutation envelopes remain unchanged.
+
+Host-state's declared selection includes `tests/stopped-source-capture.test.ts`
+alongside `tests/bun/host-state.test.ts`, so its changed capture methods have their
+real verifier, receipt and retry assertions in the numeric input set. This is the
+complete fixture file, not an unqualified per-test filter. Its existing package
+repair-suite owner is unchanged; retain the independent mutation envelope even
+when a complete partition schedule cannot finish within it.
+
 ### Automatic contour progress document
 
-Repair dispatch follows the root sidecar: one agent owns one contour, with up to
-five isolated repair lanes and immediate refill after each terminal handoff.
+Repair dispatch follows the root sidecar and the
+[rolling contour cycle](#rolling-contour-repair-cycle): one agent owns one of
+three active contours, with immediate refill after verified closure.
 Workers search analogous defects within their contour and report shared causes
 to Root; Root owns the shared helper and integration. Keep active measurement
 inputs immutable, including transient edits. Parallel preparation uses separate

@@ -59,7 +59,7 @@ function assertLedgerRejection(result: CoordinationLedgerValidationResult, code:
 
 function assertLedgerAccepted(result: CoordinationLedgerValidationResult, expected: unknown): void {
   assert.ok(result !== null && typeof result === 'object');
-  assert.equal(result.ok, true);
+  assert.equal(result.ok, true, JSON.stringify(result.issues));
   assert.deepEqual(result.issues, []);
   if (!result.ok) assert.fail('ledger image should validate');
   assert.notEqual(result.ledger, expected);
@@ -121,6 +121,37 @@ function coordinationLedgerFixture(): CoordinationLedger {
 }
 
 describe('runtime envelope canonicalization boundary', () => {
+  test('preserves the original canonicalization cause behind a safe envelope diagnostic', async () => {
+    const { validateRuntimeEnvelope } = await import('../src/contracts/envelopes.js');
+    const primary = new Error();
+    let messageReads = 0;
+    Object.defineProperty(primary, 'message', {
+      get() {
+        messageReads++;
+        throw new Error('unsafe message read');
+      },
+    });
+    const input = new Proxy(
+      { payload: null },
+      {
+        getOwnPropertyDescriptor(target, key) {
+          if (key === 'payload') throw primary;
+          return Reflect.getOwnPropertyDescriptor(target, key);
+        },
+      },
+    );
+    let caught: unknown;
+    try {
+      validateRuntimeEnvelope(input);
+    } catch (error) {
+      caught = error;
+    }
+    assert.ok(caught instanceof Error);
+    assert.equal(caught.message, 'runtime envelope rejected: [unprintable thrown value]');
+    assert.ok(caught.cause === primary, 'the exact raw canonicalization cause must be retained');
+    assert.equal(messageReads, 0);
+  });
+
   test('distinguishes the ledger encoded byte cap from the canonical raw string cap', async () => {
     const { coordinationLedgerJson, validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
     const { MAX_CANONICAL_BYTES } = await import('../src/contracts/canonical-json-core.js');
@@ -1298,6 +1329,118 @@ describe('runtime envelope canonicalization boundary', () => {
       laterExpiryResult.issues.map(({ code, path }) => ({ code, path })),
       [{ code: 'TICKET_EXPIRY_PROJECTION_INVALID', path: '$.tickets.0.expires_at' }],
     );
+  });
+
+  test.each([
+    ['mixed offset', '2026-10-17T08:00:00Z', '2026-10-17T10:00:00+03:00'],
+    ['submillisecond', '2026-10-17T07:00:00.0000009Z', '2026-10-17T10:00:00.0000001+03:00'],
+    ['nanosecond', '2026-10-17T07:00:00.000000001Z', '2026-10-17T10:00:00.000000000+03:00'],
+  ] as const)(
+    'projects the earliest %s lease by instant and preserves wire timestamps',
+    async (_label, laterInstantWireExpiry, earlierInstantWireExpiry) => {
+      const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+      const ledger = coordinationLedgerFixture();
+      const ticket = ledger.tickets[0]!;
+      const claim = ledger.claims[0]!;
+      const secondResource = 'file:src/other.ts';
+      const secondClaim: CoordinationClaim = {
+        ...claim,
+        claim_id: 'claim-second',
+        resources: [secondResource],
+        lease_expires_at: laterInstantWireExpiry,
+        created_at: '2026-10-16T00:00:00Z',
+        renewed_at: '2026-10-16T00:00:00Z',
+      };
+      const twoClaims = {
+        ...ledger,
+        tickets: [
+          {
+            ...ticket,
+            created_at: '2026-10-16T00:00:00Z',
+            exclusive_resources: [...ticket.exclusive_resources, secondResource],
+            active_resources: [...ticket.active_resources, secondResource],
+            claim_ids: [...ticket.claim_ids, secondClaim.claim_id],
+            expires_at: earlierInstantWireExpiry,
+          },
+        ],
+        claims: [
+          {
+            ...claim,
+            lease_expires_at: earlierInstantWireExpiry,
+            created_at: '2026-10-16T00:00:00Z',
+            renewed_at: '2026-10-16T00:00:00Z',
+          },
+          secondClaim,
+        ],
+      } satisfies CoordinationLedger;
+      const before = structuredClone(twoClaims);
+
+      const accepted = expectReturned(() => validateCoordinationLedgerV1(twoClaims));
+      assertLedgerAccepted(accepted, twoClaims);
+      assert.equal(accepted.ledger!.tickets[0]!.expires_at, earlierInstantWireExpiry);
+      assert.deepEqual(twoClaims, before);
+
+      const lexicalMinimumProjection = {
+        ...twoClaims,
+        tickets: [{ ...twoClaims.tickets[0]!, expires_at: laterInstantWireExpiry }],
+      };
+      const rejected = expectReturned(() => validateCoordinationLedgerV1(lexicalMinimumProjection));
+      assertLedgerRejection(rejected, 'TICKET_EXPIRY_PROJECTION_INVALID', '$.tickets.0.expires_at');
+      assert.deepEqual(twoClaims, before);
+    },
+  );
+
+  test('breaks equal-instant lease projection ties by the existing lexical order independent of claim order', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const ledger = coordinationLedgerFixture();
+    const ticket = ledger.tickets[0]!;
+    const claim = ledger.claims[0]!;
+    const lexicalMinimum = '2026-10-17T07:00:00Z';
+    const lexicalMaximum = '2026-10-17T10:00:00+03:00';
+    const secondResource = 'file:src/other.ts';
+    const secondClaim: CoordinationClaim = {
+      ...claim,
+      claim_id: 'claim-second',
+      resources: [secondResource],
+      lease_expires_at: lexicalMaximum,
+      created_at: '2026-10-16T00:00:00Z',
+      renewed_at: '2026-10-16T00:00:00Z',
+    };
+    const tiedClaims = {
+      ...ledger,
+      tickets: [
+        {
+          ...ticket,
+          created_at: '2026-10-16T00:00:00Z',
+          exclusive_resources: [...ticket.exclusive_resources, secondResource],
+          active_resources: [...ticket.active_resources, secondResource],
+          claim_ids: [...ticket.claim_ids, secondClaim.claim_id],
+          expires_at: lexicalMinimum,
+        },
+      ],
+      claims: [
+        {
+          ...claim,
+          lease_expires_at: lexicalMinimum,
+          created_at: '2026-10-16T00:00:00Z',
+          renewed_at: '2026-10-16T00:00:00Z',
+        },
+        secondClaim,
+      ],
+    } satisfies CoordinationLedger;
+    const before = structuredClone(tiedClaims);
+
+    const accepted = expectReturned(() => validateCoordinationLedgerV1(tiedClaims));
+    assertLedgerAccepted(accepted, tiedClaims);
+    assert.equal(accepted.ledger!.tickets[0]!.expires_at, lexicalMinimum);
+
+    const reversed = { ...tiedClaims, claims: [...tiedClaims.claims].reverse() };
+    const reversedBefore = structuredClone(reversed);
+    const reversedAccepted = expectReturned(() => validateCoordinationLedgerV1(reversed));
+    assertLedgerAccepted(reversedAccepted, reversed);
+    assert.equal(reversedAccepted.ledger!.tickets[0]!.expires_at, lexicalMinimum);
+    assert.deepEqual(tiedClaims, before);
+    assert.deepEqual(reversed, reversedBefore);
   });
 
   test('reports case aliases in ticket exclusive resources', async () => {

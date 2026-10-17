@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published implementation main: `6200773`; the next reviewed Source/test packet is under final checks. Runtime initialization, storage admission and existing-storage image have local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open. Main-runtime-timing has qualified local native joins; the derived contour document owns its exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Published implementation main: `b7fa92fd61d59e39954bbf8ddd4843f3912d33f7`; origin/main was fetched and was already safely up to date. The new audit Source/test packet is under final checks. Runtime initialization, storage admission and existing-storage image have historical local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -16,7 +16,77 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ### Current repair packet — 2026-10-17
 
-Published implementation isdca34b7; origin/main fetched and safely fast-forwarded.
+The current host boot is `14b0bfa9-b9d7-4c85-8400-bfdc503d4e35`. The previous
+host's uncommitted follow-up packet and scratch evidence did not survive its
+replacement. Published `b7fa92f` remains intact. Do not describe missing local
+measurements or prepared patches as retained/current. Published projection keeps
+467 attempts; no numeric closure has been added on this host.
+
+The full external `1-AUDIT.md` supplied through the user attachment was read.
+Its F/C/O/D labels identify that report, not replacement backlog IDs. Native Bun
+1.4.3 reproductions and blind reviews establish these scoped corrections:
+
+- C01: real stopped and retired capture verifiers allow caller mutation between
+  request capture and receipt creation. RED `fdPmwI` and `Itbfhm` retain exact
+  receipt mismatches. Both capture paths now use their owned request image for
+  every data decision and retain the original callback references. Focused GREEN
+  `iJYxBv` passes2cases/37assertions; final check also includes supported retry.
+- F01–F04: facade identity uses the shared canonical image, owns/freeze its copy,
+  compares nested artifacts structurally and validates delta status, uniqueness
+  and known fields. Historical valid hashes and omitted/null identity are retained.
+  Complete per-field delta value typing remains an explicit gap.
+- F05: total error display preserves successful custom String conversion; envelope
+  rejection retains the original canonicalization cause. Native raw-cause RED
+  `Gv8b31` and GREEN `NjuL6m` are distinct from static linkage and coverage.
+- F06: standalone resource reads preserve body-only/close-only errors and ordered
+  dual causes, including thrown undefined, while closing exactly once. Analogues
+  in pack metadata and Bun pin sync remain queued under filesystem cleanup work.
+- F07: active-lease expiry projection orders validated timestamps by instant,
+  nanosecond remainder and deterministic wire tie-break. Independent review found
+  the initial millisecond-only gap; native RED `cqCIEh` and GREEN `b5azP4`
+  (5cases) cover the correction without altering authorization time semantics.
+
+Receipts above live under `/workspace/attachments/audit-focused-check-<suffix>`
+on this host. Failed fixtures retain custody. Earlier four-file `DSj30r` passes
+58cases/824assertions but predates final refinements and is not final acceptance.
+Strict TypeScript505files and TS-only506Sources pass with0diagnostics; Oxlint
+passes. Final six-file `PCtpGp` passes81tests/1044assertions in167928ms, with full
+captures, closed process groups, unchanged boot and successful contained cleanup.
+It includes normal resource reads, single and dual errors, historical facade
+identity and both real capture regressions/retry. Strict commit and fresh numeric
+qualification are pending. Development checks do not update contour maxima.
+
+External C02 remains a contract question: do not change maxAttempts admission
+without establishing inclusive/exclusive intent. O01 early budget bounds, O02
+discarded JSON images and O03 repeated FIFO work are P1 candidates; O04 sharing
+requires equivalent contracts. D01/D02 public/dynamic liveness is unproved, so
+no deletion is authorized merely by absent static references.
+
+The owner's updated method is the [rolling three-contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle).
+Blind Luna lanes prepare bun-runtime-facade, main-envelopes and bun-host-state;
+Root owns all checks and final numeric admission. Only a complete compatible
+coverage/frozen-CRAP/assertion-Killed100 triple closes a contour and immediately
+refills its slot. Preparation/review alone does not close work. Other lanes use
+isolated preparation while measured inputs stay immutable.
+
+Blind preparation found that Host-state's mutation selection omitted the real
+capture regression file. The registry now includes that complete file alongside
+its existing Host-state tests, with a contract assertion in contour-progress.
+No Source is removed and no duplicate mutation test owner is added. The existing
+package repair-suite selection stays intact; full fixture cost does not authorize
+larger mutation limits. Facade's removed stable callback needs explicit reviewed
+correspondence. Envelope's expanded expiry comparator retains its original role
+and ceiling; replacing it with a higher-budget same-responsibility role was
+rejected. Neither issue is numeric closure or permission to reset frozen caps.
+Selection/projection checks `qbozxT` pass132tests/631assertions across2files in525ms
+with complete captures, closed groups and unchanged boot. The host's standard
+strict pre-commit entry is restored separately; pre-push activation is outside
+the existing authorization. Linux tini0.19.0 matches the upstream release SHA256,
+and the real tini/bwrap PID isolation probe succeeds before numeric launch.
+
+### Published admission packet — retained context
+
+The following captures describe the published admission packet through b7fa92f.
 Fresh targeted local94 run `db55aae7-3332-4642-8134-f3e1354403bc` (`wy4Dno`)
 confirms1Killed/226unattempted, full17-case baseline and original batch index5
 in13199ms. Full capture, closed process group and same boot are retained.

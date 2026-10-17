@@ -878,6 +878,7 @@ test('contract and fuzz scenarios are selected by their source owners', () => {
   const envelopes = active.find((row) => row.name === 'main-envelopes');
   const cedar = active.find((row) => row.name === 'main-cedar');
   const governance = active.find((row) => row.name === 'bun-governance-and-public-contracts');
+  const hostState = active.find((row) => row.name === 'bun-host-state');
   expect(config?.tests).toContain('tests/fuzz-config.test.ts');
   expect(publicIngress).toMatchObject({
     sources: ['src/contracts/public-ingress.ts'],
@@ -894,6 +895,10 @@ test('contract and fuzz scenarios are selected by their source owners', () => {
   expect(cedar?.tests).toContain('tests/fuzz-authorization.test.ts');
   expect(governance?.tests).toContain('tests/fuzz-public-ingress.test.ts');
   expect(governance?.tests).toContain('tests/fuzz-envelopes.test.ts');
+  expect(hostState).toMatchObject({
+    sources: ['src/host-state.ts', 'src/trusted-host.ts', 'src/contracts/work-state-schema.ts'],
+    tests: ['tests/bun/host-state.test.ts', 'tests/stopped-source-capture.test.ts'],
+  });
   expect(active.flatMap((row) => row.tests ?? [])).not.toContain('tests/fuzz.test.ts');
   expect(active.some((row) => row.name === 'main-contracts')).toBe(false);
   expect(mutationPartitions({ includeRetired: true }).find((row) => row.name === 'main-contracts')).toMatchObject({

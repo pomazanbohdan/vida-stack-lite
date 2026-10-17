@@ -1,4 +1,10 @@
 import { createHash } from 'node:crypto';
+import {
+  canonicalJson,
+  canonicalJsonImageWithNodeLimit,
+  MAX_CANONICAL_NODES,
+} from '../contracts/canonical-json-core.js';
+import { freezeJsonValue } from '../contracts/public-ingress.js';
 
 const assuranceSchema = 'RuntimeAssuranceContext/v1';
 const deltaSchema = 'RuntimeStatusDelta/v1';
@@ -38,19 +44,11 @@ function fail(message: string): never {
 }
 
 export function stable(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
-  if (value && typeof value === 'object') {
-    const object = value as JsonObject;
-    return `{${Object.keys(object)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${stable(object[key])}`)
-      .join(',')}}`;
-  }
-  return JSON.stringify(value) as string;
+  return canonicalJson(value);
 }
 
-function digest(value: unknown): string {
-  return createHash('sha256').update(stable(value)).digest('hex');
+function digest(json: string): string {
+  return createHash('sha256').update(json).digest('hex');
 }
 
 function text(value: unknown, name: string): string {
@@ -65,7 +63,7 @@ function optionalText(value: unknown, name: string): string | null {
 
 function integerOrNull(value: unknown, name: string, minimum: number): number | null {
   if (value === null || value === undefined) return null;
-  if (!Number.isInteger(value) || (value as number) < minimum) fail(`${name} invalid`);
+  if (!Number.isSafeInteger(value) || (value as number) < minimum) fail(`${name} invalid`);
   return value as number;
 }
 
@@ -143,11 +141,12 @@ function validateDocumentationStatus(value: unknown): void {
 export function buildRuntimeAssuranceContext(input: RuntimeAssuranceContextInput = {}): RuntimeAssuranceContext {
   if (!input || typeof input !== 'object') fail('assurance context input required');
   validateDocumentationStatus(input.documentation_skill_validation_status);
-  const values = identity(input);
+  const captured = canonicalJsonImageWithNodeLimit(identity(input), 0, MAX_CANONICAL_NODES);
+  const values = freezeJsonValue(captured.image as JsonObject);
   const nextAction = text(input.next_action, 'assurance context next action');
   const value = {
     schema: assuranceSchema,
-    context_id: digest(values),
+    context_id: digest(captured.json),
     ...values,
     next_action: nextAction,
     authority: 'derived_non_authoritative' as const,
@@ -160,7 +159,7 @@ export function validateRuntimeAssuranceContext(value: unknown): RuntimeAssuranc
     fail('assurance context schema invalid');
   const context = value as RuntimeAssuranceContext;
   validateDocumentationStatus(context.documentation_skill_validation_status);
-  const expected = digest(identity(context));
+  const expected = digest(stable(identity(context)));
   if (context.context_id !== expected || !digestPattern.test(context.context_id))
     fail('assurance context digest invalid');
   text(context.next_action, 'assurance context next action');
@@ -223,8 +222,12 @@ export function statusDelta(previous: RuntimeAssuranceContext, current: RuntimeA
   validateRuntimeAssuranceContext(current);
   if (previous.work_id !== current.work_id) fail('assurance status work id mismatch');
   const changed = deltaFields
-    .filter((field) => previous[field] !== current[field])
-    .map((field) => ({ field, value: current[field] }));
+    .filter((field) =>
+      field === 'current_documentation_artifact' && previous[field] !== undefined && current[field] !== undefined
+        ? stable(previous[field]) !== stable(current[field])
+        : previous[field] !== current[field],
+    )
+    .map((field) => ({ field, value: current[field] ?? null }));
   return Object.freeze({
     schema: deltaSchema,
     status: changed.length ? 'changed' : 'unchanged',
@@ -282,9 +285,14 @@ function validateDeltaIdentity(value: unknown): RuntimeStatusDelta {
 
 function validateDeltaChanges(delta: RuntimeStatusDelta): void {
   if (!Array.isArray(delta.changed)) fail('assurance status delta changes invalid');
+  const seen = new Set<string>();
   for (const change of delta.changed) {
     if (!exactFields(change, ['field', 'value'])) fail('assurance status delta change invalid');
-    text(change.field, 'assurance status delta change field');
+    const field = text(change.field, 'assurance status delta change field');
+    if (field !== change.field || !(deltaFields as readonly string[]).includes(field) || seen.has(field))
+      fail('assurance status delta change field invalid');
+    stable(change.value);
+    seen.add(field);
   }
 }
 
@@ -299,6 +307,7 @@ export function validateStatusDelta(value: unknown): RuntimeStatusDelta {
   const delta = validateDeltaIdentity(value);
   validateDeltaChanges(delta);
   if (delta.status === 'unchanged' && delta.changed.length) fail('assurance status unchanged delta has changes');
+  if (delta.status === 'changed' && delta.changed.length === 0) fail('assurance status changed delta has no changes');
   text(delta.next_action, 'assurance status delta next action');
   validateDeltaWatermark(delta);
   return delta;

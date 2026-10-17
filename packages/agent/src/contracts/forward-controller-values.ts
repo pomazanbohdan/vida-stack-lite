@@ -18,5 +18,17 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 
 /** Match the forward-controller error rendering contract. */
 export function errorMessage(value: unknown): string {
-  return value instanceof Error ? value.message : String(value);
+  try {
+    if (value instanceof Error) {
+      const message = Object.getOwnPropertyDescriptor(value, 'message');
+      return message === undefined
+        ? ''
+        : typeof message.value === 'string'
+          ? message.value
+          : '[unprintable thrown value]';
+    }
+    return String(value);
+  } catch {
+    return '[unprintable thrown value]';
+  }
 }
