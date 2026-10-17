@@ -286,7 +286,7 @@ test('native targeted diagnostics require one immutable-plan mutant and never al
     expect(() => selectMutationBatchPilot(denied, declared)).toThrow();
 });
 
-test('isolated workers reserve complete admission for reviewed attestation, initialization, image and custody contours', () => {
+test('isolated workers reserve diagnostics and complete requests for the same reviewed contours', () => {
   const name = 'bun-project-upgrade-existing-storage-image';
   const declared = [
     { name, sources: ['src/one.ts'], tests: ['tests/one.test.ts'], report: 'one.json', environment: 'bun' },
@@ -307,20 +307,10 @@ test('isolated workers reserve complete admission for reviewed attestation, init
       true,
     );
     const complete = ['--contour', contour, '--isolated-workers', '--admit-complete'];
-    if (
-      contour === 'bun-fs-safe-attestation' ||
-      contour === 'bun-service-operation-custody' ||
-      contour === 'bun-runtime-initialization' ||
-      contour === 'bun-project-upgrade-existing-storage-image'
-    )
-      expect(selectMutationBatchPilot(complete, partition)).toMatchObject({
-        isolatedWorkers: true,
-        admitComplete: true,
-      });
-    else
-      expect(() => selectMutationBatchPilot(complete, partition)).toThrow(
-        'complete admission is fs-safe attestation, runtime initialization, existing-storage image or service-operation custody only',
-      );
+    expect(selectMutationBatchPilot(complete, partition)).toMatchObject({
+      isolatedWorkers: true,
+      admitComplete: true,
+    });
     for (const suffix of [
       ['--capture-per-test-diagnostic'],
       ['--batch-size', '1', '--diagnostic-mutant-id', '1'],
@@ -338,6 +328,12 @@ test('isolated workers reserve complete admission for reviewed attestation, init
   }
   expect(() =>
     selectMutationBatchPilot(['--contour', 'foreign', '--isolated-workers'], [{ ...declared[0]!, name: 'foreign' }]),
+  ).toThrow('reviewed contour');
+  expect(() =>
+    selectMutationBatchPilot(
+      ['--contour', 'foreign', '--isolated-workers', '--admit-complete'],
+      [{ ...declared[0]!, name: 'foreign' }],
+    ),
   ).toThrow('reviewed contour');
 });
 

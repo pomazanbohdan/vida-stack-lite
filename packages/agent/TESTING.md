@@ -1111,9 +1111,13 @@ private temp/output/SQLite and nested-process mechanics controls, a passing
 21-case baseline with both racer children drained, and the closed64-mutant
 isolated diagnostic recorded in WORK. The diagnostic itself is not a score or
 evidence that four racer children ran concurrently.
-Only the reviewed fs-safe attestation, runtime initialization, existing-storage
-image and service-operation custody contours permit `--admit-complete`;
-main-envelopes remains diagnostic-only. Image eligibility follows the closed
+These five reviewed selections also permit `--admit-complete` through the same
+selector; no separate duplicate complete-eligibility list is maintained. Each
+still requires the full current universe and unchanged native proof gates.
+Envelope eligibility follows a fresh closed64-mutant all-Killed diagnostic with
+its48-case baseline, existing private context/output and runner custody controls.
+Its720unattempted rows remain unqualified; full784 must independently pass.
+Image eligibility follows the closed
 four-mutant, fixed-two diagnostic with its full80-case baseline and the existing
 private temp/output/SQLite and worker-custody controls recorded in WORK. Those
 four results remain non-score evidence: the complete current527-mutant universe
@@ -1157,7 +1161,7 @@ preserving raw bytes and sync operations. Uncertain native custody leaves privat
 outputs unpublished; partial publication failures retain both roots and deny
 confirmation. Closed raw diagnostics can still fail the unchanged runner
 confirmer; copied files alone never mean Killed. The persisted proof reader and
-flat-basename guards are unchanged. Complete attestation, initialization, image and custody admission retain
+flat-basename guards are unchanged. Complete admission for each reviewed contour retains
 the existing exhaustive-plan, all-Killed and freshness gates and emits the same
 context-bearing proof. Verify that actual retained closure through the unchanged
 reader, separately from synthetic controls. This does not resolve its zero-callable

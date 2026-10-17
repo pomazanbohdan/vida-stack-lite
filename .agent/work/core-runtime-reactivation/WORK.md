@@ -4,14 +4,14 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's fresh524aac6 coverage/frozen pair passes exact F/L/S/B100 and original caps; complete native69cb67f1 stops35Killed/0Survived/1UNKNOWN/128unattempted of164 on a different child4500ms deadline. Its racer setup passes; targeted112 is freshly assertion-Killed. A bounded real-contention fixture simplification is being prepared; full qualification remains pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability, admission stateful initialization and main-envelopes isolated complete eligibility remain OPEN. Image complete eligibility is reviewed; its full native proof is pending. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's fresh524aac6 coverage/frozen pair passes exact F/L/S/B100 and original caps; complete native69cb67f1 stops35Killed/0Survived/1UNKNOWN/128unattempted of164 on a child4500ms deadline. Published d6dc73a reuses the real-CAS fixture without that duplicate child; fresh targeted95 is assertion-Killed. Envelopes' fresh64-mutant diagnostic is all assertion-Killed after the mixed-precision regression. Image and envelopes complete eligibility are reviewed; all three full native proofs remain pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability and admission stateful initialization remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,114 current roles, including the separately capped shared UUID predicate and two lazy custody literal owners, after retiring two initialization timer callbacks; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
-- Native isolated workers retain private logical overlays and parent-only raw publication. Exact image, envelopes, initialization, custody and fs-safe selections permit bounded diagnostics; only reviewed fs-safe attestation, initialization, image and custody permit complete admission. The actual fs-safe7/7closure passes the unchanged reader with four negative controls. Initialization eligibility follows the closed64-mutant diagnostic and existing private-resource/nested-process controls below. Custody full admission follows the private SQLite controls, fresh SQL/table activation and closed64-mutant diagnostic below. Default execution stays serial, workers remain fixed-two, and capture/ID selectors remain denied. Permission is no proof; broader resource/coverage qualification and FS zero-callable CRAP applicability stay open.
+- Native isolated workers retain private logical overlays and parent-only raw publication. One reviewed selector permits exact image, envelopes, initialization, custody and fs-safe selections to request bounded diagnostics or complete admission. Complete requests still require the full current universe and unchanged native proof gates. The actual fs-safe7/7closure passes the unchanged reader with four negative controls. Initialization eligibility follows the closed64-mutant diagnostic and existing private-resource/nested-process controls below. Custody full admission follows the private SQLite controls, fresh SQL/table activation and closed64-mutant diagnostic below. Image and envelopes qualification is recorded below. Default execution stays serial, workers remain fixed-two, and capture/ID selectors remain denied. Permission is no proof; broader resource/coverage qualification and FS zero-callable CRAP applicability stay open.
 
 ## Global contour campaign packet
 
@@ -175,10 +175,38 @@ commit/clean-input checks pass. Actual372 removes fractional zero padding from
 the claim's submillisecond projection. A single mixed-precision row (.0001 versus
 .000010) in the existing chronological matrix exercises the true100us/10us order,
 reversed input, immutability and invalid later projection. Source and original
-caps remain unchanged. Main-envelopes stays diagnostic-only pending fresh all-K
-qualification. Focused RYLifZ passes138boundary/selector cases,0skipped in4029ms,
+caps remain unchanged. At this historical diagnostic, fresh all-K qualification
+was pending. Focused RYLifZ passes138boundary/selector cases,0skipped in4029ms,
 with complete captures, closed group and unchanged boot. All three contours need
 fresh evidence after this test/tooling packet; historical triples stay7/45.
+
+Published d6dc73a forms SDK inputs without suites at
+/dev/shm/rolling-contour-6qRTjC, exit0/3778ms. Fresh initialization targeted
+b1b40fee-1a7a-4905-9c44-d7f8ca3a5e95 at /dev/shm/rolling-contour-PUv7hK
+closes30682ms after its21-case baseline: current95 is assertion-Killed,
+163unattempted of164. The old UNKNOWN is neither changed nor transferred.
+
+Fresh envelopes4203c2d9-ee63-4675-934c-69efe5320fa6 at
+/dev/shm/rolling-contour-wDR5DU closes130400ms: baseline48cases5812ms,
+64assertion-Killed/0Survived/0UNKNOWN/720unattempted of784. Actual372 is now
+assertion-Killed. All32batches and64worker records retain complete captures,
+closed group custody, private resources and unchanged boot/commit/clean inputs;
+no resource denial is present. Independent review approves a complete request
+through the existing reviewed selector, not a score. Every current784row must
+still pass the unchanged exhaustive all-Killed native reader. No extra monitor,
+duplicate scan or duplicate complete-eligibility list is introduced. Review:
+/workspace/attachments/envelopes-complete-eligibility-review-v280.md.
+
+The next strict hook attempt hit tsgolint SIGKILL under the16GiB cgroup limit;
+types and formatting passed, but this is not a lint pass. With no live numeric
+or quality owner, only the installed dependency directories of closedv230/v231
+were moved from tmpfs to individually retained disk copies. Every26823-entry
+tree was checked for matching file hashes, modes, types and internal link targets
+before replacing its old dependency path with a link to that exact copy. Source,
+SDK and all original raw diagnostics/UNKNOWN/survivor outcomes remain untouched;
+changed dependency realpaths do not qualify an old run or authorize replay.
+Manifest: /workspace/attachments/closed-dependencies-v281/retention.json.
+Fresh checkouts continue using the separately qualified locked dependency link.
 
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
