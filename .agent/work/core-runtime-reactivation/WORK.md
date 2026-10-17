@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published product correction: `171e0525d2842e5087740fa015e2a67e9cac250e` reuses the validated custody digest without moving guards or CAS. Its new57-role frozen binding retains every original ceiling; fresh numeric qualification is pending. SQLite catalog, native encoding/BINARY ordering and Unicode device-path repairs are checked and pushed. Latest image F52/52,L202/202,S224/224,B61/61 and same-run frozen9/9 pass; native79-case set confirms6Killed/0Survived/0UNKNOWN/521unattempted of527 after the nested read-only parent mount repair. The next exact4MiB acceptance control passes behavior but awaits native confirmation. Custody's earlier11targeted Killed and coverage/frozen pair stay separately bound to older Source; stateful schema2 remains GAP. The prior full image campaign278Killed/34Survived/1UNKNOWN/184unattempted stays fenced. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Latest published product correction: `171e0525d2842e5087740fa015e2a67e9cac250e` reuses the validated custody digest without moving guards or CAS, pinned at `1e9b91750301078c06768d70be395ceb0627dcc4`. Fresh57-role custody F57/57,L236/236,S243/243,B123/123 and same-run frozen9/9 pass with every original ceiling. Image F52/52,L202/202,S224/224,B61/61 and frozen9/9 also pass. The earlier79-case native set confirms6Killed/0Survived/0UNKNOWN/521unattempted of527 after the nested read-only parent mount repair; the new80-case exact4MiB control separately confirms1Killed/0Survived/0UNKNOWN/526unattempted. Do not aggregate these diagnostic sets into a contour score. Custody's earlier11targeted Killed stays bound to older Source; stateful schema2 remains GAP. The prior full image campaign278Killed/34Survived/1UNKNOWN/184unattempted stays fenced. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1885,6 +1885,26 @@ review finds no new supported defect and proposes no speculative invariant.
 The digest-reuse and exact4MiB test packet is published at171e052. Its frozen
 selector uses that immutable Source commit and the reviewed57-role scope;
 this activates no numeric admission and does not replace the previous pins.
+
+Fresh immutable v206 at1e9b917 has SDK-inputs `JeRRXz`1895ms. Image coverage
+`NVt94J`8169ms, runa9a2a160-5545-4d85-903a-294b98b47354, is exact
+F52/52,L202/202,S224/224,B61/61; same-run frozen `oYlB32`678ms passes against
+4dbd30e,maxCC9/maxCRAP9. Native boundary control `rvy5mc`, run
+29e7db4f-abd0-42ab-8d02-059e6cc1277b, finishes11276ms with80passing baseline
+cases,527generated,1assertion-confirmed Killed (ID66, identity
+44d0f4ed8cf972a7ff8b459f17695840da702681dbe0c1cbe3ed33fc287cb6a5),
+0Survived,0UNKNOWN,526unattempted. It confirms the exact real4MiB acceptance
+witness against the strict-less-than mutant. Baseline6026.079791ms derives
+the actual22053ms invoke/pre-launch allowance. Diagnostic exit1 remains required.
+
+Custody coverage `uYCD4j`7419ms, runa63c83c5-cc3a-4235-b9df-141e6ffcd13f,
+is exact F57/57,L236/236,S243/243,B123/123. Same-run frozen `zNgEqF`670ms
+passes against171e052,maxCC9/maxCRAP9 with all57original role ceilings unchanged.
+One projection import publishes both compatible pairs at626attempts and keeps
+their BLOCKED parent operations separate. All five producers have complete
+captures/closed groups/unchanged boot/commit/clean measured checkout. No new
+complete triple, current custody mutation score, global admission or installed
+runtime is inferred. The prior full/UNKNOWN operations remain retained.
 
 ### Published admission packet — retained context
 

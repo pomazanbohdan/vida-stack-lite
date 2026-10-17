@@ -105,6 +105,13 @@ catalog rows, rejected extra schema and preserved input bytes. A cloned Host
 keeping rows alone does not prove that its inventory included those objects.
 Use native bigint expectations when safeIntegers is enabled.
 
+For an inclusive SQLite image-byte boundary, build a real database at the exact
+native page size/count. Delete an allocated padding BLOB to retain the image's
+high-water size and free pages for a real merge. Assert actual page/freelist
+metadata, exact serialized length, public success, reopened rows/integrity and
+the output bound. Invalid trailing padding or a deserialization mock cannot
+prove acceptance at the supported input limit.
+
 For nested bwrap input failures, inspect mount visibility before changing module
 resolution or copying packages into the sandbox. Bind the qualified parent
 repository read-only after fresh device and temporary mounts, then rebind only
