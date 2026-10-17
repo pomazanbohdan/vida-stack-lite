@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published custody repair: `fd0507b040bb931b11d58d574401433b73a7e8f7`, scoped pin `342d277ddf63db7122a3f592669c78ed2de1a83c`. Lazy schema/table literals preserve canonical lifetime state; new boundary regressions and raw digest comparison preserve guards/CAS. Fresh59-role custody exact F/L/S/B100 and same-run frozen9/9 pass; complete native proof remains pending. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Latest published custody repair and automatic stage publisher: `e494471cf7c5e8989cb947144f1f2db4071acaa0`, scoped pin `6531dc3050285a99056fef7fa8f7e94097b28c24`. Immutable v224 completes the59-role custody local triple: exact F/L/S/B100, same-run frozen9/9 and681/681assertion-confirmed native Killed. All three reports publish automatically through the maintained stage controller and unchanged reader. The derived projection now records7/45historical local triples,38unclosed. Custody's slot passes immediately to initialization; the other active contours remain storage image and envelopes. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -375,7 +375,39 @@ Luna reviews the actual diff; the one changed-Source inventory pass confirms the
 same four utility identities and complexities. All59contour roles/caps are retained
 under `scope_review_custody_digest_type_guard_20261017`. No survivor is excluded or
 credited Killed. Final focused zR4VvR passes135/0cases across stage and custody in
-3644ms. Normal static checks, publication and fresh numeric proof follow.
+3644ms. Publication e494471 and frozen pin6531dc3 pass the ordinary strict hook.
+
+Real v224 controls use immutable6531dc3 with real copied locked dependencies.
+SDK formation C2U6vq completes2514ms without suites. The maintained stage controller
+automatically publishes coverage4436526a-2cf1-4637-b4eb-d5d1f03747ae from outer
+`/tmp/contour-stage-bvxngA`:131/0cases,1123assertions, exact F59/59,L236/236,
+S243/243,B121/121 in5985ms. Same-run scoped frozen v3 at
+`/tmp/contour-stage-WVbkaf` passes in682ms against e494471, maxCC/entryCRAP9/9.
+Each has complete captures, observed owned-group closure, unchanged boot/commit
+and clean measured inputs. Both publication receipts exist; coverage/outcome and
+frozen appear automatically in the canonical648-observation snapshot. No manual
+import is used. Operation/global status remains BLOCKED and historical triples6/45
+are unchanged. Current native runb53cdbe0-3d7e-465b-a554-abe824283e2c, outer
+`/tmp/contour-stage-4ce1T5`, uses681actual generated mutants, complete selection,
+fixed-two isolated workers and128-sized batches within the unchanged900/930s
+budgets. It completes in822104ms, exit0, with all681assertion-confirmedKilled,
+0Survived,0UNKNOWN and0unattempted. Full raw captures, owned-group closure,
+unchanged boot/commit and clean inputs are recorded. The existing persisted native
+proof reader accepts the actual report, and the controller automatically imports
+it without a manual CLI step. The publication receipt at the same outer directory
+binds its exact native report path. Projection649 now records a compatible local
+coverage/native/frozen triple for custody:7/45historical triples,38remain. This
+does not promote global BLOCKED, infer whole-repository currentness or establish
+Runtime acceptance. Old failures/UNKNOWN remain unchanged. Batch size128 completes
+this current full scope within the existing budget; differing Source/tests/tools
+prevent attributing a controlled speedup versus prior runs.
+
+Custody's author slot is immediately refilled with `bun-runtime-initialization`
+at isolated base6531dc3. The first step is a bounded current activation/UNKNOWN
+review; canonical lifetime/identity guards and stateful module identity remain
+protected. Storage-image and envelopes readiness reviews find no newly confirmed
+product defect. Their isolated complete-admission policy/evidence gaps remain
+OPEN; review alone does not change those gates or close the contours.
 
 ### Isolated full-proof parity preparation — 2026-10-17
 
@@ -2848,7 +2880,7 @@ CLEAR and backlog retain the P0/P1/P2 definitions and all stable task IDs. Missi
 
 - The retained capture has exact local coverage and same-run scoped CRAP for its bound inputs. Subsequent changes need fresh evidence. No complete config mutation outcome exists.
 - Partial 7,115-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
-- Historical local contour triples are 6/45; 39 remain unclosed. They stay qualified as historical/local and do not imply a globally ready system.
+- Historical local contour triples are 7/45; 38 remain unclosed. They stay qualified as historical/local and do not imply a globally ready system.
 - Adapter/unit evidence does not establish physical HostState or native Windows behavior. Formation is not installation; installation is not attributable user Runtime acceptance.
 - Keep failures, expected failures and UNKNOWN outcomes with original classifications and receipts. Do not turn interruption, missing output, timeout or partial counters into PASS or Killed.
 
