@@ -1361,7 +1361,11 @@ declared Source. Main-host uses the separately published independent review
 v1033's review of other contours. Main-runtime-timing uses its own independently
 reviewed `--budget-ref 6e4655b1db2a32d08ae722940ff50b10d9e56ca6`.
 The independent bun-runtime-facade review uses
-`--budget-ref 64f18b3148a80644787a1c2b997ad7a1ff6e5d5d`.
+`--budget-ref cd006a23ae0c74528393783c0ee64e719627e3af`.
+This v2 review preserves23original roles and explicitly retires the deleted
+serializer callback, retaining its prior frozen row as historical data. It adds
+no function budget and raises no retained ceiling. The older24-role review stays
+pinned for its historical inputs; do not use it for the changed canonical owner.
 The independent bun-lifecycle-state review uses
 `--budget-ref e9629b3c45cde992ef688af33b2538c7e3a67391`.
 The facade partition executes the complete `tests/runtime-facade-boundary.test.ts`

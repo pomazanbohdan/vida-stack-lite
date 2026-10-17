@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published implementation main: `de64f7324e0e397ea3b3a76586abc585864b8a20`; audit fixes, three-contour policy and first feedback corrections passed ordinary strict pre-commit and were pushed. The next survivor/correspondence packet is under checks. Runtime initialization, storage admission and existing-storage image have historical local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Published implementation main: `cd006a23ae0c74528393783c0ee64e719627e3af`; audit fixes, three-contour policy, survivor controls and reviewed facade correspondence passed ordinary strict pre-commit and were pushed. The exact published review is being pinned for fresh measurement. Runtime initialization, storage admission and existing-storage image have historical local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -173,6 +173,13 @@ attempts, no added complete triple. Native failed summaries remain retained
 diagnostics; they are not passing native proof reports and their raw kills are
 not merged into a score. Final checks and another compatible measurement follow
 the new Source/test inputs.
+
+The new facade review is published at cd006a2 and selected by its exact immutable
+budget ref through the existing v2 route; historical pins remain unchanged.
+`V0tvIk` passes68correspondence/CLI tests with292assertions in14022ms, complete
+captures/groups and same boot. No tool protocol, retained ceiling or global-plan
+qualification is relaxed. A formatting-only hook rejection was corrected and the
+ordinary strict hook then passed before publication; no hook was bypassed.
 
 ### Published admission packet — retained context
 
