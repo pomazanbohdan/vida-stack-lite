@@ -10,9 +10,9 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5450,
-    "new": 1662,
-    "removed": 95,
+    "retained": 5449,
+    "new": 1663,
+    "removed": 96,
     "current_roles": 7112,
     "source_files": 149
   },
@@ -3206,39 +3206,6 @@
         "bodyColumn": 47,
         "bodyEndLine": 50,
         "bodyEndColumn": 1
-      },
-      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
-    },
-    {
-      "identity": "src/lifecycle/runtime-facade.ts#fn:stable#0/closure:CallExpression:arguments[0]#0",
-      "current_identity": "src/lifecycle/runtime-facade.ts#fn:stable#0/closure:CallExpression:arguments[0]#0",
-      "file": "src/lifecycle/runtime-facade.ts",
-      "source_address": {
-        "line": 46,
-        "column": 11,
-        "start": 1559,
-        "end": 1615,
-        "bodyLine": 46,
-        "bodyColumn": 20,
-        "bodyEndLine": 46,
-        "bodyEndColumn": 67
-      },
-      "name": "closure:CallExpression:arguments[0]",
-      "baseline_complexity": 1,
-      "baseline_coverage": 0,
-      "max_complexity": 1,
-      "baseline_crap": 2,
-      "max_crap": 2,
-      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
-      "current_source_address": {
-        "line": 46,
-        "column": 11,
-        "start": 1559,
-        "end": 1615,
-        "bodyLine": 46,
-        "bodyColumn": 20,
-        "bodyEndLine": 46,
-        "bodyEndColumn": 67
       },
       "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
@@ -207016,6 +206983,43 @@
       "max_complexity": 1,
       "max_crap": 1,
       "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Remove the nested repeated claim-resource normalization callback. The existing claim validation mapper now supplies its validated invocation-local keys; this deleted later mapper has no successor or allowance transfer."
+    },
+    {
+      "identity": "src/lifecycle/runtime-facade.ts#fn:stable#0/closure:CallExpression:arguments[0]#0",
+      "rationale": "The unary object-key serializer callback is genuinely removed from the facade; stable delegates its canonical serialization to the existing canonical-json-core owner. No replacement facade callable or cap transfer. Independently reviewed by blind Luna v155 against genuine b549951 Source.",
+      "preserved_frozen_disposition": {
+        "identity": "src/lifecycle/runtime-facade.ts#fn:stable#0/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/lifecycle/runtime-facade.ts#fn:stable#0/closure:CallExpression:arguments[0]#0",
+        "file": "src/lifecycle/runtime-facade.ts",
+        "source_address": {
+          "line": 46,
+          "column": 11,
+          "start": 1559,
+          "end": 1615,
+          "bodyLine": 46,
+          "bodyColumn": 20,
+          "bodyEndLine": 46,
+          "bodyEndColumn": 67
+        },
+        "name": "closure:CallExpression:arguments[0]",
+        "baseline_complexity": 1,
+        "baseline_coverage": 0,
+        "max_complexity": 1,
+        "baseline_crap": 2,
+        "max_crap": 2,
+        "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
+        "current_source_address": {
+          "line": 46,
+          "column": 11,
+          "start": 1559,
+          "end": 1615,
+          "bodyLine": 46,
+          "bodyColumn": 20,
+          "bodyEndLine": 46,
+          "bodyEndColumn": 67
+        },
+        "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
+      }
     }
   ],
   "review": {
@@ -224790,5 +224794,25 @@
       "removed": 0
     },
     "limits": "All52 existing prospective10/10 rows remain unchanged. Original b549951 contains no Source at this path; no historical allowance is inherited. Exact capture IDs and Source digest match the existing partial. Scope pin and same-run numeric proof remain separate; global plan stays partial/non-executable."
+  },
+  "scope_review_runtime_facade_shared_canonical_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [
+      "src/lifecycle/runtime-facade.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/lifecycle/runtime-facade.ts",
+        "current_path": "src/lifecycle/runtime-facade.ts",
+        "rationale": "Twenty named callable responsibilities and three nested callbacks remain one-to-one. Shared canonical serialization removes the fourth nested callback; original/current named roles and all surviving ceilings remain unchanged. Guard reuse and outer-array validation relocation preserve their owning validation-chain roles."
+      }
+    ],
+    "retained": 23,
+    "new_functions": 0,
+    "removed_functions": 1,
+    "independent_review_lane": "blind-native-luna-facade-lineage-v155",
+    "review_artifact": "/workspace/attachments/facade-lineage-review-v155.md",
+    "correspondence": "Original24 = retained23 + removed1; current23 = retained23 + new0. The removed stable key-map identity is explicit and its full prior frozen disposition is retained as historical data. All other original identities, measurements, ceilings and rationales are byte-for-byte unchanged.",
+    "limits": "Source correspondence only. No increased ceiling, candidate-derived baseline, historical numeric admission or global qualification. Existing v2 scoped proof must independently establish exhaustive exact function/coverage joins; complete assertion-confirmed mutation remains separate."
   }
 }

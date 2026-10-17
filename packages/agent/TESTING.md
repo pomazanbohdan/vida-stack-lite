@@ -1410,7 +1410,11 @@ do not start duplicate suites, scans, hashes or inventories.
    static and affected checks. Preserve failed artifacts and exact cleanup custody.
 3. Once the correction packet is stable, Root publishes its checked bytes and runs
    exact F/L/S/B coverage plus same-run frozen CRAP against the original budgets.
-   Prepare the required SDK inputs through their existing owner where applicable.
+   Prepare required SDK inputs through their existing owner. Resolve readiness
+   from the producer's actual captured input set: the native mutation owner also
+   captures full SDK formation inputs for a pure partition. Form missing or stale
+   test inputs once before capture; keep failed setup separate from attempted
+   mutants. Formation runs no suites and establishes no Runtime acceptance.
 4. Run bounded mutation diagnostics for current repair IDs with one shared full
    baseline. Repair survivors and assertion weaknesses; timeout, missing coverage,
    compile/runtime error and UNKNOWN remain distinct failures. After repairs,

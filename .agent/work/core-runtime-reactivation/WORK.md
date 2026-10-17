@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published implementation main: `e8134861baa69a6b6cc27865e2245a99bcd89d44`; audit fixes and the three-contour policy passed the ordinary strict pre-commit and were pushed. Numeric feedback now has a focused follow-up under checks. Runtime initialization, storage admission and existing-storage image have historical local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Published implementation main: `de64f7324e0e397ea3b3a76586abc585864b8a20`; audit fixes, three-contour policy and first feedback corrections passed ordinary strict pre-commit and were pushed. The next survivor/correspondence packet is under checks. Runtime initialization, storage admission and existing-storage image have historical local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -123,6 +123,56 @@ flow with the total raw-cause rejection owner, restoring the adapter's branch-fr
 shape without adding callbacks. Schema failures also retain their joined diagnostic
 as cause; `NlPzJx` passes45tests across the full three-file selection in2536ms.
 These changed inputs require their own fresh numeric evidence.
+
+### Rolling repair and survivor packet
+
+Fresh immutable checkout `/workspace/attachments/rolling-measure-v152` retains
+published de64f73, physical locked dependencies and separate scratch. No old Host
+operation is resumed. Facade run `dcc7ac96-593e-4e8b-8e79-6a881f5c5bf4` has exact
+F23/23,L89/89,S103/103,B98/98 in3353ms; envelopes
+`016f14ed-2569-491f-a18a-7c004f79609a` has exact F78/78,L211/211,S227/227,B103/103
+in5450ms. Both have complete captures/groups, unchanged boot and Source. The
+envelope canonicalization adapter is nowCC1. Facade item validation stillCC5
+requires its4ceiling; no PASS is inferred from file maxima.
+
+Native mutation setup `DD6vpU` fails before baseline because the new checkout
+has no SDK formation receipt. The existing `--test-inputs` builder `VB2jKC` forms
+current captured SDK inputs in2390ms without suites. This resolves that concrete
+prerequisite; TESTING now derives readiness from actual producer inputs, including
+native mutation's full SDK capture, rather than selected test names alone.
+
+Native facade request `915d2cb8-3dd0-4df9-a030-cd6980f71102` (`eLrp3O`) completes
+all318mutants in232991ms with one14case baseline:315Killed/3survived/0UNKNOWN,
+no unattempted IDs, complete captures, closed groups, same boot and unchanged
+inputs. Its summary remains diagnostic-only and no passing proof exists. The
+retained namespace is v152's `.tmp/mutation-batch-915d2cb8-3dd0-4df9-a030-cd6980f71102-fyoJlf`.
+Survivors307/338 miss exact governed diagnostics;308 removes canonical delta-value
+validation. These are assertion gaps, not newly established Source defects.
+The owning blind Luna lane prepared all three controls during the immutable run.
+
+Root integrates those controls and reuses shared isRecord instead of duplicated
+outer-record predicates. The changed-array guard moves to the end of the outer
+shape validator, preserving diagnostic order and leaving item validation within
+its original budget. No new facade callable or allowance is added. `Pgbm3t`
+passes21boundary/integration tests with639assertions in1778ms. Storage-admission's
+same real happy fixture now also asserts both binding-to-image digest cross-links;
+`vJ3MYY` passes23tests/246assertions in2536ms without another fixture.
+
+Independent actual-baseline review `facade-lineage-review-v155.md` establishes
+24original =23retained+1genuine removed stable serializer callback, zero new local
+roles. The canonical partial now records that removal and preserves its complete
+prior frozen row; all other original caps/measurements remain unchanged. Its
+existing new-function array already had1663rows while the count said1662; only the
+derived count is corrected. The new scope is Source-lineage-only and still needs
+immutable publication/pinning and fresh exact numeric proof. Envelopes' distinct
+named-comparator prototype and cap review remain isolated proposals, not adopted
+budgets or a closure. The original mapper allowance is never transferred.
+
+The projection imports the two current coverage/outcome pairs and records476
+attempts, no added complete triple. Native failed summaries remain retained
+diagnostics; they are not passing native proof reports and their raw kills are
+not merged into a score. Final checks and another compatible measurement follow
+the new Source/test inputs.
 
 ### Published admission packet — retained context
 

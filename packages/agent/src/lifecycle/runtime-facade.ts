@@ -4,6 +4,7 @@ import {
   canonicalJsonImageWithNodeLimit,
   MAX_CANONICAL_NODES,
 } from '../contracts/canonical-json-core.js';
+import { isRecord } from '../contracts/forward-controller-values.js';
 import { freezeJsonValue } from '../contracts/public-ingress.js';
 
 const assuranceSchema = 'RuntimeAssuranceContext/v1';
@@ -252,13 +253,7 @@ function exactFields(value: unknown, fields: readonly string[]): value is JsonOb
 }
 
 function validateDeltaIdentity(value: unknown): RuntimeStatusDelta {
-  if (
-    !value ||
-    typeof value !== 'object' ||
-    Array.isArray(value) ||
-    (value as JsonObject).schema !== deltaSchema ||
-    !['changed', 'unchanged'].includes((value as JsonObject).status as string)
-  )
+  if (!isRecord(value) || value.schema !== deltaSchema || !['changed', 'unchanged'].includes(value.status as string))
     fail('assurance status delta invalid');
   const delta = value as RuntimeStatusDelta;
   const fields = [
@@ -280,11 +275,11 @@ function validateDeltaIdentity(value: unknown): RuntimeStatusDelta {
   integerOrNull(delta.to_revision, 'assurance status delta to revision', 1);
   if (digestOrNull(delta.context_id, 'assurance status delta context id') === null)
     fail('assurance status delta context id invalid');
+  if (!Array.isArray(delta.changed)) fail('assurance status delta changes invalid');
   return delta;
 }
 
 function validateDeltaChanges(delta: RuntimeStatusDelta): void {
-  if (!Array.isArray(delta.changed)) fail('assurance status delta changes invalid');
   const remaining = new Set<string>(deltaFields);
   for (const change of delta.changed) {
     if (!exactFields(change, ['field', 'value'])) fail('assurance status delta change invalid');

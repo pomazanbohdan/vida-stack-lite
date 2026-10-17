@@ -750,6 +750,8 @@ describe('native existing-storage admission boundary', () => {
             });
             expect(capability.host.sha256).toBe(sha256(readFileSync(path.join(fixture.root, hostRelative))));
             expect(capability.mastra.sha256).toBe(sha256(readFileSync(path.join(fixture.root, mastraRelative))));
+            expect(capability.binding.source_host_digest).toBe(capability.host.sha256);
+            expect(capability.binding.source_mastra_digest).toBe(capability.mastra.sha256);
             return 'admitted';
           },
         }),

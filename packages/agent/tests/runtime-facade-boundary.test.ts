@@ -422,6 +422,7 @@ describe('runtime facade public boundary', () => {
       { ...delta, watermark: { context_id: second.context_id } },
       { ...delta, watermark: { context_id: second.context_id, revision: second.revision, extra: true } },
       { ...delta, changed: [null] },
+      { ...delta, changed: [{ field: 'revision', value: Number.NaN }] },
       { ...delta, changed: [{ field: 'revision' }] },
       { ...delta, changed: [{ field: '', value: 2 }] },
       { ...delta, changed: [{ field: ' revision ', value: 2 }] },
@@ -458,6 +459,10 @@ describe('runtime facade public boundary', () => {
     blocked({ ...delta, context_id: null }, 'assurance status delta context id invalid');
     blocked({ ...delta, changed: [{}] }, 'assurance status delta change invalid');
     blocked({ ...delta, changed: [{ field: '', value: 1 }] }, 'assurance status delta change field missing');
+    blocked(
+      { ...delta, changed: [{ field: 'not_a_delta_field', value: 2 }] },
+      'assurance status delta change field invalid',
+    );
     blocked({ ...delta, watermark: null }, 'assurance status delta watermark invalid');
     blocked(
       { ...delta, watermark: { context_id: first.context_id, revision: delta.to_revision } },
@@ -517,6 +522,7 @@ describe('runtime facade public boundary', () => {
       { change: { to_revision: 0 }, suffix: 'delta to revision invalid' },
       { change: { context_id: 'bad' }, suffix: 'delta context id invalid' },
       { change: { changed: {} }, suffix: 'delta changes invalid' },
+      { change: { changed: [] }, suffix: 'changed delta has no changes' },
       { change: { status: 'unchanged' }, suffix: 'unchanged delta has changes' },
       { change: { next_action: '' }, suffix: 'delta next action missing' },
     ];
