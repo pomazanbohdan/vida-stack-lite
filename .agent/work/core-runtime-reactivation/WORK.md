@@ -1180,6 +1180,12 @@ Strict lint then rejects implicit any values from native Statement Proxy traps.
 One typed test-local member forwarder delegates native receivers and arguments;
 queried rows remain unknown until use. `S5OdFG` rechecks all six controls after
 this fixture typing correction, without changing product Source or its inventory.
+Published b1ecf6b6548378d0516a6823f23d6565db6547e1 passes the ordinary strict
+hook including505-file typecheck, lint and Knip, and is pushed. It seals the
+reviewed52-role disposition and prospective caps before numeric measurement.
+The next scoped selector explicitly pins this immutable review, retaining the
+old883af1d mapping and its historical evidence. The pin adds no exemption,
+runtime switch, larger limit, correspondence fallback or global admission.
 
 ### Published admission packet — retained context
 
