@@ -11,7 +11,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
-- Native worker mechanics and bounded scheduling now feed an explicit image-only `--isolated-workers` diagnostic, with private logical report overlays and parent-only raw publication. The default remains serial; complete admission/capture/selectors are forbidden in the new route. Real pilot observations are recorded below; full persisted-proof/parallel qualification stays open. These tooling packets change no product Source or numeric contour closure.
+- Native worker mechanics and bounded scheduling now feed an explicit image-only `--isolated-workers` diagnostic, with private logical report overlays and parent-only raw publication. Published ce86679 passes a real immutable80-case baseline and2assertion-confirmed Killed/0Survived/0UNKNOWN/525unattempted of527 in16571ms. The default remains serial; complete admission/capture/selectors are forbidden in the new route. Full persisted-proof/parallel qualification stays open. These tooling packets change no product Source or numeric contour closure.
 
 ## Global contour campaign packet
 
@@ -2070,9 +2070,41 @@ overlay aliases, missing targets, symlink/hardlink denial, both mutant native
 exits, timeout/signal/live/no-PID custody, full adapter bytes, preflight collisions,
 depth/aggregate bounds, scheduler drain and unchanged descriptor/proof controls.
 Blind Luna review finds no remaining code blocker and confirms updated help and
-testing instructions. These are scoped development controls. Actual immutable
-real-runner pilot remains the next qualification; no complete contour proof or
-numerical closure is claimed by this packet.
+testing instructions. These are scoped development controls. No complete contour
+proof or numerical closure is claimed by this packet.
+
+Strict publication `ce8667908af70dc709eb55b398ab9f659c2b8386` passes509TypeScript
+files, formatting, lint, Knip and the focused-test guard. Its first hook rejects
+Buffer generic/optional-property test typings and one remaining old helper name
+in runner context binding; these are corrected without weaker compiler settings.
+Affected incomplete-capture control `mYY55g` passes1selected case. The actual
+runner check below exercises the corrected context call.
+
+Fresh detached `/dev/shm/vida-rolling-measure-v210` is pinned to ce86679. The
+initial SDK preflight denies Root's untracked root dependency symlink before
+any producer launch; only that newly created, identity-checked link is removed.
+The declared package dependency link is retained. SDK input formation `HHjwrh`
+then completes3119ms with no suites and clean Source, full captures and closed
+group. No old operation, fixture or dist is promoted into the new namespace.
+
+Real isolated image run `d200ba35-0b80-4aa9-a0a0-9bbf22a5e2fe`, outer
+`/tmp/vida-isolated-pilot-v210-gCec9v`, completes16571ms. Its operation root is
+`/dev/shm/vida-rolling-measure-v210/packages/agent/.tmp/mutation-batch-d200ba35-0b80-4aa9-a0a0-9bbf22a5e2fe-IaGZEP`.
+The unchanged confirmer accepts80baseline cases and current generated IDs79/277
+as2Killed/0Survived/0UNKNOWN, leaving525unattempted of527. Image Source remains
+`4a3414f13731b022ac65462b640ee8cadefe340974420bcc70dacd27ff6d2c4d`.
+Baseline native exit0 and both mutant exit1 have complete captures and observed
+owned-group closure; multi-worker failures/resource blocks are empty. Parent
+input/executable readbacks, unchanged boot/commit and clean measured checkout
+also pass. All private and canonical artifacts remain retained.
+
+The outer state is `failed`, exit1, because this is an intentionally incomplete
+diagnostic with525unattempted mutants; it is not a successful complete mutation
+measurement. No full proof/report is emitted, no score is extrapolated and the
+projection/historical6of45closures remain unchanged. This qualifies the bounded
+real-runner bridge only. Next: prove complete persisted-reader parity and sealed
+invocation/resource scope before extending isolated eligibility or admission;
+then use the actual contour findings for the next repair cycle.
 
 ### Published admission packet — retained context
 
