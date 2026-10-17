@@ -43,7 +43,7 @@ import {
   withWorkspaceDatabaseClose,
 } from '../../src/config/workspace-database-raw.js';
 import { prepareExistingProjectUpgradeDatabase } from '../../src/config/project-upgrade.js';
-import { expectReturned } from '../helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectReturned } from '../helpers/expect-rejection.ts';
 import { cleanupTrackedFixtureRoots } from '../helpers/tracked-fixture-root-cleanup.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.js';
 
@@ -893,45 +893,47 @@ describe('native existing-storage admission boundary', () => {
     const fixture = freshFixture();
     const sidecar = path.join(fixture.root, '.vida', STORAGE_ADMISSION_GATE_FILE + '-wal');
     let operations = 0;
-    const result = await withExistingStorageMergeCapability({
-      repositoryRoot: fixture.root,
-      workspaceId,
-      operationId: binding.operation_id,
-      planDigest: '9'.repeat(64),
-      expectedFenceBinding: binding,
-      receipt: fixture.receipt,
-      hostRelative,
-      mastraRelative,
-      closeHostOwner: () => closeHostOwner(fixture),
-      operation: async (capability) => {
-        operations++;
-        capability.assertActive();
-        expectReturned(() => assertExistingStorageMergeCapability(capability));
-        writeFileSync(sidecar, '', { flag: 'wx' });
-        let bodyFailure: { error: unknown } | undefined;
-        try {
-          expect(() => capability.assertActive()).toThrow('Project storage admission: gate sidecar is present: -wal');
-          expect(() => assertExistingStorageMergeCapability(capability)).toThrow(
-            'Project storage admission: gate sidecar is present: -wal',
+    const result = await expectAsyncReturned(() =>
+      withExistingStorageMergeCapability({
+        repositoryRoot: fixture.root,
+        workspaceId,
+        operationId: binding.operation_id,
+        planDigest: '9'.repeat(64),
+        expectedFenceBinding: binding,
+        receipt: fixture.receipt,
+        hostRelative,
+        mastraRelative,
+        closeHostOwner: () => closeHostOwner(fixture),
+        operation: async (capability) => {
+          operations++;
+          capability.assertActive();
+          expectReturned(() => assertExistingStorageMergeCapability(capability));
+          writeFileSync(sidecar, '', { flag: 'wx' });
+          let bodyFailure: { error: unknown } | undefined;
+          try {
+            expect(() => capability.assertActive()).toThrow('Project storage admission: gate sidecar is present: -wal');
+            expect(() => assertExistingStorageMergeCapability(capability)).toThrow(
+              'Project storage admission: gate sidecar is present: -wal',
+            );
+          } catch (error) {
+            bodyFailure = { error };
+          }
+          completeOwnedCleanup(
+            [
+              () => {
+                unlinkSync(sidecar);
+                return undefined;
+              },
+            ],
+            bodyFailure,
           );
-        } catch (error) {
-          bodyFailure = { error };
-        }
-        completeOwnedCleanup(
-          [
-            () => {
-              unlinkSync(sidecar);
-              return undefined;
-            },
-          ],
-          bodyFailure,
-        );
-        if (bodyFailure) throw bodyFailure.error;
-        capability.assertActive();
-        expectReturned(() => assertExistingStorageMergeCapability(capability));
-        return 'gate restored';
-      },
-    });
+          if (bodyFailure) throw bodyFailure.error;
+          capability.assertActive();
+          expectReturned(() => assertExistingStorageMergeCapability(capability));
+          return 'gate restored';
+        },
+      }),
+    );
     expect(result).toBe('gate restored');
     expect(operations).toBe(1);
     expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
@@ -1188,7 +1190,7 @@ describe('native existing-storage admission boundary', () => {
         return 'captured';
       },
     };
-    const result = await withExistingStorageMergeCapability(request);
+    const result = await expectAsyncReturned(() => withExistingStorageMergeCapability(request));
     expect(result).toBe('captured');
     expect(request.mastraRelative).toBe(alternateRelative);
     expect(request.expectedFenceBinding.project_ids).toEqual(['mutated-project']);

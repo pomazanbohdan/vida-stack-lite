@@ -1173,6 +1173,16 @@ No process-global or stat-only cache is admitted. The summary's aggregate
 `receipt_validation_timing` separates measured identity/lifecycle cost and counts
 from a reduction in repeated operations; only a real contour run proves timing.
 
+The native pilot confines Bun's derived runtime transpiler cache to a fresh0700
+subdirectory of its private operation directory. Runner/test children reuse it
+only within that operation; it is outside Source and is never copied across runs.
+Explicit `BUN_RUNTIME_TRANSPILER_CACHE_PATH=''` or `'0'` still disables caching.
+Other inherited paths are replaced by the operation-owned path, which the existing
+sandbox can write. This caches compiled bytes, never test execution or admission
+evidence: input/executable readbacks, full selected tests, activation, assertions,
+JUnit and custody checks all remain required. Qualify the actual generated-image
+run before claiming any timing improvement.
+
 The shared mutation preload accepts diagnostic `AGENT_MUTATION_PER_TEST_CAPTURE=1`
 and writes `per-test-coverage.json` exclusively inside its invocation-owned
 adapter directory. `MutationPerTestCapture/v2` records file/body registrations,

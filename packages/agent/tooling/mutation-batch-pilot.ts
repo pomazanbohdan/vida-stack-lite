@@ -302,8 +302,14 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     const sandboxTmp = path.join(sandbox, '.tmp');
     await mkdir(sandboxTmp, { recursive: true });
     await symlink(path.join(root, 'node_modules'), path.join(sandbox, 'node_modules'), 'dir');
+    let transpilerCache = process.env.BUN_RUNTIME_TRANSPILER_CACHE_PATH;
+    if (transpilerCache !== '' && transpilerCache !== '0') {
+      transpilerCache = path.join(directory, 'bun-transpiler-cache');
+      await mkdir(transpilerCache, { mode: 0o700 });
+    }
     const environment: NodeJS.ProcessEnv = {
       ...process.env,
+      BUN_RUNTIME_TRANSPILER_CACHE_PATH: transpilerCache,
       AGENT_RUNTIME_TEST_REPOSITORY_ROOT: repository,
       AGENT_RUNTIME_MUTATION_DIRECTORY: directory,
       AGENT_RUNTIME_MUTATION_SANDBOX_ROOT: sandboxRoot,

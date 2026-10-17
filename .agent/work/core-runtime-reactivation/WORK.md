@@ -583,6 +583,29 @@ its separate global outcome stays BLOCKED. A fresh full native admission request
 starts on those immutable bytes; historical IDs and partial diagnostics are not
 combined into its score.
 
+Admission native `latlsV`, run277e1ca7-f6f2-4b40-9d1d-8244c7558a19, terminates
+after33166ms with1Killed,1UNKNOWN and226unattempted of228, complete captures,
+closed groups, unchanged boot/checkout and a full28-case baseline. Local38 reverses
+the4MiB input bound: its actual hit1 occurs in the caller-owned request case, but
+an unexpected error escapes its raw positive await without an assertion cause.
+The retained v172 namespace is not reused for later measurements. Its earlier
+complete facade proof remains its own historical input-bound observation.
+
+The admission writer repairs both analogous direct positive awaits with the
+existing `expectAsyncReturned`; expected-error probes remain unchanged. In
+parallel, the refilled storage-image writer adds final schema-digest evidence
+from the actual reopened catalog and an unsupported-binding denial before image
+deserialization, retaining both input byte images. Root uses the existing
+untrusted-call boundary instead of casting an invalid literal into a valid type.
+
+Root also adopts the reviewed native-cache candidate in its existing pilot owner:
+a fresh0700 operation subdirectory is inherited by launcher/runner/test processes;
+explicit empty/0 disable values remain intact. All Source/test/executable reads
+and assertion/JUnit/custody checks stay unchanged, with no process/test-result
+reuse or cross-operation cache. This is derived compiler output only. Static,
+affected checks and a fresh bounded real mutation pilot must precede any claim
+of performance benefit or complete numeric closure.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

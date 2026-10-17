@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { describe, expect, spyOn, test } from 'bun:test';
 import { LibSQLStore } from '@mastra/libsql';
+import canonicalize from 'canonicalize';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { initializeHostDatabaseSchema } from '../src/host-state.js';
@@ -14,6 +15,7 @@ import {
   type ExistingMergeBinding,
 } from '../src/config/project-upgrade-existing-storage.js';
 import { createInMemoryBunSqliteClient } from '../src/orchestration/bun-sqlite-client.js';
+import { callWithUntrustedArguments } from './helpers/untrusted-call.ts';
 
 const workspaceId = 'a'.repeat(64);
 const sha256 = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
@@ -320,6 +322,34 @@ test('reports an outer close acknowledgement error after a successful merge and 
   for (const database of opened) expect(() => database.query('SELECT 1').get()).toThrow();
 });
 
+test('rejects an unsupported image binding before opening either SQLite image', async () => {
+  const host = makeHost();
+  const mastra = await makeMastra();
+  const hostBefore = Buffer.from(host.bytes);
+  const mastraBefore = Buffer.from(mastra.bytes);
+  const opening = spyOn(Database, 'deserialize');
+  try {
+    await expectRejection(
+      Promise.resolve().then(() =>
+        callWithUntrustedArguments(prepareUnifiedExistingStorageImage, [
+          host,
+          mastra,
+          {
+            ...binding(host, mastra),
+            schema: 'VidaExistingStorageMerge/v0',
+          },
+        ]),
+      ),
+      /Existing storage merge: unsupported binding/u,
+    );
+    expect(opening).not.toHaveBeenCalled();
+    expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
+    expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
+  } finally {
+    opening.mockRestore();
+  }
+});
+
 test('imports an owned Mastra sqlite_sequence row from the serialized Mastra image', async () => {
   const host = makeHost();
   const generatedMastra = await makeMastra();
@@ -574,6 +604,15 @@ describe('existing storage image preparation', () => {
     const merged = openUnified(image.bytes_base64);
     try {
       preserveMergeFixture(merged);
+      const schema = merged
+        .query<{ type: string; name: string; table_name: string; sql: string | null }, []>(
+          'SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master ' +
+            "WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        )
+        .all();
+      const serializedSchema = canonicalize(schema);
+      if (serializedSchema === undefined) throw new Error('reopened unified schema could not be canonicalized');
+      expect(image.schema_digest).toBe(sha256(Buffer.from(serializedSchema, 'utf8')));
     } finally {
       merged.close(true);
     }
