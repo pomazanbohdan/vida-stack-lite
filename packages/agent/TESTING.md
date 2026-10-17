@@ -1384,8 +1384,8 @@ pinned for its historical inputs; do not use it for the changed canonical owner.
 The independent bun-lifecycle-state review uses
 `--budget-ref e9629b3c45cde992ef688af33b2538c7e3a67391`.
 The facade partition executes the complete `tests/runtime-facade-boundary.test.ts`
-file, retaining all nine public behavior cases with direct Source-module imports.
-The seven package integration cases remain in `tests/smoke.test.ts`; that owner
+file, retaining all declared public behavior cases with body-local Source-module imports.
+The package integration cases remain in `tests/smoke.test.ts`; that owner
 also verifies identity of all five facade package-root exports. Keep both owners
 registered and run the integration evidence for changes affecting that boundary.
 Do not repeat unrelated integration operations for every pure facade mutant.
@@ -1452,6 +1452,14 @@ do not start duplicate suites, scans, hashes or inventories.
    exact coverage100, qualified frozen correspondence/CRAP and assertion-confirmed
    Killed100 for the same bound inputs; retain freshness/global-admission limits.
    Immediately fill its slot with the next ready contour.
+
+For a stateless module whose mutated initialization runs at import time, load a
+fresh captured module inside the asserting test body. Use the existing query-alias
+loader boundary; retain its exact Source capture and all cases. Confirm that the
+module has no lifetime state or namespace-identity contract before adopting this
+fixture isolation. Keep package-root identity checks in their integration owner.
+A child-only activation still needs qualified child evidence; a parent assertion
+or a fresh import alone does not supply that proof.
 
 For a private callback supplied to a native API, test the native API's documented
 callback contract when public output alone hides a violation. Observe the actual

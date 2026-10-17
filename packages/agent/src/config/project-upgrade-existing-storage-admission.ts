@@ -104,8 +104,8 @@ function checkpointAndClose(root: string, relative: string, sourceOwner: Exclusi
   sourceSidecarsAbsent(root, relative);
 }
 
-function fenceBindingMatches(actual: MaintenanceFenceBinding, expected: MaintenanceFenceBinding): boolean {
-  return canonicalJsonDigest(actual) === canonicalJsonDigest(expected);
+function fenceBindingMatches(actual: MaintenanceFenceBinding, expectedDigest: string): boolean {
+  return canonicalJsonDigest(actual) === expectedDigest;
 }
 
 /**
@@ -140,6 +140,7 @@ export async function withExistingStorageMergeCapability<T>(request: {
     canonicalJsonImageWithNodeLimit(input.expectedFenceBinding, 0, MAX_CANONICAL_NODES)
       .image as MaintenanceFenceBinding,
   );
+  const expectedFenceBindingDigest = canonicalJsonDigest(expectedFenceBinding);
   input = Object.freeze({ ...input, expectedFenceBinding });
   const access = requireSafeRepositoryAccess(input.repositoryRoot);
   const repositoryIdentity = access.directoryIdentity('.', label);
@@ -161,7 +162,7 @@ export async function withExistingStorageMergeCapability<T>(request: {
     requireAdmission(fence.status === 'held', 'Host maintenance fence is not held');
     requireAdmission(fence.workspace_id === input.workspaceId, 'held Host fence workspace differs');
     requireAdmission(fence.binding.operation_id === input.operationId, 'held Host fence operation differs');
-    requireAdmission(fenceBindingMatches(fence.binding, input.expectedFenceBinding), 'held Host fence binding differs');
+    requireAdmission(fenceBindingMatches(fence.binding, expectedFenceBindingDigest), 'held Host fence binding differs');
     requireAdmission(fence.generation === input.receipt.fence.generation, 'held Host fence generation differs');
     requireAdmission(fence.revision === input.receipt.fence.revision, 'held Host fence revision differs');
     requireAdmission(fence.token_digest === input.receipt.fence.token_digest, 'held Host token digest differs');

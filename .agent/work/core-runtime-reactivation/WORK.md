@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest checked Source/test packet: `b6e04505baabfab0359de6365eb6fb2ae6ab6c2b`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read/public-gate controls, three shared failure phases, sealed package-asset resolution and envelope ordering regressions. The pinned facade review and fresh compatible local triple are recorded below. Active runtime initialization, envelopes and storage admission still need complete mutation closures. Body-local activation qualification is under repair below. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest checked Source/test packet: `3a323b95dd7d93f8f95e0ed2209644e9b1022afc`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read/public-gate controls, three shared failure phases, sealed package-asset resolution, envelope ordering regressions and body-local mutation activation attribution. Active facade, envelopes and storage admission need complete fresh mutation closures under that protocol. Initialization remains OPEN on qualified child-only activation evidence; its idle slot is used for facade repair. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -479,6 +479,35 @@ test now asserts that exact refusal and successful body-state observation.
 Independent v158 finds no remaining concrete issue after the guard correction.
 Strict publication and fresh native observations under the changed tool binding
 follow; historical cumulative-counter results are not promoted to this protocol.
+
+### Body-local requalification and parallel repair
+
+Fresh immutable `3a323b9` diagnostics confirm the repaired admission IDs62,65,92,
+203,235,257 (`kcBC0l`, run80527624-326c-4974-ab4e-75e20a01bc83) and envelope
+IDs168,175,176,177,353 (`m8mcAY`, runbb3f7fa8-f593-4f6c-b55f-f3ad9616f16e).
+Both run the complete passing baseline, retain complete captures/closed groups
+and unchanged boot/checkout. Their6/228 and5/763 observations are diagnostic,
+with222 and758 unattempted; neither is a complete mutation score.
+
+Facade coverage `GQpJMt`, runa0312fd8-bbe6-4ccf-9992-80d96ab45a6c, and its
+same-run original frozen review `EywT1U` pass. Native `GsgRPI`,
+run1697c0a8-64b3-41ba-b945-f0df034e5c5f, terminates with39Killed,1UNKNOWN and
+271unattempted of311. Local1 mutates the module-level delta schema string:
+initialization happened outside the asserting body, so its body-owned hit is0.
+The namespace remains retained; old cumulative-counter observations are not
+promoted. Initialization's child-only execution gap also remains OPEN.
+
+The owning blind Luna writer prepares body-local fresh-query imports for the
+stateless facade. Independent capture review confirms query aliases still resolve
+only to captured Source; package-root export identity remains in smoke integration.
+The admission writer removes repeated expected-binding hashing while preserving
+fresh actual-binding checks. Independent v158 confirms the owned frozen JSON image
+has the same canonical limits and no new guard-order failure. Root integrates
+both. `666Qg8` passes49tests/959assertions across facade boundary, smoke integration
+and the full admission file in3699ms, complete captures/closed groups and unchanged
+boot. Strict publication and fresh numeric receipts follow. Envelopes' readonly
+optimization review finds its large fixtures cover distinct boundaries; no cases
+or assertions are removed just to reduce duration.
 
 ### Published admission packet — retained context
 
