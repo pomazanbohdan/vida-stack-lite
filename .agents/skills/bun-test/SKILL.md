@@ -105,6 +105,14 @@ catalog rows, rejected extra schema and preserved input bytes. A cloned Host
 keeping rows alone does not prove that its inventory included those objects.
 Use native bigint expectations when safeIntegers is enabled.
 
+For nested bwrap dependency failures, inspect mount visibility before changing
+module resolution or copying packages into the sandbox. Bind the exact package
+dependency root read-only after fresh device, temporary and operation mounts.
+Qualify both temporary and shared-memory dependency locations with actual
+imports, nested spawn, denied writes and unchanged bytes. A writable parent
+mounted later can hide an earlier read-only child mount. Preserve the failed
+run and use fresh measured inputs after a correction.
+
 For image schema-order assertions, preserve actual SQLite encoding. A UTF-8
 Buffer comparator is not a general model for UTF-16 BINARY collation. Real
 UTF-16LE/BE images and opposite-order Unicode names expose this difference;

@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import path from 'node:path';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { PlanKind, type Mutant, type MutantResult, type MutantTestPlan } from '@stryker-mutator/api/core';
 import { TestStatus } from '@stryker-mutator/api/test-runner';
@@ -518,51 +518,78 @@ test('native batch rejects a broken identity pairing before invoking the runner'
   expect(calls).toBe(0);
 });
 
-test('native mutation sandbox permits nested Bun spawn and private scratch while Source stays read-only', async () => {
-  const directory = mkdtempSync(path.join(tmpdir(), 'native-mutation-sandbox-control-'));
-  const sandbox = path.join(directory, 'sandbox-control');
-  const scratch = path.join(sandbox, '.tmp');
-  mkdirSync(path.join(sandbox, 'tooling'), { recursive: true });
-  mkdirSync(scratch);
-  writeFileSync(path.join(sandbox, 'subject.ts'), 'export const value = 1;\n');
-  writeFileSync(
-    path.join(sandbox, 'tooling/mutation-command-runner.ts'),
-    `
+test.each(['temporary', 'shared-memory'])(
+  'native mutation sandbox keeps %s dependencies visible and read-only with nested Bun spawn',
+  async (storage) => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'native-mutation-sandbox-control-'));
+    const dependencies = mkdtempSync(
+      path.join(storage === 'shared-memory' ? '/dev/shm' : tmpdir(), 'native-mutation-dependencies-'),
+    );
+    const sandbox = path.join(directory, 'sandbox-control');
+    const scratch = path.join(sandbox, '.tmp');
+    mkdirSync(path.join(sandbox, 'tooling'), { recursive: true });
+    mkdirSync(scratch);
+    mkdirSync(path.join(dependencies, 'native-control'));
+    writeFileSync(
+      path.join(dependencies, 'native-control/package.json'),
+      '{"name":"native-control","exports":"./index.ts"}',
+    );
+    writeFileSync(path.join(dependencies, 'native-control/index.ts'), 'export const value = 41;\n');
+    symlinkSync(dependencies, path.join(sandbox, 'node_modules'), 'dir');
+    writeFileSync(path.join(sandbox, 'subject.ts'), 'export const value = 1;\n');
+    writeFileSync(
+      path.join(sandbox, 'tooling/mutation-command-runner.ts'),
+      `
     import{writeFileSync}from'node:fs';
+    import{value}from'native-control';
     let sourceReadonly=false;
     try{writeFileSync('subject.ts','invalid')}catch(error){sourceReadonly=error.code==='EROFS'||error.code==='EACCES'}
+    let dependenciesReadonly=false;
+    try{writeFileSync('node_modules/native-control/index.ts','invalid')}catch(error){dependenciesReadonly=error.code==='EROFS'||error.code==='EACCES'}
     writeFileSync('.tmp/owned.txt','scratch');
-    const child=Bun.spawn([process.execPath,'--version'],{stdout:'pipe',stderr:'pipe'});
-    console.log(JSON.stringify({sourceReadonly,exit:await child.exited,scratch:await Bun.file('.tmp/owned.txt').text()}));
+    const child=Bun.spawn([process.execPath,'--no-install','-e',"import{value}from'native-control';if(value!==41)process.exit(1)"],{stdout:'pipe',stderr:'pipe'});
+    console.log(JSON.stringify({sourceReadonly,dependenciesReadonly,value,exit:await child.exited,scratch:await Bun.file('.tmp/owned.txt').text()}));
   `,
-  );
-  let completed = false;
-  try {
-    const bwrap = Bun.which('bwrap');
-    if (!bwrap) throw new Error('Native sandbox control requires bwrap.');
-    const result = await executeMutationCommand(
-      nativeMutationBatchCommand(bwrap, directory, sandbox, scratch, process.execPath),
-      sandbox,
-      3000,
-      {
-        ownedProcessGroup: true,
-        stdoutFile: path.join(directory, 'stdout.log'),
-        stderrFile: path.join(directory, 'stderr.log'),
-      },
     );
-    expect(result.exitCode).toBe(0);
-    expect(result.timedOut).toBe(false);
-    expect(result.processCustody?.processGroupTerminationObserved).toBe(true);
-    expect(result.output_capture?.complete).toBe(true);
-    const observed: unknown = JSON.parse(await Bun.file(path.join(directory, 'stdout.log')).text());
-    expect(observed).toEqual({ sourceReadonly: true, exit: 0, scratch: 'scratch' });
-    expect(await Bun.file(path.join(sandbox, 'subject.ts')).text()).toBe('export const value = 1;\n');
-    completed = true;
-  } finally {
-    if (completed) rmSync(directory, { recursive: true, force: true });
-    else console.error('NATIVE_SANDBOX_CONTROL_RETAINED', directory);
-  }
-});
+    let completed = false;
+    try {
+      const bwrap = Bun.which('bwrap');
+      if (!bwrap) throw new Error('Native sandbox control requires bwrap.');
+      const result = await executeMutationCommand(
+        nativeMutationBatchCommand(bwrap, directory, sandbox, scratch, process.execPath, dependencies),
+        sandbox,
+        3000,
+        {
+          ownedProcessGroup: true,
+          stdoutFile: path.join(directory, 'stdout.log'),
+          stderrFile: path.join(directory, 'stderr.log'),
+        },
+      );
+      expect(result.exitCode).toBe(0);
+      expect(result.timedOut).toBe(false);
+      expect(result.processCustody?.processGroupTerminationObserved).toBe(true);
+      expect(result.output_capture?.complete).toBe(true);
+      const observed: unknown = JSON.parse(await Bun.file(path.join(directory, 'stdout.log')).text());
+      expect(observed).toEqual({
+        sourceReadonly: true,
+        dependenciesReadonly: true,
+        value: 41,
+        exit: 0,
+        scratch: 'scratch',
+      });
+      expect(await Bun.file(path.join(sandbox, 'subject.ts')).text()).toBe('export const value = 1;\n');
+      expect(await Bun.file(path.join(dependencies, 'native-control/index.ts')).text()).toBe(
+        'export const value = 41;\n',
+      );
+      completed = true;
+    } finally {
+      if (completed) {
+        rmSync(directory, { recursive: true, force: true });
+        rmSync(dependencies, { recursive: true, force: true });
+      } else console.error('NATIVE_SANDBOX_CONTROL_RETAINED', directory, dependencies);
+    }
+  },
+);
 
 test('mutation batches own every generated identity once without changing generation ranges', () => {
   const items = [plan('0'), plan('1'), plan('2'), plan('3', 'src/two.ts')];

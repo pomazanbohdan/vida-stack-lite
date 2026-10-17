@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published product Source: `4dbd30e24403e51c4c83fead7dd4c8e4be0cff68`, scoped pin `256e3d8a8cdadb91379e243f458819be001bb08b`. SQLite catalog, native encoding/BINARY ordering and Unicode device-path repairs are checked and pushed. Latest image F52/52,L202/202,S224/224,B61/61 and same-run frozen9/9 pass; envelope and custody exact coverage/frozen pairs remain recorded separately. Custody11targeted mutants are assertion-confirmed Killed,676unattempted/687, no complete score. Stateful schema2 remains GAP. Latest image native campaign is partial:278Killed/34Survived/1UNKNOWN/184unattempted at900s; its checkout is fenced. Three new meaningful guard witnesses and a pre-launch derived-budget repair are checked pending publication and fresh native controls. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Latest published product Source: `4dbd30e24403e51c4c83fead7dd4c8e4be0cff68`, scoped pin `256e3d8a8cdadb91379e243f458819be001bb08b`. SQLite catalog, native encoding/BINARY ordering and Unicode device-path repairs are checked and pushed. Latest image F52/52,L202/202,S224/224,B61/61 and same-run frozen9/9 pass; envelope and custody exact coverage/frozen pairs remain recorded separately. Custody11targeted mutants are assertion-confirmed Killed,676unattempted/687, no complete score. Stateful schema2 remains GAP. Latest image native campaign is partial:278Killed/34Survived/1UNKNOWN/184unattempted at900s; its checkout is fenced. Three new meaningful guard witnesses and the derived-budget repair are published at `d8e0a3651385e0db37a52d556c43778eba4a589e`. Fresh native baseline exposed a nested device-mount dependency visibility defect; its exact read-only bind correction is checked, with native qualification pending. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1767,6 +1767,31 @@ Zero/fractional/saturated/invalid elapsed, below/exact floor, preserved prior
 observations and existing UNKNOWN controls pass. Combined `1K2qTy` passes
 171tests/0skipped,854assertions in5555ms with complete custody. Three new image
 controls are reviewed behavior, not yet native Killed or a complete score.
+
+Published d8e0a36 is measured in immutable /dev/shm/vida-rolling-measure-v203.
+SDK-inputs `Zxn3uB` passes1816ms; coverage `4XDDDo` passes8203ms, run
+cdd36767-db79-48ba-8249-6102ce1ec8b9, exact F52/52,L202/202,S224/224,B61/61;
+same-run frozen `lgwlTd` passes1038ms against4dbd30e,maxCC9/maxCRAP9. Complete
+captures/groups/boot/commit/clean checkout are observed. Projection617 imports
+the pair with its independent BLOCKED parent, without a contour closure.
+
+Native baseline capture `QyHVeQ`, run0fcd18c7-8ffb-4a28-bb44-e95f33dd916e,
+fails before its runner receipt in1953ms: the inner fresh `/dev` mount hides
+the package dependency root on `/dev/shm`; `@babel/parser` cannot resolve through
+the sandbox symlink. The retained baseline is UNKNOWN (missing receipt), with
+no attempted mutants. Fence v203; preserve this outcome and all inputs. Passing
+SDK/coverage/frozen alone did not qualify nested native mutation execution.
+
+Root adds an explicit exact read-only dependency-root bind to the existing
+native command after writable `/tmp` and operation mounts, before sandbox/scratch.
+Actual RED `GipZwu` shows missing shared-memory dependency imports and writable
+temporary dependencies. First correction `UOX3Et` catches an earlier read-only
+mount being hidden by later `/tmp`; its failed bytes remain retained. Final
+`E7MvII` passes98/0tests in895ms, including both dependency locations, actual
+nested Bun imports/spawn, denied Source/dependency writes, unchanged bytes and
+private scratch writes. No wider writable repository mount, dependency copy,
+resolver bypass or timeout increase is introduced. Source image/hash/role caps
+are unchanged; fresh native qualification remains required.
 
 ### Published admission packet — retained context
 

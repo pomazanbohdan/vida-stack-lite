@@ -212,6 +212,7 @@ export function nativeMutationBatchCommand(
   sandbox: string,
   sandboxTmp: string,
   executable: string,
+  dependencyRoot: string,
 ): string[] {
   return [
     bwrap,
@@ -229,6 +230,9 @@ export function nativeMutationBatchCommand(
     '--bind',
     directory,
     directory,
+    '--ro-bind',
+    dependencyRoot,
+    dependencyRoot,
     '--ro-bind',
     sandbox,
     sandbox,
@@ -368,7 +372,14 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       });
     const identity = await parentIdentity();
     const context = { identity, hookFiles: testFilesWithLifecycleHooks(tests, inputs.input_bytes) };
-    const command = nativeMutationBatchCommand(bwrap, directory, sandbox, sandboxTmp, process.execPath);
+    const command = nativeMutationBatchCommand(
+      bwrap,
+      directory,
+      sandbox,
+      sandboxTmp,
+      process.execPath,
+      path.join(root, 'node_modules'),
+    );
     const receipts = new Map<string, NativeMutationReceiptReference>();
     const maximumMutantAllowanceMs = mutationLimits.commandMs + mutationLimits.mutantOverheadMs;
     let mutantAllowanceMs = maximumMutantAllowanceMs;

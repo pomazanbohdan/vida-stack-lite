@@ -1069,9 +1069,15 @@ times remain separate observations. Storage admission reuses the unchanged2GiB
 campaign owner. Use the existing integer execution-budget owner rather than
 subtracting floating clock values at launch. Nested bwrap includes fresh `/dev` and `/proc` mounts:
 binding `/` alone denies `/dev/null` and prevents Bun's own child spawn. Mount
-private `/tmp` before the sandbox's final read-only and writable-scratch bindings.
-The real inert control verifies nested spawn, denied Source writes and allowed
-private scratch writes; option-string inspection alone does not qualify it.
+private `/tmp` and the writable operation directory before the exact package
+dependency-root read-only bind, then the sandbox's final read-only and
+writable-scratch bindings. Pass the dependency root explicitly: a sandbox
+`node_modules` symlink alone cannot preserve a `/dev/shm` checkout through a
+nested `/dev` reset, and an earlier dependency mount under `/tmp` would be
+covered by its later writable mount. The real inert controls verify imports
+from both temporary and shared-memory dependency roots, nested Bun imports/spawn,
+denied Source/dependency writes, unchanged bytes and allowed private scratch
+writes; option-string inspection alone does not qualify it.
 Native receipts still require exact baseline census, process/output closure,
 input/executable/image bindings and body assertion proof. Errors, timeouts and
 unattempted IDs remain separate. Its generated universe, image and diagnostic
