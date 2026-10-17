@@ -285,6 +285,22 @@ Publish the new Source/review before its immutable pin and fresh triple. All38
 old image survivors remain observed outcomes; unsupported/cleanup/header/count
 cases are not silently excluded or credited as Killed.
 
+The published image Source/review is cac34ce64dd6d4c1dbb69e15c9fa0bbe1efce208;
+its immutable pin now selects the shared-quote scope. Test-only v294 strengthens
+the five native handle probes with a partially consumed prepared cursor and
+statement, observed before cleanup. The probe runs once per handle because SDK
+close and the defensive Source close can both target the same handle. Only then
+does finally restore instrumentation, finalize statements and close retained
+handles. Initial Uvn7LT exposed that repeated-close instrumentation error and
+remains a failed development check; corrected Ji1Cmt passes2selected cases with
+complete captures/group closure. A rebound malformed3/3 journal header is rejected
+without changing either input image. Bun also accepts0/0, so that is not used as
+a false malformed fixture. Native observations are retained in v293; no old
+survivor is reclassified or credited as Killed from these development probes.
+The complete affected image file Z7NNLu passes87cases/0skips in4780ms, with
+complete capture/group closure. Independent initialization review finds no
+retry-denial or fixture-custody blocker; it is static, not a mutation result.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is

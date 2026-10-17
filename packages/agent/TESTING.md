@@ -636,7 +636,15 @@ Bootstrap-inspection fault controls target schema and sentinel validation
 separately, then inject failure before the exact native source close. Require
 both original causes, unchanged image/journal/activation bytes, the held paired
 gate and same-handle retry before another admission. Match SQLite integer mode:
-safeIntegers returns bigint. Shared work-and-close helpers preserve single and
+safeIntegers returns bigint. SQLite closure regressions must observe native
+prepared-statement and partially consumed cursor behavior before test cleanup;
+finalizing statements or force-closing handles first would mask the defect.
+Instrument each handle's first close only, preserving defensive repeated closes,
+and always restore/finalize retained probes in finally. A malformed serialized
+journal-header fixture must actually fail Bun's native parser (3/3 does;0/0 does
+not); rebind its digest and prove both source images remain unchanged. These
+native observations do not substitute for assertion-confirmed mutation results.
+Shared work-and-close helpers preserve single and
 combined failures; async work must settle before close. Await the owned promise
 explicitly before a matcher instead of awaiting a synchronous matcher result.
 

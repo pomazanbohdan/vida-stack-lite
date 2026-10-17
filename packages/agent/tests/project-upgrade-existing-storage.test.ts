@@ -700,9 +700,12 @@ test('preserves strict named bindings and exact integer reads on every prepared 
   const hostBefore = Buffer.from(host.bytes);
   const mastraBefore = Buffer.from(mastra.bytes);
   const deserialize = Database.deserialize.bind(Database);
+  const close = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
   const opened: Database[] = [];
   const probes: { missingBindingError: string | undefined; missingBindingIsNull: boolean; exactInteger: unknown }[] =
     [];
+  const closeProbes: { next: () => unknown; all: () => unknown; first: unknown; finalize: () => void }[] = [];
+  const closingHandles = new Set<Database>();
   const opening = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
     const database = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
     opened.push(database);
@@ -722,19 +725,51 @@ test('preserves strict named bindings and exact integer reads on every prepared 
     probes.push({ missingBindingError, missingBindingIsNull, exactInteger });
     return database;
   });
+  const closing = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, ...args) {
+    if (opened.includes(this) && !closingHandles.has(this)) {
+      closingHandles.add(this);
+      const statement = this.prepare<{ value: number | bigint }, []>('SELECT 1 AS value UNION ALL SELECT 2 AS value');
+      const cursor = statement.iterate();
+      const first = cursor.next();
+      closeProbes.push({
+        next: () => cursor.next(),
+        all: () => statement.all(),
+        first,
+        finalize: () => statement.finalize(),
+      });
+    }
+    return close.apply(this, args);
+  });
   try {
     const image = await expectAsyncReturned(() =>
       prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
     );
     expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
+    expect(closeProbes).toHaveLength(5);
+    for (const probe of closeProbes) {
+      expect(probe.first).toEqual({ value: { value: 1n }, done: false });
+      expect(probe.next).toThrow('Database has closed');
+      expect(probe.all).toThrow('Database has closed');
+    }
+    for (const database of opened) expect(() => database.query('SELECT 1').get()).toThrow();
   } finally {
+    closing.mockRestore();
     opening.mockRestore();
+    for (const probe of closeProbes) {
+      try {
+        probe.finalize();
+      } catch {}
+    }
+    for (const database of opened) {
+      try {
+        close.call(database, true);
+      } catch {}
+    }
   }
   expect(probes).toHaveLength(5);
   expect(probes.every((probe) => probe.missingBindingError === 'Missing parameter "message"')).toBe(true);
   expect(probes.every((probe) => !probe.missingBindingIsNull)).toBe(true);
   expect(probes.every((probe) => probe.exactInteger === 9007199254740993n)).toBe(true);
-  for (const database of opened) expect(() => database.query('SELECT 1').get()).toThrow();
   expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
   expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
 });
@@ -967,6 +1002,31 @@ async function assertWalImageMerge(walHost: boolean, walMastra: boolean): Promis
 }
 
 describe('existing storage image preparation', () => {
+  test('rejects a malformed SQLite journal-version header without rewriting either source image', async () => {
+    const originalHost = makeHost();
+    const mastra = await makeMastra();
+    const malformedHostBytes = Uint8Array.from(originalHost.bytes);
+    malformedHostBytes[18] = 3;
+    malformedHostBytes[19] = 3;
+    const host: ClosedDatabaseImage = {
+      ...originalHost,
+      size: malformedHostBytes.byteLength,
+      sha256: sha256(malformedHostBytes),
+      bytes: malformedHostBytes,
+    };
+    const hostBefore = Buffer.from(host.bytes);
+    const mastraBefore = Buffer.from(mastra.bytes);
+
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /file is not a database/u,
+    );
+
+    expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
+    expect(host.sha256).toBe(sha256(hostBefore));
+    expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
+  });
+
   test.each([
     ['Host', 'source_host_digest'],
     ['Mastra', 'source_mastra_digest'],
