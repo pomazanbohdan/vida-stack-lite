@@ -134,8 +134,10 @@ isolated-worker route integrates logical report overlays and parent-only raw
 output publication. Image remains diagnostic-only; reviewed read-only fs-safe
 attestation alone permits complete admission for persisted-reader parity.
 WORK owns the actual qualification result and its unresolved CRAP applicability.
-Keep the default serial execution and full declared test argv. Complete parallel
-admission still requires persisted-proof parity and captured evidence qualification.
+The fresh complete fs-safe proof now passes the unchanged persisted reader;
+WORK records its actual closure and memory-only rejection controls. Keep the
+default serial execution and full declared test argv. Broader parallel admission
+still requires each contour's captured evidence and resource qualification.
 Do not raise worker count or claim the900s target
 from arithmetic alone. Root retains capture, final checks, frozen admission and
 Git ownership. Inert mechanics do not establish a parallel mutation score.

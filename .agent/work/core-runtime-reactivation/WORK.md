@@ -11,7 +11,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
-- Native worker mechanics and bounded scheduling feed an explicit `--isolated-workers` route, with private logical report overlays and parent-only raw publication. Published ce86679 passes a real immutable80-case image baseline and2assertion-confirmed Killed/0Survived/0UNKNOWN/525unattempted of527 in16571ms. The next bounded parity step permits complete admission only for reviewed read-only fs-safe attestation; image remains diagnostic-only, and both reject capture/selectors. The default remains serial. Full persisted-proof/parallel qualification stays open pending fresh evidence. These tooling packets change no product Source or numeric contour closure.
+- Native worker mechanics and bounded scheduling feed an explicit `--isolated-workers` route, with private logical report overlays and parent-only raw publication. Published ce86679 passes a real immutable80-case image baseline and2assertion-confirmed Killed/0Survived/0UNKNOWN/525unattempted of527 in16571ms. Published3d5a60b permits complete admission only for reviewed read-only fs-safe attestation. Fresh isolated run b5632d5f passes5baseline cases and7/7assertion-confirmed Killed in4989ms; unchanged persisted reader accepts the actual closure and rejects four memory-only mismatches. Image remains diagnostic-only; both reject capture/selectors, and default execution stays serial. Broader parallel/resource qualification and FS zero-callable CRAP applicability remain open. These tooling packets change no product Source or numeric contour closure.
 
 ## Global contour campaign packet
 
@@ -32,6 +32,33 @@ complete native proof and read the actual retained closure with the unchanged
 reader. Reader negatives may clone the accepted report/selection in memory;
 never mutate retained artifacts or rerun a producer merely to test the reader.
 Zero-callable frozen CRAP applicability remains GAP, so no triple closes here.
+
+Publication `3d5a60b4a3d5960db137e3bae1e12b3e4d0af063` passes the ordinary
+strict hook: formatting, lint, Knip, focused guard and509TypeScript files. The
+fresh detached `/dev/shm/vida-rolling-measure-v212` retains that exact clean
+commit. SDK input formation `/workspace/attachments/rolling-contour-epXqnV`
+completes2196ms without suites, with complete captures and closed custody.
+
+Full isolated run `b5632d5f-23d1-4437-9fce-954ad1fb44ae`, outer
+`/tmp/vida-isolated-pilot-v212-IEA6at`, completes4989ms with exit0, complete
+captures, observed owned-group termination, unchanged boot/commit and clean
+measured checkout. Its canonical operation is
+`/dev/shm/vida-rolling-measure-v212/packages/agent/.tmp/mutation-batch-b5632d5f-23d1-4437-9fce-954ad1fb44ae-75GChd`.
+The five-case baseline takes647ms and the existing measured allowance is11295ms;
+all7generated mutants are assertion-confirmed Killed, with0Survived/UNKNOWN/
+unattempted and no worker resource/failure entries. No timeout or policy bound
+changes. The producer emits the existing context-bearing v2 proof and v1 report.
+
+The unchanged persisted reader accepts that actual closure. Offline readback
+`/workspace/attachments/native-reader-parity-v212.json` also records four
+in-memory negative controls: paired candidate counts, run binding, declared test
+selection and declared Source selection. Each rejects at its expected existing
+guard; retained artifacts are never edited or relocated and no producer repeats.
+The maintained `--native-report` CLI imports the same proof as native-mutation,
+bringing the automatic projection to627attempts. Historical local triples remain
+6/45, with39unclosed. This is partition-local proof parity with
+`full_qualification:false`, not global/current qualification, a speed comparison,
+FS CRAP applicability, broader stateful resource admission or Runtime acceptance.
 
 ### Current repair packet — 2026-10-17
 

@@ -1107,7 +1107,7 @@ per-test capture or ID selectors. Start diagnostic work with `--batch-size 2
 one generated image and the existing900s partition deadline. Baseline runs first;
 at most two mutants are then in flight. The copied parent environment is frozen
 before launch; worker-private scratch/cache overrides and mutant ID are explicit.
-This is not complete parallel mutation or global qualification.
+This bounded route does not activate broader parallel mutation or global qualification.
 
 The report overlay binds each private output at the original logical operation
 directory, then rebinds the shared sandbox and descriptor read-only, followed by
@@ -1134,6 +1134,9 @@ the existing exhaustive-plan, all-Killed and freshness gates and emits the same
 context-bearing proof. Verify that actual retained closure through the unchanged
 reader, separately from synthetic controls. This does not resolve its zero-callable
 CRAP applicability GAP or qualify broader parallel execution.
+The retained fs-safe proof parity result and its memory-only report/selection
+rejection controls are recorded in WORK. They preserve the actual artifact roots
+and hashes; no producer rerun or artifact rewrite is needed to test the reader.
 
 The explicit `--capture-per-test-diagnostic` mode runs only the complete native
 baseline and binds existing diagnostic-v2 capture through its input fingerprint,
