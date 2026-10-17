@@ -2017,6 +2017,16 @@ Keep aggregate process budgets separate and preserve their cleanup/report
 allowance. The product operation target remains 2 seconds; neither test defaults
 nor exceptions change it. Do not shorten protocol quarantine to fit a test.
 
+For initialization read-admission expiry, first observe a real pending retry
+and unchanged receipt, guard/quarantine and Host images before the original5s
+deadline. A serial test-local `Date.now` jump may then cross that deadline while
+remaining below the30s quarantine; keep retry timers real. Attach rejection
+observation immediately, drain the owned binding before restoring the clock,
+and preserve both the assertion and drain causes. This proves deadline handling,
+not elapsed quarantine. These expiry cases use the default5s case bound.
+For cross-process binding, a real parent call under a held receipt lock provides
+parent-body activation; child counters never substitute for that evidence.
+
 For a functional SQLite lease-denial case, a test-local native exec wrapper may
 set `PRAGMA busy_timeout=0` on the exact gate connection immediately before its
 real `BEGIN EXCLUSIVE`. Keep the actual paired lease held, assert native BUSY,

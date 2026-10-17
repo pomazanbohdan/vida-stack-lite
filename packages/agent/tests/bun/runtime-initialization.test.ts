@@ -31,7 +31,10 @@ import { PROJECT_WORKSPACE_DATABASE_PATH, sessionHandoffDatabaseRelativePath } f
 import { deriveWorkspaceId, WorkspaceIdentityError } from '../../src/workspace-identity.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
-import { SafeRepositoryLockContentionError } from '../../src/config/safe-repository-access.ts';
+import {
+  requireSafeRepositoryAccess,
+  SafeRepositoryLockContentionError,
+} from '../../src/config/safe-repository-access.ts';
 import type { RuntimeInitializationReceipt } from '../../src/config/initialization-record.ts';
 import { fixtureInitializationTemplates } from '../helpers/runtime-initialization-fixture.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.js';
@@ -72,6 +75,91 @@ async function expectInitializationResult<T>(action: () => Promise<T>): Promise<
     result = await action();
   });
   return result;
+}
+
+async function expectReadAdmissionExpiry(
+  action: () => Promise<unknown>,
+  assertRetainedState: () => void,
+  label: string,
+): Promise<unknown> {
+  const originalNow = Date.now;
+  const startedWallTime = originalNow();
+  let caught: unknown;
+  let bindingSettled = false;
+  let clockAdvanced = false;
+  const binding = action();
+  const observedBinding = binding.then(
+    () => {
+      bindingSettled = true;
+      return { status: 'fulfilled' as const };
+    },
+    (error: unknown) => {
+      bindingSettled = true;
+      return { status: 'rejected' as const, error };
+    },
+  );
+  let bodyFailure: { readonly error: unknown } | undefined;
+  let drainFailure: { readonly error: unknown } | undefined;
+  try {
+    const firstAttempt = await Promise.race([
+      observedBinding.then(() => 'settled'),
+      new Promise<'pending'>((resolve) => setTimeout(() => resolve('pending'), 25)),
+    ]);
+    expect(firstAttempt).toBe('pending');
+    expect(originalNow()).toBeLessThan(startedWallTime + 5_000);
+    assertRetainedState();
+
+    Date.now = () => originalNow() + 6_000;
+    clockAdvanced = true;
+    try {
+      await binding;
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(RuntimeInitializationBindingError);
+    if (caught instanceof RuntimeInitializationBindingError)
+      expect(caught.cause).toBeInstanceOf(SafeRepositoryLockContentionError);
+  } catch (error) {
+    bodyFailure = { error };
+  } finally {
+    try {
+      if (!bindingSettled) {
+        Date.now = () => originalNow() + 6_000;
+        clockAdvanced = true;
+        const drained = await observedBinding;
+        if (
+          drained.status === 'fulfilled' ||
+          !(drained.error instanceof RuntimeInitializationBindingError) ||
+          !(drained.error.cause instanceof SafeRepositoryLockContentionError)
+        )
+          drainFailure = {
+            error:
+              drained.status === 'fulfilled'
+                ? new Error(`${label} binding unexpectedly completed while draining`)
+                : drained.error,
+          };
+      } else if (!clockAdvanced && bodyFailure !== undefined) {
+        const settled = await observedBinding;
+        drainFailure = {
+          error:
+            settled.status === 'fulfilled'
+              ? new Error(`${label} binding unexpectedly completed before expiry`)
+              : settled.error,
+        };
+      }
+    } catch (error) {
+      drainFailure = { error };
+    } finally {
+      Date.now = originalNow;
+    }
+  }
+  if (bodyFailure !== undefined && drainFailure !== undefined)
+    throw new AggregateError([bodyFailure.error, drainFailure.error], `${label} assertion and binding drain failed`, {
+      cause: bodyFailure.error,
+    });
+  if (bodyFailure !== undefined) throw bodyFailure.error;
+  if (drainFailure !== undefined) throw drainFailure.error;
+  return caught;
 }
 
 beforeEach(() => {
@@ -348,12 +436,16 @@ test('workspace binding retains receipt and exact reclaim guard after read-only 
   mkdirSync(guardPath);
   const guardIdentity = lstatSync(guardPath);
   const receiptBytes = readFileSync(receiptPath);
-  let caught: unknown;
-  try {
-    await bindRuntimeInitialization(root, store);
-  } catch (error) {
-    caught = error;
-  }
+  const caught = await expectReadAdmissionExpiry(
+    () => bindRuntimeInitialization(root, store),
+    () => {
+      expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+      const retainedGuard = lstatSync(guardPath);
+      expect(retainedGuard.dev).toBe(guardIdentity.dev);
+      expect(retainedGuard.ino).toBe(guardIdentity.ino);
+    },
+    'read-only preflight',
+  );
   expect(caught).toBeInstanceOf(RuntimeInitializationBindingError);
   if (caught instanceof RuntimeInitializationBindingError)
     expect(caught.cause).toBeInstanceOf(SafeRepositoryLockContentionError);
@@ -364,7 +456,7 @@ test('workspace binding retains receipt and exact reclaim guard after read-only 
   const currentGuard = lstatSync(guardPath);
   if (currentGuard.dev === guardIdentity.dev && currentGuard.ino === guardIdentity.ino) rmdirSync(guardPath);
   caseCompleted = true;
-}, 6000);
+});
 
 test('workspace binding does not retry typed contention from the receipt replacement effect', async () => {
   if (process.platform !== 'linux') {
@@ -571,12 +663,21 @@ test('workspace binding retains an orphan activation lock quarantine after read 
   const receiptIdentity = lstatSync(receiptPath);
   const databasePath = path.join(root, '.agent/host.sqlite');
   const hostSnapshot = readFileSync(databasePath);
-  let caught: unknown;
-  try {
-    await bindRuntimeInitialization(root, store);
-  } catch (error) {
-    caught = error;
-  }
+  const caught = await expectReadAdmissionExpiry(
+    () => bindRuntimeInitialization(root, store),
+    () => {
+      expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+      const retainedReceipt = lstatSync(receiptPath);
+      expect(retainedReceipt.dev).toBe(receiptIdentity.dev);
+      expect(retainedReceipt.ino).toBe(receiptIdentity.ino);
+      expect(readFileSync(databasePath)).toEqual(hostSnapshot);
+      expect(readFileSync(quarantinePath)).toEqual(quarantineBytes);
+      const retainedQuarantine = lstatSync(quarantinePath);
+      expect(retainedQuarantine.dev).toBe(quarantineIdentity.dev);
+      expect(retainedQuarantine.ino).toBe(quarantineIdentity.ino);
+    },
+    'orphan lock quarantine',
+  );
   expect(caught).toBeInstanceOf(RuntimeInitializationBindingError);
   if (caught instanceof RuntimeInitializationBindingError)
     expect(caught.cause).toBeInstanceOf(SafeRepositoryLockContentionError);
@@ -590,7 +691,7 @@ test('workspace binding retains an orphan activation lock quarantine after read 
   expect(retainedQuarantine.dev).toBe(quarantineIdentity.dev);
   expect(retainedQuarantine.ino).toBe(quarantineIdentity.ino);
   caseCompleted = true;
-}, 6000);
+});
 
 test('workspace binding retries a disappeared Windows lock before the receipt transition', async () => {
   if (process.platform !== 'win32') {
@@ -996,10 +1097,68 @@ describe('separate process initialization', () => {
   });
 
   test('separate processes bind one pending receipt without changing its identity', async () => {
-    for (const racer of racers) {
-      if (!racer.stdin) throw new Error('Initialization racer stdin is unavailable');
-      racer.stdin.end('go\n');
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let markLocked!: () => void;
+    const locked = new Promise<void>((resolve) => {
+      markLocked = resolve;
+    });
+    const access = requireSafeRepositoryAccess(root);
+    const lock = access.withExclusiveLockAsync(
+      path.relative(root, receiptPath),
+      'initialization concurrency fixture',
+      async () => {
+        markLocked();
+        await released;
+      },
+    );
+    let observedBinding: Promise<unknown> | undefined;
+    let binding: Promise<unknown> | undefined;
+    let failure: { error: unknown } | undefined;
+    let drainErrors: unknown[] = [];
+    try {
+      await expectAsyncReturned(() =>
+        Promise.race([
+          locked,
+          lock.then(() => {
+            throw new Error('Receipt lock finished before its release handshake.');
+          }),
+        ]),
+      );
+      const receiptBytes = readFileSync(receiptPath);
+      binding = bindRuntimeInitialization(root, store);
+      observedBinding = binding.then(
+        () => 'settled',
+        () => 'settled',
+      );
+      expect(
+        await Promise.race([
+          observedBinding,
+          new Promise<'pending'>((resolve) => setTimeout(() => resolve('pending'), 25)),
+        ]),
+      ).toBe('pending');
+      expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+      for (const racer of racers) {
+        if (!racer.stdin) throw new Error('Initialization racer stdin is unavailable');
+        racer.stdin.end('go\n');
+      }
+    } catch (error) {
+      failure = { error };
+    } finally {
+      release();
+      const drained = await Promise.allSettled([lock, ...(observedBinding ? [observedBinding] : [])]);
+      drainErrors = drained.flatMap((outcome) => (outcome.status === 'rejected' ? [outcome.reason as unknown] : []));
     }
+    if (drainErrors.length)
+      throw new AggregateError(
+        [...(failure ? [failure.error] : []), ...drainErrors],
+        'Initialization concurrency fixture did not settle cleanly',
+        failure ? { cause: failure.error } : undefined,
+      );
+    if (failure) throw failure.error;
+    expect(await expectAsyncReturned(() => binding!)).toEqual({ ...receipt, workspace_binding_status: 'bound' });
     const outputs = await expectAsyncReturned(() => Promise.all(racers.map((racer) => racer.done)));
     for (const output of outputs)
       expect(JSON.parse(output.slice(output.indexOf('\n') + 1))).toEqual({

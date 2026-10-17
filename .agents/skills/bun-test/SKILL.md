@@ -492,6 +492,15 @@ and cleanup errors. Register each test file's own cleanup hook. If a case times
 out or a child remains unobserved, retain its fixture root and report UNKNOWN;
 do not retry or delete it without the owning recovery rule.
 
+For initialization expiry, prove a real pending retry and unchanged persisted
+state before advancing only the serial case's wall clock across its original
+deadline. Keep the jump below quarantine and timers real. Attach rejection
+observation before suspension, drain the binding, and restore the clock in
+`finally`, preserving body and drain failures separately. Follow
+[TESTING's expiry contract](../../../packages/agent/TESTING.md#process-timeout-and-fixture-safety).
+For parent-body mutation activation, invoke the canonical binder in that body
+under the real receipt lock; never copy subprocess counters into parent proof.
+
 For asynchronous case custody, enroll each root before the body can suspend.
 Teardown must observe a pending body directly; a `finally` that marks failure
 only after settlement is too late. Check the monotonic deadline again after

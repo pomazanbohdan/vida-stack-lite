@@ -15,6 +15,38 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
+### Initialization current evidence and owned-clock repair — 2026-10-17
+
+Fresh immutable6531dc3 initialization run70ef92f8-ec9c-463d-8b25-f44d7d9c2994
+passes19/0cases,125assertions, exact F18/18,L87/87,S100/100,B54/54. Same-run scoped
+frozen at `/tmp/contour-stage-c9x64P` passes original892523d ceilings at9/9. Both
+publish automatically; the projection records652observations. Global operation
+status remains BLOCKED and no initialization mutation closure is claimed.
+
+Bounded native run5783729c-5a8b-4945-b13a-b3115b3fb104, outerwU0X2X, closes
+in32569ms with complete captures/groups, same boot/commit and clean inputs.
+Its19-case baseline takes25373ms; actual generated40 (identity0247575) is UNKNOWN,
+with167unattempted of168. It changes runtime-initialization.ts131–133's retry-stop
+predicate to true. A child receives real EEXIST and stops retrying; the parent
+assertion fails, but its exact body event has0owned activation hits. Independent
+blind Luna confirms this from the current generated image, XML and body event.
+Keep UNKNOWN; do not infer an infrastructure error or grant child hits to parent.
+The shared classifier diagnostic now reports actual exit/JUnit/owned-hit values
+without changing classification or proof rules.
+
+Root integrates a bounded Luna test diff for two5s expiry cases. One shared helper
+observes real pending retry and exact retained state, advances Date.now by6s
+within the30s quarantine threshold, and drains/restores while preserving primary
+and cleanup errors. Timers, filesystem locks, receipt/Host images and production
+budgets remain real/unchanged. The cross-process case now starts an actual parent
+binding against an owned real receipt lock, verifies pending/unchanged bytes,
+releases both ready children and the lease, then verifies all three bind results.
+Parent activation must come from that actual API call, never a synthetic hit or
+child event. Failure paths release/drain the owned lease and binding before fixture
+cleanup. Focused cUDtSb passes19/0cases,146assertions in13999ms with full captures,
+closed groups and same boot. No new native score is established by this check;
+publish and require fresh actual40 activation evidence next.
+
 ### Fresh regression scope and next isolated diagnostics — 2026-10-17
 
 Two independent blind Luna reviews distinguish archived operational replay from

@@ -466,7 +466,9 @@ export async function confirmRunnerReceipt(
       return { status: result, cases, ...(nativeReceipt ? { native_receipt: nativeReceipt } : {}) };
     }
     if (result === 'killed') return { status: result, ...(nativeReceipt ? { native_receipt: nativeReceipt } : {}) };
-    throw new Error('Runner exit status and JUnit outcome disagree or include infrastructure errors.');
+    throw new Error(
+      `Unconfirmed runner outcome: exit=${receipt.exit_code}, JUnit=${outcome.outcome}, native failing-body hits=${requireNativeActivation && mutantId !== null ? (activationHitCount ?? 0) : 'not-required'}.`,
+    );
   } catch (error) {
     return { status: 'unknown', reason: String(error) };
   }
