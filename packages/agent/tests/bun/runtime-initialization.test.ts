@@ -29,9 +29,13 @@ import {
 } from '../../src/runtime-initialization.ts';
 import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
-import { PROJECT_WORKSPACE_DATABASE_PATH, sessionHandoffDatabaseRelativePath } from '../../src/config/project-paths.js';
+import {
+  PROJECT_UPGRADE_OPERATION_PATH,
+  PROJECT_WORKSPACE_DATABASE_PATH,
+  sessionHandoffDatabaseRelativePath,
+} from '../../src/config/project-paths.js';
 import { deriveWorkspaceId, WorkspaceIdentityError } from '../../src/workspace-identity.ts';
-import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
+import { loadRuntimeConfig, RuntimeConfigError, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import {
   requireSafeRepositoryAccess,
@@ -103,7 +107,7 @@ async function expectNoRetryDelay<T>(action: () => Promise<T>): Promise<T> {
   return result;
 }
 
-async function expectReadAdmissionExpiry(
+async function expectAdmissionExpiry(
   action: () => Promise<unknown>,
   assertRetainedState: () => void,
   label: string,
@@ -290,9 +294,13 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
   expect(expectReturned(() => deriveWorkspaceId(receipt.repository_id, path.join(root, '.')))).toBe(
     receipt.workspace_id,
   );
+  const loadedConfig = loadRuntimeConfig(root);
   const other = mkdtempSync(path.join(tmpdir(), 'vida-other-workspace-'));
   try {
     expect(expectReturned(() => deriveWorkspaceId(receipt.repository_id, other))).not.toBe(receipt.workspace_id);
+    expect(() => readRuntimeInitializationAuthority(other, loadedConfig)).toThrow(
+      'runtime config is not bound to the repository root',
+    );
   } finally {
     rmSync(other, { recursive: true, force: true });
   }
@@ -308,6 +316,44 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
     code: 'GAP-WORKSPACE-IDENTITY-001',
     message: 'repository identity is invalid',
   });
+  let numericIdentityFailure: unknown;
+  try {
+    deriveWorkspaceId(123 as unknown as string, root);
+  } catch (error) {
+    numericIdentityFailure = error;
+  }
+  expect(numericIdentityFailure).toBeInstanceOf(WorkspaceIdentityError);
+  expect(numericIdentityFailure).toMatchObject({
+    name: 'WorkspaceIdentityError',
+    code: 'GAP-WORKSPACE-IDENTITY-001',
+    message: 'repository identity is invalid',
+  });
+
+  let identityCoercions = 0;
+  const observableIdentity = {
+    toString: () => {
+      identityCoercions++;
+      return 'valid-repository';
+    },
+  } as unknown as string;
+  let observableIdentityFailure: unknown;
+  try {
+    deriveWorkspaceId(observableIdentity, root);
+  } catch (error) {
+    observableIdentityFailure = error;
+  }
+  expect(observableIdentityFailure).toBeInstanceOf(WorkspaceIdentityError);
+  expect(observableIdentityFailure).toMatchObject({
+    name: 'WorkspaceIdentityError',
+    code: 'GAP-WORKSPACE-IDENTITY-001',
+    message: 'repository identity is invalid',
+  });
+  expect(identityCoercions).toBe(0);
+
+  for (const validIdentity of ['a', '0'])
+    expect(expectReturned(() => deriveWorkspaceId(validIdentity, root))).toMatch(/^[a-f0-9]{64}$/u);
+  for (const invalidId of ['A', '', '-a', 'a_'])
+    expect(() => deriveWorkspaceId(invalidId, root)).toThrow('repository identity is invalid');
   expect(expectReturned(() => deriveWorkspaceId('another-repository', root))).not.toBe(receipt.workspace_id);
   expect(expectReturned(() => deriveWorkspaceId('a'.repeat(64), root))).toMatch(/^[a-f0-9]{64}$/u);
   expect(() => deriveWorkspaceId('a'.repeat(65), root)).toThrow('repository identity is invalid');
@@ -338,7 +384,7 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
     );
     unlinkSync(linkedRoot);
   }
-  const authority = expectReturned(() => readRuntimeInitializationAuthority(root, loadRuntimeConfig(root)));
+  const authority = expectReturned(() => readRuntimeInitializationAuthority(root, loadedConfig));
   expect(authority).toEqual({
     format: 'RuntimeInitialization/v1',
     receipt,
@@ -373,9 +419,18 @@ test('reads v2 initialization authority from a completed real project upgrade', 
 
   const projectReceiptPath = path.join(projectRoot, '.vida/runtime-initialization.v2.json');
   const projectReceiptBytes = readFileSync(projectReceiptPath);
-  expect(() => readRuntimeInitializationAuthority(projectRoot, legacyConfig)).toThrow(
-    RuntimeInitializationBindingError,
-  );
+  let legacyConfigFailure: unknown;
+  try {
+    readRuntimeInitializationAuthority(projectRoot, legacyConfig);
+  } catch (error) {
+    legacyConfigFailure = error;
+  }
+  expect(legacyConfigFailure).toBeInstanceOf(RuntimeInitializationBindingError);
+  expect(legacyConfigFailure).toMatchObject({
+    name: 'RuntimeInitializationBindingError',
+    code: 'GAP-RUNTIME-INIT-BIND-001',
+    message: 'runtime configuration selection changed',
+  });
   expect(readFileSync(projectReceiptPath)).toEqual(projectReceiptBytes);
 
   const projectConfig = loadRuntimeConfig(projectRoot);
@@ -522,7 +577,7 @@ test('workspace binding retains receipt and exact reclaim guard after read-only 
   mkdirSync(guardPath);
   const guardIdentity = lstatSync(guardPath);
   const receiptBytes = readFileSync(receiptPath);
-  const caught = await expectReadAdmissionExpiry(
+  const caught = await expectAdmissionExpiry(
     () => bindRuntimeInitialization(root, store),
     () => {
       expect(readFileSync(receiptPath)).toEqual(receiptBytes);
@@ -549,14 +604,14 @@ test('workspace binding retains receipt and lock reclaim guard when contention e
     caseCompleted = true;
     return;
   }
-  const guardPath = path.join(path.dirname(receiptPath), '.' + path.basename(receiptPath) + '.cas.lock.reclaim');
+  const guardPath = path.join(path.dirname(receiptPath), path.basename(receiptPath) + '.lock.reclaim');
   mkdirSync(guardPath);
   const guardIdentity = lstatSync(guardPath);
   const receiptBytes = readFileSync(receiptPath);
   const receiptIdentity = lstatSync(receiptPath);
   const databasePath = path.join(root, '.agent/host.sqlite');
   const hostSnapshot = readFileSync(databasePath);
-  const caught = await expectReadAdmissionExpiry(
+  const caught = await expectAdmissionExpiry(
     () => bindRuntimeInitialization(root, store),
     () => {
       expect(readFileSync(receiptPath)).toEqual(receiptBytes);
@@ -852,7 +907,7 @@ test('workspace binding retains an orphan activation lock quarantine after read 
   const receiptIdentity = lstatSync(receiptPath);
   const databasePath = path.join(root, '.agent/host.sqlite');
   const hostSnapshot = readFileSync(databasePath);
-  const caught = await expectReadAdmissionExpiry(
+  const caught = await expectAdmissionExpiry(
     () => bindRuntimeInitialization(root, store),
     () => {
       expect(readFileSync(receiptPath)).toEqual(receiptBytes);
@@ -989,6 +1044,7 @@ async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Pr
   let lockAttempts = 0;
   let callbackEntries = 0;
   let replacements = 0;
+  const receiptLockCalls: Array<{ readonly target: string; readonly label: string }> = [];
   const fileExistsCalls: Array<{ readonly target: string; readonly label: string }> = [];
   const replacementCalls: Array<Parameters<SafeRepositoryAccess['replaceAtomicAsync']>> = [];
   try {
@@ -1001,6 +1057,7 @@ async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Pr
           ...access,
           withExclusiveLockAsync: async <T>(target: string, label: string, operation: () => Promise<T>) => {
             if (target !== receiptRelative) return access.withExclusiveLockAsync(target, label, operation);
+            receiptLockCalls.push({ target, label });
             lockAttempts++;
             if (lockAttempts === 1) throw Object.assign(new Error('pre-entry lock collision'), { code });
             return access.withExclusiveLockAsync(target, label, async () => {
@@ -1023,8 +1080,54 @@ async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Pr
     const isolated = (await import(
       `${initModuleUrl}?pre-entry-retry=${randomUUID()}`
     )) as typeof import('../../src/runtime-initialization.ts');
+    const upgradeMarkerPath = path.join(root, PROJECT_UPGRADE_OPERATION_PATH);
+    mkdirSync(path.dirname(upgradeMarkerPath), { recursive: true });
+    const upgradeMarkerBytes = Buffer.from('controlled incomplete project-upgrade barrier fixture\n');
+    writeFileSync(upgradeMarkerPath, upgradeMarkerBytes, { flag: 'wx' });
+    const upgradeMarkerIdentity = lstatSync(upgradeMarkerPath);
+    let upgradeDenied: unknown;
+    try {
+      await isolated.bindRuntimeInitialization(root, store);
+    } catch (error) {
+      upgradeDenied = error;
+    }
+    expect(upgradeDenied).toBeInstanceOf(isolated.RuntimeInitializationBindingError);
+    expect(upgradeDenied).toMatchObject({
+      name: 'RuntimeInitializationBindingError',
+      code: 'GAP-RUNTIME-INIT-BIND-001',
+      message:
+        'runtime initialization binding failed: Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',
+    });
+    if (upgradeDenied instanceof isolated.RuntimeInitializationBindingError) {
+      expect(upgradeDenied.cause).toBeInstanceOf(RuntimeConfigError);
+      expect(upgradeDenied.cause).toMatchObject({
+        code: 'GAP-RUNTIME-CONFIG-001',
+        message:
+          'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',
+      });
+    }
+    expect({ lockAttempts, callbackEntries, replacements }).toEqual({
+      lockAttempts: 0,
+      callbackEntries: 0,
+      replacements: 0,
+    });
+    expect(receiptLockCalls).toEqual([]);
+    expect(fileExistsCalls).toEqual([]);
+    expect(replacementCalls).toEqual([]);
+    expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+    expect(database!.query('SELECT * FROM agent_host_state').all()).toEqual(hostBefore);
+    expect(readFileSync(upgradeMarkerPath)).toEqual(upgradeMarkerBytes);
+    const retainedUpgradeMarker = lstatSync(upgradeMarkerPath);
+    expect(retainedUpgradeMarker.dev).toBe(upgradeMarkerIdentity.dev);
+    expect(retainedUpgradeMarker.ino).toBe(upgradeMarkerIdentity.ino);
+    unlinkSync(upgradeMarkerPath);
+
     const bound = await expectAsyncReturned(() => isolated.bindRuntimeInitialization(root, store));
     expect(readFileSync(receiptPath, 'utf8')).toBe(JSON.stringify(bound, null, 2) + '\n');
+    expect(receiptLockCalls).toEqual([
+      { target: receiptRelative, label: 'bind runtime initialization' },
+      { target: receiptRelative, label: 'bind runtime initialization' },
+    ]);
     expect(fileExistsCalls).toEqual([{ target: receiptRelative, label: 'runtime initialization receipt' }]);
     expect(replacementCalls).toEqual([
       [
@@ -1042,6 +1145,11 @@ async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Pr
     const boundBytes = readFileSync(receiptPath);
     expect(await expectAsyncReturned(() => isolated.bindRuntimeInitialization(root, store))).toEqual(bound);
     expect(readFileSync(receiptPath)).toEqual(boundBytes);
+    expect(receiptLockCalls).toEqual([
+      { target: receiptRelative, label: 'bind runtime initialization' },
+      { target: receiptRelative, label: 'bind runtime initialization' },
+      { target: receiptRelative, label: 'bind runtime initialization' },
+    ]);
     expect(fileExistsCalls).toEqual([
       { target: receiptRelative, label: 'runtime initialization receipt' },
       { target: receiptRelative, label: 'runtime initialization receipt' },

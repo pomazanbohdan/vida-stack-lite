@@ -1100,7 +1100,11 @@ still needs captured-input/private-output binding and qualified worker resources
 
 `--isolated-workers` opts into a bounded real-runner diagnostic for
 `bun-project-upgrade-existing-storage-image`, `bun-fs-safe-attestation`,
-`main-envelopes` or `bun-service-operation-custody` only.
+`main-envelopes`, `bun-service-operation-custody` or
+`bun-runtime-initialization` only. Runtime initialization runs its full declared
+test file in each invocation; its worker-resource and nested-child custody
+qualification remains pending. This permission does not claim a performance
+improvement or permit complete admission for that contour.
 Only the reviewed fs-safe attestation and service-operation custody contours permit
 `--admit-complete`; the other selections remain diagnostic-only. Custody's first
 complete pilot follows actual private-database resource controls, fresh SQL/table

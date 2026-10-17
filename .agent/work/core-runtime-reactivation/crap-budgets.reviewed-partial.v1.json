@@ -20475,7 +20475,7 @@
         "line": 24,
         "column": 7,
         "start": 739,
-        "end": 1302,
+        "end": 1277,
         "bodyLine": 24,
         "bodyColumn": 72,
         "bodyEndLine": 35,
@@ -20506,8 +20506,8 @@
       "current_source_address": {
         "line": 38,
         "column": 7,
-        "start": 1415,
-        "end": 1878,
+        "start": 1390,
+        "end": 1853,
         "bodyLine": 38,
         "bodyColumn": 88,
         "bodyEndLine": 50,
@@ -225601,5 +225601,96 @@
     "limitations": "Static Source correspondence only, not numeric admission. Preserve original b549951 measurement and all original/added ceilings. Require fresh exact coverage, same-run frozen proof and complete assertion-confirmed native mutation for the new image. Old UNKNOWN stays historical.",
     "predecessor_review": "181809c9433226d13c5931fdfa34d447027c2eb6:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#scope_review_runtime_initialization_inline_guards_20261017",
     "correspondence": "All16 identities and original11/added5/removal1 dispositions retained. Remove only the duplicate explicit authority-reader upgrade check: assertLoadedRuntimeConfig already performs the required cooperative barrier on the authorized bound root. Keep its authorization/root checks, the binding-reader barrier, and all original caps; no atomicity claim or budget transfer."
+  },
+  "scope_review_workspace_directory_guard_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-runtime-initialization",
+    "files": [
+      "src/runtime-initialization.ts",
+      "src/workspace-identity.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/runtime-initialization.ts",
+        "current_path": "src/runtime-initialization.ts",
+        "rationale": "The original Host binding, lock, and expected-project responsibilities remain in this exact source path. The existing binder and its nested callback roles retain their saved identity lineage; current read/admission/retry and project-configuration roles remain separate additions with their own existing reviewed rows. The two private eager predicates now execute in their existing callable owners; all previous timer removal/retirement dispositions and ceilings remain unchanged."
+      },
+      {
+        "original_path": "src/workspace-identity.ts",
+        "current_path": "src/workspace-identity.ts",
+        "rationale": "The original workspace identity validation responsibilities remain in this exact source path and retain their selected identity lineage. This path mapping does not transfer caps to additions elsewhere in the runtime-initialization contour. The two private eager predicates now execute in their existing callable owners; all previous timer removal/retirement dispositions and ceilings remain unchanged."
+      }
+    ],
+    "reviewed_source_context": "ebc323bc8c4d35920aed6b18f0878971c4d47c1d plus independently reviewed redundant lstat predicate removal",
+    "current_source_bindings": [
+      {
+        "file": "src/runtime-initialization.ts",
+        "sha256": "64c29748775534a19390189288487b13f90653d3ddadbca11ae79723fe76e98e"
+      },
+      {
+        "file": "src/workspace-identity.ts",
+        "sha256": "da3e73629eab0d335bb2e243fa1adfa31ecf1676127f0ebc014be9ef16df5441"
+      }
+    ],
+    "independent_review": "/workspace/attachments/workspace-directory-review-v245.md",
+    "selected_rows": {
+      "retained": 11,
+      "new": 5,
+      "removed": 1,
+      "selection_basis": "7 runtime and 4 workspace original roles retained; 5 existing added roles remain. One original timer is removed; one Source-added timer is retired separately."
+    },
+    "retired_retained_row": {
+      "identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
+      "current_identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 137,
+        "column": 24,
+        "start": 4920,
+        "end": 4956,
+        "bodyLine": 137,
+        "bodyColumn": 37,
+        "bodyEndLine": 137,
+        "bodyEndColumn": 60
+      },
+      "source_address": {
+        "line": 38,
+        "column": 24,
+        "start": 1554,
+        "end": 1590,
+        "bodyLine": 38,
+        "bodyColumn": 37,
+        "bodyEndLine": 38,
+        "bodyEndColumn": 60
+      }
+    },
+    "retired_source_added_roles": [
+      {
+        "identity": "src/runtime-initialization.ts#fn:readInitializationWithAdmission#0/closure:NewExpression:arguments[0]#0",
+        "max_complexity": 10,
+        "max_crap": 10,
+        "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+        "current_source_address": {
+          "line": 149,
+          "column": 24,
+          "start": 5352,
+          "end": 5388,
+          "bodyLine": 149,
+          "bodyColumn": 37,
+          "bodyEndLine": 149,
+          "bodyEndColumn": 60
+        },
+        "current_complexity": 1
+      }
+    ],
+    "frozen_cap_action": "Preserve all eleven remaining original ceilings and all five individual added-role caps unchanged. Archive both eliminated callback rows without allowance transfer. Preserve original scope/history and baseline measurements.",
+    "limitations": "Static Source correspondence only, not numeric admission. Preserve original b549951 measurement and all original/added ceilings. Require fresh exact coverage, same-run frozen proof and complete assertion-confirmed native mutation for the new image. Old UNKNOWN stays historical.",
+    "predecessor_review": "8af2e35505ba5f389bc0f5ae1e3472d4a30e86b1:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#scope_review_runtime_initialization_single_barrier_20261017",
+    "correspondence": "All16 identities and original11/added5/removal1 dispositions retained. lstat identifies the link itself; !isDirectory already rejects links and all non-directory roots. Remove only the redundant isSymbolicLink disjunct. canonicalRepositoryRoot CC7->6 within original cap7, with exact error, root validation and native realpath preserved. No role, cap, exclusion or responsibility transfer."
   }
 }

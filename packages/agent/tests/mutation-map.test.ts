@@ -294,7 +294,13 @@ test('isolated workers reserve complete admission for reviewed attestation and c
   expect(selectMutationBatchPilot(['--contour', name], declared).isolatedWorkers).toBe(false);
   expect(selectMutationBatchPilot(['--contour', name, '--isolated-workers'], declared).isolatedWorkers).toBe(true);
   expect(selectMutationBatchPilot(['--contour', name, '--admit-complete'], declared).admitComplete).toBe(true);
-  for (const contour of [name, 'bun-fs-safe-attestation', 'main-envelopes', 'bun-service-operation-custody']) {
+  for (const contour of [
+    name,
+    'bun-fs-safe-attestation',
+    'main-envelopes',
+    'bun-service-operation-custody',
+    'bun-runtime-initialization',
+  ]) {
     const partition = [{ ...declared[0]!, name: contour }];
     expect(selectMutationBatchPilot(['--contour', contour], partition).isolatedWorkers).toBe(false);
     expect(selectMutationBatchPilot(['--contour', contour, '--isolated-workers'], partition).isolatedWorkers).toBe(

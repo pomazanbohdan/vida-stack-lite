@@ -254,6 +254,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
         'bun-fs-safe-attestation',
         'main-envelopes',
         'bun-service-operation-custody',
+        'bun-runtime-initialization',
       ].includes(selected.partitions[0].name))
   )
     throw new Error(
@@ -951,7 +952,7 @@ if (import.meta.main) {
   if (process.argv.length === 3 && process.argv[2] === '--help')
     console.log(
       'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--capture-per-test-diagnostic] [--diagnostic-mutant-id <generated local ID> | --diagnostic-mutant-ids <comma-separated generated local IDs>]. Per-test capture is diagnostic-v2 baseline-only: it binds the input fingerprint/descriptor/receipt and full test selection, executes no mutants, and cannot combine with complete admission or mutant selection. Unattempted mutants keep the diagnostic exit nonzero. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. ID sets allow1..32 unique IDs and share one budget across selected mutants. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
-      '--isolated-workers opts into private report overlays and at most two native workers for bun-project-upgrade-existing-storage-image, bun-fs-safe-attestation, main-envelopes or bun-service-operation-custody. Only fs-safe attestation and service-operation custody permit complete admission. It preserves the full test argv and one deadline, retains private outputs, and forbids per-test capture and ID selectors. Default execution remains serial.',
+      '--isolated-workers opts into private report overlays and at most two native workers for bun-project-upgrade-existing-storage-image, bun-fs-safe-attestation, main-envelopes, bun-service-operation-custody or bun-runtime-initialization. Initialization is diagnostic-only pending contour-specific worker-resource and custody qualification. Only fs-safe attestation and service-operation custody permit complete admission. It preserves the full test argv and one deadline, retains private outputs, and forbids per-test capture and ID selectors. Default execution remains serial.',
     );
   else
     await runMutationBatchPilot(

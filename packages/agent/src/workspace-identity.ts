@@ -26,7 +26,7 @@ export function canonicalRepositoryRoot(repositoryRoot: string): string {
   const resolved = path.resolve(repositoryRoot);
   try {
     const stat = lstatSync(resolved);
-    if (!stat.isDirectory() || stat.isSymbolicLink()) fail('repository root must be a non-link directory');
+    if (!stat.isDirectory()) fail('repository root must be a non-link directory');
     return realpathSync.native(resolved);
   } catch (error) {
     if (error instanceof WorkspaceIdentityError) throw error;

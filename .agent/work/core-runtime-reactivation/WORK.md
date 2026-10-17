@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's current11f142c coverage/frozen pair passes exact F/L/S/B100 and original caps; native c6a6ceb7 stops with64Killed/8Survived/1UNKNOWN/93unattempted of166. Repairs are in progress; no new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability, admission stateful initialization and image/envelopes isolated complete admission remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's ebc323b coverage/frozen pair passes exact F/L/S/B100 and original caps; native f3e56044 exhausts its budget with107Killed/6Survived/0UNKNOWN/52unattempted of165. Follow-up corrections pass120focused cases; fresh qualification is pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability, admission stateful initialization and isolated complete admission for initialization/image/envelopes remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -17,169 +17,98 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ### Initialization owned activation and native retry simplification — 2026-10-17
 
-Current product Source retains16roles:12runtime initialization plus4workspace
-identity. Published b32fc8e simplifies the two retry owners with awaited
-Bun.sleep(25) and async recursion, keeping one absolute5s deadline, entered
-boundary, typed/code guards, error identity, ownership and CAS order. One
-original timer executor is an explicit baseline removal; one Source-added
-executor is retired separately. All11retained ceilings and5added caps stay
-unchanged; no new callable, transferred budget, baseline reset or exclusion.
-The immutable reviewed scope is pinned by42e2b1b to b32fc8e. Original reviews,
-measurements, removed rows and added-role caps remain historical. Partial
-correspondence is7113roles/149files; global qualification remains open.
+Current Source retains16roles, original11retained/5active-added/1removed baseline
+dispositions and the separately retired added timer. Async Bun.sleep retries
+keep the original absolute5s deadline, entered boundary, typed/code guards, CAS,
+ownership and error causes. Predicate inlines preserve strict primitive checks.
+Original b549951 ceilings and counts7113roles/149files remain unchanged.
+Published diagnostic history and prior UNKNOWN custody are retained at
+ebc323b:.agent/work/core-runtime-reactivation/WORK.md under this heading;
+that published record links the earlier c525495 history. Do not replay those
+operations or transfer their local IDs/counters.
 
-Latest complete coverage/frozen pair: immutable11f142c, run
-344fe4b2-89bf-4f60-b90c-3f0238634944, stages /dev/shm/contour-stage-AZ3Itm and
-/dev/shm/contour-stage-tNbEWY. Its20-case selection passes167assertions and exact
-F16/16,L85/85,S96/96,B55/55 with original same-run frozen9/9, bound to181809c.
-Both auto-publish through the maintained stage controller; projection has661
-observations. Later test changes require a new compatible pair before closure.
-The previous9e35f7a pair is historical.
+Latest complete coverage/frozen pair is immutableebc323b, run
+588f0e69-b7d6-4611-a513-4e7651f20b09, stages /dev/shm/contour-stage-a2yOSW and
+/dev/shm/contour-stage-DtA9eB. It passes21cases/209assertions, exact F16/16,
+L84/84,S95/95,B55/55 and original same-run frozen9/9, bound to8af2e35.
+The maintained controller automatically imports both; projection has664
+observations. Follow-up Source/test/tool changes below require fresh evidence.
 
-Fresh native evidence remains partial, never a contour score:
+Full native f3e56044-99dc-43bd-9824-37bdfd8be7bf uses that same clean image at
+/dev/shm/vida-rolling-measure-v242/packages/agent/.tmp/mutation-batch-f3e56044-99dc-43bd-9824-37bdfd8be7bf-1FyNMK.
+Outer /dev/shm/contour-stage-OSAMUs closes869542ms, exit1, with complete captures,
+closed owned group, unchanged boot/commit and clean inputs. Baseline21cases
+passes15769ms. Of165generated,113are attempted:107assertion-Killed,6Survived,
+0UNKNOWN and52unattempted. Batch0 is incomplete, not interrupted,
+budget_exhausted=true and resource_blocked=null. No timeout or signal is
+credited. Stage correctly denies native proof publication; this is not a score.
 
-- Published f1833a2 diagnostic be0cfb0e-29df-46f1-821c-eb05a96a395b (RKxaVr)
-  confirms40, identity0247575, with a real parent call under the receipt lock.
-- Published64cc655 run9e91d67a-36b7-4b02-9811-e5dfbf3baca7 (hwnvHq) confirms
-  145, identity03fffded, after removing target derivation from beforeEach.
-- Published e31db89 diagnostic aa52c914-97ff-4d2a-9961-f14735795377 (DaTxrU)
-  confirms41, identity0dac3f8c, and exposes actual28/ca998718 as Survived:
-  file_lock_timeout was supported but untested. One Killed/one Survived and
-  160unattempted of162 is diagnostic only.
-- Full9e35f7a runfa57d132-1b74-4fcf-b0d0-ffdc16205485 (vp33g4) reconfirms145/41
-  Killed and stops at19/0dce8764 UNKNOWN: parent body6 detects a child error-name
-  change, with0owned activation. Keep2Killed/1UNKNOWN/159unattempted of162.
-- Latest c525495 diagnostic6c030b8a-840a-484b-87ae-c3a3526248fb (FlMC5E)
-  confirms19 as assertion-Killed in parent body13 with1owned hit. Next35/3bf83aea
-  changes entered=true to false; body6 reports child failure, assertion=false,
-  parenthits0. Keep1Killed/1UNKNOWN/160unattempted of162. Selected28 is unattempted,
-  so its two-code repair still awaits fresh native proof. Outer34765ms closes
-  with full captures/groups, same boot/commit and clean inputs. Exact artifacts:
-  /dev/shm/vida-rolling-measure-v234/packages/agent/.tmp/mutation-batch-6c030b8a-840a-484b-87ae-c3a3526248fb-YBnMJX.
+Actual current survivors and repairs prepared against their exact image:
+- 29: receipt-lock operation label; record and forward real target/label arguments.
+- 51: binding-lock deadline equality. The first fixture used a CAS reclaim guard,
+ which blocked a reader after callback entry. Correct it to the actual
+ receiptPath+'.lock.reclaim', preserving receipt/guard identity and Host bytes.
+- 1: missing negative coverage of assertLoadedRuntimeConfig root binding.
+ Reuse the existing second directory and one authorized loaded config.
+- 6: the real completed-upgrade stale-config case checked only the error class.
+ Assert the exact name/code/message from its single existing failing read.
+- 164: the repository-ID type guard lacked a non-string regression. Add numeric
+ and observable object inputs, zero coercions, and a compact grammar boundary set.
+- 72: binding read-admission upgrade barrier. The shared retry proxy first places
+ a controlled incomplete marker at PROJECT_UPGRADE_OPERATION_PATH. Verify typed
+ denial, unchanged marker/receipt/Host state and zero receipt-target lock,
+ callback, fileExists and replacement activity. Remove only this fixture marker
+ after assertions, then perform the existing positive retry and bound no-rewrite
+ checks. This neither resumes an operation nor proves zero locks at every target.
 
-Implemented test repairs preserve actual locks, bytes, Host state and error causes:
-independent fixture workspace IDs use the fixed public tuple/native realpath;
-the cross-process scenario has a real parent lock contender; forbidden retries
-fail promptly through one owned sleep observer; both raw retry codes use literal
-named wrappers and shared scenario work; real parent errors assert public
-name/code and workspace errors also check the message. Expiry first observes
-real pending retry and exact retained state, then advances Date.now6s below the
-30s quarantine. Both await/drain paths prohibit further sleep after that original
-deadline and restore the clock. The250/500ms cleanup/fixture-release prototype
-was not adopted. Unknown or missing terminal evidence stays UNKNOWN.
+Root integrates consolidated v250 without additional cases. The expiry helper is
+renamed expectAdmissionExpiry for both reader and binding-lock boundaries.
+Focused ZNOOa2 passes120/0cases across initialization and the selector in14529ms,
+624assertions, full captures, closed group and unchanged boot. Blind review
+/workspace/attachments/initialization-contracts-review-v253.md has no blocker
+and records the receipt-target observation limit. Native confirmation is pending.
 
-Current35 repair shares the existing replacement-fault capturer between the
-undefined case and a real parent typed-contention probe at the start of existing
-body6. It restores the mock, verifies1stub replacement and unchanged pending
-receipt, and returns the real wrapped cause for direct assertions before the
-original child starts. No healthy bind runs before that child. Existing body13
-retains healthy retry/idempotence after its own failure assertions. Keep20cases
-and their order; no new mirror test, Source reload policy, counter transfer or
-operational replay. Blind Luna actual-diff review has no findings. Focused
-lgPbgS passes20/0cases,167assertions in14659ms with full capture, closed group and
-unchanged boot. Publish before fresh35/28 proof.
+Two reviewed P1 simplifications retain all required guards: published8af2e35
+removes only the adjacent duplicate upgrade observation already performed by
+assertLoadedRuntimeConfig; current workspace change removes the redundant
+isSymbolicLink disjunct after lstat's !isDirectory. Links and regular-file roots
+still fail with the exact diagnostic; no atomicity claim is added. Scope
+scope_review_workspace_directory_guard_20261017 retains16identities and all caps,
+canonicalRepositoryRoot CC7->6 within original7. Runtime remains
+64c29748775534a19390189288487b13f90653d3ddadbca11ae79723fe76e98e; workspace is
+da3e73629eab0d335bb2e243fa1adfa31ecf1676127f0ebc014be9ef16df5441.
+Inventory /workspace/attachments/workspace-directory-inventory-v247.json parses
+only changed workspace Source and reuses hash-checked runtime rows. Independent
+review /workspace/attachments/workspace-directory-review-v245.md cites the
+maintained fs declarations and POSIX lstat contract. No role/cap/exclusion transfer.
 
-Published correction history, all earlier terminal details and blind Luna reviews
-are retained at c525495:.agent/work/core-runtime-reactivation/WORK.md under this
-heading. Published focused pD9dPE passes20/0cases,156assertions in14878ms;
-the parent-entry patch's later focused result is recorded above. Default5s cases,
-coverage300/330s and mutation900/930s limits remain unchanged.
+The serial budget gap now justifies a diagnostic-only eligibility preparation:
+initialization may use the existing at-most-two isolated worker mechanism with
+the full declared file, one baseline/image/capture and unchanged900/930s budgets.
+Complete admission remains fs-safe/custody only. Selector denial tests keep
+capture, IDs and incomplete native admission forbidden. First qualify the actual
+2-mutant pair and its private resources/nested-child custody; a later bounded
+window is diagnostic, never complete closure. Permission alone is not speedup.
 
-Resource handling: native tsgolint was SIGKILLed after passing TS511/formatting;
-no commit/push followed that failure. Disposable cache manifest
-/workspace/attachments/closed-transpiler-cache-cleanup-v232.json removes
-3043461375bytes across336closed .pile directories, preserving Source, installed
-dependencies, fixtures, DBs, receipts and UNKNOWN. Memory falls about15.4GB to
-12.0GB; this alone does not establish the signal cause. The unchanged hook then
-passes before9e35f7a publication. A later v234 SDK preflight rejects the2GiB
-storage floor before launch; Root moves only that fresh unlaunched checkout to
-/dev/shm, repairs its Git location, and SDK ja7lyh then closes successfully.
-No resource/proof gate is lowered. Stage denial diagnostics now distinguish an
-exit1 mutation result from missing capture/group custody.
+No partial MutationBatchPilotSummary is routed through native proof admission.
+The current projection lacks per-status terminal diagnostic fields; the proposed
+cross-artifact partial-proof join would add another proof authority, so it is
+not implemented. WORK links retained observations; complete native admission
+continues through the unchanged persisted reader. This visibility gap remains OPEN.
 
-Published3772277's fresh v235 diagnostic e79818f4-81c6-4a3d-9e08-164b7b44784b,
-outerevRYU2, confirms35 as assertion-Killed in parent body6 with1owned hit.
-The expanded file_lock_timeout scenario now fails the actual28 mutation in
-body15 through node-assert, but its initializer activation remains0: retain
-UNKNOWN, not Killed. Summary is1Killed/1UNKNOWN/160unattempted of162, full
-captures/groups, same boot/commit and clean inputs in44653ms. The analogous
-one-use workspace regex is confirmed by fresh diagnostic
-7b7a4c61-ca9c-4b57-bc1b-b119e03e82fc, outerL3EDGB:133/5d021099 produces a real
-parent assertion with0owned hits;0Killed/1UNKNOWN/161unattempted,22102ms with
-closed custody. Both raw operations stay at v235's declared retained path.
+Resource cleanup v251 removes37720463bytes from one closed .pile directory;
+v240 removed131510834bytes/5directories. Source, dependencies, DBs, fixtures,
+receipts and every failed/UNKNOWN outcome remain. Future dependency reuse is
+only a proposal under the existing trusted locked-dependency/read-only path.
+The standalone fingerprint command rejects a node_modules symlink and is not
+bypassed. No new per-process dependency attestation or cache substitute is claimed.
 
-Root's bounded P1 repair removes the private two-string Set in favor of strict
-comparisons in withBindingLock, and inlines the identical nonglobal repository
-grammar in deriveWorkspaceId. No new callable, lookup, reload or allowance.
-Code is still read once; guard order and messages stay exact. Cached inventory
-/workspace/attachments/initialization-inline-inventory-v236.json confirms all16
-identities and addresses: binding-lock CC6->7 within its original7 ceiling,
-derive CC3 unchanged. Scope scope_review_runtime_initialization_inline_guards_20261017
-keeps11/5/1, the separate retired added timer, b549951 baseline and every cap;
-its predecessor review is published b32fc8e. Blind actual-Source/address review
-has no findings at /workspace/attachments/initialization-inline-review-v236.md.
-Focused6SaKOr passes20/0cases in16830ms with complete capture, closed group and
-same boot. The new Source image requires a fresh pinned coverage/frozen/native
-cycle; old local IDs and UNKNOWN results do not transfer to it.
-
-Published181809c and pin11f142c retain that reviewed inline scope. Fresh full
-native c6a6ceb7-3631-4b56-952f-c6a5986ec9ec at
-/dev/shm/vida-rolling-measure-v237/packages/agent/.tmp/mutation-batch-c6a6ceb7-3631-4b56-952f-c6a5986ec9ec-ZMbPXI
-generates166mutants. Outer /dev/shm/contour-stage-J0m9eE terminates569962ms,
-exit1 with full captures, closed owned group, same boot/commit and clean inputs;
-no timeout/resource denial. Baseline20cases passes14461ms. Totals are64Killed,
-8Survived,1UNKNOWN,93unattempted; the unchanged stage correctly denies native
-publication. Survivors90/62/148/2/133/52/126/82 respectively concern sorting,
-read-admission deadline equality, absolute-root diagnostic, duplicate upgrade
-guard, replacement label, binding-lock deadline equality, no-extra-write
-idempotence and file-existence label. These current IDs belong only to this
-image. UNKNOWN9 forces the legacy authority reader down the v2 path: body1
-has1owned hit but raw ENOENT, assertion_cause=false. It remains UNKNOWN;
-the repair uses the existing successful-call assertion owner before fresh proof.
-Do not confuse the two labels with error-message literals. Blind Luna prepares
-bounded existing-case repairs and independent review; the measured checkout
-remains unchanged. Closed .pile cleanup v240 removes131510834bytes/5directories,
-preserving dependencies, Source, fixtures, DBs and all failed/UNKNOWN custody.
-
-Root integrates the bounded21-case repair: reverse actual YAML project nodes with
-the installed YAML owner, derive the ordering oracle from original config IDs,
-rebind only the authorized fresh config digest, assert exact deadline equality
-for read and receipt-lock admission, check the absolute-root error object and
-wrap the valid legacy authority call in expectReturned. Transparent forwarders
-delegate real fileExists and replaceAtomicAsync calls while checking the actual
-receipt path/label/CAS hash/content; the same owned second bind must perform no
-additional replacement. These are invocation and effect assertions, not proof of
-safe-layer diagnostic text. The added lock-boundary fixture retains exact guard,
-receipt and Host bytes and restores the clock through the existing cleanup owner.
-Focused oOxYo2 passes21/0cases,209assertions in16756ms with complete capture,
-closed group and unchanged boot. Documentation links and diff checks pass.
-The ordinary hook then catches Bun matcher typing for mutable sorted IDs versus
-the readonly receipt list. Compare with a copied expected list; no cast, policy
-change or bypass. The failed check is retained before retrying the same hook.
-
-Independent barrier review confirms the explicit reader upgrade check duplicates
-assertLoadedRuntimeConfig's authorized-bound-root cooperative barrier with no
-async yield or writer callback between them. Remove only the duplicate call;
-retain authorization/root validation, source selection and the binding reader's
-upgrade check. This removes an extra observation, not an atomicity guarantee.
-Scope scope_review_runtime_initialization_single_barrier_20261017 retains all16
-identities,11retained/5added/1removed dispositions and every original cap. Only
-the changed runtime file is inventoried; hash-checked workspace rows are reused.
-Inventory /workspace/attachments/initialization-barrier-inventory-v241.json binds
-runtime64c29748775534a19390189288487b13f90653d3ddadbca11ae79723fe76e98e
-and unchanged workspace8ff6bcfa. Review remains independent of numeric acceptance.
-
-Blind actual-diff review /workspace/attachments/initialization-contracts-review-v241.md
-has no blocker. Publication8af2e35 passes the ordinary hook including strict
-TS511, formatting, lint and Knip. The Source payload is pushed to origin/main;
-the frozen-scope pin follows without changing original limits.
-
-Next: a fresh compatible coverage/frozen/native triple on the published inputs.
-The prepared envelopes successor is the existing fixed-two64-mutant diagnostic
-(--batch-size 2 --max-batches 32, no admission/capture/ID selectors), not a repeat
-of the2-mutant pair. Image retains its actual capacity/custody qualification gap;
-the prior v210pair and launcher/scheduler seams are not complete admission. No
-new peak monitor or SQLite control is asserted as a written policy requirement.
+Next: publish/pin the reviewed correction packet, then fresh coverage/frozen and
+the bounded isolated diagnostic. Envelopes has a prepared fixed-two64-mutant
+successor; storage image has a useful four-mutant refill observation, with its
+actual resource/custody and complete-admission gaps still OPEN. Numeric producers
+remain Root-owned and measured checkouts immutable. Historical triples stay7/45,
+38unclosed; global admission, runtime cutover and acceptance are not established.
 
 ### Fresh regression scope and next isolated diagnostics — 2026-10-17
 
