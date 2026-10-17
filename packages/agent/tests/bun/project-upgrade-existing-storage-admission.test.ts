@@ -38,7 +38,10 @@ import {
   closeWorkspaceDatabaseWithAdmission,
   STORAGE_ADMISSION_GATE_FILE,
 } from '../../src/config/storage-read-admission.js';
-import { withWorkspaceDatabaseClose } from '../../src/config/workspace-database-raw.js';
+import {
+  retryPendingWorkspaceDatabaseCloses,
+  withWorkspaceDatabaseClose,
+} from '../../src/config/workspace-database-raw.js';
 import { prepareExistingProjectUpgradeDatabase } from '../../src/config/project-upgrade.js';
 import { expectReturned } from '../helpers/expect-rejection.ts';
 import { cleanupTrackedFixtureRoots } from '../helpers/tracked-fixture-root-cleanup.ts';
@@ -1500,155 +1503,216 @@ describe('native existing-storage admission boundary', () => {
     await releaseFence(fixture.root, fixture.receipt);
   });
 
-  trackedTest('preserves real Host receipt and paired temporary close failures in order', async () => {
+  trackedTest('preserves initial and exclusive Host verification and close failures in order', async () => {
     const fixture = freshFixture();
-    const closeFailure = new Error('temporary Host connection close failed once');
+    let activeFixture = fixture;
     const fenceBefore = fixture.hostStore.readMaintenanceFence();
     const hostBefore = readFileSync(path.join(fixture.root, hostRelative));
     const mastraBefore = readFileSync(path.join(fixture.root, mastraRelative));
-    const originalQuery = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
-    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
-    const originalAssertMaintenanceFence = Reflect.get(
-      HostStateStore.prototype,
-      'assertMaintenanceFence',
-    ) as typeof HostStateStore.prototype.assertMaintenanceFence;
-    let verifyingFence = false;
-    const temporaryHosts = new Set<Database>();
-    let injectedCloseFailure = false;
-    let callerOwnerCloses = 0;
-    let mergeCallbacks = 0;
-    let rejected = false;
-    let caught: unknown;
-    const observedQuery = function (this: Database, sql: string) {
-      if (verifyingFence) temporaryHosts.add(this);
-      return Reflect.apply(originalQuery, this, [sql]);
-    } as unknown as typeof Database.prototype.query;
-    const observedAssertMaintenanceFence = function (this: HostStateStore, receipt: MaintenanceFenceReceipt) {
-      if (callerOwnerCloses !== 0) return Reflect.apply(originalAssertMaintenanceFence, this, [receipt]);
-      verifyingFence = true;
-      try {
-        Reflect.apply(originalAssertMaintenanceFence, this, [receipt]);
-        // The real persisted receipt check succeeds first; preserve an undefined primary cause.
-        throw undefined;
-      } finally {
-        verifyingFence = false;
-      }
-    };
-    const observedClose = function (this: Database, throwOnError?: boolean): void {
-      if (temporaryHosts.has(this) && !injectedCloseFailure) {
-        injectedCloseFailure = true;
-        throw closeFailure;
-      }
-      return Reflect.apply(originalClose, this, [throwOnError]);
-    } as typeof Database.prototype.close;
+    const phases = [
+      {
+        title: 'preserves real Host receipt and paired temporary close failures in order',
+        kind: 'initial' as const,
+        closeFailureMessage: 'temporary Host connection close failed once',
+      },
+      {
+        title: 'preserves exclusive Host verification and source-close failures in order',
+        kind: 'exclusive' as const,
+        closeFailureMessage: 'exclusive Host source close failed once',
+      },
+    ];
 
-    Database.prototype.query = observedQuery;
-    Database.prototype.close = observedClose;
-    HostStateStore.prototype.assertMaintenanceFence = observedAssertMaintenanceFence;
-    try {
-      try {
-        await withExistingStorageMergeCapability({
-          repositoryRoot: fixture.root,
-          workspaceId,
-          operationId: binding.operation_id,
-          planDigest: '9'.repeat(64),
-          expectedFenceBinding: binding,
-          receipt: fixture.receipt,
-          hostRelative,
-          mastraRelative,
-          closeHostOwner: () => {
-            callerOwnerCloses++;
-            closeHostOwner(fixture);
-          },
-          operation: async () => {
-            mergeCallbacks++;
-          },
-        });
-      } catch (error) {
-        rejected = true;
-        caught = error;
-      }
-    } finally {
-      HostStateStore.prototype.assertMaintenanceFence = originalAssertMaintenanceFence;
-      Database.prototype.close = originalClose;
-      Database.prototype.query = originalQuery;
-    }
-
-    const [retainedConnection] = temporaryHosts;
-    const assertionFailures: unknown[] = [];
-    try {
-      expect(rejected).toBe(true);
-      expect(temporaryHosts.size).toBe(1);
-      expect(retainedConnection).toBeInstanceOf(Database);
-      expect(injectedCloseFailure).toBe(true);
-      expect(caught).toBeInstanceOf(AggregateError);
-      expect(caught).toHaveProperty('message', 'Host fence verification and paired close failed');
-      const failures = (caught as AggregateError).errors;
-      expect(failures).toHaveLength(2);
-      expect(failures[0]).toBeUndefined();
-      expect(failures[1]).toBeInstanceOf(AggregateError);
-      const closeFailures = (failures[1] as AggregateError).errors;
-      expect(closeFailures).toHaveLength(1);
-      expect(closeFailures[0]).toBe(closeFailure);
-      expect(callerOwnerCloses).toBe(0);
-      expect(mergeCallbacks).toBe(0);
-      expect(fixture.hostStore.readMaintenanceFence()).toEqual(fenceBefore);
-      expect(readFileSync(path.join(fixture.root, hostRelative))).toEqual(hostBefore);
-      expect(readFileSync(path.join(fixture.root, mastraRelative))).toEqual(mastraBefore);
-      if (!retainedConnection) throw new Error('Temporary Host verification connection was not captured.');
-      expect(retainedConnection.query('SELECT 1 AS open').get()).toEqual({ open: 1 });
-    } catch (error) {
-      assertionFailures.push(error);
-    }
-    let contender: Database | undefined;
-    const contenderCleanupFailures: unknown[] = [];
-    try {
-      if (retainedConnection && assertionFailures.length === 0) {
-        closeHostOwner(fixture);
-        contender = new Database(path.join(fixture.root, '.vida/storage-admission.v1.sqlite'), {
-          create: false,
-          strict: true,
-        });
-        let busyDenied = false;
+    for (const phase of phases) {
+      const closeFailure = new Error(phase.closeFailureMessage);
+      let expectedHostImage = hostBefore;
+      const originalQuery = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+      const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+      const originalAssertMaintenanceFence = Reflect.get(
+        HostStateStore.prototype,
+        'assertMaintenanceFence',
+      ) as typeof HostStateStore.prototype.assertMaintenanceFence;
+      let verifyingFence = false;
+      const temporaryHosts = new Set<Database>();
+      let injectedCloseFailure = false;
+      let callerOwnerCloses = 0;
+      let mergeCallbacks = 0;
+      let rejected = false;
+      let caught: unknown;
+      const observedQuery = function (this: Database, sql: string) {
+        if (verifyingFence) temporaryHosts.add(this);
+        return Reflect.apply(originalQuery, this, [sql]);
+      } as unknown as typeof Database.prototype.query;
+      const observedAssertMaintenanceFence = function (this: HostStateStore, receipt: MaintenanceFenceReceipt) {
+        const inject = phase.kind === 'initial' ? callerOwnerCloses === 0 : callerOwnerCloses !== 0;
+        if (!inject) return Reflect.apply(originalAssertMaintenanceFence, this, [receipt]);
+        verifyingFence = true;
         try {
-          contender.exec('BEGIN EXCLUSIVE');
-        } catch (error) {
-          if (error instanceof Error && 'code' in error && error.code === 'SQLITE_BUSY') busyDenied = true;
-          else throw error;
+          Reflect.apply(originalAssertMaintenanceFence, this, [receipt]);
+          // The real persisted receipt check succeeds before the phase-specific body error.
+          throw undefined;
+        } finally {
+          verifyingFence = false;
         }
-        expect(busyDenied).toBe(true);
-      }
-    } catch (error) {
-      assertionFailures.push(error);
-    }
-    if (contender) {
-      if (contender.inTransaction) {
+      };
+      const observedClose = function (this: Database, throwOnError?: boolean): void {
+        if (temporaryHosts.has(this) && !injectedCloseFailure) {
+          injectedCloseFailure = true;
+          throw closeFailure;
+        }
+        return Reflect.apply(originalClose, this, [throwOnError]);
+      } as typeof Database.prototype.close;
+
+      Database.prototype.query = observedQuery;
+      Database.prototype.close = observedClose;
+      HostStateStore.prototype.assertMaintenanceFence = observedAssertMaintenanceFence;
+      try {
         try {
-          contender.exec('ROLLBACK');
+          await withExistingStorageMergeCapability({
+            repositoryRoot: activeFixture.root,
+            workspaceId,
+            operationId: binding.operation_id,
+            planDigest: '9'.repeat(64),
+            expectedFenceBinding: binding,
+            receipt: fixture.receipt,
+            hostRelative,
+            mastraRelative,
+            closeHostOwner: () => {
+              callerOwnerCloses++;
+              closeHostOwner(activeFixture);
+              // Closing the real owner may checkpoint WAL before exclusive verification starts.
+              expectedHostImage = readFileSync(path.join(fixture.root, hostRelative));
+            },
+            operation: async () => {
+              mergeCallbacks++;
+            },
+          });
+        } catch (error) {
+          rejected = true;
+          caught = error;
+        }
+      } finally {
+        HostStateStore.prototype.assertMaintenanceFence = originalAssertMaintenanceFence;
+        Database.prototype.close = originalClose;
+        Database.prototype.query = originalQuery;
+      }
+
+      const [retainedConnection] = temporaryHosts;
+      const assertionFailures: unknown[] = [];
+      try {
+        expect(rejected).toBe(true);
+        expect(temporaryHosts.size).toBe(1);
+        expect(retainedConnection).toBeInstanceOf(Database);
+        expect(injectedCloseFailure).toBe(true);
+        expect(caught).toBeInstanceOf(AggregateError);
+        if (phase.kind === 'initial') {
+          expect(caught).toHaveProperty('message', 'Host fence verification and paired close failed');
+          const failures = (caught as AggregateError).errors;
+          expect(failures).toHaveLength(2);
+          expect(failures[0]).toBeUndefined();
+          expect(failures[1]).toBeInstanceOf(AggregateError);
+          const closeFailures = (failures[1] as AggregateError).errors;
+          expect(closeFailures).toHaveLength(1);
+          expect(closeFailures[0]).toBe(closeFailure);
+          expect(callerOwnerCloses).toBe(0);
+        } else {
+          expect(caught).toHaveProperty('message', 'exclusive Host fence verification and close failed');
+          const failures = (caught as AggregateError).errors;
+          expect(failures).toHaveLength(2);
+          expect(failures[0]).toBeUndefined();
+          expect(failures[1]).toBe(closeFailure);
+          expect(callerOwnerCloses).toBe(1);
+        }
+        expect(mergeCallbacks).toBe(0);
+        expect(readFileSync(path.join(fixture.root, hostRelative)).equals(expectedHostImage)).toBe(true);
+        expect(readFileSync(path.join(fixture.root, mastraRelative))).toEqual(mastraBefore);
+        if (phase.kind === 'initial') expect(activeFixture.hostStore.readMaintenanceFence()).toEqual(fenceBefore);
+        if (!retainedConnection) throw new Error(`${phase.title}: Host verification connection was not captured.`);
+        expect(retainedConnection.query('SELECT 1 AS open').get()).toEqual({ open: 1 });
+      } catch (error) {
+        assertionFailures.push(error);
+      }
+
+      let contender: Database | undefined;
+      const contenderCleanupFailures: unknown[] = [];
+      try {
+        if (retainedConnection && assertionFailures.length === 0) {
+          if (phase.kind === 'initial') closeHostOwner(activeFixture);
+          contender = new Database(path.join(fixture.root, '.vida/storage-admission.v1.sqlite'), {
+            create: false,
+            strict: true,
+          });
+          let busyDenied = false;
+          try {
+            contender.exec('BEGIN EXCLUSIVE');
+          } catch (error) {
+            if (error instanceof Error && 'code' in error && error.code === 'SQLITE_BUSY') busyDenied = true;
+            else throw error;
+          }
+          expect(busyDenied).toBe(true);
+        }
+      } catch (error) {
+        assertionFailures.push(error);
+      }
+      if (contender) {
+        if (contender.inTransaction) {
+          try {
+            contender.exec('ROLLBACK');
+          } catch (error) {
+            contenderCleanupFailures.push(error);
+          }
+        }
+        try {
+          contender.close();
         } catch (error) {
           contenderCleanupFailures.push(error);
         }
       }
-      try {
-        contender.close();
-      } catch (error) {
-        contenderCleanupFailures.push(error);
+
+      let retryFailure: { error: unknown } | undefined;
+      if (retainedConnection) {
+        try {
+          if (phase.kind === 'initial') {
+            // Retry through the exact paired-admission cleanup owner.
+            closeWorkspaceDatabaseWithAdmission(retainedConnection);
+          } else {
+            // Retry through the exact exclusive source-close owner registered on its first attempt.
+            retryPendingWorkspaceDatabaseCloses();
+          }
+        } catch (error) {
+          retryFailure = { error };
+        }
       }
-    }
-    let retryFailure: { error: unknown } | undefined;
-    if (retainedConnection) {
-      try {
-        // Retry the same connection through its paired-admission cleanup owner before fixture disposal.
-        closeWorkspaceDatabaseWithAdmission(retainedConnection);
-      } catch (error) {
-        retryFailure = { error };
+      const failures = [
+        ...assertionFailures,
+        ...contenderCleanupFailures,
+        ...(retryFailure ? [retryFailure.error] : []),
+      ];
+      if (failures.length > 0) {
+        retainedRoots.add(fixture.root);
+        if (failures.length === 1) throw failures[0];
+        throw new AggregateError(failures, `${phase.title}: Host failure assertion and owned close retry failed`);
       }
-    }
-    const failures = [...assertionFailures, ...contenderCleanupFailures, ...(retryFailure ? [retryFailure.error] : [])];
-    if (failures.length > 0) {
-      retainedRoots.add(fixture.root);
-      if (failures.length === 1) throw failures[0];
-      throw new AggregateError(failures, 'Host failure assertion and owned connection cleanup failed');
+      if (phase.kind === 'initial') {
+        const hostOwner = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
+        registerDatabase(hostOwner, fixture.root);
+        activeFixture = {
+          root: fixture.root,
+          hostOwner,
+          hostStore: new HostStateStore(
+            hostOwner,
+            workspaceId,
+            undefined,
+            undefined,
+            undefined,
+            verifier,
+            fixture.root,
+          ),
+          receipt: fixture.receipt,
+        };
+        expect(activeFixture.hostStore.readMaintenanceFence()).toEqual(fenceBefore);
+      } else {
+        expect(readPersistedFence(fixture.root)).toEqual(fenceBefore);
+      }
     }
     await releaseFence(fixture.root, fixture.receipt);
   });

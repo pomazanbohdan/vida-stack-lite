@@ -59,6 +59,10 @@ other active lanes are envelopes and storage admission. Admission's caller-owned
 request defect now has real RED/GREEN evidence and a bounded snapshot correction.
 Its interrupted mutation attempt stays UNKNOWN. The native pilot now shares one
 partition deadline across all batches; fresh numeric qualification remains open.
+All three active contours have fresh exact coverage/frozen pairs. Envelope's five
+new survivors have targeted native Killed confirmations, and admission's real
+initial/exclusive dual-error phases share their fixture and exact owned cleanup.
+Full compatible mutation closures remain OPEN; diagnostic sets are not unioned.
 WORK owns the exact receipts and pending equivalent/unattempted mutant analysis.
 
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.

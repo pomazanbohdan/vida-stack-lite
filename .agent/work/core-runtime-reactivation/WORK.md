@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest checked Source/test packet: `5f97270f31d0f45e81bf5a96b8af53f427f85654`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read and live public-gate controls. The pinned facade review and fresh compatible local triple are recorded below. Active runtime initialization, envelopes and storage admission still need complete mutation closures. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest checked Source/test packet: `b1c4e18030ca78964c25c545b8340d9725ed6345`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read/public-gate controls and envelope ordering regressions. The pinned facade review and fresh compatible local triple are recorded below. Active runtime initialization, envelopes and storage admission still need complete mutation closures. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -346,7 +346,44 @@ callback arguments. The native sort is delegated and restored before law asserti
 public projection, reversal and immutability assertions remain. The law checks do
 not establish transitivity over arbitrary triples or a public-output counterexample
 for every malformed comparator. Root integrates only after the old producer is
-terminal; fresh affected and mutation repair confirmations remain required.
+terminal. `1hh0Zc` passes the full three-file selection:46tests/4271assertions in
+2308ms. The ordinary hook catches untyped native callback arguments; explicit
+generic argument annotations preserve the actual observed rows, then strict505,
+Oxlint, Knip and staged checks pass before b1c4e18 publication.
+
+A fresh immutable checkout v162 forms SDK inputs once (`N12UB0`,2303ms, no suites).
+Native diagnostic `nPgBrN`, run `85804f63-1fd7-48db-9a1a-4a95740fee73`, confirms
+all five repair IDs168/175/176/177/353 Killed with one full46-case baseline in
+20012ms. It retains763generated/5attempted/5Killed/758unattempted, zero survivors
+or UNKNOWN, complete captures/groups and unchanged boot/inputs. This is a targeted
+repair confirmation; there is no complete contour proof or combined score.
+
+The changed envelope tests also have fresh exact coverage `MP8hmL`, run
+`f1792c5b-9400-4c2c-b690-3447d8e3b3db`: F78/78,L211/211,S227/227,B103/103 in5973ms.
+Same-run v2 frozen `DdWPTV` passes original caps and named-role disposition at
+maxCC9/maxCRAP9 in1373ms. Complete captures/groups, same boot and immutable b1c4e18
+are retained. The owner imports the coverage/outcome/frozen pair:495attempts.
+The operation's global BLOCKED remains separate from these exact local metrics.
+
+Admission now shares one real fixture and body across initial and exclusive Host
+dual-error phases. The exclusive real verifier succeeds before injected undefined;
+its exact source close fails once, keeping the source/gate held. The expected Host
+aggregate is rethrown directly, without duplicating its nested cleanup cause.
+Independent v158 catches the initially incorrect outer-wrapper expectation.
+Root `DudnPW` then exposes a wrong test byte boundary: normal caller-owner close
+can checkpoint WAL into the main Host file. Capture its bytes after that actual
+close for the exclusive phase, retaining the original before-close check for the
+initial phase. Boolean Buffer equality avoids unbounded failure dumps. No product
+defect is inferred from this test correction.
+
+Focused GREEN `4hu90V` passes the two-phase case in1214ms; full `FMtz4w` passes
+28tests/298assertions in2144ms with complete captures/groups and unchanged boot.
+Both phases preserve undefined/body and exact close causes, unchanged persisted
+fence/Mastra bytes, zero merge callbacks and a BUSY gate until the retained handle
+closes through its registered paired/exclusive cleanup owner. Later phase success
+cannot consume an earlier failed assertion: the captured error is rethrown before
+advancing. The checkpoint-source dual-error context remains a distinct GAP.
+Changed admission tests still need new numeric evidence after publication.
 
 ### Published admission packet — retained context
 
