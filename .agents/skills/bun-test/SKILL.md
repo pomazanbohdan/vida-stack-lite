@@ -500,6 +500,12 @@ observation before suspension, drain the binding, and restore the clock in
 [TESTING's expiry contract](../../../packages/agent/TESTING.md#process-timeout-and-fixture-safety).
 For parent-body mutation activation, invoke the canonical binder in that body
 under the real receipt lock; never copy subprocess counters into parent proof.
+When a child-only failure first ends a registered scenario, exercise its real
+parent counterpart in that same body before launching the child. A failed
+replacement probe must leave the receipt pending and byte-identical, restore
+its module mock, and assert the actual cause identity before the original child
+starts. Keep successful recovery after the owning scenario's failure assertions;
+do not reorder tests or bind the receipt early to manufacture activation.
 When a retry owner uses `Bun.sleep`, observe that owner for a zero-retry assertion;
 a `setTimeout` spy no longer proves the absence of delays. Restore the sleep
 method in `finally` and retain the actual typed denial and unchanged-state checks.

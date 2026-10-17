@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Custody's published59-role local triple is exact F/L/S/B100, same-run frozen9/9 and681/681assertion-confirmed native Killed (Source e494471, pin6531dc3, immutable v224). The automatic projection records7/45historical local triples,38unclosed. Active contours are initialization, storage image and envelopes. Initialization's fresh16-role coverage/frozen pass at9e35f7a; actual40/145/41 have owned-body Killed evidence after test repair. Current19 remains UNKNOWN on child-only error-name proof; current28's file_lock_timeout survivor repair awaits fresh evidence. Complete native closure is pending. FS zero-callable CRAP applicability, admission stateful initialization, and image/envelopes isolated complete admission remain OPEN. The derived contour document owns exact receipts and historical closures; WORK records diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- Custody's published59-role local triple is exact F/L/S/B100, same-run frozen9/9 and681/681assertion-confirmed native Killed (Source e494471, pin6531dc3, immutable v224). The automatic projection records7/45historical local triples,38unclosed. Active contours are initialization, storage image and envelopes. Initialization's fresh16-role coverage/frozen pass at9e35f7a; actual40/145/41/19 have owned-body Killed evidence after test repair. Current35 remains UNKNOWN on child-only post-entry proof; current28's file_lock_timeout survivor repair awaits fresh evidence. Complete native closure is pending. FS zero-callable CRAP applicability, admission stateful initialization, and image/envelopes isolated complete admission remain OPEN. The derived contour document owns exact receipts and historical closures; WORK records diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -17,165 +17,91 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ### Initialization owned activation and native retry simplification — 2026-10-17
 
-Published f1833a2's fresh immutable v227 diagnostic be0cfb0e-29df-46f1-821c-eb05a96a395b
-confirms actual40 (identity0247575) as assertion-confirmed Killed: its parent
-body19 records bun-expect failure with1owned hit. Full19-case baseline passes;
-one of168mutants attempted,167unattempted. Outer RKxaVr closes in23631ms with
-complete captures/groups, same boot/commit and clean tracked inputs. This is
-bounded diagnostic evidence, not complete mutation closure; prior UNKNOWN remains.
+Current product Source retains16roles:12runtime initialization plus4workspace
+identity. Published b32fc8e simplifies the two retry owners with awaited
+Bun.sleep(25) and async recursion, keeping one absolute5s deadline, entered
+boundary, typed/code guards, error identity, ownership and CAS order. One
+original timer executor is an explicit baseline removal; one Source-added
+executor is retired separately. All11retained ceilings and5added caps stay
+unchanged; no new callable, transferred budget, baseline reset or exclusion.
+The immutable reviewed scope is pinned by42e2b1b to b32fc8e. Original reviews,
+measurements, removed rows and added-role caps remain historical. Partial
+correspondence is7113roles/149files; global qualification remains open.
 
-Root then replaces both retry loops' Promise/timer wrappers with Bun.sleep(25)
-and asynchronous retries in their existing owners. Preserve the absolute5s
-deadline, per-attempt entered boundary, typed/code retry guards, error identity,
-effect ownership and CAS order. No new callable or helper abstraction is added.
-The non-contention denial test observes the actual Bun.sleep owner and restores
-it in finally. Bun's official [utility reference](https://bun.com/docs/api/utils#bun-sleep)
-documents the promise-returning sleep; current product already uses it.
+Latest complete coverage/frozen pair: immutable9e35f7a, run
+66579763-8b94-4eb3-8720-b691691bfaf2, stages /tmp/contour-stage-l1L5Bk and
+/tmp/contour-stage-oTm8Ue. Its20-case selection passes exact F16/16,L87/87,
+S98/98,B54/54 and original same-run frozen9/9. Both auto-publish through the
+maintained stage controller; projection has658observations. Later test changes
+require a new compatible pair before numeric closure.
 
-Blind Luna actual-diff and corrected lineage review are retained at
-`/workspace/attachments/initialization-retry-review-v228.md`. One changed-Source
-inventory confirms12runtime roles plus4unchanged workspace roles; only the two
-executors disappear. Archive the original timer row under removed_functions and
-the added timer under retired_source_added_roles. Preserve all11remaining original
-ceilings and5added caps, the old scope review and exact original measurements.
-The successor scope is scope_review_runtime_initialization_native_delay_20261017;
-there is no baseline recapture or ceiling transfer. Partial counts become
-5447retained/1666new/98removed,7113current roles/149files. Focused XUxWIx passes
-19/0cases in15322ms, complete captures, closed group and same boot. Fresh immutable
-exact coverage, same-run frozen proof and complete native mutation remain pending.
+Fresh native evidence remains partial, never a contour score:
 
-Fresh immutable42e2b1b coverage df56614c-610c-4798-973a-f40d3133cbc8 now passes
-19/0cases,146assertions, exact F16/16,L87/87,S98/98,B54/54; same-run frozen under
-published b32fc8e passes9/9 with the unchanged individual ceilings and exact
-11retained/5new/1removed disposition. Outer stages OmJYTD/r9Pyi1 auto-publish.
-Full native attempt98704074-d0a3-4ef2-97f3-61f51b4575a5, outerxZ5pal, stops
-at generated145 (identity03fffded, workspace-identity.ts27 typeof inequality
-inverted). Its beforeEach calls the targeted derivation while constructing the
-receipt, so XML/body show a hook error before any registered assertion. Keep
-UNKNOWN,0Killed/161unattempted of162; partial failure is not auto-published as a
-native score. The parent, captures and process group close cleanly.
+- Published f1833a2 diagnostic be0cfb0e-29df-46f1-821c-eb05a96a395b (RKxaVr)
+  confirms40, identity0247575, with a real parent call under the receipt lock.
+- Published64cc655 run9e91d67a-36b7-4b02-9811-e5dfbf3baca7 (hwnvHq) confirms
+  145, identity03fffded, after removing target derivation from beforeEach.
+- Published e31db89 diagnostic aa52c914-97ff-4d2a-9961-f14735795377 (DaTxrU)
+  confirms41, identity0dac3f8c, and exposes actual28/ca998718 as Survived:
+  file_lock_timeout was supported but untested. One Killed/one Survived and
+  160unattempted of162 is diagnostic only.
+- Full9e35f7a runfa57d132-1b74-4fcf-b0d0-ffdc16205485 (vp33g4) reconfirms145/41
+  Killed and stops at19/0dce8764 UNKNOWN: parent body6 detects a child error-name
+  change, with0owned activation. Keep2Killed/1UNKNOWN/159unattempted of162.
+- Latest c525495 diagnostic6c030b8a-840a-484b-87ae-c3a3526248fb (FlMC5E)
+  confirms19 as assertion-Killed in parent body13 with1owned hit. Next35/3bf83aea
+  changes entered=true to false; body6 reports child failure, assertion=false,
+  parenthits0. Keep1Killed/1UNKNOWN/160unattempted of162. Selected28 is unattempted,
+  so its two-code repair still awaits fresh native proof. Outer34765ms closes
+  with full captures/groups, same boot/commit and clean inputs. Exact artifacts:
+  /dev/shm/vida-rolling-measure-v234/packages/agent/.tmp/mutation-batch-6c030b8a-840a-484b-87ae-c3a3526248fb-YBnMJX.
 
-Root removes target calls from fixture construction: the pending workspace ID
-and v2 expected binding use the existing canonical JSON digest over the fixed
-WorkspaceIdentity/v1 tuple and actual native realpath. The product derivation
-remains exercised and asserted in test bodies. No Source change, test ordering,
-activation transfer, exclusion or gate weakening is introduced. Fresh native
-evidence must confirm the repaired owned-body path.
-Blind Luna actual-evidence review approves this fixture boundary and confirms
-no other direct deriveWorkspaceId call remains in hooks. Focused QEC4hy passes
-19/0cases in17577ms, with full captures, closed group and unchanged boot.
+Implemented test repairs preserve actual locks, bytes, Host state and error causes:
+independent fixture workspace IDs use the fixed public tuple/native realpath;
+the cross-process scenario has a real parent lock contender; forbidden retries
+fail promptly through one owned sleep observer; both raw retry codes use literal
+named wrappers and shared scenario work; real parent errors assert public
+name/code and workspace errors also check the message. Expiry first observes
+real pending retry and exact retained state, then advances Date.now6s below the
+30s quarantine. Both await/drain paths prohibit further sleep after that original
+deadline and restore the clock. The250/500ms cleanup/fixture-release prototype
+was not adopted. Unknown or missing terminal evidence stays UNKNOWN.
 
-Fresh immutable64cc655 native run9e91d67a-36b7-4b02-9811-e5dfbf3baca7, outerhwnvHq,
-confirms145 assertion-Killed in body13 with1owned hit. Next41 (identity0dac3f8c,
-runtime-initialization.ts130–131, entered/non-contention predicate ->false) makes
-that real no-retry case reach its5000ms timeout. Keep UNKNOWN,1Killed and
-160unattempted of162. Actual body/receipt and complete terminal captures stay
-retained; there is no complete native score or increase of the5s allowance.
+Current35 repair shares the existing replacement-fault capturer between the
+undefined case and a real parent typed-contention probe at the start of existing
+body6. It restores the mock, verifies1stub replacement and unchanged pending
+receipt, and returns the real wrapped cause for direct assertions before the
+original child starts. No healthy bind runs before that child. Existing body13
+retains healthy retry/idempotence after its own failure assertions. Keep20cases
+and their order; no new mirror test, Source reload policy, counter transfer or
+operational replay. Blind Luna actual-diff review has no findings. Focused
+lgPbgS passes20/0cases,167assertions in14659ms with full capture, closed group and
+unchanged boot. Publish before fresh35/28 proof.
 
-Root introduces one test-local expectNoRetryDelay owner for the unsafe guard,
-non-Error replacement and generic pre-entry denial cases. Unexpected Bun.sleep
-is a controlled forbidden invocation that rejects immediately, permitting owned
-operation settlement before a zero-call assertion. Restore the method before
-asserting and preserve normal returned values/rejections, including undefined.
-Keep each case's real typed error, cause, one-attempt and unchanged-state checks.
-This removes the timeout-only detection path rather than accepting a timeout as
-Killed. Require fresh actual41 proof; the expiry-helper prototype remains
-unadopted because no current expiry-specific finding has been established.
-Blind Luna approves the actual helper and all3call sites without findings.
-Focused FJc92O passes19/0cases,148assertions in14154ms, complete captures,
-closed group and unchanged boot. Publish before fresh native confirmation.
+Published correction history, all earlier terminal details and blind Luna reviews
+are retained at c525495:.agent/work/core-runtime-reactivation/WORK.md under this
+heading. Published focused pD9dPE passes20/0cases,156assertions in14878ms;
+the parent-entry patch's later focused result is recorded above. Default5s cases,
+coverage300/330s and mutation900/930s limits remain unchanged.
 
-Published e31db89 fresh diagnostic aa52c914-97ff-4d2a-9961-f14735795377, outerDaTxrU,
-confirms actual41 as assertion-Killed. The same19-case baseline and complete
-31870ms terminal run also tests actual28 (identityca998718, file_lock_timeout
-literal ->empty): it Survives. Keep1Killed/1Survived/160unattempted of162, not a
-score. The preceding UNKNOWN attempts retain their original classifications.
-Root expands the existing pre-entry lock test over both supported raw codes,
-EEXIST and file_lock_timeout, retaining the real lease, exactly2attempts,
-1callback/1replacement, exact bound receipt and unchanged Host state. This is a
-missing behavioral case, not a reason to rewrite the eager Set or relax gates.
-Source and all16function roles/ceilings stay unchanged; fresh native28 proof is
-required. The next envelopes numeric task, after this producer is terminal,
-is the existing fixed-two isolated64-mutant diagnostic (`--batch-size 2
---max-batches 32` without admission/capture/ID selectors), not another2-mutant
-pilot. Complete isolated admission remains unavailable until its actual custody
-qualification and narrow policy/selector review; image capacity qualification
-remains separate and does not require replaying the unchanged v210pair.
-Blind Luna notes that interpolated test registration is Bun-valid but invisible
-to the current audit's literal-name case index. Root retains two literal named
-wrappers with direct exact-bound-result assertions and one shared scenario owner.
-Only each wrapper marks its fixture complete after all assertions. The initial
-20-case prototype IAeqlB passed152assertions in14058ms; final literal-wrapper
-verification and fresh numeric evidence follow. This keeps shared setup without
-inventing static function/test proof or another audit parser.
-Final literal-wrapper ACoiOR passes20/0cases,152assertions in14095ms with full
-capture, closed group and unchanged boot; blind Luna final-diff review has no
-findings. Numeric Source inputs still require fresh full evidence after publication.
-The first publication hook passed TS511 and formatting but native tsgolint was
-SIGKILLed. No commit or push followed that failed check. The host then used about
-15.4GB of its17.18GB cgroup; this observation alone does not identify the signal
-cause. With no live Bun/quality owner, exact disposable .pile cleanup manifest
-`/workspace/attachments/closed-transpiler-cache-cleanup-v232.json` removes
-3043461375bytes across336cache directories. Source, dependencies, fixtures, DBs,
-receipts and UNKNOWN outcomes stay intact; memory falls to about12.0GB. Repeat
-the unchanged hook. The stage publisher's denial message now exposes actual
-input/process/capture/group flags; failed mutation no longer prints a generic
-claim of missing custody when its captures and group are actually complete.
-Publication/classification and all proof gates stay unchanged.
-The unchanged full hook then passes and packet9e35f7a is pushed. Fresh v233
-coverage66579763-8b94-4eb3-8720-b691691bfaf2 passes the20-case selection and exact
-F16/16,L87/87,S98/98,B54/54; paired frozen under b32fc8e remains9/9. Automatic
-projection has658observations. Full native fa57d132-1b74-4fcf-b0d0-ffdc16205485,
-outervp33g4, reconfirms145/41 Killed, then stops at19 UNKNOWN: constructor name
-literal ->empty is detected through child JSON in body6, with0owned parent
-activation. Keep2Killed/1UNKNOWN/159unattempted of162 and all original receipts.
-The improved stage diagnostic correctly reports failed process/exit1 while boot,
-commit, inputs, capture and closed group all remain valid.
+Resource handling: native tsgolint was SIGKILLed after passing TS511/formatting;
+no commit/push followed that failure. Disposable cache manifest
+/workspace/attachments/closed-transpiler-cache-cleanup-v232.json removes
+3043461375bytes across336closed .pile directories, preserving Source, installed
+dependencies, fixtures, DBs, receipts and UNKNOWN. Memory falls about15.4GB to
+12.0GB; this alone does not establish the signal cause. The unchanged hook then
+passes before9e35f7a publication. A later v234 SDK preflight rejects the2GiB
+storage floor before launch; Root moves only that fresh unlaunched checkout to
+/dev/shm, repairs its Git location, and SDK ja7lyh then closes successfully.
+No resource/proof gate is lowered. Stage denial diagnostics now distinguish an
+exit1 mutation result from missing capture/group custody.
 
-Root adds public name/code assertions to the real parent errors in existing
-typed-cause and non-Error effect bodies, and checks WorkspaceIdentityError's
-instance/name/code/message through the existing invalid-repository call. Blind
-Luna approves the contract checks; no direct mirror-constructor case or child-hit
-transfer is added. The shared no-retry owner also observes the two expiry await/
-drain paths after the already verified6s clock jump: correct deadline handling
-must reject before another Bun.sleep. This is the same no-retry pattern, reviewed
-independently by the clock author. It preserves guard/quarantine state without
-the unadopted250/500ms timers or fixture-release prototype. An unrelated missing
-terminal outcome still remains UNKNOWN. Fresh actual19/28 evidence is pending.
-Focused pD9dPE passes20/0cases,156assertions in14878ms with full captures,
-closed group and unchanged boot; publication/fresh numeric binding follow.
-
-### Initialization current evidence and owned-clock repair — 2026-10-17
-
-Fresh immutable6531dc3 initialization run70ef92f8-ec9c-463d-8b25-f44d7d9c2994
-passes19/0cases,125assertions, exact F18/18,L87/87,S100/100,B54/54. Same-run scoped
-frozen at `/tmp/contour-stage-c9x64P` passes original892523d ceilings at9/9. Both
-publish automatically; the projection records652observations. Global operation
-status remains BLOCKED and no initialization mutation closure is claimed.
-
-Bounded native run5783729c-5a8b-4945-b13a-b3115b3fb104, outerwU0X2X, closes
-in32569ms with complete captures/groups, same boot/commit and clean inputs.
-Its19-case baseline takes25373ms; actual generated40 (identity0247575) is UNKNOWN,
-with167unattempted of168. It changes runtime-initialization.ts131–133's retry-stop
-predicate to true. A child receives real EEXIST and stops retrying; the parent
-assertion fails, but its exact body event has0owned activation hits. Independent
-blind Luna confirms this from the current generated image, XML and body event.
-Keep UNKNOWN; do not infer an infrastructure error or grant child hits to parent.
-The shared classifier diagnostic now reports actual exit/JUnit/owned-hit values
-without changing classification or proof rules.
-
-Root integrates a bounded Luna test diff for two5s expiry cases. One shared helper
-observes real pending retry and exact retained state, advances Date.now by6s
-within the30s quarantine threshold, and drains/restores while preserving primary
-and cleanup errors. Timers, filesystem locks, receipt/Host images and production
-budgets remain real/unchanged. The cross-process case now starts an actual parent
-binding against an owned real receipt lock, verifies pending/unchanged bytes,
-releases both ready children and the lease, then verifies all three bind results.
-Parent activation must come from that actual API call, never a synthetic hit or
-child event. Failure paths release/drain the owned lease and binding before fixture
-cleanup. Focused cUDtSb passes19/0cases,146assertions in13999ms with full captures,
-closed groups and same boot. No new native score is established by this check;
-publish and require fresh actual40 activation evidence next.
+Next: confirm repaired35/28, then a complete compatible initialization triple.
+The prepared envelopes successor is the existing fixed-two64-mutant diagnostic
+(--batch-size 2 --max-batches 32, no admission/capture/ID selectors), not a repeat
+of the2-mutant pair. Image retains its actual capacity/custody qualification gap;
+the prior v210pair and launcher/scheduler seams are not complete admission. No
+new peak monitor or SQLite control is asserted as a written policy requirement.
 
 ### Fresh regression scope and next isolated diagnostics — 2026-10-17
 

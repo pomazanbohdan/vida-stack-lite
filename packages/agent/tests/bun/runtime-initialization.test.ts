@@ -501,13 +501,85 @@ test('workspace binding retains receipt and exact reclaim guard after read-only 
   caseCompleted = true;
 });
 
+type ReplacementFailureResult = {
+  readonly caught: RuntimeInitializationBindingError;
+  readonly injectedContention: SafeRepositoryLockContentionError | undefined;
+  readonly injectedCause: Error | undefined;
+  readonly receiptBytes: Buffer<ArrayBuffer>;
+};
+
+async function captureReplacementFailure(
+  failureMode: 'undefined' | 'typed-contention',
+): Promise<ReplacementFailureResult> {
+  const receiptBytes = readFileSync(receiptPath);
+  const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
+  const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
+  await import('../../src/runtime-initialization.ts');
+  const originalSafeExports = Object.freeze({ ...(await import('../../src/config/safe-repository-access.ts')) });
+  const injectedCause =
+    failureMode === 'typed-contention' ? new Error('replacement owner still holds the receipt lock') : undefined;
+  const injectedContention =
+    injectedCause !== undefined
+      ? new originalSafeExports.SafeRepositoryLockContentionError('bind runtime initialization', injectedCause)
+      : undefined;
+  let isolatedBindingError: typeof RuntimeInitializationBindingError | undefined;
+  let replaceAttempts = 0;
+  let caught: unknown;
+  try {
+    await mock.module(safeModuleUrl, () => ({
+      ...originalSafeExports,
+      requireSafeRepositoryAccess: (requestedRoot: string) => {
+        const access = originalSafeExports.requireSafeRepositoryAccess(requestedRoot);
+        if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
+        return {
+          ...access,
+          replaceAtomicAsync: async () => {
+            replaceAttempts += 1;
+            if (injectedContention !== undefined) throw injectedContention;
+            throw undefined;
+          },
+        };
+      },
+    }));
+    const isolatedInitialization = (await import(
+      `${initModuleUrl}?replacement-fault=${randomUUID()}`
+    )) as typeof import('../../src/runtime-initialization.ts');
+    isolatedBindingError = isolatedInitialization.RuntimeInitializationBindingError;
+    await expectNoRetryDelay(() => isolatedInitialization.bindRuntimeInitialization(root, store));
+  } catch (error) {
+    caught = error;
+  } finally {
+    await mock.module(safeModuleUrl, () => originalSafeExports);
+  }
+
+  if (isolatedBindingError === undefined)
+    throw new Error('Fresh initialization module was not imported.', { cause: caught });
+  expect(caught).toBeInstanceOf(isolatedBindingError);
+  if (!(caught instanceof isolatedBindingError))
+    throw new Error('Replacement failure was not wrapped as a runtime initialization binding error.', {
+      cause: caught,
+    });
+  expect(caught).toMatchObject({ name: 'RuntimeInitializationBindingError', code: 'GAP-RUNTIME-INIT-BIND-001' });
+  expect(replaceAttempts).toBe(1);
+  expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+  return { caught, injectedContention, injectedCause, receiptBytes };
+}
+
 test('workspace binding does not retry typed contention from the receipt replacement effect', async () => {
   if (process.platform !== 'linux') {
     caseCompleted = true;
     return;
   }
+  const { caught, injectedContention, injectedCause, receiptBytes } =
+    await captureReplacementFailure('typed-contention');
+  expect(injectedContention).toBeInstanceOf(SafeRepositoryLockContentionError);
+  expect(injectedCause).toBeInstanceOf(Error);
+  if (injectedContention === undefined || injectedCause === undefined)
+    throw new Error('Typed replacement contention fixture was not created.');
+  expect(injectedContention.cause).toBe(injectedCause);
+  expect(injectedCause.message).toBe('replacement owner still holds the receipt lock');
+  expect(caught.cause).toBe(injectedContention);
   const guardPath = path.join(path.dirname(receiptPath), '.' + path.basename(receiptPath) + '.cas.lock.reclaim');
-  const receiptBytes = readFileSync(receiptPath);
   const safeAccessModule = new URL('../../src/config/safe-repository-access.js', import.meta.url).href;
   const hostModule = new URL('../../src/host-state.ts', import.meta.url).href;
   const admissionModule = new URL('../../src/config/storage-read-admission.ts', import.meta.url).href;
@@ -807,52 +879,10 @@ test('binding errors retain typed cause evidence', async () => {
 });
 
 test('binding preserves a non-Error replacement failure and retries only after restoring the owner', async () => {
-  const receiptBytes = readFileSync(receiptPath);
-  const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
-  const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
-  await import('../../src/runtime-initialization.ts');
-  const originalSafeExports = Object.freeze({ ...(await import('../../src/config/safe-repository-access.ts')) });
-  type IsolatedBindingError =
-    (typeof import('../../src/runtime-initialization.ts'))['RuntimeInitializationBindingError'];
-  let isolatedBindingError: IsolatedBindingError | undefined;
-  let replaceAttempts = 0;
-  let caught: unknown;
-  try {
-    await mock.module(safeModuleUrl, () => ({
-      ...originalSafeExports,
-      requireSafeRepositoryAccess: (requestedRoot: string) => {
-        const access = originalSafeExports.requireSafeRepositoryAccess(requestedRoot);
-        if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
-        return {
-          ...access,
-          replaceAtomicAsync: async () => {
-            replaceAttempts += 1;
-            throw undefined;
-          },
-        };
-      },
-    }));
-    const isolatedInitialization = (await import(
-      `${initModuleUrl}?undefined-fault=${randomUUID()}`
-    )) as typeof import('../../src/runtime-initialization.ts');
-    isolatedBindingError = isolatedInitialization.RuntimeInitializationBindingError;
-    await expectNoRetryDelay(() => isolatedInitialization.bindRuntimeInitialization(root, store));
-  } catch (error) {
-    caught = error;
-  } finally {
-    await mock.module(safeModuleUrl, () => originalSafeExports);
-  }
-
-  if (isolatedBindingError === undefined)
-    throw new Error('Fresh initialization module was not imported.', { cause: caught });
-  expect(caught).toBeInstanceOf(isolatedBindingError);
-  expect(caught).toMatchObject({ name: 'RuntimeInitializationBindingError', code: 'GAP-RUNTIME-INIT-BIND-001' });
-  expect(replaceAttempts).toBe(1);
-  if (caught instanceof isolatedBindingError) {
-    expect(caught.message).toBe('runtime initialization binding failed: undefined');
-    expect(Object.hasOwn(caught, 'cause')).toBe(true);
-    expect(caught.cause).toBeUndefined();
-  }
+  const { caught, receiptBytes } = await captureReplacementFailure('undefined');
+  expect(caught.message).toBe('runtime initialization binding failed: undefined');
+  expect(Object.hasOwn(caught, 'cause')).toBe(true);
+  expect(caught.cause).toBeUndefined();
   expect(readFileSync(receiptPath)).toEqual(receiptBytes);
 
   const bound = await expectAsyncReturned(() => bindRuntimeInitialization(root, store));
