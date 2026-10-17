@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's fresh524aac6 coverage/frozen pair passes exact F/L/S/B100 and original caps; complete native69cb67f1 stops35Killed/0Survived/1UNKNOWN/128unattempted of164 on a child4500ms deadline. Published d6dc73a reuses the real-CAS fixture without that duplicate child; fresh targeted95 is assertion-Killed. Envelopes' fresh64-mutant diagnostic is all assertion-Killed after the mixed-precision regression. Image and envelopes complete eligibility are reviewed; all three full native proofs remain pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability and admission stateful initialization remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's fresh51e9e4f coverage/frozen pair passes exact F/L/S/B100 and original caps; complete nativebe0c3af7 closes98Killed/0Survived/1UNKNOWN/65unattempted of164. The earlier startup/extra-CAS-child cases now assertion-Kill; current58's logical retry guard is the new diagnostic gap under isolated investigation. Envelopes' fresh64-mutant diagnostic is all assertion-Killed after the mixed-precision regression. Image and envelopes complete eligibility are reviewed; all three full native proofs remain pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability and admission stateful initialization remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -27,14 +27,17 @@ ebc323b:.agent/work/core-runtime-reactivation/WORK.md under this heading;
 that published record links the earlier c525495 history. Do not replay those
 operations or transfer their local IDs/counters.
 
-Latest complete coverage/frozen pair is immutable524aac6, run
-d94565cc-0c3d-4852-9821-97ba448128a3, stages /dev/shm/contour-stage-w2FTOC and
-/dev/shm/contour-stage-48eyUw. It passes21cases/252assertions, exact F16/16,
+Latest complete coverage/frozen pair is immutable51e9e4f, run
+29cf2f6f-d665-4400-a5db-21a105b4cef9, stages /tmp/contour-stage-58Fcqx and
+/tmp/contour-stage-AIXUkt. It passes21cases/260assertions, exact F16/16,
 L84/84,S95/95,B53/53 and original same-run frozen9/9, bound tocf118c9.
-The maintained controller automatically imports both; projection has673
-observations. Follow-up test/Source changes below require fresh evidence.
+The maintained controller automatically imports both. The current scope already
+binds the actual workspace/runtime hashes; the predecessor binding is historical.
+Four inherited rationale strings are clarified without a cap, identity, address,
+disposition, pin or inventory change. Independent applicability review:
+/workspace/attachments/initialization-coverage-review-v283.md.
 
-Full native f3e56044-99dc-43bd-9824-37bdfd8be7bf uses that same clean image at
+Earlier full native f3e56044-99dc-43bd-9824-37bdfd8be7bf retains its historical image at
 /dev/shm/vida-rolling-measure-v242/packages/agent/.tmp/mutation-batch-f3e56044-99dc-43bd-9824-37bdfd8be7bf-1FyNMK.
 Outer /dev/shm/contour-stage-OSAMUs closes869542ms, exit1, with complete captures,
 closed owned group, unchanged boot/commit and clean inputs. Baseline21cases
@@ -137,8 +140,8 @@ binds the same project-set conditional identity6c4f3ef73455cff3fc195ef18ca6ceb6e
 and is assertion-confirmed Killed after a passing21-case baseline. No Survived,
 UNKNOWN, resource denial, timeout or capture/custody loss;163remain unattempted.
 It is diagnostic-only, not a score, reclassification or transfer of old UNKNOWN.
-A fresh full coverage/frozen/native cycle now runs in immutablev274. The exact
-coverage/frozen pair passes as above; native stage /dev/shm/contour-stage-oUMjO8
+A fresh full coverage/frozen/native cycle ran in immutablev274. That exact
+coverage/frozen pair passed; native stage /dev/shm/contour-stage-oUMjO8
 closes171823ms with35Killed/0Survived/1UNKNOWN/128unattempted of164. Captures,
 group custody, boot, commit and clean measured inputs all pass; publication is
 correctly denied. Local95 is the empty workspace-identity diagnostic string, but
@@ -207,6 +210,51 @@ SDK and all original raw diagnostics/UNKNOWN/survivor outcomes remain untouched;
 changed dependency realpaths do not qualify an old run or authorize replay.
 Manifest: /workspace/attachments/closed-dependencies-v281/retention.json.
 Fresh checkouts continue using the separately qualified locked dependency link.
+
+Immutable51e9e4f forms fresh SDK inputs without suites at
+/tmp/rolling-contour-0C1ghq, exit0/1923ms, then the coverage/frozen pair above.
+Full initializationbe0c3af7-40c7-4634-88c3-d1bf861566f2 at
+/tmp/contour-stage-M7owSM closes451905ms:21-case baseline13011ms,
+98assertion-Killed/0Survived/1UNKNOWN/65unattempted of164. Captures and owned
+group close fully; boot/commit/clean inputs are unchanged, resource_blocked=null
+and cgroup OOM counters do not increase. The full native reader correctly denies
+publication. Current58, identity9483a44eada4d768ce2af53b77149b826eb8da09805c4109b3cee032c50c32b1,
+changes the binding retry throw guard from OR to AND. Its exact closed worker is
+body15's pre-entry EEXIST fixture: the incomplete upgrade marker must fail closed
+without retry. The mutant repeatedly retries that non-contention RuntimeConfigError
+until the5s test timeout, before assertions. The one-line correction wraps only
+this expected denial in existing expectNoRetryDelay; the later controlled EEXIST
+retry and real CAS path stay intact. Focused nc1b4q passes the selected case in
+2153ms,20unselected, with complete capture/group closure. This is development
+evidence, not a fresh mutation result. No timeout is credited as Killed. Historical
+UNKNOWNs and counters remain untouched. Numeric work proceeds to image while
+isolated authors prepare actual survivor fixes; no duplicate producer runs.
+
+The image author prepares the actual closed-survivor batch while its full run
+continues. Before tracked Source adoption, the shared quote helper has an
+independent1/1 plan in planned_sql_identifier_quote_20261017, reviewed at
+/workspace/attachments/sql-identifier-quote-budget-plan-review-v286.md. The
+isolated prototype is disclosed; no pre-prototype chronology is claimed. Old
+local quote and redundant inline/filter roles retain their ceilings as retired
+history, without allowance transfer. Surviving sort correspondence follows its
+callsite despite the ordinal collision. Original caps remain unchanged. This
+plan is not a new Source binding, numeric proof or full mutation result.
+
+Image51e9e4f coverage1145a9ba-61a7-4450-8208-9c50e2b0982b at
+/tmp/contour-stage-HqcomJ passes80cases/593assertions, exact F52/52,L202/202,
+S224/224,B61/61. Same-run frozen /tmp/contour-stage-mZs2Ur passes9/9,
+pin32e47aa, with52individually capped Source-added roles and no original-role
+reuse. Full native12cf93c1-6320-448d-ab72-18280231cbf4 at
+/tmp/contour-stage-rIB4F3 closes881800ms: baseline80cases6101ms,
+309assertion-Killed/38Survived/0UNKNOWN/180unattempted of527. Batch2 is
+incomplete with budget_exhausted=true, interrupted=false and resource_blocked=null.
+The outer captures/group/boot/commit/clean-input checks pass and OOM counters do
+not increase. Publication is correctly denied; this is not a score or closure.
+The author prepares actual boundary/quote/encoding/native-handle/sequence
+regressions, shared escaping and the guard-backed redundant-filter removal.
+An independently reviewed per-invocation closed Mastra fixture template returns
+defensive byte copies and may remove repeated external setup without caching the
+selected Source or a live database. Pending candidates are not credited as kills.
 
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed

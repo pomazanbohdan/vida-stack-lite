@@ -20406,7 +20406,7 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains method:constructor at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/workspace-identity.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Retains WorkspaceIdentityError.constructor in src/workspace-identity.ts with the same complete constructor body and error responsibility as genuine b549951; removing the module-level regex constant shifts its source address without changing this body. The current module is not byte-identical. The current binding and predicate changes are reviewed in scope_review_workspace_directory_guard_20261017. Original complexity/CRAP ceilings remain attached to this constructor without increase or transfer.",
       "current_source_address": {
         "line": 9,
         "column": 2,
@@ -20438,7 +20438,7 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains fn:fail at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/workspace-identity.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Retains fail in src/workspace-identity.ts with the same complete body and WorkspaceIdentityError construction responsibility as genuine b549951; removing the module-level regex constant shifts its source address without changing this body. The current module is not byte-identical. The current binding and predicate changes are reviewed in scope_review_workspace_directory_guard_20261017. Original complexity/CRAP ceilings remain attached to this function without increase or transfer.",
       "current_source_address": {
         "line": 15,
         "column": 0,
@@ -20470,7 +20470,7 @@
       "max_complexity": 7,
       "baseline_crap": 7,
       "max_crap": 7,
-      "rationale": "Retains fn:canonicalRepositoryRoot at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/workspace-identity.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Retains canonicalRepositoryRoot in src/workspace-identity.ts as the genuine b549951 absolute-root validation, no-follow directory admission, native realpath and typed diagnostic owner. Current lstat !isDirectory already rejects links; only the redundant isSymbolicLink disjunct is removed. The current body/module is not byte-identical. scope_review_workspace_directory_guard_20261017 binds the actual Source and records CC7->6 within the unchanged original7/7 ceilings. No responsibility, role or allowance transfers.",
       "current_source_address": {
         "line": 24,
         "column": 7,
@@ -20502,7 +20502,7 @@
       "max_complexity": 3,
       "baseline_crap": 3,
       "max_crap": 3,
-      "rationale": "Retains fn:deriveWorkspaceId at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/workspace-identity.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Retains deriveWorkspaceId in src/workspace-identity.ts as the genuine b549951 strict repository-ID validation and canonical JSON SHA-256 workspace-key derivation owner. The unchanged non-stateful regex grammar is now inline after the same primitive-string guard; fields, root canonicalization and hashing remain in this function. The current body/module is not byte-identical. scope_review_workspace_directory_guard_20261017 binds the actual Source; the original3/3 ceilings remain unchanged without role or allowance transfer.",
       "current_source_address": {
         "line": 38,
         "column": 7,
@@ -225711,6 +225711,19 @@
     "limitations": "Static Source correspondence only, not numeric admission. Preserve original b549951 measurement and all original/added ceilings. Require fresh exact coverage, same-run frozen proof and complete assertion-confirmed native mutation for the new image. Old UNKNOWN stays historical.",
     "predecessor_review": "8af2e35505ba5f389bc0f5ae1e3472d4a30e86b1:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#scope_review_runtime_initialization_single_barrier_20261017",
     "correspondence": "All16 identities and original11/added5/removal1 dispositions retained. lstat identifies the link itself; !isDirectory already rejects links and all non-directory roots. Remove only the redundant isSymbolicLink disjunct. canonicalRepositoryRoot CC7->6 within original cap7, with exact error, root validation and native realpath preserved. No role, cap, exclusion or responsibility transfer."
+  },
+  "planned_sql_identifier_quote_20261017": {
+    "status": "REVIEWED_PLAN_BEFORE_TRACKED_SOURCE_ADOPTION_NOT_NUMERIC_ADMISSION",
+    "file": "src/config/project-upgrade-existing-storage.ts",
+    "identity": "src/config/project-upgrade-existing-storage.ts#fn:quoteSqlIdentifier#0",
+    "max_complexity": 1,
+    "max_crap": 1,
+    "responsibility": "One branch-free string transform wraps an SQL identifier in double quotes and doubles embedded double quotes. No parsing, DB access, policy branch, new engine behavior or value interpolation is added.",
+    "budget_basis": "Independent1/1 policy for a single unconditional string transform, reviewed before tracked Source adoption; not a current-run-derived allowance. Keep value parameterization and all existing ownership/schema/integer/cleanup denials.",
+    "prototype_disclosure": "The isolated author already prototyped this helper; Root has not adopted or published its Source. This record makes no pre-prototype chronology claim. Publish this plan before tracked Source adoption.",
+    "retirement_policy": "Retire the former insertSql local q and redundant inline quote callbacks explicitly, retaining their original caps as history without transferring allowances. Retire the redundant sequenceRows filter separately; map its surviving sort by callsite instead of the reused ordinal.",
+    "independent_review": "/workspace/attachments/sql-identifier-quote-budget-plan-review-v286.md",
+    "limitations": "Planning only. One stable changed-Source inventory, exact role dispositions/current source binding and independent applicability review remain necessary before numeric qualification. No original ceiling changes."
   },
   "planned_release_ticket_identity_20261017": {
     "status": "REVIEWED_PLAN_BEFORE_PUBLISHED_SOURCE_ADOPTION_NOT_NUMERIC_ADMISSION",

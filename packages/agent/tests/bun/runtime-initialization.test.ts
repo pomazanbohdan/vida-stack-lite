@@ -926,7 +926,9 @@ test('foreign or stale receipt is rejected without replacing the pending bytes',
       schema_sha256: 'Initialization receipt schema digest is stale.',
       workspace_binding_status: 'Initialization receipt does not satisfy current v1 schema.',
     }[field];
-    await Promise.resolve(expect(bindRuntimeInitialization(root, store)).rejects.toThrow(expectedError));
+    await expectNoRetryDelay(() =>
+      Promise.resolve(expect(bindRuntimeInitialization(root, store)).rejects.toThrow(expectedError)),
+    );
     expect(readFileSync(receiptPath, 'utf8')).toBe(bytes);
   }
   caseCompleted = true;
@@ -937,7 +939,7 @@ test('binding errors retain typed cause evidence', async () => {
   writeFileSync(receiptPath, bytes);
   let caught: unknown;
   try {
-    await bindRuntimeInitialization(root, store);
+    await expectNoRetryDelay(() => bindRuntimeInitialization(root, store));
   } catch (error) {
     caught = error;
   }
@@ -1017,7 +1019,7 @@ async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Pr
     const upgradeMarkerIdentity = lstatSync(upgradeMarkerPath);
     let upgradeDenied: unknown;
     try {
-      await isolated.bindRuntimeInitialization(root, store);
+      await expectNoRetryDelay(() => isolated.bindRuntimeInitialization(root, store));
     } catch (error) {
       upgradeDenied = error;
     }
@@ -1229,16 +1231,18 @@ test('fails closed when the host store or persisted receipt does not match deter
   await Promise.resolve(
     expect(bindRuntimeInitialization(root, new Proxy(store, {}))).rejects.toThrow('trusted HostStateStore'),
   );
-  await Promise.resolve(
-    expect(bindRuntimeInitialization(root, new HostStateStore(database!, 'f'.repeat(64)))).rejects.toThrow(
-      'trusted host workspace differs',
+  await expectNoRetryDelay(() =>
+    Promise.resolve(
+      expect(bindRuntimeInitialization(root, new HostStateStore(database!, 'f'.repeat(64)))).rejects.toThrow(
+        'trusted host workspace differs',
+      ),
     ),
   );
   expect(readFileSync(receiptPath)).toEqual(bytes);
   rmSync(receiptPath);
   let missingReceiptFailure: unknown;
   try {
-    await bindRuntimeInitialization(root, store);
+    await expectNoRetryDelay(() => bindRuntimeInitialization(root, store));
   } catch (error) {
     missingReceiptFailure = error;
   }
@@ -1255,9 +1259,11 @@ test('fails closed when the host store or persisted receipt does not match deter
 test('competing workspace is denied after the first bind', async () => {
   await expectInitializationResult(() => bindRuntimeInitialization(root, store));
   const bytes = readFileSync(receiptPath);
-  await Promise.resolve(
-    expect(bindRuntimeInitialization(root, new HostStateStore(database!, 'f'.repeat(64)))).rejects.toThrow(
-      'trusted host workspace differs from repository identity',
+  await expectNoRetryDelay(() =>
+    Promise.resolve(
+      expect(bindRuntimeInitialization(root, new HostStateStore(database!, 'f'.repeat(64)))).rejects.toThrow(
+        'trusted host workspace differs from repository identity',
+      ),
     ),
   );
   expect(readFileSync(receiptPath)).toEqual(bytes);
