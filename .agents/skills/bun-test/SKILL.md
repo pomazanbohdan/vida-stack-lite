@@ -85,7 +85,11 @@ database and subprocess boundaries. Isolate fixtures and control external
 dependencies. Keep persistence, restart, compare-and-swap, failure-before-effect
 and UNKNOWN behavior real. Use deterministic property checks and independent
 models where they protect the contract. A new test layer should cover a distinct
-regression risk.
+regression risk. For callbacks passed to native APIs, follow TESTING's
+[actual-callback law checks](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle):
+observe the real callback/arguments, delegate and restore the native operation,
+then assert its documented laws alongside public behavior. Keep that evidence
+distinct from coverage and mutation confirmation.
 
 For Source-beforeimage fixtures, reuse `tests/helpers/source-beforeimage-fixture.ts`
 to serialize bytes from the existing successful capture. Keep capture A distinct

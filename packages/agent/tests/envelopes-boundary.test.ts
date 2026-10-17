@@ -1335,6 +1335,7 @@ describe('runtime envelope canonicalization boundary', () => {
     ['mixed offset', '2026-10-17T08:00:00Z', '2026-10-17T10:00:00+03:00'],
     ['submillisecond', '2026-10-17T07:00:00.0000009Z', '2026-10-17T10:00:00.0000001+03:00'],
     ['nanosecond', '2026-10-17T07:00:00.000000001Z', '2026-10-17T10:00:00.000000000+03:00'],
+    ['fraction against no fraction', '2026-10-17T07:00:00.0000001Z', '2026-10-17T10:00:00+03:00'],
   ] as const)(
     'projects the earliest %s lease by instant and preserves wire timestamps',
     async (_label, laterInstantWireExpiry, earlierInstantWireExpiry) => {
@@ -1379,6 +1380,13 @@ describe('runtime envelope canonicalization boundary', () => {
       assertLedgerAccepted(accepted, twoClaims);
       assert.equal(accepted.ledger!.tickets[0]!.expires_at, earlierInstantWireExpiry);
       assert.deepEqual(twoClaims, before);
+
+      const reversedClaims = { ...twoClaims, claims: [...twoClaims.claims].reverse() };
+      const reversedBefore = structuredClone(reversedClaims);
+      const reversedAccepted = expectReturned(() => validateCoordinationLedgerV1(reversedClaims));
+      assertLedgerAccepted(reversedAccepted, reversedClaims);
+      assert.equal(reversedAccepted.ledger!.tickets[0]!.expires_at, earlierInstantWireExpiry);
+      assert.deepEqual(reversedClaims, reversedBefore);
 
       const lexicalMinimumProjection = {
         ...twoClaims,
@@ -1430,7 +1438,39 @@ describe('runtime envelope canonicalization boundary', () => {
     } satisfies CoordinationLedger;
     const before = structuredClone(tiedClaims);
 
-    const accepted = expectReturned(() => validateCoordinationLedgerV1(tiedClaims));
+    const comparatorObservations: Array<{
+      readonly compare: (left: unknown, right: unknown) => number;
+      readonly left: unknown;
+      readonly right: unknown;
+    }> = [];
+    const nativeToSorted = Array.prototype.toSorted;
+    const sortSpy = spyOn(Array.prototype, 'toSorted').mockImplementation(function <T>(
+      this: T[],
+      compareFn?: (left: T, right: T) => number,
+    ): T[] {
+      if (!compareFn) return nativeToSorted.call(this);
+      const compare = compareFn as (left: unknown, right: unknown) => number;
+      return nativeToSorted.call(this, (left: T, right: T) => {
+        comparatorObservations.push({ compare, left, right });
+        return compareFn(left, right);
+      });
+    });
+    let accepted: CoordinationLedgerValidationResult;
+    try {
+      accepted = expectReturned(() => validateCoordinationLedgerV1(tiedClaims));
+    } finally {
+      sortSpy.mockRestore();
+    }
+    assert.ok(comparatorObservations.length > 0, 'public validation must pass its lease comparator to native toSorted');
+    for (const { compare, left, right } of comparatorObservations) {
+      assert.equal(compare(left, left), 0, 'native sort comparator must return zero for the same row');
+      assert.equal(compare(right, right), 0, 'native sort comparator must return zero for the same row');
+      assert.equal(
+        Math.sign(compare(left, right)) + Math.sign(compare(right, left)),
+        0,
+        'native sort comparator must be antisymmetric for rows it compares',
+      );
+    }
     assertLedgerAccepted(accepted, tiedClaims);
     assert.equal(accepted.ledger!.tickets[0]!.expires_at, lexicalMinimum);
 

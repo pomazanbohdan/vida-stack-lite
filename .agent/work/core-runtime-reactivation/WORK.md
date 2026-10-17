@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published implementation main: `52fc50e71d7305fe18b554b6ddb1fccf8e86a577`; audit fixes, three-contour policy, survivor controls and reviewed facade correspondence passed ordinary strict pre-commit and were pushed. The pinned facade review and fresh compatible local triple are recorded below. Runtime initialization, storage admission and existing-storage image still need complete mutation closures. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest checked Source/test packet: `5f97270f31d0f45e81bf5a96b8af53f427f85654`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read and live public-gate controls. The pinned facade review and fresh compatible local triple are recorded below. Active runtime initialization, envelopes and storage admission still need complete mutation closures. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -258,8 +258,8 @@ replacement, parent replacement, invalid Mastra path, primitive capability
 denial, binding schema and dual Host failure context. Existing fixture builders
 and ordered body/cleanup error handling are retained. No fabricated authority or
 one-fixture-per-diagnostic expansion is added. Equivalent/unreachable candidates
-(including verifier null/undefined, normalized SQLite integer representation,
-the already-thrown one-error arm and live-only gate wrappers) remain analysis
+(including verifier null/undefined, normalized SQLite integer representation
+and the already-thrown one-error arm) remain analysis
 GAPs; no fake assertion, ignore or Killed claim is introduced. Remaining native
 IDs and byte-length denial controls still need their own bounded proof.
 
@@ -308,9 +308,45 @@ complete captures/groups and unchanged boot. Root also finds a reachable public
 gate control for former233/255 candidates: while the real callback remains live,
 the existing gate-sidecar fixture must make the public capability guard reject;
 it must succeed before and after restoration. `dndQAo` passes that affected case.
-The earlier unreachability hypothesis is rejected; fresh assertion-confirmed
-mutation for these controls is still pending. Final static checks and publication
-follow this test-only packet.
+The earlier unreachability hypothesis is rejected. The published5f97270 packet
+passes ordinary strict505-file typecheck, Oxlint, Knip and staged checks. Its final
+short-read control `ZKsPJQ` passes1case in999ms after tightening the native buffer
+type guard to the actual Uint8Array input.
+
+Fresh admission coverage `ni62CM`, run
+`b027776b-ba1e-419e-aa8c-b147fcc935cf`, passes28tests/281assertions with exact
+F18/18,L101/101,S104/104,B17/17 in14314ms. Same-run frozen `Qgch8Z` passes the
+original d6cab7c disposition at maxCC5/maxCRAP5. Captures and process groups are
+complete, boot and checked inputs unchanged. Both are imported:492attempts in
+the canonical projection, with no new complete mutation closure.
+
+Two bounded native diagnostic sets use that same checked packet and its accepted
+SDK inputs. `zRmFJT`, run `53e7e894-aae8-412f-8338-cfecf7612d2f`, confirms the
+short-read guard and diagnostic (locals62/65) Killed in21991ms. `zJmjkw`, run
+`c4db8673-9acc-47db-9ce5-0727bfcb3ae5`, confirms the live public gate wrappers
+(locals235/257) Killed in30359ms. Each has one full28-case baseline,2Killed,
+226unattempted,0survived/UNKNOWN and complete captures/groups with unchanged boot
+and inputs. These are separate repair confirmations, not a unioned4/4 score or
+passing contour proof; their nonzero diagnostic exits retain the unattempted
+universe. Older local IDs are historical and not reused as current identities.
+
+The full envelopes request `dccc1afe-f519-4f51-bea4-921b5c95cc55` (`gfTGmK`)
+now terminates diagnostically in900724ms under the single partition budget,
+without the outer930s kill. Its full45-case baseline and763-mutant universe yield
+331attempted,325Killed,5survived,1UNKNOWN and432unattempted. Captures and outer
+groups close with unchanged boot/inputs; the final in-flight mutant is UNKNOWN,
+so preserve all v159 mutation sandbox/scratch and the output namespace. No complete
+proof or score is emitted, and this namespace will not be reused. This confirms
+the partition deadline is no longer renewed; it does not resolve effect custody.
+
+Blind preparation plus independent review targets all five current survivors in
+the existing envelope fixtures: reversed fractional claims, no-fraction versus
+nanosecond remainder, and native comparator reflexivity/antisymmetry on actual
+callback arguments. The native sort is delegated and restored before law assertions;
+public projection, reversal and immutability assertions remain. The law checks do
+not establish transitivity over arbitrary triples or a public-output counterexample
+for every malformed comparator. Root integrates only after the old producer is
+terminal; fresh affected and mutation repair confirmations remain required.
 
 ### Published admission packet — retained context
 

@@ -1440,6 +1440,17 @@ do not start duplicate suites, scans, hashes or inventories.
    Killed100 for the same bound inputs; retain freshness/global-admission limits.
    Immediately fill its slot with the next ready contour.
 
+For a private callback supplied to a native API, test the native API's documented
+callback contract when public output alone hides a violation. Observe the actual
+callback and arguments through a scoped dependency spy, delegate the real native
+operation and restore it in finally. For sorting, the
+[ECMAScript consistent-comparator contract](https://tc39.es/ecma262/multipage/indexed-collections.html#consistent-comparator)
+requires reflexive equality and a consistent total order. Check applicable laws
+on observed rows, alongside public result and input-preservation assertions.
+Do not copy the implementation, invent callback inputs or export a private helper
+solely for a mutation score. Callback-law assertions, public behavior, coverage
+and assertion-confirmed mutation remain distinct evidence.
+
 Preparation is parallel across the active contours. Numeric producers remain
 under one Root owner and their existing resource admission; this policy does not
 activate concurrent coverage shards. Freeze the measured checkout until its
