@@ -2212,6 +2212,10 @@ After settlement, synchronous deferred cleanups run in reverse ownership order,
 preserving body and cleanup causes through completeOwnedCleanup. Retention is
 checked after native close against the same case deadline. Use an enrolled
 fixture when preparing admitted work, so setup does not take a second close path.
+The cleanup helper returns normally after successful cleanup. A catch that only
+stores the body/assertion error must explicitly rethrow it afterwards; a pending
+throw through finally resumes by itself. Do not add passing behavioral probes
+between cleanup and that rethrow or change the helper's finally contract.
 An unresolved body keeps database cleanup unproven even when its process exits;
 retain its root and native failed outcome, never relabel it PASS or Killed.
 

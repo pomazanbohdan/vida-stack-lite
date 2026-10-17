@@ -529,6 +529,8 @@ test('CLEAR command parser rejects malformed invocations and accepts a complete 
     [required.map((value, index) => (index === 1 ? 'unknown' : value)), 'documentation CLEAR mode invalid'],
     [required.map((value, index) => (index === 3 ? 'relative' : value)), 'documentation project root must be absolute'],
     [required.map((value, index) => (index === 9 ? '../bad' : value)), 'documentation work id invalid'],
+    [required.slice(0, -2), 'documentation CLEAR missing --source-revision'],
+    [required.map((value, index) => (index === 9 ? 'a'.repeat(129) : value)), 'documentation work id invalid'],
   ];
   for (const [args, message] of malformedCases) await expectRejection(runDocumentationClear(args), message);
 

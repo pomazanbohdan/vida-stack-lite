@@ -56,17 +56,17 @@ function closedImage(root: string, relative: string): ClosedDatabaseImage {
   const parentIdentity = access.directoryIdentity(parent, label);
   sourceSidecarsAbsent(root, relative);
   const stat = lstatSync(path.join(root, relative), { bigint: true });
-  requireAdmission(
-    stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1n,
-    'source is not a private regular file',
-  );
+  requireAdmission(stat.isFile() && stat.nlink === 1n, 'source is not a private regular file');
   requireAdmission(stat.size > 0n && stat.size <= 4n * 1024n * 1024n, 'source exceeds the merge byte bound');
   const before = { device: String(stat.dev), inode: String(stat.ino), size: Number(stat.size) };
   const bytes = access.readBytes(relative, label);
   const afterStat = lstatSync(path.join(root, relative), { bigint: true });
   const after = { device: String(afterStat.dev), inode: String(afterStat.ino), size: Number(afterStat.size) };
   sourceSidecarsAbsent(root, relative);
-  requireAdmission(canonicalJsonDigest(before) === canonicalJsonDigest(after), 'source changed during image capture');
+  requireAdmission(
+    afterStat.nlink === 1n && canonicalJsonDigest(before) === canonicalJsonDigest(after),
+    'source changed during image capture',
+  );
   requireAdmission(bytes.byteLength === after.size, 'source image size differs');
   requireAdmission(access.directoryIdentity(parent, label) === parentIdentity, 'source parent was replaced');
   return Object.freeze({
@@ -210,7 +210,7 @@ export async function withExistingStorageMergeCapability<T>(input: {
       return fence;
     },
     async (gate) => {
-      gate.assertActive();
+      // The exclusive owner checks gate activity immediately before invoking this callback.
       checkpointAndClose(input.repositoryRoot, input.mastraRelative, gate);
       const hostImage = closedImage(input.repositoryRoot, input.hostRelative);
       const mastraImage = closedImage(input.repositoryRoot, input.mastraRelative);
@@ -256,7 +256,7 @@ export async function withExistingStorageMergeCapability<T>(input: {
         mastraRelative: input.mastraRelative,
       });
       try {
-        capability.assertActive();
+        // Source validation begins with the same capability, gate and repository activity checks.
         capability.assertSourcesUnchanged();
         return await input.operation(capability);
       } finally {

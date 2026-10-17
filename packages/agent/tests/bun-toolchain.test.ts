@@ -536,6 +536,40 @@ test('reuses a supplied pinned executable, still verifies its version, and clean
   assert.equal(calls[1]!.options.detached, process.platform !== 'win32');
 });
 
+test('successful timeout cleanup does not swallow the primary payload timeout', () => {
+  const { root, pin } = fixture();
+  const timeoutError = systemError('ETIMEDOUT', 'payload exceeded its allowance');
+  let cleanupCalls = 0;
+  let calls = 0;
+  let thrown: unknown;
+  try {
+    runPinnedBun(['test', 'tests/smoke.test.ts'], {
+      root,
+      executable: '/fixture/pinned-bun',
+      timeoutMs: 123,
+      cleanup() {
+        cleanupCalls++;
+        return { status: 0 };
+      },
+      spawn() {
+        calls++;
+        return calls === 1 ? success(pin) : { status: null, signal: 'SIGKILL', error: timeoutError, pid: 31337 };
+      },
+    });
+  } catch (error: unknown) {
+    thrown = error;
+  }
+  assert.equal(calls, 2, 'the version probe must finish before the payload timeout');
+  assert.ok(thrown instanceof Error, 'the caller must surface the primary payload failure after cleanup');
+  assert.match(
+    thrown.message,
+    /Timed out after \d+ ms; process-tree cleanup was attempted\. Cleanup outcome: command_succeeded\./,
+  );
+  assert.equal((thrown as Error & { cause?: unknown }).cause, timeoutError);
+  assert.equal((thrown as Error & { timedOut?: boolean }).timedOut, true);
+  assert.equal(cleanupCalls, 1, 'the cleanup observation must complete before the caller rethrows the primary error');
+});
+
 test('pinned command preserves the payload spawn error as its cause', () => {
   const { root, pin } = fixture();
   const payloadError = systemError('ENOENT', 'payload executable disappeared');
@@ -1427,6 +1461,29 @@ test('non-object manifest is rejected before runtime selection or spawn', () => 
     if (!passed) {
       temporaryRoots.delete(root);
       console.error('Retained failed non-object Bun manifest fixture: ' + root);
+    }
+  }
+});
+
+test('malformed JSON manifest is rejected before runtime selection or spawn', () => {
+  const { root } = fixture();
+  let passed = false;
+  try {
+    writeFileSync(path.join(root, 'package.json'), '{"packageManager":');
+    assert.throws(
+      () =>
+        runPinnedBun([], {
+          root,
+          env: {},
+          spawn: () => assert.fail('malformed package metadata must fail before a child launch'),
+        }),
+      SyntaxError,
+    );
+    passed = true;
+  } finally {
+    if (!passed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed malformed Bun manifest fixture: ' + root);
     }
   }
 });

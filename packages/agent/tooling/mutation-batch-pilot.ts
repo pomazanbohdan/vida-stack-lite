@@ -430,6 +430,8 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
               batch: index,
               completed,
               planned: batch.identities.length,
+              local_id: row.local_id,
+              identity: row.identity,
               status: row.status,
               totals: { ...totals },
             }),

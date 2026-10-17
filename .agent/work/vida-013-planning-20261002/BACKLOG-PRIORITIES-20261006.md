@@ -1,6 +1,6 @@
 # VIDA backlog priorities
 
-Status date: 2026-10-15. This page is the current priority index. The eight P0 and ten P1 rows are work contours, not counts of confirmed defects. Stable task IDs and historical decisions remain recoverable at `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e:.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md`.
+Status date: 2026-10-17. This page is the current priority index. The eight P0 and ten P1 rows are work contours, not counts of confirmed defects. Stable task IDs and historical decisions remain recoverable at `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e:.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md`.
 
 The execution order lives in [CLEAN-START-STRATEGY-20261009.md](../core-runtime-reactivation/CLEAN-START-STRATEGY-20261009.md). Current evidence lives in [WORK.md](../core-runtime-reactivation/WORK.md). Root owns integration and final acceptance.
 Current preparation and terminal measurements are maintained once in
@@ -20,7 +20,7 @@ acceptance. Complete numeric qualification and runtime cutover remain open.
 
 | Contour                                                               | Current disposition                                                                             | Open acceptance                                                                                                 |
 | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Admission and ownership: `F01`, `F02`, `F04`, `F06`, `P0-02`, `P0-04` | Repairs are implemented. No new defect is established by the latest review.                     | Current complete acceptance and fresh native Runtime evidence.                                                  |
+| Admission and ownership: `F01`, `F02`, `F04`, `F06`, `P0-02`, `P0-04` | Post-read hardlink privacy race reproduced and fixed; real filesystem regression passes. See WORK for retained RED/GREEN. | Fresh Source numeric qualification, complete acceptance and native Runtime evidence. |
 | Root and unresolved writer: `F03`, `F05`                              | Bound-root renewal and terminal/quiescence fences are retained.                                 | Target qualification. UNKNOWN operations remain closed.                                                         |
 | Rollback and filesystem: `F07`, `F09`                                 | Merge acquisition and thrown-undefined cleanup defects fixed with17PASS and independent acceptance. Host rollback cause loss and temporary-path cleanup ownership remain open; see WORK audit. | Preserve cleanup custody; correct remaining cause/ownership findings, then native target proof. Linux or simulation evidence does not prove Windows behavior. |
 | Pre-commit: `P0-03` and existing hook work                            | Ordinary strict hook passed on published packages. The old Babel blocker is resolved.           | Shared final quality acceptance.                                                                                |

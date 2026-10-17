@@ -41,6 +41,26 @@ test('bundled scope denies missing fields, unknown fields and duplicate paths', 
   expect(expectReturned(() => validateImplementationScope({ ...scope, allowed_paths: [] }))).toBe(false);
 });
 
+test('bundled string sets reject empty members while optional documentation paths may be empty', () => {
+  for (const key of [
+    'ac_ids',
+    'allowed_paths',
+    'implementation_paths',
+    'changed_symbols',
+    'non_goals',
+    'acceptance_trace',
+    'behavior_trace',
+    'test_trace',
+    'diagnostic_trace',
+  ] as const) {
+    expect(expectReturned(() => validateImplementationScope({ ...scope, [key]: [''] }))).toBe(false);
+    expect(validateImplementationScope.errors?.some((error) => error.keyword === 'minLength')).toBe(true);
+  }
+  expect(expectReturned(() => validateImplementationScope({ ...scope, documentation_paths: [] }))).toBe(true);
+  expect(expectReturned(() => validateImplementationScope({ ...scope, documentation_paths: [''] }))).toBe(false);
+  expect(validateImplementationScope.errors?.some((error) => error.keyword === 'minLength')).toBe(true);
+});
+
 test('selected schemas control validation independently of the bundled contract', () => {
   fc.assert(
     fc.property(fc.string(), (selected) => {

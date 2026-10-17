@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import assert from 'node:assert/strict';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
+import * as fs from 'node:fs';
 import {
   linkSync,
   lstatSync,
@@ -21,6 +22,7 @@ import {
   HostStateStore,
   initializeHostDatabaseSchema,
   openHostStateDatabase,
+  type MaintenanceFence,
   type MaintenanceFenceBinding,
   type MaintenanceFenceReceipt,
 } from '../../src/host-state.js';
@@ -181,12 +183,62 @@ function trackedTest(name: string, body: () => Promise<void>): void {
 }
 
 describe('native existing-storage admission boundary', () => {
-  for (const observation of [
-    { field: 'status', value: 'released', message: 'Host maintenance fence is not held' },
-    { field: 'token_digest', value: '0'.repeat(64), message: 'held Host token digest differs' },
-  ] as const) {
-    trackedTest(`denies an inconsistent ${observation.field} observation after real Host verification`, async () => {
-      const fixture = freshFixture();
+  const observations: readonly {
+    readonly field: string;
+    readonly message: string;
+    readonly alter: (verified: MaintenanceFence, fixture: Fixture) => MaintenanceFence;
+  }[] = [
+    {
+      field: 'status',
+      message: 'Host maintenance fence is not held',
+      alter: (verified) => ({ ...verified, status: 'released' }),
+    },
+    {
+      field: 'workspace_id',
+      message: 'held Host fence workspace differs',
+      alter: (verified) => ({ ...verified, workspace_id: '0'.repeat(64) }),
+    },
+    {
+      field: 'binding.operation_id',
+      message: 'held Host fence operation differs',
+      alter: (verified) => ({
+        ...verified,
+        binding: { ...verified.binding, operation_id: 'faulted-operation' },
+      }),
+    },
+    {
+      field: 'binding.manifest_digest',
+      message: 'held Host fence binding differs',
+      alter: (verified) => ({
+        ...verified,
+        binding: { ...verified.binding, manifest_digest: 'a'.repeat(64) },
+      }),
+    },
+    {
+      field: 'generation',
+      message: 'held Host fence generation differs',
+      alter: (verified, fixture) => ({
+        ...verified,
+        generation: fixture.receipt.fence.generation + 1,
+      }),
+    },
+    {
+      field: 'revision',
+      message: 'held Host fence revision differs',
+      alter: (verified, fixture) => ({
+        ...verified,
+        revision: fixture.receipt.fence.revision + 1,
+      }),
+    },
+    {
+      field: 'token_digest',
+      message: 'held Host token digest differs',
+      alter: (verified) => ({ ...verified, token_digest: '0'.repeat(64) }),
+    },
+  ];
+  trackedTest('denies inconsistent private fence observations after real Host verification', async () => {
+    const fixture = freshFixture();
+    for (const observation of observations) {
       const originalAssert = Reflect.get(
         HostStateStore.prototype,
         'assertMaintenanceFence',
@@ -200,7 +252,9 @@ describe('native existing-storage admission boundary', () => {
         if (this === fixture.hostStore) return verified;
         verifiedObservations++;
         // Fault only the dependency observation after its real persisted receipt check.
-        return { ...verified, [observation.field]: observation.value };
+        const altered = observation.alter(verified, fixture);
+        expect(altered).not.toEqual(fixture.receipt.fence);
+        return altered;
       };
       try {
         try {
@@ -232,11 +286,60 @@ describe('native existing-storage admission boundary', () => {
       expect(verifiedObservations).toBe(1);
       expect(ownerCloses).toBe(0);
       expect(operations).toBe(0);
-      expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
-      closeHostOwner(fixture);
-      await releaseFence(fixture.root, fixture.receipt);
-    });
-  }
+      // The zero-close assertion proves this exact registered owner is still live.
+      expect(expectReturned(() => fixture.hostStore.readMaintenanceFence())).toEqual(fixture.receipt.fence);
+    }
+    closeHostOwner(fixture);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
+  trackedTest('denies a missing exact Host owner close callback before any merge effect', async () => {
+    const fixture = freshFixture();
+    const hostPath = path.join(fixture.root, hostRelative);
+    const mastraPath = path.join(fixture.root, mastraRelative);
+    const hostBytes = readFileSync(hostPath);
+    const mastraBytes = readFileSync(mastraPath);
+    let ownerCloses = 0;
+    let operations = 0;
+    const request = {
+      repositoryRoot: fixture.root,
+      workspaceId,
+      operationId: binding.operation_id,
+      planDigest: '9'.repeat(64),
+      expectedFenceBinding: binding,
+      receipt: fixture.receipt,
+      hostRelative,
+      mastraRelative,
+      closeHostOwner: () => {
+        ownerCloses++;
+        closeHostOwner(fixture);
+      },
+      operation: async () => {
+        operations++;
+      },
+    };
+    Object.defineProperty(request, 'closeHostOwner', { value: undefined });
+
+    let caught: unknown;
+    try {
+      await withExistingStorageMergeCapability(request);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught).toHaveProperty(
+      'message',
+      'VIDA existing storage admission: exact Host owner close callback is required',
+    );
+    expect(ownerCloses).toBe(0);
+    expect(operations).toBe(0);
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    expect(readFileSync(hostPath)).toEqual(hostBytes);
+    expect(readFileSync(mastraPath)).toEqual(mastraBytes);
+    closeHostOwner(fixture);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
 
   for (const fault of [
     {
@@ -350,6 +453,88 @@ describe('native existing-storage admission boundary', () => {
       await releaseFence(fixture.root, fixture.receipt);
     });
   }
+
+  trackedTest('denies a Mastra hardlink added after verified bytes during final image validation', async () => {
+    const fixture = freshFixture();
+    const mastraPath = path.join(fixture.root, mastraRelative);
+    const alias = mastraPath + '.late-alias';
+    const originalStat = Reflect.get(fs, 'lstatSync') as typeof fs.lstatSync;
+    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    let capturePhase = false;
+    let capturedStats = 0;
+    let aliasOwned = false;
+    let operations = 0;
+    let caught: unknown;
+    let bodyFailure: { error: unknown } | undefined;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      if (
+        capturePhase &&
+        args[0] === mastraPath &&
+        args[1] !== undefined &&
+        typeof args[1] === 'object' &&
+        Reflect.get(args[1], 'bigint') === true
+      ) {
+        capturedStats++;
+        // The initial image is healthy. Inject only at the final lstat of its
+        // later capability revalidation, after the real verified byte read.
+        if (capturedStats === 4) {
+          linkSync(mastraPath, alias);
+          aliasOwned = true;
+        }
+      }
+      return originalStat(...args);
+    }) as typeof fs.lstatSync);
+    Database.prototype.close = function (throwOnError) {
+      const isMastra = this.filename === mastraPath;
+      Reflect.apply(originalClose, this, [throwOnError]);
+      if (isMastra) capturePhase = true;
+    };
+    try {
+      try {
+        await withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => closeHostOwner(fixture),
+          operation: async () => {
+            operations++;
+          },
+        });
+      } catch (error) {
+        caught = error;
+      }
+      expect(aliasOwned).toBe(true);
+      expect(capturedStats).toBe(4);
+      expect(lstatSync(alias, { bigint: true }).nlink).toBe(2n);
+      expect(caught).toHaveProperty('message', 'VIDA existing storage admission: source changed during image capture');
+      expect(operations).toBe(0);
+    } catch (error) {
+      bodyFailure = { error };
+    } finally {
+      Database.prototype.close = originalClose;
+      completeOwnedCleanup(
+        [
+          () => {
+            stats.mockRestore();
+            return undefined;
+          },
+          () => {
+            if (aliasOwned) unlinkSync(alias);
+            return undefined;
+          },
+        ],
+        bodyFailure,
+      );
+    }
+    if (bodyFailure) throw bodyFailure.error;
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
 
   trackedTest('rechecks the live admission gate when a callback capability is asserted', async () => {
     const fixture = freshFixture();

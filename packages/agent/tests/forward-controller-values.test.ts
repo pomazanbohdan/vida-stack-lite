@@ -14,6 +14,14 @@ test('sha256 hashes UTF-8 strings and raw byte arrays', () => {
   );
 });
 
+test('sha256 hashes only the visible bytes of a typed-array view', () => {
+  const backing = new Uint8Array([9, 0, 255, 1, 128, 9]);
+  assert.equal(
+    expectReturned(() => sha256(backing.subarray(1, 5))),
+    'edc81f7e4ee358fb91e94bd9bd74079c3dcba36f40f2c8a36e7ae0567afecc8f',
+  );
+});
+
 test('prettyJSON preserves ordinary JSON formatting and serialization outcomes', () => {
   assert.equal(
     expectReturned(() => prettyJSON({ text: 'é', nested: [1, true] })).toString(),

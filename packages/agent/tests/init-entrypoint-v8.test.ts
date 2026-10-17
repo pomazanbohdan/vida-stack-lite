@@ -18,7 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { initializeProject, main } from '../bin/init.ts';
 import { initializeProjectFromBundle } from '../bin/init-core.ts';
 import { createInitializationBundle } from './helpers/init-bundle.js';
-import { expectReturned, expectRejection } from './helpers/expect-rejection.ts';
+import { expectReturned, expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.js';
 import * as safeRepositoryAccess from '../src/config/safe-repository-access.js';
 
@@ -523,6 +523,48 @@ test('initializer resolves project-local and bundled local knowledge sources bef
       '.agent',
     ]);
     expect(existsSync(path.join(projectRoot, '.agent', 'runtime-initialization.v1.json'))).toBe(true);
+    completed = true;
+  } finally {
+    retainedCleanup(projectRoot, completed);
+  }
+});
+
+test('initializer rejects missing configured local knowledge before publishing and retains project documents', async () => {
+  const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-missing-knowledge-'));
+  let completed = false;
+  try {
+    const bundleRoot = createInitializationBundle(packageRoot, projectRoot);
+    const existingSource = path.join(projectRoot, 'docs', 'project-owned.md');
+    const existingSourceBytes = Buffer.from('Project-owned source must remain unchanged.\n');
+    mkdirSync(path.dirname(existingSource), { recursive: true });
+    writeFileSync(existingSource, existingSourceBytes);
+    const missingSource = path.join(projectRoot, 'docs', 'missing-knowledge.md');
+    const templateFile = path.join(bundleRoot, 'templates/agent-runtime.config.template.v1.yaml');
+    const template = readFileSync(templateFile, 'utf8');
+    const expected = 'knowledge:\n  sources:\n';
+    expect(template.split(expected)).toHaveLength(2);
+    writeFileSync(
+      templateFile,
+      template.replace(
+        expected,
+        `${expected}    - id: missing-project-knowledge\n      kind: local\n      location: docs/missing-knowledge.md\n      title: Missing project knowledge\n`,
+      ),
+    );
+
+    const initialization = initializeProjectFromBundle(validRequest(projectRoot), bundleRoot);
+    await expectRejection(initialization, path.basename(missingSource));
+    const failure = await rejectionReason(initialization);
+    expect(failure).toMatchObject({ code: 'ENOENT' });
+    expect(String(failure)).toContain(path.basename(missingSource));
+    expect(readFileSync(existingSource)).toEqual(existingSourceBytes);
+    expect(readdirSync(projectRoot).sort()).toEqual(['docs', 'vida-agent']);
+    expect(readdirSync(path.join(projectRoot, 'docs'))).toEqual(['project-owned.md']);
+    expect(
+      ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', '.agent'].some((entry) =>
+        existsSync(path.join(projectRoot, entry)),
+      ),
+    ).toBe(false);
+    expect(existsSync(path.join(projectRoot, '.agent', 'runtime-initialization.v1.json'))).toBe(false);
     completed = true;
   } finally {
     retainedCleanup(projectRoot, completed);

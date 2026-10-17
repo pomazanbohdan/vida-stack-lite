@@ -105,6 +105,10 @@ forward later owners unchanged so their cleanup does not mask the failed asserti
 After capturing a failed behavioral assertion, run necessary cleanup and preserve
 that error. Keep later behavioral probes on the successful path. A later passing
 matcher consumes assertion provenance; the adapter must not carry it forward.
+`completeOwnedCleanup` joins a primary cause only when cleanup also fails. If a
+catch stores the body error, explicitly rethrow it after successful cleanup.
+A throw already propagating through finally resumes automatically; retain that
+contract rather than changing the helper to throw on successful cleanup.
 Recheck a known repair through the native pilot's `--diagnostic-mutant-id` with
 singleton batch bounds. Resolve its current canonical identity and Source binding;
 do not rerun all preceding IDs or treat one diagnostic kill as a contour score.
