@@ -119,6 +119,10 @@ const scopedBudgetReviews = new Map([
     'scope_review_custody_raw_digest_20261017',
   ],
   [
+    'fd0507b040bb931b11d58d574401433b73a7e8f7:bun-service-operation-custody',
+    'scope_review_custody_claim_predicate_20261017',
+  ],
+  [
     'c8d952a328519c6c2c64db2e6fea22849ccabfaf:bun-project-upgrade-existing-storage-image',
     'scope_review_storage_image_literal_prefix_20261017',
   ],
