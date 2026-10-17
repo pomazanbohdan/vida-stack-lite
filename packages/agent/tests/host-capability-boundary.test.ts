@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import * as fsNamespace from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import type { NativeNoFollowCapability } from '../src/config/host-capability.ts';
 import * as realSafeAccessNamespace from '../src/config/safe-repository-access.ts';
@@ -8,14 +9,15 @@ import { fsSafeIntegrity, fsSafeVersion } from '../src/config/fs-safe-attestatio
 
 const realFsExports = { ...fsNamespace };
 const realSafeAccessExports = { ...realSafeAccessNamespace };
+const hostCapabilityRequire = createRequire(import.meta.url);
+const hostCapabilityModulePath = hostCapabilityRequire.resolve('../src/config/host-capability.ts');
 
 const providerAccess = (provider: SafeRepositoryAccess['provider']) =>
   ({ provider }) satisfies Pick<SafeRepositoryAccess, 'provider'>;
 
-async function importFreshHostCapability(caseName: string): Promise<typeof import('../src/config/host-capability.ts')> {
-  return (await import(
-    `../src/config/host-capability.ts?provider-case=${encodeURIComponent(caseName)}`
-  )) as typeof import('../src/config/host-capability.ts');
+function loadHostCapability(): typeof import('../src/config/host-capability.ts') {
+  delete hostCapabilityRequire.cache[hostCapabilityModulePath];
+  return hostCapabilityRequire(hostCapabilityModulePath) as typeof import('../src/config/host-capability.ts');
 }
 
 function expectCapabilityCall(
@@ -29,8 +31,8 @@ function expectCapabilityCall(
 }
 
 describe('host capability native boundary', () => {
-  test('rejects non-string, relative and noncanonical repository roots', async () => {
-    const host = await import('../src/config/host-capability.ts');
+  test('rejects non-string, relative and noncanonical repository roots', () => {
+    const host = loadHostCapability();
     expect(() => {
       Reflect.apply(host.detectNativeNoFollowCapability, undefined, [null]);
     }).toThrow(/absolute/);
@@ -38,8 +40,8 @@ describe('host capability native boundary', () => {
     expect(() => host.detectNativeNoFollowCapability(process.cwd() + path.sep + '.')).toThrow(/canonical/);
   });
 
-  test('reports and requires the qualified native Linux descriptor capability', async () => {
-    const host = await import('../src/config/host-capability.ts');
+  test('reports and requires the qualified native Linux descriptor capability', () => {
+    const host = loadHostCapability();
     expect(host.nativeNoFollowAvailable).toBe(true);
     const capability = expectCapabilityCall(() => host.detectNativeNoFollowCapability(process.cwd()));
     expect(capability).toStrictEqual({
@@ -87,9 +89,7 @@ describe('host capability provider boundary', () => {
       safeRepositoryProviderAvailable: true,
       detectSafeRepositoryAccess: () => ({ provider: parsedProvider }),
     }));
-    const host = await importFreshHostCapability(
-      'returns null and rejects when the provider identity is not recognized',
-    );
+    const host = loadHostCapability();
     const repositoryRoot = process.cwd();
 
     expect(expectCapabilityCall(() => host.detectNativeNoFollowCapability(repositoryRoot))).toBeNull();
@@ -111,9 +111,7 @@ describe('host capability provider boundary', () => {
     }));
     Object.defineProperty(process, 'platform', { configurable: true, value: 'linux' });
     try {
-      const host = await importFreshHostCapability(
-        'reports the Linux descriptor capability when the native flags and provider are present',
-      );
+      const host = loadHostCapability();
       const repositoryRoot = process.cwd();
       const capability = expectCapabilityCall(() => host.detectNativeNoFollowCapability(repositoryRoot));
 
@@ -157,7 +155,7 @@ describe('host capability provider boundary', () => {
         attested: false,
       }),
     }));
-    const host = await importFreshHostCapability('does not attest unknown Windows filesystems for durable operations');
+    const host = loadHostCapability();
     const capability = expectCapabilityCall(() => host.detectNativeNoFollowCapability(process.cwd()));
 
     expect(capability).toStrictEqual({
@@ -186,7 +184,7 @@ describe('host capability provider boundary', () => {
       safeRepositoryProviderAvailable: false,
       detectSafeRepositoryAccess: () => providerAccess('unavailable'),
     }));
-    const host = await importFreshHostCapability('reports unavailable when the safe provider is absent');
+    const host = loadHostCapability();
 
     expect(host.nativeNoFollowAvailable).toBe(false);
   });
@@ -204,9 +202,7 @@ describe('host capability provider boundary', () => {
     }));
     Object.defineProperty(process, 'platform', { configurable: true, value: 'linux' });
     try {
-      const host = await importFreshHostCapability(
-        'requires a nonzero native flag when the Linux provider is available',
-      );
+      const host = loadHostCapability();
       expect(host.noFollowFlag).toBe(0);
       expect(host.nativeNoFollowAvailable).toBe(false);
     } finally {
@@ -224,7 +220,7 @@ describe('host capability provider boundary', () => {
       safeRepositoryProviderAvailable: true,
       detectSafeRepositoryAccess: () => providerAccess('linux-proc-fd'),
     }));
-    const host = await importFreshHostCapability('defaults a missing O_NOFOLLOW flag to zero');
+    const host = loadHostCapability();
 
     expect(host.noFollowFlag).toBe(0);
     expect(host.nativeNoFollowAvailable).toBe(false);
@@ -240,9 +236,7 @@ describe('host capability provider boundary', () => {
       safeRepositoryProviderAvailable: true,
       detectSafeRepositoryAccess: () => providerAccess('unavailable'),
     }));
-    const host = await importFreshHostCapability(
-      'does not advertise Windows durability without a positive filesystem proof',
-    );
+    const host = loadHostCapability();
 
     expect(host.nativeNoFollowAvailable).toBe(false);
   });
@@ -287,7 +281,7 @@ async function assertWindowsFilesystemCapability(
   }));
   Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' });
   try {
-    const host = await importFreshHostCapability(`${filesystem} descriptor provider attested ${providerAttested}`);
+    const host = loadHostCapability();
     const repositoryRoot = process.cwd();
     const capability = expectCapabilityCall(() => host.detectNativeNoFollowCapability(repositoryRoot));
     const expected: NativeNoFollowCapability = {

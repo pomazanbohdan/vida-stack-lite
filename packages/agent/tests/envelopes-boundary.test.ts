@@ -1336,6 +1336,7 @@ describe('runtime envelope canonicalization boundary', () => {
     ['submillisecond', '2026-10-17T07:00:00.0000009Z', '2026-10-17T10:00:00.0000001+03:00'],
     ['nanosecond', '2026-10-17T07:00:00.000000001Z', '2026-10-17T10:00:00.000000000+03:00'],
     ['fraction against no fraction', '2026-10-17T07:00:00.0000001Z', '2026-10-17T10:00:00+03:00'],
+    ['negative epoch fraction and offset', '1969-12-31T23:59:59.999000001Z', '1970-01-01T02:59:59.999+03:00'],
   ] as const)(
     'projects the earliest %s lease by instant and preserves wire timestamps',
     async (_label, laterInstantWireExpiry, earlierInstantWireExpiry) => {

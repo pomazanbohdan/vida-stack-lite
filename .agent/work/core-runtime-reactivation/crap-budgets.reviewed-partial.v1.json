@@ -11,9 +11,9 @@
   },
   "counts": {
     "retained": 5448,
-    "new": 1664,
+    "new": 1662,
     "removed": 97,
-    "current_roles": 7112,
+    "current_roles": 7110,
     "source_files": 149
   },
   "source_bindings": [
@@ -479,7 +479,7 @@
     },
     {
       "file": "src/config/project-upgrade-existing-storage.ts",
-      "sha256": "8c017d4faec5415c643feea5ca0a20dde56bb9ee0b282f78caf38eba3f914be2"
+      "sha256": "a2ba1c1ef7b366f929bb4fa356f1377e3d911c939d6185f50a5128e17ab8382f"
     },
     {
       "file": "src/config/service-operation-custody.ts",
@@ -187729,10 +187729,10 @@
         "line": 383,
         "column": 7,
         "start": 15173,
-        "end": 18365,
+        "end": 18085,
         "bodyLine": 387,
         "bodyColumn": 33,
-        "bodyEndLine": 456,
+        "bodyEndLine": 449,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 383. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187755,52 +187755,18 @@
       "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:expectedCloneSchema. The immediate parent and surrounding current Source lines 401-403 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
     },
     {
-      "identity": "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra/closure:CallExpression:arguments[0]#0",
-      "max_complexity": 10,
-      "max_crap": 10,
-      "current_complexity": 1,
-      "current_source_address": {
-        "line": 410,
-        "column": 47,
-        "start": 16607,
-        "end": 16685,
-        "bodyLine": 411,
-        "bodyColumn": 6,
-        "bodyEndLine": 411,
-        "bodyEndColumn": 66
-      },
-      "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra. The immediate parent and surrounding current Source lines 407-409 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
-    },
-    {
-      "identity": "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
-      "max_complexity": 10,
-      "max_crap": 10,
-      "current_complexity": 1,
-      "current_source_address": {
-        "line": 411,
-        "column": 28,
-        "start": 16647,
-        "end": 16684,
-        "bodyLine": 411,
-        "bodyColumn": 39,
-        "bodyEndLine": 411,
-        "bodyEndColumn": 65
-      },
-      "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra/closure:CallExpression:arguments[0]#0. The immediate parent and surrounding current Source lines 408-410 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
-    },
-    {
       "identity": "src/config/project-upgrade-existing-storage.ts#fn:closeDatabase#0",
       "max_complexity": 10,
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 458,
+        "line": 451,
         "column": 0,
-        "start": 18367,
-        "end": 18533,
-        "bodyLine": 458,
+        "start": 18087,
+        "end": 18253,
+        "bodyLine": 451,
         "bodyColumn": 80,
-        "bodyEndLine": 464,
+        "bodyEndLine": 457,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 456. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187811,13 +187777,13 @@
       "max_crap": 10,
       "current_complexity": 7,
       "current_source_address": {
-        "line": 466,
+        "line": 459,
         "column": 0,
-        "start": 18535,
-        "end": 19928,
-        "bodyLine": 466,
+        "start": 18255,
+        "end": 19648,
+        "bodyLine": 459,
         "bodyColumn": 76,
-        "bodyEndLine": 502,
+        "bodyEndLine": 495,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 464. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187828,13 +187794,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 504,
+        "line": 497,
         "column": 0,
-        "start": 19930,
-        "end": 20388,
-        "bodyLine": 504,
+        "start": 19650,
+        "end": 20108,
+        "bodyLine": 497,
         "bodyColumn": 63,
-        "bodyEndLine": 511,
+        "bodyEndLine": 504,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 502. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187845,13 +187811,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 513,
+        "line": 506,
         "column": 0,
-        "start": 20390,
-        "end": 20559,
-        "bodyLine": 513,
+        "start": 20110,
+        "end": 20279,
+        "bodyLine": 506,
         "bodyColumn": 50,
-        "bodyEndLine": 515,
+        "bodyEndLine": 508,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 511. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -207267,6 +207233,14 @@
     {
       "identity": "src/config/project-upgrade-storage.ts#fn:inspectWorkspaceBootstrapSentinel#0/closure:CallExpression:arguments[0]#0",
       "rationale": "Absent current Source-added role; original prospective policy preserved for independently reviewed current roles. No published baseline removal or allowance transfer."
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra/closure:CallExpression:arguments[0]#0",
+      "rationale": "Retired Source-added callback from the redundant targetMastra subset query. The preceding exact whole-schema guard and disjoint schema names prove this subset; no mutation or callout intervenes. Blind Luna author and independent v158 review agree. Original prospective10/10 at9469a4e1663750e8de022e8f9dfca7a4327c9a08 stays historical; no published baseline removal or allowance transfer."
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "rationale": "Retired Source-added callback from the redundant targetMastra subset query. The preceding exact whole-schema guard and disjoint schema names prove this subset; no mutation or callout intervenes. Blind Luna author and independent v158 review agree. Original prospective10/10 at9469a4e1663750e8de022e8f9dfca7a4327c9a08 stays historical; no published baseline removal or allowance transfer."
     }
   ],
   "baseline_coverage_report_ref": ".tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/coverage/bun-unified/coverage-final.json",
@@ -224860,5 +224834,38 @@
     "new_functions": 2,
     "removed_functions": 6,
     "prototype_context": "Isolated prototype disclosed; the independently justified 4/4 plan was published before tracked named adoption. No pre-prototype chronology or metric-derived allowance is claimed."
+  },
+  "scope_review_existing_storage_image_subset_removal_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-project-upgrade-existing-storage-image",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/project-upgrade-existing-storage.ts"
+    ],
+    "removed_source_paths": [],
+    "current_source_bindings": [
+      {
+        "file": "src/config/project-upgrade-existing-storage.ts",
+        "sha256": "a2ba1c1ef7b366f929bb4fa356f1377e3d911c939d6185f50a5128e17ab8382f"
+      }
+    ],
+    "reviewed_source_context": "3740f01244e7e4283eab0fe0c13785507b8d8b0f plus the reviewed duplicate subset guard deletion",
+    "review_artifacts": [
+      ".agent/work/core-runtime-reactivation/WORK.md#storage-image-duplicate-schema-invariant-removal"
+    ],
+    "selected_rows": {
+      "retained": 0,
+      "new": 50,
+      "removed": 0
+    },
+    "limits": "All50 surviving Source-added prospective10/10 ceilings from9469a4e1663750e8de022e8f9dfca7a4327c9a08 remain unchanged. Retire exactly two duplicate-subset callbacks; no published original role exists at this Source path, no cap transfer/reset/new role. Original b549951 Source correspondence and global partial/non-executable status remain unchanged. Numeric proof and pin are separate.",
+    "independent_review_lane": "blind-native-luna",
+    "retired_source_added_roles": [
+      "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra/closure:CallExpression:arguments[0]#0",
+      "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0"
+    ]
   }
 }

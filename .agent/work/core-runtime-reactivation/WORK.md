@@ -4,11 +4,11 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest checked Source/test packet: `91906ff31a6497ac290a988e67ea913aec4af7da`, pushed through ordinary strict pre-commit. It includes admission request ownership/digest reuse, a single mutation partition deadline, real short-read/public-gate controls, three shared failure phases, sealed package-asset resolution, envelope ordering regressions, body-local mutation activation and synchronous stateless facade loading with exact dependency capture. Facade has a fresh compatible local triple under that protocol. Its slot is immediately refilled with storage image; active contours are storage image, envelopes and storage admission. Initialization remains OPEN on qualified child-only activation evidence. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest checked Source/test packet: `3740f01244e7e4283eab0fe0c13785507b8d8b0f`, pushed through ordinary strict pre-commit. It adds storage-image digest/unsupported-binding assertions, admission positive-return assertions and an operation-private native transpiler cache to the previously checked ownership, deadline, cleanup, sealed-context, ordering and body-local activation repairs. Facade has a fresh compatible local triple at91906ff; that historical input-bound result is retained. Active contours are storage image, envelopes and main-host. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
-- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence: 7,112 roles; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
+- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,110 current roles after two explicit Source-added callback retirements; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
@@ -605,6 +605,71 @@ and assertion/JUnit/custody checks stay unchanged, with no process/test-result
 reuse or cross-operation cache. This is derived compiler output only. Static,
 affected checks and a fresh bounded real mutation pilot must precede any claim
 of performance benefit or complete numeric closure.
+
+`HlpS7y` passes157tests/924assertions across both storage files, adjacent real schema
+contracts and native mutation-map controls in4980ms. Strict505-file checks, format
+and normal hooks pass before publication as3740f01. On fresh immutable v175,
+`eMLQnS`, run368322d0-4934-4393-83e9-91614d36241d, confirms the exact admission
+bound mutant38 as assertion-confirmed Killed, with a complete28-case baseline,
+0UNKNOWN and227unattempted of228 in17715ms. Its real operation cache contains
+Bun.pile files (25MiB) under verified0700 permissions. This confirms cache use,
+not a comparative speedup. A separate infrastructure opt-out control `11c7db`,
+run1476345d-6de1-4d2f-a224-edb6295a4e39, runs the complete14-case facade baseline
+and schema mutant1 with `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0`: Killed, no operation
+cache directory, complete captures/groups,3677ms. It is not another contour closure.
+
+Fresh admission `emzcHx`, run70fd5a80-1e70-406c-a40f-cbcfecf52764, passes exact
+F18/18,L102/102,S105/105,B17/17 with28tests/320assertions in15945ms. Same-run
+original frozen `MLtmGP` passes maxCC5/maxCRAP5 in969ms. Projection511attempts
+retains the distinct BLOCKED global outcome. The full current228-mutant request
+now runs on those stable bytes, without combining either diagnostic's results.
+
+The next full admission `q2ydIx`, runb4cd277d-688a-4d93-ad8a-1a2b52f502e5,
+terminates in91279ms:11Killed,1UNKNOWN,216unattempted of228. Local0 changes the
+module diagnostic label before any test body; its later assertion has0owned hits.
+This is a static-initialization proof gap, not a confirmed mutation kill. The whole
+v175 namespace is retained. Both Luna reviews propose a narrowly negative fresh
+module plus exact cache restoration. Root's real Bun probe
+`probe-bun-cache-restore-v177.ts` disproves its identity premise: restored require
+accepts the original opaque token, but subsequent ESM import creates a different
+owner and fails the same-token check. No stateful fresh-load change is adopted.
+Admission stays OPEN; its slot immediately moves to ready main-host preparation.
+
+Main-host's Source is independently reviewed as structural capability observations,
+without opaque issuance/lifetime state. Its writer replaces query imports with
+body-local synchronous exact-subject loads, preserves every mock restoration and
+assertion, and drops unnecessary async from the two purely synchronous cases.
+Root adds the existing computed-import seed and expands its transitive-capture/
+freshness regression to both facade and host. The envelopes writer adds one
+supported negative-epoch/fraction/offset row to the existing ordering matrix;
+all original wire/reversal/preservation oracles remain. `EEiSOV` passes102tests/
+4771assertions over six affected files in2905ms, including package integration.
+
+### Storage-image duplicate schema invariant removal
+
+Fresh3740f01 image coverage `j2dE2n`, run96fd6aea-057a-4f3f-a362-e72c7dcfe262,
+passesF52/52,L206/206,S230/230,B52/52 in9577ms; original frozen `uMV0ho` passes
+maxCC7/maxCRAP7 in742ms. Projection514attempts preserves its BLOCKED global
+outcome. Bounded native `DTj0cP`, runc6d5f2f5-b2d4-4db9-86bd-49494097db07,
+passes the complete28-case baseline, then observes3Killed/1Survived/512unattempted
+of516,0UNKNOWN in14816ms. It is a diagnostic only. Survivor430 disables the
+target-Mastra schema subset guard immediately following full cloned-schema equality.
+
+The author and independent v158 review agree that check is redundant: the complete
+guard proves the whole Host+pinned schema; names are disjoint, both catalogs use
+the same deterministic SQL ordering, and no mutation, await or callout intervenes.
+Root removes one duplicate catalog read, filter/nested search and two canonical
+serializations, preserving the preceding complete guard and every final merge
+validation. No artificial corrupt-between-reads fixture or mutation filter is added.
+
+Root reuses the inventory owner for one affected Source parse:50existing identities
+survive; exactly the two `binding:targetMastra` callbacks are retired. The existing
+partial budget records those Source-added retirements against original9469a4e;
+all50prospective10/10 ceilings remain unchanged. Original5448retained and97removed
+published roles are unchanged; current new1662/current7110 still describe a partial,
+non-executable global plan. Source binding is a2ba1c1ef7b366f929bb4fa356f1377e3d911c939d6185f50a5128e17ab8382f.
+`Rhqz4N` passes75image/schema/correspondence tests with446assertions in6585ms.
+Strict publication, immutable review pin and fresh numeric evidence follow.
 
 ### Published admission packet — retained context
 

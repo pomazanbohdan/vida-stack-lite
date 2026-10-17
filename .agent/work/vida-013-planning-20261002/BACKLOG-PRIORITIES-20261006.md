@@ -55,8 +55,9 @@ and optimization candidates are recorded once in WORK, under the existing P0/P1
 and TEST013 tasks; external report labels do not replace their stable IDs.
 
 The fresh body-local facade triple at91906ff has refilled its slot with storage
-image; the other active lanes are envelopes and storage admission. Initialization
-remains OPEN on qualified child-only activation evidence. Admission's caller-owned
+image. Active lanes are now storage image, envelopes and main-host; admission's
+stateful static-initialization gap releases its idle slot without a closure.
+Initialization remains OPEN on qualified child-only activation evidence. Admission's caller-owned
 request defect now has real RED/GREEN evidence and a bounded snapshot correction.
 Its interrupted mutation attempt stays UNKNOWN. The native pilot now shares one
 partition deadline across all batches; fresh numeric qualification remains open.
@@ -68,6 +69,10 @@ Initialization's package-asset reader correction preserves the sealed input
 contract; its remaining activation gap is distinct from setup and generic failures.
 Full compatible mutation closures remain OPEN; diagnostic sets are not unioned.
 WORK owns the exact receipts and pending equivalent/unattempted mutant analysis.
+The image survivor exposed a duplicate subset-schema read after exact whole-schema
+equality. Independent review accepts its removal, with two explicitly retired
+Source-added callbacks and unchanged ceilings for all surviving roles; fresh
+original-lineage frozen proof remains required.
 
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
 

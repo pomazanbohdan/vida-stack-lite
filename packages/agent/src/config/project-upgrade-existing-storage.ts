@@ -407,13 +407,6 @@ export async function prepareUnifiedExistingStorageImage(
       canonicalJson(schema(target)) === canonicalJson(expectedCloneSchema),
       'cloned Host plus pinned schema closure differs',
     );
-    const targetMastra = schema(target).filter((object) =>
-      inventory.pinned.some((entry) => entry.name === object.name),
-    );
-    requireMerge(
-      canonicalJson(targetMastra) === canonicalJson(inventory.pinned),
-      'target schema differs after close/reopen',
-    );
     initializeServiceOperationCustodySchema(target);
     importMastraRows(
       target,
