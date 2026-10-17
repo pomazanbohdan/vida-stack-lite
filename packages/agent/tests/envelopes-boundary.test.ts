@@ -474,8 +474,8 @@ describe('runtime envelope canonicalization boundary', () => {
     assert.equal(duplicateClaimResult.issues[0]!.message, 'ticket references a claim owned by another ticket');
   });
 
-  test('coordination schema rejection retains every diagnostic and leaves a later valid ledger usable', async () => {
-    const { validateCoordinationLedgerV1, coordinationLedgerJson } = await import('../src/contracts/envelopes.js');
+  test('coordination schema rejection retains every diagnostic and leaves a later valid ledger usable', () => {
+    const { validateCoordinationLedgerV1, coordinationLedgerJson } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     const invalid = { ...ledger, revision: 0, workspace_id: 'not-a-workspace-digest' };
     const before = structuredClone(invalid);
@@ -1734,7 +1734,7 @@ describe('runtime envelope canonicalization boundary', () => {
       const result = expectReturned(() =>
         validateCoordinationLedgerV1({
           ...base,
-          notices: Array.from({ length: count }, () => ({ ...notice })),
+          notices: Array.from({ length: count }, () => notice),
         }),
       );
       assertLedgerRejection(result, code, pointer);

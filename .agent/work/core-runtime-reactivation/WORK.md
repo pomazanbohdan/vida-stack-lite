@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `0d2f1201b4d953c271e2068371cf49630b7ad70a` removes the proven duplicate per-row bound check and strengthens canonical encoding/header/initializer tests. The prior7363f4e packet fixes private-DB cleanup on client setup failure through one existing initializer owner. Earlier packets retain schema-snapshot reuse atd5ddd22, exact cause/output assertions and body-local envelope initialization atcace59e, and data-only observation repair at33a98d2. The current follow-up covers private-target row corruption and body-owned module constants, removes only SQLite COUNT's redundant nonnegative guard, and preserves integer mode. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `bd245b169ad9e9b7deb2cbd0d05b1cbf760de527` covers private-target row corruption and body-owned image module constants, removes SQLite COUNT's redundant nonnegative guard, and preserves integer mode. The prior0d2f120 packet removes the proven duplicate per-row bound check and strengthens canonical encoding/header/initializer tests;7363f4e fixes private-DB cleanup on client setup failure through one existing initializer owner. Earlier packets retain schema-snapshot reuse atd5ddd22, exact cause/output assertions and body-local envelope initialization atcace59e, and data-only observation repair at33a98d2. The current follow-up captures computed subjects' full transitive closure and fixes envelope schema-diagnostic activation. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -912,6 +912,52 @@ without suites. The canonical reader imports both new coverage/frozen pairs into
 projection544attempts without promoting partial native results or their kills.
 Coverage operation BLOCKED remains separate from its exact focused counters;
 global/final admission and current-compatible complete mutation remain OPEN.
+
+Published bd245b1 passes the ordinary strict hook and is pushed. Independent v158
+actual-code review finds no authority/lifetime/cleanup regression in either fresh
+stateless subject, the native corruption controls or the COUNT simplification.
+Full envelopes `ZSnML3`, run79d09766-3133-44fc-9162-5c1677582dfa, terminates in
+88171ms:32Killed,0Survived,1UNKNOWN,730unattempted of763, full47-case baseline,
+complete captures/groups and unchanged boot/checkout. Keep all v189 bytes. The
+old109 mutation is now Killed within this full attempt. Actual UNKNOWN90 removes
+Ajv's allErrors/messages options; schema-diagnostic body8 correctly rejects the
+lost second issue but reports zero owned hits. The existing case now reuses its
+qualified synchronous fresh-module helper and keeps every diagnostic, later
+valid result and repeat-invalid check on that same module instance.
+
+Image coverage `bdh1kb` on bd245b1 fails in5538ms before publishing a diagnostic:
+fresh computed preparation no longer has a static Source value import, so the
+snapshot omitted literal transitive service-operation-custody. Outcome
+5be26ddf-0f6e-4262-afaf-d8337e8a2989 is FAIL with
+resource_safe_to_advance=false; preserve all v190 bytes, lock and failed fixtures.
+The projection imports that actual failure as attempt545, without coverage or
+CRAP promotion. Root does not repeat frozen CRAP against that missing prerequisite.
+
+The correction adds image, envelope and fs-attestation subjects to the existing
+computed-entrypoint registry, so the same bounded closure owner captures literal
+transitive dependencies and freshness inputs without a second parser, walk or
+hash owner. Existing parameterized controls now cover all three added paths.
+RED `u4PZAU` fails each new row because its dependency is absent. GREEN `DlgQ8U`
+passes85tests/4707assertions across the input owner and all three envelope files
+in2812ms, with complete captures, closed groups and unchanged boot.
+
+The envelope aggregate-budget loop also reuses its identical notice reference
+instead of allocating4094/4095 shallow copies. The existing canonicalizer images
+each occurrence and detects active-stack cycles, while duplicate semantics use
+notice IDs. Both original limits/assertions remain; no measured speedup is claimed.
+
+FS attestation reuses expectReturned around the real native tree-hash operation
+before its unchanged digest comparison, so a mutated manifest path cannot turn a
+required normal completion into an unclassified I/O throw. Other Source values
+are compared before any dependent effect. Focused `tLUIP4` passes all5cases in87ms
+with complete captures, closed groups and unchanged boot. Generated-mutant proof
+remains pending; this check alone does not grant Killed or CRAP applicability.
+
+The throughput review finds repeated Babel test-import plan parsing per mutant
+as a candidate, not a demonstrated dominant cost. Any reuse must remain run-local,
+bound to exact test bytes and parser/tool identity, with invocation-local adapter
+and receipt paths. No cache, process reuse, weaker file verification, filtered
+selection, larger timeout or parallel numeric producer is activated by this note.
 
 ### Published admission packet — retained context
 

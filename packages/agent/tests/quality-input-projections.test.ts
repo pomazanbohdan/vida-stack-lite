@@ -962,6 +962,19 @@ describe('final quality input projections', () => {
   test.each([
     ['facade', 'src/lifecycle/runtime-facade.ts', 'tests/runtime-facade-boundary.test.ts', 'bun-runtime-facade'],
     ['host capability', 'src/config/host-capability.ts', 'tests/host-capability-boundary.test.ts', 'main-host'],
+    [
+      'storage image',
+      'src/config/project-upgrade-existing-storage.ts',
+      'tests/project-upgrade-existing-storage.test.ts',
+      'bun-project-upgrade-existing-storage-image',
+    ],
+    ['envelopes', 'src/contracts/envelopes.ts', 'tests/envelopes-boundary.test.ts', 'main-envelopes'],
+    [
+      'fs attestation',
+      'src/config/fs-safe-attestation.ts',
+      'tests/fs-safe-attestation.test.ts',
+      'bun-fs-safe-attestation',
+    ],
   ] as const)(
     'captures dependencies of %s loaded freshly inside each test body',
     async (_label, source, testPath, contour) => {

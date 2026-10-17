@@ -4,6 +4,7 @@ import { readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 type JsonRecord = Record<string, unknown>;
 type BunLockEntry = readonly [string, string, JsonRecord, string?];
@@ -166,8 +167,9 @@ test
     expect(nativePackage.name).toBe(nativePackageName);
     expect(nativePackage.version).toBe(fsSafeVersion);
     expect(nativePackage.main).toBe('fs-safe-native.node');
-    expect(fsSafePackageTreeSha256ByNativeTarget[nativeTarget]).toBe(
+    const actualTreeHash = expectReturned(() =>
       packageTreeHash(packageRoot, nativeRoot, nativeTarget, fsSafePackageManifest),
     );
+    expect(fsSafePackageTreeSha256ByNativeTarget[nativeTarget]).toBe(actualTreeHash);
   },
 );

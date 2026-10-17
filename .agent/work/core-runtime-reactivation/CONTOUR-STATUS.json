@@ -524977,6 +524977,30 @@
       "max_entry_crap": 9,
       "killed": null,
       "mutants": null
+    },
+    {
+      "artifact": "/workspace/attachments/rolling-measure-v190/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/5be26ddf-0f6e-4262-afaf-d8337e8a2989.json",
+      "commit": "bd245b169ad9e9b7deb2cbd0d05b1cbf760de527",
+      "recorded_at": "2026-10-17T12:11:34.553Z",
+      "contour": "bun-project-upgrade-existing-storage-image",
+      "lane": "coverage-outcome",
+      "run_id": "5be26ddf-0f6e-4262-afaf-d8337e8a2989",
+      "sources": [],
+      "tests": [],
+      "tools": [],
+      "closure": [],
+      "selected_tests": [],
+      "selection_complete": false,
+      "producer_schema": "VidaBunCoverageOperationOutcome/v1",
+      "selection_artifact": null,
+      "tool_fingerprint": null,
+      "status": "FAIL",
+      "accepted": false,
+      "coverage": null,
+      "max_cc": null,
+      "max_entry_crap": null,
+      "killed": null,
+      "mutants": null
     }
   ]
 }
