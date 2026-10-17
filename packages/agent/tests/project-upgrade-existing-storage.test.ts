@@ -167,13 +167,15 @@ function makeHostOverTableBound(): ClosedDatabaseImage {
   }
 }
 
-function makeHostOverSingleTableRowBound(): ClosedDatabaseImage {
+function makeHostOverSingleTableRowBound(rowCount = 100001): ClosedDatabaseImage {
   const database = new Database(':memory:', { strict: true, safeIntegers: true });
   try {
     initializeHostDatabaseSchema(database);
     database.exec('CREATE TABLE merge_row_bound_fixture(id INTEGER PRIMARY KEY)');
     database.exec(
-      'WITH RECURSIVE rows(id) AS (SELECT 1 UNION ALL SELECT id+1 FROM rows WHERE id<100001) ' +
+      'WITH RECURSIVE rows(id) AS (SELECT 1 UNION ALL SELECT id+1 FROM rows WHERE id<' +
+        rowCount +
+        ') ' +
         'INSERT INTO merge_row_bound_fixture SELECT id FROM rows',
     );
     return closedImage(database);
@@ -213,31 +215,47 @@ function oversizedHostImage(): ClosedDatabaseImage {
   }
 }
 
+let mastraFixtureTemplate: { readonly bytes: Buffer; readonly size: number; readonly sha256: string } | undefined;
+
 async function makeMastra(): Promise<ClosedDatabaseImage> {
-  const database = new Database(':memory:', { strict: true, safeIntegers: true });
-  const client = createInMemoryBunSqliteClient(database);
-  const storage = new LibSQLStore({ id: 'existing-storage-merge-test', client });
-  try {
-    await storage.init();
-    await client.settle();
-    const memory = await storage.getStore('memory');
-    if (!memory) throw new Error('Mastra memory store is unavailable');
-    await memory.saveThread({
-      thread: {
-        id: 'merge-thread-1',
-        resourceId: 'merge-resource-1',
-        title: 'merge preservation fixture',
-        createdAt: new Date('2026-02-03T04:05:06.000Z'),
-        updatedAt: new Date('2026-02-03T04:05:07.000Z'),
-        metadata: { fixture: 'existing-storage-merge' },
-      },
-    });
-    await client.settle();
-    return closedImage(database);
-  } finally {
-    await storage.close();
-    database.close(true);
+  if (mastraFixtureTemplate === undefined) {
+    const database = new Database(':memory:', { strict: true, safeIntegers: true });
+    const client = createInMemoryBunSqliteClient(database);
+    const storage = new LibSQLStore({ id: 'existing-storage-merge-test', client });
+    let initialized: ClosedDatabaseImage | undefined;
+    try {
+      await storage.init();
+      await client.settle();
+      const memory = await storage.getStore('memory');
+      if (!memory) throw new Error('Mastra memory store is unavailable');
+      await memory.saveThread({
+        thread: {
+          id: 'merge-thread-1',
+          resourceId: 'merge-resource-1',
+          title: 'merge preservation fixture',
+          createdAt: new Date('2026-02-03T04:05:06.000Z'),
+          updatedAt: new Date('2026-02-03T04:05:07.000Z'),
+          metadata: { fixture: 'existing-storage-merge' },
+        },
+      });
+      await client.settle();
+      initialized = closedImage(database);
+    } finally {
+      await storage.close();
+      database.close(true);
+    }
+    if (initialized === undefined) throw new Error('Mastra fixture initialization produced no closed image');
+    const bytes = Buffer.from(initialized.bytes);
+    mastraFixtureTemplate = Object.freeze({ bytes, size: bytes.byteLength, sha256: initialized.sha256 });
   }
+  const bytes = Buffer.from(mastraFixtureTemplate.bytes);
+  return {
+    device: 'fixture-device',
+    inode: 'fixture-inode',
+    size: mastraFixtureTemplate.size,
+    sha256: mastraFixtureTemplate.sha256,
+    bytes,
+  };
 }
 
 function binding(host: ClosedDatabaseImage, mastra: ClosedDatabaseImage): ExistingMergeBinding {
@@ -438,15 +456,17 @@ test.each([
 });
 
 test.each([
-  ['body and close failures', true, true, false, 'undefined'],
-  ['close failure only', false, true, false, 'undefined'],
-  ['body failure only', true, false, false, 'undefined'],
-  ['body Error and close failures', true, true, false, 'error'],
-  ['body Error only', true, false, false, 'error'],
-  ['empty inventory bound denial', false, false, true, 'undefined'],
+  ['body and close failures', true, true, 'native', 'undefined'],
+  ['close failure only', false, true, 'native', 'undefined'],
+  ['body failure only', true, false, 'native', 'undefined'],
+  ['body Error and close failures', true, true, 'native', 'error'],
+  ['body Error only', true, false, 'native', 'error'],
+  ['empty inventory bound denial', false, false, 'empty', 'undefined'],
+  ['inventory at its exact bound', false, false, 'exact-bound', 'undefined'],
+  ['inventory above its exact bound', false, false, 'over-bound', 'undefined'],
 ] as const)(
   'retains pinned catalog causes for %s',
-  async (_label, failSchemaQuery, failClose, emptyInventory, bodyFailure) => {
+  async (_label, failSchemaQuery, failClose, inventoryMode, bodyFailure) => {
     const host = makeHost();
     const mastra = await makeMastra();
     const hostBefore = Buffer.from(host.bytes);
@@ -481,7 +501,14 @@ test.each([
                 schemaQueryReached = true;
                 originalCatalogRows = rows;
                 if (failSchemaQuery) throw bodyError;
-                if (emptyInventory) return [];
+                if (inventoryMode === 'empty') return [];
+                if (inventoryMode === 'exact-bound' || inventoryMode === 'over-bound') {
+                  if (!Array.isArray(rows) || rows.length === 0)
+                    throw new Error('Expected native pinned catalog rows for the controlled-bound fixture.');
+                  const nativeRows: readonly unknown[] = rows;
+                  const rowCount = inventoryMode === 'exact-bound' ? 1024 : 1025;
+                  return Array.from({ length: rowCount }, (_, index) => nativeRows[index % nativeRows.length]);
+                }
                 return rows;
               };
             return nativeStatementMember(target, property);
@@ -534,13 +561,20 @@ test.each([
     expect(catalog).toBeDefined();
     expect(schemaQueryReached).toBe(true);
     expect(catalogCloseReached).toBe(true);
-    if (emptyInventory) {
+    if (inventoryMode === 'empty' || inventoryMode === 'over-bound') {
       expect(Array.isArray(originalCatalogRows)).toBe(true);
       if (!Array.isArray(originalCatalogRows)) throw new Error('Expected native pinned catalog rows.');
       expect(originalCatalogRows.length).toBeGreaterThan(0);
       expect(failure).toBeInstanceOf(Error);
       if (!(failure instanceof Error)) throw new Error('Expected pinned inventory bound denial.');
       expect(failure.message).toBe('Existing storage merge: pinned inventory exceeds bounds');
+    } else if (inventoryMode === 'exact-bound') {
+      expect(Array.isArray(originalCatalogRows)).toBe(true);
+      if (!Array.isArray(originalCatalogRows)) throw new Error('Expected native pinned catalog rows.');
+      expect(originalCatalogRows.length).toBeGreaterThan(0);
+      expect(failure).toBeInstanceOf(Error);
+      if (!(failure instanceof Error)) throw new Error('Expected the public prepare to reject the controlled catalog.');
+      expect(failure.message).toBe('Existing storage merge: Mastra schema differs from pinned empty-init inventory');
     } else if (failSchemaQuery && failClose) {
       expect(failure).toBeInstanceOf(AggregateError);
       if (!(failure instanceof AggregateError)) throw new Error('Expected the catalog query and close causes.');
@@ -658,6 +692,51 @@ test('rejects an unsupported image binding before opening either SQLite image', 
   } finally {
     opening.mockRestore();
   }
+});
+
+test('preserves strict named bindings and exact integer reads on every prepared SQLite handle', async () => {
+  const host = makeHost();
+  const mastra = await makeMastra();
+  const hostBefore = Buffer.from(host.bytes);
+  const mastraBefore = Buffer.from(mastra.bytes);
+  const deserialize = Database.deserialize.bind(Database);
+  const opened: Database[] = [];
+  const probes: { missingBindingError: string | undefined; missingBindingIsNull: boolean; exactInteger: unknown }[] =
+    [];
+  const opening = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
+    const database = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
+    opened.push(database);
+    let missingBindingError: string | undefined;
+    let missingBindingIsNull = false;
+    try {
+      const row = database
+        .query<{ message: string | null }, [{ messag: string }]>('SELECT $message AS message')
+        .get({ messag: 'x' });
+      missingBindingIsNull = row?.message === null;
+    } catch (error) {
+      missingBindingError = error instanceof Error ? error.message : String(error);
+    }
+    const exactInteger = database
+      .query<{ value: number | bigint }, []>('SELECT 9007199254740993 AS value')
+      .get()?.value;
+    probes.push({ missingBindingError, missingBindingIsNull, exactInteger });
+    return database;
+  });
+  try {
+    const image = await expectAsyncReturned(() =>
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+    );
+    expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
+  } finally {
+    opening.mockRestore();
+  }
+  expect(probes).toHaveLength(5);
+  expect(probes.every((probe) => probe.missingBindingError === 'Missing parameter "message"')).toBe(true);
+  expect(probes.every((probe) => !probe.missingBindingIsNull)).toBe(true);
+  expect(probes.every((probe) => probe.exactInteger === 9007199254740993n)).toBe(true);
+  for (const database of opened) expect(() => database.query('SELECT 1').get()).toThrow();
+  expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
+  expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
 });
 
 test('imports an owned Mastra sqlite_sequence row from the serialized Mastra image', async () => {
@@ -1042,7 +1121,14 @@ describe('existing storage image preparation', () => {
   });
 
   test('preserves Host tables whose names start with sqlite plus a non-underscore character', async () => {
-    const names = ['sqliteXledger', 'SQLiteXarchive'] as const;
+    const names = ['sqliteXledger', 'SQLiteXarchive', 'merge_quote"fixture'] as const;
+    const selectNamesSql =
+      "SELECT type,name FROM sqlite_master WHERE type='table' AND name IN (" +
+      names.map(() => '?').join(',') +
+      ') ORDER BY name';
+    const expectedTables = names
+      .map((name) => ({ type: 'table', name }))
+      .sort((left, right) => Buffer.compare(Buffer.from(left.name), Buffer.from(right.name)));
     const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
     let host: ClosedDatabaseImage;
     try {
@@ -1051,14 +1137,8 @@ describe('existing storage image preparation', () => {
         database.exec('CREATE TABLE ' + quoted + '(id TEXT PRIMARY KEY, payload TEXT NOT NULL)');
         database.query('INSERT INTO ' + quoted + '(id,payload) VALUES(?,?)').run('row-' + index, 'kept-' + name);
       }
-      expect(
-        database
-          .query<{ type: string; name: string }, [string, string]>(
-            "SELECT type,name FROM sqlite_master WHERE type='table' AND name IN (?,?) ORDER BY name",
-          )
-          .all(...names),
-      ).toEqual(
-        names.map((name) => ({ type: 'table', name })).sort((left, right) => left.name.localeCompare(right.name)),
+      expect(database.query<{ type: string; name: string }, string[]>(selectNamesSql).all(...names)).toEqual(
+        expectedTables,
       );
       expect(database.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
       host = closedImage(database);
@@ -1072,14 +1152,8 @@ describe('existing storage image preparation', () => {
     expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
     const merged = openUnified(image.bytes_base64);
     try {
-      expect(
-        merged
-          .query<{ type: string; name: string }, [string, string]>(
-            "SELECT type,name FROM sqlite_master WHERE type='table' AND name IN (?,?) ORDER BY name",
-          )
-          .all(...names),
-      ).toEqual(
-        names.map((name) => ({ type: 'table', name })).sort((left, right) => left.name.localeCompare(right.name)),
+      expect(merged.query<{ type: string; name: string }, string[]>(selectNamesSql).all(...names)).toEqual(
+        expectedTables,
       );
       for (const [index, name] of names.entries()) {
         const quoted = '"' + name.replaceAll('"', '""') + '"';
@@ -1091,7 +1165,7 @@ describe('existing storage image preparation', () => {
     }
   });
 
-  test.each(['UTF-16le', 'UTF-16be'] as const)(
+  test.each(['UTF-8', 'UTF-16le', 'UTF-16be'] as const)(
     'preserves native %s Host schema ordering and Unicode table rows',
     async (encoding) => {
       const database = new Database(':memory:', { strict: true, safeIntegers: true });
@@ -1333,6 +1407,13 @@ describe('existing storage image preparation', () => {
       "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name='agent_host_service_operation_custody'",
       0n,
       /Service operation custody: owned service table is absent or differs/u,
+    ],
+    [
+      'changed ID sequence',
+      "UPDATE sqlite_sequence SET seq=seq+1 WHERE name='merge_sequence_fixture'",
+      "SELECT seq AS count FROM sqlite_sequence WHERE name='merge_sequence_fixture'",
+      9007199254740994n,
+      /Host and Mastra ID sequences changed during merge/u,
     ],
   ] as const)(
     'rejects %s on the owned private target after the cloned-schema check',
@@ -1813,6 +1894,15 @@ describe('existing storage image preparation', () => {
     await expectRejection(
       prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
       /table count is unsupported: merge_row_bound_fixture/u,
+    );
+  });
+
+  test('accepts exactly 100000 rows at the per-table guard before enforcing the combined row bound', async () => {
+    const host = makeHostOverSingleTableRowBound(100000);
+    const mastra = await makeMastra();
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /supported Host and Mastra tables exceed total row bound/u,
     );
   });
 

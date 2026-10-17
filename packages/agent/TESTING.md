@@ -1537,21 +1537,20 @@ to satisfy the other namespace.
 
 For sequential whole-contour development, the existing CRAP owner also supports
 `VIDA_BUN_COVERAGE_REPORT=<focused-report> bun tooling/crap-gate.ts --contour
-<declared-contour> --budget-ref ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56`.
+<declared-contour> --budget-ref <published-reviewed-current-Source-commit>`.
 This is a separate conservative local proof, never global admission of a partial
 plan or a historical measurement. The pinned published review must cover every
-declared Source. Main-host uses the separately published independent review
-`--budget-ref 6f687506464048a0360f3fb8932eb7b77c7fc005`; it does not inherit
-v1033's review of other contours. Main-runtime-timing uses its own independently
-reviewed `--budget-ref 6e4655b1db2a32d08ae722940ff50b10d9e56ca6`.
-The independent bun-runtime-facade review uses
-`--budget-ref cd006a23ae0c74528393783c0ee64e719627e3af`.
-This v2 review preserves23original roles and explicitly retires the deleted
-serializer callback, retaining its prior frozen row as historical data. It adds
-no function budget and raises no retained ceiling. The older24-role review stays
-pinned for its historical inputs; do not use it for the changed canonical owner.
-The independent bun-lifecycle-state review uses
-`--budget-ref e9629b3c45cde992ef688af33b2538c7e3a67391`.
+declared Source. Its `current_source_bindings` must list exactly those paths and
+their SHA-256 digests. The gate compares them with the focused validator's
+already established Source digests, without another scan, read or hash pass.
+Missing, duplicate, malformed, partial or stale bindings fail closed, including
+historical reviews lacking explicit bindings; use a published review of the
+actual current Source before measuring. Historical issued reports remain intact.
+Resolve the current contour's review through the maintained
+`latestScopedCrapBudgetRef` owner in `tooling/crap-gate.ts`; never copy a historical
+pin from an earlier run or another contour. Exact Source-binding validation still
+governs the selected pin. Retired callbacks retain their historical rows without
+allowance transfer; the active proof uses the actual current callable roles.
 The facade partition executes the complete `tests/runtime-facade-boundary.test.ts`
 file, retaining all declared public behavior cases with body-local Source-module imports.
 The package integration cases remain in `tests/smoke.test.ts`; that owner
@@ -1561,15 +1560,7 @@ Do not repeat unrelated integration operations for every pure facade mutant.
 Changed test/module selection needs fresh compatible coverage, scoped proof and
 complete assertion-confirmed mutation; no old result is relabeled current.
 
-The main-envelopes named chronological ordering review uses
-`--budget-ref 53fac83b74fb8a5fca7362bbbcb1a0abd8e13253`. It preserves the removed
-unary mapper's full historical1/1 row, the other76retained mappings and the
-capture facade's independent10/10 ceiling. The distinct new comparator has its
-own domain-justified4/4 ceiling published prospectively at b66671c before tracked
-named adoption; the isolated prototype is disclosed. No identity or cap transfer
-and no global admission follows from that local review.
-
-The gate accepts only these pinned review/key
+The gate accepts only the maintained pinned review/key
 pairs and each review's actual Source scope. Caller-supplied correspondence
 versions are rejected. The shared
 focused validator rechecks the pinned runtime, current inputs, immutable snapshot,

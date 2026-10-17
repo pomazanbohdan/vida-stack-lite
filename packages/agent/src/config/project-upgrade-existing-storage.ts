@@ -19,6 +19,8 @@ const maxInputBytes = 4 * 1024 * 1024;
 const maxRows = 100_000;
 const maxTables = 128;
 const migrationTable = 'vida_workspace_storage_migration';
+const sqliteOptions = Object.freeze({ strict: true, safeIntegers: true } as const);
+const readonlySqliteOptions = Object.freeze({ ...sqliteOptions, readonly: true } as const);
 
 export interface ClosedDatabaseImage {
   /** The caller has already proved same device/inode, one link, no symlink, no sidecars, and a successful close. */
@@ -92,6 +94,10 @@ function requireMerge(ok: unknown, message: string): asserts ok {
   if (!ok) throw new Error('Existing storage merge: ' + message);
 }
 
+function quoteSqlIdentifier(value: string): string {
+  return '"' + value.replaceAll('"', '""') + '"';
+}
+
 function canonicalIntegerValue(value: number | bigint): { integer_decimal: string } {
   requireMerge(typeof value === 'bigint' || Number.isSafeInteger(value), 'SQLite integer is not safely representable');
   return { integer_decimal: BigInt(value).toString() };
@@ -117,7 +123,7 @@ function openImage(image: ClosedDatabaseImage, label: string): Database {
     copy[18] = 1;
     copy[19] = 1;
   }
-  return Database.deserialize(copy, { readonly: true, strict: true, safeIntegers: true });
+  return Database.deserialize(copy, readonlySqliteOptions);
 }
 
 function schema(database: Database): SchemaObject[] {
@@ -149,7 +155,7 @@ function canonicalSequenceRows(rows: readonly SequenceRow[]): unknown[] {
 function rowsDigest(database: Database, names: readonly string[]): string {
   const parts: unknown[] = [];
   for (const name of names) {
-    const quoted = '"' + name.replaceAll('"', '""') + '"';
+    const quoted = quoteSqlIdentifier(name);
     const columns = database
       .query<{ name: string; hidden: number | bigint }, []>('PRAGMA table_xinfo(' + quoted + ')')
       .all()
@@ -157,9 +163,7 @@ function rowsDigest(database: Database, names: readonly string[]): string {
       .map((c) => c.name);
     requireMerge(columns.length > 0, 'table has no columns: ' + name);
     const selected = database
-      .query(
-        'SELECT ' + columns.map((column) => '"' + column.replaceAll('"', '""') + '"').join(',') + ' FROM ' + quoted,
-      )
+      .query('SELECT ' + columns.map(quoteSqlIdentifier).join(',') + ' FROM ' + quoted)
       .values() as SqlValue[][];
     const ordered = selected.map((row) => canonicalJson(canonicalSqlValues(row))).sort();
     parts.push({ name, columns, rows: ordered });
@@ -170,14 +174,19 @@ function rowsDigest(database: Database, names: readonly string[]): string {
 }
 
 function insertSql(table: string, columns: readonly string[]): string {
-  const q = (s: string) => '"' + s.replaceAll('"', '""') + '"';
   return (
-    'INSERT INTO ' + q(table) + ' (' + columns.map(q).join(',') + ') VALUES (' + columns.map(() => '?').join(',') + ')'
+    'INSERT INTO ' +
+    quoteSqlIdentifier(table) +
+    ' (' +
+    columns.map(quoteSqlIdentifier).join(',') +
+    ') VALUES (' +
+    columns.map(() => '?').join(',') +
+    ')'
   );
 }
 
 function tableColumns(database: Database, table: string): string[] {
-  const quoted = '"' + table.replaceAll('"', '""') + '"';
+  const quoted = quoteSqlIdentifier(table);
   const columns = database
     .query<{ name: string; hidden: number | bigint }, []>('PRAGMA table_xinfo(' + quoted + ')')
     .all()
@@ -199,7 +208,7 @@ function sequenceRows(
     all.every((row) => selected.has(row.name)),
     'sqlite_sequence has an unowned table row',
   );
-  return all.filter((row) => selected.has(row.name)).sort((a, b) => a.name.localeCompare(b.name));
+  return all.sort((a, b) => a.name.localeCompare(b.name));
 }
 type SequenceRow = ReturnType<typeof sequenceRows>[number];
 
@@ -314,11 +323,11 @@ function importMastraRows(
   target.transaction(() => {
     for (const table of tables) {
       const columns = tableColumns(mastra, table);
-      const quoted = '"' + table.replaceAll('"', '""') + '"';
+      const quoted = quoteSqlIdentifier(table);
       const statement = target.query(insertSql(table, columns));
       let outcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
       try {
-        const selected = columns.map((column) => '"' + column.replaceAll('"', '""') + '"').join(',');
+        const selected = columns.map(quoteSqlIdentifier).join(',');
         for (const row of mastra.query('SELECT ' + selected + ' FROM ' + quoted).values() as SqlValue[][]) {
           statement.run(...row);
         }
@@ -416,7 +425,7 @@ export async function prepareUnifiedExistingStorageImage(
     host = openImage(hostImage, 'Host');
     mastra = openImage(mastraImage, 'Mastra');
     const inventory = await inspectExistingMergeInputs(host, mastra);
-    const hostClone = Database.deserialize(Buffer.from(host.serialize()), { strict: true, safeIntegers: true });
+    const hostClone = Database.deserialize(Buffer.from(host.serialize()), sqliteOptions);
     const pinned = await addPinnedSchemaToHostClone(
       hostClone,
       'vida-existing-storage-schema-merge',
@@ -424,7 +433,7 @@ export async function prepareUnifiedExistingStorageImage(
     );
     if (!pinned.ok) throw pinned.error;
     const withPinnedSchema = pinned.value;
-    target = Database.deserialize(Buffer.from(withPinnedSchema), { strict: true, safeIntegers: true });
+    target = Database.deserialize(Buffer.from(withPinnedSchema), sqliteOptions);
     const schemaEncoding = target.query<{ encoding: string }, []>('PRAGMA encoding').get()?.encoding;
     requireMerge(
       schemaEncoding === 'UTF-8' || schemaEncoding === 'UTF-16le' || schemaEncoding === 'UTF-16be',
@@ -493,14 +502,14 @@ function closeDatabase(database: Database | undefined, errors: unknown[]): void 
 }
 
 async function capturePinnedMastraInventoryAsync(): Promise<SchemaObject[]> {
-  const database = new Database(':memory:', { strict: true, safeIntegers: true });
+  const database = new Database(undefined, sqliteOptions);
   const outcome = await addPinnedSchemaToHostClone(
     database,
     'vida-pinned-mastra-inventory',
     'pinned inventory preparation and close failed',
   );
   if (!outcome.ok) throw outcome.error;
-  const closed = Database.deserialize(Buffer.from(outcome.value), { readonly: true });
+  const closed = Database.deserialize(Buffer.from(outcome.value), readonlySqliteOptions);
   let catalogOutcome: DatabaseWorkOutcome<SchemaObject[]>;
   try {
     const objects = schema(closed);
@@ -518,7 +527,7 @@ async function capturePinnedMastraInventoryAsync(): Promise<SchemaObject[]> {
 }
 
 function tableCount(database: Database, table: string): number {
-  const quoted = '"' + table.replaceAll('"', '""') + '"';
+  const quoted = quoteSqlIdentifier(table);
   const row = database.query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM ' + quoted).get();
   requireMerge(row !== null, 'table count unavailable: ' + table);
   const count = BigInt(row.count);

@@ -8,7 +8,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
-- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,114 current roles, including the separately capped shared UUID predicate and two lazy custody literal owners, after retiring two initialization timer callbacks; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
+- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,111 current roles, including the separately capped shared UUID/SQL-quote predicates and two lazy custody literal owners, after retiring initialization timers and four redundant/local image callbacks; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 - Native isolated workers retain private logical overlays and parent-only raw publication. One reviewed selector permits exact image, envelopes, initialization, custody and fs-safe selections to request bounded diagnostics or complete admission. Complete requests still require the full current universe and unchanged native proof gates. The actual fs-safe7/7closure passes the unchanged reader with four negative controls. Initialization eligibility follows the closed64-mutant diagnostic and existing private-resource/nested-process controls below. Custody full admission follows the private SQLite controls, fresh SQL/table activation and closed64-mutant diagnostic below. Image and envelopes qualification is recorded below. Default execution stays serial, workers remain fixed-two, and capture/ID selectors remain denied. Permission is no proof; broader resource/coverage qualification and FS zero-callable CRAP applicability stay open.
@@ -242,9 +242,15 @@ plan is not a new Source binding, numeric proof or full mutation result.
 
 Image51e9e4f coverage1145a9ba-61a7-4450-8208-9c50e2b0982b at
 /tmp/contour-stage-HqcomJ passes80cases/593assertions, exact F52/52,L202/202,
-S224/224,B61/61. Same-run frozen /tmp/contour-stage-mZs2Ur passes9/9,
+S224/224,B61/61. Same-run frozen /tmp/contour-stage-mZs2Ur measures9/9,
 pin32e47aa, with52individually capped Source-added roles and no original-role
-reuse. Full native12cf93c1-6320-448d-ab72-18280231cbf4 at
+reuse. The old reader emitted scoped-proof-pass, but Root selected a stale
+review Source binding:32e47aa bindsa1818f, while this Source is4a3414. The already
+published4dbd30e native-encoding scope is the correct binding. Keep the old
+observation as issued; do not count it as current scoped qualification. A bounded
+P0 gate correction will compare the selected immutable Source bindings against
+already validated coverage-input digests without another read/hash/AST pass.
+Full native12cf93c1-6320-448d-ab72-18280231cbf4 at
 /tmp/contour-stage-rIB4F3 closes881800ms: baseline80cases6101ms,
 309assertion-Killed/38Survived/0UNKNOWN/180unattempted of527. Batch2 is
 incomplete with budget_exhausted=true, interrupted=false and resource_blocked=null.
@@ -255,6 +261,29 @@ regressions, shared escaping and the guard-backed redundant-filter removal.
 An independently reviewed per-invocation closed Mastra fixture template returns
 defensive byte copies and may remove repeated external setup without caching the
 selected Source or a live database. Pending candidates are not credited as kills.
+
+After the independently publishedfc9b012 plan, Root adopts Sourceacba39e0:
+one pure quote helper has its own1/1 ceiling;48prior roles retain their own caps;
+four old local/inline/filter callbacks are retired with full history. Cached
+changed-Source inventoryv290 has49roles; no unchanged Source is reparsed.
+The sort's old#2 callsite explicitly succeeds the retired filter's#1 label,
+without transferring the filter ceiling. Shared frozen SQLite options retain
+the existing strict/safe/readonly contracts and add strict/safe defenses to the
+schema-only text catalog; v288 qualifies the exact Bun1.4.3 overload/mechanics.
+Independent final lineage reviewv292 has no blocker. The86-case image development
+check XPx9B5 and41-case correspondence check o5AyGm pass with no skips, complete
+captures and closed groups. Fixture query placeholders now derive from the
+actual names array and expected ASCII names use native BINARY byte ordering.
+These checks are not fresh numeric qualification or confirmed mutant results.
+
+The CRAP gate now requires exact pinned current_source_bindings after the focused
+validator, comparing its existing Source digests without an extra scan/hash/read.
+The positive and stale/malformed/missing/duplicate rejection controls pass; no
+legacy fallback bypasses missing review bindings. TESTING uses the maintained
+current-pin resolver and removes obsolete historical hashes from active commands.
+Publish the new Source/review before its immutable pin and fresh triple. All38
+old image survivors remain observed outcomes; unsupported/cleanup/header/count
+cases are not silently excluded or credited as Killed.
 
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed

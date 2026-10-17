@@ -182,6 +182,48 @@ function reviewedSourcePaths(value: unknown): string[] {
   return value;
 }
 
+/** Bind a frozen review to exactly the current Source bytes already validated from the coverage run. */
+export function assertReviewedCurrentSourceBindings(
+  review: unknown,
+  selectedSources: readonly string[],
+  currentSources: readonly { path: string; sha256: string }[],
+): void {
+  if (!isRecord(review) || !Array.isArray(review.current_source_bindings))
+    throw new Error('Scoped CRAP review requires explicit current Source bindings.');
+  if (
+    new Set(selectedSources).size !== selectedSources.length ||
+    new Set(currentSources.map(({ path }) => path)).size !== currentSources.length
+  )
+    throw new Error('Scoped CRAP current Source bindings contain duplicate paths.');
+  const bindings = review.current_source_bindings;
+  const byPath = new Map<string, string>();
+  for (const raw of bindings) {
+    if (
+      !isRecord(raw) ||
+      Object.keys(raw).length !== 2 ||
+      typeof raw.file !== 'string' ||
+      typeof raw.sha256 !== 'string' ||
+      !/^[0-9a-f]{64}$/u.test(raw.sha256)
+    )
+      throw new Error('Scoped CRAP current Source binding is malformed.');
+    if (byPath.has(raw.file)) throw new Error('Scoped CRAP current Source bindings contain duplicate paths.');
+    byPath.set(raw.file, raw.sha256);
+  }
+  const actual = new Map(currentSources.map(({ path, sha256 }) => [path, sha256]));
+  if (
+    byPath.size !== selectedSources.length ||
+    actual.size !== selectedSources.length ||
+    selectedSources.some((file) => {
+      const reviewed = byPath.get(file);
+      const current = actual.get(file);
+      return (
+        reviewed === undefined || current === undefined || !/^[0-9a-f]{64}$/u.test(current) || reviewed !== current
+      );
+    })
+  )
+    throw new Error('Scoped CRAP review is not bound to the exact current Source selection and bytes.');
+}
+
 function assertCrapPlanIdentity(value: unknown): asserts value is Record<string, unknown> {
   if (!isRecord(value) || value.schema !== 'VidaCrapBudgetPlan/v1' || value.baseline_ref !== baselineRef)
     throw new Error('CRAP budget plan schema or published baseline ref is invalid.');
@@ -1088,6 +1130,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       sources: partition.sources,
       tests: partition.tests,
     });
+    assertReviewedCurrentSourceBindings(review, partition.sources, validation.inputs.sources);
     if (v2Review && isRecord(review) && Array.isArray(review.source_mappings)) {
       const identityReuses: ScopedIdentityReuse[] = [];
       if (sourceMappingKind === 'reviewed-pairs') {

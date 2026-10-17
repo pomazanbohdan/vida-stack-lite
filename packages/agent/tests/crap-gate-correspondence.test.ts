@@ -5,7 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { coverageToolInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
-import { scopedCrapDispositionProof, type ScopedFunctionDisposition } from '../tooling/crap-gate.ts';
+import {
+  assertReviewedCurrentSourceBindings,
+  scopedCrapDispositionProof,
+  type ScopedFunctionDisposition,
+} from '../tooling/crap-gate.ts';
 import { functionInventory } from '../tooling/function-inventory.js';
 import type { FileCoverageData } from 'istanbul-lib-instrument';
 
@@ -47,6 +51,48 @@ const v2Rows = [
   },
 ] satisfies ScopedFunctionDisposition[];
 const v2Caps = new Map([['src/a.ts#old', { max_complexity: 2, max_crap: 3 }]]);
+
+test('scoped CRAP current Source bindings match the exact validated selection and bytes', () => {
+  const digestA = 'a'.repeat(64);
+  const digestB = 'b'.repeat(64);
+  const selected = ['src/a.ts', 'src/b.ts'];
+  const current = [
+    { path: 'src/a.ts', sha256: digestA },
+    { path: 'src/b.ts', sha256: digestB },
+  ] as const;
+  const review = {
+    current_source_bindings: [
+      { file: 'src/b.ts', sha256: digestB },
+      { file: 'src/a.ts', sha256: digestA },
+    ],
+  };
+  expect(() => assertReviewedCurrentSourceBindings(review, selected, current)).not.toThrow();
+  for (const [candidate, sources] of [
+    [{}, current],
+    [{ current_source_bindings: [{ file: 'src/a.ts', sha256: digestA }] }, current],
+    [{ current_source_bindings: [...review.current_source_bindings, { file: 'src/a.ts', sha256: digestA }] }, current],
+    [
+      { current_source_bindings: [...review.current_source_bindings, { file: 'src/c.ts', sha256: 'c'.repeat(64) }] },
+      current,
+    ],
+    [
+      { current_source_bindings: [{ file: 'src/a.ts', sha256: '0'.repeat(64) }, review.current_source_bindings[0]] },
+      current,
+    ],
+    [review, [...current, { path: 'src/a.ts', sha256: digestA }]],
+    [review, [{ path: 'src/a.ts', sha256: '0'.repeat(64) }, current[1]]],
+    [
+      {
+        current_source_bindings: [
+          { file: 'src/a.ts', sha256: digestA, extra: true },
+          review.current_source_bindings[1],
+        ],
+      },
+      current,
+    ],
+  ] as const)
+    expect(() => assertReviewedCurrentSourceBindings(candidate, selected, sources)).toThrow();
+});
 
 function splitProofInputs(): Parameters<typeof scopedCrapDispositionProof> {
   return [
