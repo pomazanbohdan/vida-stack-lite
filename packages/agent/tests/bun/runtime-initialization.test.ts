@@ -136,7 +136,7 @@ async function expectReadAdmissionExpiry(
     Date.now = () => originalNow() + 6_000;
     clockAdvanced = true;
     try {
-      await binding;
+      await expectNoRetryDelay(() => binding);
     } catch (error) {
       caught = error;
     }
@@ -150,7 +150,7 @@ async function expectReadAdmissionExpiry(
       if (!bindingSettled) {
         Date.now = () => originalNow() + 6_000;
         clockAdvanced = true;
-        const drained = await observedBinding;
+        const drained = await expectNoRetryDelay(() => observedBinding);
         if (
           drained.status === 'fulfilled' ||
           !(drained.error instanceof RuntimeInitializationBindingError) ||
@@ -285,7 +285,18 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
   } finally {
     rmSync(other, { recursive: true, force: true });
   }
-  expect(() => deriveWorkspaceId('Invalid Repository ID', root)).toThrow('repository identity is invalid');
+  let invalidIdentity: unknown;
+  try {
+    deriveWorkspaceId('Invalid Repository ID', root);
+  } catch (error) {
+    invalidIdentity = error;
+  }
+  expect(invalidIdentity).toBeInstanceOf(WorkspaceIdentityError);
+  expect(invalidIdentity).toMatchObject({
+    name: 'WorkspaceIdentityError',
+    code: 'GAP-WORKSPACE-IDENTITY-001',
+    message: 'repository identity is invalid',
+  });
   expect(expectReturned(() => deriveWorkspaceId('another-repository', root))).not.toBe(receipt.workspace_id);
   expect(expectReturned(() => deriveWorkspaceId('a'.repeat(64), root))).toMatch(/^[a-f0-9]{64}$/u);
   expect(() => deriveWorkspaceId('a'.repeat(65), root)).toThrow('repository identity is invalid');
@@ -789,7 +800,7 @@ test('binding errors retain typed cause evidence', async () => {
     caught = error;
   }
   expect(caught).toBeInstanceOf(RuntimeInitializationBindingError);
-  expect(caught).toMatchObject({ code: 'GAP-RUNTIME-INIT-BIND-001' });
+  expect(caught).toMatchObject({ name: 'RuntimeInitializationBindingError', code: 'GAP-RUNTIME-INIT-BIND-001' });
   if (caught instanceof RuntimeInitializationBindingError) expect(caught.cause).toBeInstanceOf(Error);
   expect(readFileSync(receiptPath, 'utf8')).toBe(bytes);
   caseCompleted = true;
@@ -835,6 +846,7 @@ test('binding preserves a non-Error replacement failure and retries only after r
   if (isolatedBindingError === undefined)
     throw new Error('Fresh initialization module was not imported.', { cause: caught });
   expect(caught).toBeInstanceOf(isolatedBindingError);
+  expect(caught).toMatchObject({ name: 'RuntimeInitializationBindingError', code: 'GAP-RUNTIME-INIT-BIND-001' });
   expect(replaceAttempts).toBe(1);
   if (caught instanceof isolatedBindingError) {
     expect(caught.message).toBe('runtime initialization binding failed: undefined');

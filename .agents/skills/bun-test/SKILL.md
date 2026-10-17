@@ -512,6 +512,10 @@ unexpected invocation immediately and assert zero calls after restoring the
 method. Preserve ordinary operation errors, including rejected undefined.
 Keep typed error/state assertions and require fresh native proof; a5s timeout
 against a5s production retry deadline cannot establish assertion-confirmed Killed.
+The same observer can cover expiry only after the real pending probe and the
+verified jump past the absolute deadline. At that point retry is forbidden;
+observe both the binding await and its pending drain without releasing the
+guard/quarantine. This does not prove mutations using another async mechanism.
 The current function audit indexes literal test names and direct body assertions.
 For a small scenario table, keep named wrappers with meaningful result assertions
 and share the expensive scenario body. Mark fixture success after each wrapper's

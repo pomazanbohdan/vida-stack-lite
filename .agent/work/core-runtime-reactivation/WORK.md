@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Custody's published59-role local triple is exact F/L/S/B100, same-run frozen9/9 and681/681assertion-confirmed native Killed (Source e494471, pin6531dc3, immutable v224). The automatic projection records7/45historical local triples,38unclosed. Active contours are initialization, storage image and envelopes. Initialization's fresh16-role coverage/frozen pass at42e2b1b; actual40 and145 now have owned-body Killed evidence after test repair, while current41 remains UNKNOWN on a case timeout and complete native closure is pending. FS zero-callable CRAP applicability, admission stateful initialization, and image/envelopes isolated complete admission remain OPEN. The derived contour document owns exact receipts and historical closures; WORK records diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- Custody's published59-role local triple is exact F/L/S/B100, same-run frozen9/9 and681/681assertion-confirmed native Killed (Source e494471, pin6531dc3, immutable v224). The automatic projection records7/45historical local triples,38unclosed. Active contours are initialization, storage image and envelopes. Initialization's fresh16-role coverage/frozen pass at9e35f7a; actual40/145/41 have owned-body Killed evidence after test repair. Current19 remains UNKNOWN on child-only error-name proof; current28's file_lock_timeout survivor repair awaits fresh evidence. Complete native closure is pending. FS zero-callable CRAP applicability, admission stateful initialization, and image/envelopes isolated complete admission remain OPEN. The derived contour document owns exact receipts and historical closures; WORK records diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -122,6 +122,28 @@ the unchanged hook. The stage publisher's denial message now exposes actual
 input/process/capture/group flags; failed mutation no longer prints a generic
 claim of missing custody when its captures and group are actually complete.
 Publication/classification and all proof gates stay unchanged.
+The unchanged full hook then passes and packet9e35f7a is pushed. Fresh v233
+coverage66579763-8b94-4eb3-8720-b691691bfaf2 passes the20-case selection and exact
+F16/16,L87/87,S98/98,B54/54; paired frozen under b32fc8e remains9/9. Automatic
+projection has658observations. Full native fa57d132-1b74-4fcf-b0d0-ffdc16205485,
+outervp33g4, reconfirms145/41 Killed, then stops at19 UNKNOWN: constructor name
+literal ->empty is detected through child JSON in body6, with0owned parent
+activation. Keep2Killed/1UNKNOWN/159unattempted of162 and all original receipts.
+The improved stage diagnostic correctly reports failed process/exit1 while boot,
+commit, inputs, capture and closed group all remain valid.
+
+Root adds public name/code assertions to the real parent errors in existing
+typed-cause and non-Error effect bodies, and checks WorkspaceIdentityError's
+instance/name/code/message through the existing invalid-repository call. Blind
+Luna approves the contract checks; no direct mirror-constructor case or child-hit
+transfer is added. The shared no-retry owner also observes the two expiry await/
+drain paths after the already verified6s clock jump: correct deadline handling
+must reject before another Bun.sleep. This is the same no-retry pattern, reviewed
+independently by the clock author. It preserves guard/quarantine state without
+the unadopted250/500ms timers or fixture-release prototype. An unrelated missing
+terminal outcome still remains UNKNOWN. Fresh actual19/28 evidence is pending.
+Focused pD9dPE passes20/0cases,156assertions in14878ms with full captures,
+closed group and unchanged boot; publication/fresh numeric binding follow.
 
 ### Initialization current evidence and owned-clock repair — 2026-10-17
 
