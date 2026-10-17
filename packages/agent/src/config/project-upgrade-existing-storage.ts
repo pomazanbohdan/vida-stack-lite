@@ -398,8 +398,7 @@ export async function prepareUnifiedExistingStorageImage(
   let host: Database | undefined;
   let mastra: Database | undefined;
   let target: Database | undefined;
-  let primaryFailure: { error: unknown } | undefined;
-  let output: UnifiedDatabaseImage | undefined;
+  let outcome: { ok: true; value: UnifiedDatabaseImage } | { ok: false; error: unknown };
   const closeErrors: unknown[] = [];
   try {
     host = openImage(hostImage, 'Host');
@@ -434,7 +433,7 @@ export async function prepareUnifiedExistingStorageImage(
     const finalSchema = assertMergedRowsAndSchema(target, inventory);
     const finalBytes = Buffer.from(target.serialize());
     requireMerge(finalBytes.byteLength <= maxInputBytes, 'unified image exceeds bounded journal capacity');
-    output = Object.freeze({
+    const image: UnifiedDatabaseImage = Object.freeze({
       schema: 'VidaUnifiedWorkspaceImage/v1',
       binding: Object.freeze({ ...binding }),
       size: finalBytes.byteLength,
@@ -444,21 +443,21 @@ export async function prepareUnifiedExistingStorageImage(
       host_rows_digest: inventory.hostRowsDigest,
       mastra_rows_digest: inventory.mastraRowsDigest,
     });
+    outcome = { ok: true, value: image };
   } catch (error) {
-    primaryFailure = { error };
+    outcome = { ok: false, error };
   } finally {
     closeDatabase(target, closeErrors);
     closeDatabase(host, closeErrors);
     closeDatabase(mastra, closeErrors);
   }
-  if (primaryFailure !== undefined) {
+  if (!outcome.ok) {
     if (closeErrors.length > 0)
-      throw new AggregateError([primaryFailure.error, ...closeErrors], 'existing merge and database close failed');
-    throw primaryFailure.error;
+      throw new AggregateError([outcome.error, ...closeErrors], 'existing merge and database close failed');
+    throw outcome.error;
   }
   if (closeErrors.length > 0) throw new AggregateError(closeErrors, 'existing merge database close failed');
-  requireMerge(output !== undefined, 'unified image was not produced');
-  return output;
+  return outcome.value;
 }
 
 function closeDatabase(database: Database | undefined, errors: unknown[]): void {

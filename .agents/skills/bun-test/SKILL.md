@@ -484,6 +484,11 @@ Check the actual mount backing a private fixture, including bind mounts. Use
 TESTING's retained-host-tmpfs rule for disposable functional/process-recovery
 cases; preserve all fsync calls and failed roots. This is not power-loss
 durability evidence or parallel-coverage qualification.
+Use the existing isolation owner's explicit `VIDA_QUALITY_RETAINED_SCRATCH_ROOT`
+option for a qualified retained host root; it must already exist, be absolute
+and resolve outside `packages/agent`. Keep its capacity/type receipt and unique
+per-stage scratch. Never substitute a namespace-only ephemeral tmpfs or reuse a
+failed root. Default storage and all timeout/evidence gates remain unchanged.
 
 Classify real reader effects. An immutable `readFileSync` dependency and a
 SafeAccess reader that creates compare-and-swap sidecars have different resource

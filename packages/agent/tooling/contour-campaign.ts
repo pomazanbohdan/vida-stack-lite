@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, statfsSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, statSync, statfsSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
@@ -198,9 +198,34 @@ function writeRecord(directory: string, file: string, record: unknown): void {
   writeFileSync(path.join(directory, file), JSON.stringify(record, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
 }
 
-export function isolatedCommand(directory: string, args: string[], tools: { tini: string; bwrap: string }) {
+export function isolatedCommand(
+  directory: string,
+  args: string[],
+  tools: { tini: string; bwrap: string },
+  retainedScratchRoot?: string,
+) {
   requireCampaignStorage(directory);
-  const temporary = mkdtempSync(path.join(directory, 'scratch-'));
+  let scratchParent = directory;
+  if (retainedScratchRoot !== undefined) {
+    if (!path.isAbsolute(retainedScratchRoot)) throw new Error('Retained scratch root must be an absolute directory.');
+    let canonicalRoot: string;
+    try {
+      canonicalRoot = realpathSync(retainedScratchRoot);
+      if (!statSync(canonicalRoot).isDirectory()) throw new Error('Retained scratch root is not a directory.');
+    } catch {
+      throw new Error('Retained scratch root must be an existing directory.');
+    }
+    const canonicalPackageRoot = realpathSync(packageRoot);
+    const relativeToPackage = path.relative(canonicalPackageRoot, canonicalRoot);
+    const insidePackage =
+      relativeToPackage === '' ||
+      (!path.isAbsolute(relativeToPackage) &&
+        relativeToPackage !== '..' &&
+        !relativeToPackage.startsWith('..' + path.sep));
+    if (insidePackage) throw new Error('Retained scratch root must resolve outside packages/agent.');
+    scratchParent = canonicalRoot;
+  }
+  const temporary = mkdtempSync(path.join(scratchParent, 'scratch-'));
   const info = statfsSync(temporary, { bigint: true });
   if (!campaignStorageAdmitted(info.bavail * info.bsize))
     throw new CampaignResourceError(temporary, String(info.bavail * info.bsize));
@@ -395,7 +420,12 @@ async function main(): Promise<void> {
               : ['tooling/crap-gate.ts', '--contour', partition.name, '--budget-ref', budget!];
         let isolated: ReturnType<typeof isolatedCommand>;
         try {
-          isolated = isolatedCommand(privateScratchDirectory, args, isolationTools);
+          isolated = isolatedCommand(
+            privateScratchDirectory,
+            args,
+            isolationTools,
+            process.env.VIDA_QUALITY_RETAINED_SCRATCH_ROOT,
+          );
         } catch (error) {
           return isCampaignResourceFailure(error)
             ? { state: 'resource', detail: String(error) }

@@ -14,7 +14,16 @@ import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import type { MutationPartition } from '../tooling/mutation-partitions.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import { selectContourCampaign } from '../tooling/contour-progress.ts';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statfsSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statfsSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,6 +62,80 @@ test('campaign retains private scratch with its stage instead of accumulating ho
     completed = true;
   } finally {
     if (completed) rmSync(stage, { recursive: true });
+  }
+});
+
+test('campaign can retain isolated scratch under an explicit external existing root', () => {
+  const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const operationParent = path.resolve(packageRoot, '../..', '.tmp');
+  mkdirSync(operationParent, { recursive: true });
+  const stage = mkdtempSync(path.join(operationParent, 'contour-scratch-stage-'));
+  const retainedRoot = mkdtempSync(path.join(operationParent, 'contour-retained-scratch-'));
+  let completed = false;
+  try {
+    const tools = { tini: '/control/tini', bwrap: '/control/bwrap' };
+    const first = isolatedCommand(
+      stage,
+      ['tooling/contour-campaign.ts', '--coverage-child', 'main-config'],
+      tools,
+      retainedRoot,
+    );
+    const second = isolatedCommand(
+      stage,
+      ['tooling/contour-campaign.ts', '--coverage-child', 'main-config'],
+      tools,
+      retainedRoot,
+    );
+    expect(path.dirname(first.temporary)).toBe(retainedRoot);
+    expect(path.dirname(second.temporary)).toBe(retainedRoot);
+    expect(first.temporary).not.toBe(second.temporary);
+    const scratchIndex = first.command.indexOf(path.join(first.temporary, 'scratch'));
+    expect(first.command.slice(scratchIndex - 1, scratchIndex + 2)).toEqual([
+      '--bind',
+      path.join(first.temporary, 'scratch'),
+      '/tmp',
+    ]);
+    expect(first.scratch_storage.filesystem_type).toBe(String(statfsSync(first.temporary, { bigint: true }).type));
+    expect(BigInt(first.scratch_storage.available_bytes)).toBeGreaterThanOrEqual(2n * 1024n ** 3n);
+    completed = true;
+  } finally {
+    if (completed) {
+      rmSync(stage, { recursive: true });
+      rmSync(retainedRoot, { recursive: true });
+    }
+  }
+});
+
+test('campaign rejects invalid or package-contained retained scratch roots before allocating scratch', () => {
+  const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const operationParent = path.resolve(packageRoot, '../..', '.tmp');
+  mkdirSync(operationParent, { recursive: true });
+  const stage = mkdtempSync(path.join(operationParent, 'contour-scratch-validation-'));
+  const external = mkdtempSync(path.join(operationParent, 'contour-scratch-root-validation-'));
+  const escapedLink = path.join(external, 'package-link');
+  const regularFile = path.join(external, 'regular-file');
+  writeFileSync(regularFile, 'not a directory', { flag: 'wx' });
+  symlinkSync(packageRoot, escapedLink, 'dir');
+  const args = ['tooling/contour-campaign.ts', '--coverage-child', 'main-config'];
+  const tools = { tini: '/control/tini', bwrap: '/control/bwrap' };
+  let completed = false;
+  try {
+    for (const root of [
+      'relative-scratch-root',
+      path.join(external, 'missing'),
+      regularFile,
+      packageRoot,
+      escapedLink,
+    ]) {
+      expect(() => isolatedCommand(stage, args, tools, root)).toThrow();
+      expect(readdirSync(stage)).toEqual([]);
+    }
+    completed = true;
+  } finally {
+    if (completed) {
+      rmSync(stage, { recursive: true });
+      rmSync(external, { recursive: true });
+    }
   }
 });
 

@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `bd245b169ad9e9b7deb2cbd0d05b1cbf760de527` covers private-target row corruption and body-owned image module constants, removes SQLite COUNT's redundant nonnegative guard, and preserves integer mode. The prior0d2f120 packet removes the proven duplicate per-row bound check and strengthens canonical encoding/header/initializer tests;7363f4e fixes private-DB cleanup on client setup failure through one existing initializer owner. Earlier packets retain schema-snapshot reuse atd5ddd22, exact cause/output assertions and body-local envelope initialization atcace59e, and data-only observation repair at33a98d2. The current follow-up captures computed subjects' full transitive closure and fixes envelope schema-diagnostic activation. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `ec3b3ba66d85368e1f380c0728bbfe523fb8e381` captures computed subjects' full transitive closure and fixes envelope schema-diagnostic activation. The priorbd245b1 packet covers private-target row corruption and body-owned image module constants, removes SQLite COUNT's redundant nonnegative guard, and preserves integer mode;0d2f120 removes the duplicate per-row import bound;7363f4e fixes private-DB cleanup on client setup failure through one existing initializer owner. Earlier packets retain schema-snapshot reuse atd5ddd22 and data-only observation repair at33a98d2. Current fs-attestation has a reader-validated full7/7 native Killed proof, with zero-callable CRAP applicability still OPEN. Its blocked slot moves to service-operation-custody; active contours are storage image, envelopes and service-operation-custody. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -958,6 +958,119 @@ as a candidate, not a demonstrated dominant cost. Any reuse must remain run-loca
 bound to exact test bytes and parser/tool identity, with invocation-local adapter
 and receipt paths. No cache, process reuse, weaker file verification, filtered
 selection, larger timeout or parallel numeric producer is activated by this note.
+
+Fresh immutable ec3b3ba v191 restores image coverage through the corrected input
+owner. `VWjXVu`, run7adeea7b-73e3-4f04-92aa-f24f69fc396b, passes42tests/
+301assertions with exactF50/50,L189/189,S211/211,B56/56 in7160ms. Same-run
+`9nuKih` preserves original883af1d ceilings at maxCC9/maxCRAP9. SDK inputs form
+once through `rTmIsq` in1928ms without suites. Image diagnostic `Un7KBw`,
+run24408569-cd0a-4fe5-adc8-21db9d3b9504, confirms current0 and355 as
+assertion-Killed with full42-case baseline,0UNKNOWN,486unattempted of488 in8869ms.
+The body-local forwarder and real target-corruption assertion now have actual
+generated-mutant proof; this diagnostic is not a complete image score.
+
+FS coverage `xhXUj1`, runca97cf91-0968-489e-b000-417d0af2dc37, completes2807ms,
+5tests/37assertions, F0/0,L4/4,S4/4,B0/0. There are no callable functions or
+branches; maxima remain null rather than zero. Full native `z6G2SE`,
+runef294555-ebf3-4029-97a0-5ad34b506322, completes7472ms with a full5-case
+baseline and7/7assertion-confirmed Killed,0Survived,0UNKNOWN,0unattempted. The
+existing native reader validates its real native-partition-report.json and
+retained context in v191 before projection import. Do not infer additional
+mutants, baseline cases or broader attestation scope from these exact counts.
+
+The Source is absent from originalb549951, not an original/current zero-role
+pair. Existing partial review scope_review_20261013_small records it explicitly
+as a new zero-role Source, but the scoped executable CRAP route has no qualified
+applicability receipt for that case. Keep this GAP, the null metrics and normal
+executable/nonempty role checks. No dummy function, numeric zero, new data-only
+gate fork or static-export exemption is introduced. The slot moves to ready
+service-operation-custody while attestation remains OPEN. Its two-Source,
+three-file selection and original8ca2af9 review stay intact; blind review finds
+no justified initial assertion or expensive-fixture correction before measurement.
+
+Current envelopes `Dtb36l`, run56aeba09-dd28-4ef8-94b2-371fe0faa0b7, passes47tests/
+4271assertions with exact78/211/227/103 counters in6025ms; same-run `zBLMtd`
+passes original53fac83 ceilings at9/9. Projection554contains these pairs, the
+data-only observation and the complete native FS proof, with no new full triple.
+All successful measurements above retain complete captures, closed outer groups,
+unchanged boot and immutable checkout. Coverage operation BLOCKED remains
+distinct from focused exact metrics and native local partition acceptance.
+
+Envelope diagnostic `U7AfhO`, run985c66a5-1529-4c56-be6f-f2166cbd9fbd, confirms
+current90 as assertion-Killed with one full47-case baseline,0UNKNOWN and
+762unattempted of763 in9188ms. It keeps original singleton batch index32 and is
+not unioned with the earlier32Killed attempt into a complete score. V191 stays
+clean with no UNKNOWN and can continue independent declared measurements.
+
+Service-operation-custody `nX5I8f`, rund0f839ae-3bf9-4e61-a98b-4f57f5b290cc,
+passes123tests/1026assertions, exactF56/56,L235/235,S243/243,B123/123, test-child
+27.09s and producer30599ms. Same-run `ksTHzS` preserves original8ca2af9 frozen
+ceilings at9/9. Blind review finds no safe fixture-sharing or assertion reduction:
+cost is distributed across real SQLite setup/teardown and independent authority,
+CAS, handoff and cleanup faults. Cheap predicate duplicates are not the bottleneck.
+
+An otherwise identical same-commit/full-selection coverage comparison places
+only the owned operation scratch on retained host tmpfs. Parent
+`/tmp/vida-rolling-contour-JhStJH`, run38fb876b-01fb-4f34-b46c-e4d0a28b20c6,
+passes all123tests/1026assertions and the same exact56/235/243/123 counters.
+Test-child timing is3.47s and producer6424ms, compared with27.09s/30599ms on
+overlay. This single comparison is approximately7.8x/4.8x faster for those
+measured processes, not a general performance guarantee. No filesystem timing
+spy, omitted fsync, shared fixture/handle, weaker test or larger timeout is used.
+Actual recorded filesystem types are16914836(tmpfs) and2035054128(overlay);
+both preserve the2GiB admission requirement. The host tmpfs had over8GiB free.
+Its roots and captures remain after the isolated child exits; expected UNKNOWN
+fixtures are not deleted. No power-loss or host-restart durability is claimed.
+
+The current [Linux tmpfs documentation](https://docs.kernel.org/filesystems/tmpfs.html)
+confirms virtual-memory storage, loss on unmount and capacity/memory accounting.
+It is saved as attachments/linux-tmpfs-reference-20261017.html. The probe uses
+the existing isolation owner, differing only in its explicit operation directory;
+there is no ephemeral namespace-only mount. Same-run frozen `tjJq20` passes
+original8ca2af9 ceilings at9/9. Projection560imports both service pairs without
+replacing missing mutation.
+
+Full image `NqZ8Ik`, runa455c04d-dcae-4cdc-8e9c-c9d95ee53957, terminates
+exit1 after900739ms at the unchanged partition budget:488generated,
+410attempted,326assertion-Killed,83Survived,1UNKNOWN,78unattempted. Full42-case
+baseline, complete outer captures, closed groups, unchanged boot and commit are
+retained. Last local18 has incomplete native producer/capture custody, not a
+confirmed Source defect or Killed result. Preserve all v191 and retained host
+scratch; this checkout is now fenced. Its earlier successful receipts remain
+input-bound evidence, not permission to continue a fenced producer namespace.
+
+The next integrated image packet adds independent canonical logical-row digest
+and migration-ledger payload/digest assertions, physical insertion-order
+permutation, healthy schema capacity, real source/final CHECK corruption,
+unowned sequence and reserved-name denials, actual extra clone table and seeded
+private-target custody faults, exact empty-image denial, regex anchor controls
+and ordered body/close cause checks. Positive result shape is asserted before
+dereference. No fake integrity/COUNT results or weakened native invariants are
+introduced. A reviewed tagged result replaces separate optional output/error
+slots in public preparation, retaining thrown undefined and flat close ordering.
+The single affected inventory retains50identities and every original10/10cap;
+current Source binding is122e5d3910f12b47a2928d484f773f411fb263a28f34510ac8b98224db0e9af2.
+
+The existing isolation owner now accepts an explicit retained external scratch
+root. RED `36EQ0q` fails both positive-root and invalid-root controls on the old
+implementation. GREEN `9M7Un2` passes188tests/1028assertions across image,
+campaign and progress in3222ms with full captures, closed groups and unchanged
+boot. Roots must exist, be absolute and resolve outside the package; unique
+allocation,2GiB guards, private bindings, defaults and evidence gates remain.
+TESTING and the bun-test skill document host tmpfs retention and durability limits.
+The existing progress CLI writes compact JSON with unchanged atomic publication
+and32MiB bound. An actual560-attempt semantic roundtrip passes, shrinking the
+snapshot from22560462 to16931076bytes with all values/history unchanged.
+These are development/tooling checks; fresh numeric qualification is pending.
+The ordinary strict hook catches three possibly-undefined accesses on the new
+migration row. An explicit row-presence assertion and narrowing precede all
+accesses; no nonnull cast is used. Blind envelope review finds the analogous
+runtime-Ajv/local-tool initializer attribution risk in the existing final JSON/
+revision/input case. It now uses the same synchronous fresh subject, preserving
+all assertions. Combined image and complete envelope selection `6Tem1s` passes
+in3716ms with complete captures, closed groups and unchanged boot. An earlier
+launcher request used nonexistent guessed envelope filenames and was rejected
+before launching tests; it supplies no passing evidence.
 
 ### Published admission packet — retained context
 

@@ -1564,8 +1564,16 @@ Record the actual filesystem type and available bytes in `launch.json`; the
 private `/tmp` bind does not imply tmpfs. `TMPDIR` and `BUN_TMPDIR` both select
 that private root. `BUN_INSTALL_CACHE_DIR` selects its fresh writable
 `/tmp/bun-install-cache`; do not copy the whole host cache into each stage.
-This keeps new scratch off the shared host `/tmp` capacity
-without deleting or relocating any prior FAIL/UNKNOWN fixture. Native mutation evidence stays
+The default keeps new scratch off the shared host `/tmp` capacity. For a qualified
+retained host filesystem, explicitly set `VIDA_QUALITY_RETAINED_SCRATCH_ROOT`
+to an existing absolute directory outside `packages/agent`. The isolation owner
+resolves symlinks, rejects package-contained roots and allocates a unique child;
+it retains the same capacity checks and records the actual backing filesystem.
+No automatic tmpfs selection or ephemeral mount is performed. An explicitly
+selected host tmpfs must retain failed roots after namespace exit; it consumes
+host memory and is lost on host reboot/unmount. Keep all fsync calls and do not
+claim power-loss durability from functional or process-recovery tests there.
+Do not delete or relocate any prior FAIL/UNKNOWN fixture. Native mutation evidence stays
 at its real package `.tmp` path; the campaign does not relocate or rewrite it.
 Full captures, boot identity, argv, terminal status, timeout and process-group
 custody are retained in `coverage/contour-campaigns/<run-id>/`. Known failures

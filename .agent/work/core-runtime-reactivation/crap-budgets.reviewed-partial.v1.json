@@ -479,7 +479,7 @@
     },
     {
       "file": "src/config/project-upgrade-existing-storage.ts",
-      "sha256": "1f57abfd12d2238f109eb023af28c16f1e2182ad9699a9a61f5ce823e4b75fcf"
+      "sha256": "122e5d3910f12b47a2928d484f773f411fb263a28f34510ac8b98224db0e9af2"
     },
     {
       "file": "src/config/service-operation-custody.ts",
@@ -187729,10 +187729,10 @@
         "line": 390,
         "column": 7,
         "start": 15254,
-        "end": 18449,
+        "end": 18414,
         "bodyLine": 394,
         "bodyColumn": 33,
-        "bodyEndLine": 462,
+        "bodyEndLine": 461,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 383. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187743,13 +187743,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 418,
+        "line": 417,
         "column": 6,
-        "start": 16708,
-        "end": 16778,
-        "bodyLine": 418,
+        "start": 16696,
+        "end": 16766,
+        "bodyLine": 417,
         "bodyColumn": 16,
-        "bodyEndLine": 418,
+        "bodyEndLine": 417,
         "bodyEndColumn": 76
       },
       "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:expectedCloneSchema. The immediate parent and surrounding current Source lines 401-403 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
@@ -187760,13 +187760,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 464,
+        "line": 463,
         "column": 0,
-        "start": 18451,
-        "end": 18617,
-        "bodyLine": 464,
+        "start": 18416,
+        "end": 18582,
+        "bodyLine": 463,
         "bodyColumn": 80,
-        "bodyEndLine": 470,
+        "bodyEndLine": 469,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 456. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187777,13 +187777,13 @@
       "max_crap": 10,
       "current_complexity": 3,
       "current_source_address": {
-        "line": 472,
+        "line": 471,
         "column": 0,
-        "start": 18619,
-        "end": 19328,
-        "bodyLine": 472,
+        "start": 18584,
+        "end": 19293,
+        "bodyLine": 471,
         "bodyColumn": 76,
-        "bodyEndLine": 488,
+        "bodyEndLine": 487,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 464. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187794,13 +187794,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 490,
+        "line": 489,
         "column": 0,
-        "start": 19330,
-        "end": 19773,
-        "bodyLine": 490,
+        "start": 19295,
+        "end": 19738,
+        "bodyLine": 489,
         "bodyColumn": 63,
-        "bodyEndLine": 497,
+        "bodyEndLine": 496,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 502. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187811,13 +187811,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 499,
+        "line": 498,
         "column": 0,
-        "start": 19775,
-        "end": 19944,
-        "bodyLine": 499,
+        "start": 19740,
+        "end": 19909,
+        "bodyLine": 498,
         "bodyColumn": 50,
-        "bodyEndLine": 501,
+        "bodyEndLine": 500,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 511. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."

@@ -2590,9 +2590,8 @@ describe('runtime envelope canonicalization boundary', () => {
     ).toMatchObject({ decision: 'allow', diagnostics: ['policy1'] });
   });
 });
-test('envelopes validate JSON data, revision bindings, and local tool inputs', async () => {
-  const { consumeRuntimeEnvelope, localToolEnvelope, validateRuntimeEnvelope } =
-    await import('../src/contracts/envelopes.js');
+test('envelopes validate JSON data, revision bindings, and local tool inputs', () => {
+  const { consumeRuntimeEnvelope, localToolEnvelope, validateRuntimeEnvelope } = loadFreshEnvelopes();
   const envelope: RuntimeEnvelope<unknown> = {
     schema: 'RuntimeEnvelope/v1',
     kind: 'quality-check',

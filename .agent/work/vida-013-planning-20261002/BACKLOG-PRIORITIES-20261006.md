@@ -56,8 +56,11 @@ and TEST013 tasks; external report labels do not replace their stable IDs.
 
 The fresh body-local facade triple at91906ff has refilled its slot with storage
 image. Main-host has a fresh compatible triple atfebad42 and immediately refills
-its slot with fs-safe-attestation. Active lanes are storage image, envelopes and
-fs-safe-attestation; admission's
+its slot with fs-safe-attestation. Attestation now has exact L4/4,S4/4 with no
+callable/branch inventory and a reader-validated full7/7 native Killed proof;
+its explicit CRAP applicability gap parks the contour without a closure. The
+released slot prepares service-operation-custody. Active lanes are storage image,
+envelopes and service-operation-custody; admission's
 stateful static-initialization gap releases its idle slot without a closure.
 Initialization remains OPEN on qualified child-only activation evidence. Admission's caller-owned
 request defect now has real RED/GREEN evidence and a bounded snapshot correction.

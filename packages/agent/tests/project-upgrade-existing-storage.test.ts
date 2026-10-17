@@ -64,6 +64,23 @@ function makeHost(sequenceValue: bigint | number | string = 9007199254740993n): 
   }
 }
 
+function makeHostWithLogicalInsertionOrder(reverse: boolean): ClosedDatabaseImage {
+  const database = new Database(':memory:', { strict: true, safeIntegers: true });
+  try {
+    database.exec('CREATE TABLE logical_order_fixture(key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+    const rows = [
+      { key: 'alpha', value: 'first' },
+      { key: 'bravo', value: 'second' },
+      { key: 'charlie', value: 'third' },
+    ];
+    const insert = database.query('INSERT INTO logical_order_fixture(key,value) VALUES(?,?)');
+    for (const row of reverse ? [...rows].reverse() : rows) insert.run(row.key, row.value);
+    return closedImage(database);
+  } finally {
+    database.close(true);
+  }
+}
+
 function makeHostWithForeignKeyViolation(): ClosedDatabaseImage {
   const database = new Database(':memory:', { strict: true, safeIntegers: true });
   try {
@@ -74,6 +91,41 @@ function makeHostWithForeignKeyViolation(): ClosedDatabaseImage {
       'CREATE TABLE merge_fk_child(id TEXT PRIMARY KEY, parent_id TEXT NOT NULL REFERENCES merge_fk_parent(id))',
     );
     database.query('INSERT INTO merge_fk_child VALUES(?,?)').run('orphan', 'missing-parent');
+    return closedImage(database);
+  } finally {
+    database.close(true);
+  }
+}
+
+function makeHostWithCheckConstraintViolation(): ClosedDatabaseImage {
+  const database = new Database(':memory:', { strict: true, safeIntegers: true });
+  try {
+    initializeHostDatabaseSchema(database);
+    database.exec('CREATE TABLE merge_integrity_fixture(id INTEGER CHECK(id > 0))');
+    database.exec('PRAGMA ignore_check_constraints=ON');
+    database.query('INSERT INTO merge_integrity_fixture VALUES(?)').run(-1);
+    database.exec('PRAGMA ignore_check_constraints=OFF');
+    return closedImage(database);
+  } finally {
+    database.close(true);
+  }
+}
+
+function makeHostWithUnownedSequenceRow(): ClosedDatabaseImage {
+  const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
+  try {
+    database.query('INSERT INTO sqlite_sequence(name,seq) VALUES(?,?)').run('unowned_sequence_fixture', 9);
+    return closedImage(database);
+  } finally {
+    database.close(true);
+  }
+}
+
+function makeHostWithCheckFixture(): ClosedDatabaseImage {
+  const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
+  try {
+    database.exec('CREATE TABLE final_integrity_fixture(value INTEGER NOT NULL CHECK(value > 0))');
+    database.query('INSERT INTO final_integrity_fixture VALUES(1)').run();
     return closedImage(database);
   } finally {
     database.close(true);
@@ -357,6 +409,38 @@ test.each([
   }
 });
 
+test('rejects an extra table on the observed Host clone before importing rows', async () => {
+  const host = makeHost();
+  const mastra = await makeMastra();
+  const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+  const exec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+  const setupDatabases = new Set<Database>();
+  const observed: { clone?: Database } = {};
+  let insertedExtraTable = false;
+  const observing = spyOn(Database.prototype, 'query').mockImplementation(function (this: Database, sql: string) {
+    if (sql === 'PRAGMA database_list' && !setupDatabases.has(this)) {
+      setupDatabases.add(this);
+      if (setupDatabases.size === 2) {
+        observed.clone = this;
+        exec.apply(this, ['CREATE TABLE unexpected_host_clone_fixture(id INTEGER PRIMARY KEY)']);
+        insertedExtraTable = true;
+      }
+    }
+    return Reflect.apply(query, this, [sql]);
+  } as typeof Database.prototype.query);
+  try {
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /cloned Host plus pinned schema closure differs/u,
+    );
+  } finally {
+    observing.mockRestore();
+  }
+  expect(observed.clone).toBeDefined();
+  expect(insertedExtraTable).toBe(true);
+  expect(() => observed.clone?.query('SELECT 1').get()).toThrow();
+});
+
 test('reports an outer close acknowledgement error after a successful merge and attempts every close', async () => {
   const host = makeHost();
   const mastra = await makeMastra();
@@ -397,6 +481,7 @@ test('reports an outer close acknowledgement error after a successful merge and 
   expect(opened.length).toBeGreaterThan(0);
   expect(failure).toBeInstanceOf(AggregateError);
   if (!(failure instanceof AggregateError)) throw new Error('Expected the close acknowledgement error.');
+  expect(failure.message).toBe('existing merge database close failed');
   expect(failure.errors).toEqual([closeError]);
   for (const database of opened) expect(() => database.query('SELECT 1').get()).toThrow();
 });
@@ -455,6 +540,7 @@ test('imports an owned Mastra sqlite_sequence row from the serialized Mastra ima
   const image = await expectAsyncReturned(() =>
     prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
   );
+  expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: binding(host, mastra) });
   expect(Buffer.from(mastra.bytes)).toEqual(Buffer.from(serializedMastra));
   const merged = openUnified(image.bytes_base64);
   try {
@@ -629,6 +715,7 @@ async function assertWalImageMerge(walHost: boolean, walMastra: boolean): Promis
     const expectedBinding = binding(host, mastra);
     const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
 
+    expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
     expect(image.binding).toEqual(expectedBinding);
     expect(image.binding.source_host_digest).toBe(hostDigest);
     expect(image.binding.source_mastra_digest).toBe(mastraDigest);
@@ -679,6 +766,7 @@ describe('existing storage image preparation', () => {
     const expectedBinding = binding(host, mastra);
     const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
 
+    expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
     expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
     expect(image.binding).toEqual(expectedBinding);
     expect(image.size).toBeGreaterThan(0);
@@ -690,6 +778,25 @@ describe('existing storage image preparation', () => {
     const merged = openUnified(image.bytes_base64);
     try {
       preserveMergeFixture(merged);
+      const migrationRows = merged
+        .query<{ id: number | bigint; payload: string; digest: string }, []>(
+          'SELECT id,payload,digest FROM vida_workspace_storage_migration',
+        )
+        .all();
+      expect(migrationRows).toHaveLength(1);
+      const migrationRow = migrationRows[0];
+      expect(migrationRow).toBeDefined();
+      if (migrationRow === undefined) throw new Error('expected one migration ledger row');
+      expect(migrationRow.id).toBe(1n);
+      const expectedMigrationPayload = canonicalize({
+        ...expectedBinding,
+        host_rows_digest: image.host_rows_digest,
+        mastra_rows_digest: image.mastra_rows_digest,
+      });
+      if (expectedMigrationPayload === undefined)
+        throw new Error('expected migration ledger payload could not be canonicalized');
+      expect(migrationRow.payload).toBe(expectedMigrationPayload);
+      expect(migrationRow.digest).toBe(sha256(Buffer.from(expectedMigrationPayload, 'utf8')));
       const schema = merged
         .query<{ type: string; name: string; table_name: string; sql: string | null }, []>(
           'SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master ' +
@@ -704,11 +811,104 @@ describe('existing storage image preparation', () => {
     }
   });
 
+  test('preserves the same Host logical rows across different physical insertion orders', async () => {
+    const forwardHost = makeHostWithLogicalInsertionOrder(false);
+    const reverseHost = makeHostWithLogicalInsertionOrder(true);
+    const mastra = await makeMastra();
+    const canonicalHostRows = canonicalize([
+      {
+        name: 'logical_order_fixture',
+        columns: ['key', 'value'],
+        rows: ['["alpha","first"]', '["bravo","second"]', '["charlie","third"]'].sort(),
+      },
+    ]);
+    if (canonicalHostRows === undefined) throw new Error('logical Host fixture could not be canonicalized');
+    const expectedHostRowsDigest = sha256(Buffer.from(canonicalHostRows, 'utf8'));
+    expect(forwardHost.sha256).not.toBe(reverseHost.sha256);
+    const forwardBinding = binding(forwardHost, mastra);
+    const reverseBinding = binding(reverseHost, mastra);
+    const forward = await expectAsyncReturned(() =>
+      prepareUnifiedExistingStorageImage(forwardHost, mastra, forwardBinding),
+    );
+    const reverse = await expectAsyncReturned(() =>
+      prepareUnifiedExistingStorageImage(reverseHost, mastra, reverseBinding),
+    );
+
+    expect(forward).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: forwardBinding });
+    expect(reverse).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: reverseBinding });
+    expect(forward.host_rows_digest).toBe(expectedHostRowsDigest);
+    expect(reverse.host_rows_digest).toBe(expectedHostRowsDigest);
+    expect(forward.schema_digest).toBe(reverse.schema_digest);
+    expect(forward.binding.source_host_digest).toBe(forwardHost.sha256);
+    expect(reverse.binding.source_host_digest).toBe(reverseHost.sha256);
+    for (const image of [forward, reverse]) {
+      const merged = openUnified(image.bytes_base64);
+      try {
+        expect(
+          merged
+            .query<{ key: string; value: string }, []>('SELECT key,value FROM logical_order_fixture ORDER BY key')
+            .all(),
+        ).toEqual([
+          { key: 'alpha', value: 'first' },
+          { key: 'bravo', value: 'second' },
+          { key: 'charlie', value: 'third' },
+        ]);
+      } finally {
+        merged.close(true);
+      }
+    }
+  });
+
+  test('accepts a healthy Host schema above sixteen objects within the supported bounds', async () => {
+    const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
+    let host: ClosedDatabaseImage;
+    try {
+      database.exec(
+        Array.from(
+          { length: 20 },
+          (_, index) =>
+            'CREATE INDEX merge_capacity_fixture_index_' +
+            String(index).padStart(2, '0') +
+            ' ON merge_sequence_fixture(group_id)',
+        ).join(';'),
+      );
+      host = closedImage(database);
+    } finally {
+      database.close(true);
+    }
+    const mastra = await makeMastra();
+    const expectedBinding = binding(host, mastra);
+    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
+    const merged = openUnified(image.bytes_base64);
+    try {
+      const schemaObjectCount = merged
+        .query<{ count: number | bigint }, []>(
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'",
+        )
+        .get()?.count;
+      expect(schemaObjectCount).toBeDefined();
+      expect(Number(schemaObjectCount)).toBeGreaterThan(16);
+      expect(Number(schemaObjectCount)).toBeLessThanOrEqual(1024);
+      expect(
+        merged
+          .query<{ count: number | bigint }, []>(
+            "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='index' AND name GLOB 'merge_capacity_fixture_index_*'",
+          )
+          .get()?.count,
+      ).toBe(20n);
+      preserveMergeFixture(merged);
+    } finally {
+      merged.close(true);
+    }
+  });
+
   test.each([
     ['Host', /Host logical rows changed during merge/u],
     ['Mastra', /Mastra logical rows differ after import/u],
+    ['new service custody', /new service custody table contains operational rows/u],
   ] as const)(
-    'rejects a %s row changed in the private target before returning the unified image',
+    'rejects %s state changed or seeded in the private target before returning the unified image',
     async (label, diagnostic) => {
       const host = makeHost();
       const mastra = await makeMastra();
@@ -722,10 +922,14 @@ describe('existing storage image preparation', () => {
           changedRows =
             label === 'Host'
               ? this.query('UPDATE merge_sequence_fixture SET body=? WHERE id=1').run(Buffer.from([9, 8, 7])).changes
-              : this.query('UPDATE mastra_threads SET title=? WHERE id=?').run(
-                  'changed inside private merge target',
-                  'merge-thread-1',
-                ).changes;
+              : label === 'Mastra'
+                ? this.query('UPDATE mastra_threads SET title=? WHERE id=?').run(
+                    'changed inside private merge target',
+                    'merge-thread-1',
+                  ).changes
+                : this.query(
+                    "INSERT INTO agent_host_service_operation_custody(workspace_id,owner_kind,operation_id,request_digest,revision,phase,evidence_digest) VALUES(?,'release-pack-worker',?,?,1,'prepared',?)",
+                  ).run('e'.repeat(64), 'merge-fixture-operation', 'f'.repeat(64), 'a'.repeat(64)).changes;
         }
         return result;
       });
@@ -802,6 +1006,22 @@ describe('existing storage image preparation', () => {
     );
   });
 
+  test('rejects a Host schema using the reserved migration sentinel name', async () => {
+    const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
+    let host: ClosedDatabaseImage;
+    try {
+      database.exec('CREATE TABLE vida_workspace_storage_migration(id INTEGER PRIMARY KEY)');
+      host = closedImage(database);
+    } finally {
+      database.close(true);
+    }
+    const mastra = await makeMastra();
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /Host already uses the migration sentinel name/u,
+    );
+  });
+
   test('rejects a correctly hashed source image larger than the 4 MiB input bound before SQLite deserialization', async () => {
     const host = oversizedHostImage();
     const mastra = await makeMastra();
@@ -816,6 +1036,33 @@ describe('existing storage image preparation', () => {
       opening.mockRestore();
     }
   });
+
+  test.each(['Host', 'Mastra'] as const)(
+    'rejects a correctly described empty %s image before deserializing that image',
+    async (label) => {
+      const validHost = makeHost();
+      const validMastra = await makeMastra();
+      const emptyBytes = Buffer.alloc(0);
+      const emptyImage: ClosedDatabaseImage = {
+        ...(label === 'Host' ? validHost : validMastra),
+        size: emptyBytes.byteLength,
+        sha256: sha256(emptyBytes),
+        bytes: emptyBytes,
+      };
+      const host = label === 'Host' ? emptyImage : validHost;
+      const mastra = label === 'Mastra' ? emptyImage : validMastra;
+      const opening = spyOn(Database, 'deserialize');
+      try {
+        await expectRejection(
+          prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+          new RegExp('^Existing storage merge: ' + label + ' image size is unsupported$', 'u'),
+        );
+        expect(opening).toHaveBeenCalledTimes(label === 'Host' ? 0 : 1);
+      } finally {
+        opening.mockRestore();
+      }
+    },
+  );
 
   test.each([
     ['Host', 'digest', 0],
@@ -905,12 +1152,104 @@ describe('existing storage image preparation', () => {
     );
   });
 
+  test('rejects a Host CHECK constraint violation reported by SQLite integrity_check', async () => {
+    const host = makeHostWithCheckConstraintViolation();
+    const mastra = await makeMastra();
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /an input image fails integrity_check/u,
+    );
+  });
+
+  test('rejects an unowned sqlite_sequence row alongside the owned Host rows', async () => {
+    const host = makeHostWithUnownedSequenceRow();
+    const mastra = await makeMastra();
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /sqlite_sequence has an unowned table row/u,
+    );
+  });
+
+  test('checks the final target integrity after earlier merge checks', async () => {
+    const host = makeHostWithCheckFixture();
+    const mastra = await makeMastra();
+    const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+    const exec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+    const observed: { target?: Database } = {};
+    const observingExec = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, ...args) {
+      const result = exec.apply(this, args);
+      if (String(args[0]).includes('CREATE TABLE vida_workspace_storage_migration')) observed.target = this;
+      return result;
+    });
+    const corruptingFinalCheck = spyOn(Database.prototype, 'query').mockImplementation(function (
+      this: Database,
+      sql: string,
+    ) {
+      if (this === observed.target && sql === 'PRAGMA integrity_check') {
+        exec.apply(this, ['PRAGMA ignore_check_constraints=ON']);
+        Reflect.apply(query, this, ['UPDATE final_integrity_fixture SET value=-1']).run();
+        exec.apply(this, ['PRAGMA ignore_check_constraints=OFF']);
+      }
+      return Reflect.apply(query, this, [sql]);
+    } as typeof Database.prototype.query);
+    try {
+      await expectRejection(
+        prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+        /integrity check failed/u,
+      );
+    } finally {
+      corruptingFinalCheck.mockRestore();
+      observingExec.mockRestore();
+    }
+    expect(observed.target).toBeDefined();
+    expect(() => observed.target?.query('SELECT 1').get()).toThrow();
+  });
+
+  test('retains the outer merge-and-close diagnostic when a body failure and target close failure coincide', async () => {
+    const host = makeHost();
+    const mastra = await makeMastra();
+    const bodyError = new Error('private target body fault');
+    const closeError = new Error('private target close fault');
+    const exec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+    const close = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    const observed: { target?: Database } = {};
+    const failingBody = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, ...args) {
+      const result = exec.apply(this, args);
+      if (String(args[0]).includes('CREATE TABLE vida_workspace_storage_migration')) {
+        observed.target = this;
+        throw bodyError;
+      }
+      return result;
+    });
+    const failingClose = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, ...args) {
+      const result = close.apply(this, args);
+      if (this === observed.target) throw closeError;
+      return result;
+    });
+    let failure: unknown;
+    try {
+      failure = await rejectionReason(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+    } finally {
+      failingClose.mockRestore();
+      failingBody.mockRestore();
+    }
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError)) throw new Error('Expected the body and target-close failures.');
+    expect(failure.message).toBe('existing merge and database close failed');
+    expect(failure.errors).toHaveLength(2);
+    expect(failure.errors[0]).toBe(bodyError);
+    expect(failure.errors[1]).toBe(closeError);
+    expect(observed.target).toBeDefined();
+    expect(() => observed.target?.query('SELECT 1').get()).toThrow();
+  });
+
   test('validates serialized unified image shape, canonical base64, size, and byte digest', async () => {
     const { validateUnifiedDatabaseImage } = loadFreshStorageImage();
     const host = makeHost();
     const mastra = await makeMastra();
     const expectedBinding = binding(host, mastra);
     const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
     expect(expectReturned(() => validateUnifiedDatabaseImage(image))).toEqual({
       schema: 'VidaUnifiedWorkspaceImage/v1',
       binding: expectedBinding,
@@ -921,6 +1260,20 @@ describe('existing storage image preparation', () => {
       host_rows_digest: image.host_rows_digest,
       mastra_rows_digest: image.mastra_rows_digest,
     });
+    expect(() => validateUnifiedDatabaseImage({ ...image, schema_digest: 'x' + image.schema_digest })).toThrow();
+    expect(() => validateUnifiedDatabaseImage({ ...image, schema_digest: image.schema_digest + 'x' })).toThrow();
+    expect(() =>
+      validateUnifiedDatabaseImage({
+        ...image,
+        binding: { ...image.binding, operation_id: image.binding.operation_id + '\n' },
+      }),
+    ).toThrow();
+    expect(() =>
+      validateUnifiedDatabaseImage({
+        ...image,
+        binding: { ...image.binding, operation_id: image.binding.operation_id + '!' },
+      }),
+    ).toThrow();
     const oneByte = Buffer.from([1]);
     expect(() =>
       validateUnifiedDatabaseImage({
