@@ -752,6 +752,62 @@ in2275ms; real generated109 activation must still be independently confirmed.
 Projection526imports the actual
 coverage/frozen pair without promoting this partial mutation result.
 
+On cace59e, image `B0ce3s`, rund781cc45-c65b-49cb-9ef8-3c6f830adb72, and
+`qCYgIe` preserve exactF50/50,L203/203,S226/226,B52/52 and original frozen7/7.
+Envelope `w37Zlx`, run085ca8a9-c1e5-4ae2-9c7b-b10ed126ea5f, and `HZmeil`
+preserve exactF78/78,L211/211,S227/227,B103/103 and original frozen9/9.
+The owner imports both pairs into projection532attempts. SDK inputs form once
+through `tG9XhB` without suites. Envelope diagnostic `gFeIrU`,
+run2d650479-87e1-4758-9d53-5ecbd26d10ef, confirms109 as assertion-Killed with a
+full47-case baseline,0UNKNOWN and762unattempted of763 in8175ms. It qualifies
+actual body-local initialization; it is not another complete contour score.
+
+Image diagnostic `Y5hsRC`, run9942be7e-0a09-4f5d-afc1-b81da07e62e1, completes
+12383ms with full28-case baseline:264Killed,73Survived,430UNKNOWN and501unattempted
+of504. Retain all v185 bytes. Exact instrumented review corrects the initial73
+gloss: it removes the metadata-size equality, not the already-tested byte upper
+bound. The current table now independently corrupts Host/Mastra size or digest
+and verifies denial before that image is deserialized. The actual430 failure is
+the WAL fixture reading `image.binding.source_host_digest` before an assertion;
+it now asserts the complete expected binding first, and the existing positive
+decoder helper asserts normal completion for analogous cases. `JOmlfv` passes
+30tests/210assertions in2182ms before the following new fault controls.
+
+Independent v158 review rejects the generic single-close helper for this path:
+it would nest cleanup causes instead of retaining the flat ordered contract.
+Root's new native-handle fault controls `zUT5cV` reproduce a product defect in both
+inventory and Host-clone preparation: client construction throws at its actual
+PRAGMA database_list read after an owned private database opens, but no close is
+attempted. Both cases propagate the original setup error and fail at closes0/1;
+fixture cleanup then closes the exact observed handle after restoring spies.
+The earlier `nZmerY` second-case probe used query ordinal and did not target clone
+setup; it remains an unsuccessful diagnostic. Distinct-database targeting fixes
+the probe, not the Source. The single image writer now consolidates existing
+initializer ownership with tagged outcomes, preserving flat ordered errors,
+undefined identity and original prospective ceilings. No missing-capture guard is
+simply deleted via a type assertion.
+
+GREEN `MWlntE` passes96tests/793assertions across image, schema, admission and Bun
+SQLite client in4799ms, including both real setup-fault regressions. Independent
+v158 actual-code review confirms every owned private DB close, conditional store
+close, Host original lifetime, readonly inventory reopen, flat ordered aggregation
+and lone undefined identity. Root adds six close-only phase scenarios to the same
+fixture instead of another builder, checking single store/DB error identity,
+two-close aggregation and the original phase-specific message. Final image
+`mcA9Op` passes38tests/284assertions in2034ms. Shared positive decoder/WAL checks
+and metadata size/digest denial retain their actual context; no test selection
+filter or Source mutation exclusion is added.
+
+The existing initializer takes ownership of the already-created private database;
+client/store construction now occurs inside its guarded body. Both callers use
+the same tagged-outcome owner, so the duplicated inventory initialization/close
+body and optional snapshot guards disappear. Inventory's readonly catalog phase
+and final schema snapshot reuse remain. Root's one inventory/hash pass finds all
+50original surviving identities, no added/retired functions, each within its
+unchanged prospective10/10 ceilings. Current Source binding is
+ff21ccea00f99c87343d000c72d8a04d3d225e3a922b3f83af45292216c5b0dd; original883af1d
+frozen bytes remain unchanged. Fresh numeric evidence must bind these new bytes.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

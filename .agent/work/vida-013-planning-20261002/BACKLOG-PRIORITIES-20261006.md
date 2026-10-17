@@ -79,6 +79,12 @@ final schema array for the digest, removing a second post-merge catalog read wit
 unchanged50-role correspondence and original ceilings. The data-only attestation
 Source remains executable for coverage/mutation; CRAP applicability needs explicit
 empty-callable proof, not a synthetic zero score or static-export exemption.
+Actual fault controls also expose missing private-DB close when memory-client
+construction fails in inventory and Host-clone preparation. The existing image
+initializer now owns both setup and cleanup for either prepared DB, with tagged
+outcomes and flat ordered body/store/DB causes. Shared-body deletion preserves all
+50identities and prospective ceilings; affected regressions pass. Fresh numeric
+qualification remains OPEN. WORK owns the exact RED/GREEN and mutation receipts.
 
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
 

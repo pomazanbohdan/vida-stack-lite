@@ -257,24 +257,30 @@ async function inspectExistingMergeInputs(host: Database, mastra: Database): Pro
   };
 }
 
-async function addPinnedSchemaToHostClone(host: Database): Promise<Uint8Array> {
-  const prepared = Database.deserialize(Buffer.from(host.serialize()), { strict: true, safeIntegers: true });
-  const client = createInMemoryBunSqliteClient(prepared);
-  const storage = new LibSQLStore({ id: 'vida-existing-storage-schema-merge', client });
-  let withPinnedSchema: Uint8Array | undefined;
+async function addPinnedSchemaToHostClone(
+  prepared: Database,
+  storageId: string,
+  aggregateMessage: string,
+): Promise<{ ok: true; value: Uint8Array } | { ok: false; error: unknown }> {
   const errors: unknown[] = [];
+  let outcome: { ok: true; value: Uint8Array } | { ok: false; error: unknown };
+  let storage: LibSQLStore | undefined;
   try {
+    const client = createInMemoryBunSqliteClient(prepared);
+    storage = new LibSQLStore({ id: storageId, client });
     await storage.init();
     await client.settle();
     requireMerge(!prepared.inTransaction, 'pinned initializer left a transaction open');
-    withPinnedSchema = Buffer.from(prepared.serialize());
+    outcome = { ok: true, value: Buffer.from(prepared.serialize()) };
   } catch (error) {
-    errors.push(error);
+    outcome = { ok: false, error };
   } finally {
-    try {
-      await storage.close();
-    } catch (error) {
-      errors.push(error);
+    if (storage !== undefined) {
+      try {
+        await storage.close();
+      } catch (error) {
+        errors.push(error);
+      }
     }
     try {
       prepared.close(true);
@@ -282,10 +288,13 @@ async function addPinnedSchemaToHostClone(host: Database): Promise<Uint8Array> {
       errors.push(error);
     }
   }
-  if (errors.length === 1) throw errors[0];
-  if (errors.length > 1) throw new AggregateError(errors, 'pinned schema initialization and close failed');
-  requireMerge(withPinnedSchema !== undefined, 'pinned schema snapshot missing');
-  return withPinnedSchema;
+  if (!outcome.ok) {
+    if (errors.length === 0) return outcome;
+    return { ok: false, error: new AggregateError([outcome.error, ...errors], aggregateMessage) };
+  }
+  if (errors.length > 0)
+    return { ok: false, error: errors.length === 1 ? errors[0] : new AggregateError(errors, aggregateMessage) };
+  return outcome;
 }
 
 function importMastraRows(
@@ -399,7 +408,14 @@ export async function prepareUnifiedExistingStorageImage(
     host = openImage(hostImage, 'Host');
     mastra = openImage(mastraImage, 'Mastra');
     const inventory = await inspectExistingMergeInputs(host, mastra);
-    const withPinnedSchema = await addPinnedSchemaToHostClone(host);
+    const hostClone = Database.deserialize(Buffer.from(host.serialize()), { strict: true, safeIntegers: true });
+    const pinned = await addPinnedSchemaToHostClone(
+      hostClone,
+      'vida-existing-storage-schema-merge',
+      'pinned schema initialization and close failed',
+    );
+    if (!pinned.ok) throw pinned.error;
+    const withPinnedSchema = pinned.value;
     target = Database.deserialize(Buffer.from(withPinnedSchema), { strict: true, safeIntegers: true });
     const expectedCloneSchema = [...inventory.hostSchema, ...inventory.pinned].sort(
       (a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name),
@@ -458,33 +474,13 @@ function closeDatabase(database: Database | undefined, errors: unknown[]): void 
 
 async function capturePinnedMastraInventoryAsync(): Promise<SchemaObject[]> {
   const database = new Database(':memory:', { strict: true, safeIntegers: true });
-  const client = createInMemoryBunSqliteClient(database);
-  const storage = new LibSQLStore({ id: 'vida-pinned-mastra-inventory', client });
-  let captured: Uint8Array | undefined;
-  const errors: unknown[] = [];
-  try {
-    await storage.init();
-    await client.settle();
-    requireMerge(!database.inTransaction, 'pinned initializer left a transaction open');
-    captured = Buffer.from(database.serialize());
-  } catch (error) {
-    errors.push(error);
-  } finally {
-    try {
-      await storage.close();
-    } catch (error) {
-      errors.push(error);
-    }
-    try {
-      database.close(true);
-    } catch (error) {
-      errors.push(error);
-    }
-  }
-  if (errors.length === 1) throw errors[0];
-  if (errors.length > 1) throw new AggregateError(errors, 'pinned inventory preparation and close failed');
-  requireMerge(captured !== undefined, 'pinned inventory was not captured');
-  const closed = Database.deserialize(Buffer.from(captured), { readonly: true, strict: true, safeIntegers: true });
+  const outcome = await addPinnedSchemaToHostClone(
+    database,
+    'vida-pinned-mastra-inventory',
+    'pinned inventory preparation and close failed',
+  );
+  if (!outcome.ok) throw outcome.error;
+  const closed = Database.deserialize(Buffer.from(outcome.value), { readonly: true, strict: true, safeIntegers: true });
   try {
     const objects = schema(closed);
     requireMerge(objects.length <= maxTables * 8 && tableNames(objects).length > 0, 'pinned inventory exceeds bounds');

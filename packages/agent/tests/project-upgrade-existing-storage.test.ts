@@ -173,10 +173,15 @@ function binding(host: ClosedDatabaseImage, mastra: ClosedDatabaseImage): Existi
 }
 
 function openUnified(bytesBase64: string): Database {
-  return Database.deserialize(Buffer.from(bytesBase64, 'base64'), { strict: true, safeIntegers: true });
+  return expectReturned(() =>
+    Database.deserialize(Buffer.from(bytesBase64, 'base64'), { strict: true, safeIntegers: true }),
+  );
 }
 
-async function expectPinnedPhaseFailure(phase: 'inventory' | 'Host clone', failCleanup: boolean): Promise<void> {
+async function expectPinnedPhaseFailure(
+  phase: 'inventory' | 'Host clone',
+  faults: { serialize: boolean; storeClose: boolean; databaseClose: boolean },
+): Promise<void> {
   const host = makeHost();
   const mastra = await makeMastra();
   const targetInit = phase === 'inventory' ? 1 : 2;
@@ -225,7 +230,7 @@ async function expectPinnedPhaseFailure(phase: 'inventory' | 'Host clone', failC
     if (targetReady && targetDatabases.has(this)) {
       targetReady = false;
       bodyReached = true;
-      throw bodyError;
+      if (faults.serialize) throw bodyError;
     }
     return bytes;
   });
@@ -238,7 +243,7 @@ async function expectPinnedPhaseFailure(phase: 'inventory' | 'Host clone', failC
       const result = await storeClose.apply(this, args);
       if (targetStores.has(this)) {
         storeCloseReached = true;
-        if (failCleanup) throw storeCloseError;
+        if (faults.storeClose) throw storeCloseError;
       }
       return result;
     } finally {
@@ -249,7 +254,7 @@ async function expectPinnedPhaseFailure(phase: 'inventory' | 'Host clone', failC
     databaseClose.apply(this, args);
     if (targetDatabases.has(this)) {
       databaseCloseReached = true;
-      if (failCleanup && !closingStoreInProgress) throw undefined;
+      if (faults.databaseClose && !closingStoreInProgress) throw undefined;
     }
   });
   try {
@@ -260,14 +265,21 @@ async function expectPinnedPhaseFailure(phase: 'inventory' | 'Host clone', failC
     expect(bodyReached).toBe(true);
     expect(storeCloseReached).toBe(true);
     expect(databaseCloseReached).toBe(true);
-    if (failCleanup) {
+    const expected: unknown[] = [];
+    if (faults.serialize) expected.push(bodyError);
+    if (faults.storeClose) expected.push(storeCloseError);
+    if (faults.databaseClose) expected.push(undefined);
+    if (expected.length > 1) {
       expect(failure).toBeInstanceOf(AggregateError);
       if (!(failure instanceof AggregateError)) throw new Error('Expected retained body and cleanup causes.');
-      expect(failure.errors).toHaveLength(3);
-      expect(failure.errors[0]).toBe(bodyError);
-      expect(failure.errors[1]).toBe(storeCloseError);
-      expect(failure.errors[2]).toBeUndefined();
-    } else expect(failure).toBeUndefined();
+      expect(failure.errors).toHaveLength(expected.length);
+      expected.forEach((cause, index) => expect(failure.errors[index]).toBe(cause));
+      expect(failure.message).toBe(
+        phase === 'inventory'
+          ? 'pinned inventory preparation and close failed'
+          : 'pinned schema initialization and close failed',
+      );
+    } else expect(failure).toBe(expected[0]);
   } finally {
     closingDatabase.mockRestore();
     closingStore.mockRestore();
@@ -279,12 +291,58 @@ async function expectPinnedPhaseFailure(phase: 'inventory' | 'Host clone', failC
 }
 
 test.each([
-  ['inventory / clean teardown', 'inventory', false],
-  ['inventory / cleanup failures', 'inventory', true],
-  ['Host clone / clean teardown', 'Host clone', false],
-  ['Host clone / cleanup failures', 'Host clone', true],
-] as const)('%s retains body and close errors', async (_label, phase, failCleanup) => {
-  await expectPinnedPhaseFailure(phase, failCleanup);
+  ['inventory / clean teardown', 'inventory', true, false, false],
+  ['inventory / cleanup failures', 'inventory', true, true, true],
+  ['Host clone / clean teardown', 'Host clone', true, false, false],
+  ['Host clone / cleanup failures', 'Host clone', true, true, true],
+  ['inventory / store close only', 'inventory', false, true, false],
+  ['inventory / database close only', 'inventory', false, false, true],
+  ['inventory / both closes only', 'inventory', false, true, true],
+  ['Host clone / store close only', 'Host clone', false, true, false],
+  ['Host clone / database close only', 'Host clone', false, false, true],
+  ['Host clone / both closes only', 'Host clone', false, true, true],
+] as const)('%s retains body and close errors', async (_label, phase, serialize, storeClose, databaseClose) => {
+  await expectPinnedPhaseFailure(phase, { serialize, storeClose, databaseClose });
+});
+
+test.each([
+  ['inventory', 1],
+  ['Host clone', 2],
+] as const)('closes the owned %s database when memory-client setup fails', async (_phase, targetSetup) => {
+  const host = makeHost();
+  const mastra = await makeMastra();
+  const setupError = new Error('memory-client setup failed');
+  const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+  const close = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+  const setupDatabases = new Set<Database>();
+  const observed: { database?: Database } = {};
+  let ownedCloses = 0;
+  const querying = spyOn(Database.prototype, 'query').mockImplementation(function (this: Database, sql: string) {
+    if (sql === 'PRAGMA database_list' && !setupDatabases.has(this)) {
+      setupDatabases.add(this);
+      if (setupDatabases.size === targetSetup) {
+        observed.database = this;
+        throw setupError;
+      }
+    }
+    return Reflect.apply(query, this, [sql]);
+  } as typeof Database.prototype.query);
+  const closing = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, ...args) {
+    const result = close.apply(this, args);
+    if (this === observed.database) ownedCloses++;
+    return result;
+  });
+  try {
+    const failure = await rejectionReason(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+    expect(failure).toBe(setupError);
+    expect(observed.database).toBeDefined();
+    expect(ownedCloses).toBe(1);
+    expect(() => observed.database?.query('SELECT 1').get()).toThrow();
+  } finally {
+    closing.mockRestore();
+    querying.mockRestore();
+    if (observed.database && ownedCloses === 0) observed.database.close(true);
+  }
 });
 
 test('reports an outer close acknowledgement error after a successful merge and attempts every close', async () => {
@@ -556,10 +614,10 @@ async function assertWalImageMerge(walHost: boolean, walMastra: boolean): Promis
     const mastraBytes = Uint8Array.from(mastra.bytes);
     const hostDigest = sha256(hostBytes);
     const mastraDigest = sha256(mastraBytes);
-    const image = await expectAsyncReturned(() =>
-      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
-    );
+    const expectedBinding = binding(host, mastra);
+    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
 
+    expect(image.binding).toEqual(expectedBinding);
     expect(image.binding.source_host_digest).toBe(hostDigest);
     expect(image.binding.source_mastra_digest).toBe(mastraDigest);
     expect(host.sha256).toBe(hostDigest);
@@ -712,15 +770,19 @@ describe('existing storage image preparation', () => {
   });
 
   test.each([
-    ['Host', 0],
-    ['Mastra', 1],
+    ['Host', 'digest', 0],
+    ['Mastra', 'digest', 1],
+    ['Host', 'size', 0],
+    ['Mastra', 'size', 1],
   ] as const)(
-    'rejects a correctly sized %s image with a stale digest before deserializing it',
-    async (label, expectedOpens) => {
+    'rejects a %s image with stale %s metadata before deserializing it',
+    async (label, mismatch, expectedOpens) => {
       const host = makeHost();
       const mastra = await makeMastra();
-      const invalidHost = label === 'Host' ? { ...host, sha256: '0'.repeat(64) } : host;
-      const invalidMastra = label === 'Mastra' ? { ...mastra, sha256: '0'.repeat(64) } : mastra;
+      const image = label === 'Host' ? host : mastra;
+      const invalid = mismatch === 'size' ? { ...image, size: image.size + 1 } : { ...image, sha256: '0'.repeat(64) };
+      const invalidHost = label === 'Host' ? invalid : host;
+      const invalidMastra = label === 'Mastra' ? invalid : mastra;
       const deserialize = Database.deserialize.bind(Database);
       let opens = 0;
       const opening = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
