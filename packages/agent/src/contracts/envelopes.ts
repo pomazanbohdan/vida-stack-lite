@@ -44,14 +44,12 @@ function reject(conditions: readonly boolean[], message: string): void {
   });
 }
 
-function rejectCanonical(message: string, options?: ErrorOptions): never {
-  throw new Error('runtime envelope rejected: ' + message, options);
+function rejectCanonical(cause: unknown): never {
+  throw new Error('runtime envelope rejected: ' + errorMessage(cause), { cause });
 }
 const canonicalAttempt = Result.fromThrowable(canonicalJsonImageWithNodeLimit);
 function assertDataOnlyJson(value: unknown): unknown {
-  const captured = canonicalAttempt(value, 0, MAX_CANONICAL_NODES);
-  if (captured.isErr()) rejectCanonical(errorMessage(captured.error), { cause: captured.error });
-  return captured.value.image;
+  return canonicalAttempt(value, 0, MAX_CANONICAL_NODES).mapErr(rejectCanonical)._unsafeUnwrap().image;
 }
 
 export function validateRuntimeEnvelope(value: unknown): RuntimeEnvelope {

@@ -2560,8 +2560,16 @@ test('envelopes validate JSON data, revision bindings, and local tool inputs', a
   expect(consumed).toEqual(envelope);
   expect(consumed).not.toBe(envelope);
   expect(() => validateRuntimeEnvelope({ ...envelope, payload: 1n })).toThrow(/non-canonical/);
-  expect(() => validateRuntimeEnvelope({ ...envelope, kind: '', operation: '' })).toThrow(
-    'runtime envelope rejected: must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._/-]*$"; must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._:/-]*$"',
+  const schemaMessage =
+    'runtime envelope rejected: must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._/-]*$"; must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._:/-]*$"';
+  assert.throws(
+    () => validateRuntimeEnvelope({ ...envelope, kind: '', operation: '' }),
+    (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.equal(error.message, schemaMessage);
+      assert.equal(error.cause, schemaMessage.slice('runtime envelope rejected: '.length));
+      return true;
+    },
   );
   expect(() => invokeUntrusted(consumeRuntimeEnvelope, [envelope, { sourceRevision: 1, currentRevision: 1 }])).toThrow(
     'runtime envelope source revision binding is required',

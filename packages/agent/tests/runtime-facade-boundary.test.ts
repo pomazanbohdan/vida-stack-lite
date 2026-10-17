@@ -424,6 +424,8 @@ describe('runtime facade public boundary', () => {
       { ...delta, changed: [null] },
       { ...delta, changed: [{ field: 'revision' }] },
       { ...delta, changed: [{ field: '', value: 2 }] },
+      { ...delta, changed: [{ field: ' revision ', value: 2 }] },
+      { ...delta, changed: [{ field: 1, value: 2 }] },
       { ...delta, changed: [{ field: 'revision', value: 2, extra: true }] },
     ])
       expect(() => runtime.validateStatusDelta(invalid)).toThrow();

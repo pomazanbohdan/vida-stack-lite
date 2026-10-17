@@ -222,12 +222,12 @@ export function statusDelta(previous: RuntimeAssuranceContext, current: RuntimeA
   validateRuntimeAssuranceContext(current);
   if (previous.work_id !== current.work_id) fail('assurance status work id mismatch');
   const changed = deltaFields
-    .filter((field) =>
-      field === 'current_documentation_artifact' && previous[field] !== undefined && current[field] !== undefined
-        ? stable(previous[field]) !== stable(current[field])
-        : previous[field] !== current[field],
+    .filter(
+      (field) =>
+        stable([previous[field] === undefined, pick(previous, field, null)]) !==
+        stable([current[field] === undefined, pick(current, field, null)]),
     )
-    .map((field) => ({ field, value: current[field] ?? null }));
+    .map((field) => ({ field, value: pick(current, field, null) }));
   return Object.freeze({
     schema: deltaSchema,
     status: changed.length ? 'changed' : 'unchanged',
@@ -285,14 +285,12 @@ function validateDeltaIdentity(value: unknown): RuntimeStatusDelta {
 
 function validateDeltaChanges(delta: RuntimeStatusDelta): void {
   if (!Array.isArray(delta.changed)) fail('assurance status delta changes invalid');
-  const seen = new Set<string>();
+  const remaining = new Set<string>(deltaFields);
   for (const change of delta.changed) {
     if (!exactFields(change, ['field', 'value'])) fail('assurance status delta change invalid');
-    const field = text(change.field, 'assurance status delta change field');
-    if (field !== change.field || !(deltaFields as readonly string[]).includes(field) || seen.has(field))
-      fail('assurance status delta change field invalid');
+    text(change.field, 'assurance status delta change field');
+    if (!remaining.delete(change.field as string)) fail('assurance status delta change field invalid');
     stable(change.value);
-    seen.add(field);
   }
 }
 
@@ -306,8 +304,13 @@ function validateDeltaWatermark(delta: RuntimeStatusDelta): void {
 export function validateStatusDelta(value: unknown): RuntimeStatusDelta {
   const delta = validateDeltaIdentity(value);
   validateDeltaChanges(delta);
-  if (delta.status === 'unchanged' && delta.changed.length) fail('assurance status unchanged delta has changes');
-  if (delta.status === 'changed' && delta.changed.length === 0) fail('assurance status changed delta has no changes');
+  if ((delta.status === 'changed') !== Boolean(delta.changed.length))
+    fail(
+      {
+        changed: 'assurance status changed delta has no changes',
+        unchanged: 'assurance status unchanged delta has changes',
+      }[delta.status],
+    );
   text(delta.next_action, 'assurance status delta next action');
   validateDeltaWatermark(delta);
   return delta;

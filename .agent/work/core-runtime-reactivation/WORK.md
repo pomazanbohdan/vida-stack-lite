@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published implementation main: `b7fa92fd61d59e39954bbf8ddd4843f3912d33f7`; origin/main was fetched and was already safely up to date. The new audit Source/test packet is under final checks. Runtime initialization, storage admission and existing-storage image have historical local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Published implementation main: `e8134861baa69a6b6cc27865e2245a99bcd89d44`; audit fixes and the three-contour policy passed the ordinary strict pre-commit and were pushed. Numeric feedback now has a focused follow-up under checks. Runtime initialization, storage admission and existing-storage image have historical local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -63,7 +63,7 @@ requires equivalent contracts. D01/D02 public/dynamic liveness is unproved, so
 no deletion is authorized merely by absent static references.
 
 The owner's updated method is the [rolling three-contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle).
-Blind Luna lanes prepare bun-runtime-facade, main-envelopes and bun-host-state;
+Blind Luna lanes began with bun-runtime-facade, main-envelopes and bun-host-state;
 Root owns all checks and final numeric admission. Only a complete compatible
 coverage/frozen-CRAP/assertion-Killed100 triple closes a contour and immediately
 refills its slot. Preparation/review alone does not close work. Other lanes use
@@ -75,14 +75,54 @@ its existing Host-state tests, with a contract assertion in contour-progress.
 No Source is removed and no duplicate mutation test owner is added. The existing
 package repair-suite selection stays intact; full fixture cost does not authorize
 larger mutation limits. Facade's removed stable callback needs explicit reviewed
-correspondence. Envelope's expanded expiry comparator retains its original role
-and ceiling; replacing it with a higher-budget same-responsibility role was
-rejected. Neither issue is numeric closure or permission to reset frozen caps.
+correspondence. Independent actual-baseline review distinguishes envelope's
+removed claim-to-wire mapper from the newly explicit pairwise comparator, despite
+the same lexical identity. Its original cap is preserved; a new-role disposition
+requires the existing explicit v3 policy and independent admission, not a reset.
+Neither issue is numeric closure or permission to reset frozen caps.
 Selection/projection checks `qbozxT` pass132tests/631assertions across2files in525ms
 with complete captures, closed groups and unchanged boot. The host's standard
 strict pre-commit entry is restored separately; pre-push activation is outside
 the existing authorization. Linux tini0.19.0 matches the upstream release SHA256,
 and the real tini/bwrap PID isolation probe succeeds before numeric launch.
+
+### First rolling numeric feedback
+
+Published e813486 measurements have full captures, closed outer process groups,
+unchanged boot and immutable Source. Facade `u0aFbH`, run
+`4b26dc4a-0593-4603-a763-5c3815307695`, has exact F23/23,L91/91,S106/106,B114/114
+and14passing tests. Same-run frozen `9yZeQx` correctly rejects the old24-role
+review after canonicalization removed one callback. Envelopes `3hOYzB`, run
+`0ff57381-82af-41ae-ae38-8aa10df66abb`, has exact F78/78,L213/213,S230/230,B105/105
+and45passing tests. Same-run frozen `TzxjlB` rejects retained ceilings; captured
+rows isolate assertDataOnlyJson2>1 and the mapper/comparator responsibility change.
+No cap is raised and no new mutation100 result is claimed.
+
+Host-state `r6dXMC`, run `417dc56a-4649-4037-9d99-9fda9e0aea1b`, terminates
+UNKNOWN in270559ms. The instrumented real retirement fixture exceeds its60s case
+limit and contained preparation subsequently times out. SIGKILL/UNKNOWN and
+resource_safe_to_advance=false remain explicit. Preserve its run, lock, scratch
+and failed contained fixture; no replay, automatic unchanged retry, deletion or
+larger timeout. Further numeric work needs the existing fresh-isolated-checkout
+protocol. The outer namespace being reaped does not resolve test-effect custody.
+Host-state stays OPEN, also missing a scoped three-source frozen review; main-host
+is a different Source. Its blocked slot moves to ready storage-admission repair,
+so active preparation is facade, envelopes and storage-admission.
+
+The existing projection owner imports both coverage/outcome pairs and Host's
+UNKNOWN:472attempts, no additional complete local triple. Counts and status derive
+only from CONTOUR-STATUS. Blind reports v146–v151 distinguish confirmed findings,
+lineage gaps and candidates; no speculative fixture weakening was adopted.
+
+Follow-up facade uses one remaining-field Set deletion for membership/uniqueness,
+existing canonical signatures for value/absence equality, and one bidirectional
+status/length guard with unchanged diagnostics. Frozen role correspondence stays
+open. Independent v150 finds no defect; `n7ILG0` passes21tests/633assertions across
+boundary and package integration in1552ms. Envelopes reuses its original mapErr
+flow with the total raw-cause rejection owner, restoring the adapter's branch-free
+shape without adding callbacks. Schema failures also retain their joined diagnostic
+as cause; `NlPzJx` passes45tests across the full three-file selection in2536ms.
+These changed inputs require their own fresh numeric evidence.
 
 ### Published admission packet — retained context
 
