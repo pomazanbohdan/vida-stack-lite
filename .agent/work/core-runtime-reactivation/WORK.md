@@ -1362,6 +1362,11 @@ The ordinary hook catches a typed Bun matcher mismatch between the observed
 string digest and the reservation's nullable field. An explicit boolean search
 matches both actual argument/result fields without a cast or weaker check.
 `quFxgB` rechecks the changed closed-child body in621ms with complete custody.
+Published32e47aa1c0928613a1b4329fb529313606dca89b passes the ordinary strict
+505-file TypeScript/format/lint/Knip hook and is pushed. The scoped selector now
+names that immutable aggregate review; earlier pins stay intact. Fresh numeric
+measurement must use this exact pin and the new Source binding, not the prior
+cleanup review. This publication performs no loader/layout/runtime cutover.
 
 ### Published admission packet — retained context
 

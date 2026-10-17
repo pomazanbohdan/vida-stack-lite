@@ -94,6 +94,10 @@ const scopedBudgetReviews = new Map([
     'scope_review_existing_storage_image_cleanup_20261017',
   ],
   [
+    '32e47aa1c0928613a1b4329fb529313606dca89b:bun-project-upgrade-existing-storage-image',
+    'scope_review_existing_storage_image_aggregate_20261017',
+  ],
+  [
     'cd006a23ae0c74528393783c0ee64e719627e3af:bun-runtime-facade',
     'scope_review_runtime_facade_shared_canonical_20261017',
   ],
