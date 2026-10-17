@@ -1163,6 +1163,152 @@ test('handoff keeps its source-read diagnostic when owned source cleanup also fa
   if (completed) rmSync(fixture.root, { recursive: true, force: true });
 });
 
+test('reconciliation keeps its source-read diagnostic when owned source cleanup also fails', async () => {
+  const fixture = openCustodyFixture('reconciliation-read-close-fault-');
+  let source: Database | undefined;
+  let inspection: Database | undefined;
+  let reader: Database | undefined;
+  let restoreRawOpen: (() => void) | undefined;
+  let restoreClose: (() => void) | undefined;
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    const prior = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(prior).not.toBeNull();
+    if (!prior) throw new Error('The exact reconciliation source beforeimage must remain present.');
+    expectReturned(() => closeServiceOperationDatabase(fixture.database));
+    source = expectReturned(() => openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId));
+    source.exec('ALTER TABLE agent_host_service_operation_custody ADD COLUMN unexpected TEXT');
+
+    let ownedSource: Database | undefined;
+    const nativeOpen = workspaceRaw.openUnadmittedWorkspaceDatabase;
+    const watchedOpen = spyOn(workspaceRaw, 'openUnadmittedWorkspaceDatabase').mockImplementation((...args) => {
+      const database = nativeOpen(...args);
+      if (ownedSource === undefined && args[0] === fixture.root && args[1] === fixture.relative) ownedSource = database;
+      return database;
+    });
+    restoreRawOpen = () => watchedOpen.mockRestore();
+
+    const closeError = new Error('injected reconciliation source cleanup failure');
+    let closeFaultReached = false;
+    let verifierCalls = 0;
+    const nativeClose = Reflect.get(Database.prototype, 'close') as Database['close'];
+    const watchedClose = spyOn(Database.prototype, 'close').mockImplementation(function (
+      this: Database,
+      force?: boolean,
+    ): void {
+      if (this === ownedSource && !closeFaultReached) {
+        closeFaultReached = true;
+        throw closeError;
+      }
+      nativeClose.call(this, force);
+    });
+    restoreClose = () => watchedClose.mockRestore();
+
+    const failure = await rejectionReason(
+      reconcileServiceOperationCustody(
+        source,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        async () => {
+          verifierCalls++;
+          throw new Error('reconciliation verifier must not run after a source-read failure');
+        },
+      ).finally(() => {
+        source = undefined;
+      }),
+    );
+    expect(closeFaultReached).toBe(true);
+    expect(verifierCalls).toBe(0);
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError))
+      throw new Error('Reconciliation source read and close causes must survive.');
+    expect(failure.message).toBe('reconciliation source read and close failed');
+    expect(failure.errors).toHaveLength(2);
+    expect(failure.errors[0]).toBeInstanceOf(Error);
+    if (!(failure.errors[0] instanceof Error)) throw new Error('The custody schema read error must survive.');
+    expect(failure.errors[0].message).toBe('Service operation custody: owned service table is absent or differs');
+    expect(failure.errors[1]).toBe(closeError);
+
+    restoreClose();
+    restoreClose = undefined;
+    restoreRawOpen();
+    restoreRawOpen = undefined;
+    retryPendingWorkspaceDatabaseCloses();
+
+    inspection = new Database(path.join(fixture.root, fixture.relative));
+    inspection.exec('ALTER TABLE agent_host_service_operation_custody DROP COLUMN unexpected');
+    inspection.close();
+    inspection = undefined;
+    reader = expectReturned(() => openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId));
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(reader!, fixture.workspaceId, operationId)),
+    ).toEqual(prior);
+    closeServiceOperationDatabase(reader);
+    reader = undefined;
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+  }
+  try {
+    completeOwnedCleanup(
+      [
+        () => {
+          restoreClose?.();
+          return undefined;
+        },
+        () => {
+          restoreRawOpen?.();
+          return undefined;
+        },
+        () => {
+          retryPendingWorkspaceDatabaseCloses();
+          return undefined;
+        },
+        () => {
+          if (source !== undefined) closeServiceOperationDatabase(source);
+          return undefined;
+        },
+        () => {
+          inspection?.close();
+          return undefined;
+        },
+        () => {
+          if (reader !== undefined) closeServiceOperationDatabase(reader);
+          return undefined;
+        },
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+    if (primaryFailure !== undefined) throw primaryFailure.error;
+  } catch (error) {
+    console.error('Retained failed reconciliation source-read close fixture: ' + fixture.root);
+    throw error;
+  }
+  if (completed) rmSync(fixture.root, { recursive: true, force: true });
+  else console.error('Retained failed reconciliation source-read close fixture: ' + fixture.root);
+});
+
 test('handoff stops before receipt verification when a valid source read cannot close', async () => {
   const fixture = openCustodyFixture('handoff-valid-read-close-fault-');
   let source: Database | undefined;

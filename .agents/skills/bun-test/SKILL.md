@@ -550,6 +550,11 @@ For a repeated SQLite BUSY wait in a functional lease-denial case, use
 Keep the real lock, exact connection, healthy retry and production timing policy;
 do not replace the native denial with a thrown error.
 
+For mutation resource pressure, distinguish disposable Bun `.pile` transpiler
+cache from fixture/evidence data. Follow TESTING's isolated worker cache policy;
+retain the exact cleanup manifest and every database, raw receipt and UNKNOWN
+fixture. Cache deletion or disabling alone establishes no test/mutation result.
+
 Check the actual mount backing a private fixture, including bind mounts. Use
 TESTING's retained-host-tmpfs rule for disposable functional/process-recovery
 cases; preserve all fsync calls and failed roots. This is not power-loss

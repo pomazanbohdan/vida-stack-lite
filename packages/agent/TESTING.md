@@ -1111,7 +1111,14 @@ per-test capture or ID selectors. Start diagnostic work with `--batch-size 2
 --max-batches 1`; it preserves the full declared test argv, one input capture,
 one generated image and the existing900s partition deadline. Baseline runs first;
 at most two mutants are then in flight. The copied parent environment is frozen
-before launch; worker-private scratch/cache overrides and mutant ID are explicit.
+before launch; worker-private scratch overrides and mutant ID are explicit.
+Isolated workers set `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0`: their single-invocation
+cache would otherwise retain duplicate compiled output on the bounded filesystem.
+Native controls compile an entrypoint above Bun's cache threshold while preserving
+the full isolation/custody checks. The serial cache policy is unchanged. Bun's
+[runtime cache documentation](https://bun.com/docs/runtime/environment-variables#runtime-transpiler-caching)
+identifies `.pile` output as disposable; cleanup may remove only that derived cache,
+preserving fixtures, databases, Source, raw reports/receipts and outcome classes.
 This bounded route does not activate broader parallel mutation or global qualification.
 
 The report overlay binds each private output at the original logical operation

@@ -31,15 +31,15 @@ export function serviceOperationLaunchCapabilityMatches(expectedDigest: string |
   return timingSafeEqual(Buffer.from(expectedDigest, 'hex'), createHash('sha256').update(capability).digest());
 }
 
-export function serviceOperationLaunchClaimMatches(
-  prior: ServiceOperationLaunchClaimImage | null,
+export function serviceOperationLaunchClaimMatches<T extends ServiceOperationLaunchClaimImage>(
+  prior: T | null,
   workspaceId: string,
   kind: string,
   operationId: string,
   requestDigest: string,
   pid: number,
   capability: unknown,
-): boolean {
+): prior is T {
   return (
     prior !== null &&
     prior.workspace_id === workspaceId &&

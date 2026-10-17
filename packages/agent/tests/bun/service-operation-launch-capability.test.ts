@@ -1,7 +1,6 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
-import assert from 'node:assert/strict';
 import * as custodySubject from '../../src/config/service-operation-custody.js';
 import {
   serviceOperationLaunchCapabilityDigest,
@@ -1284,7 +1283,9 @@ test('an active child paired lease denies exclusive reconciliation without chang
     const before = expectReturned(() =>
       readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
     );
-    assert(before !== null, 'claimed child custody must remain persisted');
+    expect(before).toBeDefined();
+    expect(before).not.toBeNull();
+    if (before === undefined || before === null) return;
     const reconciliationDatabase = expectReturned(() =>
       openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
     );

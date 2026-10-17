@@ -177382,9 +177382,9 @@
         "line": 34,
         "column": 7,
         "start": 1214,
-        "end": 1791,
+        "end": 1807,
         "bodyLine": 42,
-        "bodyColumn": 11,
+        "bodyColumn": 14,
         "bodyEndLine": 53,
         "bodyEndColumn": 1
       },
@@ -188307,10 +188307,10 @@
         "line": 412,
         "column": 7,
         "start": 16906,
-        "end": 18810,
+        "end": 18784,
         "bodyLine": 420,
         "bodyColumn": 26,
-        "bodyEndLine": 457,
+        "bodyEndLine": 456,
         "bodyEndColumn": 1
       },
       "rationale": "Requires exact workspace/kind/operation/request/PID/capability match, consumes the reservation, and creates a live in-flight handle. Obligation: Claim tests require every identity component and valid child capability; claim is one-shot."
@@ -188319,15 +188319,15 @@
       "identity": "src/config/service-operation-custody.ts#fn:claimReservedServiceOperationLaunch#0/binding:revision/closure:CallExpression:arguments[1]#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "current_complexity": 2,
+      "current_complexity": 1,
       "current_source_address": {
         "line": 428,
         "column": 49,
         "start": 17558,
-        "end": 18514,
+        "end": 18488,
         "bodyLine": 428,
         "bodyColumn": 55,
-        "bodyEndLine": 445,
+        "bodyEndLine": 444,
         "bodyEndColumn": 3
       },
       "rationale": "Transaction validates the complete claim image and CASes launching to in-flight while revoking launch PID/capability. Obligation: Wrong owner/request/PID/capability and concurrent/stale claims reject without consuming the wrong row."
@@ -188338,13 +188338,13 @@
       "max_crap": 10,
       "current_complexity": 3,
       "current_source_address": {
-        "line": 460,
+        "line": 459,
         "column": 7,
-        "start": 18900,
-        "end": 20246,
-        "bodyLine": 464,
+        "start": 18874,
+        "end": 20220,
+        "bodyLine": 463,
         "bodyColumn": 10,
-        "bodyEndLine": 492,
+        "bodyEndLine": 491,
         "bodyEndColumn": 1
       },
       "rationale": "Closes only the exact live owner by revision/token CAS; UNKNOWN has no evidence, resolved phases require a digest. Obligation: Close tests cover phase/evidence combinations, stale ownership and durable UNKNOWN on unresolved external outcomes."
@@ -188355,13 +188355,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 471,
+        "line": 470,
         "column": 37,
-        "start": 19563,
-        "end": 20223,
-        "bodyLine": 471,
+        "start": 19537,
+        "end": 20197,
+        "bodyLine": 470,
         "bodyColumn": 43,
-        "bodyEndLine": 490,
+        "bodyEndLine": 489,
         "bodyEndColumn": 3
       },
       "rationale": "Transaction body releases owner token and updates phase/evidence under the exact in-flight CAS. Obligation: Close-CAS tests ensure stale handles cannot close a successor row."
@@ -188372,13 +188372,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 494,
+        "line": 493,
         "column": 7,
-        "start": 20255,
-        "end": 20533,
-        "bodyLine": 494,
+        "start": 20229,
+        "end": 20507,
+        "bodyLine": 493,
         "bodyColumn": 89,
-        "bodyEndLine": 499,
+        "bodyEndLine": 498,
         "bodyEndColumn": 1
       },
       "rationale": "Closes the DB admission lease for an exact live handle, then deletes that handle from live ownership. Obligation: Live/non-live handle tests; handle cannot be reused after close."
@@ -188389,13 +188389,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 501,
+        "line": 500,
         "column": 7,
-        "start": 20542,
-        "end": 20696,
-        "bodyLine": 501,
+        "start": 20516,
+        "end": 20670,
+        "bodyLine": 500,
         "bodyColumn": 72,
-        "bodyEndLine": 504,
+        "bodyEndLine": 503,
         "bodyEndColumn": 1
       },
       "rationale": "Closes through admission-aware DB cleanup and removes the database binding. Obligation: All database lifecycle paths; stale connection metadata cannot be reused."
@@ -188406,13 +188406,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 506,
+        "line": 505,
         "column": 7,
-        "start": 20705,
-        "end": 21069,
-        "bodyLine": 510,
+        "start": 20679,
+        "end": 21043,
+        "bodyLine": 509,
         "bodyColumn": 34,
-        "bodyEndLine": 515,
+        "bodyEndLine": 514,
         "bodyEndColumn": 1
       },
       "rationale": "Validates key, bound connection and exact table before returning one row. Obligation: Direct read and malformed/corrupt persisted-row scenarios."
@@ -188423,13 +188423,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 518,
+        "line": 517,
         "column": 7,
-        "start": 21185,
-        "end": 25185,
-        "bodyLine": 527,
+        "start": 21159,
+        "end": 25159,
+        "bodyLine": 526,
         "bodyColumn": 36,
-        "bodyEndLine": 603,
+        "bodyEndLine": 602,
         "bodyEndColumn": 1
       },
       "rationale": "Closes the caller’s lease, holds exclusive admission, verifies exact terminal pack owner plus prepared receipt, then same-operation CASes to release-worker with lineage. Obligation: `service-operation-handoff.test.ts`: wrong owner/request/phase, verifier failure, malformed receipt, gate replacement, CAS/close failures, and exact successful handoff."
@@ -188440,13 +188440,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 540,
+        "line": 539,
         "column": 4,
-        "start": 22181,
-        "end": 22196,
-        "bodyLine": 540,
+        "start": 22155,
+        "end": 22170,
+        "bodyLine": 539,
         "bodyColumn": 10,
-        "bodyEndLine": 540,
+        "bodyEndLine": 539,
         "bodyEndColumn": 19
       },
       "rationale": "Supplies the no-op acquisition observation; the held-owner callback performs the actual exact row check. Obligation: Exclusive admission contract; no synthetic owner value grants write authority."
@@ -188457,13 +188457,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 541,
+        "line": 540,
         "column": 4,
-        "start": 22202,
-        "end": 25080,
-        "bodyLine": 541,
+        "start": 22176,
+        "end": 25054,
+        "bodyLine": 540,
         "bodyColumn": 25,
-        "bodyEndLine": 599,
+        "bodyEndLine": 598,
         "bodyEndColumn": 5
       },
       "rationale": "Exclusive handoff body verifies source row, awaits receipt, rechecks gate, then writes and rereads the exact transfer. Obligation: Successful/failed receipt and same-operation CAS scenarios; no transfer before the proof."
@@ -188474,13 +188474,13 @@
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 546,
+        "line": 545,
         "column": 8,
-        "start": 22489,
-        "end": 22946,
-        "bodyLine": 546,
+        "start": 22463,
+        "end": 22920,
+        "bodyLine": 545,
         "bodyColumn": 14,
-        "bodyEndLine": 557,
+        "bodyEndLine": 556,
         "bodyEndColumn": 9
       },
       "rationale": "Reads and validates the exact terminal pack owner under the held gate. Obligation: Missing row, wrong owner/request/phase and schema drift reject before verifier call."
@@ -188491,13 +188491,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 558,
+        "line": 557,
         "column": 8,
-        "start": 22956,
-        "end": 22991,
-        "bodyLine": 558,
+        "start": 22930,
+        "end": 22965,
+        "bodyLine": 557,
         "bodyColumn": 14,
-        "bodyEndLine": 558,
+        "bodyEndLine": 557,
         "bodyEndColumn": 43
       },
       "rationale": "Closes the read-only handoff source connection with cleanup error retention. Obligation: Handoff read/close failure scenarios preserve both operation and cleanup causes."
@@ -188508,13 +188508,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 569,
+        "line": 568,
         "column": 8,
-        "start": 23569,
-        "end": 24977,
-        "bodyLine": 569,
+        "start": 23543,
+        "end": 24951,
+        "bodyLine": 568,
         "bodyColumn": 14,
-        "bodyEndLine": 595,
+        "bodyEndLine": 594,
         "bodyEndColumn": 9
       },
       "rationale": "Owns the exclusive callback’s initial read connection and returns the validated source owner. Obligation: No source write authority before receipt; gate-held exact source observation."
@@ -188525,13 +188525,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 570,
+        "line": 569,
         "column": 40,
-        "start": 23617,
-        "end": 24804,
-        "bodyLine": 570,
+        "start": 23591,
+        "end": 24778,
+        "bodyLine": 569,
         "bodyColumn": 46,
-        "bodyEndLine": 592,
+        "bodyEndLine": 591,
         "bodyEndColumn": 11
       },
       "rationale": "Closes that initial read connection through the exclusive owner. Obligation: Read-side cleanup is required on both success and failure."
@@ -188542,13 +188542,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 596,
+        "line": 595,
         "column": 8,
-        "start": 24987,
-        "end": 25024,
-        "bodyLine": 596,
+        "start": 24961,
+        "end": 24998,
+        "bodyLine": 595,
         "bodyColumn": 14,
-        "bodyEndLine": 596,
+        "bodyEndLine": 595,
         "bodyEndColumn": 45
       },
       "rationale": "Closes the write connection after the handoff CAS and row reread. Obligation: CAS/close failure tests retain the terminal or resulting exact journal state."
@@ -188559,13 +188559,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 609,
+        "line": 608,
         "column": 7,
-        "start": 25376,
-        "end": 30470,
-        "bodyLine": 618,
+        "start": 25350,
+        "end": 30444,
+        "bodyLine": 617,
         "bodyColumn": 36,
-        "bodyEndLine": 729,
+        "bodyEndLine": 728,
         "bodyEndColumn": 1
       },
       "rationale": "Reconciles only an exact same-operation launching/in-flight/unknown journal under exclusive admission using a receipt. Obligation: `service-operation-handoff.test.ts` and launch tests: wrong identity, missing row, active lease, gate replacement, malformed/failed receipt, UNKNOWN preservation and exact receipt CAS."
@@ -188576,13 +188576,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 627,
+        "line": 626,
         "column": 4,
-        "start": 26089,
-        "end": 26895,
-        "bodyLine": 627,
+        "start": 26063,
+        "end": 26869,
+        "bodyLine": 626,
         "bodyColumn": 21,
-        "bodyEndLine": 646,
+        "bodyEndLine": 645,
         "bodyEndColumn": 5
       },
       "rationale": "Captures the exact eligible source row under admission before exclusive receipt processing. Obligation: Exact owner/request/phase and missing-row tests; source DB closes before verifier effects."
@@ -188593,13 +188593,13 @@
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 631,
+        "line": 630,
         "column": 8,
-        "start": 26309,
-        "end": 26775,
-        "bodyLine": 631,
+        "start": 26283,
+        "end": 26749,
+        "bodyLine": 630,
         "bodyColumn": 14,
-        "bodyEndLine": 642,
+        "bodyEndLine": 641,
         "bodyEndColumn": 9
       },
       "rationale": "Validates schema and reads the exact eligible row. Obligation: Wrong or terminal row rejects before receipt verifier invocation."
@@ -188610,13 +188610,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 643,
+        "line": 642,
         "column": 8,
-        "start": 26785,
-        "end": 26824,
-        "bodyLine": 643,
+        "start": 26759,
+        "end": 26798,
+        "bodyLine": 642,
         "bodyColumn": 14,
-        "bodyEndLine": 643,
+        "bodyEndLine": 642,
         "bodyEndColumn": 47
       },
       "rationale": "Closes the initial reconciliation read connection. Obligation: Cleanup failure remains visible; no stale lease silently survives."
@@ -188627,13 +188627,13 @@
       "max_crap": 10,
       "current_complexity": 8,
       "current_source_address": {
-        "line": 647,
+        "line": 646,
         "column": 4,
-        "start": 26901,
-        "end": 30358,
-        "bodyLine": 647,
+        "start": 26875,
+        "end": 30332,
+        "bodyLine": 646,
         "bodyColumn": 25,
-        "bodyEndLine": 725,
+        "bodyEndLine": 724,
         "bodyEndColumn": 5
       },
       "rationale": "Verifies prepared/terminal receipt; on uncertainty CASes to durable UNKNOWN; on valid proof CASes exact row to resolved phase. Obligation: Receipt failure and cleanup failure retention, launch revocation, UNKNOWN cleanup, exact same-operation transition and CAS tests."
@@ -188644,13 +188644,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 668,
+        "line": 667,
         "column": 38,
-        "start": 27951,
-        "end": 28537,
-        "bodyLine": 668,
+        "start": 27925,
+        "end": 28511,
+        "bodyLine": 667,
         "bodyColumn": 44,
-        "bodyEndLine": 677,
+        "bodyEndLine": 676,
         "bodyEndColumn": 11
       },
       "rationale": "Closes the connection used for UNKNOWN custody cleanup. Obligation: Failed cleanup must aggregate with receipt failure and leave effect unresolved."
@@ -188661,13 +188661,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 698,
+        "line": 697,
         "column": 8,
-        "start": 29240,
-        "end": 30248,
-        "bodyLine": 698,
+        "start": 29214,
+        "end": 30222,
+        "bodyLine": 697,
         "bodyColumn": 14,
-        "bodyEndLine": 721,
+        "bodyEndLine": 720,
         "bodyEndColumn": 9
       },
       "rationale": "Runs the resolution CAS transaction and rereads the resulting row. Obligation: Exact revision/phase CAS; trigger-deleted or stale row must reject."
@@ -188678,13 +188678,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 699,
+        "line": 698,
         "column": 40,
-        "start": 29288,
-        "end": 30075,
-        "bodyLine": 699,
+        "start": 29262,
+        "end": 30049,
+        "bodyLine": 698,
         "bodyColumn": 46,
-        "bodyEndLine": 718,
+        "bodyEndLine": 717,
         "bodyEndColumn": 11
       },
       "rationale": "Applies resolved phase/evidence and clears ownership/PID in the transaction. Obligation: Reconciliation CAS tests ensure only the exact observed same-operation row changes."
@@ -188695,13 +188695,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 722,
+        "line": 721,
         "column": 8,
-        "start": 30258,
-        "end": 30295,
-        "bodyLine": 722,
+        "start": 30232,
+        "end": 30269,
+        "bodyLine": 721,
         "bodyColumn": 14,
-        "bodyEndLine": 722,
+        "bodyEndLine": 721,
         "bodyEndColumn": 45
       },
       "rationale": "Closes the successful reconciliation write connection. Obligation: Close failure remains reported after the actual CAS; result cannot claim clean closure."
@@ -225301,6 +225301,41 @@
     ],
     "correspondence": "All59existing roles/ceilings remain:53custody plus3utility roles10/10, shared UUID predicate and2lazy literal owners1/1. No new/removed/reused callable or allowance transfer. Remove explicit defaultUTF8 options and avoid hexencoding/decoding the computed digest before native constant-time Buffercomparison. Public digest remains lowercasehex. Fourutility complexities/identities are unchanged; cached55custody rows/Sourcebinding remain valid.",
     "limits": "Static scoped lineage only. Require fresh immutable59-role exactcoverage, same-run originalfrozenproof and actual causal native controls after assertion repairs. Prior60/4/0/625 diagnostic is historical at1997612 and cannot be relabelled as repaired/current100; no complete score or Runtime admission.",
+    "prospective_plan": "62e6bf5:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#planned_custody_lazy_literals_20261017"
+  },
+  "scope_review_custody_claim_predicate_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/service-operation-custody.ts",
+      "src/config/service-operation-launch-capability.ts"
+    ],
+    "removed_source_paths": [],
+    "reviewed_current_sources": [
+      {
+        "path": "src/config/service-operation-custody.ts",
+        "sha256": "20618e019ff9fbca2272e62e0179e46191454d9898cb5d63a5f5a3e6f596edcd"
+      },
+      {
+        "path": "src/config/service-operation-launch-capability.ts",
+        "sha256": "8ddd0f966ffabf567a0c4af1c2a61909cfc67c5a5cedfedc717636337d642fc5"
+      }
+    ],
+    "review_artifacts": [
+      "/workspace/attachments/luna-review-custody-budget-draft-a740-20261016.md",
+      "/workspace/attachments/luna-custody-baseline-correspondence-a740-20261016.md",
+      "/workspace/attachments/custody-uuid-predicate-review-v199-20261017.md",
+      "/workspace/attachments/custody-digest-reuse-review-v206-20261017.md",
+      "/workspace/attachments/custody-lazy-literals-plan-review-v214-20261017.md",
+      "/workspace/attachments/custody-lazy-literals-source-review-v216-20261017.md",
+      "/workspace/attachments/custody-survivor-repair-review-v219-20261017.md",
+      "/workspace/attachments/custody-claim-predicate-review-v221-20261017.md"
+    ],
+    "correspondence": "All59existing roles and frozen ceilings retained. Generic null-narrowing predicate preserves the caller subtype and its existing runtime null guard; remove only the redundant caller null conjunct. One substantive claim transaction callback complexity drops by1; no new/removed/reused callable, baseline recapture or allowance transfer.",
+    "limits": "Static scoped lineage only. Fresh same-run exact coverage, original frozen proof and complete assertion-confirmed native mutation remain required. Previous574inner results have incomplete outer custody/capture and are not a complete admitted score.",
     "prospective_plan": "62e6bf5:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#planned_custody_lazy_literals_20261017"
   }
 }

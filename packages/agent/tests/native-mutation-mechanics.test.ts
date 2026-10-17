@@ -32,11 +32,10 @@ for(const file of [process.env.SHARED_INPUT,process.env.SHARED_DESCRIPTOR,'subje
 }
 writeFileSync('.tmp/owned',id);
 writeFileSync('/tmp/owned',id);
-writeFileSync(process.env.BUN_RUNTIME_TRANSPILER_CACHE_PATH+'/owned',id);
 const observed={id,pid:process.pid,pid1:readFileSync('/proc/1/comm','utf8').trim(),namespace:readlinkSync('/proc/self/ns/pid'),
   ...(mode==='overlay'?{report:output,cwd:process.cwd()}:{}),
   denied:denied.length,input:readFileSync(process.env.SHARED_INPUT,'utf8'),scratch:readFileSync('.tmp/owned','utf8'),
-  temporary:readFileSync('/tmp/owned','utf8'),cache:readFileSync(process.env.BUN_RUNTIME_TRANSPILER_CACHE_PATH+'/owned','utf8')};
+  temporary:readFileSync('/tmp/owned','utf8'),cache:process.env.BUN_RUNTIME_TRANSPILER_CACHE_PATH};
 if(mode==='descendant'){
   const child=Bun.spawn([process.execPath,'--no-env-file','--no-install','tooling/descendant.ts'],{detached:true,stdout:'ignore',stderr:'ignore'});
   child.unref();
@@ -62,7 +61,10 @@ function fixture(storage = tmpdir()) {
   writeFileSync(sharedInput, 'immutable input');
   writeFileSync(sharedDescriptor, '{"immutable":true}');
   writeFileSync(path.join(sandbox, 'subject.ts'), 'export const value = 1;\n');
-  writeFileSync(path.join(sandbox, 'tooling/mutation-command-runner.ts'), workerSource);
+  writeFileSync(
+    path.join(sandbox, 'tooling/mutation-command-runner.ts'),
+    workerSource + '\n/*' + 'x'.repeat(5000) + '*/',
+  );
   writeFileSync(
     path.join(sandbox, 'tooling/descendant.ts'),
     `
@@ -72,8 +74,7 @@ function fixture(storage = tmpdir()) {
   );
   const outputs = ['first', 'second'].map((id) => {
     const output = path.join(directory, 'outputs', id);
-    for (const leaf of ['scratch', 'tmp/bun-transpiler-cache', 'tmp/bun-install-cache'])
-      mkdirSync(path.join(output, leaf), { recursive: true });
+    for (const leaf of ['scratch', 'tmp/bun-install-cache']) mkdirSync(path.join(output, leaf), { recursive: true });
     return output;
   });
   const bwrap = Bun.which('bwrap');
@@ -135,7 +136,7 @@ async function waitForFile(file: string): Promise<void> {
 }
 
 test.each([tmpdir(), '/dev/shm'])(
-  'two native mechanics workers isolate inputs, outputs, scratch, caches and PID1 namespaces under %s',
+  'two native mechanics workers isolate resources and disable disposable transpiler caches under %s',
   async (storage) => {
     const current = fixture(storage);
     const prepared = commands(current);
@@ -169,13 +170,14 @@ test.each([tmpdir(), '/dev/shm'])(
           input: 'immutable input',
           scratch: String(index),
           temporary: String(index),
-          cache: String(index),
+          cache: '0',
         });
         namespaces.push(observation.namespace);
         expect(readFileSync(path.join(output, 'stderr.log'), 'utf8')).toBe('worker-stderr:' + index + '\n');
         expect(readFileSync(path.join(output, 'done'), 'utf8')).toBe(String(index));
-        for (const leaf of ['scratch/owned', 'tmp/owned', 'tmp/bun-transpiler-cache/owned'])
+        for (const leaf of ['scratch/owned', 'tmp/owned'])
           expect(readFileSync(path.join(output, leaf), 'utf8')).toBe(String(index));
+        expect(existsSync(path.join(output, 'tmp/bun-transpiler-cache'))).toBe(false);
         expect(existsSync(path.join(output, 'forbidden'))).toBe(false);
       }
       expect(new Set(namespaces).size).toBe(2);
@@ -466,7 +468,8 @@ test.each([tmpdir(), '/dev/shm'])(
         expect(observed.input).toBe('immutable input');
         expect(observed.scratch).toBe(String(index));
         expect(observed.temporary).toBe(String(index));
-        expect(observed.cache).toBe(String(index));
+        expect(observed.cache).toBe('0');
+        expect(existsSync(path.join(output, 'tmp/bun-transpiler-cache'))).toBe(false);
         writeFileSync(path.join(output, 'go'), 'release');
       }
       const outcomes = await Promise.all(pending);

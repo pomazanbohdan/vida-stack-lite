@@ -428,8 +428,7 @@ export function claimReservedServiceOperationLaunch(
   const revision = runShortTransaction(database, () => {
     const prior = readRow(database, workspaceId, operationId);
     requireCustody(
-      prior !== null &&
-        serviceOperationLaunchClaimMatches(prior, workspaceId, kind, operationId, requestDigest, pid, childCapability),
+      serviceOperationLaunchClaimMatches(prior, workspaceId, kind, operationId, requestDigest, pid, childCapability),
       'worker does not match the exact one-shot launch reservation',
     );
     const revision = nextRevision(prior.revision);

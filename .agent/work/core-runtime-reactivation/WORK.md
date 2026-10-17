@@ -210,6 +210,81 @@ Next use a fresh immutable /tmp worktree with real private locked dependencies,
 then fresh coverage/frozen and a shared-baseline diagnostic of721/545/439 before
 another exhaustive native attempt. Existing artifacts remain in place.
 
+Published37eba45 passes the normal strict509-file hook and is pushed. Fresh
+immutable `/tmp/vida-rolling-measure-v220` retains real copied locked dependencies
+and all physical output paths. SDK formation3juVOR completes1868ms without suites;
+coverage65fd2d81/JZXaYn completes6453ms:127/0cases,1090assertions, exact
+F59/59,L236/236,S243/243,B123/123. Same-run scoped frozen avqxMK passes in712ms
+against original ceilings, maxCC/entryCRAP9/9. Both enter the existing automatic
+projection; global operation status remains BLOCKED and historical6/45triples
+remain unchanged.
+
+Shared-baseline diagnostic268cab4e-a3da-4dd5-a7a0-a85fb2f9d7d9, outer sHgi9o,
+completes12368ms with current721/545/439 all assertion-confirmed Killed,
+0Survived/UNKNOWN and682unattempted of685. Captures, owned-group closure,
+boot/commit/input/executable readbacks and measured checkout cleanliness pass.
+The original439 UNKNOWN is unchanged; only the fresh repaired run establishes
+the new evidence. This3-ID diagnostic is no complete contour score. A new
+exhaustive fixed-two run is now bound to the same published immutable inputs;
+its terminal accounting must precede another correction/publication cycle.
+
+Parallel blind review finds no analogous coercion gap in current envelopes or
+storage-image boundaries. Their existing non-coercing validation and assertion
+controls remain unchanged; no speculative case is added. FS-safe review confirms
+an architecture applicability GAP: its actual0/0functions,4/4lines,4/4statements,
+0/0branches and native7/7 cannot satisfy the current positive-denominator frozen
+or triple predicates. Existing inventory N/A and non-executable zero-role review
+are not exemptions. Keep that contour OPEN.
+
+The proposed next bounded design is a distinct reviewed not-applicable receipt
+for this exact data-only Source, with null CC/CRAP, explicit source-level zero-role
+disposition and absence from original b549951, immutable review/rationale and exact
+same-run coverage/Source/tests/tool/closure bindings. Require positive exact lines/
+statements and nonzero exhaustive all-Killed mutation. Keep ordinary numeric frozen
+schemas/ceilings and maximum predicates unchanged; display a distinct reviewed-N/A
+state rather than zero or0/0-as100. Independent design review and negative producer/
+reader controls are required before implementation/admission; no new exemption or
+closure is adopted by this plan.
+
+### Current native findings and disposable cache correction — 2026-10-17
+
+Inner run2d68875b reports574attempted/571Killed/2Survived/1UNKNOWN/
+111unattempted of685 in its actual terminal summary. Its full run ID is
+2d68875b-949d-48b3-81fe-de77eff7687f. Outer PX9fII stdout stops at226, the tool
+session disappears and no outer execution.json exists. Keep the outer outcome
+UNKNOWN and the inner counts diagnostic-only. Boot stays unchanged; matching
+commands are no longer live and Tini165634 is defunct. Cgroup memory approaches
+its16GiB bound, but OOM-kill counters are0; the observer-loss cause is unproven.
+
+The actual new575worker caches are populated, unlike the earlier scoped empty
+cache observation. Root preflights only canonical flat regular single-link .pile
+files and removes4,926,958,948derived bytes under
+`/workspace/attachments/closed-transpiler-cache-cleanup-v221.json`. All Source,
+DBs, fixtures, adapters, raw reports/receipts and outcome classes remain. Official
+Bun documentation permits deleting this cache at any time and disabling it on
+ephemeral storage. The isolated parent/worker route now selects0 and omits unused
+cache allocations; serial behavior stays unchanged. Updated real native controls
+compile over5KB and retain isolation/custody checks. OwnedOZobqR passes110/0cases
+in2253ms after updating both cache observations; earlier xjtMHt failure stays.
+
+604 exposes the missing reconciliation read+close aggregate diagnostic assertion.
+489 returns an undefined beforeimage, exposing a raw field inspection despite
+the old null-only assertion. The bounded tests now assert both missing-value
+forms and both actual read/close causes with unchanged persisted row. Initial
+40ngAW reveals a setup connection still holding its real lease; Root releases
+that connection before opening the operation source. Final9zvbqG passes139/0cases
+in3941ms across128custody cases and11native mechanics, with complete captures,
+observed group closure and same boot. Preserve the failed fixture and captures.
+
+427 is the duplicate caller null check; the shared predicate already denies null.
+Root adopts independently reviewed generic prior-is-T narrowing and removes only
+that redundant conjunct. All59role identities/caps remain; one transaction callback
+dropsCC2to1, all other complexities unchanged. Scoped review key
+scope_review_custody_claim_predicate_20261017 binds current Source20618e01/8ddd0f96.
+Review: `/workspace/attachments/custody-claim-predicate-review-v221-20261017.md`.
+No mutant is excluded or relabelled, and no frozen baseline/cap is reset. Fresh
+exact coverage/frozen and actual native controls remain required after publication.
+
 ### Isolated full-proof parity preparation — 2026-10-17
 
 Three blind Luna reviews qualify the next bounded selection: fs-safe attestation

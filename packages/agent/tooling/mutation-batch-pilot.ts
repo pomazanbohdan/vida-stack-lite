@@ -476,7 +476,7 @@ export function nativeMutationMechanicsWorkerCommand(input: {
     '/tmp/bun-install-cache',
     '--setenv',
     'BUN_RUNTIME_TRANSPILER_CACHE_PATH',
-    '/tmp/bun-transpiler-cache',
+    '0',
     '--chdir',
     sandbox,
     tini,
@@ -582,7 +582,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     const sandboxTmp = path.join(sandbox, '.tmp');
     await mkdir(sandboxTmp, { recursive: true });
     await symlink(path.join(root, 'node_modules'), path.join(sandbox, 'node_modules'), 'dir');
-    let transpilerCache = process.env.BUN_RUNTIME_TRANSPILER_CACHE_PATH;
+    let transpilerCache = isolatedWorkers ? '0' : process.env.BUN_RUNTIME_TRANSPILER_CACHE_PATH;
     if (transpilerCache !== '' && transpilerCache !== '0') {
       transpilerCache = path.join(directory, 'bun-transpiler-cache');
       await mkdir(transpilerCache, { mode: 0o700 });
@@ -640,12 +640,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       if (isolatedWorkers) {
         outputRoot = path.join(directory, 'workers', key);
         await mkdir(outputRoot, { mode: 0o700 });
-        for (const leaf of [
-          'tmp/bun-transpiler-cache',
-          'tmp/bun-install-cache',
-          'scratch',
-          path.relative(directory, sandbox),
-        ])
+        for (const leaf of ['tmp/bun-install-cache', 'scratch', path.relative(directory, sandbox)])
           await mkdir(path.join(outputRoot, leaf), { recursive: true, mode: 0o700 });
         await writeFile(path.join(outputRoot, `${partition.name}.inputs.json`), '', { flag: 'wx', mode: 0o600 });
         invocation = nativeMutationMechanicsWorkerCommand({
