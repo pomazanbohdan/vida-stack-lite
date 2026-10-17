@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest checked Source/test packet: `490f7d86713b393d8ace2c0b8629a98dedd73e12`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read/public-gate controls, shared Host failure phases and envelope ordering regressions. The pinned facade review and fresh compatible local triple are recorded below. Active runtime initialization, envelopes and storage admission still need complete mutation closures. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest checked Source/test packet: `b6e04505baabfab0359de6365eb6fb2ae6ab6c2b`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read/public-gate controls, three shared failure phases, sealed package-asset resolution and envelope ordering regressions. The pinned facade review and fresh compatible local triple are recorded below. Active runtime initialization, envelopes and storage admission still need complete mutation closures. Body-local activation qualification is under repair below. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -414,6 +414,71 @@ phases. This removes phase-specific handle branches without suppressing lint.
 Affected `pcGamC` passes the shared three-phase case in1013ms.
 Native mutation confirmation for both governed aggregate diagnostics remains
 required; the earlier reachability GAP is now a concrete supported fixture.
+
+Fresh b6e0450 uses v164 with physical locked dependencies and SDK preparation
+`8krUEK`(1792ms,no suites). Initialization coverage `TpDd31`, run
+`4c91c837-5634-4dbb-8790-838441d68ef3`, has exact F18/18,L87/87,S100/100,B54/54
+in34764ms; same-run original-budget `hZpuys` passes maxCC9/maxCRAP9 in1183ms.
+Its first four-ID native window `W419Dw`, run
+`9045e6bd-8810-4d5c-bce5-fbfe7bbca9de`, now passes the full19-case baseline,
+then stops in41175ms at local40:0Killed,1UNKNOWN,167unattempted of168generated.
+The actual child fails retry admission under the active catch-predicate mutant;
+the parent awaits raw Promise.all and propagates a generic racer error. Native
+classification correctly refuses Killed without assertion evidence. Preserve all
+v164 operation/sandbox/scratch and retained failed racer fixture; do not reuse
+that namespace. Captures/groups close with unchanged boot/inputs, which does not
+resolve retained test effects.
+
+The expected-success parent await now uses the already qualified expectAsyncReturned
+owner, preserving child diagnostics and cleanup. Affected `iIm6gc` passes the real
+separate-process case in4586ms. This does not prove child activation in the failed
+parent body and does not upgrade the old UNKNOWN.
+
+Admission's independent clean v165 forms SDK inputs `iyEUOj` in1841ms. Coverage
+`NyqWCB`, run `d70e80d8-234b-4de5-af2c-a21dc9785d92`, passes exact
+F18/18,L101/101,S104/104,B17/17 in14786ms; same-run frozen `q5F5CR` passes original
+maxCC5/maxCRAP5 in746ms. The canonical projection now has501attempts. Full captures,
+closed groups and unchanged boot/inputs hold for both fresh pairs.
+Native diagnostic `seWnyD`, run `8e035e10-dded-422f-aab5-2892e733a719`, records
+locals92/203 Killed with one full28-case baseline in35022ms:2attempted/2Killed,
+226unattempted of228,0survived/UNKNOWN, full captures/groups and immutable b6e0450.
+These are original-protocol diagnostic observations, not a complete score.
+
+Independent v155 confirms a P0 evidence defect while investigating initialization:
+preload initializes global Stryker hitCount once; the adapter emits its cumulative
+value on any later failed body. The activation reader can accept a prior passing
+body's or hook's hit for an unrelated later assertion. No new mutation closure is
+admitted until a real generated-image negative control and body-local attribution
+are qualified. Existing historical reports retain their original bytes and input
+bindings; do not transfer them to the tightened protocol. Root owns the shared
+tool correction in isolated v166; one Luna owns its real control tests and another
+reviews the ALS/counter/lifecycle boundary. The three product-contour writers and
+one final numeric owner remain the same; this is a shared prerequisite, not a new
+product contour or another canonical evidence store.
+
+Real generated-image RED `W58nM8` proves that defect: a later unrelated assertion
+receives hit_count3 from a prior passing body/hook instead of0. Root adopts
+body-owned hit attribution through the existing ALS context. The installed public
+instrumenter increments its global property with++; the accessor preserves that
+process total/hit limit while crediting only its current active body. The preload
+loads the same generated context before Source in all modes; adapter receipts
+use matching file/body-owned hits, lifecycle hooks leave body ALS, and sync/async
+settlement always deactivates it. Independent v158 catches a return-classification
+error path; the whole thenable inspection is now inside cleanup-safe try/catch.
+
+The one generated image is reused across actual sync/awaited positives, prior
+passing-body/hook negatives, a late settled-body task, a throwing-Proxy result
+classification control and a foreign-ID negative. Late work uses an owned promise
+handshake, with no fixed sleep or result file. A new15s test exception was not
+needed and was removed; the default5s remains. `eGYPOS` passes the expanded control
+in858ms. Final `PeHQFD` passes196tests/866assertions across the four affected
+adapter/classifier/native-reader/map files in4684ms, complete captures/groups and
+unchanged boot. Earlier `wBGdCS` is retained: the new generic-error control wrongly
+expected an UNKNOWN return, while the classifier correctly throws closed. The
+test now asserts that exact refusal and successful body-state observation.
+Independent v158 finds no remaining concrete issue after the guard correction.
+Strict publication and fresh native observations under the changed tool binding
+follow; historical cumulative-counter results are not promoted to this protocol.
 
 ### Published admission packet — retained context
 

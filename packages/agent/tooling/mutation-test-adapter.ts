@@ -34,11 +34,8 @@ let receiptBytes = 0;
 function append(event: Record<string, unknown>): void {
   if (!receiptFile || !file) throw new Error('Mutation body receipt channel is not configured.');
   const activationId = event.kind === 'body' ? process.env.__STRYKER_ACTIVE_MUTANT__ : undefined;
-  const strykerState = (globalThis as typeof globalThis & { __stryker__?: unknown }).__stryker__;
-  const hitCount =
-    strykerState !== null && typeof strykerState === 'object' && !Array.isArray(strykerState)
-      ? (strykerState as Record<string, unknown>).hitCount
-      : undefined;
+  const state = bodyContext.getStore();
+  const hitCount = state?.testFile === file && state.id === event.body_id ? state.activationHits : undefined;
   const activation =
     activationId !== undefined && activationId.length > 0 && Number.isSafeInteger(hitCount) && Number(hitCount) >= 0
       ? { activation: { mutant_id: activationId, hit_count: hitCount } }
@@ -185,7 +182,14 @@ function withBody(
       bodyArgs = [binding.row, ...args.slice(1)];
     }
     if (!file) throw new Error('Mutation body file is not configured.');
-    const state: BodyState = { id: bodyId, testFile: file, active: true, assertionError: null, assertionSource: null };
+    const state: BodyState = {
+      id: bodyId,
+      testFile: file,
+      active: true,
+      activationHits: 0,
+      assertionError: null,
+      assertionSource: null,
+    };
     const run = () => {
       let result;
       try {
@@ -214,7 +218,20 @@ function withBody(
       }
       return result;
     };
-    const invoke = () => bodyContext.run(state, run);
+    const invoke = () => {
+      try {
+        const result = bodyContext.run(state, run);
+        if (result !== null && (typeof result === 'object' || typeof result === 'function') && 'then' in result)
+          return Promise.resolve(result).finally(() => {
+            state.active = false;
+          });
+        state.active = false;
+        return result;
+      } catch (error) {
+        state.active = false;
+        throw error;
+      }
+    };
     return mutationCoverage ? mutationCoverage.body(state, invoke) : invoke();
   };
 }
@@ -236,7 +253,7 @@ function withHook(callback: TestCallback, hook: string, hookId: number): TestCal
       }
     };
     if (!file) throw new Error('Mutation hook file is not configured.');
-    return mutationCoverage ? mutationCoverage.hook(file, hookId, invoke) : invoke();
+    return mutationCoverage ? mutationCoverage.hook(file, hookId, invoke) : bodyContext.exit(invoke);
   };
 }
 

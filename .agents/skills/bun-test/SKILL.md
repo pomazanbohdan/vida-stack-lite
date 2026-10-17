@@ -117,6 +117,11 @@ Recheck a known repair through the native pilot's `--diagnostic-mutant-id` with
 singleton batch bounds. Resolve its current canonical identity and Source binding;
 do not rerun all preceding IDs or treat one diagnostic kill as a contour score.
 Keep the full baseline and unfiltered tests; TESTING owns complete admission.
+Require activation in the same failed body's active ALS context. Process-wide
+totals, hook/previous-body hits and child-only activation do not establish it.
+Keep real generated-image negative controls when changing activation attribution,
+and settle body state even when returned thenable inspection throws. Use owned
+promise handshakes for late-task controls instead of fixed timing sleeps.
 For several known repairs, use the mutually exclusive `--diagnostic-mutant-ids`
 comma-list (1..32 unique IDs) with the same singleton bounds. It shares one full
 baseline and one partition budget, retains original sparse plan indices and the

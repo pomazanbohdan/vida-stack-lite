@@ -1000,7 +1000,7 @@ describe('separate process initialization', () => {
       if (!racer.stdin) throw new Error('Initialization racer stdin is unavailable');
       racer.stdin.end('go\n');
     }
-    const outputs = await Promise.all(racers.map((racer) => racer.done));
+    const outputs = await expectAsyncReturned(() => Promise.all(racers.map((racer) => racer.done)));
     for (const output of outputs)
       expect(JSON.parse(output.slice(output.indexOf('\n') + 1))).toEqual({
         ...receipt,

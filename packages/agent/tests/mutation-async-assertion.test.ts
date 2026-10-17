@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   confirmedRunnerOutcome,
   junitOutcome,
@@ -142,6 +142,133 @@ test('generated image activation records only the selected local ID at a failing
     expect(junitOutcome(selected.junit, [selected.selectedTest], [], selected.events).outcome).toBe('killed');
     expect(nativeMutationActivationHitCount(selected.events, mutant!.local_id)).toBeGreaterThan(0);
     expect(confirmedRunnerOutcome(selected.exitCode, 'killed', selectedHitCount)).toBe('killed');
+
+    const stale = await runAdapterChild(
+      root,
+      `import { beforeEach, expect, test } from 'bun:test';
+import { flag } from '../src/flag.ts';
+beforeEach(() => expect(flag()).toBe(false));
+test('prior passing body executes the selected mutant', () => expect(flag()).toBe(false));
+test('later unrelated assertion after the passing body', () => expect(1).toBe(2));
+test('unrelated assertion after a later activating hook', () => expect(3).toBe(4));
+`,
+      'stale-body-activation',
+      { activeMutantId: mutant!.local_id, maxConcurrency: 1, exitCode: 1 },
+    );
+    const staleCases: MutationJUnitCase[] = [];
+    const staleOutcome = junitOutcome(stale.junit, [stale.selectedTest], [], stale.events, (row) =>
+      staleCases.push(row),
+    );
+    expect(staleOutcome).toMatchObject({ tests: 3, failures: 2, errors: 0, outcome: 'killed' });
+    const staleFailureIds = staleCases
+      .filter((row) => row.outcome === 'failed')
+      .map((row) => {
+        const match = /^\[mutation-body:(\d+)\]/u.exec(row.name);
+        if (!match) throw new Error(`Failed JUnit case has no body identity: ${row.name}`);
+        return Number(match[1]);
+      })
+      .sort((left, right) => left - right);
+    const staleAssertionEvents = stale.events.filter((event) => event.kind === 'body' && event.assertion_cause);
+    expect(
+      staleAssertionEvents.map((event) => (event.kind === 'body' ? event.body_id : -1)).sort((a, b) => a - b),
+    ).toEqual(staleFailureIds);
+    expect(staleAssertionEvents).toHaveLength(2);
+    for (const event of staleAssertionEvents) {
+      expect(event.kind).toBe('body');
+      if (event.kind !== 'body') throw new Error('Expected a body assertion event.');
+      expect(event.activation).toEqual({ mutant_id: mutant!.local_id, hit_count: 0 });
+    }
+    const staleHitCount = nativeMutationActivationHitCount(stale.events, mutant!.local_id);
+    expect(staleHitCount).toBe(0);
+    expect(confirmedRunnerOutcome(stale.exitCode, staleOutcome.outcome, staleHitCount)).toBe('unknown');
+
+    const awaited = await runAdapterChild(
+      root,
+      `import { expect, test } from 'bun:test';
+import { flag } from '../src/flag.ts';
+test('awaited selected mutant branch', async () => {
+  await Promise.resolve();
+  const result = await Promise.resolve(flag());
+  expect(result).toBe(true);
+});
+`,
+      'awaited-activation',
+      { activeMutantId: mutant!.local_id, maxConcurrency: 1, exitCode: 1 },
+    );
+    const awaitedOutcome = junitOutcome(awaited.junit, [awaited.selectedTest], [], awaited.events);
+    const awaitedEvent = awaited.events.find((event) => event.kind === 'body' && event.assertion_cause);
+    expect(awaitedOutcome.outcome).toBe('killed');
+    expect(awaitedEvent?.kind).toBe('body');
+    if (awaitedEvent?.kind !== 'body') throw new Error('Awaited mutant assertion has no body receipt.');
+    expect(awaitedEvent.activation?.mutant_id).toBe(mutant!.local_id);
+    expect(awaitedEvent.activation?.hit_count).toBeGreaterThan(0);
+    expect(confirmedRunnerOutcome(awaited.exitCode, awaitedOutcome.outcome, awaitedEvent.activation?.hit_count)).toBe(
+      'killed',
+    );
+
+    const late = await runAdapterChild(
+      root,
+      `import { expect, test } from 'bun:test';
+import { flag } from '../src/flag.ts';
+let releaseLate!: () => void;
+let lateResult!: Promise<boolean>;
+test('passing body leaves a late task', () => {
+  lateResult = new Promise<void>((resolve) => { releaseLate = resolve; }).then(() => flag());
+});
+test('later unrelated assertion waits for the settled body task', async () => {
+  releaseLate();
+  expect(await lateResult).toBe(false);
+  expect(1).toBe(2);
+});
+`,
+      'late-settled-activation',
+      { activeMutantId: mutant!.local_id, maxConcurrency: 1, exitCode: 1 },
+    );
+    const lateCases: MutationJUnitCase[] = [];
+    const lateOutcome = junitOutcome(late.junit, [late.selectedTest], [], late.events, (row) => lateCases.push(row));
+    expect(lateOutcome).toMatchObject({ tests: 2, failures: 1, errors: 0, outcome: 'killed' });
+    const lateFailure = late.events.find((event) => event.kind === 'body' && event.assertion_cause);
+    expect(lateFailure?.kind).toBe('body');
+    if (lateFailure?.kind !== 'body') throw new Error('Late-task control has no body assertion event.');
+    expect(lateCases.filter((row) => row.outcome === 'failed')).toHaveLength(1);
+    expect(lateFailure.activation).toEqual({ mutant_id: mutant!.local_id, hit_count: 0 });
+    const lateHitCount = nativeMutationActivationHitCount(late.events, mutant!.local_id);
+    expect(lateHitCount).toBe(0);
+    expect(confirmedRunnerOutcome(late.exitCode, lateOutcome.outcome, lateHitCount)).toBe('unknown');
+
+    const classified = await runAdapterChild(
+      root,
+      `import { expect, test } from 'bun:test';
+import { flag } from '../src/flag.ts';
+import { bodyContext } from ${JSON.stringify(pathToFileURL(path.join(root, 'adapters-throwing-result', 'mutation-assertion-context.ts')).href)};
+let state: ReturnType<typeof bodyContext.getStore>;
+let releaseLate!: () => void;
+let lateResult!: Promise<boolean>;
+test('result classification throws after the body returns', () => {
+  state = bodyContext.getStore();
+  lateResult = new Promise<void>((resolve) => { releaseLate = resolve; }).then(() => flag());
+  let probes = 0;
+  return new Proxy({}, { has() {
+    if (++probes === 2) throw new Error('result classification failed');
+    return false;
+  } });
+});
+test('failed result classification settles its body before a late task', async () => {
+  releaseLate();
+  expect(await lateResult).toBe(false);
+  expect(state?.active).toBe(false);
+  expect(state?.activationHits).toBe(0);
+});
+`,
+      'throwing-result',
+      { activeMutantId: mutant!.local_id, maxConcurrency: 1, exitCode: 1 },
+    );
+    expect(() => junitOutcome(classified.junit, [classified.selectedTest], [], classified.events)).toThrow(
+      'JUnit failure is not proven to be a Bun assertion failure.',
+    );
+    expect(classified.stderr).toMatch(
+      /\(pass\)[^\n]*failed result classification settles its body before a late task/u,
+    );
 
     const foreign = await runAdapterChild(root, body, 'foreign', {
       activeMutantId: `foreign-${mutant!.local_id}`,

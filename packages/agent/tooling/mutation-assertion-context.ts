@@ -6,12 +6,38 @@ export interface MutationBodyState {
   id: number;
   testFile: string;
   active: boolean;
+  activationHits: number;
   assertionError: unknown;
   assertionSource: 'bun-expect' | 'node-assert' | null;
 }
 
 /** One child-run context shared by registered tests and their loader-owned helpers. */
 export const bodyContext = new AsyncLocalStorage<MutationBodyState>();
+
+/** Keep the instrumenter's process counter while attributing each hit to its active body. */
+export function installMutationActivationTracking(): void {
+  const namespace = (globalThis as typeof globalThis & { __stryker__?: unknown }).__stryker__;
+  if (namespace === null || typeof namespace !== 'object' || Array.isArray(namespace))
+    throw new Error('Mutation activation namespace is unavailable.');
+  const state = namespace as Record<string, unknown>;
+  const initial = state.hitCount;
+  if (typeof initial !== 'number' || !Number.isSafeInteger(initial) || initial < 0)
+    throw new Error('Mutation activation counter is invalid.');
+  let total = initial;
+  Object.defineProperty(state, 'hitCount', {
+    enumerable: true,
+    configurable: false,
+    get: () => total,
+    set(next: unknown) {
+      if (typeof next !== 'number' || !Number.isSafeInteger(next) || (next !== total && next !== total + 1))
+        throw new Error('Mutation activation counter did not advance by one hit.');
+      if (next === total) return;
+      total = next;
+      const body = bodyContext.getStore();
+      if (body?.active) body.activationHits++;
+    },
+  });
+}
 
 type BodyRegistration = { test_file: string; body_id: number; expected_failure: boolean; describe_ids: number[] };
 type DescribeRegistration = { test_file: string; describe_id: number; parent_ids: number[]; title: string };

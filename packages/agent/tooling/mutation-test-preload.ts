@@ -50,8 +50,9 @@ writeBoundAdapterModule(
   ),
 );
 const contextUrl = pathToFileURL(contextPath).href;
+const context = (await import(contextUrl)) as typeof import('./mutation-assertion-context.ts');
+context.installMutationActivationTracking();
 if (perTestCapture === '1') {
-  const context = (await import(contextUrl)) as typeof import('./mutation-assertion-context.ts');
   // Like the existing coverage preload, this runs after all file-local hooks.
   // Bun test does not run process exit listeners.
   afterAll(() => context.mutationCoverage!.finish());

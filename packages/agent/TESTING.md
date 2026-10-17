@@ -1056,6 +1056,15 @@ body, rejects every foreign observation and rejects baseline observations. An
 absent or zero-hit observation cannot confirm Killed. Activation alone never
 establishes an assertion. The ordinary Stryker confirmation route retains its
 existing contract; historical receipts do not acquire activation evidence.
+The instrumenter's process counter is distinct from that failed body's count.
+The shared ALS context attributes actual counter increments only to its active
+body, preserving Stryker's process total and hit limit. Load that context before
+Source imports in every native mode. Hooks execute outside body context; settled
+sync/async bodies and return-classification failures are deactivated. Hits from
+imports, hooks, earlier passing bodies or their late tasks cannot qualify another
+body's assertion. Actual generated-image controls cover those denials alongside
+sync/awaited positive and foreign-ID controls. Child-only activation is not a
+parent-body hit; asserting child success alone does not qualify that mutation.
 The real generated-image control pairs an active BooleanLiteral branch with an
 inactive foreign-ID assertion failure. This cooperative in-process observation
 is not protection against hostile code rewriting the public counter. It qualifies
