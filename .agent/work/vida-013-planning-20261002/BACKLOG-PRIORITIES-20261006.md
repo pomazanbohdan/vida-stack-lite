@@ -61,7 +61,9 @@ Its interrupted mutation attempt stays UNKNOWN. The native pilot now shares one
 partition deadline across all batches; fresh numeric qualification remains open.
 All three active contours have fresh exact coverage/frozen pairs. Envelope's five
 new survivors have targeted native Killed confirmations, and admission's real
-initial/exclusive dual-error phases share their fixture and exact owned cleanup.
+initial/exclusive/checkpoint dual-error phases share their fixture and exact owned cleanup.
+Initialization's native setup exposed a project-context/package-asset reader mixup;
+the test-only correction preserves the sealed input contract and needs fresh proof.
 Full compatible mutation closures remain OPEN; diagnostic sets are not unioned.
 WORK owns the exact receipts and pending equivalent/unattempted mutant analysis.
 

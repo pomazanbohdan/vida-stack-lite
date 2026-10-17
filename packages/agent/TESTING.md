@@ -917,6 +917,10 @@ configuredTestContext() and configured YAML, fuzz and repair fixture reads;
 AGENT_RUNTIME_TEST_REPOSITORY_ROOT keeps the parent Source/tooling binding.
 Fixture readers prefer the context root when present. Do not redirect parent
 input verification to it or read shared repository state as a fixture instead.
+Package schemas and templates resolve from the executing captured package root,
+such as the test module's package-relative location; they are not project context
+files. Keep project output/configuration reads on the sealed context. Do not
+expand its four-file layout or copy uncaptured package assets to fix a reader.
 Never copy .vida, work, databases or leases into this fixture.
 Parent admission verifies the deterministic root/digest receipt binding, exact
 layout and bytes before accepting an outcome. Failed materialization launches

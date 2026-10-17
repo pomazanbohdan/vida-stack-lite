@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest checked Source/test packet: `b1c4e18030ca78964c25c545b8340d9725ed6345`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read/public-gate controls and envelope ordering regressions. The pinned facade review and fresh compatible local triple are recorded below. Active runtime initialization, envelopes and storage admission still need complete mutation closures. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest checked Source/test packet: `490f7d86713b393d8ace2c0b8629a98dedd73e12`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read/public-gate controls, shared Host failure phases and envelope ordering regressions. The pinned facade review and fresh compatible local triple are recorded below. Active runtime initialization, envelopes and storage admission still need complete mutation closures. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -382,8 +382,38 @@ Both phases preserve undefined/body and exact close causes, unchanged persisted
 fence/Mastra bytes, zero merge callbacks and a BUSY gate until the retained handle
 closes through its registered paired/exclusive cleanup owner. Later phase success
 cannot consume an earlier failed assertion: the captured error is rethrown before
-advancing. The checkpoint-source dual-error context remains a distinct GAP.
-Changed admission tests still need new numeric evidence after publication.
+advancing. Changed admission tests still need new numeric evidence after publication.
+
+The first bounded initialization native request `12419201-6b6f-4a13-b234-8f3d080bb44e`
+(`AlUZpz`) ends in4201ms before any mutant. Its baseline is UNKNOWN: the module
+reader looks for a package schema in the sealed four-file configured project
+context and fails ENOENT before any test body. The actual captured schema already
+exists in the executing native sandbox. Preserve the failed v162 operation,
+configured context, captures and scratch; do not reuse it or claim an attempted
+mutant. The test-only correction resolves package schema/templates relative to
+the executing test module and retains configured project roots for output/config
+reads. TESTING now makes that existing boundary explicit; no input list or sealed
+layout is widened. Full development `eIUHm9` passes19tests/125assertions in23909ms
+with complete captures/groups and unchanged boot. Fresh native baseline proof
+still follows checked publication in another clean namespace.
+
+The shared admission fixture now adds the checkpoint-source phase. Exact native
+`PRAGMA database_list` identifies its Mastra handle; the real checkpoint `get`
+succeeds before injected undefined and the same exact handle's close fails once.
+Its Statement own descriptor is restored immediately and on the outer failure
+path. Native result shape/types and completed checkpoint are asserted; no SQLite
+row or I/O failure is fabricated. Independent v158 finds no custody/correctness
+issue. Root's `FMElxA` exposes an incorrect test expectation: Mastra's existing
+safeIntegers connection returns1n, while Host returns1. Keep those distinct native
+types. Full GREEN `Dj4anR` passes28tests in2210ms, complete captures/groups and
+unchanged boot. All three phases share setup, retain exact direct/nested error
+contracts, assert the held gate and retry each exact owner before advancing.
+Strict lint then catches an untyped native method and redundant this alias;
+capture it as unknown before narrowing and reuse one exact-source Set for all
+phases. This removes phase-specific handle branches without suppressing lint.
+Affected `pcGamC` passes the shared three-phase case in1013ms.
+Native mutation confirmation for both governed aggregate diagnostics remains
+required; the earlier reachability GAP is now a concrete supported fixture.
 
 ### Published admission packet — retained context
 

@@ -1503,7 +1503,7 @@ describe('native existing-storage admission boundary', () => {
     await releaseFence(fixture.root, fixture.receipt);
   });
 
-  trackedTest('preserves initial and exclusive Host verification and close failures in order', async () => {
+  trackedTest('preserves initial, exclusive Host, and source checkpoint close failures in order', async () => {
     const fixture = freshFixture();
     let activeFixture = fixture;
     const fenceBefore = fixture.hostStore.readMaintenanceFence();
@@ -1520,6 +1520,11 @@ describe('native existing-storage admission boundary', () => {
         kind: 'exclusive' as const,
         closeFailureMessage: 'exclusive Host source close failed once',
       },
+      {
+        title: 'preserves source checkpoint and close failures in order',
+        kind: 'checkpoint' as const,
+        closeFailureMessage: 'Mastra source close failed once',
+      },
     ];
 
     for (const phase of phases) {
@@ -1532,18 +1537,50 @@ describe('native existing-storage admission boundary', () => {
         'assertMaintenanceFence',
       ) as typeof HostStateStore.prototype.assertMaintenanceFence;
       let verifyingFence = false;
-      const temporaryHosts = new Set<Database>();
+      const retainedSources = new Set<Database>();
+      let checkpointResult: unknown;
+      let checkpointStatement: object | undefined;
+      let checkpointGetDescriptor: PropertyDescriptor | undefined;
+      let checkpointObserved = false;
       let injectedCloseFailure = false;
       let callerOwnerCloses = 0;
       let mergeCallbacks = 0;
       let rejected = false;
       let caught: unknown;
       const observedQuery = function (this: Database, sql: string) {
-        if (verifyingFence) temporaryHosts.add(this);
-        return Reflect.apply(originalQuery, this, [sql]);
+        if (verifyingFence) retainedSources.add(this);
+        const statement = Reflect.apply(originalQuery, this, [sql]) as object;
+        if (phase.kind !== 'checkpoint' || sql !== 'PRAGMA wal_checkpoint(TRUNCATE)') return statement;
+        const databases = Reflect.apply(originalQuery, this, ['PRAGMA database_list']).all() as {
+          name: string;
+          file: string;
+        }[];
+        const main = databases.find((database) => database.name === 'main');
+        if (main?.file !== path.join(fixture.root, mastraRelative)) return statement;
+        retainedSources.add(this);
+        checkpointStatement = statement;
+        checkpointGetDescriptor = Object.getOwnPropertyDescriptor(statement, 'get');
+        const nativeGet: unknown = Reflect.get(statement, 'get');
+        if (typeof nativeGet !== 'function') return statement;
+        Object.defineProperty(statement, 'get', {
+          configurable: true,
+          writable: true,
+          value: (...args: unknown[]) => {
+            try {
+              checkpointResult = Reflect.apply(nativeGet, statement, args);
+              checkpointObserved = true;
+              throw undefined;
+            } finally {
+              if (checkpointGetDescriptor) Object.defineProperty(statement, 'get', checkpointGetDescriptor);
+              else Reflect.deleteProperty(statement, 'get');
+            }
+          },
+        });
+        return statement;
       } as unknown as typeof Database.prototype.query;
       const observedAssertMaintenanceFence = function (this: HostStateStore, receipt: MaintenanceFenceReceipt) {
-        const inject = phase.kind === 'initial' ? callerOwnerCloses === 0 : callerOwnerCloses !== 0;
+        const inject =
+          phase.kind === 'initial' ? callerOwnerCloses === 0 : phase.kind === 'exclusive' && callerOwnerCloses !== 0;
         if (!inject) return Reflect.apply(originalAssertMaintenanceFence, this, [receipt]);
         verifyingFence = true;
         try {
@@ -1555,7 +1592,7 @@ describe('native existing-storage admission boundary', () => {
         }
       };
       const observedClose = function (this: Database, throwOnError?: boolean): void {
-        if (temporaryHosts.has(this) && !injectedCloseFailure) {
+        if (retainedSources.has(this) && !injectedCloseFailure) {
           injectedCloseFailure = true;
           throw closeFailure;
         }
@@ -1594,13 +1631,17 @@ describe('native existing-storage admission boundary', () => {
         HostStateStore.prototype.assertMaintenanceFence = originalAssertMaintenanceFence;
         Database.prototype.close = originalClose;
         Database.prototype.query = originalQuery;
+        if (checkpointStatement) {
+          if (checkpointGetDescriptor) Object.defineProperty(checkpointStatement, 'get', checkpointGetDescriptor);
+          else Reflect.deleteProperty(checkpointStatement, 'get');
+        }
       }
 
-      const [retainedConnection] = temporaryHosts;
+      const [retainedConnection] = retainedSources;
       const assertionFailures: unknown[] = [];
       try {
         expect(rejected).toBe(true);
-        expect(temporaryHosts.size).toBe(1);
+        expect(retainedSources.size).toBe(1);
         expect(retainedConnection).toBeInstanceOf(Database);
         expect(injectedCloseFailure).toBe(true);
         expect(caught).toBeInstanceOf(AggregateError);
@@ -1614,20 +1655,41 @@ describe('native existing-storage admission boundary', () => {
           expect(closeFailures).toHaveLength(1);
           expect(closeFailures[0]).toBe(closeFailure);
           expect(callerOwnerCloses).toBe(0);
-        } else {
+        } else if (phase.kind === 'exclusive') {
           expect(caught).toHaveProperty('message', 'exclusive Host fence verification and close failed');
           const failures = (caught as AggregateError).errors;
           expect(failures).toHaveLength(2);
           expect(failures[0]).toBeUndefined();
           expect(failures[1]).toBe(closeFailure);
           expect(callerOwnerCloses).toBe(1);
+        } else {
+          expect(caught).toHaveProperty('message', 'source checkpoint and close failed');
+          const failures = (caught as AggregateError).errors;
+          expect(failures).toHaveLength(2);
+          expect(failures[0]).toBeUndefined();
+          expect(failures[1]).toBe(closeFailure);
+          expect(callerOwnerCloses).toBe(1);
+          expect(checkpointObserved).toBe(true);
+          expect(checkpointResult).toBeDefined();
+          assert.ok(checkpointResult !== null && typeof checkpointResult === 'object');
+          assert.ok('busy' in checkpointResult && 'log' in checkpointResult && 'checkpointed' in checkpointResult);
+          const { busy, log, checkpointed } = checkpointResult;
+          assert.ok(typeof busy === 'number' || typeof busy === 'bigint');
+          assert.ok(typeof log === 'number' || typeof log === 'bigint');
+          assert.ok(typeof checkpointed === 'number' || typeof checkpointed === 'bigint');
+          expect(BigInt(busy)).toBe(0n);
+          expect(BigInt(checkpointed)).toBeGreaterThanOrEqual(BigInt(log));
+          if (!checkpointStatement) throw new Error('Mastra checkpoint statement was not captured.');
+          expect(Object.getOwnPropertyDescriptor(checkpointStatement, 'get')).toEqual(checkpointGetDescriptor);
         }
         expect(mergeCallbacks).toBe(0);
         expect(readFileSync(path.join(fixture.root, hostRelative)).equals(expectedHostImage)).toBe(true);
         expect(readFileSync(path.join(fixture.root, mastraRelative))).toEqual(mastraBefore);
         if (phase.kind === 'initial') expect(activeFixture.hostStore.readMaintenanceFence()).toEqual(fenceBefore);
-        if (!retainedConnection) throw new Error(`${phase.title}: Host verification connection was not captured.`);
-        expect(retainedConnection.query('SELECT 1 AS open').get()).toEqual({ open: 1 });
+        if (!retainedConnection) throw new Error(`${phase.title}: source connection was not captured.`);
+        expect(retainedConnection.query('SELECT 1 AS open').get()).toEqual({
+          open: phase.kind === 'checkpoint' ? 1n : 1,
+        });
       } catch (error) {
         assertionFailures.push(error);
       }
@@ -1692,7 +1754,8 @@ describe('native existing-storage admission boundary', () => {
         if (failures.length === 1) throw failures[0];
         throw new AggregateError(failures, `${phase.title}: Host failure assertion and owned close retry failed`);
       }
-      if (phase.kind === 'initial') {
+      if (phase.kind !== 'checkpoint') {
+        if (phase.kind === 'exclusive') expect(readPersistedFence(fixture.root)).toEqual(fenceBefore);
         const hostOwner = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
         registerDatabase(hostOwner, fixture.root);
         activeFixture = {

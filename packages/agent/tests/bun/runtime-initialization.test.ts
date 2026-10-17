@@ -53,8 +53,8 @@ let store: HostStateStore;
 let racers: Racer[] = [];
 let caseCompleted = false;
 let projectAuthorityFixtureRoot: string | undefined;
-const { repositoryRoot, config: configFixture } = configuredTestContext();
-const bundleRoot = path.join(repositoryRoot, configFixture.runtime.bundle);
+const { repositoryRoot } = configuredTestContext();
+const bundleRoot = path.resolve(import.meta.dirname, '../..');
 const fixtureFiles = ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'].map(
   (file) => [file, readFileSync(path.join(repositoryRoot, file))] as const,
 );
