@@ -1,13 +1,16 @@
 import { describe, expect, test } from 'bun:test';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import type { RuntimeAssuranceContextInput } from '../src/lifecycle/runtime-facade.ts';
 import { expectReturned } from './helpers/expect-rejection.ts';
 import { callWithUntrustedArguments } from './helpers/untrusted-call.ts';
 
-async function importFreshRuntimeFacade(): Promise<typeof import('../src/lifecycle/runtime-facade.ts')> {
-  return (await import(
-    `../src/lifecycle/runtime-facade.ts?body=${randomUUID()}`
-  )) as typeof import('../src/lifecycle/runtime-facade.ts');
+const requireFacade = createRequire(import.meta.url);
+
+function loadFreshRuntimeFacade(): typeof import('../src/lifecycle/runtime-facade.ts') {
+  const file = requireFacade.resolve('../src/lifecycle/runtime-facade.ts');
+  delete requireFacade.cache[file];
+  return requireFacade(file) as typeof import('../src/lifecycle/runtime-facade.ts');
 }
 
 function assuranceInput(overrides: RuntimeAssuranceContextInput = {}): RuntimeAssuranceContextInput {
@@ -37,8 +40,8 @@ function expectObjectReturned<T extends object>(operation: () => T): T {
 }
 
 describe('runtime facade public boundary', () => {
-  test('exposes derived assurance context and a validated same-work status delta', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('exposes derived assurance context and a validated same-work status delta', () => {
+    const runtime = loadFreshRuntimeFacade();
     const first = expectObjectReturned(() =>
       runtime.buildRuntimeAssuranceContext({
         work_id: 'migration-work',
@@ -84,8 +87,8 @@ describe('runtime facade public boundary', () => {
     expect(() => runtime.statusDelta(first, otherWork)).toThrow(/work id mismatch/);
   });
 
-  test('canonicalizes nested context values without changing array order', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('canonicalizes nested context values without changing array order', () => {
+    const runtime = loadFreshRuntimeFacade();
     expect(expectReturned(() => runtime.stable({ b: [2, { y: 2, x: 1 }], a: 1 }))).toBe(
       '{"a":1,"b":[2,{"x":1,"y":2}]}',
     );
@@ -95,8 +98,8 @@ describe('runtime facade public boundary', () => {
     expect(expectReturned(() => runtime.stable([1, 2]))).not.toBe(expectReturned(() => runtime.stable([2, 1])));
   });
 
-  test('rejects malformed assurance identities before they become status evidence', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('rejects malformed assurance identities before they become status evidence', () => {
+    const runtime = loadFreshRuntimeFacade();
     expect(() => runtime.buildRuntimeAssuranceContext()).toThrow('assurance context work id missing');
     for (const input of [null, [], 'not an object'])
       expect(() => callWithUntrustedArguments(runtime.buildRuntimeAssuranceContext, [input])).toThrow();
@@ -152,8 +155,8 @@ describe('runtime facade public boundary', () => {
     }
   });
 
-  test('binds packet fallback, explicit precedence, and documentation status into the context', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('binds packet fallback, explicit precedence, and documentation status into the context', () => {
+    const runtime = loadFreshRuntimeFacade();
     const packet = {
       sealed_revision: 2,
       implementation_fingerprint: 'a'.repeat(64),
@@ -212,8 +215,8 @@ describe('runtime facade public boundary', () => {
       ).toThrow();
   });
 
-  test('reports every bound assurance status change with the current watermark', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('reports every bound assurance status change with the current watermark', () => {
+    const runtime = loadFreshRuntimeFacade();
     const baseline = expectObjectReturned(() =>
       runtime.buildRuntimeAssuranceContext(
         assuranceInput({
@@ -258,8 +261,8 @@ describe('runtime facade public boundary', () => {
     }
   });
 
-  test('compares nested artifact values while keeping next action outside identity', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('compares nested artifact values while keeping next action outside identity', () => {
+    const runtime = loadFreshRuntimeFacade();
     const artifactA = { path: 'docs/result.md', sha256: 'a'.repeat(64), metadata: { owner: 'agent' } };
     const artifactB = { metadata: { owner: 'agent' }, sha256: 'a'.repeat(64), path: 'docs/result.md' };
     const first = expectObjectReturned(() =>
@@ -289,8 +292,8 @@ describe('runtime facade public boundary', () => {
     expect(expectReturned(() => runtime.validateStatusDelta(removed))).toBe(removed);
   });
 
-  test('owns a nested artifact snapshot without freezing caller input', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('owns a nested artifact snapshot without freezing caller input', () => {
+    const runtime = loadFreshRuntimeFacade();
     const artifact = { path: 'docs/result.md', metadata: { owner: 'agent' } };
     const context = expectObjectReturned(() =>
       runtime.buildRuntimeAssuranceContext(assuranceInput({ current_documentation_artifact: artifact })),
@@ -307,8 +310,8 @@ describe('runtime facade public boundary', () => {
     expect(expectReturned(() => runtime.validateRuntimeAssuranceContext(context))).toBe(context);
   });
 
-  test('rejects values outside canonical JSON while preserving the open artifact JSON domain', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('rejects values outside canonical JSON while preserving the open artifact JSON domain', () => {
+    const runtime = loadFreshRuntimeFacade();
     const valid = expectObjectReturned(() =>
       runtime.buildRuntimeAssuranceContext(
         assuranceInput({ current_documentation_artifact: { path: 'docs/result.md', labels: ['current'] } }),
@@ -322,8 +325,8 @@ describe('runtime facade public boundary', () => {
     expect(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 9007199254740992 }))).toThrow();
   });
 
-  test('keeps the historical context digest bytes for a valid scalar context', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('keeps the historical context digest bytes for a valid scalar context', () => {
+    const runtime = loadFreshRuntimeFacade();
     const context = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
     const historicalIdentity =
       '{"capability_epoch":null,"documentation_skill_validation_status":null,"generation":null,"implementation_fingerprint":null,"lease_expires_at":null,"lifecycle_state":"EXECUTE","packet_id":null,"packet_version":null,"platform_knowledge_context_id":null,"platform_knowledge_digest":null,"requested_reviewers":null,"review_mode":null,"revision":1,"sealed_revision":null,"source_revision":"source-a","wave":null,"work_id":"migration-work"}';
@@ -331,8 +334,8 @@ describe('runtime facade public boundary', () => {
     expect(context.context_id).toBe(createHash('sha256').update(historicalIdentity).digest('hex'));
   });
 
-  test('rejects deltas that the closed builder contract cannot produce', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('rejects deltas that the closed builder contract cannot produce', () => {
+    const runtime = loadFreshRuntimeFacade();
     const first = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
     const second = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 })));
     const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
@@ -351,8 +354,8 @@ describe('runtime facade public boundary', () => {
     ).toThrow();
   });
 
-  test('rejects malformed status deltas and tampered contexts', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('rejects malformed status deltas and tampered contexts', () => {
+    const runtime = loadFreshRuntimeFacade();
     const first = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
     const second = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 })));
     const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
@@ -420,8 +423,8 @@ describe('runtime facade public boundary', () => {
     ).toThrow(/documentation validation status invalid/);
   });
 
-  test('requires complete v1 delta shape and a matching watermark', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('requires complete v1 delta shape and a matching watermark', () => {
+    const runtime = loadFreshRuntimeFacade();
     const first = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
     const second = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 })));
     const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
@@ -452,8 +455,8 @@ describe('runtime facade public boundary', () => {
     expect(expectReturned(() => runtime.validateStatusDelta(delta))).toBe(delta);
   });
 
-  test('blocks malformed v1 delta objects with governed diagnostics', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('blocks malformed v1 delta objects with governed diagnostics', () => {
+    const runtime = loadFreshRuntimeFacade();
     const first = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
     const second = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 })));
     const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
@@ -494,8 +497,8 @@ describe('runtime facade public boundary', () => {
     blocked({ ...delta, changed: [Object.assign(() => {}, { field: 'revision', value: 2 })] });
   });
 
-  test('reports the invalid assurance field and status delta in blocked diagnostics', async () => {
-    const runtime = await importFreshRuntimeFacade();
+  test('reports the invalid assurance field and status delta in blocked diagnostics', () => {
+    const runtime = loadFreshRuntimeFacade();
     const fieldCases: readonly (readonly [string, unknown, string])[] = [
       ['work_id', undefined, 'work id missing'],
       ['revision', 0, 'revision invalid'],

@@ -971,7 +971,7 @@ describe('final quality input projections', () => {
     writeFileSync(path.join(root, dependency), 'export const value = true;\n');
     writeFileSync(
       path.join(root, testPath),
-      "test('fresh facade', async () => { await import(`../src/lifecycle/runtime-facade.ts?body=${crypto.randomUUID()}`); });\n",
+      "import { createRequire } from 'node:module'; const load = createRequire(import.meta.url); test('fresh facade', () => { const file = load.resolve('../src/lifecycle/runtime-facade.ts'); delete load.cache[file]; load(file); });\n",
     );
     const selection = {
       mode: 'focused-diagnostic' as const,

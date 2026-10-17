@@ -105,7 +105,7 @@ async function runAdapterChild(
 
 test('generated image activation records only the selected local ID at a failing body', async () => {
   const packageRoot = path.resolve(import.meta.dir, '..');
-  const source = Buffer.from('export const flag = () => true;\n');
+  const source = Buffer.from("export const flag = () => true;\nexport const schema = 'schema/v1';\n");
   const sourceDigest = createHash('sha256').update(source).digest('hex');
   const image = await generateMutationImage(
     packageRoot,
@@ -142,6 +142,38 @@ test('generated image activation records only the selected local ID at a failing
     expect(junitOutcome(selected.junit, [selected.selectedTest], [], selected.events).outcome).toBe('killed');
     expect(nativeMutationActivationHitCount(selected.events, mutant!.local_id)).toBeGreaterThan(0);
     expect(confirmedRunnerOutcome(selected.exitCode, 'killed', selectedHitCount)).toBe('killed');
+
+    const initializationMutant = image.universe.mutants.find((row) => row.replacement === '""');
+    if (!initializationMutant) throw new Error('Generated image has no schema initialization mutant.');
+    const initialization = await runAdapterChild(
+      root,
+      `import { test, expect } from 'bun:test';
+import { createRequire } from 'node:module';
+const requireSubject = createRequire(import.meta.url);
+test('fresh module initialization belongs to the asserting body', () => {
+  const file = requireSubject.resolve('../src/flag.ts');
+  delete requireSubject.cache[file];
+  const first = requireSubject(file);
+  delete requireSubject.cache[file];
+  const second = requireSubject(file);
+  expect(first).not.toBe(second);
+  expect(second.schema).toBe('schema/v1');
+});
+`,
+      'module-initialization',
+      { activeMutantId: initializationMutant.local_id, exitCode: 1 },
+    );
+    const initializationOutcome = junitOutcome(
+      initialization.junit,
+      [initialization.selectedTest],
+      [],
+      initialization.events,
+    );
+    const initializationHits = nativeMutationActivationHitCount(initialization.events, initializationMutant.local_id);
+    expect(initializationHits).toBe(2);
+    expect(confirmedRunnerOutcome(initialization.exitCode, initializationOutcome.outcome, initializationHits)).toBe(
+      'killed',
+    );
 
     const stale = await runAdapterChild(
       root,

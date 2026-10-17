@@ -1454,10 +1454,14 @@ do not start duplicate suites, scans, hashes or inventories.
    Immediately fill its slot with the next ready contour.
 
 For a stateless module whose mutated initialization runs at import time, load a
-fresh captured module inside the asserting test body. Use the existing query-alias
-loader boundary; retain its exact Source capture and all cases. Confirm that the
-module has no lifetime state or namespace-identity contract before adopting this
-fixture isolation. Keep package-root identity checks in their integration owner.
+fresh captured module inside the asserting test body. Bun1.4.3 query imports reuse
+module identity and initialize outside body ALS; a query suffix is not fresh-load
+evidence. Use `createRequire(import.meta.url)`, resolve the exact module, delete only
+its cache entry and require it synchronously in the body. Retain the explicit
+computed entrypoint, exact Source capture and all cases; qualify snapshot-loader
+interception and real generated-mutant activation. Confirm that the module has no
+lifetime state or namespace-identity contract before adopting this fixture isolation.
+Keep package-root identity checks in their integration owner.
 A child-only activation still needs qualified child evidence; a parent assertion
 or a fresh import alone does not supply that proof.
 

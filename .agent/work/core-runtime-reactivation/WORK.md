@@ -519,6 +519,21 @@ loader's captured-bytes rejection unchanged. A focused synthetic regression
 projection checks `MrjVlv` pass afterward, including changed dependency bytes and
 freshness fingerprints. The failed namespace is retained, not retried as a success.
 
+Fresh `12f8815` coverage `3id8rq`, run58b5295a-ecdd-40b3-ac5f-34cf2b51a0a9,
+passes14tests/599assertions; same-run frozen `HTa7as` passes against the original
+facade review. However native diagnostic `54U08O`,
+run6e16bab8-04e0-4daa-a460-cfcf2b6fb9e2, still records local1 asUNKNOWN with hit0.
+Root's isolated Bun1.4.3 probe shows query imports reuse identity and module
+evaluation lacks body ALS; prior static review did not establish fresh loading.
+The retained diagnostic is not a closure. Synchronous createRequire with exact
+cache-entry deletion demonstrably gives fresh identity and the current body ALS.
+Root adopts that test-only loader for the previously reviewed stateless facade.
+`JqTIeF` passes21boundary/integration cases in1888ms. The existing generated-image
+control now includes a real schema-initialization mutant, requires fresh namespace
+identity and observes exactly two owned hits from two synchronous loads before its
+schema assertion fails. `e7lWLc` passes that expanded control in931ms. Explicit
+entrypoint capture remains; loader interception still needs fresh numeric proof.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.
