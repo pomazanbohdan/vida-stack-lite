@@ -649,6 +649,11 @@ rethrow that same failure before any success-path assertion. A later successful
 matcher can consume causal assertion evidence; it must not mask the primary
 failure before mutation attribution. Keep success-only invariants on the normal
 completion path, without weakening the reader's UNKNOWN classification.
+An error path must still fail any independent forbidden-effect invariant: the
+no-retry helper checks zero calls on success and whenever a retry occurred;
+only a zero-retry failure skips the later successful matcher before rethrowing.
+Otherwise a caller's broad catch could mistake the retry sentinel for its
+expected operation error.
 Shared work-and-close helpers preserve single and
 combined failures; async work must settle before close. Await the owned promise
 explicitly before a matcher instead of awaiting a synchronous matcher result.

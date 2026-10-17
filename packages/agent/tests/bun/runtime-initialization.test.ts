@@ -102,8 +102,9 @@ async function expectNoRetryDelay<T>(action: () => Promise<T>): Promise<T> {
   } finally {
     Bun.sleep = originalSleep;
   }
+  // Preserve a primary assertion, but always reject an attempted forbidden retry.
+  if (!failure || retrySleeps !== 0) expect(retrySleeps).toBe(0);
   if (failure) throw failure.error;
-  expect(retrySleeps).toBe(0);
   return result;
 }
 

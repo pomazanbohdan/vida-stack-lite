@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's fresh51e9e4f coverage/frozen pair passes exact F/L/S/B100 and original caps; complete nativebe0c3af7 closes98Killed/0Survived/1UNKNOWN/65unattempted of164. The earlier startup/extra-CAS-child cases now assertion-Kill; current58's logical retry guard is the new diagnostic gap under isolated investigation. Envelopes' fresh64-mutant diagnostic is all assertion-Killed after the mixed-precision regression. Image and envelopes complete eligibility are reviewed; all three full native proofs remain pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability and admission stateful initialization remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Fresh85b09b0 initialization and image pairs have exact local F/L/S/B100 and same-run frozen9/9; image's current49-role Source binding is checked. Initialization native8703f0b1 stops8Killed/0Survived/1UNKNOWN/155unattempted of164 on primary-assertion evidence loss. The reviewed helper correction preserves that evidence and still rejects every forbidden retry, pending fresh native proof. Envelopes'64-mutant diagnostic is all assertion-Killed after the mixed-precision regression. All three complete native proofs remain pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability and admission stateful initialization remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -27,7 +27,7 @@ ebc323b:.agent/work/core-runtime-reactivation/WORK.md under this heading;
 that published record links the earlier c525495 history. Do not replay those
 operations or transfer their local IDs/counters.
 
-Latest complete coverage/frozen pair is immutable51e9e4f, run
+An earlier complete local coverage/frozen pair is immutable51e9e4f, run
 29cf2f6f-d665-4400-a5db-21a105b4cef9, stages /tmp/contour-stage-58Fcqx and
 /tmp/contour-stage-AIXUkt. It passes21cases/260assertions, exact F16/16,
 L84/84,S95/95,B53/53 and original same-run frozen9/9, bound tocf118c9.
@@ -323,6 +323,16 @@ roles and max9/9. Neither focused pair substitutes for complete native proof.
 Independent image review finds no justified test patch for impossible native
 empty COUNT/table_xinfo results or unestablished FTS support; those observed
 survivors remain unqualified, never silently excluded or credited as Killed.
+
+Independent review catches a weakness in c560087's helper ordering: an expected
+broad binding-error catch could accept the forbidden-retry sentinel if rejection
+skips the retry count. The corrected minimal condition asserts zero calls on
+normal completion or whenever any retry occurred. A zero-retry failure skips
+only the successful matcher, preserving its original assertion. Both author and
+reviewer agree; no reader or error contract is weakened. Immutablec560087 coverage
+bf21ec99-5d24-4418-bb8c-f47e57ff3a52 passes exact16/84/95/53,21cases/261assertions,
+but native is deliberately not started on that superseded helper. Preserve the
+issued local observation without promoting it to full acceptance.
 
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
