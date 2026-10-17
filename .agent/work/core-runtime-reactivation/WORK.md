@@ -11,9 +11,27 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
-- Native worker mechanics and bounded scheduling now feed an explicit image-only `--isolated-workers` diagnostic, with private logical report overlays and parent-only raw publication. Published ce86679 passes a real immutable80-case baseline and2assertion-confirmed Killed/0Survived/0UNKNOWN/525unattempted of527 in16571ms. The default remains serial; complete admission/capture/selectors are forbidden in the new route. Full persisted-proof/parallel qualification stays open. These tooling packets change no product Source or numeric contour closure.
+- Native worker mechanics and bounded scheduling feed an explicit `--isolated-workers` route, with private logical report overlays and parent-only raw publication. Published ce86679 passes a real immutable80-case image baseline and2assertion-confirmed Killed/0Survived/0UNKNOWN/525unattempted of527 in16571ms. The next bounded parity step permits complete admission only for reviewed read-only fs-safe attestation; image remains diagnostic-only, and both reject capture/selectors. The default remains serial. Full persisted-proof/parallel qualification stays open pending fresh evidence. These tooling packets change no product Source or numeric contour closure.
 
 ## Global contour campaign packet
+
+### Isolated full-proof parity preparation — 2026-10-17
+
+Three blind Luna reviews qualify the next bounded selection: fs-safe attestation
+has five read/hash-only baseline cases with no shared writes. Its historical
+seven-mutant result is not fresh evidence. The isolated selector now permits
+complete admission only for this contour; image stays diagnostic-only, both
+reject capture and ID selectors, and default execution stays serial. Existing
+full-plan-before-launch, exhaustive all-Killed, freshness, proof schema and reader
+owners remain unchanged. No broader resource or coverage parallelism is admitted.
+
+Focused owned run `8GzCuz` passes112cases/0failures/390assertions across the selector
+and existing persisted-reader suites in1109ms, with complete captures, closed
+group and unchanged boot. Next: publish, freeze a clean checkout, produce the
+complete native proof and read the actual retained closure with the unchanged
+reader. Reader negatives may clone the accepted report/selection in memory;
+never mutate retained artifacts or rerun a producer merely to test the reader.
+Zero-callable frozen CRAP applicability remains GAP, so no triple closes here.
 
 ### Current repair packet — 2026-10-17
 

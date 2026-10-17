@@ -1099,8 +1099,10 @@ This diagnostic result is not a native mutation proof schema. Real integration
 still needs captured-input/private-output binding and qualified worker resources.
 
 `--isolated-workers` opts into a bounded real-runner diagnostic for
-`bun-project-upgrade-existing-storage-image` only. It cannot combine with complete
-admission, per-test capture or ID selectors. Start with `--batch-size 2
+`bun-project-upgrade-existing-storage-image` or `bun-fs-safe-attestation` only.
+Only the reviewed read-only fs-safe attestation contour permits `--admit-complete`
+for persisted-proof parity; image remains diagnostic-only. Neither contour permits
+per-test capture or ID selectors. Start diagnostic work with `--batch-size 2
 --max-batches 1`; it preserves the full declared test argv, one input capture,
 one generated image and the existing900s partition deadline. Baseline runs first;
 at most two mutants are then in flight. The copied parent environment is frozen
@@ -1127,7 +1129,11 @@ preserving raw bytes and sync operations. Uncertain native custody leaves privat
 outputs unpublished; partial publication failures retain both roots and deny
 confirmation. Closed raw diagnostics can still fail the unchanged runner
 confirmer; copied files alone never mean Killed. The persisted proof reader and
-flat-basename guards are unchanged, and this pilot emits no complete proof.
+flat-basename guards are unchanged. Complete fs-safe attestation admission retains
+the existing exhaustive-plan, all-Killed and freshness gates and emits the same
+context-bearing proof. Verify that actual retained closure through the unchanged
+reader, separately from synthetic controls. This does not resolve its zero-callable
+CRAP applicability GAP or qualify broader parallel execution.
 
 The explicit `--capture-per-test-diagnostic` mode runs only the complete native
 baseline and binds existing diagnostic-v2 capture through its input fingerprint,

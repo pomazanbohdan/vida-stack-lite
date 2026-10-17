@@ -130,8 +130,10 @@ WORK owns their actual receipts. The next bounded native speed qualification
 reviews selected real-test resources, then integrates captured immutable inputs,
 private per-ID outputs and one shared deadline. The separate inert scheduler
 provides bounded ordered collection and UNKNOWN stop/drain controls. The explicit
-image-only isolated-worker diagnostic integrates logical report overlays and
-parent-only raw output publication; WORK owns its actual qualification result.
+isolated-worker route integrates logical report overlays and parent-only raw
+output publication. Image remains diagnostic-only; reviewed read-only fs-safe
+attestation alone permits complete admission for persisted-reader parity.
+WORK owns the actual qualification result and its unresolved CRAP applicability.
 Keep the default serial execution and full declared test argv. Complete parallel
 admission still requires persisted-proof parity and captured evidence qualification.
 Do not raise worker count or claim the900s target

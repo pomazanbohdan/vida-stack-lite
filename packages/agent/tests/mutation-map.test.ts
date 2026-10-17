@@ -286,25 +286,34 @@ test('native targeted diagnostics require one immutable-plan mutant and never al
     expect(() => selectMutationBatchPilot(denied, declared)).toThrow();
 });
 
-test('isolated worker pilot is explicit, image-only and cannot supply complete admission or filtering', () => {
+test('isolated workers require reviewed contours and reserve complete admission for fs-safe attestation', () => {
   const name = 'bun-project-upgrade-existing-storage-image';
   const declared = [
     { name, sources: ['src/one.ts'], tests: ['tests/one.test.ts'], report: 'one.json', environment: 'bun' },
   ];
   expect(selectMutationBatchPilot(['--contour', name], declared).isolatedWorkers).toBe(false);
   expect(selectMutationBatchPilot(['--contour', name, '--isolated-workers'], declared).isolatedWorkers).toBe(true);
+  const fsName = 'bun-fs-safe-attestation';
+  const fsDeclared = [{ ...declared[0]!, name: fsName }];
+  expect(
+    selectMutationBatchPilot(['--contour', fsName, '--isolated-workers', '--admit-complete'], fsDeclared),
+  ).toMatchObject({ isolatedWorkers: true, admitComplete: true });
+  expect(selectMutationBatchPilot(['--contour', name, '--admit-complete'], declared).admitComplete).toBe(true);
+  expect(() =>
+    selectMutationBatchPilot(['--contour', name, '--isolated-workers', '--admit-complete'], declared),
+  ).toThrow('complete admission is fs-safe attestation only');
   for (const suffix of [
-    ['--admit-complete'],
     ['--capture-per-test-diagnostic'],
     ['--batch-size', '1', '--diagnostic-mutant-id', '1'],
     ['--batch-size', '1', '--diagnostic-mutant-ids', '1,2'],
   ])
-    expect(() => selectMutationBatchPilot(['--contour', name, '--isolated-workers', ...suffix], declared)).toThrow(
-      'diagnostic-only',
-    );
+    for (const partition of [declared, fsDeclared])
+      expect(() =>
+        selectMutationBatchPilot(['--contour', partition[0]!.name, '--isolated-workers', ...suffix], partition),
+      ).toThrow('without capture or ID selectors');
   expect(() =>
     selectMutationBatchPilot(['--contour', 'foreign', '--isolated-workers'], [{ ...declared[0]!, name: 'foreign' }]),
-  ).toThrow('reviewed image');
+  ).toThrow('reviewed image or fs-safe attestation');
 });
 
 test('native diagnostic ID sets require bounded unique IDs and remain incompatible with single-ID and admission modes', () => {
