@@ -509,6 +509,16 @@ boot. Strict publication and fresh numeric receipts follow. Envelopes' readonly
 optimization review finds its large fixtures cover distinct boundaries; no cases
 or assertions are removed just to reduce duration.
 
+The next immutable `824c6df` coverage `UkBudq`,
+runde4ea03b-d049-469c-8866-309f61f4d97d, correctly refuses an uncaptured transitive
+facade dependency. The erased type import no longer seeds traversal of its Source;
+the dynamic query is invisible to the static import scanner. Root adds the exact
+facade entry to the existing computed-module entrypoint map, leaving the query
+loader's captured-bytes rejection unchanged. A focused synthetic regression
+`kIE3Hs` fails on the missing transitive module before the entry is added; full
+projection checks `MrjVlv` pass afterward, including changed dependency bytes and
+freshness fingerprints. The failed namespace is retained, not retried as a success.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

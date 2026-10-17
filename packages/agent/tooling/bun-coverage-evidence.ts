@@ -242,6 +242,7 @@ export const repositoryToolingInputPrefix = '_repository/tooling/agent';
 // their test-owned entrypoints explicit, then let the shared bounded closure
 // capture each entrypoint's literal transitive imports and freshness inputs.
 const computedModuleEntryPointsByTest: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  'tests/runtime-facade-boundary.test.ts': ['src/lifecycle/runtime-facade.ts'],
   'tests/bun/service-operation-launch-capability.test.ts': [`${repositoryToolingInputPrefix}/release-local.ts`],
 });
 export const repositoryTestContextInputPrefix = '_repository/test-context';

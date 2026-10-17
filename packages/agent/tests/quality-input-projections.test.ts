@@ -959,6 +959,38 @@ describe('final quality input projections', () => {
     expect(after.tool_fingerprint).not.toBe(before.tool_fingerprint);
   });
 
+  test('captures dependencies of the facade loaded freshly inside each test body', async () => {
+    const root = fixtureRoot();
+    const source = 'src/lifecycle/runtime-facade.ts';
+    const dependency = 'src/lifecycle/facade-dependency.ts';
+    const testPath = 'tests/runtime-facade-boundary.test.ts';
+    writeFileSync(
+      path.join(root, source),
+      "import { value } from './facade-dependency.ts'; export const facade = value;\n",
+    );
+    writeFileSync(path.join(root, dependency), 'export const value = true;\n');
+    writeFileSync(
+      path.join(root, testPath),
+      "test('fresh facade', async () => { await import(`../src/lifecycle/runtime-facade.ts?body=${crypto.randomUUID()}`); });\n",
+    );
+    const selection = {
+      mode: 'focused-diagnostic' as const,
+      contour: 'bun-runtime-facade',
+      sources: [source],
+      tests: [testPath],
+    };
+    const before = await coverageInputs(root, selection);
+    expect(before.module_inputs.map(({ path: file }) => file)).toContain(dependency);
+    expect(before.tool_inputs.map(({ path: file }) => file)).toContain(dependency);
+    expect(before.sources.map(({ path: file }) => file)).toEqual([source]);
+    const changed = Buffer.from('export const value = false;\n');
+    writeFileSync(path.join(root, dependency), changed);
+    const after = await coverageInputs(root, selection);
+    expect(after.input_bytes[dependency]).toEqual(changed);
+    expect(after.tool_fingerprint).not.toBe(before.tool_fingerprint);
+    expect(qualityFingerprint(after)).not.toBe(qualityFingerprint(before));
+  });
+
   test('rejects empty, duplicate and foreign focused diagnostic selections', async () => {
     const root = fixtureRoot();
     const select = (sources: string[], tests: string[]) =>
