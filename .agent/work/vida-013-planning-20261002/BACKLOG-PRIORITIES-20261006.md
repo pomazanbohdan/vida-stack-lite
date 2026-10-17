@@ -55,7 +55,9 @@ and optimization candidates are recorded once in WORK, under the existing P0/P1
 and TEST013 tasks; external report labels do not replace their stable IDs.
 
 The fresh body-local facade triple at91906ff has refilled its slot with storage
-image. Active lanes are now storage image, envelopes and main-host; admission's
+image. Main-host has a fresh compatible triple atfebad42 and immediately refills
+its slot with fs-safe-attestation. Active lanes are storage image, envelopes and
+fs-safe-attestation; admission's
 stateful static-initialization gap releases its idle slot without a closure.
 Initialization remains OPEN on qualified child-only activation evidence. Admission's caller-owned
 request defect now has real RED/GREEN evidence and a bounded snapshot correction.
@@ -72,7 +74,11 @@ WORK owns the exact receipts and pending equivalent/unattempted mutant analysis.
 The image survivor exposed a duplicate subset-schema read after exact whole-schema
 equality. Independent review accepts its removal, with two explicitly retired
 Source-added callbacks and unchanged ceilings for all surviving roles; fresh
-original-lineage frozen proof remains required.
+original-lineage frozen proof remains required. Its follow-up reuses the validated
+final schema array for the digest, removing a second post-merge catalog read with
+unchanged50-role correspondence and original ceilings. The data-only attestation
+Source remains executable for coverage/mutation; CRAP applicability needs explicit
+empty-callable proof, not a synthetic zero score or static-export exemption.
 
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
 

@@ -347,7 +347,7 @@ function assertEmptyServiceOperationCustody(database: Database): void {
   requireMerge(count !== undefined && BigInt(count) === 0n, 'new service custody table contains operational rows');
 }
 
-function assertMergedRowsAndSchema(target: Database, inventory: ExistingMergeInventory): void {
+function assertMergedRowsAndSchema(target: Database, inventory: ExistingMergeInventory): SchemaObject[] {
   requireMerge(
     rowsDigest(target, inventory.hostTables) === inventory.hostRowsDigest,
     'Host logical rows changed during merge',
@@ -374,6 +374,7 @@ function assertMergedRowsAndSchema(target: Database, inventory: ExistingMergeInv
   requireMerge(canonicalJson(hostOnly) === canonicalJson(inventory.hostSchema), 'Host schema changed during merge');
   assertServiceOperationCustodyReady(target);
   assertEmptyServiceOperationCustody(target);
+  return finalSchema;
 }
 
 /**
@@ -417,8 +418,7 @@ export async function prepareUnifiedExistingStorageImage(
       inventory.hostRowsDigest,
       inventory.mastraRowsDigest,
     );
-    assertMergedRowsAndSchema(target, inventory);
-    const finalSchema = schema(target);
+    const finalSchema = assertMergedRowsAndSchema(target, inventory);
     const finalBytes = Buffer.from(target.serialize());
     requireMerge(finalBytes.byteLength <= maxInputBytes, 'unified image exceeds bounded journal capacity');
     output = Object.freeze({

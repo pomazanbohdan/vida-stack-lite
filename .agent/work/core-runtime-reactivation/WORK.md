@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest checked Source/test packet: `3740f01244e7e4283eab0fe0c13785507b8d8b0f`, pushed through ordinary strict pre-commit. It adds storage-image digest/unsupported-binding assertions, admission positive-return assertions and an operation-private native transpiler cache to the previously checked ownership, deadline, cleanup, sealed-context, ordering and body-local activation repairs. Facade has a fresh compatible local triple at91906ff; that historical input-bound result is retained. Active contours are storage image, envelopes and main-host. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `febad42bbc25a76d210ec0b2459479592b452e94`, following the reviewed schema-guard retirement, stateless host loading and negative-epoch envelope assertions at883af1d. The current follow-up reuses the final validated schema snapshot instead of querying it again, without changing surviving roles or frozen ceilings. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -669,7 +669,39 @@ all50prospective10/10 ceilings remain unchanged. Original5448retained and97remov
 published roles are unchanged; current new1662/current7110 still describe a partial,
 non-executable global plan. Source binding is a2ba1c1ef7b366f929bb4fa356f1377e3d911c939d6185f50a5128e17ab8382f.
 `Rhqz4N` passes75image/schema/correspondence tests with446assertions in6585ms.
-Strict publication, immutable review pin and fresh numeric evidence follow.
+Strict publication as883af1d and immutable50-role review pin atfebad42 are complete.
+
+### Main-host requalification and next schema-read reduction
+
+Fresh immutablefebad42 main-host coverage `nf7PxB`, run44776f41-fba2-4a71-a1c2-ccf7c0f9df24,
+passesF7/7,L21/21,S22/22,B11/11 with13tests/42assertions in3780ms. Same-run
+`JQc9OW` preserves original6f687506464048a0360f3fb8932eb7b77c7fc005 ceilings,
+maxCC3/maxCRAP3. SDK test inputs form separately through `6U0tDI`, without suites.
+Full native `JoN6Dg`, run4be7c283-97c9-48f4-8825-71e403e644ce, completes all69
+generated mutants as assertion-confirmed Killed in51668ms:0Survived,0UNKNOWN,
+0unattempted, full13-case baseline, complete captures/closed groups/same boot and
+unchanged checkout. The native reader accepts its actual partition proof with the
+same coverage/frozen pair; projection518attempts records the local triple. This
+requalifies an existing historical closure, not another unique completed contour.
+The slot immediately moves to fs-safe-attestation; storage image and envelopes
+remain the other two active contours.
+
+The image writer and independent v158 reviewer also confirm that final custody
+checks only read schema/counts. Root returns the already validated final schema
+array from `assertMergedRowsAndSchema` and reuses it for the output digest. This
+removes one more post-merge catalog query without moving serialization ahead of
+any validation or exposing the snapshot. All50existing function identities and
+original10/10 ceilings remain; the single reused inventory updates current
+addresses and Source binding to591f96e32668e14d11c4c0b0e36734cfe2406e2a9da17aeddbed448c85ce654c.
+Original883af1d review bytes remain historical, not rewritten. Focused `JccMXU`
+passes82tests/462assertions across image, custody schema and frozen-correspondence
+checks; this is development evidence, not fresh numeric closure.
+
+Blind attestation review finds no callables, but const data still has real mutation
+obligations. Existing static-export exemptions do not apply. Keep its executable
+selection and treat missing explicit CRAP applicability proof as a GAP; no fake
+function/zero score, generic empty-plan acceptance or mutation exclusion. Envelope
+review finds no further proven Source/assertion change before fresh measurement.
 
 ### Published admission packet — retained context
 

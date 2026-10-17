@@ -479,7 +479,7 @@
     },
     {
       "file": "src/config/project-upgrade-existing-storage.ts",
-      "sha256": "a2ba1c1ef7b366f929bb4fa356f1377e3d911c939d6185f50a5128e17ab8382f"
+      "sha256": "591f96e32668e14d11c4c0b0e36734cfe2406e2a9da17aeddbed448c85ce654c"
     },
     {
       "file": "src/config/service-operation-custody.ts",
@@ -187661,10 +187661,10 @@
         "line": 350,
         "column": 0,
         "start": 13582,
-        "end": 14972,
+        "end": 15004,
         "bodyLine": 350,
-        "bodyColumn": 94,
-        "bodyEndLine": 377,
+        "bodyColumn": 104,
+        "bodyEndLine": 378,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 350. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187677,8 +187677,8 @@
       "current_source_address": {
         "line": 360,
         "column": 92,
-        "start": 14161,
-        "end": 14203,
+        "start": 14171,
+        "end": 14213,
         "bodyLine": 361,
         "bodyColumn": 4,
         "bodyEndLine": 361,
@@ -187694,8 +187694,8 @@
       "current_source_address": {
         "line": 370,
         "column": 28,
-        "start": 14570,
-        "end": 14591,
+        "start": 14580,
+        "end": 14601,
         "bodyLine": 370,
         "bodyColumn": 39,
         "bodyEndLine": 370,
@@ -187711,8 +187711,8 @@
       "current_source_address": {
         "line": 373,
         "column": 38,
-        "start": 14682,
-        "end": 14759,
+        "start": 14692,
+        "end": 14769,
         "bodyLine": 373,
         "bodyColumn": 50,
         "bodyEndLine": 373,
@@ -187726,11 +187726,11 @@
       "max_crap": 10,
       "current_complexity": 5,
       "current_source_address": {
-        "line": 383,
+        "line": 384,
         "column": 7,
-        "start": 15173,
-        "end": 18085,
-        "bodyLine": 387,
+        "start": 15205,
+        "end": 18097,
+        "bodyLine": 388,
         "bodyColumn": 33,
         "bodyEndLine": 449,
         "bodyEndColumn": 1
@@ -187743,13 +187743,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 404,
+        "line": 405,
         "column": 6,
-        "start": 16324,
-        "end": 16394,
-        "bodyLine": 404,
+        "start": 16356,
+        "end": 16426,
+        "bodyLine": 405,
         "bodyColumn": 16,
-        "bodyEndLine": 404,
+        "bodyEndLine": 405,
         "bodyEndColumn": 76
       },
       "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:expectedCloneSchema. The immediate parent and surrounding current Source lines 401-403 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
@@ -187762,8 +187762,8 @@
       "current_source_address": {
         "line": 451,
         "column": 0,
-        "start": 18087,
-        "end": 18253,
+        "start": 18099,
+        "end": 18265,
         "bodyLine": 451,
         "bodyColumn": 80,
         "bodyEndLine": 457,
@@ -187779,8 +187779,8 @@
       "current_source_address": {
         "line": 459,
         "column": 0,
-        "start": 18255,
-        "end": 19648,
+        "start": 18267,
+        "end": 19660,
         "bodyLine": 459,
         "bodyColumn": 76,
         "bodyEndLine": 495,
@@ -187796,8 +187796,8 @@
       "current_source_address": {
         "line": 497,
         "column": 0,
-        "start": 19650,
-        "end": 20108,
+        "start": 19662,
+        "end": 20120,
         "bodyLine": 497,
         "bodyColumn": 63,
         "bodyEndLine": 504,
@@ -187813,8 +187813,8 @@
       "current_source_address": {
         "line": 506,
         "column": 0,
-        "start": 20110,
-        "end": 20279,
+        "start": 20122,
+        "end": 20291,
         "bodyLine": 506,
         "bodyColumn": 50,
         "bodyEndLine": 508,
