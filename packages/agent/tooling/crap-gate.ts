@@ -111,6 +111,10 @@ const scopedBudgetReviews = new Map([
     'scope_review_storage_image_literal_prefix_20261017',
   ],
   ['c8d952a328519c6c2c64db2e6fea22849ccabfaf:main-envelopes', 'scope_review_envelopes_device_extensions_20261017'],
+  [
+    '4dbd30e24403e51c4c83fead7dd4c8e4be0cff68:bun-project-upgrade-existing-storage-image',
+    'scope_review_storage_image_native_encoding_20261017',
+  ],
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {

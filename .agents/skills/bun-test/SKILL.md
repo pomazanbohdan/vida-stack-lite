@@ -98,6 +98,21 @@ observe the real callback/arguments, delegate and restore the native operation,
 then assert its documented laws alongside public behavior. Keep that evidence
 distinct from coverage and mutation confirmation.
 
+SQLite catalog tests include legal user names that resemble the internal prefix,
+such as sqliteXledger and SQLiteXarchive. SQL LIKE treats underscore as a
+wildcard; a literal sqlite_ prefix filter uses GLOB 'sqlite_*'. Verify actual
+catalog rows, rejected extra schema and preserved input bytes. A cloned Host
+keeping rows alone does not prove that its inventory included those objects.
+Use native bigint expectations when safeIntegers is enabled.
+
+For image schema-order assertions, preserve actual SQLite encoding. A UTF-8
+Buffer comparator is not a general model for UTF-16 BINARY collation. Real
+UTF-16LE/BE images and opposite-order Unicode names expose this difference;
+assert encoding, rows and integrity after reopening. Keep native metadata fault
+denial and healthy retry separate from these supported-input controls. Forward
+unrelated mock method/property operations with their native receiver and typed
+unknown values; retain the generic native signature at the fault boundary.
+
 For Source-beforeimage fixtures, reuse `tests/helpers/source-beforeimage-fixture.ts`
 to serialize bytes from the existing successful capture. Keep capture A distinct
 from each later current Source capture B and its inventory. A capture is not a
