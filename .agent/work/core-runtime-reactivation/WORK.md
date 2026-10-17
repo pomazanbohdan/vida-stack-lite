@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `febad42bbc25a76d210ec0b2459479592b452e94`, following the reviewed schema-guard retirement, stateless host loading and negative-epoch envelope assertions at883af1d. The current follow-up reuses the final validated schema snapshot instead of querying it again, without changing surviving roles or frozen ceilings. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `33a98d246f8eb8988b08ce04bbcf3b54cbeee6ff`, following the reviewed schema-snapshot reuse atd5ddd22 and guard retirement at883af1d. Data-only coverage now preserves null complexity without inventing CRAP proof. The current image follow-up strengthens byte-bound, exact cleanup-cause and output assertions. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -726,6 +726,31 @@ maximum, frozen CRAP and mutation rules. Whole projection GREEN `UjOgd8` passes
 exemption or new contour closure is created.
 Projection523attempts imports these coverage observations and the actual image
 frozen receipt; current freshness and global acceptance remain unverified.
+
+Image repair now uses a valid oversized SQLite image and verifies the bound before
+any deserialize call. Exact cause-list length and indexed identity replace loose
+equality with undefined entries; concrete schema/binding/digest assertions run
+before the successful output is decoded. `PXKcgy` passes all28tests/201assertions
+in2349ms. The equivalent second-count guard and ordinarily unreachable missing-
+capture diagnostic stay explicit review gaps, not fabricated mutation kills.
+
+Fresh33a98d2 envelopes `bkDLo7`, run17203f0d-7ac1-4f1d-b4bf-62ddd6cd45d9,
+passes47tests/4271assertions, F78/78,L211/211,S227/227,B103/103 in8191ms.
+Same-run `yCLrlq` preserves original53fac83 ceilings at maxCC9/maxCRAP9.
+SDK input formation `jngQPy` runs no suites. Full native `cG9XvC`,
+run17f53411-5869-4de7-bb96-5101e7ba5d8d, terminates in17625ms with3Killed,
+1UNKNOWN,759unattempted of763, full47-case baseline and complete captures/groups/
+boot/checkout. Preserve all v184 bytes. Local109 changes the module-level Windows
+reserved-name regex; the existing CON assertion fails, but its owned body has0hits
+because initialization preceded the body. Blind v147 confirms this is activation
+accounting, not absent assertions. The case returns to the stateless-fixture lane;
+no cumulative/static-hit fallback is authorized. The writer finds no lifetime or
+exported-identity contract in this path and uses the qualified exact-source
+synchronous fresh-load pattern only inside that existing test body. Other package
+namespace checks remain intact. `1nYikL` passes all47selected tests/4271assertions
+in2275ms; real generated109 activation must still be independently confirmed.
+Projection526imports the actual
+coverage/frozen pair without promoting this partial mutation result.
 
 ### Published admission packet — retained context
 

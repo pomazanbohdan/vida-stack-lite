@@ -123,8 +123,14 @@ function makeHostOverCombinedRowBound(): ClosedDatabaseImage {
 }
 
 function oversizedHostImage(): ClosedDatabaseImage {
-  const bytes = Buffer.alloc(4 * 1024 * 1024 + 1);
-  return { device: 'fixture-device', inode: 'fixture-inode', size: bytes.byteLength, sha256: sha256(bytes), bytes };
+  const database = new Database(':memory:', { strict: true, safeIntegers: true });
+  try {
+    database.exec('CREATE TABLE oversized_fixture(payload BLOB NOT NULL)');
+    database.query('INSERT INTO oversized_fixture(payload) VALUES(zeroblob(?))').run(4 * 1024 * 1024);
+    return closedImage(database);
+  } finally {
+    database.close(true);
+  }
 }
 
 async function makeMastra(): Promise<ClosedDatabaseImage> {
@@ -257,7 +263,10 @@ async function expectPinnedPhaseFailure(phase: 'inventory' | 'Host clone', failC
     if (failCleanup) {
       expect(failure).toBeInstanceOf(AggregateError);
       if (!(failure instanceof AggregateError)) throw new Error('Expected retained body and cleanup causes.');
-      expect(failure.errors).toEqual([bodyError, storeCloseError, undefined]);
+      expect(failure.errors).toHaveLength(3);
+      expect(failure.errors[0]).toBe(bodyError);
+      expect(failure.errors[1]).toBe(storeCloseError);
+      expect(failure.errors[2]).toBeUndefined();
     } else expect(failure).toBeUndefined();
   } finally {
     closingDatabase.mockRestore();
@@ -597,9 +606,16 @@ describe('existing storage image preparation', () => {
   test('preserves source rows including duplicate values, exact BLOBs, large integers, and AUTOINCREMENT sequence', async () => {
     const host = makeHost();
     const mastra = await makeMastra();
-    const image = await expectAsyncReturned(() =>
-      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
-    );
+    const expectedBinding = binding(host, mastra);
+    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+
+    expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
+    expect(image.binding).toEqual(expectedBinding);
+    expect(image.size).toBeGreaterThan(0);
+    expect(image.sha256).toBe(sha256(Buffer.from(image.bytes_base64, 'base64')));
+    expect(image.host_rows_digest).toMatch(/^[0-9a-f]{64}$/u);
+    expect(image.mastra_rows_digest).toMatch(/^[0-9a-f]{64}$/u);
+    expect(image.schema_digest).toMatch(/^[0-9a-f]{64}$/u);
 
     const merged = openUnified(image.bytes_base64);
     try {
@@ -683,10 +699,16 @@ describe('existing storage image preparation', () => {
   test('rejects a correctly hashed source image larger than the 4 MiB input bound before SQLite deserialization', async () => {
     const host = oversizedHostImage();
     const mastra = await makeMastra();
-    await expectRejection(
-      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
-      /Host image size is unsupported/u,
-    );
+    const opening = spyOn(Database, 'deserialize');
+    try {
+      await expectRejection(
+        prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+        /Host image size is unsupported/u,
+      );
+      expect(opening).not.toHaveBeenCalled();
+    } finally {
+      opening.mockRestore();
+    }
   });
 
   test.each([
@@ -756,10 +778,18 @@ describe('existing storage image preparation', () => {
   test('validates serialized unified image shape, canonical base64, size, and byte digest', async () => {
     const host = makeHost();
     const mastra = await makeMastra();
-    const image = await expectAsyncReturned(() =>
-      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
-    );
-    expect(expectReturned(() => validateUnifiedDatabaseImage(image))).toEqual(image);
+    const expectedBinding = binding(host, mastra);
+    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    expect(expectReturned(() => validateUnifiedDatabaseImage(image))).toEqual({
+      schema: 'VidaUnifiedWorkspaceImage/v1',
+      binding: expectedBinding,
+      size: image.size,
+      sha256: sha256(Buffer.from(image.bytes_base64, 'base64')),
+      bytes_base64: image.bytes_base64,
+      schema_digest: image.schema_digest,
+      host_rows_digest: image.host_rows_digest,
+      mastra_rows_digest: image.mastra_rows_digest,
+    });
     expect(() => validateUnifiedDatabaseImage({ ...image, bytes_base64: image.bytes_base64 + '!' })).toThrow();
     expect(() => validateUnifiedDatabaseImage({ ...image, size: image.size + 1 })).toThrow(/bytes or digest differ/u);
     expect(() => validateUnifiedDatabaseImage({ ...image, sha256: '0'.repeat(64) })).toThrow(/bytes or digest differ/u);

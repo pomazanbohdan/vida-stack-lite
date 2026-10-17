@@ -1,5 +1,6 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import type { TrustedProjectIdentity, ProjectAuthorizationRequest } from '../src/contracts/public-ingress.js';
@@ -15,6 +16,14 @@ import { configuredTestContext } from './configured-context.js';
 import fc from 'fast-check';
 import { assertProperty } from './helpers/assert-property.js';
 import { expectReturned } from './helpers/expect-rejection.ts';
+
+const requireEnvelopes = createRequire(import.meta.url);
+
+function loadFreshEnvelopes(): typeof import('../src/contracts/envelopes.js') {
+  const file = requireEnvelopes.resolve('../src/contracts/envelopes.ts');
+  delete requireEnvelopes.cache[file];
+  return requireEnvelopes(file) as typeof import('../src/contracts/envelopes.js');
+}
 
 function hasValidateRequest(value: unknown): value is { readonly validateRequest: true } {
   return typeof value === 'object' && value !== null && 'validateRequest' in value && value.validateRequest === true;
@@ -179,8 +188,8 @@ describe('runtime envelope canonicalization boundary', () => {
     );
   });
 
-  test('owned paths preserve Unicode, device and historical wildcard boundaries', async () => {
-    const { safeWorkflowOwnedPath, safeHistoricalWorkflowOwnedPath } = await import('../src/contracts/envelopes.js');
+  test('owned paths preserve Unicode, device and historical wildcard boundaries', () => {
+    const { safeWorkflowOwnedPath, safeHistoricalWorkflowOwnedPath } = loadFreshEnvelopes();
     const controls = Array.from({ length: 32 }, (_, index) => String.fromCodePoint(index)).concat(
       Array.from({ length: 33 }, (_, index) => String.fromCodePoint(0x7f + index)),
     );
