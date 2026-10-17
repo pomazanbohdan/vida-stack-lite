@@ -86,8 +86,12 @@ When a contour has a complete compatible passing triple, record its closure and
 immediately assign the next ready contour to that slot. A finished patch or review
 alone does not close a contour. A dependency-blocked contour remains OPEN with its
 exact prerequisite; keep its prepared bytes and use its idle slot for ready work.
-Give each code-producing lane its own checkout and exact file ownership. During
-numeric measurement, the measured checkout stays immutable: workers may prepare
+Give each code-producing lane its own checkout and exact file ownership. Each
+handoff names the immutable base commit and provides a bounded diff for those
+files. Root compares that diff with current canonical bytes and preserves
+unrelated intervening changes. Do not integrate a stale whole-file replacement
+when its diff deletes tests or fixes outside the assigned change.
+During numeric measurement, the measured checkout stays immutable: workers may prepare
 fixes in their assigned isolated checkouts, and Root integrates only after the
 affected producers are terminal. Temporary edits followed by restoration also
 violate this rule. Root alone owns Git, shared-file integration and final checks;

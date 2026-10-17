@@ -17,6 +17,9 @@ import { mutationLimits } from './mutation-limits.ts';
 import { mutationPartitionSources, mutationPartitions, type MutationPartition } from './mutation-partitions.ts';
 
 type Lane = 'coverage' | 'frozen-crap' | 'mutation';
+export function campaignReportArguments(reports: readonly { file: string; lane: Lane }[]): string[] {
+  return reports.flatMap(({ file, lane }) => [lane === 'coverage' ? '--coverage-run' : '--report', file]);
+}
 export type CampaignOutcome = {
   state: 'completed' | 'failed' | 'timeout' | 'gap' | 'resource' | 'unknown';
   detail: string;
@@ -181,7 +184,7 @@ function jsonFile(file: string): unknown {
 }
 
 function git(args: string[]): string {
-  return execFileSync('git', args, {
+  return execFileSync('git', ['--no-optional-locks', ...args], {
     cwd: repositoryRoot,
     encoding: 'utf8',
     timeout: 5000,
@@ -382,7 +385,7 @@ async function main(): Promise<void> {
   }
   const isolationTools = { tini: tools.tini, bwrap: tools.bwrap };
   const boot = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
-  const reports: string[] = [];
+  const reports: { file: string; lane: Lane }[] = [];
   const incoming: ReturnType<typeof contourAttempts> = [];
   const coverageReports = new Map<string, string>();
   let index = 0;
@@ -497,7 +500,7 @@ async function main(): Promise<void> {
             artifact: report,
             recorded_at: new Date().toISOString(),
           });
-          reports.push(report);
+          reports.push({ file: report, lane });
           incoming.push(...attempts);
           const maximum = attempts.some(
             (row) => row.contour === partition.name && row.lane === lane && contourAttemptMaximum(row),
@@ -524,7 +527,7 @@ async function main(): Promise<void> {
         statusDirectory,
         '--commit',
         commit,
-        ...reports.flatMap((report) => ['--report', report]),
+        ...campaignReportArguments(reports),
       ],
       packageRoot,
     );

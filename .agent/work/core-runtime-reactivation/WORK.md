@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `812016284ce2fce8a6739d79a0ad46d2c7179a01` retains capture failure codes and observed child custody, always attempts native log close and cancels failed readers before releasing them. Its real-child/handle RED/GREEN evidence is below. Priorbde2857 strengthens image integrity/digest/ledger tests, retains external scratch explicitly and compacts the unchanged progress history; ec3b3ba captures computed subjects' transitive closure. Earlier private-DB setup cleanup, validated-schema reuse and body-owned stateless module repairs remain. Current fs-attestation has a reader-validated full7/7 native Killed proof, with zero-callable CRAP applicability still OPEN. Its blocked slot moves to service-operation-custody; active contours are storage image, envelopes and service-operation-custody. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `2997f9c52d5a98c6ea9251c42bbbb95a3794f152` pins the published52-role image cleanup review atb1ecf6b. Fresh numeric qualification is pending. Prior8120162 repairs capture close/cancellation; bde2857 strengthens image assertions, retains explicit external scratch and compacts unchanged progress history; ec3b3ba captures computed transitive closure. The current six-hour script audit repairs campaign outcome binding and surviving-group cleanup with focused/native RED/GREEN evidence below. Current fs-attestation has a reader-validated full7/7 native Killed proof, with zero-callable CRAP applicability still OPEN. Its blocked slot moves to service-operation-custody; active contours are storage image, envelopes and service-operation-custody. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1186,6 +1186,50 @@ reviewed52-role disposition and prospective caps before numeric measurement.
 The next scoped selector explicitly pins this immutable review, retaining the
 old883af1d mapping and its historical evidence. The pin adds no exemption,
 runtime switch, larger limit, correspondence fallback or global admission.
+
+### Six-hour testing-script operation audit
+
+The owner's requested audit covers2026-10-17T07:10:32Z through13:10:32Z.
+`/workspace/attachments/testing-operations-audit-20261017.json` records188 retained
+known-wrapper operations, not every shell action or per-test timing. Their summed
+wall time is4709207ms; mutation lanes account for87.25%, frozen CRAP below1%.
+The19 SDK formations span16 commits; same-commit repeats belong to distinct or
+fenced checkouts, so no unsafe cross-checkout cache replaces their provenance.
+Independent blind Luna reviews found no justified removal of AST/hash or custody
+checks. Root retains one numeric producer and the existing three-contour queue.
+
+Two defects and one read-only optimization are implemented under TEST013:
+
+- Campaign imports previously discarded each report's lane and used generic
+  --report for coverage, bypassing its bound operation-outcome import. The shared
+  argument adapter now sends coverage through --coverage-run; all other reports
+  retain --report. Thirteen real projection controls fail under the old routing
+  (`bxm9kQ`) and pass after the repair, including missing/mismatched outcome refusal
+  without modifying the prior snapshot. The data-only regression stays intact.
+- A normally exited leader could leave live owned descendants without bounded
+  settlement. Reuse the existing TERM/KILL owner, retaining original exit/signal,
+  timedOut:false and the non-success diagnostic. The controlled regression RED
+  `wRrk5i` misses TERM. Actual Linux subreaper proof also reproduces a surviving
+  descendant against8120162 (`owned-group-native-audit-phEk3K`), while current
+  Source (`owned-group-native-audit-BErR1v`) observes group closure before return.
+  Both fixture PIDs are now absent; the negative evidence remains retained.
+- Read-only campaign Git commands now disable optional locks, preserving all
+  existing clean-HEAD/worktree checks without optional index refresh.
+
+Final focused `audit-focused-check-9cPF9l` passes174tests/806assertions across
+progress, campaign contracts and mutation evidence in1240ms, with0skipped, full
+captures, closed groups and unchanged boot. This is development verification,
+not a coverage/CRAP/mutation closure. The versioned external focused launcher
+`audit-focused-check-v2-20261017.ts` reuses the native JUnit reader and emits the
+case census beside the terminal status, reducing separate log-reading steps.
+The zero-match control `t3DST8` is unsuccessful with0executed/39skipped; Bun itself
+also exits1, so this is no claim of a newly discovered native false PASS.
+
+Root caught a stale worker full-file proposal that omitted an unrelated data-only
+test; that canonical case was preserved before GREEN. Sidecar and Bun Test skill
+now require immutable worker bases and bounded diffs, rather than stale whole-file
+replacement. All UNKNOWN, original frozen caps, exact gates and budgets remain.
+Publication checks and fresh52-role image qualification are the next actions.
 
 ### Published admission packet — retained context
 

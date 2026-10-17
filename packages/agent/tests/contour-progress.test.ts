@@ -16,6 +16,7 @@ import {
   runContourProgress,
   runContourProgressWithNative,
 } from '../tooling/contour-progress-cli.ts';
+import { campaignReportArguments } from '../tooling/contour-campaign.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
 
@@ -303,7 +304,21 @@ test.each(['PASS', 'FAIL', 'UNKNOWN', 'BLOCKED'])(
         }),
       );
       const output = path.join(root, 'published');
-      const args = ['--coverage-run', file, '--output', output, '--commit', receipt.commit];
+      const args = [
+        ...campaignReportArguments([{ file, lane: 'coverage' }]),
+        '--output',
+        output,
+        '--commit',
+        receipt.commit,
+      ];
+      if (status === 'PASS')
+        expect(
+          campaignReportArguments([
+            { file: 'coverage.json', lane: 'coverage' },
+            { file: 'frozen.json', lane: 'frozen-crap' },
+            { file: 'mutation.json', lane: 'mutation' },
+          ]),
+        ).toEqual(['--coverage-run', 'coverage.json', '--report', 'frozen.json', '--report', 'mutation.json']);
       runContourProgress(args, root);
       const bytes = readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8');
       const snapshot = mergeContourProgress(JSON.parse(bytes) as unknown, []);
@@ -362,7 +377,8 @@ test.each(['missing', 'schema', 'run', 'contour', 'source', 'tests', 'tools', 's
       runContourProgress(['--output', output], root);
       const before = readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8');
       const markdownBefore = readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8');
-      expect(() => runContourProgress(['--coverage-run', file, '--output', output], root)).toThrow();
+      const args = [...campaignReportArguments([{ file, lane: 'coverage' }]), '--output', output];
+      expect(() => runContourProgress(args, root)).toThrow();
       expect(readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8')).toBe(before);
       expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8')).toBe(markdownBefore);
       passed = true;
@@ -550,7 +566,6 @@ function coverageWithTwoFunctions() {
   c.metrics[0]!.functions.push({ identity: 'fixture#second', complexity: 2, coverage: 1, crap: 2 });
   return c;
 }
-
 test('data-only coverage retains observed counters without inventing function complexity or closure', () => {
   const c = coverage();
   const source = 'src/config/fs-safe-attestation.ts';

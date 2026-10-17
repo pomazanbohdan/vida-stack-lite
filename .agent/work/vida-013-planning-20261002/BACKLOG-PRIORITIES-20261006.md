@@ -53,6 +53,10 @@ Root owns final checks and integrates isolated preparation after terminal custod
 Current audit corrections and unresolved per-field validation, cleanup analogues
 and optimization candidates are recorded once in WORK, under the existing P0/P1
 and TEST013 tasks; external report labels do not replace their stable IDs.
+The six-hour testing-script audit repairs campaign coverage/outcome pairing and
+bounded cleanup of descendants after a normal leader exit, while preserving the
+non-successful result. WORK records its negative controls, native proof and
+focused verification. These implemented TEST013 repairs do not close global gates.
 
 The fresh body-local facade triple at91906ff has refilled its slot with storage
 image. Main-host has a fresh compatible triple atfebad42 and immediately refills

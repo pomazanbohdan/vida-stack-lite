@@ -1034,6 +1034,17 @@ async function observeMutationProcess(
         attempts: [],
       },
     };
+    if (ownedProcessGroup && !processGroupTerminationObserved) {
+      const cleanup = await settleTimedOutChild(
+        child,
+        limits.terminationGraceMs ?? 1_000,
+        limits.forceWaitMs ?? 1_000,
+        true,
+      );
+      // Settlement does not turn the unexpected group into a clean completion
+      // or change the already observed leader exit into a timeout.
+      result = { ...result, processCustody: cleanup.processCustody };
+    }
   } else {
     result = await settleTimedOutChild(
       child,

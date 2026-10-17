@@ -995,6 +995,51 @@ describe('mutation execution receipts', () => {
     },
   );
 
+  test.skipIf(process.platform === 'win32')(
+    'attempts bounded cleanup for a surviving owned group but keeps normal leader exit non-successful',
+    async () => {
+      const originalKill = process.kill.bind(process);
+      let simulatedSurvivor = true;
+      const attempts: NodeJS.Signals[] = [];
+      const kill = spyOn(process, 'kill').mockImplementation((...args: Parameters<typeof process.kill>) => {
+        const [pid, signal] = args;
+        if (typeof pid === 'number' && pid < 0) {
+          if (signal === 0) {
+            if (simulatedSurvivor) return true;
+            throw Object.assign(new Error('simulated group is gone'), { code: 'ESRCH' });
+          }
+          if (signal === 'SIGTERM' || signal === 'SIGKILL') {
+            attempts.push(signal);
+            simulatedSurvivor = false;
+            return true;
+          }
+        }
+        return originalKill(...args);
+      });
+      try {
+        const result = await executeMutationCommand([process.execPath, '-e', 'process.exit(0)'], process.cwd(), 1000, {
+          ownedProcessGroup: true,
+        });
+
+        expect(attempts).toContain('SIGTERM');
+        expect(simulatedSurvivor).toBe(false);
+        expect(result).toMatchObject({
+          exitCode: 0,
+          signal: null,
+          timedOut: false,
+          spawnError: 'process-group-termination-unobserved',
+          processCustody: {
+            scope: 'owned-process-group',
+            terminationObserved: true,
+            processGroupTerminationObserved: true,
+          },
+        });
+      } finally {
+        kill.mockRestore();
+      }
+    },
+  );
+
   test.skipIf(process.platform === 'win32')('observes an empty owned process group after normal exit', async () => {
     const result = await executeMutationCommand([process.execPath, '-e', 'process.exit(0)'], process.cwd(), 1000, {
       ownedProcessGroup: true,

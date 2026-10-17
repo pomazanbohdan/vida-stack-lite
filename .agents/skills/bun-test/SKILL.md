@@ -527,6 +527,12 @@ package scripts for ordinary phase membership. Add each maintained test once
 to its owner. The final-check owner alone collects coverage, CRAP and mutation
 outputs.
 
+Preserve a worker's declared base commit when integrating test repairs. Review
+only its assigned diff, retain intervening canonical cases/helpers, and reject
+unrelated deletions from an older full-file copy. A passing filtered run must
+also identify actual executed cases; keep zero-match/skip-only selections
+unsuccessful and separate from complete contour qualification.
+
 ## Official references
 
 Use current official documentation for the affected Bun behavior:

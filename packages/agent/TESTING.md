@@ -336,9 +336,12 @@ capture failure retains the observed child exit/custody and ordered per-stream
 error codes as `output-capture-failed` with `complete:false`. A deadline remains
 `output-capture-incomplete`; neither state can qualify a mutation kill. A held-
 sync regression releases its gate and observes both closes before fixture cleanup.
-On supported POSIX hosts, a normal owned-group exit probes group absence without
-waiting or issuing another signal; a failed probe retains the direct observation
-and reports unobserved group custody. Unsupported group observation remains GAP.
+On supported POSIX hosts, a normal owned-group exit first probes group absence
+without waiting or issuing another signal. If descendants remain, reuse the
+existing bounded TERM/KILL settlement before returning. Preserve the original
+leader exit/signal and timedOut:false plus the non-successful unobserved-group
+diagnostic; successful cleanup updates custody, not execution success. Unsupported
+group observation remains GAP.
 The current observer is qualified on Linux; a native Windows campaign cannot
 establish this proof through a direct-child result and remains unqualified.
 Known nonzero exits stay available for reporting; they permit another partition
@@ -1556,6 +1559,9 @@ The campaign first runs declared focused coverage and same-run scoped frozen
 CRAP per contour, then every selected partition's existing mutation pilot. It
 preserves full Source/test selections and the existing evidence owners. Missing
 pinned scope reviews remain GAP; failed coverage does not silently skip mutation.
+Read-only campaign Git observations disable optional locks while retaining the
+clean-commit and worktree checks, so status cannot refresh the index during a
+concurrent staged-hook observation.
 If the coverage lane is not completed at its exact maximum, record frozen CRAP
 as GAP without launching that producer. Continue independent mutation lanes;
 UNKNOWN custody and resource denial still fence every successor.
@@ -1658,6 +1664,16 @@ actual operation status. BLOCKED, FAIL and UNKNOWN remain separate operation
 observations; numeric counters never promote them to PASS. This reads retained
 reports only and adds no Source/AST/hash scan or test run. Use this option for
 new focused-run imports; retain `--report` for other owner-issued artifacts.
+The campaign uses that same coverage/outcome pairing and retains each report's
+lane when assembling imports. Missing or mismatched outcome bindings fail before
+publication; do not downgrade a coverage import to generic `--report`.
+
+Focused development launchers retain native JUnit and report actual executed and
+skipped case counts with their terminal result. A zero-match/skip-only selection
+does not verify a repair. Reuse the existing JUnit reader; this census does not
+replace complete contour selection, assertion confirmation or numeric admission.
+Version a retained launcher when changing its receipt format, preserving the
+original launcher and failed/UNKNOWN artifacts.
 
 For an older mutation summary that omitted executed tests, supply its actual retained
 `--selection <partition.inputs.json>` v3 descriptor. It must match the summary's
