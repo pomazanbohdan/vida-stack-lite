@@ -13,6 +13,7 @@ import {
   renameSync,
   rmdirSync,
   symlinkSync,
+  truncateSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -628,6 +629,104 @@ describe('native existing-storage admission boundary', () => {
     await releaseFence(fixture.root, fixture.receipt);
   });
 
+  trackedTest('denies a short Mastra read after the same source file is restored', async () => {
+    const fixture = freshFixture();
+    const mastraPath = path.join(fixture.root, mastraRelative);
+    const originalBytes = readFileSync(mastraPath);
+    const originalStat = lstatSync(mastraPath, { bigint: true });
+    const originalRead = Reflect.get(fs, 'readSync') as typeof fs.readSync;
+    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    let capturePhase = false;
+    let readPhase = 0;
+    let sourceTruncated = false;
+    let sourceRestored = false;
+    let operations = 0;
+    let caught: unknown;
+    let bodyFailure: { error: unknown } | undefined;
+    const reads = spyOn(fs, 'readSync').mockImplementation(((...args: Parameters<typeof fs.readSync>) => {
+      const [fd, buffer, offset, length, position] = args as unknown as readonly unknown[];
+      if (
+        typeof fd !== 'number' ||
+        !(buffer instanceof Uint8Array) ||
+        typeof offset !== 'number' ||
+        typeof length !== 'number' ||
+        (position !== null && typeof position !== 'number')
+      )
+        return Reflect.apply(originalRead, fs, args);
+      if (!capturePhase || readPhase >= 2) return Reflect.apply(originalRead, fs, args);
+      const descriptor = fs.fstatSync(fd, { bigint: true });
+      if (descriptor.dev !== originalStat.dev || descriptor.ino !== originalStat.ino)
+        return Reflect.apply(originalRead, fs, args);
+      if (readPhase === 0) {
+        const partialLength = Math.max(1, Math.floor(length / 2));
+        const bytesRead = originalRead(fd, buffer, offset, partialLength, position);
+        if (bytesRead > 0) {
+          truncateSync(mastraPath, bytesRead);
+          sourceTruncated = true;
+          readPhase = 1;
+        }
+        return bytesRead;
+      }
+      const bytesRead = Reflect.apply(originalRead, fs, args);
+      if (bytesRead === 0) {
+        writeFileSync(mastraPath, originalBytes);
+        sourceRestored = true;
+        readPhase = 2;
+      }
+      return bytesRead;
+    }) as typeof fs.readSync);
+    Database.prototype.close = function (throwOnError) {
+      const isMastra = this.filename === mastraPath;
+      Reflect.apply(originalClose, this, [throwOnError]);
+      if (isMastra) capturePhase = true;
+    };
+    try {
+      try {
+        await withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => closeHostOwner(fixture),
+          operation: async () => {
+            operations++;
+          },
+        });
+      } catch (error) {
+        caught = error;
+      }
+      expect(sourceTruncated).toBe(true);
+      expect(sourceRestored).toBe(true);
+      expect(readFileSync(mastraPath)).toEqual(originalBytes);
+      expect(caught).toHaveProperty('message', 'VIDA existing storage admission: source image size differs');
+      expect(operations).toBe(0);
+    } catch (error) {
+      bodyFailure = { error };
+    } finally {
+      Database.prototype.close = originalClose;
+      completeOwnedCleanup(
+        [
+          () => {
+            reads.mockRestore();
+            return undefined;
+          },
+          () => {
+            if (sourceTruncated && !sourceRestored) writeFileSync(mastraPath, originalBytes);
+            return undefined;
+          },
+        ],
+        bodyFailure,
+      );
+    }
+    if (bodyFailure) throw bodyFailure.error;
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
   trackedTest('denies a Mastra sidecar that appears during closed-image capture', async () => {
     const fixture = freshFixture();
     const mastraPath = path.join(fixture.root, mastraRelative);
@@ -804,10 +903,14 @@ describe('native existing-storage admission boundary', () => {
       operation: async (capability) => {
         operations++;
         capability.assertActive();
+        expectReturned(() => assertExistingStorageMergeCapability(capability));
         writeFileSync(sidecar, '', { flag: 'wx' });
         let bodyFailure: { error: unknown } | undefined;
         try {
           expect(() => capability.assertActive()).toThrow('Project storage admission: gate sidecar is present: -wal');
+          expect(() => assertExistingStorageMergeCapability(capability)).toThrow(
+            'Project storage admission: gate sidecar is present: -wal',
+          );
         } catch (error) {
           bodyFailure = { error };
         }
@@ -822,6 +925,7 @@ describe('native existing-storage admission boundary', () => {
         );
         if (bodyFailure) throw bodyFailure.error;
         capability.assertActive();
+        expectReturned(() => assertExistingStorageMergeCapability(capability));
         return 'gate restored';
       },
     });

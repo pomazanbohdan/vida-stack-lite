@@ -282,6 +282,36 @@ they do not establish real end-to-end timeout qualification. Next measurements
 use a fresh checked checkout, not retained v152. Active contours stay runtime
 initialization, envelopes and admission; facade's verified slot remains refilled.
 
+Fresh8563442 measurements use isolated `/workspace/attachments/rolling-measure-v159`
+with only physical locked dependencies; no old database, lease, lock or attempt is
+copied. SDK preparation `YConDc` completes1939ms without suites. Initialization
+coverage `NSmiU2`, run `64bf387c-aafd-4cb7-b93c-0a93d8dca205`, passes exact
+F18/18,L87/87,S100/100,B54/54 in45097ms; same-run frozen `uwhsKl` passes its
+original9/9 maximum using892523d. Envelopes `PC12VF`, run
+`b2a29f9c-8546-4bdb-a102-7fe44f723662`, passes exact F78/78,L211/211,S227/227,
+B103/103 in7320ms; same-run v2 `1X6mVk` passes unchanged original caps plus the
+prospective named-role4/4 at maxCC9/maxCRAP9. Both pairs are imported. Complete
+fresh mutation closures remain open.
+
+Initialization's19real cases take40520ms under instrumentation: the genuine v2
+upgrade costs15383ms, two real expiry cases5273/5180ms and separate processes4993ms.
+Blind bounded review finds no supported fast genuine v2 authority fixture or owned
+clock seam. Keep actual receipts and quarantine behavior; no synthetic replacement,
+shortened runtime contract or raised deadline is accepted. This is a measured
+cost gap for repeated full-selection mutation, not a failed coverage result.
+
+The next admission control `QWJ2oR` passes a real short-read race: temporarily
+truncate the owned Mastra inode during native read, observe real EOF, restore the
+exact original bytes before after-stat, then require the specific byte-length
+denial. No fake bytes are returned. Full `RM6u2i` passes28tests in2661ms with
+complete captures/groups and unchanged boot. Root also finds a reachable public
+gate control for former233/255 candidates: while the real callback remains live,
+the existing gate-sidecar fixture must make the public capability guard reject;
+it must succeed before and after restoration. `dndQAo` passes that affected case.
+The earlier unreachability hypothesis is rejected; fresh assertion-confirmed
+mutation for these controls is still pending. Final static checks and publication
+follow this test-only packet.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.
