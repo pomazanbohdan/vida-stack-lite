@@ -103,7 +103,10 @@ only a proposal under the existing trusted locked-dependency/read-only path.
 The standalone fingerprint command rejects a node_modules symlink and is not
 bypassed. No new per-process dependency attestation or cache substitute is claimed.
 
-Next: publish/pin the reviewed correction packet, then fresh coverage/frozen and
+Published cf118c9 passes the ordinary strict hook and is pushed to origin/main.
+The following pin binds the same reviewed scope without changing any ceiling.
+
+Next: fresh coverage/frozen and
 the bounded isolated diagnostic. Envelopes has a prepared fixed-two64-mutant
 successor; storage image has a useful four-mutant refill observation, with its
 actual resource/custody and complete-admission gaps still OPEN. Numeric producers
