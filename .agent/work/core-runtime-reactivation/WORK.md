@@ -44,6 +44,27 @@ there is no baseline recapture or ceiling transfer. Partial counts become
 19/0cases in15322ms, complete captures, closed group and same boot. Fresh immutable
 exact coverage, same-run frozen proof and complete native mutation remain pending.
 
+Fresh immutable42e2b1b coverage df56614c-610c-4798-973a-f40d3133cbc8 now passes
+19/0cases,146assertions, exact F16/16,L87/87,S98/98,B54/54; same-run frozen under
+published b32fc8e passes9/9 with the unchanged individual ceilings and exact
+11retained/5new/1removed disposition. Outer stages OmJYTD/r9Pyi1 auto-publish.
+Full native attempt98704074-d0a3-4ef2-97f3-61f51b4575a5, outerxZ5pal, stops
+at generated145 (identity03fffded, workspace-identity.ts27 typeof inequality
+inverted). Its beforeEach calls the targeted derivation while constructing the
+receipt, so XML/body show a hook error before any registered assertion. Keep
+UNKNOWN,0Killed/161unattempted of162; partial failure is not auto-published as a
+native score. The parent, captures and process group close cleanly.
+
+Root removes target calls from fixture construction: the pending workspace ID
+and v2 expected binding use the existing canonical JSON digest over the fixed
+WorkspaceIdentity/v1 tuple and actual native realpath. The product derivation
+remains exercised and asserted in test bodies. No Source change, test ordering,
+activation transfer, exclusion or gate weakening is introduced. Fresh native
+evidence must confirm the repaired owned-body path.
+Blind Luna actual-evidence review approves this fixture boundary and confirms
+no other direct deriveWorkspaceId call remains in hooks. Focused QEC4hy passes
+19/0cases in17577ms, with full captures, closed group and unchanged boot.
+
 ### Initialization current evidence and owned-clock repair — 2026-10-17
 
 Fresh immutable6531dc3 initialization run70ef92f8-ec9c-463d-8b25-f44d7d9c2994

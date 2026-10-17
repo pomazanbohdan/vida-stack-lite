@@ -10,6 +10,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -173,7 +174,11 @@ beforeEach(() => {
   writeFileSync(path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'), documentationPolicy);
   mkdirSync(path.join(root, '.agent'));
   const config = loadRuntimeConfig(root);
-  const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+  const workspaceId = canonicalJsonDigest({
+    schema: 'WorkspaceIdentity/v1',
+    repository_id: config.repository.repository_id,
+    repository_root: realpathSync.native(root),
+  });
   receiptPath = path.join(root, '.agent', 'runtime-initialization.v1.json');
   receipt = {
     schema: 'RuntimeInitialization/v1',
@@ -323,7 +328,11 @@ test('reads v2 initialization authority from a completed real project upgrade', 
   expect(authority.binding).toEqual({
     repository_id: projectConfig.repository.repository_id,
     project_ids: projectConfig.projects.map(({ project_id }) => project_id).sort(),
-    workspace_id: deriveWorkspaceId(projectConfig.repository.repository_id, projectRoot),
+    workspace_id: canonicalJsonDigest({
+      schema: 'WorkspaceIdentity/v1',
+      repository_id: projectConfig.repository.repository_id,
+      repository_root: realpathSync.native(projectRoot),
+    }),
     config_digest: runtimeConfigDigest(projectConfig),
   });
   expect(authority.receipt).toMatchObject({

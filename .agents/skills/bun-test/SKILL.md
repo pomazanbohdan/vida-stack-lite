@@ -503,6 +503,10 @@ under the real receipt lock; never copy subprocess counters into parent proof.
 When a retry owner uses `Bun.sleep`, observe that owner for a zero-retry assertion;
 a `setTimeout` spy no longer proves the absence of delays. Restore the sleep
 method in `finally` and retain the actual typed denial and unchanged-state checks.
+Keep a mutation target out of fixture construction when its failure would abort
+`beforeEach`. Build controlled expected data from the independent contract and
+real fixture inputs, then invoke and assert the target inside registered bodies.
+A hook error is UNKNOWN, even when its printed case name looks like a body.
 
 For asynchronous case custody, enroll each root before the body can suspend.
 Teardown must observe a pending body directly; a `finally` that marks failure
