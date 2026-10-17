@@ -480,6 +480,55 @@ test('initializer rejects a missing configured marker before publishing integrat
   }
 });
 
+test('initializer resolves project-local and bundled local knowledge sources before publishing outputs', async () => {
+  const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-knowledge-sources-'));
+  let completed = false;
+  try {
+    const bundleRoot = createInitializationBundle(packageRoot, projectRoot);
+    const projectSource = path.join(projectRoot, 'docs', 'project-knowledge.md');
+    mkdirSync(path.dirname(projectSource), { recursive: true });
+    writeFileSync(projectSource, 'Project-owned knowledge source.\n');
+    const templateFile = path.join(bundleRoot, 'templates/agent-runtime.config.template.v1.yaml');
+    const template = readFileSync(templateFile, 'utf8');
+    const expected = 'knowledge:\n  sources:\n';
+    expect(template.split(expected)).toHaveLength(2);
+    writeFileSync(
+      templateFile,
+      template.replace(
+        expected,
+        `${expected}    - id: project-knowledge\n      kind: local\n      location: docs/project-knowledge.md\n      title: Project knowledge\n    - id: bundled-knowledge\n      kind: local\n      location: vida-agent/instructions/knowledge-graph.md\n      title: Bundled knowledge\n`,
+      ),
+    );
+
+    const result = await initializeProjectFromBundle(validRequest(projectRoot), bundleRoot);
+    expect(result.status).toBe('initialized');
+    const initializedConfig = loadRuntimeConfig(projectRoot);
+    expect(initializedConfig.knowledge.sources).toContainEqual({
+      id: 'project-knowledge',
+      kind: 'local',
+      location: 'docs/project-knowledge.md',
+      title: 'Project knowledge',
+    });
+    expect(initializedConfig.knowledge.sources).toContainEqual({
+      id: 'bundled-knowledge',
+      kind: 'local',
+      location: 'vida-agent/instructions/knowledge-graph.md',
+      title: 'Bundled knowledge',
+    });
+    expect(integrationNames.filter((entry) => existsSync(path.join(projectRoot, entry)))).toEqual([
+      'AGENTS.md',
+      'AGENT.sidecar.md',
+      'agent-runtime.config.v1.yaml',
+      'docs',
+      '.agent',
+    ]);
+    expect(existsSync(path.join(projectRoot, '.agent', 'runtime-initialization.v1.json'))).toBe(true);
+    completed = true;
+  } finally {
+    retainedCleanup(projectRoot, completed);
+  }
+});
+
 test('init preserves explicit nested project roots and their distinct identities', async () => {
   const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-v8-'));
   let completed = false;

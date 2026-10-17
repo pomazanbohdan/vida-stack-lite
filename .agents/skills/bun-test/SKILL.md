@@ -109,6 +109,11 @@ Recheck a known repair through the native pilot's `--diagnostic-mutant-id` with
 singleton batch bounds. Resolve its current canonical identity and Source binding;
 do not rerun all preceding IDs or treat one diagnostic kill as a contour score.
 Keep the full baseline and unfiltered tests; TESTING owns complete admission.
+For several known repairs, use the mutually exclusive `--diagnostic-mutant-ids`
+comma-list (1..32 unique IDs) with the same singleton bounds. It shares one full
+baseline and one partition budget, retains original sparse plan indices and the
+full universe, and emits no complete proof or contour score. Resolve every ID
+against the current map; do not aggregate separate diagnostic runs as closure.
 
 For expected-success async target calls, reuse `expectAsyncReturned` from
 `tests/helpers/expect-rejection.ts`. It observes one invocation through Node's

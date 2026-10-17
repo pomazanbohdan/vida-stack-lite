@@ -101,6 +101,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
       'max-batches': { type: 'string', default: '1' },
       'admit-complete': { type: 'boolean', default: false },
       'diagnostic-mutant-id': { type: 'string' },
+      'diagnostic-mutant-ids': { type: 'string' },
     },
     strict: true,
     allowPositionals: false,
@@ -119,18 +120,55 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
   const maxBatches = finite(values['max-batches']);
   const admitComplete = values['admit-complete'] === true;
   const diagnosticMutantId = values['diagnostic-mutant-id'];
+  const diagnosticMutantIds = values['diagnostic-mutant-ids']?.split(',');
   if (
     diagnosticMutantId !== undefined &&
     (!diagnosticMutantId || diagnosticMutantId.length > 200 || batchSize !== 1 || maxBatches !== 1 || admitComplete)
   )
     throw new Error('Targeted diagnostics require one mutant, one batch and no complete admission.');
+  if (
+    diagnosticMutantIds !== undefined &&
+    (diagnosticMutantId !== undefined ||
+      diagnosticMutantIds.length < 1 ||
+      diagnosticMutantIds.length > 32 ||
+      diagnosticMutantIds.some((id) => !id || id.length > 200) ||
+      new Set(diagnosticMutantIds).size !== diagnosticMutantIds.length ||
+      batchSize !== 1 ||
+      maxBatches !== 1 ||
+      admitComplete)
+  )
+    throw new Error(
+      'Targeted diagnostic sets require 1 through 32 unique IDs, singleton batches and no complete admission.',
+    );
   return {
     partition: selected.partitions[0],
     batchSize,
     maxBatches,
     admitComplete,
     diagnosticMutantId,
+    diagnosticMutantIds,
   };
+}
+
+/** Resolve a bounded diagnostic set against the complete original singleton plan. */
+export function selectNativeMutationBatchIndices(
+  plan: Pick<ReturnType<typeof planMutationBatches>, 'limit' | 'batches'>,
+  diagnosticMutantIds: readonly string[],
+): number[] {
+  if (plan.limit !== 1) throw new Error('Targeted diagnostics require singleton batches.');
+  if (diagnosticMutantIds.length < 1 || diagnosticMutantIds.length > 32)
+    throw new Error('Targeted diagnostic sets require 1 through 32 IDs.');
+  const wanted = new Set(diagnosticMutantIds);
+  if (wanted.size !== diagnosticMutantIds.length || diagnosticMutantIds.some((id) => !id || id.length > 200))
+    throw new Error('Targeted diagnostic set IDs must be unique nonempty tokens up to 200 characters.');
+  const indices: number[] = [];
+  for (const [index, batch] of plan.batches.entries()) {
+    if (batch.identities.length !== 1 || batch.local_ids.length !== 1)
+      throw new Error('Targeted diagnostics require singleton batches.');
+    if (wanted.delete(batch.local_ids[0]!)) indices.push(index);
+  }
+  if (wanted.size > 0) throw new Error('Diagnostic mutant is absent from the complete generated plan.');
+  return indices;
 }
 
 export function selectNativeMutationBatchWindow(
@@ -187,10 +225,8 @@ export function nativeMutationBatchCommand(
 async function runMutationBatchPilot(root: string, args: readonly string[]): Promise<void> {
   const pilotStarted = performance.now();
   const firstBudget = executionBudget(mutationLimits.partitionMs, 0);
-  const { partition, batchSize, maxBatches, admitComplete, diagnosticMutantId } = selectMutationBatchPilot(
-    args,
-    mutationPartitions(),
-  );
+  const { partition, batchSize, maxBatches, admitComplete, diagnosticMutantId, diagnosticMutantIds } =
+    selectMutationBatchPilot(args, mutationPartitions());
   const pin = readPin(root);
   checkManifest(root, pin);
   if (process.versions.bun !== pin) throw new Error('Mutation batch pilot requires the pinned Bun.');
@@ -224,7 +260,12 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     if (image.universe.mutants.some((row) => row.generated_status !== 'Pending'))
       throw new Error('Generated dispositions require review before a native batch pilot.');
     const plan = planMutationBatches(root, binding, image.universe, batchSize);
-    const window = selectNativeMutationBatchWindow(plan, maxBatches, diagnosticMutantId);
+    const diagnosticBatchIndices =
+      diagnosticMutantIds === undefined ? undefined : selectNativeMutationBatchIndices(plan, diagnosticMutantIds);
+    const window =
+      diagnosticMutantIds === undefined
+        ? selectNativeMutationBatchWindow(plan, maxBatches, diagnosticMutantId)
+        : undefined;
     const artifacts = {
       generated_image: record('generated-image.json', image),
       batch_plan: record('batch-plan.json', plan),
@@ -365,10 +406,15 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       unattempted: image.universe.mutants.length,
     };
     let resourceBlocked: { observed_path: string; available_bytes: string | null } | undefined;
-    for (let index = window.start; index < window.end; index++) {
+    const batchCount = diagnosticBatchIndices?.length ?? window!.end - window!.start;
+    for (let position = 0; position < batchCount; position++) {
+      const index = diagnosticBatchIndices?.[position] ?? window!.start + position;
       const batch = plan.batches[index]!;
-      const started = index === window.start ? pilotStarted : performance.now();
-      const budget = index === window.start ? firstBudget : executionBudget(mutationLimits.partitionMs, 0);
+      const started = position === 0 ? pilotStarted : performance.now();
+      const budget =
+        diagnosticMutantIds !== undefined || position === 0
+          ? firstBudget
+          : executionBudget(mutationLimits.partitionMs, 0);
       const observed = await collectNativeMutationBatch(
         batch,
         () => budget.remaining(),
@@ -444,8 +490,17 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       resource_blocked: resourceBlocked ?? null,
       totals,
       ...(diagnosticMutantId !== undefined
-        ? { diagnostic_selection: { local_id: diagnosticMutantId, batch_index: window.start } }
-        : {}),
+        ? { diagnostic_selection: { local_id: diagnosticMutantId, batch_index: window!.start } }
+        : diagnosticMutantIds !== undefined
+          ? {
+              diagnostic_selection: {
+                selections: diagnosticBatchIndices!.map((index) => ({
+                  local_id: plan.batches[index]!.local_ids[0]!,
+                  batch_index: index,
+                })),
+              },
+            }
+          : {}),
     };
     record('terminal-summary.json', summary);
     console.log(JSON.stringify(summary));
@@ -521,7 +576,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
 if (import.meta.main) {
   if (process.argv.length === 3 && process.argv[2] === '--help')
     console.log(
-      'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--diagnostic-mutant-id <generated local ID>]. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
+      'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--diagnostic-mutant-id <generated local ID> | --diagnostic-mutant-ids <comma-separated generated local IDs>]. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. ID sets allow1..32 unique IDs and share one budget across selected mutants. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
     );
   else
     await runMutationBatchPilot(

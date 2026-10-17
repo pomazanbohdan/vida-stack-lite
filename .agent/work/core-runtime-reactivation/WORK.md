@@ -1,6 +1,6 @@
 # Core runtime reactivation work
 
-Status date: 2026-10-16. Current execution and evidence record. This document does not authorize replay of old operations or claim complete quality or Runtime acceptance.
+Status date: 2026-10-17. Current execution and evidence record. This document does not authorize replay of old operations or claim complete quality or Runtime acceptance.
 
 ## Current state and owners
 
@@ -14,7 +14,44 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
-### Coverage receipt reuse and fixture import closure
+### Current repair packet — 2026-10-17
+
+Published starting point is0cae79f; origin/main fetched and safely fast-forwarded.
+Fresh targeted local94 run `db55aae7-3332-4642-8134-f3e1354403bc` (`wy4Dno`)
+confirms1Killed/226unattempted, full17-case baseline and original batch index5
+in13199ms. Full capture, closed process group and same boot are retained.
+This is diagnostic-only, with no complete contour score.
+
+New admission controls verify status/token observations only after the real Host
+verifier, callback-live gate sidecar denial/restoration, and post-close Mastra
+sidecar denial before Host image validation. No persisted authority is invented.
+`uBKC1B` passes21/0tests,189assertions in2195ms. The earlier3-file `P7J0fn`
+passes158/0tests,679assertions in4461ms, before the last sidecar-order case.
+CLI init now resolves an actual project-local source and an existing package
+resource; `G0IwhX` passes the added case. `Y36WhT` retains the rejected fixture
+which incorrectly supplied a resource outside the executing package.
+
+The diagnostic set path shares one full baseline, generated image, input capture
+and partition budget for up to32 known repair IDs. Original sparse indices and
+the full universe remain intact; no complete proof or score is emitted. RED
+`mJ3TgL` rejects the missing selector export; the three-file GREEN above exercises
+the implemented selection. Blind v112 finds no actionable defect. Fresh native
+set execution remains pending, so this preparation qualifies no additional kills.
+Final `BJvfk5` passes159/0tests across3files in6142ms with complete captures,
+closed groups and same boot. Strict505/TS-only506 and Oxlint pass. Initial static
+checks caught void cleanup callbacks and an unsafe Bun asymmetric matcher value;
+exact undefined cleanup returns and typed source-membership assertions fix them.
+Current review proposals and Source checks do not
+change the generated contour closure counters or global acceptance.
+
+Five blind Luna lanes reviewed admission, image, runtime initialization, CLI init
+and assurance. Runtime receipt projection is followed by explicit CLI binding
+checks; its initial suspected defect was withdrawn after caller review. Image
+review found no concrete change. Assurance reachability proposals need an exact
+supported fixture before implementation. Admission reviewsv110/v111 informed
+the controls above; workers ran no runtime checks or Git.
+
+### Retained evidence through0cae79f
 
 Fresh f278189 admission run `0bbbf445-ac76-41d1-96d7-fb8ac2aafc0f`
 (`Vkc809`) passes17/0tests,169assertions in9165ms. Exact F18/18,L100/100,

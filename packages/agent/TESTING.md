@@ -1092,6 +1092,16 @@ The terminal summary records its diagnostic selection; it supplies no candidate
 partition proof, contour score or global qualification. All activation, assertion,
 input/image/executable readbacks, custody and time limits remain in force.
 
+For several known repairs, use the mutually exclusive
+`--diagnostic-mutant-ids <ID,ID,...>` with the same singleton bounds. Supply
+1 through 32 unique nonempty IDs, each at most 200 characters. All IDs must
+resolve before the baseline starts. The producer runs the full baseline once,
+then only those original plan indices in plan order under one shared partition
+budget; intervening mutants remain unattempted. The complete universe and plan
+are unchanged. The diagnostic summary lists the selected ID/index pairs and
+still grants no partition proof or combined contour score. Prefer this path to
+repeating baseline, input capture and image generation for each known repair.
+
 The in-memory `NativeMutationPartitionProof/v1` join remains the semantic owner.
 The producer writes `NativeMutationPartitionProof/v2` with one referenced
 `NativeMutationValidationContext/v1`, after the existing parent input and

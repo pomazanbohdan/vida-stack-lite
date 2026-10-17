@@ -36,6 +36,7 @@ import {
   collectNativeMutationBatch,
   nativeMutationBatchCommand,
   selectMutationBatchPilot,
+  selectNativeMutationBatchIndices,
   selectNativeMutationBatchWindow,
 } from '../tooling/mutation-batch-pilot.ts';
 import { executeMutationCommand } from '../tooling/mutation-evidence.ts';
@@ -271,6 +272,48 @@ test('native targeted diagnostics require one immutable-plan mutant and never al
     ['--contour', 'one', '--batch-size', '1', '--diagnostic-mutant-id', ''],
   ])
     expect(() => selectMutationBatchPilot(denied, declared)).toThrow();
+});
+
+test('native diagnostic ID sets require bounded unique IDs and remain incompatible with single-ID and admission modes', () => {
+  const declared = [
+    { name: 'one', sources: ['src/one.ts'], tests: ['tests/one.test.ts'], report: 'one.json', environment: 'bun' },
+  ];
+  const args = ['--contour', 'one', '--batch-size', '1', '--diagnostic-mutant-ids', '178,240'];
+  const selected = selectMutationBatchPilot(args, declared);
+  expect(selected).toHaveProperty('diagnosticMutantIds', ['178', '240']);
+  expect(selected).toHaveProperty('diagnosticMutantId', undefined);
+  for (const denied of [
+    [...args, '--admit-complete'],
+    [...args, '--max-batches', '2'],
+    [...args, '--diagnostic-mutant-id', '178'],
+    ['--contour', 'one', '--batch-size', '1', '--diagnostic-mutant-ids', ''],
+    ['--contour', 'one', '--batch-size', '1', '--diagnostic-mutant-ids', '178,'],
+    ['--contour', 'one', '--batch-size', '1', '--diagnostic-mutant-ids', ',178'],
+    ['--contour', 'one', '--batch-size', '1', '--diagnostic-mutant-ids', '178,178'],
+    ['--contour', 'one', '--batch-size', '1', '--diagnostic-mutant-ids', 'x'.repeat(201)],
+    [
+      '--contour',
+      'one',
+      '--batch-size',
+      '1',
+      '--diagnostic-mutant-ids',
+      Array.from({ length: 33 }, (_, i) => String(i)).join(','),
+    ],
+    ['--contour', 'one', '--batch-size', '2', '--diagnostic-mutant-ids', '178,240'],
+  ])
+    expect(() => selectMutationBatchPilot(denied, declared)).toThrow();
+});
+
+test('native diagnostic ID sets resolve all IDs before execution and retain sparse original plan indices in plan order', () => {
+  const batches = ['85', '177', '178', '240'].map((id) => ({ identities: ['identity-' + id], local_ids: [id] }));
+  const before = structuredClone(batches);
+  const plan = { limit: 1, batches };
+  expect(selectNativeMutationBatchIndices(plan, ['240', '177'])).toEqual([1, 3]);
+  expect(() => selectNativeMutationBatchIndices(plan, ['177', 'foreign'])).toThrow('complete generated plan');
+  expect(() => selectNativeMutationBatchIndices({ ...plan, limit: 2 }, ['177', '240'])).toThrow('singleton batches');
+  expect(() => selectNativeMutationBatchIndices(plan, ['177', '177'])).toThrow();
+  expect(batches).toEqual(before);
+  expect(selectNativeMutationBatchWindow(plan, 1)).toEqual({ start: 0, end: 1 });
 });
 
 test('targeted batch keeps its original plan index and leaves the full universe unchanged', () => {
