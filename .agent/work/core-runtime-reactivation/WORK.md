@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `33a98d246f8eb8988b08ce04bbcf3b54cbeee6ff`, following the reviewed schema-snapshot reuse atd5ddd22 and guard retirement at883af1d. Data-only coverage now preserves null complexity without inventing CRAP proof. The current image follow-up strengthens byte-bound, exact cleanup-cause and output assertions. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `7363f4e44b1b80f35ef8686c5ac00dbbdce17f87` fixes private-DB cleanup on client setup failure through one existing initializer owner. Earlier packets retain schema-snapshot reuse atd5ddd22, exact cause/output assertions and body-local envelope initialization atcace59e, and data-only observation repair at33a98d2. The current image follow-up removes a proven duplicate per-row bound check and strengthens canonical encoding/header/initializer tests. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -807,6 +807,46 @@ and final schema snapshot reuse remain. Root's one inventory/hash pass finds all
 unchanged prospective10/10 ceilings. Current Source binding is
 ff21ccea00f99c87343d000c72d8a04d3d225e3a922b3f83af45292216c5b0dd; original883af1d
 frozen bytes remain unchanged. Fresh numeric evidence must bind these new bytes.
+
+Fresh7363f4e image `zzE1nb`, run0a43b722-a3ea-452f-a402-3191fc4df3e6, passes
+38tests/284assertions and exactF50/50,L192/192,S214/214,B58/58 in5162ms. Same-run
+`8A5Vo3` passes original frozen ceilings at measured maxCC9/maxCRAP9. The single
+shared owner raises that measured maximum from7 to9 while staying within its
+unchanged prospective10/10 cap; no complexity-improvement claim is made from
+deduplication alone. Envelope `E8qP7p`, runbb67d174-52ee-42c9-af82-b6a72b64c405,
+retains47tests/4271assertions, exact78/211/227/103 counters and same-run frozen9/9
+through `9lPgId`. Projection538imports both pairs. SDK formation `dtG62g` runs no
+suites. Full image `A0Eo6N`, rund8493a4d-73df-42c1-9af8-ba565a4f9316,
+terminates33942ms:10Killed,4Survived,1UNKNOWN,484unattempted of499, full38-case
+baseline, complete captures/groups, unchanged boot/checkout. Retain all v186.
+
+The current map identifies exact Source spans:28 canonical-base64 diagnostic,
+488 safeIntegers on the empty inventory DB,78 conditional WAL-header conversion,
+312 per-row import-bound diagnostic, and UNKNOWN5 module-level digest regex.
+The bounded diagnostic reader now asserts the map's one-based position basis and
+shows exact captured-checkout Source fragments using one cached read per Source,
+avoiding ambiguous line-only paraphrases. It remains diagnostic, not another AST,
+hash or acceptance owner. The latest Source image differs from all prior local IDs.
+
+Independent v158 proves the per-row counter/check redundant: preflight counts the
+same complete pinned Mastra table list under the unchanged total bound; Source
+connections are private readonly copies, the intervening await only uses a Host
+clone, and final row digests still verify import. Root removes only the counter,
+increment and require call. Keep integer-mode and WAL-format guards; no mutation
+filter or numeric exemption is added. Both boundary/digest invariants stay.
+
+The writer adds a same-body fresh validator subject and an otherwise size/hash-
+consistent noncanonical base64 case with the exact encoding diagnostic. Root uses
+only that fresh validator throughout the existing case and retains the malformed
+base64 case. A real Bun header-pair probe shows mixed write1/read2 fails native
+deserialization while correct1/1 opens; Source only adapts the supported2/2 pair.
+Two new public cases therefore require rejection of mixed Host/Mastra headers
+without altering raw bytes, covering malformed inputs rather than forcing a
+private option assertion. `mBTT7p` passes40tests/291assertions in2037ms. The one
+updated inventory retains50identities and all10/10caps; current Source binding
+is dca61c635331ea343f5779dce06c195479a0d173332f65f4f43ee40905657b99.
+Fresh assertion-confirmed mutation and empty-inventory CRAP applicability remain
+OPEN; no prepared or historical proof is promoted to current global acceptance.
 
 ### Published admission packet — retained context
 

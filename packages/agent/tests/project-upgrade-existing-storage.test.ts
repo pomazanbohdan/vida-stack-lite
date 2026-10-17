@@ -1,6 +1,7 @@
 import { expectAsyncReturned, expectRejection, expectReturned, rejectionReason } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { describe, expect, spyOn, test } from 'bun:test';
 import { LibSQLStore } from '@mastra/libsql';
@@ -10,7 +11,6 @@ import path from 'node:path';
 import { initializeHostDatabaseSchema } from '../src/host-state.js';
 import {
   prepareUnifiedExistingStorageImage,
-  validateUnifiedDatabaseImage,
   type ClosedDatabaseImage,
   type ExistingMergeBinding,
 } from '../src/config/project-upgrade-existing-storage.js';
@@ -19,6 +19,13 @@ import { callWithUntrustedArguments } from './helpers/untrusted-call.ts';
 
 const workspaceId = 'a'.repeat(64);
 const sha256 = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
+const requireStorageImage = createRequire(import.meta.url);
+
+function loadFreshStorageImage(): typeof import('../src/config/project-upgrade-existing-storage.ts') {
+  const file = requireStorageImage.resolve('../src/config/project-upgrade-existing-storage.ts');
+  delete requireStorageImage.cache[file];
+  return requireStorageImage(file) as typeof import('../src/config/project-upgrade-existing-storage.ts');
+}
 
 function closedImage(database: Database): ClosedDatabaseImage {
   const bytes = Buffer.from(database.serialize());
@@ -801,6 +808,26 @@ describe('existing storage image preparation', () => {
     },
   );
 
+  test.each(['Host', 'Mastra'] as const)(
+    'rejects a mixed rollback/WAL %s header without repairing raw bytes',
+    async (label) => {
+      const host = makeHost();
+      const mastra = await makeMastra();
+      const original = label === 'Host' ? host : mastra;
+      const bytes = Buffer.from(original.bytes);
+      bytes[18] = 1;
+      bytes[19] = 2;
+      const before = Buffer.from(bytes);
+      const mixed = { ...original, bytes, sha256: sha256(bytes) };
+      const invalidHost = label === 'Host' ? mixed : host;
+      const invalidMastra = label === 'Mastra' ? mixed : mastra;
+      await expectRejection(
+        prepareUnifiedExistingStorageImage(invalidHost, invalidMastra, binding(invalidHost, invalidMastra)),
+      );
+      expect(bytes.equals(before)).toBe(true);
+    },
+  );
+
   test('rejects a Host schema exceeding the 1024-object inventory bound within the image byte limit', async () => {
     const host = makeHostOverTableBound();
     const mastra = await makeMastra();
@@ -838,6 +865,7 @@ describe('existing storage image preparation', () => {
   });
 
   test('validates serialized unified image shape, canonical base64, size, and byte digest', async () => {
+    const { validateUnifiedDatabaseImage } = loadFreshStorageImage();
     const host = makeHost();
     const mastra = await makeMastra();
     const expectedBinding = binding(host, mastra);
@@ -852,6 +880,15 @@ describe('existing storage image preparation', () => {
       host_rows_digest: image.host_rows_digest,
       mastra_rows_digest: image.mastra_rows_digest,
     });
+    const oneByte = Buffer.from([1]);
+    expect(() =>
+      validateUnifiedDatabaseImage({
+        ...image,
+        size: oneByte.byteLength,
+        sha256: sha256(oneByte),
+        bytes_base64: 'AR==',
+      }),
+    ).toThrow('Existing storage merge: unified image encoding is not canonical');
     expect(() => validateUnifiedDatabaseImage({ ...image, bytes_base64: image.bytes_base64 + '!' })).toThrow();
     expect(() => validateUnifiedDatabaseImage({ ...image, size: image.size + 1 })).toThrow(/bytes or digest differ/u);
     expect(() => validateUnifiedDatabaseImage({ ...image, sha256: '0'.repeat(64) })).toThrow(/bytes or digest differ/u);

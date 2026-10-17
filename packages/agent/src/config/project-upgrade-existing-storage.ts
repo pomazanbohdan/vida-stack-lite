@@ -308,7 +308,6 @@ function importMastraRows(
 ): void {
   target.exec('PRAGMA defer_foreign_keys=ON');
   target.transaction(() => {
-    let copiedRows = 0;
     for (const table of tables) {
       const columns = tableColumns(mastra, table);
       const quoted = '"' + table.replaceAll('"', '""') + '"';
@@ -316,8 +315,6 @@ function importMastraRows(
       try {
         const selected = columns.map((column) => '"' + column.replaceAll('"', '""') + '"').join(',');
         for (const row of mastra.query('SELECT ' + selected + ' FROM ' + quoted).values() as SqlValue[][]) {
-          copiedRows++;
-          requireMerge(copiedRows <= maxRows, 'total imported row bound exceeded');
           statement.run(...row);
         }
       } finally {
