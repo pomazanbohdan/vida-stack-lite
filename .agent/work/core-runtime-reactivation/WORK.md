@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `c41486675244c98e49c74fc2c27833860045dbde` repairs campaign outcome binding and surviving-group cleanup with focused/native RED/GREEN evidence below. Fresh v194 coverage/frozen pairs pass for image52roles, envelopes and service custody, preserving separate BLOCKED parent outcomes. Full mutation qualification remains open. Prior2997f9c pins the image cleanup review atb1ecf6b;8120162 repairs capture close/cancellation; bde2857 strengthens image assertions, retains explicit external scratch and compacts unchanged progress history; ec3b3ba captures computed transitive closure. Current fs-attestation has a reader-validated full7/7 native Killed proof, with zero-callable CRAP applicability still OPEN. Its blocked slot moves to service-operation-custody; active contours are storage image, envelopes and service-operation-custody. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `34e52e62b07f6b1af2b9d183c0d00336a64dcb26` isolates envelope subject initialization and adds the empty-Mastra witness. Actual diagnostics now confirm envelope110 and image216 Killed; neither is a full score. Fresh v195 coverage/frozen pairs pass for all three active contours and preserve separate BLOCKED parent outcomes. The next checked correction fixes the reproduced100000-row aggregate canonicalization defect without changing52roles or ceilings; new pin/numeric proof are pending. Custody693 remains historical UNKNOWN while its bounded pure-dependency forwarding control awaits native proof. Earlier script/capture and image cleanup repairs remain published, with receipts below. Active contours are storage image, envelopes and service-operation-custody. FS attestation retains native7/7 but stays OPEN on zero-callable CRAP applicability. Facade91906ff and main-hostfebad42 retain historical compatible triples. Admission remains OPEN on stateful static initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1293,6 +1293,75 @@ baseline has47cases/4271assertions. ZOMBIES'7leaf cases total0.076s versus1.937s
 file time;1.861s lies in import/setup/collection. Its public export inventory is
 required, and the shared context is loaded once. No justified removal, filter,
 process reuse, larger timeout or claimed speedup follows from that timing.
+
+The packet above is published34e52e62b07f6b1af2b9d183c0d00336a64dcb26 after
+independent blind review and the ordinary strict505-file hook. Immutablev195
+forms SDK inputs once (`tu7RuQ`,2299ms). Three exact coverage/frozen pairs pass:
+envelopes `hgcfBy`/`CO3Nxg`, run6356f69c-1666-475f-a6f5-954d21a397d1,
+7456ms/1391ms; image `0WKe4e`/`YXiXSA`, run084332a8-d209-4b4d-b321-fc458ef57974,
+6543ms/928ms; custody `Iprbnn`/`w6g6f7`, run7cfec1a8-5d8d-4b63-9929-cfcfbc105a53,
+6339ms/816ms. Original78/211/227/103,52/194/216/56,56/235/243/123 counters and
+maxCC9/maxCRAP9 remain. Projection590imports these terminal pairs together,
+preserving BLOCKED parent operations and historical-only qualification.
+
+Actual envelope110 diagnostic `jexN0f`, run8b543ff8-3f7e-4181-b8d2-259718dd1daf,
+now confirms1Killed/0UNKNOWN with full47-case baseline,762unattempted of763 in
+11274ms. The original UNKNOWN is not reclassified. Image216 `lRjKeV`,
+runc5301c89-dd02-4a07-9397-fb69b2ea48a0, confirms1Killed/0UNKNOWN with full63-case
+baseline,496unattempted of497 in8315ms. Its actual current map resolves the same
+>=0 mutation at232:16 to identity04af528b4514e217767657f0068f211b43eefcc83a3eccebc2251c7f2fb760e8;
+it is not a stale-ID assumption. Both diagnostic scopes retain complete custody
+but neither produces a full score or closure.
+
+The first full custody attempt `Vpn396`, run3efc3b9a-17c3-4b3d-b011-6127209cb920,
+ends72000ms with123-case baseline,686generated/28attempted/27Killed/0Survived/
+1UNKNOWN/658unattempted. Outer captures/groups/boot/checkout are complete, but
+UNKNOWN693 identity0936e36145dcd0a8dfad81147b8dd72ba16d43286e8c540d2990f2903666478e
+shortens the UUID regex and fails the existing closed-child reservation assertion
+with0owned activation. Preserve/fence allv195 artifacts. Do not replay it or infer
+a missing assertion from the failed expected-success call.
+
+### Storage image inclusive capacity and custody activation
+
+The next image review derives two current candidates from retained descriptions:
+205 makes1024schema objects exclusive, and232 makes100000aggregate rows exclusive.
+Tests now build actual exact-capacity fixtures, derive counts from SQLite, assert
+public success, bindings, retained views/rows and native integrity. Real views
+keep the1024-object fixture within4MiB without allocating one btree page per
+index; the earlier20-index case remains. Root corrects the proposed CTE's inclusive
+stop bound and native PRAGMA column handling before integration. No source/data
+mock or budget increase is used.
+
+RED `WDHy0f` passes the schema case and the custody control but reproduces a real
+product defect at100000rows: rowsDigest calls canonicalJsonDigest on the entire
+ordered aggregate and exhausts the ordinary10000-node cap around row9927. Each
+individual row was already bounded/validated, and the native total permits100000.
+Reuse canonicalJsonWithNodeLimit(parts,0,MAX_CANONICAL_BYTES) only at that final
+typed aggregate and hash its canonical UTF-8 through the existing digest owner.
+Per-row/public/depth/8MiB byte/4MiB image/count guards stay. GREEN `W3uVpi` passes
+both exact limits at1471ms/117ms and the custody control in2770ms. Independent
+blind review approves this existing typed-component seam and byte-for-byte digest
+compatibility for previously accepted inputs.
+
+Custody's existing closed-child body now observes the actual call to its pure
+digest dependency, loads/delegates that utility synchronously inside the call,
+and matches its argument/result against the returned reservation. The spy and
+temporary cache entry are restored before subsequent record/claim/cleanup. Its
+canonical custody namespace and opaque state are not refreshed. Ordinary behavior
+passes; actual693 qualification is pending publication, not inferred from the spy.
+
+Final `JFCsxh` passes235tests/5763assertions over all seven active-contour files in
+10589ms,0skipped, complete captures, closed groups and unchanged boot. The single
+affected Babel inventory/hash keeps exactly52identities/responsibilities:50caps
+10/10 and both cleanupcaps1/1; no role/count/ceiling change. Binding is
+a1818feb71e326ec01d3b6ff938057643f95ff664f5604c5a3aa508ab9b8e660.
+The new source-only review is scope_review_existing_storage_image_aggregate_20261017;
+publish it before its new immutable scoped pin and numeric measurement. Original
+b1ecf6b and older scope evidence remain intact. No full triple is added.
+The ordinary hook catches a typed Bun matcher mismatch between the observed
+string digest and the reservation's nullable field. An explicit boolean search
+matches both actual argument/result fields without a cast or weaker check.
+`quFxgB` rechecks the changed closed-child body in621ms with complete custody.
 
 ### Published admission packet — retained context
 

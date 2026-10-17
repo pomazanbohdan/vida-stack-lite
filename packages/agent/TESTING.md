@@ -1503,6 +1503,14 @@ identity on the qualified Bun probe. Preserve its canonical owner and leave miss
 static-initialization evidence as an explicit GAP until a safe owner is qualified.
 A child-only activation still needs qualified child evidence; a parent assertion
 or a fresh import alone does not supply that proof.
+When a stateful subject calls a separately owned stateless utility, an exact
+test-local dependency spy may delegate the real observed arguments to a fresh
+synchronous utility load within that actual call. Keep the stateful namespace and
+opaque capability registry intact. Restore the utility cache and interception
+before later persistence/cleanup; compare observed arguments/results with the
+real reservation. An original suite pass only qualifies the fixture's ordinary
+behavior; actual generated-mutant activation/assertion/custody proof is still
+required. Never add a dummy utility call merely to create a hit.
 
 For a private callback supplied to a native API, test the native API's documented
 callback contract when public output alone hides a violation. Observe the actual

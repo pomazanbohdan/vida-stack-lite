@@ -6,6 +6,7 @@
 import { Database } from 'bun:sqlite';
 import { LibSQLStore } from '@mastra/libsql';
 import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { canonicalJsonWithNodeLimit, MAX_CANONICAL_BYTES } from '../contracts/canonical-json-core.js';
 import { createInMemoryBunSqliteClient } from '../orchestration/bun-sqlite-client.js';
 import {
   assertServiceOperationCustodyReady,
@@ -163,7 +164,9 @@ function rowsDigest(database: Database, names: readonly string[]): string {
     const ordered = selected.map((row) => canonicalJson(canonicalSqlValues(row))).sort();
     parts.push({ name, columns, rows: ordered });
   }
-  return canonicalJsonDigest(parts);
+  // Rows have already passed their own canonicalization and native count bounds.
+  // The aggregate is not one public ingress document; retain the common byte cap.
+  return digest(Buffer.from(canonicalJsonWithNodeLimit(parts, 0, MAX_CANONICAL_BYTES), 'utf8'));
 }
 
 function insertSql(table: string, columns: readonly string[]): string {

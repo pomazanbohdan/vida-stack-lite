@@ -1,6 +1,7 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import * as custodySubject from '../../src/config/service-operation-custody.js';
+import * as launchCapabilitySubject from '../../src/config/service-operation-launch-capability.js';
 import * as storageAdmission from '../../src/config/storage-read-admission.js';
 import * as workspaceRaw from '../../src/config/workspace-database-raw.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
@@ -1259,16 +1260,47 @@ test('closed in-flight child reconciles only through its exact same-operation re
   for (const receiptPhase of ['prepared', 'terminal'] as const) {
     const fixture = openCustodyFixture(`closed-child-${receiptPhase}-`);
     try {
-      const reservation = expectReturned(() =>
-        reserveServiceOperationLaunch(
-          fixture.database,
-          fixture.workspaceId,
-          'release-pack-worker',
-          operationId,
-          requestDigest,
-          'c'.repeat(64),
-        ),
+      const capabilityRequire = createRequire(import.meta.url);
+      const capabilityPath = capabilityRequire.resolve('../../src/config/service-operation-launch-capability.js');
+      const observedDigests: Array<{ capability: string; digest: string }> = [];
+      const digestSpy = spyOn(launchCapabilitySubject, 'serviceOperationLaunchCapabilityDigest').mockImplementation(
+        (actualCapability) => {
+          const originalModule = capabilityRequire.cache[capabilityPath];
+          if (!originalModule) throw new Error('The stateless launch capability module is not in its original cache.');
+          delete capabilityRequire.cache[capabilityPath];
+          try {
+            const freshUtility = capabilityRequire(
+              capabilityPath,
+            ) as typeof import('../../src/config/service-operation-launch-capability.js');
+            const digest = freshUtility.serviceOperationLaunchCapabilityDigest(actualCapability);
+            observedDigests.push({ capability: actualCapability, digest });
+            return digest;
+          } finally {
+            capabilityRequire.cache[capabilityPath] = originalModule;
+          }
+        },
       );
+      let reservation: ReturnType<typeof reserveServiceOperationLaunch>;
+      try {
+        reservation = expectReturned(() =>
+          reserveServiceOperationLaunch(
+            fixture.database,
+            fixture.workspaceId,
+            'release-pack-worker',
+            operationId,
+            requestDigest,
+            'c'.repeat(64),
+          ),
+        );
+        expect(
+          observedDigests.some(
+            (observed) =>
+              observed.capability === reservation.child_capability && observed.digest === reservation.owner_token,
+          ),
+        ).toBe(true);
+      } finally {
+        digestSpy.mockRestore();
+      }
       expectReturned(() =>
         recordServiceOperationLaunchPid(
           fixture.database,

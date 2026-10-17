@@ -207,6 +207,14 @@ writes atomic. Readers cannot admit partially applied state.
 Existing-storage merge stays blocked while the legacy storage overlap exclusion
 is unproven. This intent repair does not unblock existing consumers.
 
+The closed-image merge validates each SQL row under the ordinary canonical JSON
+limits before hashing its deterministic table/row aggregate. That internal
+aggregate is not one public ingress document: use the existing bounded canonical
+component seam so the10,000-node ingress cap does not reject an otherwise valid
+100,000-row input. Retain the8MiB canonical byte cap, depth cap, per-row limits,
+4MiB image bounds and native row/schema checks. Previously accepted aggregates
+retain identical canonical bytes and digests.
+
 The target initialized workspace has exactly one persistent SQLite database,
 `.vida/work/workspace.v1.sqlite`, shared by Host, ledger/history and workflows.
 Storage admission must not introduce another SQLite database. Its replacement

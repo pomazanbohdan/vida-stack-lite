@@ -109,6 +109,12 @@ verified through the fresh52-role coverage/frozen pair recorded in WORK. Full
 mutation closure remains OPEN. The next TEST013 packet adds a real empty-Mastra
 schema assertion and removes residual cached subject imports from envelope test
 bodies after an actual zero-owned-hit UNKNOWN. Original failed evidence remains.
+The exact-row boundary then reproduces a product defect: the storage row digest
+applies the10,000-node ingress budget to its supported100,000-row aggregate.
+The causal correction reuses the existing byte-bounded internal canonicalizer,
+retaining public/per-row limits and all52role ceilings. Exact1024-object and
+100000-row acceptance plus existing over-limit denials are checked together;
+WORK owns the new immutable pin and pending numeric proof.
 
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
 

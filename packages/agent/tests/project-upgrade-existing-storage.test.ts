@@ -37,6 +37,22 @@ function closedImage(database: Database): ClosedDatabaseImage {
   return { device: 'fixture-device', inode: 'fixture-inode', size: bytes.byteLength, sha256: sha256(bytes), bytes };
 }
 
+function countUserTableRows(database: Database): bigint {
+  const tables = database
+    .query<{ name: string }, []>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+    )
+    .all();
+  return tables.reduce((total, { name }) => {
+    const quoted = '"' + name.replaceAll('"', '""') + '"';
+    const count = database
+      .query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM ' + quoted)
+      .get()?.count;
+    if (count === undefined) throw new Error('SQLite row count is unavailable for table ' + name);
+    return total + BigInt(count);
+  }, 0n);
+}
+
 function makeHost(sequenceValue: bigint | number | string = 9007199254740993n): ClosedDatabaseImage {
   const database = new Database(':memory:', { strict: true, safeIntegers: true });
   try {
@@ -819,7 +835,7 @@ async function assertWalImageMerge(walHost: boolean, walMastra: boolean): Promis
     const expectedBinding = binding(host, mastra);
     const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
 
-    expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
+    expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
     expect(image.binding).toEqual(expectedBinding);
     expect(image.binding.source_host_digest).toBe(hostDigest);
     expect(image.binding.source_mastra_digest).toBe(mastraDigest);
@@ -1002,6 +1018,67 @@ describe('existing storage image preparation', () => {
           .get()?.count,
       ).toBe(20n);
       preserveMergeFixture(merged);
+    } finally {
+      merged.close(true);
+    }
+  });
+
+  test('accepts exactly 1024 input schema objects and preserves the added views', async () => {
+    const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
+    let host: ClosedDatabaseImage;
+    let expectedViewCount = 0n;
+    try {
+      const initialCount = database
+        .query<{ count: number | bigint }, []>(
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'",
+        )
+        .get()?.count;
+      if (initialCount === undefined) throw new Error('Host schema object count is unavailable');
+      const missingObjects = 1024 - Number(initialCount);
+      if (!Number.isInteger(missingObjects) || missingObjects <= 0)
+        throw new Error('Host fixture does not leave room for the 1024-object boundary');
+      database.transaction(() => {
+        for (let index = 0; index < missingObjects; index++) {
+          database.exec(
+            'CREATE VIEW merge_capacity_boundary_' +
+              String(index).padStart(4, '0') +
+              ' AS SELECT group_id FROM merge_sequence_fixture',
+          );
+        }
+      })();
+      const schemaCount = database
+        .query<{ count: number | bigint }, []>(
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'",
+        )
+        .get()?.count;
+      expect(schemaCount).toBe(1024n);
+      expectedViewCount = BigInt(missingObjects);
+      host = closedImage(database);
+    } finally {
+      database.close(true);
+    }
+    const mastra = await makeMastra();
+    expect(host.size).toBeLessThan(4 * 1024 * 1024);
+    expect(mastra.size).toBeLessThan(4 * 1024 * 1024);
+    const expectedBinding = binding(host, mastra);
+    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
+    expect(image.binding).toEqual(expectedBinding);
+    expect(image.size).toBeLessThan(4 * 1024 * 1024);
+    const merged = openUnified(image.bytes_base64);
+    try {
+      const boundaryViews = merged
+        .query<{ count: number | bigint }, []>(
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='view' AND name GLOB 'merge_capacity_boundary_*'",
+        )
+        .get()?.count;
+      expect(boundaryViews).toBe(expectedViewCount);
+      expect(
+        merged
+          .query<{ group_id: string }, []>('SELECT group_id FROM merge_capacity_boundary_0000 ORDER BY group_id')
+          .all(),
+      ).toEqual([{ group_id: 'same-group' }, { group_id: 'same-group' }]);
+      expect(merged.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
     } finally {
       merged.close(true);
     }
@@ -1420,6 +1497,70 @@ describe('existing storage image preparation', () => {
       prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
       /supported Host and Mastra tables exceed total row bound/u,
     );
+  });
+
+  test('accepts exactly 100000 Host and Mastra rows and preserves the boundary rows', async () => {
+    const mastraDatabase = Database.deserialize(Buffer.from((await makeMastra()).bytes), {
+      strict: true,
+      safeIntegers: true,
+    });
+    let mastra: ClosedDatabaseImage;
+    let mastraRowCount: bigint;
+    try {
+      mastraRowCount = countUserTableRows(mastraDatabase);
+      mastra = closedImage(mastraDatabase);
+    } finally {
+      mastraDatabase.close(true);
+    }
+
+    const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
+    let host: ClosedDatabaseImage;
+    let expectedBoundaryTableRows: bigint;
+    try {
+      database.exec('CREATE TABLE merge_exact_total_boundary(id INTEGER PRIMARY KEY, payload TEXT NOT NULL)');
+      const existingHostRows = countUserTableRows(database);
+      expectedBoundaryTableRows = 100_000n - existingHostRows - mastraRowCount;
+      if (expectedBoundaryTableRows <= 0n || expectedBoundaryTableRows > 100_000n)
+        throw new Error('Real Host and Mastra fixtures leave no valid exact-total row count');
+      database
+        .query(
+          'WITH RECURSIVE rows(id) AS (SELECT 1 UNION ALL SELECT id+1 FROM rows WHERE id<?) ' +
+            "INSERT INTO merge_exact_total_boundary(id,payload) SELECT id,'boundary-row' FROM rows",
+        )
+        .run(expectedBoundaryTableRows);
+      expect(countUserTableRows(database) + mastraRowCount).toBe(100_000n);
+      host = closedImage(database);
+    } finally {
+      database.close(true);
+    }
+
+    expect(host.size).toBeLessThan(4 * 1024 * 1024);
+    expect(mastra.size).toBeLessThan(4 * 1024 * 1024);
+    const expectedBinding = binding(host, mastra);
+    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
+    expect(image.binding).toEqual(expectedBinding);
+    expect(image.size).toBeLessThan(4 * 1024 * 1024);
+    const merged = openUnified(image.bytes_base64);
+    try {
+      expect(
+        merged.query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM merge_exact_total_boundary').get()
+          ?.count,
+      ).toBe(expectedBoundaryTableRows);
+      expect(
+        merged
+          .query<{ id: number | bigint; payload: string }, [bigint]>(
+            'SELECT id,payload FROM merge_exact_total_boundary WHERE id IN (1,?) ORDER BY id',
+          )
+          .all(expectedBoundaryTableRows),
+      ).toEqual([
+        { id: 1n, payload: 'boundary-row' },
+        { id: expectedBoundaryTableRows, payload: 'boundary-row' },
+      ]);
+      expect(merged.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
+    } finally {
+      merged.close(true);
+    }
   });
 
   test('rejects an input with a foreign-key violation even when SQLite integrity_check accepts its pages', async () => {
