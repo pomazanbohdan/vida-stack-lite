@@ -234,6 +234,13 @@ three-file envelope selection45tests in3872ms with complete captures, closed
 groups and unchanged boot. Immutable review pinning and fresh numeric checks
 remain separate; no envelope closure is claimed.
 
+The reviewed envelope disposition is published at53fac83 and is pinned through
+the existing scoped v2 allowlist. `ih5wFB` passes68correspondence/CLI tests with
+292assertions in15260ms, full captures, closed groups and unchanged boot. Historical
+review pins remain available for their own captured inputs; no protocol or
+retained cap changes. The separate immutable v152 storage-admission mutation
+producer continues against52fc50e; these Source edits do not alter its capture.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

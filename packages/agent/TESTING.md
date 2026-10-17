@@ -1376,6 +1376,15 @@ registered and run the integration evidence for changes affecting that boundary.
 Do not repeat unrelated integration operations for every pure facade mutant.
 Changed test/module selection needs fresh compatible coverage, scoped proof and
 complete assertion-confirmed mutation; no old result is relabeled current.
+
+The main-envelopes named chronological ordering review uses
+`--budget-ref 53fac83b74fb8a5fca7362bbbcb1a0abd8e13253`. It preserves the removed
+unary mapper's full historical1/1 row, the other76retained mappings and the
+capture facade's independent10/10 ceiling. The distinct new comparator has its
+own domain-justified4/4 ceiling published prospectively at b66671c before tracked
+named adoption; the isolated prototype is disclosed. No identity or cap transfer
+and no global admission follows from that local review.
+
 The gate accepts only these pinned review/key
 pairs and each review's actual Source scope. Caller-supplied correspondence
 versions are rejected. The shared
