@@ -131,7 +131,7 @@ function coordinationLedgerFixture(): CoordinationLedger {
 
 describe('runtime envelope canonicalization boundary', () => {
   test('preserves the original canonicalization cause behind a safe envelope diagnostic', async () => {
-    const { validateRuntimeEnvelope } = await import('../src/contracts/envelopes.js');
+    const { validateRuntimeEnvelope } = loadFreshEnvelopes();
     const primary = new Error();
     let messageReads = 0;
     Object.defineProperty(primary, 'message', {
@@ -162,7 +162,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('distinguishes the ledger encoded byte cap from the canonical raw string cap', async () => {
-    const { coordinationLedgerJson, validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { coordinationLedgerJson, validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const { MAX_CANONICAL_BYTES } = await import('../src/contracts/canonical-json-core.js');
     // A JSON string adds two quote bytes. At the cap it reaches schema rejection;
     // one encoded byte above it must stop at the earlier ledger byte guard.
@@ -302,7 +302,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('consumes only the exact current revision binding and rejects unsafe workflow paths', async () => {
-    const { consumeRuntimeEnvelope, safeWorkflowOwnedPath } = await import('../src/contracts/envelopes.js');
+    const { consumeRuntimeEnvelope, safeWorkflowOwnedPath } = loadFreshEnvelopes();
     const envelope: RuntimeEnvelope<{ readonly checks: readonly string[] }> = {
       schema: 'RuntimeEnvelope/v1',
       kind: 'quality-check',
@@ -371,7 +371,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test("rejects a ticket that lists another ticket's claim", async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const created = '2026-09-18T00:00:00.000Z';
     const expires = '2099-09-18T00:00:00.000Z';
     const ticket = {
@@ -531,7 +531,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('captures descriptor values once before schema rejection and defers the clock option', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     let liveReads = 0;
     let clockReads = 0;
@@ -565,7 +565,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('returns an isolated mutable ledger image built from valid descriptors', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     const expected = JSON.parse(JSON.stringify(ledger)) as unknown;
     let liveReads = 0;
@@ -607,7 +607,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('ledger capture failures reject without converting arbitrary thrown values', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     let conversions = 0;
     const hostile = {
       [Symbol.toPrimitive]() {
@@ -653,7 +653,7 @@ describe('runtime envelope canonicalization boundary', () => {
       coordinationLedgerDigest,
       coordinationLedgerJson,
       validateCoordinationLedgerV1,
-    } = await import('../src/contracts/envelopes.js');
+    } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     const before = structuredClone(ledger);
 
@@ -721,7 +721,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('coordination ledger validates and emits the same captured Proxy image', async () => {
-    const { coordinationLedgerJson } = await import('../src/contracts/envelopes.js');
+    const { coordinationLedgerJson } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     let liveReads = 0;
     let hookCalls = 0;
@@ -748,7 +748,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('rejects an invalid captured ledger image even when live fields would pass', async () => {
-    const { coordinationLedgerJson } = await import('../src/contracts/envelopes.js');
+    const { coordinationLedgerJson } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     let liveReads = 0;
     const input = new Proxy(ledger, {
@@ -769,7 +769,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('coordination ledger semantics bind claim authority, projections, FIFO, and notice history', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     const ledgerBefore = structuredClone(ledger);
     const owner = ledger.tickets[0]!;
@@ -1243,7 +1243,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('rejects overlapping resources across active claims on one ticket', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     const ticket = ledger.tickets[0]!;
     const claim = ledger.claims[0]!;
@@ -1349,7 +1349,7 @@ describe('runtime envelope canonicalization boundary', () => {
   ] as const)(
     'projects the earliest %s lease by instant and preserves wire timestamps',
     async (_label, laterInstantWireExpiry, earlierInstantWireExpiry) => {
-      const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+      const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
       const ledger = coordinationLedgerFixture();
       const ticket = ledger.tickets[0]!;
       const claim = ledger.claims[0]!;
@@ -1409,7 +1409,7 @@ describe('runtime envelope canonicalization boundary', () => {
   );
 
   test('breaks equal-instant lease projection ties by the existing lexical order independent of claim order', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     const ticket = ledger.tickets[0]!;
     const claim = ledger.claims[0]!;
@@ -1494,7 +1494,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('reports case aliases in ticket exclusive resources', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     const value: CoordinationLedger = {
       ...ledger,
@@ -1507,7 +1507,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('reports duplicate ticket and claim identity diagnostics', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const ledger = coordinationLedgerFixture();
     const ticket = ledger.tickets[0]!;
     const claim = ledger.claims[0]!;
@@ -1536,7 +1536,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('rejects malformed ledger keys and calendar dates with their exact diagnostics', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const base = coordinationLedgerFixture();
     const ticket = base.tickets[0]!;
     const claim = base.claims[0]!;
@@ -1589,7 +1589,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('checks normalized resource aliases and combined ticket scope before projections', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const base = coordinationLedgerFixture();
     const ticket = base.tickets[0]!;
     const claim = base.claims[0]!;
@@ -1638,7 +1638,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('keeps Unicode file keys distinct when uppercase folding would merge them', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const base = coordinationLedgerFixture();
     const resources = ['file:src/ß.ts', 'file:src/ss.ts'];
     const ledger = {
@@ -1653,7 +1653,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('accepts a released claim from an earlier ticket generation', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const base = coordinationLedgerFixture();
     const historical = {
       ...base,
@@ -1682,7 +1682,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('rejects a wildcard resource at the active claim boundary', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const base = coordinationLedgerFixture();
     const wildcard = 'file:src/*.ts';
     const result = expectReturned(() =>
@@ -1697,7 +1697,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('rejects a ticket sequence equal to the next sequence', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const base = coordinationLedgerFixture();
     const result = expectReturned(() =>
       validateCoordinationLedgerV1({
@@ -1711,7 +1711,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('enforces aggregate coordination ledger record and resource budgets', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const base = coordinationLedgerFixture();
     const notice = {
       schema: 'ConflictNotice/v1',
@@ -1775,7 +1775,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('counts every resource field in a mixed aggregate overflow before later semantic errors', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const base = coordinationLedgerFixture();
     const resources = (prefix: string, count: number) =>
       Array.from({ length: count }, (_, index) => `${prefix}:${index}`);
@@ -1807,7 +1807,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('coordination release history binds contour assurance, batch state, rebind, and retirement', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1 } = loadFreshEnvelopes();
     const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.js');
     const base = coordinationLedgerFixture();
     const owner = base.tickets[0]!;
@@ -2429,7 +2429,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('normalizes a non-Error canonicalizer failure before rejecting', async () => {
-    const envelopes = await import('../src/contracts/envelopes.js');
+    const envelopes = loadFreshEnvelopes();
     const envelope: RuntimeEnvelope = {
       schema: 'RuntimeEnvelope/v1',
       kind: 'quality-check',
@@ -2455,7 +2455,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('preserves canonicalizer failures without eager message reads or string conversion', async () => {
-    const { validateRuntimeEnvelope } = await import('../src/contracts/envelopes.js');
+    const { validateRuntimeEnvelope } = loadFreshEnvelopes();
     let messageReads = 0;
     let errorStringConversions = 0;
     const nonError = {
@@ -2683,7 +2683,7 @@ function invokeUntrusted(
 }
 
 test('runtime envelopes validate and consume one captured Proxy descriptor image', async () => {
-  const { consumeRuntimeEnvelope, validateRuntimeEnvelope } = await import('../src/contracts/envelopes.js');
+  const { consumeRuntimeEnvelope, validateRuntimeEnvelope } = loadFreshEnvelopes();
   const descriptorImage: RuntimeEnvelope = {
     schema: 'RuntimeEnvelope/v1',
     kind: 'quality-check',

@@ -1,16 +1,22 @@
 import { describe, expect, test } from 'bun:test';
 import fc from 'fast-check';
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { assertProperty } from './helpers/assert-property.js';
 import { outcome, parameters, unknownValue } from './helpers/fuzz-boundary.ts';
-import {
-  consumeRuntimeEnvelope,
-  validateRuntimeEnvelope,
-  type RuntimeEnvelopeRevisionBinding,
-} from '../src/contracts/envelopes.ts';
+import type { RuntimeEnvelopeRevisionBinding } from '../src/contracts/envelopes.ts';
+
+const requireEnvelopes = createRequire(import.meta.url);
+
+function loadFreshEnvelopes(): typeof import('../src/contracts/envelopes.js') {
+  const file = requireEnvelopes.resolve('../src/contracts/envelopes.ts');
+  delete requireEnvelopes.cache[file];
+  return requireEnvelopes(file) as typeof import('../src/contracts/envelopes.js');
+}
 
 describe('deterministic envelope fuzz boundaries', () => {
   test('runtime-envelope unknown-value validator returns its canonical image or fails closed', () => {
+    const { validateRuntimeEnvelope } = loadFreshEnvelopes();
     assertProperty(
       fc.property(unknownValue, (value) => {
         const result = outcome(() => validateRuntimeEnvelope(value));
@@ -32,6 +38,7 @@ describe('deterministic envelope fuzz boundaries', () => {
   });
 
   test('runtime envelope revision binding rejects arbitrary payload and binding mutations', () => {
+    const { consumeRuntimeEnvelope } = loadFreshEnvelopes();
     assertProperty(
       fc.property(unknownValue, unknownValue, (value, binding) => {
         const result = outcome(() => consumeRuntimeEnvelope(value, binding as RuntimeEnvelopeRevisionBinding));

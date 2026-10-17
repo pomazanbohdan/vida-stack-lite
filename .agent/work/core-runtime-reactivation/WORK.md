@@ -1254,6 +1254,46 @@ contours remain without a complete triple. These pairs do not establish mutation
 closure or global admission. Resume remaining mutation repairs from captured maps;
 no repeated whole suite or reclassification of prior UNKNOWN is authorized here.
 
+### Three-contour mutation follow-up
+
+Three blind Luna author lanes at immutablea94321f inspect image, envelopes and
+service custody. They prepare only assigned test bytes in isolated author trees;
+Root owns all execution, integration and Git. No concrete additional custody
+test is justified from its current evidence, so no speculative cases are added.
+
+Fresh full envelope attempt `UZf9rf`, run8caecd92-f4ac-4a61-a76a-d6b8f05a2a1e,
+on immutablec414866 terminates in249704ms:763generated,101attempted,100Killed,
+0Survived,1UNKNOWN,662unattempted, with the full47-case baseline. Outer captures,
+groups, boot and checkout observations are complete. Preserve/fence all v194
+artifacts and scratch; no whole-contour score or automatic replay follows.
+UNKNOWN local110, identity21cde2fda9ac26171cc831e9dce8ee9afc2d3d2b8553e6f6153c85e9ee106172,
+shortens the reserved-device regex extension. The existing NUL.txt assertion fails
+correctly, but its body owns0activation hits. Residual dynamic subject imports
+reuse an earlier module's import-time regex rather than initialize within that
+body. All28 analogous direct envelope imports now reuse the already-qualified
+synchronous test-local fresh loader. Both property bodies also load once before
+constructing their unchanged properties; seeds, run counts and assertions stay.
+Public-index inventory and lifetime-state modules remain with their existing owners.
+
+The image lane joins retained Survived identity6388d41eef2073f88aacbad3392b2d01f70ddc280a1518158721479b2393c2cc
+to its actual generated description (old local216), rather than guess from stale
+IDs. One new fixture uses native VACUUM, verifies zero user tables, serializes the
+real SQLite image and requires the empty-Mastra-schema diagnostic. Focused
+`dLjUxl` passes1case/3assertions. Exact >=0 negative control `ShqHRH` fails that
+assertion with the later inventory-mismatch diagnostic; Root restores Source
+exactly before further checks. This local negative control is not a native Killed
+receipt. No product Source changes or frozen correspondence changes are needed.
+
+Final development `MuFBtj` passes110tests/4717assertions across all four affected
+image/envelope files in5924ms,0skipped, complete captures, closed groups and same
+boot. Actual generated-mutant requalification remains pending publication.
+
+Recursive JUnit review corrects an incomplete worker census: actual envelope
+baseline has47cases/4271assertions. ZOMBIES'7leaf cases total0.076s versus1.937s
+file time;1.861s lies in import/setup/collection. Its public export inventory is
+required, and the shared context is loaded once. No justified removal, filter,
+process reuse, larger timeout or claimed speedup follows from that timing.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

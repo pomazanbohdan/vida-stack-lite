@@ -1491,6 +1491,12 @@ the exact subject before each operation; all assertions inspect that operation's
 result. A fresh load in only one helper cannot supply activation for another
 failing body. Preserve one module instance within an operation and retain native
 prototype interception. Qualify this route against the actual generated mutant.
+Audit every subject import in the declared contour, including residual dynamic
+imports in later bodies and static value imports in property files. For a pure
+property subject, load once per body before constructing the unchanged property,
+not once per generated input. Keep public-index export inventory and unrelated
+dependencies with their existing owners. A passing assertion with zero owned
+activation remains UNKNOWN until a fresh native control proves the repair.
 Do not use this fixture for a module owning opaque capabilities or lifetime state:
 restoring its exact `require.cache` entry does not restore subsequent ESM imports'
 identity on the qualified Bun probe. Preserve its canonical owner and leave missing

@@ -104,8 +104,11 @@ An analogous image review also confirms two product error-masking defects in
 readonly catalog close and INSERT statement finalization. Shared existing cleanup
 finishing now retains undefined/body/cleanup identities and ordered aggregates;
 real-handle RED/GREEN tests cover both. Existing50caps stay10/10; two new cleanup
-callbacks have separately reviewed prospective1/1 caps, awaiting immutable pin
-and fresh numerical proof. No current score or closure is inferred from this fix.
+callbacks have separately reviewed prospective1/1 caps, pinned atb1ecf6b and
+verified through the fresh52-role coverage/frozen pair recorded in WORK. Full
+mutation closure remains OPEN. The next TEST013 packet adds a real empty-Mastra
+schema assertion and removes residual cached subject imports from envelope test
+bodies after an actual zero-owned-hit UNKNOWN. Original failed evidence remains.
 
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
 

@@ -1024,6 +1024,28 @@ describe('existing storage image preparation', () => {
     );
   });
 
+  test('rejects a valid but empty Mastra database image before comparing it with the pinned inventory', async () => {
+    const database = new Database(':memory:', { strict: true, safeIntegers: true });
+    let mastra: ClosedDatabaseImage;
+    try {
+      database.exec('VACUUM');
+      const tableCount = database
+        .query<{ count: number | bigint }, []>(
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+        )
+        .get()?.count;
+      expect(tableCount).toBe(0n);
+      mastra = closedImage(database);
+    } finally {
+      database.close(true);
+    }
+    const host = makeHost();
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /Mastra schema is empty/u,
+    );
+  });
+
   test.each([
     [
       'extra target table',
