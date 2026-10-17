@@ -1832,6 +1832,56 @@ Independent review approves the required hierarchy. Fresh native qualification
 is still pending; product Source, role caps and existing UNKNOWN results stay
 unchanged.
 
+Fresh immutable v205 at2455aa8 qualifies the corrected nested native path.
+SDK-inputs `Tj8Ff0` passes1891ms. Native set `ftiGFW`, run
+3fa2a16e-89d1-4ff3-8a7c-0e0e1ad0e511, finishes30500ms with a complete
+79-case baseline and527generated:6assertion-confirmed Killed,0Survived,
+0UNKNOWN,521unattempted. Current IDs53/209/311/472/535/541 bind Source4a3414f
+and the actual generated image; they cover bigint digest separation, Mastra
+schema bound, original import cause, combined output capacity, pinned nonempty
+catalog and original catalog cause. The measured baseline5712.34748ms derives
+the same21425ms pre-launch/invoke allowance, capped by the unchanged190000ms
+envelope. Full captures/groups/boot/commit/clean checkout are observed. Diagnostic
+exit1 is required for521unattempted; no full contour score, triple or acceptance.
+The reader correctly rejects terminal-summary as a complete partition report;
+projection620 is unchanged. Preserve all previous UNKNOWN classifications.
+
+The v204 coverage/frozen pair remains separately bound to its original commit.
+The two native tooling changes are absent from its168captured tool inputs and
+do not affect its Source/test closure, so no duplicate coverage suite is run for
+v205. This reuse does not turn that older observation into a new-run report.
+
+Next image boundary control uses a real native4096-byte-page database with
+1024pages. One BLOB allocation creates exactly4MiB; deleting that row preserves
+the high-water image and over1000free pages, which the real merge reuses.
+`5BlYPP` passes the actual public success/reopened rows/integrity/output-capacity
+control,1executed/79skipped in1232ms. An earlier inert fixture probe established
+native page sizes but its final diagnostic JSON failed to serialize bigint;
+that probe is neither a product failure nor final behavioral proof. No invalid
+trailing padding, mock deserialization, tuning loop or higher limit is added.
+
+Blind custody review finds one safe duplicate SHA-256: keep the validated child
+capability digest at its existing first guard and bind that immutable local in
+the same PID-record CAS slot. Independent review approves equivalence and guard
+order. Root applies only that two-statement Source change. The combined image
+and complete custody selection `GeGTbr` passes205/0tests in9614ms with full
+captures/groups/boot. A mistaken nonexistent fixture selection was rejected
+before launch; the actual three custody files come from the maintained registry.
+
+Only the changed custody Source is inventoried. All53identities/complexities
+match its Source-bound v200 report, maxCC9, with four unchanged utility roles.
+New scoped binding70bc49a3259d6c21d9f3caf8beb953f3fa3ffa231fc6c0b2f5314c7b2df2e827
+preserves57roles and every actual ceiling:56ordinary10/10 plus shared UUID1/1.
+The older scope prose confused isDigest's measured1/1 with its actual10/10 cap;
+the prior scoped report and published row confirm10/10, which stays unchanged.
+Missing current-complexity annotations in the partial global rows are filled
+from the checked inventory; no allowance/count/global admission is changed.
+Retained inventory avoids another parse after the static metadata correction.
+Review: /workspace/attachments/custody-digest-reuse-review-v206-20261017.md.
+New scope is Source-lineage-only pending its immutable pin and fresh numeric
+pair. Existing module-init SQL activation GAP remains open. Blind envelopes
+review finds no new supported defect and proposes no speculative invariant.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

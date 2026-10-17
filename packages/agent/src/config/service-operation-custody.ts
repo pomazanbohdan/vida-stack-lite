@@ -379,7 +379,7 @@ export function recordServiceOperationLaunchPid(
 ): ServiceOperationCustody {
   validateKey(workspaceId, kind, operationId);
   validateDigest(requestDigest, 'request digest');
-  serviceOperationLaunchCapabilityDigest(childCapability);
+  const capabilityDigest = serviceOperationLaunchCapabilityDigest(childCapability);
   requireCustody(Number.isSafeInteger(pid) && pid > 0, 'spawned worker pid is invalid');
   assertServiceDatabase(database, workspaceId);
   assertServiceOperationCustodyReady(database);
@@ -391,16 +391,7 @@ export function recordServiceOperationLaunchPid(
           table +
           " SET launch_pid=?,revision=? WHERE workspace_id=? AND owner_kind=? AND operation_id=? AND request_digest=? AND revision=? AND phase='launching' AND launch_pid IS NULL AND owner_token=?",
       )
-      .run(
-        pid,
-        next,
-        workspaceId,
-        kind,
-        operationId,
-        requestDigest,
-        revision,
-        serviceOperationLaunchCapabilityDigest(childCapability),
-      );
+      .run(pid, next, workspaceId, kind, operationId, requestDigest, revision, capabilityDigest);
     requireCustody(recorded.changes === 1, 'spawned worker pid compare-and-swap failed');
     const row = readRow(database, workspaceId, operationId);
     requireCustody(row?.phase === 'launching' && row.launch_pid === pid, 'spawned worker reservation changed');

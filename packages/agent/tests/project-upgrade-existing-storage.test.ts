@@ -1576,6 +1576,47 @@ describe('existing storage image preparation', () => {
     );
   });
 
+  test('accepts a real 4 MiB Host image and reuses its free pages for the merge', async () => {
+    const maximumBytes = 4 * 1024 * 1024;
+    const database = new Database(':memory:', { strict: true, safeIntegers: true });
+    let host: ClosedDatabaseImage;
+    try {
+      database.exec('PRAGMA page_size=4096');
+      database.exec('CREATE TABLE boundary_row(id INTEGER PRIMARY KEY, label TEXT NOT NULL)');
+      database.query('INSERT INTO boundary_row VALUES(1,?)').run('kept');
+      database.exec('CREATE TABLE capacity_padding(payload BLOB NOT NULL)');
+      database.query('INSERT INTO capacity_padding VALUES(zeroblob(?))').run(maximumBytes - 4 * 4096 + 4);
+      expect(database.query<{ page_size: bigint }, []>('PRAGMA page_size').get()?.page_size).toBe(4096n);
+      expect(database.query<{ page_count: bigint }, []>('PRAGMA page_count').get()?.page_count).toBe(1024n);
+      database.exec('DELETE FROM capacity_padding');
+      expect(
+        database.query<{ freelist_count: bigint }, []>('PRAGMA freelist_count').get()?.freelist_count,
+      ).toBeGreaterThan(1000n);
+      host = closedImage(database);
+    } finally {
+      database.close(true);
+    }
+    expect(host.bytes.byteLength).toBe(maximumBytes);
+    const before = Buffer.from(host.bytes);
+    const mastra = await makeMastra();
+    const image = await expectAsyncReturned(() =>
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+    );
+    expect(image.size).toBeLessThanOrEqual(maximumBytes);
+    expect(Buffer.from(host.bytes).equals(before)).toBe(true);
+    const merged = openUnified(image.bytes_base64);
+    try {
+      expect(merged.query('SELECT * FROM boundary_row').all()).toEqual([{ id: 1n, label: 'kept' }]);
+      expect(merged.query('SELECT * FROM capacity_padding').all()).toEqual([]);
+      expect(merged.query('PRAGMA integrity_check').get()).toEqual({ integrity_check: 'ok' });
+      expect(
+        merged.query<{ count: bigint }, []>('SELECT COUNT(*) AS count FROM mastra_threads').get()?.count,
+      ).toBeGreaterThan(0n);
+    } finally {
+      merged.close(true);
+    }
+  });
+
   test('rejects a correctly hashed source image larger than the 4 MiB input bound before SQLite deserialization', async () => {
     const host = oversizedHostImage();
     const mastra = await makeMastra();
