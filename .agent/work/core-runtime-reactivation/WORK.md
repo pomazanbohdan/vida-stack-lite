@@ -222,6 +222,18 @@ before adoption and retain GAP until explicit dispositions, independent review,
 immutable pinning and fresh numeric checks pass. No active budget row changes in
 this planning step.
 
+The prospective plan is published at b66671c before tracked named adoption.
+Independent v149 reconciles the actual named helper and v2 dispositions: the
+mapper moves out of active retained rows into explicit removal with its complete
+prior row embedded as historical data; the comparator is separately new at4/4.
+All76other mappings, five previous removals and capture facade10/10 remain
+unchanged. Counters derive5448retained/1664new/97removed, still7112current roles.
+The exact existing comparator body now has its distinct name; no extra wrapper,
+comparison, export or authorization change is added. `U7OqKw` passes the full
+three-file envelope selection45tests in3872ms with complete captures, closed
+groups and unchanged boot. Immutable review pinning and fresh numeric checks
+remain separate; no envelope closure is claimed.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

@@ -233,6 +233,22 @@ function ledgerTimestamp(value: string, path: string): number {
   return parsed;
 }
 
+type ClaimLeaseOrderingValue = {
+  readonly claim: Pick<CoordinationClaim, 'lease_expires_at'>;
+  readonly leaseExpiry: number;
+  readonly leaseSubmillisecond: number;
+};
+
+function compareClaimLeaseExpiry(left: ClaimLeaseOrderingValue, right: ClaimLeaseOrderingValue): number {
+  return (
+    left.leaseExpiry - right.leaseExpiry ||
+    left.leaseSubmillisecond - right.leaseSubmillisecond ||
+    (left.claim.lease_expires_at < right.claim.lease_expires_at
+      ? -1
+      : Number(left.claim.lease_expires_at > right.claim.lease_expires_at))
+  );
+}
+
 function ledgerResourceKey(resource: string, path: string): string {
   ledgerRequire(
     resource.trim() === resource && !/\p{Cc}/u.test(resource),
@@ -452,15 +468,7 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       `$.tickets.${index}.active_resources`,
       'ticket active resource projection differs from claims',
     );
-    const expiry =
-      activeClaims.toSorted(
-        (left, right) =>
-          left.leaseExpiry - right.leaseExpiry ||
-          left.leaseSubmillisecond - right.leaseSubmillisecond ||
-          (left.claim.lease_expires_at < right.claim.lease_expires_at
-            ? -1
-            : Number(left.claim.lease_expires_at > right.claim.lease_expires_at)),
-      )[0]?.claim.lease_expires_at ?? null;
+    const expiry = activeClaims.toSorted(compareClaimLeaseExpiry)[0]?.claim.lease_expires_at ?? null;
     ledgerRequire(
       ticket.expires_at === expiry,
       'TICKET_EXPIRY_PROJECTION_INVALID',

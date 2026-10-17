@@ -10,9 +10,9 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5449,
-    "new": 1663,
-    "removed": 96,
+    "retained": 5448,
+    "new": 1664,
+    "removed": 97,
     "current_roles": 7112,
     "source_files": 149
   },
@@ -44348,39 +44348,6 @@
         "bodyLine": 442,
         "bodyColumn": 52,
         "bodyEndLine": 442,
-        "bodyEndColumn": 71
-      },
-      "baseline_complexity": 1,
-      "baseline_coverage": 1,
-      "baseline_crap": 1,
-      "max_complexity": 1,
-      "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
-      "current_complexity": 1
-    },
-    {
-      "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:expiry/closure:CallExpression:arguments[0]#0",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:expiry/closure:CallExpression:arguments[0]#0",
-      "file": "src/contracts/envelopes.ts",
-      "name": "closure:CallExpression:arguments[0]",
-      "source_address": {
-        "line": 467,
-        "column": 36,
-        "start": 17565,
-        "end": 17598,
-        "bodyLine": 467,
-        "bodyColumn": 47,
-        "bodyEndLine": 467,
-        "bodyEndColumn": 69
-      },
-      "current_source_address": {
-        "line": 449,
-        "column": 36,
-        "start": 17212,
-        "end": 17247,
-        "bodyLine": 449,
-        "bodyColumn": 45,
-        "bodyEndLine": 449,
         "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
@@ -206359,6 +206326,13 @@
         "bodyEndColumn": 1
       },
       "current_complexity": 2
+    },
+    {
+      "identity": "src/contracts/envelopes.ts#fn:compareClaimLeaseExpiry#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "New private callable owns one cohesive chronological ordering over already validated claim rows: epoch milliseconds, submillisecond remainder, then deterministic ASCII original-wire tie. This is a separately prospective domain/risk cap under the existing cohesive-invariant-4 policy, recorded in planned_named_lease_ordering_20261017 at b66671c before tracked named adoption. The isolated v139 prototype is explicitly disclosed; the plan does not claim pre-prototype timing. No original allowance is transferred, and no candidate metric sets the cap.",
+      "independent_review": "/workspace/attachments/lease-named-comparator-review-v149.md"
     }
   ],
   "removed_functions": [
@@ -207019,6 +206993,43 @@
           "bodyEndColumn": 67
         },
         "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
+      }
+    },
+    {
+      "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:expiry/closure:CallExpression:arguments[0]#0",
+      "rationale": "The b549951 responsibility is a unary claim-to-expiry-wire-string mapper, followed by native string sorting. The current projection obtains the wire string after sorting active rows; the distinct compareClaimLeaseExpiry callable performs pairwise chronological ordering of enriched rows. The original mapper has no same-responsibility callable successor. Preserve its complete frozen baseline row and original1/1 ceiling as history; remove this role without transferring or increasing its allowance. Independent role review: /workspace/attachments/lease-named-comparator-review-v149.md. Prospective named-role plan: planned_named_lease_ordering_20261017, committed b66671c before tracked named adoption.",
+      "preserved_frozen_disposition": {
+        "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:expiry/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:expiry/closure:CallExpression:arguments[0]#0",
+        "file": "src/contracts/envelopes.ts",
+        "name": "closure:CallExpression:arguments[0]",
+        "source_address": {
+          "line": 467,
+          "column": 36,
+          "start": 17565,
+          "end": 17598,
+          "bodyLine": 467,
+          "bodyColumn": 47,
+          "bodyEndLine": 467,
+          "bodyEndColumn": 69
+        },
+        "current_source_address": {
+          "line": 449,
+          "column": 36,
+          "start": 17212,
+          "end": 17247,
+          "bodyLine": 449,
+          "bodyColumn": 45,
+          "bodyEndLine": 449,
+          "bodyEndColumn": 71
+        },
+        "baseline_complexity": 1,
+        "baseline_coverage": 1,
+        "baseline_crap": 1,
+        "max_complexity": 1,
+        "max_crap": 1,
+        "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+        "current_complexity": 1
       }
     }
   ],
@@ -224826,5 +224837,28 @@
     "pre_implementation_context": "Published 52fc50e has no named compareClaimLeaseExpiry callable. The existing inline repair remains numerically unqualified. An isolated candidate prototype exists at audit-lease-projection-v139; this record must be published and reviewed before adopting its named implementation into tracked Source.",
     "original_disposition": "The genuine b549951 unary claim-to-wire mapper is removed, not renamed into the pairwise comparator. Preserve its complete original frozen row and allowance as history, with no transfer or increase.",
     "adoption_prerequisites": "After this prospective record is immutable, adopt a distinct named callable identity, explicit old-mapper removal and new-role disposition under the existing v2 protocol. Keep 76 retained original roles, five prior removals, the sixth mapper removal and the existing independently capped capture facade unchanged. Expected current78 = retained76 + existing capture facade + named comparator. No identity reset, dummy wrapper, global qualification or passing score follows from this plan."
+  },
+  "scope_review_main_envelopes_named_ordering_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [
+      "src/contracts/envelopes.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/contracts/envelopes.ts",
+        "current_path": "src/contracts/envelopes.ts",
+        "rationale": "All envelope roles remain in the same Source owner. The unary expiry mapper is removed and the distinct named pairwise comparator is added within this file."
+      }
+    ],
+    "review_artifact": "/workspace/attachments/quality-envelope-validated-rows-actual-lineage-20261016.md",
+    "additional_role_review": "/workspace/attachments/lease-named-comparator-review-v149.md",
+    "correspondence": "Original 82 = 76 retained + 6 removed. Preserve all 76 other retained role mappings, original ceilings, measurements and rationales unchanged; preserve the five prior removals and add only the original unary expiry mapper removal. Current 78 = retained 76 + existing capture facade + named compareClaimLeaseExpiry. The capture facade retains its existing prospective10/10 cap; the distinct comparator uses its prospective4/4 role plan. The old mapper's full original baseline row and1/1 allowance remain immutable history. No ceiling transfers, identity reuse, numeric admission or contour closure is implied.",
+    "limits": "Lineage-only proposal. Exact coverage, scoped frozen CRAP admission and mutation evidence remain separate.",
+    "independent_review_lane": "blind-native-luna-lease-lineage-v149",
+    "prospective_plan_ref": "b66671c",
+    "retained": 76,
+    "new_functions": 2,
+    "removed_functions": 6,
+    "prototype_context": "Isolated prototype disclosed; the independently justified 4/4 plan was published before tracked named adoption. No pre-prototype chronology or metric-derived allowance is claimed."
   }
 }
