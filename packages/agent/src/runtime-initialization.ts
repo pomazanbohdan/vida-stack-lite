@@ -58,7 +58,6 @@ export function readRuntimeInitializationAuthority(
   const root = canonicalRepositoryRoot(repositoryRoot);
   const access = requireSafeRepositoryAccess(root);
   assertLoadedRuntimeConfig(config, root);
-  assertProjectUpgradeInactive(access);
   const selected = activeRuntimeConfigurationSource(access);
   const loaded = runtimeConfigurationSourceFor(config);
   if (selected !== loaded) fail('runtime configuration selection changed');

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import assert from 'node:assert/strict';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
+import { isSeq, parseDocument } from 'yaml';
 import { execFile, type ChildProcess } from 'node:child_process';
 import type { Writable } from 'node:stream';
 import {
@@ -35,6 +36,7 @@ import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import {
   requireSafeRepositoryAccess,
   SafeRepositoryLockContentionError,
+  type SafeRepositoryAccess,
 } from '../../src/config/safe-repository-access.ts';
 import type { RuntimeInitializationReceipt } from '../../src/config/initialization-record.ts';
 import { fixtureInitializationTemplates } from '../helpers/runtime-initialization-fixture.ts';
@@ -108,10 +110,18 @@ async function expectReadAdmissionExpiry(
 ): Promise<unknown> {
   const originalNow = Date.now;
   const startedWallTime = originalNow();
+  const deadline = startedWallTime + 5_000;
   let caught: unknown;
   let bindingSettled = false;
   let clockAdvanced = false;
-  const binding = action();
+  Date.now = () => startedWallTime;
+  let binding: Promise<unknown>;
+  try {
+    binding = action();
+  } catch (error) {
+    Date.now = originalNow;
+    throw error;
+  }
   const observedBinding = binding.then(
     () => {
       bindingSettled = true;
@@ -130,11 +140,12 @@ async function expectReadAdmissionExpiry(
       new Promise<'pending'>((resolve) => setTimeout(() => resolve('pending'), 25)),
     ]);
     expect(firstAttempt).toBe('pending');
-    expect(originalNow()).toBeLessThan(startedWallTime + 5_000);
+    expect(originalNow()).toBeLessThan(deadline);
     assertRetainedState();
 
-    Date.now = () => originalNow() + 6_000;
+    Date.now = () => deadline;
     clockAdvanced = true;
+    expect(Date.now()).toBe(deadline);
     try {
       await expectNoRetryDelay(() => binding);
     } catch (error) {
@@ -148,7 +159,7 @@ async function expectReadAdmissionExpiry(
   } finally {
     try {
       if (!bindingSettled) {
-        Date.now = () => originalNow() + 6_000;
+        Date.now = () => deadline;
         clockAdvanced = true;
         const drained = await expectNoRetryDelay(() => observedBinding);
         if (
@@ -300,7 +311,18 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
   expect(expectReturned(() => deriveWorkspaceId('another-repository', root))).not.toBe(receipt.workspace_id);
   expect(expectReturned(() => deriveWorkspaceId('a'.repeat(64), root))).toMatch(/^[a-f0-9]{64}$/u);
   expect(() => deriveWorkspaceId('a'.repeat(65), root)).toThrow('repository identity is invalid');
-  expect(() => deriveWorkspaceId(receipt.repository_id, 'relative/root')).toThrow(WorkspaceIdentityError);
+  let relativeRootError: unknown;
+  try {
+    deriveWorkspaceId(receipt.repository_id, 'relative/root');
+  } catch (error) {
+    relativeRootError = error;
+  }
+  expect(relativeRootError).toBeInstanceOf(WorkspaceIdentityError);
+  expect(relativeRootError).toMatchObject({
+    name: 'WorkspaceIdentityError',
+    code: 'GAP-WORKSPACE-IDENTITY-001',
+    message: 'repository root must be absolute',
+  });
   expect(() => deriveWorkspaceId(receipt.repository_id, null as unknown as string)).toThrow(WorkspaceIdentityError);
   const missingRoot = path.join(root, 'missing-repository-root');
   expect(existsSync(missingRoot)).toBe(false);
@@ -316,7 +338,7 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
     );
     unlinkSync(linkedRoot);
   }
-  const authority = readRuntimeInitializationAuthority(root, loadRuntimeConfig(root));
+  const authority = expectReturned(() => readRuntimeInitializationAuthority(root, loadRuntimeConfig(root)));
   expect(authority).toEqual({
     format: 'RuntimeInitialization/v1',
     receipt,
@@ -421,6 +443,27 @@ test('reads v2 initialization authority from a completed real project upgrade', 
 }, 10_000);
 
 test('same workspace binding is idempotent under concurrent callers', async () => {
+  const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
+  const originalConfig = loadRuntimeConfig(root);
+  const originalProjectIds = originalConfig.projects.map(({ project_id }) => project_id);
+  expect([...originalProjectIds].sort()).toEqual([...receipt.project_ids]);
+  const originalConfigDigest = receipt.config_digest;
+  const sourceDocument = parseDocument(readFileSync(configPath, 'utf8'));
+  const projectsNode = sourceDocument.get('projects', true);
+  if (!isSeq(projectsNode) || projectsNode.items.length < 2)
+    throw new Error('Runtime configuration needs at least two projects for order coverage.');
+  projectsNode.items.reverse();
+  const reversedProjectIds = [...originalProjectIds].reverse();
+  writeFileSync(configPath, sourceDocument.toString());
+
+  // The per-root config cache reloads when its source digest changes.
+  const reorderedConfig = loadRuntimeConfig(root);
+  expect(reorderedConfig.projects.map(({ project_id }) => project_id)).toEqual(reversedProjectIds);
+  const reorderedConfigDigest = runtimeConfigDigest(reorderedConfig);
+  expect(reorderedConfigDigest).not.toBe(originalConfigDigest);
+  receipt = { ...receipt, config_digest: reorderedConfigDigest };
+  writeFileSync(receiptPath, JSON.stringify(receipt) + '\n');
+
   const results = await Promise.all([
     expectInitializationResult(() => bindRuntimeInitialization(root, store)),
     expectInitializationResult(() => bindRuntimeInitialization(root, store)),
@@ -493,6 +536,48 @@ test('workspace binding retains receipt and exact reclaim guard after read-only 
   if (caught instanceof RuntimeInitializationBindingError)
     expect(caught.cause).toBeInstanceOf(SafeRepositoryLockContentionError);
   expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+  const retainedGuard = lstatSync(guardPath);
+  expect(retainedGuard.dev).toBe(guardIdentity.dev);
+  expect(retainedGuard.ino).toBe(guardIdentity.ino);
+  const currentGuard = lstatSync(guardPath);
+  if (currentGuard.dev === guardIdentity.dev && currentGuard.ino === guardIdentity.ino) rmdirSync(guardPath);
+  caseCompleted = true;
+});
+
+test('workspace binding retains receipt and lock reclaim guard when contention expires at the deadline', async () => {
+  if (process.platform !== 'linux') {
+    caseCompleted = true;
+    return;
+  }
+  const guardPath = path.join(path.dirname(receiptPath), '.' + path.basename(receiptPath) + '.cas.lock.reclaim');
+  mkdirSync(guardPath);
+  const guardIdentity = lstatSync(guardPath);
+  const receiptBytes = readFileSync(receiptPath);
+  const receiptIdentity = lstatSync(receiptPath);
+  const databasePath = path.join(root, '.agent/host.sqlite');
+  const hostSnapshot = readFileSync(databasePath);
+  const caught = await expectReadAdmissionExpiry(
+    () => bindRuntimeInitialization(root, store),
+    () => {
+      expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+      const retainedReceipt = lstatSync(receiptPath);
+      expect(retainedReceipt.dev).toBe(receiptIdentity.dev);
+      expect(retainedReceipt.ino).toBe(receiptIdentity.ino);
+      expect(readFileSync(databasePath)).toEqual(hostSnapshot);
+      const retainedGuard = lstatSync(guardPath);
+      expect(retainedGuard.dev).toBe(guardIdentity.dev);
+      expect(retainedGuard.ino).toBe(guardIdentity.ino);
+    },
+    'receipt lock admission',
+  );
+  expect(caught).toBeInstanceOf(RuntimeInitializationBindingError);
+  if (caught instanceof RuntimeInitializationBindingError)
+    expect(caught.cause).toBeInstanceOf(SafeRepositoryLockContentionError);
+  expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+  const retainedReceipt = lstatSync(receiptPath);
+  expect(retainedReceipt.dev).toBe(receiptIdentity.dev);
+  expect(retainedReceipt.ino).toBe(receiptIdentity.ino);
+  expect(readFileSync(databasePath)).toEqual(hostSnapshot);
   const retainedGuard = lstatSync(guardPath);
   expect(retainedGuard.dev).toBe(guardIdentity.dev);
   expect(retainedGuard.ino).toBe(guardIdentity.ino);
@@ -899,10 +984,13 @@ async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Pr
   const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
   const originalSafeExports = Object.freeze({ ...(await import('../../src/config/safe-repository-access.ts')) });
   const receiptRelative = path.relative(root, receiptPath).replaceAll('\\', '/');
+  const receiptBytes = readFileSync(receiptPath);
   const hostBefore = database!.query('SELECT * FROM agent_host_state').all();
   let lockAttempts = 0;
   let callbackEntries = 0;
   let replacements = 0;
+  const fileExistsCalls: Array<{ readonly target: string; readonly label: string }> = [];
+  const replacementCalls: Array<Parameters<SafeRepositoryAccess['replaceAtomicAsync']>> = [];
   try {
     await mock.module(safeModuleUrl, () => ({
       ...originalSafeExports,
@@ -920,8 +1008,13 @@ async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Pr
               return operation();
             });
           },
+          fileExists: (target: string, label: string) => {
+            if (target === receiptRelative) fileExistsCalls.push({ target, label });
+            return access.fileExists(target, label);
+          },
           replaceAtomicAsync: async (...args: Parameters<typeof access.replaceAtomicAsync>) => {
             replacements++;
+            replacementCalls.push(args);
             return access.replaceAtomicAsync(...args);
           },
         };
@@ -932,9 +1025,31 @@ async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Pr
     )) as typeof import('../../src/runtime-initialization.ts');
     const bound = await expectAsyncReturned(() => isolated.bindRuntimeInitialization(root, store));
     expect(readFileSync(receiptPath, 'utf8')).toBe(JSON.stringify(bound, null, 2) + '\n');
+    expect(fileExistsCalls).toEqual([{ target: receiptRelative, label: 'runtime initialization receipt' }]);
+    expect(replacementCalls).toEqual([
+      [
+        receiptRelative,
+        createHash('sha256').update(receiptBytes).digest('hex'),
+        JSON.stringify(bound, null, 2) + '\n',
+        'bind runtime initialization',
+      ],
+    ]);
     expect({ lockAttempts, callbackEntries, replacements }).toEqual({
       lockAttempts: 2,
       callbackEntries: 1,
+      replacements: 1,
+    });
+    const boundBytes = readFileSync(receiptPath);
+    expect(await expectAsyncReturned(() => isolated.bindRuntimeInitialization(root, store))).toEqual(bound);
+    expect(readFileSync(receiptPath)).toEqual(boundBytes);
+    expect(fileExistsCalls).toEqual([
+      { target: receiptRelative, label: 'runtime initialization receipt' },
+      { target: receiptRelative, label: 'runtime initialization receipt' },
+    ]);
+    expect(replacementCalls).toHaveLength(1);
+    expect({ lockAttempts, callbackEntries, replacements }).toEqual({
+      lockAttempts: 3,
+      callbackEntries: 2,
       replacements: 1,
     });
     expect(database!.query('SELECT * FROM agent_host_state').all()).toEqual(hostBefore);
@@ -1083,9 +1198,19 @@ test('fails closed when the host store or persisted receipt does not match deter
   );
   expect(readFileSync(receiptPath)).toEqual(bytes);
   rmSync(receiptPath);
-  await Promise.resolve(
-    expect(bindRuntimeInitialization(root, store)).rejects.toThrow('runtime initialization receipt is unavailable'),
-  );
+  let missingReceiptFailure: unknown;
+  try {
+    await bindRuntimeInitialization(root, store);
+  } catch (error) {
+    missingReceiptFailure = error;
+  }
+  expect(missingReceiptFailure).toBeInstanceOf(RuntimeInitializationBindingError);
+  expect(missingReceiptFailure).toMatchObject({
+    name: 'RuntimeInitializationBindingError',
+    code: 'GAP-RUNTIME-INIT-BIND-001',
+    message: 'runtime initialization receipt is unavailable',
+  });
+  expect(existsSync(receiptPath)).toBe(false);
   caseCompleted = true;
 });
 
