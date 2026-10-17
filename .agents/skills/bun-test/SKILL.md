@@ -500,6 +500,9 @@ observation before suspension, drain the binding, and restore the clock in
 [TESTING's expiry contract](../../../packages/agent/TESTING.md#process-timeout-and-fixture-safety).
 For parent-body mutation activation, invoke the canonical binder in that body
 under the real receipt lock; never copy subprocess counters into parent proof.
+When a retry owner uses `Bun.sleep`, observe that owner for a zero-retry assertion;
+a `setTimeout` spy no longer proves the absence of delays. Restore the sleep
+method in `finally` and retain the actual typed denial and unchanged-state checks.
 
 For asynchronous case custody, enroll each root before the body can suspend.
 Teardown must observe a pending body directly; a `finally` that marks failure

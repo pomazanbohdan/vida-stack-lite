@@ -571,12 +571,12 @@ test('workspace binding denies an unsafe activation reclaim guard without retryi
   symlinkSync(target, guardPath, 'dir');
   const guardIdentity = lstatSync(guardPath);
   const receiptBytes = readFileSync(receiptPath);
-  const originalSetTimeout = globalThis.setTimeout;
-  let retryTimers = 0;
-  globalThis.setTimeout = ((...args: Parameters<typeof setTimeout>) => {
-    retryTimers += 1;
-    return originalSetTimeout(...args);
-  }) as typeof setTimeout;
+  const originalSleep = Bun.sleep;
+  let retrySleeps = 0;
+  Bun.sleep = ((...args: Parameters<typeof Bun.sleep>) => {
+    retrySleeps += 1;
+    return originalSleep(...args);
+  }) as typeof Bun.sleep;
   let caught: unknown;
   try {
     try {
@@ -585,14 +585,14 @@ test('workspace binding denies an unsafe activation reclaim guard without retryi
       caught = error;
     }
   } finally {
-    globalThis.setTimeout = originalSetTimeout;
+    Bun.sleep = originalSleep;
   }
   expect(caught).toBeInstanceOf(RuntimeInitializationBindingError);
   if (caught instanceof RuntimeInitializationBindingError) {
     expect(caught.cause).toBeInstanceOf(Error);
     expect(caught.cause).not.toBeInstanceOf(SafeRepositoryLockContentionError);
   }
-  expect(retryTimers).toBe(0);
+  expect(retrySleeps).toBe(0);
   expect(readFileSync(receiptPath)).toEqual(receiptBytes);
   const retainedGuard = lstatSync(guardPath);
   expect(retainedGuard.dev).toBe(guardIdentity.dev);

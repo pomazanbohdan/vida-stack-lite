@@ -10,10 +10,10 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5448,
-    "new": 1667,
-    "removed": 97,
-    "current_roles": 7115,
+    "retained": 5447,
+    "new": 1666,
+    "removed": 98,
+    "current_roles": 7113,
     "source_files": 149
   },
   "source_bindings": [
@@ -27938,13 +27938,13 @@
       "max_crap": 2,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 96,
+        "line": 95,
         "column": 2,
-        "start": 3537,
-        "end": 3693,
-        "bodyLine": 96,
+        "start": 3425,
+        "end": 3581,
+        "bodyLine": 95,
         "bodyColumn": 71,
-        "bodyEndLine": 99,
+        "bodyEndLine": 98,
         "bodyEndColumn": 3
       },
       "source_address": {
@@ -27968,13 +27968,13 @@
       "max_crap": 2,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 102,
+        "line": 101,
         "column": 0,
-        "start": 3697,
-        "end": 3794,
-        "bodyLine": 102,
+        "start": 3585,
+        "end": 3682,
+        "bodyLine": 101,
         "bodyColumn": 38,
-        "bodyEndLine": 104,
+        "bodyEndLine": 103,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -27998,13 +27998,13 @@
       "max_crap": 56,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 116,
+        "line": 115,
         "column": 0,
-        "start": 4236,
-        "end": 4970,
-        "bodyLine": 121,
+        "start": 4124,
+        "end": 4843,
+        "bodyLine": 120,
         "bodyColumn": 14,
-        "bodyEndLine": 140,
+        "bodyEndLine": 138,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -28028,14 +28028,14 @@
       "max_crap": 2,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 125,
-        "column": 93,
-        "start": 4534,
-        "end": 4613,
-        "bodyLine": 125,
-        "bodyColumn": 105,
-        "bodyEndLine": 128,
-        "bodyEndColumn": 7
+        "line": 123,
+        "column": 91,
+        "start": 4403,
+        "end": 4476,
+        "bodyLine": 123,
+        "bodyColumn": 103,
+        "bodyEndLine": 126,
+        "bodyEndColumn": 5
       },
       "source_address": {
         "line": 31,
@@ -28049,36 +28049,6 @@
       }
     },
     {
-      "identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
-      "current_identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
-      "baseline_complexity": 1,
-      "baseline_coverage": 0,
-      "baseline_crap": 2,
-      "max_complexity": 1,
-      "max_crap": 2,
-      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
-      "current_source_address": {
-        "line": 137,
-        "column": 24,
-        "start": 4920,
-        "end": 4956,
-        "bodyLine": 137,
-        "bodyColumn": 37,
-        "bodyEndLine": 137,
-        "bodyEndColumn": 60
-      },
-      "source_address": {
-        "line": 38,
-        "column": 24,
-        "start": 1554,
-        "end": 1590,
-        "bodyLine": 38,
-        "bodyColumn": 37,
-        "bodyEndLine": 38,
-        "bodyEndColumn": 60
-      }
-    },
-    {
       "identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0",
       "current_identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0",
       "baseline_complexity": 5,
@@ -28088,13 +28058,13 @@
       "max_crap": 30,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 155,
+        "line": 152,
         "column": 7,
-        "start": 5498,
-        "end": 8389,
-        "bodyLine": 155,
+        "start": 5369,
+        "end": 8260,
+        "bodyLine": 152,
         "bodyColumn": 113,
-        "bodyEndLine": 209,
+        "bodyEndLine": 206,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -28118,13 +28088,13 @@
       "max_crap": 90,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 170,
+        "line": 167,
         "column": 6,
-        "start": 6273,
-        "end": 8292,
-        "bodyLine": 170,
+        "start": 6144,
+        "end": 8163,
+        "bodyLine": 167,
         "bodyColumn": 18,
-        "bodyEndLine": 203,
+        "bodyEndLine": 200,
         "bodyEndColumn": 7
       },
       "source_address": {
@@ -28148,13 +28118,13 @@
       "max_crap": 2,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role. Exact closure relocation reviewed by Root against published/current bodies and corrected by the blind reviewer.",
       "current_source_address": {
-        "line": 179,
+        "line": 176,
         "column": 55,
-        "start": 6961,
-        "end": 6988,
-        "bodyLine": 179,
+        "start": 6832,
+        "end": 6859,
+        "bodyLine": 176,
         "bodyColumn": 66,
-        "bodyEndLine": 179,
+        "bodyEndLine": 176,
         "bodyEndColumn": 82
       },
       "source_address": {
@@ -178317,13 +178287,13 @@
         "line": 54,
         "column": 7,
         "start": 1982,
-        "end": 3422,
+        "end": 3310,
         "bodyLine": 57,
         "bodyColumn": 34,
-        "bodyEndLine": 91,
+        "bodyEndLine": 90,
         "bodyEndColumn": 1
       },
-      "current_complexity": 4
+      "current_complexity": 3
     },
     {
       "identity": "src/runtime-initialization.ts#fn:initializationBindingFailure#0",
@@ -178331,13 +178301,13 @@
       "max_crap": 10,
       "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
       "current_source_address": {
-        "line": 106,
+        "line": 105,
         "column": 0,
-        "start": 3796,
-        "end": 4139,
-        "bodyLine": 106,
+        "start": 3684,
+        "end": 4027,
+        "bodyLine": 105,
         "bodyColumn": 89,
-        "bodyEndLine": 112,
+        "bodyEndLine": 111,
         "bodyEndColumn": 1
       },
       "current_complexity": 3
@@ -178348,33 +178318,16 @@
       "max_crap": 10,
       "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
       "current_source_address": {
-        "line": 143,
+        "line": 141,
         "column": 0,
-        "start": 5057,
-        "end": 5402,
-        "bodyLine": 143,
+        "start": 4931,
+        "end": 5273,
+        "bodyLine": 141,
         "bodyColumn": 97,
-        "bodyEndLine": 152,
+        "bodyEndLine": 149,
         "bodyEndColumn": 1
       },
-      "current_complexity": 5
-    },
-    {
-      "identity": "src/runtime-initialization.ts#fn:readInitializationWithAdmission#0/closure:NewExpression:arguments[0]#0",
-      "max_complexity": 10,
-      "max_crap": 10,
-      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
-      "current_source_address": {
-        "line": 149,
-        "column": 24,
-        "start": 5352,
-        "end": 5388,
-        "bodyLine": 149,
-        "bodyColumn": 37,
-        "bodyEndLine": 149,
-        "bodyEndColumn": 60
-      },
-      "current_complexity": 1
+      "current_complexity": 4
     },
     {
       "identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0/binding:selected/closure:CallExpression:arguments[0]#0",
@@ -178382,13 +178335,13 @@
       "max_crap": 10,
       "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
       "current_source_address": {
-        "line": 161,
+        "line": 158,
         "column": 59,
-        "start": 5911,
-        "end": 6023,
-        "bodyLine": 161,
+        "start": 5782,
+        "end": 5894,
+        "bodyLine": 158,
         "bodyColumn": 65,
-        "bodyEndLine": 164,
+        "bodyEndLine": 161,
         "bodyEndColumn": 5
       },
       "current_complexity": 1
@@ -178399,13 +178352,13 @@
       "max_crap": 10,
       "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
       "current_source_address": {
-        "line": 171,
+        "line": 168,
         "column": 76,
-        "start": 6363,
-        "end": 7846,
-        "bodyLine": 171,
+        "start": 6234,
+        "end": 7717,
+        "bodyLine": 168,
         "bodyColumn": 82,
-        "bodyEndLine": 191,
+        "bodyEndLine": 188,
         "bodyEndColumn": 9
       },
       "current_complexity": 9
@@ -207104,6 +207057,10 @@
         "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
         "current_complexity": 1
       }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
+      "rationale": "Replace the Promise executor and timer callback with await Bun.sleep(25) inside the existing retry owner. No replacement callable, transferred ceiling, deadline reset, guard change or baseline recapture."
     }
   ],
   "review": {
@@ -207348,6 +207305,10 @@
     {
       "identity": "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
       "rationale": "Retired Source-added callback from the redundant targetMastra subset query. The preceding exact whole-schema guard and disjoint schema names prove this subset; no mutation or callout intervenes. Blind Luna author and independent v158 review agree. Original prospective10/10 at9469a4e1663750e8de022e8f9dfca7a4327c9a08 stays historical; no published baseline removal or allowance transfer."
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:readInitializationWithAdmission#0/closure:NewExpression:arguments[0]#0",
+      "rationale": "Replace the Promise executor and timer callback with await Bun.sleep(25) inside the existing retry owner. No replacement callable, transferred ceiling, deadline reset, guard change or baseline recapture."
     }
   ],
   "baseline_coverage_report_ref": ".tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/coverage/bun-unified/coverage-final.json",
@@ -225373,5 +225334,90 @@
     "correspondence": "All59existing roles and original ceilings retained. Replace redundant null-only digest guard with an explicit primitive-string guard; preserve API string|null, validation order, hex regex, hash and timingSafeEqual. Four utility identities and complexities unchanged. No baseline recapture, allowance transfer or mutation exclusion.",
     "limits": "Static scoped lineage only. Fresh same-run exact coverage, original frozen proof and complete assertion-confirmed native mutation remain required. Previous574inner results have incomplete outer custody/capture and are not a complete admitted score.",
     "prospective_plan": "62e6bf5:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#planned_custody_lazy_literals_20261017"
+  },
+  "scope_review_runtime_initialization_native_delay_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-runtime-initialization",
+    "files": [
+      "src/runtime-initialization.ts",
+      "src/workspace-identity.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/runtime-initialization.ts",
+        "current_path": "src/runtime-initialization.ts",
+        "rationale": "The original Host binding, lock, and expected-project responsibilities remain in this exact source path. The existing binder and its nested callback roles retain their saved identity lineage; current read/admission/retry and project-configuration roles remain separate additions with their own existing reviewed rows."
+      },
+      {
+        "original_path": "src/workspace-identity.ts",
+        "current_path": "src/workspace-identity.ts",
+        "rationale": "The original workspace identity validation responsibilities remain in this exact source path and retain their selected identity lineage. This path mapping does not transfer caps to additions elsewhere in the runtime-initialization contour."
+      }
+    ],
+    "reviewed_source_context": "f1833a27c37e5f3ebfef1dbf3b0d58b13867665d plus reviewed async retry simplification",
+    "current_source_bindings": [
+      {
+        "file": "src/runtime-initialization.ts",
+        "sha256": "b92fc74512f6634a6b96e451a55db4193918753e98a12a360a7f7cd615d738e9"
+      }
+    ],
+    "independent_review": "/workspace/attachments/initialization-retry-review-v228.md",
+    "selected_rows": {
+      "retained": 11,
+      "new": 5,
+      "removed": 1,
+      "selection_basis": "7 runtime and 4 workspace original roles retained; 5 existing added roles remain. One original timer is removed; one Source-added timer is retired separately."
+    },
+    "retired_retained_row": {
+      "identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
+      "current_identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 137,
+        "column": 24,
+        "start": 4920,
+        "end": 4956,
+        "bodyLine": 137,
+        "bodyColumn": 37,
+        "bodyEndLine": 137,
+        "bodyEndColumn": 60
+      },
+      "source_address": {
+        "line": 38,
+        "column": 24,
+        "start": 1554,
+        "end": 1590,
+        "bodyLine": 38,
+        "bodyColumn": 37,
+        "bodyEndLine": 38,
+        "bodyEndColumn": 60
+      }
+    },
+    "retired_source_added_roles": [
+      {
+        "identity": "src/runtime-initialization.ts#fn:readInitializationWithAdmission#0/closure:NewExpression:arguments[0]#0",
+        "max_complexity": 10,
+        "max_crap": 10,
+        "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+        "current_source_address": {
+          "line": 149,
+          "column": 24,
+          "start": 5352,
+          "end": 5388,
+          "bodyLine": 149,
+          "bodyColumn": 37,
+          "bodyEndLine": 149,
+          "bodyEndColumn": 60
+        },
+        "current_complexity": 1
+      }
+    ],
+    "frozen_cap_action": "Preserve all eleven remaining original ceilings and all five individual added-role caps unchanged. Archive both eliminated callback rows without allowance transfer. Preserve original scope/history and baseline measurements.",
+    "limitations": "Independent Source correspondence review only; existing saved caps unchanged. No original runtime measurement admitted. Exact inventory partitions, full current coverage and scoped proof remain executable gates. No numerical, global or runtime qualification from metadata."
   }
 }

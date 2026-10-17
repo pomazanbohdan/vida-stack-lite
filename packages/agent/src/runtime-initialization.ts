@@ -118,35 +118,33 @@ async function withBindingLock<T>(
   operation: () => Promise<T>,
   deadline: number,
 ): Promise<T> {
-  for (;;) {
-    let entered = false;
-    try {
-      return await access.withExclusiveLockAsync(receiptPath, 'bind runtime initialization', async () => {
-        entered = true;
-        return await operation();
-      });
-    } catch (error) {
-      const code = (error as { readonly code?: unknown })?.code;
-      if (
-        entered ||
-        (!(error instanceof SafeRepositoryLockContentionError) && !bindingLockRetryCodes.has(code)) ||
-        Date.now() >= deadline
-      )
-        throw error;
-      await new Promise((resolve) => setTimeout(resolve, 25));
-    }
+  let entered = false;
+  try {
+    return await access.withExclusiveLockAsync(receiptPath, 'bind runtime initialization', async () => {
+      entered = true;
+      return await operation();
+    });
+  } catch (error) {
+    const code = (error as { readonly code?: unknown })?.code;
+    if (
+      entered ||
+      (!(error instanceof SafeRepositoryLockContentionError) && !bindingLockRetryCodes.has(code)) ||
+      Date.now() >= deadline
+    )
+      throw error;
+    await Bun.sleep(25);
+    return withBindingLock(access, receiptPath, operation, deadline);
   }
 }
 
-/** Retry only synchronous read admission; binding effects never enter this loop. */
+/** Retry only synchronous read admission; binding effects never enter this retry. */
 async function readInitializationWithAdmission<T>(reader: () => T, deadline: number): Promise<T> {
-  for (;;) {
-    try {
-      return reader();
-    } catch (error) {
-      if (!(error instanceof SafeRepositoryLockContentionError) || Date.now() >= deadline) throw error;
-      await new Promise((resolve) => setTimeout(resolve, 25));
-    }
+  try {
+    return reader();
+  } catch (error) {
+    if (!(error instanceof SafeRepositoryLockContentionError) || Date.now() >= deadline) throw error;
+    await Bun.sleep(25);
+    return readInitializationWithAdmission(reader, deadline);
   }
 }
 

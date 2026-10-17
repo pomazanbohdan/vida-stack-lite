@@ -8,12 +8,41 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
-- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,115 current roles, including the separately capped shared UUID predicate and two lazy custody literal owners; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
+- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate and two lazy custody literal owners, after retiring two initialization timer callbacks; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 - Native isolated workers retain private logical overlays and parent-only raw publication. Exact image, envelopes, custody and fs-safe selections permit bounded diagnostics; only fs-safe attestation and custody permit complete admission. The actual fs-safe7/7closure passes the unchanged reader with four negative controls. Custody full admission follows the private SQLite controls, fresh SQL/table activation and closed64-mutant diagnostic below. Default execution stays serial, workers remain fixed-two, and capture/ID selectors remain denied. Permission is no proof; broader resource/coverage qualification and FS zero-callable CRAP applicability stay open.
 
 ## Global contour campaign packet
+
+### Initialization owned activation and native retry simplification — 2026-10-17
+
+Published f1833a2's fresh immutable v227 diagnostic be0cfb0e-29df-46f1-821c-eb05a96a395b
+confirms actual40 (identity0247575) as assertion-confirmed Killed: its parent
+body19 records bun-expect failure with1owned hit. Full19-case baseline passes;
+one of168mutants attempted,167unattempted. Outer RKxaVr closes in23631ms with
+complete captures/groups, same boot/commit and clean tracked inputs. This is
+bounded diagnostic evidence, not complete mutation closure; prior UNKNOWN remains.
+
+Root then replaces both retry loops' Promise/timer wrappers with Bun.sleep(25)
+and asynchronous retries in their existing owners. Preserve the absolute5s
+deadline, per-attempt entered boundary, typed/code retry guards, error identity,
+effect ownership and CAS order. No new callable or helper abstraction is added.
+The non-contention denial test observes the actual Bun.sleep owner and restores
+it in finally. Bun's official [utility reference](https://bun.com/docs/api/utils#bun-sleep)
+documents the promise-returning sleep; current product already uses it.
+
+Blind Luna actual-diff and corrected lineage review are retained at
+`/workspace/attachments/initialization-retry-review-v228.md`. One changed-Source
+inventory confirms12runtime roles plus4unchanged workspace roles; only the two
+executors disappear. Archive the original timer row under removed_functions and
+the added timer under retired_source_added_roles. Preserve all11remaining original
+ceilings and5added caps, the old scope review and exact original measurements.
+The successor scope is scope_review_runtime_initialization_native_delay_20261017;
+there is no baseline recapture or ceiling transfer. Partial counts become
+5447retained/1666new/98removed,7113current roles/149files. Focused XUxWIx passes
+19/0cases in15322ms, complete captures, closed group and same boot. Fresh immutable
+exact coverage, same-run frozen proof and complete native mutation remain pending.
 
 ### Initialization current evidence and owned-clock repair — 2026-10-17
 
@@ -2911,7 +2940,7 @@ CLEAR and backlog retain the P0/P1/P2 definitions and all stable task IDs. Missi
 ## Evidence boundaries
 
 - The retained capture has exact local coverage and same-run scoped CRAP for its bound inputs. Subsequent changes need fresh evidence. No complete config mutation outcome exists.
-- Partial 7,115-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
+- Partial 7,113-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
 - Historical local contour triples are 7/45; 38 remain unclosed. They stay qualified as historical/local and do not imply a globally ready system.
 - Adapter/unit evidence does not establish physical HostState or native Windows behavior. Formation is not installation; installation is not attributable user Runtime acceptance.
 - Keep failures, expected failures and UNKNOWN outcomes with original classifications and receipts. Do not turn interruption, missing output, timeout or partial counters into PASS or Killed.
