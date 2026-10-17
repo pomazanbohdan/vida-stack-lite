@@ -1491,6 +1491,12 @@ the exact subject before each operation; all assertions inspect that operation's
 result. A fresh load in only one helper cannot supply activation for another
 failing body. Preserve one module instance within an operation and retain native
 prototype interception. Qualify this route against the actual generated mutant.
+When several test files share that pure utility, keep their typed forwarding
+functions in one test helper. Restore the exact prior cache entry in `finally`,
+or remove the fresh entry if the cache was originally empty. Check a consuming
+file alone as well as the full contour so test-file ordering cannot hide a
+missing-cache prerequisite. Keep actual dependency namespace spies on the
+canonical utility; changing direct test imports does not replace a stateful caller.
 Audit every subject import in the declared contour, including residual dynamic
 imports in later bodies and static value imports in property files. For a pure
 property subject, load once per body before constructing the unchanged property,

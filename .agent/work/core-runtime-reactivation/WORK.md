@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `34e52e62b07f6b1af2b9d183c0d00336a64dcb26` isolates envelope subject initialization and adds the empty-Mastra witness. Actual diagnostics now confirm envelope110 and image216 Killed; neither is a full score. Fresh v195 coverage/frozen pairs pass for all three active contours and preserve separate BLOCKED parent outcomes. The next checked correction fixes the reproduced100000-row aggregate canonicalization defect without changing52roles or ceilings; new pin/numeric proof are pending. Custody693 remains historical UNKNOWN while its bounded pure-dependency forwarding control awaits native proof. Earlier script/capture and image cleanup repairs remain published, with receipts below. Active contours are storage image, envelopes and service-operation-custody. FS attestation retains native7/7 but stays OPEN on zero-callable CRAP applicability. Facade91906ff and main-hostfebad42 retain historical compatible triples. Admission remains OPEN on stateful static initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `32e47aa1c0928613a1b4329fb529313606dca89b` fixes the reproduced100000-row aggregate canonicalization defect without changing52roles or ceilings; `eda2fa4cfcb833d2f1c3d5aa42766d045e4c2c51` publishes its scoped frozen selector. Fresh v196 storage coverage/frozen proof passes on that exact Source. Actual point diagnostics confirm custody693 and both storage inclusive-boundary mutants Killed; earlier envelope110 and empty-Mastra216 proofs remain historical. These are not full mutation scores. The next correction shares fresh stateless utility forwarding across custody test files, preserving the canonical stateful owner. Earlier script/capture and image cleanup repairs remain published, with receipts below. Active contours are storage image, envelopes and service-operation-custody. FS attestation retains native7/7 but stays OPEN on zero-callable CRAP applicability. Facade91906ff and main-hostfebad42 retain historical compatible triples. Admission remains OPEN on stateful static initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1367,6 +1367,45 @@ Published32e47aa1c0928613a1b4329fb529313606dca89b passes the ordinary strict
 names that immutable aggregate review; earlier pins stay intact. Fresh numeric
 measurement must use this exact pin and the new Source binding, not the prior
 cleanup review. This publication performs no loader/layout/runtime cutover.
+
+On immutable eda2fa4, SDK input formation `nh5vbx` finishes in1787ms without
+suites. Native custody693 diagnostic `r5Mp8g`, run506b4b32-4eec-4ffe-8927-fce5da0a21b2,
+confirms the exact former UNKNOWN identity
+0936e36145dcd0a8dfad81147b8dd72ba16d43286e8c540d2990f2903666478e
+as1assertion-confirmed Killed,0UNKNOWN,685unattempted/686 after the full123-case
+baseline. The6892ms point proof preserves the old failed receipt unchanged.
+
+Storage coverage `rp8RvD`, runce71bf25-165d-4561-8ab2-c045a8a3442d, finishes
+in8865ms with65tests/464assertions and exact52/52functions,194/194lines,
+216/216statements,56/56branches. Frozen `1QD4Xm` passes in1248ms at maxCC/CRAP9/9
+against32e47aa and the reviewed aggregate Source. One import advances the derived
+projection to593attempts; the coverage parent's BLOCKED outcome stays separate.
+Native boundary diagnostic `ACdK8z`, runb69a0ae6-3446-4b7c-b8fe-3fdd784e765b,
+finishes in16619ms with2Killed,0UNKNOWN,496unattempted/498 and65baseline cases.
+Actual current descriptions confirm206 is the exclusive1024-schema comparison
+(identity9aa8d5729a9f1b1d4da3bffc0838d731e9d5861a19f6c6ce8ee1c0014f881cbb),
+and233 is the exclusive100000-row comparison
+(identity710e85ce4ac2227ea02e5c4ad37d9367777db98b33d17e5ad4543091fbdff1b4).
+No shifted local ID is inferred from the old map. All these wrappers retain full
+output, closed process groups, unchanged boot/commit and clean measured checkout.
+Neither point diagnostic is a full-contour score; historical6/45triples stay.
+
+The same pure-utility import pattern exists in two custody test files. One shared
+typed helper now loads the exact stateless utility synchronously per operation,
+restoring an existing cache entry or removing the transient entry when originally
+absent. Only named direct-call imports move; the real dependency namespace spy and
+canonical stateful custody owner remain. Blind read-only review approves this
+bounded seam. Predicate file alone `0gPFpx` passes35cases/0skipped in133ms; full
+three-file contour `fsCIMf` passes123cases/0skipped in3278ms. Both retain complete
+captures, closed groups and unchanged boot. Fresh post-publication native proof is
+required for the changed test closure; no Source inventory/hash pass is repeated.
+
+Native per-body filtering research locates reusable capture, registration/baseline
+join, canonical-map, assertion and receipt owners. It is not enabled: native pilot
+still lacks the independent all-skipped registration probe, full native capture
+join, selected-body/skipped-sibling/required-hook receipt checks and matched
+positive/omitted-body/static-hit controls. Keep current full-selection semantics
+and fixed budgets; diagnostic planning does not authorize filtered mutation proof.
 
 ### Published admission packet — retained context
 
