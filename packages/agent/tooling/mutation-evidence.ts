@@ -58,7 +58,9 @@ export type MutationProcessResult = {
   spawnError: string | null;
   timedOut: boolean;
   processCustody: ProcessCustody | null;
-  output_capture?: { complete: true; stdout: CapturedOutput; stderr: CapturedOutput } | { complete: false };
+  output_capture?:
+    | { complete: true; stdout: CapturedOutput; stderr: CapturedOutput }
+    | { complete: false; errors?: { stream: 'stdout' | 'stderr'; codes: string[] }[] };
 };
 
 const parser = new XMLParser({
@@ -913,11 +915,13 @@ function captureMutationOutput(
 }
 
 async function consumeOutput(reader: OutputReader, file: string, limit: number): Promise<CapturedOutput> {
-  const handle = file ? await open(file, 'wx', 0o600) : null;
+  let handle: Awaited<ReturnType<typeof open>> | null = null;
   const hash = createHash('sha256');
   let bytes = 0;
   let retained = 0;
+  const failures: unknown[] = [];
   try {
+    handle = file ? await open(file, 'wx', 0o600) : null;
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -927,13 +931,30 @@ async function consumeOutput(reader: OutputReader, file: string, limit: number):
       if (length && handle) await handle.writeFile(value.subarray(0, length));
       retained += length;
     }
-  } finally {
-    reader.releaseLock();
-    if (handle) {
-      await handle.sync();
-      await handle.close();
+  } catch (error) {
+    failures.push(error);
+    try {
+      await reader.cancel();
+    } catch (cancellation) {
+      failures.push(cancellation);
     }
   }
+  try {
+    reader.releaseLock();
+  } catch (error) {
+    failures.push(error);
+  }
+  if (handle) {
+    for (const operation of ['sync', 'close'] as const) {
+      try {
+        await handle[operation]();
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+  }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1) throw new AggregateError(failures, 'Mutation output capture and cleanup failed');
   return { bytes, sha256: hash.digest('hex'), retained_bytes: retained, truncated: retained !== bytes };
 }
 
@@ -994,7 +1015,7 @@ async function observeMutationProcess(
   const outputLimit = limits.outputByteLimit ?? 4 * 1024 * 1024;
   const stdout = captureMutationOutput(child.stdout, limits.stdoutFile ?? '', outputLimit);
   const stderr = captureMutationOutput(child.stderr, limits.stderrFile ?? '', outputLimit);
-  const outputResults = Promise.all([stdout.result, stderr.result]);
+  const outputResults = Promise.allSettled([stdout.result, stderr.result]);
   const initial = await observeExit(child.exited, timeoutMs);
   let result;
   if (initial.observed) {
@@ -1027,7 +1048,7 @@ async function observeMutationProcess(
     outputTimer = setTimeout(() => resolve({ complete: false }), 500);
   });
   const settled = await Promise.race([
-    outputResults.then(([out, err]) => ({ complete: true, stdout: out, stderr: err })),
+    outputResults.then((results) => ({ complete: true, results })),
     outputDeadline,
   ]).finally(() => clearTimeout(outputTimer));
   if (!settled.complete) {
@@ -1039,7 +1060,28 @@ async function observeMutationProcess(
       output_capture: { complete: false },
     };
   }
-  return { ...result, output_capture: settled };
+  const [out, err] = settled.results;
+  if (out.status === 'rejected' || err.status === 'rejected')
+    return {
+      ...result,
+      spawnError: result.spawnError ?? 'output-capture-failed',
+      output_capture: {
+        complete: false,
+        errors: settled.results.flatMap((capture, index) =>
+          capture.status === 'rejected'
+            ? [
+                {
+                  stream: index === 0 ? 'stdout' : 'stderr',
+                  codes: (capture.reason instanceof AggregateError ? capture.reason.errors : [capture.reason]).map(
+                    childErrorCode,
+                  ),
+                },
+              ]
+            : [],
+        ),
+      },
+    };
+  return { ...result, output_capture: { complete: true, stdout: out.value, stderr: err.value } };
 }
 
 async function hashExecutable(

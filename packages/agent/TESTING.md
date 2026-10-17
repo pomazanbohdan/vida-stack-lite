@@ -326,6 +326,16 @@ Stryker partitions reuse one scratch root. Record each process receipt and
 post-run input check before deciding whether another partition may start.
 UNKNOWN, incomplete output, signal, spawn error or missing owned-group termination
 proof stops that sequence. A direct exit, including exit0, is not group proof.
+The output-capture500ms close envelope includes stream reads, queued writes,
+file sync and file close; its expiry does not identify the stalled phase.
+Await both capture outcomes without an unhandled rejection. Even after a read,
+write or sync failure, attempt reader release and native file close. Cancel a
+failed reader before releasing its lock so an emitting child cannot block on an
+unread pipe until the command deadline. Preserve cancellation errors too. A settled
+capture failure retains the observed child exit/custody and ordered per-stream
+error codes as `output-capture-failed` with `complete:false`. A deadline remains
+`output-capture-incomplete`; neither state can qualify a mutation kill. A held-
+sync regression releases its gate and observes both closes before fixture cleanup.
 On supported POSIX hosts, a normal owned-group exit probes group absence without
 waiting or issuing another signal; a failed probe retains the direct observation
 and reports unobserved group custody. Unsupported group observation remains GAP.

@@ -1,6 +1,7 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import strykerConfig from '../stryker.config.ts';
-import { mkdtemp, writeFile, rm, rename } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, rename, open as openFile } from 'node:fs/promises';
+import { readlinkSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {
@@ -714,6 +715,204 @@ describe('mutation execution receipts', () => {
     expect(missing).toMatchObject({ exitCode: null, spawnError: 'ENOENT', timedOut: false });
     expect(timeout).toMatchObject({ spawnError: null, timedOut: true });
   });
+
+  test('cancels a failed log stream before a writing child blocks on its unread pipe', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'mutation-output-open-failure-'));
+    let completed = false;
+    try {
+      const result = await executeMutationCommand(
+        [
+          process.execPath,
+          '-e',
+          `process.stdout.on('error', () => process.exit(23));
+          const bytes = Buffer.alloc(65536);
+          function pump() {
+            process.stdout.write(bytes, error => { if (error) process.exit(23); else pump(); });
+          }
+          pump();`,
+        ],
+        process.cwd(),
+        1000,
+        { stdoutFile: path.join(root, 'missing-parent', 'stdout.log'), stderrFile: path.join(root, 'stderr.log') },
+      );
+      expect(result).toMatchObject({
+        exitCode: 23,
+        signal: null,
+        timedOut: false,
+        spawnError: 'output-capture-failed',
+        processCustody: { terminationObserved: true },
+        output_capture: { complete: false, errors: [{ stream: 'stdout', codes: ['ENOENT'] }] },
+      });
+      completed = true;
+    } finally {
+      if (completed) await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test.skipIf(process.platform !== 'linux')(
+    'returns incomplete capture with ordered write, sync and close failures while closing the real log handle',
+    async () => {
+      const root = await mkdtemp(path.join(os.tmpdir(), 'mutation-output-failure-'));
+      let completed = false;
+      let writeAttempts = 0;
+      let syncAttempts = 0;
+      let closeAttempts = 0;
+      let writeSpy: { mockRestore: () => void } | undefined;
+      let syncSpy: { mockRestore: () => void } | undefined;
+      let closeSpy: { mockRestore: () => void } | undefined;
+      try {
+        const stdoutFile = path.join(root, 'stdout.log');
+        const stderrFile = path.join(root, 'stderr.log');
+        const probe = await openFile(path.join(root, 'handle-probe'), 'wx');
+        const handlePrototype = Object.getPrototypeOf(probe) as Pick<typeof probe, 'writeFile' | 'sync' | 'close'>;
+        await probe.close();
+        const handlePath = (handle: typeof probe): string => path.resolve(readlinkSync(`/proc/self/fd/${handle.fd}`));
+        const writeFailure = Object.assign(new Error('controlled capture write failure'), { code: 'EWRITE' });
+        const syncFailure = Object.assign(new Error('controlled capture sync failure'), { code: 'ESYNC' });
+        const closeFailure = Object.assign(new Error('controlled capture close failure'), { code: 'ECLOSE' });
+        const originalWriteFile = handlePrototype.writeFile;
+        const originalSync = handlePrototype.sync;
+        const originalClose = handlePrototype.close;
+        writeSpy = spyOn(handlePrototype, 'writeFile').mockImplementation(async function (
+          this: typeof probe,
+          ...args: Parameters<typeof originalWriteFile>
+        ) {
+          if (handlePath(this) === stdoutFile) {
+            writeAttempts++;
+            throw writeFailure;
+          }
+          return Reflect.apply(originalWriteFile, this, args) as ReturnType<typeof originalWriteFile>;
+        });
+        syncSpy = spyOn(handlePrototype, 'sync').mockImplementation(async function (this: typeof probe) {
+          if (handlePath(this) === stdoutFile) {
+            syncAttempts++;
+            throw syncFailure;
+          }
+          return originalSync.call(this);
+        });
+        closeSpy = spyOn(handlePrototype, 'close').mockImplementation(async function (this: typeof probe) {
+          if (handlePath(this) === stdoutFile) {
+            closeAttempts++;
+            await originalClose.call(this);
+            throw closeFailure;
+          }
+          return originalClose.call(this);
+        });
+
+        const observed = await executeMutationCommand(
+          [process.execPath, '-e', "process.stdout.write('captured bytes', () => process.exit(7))"],
+          process.cwd(),
+          1000,
+          { stdoutFile, stderrFile },
+        ).then(
+          (value) => ({ value }),
+          (reason: unknown) => ({ reason }),
+        );
+        expect('value' in observed).toBe(true);
+        if (!('value' in observed))
+          throw new Error('Capture failure rejected instead of returning bounded evidence.', {
+            cause: observed.reason,
+          });
+        expect(observed.value).toMatchObject({
+          exitCode: 7,
+          signal: null,
+          spawnError: 'output-capture-failed',
+          timedOut: false,
+          processCustody: { terminationObserved: true },
+          output_capture: {
+            complete: false,
+            errors: [{ stream: 'stdout', codes: ['EWRITE', 'ESYNC', 'ECLOSE'] }],
+          },
+        });
+        expect(writeAttempts).toBe(1);
+        expect(syncAttempts).toBe(1);
+        expect(closeAttempts).toBe(1);
+        completed = true;
+      } finally {
+        writeSpy?.mockRestore();
+        syncSpy?.mockRestore();
+        closeSpy?.mockRestore();
+        if (completed) await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
+
+  test.skipIf(process.platform !== 'linux')(
+    'keeps capture incomplete when EOF completes but durable sync is held',
+    async () => {
+      const root = await mkdtemp(path.join(os.tmpdir(), 'mutation-output-sync-gate-'));
+      let completed = false;
+      let syncStarted = 0;
+      let closeAttempts = 0;
+      let signalSyncStarted!: () => void;
+      let signalCleanupFinished!: () => void;
+      let releaseSync!: () => void;
+      const bothSyncsStarted = new Promise<void>((resolve) => {
+        signalSyncStarted = resolve;
+      });
+      const cleanupFinished = new Promise<void>((resolve) => {
+        signalCleanupFinished = resolve;
+      });
+      const syncGate = new Promise<void>((resolve) => {
+        releaseSync = resolve;
+      });
+      let syncSpy: { mockRestore: () => void } | undefined;
+      let closeSpy: { mockRestore: () => void } | undefined;
+      try {
+        const stdoutFile = path.join(root, 'stdout.log');
+        const stderrFile = path.join(root, 'stderr.log');
+        const probe = await openFile(path.join(root, 'handle-probe'), 'wx');
+        const handlePrototype = Object.getPrototypeOf(probe) as Pick<typeof probe, 'sync' | 'close'>;
+        await probe.close();
+        const handlePath = (handle: typeof probe): string => path.resolve(readlinkSync(`/proc/self/fd/${handle.fd}`));
+        const originalSync = handlePrototype.sync;
+        const originalClose = handlePrototype.close;
+        syncSpy = spyOn(handlePrototype, 'sync').mockImplementation(async function (this: typeof probe) {
+          const target = handlePath(this);
+          if (target === stdoutFile || target === stderrFile) {
+            syncStarted++;
+            if (syncStarted === 2) signalSyncStarted();
+            await syncGate;
+          }
+          return originalSync.call(this);
+        });
+        closeSpy = spyOn(handlePrototype, 'close').mockImplementation(async function (this: typeof probe) {
+          const target = handlePath(this);
+          await originalClose.call(this);
+          if (target === stdoutFile || target === stderrFile) {
+            closeAttempts++;
+            if (closeAttempts === 2) signalCleanupFinished();
+          }
+        });
+
+        const resultPromise = executeMutationCommand([process.execPath, '-e', 'process.exit(0)'], process.cwd(), 1000, {
+          stdoutFile,
+          stderrFile,
+        });
+        await bothSyncsStarted;
+        const result = await resultPromise;
+        expect(result).toMatchObject({
+          exitCode: 0,
+          signal: null,
+          timedOut: false,
+          output_capture: { complete: false },
+        });
+        expect(syncStarted).toBe(2);
+        expect(closeAttempts).toBe(0);
+
+        releaseSync();
+        await cleanupFinished;
+        expect(closeAttempts).toBe(2);
+        completed = true;
+      } finally {
+        releaseSync?.();
+        if (syncStarted === 2) await cleanupFinished;
+        syncSpy?.mockRestore();
+        closeSpy?.mockRestore();
+        if (completed) await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
 
   test('uses an explicit child environment without restoring omitted parent variables', async () => {
     const name = 'VIDA_MUTATION_ENV_BOUNDARY_TEST';

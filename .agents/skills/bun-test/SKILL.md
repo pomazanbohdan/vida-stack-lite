@@ -161,6 +161,11 @@ its result before altering a diagnostic view. Label malformed dependency output
 explicitly; restore a scoped prototype spy before invoking captured validators.
 Check a normal operation afterward. Never turn fixture health, matcher misuse or
 missing result-property access into mutation-kill evidence.
+For a capture UNKNOWN, distinguish child termination from complete pipe and
+durable-file capture. Log existence does not prove EOF, sync or close. Keep the
+existing capture deadline; inject faults on exact real file handles and prove
+all close attempts plus retained ordered error codes. A gated sync control must
+release and await its cleanup before restoring spies or disposing the fixture.
 Use the existing `expectReturned` helper for expected-success synchronous setup
 inside a test body; do not construct the mutable subject at module scope.
 `describe` callbacks also run during registration. Keep their Source-dependent

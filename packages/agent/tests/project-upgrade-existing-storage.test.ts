@@ -903,6 +903,66 @@ describe('existing storage image preparation', () => {
     }
   });
 
+  test('rejects a valid Mastra image whose schema differs from the pinned empty-init inventory', async () => {
+    const initializedMastra = await makeMastra();
+    const database = Database.deserialize(Buffer.from(initializedMastra.bytes), { strict: true, safeIntegers: true });
+    let mastra: ClosedDatabaseImage;
+    try {
+      database.exec('CREATE TABLE unplanned_mastra_fixture(id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
+      mastra = closedImage(database);
+    } finally {
+      database.close(true);
+    }
+    const host = makeHost();
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /Mastra schema differs from pinned empty-init inventory/u,
+    );
+  });
+
+  test.each([
+    [
+      'extra target table',
+      'CREATE TABLE unexpected_private_target_fixture(id INTEGER PRIMARY KEY)',
+      "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name='unexpected_private_target_fixture'",
+      1n,
+      /Host schema changed during merge/u,
+    ],
+    [
+      'missing custody table',
+      'DROP TABLE agent_host_service_operation_custody',
+      "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name='agent_host_service_operation_custody'",
+      0n,
+      /Service operation custody: owned service table is absent or differs/u,
+    ],
+  ] as const)(
+    'rejects %s on the owned private target after the cloned-schema check',
+    async (_label, mutationSql, observationSql, expectedCount, diagnostic) => {
+      const host = makeHost();
+      const mastra = await makeMastra();
+      const exec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+      const observed: { target?: Database } = {};
+      let changedState: number | bigint | undefined;
+      const mutating = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, ...args) {
+        const result = exec.apply(this, args);
+        if (String(args[0]).includes('CREATE TABLE vida_workspace_storage_migration')) {
+          observed.target = this;
+          exec.apply(this, [mutationSql]);
+          changedState = this.query<{ count: number | bigint }, []>(observationSql).get()?.count;
+        }
+        return result;
+      });
+      try {
+        await expectRejection(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)), diagnostic);
+      } finally {
+        mutating.mockRestore();
+      }
+      expect(observed.target).toBeDefined();
+      expect(changedState).toBe(expectedCount);
+      expect(() => observed.target?.query('SELECT 1').get()).toThrow();
+    },
+  );
+
   test.each([
     ['Host', /Host logical rows changed during merge/u],
     ['Mastra', /Mastra logical rows differ after import/u],
@@ -1262,6 +1322,12 @@ describe('existing storage image preparation', () => {
     });
     expect(() => validateUnifiedDatabaseImage({ ...image, schema_digest: 'x' + image.schema_digest })).toThrow();
     expect(() => validateUnifiedDatabaseImage({ ...image, schema_digest: image.schema_digest + 'x' })).toThrow();
+    expect(() =>
+      validateUnifiedDatabaseImage({
+        ...image,
+        binding: { ...image.binding, operation_id: '!' + image.binding.operation_id },
+      }),
+    ).toThrow();
     expect(() =>
       validateUnifiedDatabaseImage({
         ...image,

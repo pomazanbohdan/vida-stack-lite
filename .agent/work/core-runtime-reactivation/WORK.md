@@ -1072,6 +1072,56 @@ in3716ms with complete captures, closed groups and unchanged boot. An earlier
 launcher request used nonexistent guessed envelope filenames and was rejected
 before launching tests; it supplies no passing evidence.
 
+Published bde2857 passes the ordinary strict hook and is pushed. New immutable
+v192 uses the existing isolation owner's explicit external retained-root option,
+with `/tmp` actually measured as tmpfs and the same2GiB guard. SDK `oEK6sZ`
+forms inputs once without suites. Image `u2ajp0`, run2b413be1-a99b-4b6e-9bfe-
+73e1e0d4eca7, passes53tests/371assertions with exactF50/50,L189/189,S211/211,
+B56/56 in5698ms; original883af1d frozen `axx5QO` passes9/9 in844ms. The owner
+imports the actual pair into projection563attempts without promoting its BLOCKED
+parent coverage operation or global admission.
+
+Image diagnostic `DRsz8l`, run9818bf1e-5e58-46b4-bca7-48f6b5d2cf1b, completes
+40622ms with full53-case baseline:13assertion-Killed,0Survived,1UNKNOWN,
+473unattempted of487. The19selected IDs were checked against the current generated
+map's actual replacement/location. Local135 fails the independent digest assertion,
+but its real runner receipt records output-capture-incomplete and null capture
+digests; it remains UNKNOWN. Preserve all v192 and scratch, now fenced. No new
+partial score or union of diagnostic sets is accepted. The exact stalled capture
+phase is unproven; complete-looking stderr does not establish full custody.
+
+The next image tests cover actual unexpected Mastra schema, post-clone target
+Host schema change, missing custody readiness table and the operation-ID leading
+anchor. `AXMaiF` passes56tests/384assertions in2426ms. Native handles are observed
+at actual migration creation, changes are asserted, exact diagnostics are checked
+and closed target handles are proved; no mocked schema/integrity result is used.
+
+Capture review exposes a separate deterministic defect: a failed log sync skips
+native close and can reject before child observation. RED `oPpOL2` reproduces the
+unhandled controlled ESYNC error on original Source. Root now attempts reader
+release, sync and close independently, retains single/ordered multiple causes,
+and attaches allSettled immediately. Settled failure retains actual child
+exit/custody and per-stream ordered codes with complete:false;500ms remains
+unchanged. The actual-handle fault test checks EWRITE/ESYNC/ECLOSE and native close.
+A second gated-sync case proves EOF alone cannot pass; it releases both gates and
+observes both native closes before fixture disposal. GREEN `d4pjkO` passes107tests/
+822assertions across image, evidence and command contracts in3775ms with complete
+outer captures, closed groups and unchanged boot. This fixes capture error
+handling; it does not prove the cause of the historical local135 deadline.
+Independent Source review catches the analogous unread-pipe path: failed open/
+write releases a reader without draining or cancelling it, so an emitting child
+can block. Real-child RED `bLfs1N` proves this reaches the1000ms command timeout
+and SIGTERM. Cancelling the exact failed reader before release makes the same
+writer observe its broken pipe and exit23 normally; capture remains refused and
+all error codes remain. Ordered sync/close share one bounded loop rather than
+duplicated catch blocks. Combined GREEN `jKYCaO` passes108tests/823assertions in
+4249ms before that mechanical cleanup-loop consolidation; no timeout is raised.
+Final receipt-owner `b3RF2L` rechecks the changed cleanup loop in879ms with
+complete captures, closed groups and unchanged boot.
+The strict hook also catches an untyped Reflect.apply query-result property in
+the new target fixture. Use the same native handle's typed query directly;
+focused `nMbUPu` rechecks both target faults before retrying the ordinary hook.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.
