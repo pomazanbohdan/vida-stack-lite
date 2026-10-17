@@ -9,6 +9,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  symlinkSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -237,82 +238,118 @@ describe('native existing-storage admission boundary', () => {
     });
   }
 
-  trackedTest('rejects a post-close Mastra sidecar before attempting Host image validation', async () => {
-    const fixture = freshFixture();
-    const hostPath = path.join(fixture.root, hostRelative);
-    const mastraPath = path.join(fixture.root, mastraRelative);
-    const sidecar = mastraPath + '-wal';
-    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
-    let hostBytes: Buffer | undefined;
-    let markerOwned = false;
-    let hostChanged = false;
-    let sourceCloses = 0;
-    let operations = 0;
-    let caught: unknown;
-    let bodyFailure: { error: unknown } | undefined;
-    Database.prototype.close = function (throwOnError) {
-      const isMastra = this.filename === mastraPath;
-      Reflect.apply(originalClose, this, [throwOnError]);
-      if (isMastra && !markerOwned) {
-        sourceCloses++;
-        hostBytes = readFileSync(hostPath);
-        writeFileSync(sidecar, '', { flag: 'wx' });
-        markerOwned = true;
-        // Both actual Source owners have closed. Make downstream Host validation
-        // distinguishable from the required earlier Mastra-sidecar denial.
-        hostChanged = true;
-        writeFileSync(hostPath, '');
-      }
-    };
-    try {
+  for (const fault of [
+    {
+      name: 'rejects a post-close Mastra sidecar before attempting Host image validation',
+      kind: 'sidecar',
+      message: 'source sidecar remains: ' + mastraRelative + '-wal',
+    },
+    {
+      name: 'rejects a post-close Mastra symlink before accepting its otherwise real image',
+      kind: 'symlink',
+      message: 'source is not a private regular file',
+    },
+  ] as const) {
+    trackedTest(fault.name, async () => {
+      const fixture = freshFixture();
+      const hostPath = path.join(fixture.root, hostRelative);
+      const mastraPath = path.join(fixture.root, mastraRelative);
+      const sidecar = mastraPath + '-wal';
+      const originalMastraPath = mastraPath + '.owned-original';
+      const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+      let hostBytes: Buffer | undefined;
+      let markerOwned = false;
+      let hostChanged = false;
+      let originalMastraOwned = false;
+      let mastraRemoved = false;
+      let symlinkOwned = false;
+      let mastraBytes: Buffer | undefined;
+      let sourceCloses = 0;
+      let operations = 0;
+      let caught: unknown;
+      let bodyFailure: { error: unknown } | undefined;
+      Database.prototype.close = function (throwOnError) {
+        const isMastra = this.filename === mastraPath;
+        Reflect.apply(originalClose, this, [throwOnError]);
+        if (isMastra && sourceCloses === 0) {
+          sourceCloses++;
+          if (fault.kind === 'symlink') {
+            mastraBytes = readFileSync(mastraPath);
+            linkSync(mastraPath, originalMastraPath);
+            originalMastraOwned = true;
+            unlinkSync(mastraPath);
+            mastraRemoved = true;
+            symlinkSync(path.basename(originalMastraPath), mastraPath);
+            symlinkOwned = true;
+            return;
+          }
+          hostBytes = readFileSync(hostPath);
+          writeFileSync(sidecar, '', { flag: 'wx' });
+          markerOwned = true;
+          // Both actual Source owners have closed. Make downstream Host validation
+          // distinguishable from the required earlier Mastra-sidecar denial.
+          hostChanged = true;
+          writeFileSync(hostPath, '');
+        }
+      };
       try {
-        await withExistingStorageMergeCapability({
-          repositoryRoot: fixture.root,
-          workspaceId,
-          operationId: binding.operation_id,
-          planDigest: '9'.repeat(64),
-          expectedFenceBinding: binding,
-          receipt: fixture.receipt,
-          hostRelative,
-          mastraRelative,
-          closeHostOwner: () => closeHostOwner(fixture),
-          operation: async () => {
-            operations++;
-          },
-        });
+        try {
+          await withExistingStorageMergeCapability({
+            repositoryRoot: fixture.root,
+            workspaceId,
+            operationId: binding.operation_id,
+            planDigest: '9'.repeat(64),
+            expectedFenceBinding: binding,
+            receipt: fixture.receipt,
+            hostRelative,
+            mastraRelative,
+            closeHostOwner: () => closeHostOwner(fixture),
+            operation: async () => {
+              operations++;
+            },
+          });
+        } catch (error) {
+          caught = error;
+        }
+        expect(caught).toHaveProperty('message', 'VIDA existing storage admission: ' + fault.message);
+        expect(sourceCloses).toBe(1);
+        expect(operations).toBe(0);
+        if (fault.kind === 'symlink') expect(lstatSync(mastraPath).isSymbolicLink()).toBe(true);
       } catch (error) {
-        caught = error;
+        bodyFailure = { error };
+      } finally {
+        Database.prototype.close = originalClose;
+        completeOwnedCleanup(
+          [
+            () => {
+              if (markerOwned) unlinkSync(sidecar);
+              return undefined;
+            },
+            () => {
+              if (!hostChanged) return undefined;
+              if (!hostBytes) throw new Error('Closed Host image restoration bytes are missing');
+              writeFileSync(hostPath, hostBytes);
+              if (!readFileSync(hostPath).equals(hostBytes)) throw new Error('Closed Host image restoration differs');
+              return undefined;
+            },
+            () => {
+              if (!originalMastraOwned) return undefined;
+              if (symlinkOwned) unlinkSync(mastraPath);
+              if (mastraRemoved) linkSync(originalMastraPath, mastraPath);
+              unlinkSync(originalMastraPath);
+              if (!mastraBytes || !readFileSync(mastraPath).equals(mastraBytes))
+                throw new Error('Closed Mastra image restoration differs');
+              return undefined;
+            },
+          ],
+          bodyFailure,
+        );
       }
-      expect(caught).toHaveProperty(
-        'message',
-        'VIDA existing storage admission: source sidecar remains: ' + mastraRelative + '-wal',
-      );
-      expect(sourceCloses).toBe(1);
-      expect(operations).toBe(0);
-    } catch (error) {
-      bodyFailure = { error };
-    } finally {
-      Database.prototype.close = originalClose;
-      completeOwnedCleanup(
-        [
-          () => {
-            if (markerOwned) unlinkSync(sidecar);
-            return undefined;
-          },
-          () => {
-            if (!hostChanged) return undefined;
-            if (!hostBytes) throw new Error('Closed Host image restoration bytes are missing');
-            writeFileSync(hostPath, hostBytes);
-            if (!readFileSync(hostPath).equals(hostBytes)) throw new Error('Closed Host image restoration differs');
-            return undefined;
-          },
-        ],
-        bodyFailure,
-      );
-    }
-    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
-    await releaseFence(fixture.root, fixture.receipt);
-  });
+      if (bodyFailure) throw bodyFailure.error;
+      expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+      await releaseFence(fixture.root, fixture.receipt);
+    });
+  }
 
   trackedTest('rechecks the live admission gate when a callback capability is asserted', async () => {
     const fixture = freshFixture();
@@ -347,6 +384,7 @@ describe('native existing-storage admission boundary', () => {
           ],
           bodyFailure,
         );
+        if (bodyFailure) throw bodyFailure.error;
         capability.assertActive();
         return 'gate restored';
       },

@@ -16,7 +16,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ### Current repair packet — 2026-10-17
 
-Published starting point is0cae79f; origin/main fetched and safely fast-forwarded.
+Published implementation isdca34b7; origin/main fetched and safely fast-forwarded.
 Fresh targeted local94 run `db55aae7-3332-4642-8134-f3e1354403bc` (`wy4Dno`)
 confirms1Killed/226unattempted, full17-case baseline and original batch index5
 in13199ms. Full capture, closed process group and same boot are retained.
@@ -36,13 +36,27 @@ and partition budget for up to32 known repair IDs. Original sparse indices and
 the full universe remain intact; no complete proof or score is emitted. RED
 `mJ3TgL` rejects the missing selector export; the three-file GREEN above exercises
 the implemented selection. Blind v112 finds no actionable defect. Fresh native
-set execution remains pending, so this preparation qualifies no additional kills.
+set `dd82d1d7-63a3-4c0b-b1ac-f4de07065681` (`dPNucd`) now terminates in81188ms:
+one21-case baseline,13selected original indices,10Killed/3survived/0UNKNOWN,
+214unattempted of227. Full captures, closed groups, same boot and unchanged
+Source digest are retained. It emits no candidate proof or contour score.
+Survivors are26,92,212; their old dispositions remain unchanged.
 Final `BJvfk5` passes159/0tests across3files in6142ms with complete captures,
 closed groups and same boot. Strict505/TS-only506 and Oxlint pass. Initial static
 checks caught void cleanup callbacks and an unsafe Bun asymmetric matcher value;
 exact undefined cleanup returns and typed source-membership assertions fix them.
 Current review proposals and Source checks do not
 change the generated contour closure counters or global acceptance.
+
+The fresh native survivors expose two assertion failures swallowed by successful
+cleanup in the new92/212 controls. `completeOwnedCleanup` joins a primary failure
+only when cleanup also fails; explicitly rethrow the captured body failure before
+later successful probes. Preserve the helper's existing contract and Source guards.
+For26, a hardlink still fails its separate nlink predicate; the new post-close
+symlink case isolates the non-file predicate with the original real Mastra image.
+Both post-close faults share one fixture/control path, exact restoration and
+retention. `PcT6j2` passes22/0tests,194assertions in2290ms. Strict505/TS-only506
+pass. Fresh native confirmation of these three repairs is pending.
 
 Five blind Luna lanes reviewed admission, image, runtime initialization, CLI init
 and assurance. Runtime receipt projection is followed by explicit CLI binding
