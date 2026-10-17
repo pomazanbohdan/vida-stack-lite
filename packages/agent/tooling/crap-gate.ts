@@ -102,6 +102,10 @@ const scopedBudgetReviews = new Map([
     'scope_review_runtime_facade_shared_canonical_20261017',
   ],
   ['53fac83b74fb8a5fca7362bbbcb1a0abd8e13253:main-envelopes', 'scope_review_main_envelopes_named_ordering_20261017'],
+  [
+    'fb6fdbdc39c4c1615b561a46a98c75d73df26763:bun-service-operation-custody',
+    'scope_review_custody_uuid_predicate_20261017',
+  ],
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
