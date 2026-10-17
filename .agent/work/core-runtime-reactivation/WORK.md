@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `46421bf3a0e958cbf4330b43538db6bcdcbc588a` shares owned pure-utility activation; product aggregate correction32e47aa and its scoped selector eda2fa4 are published. Fresh v197 pairs pass exact coverage100 and frozen9/9 for all three active contours; parent BLOCKED outcomes remain separate. The full custody attempt records305Killed/7Survived/1UNKNOWN/373unattempted of686 and is fenced. The next checked packet adds seven real guard witnesses and baseline-only native diagnostics; post-publication mutation controls remain pending. UNKNOWN2 is a stateful initialization ownership GAP, not a confirmed kill. Active contours remain storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Latest published checked packet: `8536c35e51dbf04b6a79f2fca41354ca846d03ca` adds seven custody guard witnesses and baseline-only native diagnostics. Fresh point controls confirm all7Killed with679unattempted/686; this is no complete score. Native envelope capture validates47baseline cases and no mutant execution. UUID693 recurs as UNKNOWN in a different first body, so a shared Source grammar predicate is planned under a prospective1/1 cap; stateful schema2 remains GAP. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. Fresh v197 coverage/frozen pairs remain recorded at46421bf, with separate BLOCKED parent outcomes. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1518,6 +1518,47 @@ Type-aware lint separately rejects returning Reflect.apply's any value from the
 throw assertion callback. Use a statement-only block; `1CQJxL` verifies the actual
 invalid-PID/phase body in732ms,1executed/48skipped. An earlier wrong name pattern
 `bjiZwZ` is correctly rejected with0executed/49skipped and supplies no PASS proof.
+
+### Native repair controls and prospective shared UUID owner
+
+Published8536c35e51dbf04b6a79f2fca41354ca846d03ca passes the normal strict
+506-file TypeScript/format/lint/Knip hook and is pushed. In v198, SDK `W9BXvI`
+finishes2009ms. Diagnostic `LIUD26`, runc682301c-21d4-42cb-95af-ef5e6a18d0b4,
+stops8101ms at UUID693 with0Killed/1UNKNOWN/685unattempted, full125-case baseline.
+The actual first failing body is now14, active-child paired lease, before the
+closed-child spy. Its node assertion is genuine but owned hit0. Thus the local
+spy repair is order-dependent; v198 and its UNKNOWN evidence stay fenced.
+
+Independent fresh v199 forms SDK once (`K6nUXz`,2384ms). The seven separate guard
+controls `2Wz3kr`, runa53a35db-1f69-4e95-bec1-55c0546b3bd1, finish26735ms:
+481/491/449/434/619/310/341 are7assertion-confirmed Killed,0Survived,0UNKNOWN,
+679unattempted/686 with full125baseline. Each exact canonical identity matches
+its retained Source description above; they are not inferred from local-ID
+position. Output/groups/boot/commit/clean checkout custody is complete. This
+proves the seven targeted repairs, not a full score or closure.
+
+Native baseline capture `v7M0lo`, rune5c317ed-6a75-40a5-97c2-beb17b915eda,
+finishes7390ms on the same immutable8536c35. Existing receipt owner admits the
+complete47-case baseline and digest-binds MutationPerTestCapture/v2:3describes,
+0hooks,47registrations,47invocations,coverage_observed true,27static IDs and
+41per-test counter contexts. No mutants execute:0attempted/763unattempted,
+nonzero diagnostic exit as documented, no UNKNOWN or complete mutation proof.
+Registration/canonical/filter joins remain explicitly unqualified. This positive
+capture control does not grant a filtered runner or permission to raise budgets.
+
+Disclosed isolated v199 prototypes private literal owners; blind Luna reviews
+their Source roles. Root selects only the shared UUID predicate for adoption.
+Its one straight-return grammar responsibility receives prospective1/1 in
+planned_custody_uuid_predicate_20261017 before canonical implementation. Preserve
+all3existing utility roles/ceilings and all53custody roles/Source bytes. This
+shared predicate will let tests call actual Source directly and remove cache
+reload/namespace-spy scaffolding; no counter hits are assigned or borrowed.
+
+The wider SQL/table factory prototype is not adopted. A call used to preserve
+the exported string constant creates another initialization-owned CallExpression,
+so those two added roles/work do not eliminate the full static-ownership class.
+Source2 remains GAP. Do not treat a prospective cap, prototype, static approval,
+baseline capture or7point controls as current full quality admission.
 
 ### Published admission packet — retained context
 

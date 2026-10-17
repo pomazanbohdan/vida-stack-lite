@@ -224967,5 +224967,17 @@
       "src/config/project-upgrade-existing-storage.ts#fn:capturePinnedMastraInventoryAsync#0/closure:CallExpression:arguments[2]#0"
     ],
     "limits": "All52 existing callable identities and responsibilities remain. Keep all50 original10/10 Source-added ceilings and both previously published cleanup1/1 ceilings exactly. No added/removed/renamed role or cap transfer. Only the final typed row aggregate uses the existing byte-bounded canonicalization seam; public/per-row/depth/byte limits remain. Publish this review before a new immutable scoped pin and numeric measurement; static review is not numeric proof."
+  },
+  "planned_custody_uuid_predicate_20261017": {
+    "status": "PROSPECTIVE_BEFORE_TRACKED_NAMED_IMPLEMENTATION_NOT_NUMERIC_ADMISSION",
+    "file": "src/config/service-operation-launch-capability.ts",
+    "identity": "src/config/service-operation-launch-capability.ts#fn:isServiceOperationLaunchCapability#0",
+    "max_complexity": 1,
+    "max_crap": 1,
+    "basis": "One private pure grammar predicate returns the existing fixed UUID regex test, with no branches, loops, state, effects, hashing or authorization. Its single responsibility is shared by the two existing grammar callers. The independent1/1 ceiling is domain-justified, not copied from a prior role or raised from candidate measurements.",
+    "independent_review": "/workspace/attachments/custody-uuid-predicate-review-v199-20261017.md",
+    "pre_implementation_context": "Published8536c35 has3utility roles and a module-level regex. The disclosed isolated v199 prototype exists; only its UUID predicate is proposed. This record must be immutable before tracked adoption. The wider SQL/table factories remain isolated and unadopted.",
+    "original_disposition": "Preserve all3existing utility responsibilities/ceilings and the unchanged53custody roles. Remove no callable, transfer no allowance, reset no identity. Custody Source bytes remain unchanged.",
+    "adoption_prerequisites": "After publication adopt only the named predicate, remove order-dependent test cache/namespace workarounds, and let the existing Babel inventory owner update exact addresses/hash for this one changedSource. Add1new independently capped role; preserve all existing correspondence and caps. Require affected behavior, exact coverage, scoped frozen proof and actual native controls. No global admission or complete mutation score follows from this plan."
   }
 }
