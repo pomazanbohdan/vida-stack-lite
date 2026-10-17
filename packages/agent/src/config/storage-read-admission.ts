@@ -107,7 +107,7 @@ function assertGateRow(database: Database, workspaceId: string): void {
 function assertClosedGateSchema(database: Database): void {
   const objects = database
     .query<{ type: string; name: string; table_name: string; sql: string | null }, []>(
-      "SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+      "SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master WHERE name NOT GLOB 'sqlite_*' ORDER BY type,name",
     )
     .all();
   requireAdmission(
@@ -156,7 +156,7 @@ function initializeGateTransaction(
   expected: ReturnType<typeof gateIdentity>,
 ): void {
   const objects = () =>
-    database.query<{ name: string }, []>("SELECT name FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'").all();
+    database.query<{ name: string }, []>("SELECT name FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'").all();
   if (objects().length !== 0) return;
   database.exec('BEGIN EXCLUSIVE');
   try {

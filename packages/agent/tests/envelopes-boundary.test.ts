@@ -212,6 +212,9 @@ describe('runtime envelope canonicalization boundary', () => {
       'com¹',
       'lpt².txt',
       'LPT³',
+      'NUL.foo\u2028bar',
+      'CON.foo\u2029bar',
+      'COM1.foo\u2028bar',
       '<',
       '>',
       '|',
@@ -237,6 +240,8 @@ describe('runtime envelope canonicalization boundary', () => {
       'docs/ordinary.\u2028',
       'docs/ordinary \u2029',
       'docs/.GiT\u2028',
+      'docs/NUL\u2028',
+      'docs/CON\u2029',
       'docs/\u2029',
     ])
       assert.equal(

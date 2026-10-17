@@ -185,7 +185,8 @@ const ledgerValidator = new Ajv2020Constructor({ allErrors: true, messages: true
 
 // Require the actual end of a segment: `$` also matches before a final Unicode line separator.
 const invalidPathSegmentSyntax = /(?:^|^\.[gG][iI][tT]|[. ])(?![\s\S])|\p{Cc}|[<>|"?*]/u;
-const reservedPathSegment = /^(?:con|prn|aux|nul|clock\$|conin\$|conout\$|com[1-9¹²³]|lpt[1-9¹²³])(?:\..*)?$/i;
+const reservedPathSegment =
+  /^(?:con|prn|aux|nul|clock\$|conin\$|conout\$|com[1-9¹²³]|lpt[1-9¹²³])(?:\.[\s\S]*)?(?![\s\S])/i;
 
 function invalidPathSegment(segment: string): boolean {
   return invalidPathSegmentSyntax.test(segment) || reservedPathSegment.test(segment);

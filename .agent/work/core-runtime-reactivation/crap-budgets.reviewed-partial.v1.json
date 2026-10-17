@@ -363,7 +363,7 @@
     },
     {
       "file": "src/config/storage-read-admission.ts",
-      "sha256": "f42c3e2a056242b7fb2beb75d82e90c49c18f54ef03289bf1551fcca5adf185f"
+      "sha256": "c81d413172cfb58fb27077793200f84cfbd7f19413f6723a2e2872bd44ecf929"
     },
     {
       "file": "src/orchestration/local-session-reconciliation.ts",
@@ -419,7 +419,7 @@
     },
     {
       "file": "src/contracts/envelopes.ts",
-      "sha256": "71f614a1e4fe6792cabbc077d4236215c88de1f2b7012bb34dfc1eb0cbfa65de"
+      "sha256": "cc06d4c9e2c4289de199f7782290ce9100d903c828259c466e2ba1257ccc49fd"
     },
     {
       "file": "src/orchestration/delivered-work-continuation-repair.ts",
@@ -479,7 +479,7 @@
     },
     {
       "file": "src/config/project-upgrade-existing-storage.ts",
-      "sha256": "a1818feb71e326ec01d3b6ff938057643f95ff664f5604c5a3aa508ab9b8e660"
+      "sha256": "8678bbca51ea0dbaaa6a47f14a8e361f16b912f827487e91f2e4e0e3d0683444"
     },
     {
       "file": "src/config/service-operation-custody.ts",
@@ -42991,9 +42991,9 @@
         "line": 47,
         "column": 0,
         "start": 1636,
-        "end": 1748,
+        "end": 1770,
         "bodyLine": 47,
-        "bodyColumn": 49,
+        "bodyColumn": 48,
         "bodyEndLine": 49,
         "bodyEndColumn": 1
       },
@@ -43021,13 +43021,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 52,
+        "line": 51,
         "column": 0,
-        "start": 1925,
-        "end": 2085,
-        "bodyLine": 52,
+        "start": 1851,
+        "end": 2011,
+        "bodyLine": 51,
         "bodyColumn": 53,
-        "bodyEndLine": 54,
+        "bodyEndLine": 53,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43054,13 +43054,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 56,
+        "line": 55,
         "column": 7,
-        "start": 2094,
-        "end": 2343,
-        "bodyLine": 56,
+        "start": 2020,
+        "end": 2269,
+        "bodyLine": 55,
         "bodyColumn": 73,
-        "bodyEndLine": 60,
+        "bodyEndLine": 59,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43087,13 +43087,13 @@
         "bodyEndColumn": 35
       },
       "current_source_address": {
-        "line": 58,
+        "line": 57,
         "column": 63,
-        "start": 2268,
-        "end": 2292,
-        "bodyLine": 58,
+        "start": 2194,
+        "end": 2218,
+        "bodyLine": 57,
         "bodyColumn": 74,
-        "bodyEndLine": 58,
+        "bodyEndLine": 57,
         "bodyEndColumn": 87
       },
       "baseline_complexity": 1,
@@ -43120,13 +43120,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 65,
+        "line": 64,
         "column": 7,
-        "start": 2541,
-        "end": 3292,
-        "bodyLine": 65,
+        "start": 2467,
+        "end": 3218,
+        "bodyLine": 64,
         "bodyColumn": 113,
-        "bodyEndLine": 77,
+        "bodyEndLine": 76,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43153,13 +43153,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 89,
+        "line": 88,
         "column": 7,
-        "start": 3599,
-        "end": 4074,
-        "bodyLine": 89,
+        "start": 3525,
+        "end": 4000,
+        "bodyLine": 88,
         "bodyColumn": 74,
-        "bodyEndLine": 95,
+        "bodyEndLine": 94,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43186,13 +43186,13 @@
         "bodyEndColumn": 100
       },
       "current_source_address": {
-        "line": 93,
+        "line": 92,
         "column": 76,
-        "start": 4016,
-        "end": 4040,
-        "bodyLine": 93,
+        "start": 3942,
+        "end": 3966,
+        "bodyLine": 92,
         "bodyColumn": 87,
-        "bodyEndLine": 93,
+        "bodyEndLine": 92,
         "bodyEndColumn": 100
       },
       "baseline_complexity": 1,
@@ -43219,13 +43219,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 98,
+        "line": 97,
         "column": 7,
-        "start": 4173,
-        "end": 4614,
-        "bodyLine": 98,
+        "start": 4099,
+        "end": 4540,
+        "bodyLine": 97,
         "bodyColumn": 77,
-        "bodyEndLine": 104,
+        "bodyEndLine": 103,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43252,13 +43252,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 106,
+        "line": 105,
         "column": 7,
-        "start": 4623,
-        "end": 4767,
-        "bodyLine": 106,
+        "start": 4549,
+        "end": 4693,
+        "bodyLine": 105,
         "bodyColumn": 65,
-        "bodyEndLine": 108,
+        "bodyEndLine": 107,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43285,13 +43285,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 111,
+        "line": 110,
         "column": 7,
-        "start": 4866,
-        "end": 5057,
-        "bodyLine": 111,
+        "start": 4792,
+        "end": 4983,
+        "bodyLine": 110,
         "bodyColumn": 100,
-        "bodyEndLine": 113,
+        "bodyEndLine": 112,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43318,13 +43318,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 112,
+        "line": 111,
         "column": 52,
-        "start": 5013,
-        "end": 5053,
-        "bodyLine": 112,
+        "start": 4939,
+        "end": 4979,
+        "bodyLine": 111,
         "bodyColumn": 70,
-        "bodyEndLine": 112,
+        "bodyEndLine": 111,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -43351,13 +43351,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 178,
+        "line": 177,
         "column": 2,
-        "start": 7503,
-        "end": 7597,
-        "bodyLine": 178,
+        "start": 7429,
+        "end": 7523,
+        "bodyLine": 177,
         "bodyColumn": 65,
-        "bodyEndLine": 180,
+        "bodyEndLine": 179,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 1,
@@ -43386,8 +43386,8 @@
       "current_source_address": {
         "line": 191,
         "column": 0,
-        "start": 8045,
-        "end": 8188,
+        "start": 7987,
+        "end": 8130,
         "bodyLine": 191,
         "bodyColumn": 54,
         "bodyEndLine": 193,
@@ -43419,8 +43419,8 @@
       "current_source_address": {
         "line": 195,
         "column": 7,
-        "start": 8197,
-        "end": 8525,
+        "start": 8139,
+        "end": 8467,
         "bodyLine": 195,
         "bodyColumn": 62,
         "bodyEndLine": 206,
@@ -43452,8 +43452,8 @@
       "current_source_address": {
         "line": 208,
         "column": 7,
-        "start": 8534,
-        "end": 8746,
+        "start": 8476,
+        "end": 8688,
         "bodyLine": 208,
         "bodyColumn": 72,
         "bodyEndLine": 212,
@@ -43485,8 +43485,8 @@
       "current_source_address": {
         "line": 214,
         "column": 0,
-        "start": 8748,
-        "end": 8891,
+        "start": 8690,
+        "end": 8833,
         "bodyLine": 214,
         "bodyColumn": 72,
         "bodyEndLine": 216,
@@ -43518,8 +43518,8 @@
       "current_source_address": {
         "line": 218,
         "column": 0,
-        "start": 8893,
-        "end": 9054,
+        "start": 8835,
+        "end": 8996,
         "bodyLine": 218,
         "bodyColumn": 107,
         "bodyEndLine": 220,
@@ -43551,8 +43551,8 @@
       "current_source_address": {
         "line": 222,
         "column": 0,
-        "start": 9056,
-        "end": 9307,
+        "start": 8998,
+        "end": 9249,
         "bodyLine": 222,
         "bodyColumn": 104,
         "bodyEndLine": 229,
@@ -43584,8 +43584,8 @@
       "current_source_address": {
         "line": 231,
         "column": 0,
-        "start": 9309,
-        "end": 9533,
+        "start": 9251,
+        "end": 9475,
         "bodyLine": 231,
         "bodyColumn": 62,
         "bodyEndLine": 235,
@@ -43615,13 +43615,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 237,
+        "line": 253,
         "column": 0,
-        "start": 9535,
-        "end": 9967,
-        "bodyLine": 237,
+        "start": 10029,
+        "end": 10461,
+        "bodyLine": 253,
         "bodyColumn": 67,
-        "bodyEndLine": 247,
+        "bodyEndLine": 263,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -43648,13 +43648,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 249,
+        "line": 265,
         "column": 0,
-        "start": 9969,
-        "end": 10442,
-        "bodyLine": 249,
+        "start": 10463,
+        "end": 10936,
+        "bodyLine": 265,
         "bodyColumn": 77,
-        "bodyEndLine": 264,
+        "bodyEndLine": 280,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -43681,13 +43681,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 266,
+        "line": 282,
         "column": 0,
-        "start": 10444,
-        "end": 28504,
-        "bodyLine": 266,
+        "start": 10938,
+        "end": 29299,
+        "bodyLine": 282,
         "bodyColumn": 97,
-        "bodyEndLine": 730,
+        "bodyEndLine": 753,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43714,13 +43714,13 @@
         "bodyEndColumn": 31
       },
       "current_source_address": {
-        "line": 284,
+        "line": 300,
         "column": 6,
-        "start": 11006,
-        "end": 11236,
-        "bodyLine": 285,
+        "start": 11500,
+        "end": 11730,
+        "bodyLine": 301,
         "bodyColumn": 8,
-        "bodyEndLine": 290,
+        "bodyEndLine": 306,
         "bodyEndColumn": 31
       },
       "baseline_complexity": 1,
@@ -43747,13 +43747,13 @@
         "bodyEndColumn": 75
       },
       "current_source_address": {
-        "line": 293,
+        "line": 309,
         "column": 27,
-        "start": 11282,
-        "end": 11330,
-        "bodyLine": 293,
+        "start": 11776,
+        "end": 11824,
+        "bodyLine": 309,
         "bodyColumn": 45,
-        "bodyEndLine": 293,
+        "bodyEndLine": 309,
         "bodyEndColumn": 75
       },
       "baseline_complexity": 1,
@@ -43780,13 +43780,13 @@
         "bodyEndColumn": 51
       },
       "current_source_address": {
-        "line": 300,
+        "line": 316,
         "column": 23,
-        "start": 11503,
-        "end": 11531,
-        "bodyLine": 300,
+        "start": 11997,
+        "end": 12025,
+        "bodyLine": 316,
         "bodyColumn": 35,
-        "bodyEndLine": 300,
+        "bodyEndLine": 316,
         "bodyEndColumn": 51
       },
       "baseline_complexity": 1,
@@ -43813,13 +43813,13 @@
         "bodyEndColumn": 58
       },
       "current_source_address": {
-        "line": 306,
+        "line": 322,
         "column": 23,
-        "start": 11654,
-        "end": 11689,
-        "bodyLine": 306,
+        "start": 12148,
+        "end": 12183,
+        "bodyLine": 322,
         "bodyColumn": 35,
-        "bodyEndLine": 306,
+        "bodyEndLine": 322,
         "bodyEndColumn": 58
       },
       "baseline_complexity": 1,
@@ -43846,13 +43846,13 @@
         "bodyEndColumn": 47
       },
       "current_source_address": {
-        "line": 312,
+        "line": 328,
         "column": 22,
-        "start": 11815,
-        "end": 11840,
-        "bodyLine": 312,
+        "start": 12309,
+        "end": 12334,
+        "bodyLine": 328,
         "bodyColumn": 33,
-        "bodyEndLine": 312,
+        "bodyEndLine": 328,
         "bodyEndColumn": 47
       },
       "baseline_complexity": 1,
@@ -43879,13 +43879,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 327,
+        "line": 343,
         "column": 24,
-        "start": 12242,
-        "end": 12272,
-        "bodyLine": 327,
+        "start": 12736,
+        "end": 12766,
+        "bodyLine": 343,
         "bodyColumn": 35,
-        "bodyEndLine": 327,
+        "bodyEndLine": 343,
         "bodyEndColumn": 54
       },
       "baseline_complexity": 1,
@@ -43912,13 +43912,13 @@
         "bodyEndColumn": 83
       },
       "current_source_address": {
-        "line": 342,
+        "line": 359,
         "column": 23,
-        "start": 12611,
-        "end": 12725,
-        "bodyLine": 342,
+        "start": 13149,
+        "end": 13263,
+        "bodyLine": 359,
         "bodyColumn": 35,
-        "bodyEndLine": 345,
+        "bodyEndLine": 362,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -43945,13 +43945,13 @@
         "bodyEndColumn": 77
       },
       "current_source_address": {
-        "line": 347,
+        "line": 364,
         "column": 43,
-        "start": 12776,
-        "end": 12810,
-        "bodyLine": 347,
+        "start": 13314,
+        "end": 13348,
+        "bodyLine": 364,
         "bodyColumn": 54,
-        "bodyEndLine": 347,
+        "bodyEndLine": 364,
         "bodyEndColumn": 77
       },
       "baseline_complexity": 1,
@@ -43978,13 +43978,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 348,
+        "line": 365,
         "column": 24,
-        "start": 12838,
-        "end": 14502,
-        "bodyLine": 348,
+        "start": 13376,
+        "end": 15287,
+        "bodyLine": 365,
         "bodyColumn": 42,
-        "bodyEndLine": 380,
+        "bodyEndLine": 403,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -43993,7 +43993,7 @@
       "max_complexity": 9,
       "max_crap": 9,
       "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
-      "current_complexity": 8
+      "current_complexity": 9
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0",
@@ -44011,13 +44011,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 361,
+        "line": 378,
         "column": 45,
-        "start": 13463,
-        "end": 13705,
-        "bodyLine": 362,
+        "start": 14001,
+        "end": 14243,
+        "bodyLine": 379,
         "bodyColumn": 6,
-        "bodyEndLine": 364,
+        "bodyEndLine": 381,
         "bodyEndColumn": 95
       },
       "baseline_complexity": 2,
@@ -44044,13 +44044,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 369,
+        "line": 386,
         "column": 30,
-        "start": 13918,
-        "end": 13977,
-        "bodyLine": 369,
+        "start": 14456,
+        "end": 14515,
+        "bodyLine": 386,
         "bodyColumn": 44,
-        "bodyEndLine": 369,
+        "bodyEndLine": 386,
         "bodyEndColumn": 89
       },
       "baseline_complexity": 1,
@@ -44077,13 +44077,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 382,
+        "line": 405,
         "column": 25,
-        "start": 14531,
-        "end": 19259,
-        "bodyLine": 382,
+        "start": 15316,
+        "end": 20054,
+        "bodyLine": 405,
         "bodyColumn": 44,
-        "bodyEndLine": 500,
+        "bodyEndLine": 523,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -44110,13 +44110,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 385,
+        "line": 408,
         "column": 30,
-        "start": 14679,
-        "end": 14805,
-        "bodyLine": 386,
+        "start": 15464,
+        "end": 15590,
+        "bodyLine": 409,
         "bodyColumn": 8,
-        "bodyEndLine": 386,
+        "bodyEndLine": 409,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -44143,13 +44143,13 @@
         "bodyEndColumn": 104
       },
       "current_source_address": {
-        "line": 393,
+        "line": 416,
         "column": 37,
-        "start": 14988,
-        "end": 15121,
-        "bodyLine": 394,
+        "start": 15773,
+        "end": 15906,
+        "bodyLine": 417,
         "bodyColumn": 8,
-        "bodyEndLine": 394,
+        "bodyEndLine": 417,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 1,
@@ -44176,13 +44176,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 401,
+        "line": 424,
         "column": 6,
-        "start": 15358,
-        "end": 15463,
-        "bodyLine": 401,
+        "start": 16143,
+        "end": 16248,
+        "bodyLine": 424,
         "bodyColumn": 35,
-        "bodyEndLine": 401,
+        "bodyEndLine": 424,
         "bodyEndColumn": 111
       },
       "baseline_complexity": 1,
@@ -44209,13 +44209,13 @@
         "bodyEndColumn": 53
       },
       "current_source_address": {
-        "line": 416,
+        "line": 439,
         "column": 70,
-        "start": 15905,
-        "end": 15972,
-        "bodyLine": 417,
+        "start": 16690,
+        "end": 16757,
+        "bodyLine": 440,
         "bodyColumn": 8,
-        "bodyEndLine": 417,
+        "bodyEndLine": 440,
         "bodyEndColumn": 53
       },
       "baseline_complexity": 1,
@@ -44242,13 +44242,13 @@
         "bodyEndColumn": 61
       },
       "current_source_address": {
-        "line": 424,
+        "line": 447,
         "column": 29,
-        "start": 16154,
-        "end": 16186,
-        "bodyLine": 424,
+        "start": 16939,
+        "end": 16971,
+        "bodyLine": 447,
         "bodyColumn": 42,
-        "bodyEndLine": 424,
+        "bodyEndLine": 447,
         "bodyEndColumn": 61
       },
       "baseline_complexity": 1,
@@ -44275,13 +44275,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 430,
+        "line": 453,
         "column": 29,
-        "start": 16355,
-        "end": 16419,
-        "bodyLine": 430,
+        "start": 17140,
+        "end": 17204,
+        "bodyLine": 453,
         "bodyColumn": 42,
-        "bodyEndLine": 430,
+        "bodyEndLine": 453,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 1,
@@ -44308,13 +44308,13 @@
         "bodyEndColumn": 109
       },
       "current_source_address": {
-        "line": 437,
+        "line": 460,
         "column": 27,
-        "start": 16685,
-        "end": 16710,
-        "bodyLine": 437,
+        "start": 17470,
+        "end": 17495,
+        "bodyLine": 460,
         "bodyColumn": 36,
-        "bodyEndLine": 437,
+        "bodyEndLine": 460,
         "bodyEndColumn": 52
       },
       "baseline_complexity": 1,
@@ -44341,13 +44341,13 @@
         "bodyEndColumn": 81
       },
       "current_source_address": {
-        "line": 442,
+        "line": 465,
         "column": 43,
-        "start": 16881,
-        "end": 16909,
-        "bodyLine": 442,
+        "start": 17666,
+        "end": 17694,
+        "bodyLine": 465,
         "bodyColumn": 52,
-        "bodyEndLine": 442,
+        "bodyEndLine": 465,
         "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
@@ -44374,13 +44374,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 477,
+        "line": 500,
         "column": 29,
-        "start": 18385,
-        "end": 18425,
-        "bodyLine": 477,
+        "start": 19180,
+        "end": 19220,
+        "bodyLine": 500,
         "bodyColumn": 38,
-        "bodyEndLine": 477,
+        "bodyEndLine": 500,
         "bodyEndColumn": 69
       },
       "baseline_complexity": 1,
@@ -44407,13 +44407,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 486,
+        "line": 509,
         "column": 8,
-        "start": 18748,
-        "end": 19060,
-        "bodyLine": 487,
+        "start": 19543,
+        "end": 19855,
+        "bodyLine": 510,
         "bodyColumn": 10,
-        "bodyEndLine": 491,
+        "bodyEndLine": 514,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 4,
@@ -44440,13 +44440,13 @@
         "bodyEndColumn": 72
       },
       "current_source_address": {
-        "line": 490,
+        "line": 513,
         "column": 12,
-        "start": 18987,
-        "end": 19047,
-        "bodyLine": 490,
+        "start": 19782,
+        "end": 19842,
+        "bodyLine": 513,
         "bodyColumn": 25,
-        "bodyEndLine": 490,
+        "bodyEndLine": 513,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 1,
@@ -44473,13 +44473,13 @@
         "bodyEndColumn": 88
       },
       "current_source_address": {
-        "line": 502,
+        "line": 525,
         "column": 45,
-        "start": 19308,
-        "end": 19351,
-        "bodyLine": 502,
+        "start": 20103,
+        "end": 20146,
+        "bodyLine": 525,
         "bodyColumn": 56,
-        "bodyEndLine": 502,
+        "bodyEndLine": 525,
         "bodyEndColumn": 88
       },
       "baseline_complexity": 1,
@@ -44506,13 +44506,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 503,
+        "line": 526,
         "column": 25,
-        "start": 19380,
-        "end": 20827,
-        "bodyLine": 503,
+        "start": 20175,
+        "end": 21622,
+        "bodyLine": 526,
         "bodyColumn": 44,
-        "bodyEndLine": 539,
+        "bodyEndLine": 562,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -44539,13 +44539,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 512,
+        "line": 535,
         "column": 20,
-        "start": 19727,
-        "end": 19840,
-        "bodyLine": 513,
+        "start": 20522,
+        "end": 20635,
+        "bodyLine": 536,
         "bodyColumn": 8,
-        "bodyEndLine": 513,
+        "bodyEndLine": 536,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -44572,13 +44572,13 @@
         "bodyEndColumn": 114
       },
       "current_source_address": {
-        "line": 520,
+        "line": 543,
         "column": 84,
-        "start": 20065,
-        "end": 20095,
-        "bodyLine": 520,
+        "start": 20860,
+        "end": 20890,
+        "bodyLine": 543,
         "bodyColumn": 95,
-        "bodyEndLine": 520,
+        "bodyEndLine": 543,
         "bodyEndColumn": 114
       },
       "baseline_complexity": 1,
@@ -44605,13 +44605,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 534,
+        "line": 557,
         "column": 33,
-        "start": 20611,
-        "end": 20694,
-        "bodyLine": 534,
+        "start": 21406,
+        "end": 21489,
+        "bodyLine": 557,
         "bodyColumn": 44,
-        "bodyEndLine": 534,
+        "bodyEndLine": 557,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 2,
@@ -44638,13 +44638,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 540,
+        "line": 563,
         "column": 30,
-        "start": 20860,
-        "end": 21209,
-        "bodyLine": 540,
+        "start": 21655,
+        "end": 22004,
+        "bodyLine": 563,
         "bodyColumn": 54,
-        "bodyEndLine": 549,
+        "bodyEndLine": 572,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 6,
@@ -44671,13 +44671,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 551,
+        "line": 574,
         "column": 47,
-        "start": 21260,
-        "end": 21304,
-        "bodyLine": 551,
+        "start": 22055,
+        "end": 22099,
+        "bodyLine": 574,
         "bodyColumn": 58,
-        "bodyEndLine": 551,
+        "bodyEndLine": 574,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -44704,13 +44704,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 552,
+        "line": 575,
         "column": 26,
-        "start": 21334,
-        "end": 22470,
-        "bodyLine": 552,
+        "start": 22129,
+        "end": 23265,
+        "bodyLine": 575,
         "bodyColumn": 46,
-        "bodyEndLine": 583,
+        "bodyEndLine": 606,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -44737,13 +44737,13 @@
         "bodyEndColumn": 64
       },
       "current_source_address": {
-        "line": 554,
+        "line": 577,
         "column": 41,
-        "start": 21460,
-        "end": 21483,
-        "bodyLine": 554,
+        "start": 22255,
+        "end": 22278,
+        "bodyLine": 577,
         "bodyColumn": 49,
-        "bodyEndLine": 554,
+        "bodyEndLine": 577,
         "bodyEndColumn": 64
       },
       "baseline_complexity": 1,
@@ -44770,13 +44770,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 562,
+        "line": 585,
         "column": 27,
-        "start": 21691,
-        "end": 21744,
-        "bodyLine": 562,
+        "start": 22486,
+        "end": 22539,
+        "bodyLine": 585,
         "bodyColumn": 39,
-        "bodyEndLine": 562,
+        "bodyEndLine": 585,
         "bodyEndColumn": 80
       },
       "baseline_complexity": 1,
@@ -44803,13 +44803,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 563,
+        "line": 586,
         "column": 89,
-        "start": 21838,
-        "end": 21865,
-        "bodyLine": 563,
+        "start": 22633,
+        "end": 22660,
+        "bodyLine": 586,
         "bodyColumn": 101,
-        "bodyEndLine": 563,
+        "bodyEndLine": 586,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -44836,13 +44836,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 584,
+        "line": 607,
         "column": 25,
-        "start": 22498,
-        "end": 24839,
-        "bodyLine": 584,
+        "start": 23293,
+        "end": 25634,
+        "bodyLine": 607,
         "bodyColumn": 43,
-        "bodyEndLine": 639,
+        "bodyEndLine": 662,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 7,
@@ -44869,13 +44869,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 595,
+        "line": 618,
         "column": 77,
-        "start": 22974,
-        "end": 23004,
-        "bodyLine": 595,
+        "start": 23769,
+        "end": 23799,
+        "bodyLine": 618,
         "bodyColumn": 88,
-        "bodyEndLine": 595,
+        "bodyEndLine": 618,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -44902,13 +44902,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 617,
+        "line": 640,
         "column": 89,
-        "start": 23944,
-        "end": 23971,
-        "bodyLine": 617,
+        "start": 24739,
+        "end": 24766,
+        "bodyLine": 640,
         "bodyColumn": 100,
-        "bodyEndLine": 617,
+        "bodyEndLine": 640,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -44935,13 +44935,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 623,
+        "line": 646,
         "column": 75,
-        "start": 24244,
-        "end": 24267,
-        "bodyLine": 623,
+        "start": 25039,
+        "end": 25062,
+        "bodyLine": 646,
         "bodyColumn": 83,
-        "bodyEndLine": 623,
+        "bodyEndLine": 646,
         "bodyEndColumn": 98
       },
       "baseline_complexity": 1,
@@ -44968,13 +44968,13 @@
         "bodyEndColumn": 102
       },
       "current_source_address": {
-        "line": 626,
+        "line": 649,
         "column": 31,
-        "start": 24363,
-        "end": 24404,
-        "bodyLine": 626,
+        "start": 25158,
+        "end": 25199,
+        "bodyLine": 649,
         "bodyColumn": 43,
-        "bodyEndLine": 626,
+        "bodyEndLine": 649,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 5,
@@ -45001,13 +45001,13 @@
         "bodyEndColumn": 70
       },
       "current_source_address": {
-        "line": 633,
+        "line": 656,
         "column": 31,
-        "start": 24632,
-        "end": 24671,
-        "bodyLine": 633,
+        "start": 25427,
+        "end": 25466,
+        "bodyLine": 656,
         "bodyColumn": 43,
-        "bodyEndLine": 633,
+        "bodyEndLine": 656,
         "bodyEndColumn": 70
       },
       "baseline_complexity": 1,
@@ -45034,13 +45034,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 640,
+        "line": 663,
         "column": 28,
-        "start": 24870,
-        "end": 26163,
-        "bodyLine": 640,
+        "start": 25665,
+        "end": 26958,
+        "bodyLine": 663,
         "bodyColumn": 50,
-        "bodyEndLine": 674,
+        "bodyEndLine": 697,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -45067,13 +45067,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 662,
+        "line": 685,
         "column": 24,
-        "start": 25713,
-        "end": 25839,
-        "bodyLine": 663,
+        "start": 26508,
+        "end": 26634,
+        "bodyLine": 686,
         "bodyColumn": 8,
-        "bodyEndLine": 663,
+        "bodyEndLine": 686,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -45100,13 +45100,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 675,
+        "line": 698,
         "column": 25,
-        "start": 26191,
-        "end": 26432,
-        "bodyLine": 676,
+        "start": 26986,
+        "end": 27227,
+        "bodyLine": 699,
         "bodyColumn": 4,
-        "bodyEndLine": 681,
+        "bodyEndLine": 704,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -45133,13 +45133,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 677,
+        "line": 700,
         "column": 29,
-        "start": 26257,
-        "end": 26313,
-        "bodyLine": 677,
+        "start": 27052,
+        "end": 27108,
+        "bodyLine": 700,
         "bodyColumn": 44,
-        "bodyEndLine": 677,
+        "bodyEndLine": 700,
         "bodyEndColumn": 85
       },
       "baseline_complexity": 3,
@@ -45166,13 +45166,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 683,
+        "line": 706,
         "column": 29,
-        "start": 26468,
-        "end": 27371,
-        "bodyLine": 683,
+        "start": 27263,
+        "end": 28166,
+        "bodyLine": 706,
         "bodyColumn": 52,
-        "bodyEndLine": 703,
+        "bodyEndLine": 726,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -45199,13 +45199,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 700,
+        "line": 723,
         "column": 56,
-        "start": 27234,
-        "end": 27359,
-        "bodyLine": 701,
+        "start": 28029,
+        "end": 28154,
+        "bodyLine": 724,
         "bodyColumn": 6,
-        "bodyEndLine": 701,
+        "bodyEndLine": 724,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -45232,13 +45232,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 704,
+        "line": 727,
         "column": 25,
-        "start": 27399,
-        "end": 28500,
-        "bodyLine": 704,
+        "start": 28194,
+        "end": 29295,
+        "bodyLine": 727,
         "bodyColumn": 44,
-        "bodyEndLine": 729,
+        "bodyEndLine": 752,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 5,
@@ -45265,13 +45265,13 @@
         "bodyEndColumn": 71
       },
       "current_source_address": {
-        "line": 715,
+        "line": 738,
         "column": 29,
-        "start": 27877,
-        "end": 27919,
-        "bodyLine": 715,
+        "start": 28672,
+        "end": 28714,
+        "bodyLine": 738,
         "bodyColumn": 43,
-        "bodyEndLine": 715,
+        "bodyEndLine": 738,
         "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
@@ -45298,13 +45298,13 @@
         "bodyEndColumn": 9
       },
       "current_source_address": {
-        "line": 716,
+        "line": 739,
         "column": 30,
-        "start": 27954,
-        "end": 28075,
-        "bodyLine": 716,
+        "start": 28749,
+        "end": 28870,
+        "bodyLine": 739,
         "bodyColumn": 38,
-        "bodyEndLine": 719,
+        "bodyEndLine": 742,
         "bodyEndColumn": 9
       },
       "baseline_complexity": 2,
@@ -45331,13 +45331,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 726,
+        "line": 749,
         "column": 22,
-        "start": 28367,
-        "end": 28488,
-        "bodyLine": 727,
+        "start": 29162,
+        "end": 29283,
+        "bodyLine": 750,
         "bodyColumn": 6,
-        "bodyEndLine": 727,
+        "bodyEndLine": 750,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -45364,13 +45364,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 732,
+        "line": 755,
         "column": 0,
-        "start": 28506,
-        "end": 29367,
-        "bodyLine": 735,
+        "start": 29301,
+        "end": 30162,
+        "bodyLine": 758,
         "bodyColumn": 38,
-        "bodyEndLine": 754,
+        "bodyEndLine": 777,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -45397,13 +45397,13 @@
         "bodyEndColumn": 7
       },
       "current_source_address": {
-        "line": 741,
+        "line": 764,
         "column": 42,
-        "start": 28864,
-        "end": 29073,
-        "bodyLine": 741,
+        "start": 29659,
+        "end": 29868,
+        "bodyLine": 764,
         "bodyColumn": 54,
-        "bodyEndLine": 745,
+        "bodyEndLine": 768,
         "bodyEndColumn": 7
       },
       "baseline_complexity": 2,
@@ -187729,7 +187729,7 @@
         "line": 402,
         "column": 7,
         "start": 16004,
-        "end": 19164,
+        "end": 19191,
         "bodyLine": 406,
         "bodyColumn": 33,
         "bodyEndLine": 473,
@@ -187741,16 +187741,16 @@
       "identity": "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:expectedCloneSchema/closure:CallExpression:arguments[0]#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "current_complexity": 2,
+      "current_complexity": 1,
       "current_source_address": {
-        "line": 429,
-        "column": 6,
-        "start": 17446,
-        "end": 17516,
+        "line": 428,
+        "column": 84,
+        "start": 17439,
+        "end": 17543,
         "bodyLine": 429,
-        "bodyColumn": 16,
+        "bodyColumn": 6,
         "bodyEndLine": 429,
-        "bodyEndColumn": 76
+        "bodyEndColumn": 94
       },
       "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:expectedCloneSchema. The immediate parent and surrounding current Source lines 401-403 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
     },
@@ -187762,8 +187762,8 @@
       "current_source_address": {
         "line": 475,
         "column": 0,
-        "start": 19166,
-        "end": 19332,
+        "start": 19193,
+        "end": 19359,
         "bodyLine": 475,
         "bodyColumn": 80,
         "bodyEndLine": 481,
@@ -187779,8 +187779,8 @@
       "current_source_address": {
         "line": 483,
         "column": 0,
-        "start": 19334,
-        "end": 20289,
+        "start": 19361,
+        "end": 20316,
         "bodyLine": 483,
         "bodyColumn": 76,
         "bodyEndLine": 506,
@@ -187796,8 +187796,8 @@
       "current_source_address": {
         "line": 508,
         "column": 0,
-        "start": 20291,
-        "end": 20734,
+        "start": 20318,
+        "end": 20761,
         "bodyLine": 508,
         "bodyColumn": 63,
         "bodyEndLine": 515,
@@ -187813,8 +187813,8 @@
       "current_source_address": {
         "line": 517,
         "column": 0,
-        "start": 20736,
-        "end": 20905,
+        "start": 20763,
+        "end": 20932,
         "bodyLine": 517,
         "bodyColumn": 50,
         "bodyEndLine": 519,
@@ -206259,13 +206259,13 @@
       "max_crap": 10,
       "rationale": "New exported descriptor-capture and bounded result facade, prospectively planned/reviewed at published af033f5 before implementation. Existing Ajv/semantic validation and its callback retain their original ceilings on private ImageV1 successors; no allowance transfer or historical measurement is claimed.",
       "current_source_address": {
-        "line": 759,
+        "line": 782,
         "column": 0,
-        "start": 29600,
-        "end": 30258,
-        "bodyLine": 762,
+        "start": 30395,
+        "end": 31051,
+        "bodyLine": 785,
         "bodyColumn": 38,
-        "bodyEndLine": 777,
+        "bodyEndLine": 800,
         "bodyEndColumn": 1
       },
       "current_complexity": 3
@@ -206298,7 +206298,18 @@
       "max_complexity": 4,
       "max_crap": 4,
       "rationale": "New private callable owns one cohesive chronological ordering over already validated claim rows: epoch milliseconds, submillisecond remainder, then deterministic ASCII original-wire tie. This is a separately prospective domain/risk cap under the existing cohesive-invariant-4 policy, recorded in planned_named_lease_ordering_20261017 at b66671c before tracked named adoption. The isolated v139 prototype is explicitly disclosed; the plan does not claim pre-prototype timing. No original allowance is transferred, and no candidate metric sets the cap.",
-      "independent_review": "/workspace/attachments/lease-named-comparator-review-v149.md"
+      "independent_review": "/workspace/attachments/lease-named-comparator-review-v149.md",
+      "current_source_address": {
+        "line": 243,
+        "column": 0,
+        "start": 9649,
+        "end": 10027,
+        "bodyLine": 243,
+        "bodyColumn": 104,
+        "bodyEndLine": 251,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 4
     },
     {
       "identity": "src/config/project-upgrade-existing-storage.ts#fn:importMastraRows#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[2]#0",
@@ -206325,8 +206336,8 @@
       "current_source_address": {
         "line": 503,
         "column": 4,
-        "start": 20198,
-        "end": 20232,
+        "start": 20225,
+        "end": 20259,
         "bodyLine": 503,
         "bodyColumn": 18,
         "bodyEndLine": 503,
@@ -225026,5 +225037,72 @@
     "correspondence": "Preserve all56 Source-added roles and all55 existing10/10 caps plus isDigest1/1. Add only private isServiceOperationLaunchCapability under its independently published1/1 cap:57 roles total. No original counterpart, removal, role reuse or cap transfer. Custody Source remains byte-identical; only utility addresses and hash change.",
     "limits": "Static scoped correspondence only. Require a later immutable Source pin, exact57-role coverage, same-run frozen proof and native assertion-confirmed mutation controls. Existing global partial status, historical mutation UNKNOWN and stateful initialization GAP remain unchanged.",
     "prospective_plan": "3afc640:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#planned_custody_uuid_predicate_20261017"
+  },
+  "scope_review_storage_image_literal_prefix_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-project-upgrade-existing-storage-image",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/project-upgrade-existing-storage.ts"
+    ],
+    "removed_source_paths": [],
+    "current_source_bindings": [
+      {
+        "file": "src/config/project-upgrade-existing-storage.ts",
+        "sha256": "8678bbca51ea0dbaaa6a47f14a8e361f16b912f827487e91f2e4e0e3d0683444"
+      }
+    ],
+    "reviewed_source_context": "34e52e62b07f6b1af2b9d183c0d00336a64dcb26 plus reviewed internal aggregate canonicalization repair",
+    "review_artifacts": [
+      "/workspace/attachments/literal-boundary-repair-review-v201-20261017.md"
+    ],
+    "selected_rows": {
+      "retained": 0,
+      "new": 52,
+      "removed": 0
+    },
+    "independent_review_lane": "blind-native-luna-repair-packet-review-v195",
+    "added_cleanup_roles": [
+      "src/config/project-upgrade-existing-storage.ts#fn:importMastraRows#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[2]#0",
+      "src/config/project-upgrade-existing-storage.ts#fn:capturePinnedMastraInventoryAsync#0/closure:CallExpression:arguments[2]#0"
+    ],
+    "limits": "Literal/comparator repair only; no added/retired/reassigned function, increased allowance or current numeric claim. Existing complete correspondence, historical provenance and prior reviews remain applicable. Require an immutable scope pin and fresh exact coverage/same-run frozen proof. Mutation and Runtime acceptance remain separate.",
+    "correction": "Catalog excludes only the literal SQLite internal prefix using GLOB; legal sqliteX objects remain inventoried. Expected clone closure uses UTF-8 BINARY ordering matching SQLite. All52 roles,50existing10/10 caps and two published1/1 cleanup caps remain unchanged."
+  },
+  "scope_review_envelopes_device_extensions_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [
+      "src/contracts/envelopes.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/contracts/envelopes.ts",
+        "current_path": "src/contracts/envelopes.ts",
+        "rationale": "All envelope roles remain in the same Source owner. The unary expiry mapper is removed and the distinct named pairwise comparator is added within this file."
+      }
+    ],
+    "review_artifact": "/workspace/attachments/quality-envelope-validated-rows-actual-lineage-20261016.md",
+    "additional_role_review": "/workspace/attachments/lease-named-comparator-review-v149.md",
+    "correspondence": "Original 82 = 76 retained + 6 removed. Preserve all 76 other retained role mappings, original ceilings, measurements and rationales unchanged; preserve the five prior removals and add only the original unary expiry mapper removal. Current 78 = retained 76 + existing capture facade + named compareClaimLeaseExpiry. The capture facade retains its existing prospective10/10 cap; the distinct comparator uses its prospective4/4 role plan. The old mapper's full original baseline row and1/1 allowance remain immutable history. No ceiling transfers, identity reuse, numeric admission or contour closure is implied.",
+    "limits": "Literal/comparator repair only; no added/retired/reassigned function, increased allowance or current numeric claim. Existing complete correspondence, historical provenance and prior reviews remain applicable. Require an immutable scope pin and fresh exact coverage/same-run frozen proof. Mutation and Runtime acceptance remain separate.",
+    "independent_review_lane": "blind-native-luna-lease-lineage-v149",
+    "prospective_plan_ref": "b66671c",
+    "retained": 76,
+    "new_functions": 2,
+    "removed_functions": 6,
+    "prototype_context": "Isolated prototype disclosed; the independently justified 4/4 plan was published before tracked named adoption. No pre-prototype chronology or metric-derived allowance is claimed.",
+    "current_source_bindings": [
+      {
+        "file": "src/contracts/envelopes.ts",
+        "sha256": "cc06d4c9e2c4289de199f7782290ce9100d903c828259c466e2ba1257ccc49fd"
+      }
+    ],
+    "review_artifacts": [
+      "/workspace/attachments/literal-boundary-repair-review-v201-20261017.md"
+    ],
+    "correction": "Reserved device-name extensions consume all Unicode characters and require actual segment end. Bare nonreserved Unicode basenames remain allowed. All78 roles and their original correspondence/caps are retained."
   }
 }

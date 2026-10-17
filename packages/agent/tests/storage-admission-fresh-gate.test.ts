@@ -24,6 +24,7 @@ import {
   retryPendingWorkspaceDatabaseCloses,
 } from '../src/config/workspace-database-raw.js';
 import { inspectProjectUpgrade } from '../src/config/project-upgrade.js';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.js';
 import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 
@@ -73,6 +74,105 @@ describe('fresh storage admission gate', () => {
       expect(readFileSync(file)).toEqual(initialBytes);
     } finally {
       rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  test('rejects a non-reserved sqliteX user table from the closed gate schema without changing its state', () => {
+    const fixture = openRepositoryFixture('sqlite-prefix-storage-gate-');
+    const file = path.join(fixture.root, '.vida/storage-admission.v1.sqlite');
+    let mutation: Database | undefined;
+    let inspection: Database | undefined;
+    let unexpectedAdmission: StorageReadAdmission | undefined;
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      const initialAdmission = acquireStorageReadAdmission(fixture.root, fixture.workspaceId, '.vida/unused.sqlite');
+      initialAdmission.close();
+      const originalBytes = readFileSync(file);
+
+      mutation = new Database(file);
+      mutation.exec('CREATE TABLE sqliteXledger(id TEXT PRIMARY KEY, payload TEXT NOT NULL)');
+      mutation.query('INSERT INTO sqliteXledger(id,payload) VALUES(?,?)').run('row-1', 'preserve-me');
+      mutation.exec('CREATE TABLE SQLiteXarchive(id TEXT PRIMARY KEY, payload TEXT NOT NULL)');
+      mutation.query('INSERT INTO SQLiteXarchive(id,payload) VALUES(?,?)').run('row-2', 'also-preserve');
+      expect(mutation.query<{ id: string; payload: string }, []>('SELECT id,payload FROM sqliteXledger').get()).toEqual(
+        { id: 'row-1', payload: 'preserve-me' },
+      );
+      expect(
+        mutation.query<{ id: string; payload: string }, []>('SELECT id,payload FROM SQLiteXarchive').get(),
+      ).toEqual({ id: 'row-2', payload: 'also-preserve' });
+      mutation.close();
+      mutation = undefined;
+      const modifiedBytes = readFileSync(file);
+      expect(modifiedBytes).not.toEqual(originalBytes);
+
+      let acquireFailure: unknown;
+      try {
+        unexpectedAdmission = acquireStorageReadAdmission(fixture.root, fixture.workspaceId, '.vida/unused.sqlite');
+      } catch (error) {
+        acquireFailure = error;
+      }
+      if (unexpectedAdmission) {
+        unexpectedAdmission.close();
+        unexpectedAdmission = undefined;
+      }
+      expect(acquireFailure).toBeInstanceOf(Error);
+      if (!(acquireFailure instanceof Error)) throw new Error('Expected acquisition to reject the extra gate table.');
+      expect(acquireFailure.message).toBe(
+        'Project storage admission: storage gate schema is not the package-owned closed schema',
+      );
+
+      let inspectionFailure: unknown;
+      try {
+        assertOnlyStorageAdmissionGate(fixture.root, fixture.workspaceId);
+      } catch (error) {
+        inspectionFailure = error;
+      }
+      expect(inspectionFailure).toBeInstanceOf(Error);
+      if (!(inspectionFailure instanceof Error))
+        throw new Error('Expected upgrade inspection to reject the extra gate table.');
+      expect(inspectionFailure.message).toBe(
+        'Project storage admission: storage gate schema is not the package-owned closed schema',
+      );
+
+      expect(readFileSync(file)).toEqual(modifiedBytes);
+      inspection = new Database(file, { readonly: true });
+      expect(
+        inspection.query<{ id: string; payload: string }, []>('SELECT id,payload FROM sqliteXledger').get(),
+      ).toEqual({ id: 'row-1', payload: 'preserve-me' });
+      expect(
+        inspection.query<{ id: string; payload: string }, []>('SELECT id,payload FROM SQLiteXarchive').get(),
+      ).toEqual({ id: 'row-2', payload: 'also-preserve' });
+      inspection.close();
+      inspection = undefined;
+      expect(readFileSync(file)).toEqual(modifiedBytes);
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            unexpectedAdmission?.close();
+            return undefined;
+          },
+          () => {
+            inspection?.close(true);
+            return undefined;
+          },
+          () => {
+            mutation?.close(true);
+            return undefined;
+          },
+          () => {
+            if (completed) rmSync(fixture.root, { recursive: true, force: true });
+            else console.error(`Retained failed sqlite-prefix storage gate fixture: ${fixture.root}`);
+            return undefined;
+          },
+        ],
+        primaryFailure,
+      );
     }
   });
 

@@ -124,7 +124,7 @@ function schema(database: Database): SchemaObject[] {
   return database
     .query<SchemaObject, []>(
       'SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master ' +
-        "WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+        "WHERE name NOT GLOB 'sqlite_*' ORDER BY type,name",
     )
     .all();
 }
@@ -425,8 +425,8 @@ export async function prepareUnifiedExistingStorageImage(
     if (!pinned.ok) throw pinned.error;
     const withPinnedSchema = pinned.value;
     target = Database.deserialize(Buffer.from(withPinnedSchema), { strict: true, safeIntegers: true });
-    const expectedCloneSchema = [...inventory.hostSchema, ...inventory.pinned].sort(
-      (a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name),
+    const expectedCloneSchema = [...inventory.hostSchema, ...inventory.pinned].sort((a, b) =>
+      Buffer.compare(Buffer.from(a.type + '\0' + a.name), Buffer.from(b.type + '\0' + b.name)),
     );
     requireMerge(
       canonicalJson(schema(target)) === canonicalJson(expectedCloneSchema),

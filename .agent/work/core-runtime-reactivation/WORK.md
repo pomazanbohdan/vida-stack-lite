@@ -4,11 +4,11 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `8536c35e51dbf04b6a79f2fca41354ca846d03ca` adds seven custody guard witnesses and baseline-only native diagnostics. Fresh point controls confirm all7Killed with679unattempted/686; this is no complete score. Native envelope capture validates47baseline cases and no mutant execution. UUID693 recurs as UNKNOWN in a different first body, so a shared Source grammar predicate is planned under a prospective1/1 cap; stateful schema2 remains GAP. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. Fresh v197 coverage/frozen pairs remain recorded at46421bf, with separate BLOCKED parent outcomes. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Latest published checked Source: `fb6fdbdc39c4c1615b561a46a98c75d73df26763`, scoped pin `f063bab6018976820b79a460dd7201bb6d94ad96`. Shared UUID predicate replaces order-dependent cache/spy workarounds. Fresh custody F57/57,L236/236,S243/243,B123/123 and same-run frozen maxCC/CRAP9/9 pass;11targeted mutants are assertion-confirmed Killed,676unattempted/687, no complete score. Stateful schema2 remains GAP. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. Current literal-boundary repairs are under verification, and an independent immutable envelope native campaign is running. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
-- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,112 current roles after two explicit Source-added callback retirements and two separately declared SQLite cleanup additions; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
+- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
@@ -1583,6 +1583,55 @@ unchanged767fd4ae custody Source and reviewed utility bytes, retaining the old
 scope as historical. Current coverage, frozen numeric proof and native mutation
 controls are pending a separately published immutable scoped pin. SQL2 remains
 an explicit initialization-ownership GAP; no full triple is added here.
+
+### Fresh custody qualification and literal-boundary product repairs
+
+Immutable f063bab v200 forms SDK test inputs once (`FOORnr`,1936ms). Coverage
+`hVhfyq`, runc171967c-9d47-4fa4-a064-b688ea5e7d06, completes5910ms with
+F57/57,L236/236,S243/243,B123/123. Same-run frozen `VnPhKX` completes697ms
+against publishedfb6fdbd with all57roles under their preserved ceilings,
+maxCC9/maxCRAP9; the new predicate is1/1. Projection605imports this pair;
+the parent BLOCKED outcome stays separate. Baseline capture `GxXkcz`,
+rune91f18d7-2be5-4fb5-8981-093e81060312, completes5793ms with125cases and
+0attempted/687unattempted; its diagnostic nonzero exit is expected.
+
+Fresh actual generated descriptors identify regex687/688/689/694 as the new
+predicate's permissive/restrictive controls, not stale ID693 by ordinal. Along
+with the seven exact unchanged guard identities, `TBhpUf`,
+run82d60b85-9de6-4a81-9ca1-78447831b5c5, completes29763ms:
+11assertion-confirmed Killed,0Survived,0UNKNOWN,676unattempted/687,
+125baseline cases. Captures/groups/boot/commit/clean custody is complete.
+The previous order-dependent UUID UNKNOWN is not replayed or relabelled;
+this is new Source and actual owned execution. The separate SQL2 static-literal
+gap remains: a public primitive string is built before import returns, so a
+factory, lazy value or stateful module reload cannot preserve all current
+contracts. Application schema checks remain valid without inventing hit credit.
+
+Blind contour analysis finds an actual catalog predicate defect: SQL LIKE's
+underscore wildcard omits legal sqliteXledger/SQLiteXarchive user objects.
+Root RED `pa12sG` passes the ordinary unplanned-table control but wrongly
+accepts both Mastra variants; RED `a1s2p9` wrongly admits a real gate containing
+both extra tables. Host clone preservation alone (`iwFnGW`) passes old Source
+and was correctly rejected as defect proof. Correct all three maintained Source
+catalog queries to literal-prefix GLOB. A positive mixed-case Host fixture also
+exposes expected-clone locale ordering differing from SQLite BINARY ordering;
+its existing comparator now uses UTF-8 Buffer.compare without a new role.
+Update exact query spies and independent test inventories to the corrected SQL.
+
+Microsoft Windows filename rules preserve reserved device basenames across
+extensions. RED `D9Tc4M` confirms NUL.foo plus internal U+2028 plus bar is wrongly
+allowed. The reserved-name regex now consumes Unicode separators in extensions
+and requires actual segment end; distinct bare NUL/CON plus Unicode separators
+remain allowed. Ordinary Unicode and exact reserved names retain their guards.
+Root combined GREEN `y2fE39` passes123tests/0skipped,982assertions in11035ms
+with complete captures/closed group/unchanged boot. Earlier3Eg4CT exposes the
+sort and stale query-spy failures and stays failed. EarlierzQfy5B fails only a
+safeIntegers fixture mismatch, corrected before the genuine RED; zero-selection
+cJFmvt supplies no proof. Integration duplicate-test hunk is removed before
+the final123-case check. One existing inventory/hash pass refreshes only the
+three changed Sources: image52, admission47, envelopes78; all identities/caps
+and partial counts remain unchanged. Fresh numeric evidence for these repairs
+is still pending publication, scoped pins and an immutable checkout.
 
 ### Published admission packet — retained context
 

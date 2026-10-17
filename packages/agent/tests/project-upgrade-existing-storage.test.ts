@@ -40,7 +40,7 @@ function closedImage(database: Database): ClosedDatabaseImage {
 function countUserTableRows(database: Database): bigint {
   const tables = database
     .query<{ name: string }, []>(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT GLOB 'sqlite_*' ORDER BY name",
     )
     .all();
   return tables.reduce((total, { name }) => {
@@ -452,7 +452,7 @@ test.each([
   const deserialize = Database.deserialize.bind(Database);
   const schemaQuery =
     'SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master ' +
-    "WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name";
+    "WHERE name NOT GLOB 'sqlite_*' ORDER BY type,name";
   const observed: { inventoryBuilder?: Database } = {};
   let inventoryBytes: Buffer | undefined;
   let catalog: Database | undefined;
@@ -920,7 +920,7 @@ describe('existing storage image preparation', () => {
       const schema = merged
         .query<{ type: string; name: string; table_name: string; sql: string | null }, []>(
           'SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master ' +
-            "WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+            "WHERE name NOT GLOB 'sqlite_*' ORDER BY type,name",
         )
         .all();
       const serializedSchema = canonicalize(schema);
@@ -979,6 +979,56 @@ describe('existing storage image preparation', () => {
     }
   });
 
+  test('preserves Host tables whose names start with sqlite plus a non-underscore character', async () => {
+    const names = ['sqliteXledger', 'SQLiteXarchive'] as const;
+    const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
+    let host: ClosedDatabaseImage;
+    try {
+      for (const [index, name] of names.entries()) {
+        const quoted = '"' + name.replaceAll('"', '""') + '"';
+        database.exec('CREATE TABLE ' + quoted + '(id TEXT PRIMARY KEY, payload TEXT NOT NULL)');
+        database.query('INSERT INTO ' + quoted + '(id,payload) VALUES(?,?)').run('row-' + index, 'kept-' + name);
+      }
+      expect(
+        database
+          .query<{ type: string; name: string }, [string, string]>(
+            "SELECT type,name FROM sqlite_master WHERE type='table' AND name IN (?,?) ORDER BY name",
+          )
+          .all(...names),
+      ).toEqual(
+        names.map((name) => ({ type: 'table', name })).sort((left, right) => left.name.localeCompare(right.name)),
+      );
+      expect(database.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
+      host = closedImage(database);
+    } finally {
+      database.close(true);
+    }
+
+    const mastra = await makeMastra();
+    const expectedBinding = binding(host, mastra);
+    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
+    const merged = openUnified(image.bytes_base64);
+    try {
+      expect(
+        merged
+          .query<{ type: string; name: string }, [string, string]>(
+            "SELECT type,name FROM sqlite_master WHERE type='table' AND name IN (?,?) ORDER BY name",
+          )
+          .all(...names),
+      ).toEqual(
+        names.map((name) => ({ type: 'table', name })).sort((left, right) => left.name.localeCompare(right.name)),
+      );
+      for (const [index, name] of names.entries()) {
+        const quoted = '"' + name.replaceAll('"', '""') + '"';
+        expect(merged.query('SELECT id,payload FROM ' + quoted).values()).toEqual([['row-' + index, 'kept-' + name]]);
+      }
+      expect(merged.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
+    } finally {
+      merged.close(true);
+    }
+  });
+
   test('accepts a healthy Host schema above sixteen objects within the supported bounds', async () => {
     const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
     let host: ClosedDatabaseImage;
@@ -1004,7 +1054,7 @@ describe('existing storage image preparation', () => {
     try {
       const schemaObjectCount = merged
         .query<{ count: number | bigint }, []>(
-          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'",
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'",
         )
         .get()?.count;
       expect(schemaObjectCount).toBeDefined();
@@ -1030,7 +1080,7 @@ describe('existing storage image preparation', () => {
     try {
       const initialCount = database
         .query<{ count: number | bigint }, []>(
-          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'",
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'",
         )
         .get()?.count;
       if (initialCount === undefined) throw new Error('Host schema object count is unavailable');
@@ -1048,7 +1098,7 @@ describe('existing storage image preparation', () => {
       })();
       const schemaCount = database
         .query<{ count: number | bigint }, []>(
-          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'",
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'",
         )
         .get()?.count;
       expect(schemaCount).toBe(1024n);
@@ -1084,22 +1134,38 @@ describe('existing storage image preparation', () => {
     }
   });
 
-  test('rejects a valid Mastra image whose schema differs from the pinned empty-init inventory', async () => {
-    const initializedMastra = await makeMastra();
-    const database = Database.deserialize(Buffer.from(initializedMastra.bytes), { strict: true, safeIntegers: true });
-    let mastra: ClosedDatabaseImage;
-    try {
-      database.exec('CREATE TABLE unplanned_mastra_fixture(id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
-      mastra = closedImage(database);
-    } finally {
-      database.close(true);
-    }
-    const host = makeHost();
-    await expectRejection(
-      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
-      /Mastra schema differs from pinned empty-init inventory/u,
-    );
-  });
+  test.each(['unplanned_mastra_fixture', 'sqliteXledger', 'SQLiteXarchive'] as const)(
+    'rejects a valid Mastra image containing unplanned table %s without changing its source bytes',
+    async (tableName) => {
+      const initializedMastra = await makeMastra();
+      const database = Database.deserialize(Buffer.from(initializedMastra.bytes), { strict: true, safeIntegers: true });
+      let mastra: ClosedDatabaseImage;
+      try {
+        const quoted = '"' + tableName.replaceAll('"', '""') + '"';
+        database.exec('CREATE TABLE ' + quoted + '(id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
+        database.query('INSERT INTO ' + quoted + '(id,value) VALUES(?,?)').run(1, 'unplanned sentinel');
+        expect(
+          database
+            .query<{ type: string; name: string }, [string]>(
+              "SELECT type,name FROM sqlite_master WHERE type='table' AND name=?",
+            )
+            .all(tableName),
+        ).toEqual([{ type: 'table', name: tableName }]);
+        expect(database.query('SELECT id,value FROM ' + quoted).values()).toEqual([[1n, 'unplanned sentinel']]);
+        expect(database.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
+        mastra = closedImage(database);
+      } finally {
+        database.close(true);
+      }
+      const host = makeHost();
+      const originalBytes = Buffer.from(mastra.bytes);
+      await expectRejection(
+        prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+        /Mastra schema differs from pinned empty-init inventory/u,
+      );
+      expect(Buffer.from(mastra.bytes).equals(originalBytes)).toBe(true);
+    },
+  );
 
   test('rejects a valid but empty Mastra database image before comparing it with the pinned inventory', async () => {
     const database = new Database(':memory:', { strict: true, safeIntegers: true });
@@ -1108,7 +1174,7 @@ describe('existing storage image preparation', () => {
       database.exec('VACUUM');
       const tableCount = database
         .query<{ count: number | bigint }, []>(
-          "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT GLOB 'sqlite_*'",
         )
         .get()?.count;
       expect(tableCount).toBe(0n);
@@ -1340,7 +1406,7 @@ describe('existing storage image preparation', () => {
       collisionName =
         mastraDb
           .query<{ name: string }, []>(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name LIMIT 1",
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT GLOB 'sqlite_*' ORDER BY name LIMIT 1",
           )
           .get()?.name ?? '';
     } finally {
