@@ -2013,6 +2013,21 @@ sibling rows remain retained. No sleeps or suite-size timeout changes are added.
 The real-runner descriptor/private-output bridge and captured proof admission
 remain next; no new numerical contour measurement or closure is claimed.
 
+Scheduler packet `5de1fdfef5caa6cf4c696ea1ff5497a914769d9e` is published after
+ordinary strict checks pass507TypeScript files. Final bridge review confirms a
+direct per-ID reportDirectory change is incompatible with both parent confirmation
+and the persisted proof reader: both reconstruct argv, test-context and sandbox
+paths from the flat operation root. The next bounded experiment should preserve
+those logical paths with a per-worker writable report overlay and shared read-only
+descriptor/image. Prove actual bwrap source visibility/mount order first; do not
+assume a staged bind source or hidden sandbox remains accessible. Then qualify
+parent-only, exact-byte publication of the complete expected output roles after
+terminal custody, retaining UNKNOWN/live private outputs without publication.
+Keep runner receipts, basename guards and persisted reader checks unchanged if
+this topology preserves their contract. Otherwise require explicit versioned
+routing and independent reader parity; never rewrite receipt identities or relax
+path checks to force admission. This reviewed experiment is still unimplemented.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.
