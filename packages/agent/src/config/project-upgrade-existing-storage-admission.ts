@@ -2,7 +2,8 @@
 import type { Database } from 'bun:sqlite';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
-import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
+import { canonicalJsonImageWithNodeLimit, MAX_CANONICAL_NODES } from '../contracts/canonical-json-core.js';
 import { HostStateStore, type MaintenanceFenceBinding, type MaintenanceFenceReceipt } from '../host-state.js';
 import {
   assertWorkspaceDatabaseRelativePath,
@@ -112,7 +113,7 @@ function fenceBindingMatches(actual: MaintenanceFenceBinding, expected: Maintena
  * current row, checkpoint/close both main files, then mint a callback-scoped opaque capability.
  * A busy gate, bad token/generation, replaced source, or remaining sidecar fails before merge.
  */
-export async function withExistingStorageMergeCapability<T>(input: {
+export async function withExistingStorageMergeCapability<T>(request: {
   readonly repositoryRoot: string;
   readonly workspaceId: string;
   readonly operationId: string;
@@ -125,6 +126,8 @@ export async function withExistingStorageMergeCapability<T>(input: {
   readonly closeHostOwner: () => void;
   readonly operation: (capability: ExistingStorageMergeCapability) => Promise<T>;
 }): Promise<T> {
+  // Capture caller-owned fields before the first callback or await; retain the opaque receipt key.
+  let input = Object.freeze({ ...request });
   assertWorkspaceDatabaseRelativePath(input.hostRelative);
   assertWorkspaceDatabaseRelativePath(input.mastraRelative);
   requireAdmission(typeof input.closeHostOwner === 'function', 'exact Host owner close callback is required');
@@ -133,6 +136,11 @@ export async function withExistingStorageMergeCapability<T>(input: {
   requireAdmission(/^[a-f0-9]{64}$/u.test(input.planDigest), 'plan digest is invalid');
   requireAdmission(input.hostRelative !== input.mastraRelative, 'Host and Mastra paths collide');
   requireAdmission(input.expectedFenceBinding.operation_id === input.operationId, 'fence binding operation differs');
+  const expectedFenceBinding = freezeJsonValue(
+    canonicalJsonImageWithNodeLimit(input.expectedFenceBinding, 0, MAX_CANONICAL_NODES)
+      .image as MaintenanceFenceBinding,
+  );
+  input = Object.freeze({ ...input, expectedFenceBinding });
   const access = requireSafeRepositoryAccess(input.repositoryRoot);
   const repositoryIdentity = access.directoryIdentity('.', label);
   const verifyCurrentFence = (database: Database) => {

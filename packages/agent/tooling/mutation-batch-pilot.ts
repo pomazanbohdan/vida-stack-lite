@@ -224,7 +224,7 @@ export function nativeMutationBatchCommand(
 /** Complete partition admission is explicit; ordinary gate selection and global admission stay unchanged. */
 async function runMutationBatchPilot(root: string, args: readonly string[]): Promise<void> {
   const pilotStarted = performance.now();
-  const firstBudget = executionBudget(mutationLimits.partitionMs, 0);
+  const partitionBudget = executionBudget(mutationLimits.partitionMs, 0);
   const { partition, batchSize, maxBatches, admitComplete, diagnosticMutantId, diagnosticMutantIds } =
     selectMutationBatchPilot(args, mutationPartitions());
   const pin = readPin(root);
@@ -391,7 +391,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       if (id !== null) receipts.set(id, nativeReceipt);
       return { ...outcome, native_receipt: nativeReceipt };
     };
-    const baseline = await invoke(null, firstBudget.remaining(mutationLimits.dryRunEnvelopeMs));
+    const baseline = await invoke(null, partitionBudget.remaining(mutationLimits.dryRunEnvelopeMs));
     const baselineArtifact = record('baseline.json', baseline);
     if (baseline.status !== 'passed' || !baseline.native_receipt)
       throw new Error('Native mutation baseline is not a complete passing receipt.');
@@ -411,13 +411,9 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       const index = diagnosticBatchIndices?.[position] ?? window!.start + position;
       const batch = plan.batches[index]!;
       const started = position === 0 ? pilotStarted : performance.now();
-      const budget =
-        diagnosticMutantIds !== undefined || position === 0
-          ? firstBudget
-          : executionBudget(mutationLimits.partitionMs, 0);
       const observed = await collectNativeMutationBatch(
         batch,
-        () => budget.remaining(),
+        () => partitionBudget.remaining(),
         (id, remaining) => invoke(id, remaining, baseline.cases),
         (row, completed) => {
           totals.attempted++;

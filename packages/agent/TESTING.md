@@ -1027,11 +1027,13 @@ Use the existing owned PID1/isolation and SDK-readiness ingress before invocatio
 The package/root input capture is shared, the instrumented image is created once,
 and execution is serial in a private sandbox with read-only Source/test/tool files
 and private writable scratch. The full declared test argv runs for each ID.
-Each selected batch has its own900s deadline; command/case limits remain with
-their existing owners. Storage admission reuses the unchanged2GiB campaign owner.
-The first batch includes capture, generation and baseline in that same allowance;
-use the existing integer execution-budget owner rather than subtracting floating
-clock values at launch. Nested bwrap includes fresh `/dev` and `/proc` mounts:
+One900s partition deadline covers capture, generation, baseline and every selected
+batch; command/case limits remain with their existing owners. Do not reset this
+deadline between batches: the campaign's930s outer envelope must leave time for
+terminal bookkeeping instead of interrupting a newly renewed batch. Batch elapsed
+times remain separate observations. Storage admission reuses the unchanged2GiB
+campaign owner. Use the existing integer execution-budget owner rather than
+subtracting floating clock values at launch. Nested bwrap includes fresh `/dev` and `/proc` mounts:
 binding `/` alone denies `/dev/null` and prevents Bun's own child spawn. Mount
 private `/tmp` before the sandbox's final read-only and writable-scratch bindings.
 The real inert control verifies nested spawn, denied Source writes and allowed

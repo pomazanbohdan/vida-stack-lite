@@ -54,6 +54,13 @@ Current audit corrections and unresolved per-field validation, cleanup analogues
 and optimization candidates are recorded once in WORK, under the existing P0/P1
 and TEST013 tasks; external report labels do not replace their stable IDs.
 
+The fresh facade triple has refilled its slot with runtime initialization; the
+other active lanes are envelopes and storage admission. Admission's caller-owned
+request defect now has real RED/GREEN evidence and a bounded snapshot correction.
+Its interrupted mutation attempt stays UNKNOWN. The native pilot now shares one
+partition deadline across all batches; fresh numeric qualification remains open.
+WORK owns the exact receipts and pending equivalent/unattempted mutant analysis.
+
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
 
 Fixture import effects and pending/elapsed Source-repair teardown are corrected

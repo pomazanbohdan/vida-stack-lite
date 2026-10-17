@@ -241,6 +241,47 @@ review pins remain available for their own captured inputs; no protocol or
 retained cap changes. The separate immutable v152 storage-admission mutation
 producer continues against52fc50e; these Source edits do not alter its capture.
 
+### Admission repair feedback and bounded deadline correction
+
+The immutable52fc50e native admission attempt `tpG97B`, run
+`322e71e6-7fbb-464f-ba21-95f376c5bdad`, ends in outer timeout at930113ms with
+complete captures, closed outer group, unchanged boot and Source. There is no
+terminal native summary/proof. Last live observations are188/226attempted,
+167Killed/21survived/38unattempted; these are unadmitted live counters, not a
+terminal score. Preserve v152 and its sandbox/scratch/captures as UNKNOWN; the
+reaped outer namespace does not resolve test-effect custody. Do not reuse that
+measurement namespace or combine its raw kills with another run.
+
+One admission writer prepared real-fixture controls for digest end anchors,
+expired capability source checks, post-read sidecars, private same-size inode
+replacement, parent replacement, invalid Mastra path, primitive capability
+denial, binding schema and dual Host failure context. Existing fixture builders
+and ordered body/cleanup error handling are retained. No fabricated authority or
+one-fixture-per-diagnostic expansion is added. Equivalent/unreachable candidates
+(including verifier null/undefined, normalized SQLite integer representation,
+the already-thrown one-error arm and live-only gate wrappers) remain analysis
+GAPs; no fake assertion, ignore or Killed claim is introduced. Remaining native
+IDs and byte-length denial controls still need their own bounded proof.
+
+The same contour exposes a real request-ownership defect: caller mutation from
+the close callback changes the request used by the second Host verifier. Root
+RED `3ivNjp` fails with actual `maintenance project authority mismatch` before
+adopting Source. The correction captures outer fields/callbacks once and clones
+the complete expected binding through the existing bounded canonical-image owner,
+freezing only its owned copy. The exact opaque receipt reference is preserved.
+Independent v158 finds no correctness issue. Full GREEN `5fsMki` passes27tests/
+274assertions in3496ms with complete captures, closed group and unchanged boot.
+The old RED fixture is retained; no old operation is replayed.
+
+The timeout also reveals contradictory budget wiring: complete native runs
+renewed900s for each later batch while the campaign has one900s partition/930s
+outer envelope. Reuse one existing partition budget across preparation, baseline
+and all batches, deleting renewal without increasing any limit. TESTING now
+states that bound consistently. Existing collector/map controls `iF3l20` pass;
+they do not establish real end-to-end timeout qualification. Next measurements
+use a fresh checked checkout, not retained v152. Active contours stay runtime
+initialization, envelopes and admission; facade's verified slot remains refilled.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

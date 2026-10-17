@@ -10,6 +10,8 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  renameSync,
+  rmdirSync,
   symlinkSync,
   unlinkSync,
   writeFileSync,
@@ -536,6 +538,255 @@ describe('native existing-storage admission boundary', () => {
     await releaseFence(fixture.root, fixture.receipt);
   });
 
+  trackedTest('denies a private same-size Mastra replacement during image capture', async () => {
+    const fixture = freshFixture();
+    const mastraPath = path.join(fixture.root, mastraRelative);
+    const originalPath = mastraPath + '.owned-original';
+    const originalBytes = readFileSync(mastraPath);
+    const originalStat = Reflect.get(fs, 'lstatSync') as typeof fs.lstatSync;
+    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    let capturePhase = false;
+    let capturedStats = 0;
+    let originalOwned = false;
+    let replacementOwned = false;
+    let operations = 0;
+    let caught: unknown;
+    let bodyFailure: { error: unknown } | undefined;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      if (
+        capturePhase &&
+        args[0] === mastraPath &&
+        args[1] !== undefined &&
+        typeof args[1] === 'object' &&
+        Reflect.get(args[1], 'bigint') === true
+      ) {
+        capturedStats++;
+        if (capturedStats === 2) {
+          renameSync(mastraPath, originalPath);
+          originalOwned = true;
+          writeFileSync(mastraPath, originalBytes, { flag: 'wx' });
+          replacementOwned = true;
+        }
+      }
+      return originalStat(...args);
+    }) as typeof fs.lstatSync);
+    Database.prototype.close = function (throwOnError) {
+      const isMastra = this.filename === mastraPath;
+      Reflect.apply(originalClose, this, [throwOnError]);
+      if (isMastra) capturePhase = true;
+    };
+    try {
+      try {
+        await withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => closeHostOwner(fixture),
+          operation: async () => {
+            operations++;
+          },
+        });
+      } catch (error) {
+        caught = error;
+      }
+      expect(capturedStats).toBe(2);
+      expect(originalOwned).toBe(true);
+      expect(replacementOwned).toBe(true);
+      expect(lstatSync(mastraPath, { bigint: true }).nlink).toBe(1n);
+      expect(readFileSync(mastraPath)).toEqual(originalBytes);
+      expect(caught).toHaveProperty('message', 'VIDA existing storage admission: source changed during image capture');
+      expect(operations).toBe(0);
+    } catch (error) {
+      bodyFailure = { error };
+    } finally {
+      Database.prototype.close = originalClose;
+      completeOwnedCleanup(
+        [
+          () => {
+            stats.mockRestore();
+            return undefined;
+          },
+          () => {
+            if (replacementOwned) unlinkSync(mastraPath);
+            return undefined;
+          },
+          () => {
+            if (originalOwned) renameSync(originalPath, mastraPath);
+            return undefined;
+          },
+        ],
+        bodyFailure,
+      );
+    }
+    if (bodyFailure) throw bodyFailure.error;
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
+  trackedTest('denies a Mastra sidecar that appears during closed-image capture', async () => {
+    const fixture = freshFixture();
+    const mastraPath = path.join(fixture.root, mastraRelative);
+    const sidecar = mastraPath + '-wal';
+    const originalStat = Reflect.get(fs, 'lstatSync') as typeof fs.lstatSync;
+    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    let capturePhase = false;
+    let sidecarOwned = false;
+    let operations = 0;
+    let caught: unknown;
+    let bodyFailure: { error: unknown } | undefined;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      if (capturePhase && !sidecarOwned && args[0] === mastraPath && args[1] !== undefined) {
+        writeFileSync(sidecar, '', { flag: 'wx' });
+        sidecarOwned = true;
+      }
+      return originalStat(...args);
+    }) as typeof fs.lstatSync);
+    Database.prototype.close = function (throwOnError) {
+      const isMastra = this.filename === mastraPath;
+      Reflect.apply(originalClose, this, [throwOnError]);
+      if (isMastra) capturePhase = true;
+    };
+    try {
+      try {
+        await withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => closeHostOwner(fixture),
+          operation: async () => {
+            operations++;
+          },
+        });
+      } catch (error) {
+        caught = error;
+      }
+      expect(sidecarOwned).toBe(true);
+      expect(caught).toHaveProperty(
+        'message',
+        `VIDA existing storage admission: source sidecar remains: ${mastraRelative}-wal`,
+      );
+      expect(operations).toBe(0);
+    } catch (error) {
+      bodyFailure = { error };
+    } finally {
+      Database.prototype.close = originalClose;
+      completeOwnedCleanup(
+        [
+          () => {
+            stats.mockRestore();
+            return undefined;
+          },
+          () => {
+            if (sidecarOwned) unlinkSync(sidecar);
+            return undefined;
+          },
+        ],
+        bodyFailure,
+      );
+    }
+    if (bodyFailure) throw bodyFailure.error;
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
+  trackedTest('denies a source parent replacement during closed-image capture', async () => {
+    const fixture = freshFixture();
+    const hostPath = path.join(fixture.root, hostRelative);
+    const parent = path.join(fixture.root, '.vida');
+    const originalParent = parent + '.owned-original';
+    const originalStat = Reflect.get(fs, 'lstatSync') as typeof fs.lstatSync;
+    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    let capturePhase = false;
+    let hostStats = 0;
+    let parentMoved = false;
+    let replacementCreated = false;
+    let operations = 0;
+    let caught: unknown;
+    let bodyFailure: { error: unknown } | undefined;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      const result = originalStat(...args);
+      if (
+        capturePhase &&
+        args[0] === hostPath &&
+        args[1] !== undefined &&
+        typeof args[1] === 'object' &&
+        Reflect.get(args[1], 'bigint') === true
+      ) {
+        hostStats++;
+        if (hostStats === 2) {
+          renameSync(parent, originalParent);
+          parentMoved = true;
+          mkdirSync(parent);
+          replacementCreated = true;
+        }
+      }
+      return result;
+    }) as typeof fs.lstatSync);
+    Database.prototype.close = function (throwOnError) {
+      const isMastra = this.filename === path.join(fixture.root, mastraRelative);
+      Reflect.apply(originalClose, this, [throwOnError]);
+      if (isMastra) capturePhase = true;
+    };
+    try {
+      try {
+        await withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => closeHostOwner(fixture),
+          operation: async () => {
+            operations++;
+          },
+        });
+      } catch (error) {
+        caught = error;
+      }
+      expect(parentMoved).toBe(true);
+      expect(replacementCreated).toBe(true);
+      expect(caught).toHaveProperty('message', 'VIDA existing storage admission: source parent was replaced');
+      expect(operations).toBe(0);
+    } catch (error) {
+      bodyFailure = { error };
+    } finally {
+      Database.prototype.close = originalClose;
+      completeOwnedCleanup(
+        [
+          () => {
+            stats.mockRestore();
+            return undefined;
+          },
+          () => {
+            if (replacementCreated) rmdirSync(parent);
+            return undefined;
+          },
+          () => {
+            if (parentMoved) renameSync(originalParent, parent);
+            return undefined;
+          },
+        ],
+        bodyFailure,
+      );
+    }
+    if (bodyFailure) throw bodyFailure.error;
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
   trackedTest('rechecks the live admission gate when a callback capability is asserted', async () => {
     const fixture = freshFixture();
     const sidecar = path.join(fixture.root, '.vida', STORAGE_ADMISSION_GATE_FILE + '-wal');
@@ -736,6 +987,7 @@ describe('native existing-storage admission boundary', () => {
             escapedCapability = capability;
             expectReturned(() => assertExistingStorageMergeCapability(capability));
             expect(() => assertExistingStorageMergeCapability(null)).toThrow(/merge capability required/u);
+            expect(() => assertExistingStorageMergeCapability('forged')).toThrow(/merge capability required/u);
             expect(() => assertExistingStorageMergeCapability({})).toThrow(
               /merge capability was not minted by the Host fence owner/u,
             );
@@ -743,6 +995,7 @@ describe('native existing-storage admission boundary', () => {
             capability.assertSourcesUnchanged();
             expect(capability.schema).toBe('VidaExistingStorageMergeCapability/v1');
             expect(capability.binding).toMatchObject({
+              schema: 'VidaExistingStorageMerge/v1',
               operation_id: binding.operation_id,
               workspace_id: workspaceId,
               plan_digest: '9'.repeat(64),
@@ -770,6 +1023,7 @@ describe('native existing-storage admission boundary', () => {
     expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(receipt.fence);
     expect(callbacks).toBe(1);
     expect(() => escapedCapability?.assertActive()).toThrow(/callback capability expired/u);
+    expect(() => escapedCapability?.assertSourcesUnchanged()).toThrow(/callback capability expired/u);
     expect(() => assertExistingStorageMergeCapability(escapedCapability)).toThrow(
       /merge capability was not minted by the Host fence owner/u,
     );
@@ -786,6 +1040,57 @@ describe('native existing-storage admission boundary', () => {
       console.error(`Retained failed existing-storage admission fixture: ${fixture.root}`);
       throw error;
     }
+  });
+
+  trackedTest('captures caller-owned request fields before the Host close callback', async () => {
+    const fixture = freshFixture();
+    const alternateRelative = '.vida/alternate.sqlite';
+    const alternate = new Database(path.join(fixture.root, alternateRelative), { strict: true });
+    alternate.exec('PRAGMA journal_mode=DELETE; CREATE TABLE alternate_source(value TEXT NOT NULL);');
+    alternate.close();
+    const expectedMastraDigest = sha256(readFileSync(path.join(fixture.root, mastraRelative)));
+    type MutableBinding = Omit<MaintenanceFenceBinding, 'project_ids'> & { project_ids: string[] };
+    type AdmissionInput = Parameters<typeof withExistingStorageMergeCapability>[0];
+    type MutableRequest = Omit<AdmissionInput, 'mastraRelative' | 'planDigest' | 'expectedFenceBinding'> & {
+      mastraRelative: string;
+      planDigest: string;
+      expectedFenceBinding: MutableBinding;
+    };
+    let request: MutableRequest;
+    let observed: { mastraDigest: string; planDigest: string } | undefined;
+    request = {
+      repositoryRoot: fixture.root,
+      workspaceId,
+      operationId: binding.operation_id,
+      planDigest: '9'.repeat(64),
+      expectedFenceBinding: { ...binding, project_ids: [...binding.project_ids] },
+      receipt: fixture.receipt,
+      hostRelative,
+      mastraRelative,
+      closeHostOwner: () => {
+        request.mastraRelative = alternateRelative;
+        request.planDigest = '8'.repeat(64);
+        request.expectedFenceBinding.project_ids[0] = 'mutated-project';
+        closeHostOwner(fixture);
+      },
+      operation: async (capability) => {
+        observed = {
+          mastraDigest: capability.mastra.sha256,
+          planDigest: capability.binding.plan_digest,
+        };
+        return 'captured';
+      },
+    };
+    const result = await withExistingStorageMergeCapability(request);
+    expect(result).toBe('captured');
+    expect(request.mastraRelative).toBe(alternateRelative);
+    expect(request.expectedFenceBinding.project_ids).toEqual(['mutated-project']);
+    expect(observed).toEqual({
+      mastraDigest: expectedMastraDigest,
+      planDigest: '9'.repeat(64),
+    });
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
   });
 
   for (const source of [
@@ -1173,6 +1478,7 @@ describe('native existing-storage admission boundary', () => {
       expect(retainedConnection).toBeInstanceOf(Database);
       expect(injectedCloseFailure).toBe(true);
       expect(caught).toBeInstanceOf(AggregateError);
+      expect(caught).toHaveProperty('message', 'Host fence verification and paired close failed');
       const failures = (caught as AggregateError).errors;
       expect(failures).toHaveLength(2);
       expect(failures[0]).toBeUndefined();
@@ -1294,9 +1600,19 @@ describe('native existing-storage admission boundary', () => {
         override: { planDigest: 'z' + '9'.repeat(64) },
       },
       {
+        label: 'plan digest trailing garbage',
+        expectedMessage: 'VIDA existing storage admission: plan digest is invalid',
+        override: { planDigest: '9'.repeat(64) + 'garbage' },
+      },
+      {
         label: 'workspace digest prefix',
         expectedMessage: 'VIDA existing storage admission: workspace digest is invalid',
         override: { workspaceId: 'z' + 'a'.repeat(64) },
+      },
+      {
+        label: 'workspace digest trailing garbage',
+        expectedMessage: 'VIDA existing storage admission: workspace digest is invalid',
+        override: { workspaceId: 'a'.repeat(64) + 'garbage' },
       },
       {
         label: 'operation id punctuation',
@@ -1312,6 +1628,11 @@ describe('native existing-storage admission boundary', () => {
         label: 'colliding source paths',
         expectedMessage: 'VIDA existing storage admission: Host and Mastra paths collide',
         override: { hostRelative: mastraRelative },
+      },
+      {
+        label: 'noncanonical Mastra relative path',
+        expectedMessage: 'Workspace database: canonical relative path required',
+        override: { mastraRelative: '../mastra.sqlite' },
       },
       {
         label: 'mismatched expected fence operation',
