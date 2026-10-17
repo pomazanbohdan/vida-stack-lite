@@ -32,6 +32,29 @@ caller test filters reject. Blind actual-diff review finds no code blocker.
 Focused owned run `R2ydEQ` passes118cases/488assertions in1232ms, complete
 captures, closed process group and unchanged boot. Publish before native pilots.
 
+### Prospective custody lazy literal ownership — 2026-10-17
+
+Blind Luna reviews the exact next Source design before implementation:
+`service-operation-custody.ts` keeps its two canonical lifetime WeakMaps, all
+57 existing contour roles and their original budgets. Replace the eager internal
+SQL string export with `serviceOperationCustodySchemaSql(): string`; add private
+`serviceOperationCustodyTable(): string` as the single table-name owner, used by
+the schema builder and existing queries only when their real operation executes.
+No eager helper invocation or cached primitive export is retained. The two new
+straight-return roles each receive prospective CC1/entry-CRAP1, under
+`planned_custody_lazy_literals_20261017`; no original allowance is reassigned.
+The schema remains byte-identical and query/guard/CAS ordering stays unchanged.
+
+Only the two direct test references in `fresh-projection-schema-contract.test.ts`
+consume the old primitive export; no package public barrel or product consumer
+was found. Migrate those calls without changing the independent custody fixture
+schema oracle. Existing initializer assertions compare actual SQLite schema and
+empty state. Do not reload the stateful module, manufacture activation hits or
+call a dummy target. One existing scoped inventory pass must verify the two new
+identities and preserve every original correspondence after Source settles.
+Then require fresh actual generated SQL/table mutant evidence; a focused PASS,
+this prospective plan or static review alone does not close the activation GAP.
+
 ### Isolated full-proof parity preparation — 2026-10-17
 
 Three blind Luna reviews qualify the next bounded selection: fs-safe attestation
