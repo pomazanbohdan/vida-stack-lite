@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Custody's published59-role local triple is exact F/L/S/B100, same-run frozen9/9 and681/681assertion-confirmed native Killed (Source e494471, pin6531dc3, immutable v224). The automatic projection records7/45historical local triples,38unclosed. Active contours are initialization, storage image and envelopes. Initialization's fresh16-role coverage/frozen pass at9e35f7a; actual40/145/41/19 have owned-body Killed evidence after test repair. Current35 remains UNKNOWN on child-only post-entry proof; current28's file_lock_timeout survivor repair awaits fresh evidence. Complete native closure is pending. FS zero-callable CRAP applicability, admission stateful initialization, and image/envelopes isolated complete admission remain OPEN. The derived contour document owns exact receipts and historical closures; WORK records diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's9e35f7a coverage/frozen pair is historical after two predicate-owner inlines; a new complete triple is required. Fresh bound diagnostics confirm40/145/41/19/35 after repair;28/133 initializer UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability, admission stateful initialization and image/envelopes isolated complete admission remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -96,7 +96,32 @@ storage floor before launch; Root moves only that fresh unlaunched checkout to
 No resource/proof gate is lowered. Stage denial diagnostics now distinguish an
 exit1 mutation result from missing capture/group custody.
 
-Next: confirm repaired35/28, then a complete compatible initialization triple.
+Published3772277's fresh v235 diagnostic e79818f4-81c6-4a3d-9e08-164b7b44784b,
+outerevRYU2, confirms35 as assertion-Killed in parent body6 with1owned hit.
+The expanded file_lock_timeout scenario now fails the actual28 mutation in
+body15 through node-assert, but its initializer activation remains0: retain
+UNKNOWN, not Killed. Summary is1Killed/1UNKNOWN/160unattempted of162, full
+captures/groups, same boot/commit and clean inputs in44653ms. The analogous
+one-use workspace regex is confirmed by fresh diagnostic
+7b7a4c61-ca9c-4b57-bc1b-b119e03e82fc, outerL3EDGB:133/5d021099 produces a real
+parent assertion with0owned hits;0Killed/1UNKNOWN/161unattempted,22102ms with
+closed custody. Both raw operations stay at v235's declared retained path.
+
+Root's bounded P1 repair removes the private two-string Set in favor of strict
+comparisons in withBindingLock, and inlines the identical nonglobal repository
+grammar in deriveWorkspaceId. No new callable, lookup, reload or allowance.
+Code is still read once; guard order and messages stay exact. Cached inventory
+/workspace/attachments/initialization-inline-inventory-v236.json confirms all16
+identities and addresses: binding-lock CC6->7 within its original7 ceiling,
+derive CC3 unchanged. Scope scope_review_runtime_initialization_inline_guards_20261017
+keeps11/5/1, the separate retired added timer, b549951 baseline and every cap;
+its predecessor review is published b32fc8e. Blind actual-Source/address review
+has no findings at /workspace/attachments/initialization-inline-review-v236.md.
+Focused6SaKOr passes20/0cases in16830ms with complete capture, closed group and
+same boot. The new Source image requires a fresh pinned coverage/frozen/native
+cycle; old local IDs and UNKNOWN results do not transfer to it.
+
+Next: publish/pin the inline Source review, then a complete compatible triple.
 The prepared envelopes successor is the existing fixed-two64-mutant diagnostic
 (--batch-size 2 --max-batches 32, no admission/capture/ID selectors), not a repeat
 of the2-mutant pair. Image retains its actual capacity/custody qualification gap;

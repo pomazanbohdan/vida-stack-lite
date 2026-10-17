@@ -110,8 +110,6 @@ function initializationBindingFailure(error: unknown): RuntimeInitializationBind
   );
 }
 
-const bindingLockRetryCodes: ReadonlySet<unknown> = new Set(['file_lock_timeout', 'EEXIST']);
-
 async function withBindingLock<T>(
   access: SafeRepositoryAccess,
   receiptPath: string,
@@ -128,7 +126,7 @@ async function withBindingLock<T>(
     const code = (error as { readonly code?: unknown })?.code;
     if (
       entered ||
-      (!(error instanceof SafeRepositoryLockContentionError) && !bindingLockRetryCodes.has(code)) ||
+      (!(error instanceof SafeRepositoryLockContentionError) && code !== 'file_lock_timeout' && code !== 'EEXIST') ||
       Date.now() >= deadline
     )
       throw error;

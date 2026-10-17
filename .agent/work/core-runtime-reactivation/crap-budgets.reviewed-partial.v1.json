@@ -20408,13 +20408,13 @@
       "max_crap": 2,
       "rationale": "Retains method:constructor at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/workspace-identity.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
       "current_source_address": {
-        "line": 11,
+        "line": 9,
         "column": 2,
-        "start": 348,
-        "end": 444,
-        "bodyLine": 11,
+        "start": 290,
+        "end": 386,
+        "bodyLine": 9,
         "bodyColumn": 31,
-        "bodyEndLine": 14,
+        "bodyEndLine": 12,
         "bodyEndColumn": 3
       }
     },
@@ -20440,13 +20440,13 @@
       "max_crap": 2,
       "rationale": "Retains fn:fail at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/workspace-identity.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
       "current_source_address": {
-        "line": 17,
+        "line": 15,
         "column": 0,
-        "start": 448,
-        "end": 534,
-        "bodyLine": 17,
+        "start": 390,
+        "end": 476,
+        "bodyLine": 15,
         "bodyColumn": 38,
-        "bodyEndLine": 19,
+        "bodyEndLine": 17,
         "bodyEndColumn": 1
       }
     },
@@ -20472,13 +20472,13 @@
       "max_crap": 7,
       "rationale": "Retains fn:canonicalRepositoryRoot at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/workspace-identity.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
       "current_source_address": {
-        "line": 26,
+        "line": 24,
         "column": 7,
-        "start": 797,
-        "end": 1360,
-        "bodyLine": 26,
+        "start": 739,
+        "end": 1302,
+        "bodyLine": 24,
         "bodyColumn": 72,
-        "bodyEndLine": 37,
+        "bodyEndLine": 35,
         "bodyEndColumn": 1
       }
     },
@@ -20504,13 +20504,13 @@
       "max_crap": 3,
       "rationale": "Retains fn:deriveWorkspaceId at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/workspace-identity.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
       "current_source_address": {
-        "line": 40,
+        "line": 38,
         "column": 7,
-        "start": 1473,
-        "end": 1928,
-        "bodyLine": 40,
+        "start": 1415,
+        "end": 1878,
+        "bodyLine": 38,
         "bodyColumn": 88,
-        "bodyEndLine": 52,
+        "bodyEndLine": 50,
         "bodyEndColumn": 1
       }
     },
@@ -27998,13 +27998,13 @@
       "max_crap": 56,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 115,
+        "line": 113,
         "column": 0,
-        "start": 4124,
-        "end": 4843,
-        "bodyLine": 120,
+        "start": 4029,
+        "end": 4765,
+        "bodyLine": 118,
         "bodyColumn": 14,
-        "bodyEndLine": 138,
+        "bodyEndLine": 136,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -28028,13 +28028,13 @@
       "max_crap": 2,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 123,
+        "line": 121,
         "column": 91,
-        "start": 4403,
-        "end": 4476,
-        "bodyLine": 123,
+        "start": 4308,
+        "end": 4381,
+        "bodyLine": 121,
         "bodyColumn": 103,
-        "bodyEndLine": 126,
+        "bodyEndLine": 124,
         "bodyEndColumn": 5
       },
       "source_address": {
@@ -28058,13 +28058,13 @@
       "max_crap": 30,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 152,
+        "line": 150,
         "column": 7,
-        "start": 5369,
-        "end": 8260,
-        "bodyLine": 152,
+        "start": 5291,
+        "end": 8182,
+        "bodyLine": 150,
         "bodyColumn": 113,
-        "bodyEndLine": 206,
+        "bodyEndLine": 204,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -28088,13 +28088,13 @@
       "max_crap": 90,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
       "current_source_address": {
-        "line": 167,
+        "line": 165,
         "column": 6,
-        "start": 6144,
-        "end": 8163,
-        "bodyLine": 167,
+        "start": 6066,
+        "end": 8085,
+        "bodyLine": 165,
         "bodyColumn": 18,
-        "bodyEndLine": 200,
+        "bodyEndLine": 198,
         "bodyEndColumn": 7
       },
       "source_address": {
@@ -28118,13 +28118,13 @@
       "max_crap": 2,
       "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role. Exact closure relocation reviewed by Root against published/current bodies and corrected by the blind reviewer.",
       "current_source_address": {
-        "line": 176,
+        "line": 174,
         "column": 55,
-        "start": 6832,
-        "end": 6859,
-        "bodyLine": 176,
+        "start": 6754,
+        "end": 6781,
+        "bodyLine": 174,
         "bodyColumn": 66,
-        "bodyEndLine": 176,
+        "bodyEndLine": 174,
         "bodyEndColumn": 82
       },
       "source_address": {
@@ -178318,13 +178318,13 @@
       "max_crap": 10,
       "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
       "current_source_address": {
-        "line": 141,
+        "line": 139,
         "column": 0,
-        "start": 4931,
-        "end": 5273,
-        "bodyLine": 141,
+        "start": 4853,
+        "end": 5195,
+        "bodyLine": 139,
         "bodyColumn": 97,
-        "bodyEndLine": 149,
+        "bodyEndLine": 147,
         "bodyEndColumn": 1
       },
       "current_complexity": 4
@@ -178335,13 +178335,13 @@
       "max_crap": 10,
       "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
       "current_source_address": {
-        "line": 158,
+        "line": 156,
         "column": 59,
-        "start": 5782,
-        "end": 5894,
-        "bodyLine": 158,
+        "start": 5704,
+        "end": 5816,
+        "bodyLine": 156,
         "bodyColumn": 65,
-        "bodyEndLine": 161,
+        "bodyEndLine": 159,
         "bodyEndColumn": 5
       },
       "current_complexity": 1
@@ -178352,13 +178352,13 @@
       "max_crap": 10,
       "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
       "current_source_address": {
-        "line": 168,
+        "line": 166,
         "column": 76,
-        "start": 6234,
-        "end": 7717,
-        "bodyLine": 168,
+        "start": 6156,
+        "end": 7639,
+        "bodyLine": 166,
         "bodyColumn": 82,
-        "bodyEndLine": 188,
+        "bodyEndLine": 186,
         "bodyEndColumn": 9
       },
       "current_complexity": 9
@@ -225419,5 +225419,96 @@
     ],
     "frozen_cap_action": "Preserve all eleven remaining original ceilings and all five individual added-role caps unchanged. Archive both eliminated callback rows without allowance transfer. Preserve original scope/history and baseline measurements.",
     "limitations": "Independent Source correspondence review only; existing saved caps unchanged. No original runtime measurement admitted. Exact inventory partitions, full current coverage and scoped proof remain executable gates. No numerical, global or runtime qualification from metadata."
+  },
+  "scope_review_runtime_initialization_inline_guards_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-runtime-initialization",
+    "files": [
+      "src/runtime-initialization.ts",
+      "src/workspace-identity.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/runtime-initialization.ts",
+        "current_path": "src/runtime-initialization.ts",
+        "rationale": "The original Host binding, lock, and expected-project responsibilities remain in this exact source path. The existing binder and its nested callback roles retain their saved identity lineage; current read/admission/retry and project-configuration roles remain separate additions with their own existing reviewed rows. The two private eager predicates now execute in their existing callable owners; all previous timer removal/retirement dispositions and ceilings remain unchanged."
+      },
+      {
+        "original_path": "src/workspace-identity.ts",
+        "current_path": "src/workspace-identity.ts",
+        "rationale": "The original workspace identity validation responsibilities remain in this exact source path and retain their selected identity lineage. This path mapping does not transfer caps to additions elsewhere in the runtime-initialization contour. The two private eager predicates now execute in their existing callable owners; all previous timer removal/retirement dispositions and ceilings remain unchanged."
+      }
+    ],
+    "reviewed_source_context": "37722774f8222c29c637aa8f0c35595c4ee14e55 plus independently reviewed predicate inlines",
+    "current_source_bindings": [
+      {
+        "file": "src/runtime-initialization.ts",
+        "sha256": "85ca475b0a5496cebcc0e5b54b478ee6319703a9faf2ca58e8f3d4335ced39c0"
+      },
+      {
+        "file": "src/workspace-identity.ts",
+        "sha256": "8ff6bcfa7b0d1de65d0417ed240362ab41ac3aeabe56e7e3e22512c15f565fbd"
+      }
+    ],
+    "independent_review": "/workspace/attachments/initialization-inline-review-v236.md",
+    "selected_rows": {
+      "retained": 11,
+      "new": 5,
+      "removed": 1,
+      "selection_basis": "7 runtime and 4 workspace original roles retained; 5 existing added roles remain. One original timer is removed; one Source-added timer is retired separately."
+    },
+    "retired_retained_row": {
+      "identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
+      "current_identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 137,
+        "column": 24,
+        "start": 4920,
+        "end": 4956,
+        "bodyLine": 137,
+        "bodyColumn": 37,
+        "bodyEndLine": 137,
+        "bodyEndColumn": 60
+      },
+      "source_address": {
+        "line": 38,
+        "column": 24,
+        "start": 1554,
+        "end": 1590,
+        "bodyLine": 38,
+        "bodyColumn": 37,
+        "bodyEndLine": 38,
+        "bodyEndColumn": 60
+      }
+    },
+    "retired_source_added_roles": [
+      {
+        "identity": "src/runtime-initialization.ts#fn:readInitializationWithAdmission#0/closure:NewExpression:arguments[0]#0",
+        "max_complexity": 10,
+        "max_crap": 10,
+        "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+        "current_source_address": {
+          "line": 149,
+          "column": 24,
+          "start": 5352,
+          "end": 5388,
+          "bodyLine": 149,
+          "bodyColumn": 37,
+          "bodyEndLine": 149,
+          "bodyEndColumn": 60
+        },
+        "current_complexity": 1
+      }
+    ],
+    "frozen_cap_action": "Preserve all eleven remaining original ceilings and all five individual added-role caps unchanged. Archive both eliminated callback rows without allowance transfer. Preserve original scope/history and baseline measurements.",
+    "limitations": "Static Source correspondence only, not numeric admission. Preserve original b549951 measurement and all original/added ceilings. Require fresh exact coverage, same-run frozen proof and complete assertion-confirmed native mutation for the new image. Old UNKNOWN stays historical.",
+    "predecessor_review": "b32fc8eb4b72fa88ef7e437d61130e6c9072e8f4:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#scope_review_runtime_initialization_native_delay_20261017",
+    "correspondence": "All16 current identities retained. Original11/added5/removal1 and separately retired added timer remain exactly partitioned. Eliminate the two-string Set and inline the one-use fixed nonglobal regex with unchanged guard order, primitive semantics and one code read. No role, cap or responsibility transfer."
   }
 }

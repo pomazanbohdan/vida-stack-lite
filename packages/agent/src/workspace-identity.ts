@@ -3,8 +3,6 @@ import { lstatSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { canonicalJson } from './contracts/public-ingress.js';
 
-const repositoryIdPattern = /^[a-z0-9][a-z0-9-]{0,63}$/;
-
 export class WorkspaceIdentityError extends Error {
   readonly code = 'GAP-WORKSPACE-IDENTITY-001';
 
@@ -38,7 +36,7 @@ export function canonicalRepositoryRoot(repositoryRoot: string): string {
 
 /** The stable v1 workspace key is derived only from repository identity and physical checkout root. */
 export function deriveWorkspaceId(repositoryId: string, repositoryRoot: string): string {
-  if (typeof repositoryId !== 'string' || !repositoryIdPattern.test(repositoryId))
+  if (typeof repositoryId !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(repositoryId))
     fail('repository identity is invalid');
   return createHash('sha256')
     .update(
