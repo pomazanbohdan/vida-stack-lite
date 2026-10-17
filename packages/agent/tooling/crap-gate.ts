@@ -106,6 +106,11 @@ const scopedBudgetReviews = new Map([
     'fb6fdbdc39c4c1615b561a46a98c75d73df26763:bun-service-operation-custody',
     'scope_review_custody_uuid_predicate_20261017',
   ],
+  [
+    'c8d952a328519c6c2c64db2e6fea22849ccabfaf:bun-project-upgrade-existing-storage-image',
+    'scope_review_storage_image_literal_prefix_20261017',
+  ],
+  ['c8d952a328519c6c2c64db2e6fea22849ccabfaf:main-envelopes', 'scope_review_envelopes_device_extensions_20261017'],
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
