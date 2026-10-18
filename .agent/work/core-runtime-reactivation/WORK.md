@@ -41,8 +41,9 @@ later public setup calls; setup errors close only opened handles and retain the
 root plus original/cleanup causes. v408 passes3controls/19assertions in3.18s,
 including real ledger cleanup after failed bridge-open and simultaneous close
 failure. v409 passes2retained-versus-expired completion controls/7assertions.
-Distinct string labels replace unexpanded Boolean %s case names so body IDs do
-not collide. The bounded real v410 recovery recheck now fails at36022.85ms
+Distinct string labels replace unexpanded Boolean %s case names; unique rendered
+names are observed, without a separate complete body-ID census. The bounded real
+v410 recovery recheck now fails at36022.85ms
 before execution-open, closes its opened connections and retains its fresh root;
 later capability operations do not run. This proves the new stop boundary, not
 recovery completion or a case within30s. The final5fast controls pass26assertions
@@ -52,7 +53,67 @@ mismatch in the test observer; its non-shared return type is now explicit,
 without copying expected bytes or weakening assertions. Typed lint then rejects
 an unbound prototype close reference. The fault control now binds/spies only on
 the exact ledger received by bridge-open, reducing global mock scope without a
-rule waiver. Its two changed cases are rechecked atv414. Final static checks follow.
+rule waiver. Its two changed cases pass15assertions in2.65s(v414). The correction
+packet is published as1d3f135 through normal hooks:507-file format,514-file strict
+TypeScript, typed lint, focused-test guard and Knip pass. The push to main is
+confirmed; canonical Source was clean before the fresh measurement.
+
+Fresh immutable `/workspace/attachments/rolling-measure-v416` binds1d3f135.
+SDK-input stage8JvaUp completes2101.093735ms without suites. CoverageiUuGHA
+completes25562.273896ms:28PASS/0FAIL/320assertions, exact F18/18,L102/102,S105/105,
+B17/17 for storage-admission run3fe88c16-1d14-4a25-89ce-ebe527b5e09c.
+Frozen staged53jXj completes2261.80358ms with the same run and unchanged cabdb43
+scope; maxCC5/maxCRAP5. Both have complete captures, closed groups and unchanged
+boot/commit/clean inputs and are imported by the existing projection owner.
+The diagnostic operation's global BLOCKED status is preserved; exact local
+coverage and scoped frozen proof do not establish global acceptance.
+Full228-mutant two-worker stagem3ENfn terminates after846811.306545ms under the
+unchanged900/930s limits. The complete capture has closed groups and unchanged
+clean boot/commit:134attempted,126Killed,8Survived,0UNKNOWN,94unattempted.
+The baseline is24787.560146ms and the existing allowance is59576ms. The producer
+stops before another launch would exceed its shared budget; exit1 is partial,
+not an outer timeout or a complete score. This does not qualify full two-worker
+execution or close the contour. Original receipts and survivor rows remain in
+the immutable measured checkout.
+
+The failed stage exposed a projection defect: raw publication-error was retained
+but the latest failure was absent from the common document. The existing publisher
+now joins stage launch/execution/error once and records a nonmetric stage-outcome.
+It rejects accepted/selection/numeric promotion and mismatched custody, separates
+latest stage outcome from the historical mutation report, and preserves primary
+plus projection errors. Legacy raw errors are adapted only in memory, never
+rewritten. v434 imports the actual m3ENfn failure through this owner; v435 passes
+147stage/projection controls with514assertions in456ms. No extra suite, inventory
+or Source hash pass is needed to project a terminal failure.
+
+Storage survivor repairs add actual workflow-client drain, sidecar-after-Host-close,
+sidecar-after-byte-read and repository-root replacement regressions. The entire
+updated file passes32cases/340assertions in23.87s(v431). Initial Host verify/close
+now reuses the existing paired-close owner, retaining error order, undefined
+causes and pending-close custody. This removes the equivalent duplicate manual
+length comparison, rather than excluding a mutant. The changed Source needs a
+fresh frozen binding; cabdb43 and the pair above remain historical evidence.
+The unused null/undefined readonly verifier mutation remains an explicit possible
+equivalence GAP; no reflective assertion or waiver fabricates a kill. The readonly
+checkpoint survivor also remains unconfirmed until a fresh native diagnostic.
+Existing exact diagnostic ID options now accept local or canonical tokens against
+the complete generated plan before baseline. They reject alias duplication and
+ambiguity, preserve original indices/full tests and share one baseline. This
+avoids a separate image-generation pass just to discover shifted local IDs;
+predicted identities remain lookup requests, not mutation evidence.
+The final resolver controls pass99cases/400assertions(v439), including mixed
+aliases, duplicate resolved mutants, cross-row ambiguity, absent tokens and
+single-window parity. The adjusted client regression separately passes(v438)
+and now retains thrown undefined plus simultaneous body/cleanup causes. Current
+documentation validation checks5documents/52local links; external/runtime
+receipts are outside that check. The first ordinary hook passes format and
+514-file TypeScript, then catches two ignored union-typed client-close results
+and an await on Bun's non-Promise matcher. The fixture now returns the delegated
+close result and awaits its fallback cleanup, preserving both causes; the stage
+test uses the shared rejection owner. Changed controls pass9/0(v442) and1/0(v443).
+The next hook rejects explicit throws in finally; cleanup follows the caught
+body outside finally, preserving both causes. The changed client case passes
+again(v445). Strict hook and publication follow this packet.
 
 Execution choices use measured facts separately from estimates:
 
@@ -60,7 +121,7 @@ Execution choices use measured facts separately from estimates:
 | --- | --- |
 | One numeric owner plus three bounded preparation/review slots | Keep. Matches custody and immutable inputs; independent read-only audits overlap without duplicate suites/scans. No new throughput claim. |
 | Several known repair IDs with one full baseline | Keep the existing sequential diagnostic route. Reuses capture/image/baseline; no combined score or new filter. |
-| Two isolated workers inside storage-admission | Existing16-ID pilot completed96.275s with16assertion-confirmed kills. Full228 proof remains required; four workers stay rejected. |
+| Two isolated workers inside storage-admission | Existing16-ID pilot completed96.275s with16assertion-confirmed kills; the full attempt stops partial at846.811s with134/228attempted. Keep diagnostic qualification only; four workers stay rejected. |
 | Three simultaneous numeric contours | Reject. Resource/parallel qualification is absent;4CPU/16GiB does not establish safe overlap. |
 
 Do not remove fresh ledger/Host config checks or the independent approval DB

@@ -197,7 +197,11 @@ For several known repairs, use the mutually exclusive `--diagnostic-mutant-ids`
 comma-list (1..32 unique IDs) with the same singleton bounds. It shares one full
 baseline and one partition budget, retains original sparse plan indices and the
 full universe, and emits no complete proof or contour score. Resolve every ID
-against the current map; do not aggregate separate diagnostic runs as closure.
+against the current complete plan; local and canonical IDs use the same existing
+options. Canonical identities bind the Source hash and mutation tuple. Reject
+duplicate aliases and ambiguous tokens before the baseline. A predicted identity
+is only a lookup request, not execution evidence. Avoid a separate instrumenter
+pass just to discover changed local IDs. Do not aggregate diagnostic runs as closure.
 
 For expected-success async target calls, reuse `expectAsyncReturned` from
 `tests/helpers/expect-rejection.ts`. It observes one invocation through Node's

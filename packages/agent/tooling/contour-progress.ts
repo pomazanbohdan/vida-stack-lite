@@ -11,7 +11,14 @@ type Counter = { covered: number; total: number };
 type Coverage = Record<'functions' | 'lines' | 'statements' | 'branches', Counter>;
 type Attempt = {
   contour: string;
-  lane: 'coverage' | 'frozen-crap' | 'crap-applicability' | 'mutation' | 'native-mutation' | 'coverage-outcome';
+  lane:
+    | 'coverage'
+    | 'frozen-crap'
+    | 'crap-applicability'
+    | 'mutation'
+    | 'native-mutation'
+    | 'coverage-outcome'
+    | 'stage-outcome';
   run_id: string;
   coverage_run_id?: string;
   function_count?: number;
@@ -114,7 +121,15 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
         properties: {
           contour: { type: 'string', minLength: 1 },
           lane: {
-            enum: ['coverage', 'frozen-crap', 'crap-applicability', 'mutation', 'native-mutation', 'coverage-outcome'],
+            enum: [
+              'coverage',
+              'frozen-crap',
+              'crap-applicability',
+              'mutation',
+              'native-mutation',
+              'coverage-outcome',
+              'stage-outcome',
+            ],
           },
           run_id: { type: 'string', minLength: 1 },
           coverage_run_id: { type: 'string', minLength: 1 },
@@ -139,6 +154,7 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
               'CandidateMutationPilotReport/v2',
               'CandidateMutationReport/v4',
               'CandidateNativeMutationReport/v1',
+              'VidaContourStagePublicationError/v1',
             ],
           },
           selection_artifact: { type: ['string', 'null'] },
@@ -376,12 +392,96 @@ function selectedTests(
 }
 
 /** Adapts owner-issued terminal reports only. It does not re-admit their receipts or establish current freshness. */
+export { object as contourRecord };
+
+function stageOutcomeAttempts(report: Record<string, unknown>, receipt: Receipt): Attempt[] {
+  const diagnostic = object(report.diagnostic);
+  const status = text(report.status);
+  const contour = text(diagnostic.contour);
+  const stageLane = text(diagnostic.lane);
+  const process = text(diagnostic.process);
+  if (
+    [
+      !['unknown-or-partial', 'published-receipt-failed'].includes(status),
+      report.source_commit !== receipt.commit,
+      text(report.error) !== text(diagnostic.error),
+      diagnostic.schema !== 'VidaContourStageOutcome/v1',
+      diagnostic.publication !== status,
+      !['coverage', 'frozen-crap', 'crap-applicability', 'mutation'].includes(stageLane),
+      !['completed', 'failed', 'timeout', 'unknown', 'resource'].includes(process),
+      typeof diagnostic.capture_complete !== 'boolean',
+      typeof diagnostic.group_closed !== 'boolean',
+      typeof diagnostic.boot_unchanged !== 'boolean',
+      typeof diagnostic.commit_unchanged !== 'boolean',
+      typeof diagnostic.clean_inputs !== 'boolean',
+    ].some(Boolean)
+  )
+    throw new Error('Stage publication outcome is malformed or successful.');
+  declaredSources(contour);
+  return [
+    {
+      ...receipt,
+      contour,
+      lane: 'stage-outcome',
+      run_id: text(report.run_id),
+      sources: [],
+      tests: [],
+      tools: [],
+      closure: [],
+      selected_tests: [],
+      selection_complete: false,
+      producer_schema: text(report.schema),
+      selection_artifact: null,
+      tool_fingerprint: null,
+      status: `${stageLane}/${process}/${status}`,
+      accepted: false,
+      coverage: null,
+      max_cc: null,
+      max_entry_crap: null,
+      killed: null,
+      mutants: null,
+    },
+  ];
+}
+
+function assertStageOutcomeObservation(attempt: Attempt): void {
+  if (
+    [
+      attempt.accepted,
+      attempt.producer_schema !== 'VidaContourStagePublicationError/v1',
+      !/^(?:coverage|frozen-crap|crap-applicability|mutation)\/(?:completed|failed|timeout|unknown|resource)\/(?:unknown-or-partial|published-receipt-failed)$/u.test(
+        attempt.status,
+      ),
+      attempt.sources.length !== 0,
+      attempt.tests.length !== 0,
+      attempt.tools.length !== 0,
+      attempt.closure.length !== 0,
+      attempt.selected_tests.length !== 0,
+      attempt.selection_complete,
+      attempt.coverage !== null,
+      attempt.killed !== null,
+      attempt.mutants !== null,
+      attempt.max_cc !== null,
+      attempt.max_entry_crap !== null,
+      attempt.coverage_run_id !== undefined,
+      attempt.function_count !== undefined,
+      attempt.coverage_binding !== undefined,
+      attempt.native_provenance !== undefined,
+      attempt.confirmed_killed !== undefined,
+      attempt.tool_fingerprint !== null,
+      attempt.selection_artifact !== null,
+    ].some(Boolean)
+  )
+    throw new Error('Stage outcome is not admitted evidence.');
+}
+
 export function contourAttempts(value: unknown, receipt: Receipt, artifactSha256?: string): Attempt[] {
   if (artifactSha256 !== undefined && !/^[a-f0-9]{64}$/u.test(artifactSha256))
     throw new Error('Invalid observed contour artifact digest.');
   const report = object(value);
   if (report.schema === 'CandidateNativeMutationReport/v1')
     throw new Error('Native mutation reports require the validated --native-report route.');
+  if (report.schema === 'VidaContourStagePublicationError/v1') return stageOutcomeAttempts(report, receipt);
   if (report.schema === 'VidaScopedCrapApplicabilityNA/v1') {
     assertFsSafeCrapApplicabilityReceipt(report);
     const contour = text(report.contour);
@@ -1143,6 +1243,7 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
         attempt.max_entry_crap !== null)
     )
       throw new Error('Parent outcome is not metric evidence.');
+    if (attempt.lane === 'stage-outcome') assertStageOutcomeObservation(attempt);
     if (!Number.isFinite(Date.parse(attempt.recorded_at))) throw new Error('Invalid contour receipt time.');
     for (const metric of Object.values(attempt.coverage ?? {}))
       if (metric.covered > metric.total) throw new Error('Coverage exceeds denominator.');
@@ -1272,7 +1373,7 @@ function cell(value: string): string {
 }
 function counts(attempt: Attempt | undefined): string {
   if (!attempt) return 'unknown';
-  if (attempt.lane === 'coverage-outcome') return 'no metric evidence';
+  if (attempt.lane === 'coverage-outcome' || attempt.lane === 'stage-outcome') return 'no metric evidence';
   if ((attempt.lane === 'mutation' || attempt.lane === 'native-mutation') && attempt.mutants === null)
     return 'unknown (' + attempt.status + ')';
   if (attempt.lane === 'native-mutation')
@@ -1439,7 +1540,9 @@ export function renderContourProgress(snapshot: Snapshot): string {
     const lastCoverage = coverage.at(-1);
     const lastMutation = mutation.at(-1);
     const lastCrap = crap.at(-1);
-    const lastOutcome = attempts.filter((row) => row.lane === 'coverage-outcome').at(-1);
+    const lastOutcome = attempts
+      .filter((row) => row.lane === 'coverage-outcome' || row.lane === 'stage-outcome')
+      .at(-1);
     body.push(
       `| ${partition.name} | ${cell(counts(lastCoverage))} | ${lastCoverage ? (lastCoverage.coverage?.functions.total === 0 ? 'N/A: no callable functions (coverage inventory)' : `${lastCoverage.max_cc} / ${lastCoverage.max_entry_crap}`) : 'unknown'} | ${cell(counts(lastMutation))} | ${lastOutcome?.status ?? 'not imported'} | ${staticOnly ? 'N/A: static exports' : best ? 'local maximum recorded' : 'open / unknown'} | ${lastCrap ? `${lastCrap.max_cc} / ${lastCrap.max_entry_crap}` : 'unknown'} | ${triple ? 'local triple recorded' : 'open / unknown'} |`,
     );
@@ -1505,7 +1608,7 @@ export function renderContourProgress(snapshot: Snapshot): string {
       '',
       'F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-binary coverage. They do not replace frozen per-function ceilings or exact coverage gates. No report means unknown, never zero. A failed or partial last attempt does not erase a historical complete closure. Different Source/test/config closures are never combined into a synthetic maximum.',
       '',
-      '| Contour | Latest F / L / S / B | CC / entry CRAP | Latest mutation | Reported coverage operation | Historical coverage + mutation pair | Latest frozen CC / CRAP | Same-run local triple |',
+      '| Contour | Latest F / L / S / B | CC / entry CRAP | Latest mutation report | Latest stage / coverage outcome | Historical coverage + mutation pair | Latest frozen CC / CRAP | Same-run local triple |',
       '| --- | --- | --- | --- | --- | --- | --- | --- |',
       ...body,
       '',

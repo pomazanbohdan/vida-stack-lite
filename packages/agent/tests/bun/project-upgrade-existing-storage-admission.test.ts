@@ -43,6 +43,8 @@ import {
   withWorkspaceDatabaseClose,
 } from '../../src/config/workspace-database-raw.js';
 import { prepareExistingProjectUpgradeDatabase } from '../../src/config/project-upgrade.js';
+import { openBunSqliteClient } from '../../src/orchestration/bun-sqlite-client.js';
+import * as safeRepositoryAccess from '../../src/config/safe-repository-access.js';
 import { expectAsyncReturned, expectReturned } from '../helpers/expect-rejection.ts';
 import { cleanupTrackedFixtureRoots } from '../helpers/tracked-fixture-root-cleanup.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.js';
@@ -189,6 +191,301 @@ function trackedTest(name: string, body: () => Promise<void>): void {
 }
 
 describe('native existing-storage admission boundary', () => {
+  trackedTest('drains the exact admitted local workflow client before exclusive source capture', async () => {
+    const fixture = freshFixture();
+    const client = openBunSqliteClient(fixture.root, mastraRelative, workspaceId);
+    const realClose = client.close.bind(client);
+    let clientCloseCalls = 0;
+    let clientClosed = false;
+    client.close = () => {
+      clientCloseCalls++;
+      clientClosed = true;
+      return realClose();
+    };
+    let result: string | undefined;
+    let bodyFailure: { error: unknown } | undefined;
+    try {
+      result = await withExistingStorageMergeCapability({
+        repositoryRoot: fixture.root,
+        workspaceId,
+        operationId: binding.operation_id,
+        planDigest: '9'.repeat(64),
+        expectedFenceBinding: binding,
+        receipt: fixture.receipt,
+        hostRelative,
+        mastraRelative,
+        closeHostOwner: () => closeHostOwner(fixture),
+        operation: async (capability) => {
+          capability.assertActive();
+          capability.assertSourcesUnchanged();
+          return 'admitted after workflow client drain';
+        },
+      });
+    } catch (error) {
+      bodyFailure = { error };
+    }
+    try {
+      if (!clientClosed) {
+        clientClosed = true;
+        await realClose();
+      }
+    } catch (error) {
+      if (bodyFailure)
+        throw new AggregateError([bodyFailure.error, error], 'Workflow fixture body and cleanup failed', {
+          cause: bodyFailure.error,
+        });
+      throw error;
+    }
+    expect(bodyFailure).toBeUndefined();
+    expect(result).toBe('admitted after workflow client drain');
+    expect(clientCloseCalls).toBe(1);
+    expect(clientClosed).toBe(true);
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
+  trackedTest('checks Host sidecars immediately after the exclusive Host owner closes', async () => {
+    const fixture = freshFixture();
+    const hostPath = path.join(fixture.root, hostRelative);
+    const sidecar = hostPath + '-wal';
+    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    let hostCloses = 0;
+    let mastraCloses = 0;
+    let sidecarOwned = false;
+    let sidecarRemoved = false;
+    let operations = 0;
+    let caught: unknown;
+    let bodyFailure: { error: unknown } | undefined;
+    Database.prototype.close = function (throwOnError) {
+      const isHost = this.filename === hostPath;
+      const isMastra = this.filename === path.join(fixture.root, mastraRelative);
+      Reflect.apply(originalClose, this, [throwOnError]);
+      if (isHost && ++hostCloses === 3) {
+        writeFileSync(sidecar, '', { flag: 'wx' });
+        sidecarOwned = true;
+      } else if (isMastra) {
+        mastraCloses++;
+        if (sidecarOwned) {
+          unlinkSync(sidecar);
+          sidecarRemoved = true;
+        }
+      }
+    };
+    try {
+      try {
+        await withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => closeHostOwner(fixture),
+          operation: async () => {
+            operations++;
+          },
+        });
+      } catch (error) {
+        caught = error;
+      }
+      expect(hostCloses).toBe(3);
+      expect(sidecarOwned).toBe(true);
+      expect(sidecarRemoved).toBe(false);
+      expect(mastraCloses).toBe(0);
+      expect(caught).toHaveProperty(
+        'message',
+        `VIDA existing storage admission: source sidecar remains: ${hostRelative}-wal`,
+      );
+      expect(operations).toBe(0);
+    } catch (error) {
+      bodyFailure = { error };
+    } finally {
+      Database.prototype.close = originalClose;
+      completeOwnedCleanup(
+        [
+          () => {
+            if (sidecarOwned && !sidecarRemoved) unlinkSync(sidecar);
+            return undefined;
+          },
+        ],
+        bodyFailure,
+      );
+    }
+    if (bodyFailure) throw bodyFailure.error;
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
+  trackedTest('checks Mastra sidecars after the verified byte read and before capture can continue', async () => {
+    const fixture = freshFixture();
+    const mastraPath = path.join(fixture.root, mastraRelative);
+    const sidecar = mastraPath + '-wal';
+    const originalStat = Reflect.get(fs, 'lstatSync') as typeof fs.lstatSync;
+    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    const originalAccess = Reflect.get(
+      safeRepositoryAccess,
+      'requireSafeRepositoryAccess',
+    ) as typeof safeRepositoryAccess.requireSafeRepositoryAccess;
+    let capturePhase = false;
+    let mastraStats = 0;
+    let sidecarOwned = false;
+    let sidecarRemoved = false;
+    let operations = 0;
+    let caught: unknown;
+    let bodyFailure: { error: unknown } | undefined;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      const result = originalStat(...args);
+      if (
+        capturePhase &&
+        args[0] === mastraPath &&
+        args[1] !== undefined &&
+        typeof args[1] === 'object' &&
+        Reflect.get(args[1], 'bigint') === true
+      ) {
+        mastraStats++;
+        // The second stat is after the real bounded byte read; the next guard owns this race.
+        if (mastraStats === 2) {
+          writeFileSync(sidecar, '', { flag: 'wx' });
+          sidecarOwned = true;
+        }
+      }
+      return result;
+    }) as typeof fs.lstatSync);
+    const access = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((root) => {
+      const real = originalAccess(root);
+      if (root !== fixture.root) return real;
+      return {
+        ...real,
+        directoryIdentity(target, label) {
+          const identity = real.directoryIdentity(target, label);
+          // If the post-read sidecar guard is skipped, retire this injected afterimage at
+          // the subsequent source-parent check so later validation cannot mask that omission.
+          if (target === '.vida' && sidecarOwned && !sidecarRemoved) {
+            unlinkSync(sidecar);
+            sidecarRemoved = true;
+          }
+          return identity;
+        },
+      };
+    });
+    Database.prototype.close = function (throwOnError) {
+      const isMastra = this.filename === mastraPath;
+      Reflect.apply(originalClose, this, [throwOnError]);
+      if (isMastra) capturePhase = true;
+    };
+    try {
+      try {
+        await withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => closeHostOwner(fixture),
+          operation: async () => {
+            operations++;
+          },
+        });
+      } catch (error) {
+        caught = error;
+      }
+      expect(mastraStats).toBe(2);
+      expect(sidecarOwned).toBe(true);
+      expect(sidecarRemoved).toBe(false);
+      expect(caught).toHaveProperty(
+        'message',
+        `VIDA existing storage admission: source sidecar remains: ${mastraRelative}-wal`,
+      );
+      expect(operations).toBe(0);
+    } catch (error) {
+      bodyFailure = { error };
+    } finally {
+      Database.prototype.close = originalClose;
+      completeOwnedCleanup(
+        [
+          () => {
+            access.mockRestore();
+            return undefined;
+          },
+          () => {
+            stats.mockRestore();
+            return undefined;
+          },
+          () => {
+            if (sidecarOwned && !sidecarRemoved) unlinkSync(sidecar);
+            return undefined;
+          },
+        ],
+        bodyFailure,
+      );
+    }
+    if (bodyFailure) throw bodyFailure.error;
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
+  trackedTest('rejects a replaced repository root while preserving the live gate directory', async () => {
+    const fixture = freshFixture();
+    const movedRoot = fixture.root + '.owned-original';
+    let rootMoved = false;
+    let replacementCreated = false;
+    let vidaMoved = false;
+    let assertionFailure: unknown;
+    let bodyFailure: { error: unknown } | undefined;
+    try {
+      await withExistingStorageMergeCapability({
+        repositoryRoot: fixture.root,
+        workspaceId,
+        operationId: binding.operation_id,
+        planDigest: '9'.repeat(64),
+        expectedFenceBinding: binding,
+        receipt: fixture.receipt,
+        hostRelative,
+        mastraRelative,
+        closeHostOwner: () => closeHostOwner(fixture),
+        operation: async (capability) => {
+          capability.assertActive();
+          renameSync(fixture.root, movedRoot);
+          rootMoved = true;
+          mkdirSync(fixture.root);
+          replacementCreated = true;
+          renameSync(path.join(movedRoot, '.vida'), path.join(fixture.root, '.vida'));
+          vidaMoved = true;
+          try {
+            capability.assertActive();
+          } catch (error) {
+            assertionFailure = error;
+          } finally {
+            if (vidaMoved) {
+              renameSync(path.join(fixture.root, '.vida'), path.join(movedRoot, '.vida'));
+              vidaMoved = false;
+            }
+            if (replacementCreated) {
+              rmdirSync(fixture.root);
+              replacementCreated = false;
+            }
+            if (rootMoved) {
+              renameSync(movedRoot, fixture.root);
+              rootMoved = false;
+            }
+          }
+          return 'root identity checked';
+        },
+      });
+    } catch (error) {
+      bodyFailure = { error };
+    }
+    if (bodyFailure) throw bodyFailure.error;
+    expect(assertionFailure).toHaveProperty('message', 'VIDA existing storage admission: repository root was replaced');
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fixture.receipt.fence);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
   const observations: readonly {
     readonly field: string;
     readonly message: string;

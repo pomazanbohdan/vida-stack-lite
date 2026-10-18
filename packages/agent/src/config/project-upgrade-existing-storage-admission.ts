@@ -176,19 +176,12 @@ export async function withExistingStorageMergeCapability<T>(request: {
     false,
     false,
   );
-  const fenceErrors: unknown[] = [];
-  try {
-    verifyCurrentFence(initialHost);
-  } catch (error) {
-    fenceErrors.push(error);
-  }
-  try {
-    closeWorkspaceDatabaseWithAdmission(initialHost);
-  } catch (error) {
-    fenceErrors.push(error);
-  }
-  if (fenceErrors.length === 1) throw fenceErrors[0];
-  if (fenceErrors.length > 1) throw new AggregateError(fenceErrors, 'Host fence verification and paired close failed');
+  withWorkspaceDatabaseClose(
+    initialHost,
+    verifyCurrentFence.bind(undefined, initialHost),
+    closeWorkspaceDatabaseWithAdmission,
+    'Host fence verification and paired close failed',
+  );
   // Real local Mastra owners are drained after receipt verification; remote owners must close
   // their paired gate leases themselves or the bounded EXCLUSIVE attempt fails without reads.
   closeWorkspaceWorkflowClients(input.repositoryRoot, input.mastraRelative);

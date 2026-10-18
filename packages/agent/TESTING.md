@@ -1325,9 +1325,12 @@ duplicate, foreign, partial, survived, UNKNOWN or resource-blocked observations
 produce no passing candidate. The metadata universe digest has one shared owner;
 this join adds no Source scan or test suite.
 
-For a fresh repair diagnostic, `--diagnostic-mutant-id <generated local ID>`
+For a fresh repair diagnostic, `--diagnostic-mutant-id <local or canonical ID>`
 requires `--batch-size 1 --max-batches 1` and rejects `--admit-complete`. Resolve
-the ID from the current generated canonical map; local IDs can change with Source.
+the ID against the current complete generated plan; local IDs can change with
+Source. A canonical identity includes the Source hash and exact mutation tuple.
+An identity computed from retained metadata and changed Source is only a lookup
+request until this resolution succeeds, never a new mutation observation.
 The producer keeps the complete universe/plan and original batch index, rejects
 an absent ID before baseline execution, and runs the full passing baseline and
 the full unfiltered selected tests for that mutant. Other rows remain unattempted.
@@ -1337,8 +1340,11 @@ input/image/executable readbacks, custody and time limits remain in force.
 
 For several known repairs, use the mutually exclusive
 `--diagnostic-mutant-ids <ID,ID,...>` with the same singleton bounds. Supply
-1 through 32 unique nonempty IDs, each at most 200 characters. All IDs must
-resolve before the baseline starts. The producer runs the full baseline once,
+1 through 32 unique nonempty local or canonical IDs, each at most 200 characters.
+All IDs must resolve before the baseline starts. Multiple aliases for the same
+mutant and tokens matching distinct mutants are rejected. This reuses the
+producer's full plan without a separate image-generation pass to discover local
+IDs. The producer runs the full baseline once,
 then only those original plan indices in plan order under one shared partition
 budget; intervening mutants remain unattempted. The complete universe and plan
 are unchanged. The diagnostic summary lists the selected ID/index pairs and

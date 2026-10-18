@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   contourAttempts,
+  contourRecord,
   mergeContourProgress,
   nativeMutationAttempt,
   renderContourProgress,
@@ -168,6 +169,50 @@ export function recordContourReport(root: string, report: unknown, artifact: str
   }
 }
 
+/** Bind a failed stage outcome to its retained launch and terminal execution before projection. */
+function readStageOutcome(file: string, commit: string, recorded_at: string): ReturnType<typeof contourAttempts> {
+  if (path.basename(file) !== 'publication-error.json')
+    throw new Error('Stage outcome must name publication-error.json.');
+  const directory = path.dirname(file);
+  const run_id = path.basename(directory);
+  if (!/^contour-stage-[a-zA-Z0-9_-]+$/u.test(run_id)) throw new Error('Invalid retained stage run identity.');
+  const rawReport = contourRecord(load(file));
+  const launch = contourRecord(load(path.join(directory, 'launch.json')));
+  const execution = contourRecord(load(path.join(directory, 'execution.json')));
+  const report =
+    rawReport.schema === undefined && rawReport.run_id === undefined
+      ? { ...rawReport, schema: 'VidaContourStagePublicationError/v1', run_id }
+      : rawReport;
+  const diagnostic = contourRecord(rawReport.diagnostic);
+  const result = contourRecord(execution.result);
+  const custody = contourRecord(result.processCustody);
+  const capture = contourRecord(result.output_capture);
+  const observations: readonly (readonly [unknown, unknown])[] = [
+    [report.run_id, run_id],
+    [diagnostic.directory, directory],
+    [report.source_commit, launch.commit],
+    [report.source_commit, execution.commit],
+    [commit, launch.commit],
+    [diagnostic.contour, launch.contour],
+    [diagnostic.contour, execution.contour],
+    [diagnostic.lane, launch.lane],
+    [diagnostic.lane, execution.lane],
+    [diagnostic.exit_code, result.exitCode],
+    [diagnostic.signal, result.signal],
+    [diagnostic.timed_out, result.timedOut],
+    [diagnostic.spawn_error, result.spawnError],
+    [diagnostic.capture_complete, capture.complete === true],
+    [diagnostic.group_closed, custody.processGroupTerminationObserved === true],
+    [diagnostic.boot_unchanged, execution.boot_after === launch.boot],
+    [diagnostic.commit_unchanged, execution.commit_after === launch.commit],
+    [diagnostic.clean_inputs, execution.tracked_status_after === ''],
+    [diagnostic.elapsed_ms, execution.elapsed_ms],
+  ];
+  if (observations.some(([observed, expected]) => observed !== expected))
+    throw new Error('Stage outcome differs from its retained scope or terminal custody.');
+  return contourAttempts(report, { artifact: file, commit, recorded_at });
+}
+
 /** Single final-check owner publishes after terminal producers; never called by build/install or a Git hook. */
 export function runContourProgress(
   args: string[],
@@ -267,12 +312,14 @@ export async function runContourProgressWithNative(
   root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
 ): Promise<void> {
   const nativeFiles: string[] = [];
+  const stageOutcomeFiles: string[] = [];
   const ordinary: string[] = [];
   for (let index = 0; index < args.length; index++) {
-    if (args[index] === '--native-report') {
+    if (args[index] === '--native-report' || args[index] === '--stage-outcome') {
+      const option = args[index]!;
       const file = args[++index];
-      if (!file) throw new Error('Expected --native-report with a value.');
-      nativeFiles.push(path.resolve(file));
+      if (!file) throw new Error('Expected ' + option + ' with a value.');
+      (option === '--native-report' ? nativeFiles : stageOutcomeFiles).push(path.resolve(file));
     } else ordinary.push(args[index]!);
   }
   const commitIndex = ordinary.lastIndexOf('--commit');
@@ -281,6 +328,7 @@ export async function runContourProgressWithNative(
   const recorded_at = atIndex >= 0 ? (ordinary[atIndex + 1] ?? new Date().toISOString()) : new Date().toISOString();
   const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const attempts: ReturnType<typeof contourAttempts> = [];
+  for (const file of stageOutcomeFiles) attempts.push(...readStageOutcome(file, commit, recorded_at));
   for (const file of nativeFiles) {
     const bytes = await readBoundedMutationArtifact(path.dirname(file), path.basename(file), mutationArtifactByteLimit);
     const report: unknown = JSON.parse(fatalDecoder.decode(bytes));

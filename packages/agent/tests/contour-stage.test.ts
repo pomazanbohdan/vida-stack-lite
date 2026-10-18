@@ -5,10 +5,13 @@ import {
   contourStageReportArguments,
   contourStageDiagnostic,
 } from '../tooling/contour-stage.ts';
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { contourAttempts, mergeContourProgress } from '../tooling/contour-progress.ts';
+import { runContourProgressWithNative } from '../tooling/contour-progress-cli.ts';
 import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
+import { expectRejection } from './helpers/expect-rejection.ts';
 
 function terminal(): MutationProcessResult {
   return {
@@ -219,5 +222,151 @@ test('missing descendant closure or incomplete capture fences every publication 
     expect(contourStagePublicationAdmitted(result, 'frozen-crap')).toBe(false);
     expect(contourStagePublicationAdmitted(result, 'crap-applicability')).toBe(false);
     expect(contourStagePublicationAdmitted(result, 'mutation')).toBe(false);
+  }
+});
+
+test('failed-stage outcome import binds retained custody and cannot promote diagnostic counters', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-stage-outcome-'));
+  const stage = path.join(root, 'contour-stage-fixture_1');
+  const output = path.join(root, 'published');
+  mkdirSync(stage);
+  const result = { ...terminal(), exitCode: 1 };
+  const launch = {
+    commit: 'fixture-commit',
+    boot: 'boot-id',
+    contour: 'main-host',
+    lane: 'mutation',
+    output,
+    timeout_ms: 10,
+  };
+  const execution = {
+    ...launch,
+    result,
+    elapsed_ms: 5,
+    boot_after: 'boot-id',
+    commit_after: 'fixture-commit',
+    tracked_status_after: '',
+  };
+  const diagnostic = {
+    schema: 'VidaContourStageOutcome/v1',
+    directory: stage,
+    contour: 'main-host',
+    lane: 'mutation',
+    process: 'failed',
+    elapsed_ms: 5,
+    exit_code: 1,
+    signal: null,
+    timed_out: false,
+    spawn_error: null,
+    capture_complete: true,
+    group_closed: true,
+    boot_unchanged: true,
+    commit_unchanged: true,
+    clean_inputs: true,
+    mutation: {
+      qualification: 'diagnostic-only',
+      run_id: 'raw-run',
+      totals: { generated: 5, attempted: 4, killed: 2, survived: 1, unknown: 1, unattempted: 1 },
+    },
+    publication: 'unknown-or-partial',
+    error: 'report publication failed',
+  };
+  const failure = {
+    schema: 'VidaContourStagePublicationError/v1',
+    run_id: path.basename(stage),
+    error: diagnostic.error,
+    status: 'unknown-or-partial',
+    source_commit: 'fixture-commit',
+    diagnostic,
+  };
+  writeFileSync(path.join(stage, 'launch.json'), JSON.stringify(launch));
+  writeFileSync(path.join(stage, 'execution.json'), JSON.stringify(execution));
+  writeFileSync(path.join(stage, 'publication-error.json'), JSON.stringify(failure));
+  let passed = false;
+  try {
+    await runContourProgressWithNative(
+      ['--output', output, '--commit', 'fixture-commit', '--stage-outcome', path.join(stage, 'publication-error.json')],
+      root,
+    );
+    const snapshotBytes: unknown = JSON.parse(readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8'));
+    const snapshot = mergeContourProgress(snapshotBytes, []);
+    expect(snapshot.attempts).toHaveLength(1);
+    expect(snapshot.attempts[0]).toMatchObject({
+      lane: 'stage-outcome',
+      run_id: path.basename(stage),
+      status: 'mutation/failed/unknown-or-partial',
+      accepted: false,
+      artifact: path.join(stage, 'publication-error.json'),
+      sources: [],
+      tests: [],
+      tools: [],
+      closure: [],
+      coverage: null,
+      max_cc: null,
+      max_entry_crap: null,
+      killed: null,
+      mutants: null,
+    });
+    expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8')).toContain(
+      'mutation/failed/unknown-or-partial',
+    );
+    for (const promotion of [{ accepted: true }, { confirmed_killed: 2 }, { mutants: 5 }, { selection_complete: true }])
+      expect(() =>
+        mergeContourProgress({ schema: snapshot.schema, attempts: [{ ...snapshot.attempts[0], ...promotion }] }, []),
+      ).toThrow();
+    const legacyOutput = path.join(root, 'legacy-published');
+    writeFileSync(
+      path.join(stage, 'publication-error.json'),
+      JSON.stringify({
+        error: failure.error,
+        status: failure.status,
+        source_commit: failure.source_commit,
+        diagnostic,
+      }),
+    );
+    await runContourProgressWithNative(
+      [
+        '--output',
+        legacyOutput,
+        '--commit',
+        'fixture-commit',
+        '--stage-outcome',
+        path.join(stage, 'publication-error.json'),
+      ],
+      root,
+    );
+    expect(readFileSync(path.join(legacyOutput, 'CONTOUR-STATUS.md'), 'utf8')).toContain(
+      'mutation/failed/unknown-or-partial',
+    );
+    expect(() =>
+      contourAttempts(
+        { ...failure, status: 'PASS', diagnostic: { ...diagnostic, publication: 'PASS' } },
+        {
+          artifact: path.join(stage, 'publication-error.json'),
+          commit: 'fixture-commit',
+          recorded_at: new Date().toISOString(),
+        },
+      ),
+    ).toThrow();
+    const mismatch = { ...diagnostic, contour: 'other-contour' };
+    writeFileSync(path.join(stage, 'publication-error.json'), JSON.stringify({ ...failure, diagnostic: mismatch }));
+    await expectRejection(
+      runContourProgressWithNative(
+        [
+          '--output',
+          output,
+          '--commit',
+          'fixture-commit',
+          '--stage-outcome',
+          path.join(stage, 'publication-error.json'),
+        ],
+        root,
+      ),
+      /scope or terminal custody/u,
+    );
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Retained failed stage projection fixture: ${root}`);
   }
 });

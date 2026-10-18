@@ -314,11 +314,17 @@ export function selectNativeMutationBatchIndices(
   const wanted = new Set(diagnosticMutantIds);
   if (wanted.size !== diagnosticMutantIds.length || diagnosticMutantIds.some((id) => !id || id.length > 200))
     throw new Error('Targeted diagnostic set IDs must be unique nonempty tokens up to 200 characters.');
+  const requested = new Set(wanted);
   const indices: number[] = [];
   for (const [index, batch] of plan.batches.entries()) {
     if (batch.identities.length !== 1 || batch.local_ids.length !== 1)
       throw new Error('Targeted diagnostics require singleton batches.');
-    if (wanted.delete(batch.local_ids[0]!)) indices.push(index);
+    const matches = [...new Set([batch.local_ids[0]!, batch.identities[0]!])].filter((id) => requested.has(id));
+    if (matches.length > 1) throw new Error('Diagnostic set names the same mutant through multiple aliases.');
+    if (matches.length === 1) {
+      if (!wanted.delete(matches[0]!)) throw new Error('Diagnostic token is ambiguous across generated mutants.');
+      indices.push(index);
+    }
   }
   if (wanted.size > 0) throw new Error('Diagnostic mutant is absent from the complete generated plan.');
   return indices;
@@ -331,8 +337,7 @@ export function selectNativeMutationBatchWindow(
 ) {
   if (diagnosticMutantId === undefined) return { start: 0, end: Math.min(maxBatches, plan.batches.length) };
   if (plan.limit !== 1 || maxBatches !== 1) throw new Error('Targeted diagnostics require singleton batches.');
-  const index = plan.batches.findIndex((batch) => batch.local_ids[0] === diagnosticMutantId);
-  if (index < 0) throw new Error('Diagnostic mutant is absent from the complete generated plan.');
+  const index = selectNativeMutationBatchIndices(plan, [diagnosticMutantId])[0]!;
   return { start: index, end: index + 1 };
 }
 
@@ -961,7 +966,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
 if (import.meta.main) {
   if (process.argv.length === 3 && process.argv[2] === '--help')
     console.log(
-      'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--capture-per-test-diagnostic] [--diagnostic-mutant-id <generated local ID> | --diagnostic-mutant-ids <comma-separated generated local IDs>]. Per-test capture is diagnostic-v2 baseline-only: it binds the input fingerprint/descriptor/receipt and full test selection, executes no mutants, and cannot combine with complete admission or mutant selection. Unattempted mutants keep the diagnostic exit nonzero. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. ID sets allow1..32 unique IDs and share one budget across selected mutants. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
+      'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--capture-per-test-diagnostic] [--diagnostic-mutant-id <local or canonical ID> | --diagnostic-mutant-ids <comma-separated local or canonical IDs>]. Per-test capture is diagnostic-v2 baseline-only: it binds the input fingerprint/descriptor/receipt and full test selection, executes no mutants, and cannot combine with complete admission or mutant selection. Unattempted mutants keep the diagnostic exit nonzero. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. ID sets allow1..32 unique IDs, reject duplicate or ambiguous aliases before baseline, and share one budget across selected mutants. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
       '--isolated-workers opts into private report overlays with a two-worker default; --workers 2|4 explicitly selects a bounded pool for bun-project-upgrade-existing-storage-image, bun-fs-safe-attestation, main-envelopes, bun-service-operation-custody or bun-runtime-initialization. bun-project-upgrade-storage-admission is bounded to two workers. These reviewed selections may request complete admission through the unchanged full-universe native proof gates. It preserves the full test argv and one deadline, retains private outputs, and forbids per-test capture and ID selectors. Default execution remains serial.',
     );
   else

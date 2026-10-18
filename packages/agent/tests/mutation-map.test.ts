@@ -394,7 +394,28 @@ test('native diagnostic ID sets resolve all IDs before execution and retain spar
   const before = structuredClone(batches);
   const plan = { limit: 1, batches };
   expect(selectNativeMutationBatchIndices(plan, ['240', '177'])).toEqual([1, 3]);
+  expect(selectNativeMutationBatchIndices(plan, ['identity-240', 'identity-177'])).toEqual([1, 3]);
+  expect(selectNativeMutationBatchIndices(plan, ['identity-240', '177'])).toEqual([1, 3]);
+  expect(() => selectNativeMutationBatchIndices(plan, ['177', 'identity-177'])).toThrow('multiple aliases');
+  expect(() =>
+    selectNativeMutationBatchIndices(
+      {
+        limit: 1,
+        batches: [
+          { local_ids: ['a'], identities: ['hash-a'] },
+          { local_ids: ['b'], identities: ['a'] },
+        ],
+      },
+      ['a'],
+    ),
+  ).toThrow('ambiguous');
+  expect(
+    selectNativeMutationBatchIndices({ limit: 1, batches: [{ local_ids: ['a'], identities: ['a'] }] }, ['a']),
+  ).toEqual([0]);
   expect(() => selectNativeMutationBatchIndices(plan, ['177', 'foreign'])).toThrow('complete generated plan');
+  expect(() => selectNativeMutationBatchIndices(plan, ['identity-177', 'identity-foreign'])).toThrow(
+    'complete generated plan',
+  );
   expect(() => selectNativeMutationBatchIndices({ ...plan, limit: 2 }, ['177', '240'])).toThrow('singleton batches');
   expect(() => selectNativeMutationBatchIndices(plan, ['177', '177'])).toThrow();
   expect(batches).toEqual(before);
@@ -406,6 +427,7 @@ test('targeted batch keeps its original plan index and leaves the full universe 
   const before = structuredClone(batches);
   const plan = { limit: 1, batches };
   expect(selectNativeMutationBatchWindow(plan, 1, '178')).toEqual({ start: 2, end: 3 });
+  expect(selectNativeMutationBatchWindow(plan, 1, 'identity-178')).toEqual({ start: 2, end: 3 });
   expect(selectNativeMutationBatchWindow(plan, 2)).toEqual({ start: 0, end: 2 });
   expect(selectNativeMutationBatchWindow(plan, 8)).toEqual({ start: 0, end: 3 });
   expect(() => selectNativeMutationBatchWindow(plan, 1, 'foreign')).toThrow('complete generated plan');

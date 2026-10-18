@@ -311,21 +311,45 @@ async function main(): Promise<void> {
     });
     process.stdout.write(JSON.stringify(diagnostic({ publication: 'published', reports: reportArgs })) + '\n');
   } catch (error) {
+    let projectionFailure: { error: unknown } | undefined;
     try {
       const detail = diagnostic({
         publication: published ? 'published-receipt-failed' : 'unknown-or-partial',
         error: String(error),
       });
       record('publication-error', {
+        schema: 'VidaContourStagePublicationError/v1',
+        run_id: path.basename(directory),
         error: String(error),
         status: published ? 'published-receipt-failed' : 'unknown-or-partial',
         source_commit: commit,
         diagnostic: detail,
       });
       process.stdout.write(JSON.stringify(detail) + '\n');
+      const snapshot = values.snapshot ?? path.join(output, 'CONTOUR-STATUS.json');
+      try {
+        await runContourProgressWithNative(
+          [
+            '--output',
+            output,
+            '--commit',
+            commit,
+            ...(values.snapshot || existsSync(snapshot) ? ['--snapshot', snapshot] : []),
+            '--stage-outcome',
+            path.join(directory, 'publication-error.json'),
+          ],
+          packageRoot,
+        );
+      } catch (projectionError) {
+        projectionFailure = { error: projectionError };
+      }
     } catch (receiptError) {
       return throwAfterCampaignReceiptFailure(error, receiptError, { source_commit: commit, boot });
     }
+    if (projectionFailure)
+      throw new AggregateError([error, projectionFailure.error], 'Stage failure and outcome projection failure', {
+        cause: error,
+      });
     throw error;
   }
   if (campaignProcessState(result) !== 'completed') process.exitCode = 1;

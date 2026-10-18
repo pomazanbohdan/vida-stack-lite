@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date: 2026-10-17. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
+Status date: 2026-10-18. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
 
 ## Objective
 
@@ -33,14 +33,34 @@ Migrate current callers to the shared helpers, then delete forward-only duplicat
 
 ### 4. Frozen quality prerequisites and complete run
 
+The failed-stage projection repair uses the existing snapshot publisher and
+paired raw launch/execution records. Its decoder and non-admission invariant
+helpers have prospective CC/CRAP ceilings10/10 before extraction. Reuse the
+existing record guard; bind scalar observations once through comparison data,
+not a second Source scan/hash or duplicated custody policy. Stage failures keep
+null metrics and no Source/currentness claim. Preserve primary and projection
+errors together and expose the last failed attempt without changing past scores.
+
+Resolve bounded diagnostic requests through either existing local IDs or exact
+canonical mutant identities in the same captured singleton plan. Reject two
+aliases for one mutant. This reuses the current resolver before its full baseline;
+it does not add a test filter or permit complete admission. Derive provisional
+identities with the existing identity owner and current Source bytes, then require
+an exact generated-plan match. Avoid a separate instrumenter/AST inventory just
+to discover shifted local IDs after a supported refactor.
+
 Current three-hour review keeps Root's numeric producers serial and three
 independent preparation slots. Finish the config fastpath's guarded fallback/race
 regressions and setup-deadline custody before repeating the failed core selection.
 Do not repeat its unchanged270s failed campaign or treat late Bun PASS rows as
-deadline proof. Queue fresh storage-admission coverage/frozen proof and the
-qualified two-worker complete mutation route while core's30/60s setup issue stays
-OPEN. Reuse each capture, full baseline and canonical mutant map; known repair IDs
-share one diagnostic baseline. WORK owns the measured receipts and resource margin.
+deadline proof. Storage coverage/frozen proof is terminal; the full two-worker
+mutation attempt stops partial with134/228attempted. Integrate the actual survivor
+regressions/shared-close repair and failed-stage projection, publish normally,
+then recheck repaired IDs together on fresh inputs. Do not repeat the unchanged
+full campaign or promote the earlier pair after changed Source. Core's30/60s
+setup issue stays OPEN. Reuse each capture, full baseline and canonical mutant
+map; known repair IDs share one diagnostic baseline. WORK owns the measured
+receipts and resource margin.
 
 The2026-10-16 user instruction adds an explicit complete diagnostic campaign via
 `bun run test:contours --unclosed` (`--all` selects every executable contour;
