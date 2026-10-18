@@ -26,8 +26,8 @@ and main-envelopes. Root serializes numeric producers; blind Luna prepares and
 reviews bounded patches. Dispatch's fixture repair now binds SDK and package data;
 main-envelopes awaits a measured correction rather than an unchanged full retry.
 The storage deficit observed at v798 is resolved by the verified v803 retirement
-below. The next producer still needs fresh admission; the rejected attempt has no
-numeric result and is not resumed.
+below. Fresh dispatch coveragev804 completes on e67216b; its residual exact-gate
+deficits remain OPEN. The rejected v798 attempt has no numeric result.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
@@ -134,7 +134,7 @@ are incomplete and are not contour closure:
 | Contour/run | Functions | Lines | Statements | Branches | maxCC/CRAP |
 | --- | --- | --- | --- | --- | --- |
 | Governanceccc6c4d2(v780) |105/105|365/365|406/407|249/251|32/32|
-| Dispatch38b4557e(v788) |70/70|298/312|318/334|244/256|39/39|
+| Dispatch438eea30(v804) |70/70|305/312|325/334|245/256|39/39|
 | Controller7071caed(v564) |27/28|132/156|144/182|127/164|14/20|
 
 Published e34393b contains the hash correction and four regressions; ordinary
@@ -291,6 +291,23 @@ SHA256 and status, the absent attachments root, and no remaining worktree there.
 Current gitless images, contour stages, SDK outputs and Root Git history remain
 outside the removed directory. No new suite or numeric qualification ran during
 retirement. Subsequent scratch and logs use paths outside attachments.
+
+#### One requested coverage cycle after retirement
+
+Fresh dispatchv804 uses Source e67216b and gitless image
+/workspace/.vida-quality-inputs/1f5350e3fbf1557e61587f416e5ba3bc67a681b3/repository.
+Run438eea30-b23e-4e92-847d-e1ab6cf1607b passes58tests with622assertions and0failures
+in156.29s test time,160988.239488ms stage time. Stage
+/workspace/contour-stage-DSSEvN retains complete capture, observed group closure,
+unchanged boot and unchanged image. The outer log is
+/workspace/.vida-retained/coverage-cycle-v804/coverage.log. No attachments root or
+worktree is created. Coverage is F70/70 L305/312 S325/334 B245/256 with
+maxCC/entryCRAP39/39. Compared with v788,7more lines,7more statements and1more
+branch arm execute; the two new restore-denial cases bring the total from56to58.
+The unchanged exact gate remains BLOCKED by7lines,9statements and11branch arms.
+The stage publishes the automatic projection once through its existing owner.
+No frozen producer runs against nonexact coverage, no mutation score is inferred,
+and no second cycle is started. Historical closure counts remain unchanged.
 
 Root integrates one public1000/1001result-capacity regression from blind Lunav767.
 It uses real SDK transitions, checks ordered immutable evidence and all subsequent

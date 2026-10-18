@@ -99,6 +99,11 @@ unchanged2GiB threshold. Owner-directed v803 retires the entire attachments root
 after archive comparison and preservation, restoring23519653888available bytes.
 WORK owns its exact archive mapping and terminal checks. Start the next fresh
 producer with normal admission; do not resume v798 or infer a numeric pass.
+The owner's single requested coverage cyclev804 now completes on e67216b with
+58PASS/0FAIL and F70/70 L305/312 S325/334 B245/256, maxCC/entryCRAP39/39.
+Continue dispatch repairs from its retained counters, with9statement and11branch
+deficits still OPEN. The automatic projection is updated; no second producer or
+frozen/mutation acceptance follows from that nonexact coverage.
 
 The fresh governance producer exposes missing pre-capture of explicit computed
 module roots outside the selected coverage Source. Capture these roots through
