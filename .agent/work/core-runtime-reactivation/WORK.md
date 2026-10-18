@@ -28,10 +28,10 @@ main-envelopes awaits a measured correction rather than an unchanged full retry.
 The storage deficit observed at v798 is resolved by the verified v803 retirement
 below. Fresh dispatch coveragev804 completes on e67216b; its residual exact-gate
 deficits remain OPEN. The rejected v798 attempt has no numeric result.
-The owner requests two further coverage cycles. Fresh dispatchv805 completes after
-public missing-root and missing-repair-ID denials. Blind Luna confirms the SDK
-snapshot seam; Root qualifies its actual state shape for the second governance
-cycle. Numeric producers remain serial.
+Both further requested coverage cycles are complete. Dispatchv805 adds two public
+missing-option denials; governancev806 qualifies duplicate completion suppression
+through the observed SDK clone state. Both exact gates remain BLOCKED. No third
+numeric producer is started and the chat automation remains paused.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
@@ -137,7 +137,7 @@ are incomplete and are not contour closure:
 
 | Contour/run | Functions | Lines | Statements | Branches | maxCC/CRAP |
 | --- | --- | --- | --- | --- | --- |
-| Governanceccc6c4d2(v780) |105/105|365/365|406/407|249/251|32/32|
+| Governanceb95877ad(v806) |105/105|365/365|406/407|250/251|32/32|
 | Dispatch17e6c4f3(v805) |70/70|305/312|325/334|247/256|39/39|
 | Controller7071caed(v564) |27/28|132/156|144/182|127/164|14/20|
 
@@ -337,6 +337,23 @@ completion entry, the completion event, result evidence and a healthy call after
 restoration. Probe logs remain under /workspace/.vida-retained/coverage-cycles-v805.
 This is a controlled dependency output, not a claim of a valid duplicate-ID
 workflow, process-crash recovery, numeric coverage or mutation acceptance.
+
+The ordinary hook catches an unbound-method reference in the test. Root captures
+the original SDK method through its checked descriptor, retains its native this
+receiver and reruns the focused case successfully with7assertions in2.23s. The
+failed hook remains retained; the corrected hook passes before3768c40 publication.
+
+Fresh governancev806 on3768c40 completes165PASS/0FAIL with8518assertions in63.89s
+test time and69763.634177ms stage time. Runb95877ad-4a38-410f-8c0f-016e2df8e537 uses
+/workspace/.vida-quality-inputs/65395f9d3cefac9108f2ad0b8b244e6bc8818edf/repository;
+stage /workspace/contour-stage-cRucPy retains complete capture/group closure and
+unchanged boot/image. Coverage is F105/105 L365/365 S406/407 B250/251 with
+maxCC/entryCRAP32/32. The new case executes the previously uncovered duplicate
+completion arm. Only policy-workflow.ts:402's missing-evaluation throw remains
+uncovered in statements/branches. The exact gate stays BLOCKED; no frozen producer
+or mutation acceptance is inferred. Both stages update the existing projection
+once. The two requested cycles are terminal; historical closure counts stay9/45
+plus the separate reviewed data-only closure. No runtime or consumer effect occurs.
 
 Root integrates one public1000/1001result-capacity regression from blind Lunav767.
 It uses real SDK transitions, checks ordered immutable evidence and all subsequent

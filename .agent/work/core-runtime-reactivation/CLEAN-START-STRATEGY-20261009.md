@@ -106,9 +106,12 @@ deficits still OPEN. The automatic projection is updated; no second producer or
 frozen/mutation acceptance follows from that nonexact coverage.
 The next owner request authorizes two more cycles. Dispatchv805 completes after
 two missing-option regressions with60PASS/0FAIL and B247/256. Lines/statements and
-maxCC/entryCRAP remain305/312,325/334and39/39. Root now runs governance coverage
-after its observed SDK clone-state completion control; preserve both exact-gate
-deficits and all failed fixture probes. Keep one serial numeric owner.
+maxCC/entryCRAP remain305/312,325/334and39/39. Governancev806 now completes the
+second cycle after its observed SDK clone-state completion control with165PASS,
+F105/105 L365/365 S406/407 B250/251 and maxCC/entryCRAP32/32. Its only remaining
+statement/branch deficit is policy-workflow.ts:402's missing-evaluation guard.
+Preserve both exact-gate deficits and all failed fixture probes. Both requested
+cycles are terminal; no third run, frozen pass or mutation closure is inferred.
 
 The fresh governance producer exposes missing pre-capture of explicit computed
 module roots outside the selected coverage Source. Capture these roots through
