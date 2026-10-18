@@ -4,6 +4,17 @@ Status date: 2026-10-18. Current execution and evidence record. This document do
 
 ## Current state and owners
 
+Real v357 ID0 control d80a128f-3451-4816-bb52-59a9373e1bc5 binds56999f9
+and closes17720ms with1assertion-confirmed Killed,0Survived/UNKNOWN and227
+unattempted of228. StageL4Fwca retains complete captures, closed groups and clean
+unchanged boot/commit; expected partial exit1 denies score publication. The old
+import-time UNKNOWN stays unchanged. Blind Luna's worker review at
+`/workspace/attachments/storage-admission-worker-review-v357.md` finds private
+fixture/module/SQLite/spy/report ownership suitable for a bounded two-worker
+pilot. The selector adds this exact contour, rejects four workers, retains full
+argv/baseline/proof gates and has a60-assertion selector control. No parallel
+execution or full score is claimed before the real16-ID pilot closes.
+
 The storage-admission import-time gap has an identity-preserving correction in
 the existing mutation image owner: Babel resolves function-body reads of the
 instrumented module const, without reloading the module or resetting capability

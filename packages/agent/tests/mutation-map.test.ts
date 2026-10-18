@@ -312,8 +312,18 @@ test('isolated workers reserve diagnostics and complete requests for the same re
     'main-envelopes',
     'bun-service-operation-custody',
     'bun-runtime-initialization',
+    'bun-project-upgrade-storage-admission',
   ]) {
     const partition = [{ ...declared[0]!, name: contour }];
+    if (contour === 'bun-project-upgrade-storage-admission') {
+      expect(() =>
+        selectMutationBatchPilot(['--contour', contour, '--isolated-workers', '--workers', '4'], partition),
+      ).toThrow('bounded to two');
+      expect(
+        selectMutationBatchPilot(['--contour', contour, '--isolated-workers', '--workers', '2'], partition)
+          .maximumWorkers,
+      ).toBe(2);
+    }
     expect(selectMutationBatchPilot(['--contour', contour], partition).isolatedWorkers).toBe(false);
     expect(selectMutationBatchPilot(['--contour', contour, '--isolated-workers'], partition).isolatedWorkers).toBe(
       true,

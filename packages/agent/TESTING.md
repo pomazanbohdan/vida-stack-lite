@@ -1152,13 +1152,20 @@ still needs captured-input/private-output binding and qualified worker resources
 `--isolated-workers` opts into a bounded real-runner diagnostic for
 `bun-project-upgrade-existing-storage-image`, `bun-fs-safe-attestation`,
 `main-envelopes`, `bun-service-operation-custody` or
-`bun-runtime-initialization` only. Runtime initialization runs its full declared
+`bun-runtime-initialization`. Storage admission additionally permits a candidate
+two-worker pool; an explicit four-worker request is rejected before generation.
+Its static review and real ID0 consumption proof are preparation. First qualify
+one16-mutant diagnostic with the full28-case baseline, complete private-output
+and child custody, all assertion-confirmed kills and no UNKNOWN/resource block;
+then request the full current universe under the same two-worker bound. A static
+review or partial diagnostic is never a complete score.
+Runtime initialization runs its full declared
 test file in each invocation. Its first complete pilot follows the existing
 private temp/output/SQLite and nested-process mechanics controls, a passing
 21-case baseline with both racer children drained, and the closed64-mutant
 isolated diagnostic recorded in WORK. The diagnostic itself is not a score or
 evidence that four racer children ran concurrently.
-These five reviewed selections also permit `--admit-complete` through the same
+The reviewed selections also permit `--admit-complete` through the same
 selector; no separate duplicate complete-eligibility list is maintained. Each
 still requires the full current universe and unchanged native proof gates.
 Envelope eligibility follows a fresh closed64-mutant all-Killed diagnostic with
