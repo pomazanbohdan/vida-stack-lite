@@ -22,9 +22,10 @@ No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 ### Current rolling repair cycle
 
 Active contours: governance/public contracts, dispatch repair and controller
-observation. Published checkpoint at this audit is8e572c5; Root's next test-only
-packet addresses the latest UNKNOWN and prepares further workflow/controller
-cases. All immutable rolling-measure-* checkouts remain untouched.
+observation. The checked test-only packet is published asa14c98b through ordinary
+hooks/push. It addresses the latest UNKNOWN and adds workflow/controller cases.
+All immutable rolling-measure-* checkouts remain untouched. Further numeric work
+is resource-blocked at v621 below; no replacement producer is launched.
 
 Latest local observations below apply only to their own captured inputs, before
 new residual test changes. They are incomplete and are not contour closure:
@@ -153,14 +154,44 @@ device27,2397720576bytes free against2147483648floor. That historical sample has
 value. Existing inventories v553/v554 are reused; no broad du/scan/hash or cache
 removal is performed. Native admission still applies to each new producer.
 
+### Current resource blocker
+
+Fresh immutablev619 binds publisheda14c98b; SDKv620 forms inputs without suites.
+Mutationv621/jlZKl6, runf18a4f24-fb21-40e3-b908-9f6c76202c47, passes its158-case
+baseline in67126.17031599999ms. Before launching the selected mutant, the existing
+native per-mutant storage guard observes2109136896bytes free against the unchanged
+2147483648floor:38346752bytes short. The stage exits1after69843.61712400001ms;
+captures are complete, groups closed, boot/commit unchanged and inputs clean.
+981generated,0attempted,0Killed,0UNKNOWN,981unattempted is a resource refusal,
+not a mutation score. The original terminal outcome and partial publication are
+retained under /workspace/attachments/contour-stage-jlZKl6 and automatically
+projected. Earlier UNKNOWN observations keep their original classification.
+
+Native admission already checks storage before the baseline and each mutant;
+do not add a duplicate probe or retry the unchanged baseline without capacity.
+The shallowv623 cache inventory reuses the earlier63221760-byte total and finds
+shared global tool dependencies, with no proven obsolete independent subset.
+No cache is deleted. Completed worker checkouts have already been retired;
+remaining measured roots, dependency owner and original evidence stay protected.
+No new broad disk/AST/hash scan, checkout or numeric producer is started.
+
+Continuation needs durable capacity above the observed38346752-byte deficit,
+plus working room for the next producer. About1GiB extra is a practical buffer,
+not a changed admission threshold or a measured estimate of peak demand. Do not
+lower the floor or move evidence to volatile storage. Controller native raw-fault
+reachability remains a separate GAP after read-onlyv622: a Proxy/getter hypothesis
+has neither native qualification nor a truthful durable argv receipt. No Source
+change or synthetic fault seam is justified by that hypothesis.
+
 ## Execution order
 
-1. Finish the current assertion/workflow/controller packet with static/focused
-   checks, normal hooks and ordinary push. Never bypass hooks or edit a measured
-   checkout. Retain each failed attempt with its original custody/classification.
-2. On new immutable checked inputs, run the next bounded mutation diagnostic and
-   current incomplete contour coverage. Fresh SDK formation only when required;
-   do not repeat unchanged suites or existing AST/inventory/hash passes.
+1. The assertion/workflow/controller packet is checked and published asa14c98b.
+   Preserve its normal-hook evidence and each failed attempt's original custody/
+   classification. Never bypass hooks or edit a measured checkout.
+2. Resolve the resource GAP, then run the next bounded mutation diagnostic and
+   current incomplete contour coverage on immutable checked inputs. Fresh SDK
+   formation only when required; do not repeat unchanged suites or existing
+   AST/inventory/hash passes.
 3. Complete governance exact coverage and independently pin valid v4 ownership
    review using the existing changed-role inventory. Preserve retired stageCalls
    role#2; retained mcpResults#3->#2and recordedStages#4->#3keep their own caps.
