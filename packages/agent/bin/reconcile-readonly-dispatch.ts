@@ -6,6 +6,11 @@ import {
 import { reconcileCliContracts, reconcileExpectedOptions } from './reconcile-cli-contracts.ts';
 import { closeSync, constants, fsyncSync, lstatSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import {
+  finishWorkspaceDatabaseClose,
+  withWorkspaceDatabaseClose,
+  type DatabaseWorkOutcome,
+} from '../src/config/workspace-database-raw.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -185,12 +190,15 @@ function writePlan(root: string, repairId: string, plan: ReadOnlyDispatchPlan): 
   const file = path.join(root, planFile(repairId));
   const bytes = Buffer.from(`${JSON.stringify(plan, null, 2)}\n`);
   const fd = openSync(file, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY, 0o600);
-  try {
-    writeFileSync(fd, bytes);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
-  }
+  withWorkspaceDatabaseClose(
+    fd,
+    () => {
+      writeFileSync(fd, bytes);
+      fsyncSync(fd);
+    },
+    closeSync,
+    'read-only dispatch plan write and descriptor close failed',
+  );
 }
 
 /** Sole public reconcile-artifacts CLI branch; this prepares provenance, not native dispatch. */
@@ -221,6 +229,7 @@ export function runReadOnlyDispatchRepair(args: string[]): {
     'read-only dispatch database must be a single-link regular file',
   );
   const database = openCliWorkspaceDatabase(root, databasePath, workspaceId, mode === 'inspect' || mode === 'plan');
+  let closeOutcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
   try {
     if (['inspect', 'plan'].includes(mode)) {
       const projectIds = requiredOption(values, '--projects').split(',');
@@ -277,7 +286,15 @@ export function runReadOnlyDispatchRepair(args: string[]): {
       old_issue_outcome: saved.prior_outcome,
       new_dispatch_generation: saved.replacement_generation,
     };
+  } catch (error) {
+    closeOutcome = { ok: false, error };
+    throw error;
   } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
+    finishWorkspaceDatabaseClose(
+      database,
+      closeOutcome,
+      closeWorkspaceDatabaseWithAdmission,
+      'read-only dispatch repair and admitted database close failed',
+    );
   }
 }

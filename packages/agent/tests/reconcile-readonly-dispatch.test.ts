@@ -1,5 +1,6 @@
-import { test, expect } from 'bun:test';
+import { test, expect, spyOn } from 'bun:test';
 import { Database } from 'bun:sqlite';
+import * as fs from 'node:fs';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -15,6 +16,8 @@ import { openConfiguredMastraSessionLedger } from '../src/orchestration/persiste
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
+import * as workspaceDatabaseCli from '../bin/workspace-database-cli.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import {
   observationSchema,
   requestSchema,
@@ -736,3 +739,184 @@ test('persisted v1 read-only dispatch plans remain readable', async () => {
     finishFixture(value, succeeded);
   }
 });
+test('public read-only dispatch CLI preserves a body failure when admitted database close also fails', async () => {
+  const value = fixture();
+  let succeeded = false;
+  let sourceDatabase: Database | undefined;
+  let closeAttempts = 0;
+  let injectCloseFailure = false;
+  let sourceClosePending = false;
+  let bodyFailure: { error: unknown } | undefined;
+  const closeError = new Error('injected read-only dispatch source close interruption');
+  const originalOpen = workspaceDatabaseCli.openCliWorkspaceDatabase.bind(workspaceDatabaseCli);
+  const openSpy = spyOn(workspaceDatabaseCli, 'openCliWorkspaceDatabase').mockImplementation((...args) => {
+    const database = originalOpen(...args);
+    if (injectCloseFailure) sourceDatabase = database;
+    return database;
+  });
+  const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+  const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+    this: Database,
+    force?: boolean,
+  ): void {
+    if (injectCloseFailure && this === sourceDatabase) {
+      closeAttempts += 1;
+      sourceClosePending = true;
+      throw closeError;
+    }
+    originalClose.call(this, force);
+  });
+
+  try {
+    await runReconcileArtifacts(value.args('plan'));
+    writeFileSync(path.join(value.root, '.agent/work/fixture-dispatch/read-only-dispatch-plan.v1.json'), '{}\n');
+    injectCloseFailure = true;
+
+    let failure: unknown;
+    try {
+      await runReconcileArtifacts(value.args('apply'));
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError)) throw new Error('body and close failures were not aggregated');
+    expect(failure.errors).toHaveLength(2);
+    expect(failure.errors[0]).toBeInstanceOf(Error);
+    expect(failure.errors[0]).toMatchObject({
+      message: 'vida repair artifacts: read-only dispatch plan is not exact canonical JSON',
+    });
+    expect(failure.errors[1]).toBeInstanceOf(AggregateError);
+    if (!(failure.errors[1] instanceof AggregateError)) throw new Error('admitted close failure was not retained');
+    expect(failure.errors[1].errors).toEqual([closeError]);
+    expect(closeAttempts).toBe(1);
+    if (!sourceDatabase) throw new Error('public CLI did not expose its admitted source handle to close');
+    expect(sourceDatabase.query<{ value: number }, []>('SELECT 1 AS value').get()).toEqual({ value: 1 });
+
+    closeSpy.mockRestore();
+    openSpy.mockRestore();
+    closeWorkspaceDatabaseWithAdmission(sourceDatabase);
+    sourceClosePending = false;
+    succeeded = true;
+  } catch (error) {
+    bodyFailure = { error };
+  }
+  try {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeSpy.mockRestore();
+        },
+        () => {
+          openSpy.mockRestore();
+        },
+        () => {
+          if (sourceDatabase && sourceClosePending) closeWorkspaceDatabaseWithAdmission(sourceDatabase);
+        },
+      ],
+      bodyFailure,
+    );
+  } catch (error) {
+    finishFixture(value, false);
+    throw error;
+  }
+  finishFixture(value, succeeded);
+  if (bodyFailure) throw bodyFailure.error;
+});
+
+test.each(['error', 'undefined'] as const)(
+  'public read-only dispatch planning preserves body and descriptor-close failures (%s)',
+  async (failureKind) => {
+    const value = fixture();
+    const planPath = path.join(value.root, '.agent/work/fixture-dispatch/read-only-dispatch-plan.v1.json');
+    const writeError: unknown =
+      failureKind === 'error' ? new Error('injected read-only dispatch plan write interruption') : undefined;
+    const closeError = new Error('injected read-only dispatch plan descriptor close interruption');
+    const events: string[] = [];
+    const originalOpenSync = fs.openSync;
+    const originalWriteFileSync = fs.writeFileSync;
+    const originalCloseSync = fs.closeSync;
+    let planDescriptor: number | undefined;
+    let planOpenFlags: number | string | undefined;
+    let writeAttempts = 0;
+    let closeAttempts = 0;
+    let primaryFailure: { readonly error: unknown } | undefined;
+
+    const openSpy = spyOn(fs, 'openSync').mockImplementation((...args: Parameters<typeof fs.openSync>) => {
+      const descriptor = originalOpenSync(...args);
+      if (typeof args[0] === 'string' && path.resolve(args[0]) === planPath) {
+        planDescriptor = descriptor;
+        planOpenFlags = args[1];
+        events.push('open');
+      }
+      return descriptor;
+    });
+    const writeSpy = spyOn(fs, 'writeFileSync').mockImplementation((...args: Parameters<typeof fs.writeFileSync>) => {
+      if (typeof args[0] === 'number' && args[0] === planDescriptor) {
+        writeAttempts += 1;
+        events.push('write');
+        throw writeError;
+      }
+      return originalWriteFileSync(...args);
+    });
+    const closeSpy = spyOn(fs, 'closeSync').mockImplementation((...args: Parameters<typeof fs.closeSync>) => {
+      if (typeof args[0] === 'number' && args[0] === planDescriptor) {
+        closeAttempts += 1;
+        originalCloseSync(...args);
+        events.push('close');
+        throw closeError;
+      }
+      return originalCloseSync(...args);
+    });
+
+    try {
+      let cliFailure: unknown;
+      try {
+        await runReconcileArtifacts(value.args('plan'));
+      } catch (error) {
+        cliFailure = error;
+      }
+
+      expect(cliFailure).toBeInstanceOf(AggregateError);
+      if (!(cliFailure instanceof AggregateError))
+        throw new Error('plan body and descriptor close were not aggregated');
+      expect(cliFailure.errors).toEqual([writeError, closeError]);
+      expect(planDescriptor).toBeDefined();
+      if (planDescriptor === undefined) throw new Error('public plan writer did not expose its exclusive descriptor');
+      const closedDescriptor = planDescriptor;
+      if (typeof planOpenFlags !== 'number' || (planOpenFlags & fs.constants.O_EXCL) === 0)
+        throw new Error('public plan writer did not use exclusive creation for the observed descriptor');
+      expect(writeAttempts).toBe(1);
+      expect(closeAttempts).toBe(1);
+      expect(events).toEqual(['open', 'write', 'close']);
+      expect(fs.readFileSync(planPath)).toEqual(Buffer.alloc(0));
+      expect(fs.existsSync(value.root)).toBe(true);
+      expect(() => fs.fstatSync(closedDescriptor)).toThrow();
+    } catch (error) {
+      primaryFailure = { error };
+    }
+
+    completeOwnedCleanup(
+      [
+        () => {
+          closeSpy.mockRestore();
+          return undefined;
+        },
+        () => {
+          writeSpy.mockRestore();
+          return undefined;
+        },
+        () => {
+          openSpy.mockRestore();
+          return undefined;
+        },
+        () => {
+          console.error(`Retained read-only dispatch plan failure fixture root: ${value.root}`);
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+    if (primaryFailure) throw primaryFailure.error;
+  },
+);

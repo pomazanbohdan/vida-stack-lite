@@ -1059,6 +1059,13 @@ export async function captureRuntimeInputClosure(
     visited.add(importer);
     const bytes = inputBytes.get(importer);
     if (!bytes) throw new Error(`Coverage input snapshot is missing: ${importer}`);
+    const firstPathPart = importer.split('/')[0] ?? '';
+    if (
+      !sources.has(importer) &&
+      !tests.has(importer) &&
+      !(resourceRoots.includes(firstPathPart) && inputBytes.has(importer))
+    )
+      runtimeTools.add(importer);
     if (!importScanSource(importer)) continue;
     const loader = importScanLoader(importer);
     let scanner = scanners.get(loader);
@@ -1109,14 +1116,7 @@ export async function captureRuntimeInputClosure(
       }
       if (!resolved) throw new Error(`Unresolved package-local runtime import: ${importer} -> ${specifier}`);
       observeResolvedEdge?.(importer, resolved);
-      const firstPathPart = resolved.split('/')[0] ?? '';
-      if (
-        !sources.has(resolved) &&
-        !tests.has(resolved) &&
-        !(resourceRoots.includes(firstPathPart) && inputBytes.has(resolved))
-      )
-        runtimeTools.add(resolved);
-      if (importScanSource(resolved)) queued.push(resolved);
+      queued.push(resolved);
     }
   }
   return [...new Set([...runtimeTools, ...captureConfiguredTestContextInputs(root, visited, inputBytes)])].sort();
@@ -1251,8 +1251,11 @@ async function captureQualityInputBase(
     contractInputs,
     selectionMode,
   );
+  const runtimeEntrypoints = [...testSelection.tests];
+  for (const testPath of selectionMode === 'current' ? testSelection.tests : [])
+    runtimeEntrypoints.push(...(computedModuleEntryPointsByTest[testPath] ?? []));
   const allInputs = [
-    ...new Set([...sources, ...(sdkFormationSourcePaths ?? []), ...capturedTestPaths, ...tools]),
+    ...new Set([...sources, ...(sdkFormationSourcePaths ?? []), ...capturedTestPaths, ...runtimeEntrypoints, ...tools]),
   ].sort();
   const inputBytes = await readQualityInputs(root, allInputs);
   if (selectionMode === 'published-baseline-bun-native')
@@ -1261,9 +1264,7 @@ async function captureQualityInputBase(
     selectionMode === 'current' && inputBytes.has('tooling/build-package.ts') ? 'tooling/build-package.ts' : undefined;
   const sdkBuilderEdges = new Map<string, Set<string>>();
   const runtimeTestPaths = focused ? testSelection.tests : testInputsAll;
-  const runtimeEntrypoints = [...testSelection.tests, ...(sdkBuilderEntrypoint ? [sdkBuilderEntrypoint] : [])];
-  for (const testPath of testSelection.tests)
-    runtimeEntrypoints.push(...(computedModuleEntryPointsByTest[testPath] ?? []));
+  if (sdkBuilderEntrypoint) runtimeEntrypoints.push(sdkBuilderEntrypoint);
   const runtimeToolPaths =
     selectionMode === 'current'
       ? await captureRuntimeInputClosure(

@@ -55,7 +55,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-completed-readonly-capture | 2/113 · 8/339 · 8/360 · 3/347 | 90 / 90 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-routing-contracts | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
 | bun-project-configuration-lifecycle | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
-| bun-governance-and-public-contracts | 94/106 · 329/362 · 355/404 · 182/249 | 32 / 32 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-governance-and-public-contracts | 94/106 · 329/362 · 355/404 · 182/249 | 32 / 32 | unknown | coverage/failed/unknown-or-partial | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-lifecycle | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-storage-admission | 18/18 · 94/94 · 95/95 · 13/13 | 4 / 4 | unknown | BLOCKED | open / unknown | 4 / 4 | open / unknown |
 | bun-project-upgrade-existing-storage-image | 49/49 · 203/203 · 222/222 · 61/61 | 9 / 9 | 488/488 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
@@ -1094,6 +1094,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | --- | --- | --- | --- | --- | --- | --- |
 | coverage | 0af4d7d1-b65a-4be6-b75f-8c6cd051473d | 573db21f4ddc0057e8bb248011c8c3a3b9577b2e | 2026-10-16T07:07:15.569Z | focused-diagnostic; owner accepted locally; selection bound | 94/106 · 329/362 · 355/404 · 182/249 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/0af4d7d1-b65a-4be6-b75f-8c6cd051473d.focused-coverage.json |
 | coverage-outcome | 0af4d7d1-b65a-4be6-b75f-8c6cd051473d | not-captured | 2026-10-16T07:07:15.579Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/0af4d7d1-b65a-4be6-b75f-8c6cd051473d.json |
+| coverage-outcome | 4c90afa4-ef09-47af-b1c7-af6ceada8317 | not-captured | 2026-10-18T10:59:25.559Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/rolling-measure-v462/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/4c90afa4-ef09-47af-b1c7-af6ceada8317.json |
+| stage-outcome | contour-stage-Tv2GGu | 78e9462dcae4c44e360059b6dfe0a3a3238d5dbc | 2026-10-18T10:59:25.864Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-stage-Tv2GGu/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

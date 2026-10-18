@@ -33,6 +33,21 @@ Migrate current callers to the shared helpers, then delete forward-only duplicat
 
 ### 4. Frozen quality prerequisites and complete run
 
+The fresh governance producer exposes missing pre-capture of explicit computed
+module roots outside the selected coverage Source. Capture these roots through
+the same bounded initial read, then classify every visited runtime input once,
+including non-scannable leaves. Keep selected Source/test roles, aggregate/path
+bounds, missing-root rejection and existing freshness fingerprints unchanged.
+Do not widen numeric coverage scope or fall back to unbound live module reads.
+This moves existing owners; no new callable or allowance transfer is planned.
+
+The same dispatch contour contains a second plain-finally error mask at plan
+file publication. Use the existing close owner for its write/fsync body; its
+small new operation callback has prospective CC/CRAP10/10, without inheriting a
+parent allowance. Verify actual opened descriptor, delegated native close,
+ordered causes including undefined and retained afterimage through the public CLI.
+Keep the database body in its current owner through the existing tagged finisher.
+
 Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
 `nativeDiagnosticIdSet` owner and its invalid-token predicate, each with
 prospective CC/CRAP10/10. Reuse its validated Set in plan resolution instead of

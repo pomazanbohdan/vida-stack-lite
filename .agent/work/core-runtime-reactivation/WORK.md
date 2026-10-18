@@ -4,6 +4,70 @@ Status date: 2026-10-18. Current execution and evidence record. This document do
 
 ## Current state and owners
 
+### Current rolling repair cycle
+
+Resume base37c0454 is clean; no previous producer is active. Root selects
+governance/public contracts, dispatch repair and controller observation from the
+existing projection. Blind Luna reads bounded independent contours; Root owns
+canonical integration, checks, Git and numeric publication. Vex statusv467 and
+one synchronous outlinev470 precede measurement; all Vex calls pause for it.
+
+Fresh governance stageTv2GGu(v471) fails before tests in2597.734106ms:
+`Coverage input snapshot is missing: src/contracts/envelopes.ts`. This explicit
+computed root is outside selected coverage Source and was queued after initial
+capture. Full output/group closure and unchanged clean boot/commit are retained;
+no metric report exists. The ordinary publisher records this failed stage.
+REDv481 independently reproduces the same missing root in a small owned fixture.
+The capture correction includes explicit current-mode roots in the existing
+bounded initial read and classifies each visited input once, including non-code
+leaves. Source/test roles, path/byte bounds and frozen baseline mode stay intact.
+GREENv482 passes39cases/456assertions. Independent reviewv479 supports this
+ordering and requests the computed-root/non-code-leaf regression now present.
+
+Compatibilityv483 passes66cases and exposes one genuine metadata-only help
+failure: reconcile-artifacts eagerly loads workspace close helpers, importing
+external DB dependencies before --help. Exact publishedv462 REDv484 reproduces
+it; moving the existing runtime imports into its operational async branch passes
+the same one-case controlv485. Type-only imports and actual repair cleanup remain.
+
+Dispatch REDv486 exposes primary-error loss: malformed persisted plan plus a
+native close interruption yields only the close AggregateError. The control arms
+only the exact admitted DB returned by the real CLI opener, not every handle at
+the same filename. The existing tagged finishWorkspaceDatabaseClose now joins
+both causes without moving the substantive body to a new callback. GREENv487
+passes the complete5-case file/76assertions in9.82s, including the retained live
+handle and its exact registered close retry. Original RED roots/logs remain.
+
+The analogous plan-file writer also masks a write failure with a descriptor-close
+failure. Root corrected the v490 proposal to spy on the actual writeFileSync
+boundary and explicitly rethrow its captured primary assertion error after
+successful cleanup. v492's apparent2PASS/2assertions was invalid: that proposal
+had swallowed the failed assertions. Corrected REDv493 fails both Error/undefined
+rows at the real close-only result. The existing generic close owner now wraps
+only the tiny write/fsync operation; GREENv495 passes2cases/18assertions in2.85s,
+including exact O_EXCL descriptor, delegated native close, ordered causes and
+empty retained afterimage. A blind bounded caller auditv494 checks analogous
+cleanup-primary misuse; no old evidence is reclassified. Existing research
+cleanup callers pass2cases/20assertions in3.29s(v488).
+
+The activated-config10s case now has opt-in point-phase diagnostics without
+repeating any operation or changing assertions/deadlines. Its one real isolated
+diagnostic is pending fresh published inputs. No speedup or deadline acceptance
+is claimed from this instrumentation. Staticv491 passed514files before the
+descriptor test. Staticv496 then caught a mutable-descriptor narrowing error in
+that test; the closed descriptor is now captured as a const before its assertion.
+
+Custody incident: worker473 temporarily changed and reversed only canonical
+`packages/agent/bin/reconcile-readonly-dispatch.ts`, violating its read-only
+assignment. Root observed an empty diff for that file before its own repair.
+The worker's recorded absolute path differs from immutablev462; no measured
+write is reported, and v471 supplies no admitted numeric result regardless.
+Its original note and correction message are retained. Subsequent code proposals
+use separate worker checkouts v475/v477; Root reviews and integrates exact diffs.
+These prompt-only boundaries are not claimed as filesystem enforcement.
+
+### Prior audit and retained evidence
+
 The three-hour review reuses terminal receipts and existing inventories. Root is
 the sole Source/Git/numeric owner; no other cycle or numeric producer is active.
 Fresh core coverage on5063aae failed at stage dP0KdB after270393.741046ms with

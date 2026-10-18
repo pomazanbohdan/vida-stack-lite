@@ -4,11 +4,7 @@ import { constants, closeSync, fsyncSync, lstatSync, openSync, readFileSync, wri
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { reconcileCliContracts, reconcileExpectedOptions } from './reconcile-cli-contracts.ts';
-import {
-  finishWorkspaceDatabaseClose,
-  withWorkspaceDatabaseClose as withOwnedClose,
-  type DatabaseWorkOutcome,
-} from '../src/config/workspace-database-raw.js';
+import type { DatabaseWorkOutcome } from '../src/config/workspace-database-raw.js';
 import type { MaintenanceFence, MaintenanceFenceBinding, MaintenanceReleaseVerifier } from '../src/host-state.ts';
 import type { planResearchSourceIdentityRepair } from './repair-research-records.ts';
 
@@ -203,6 +199,8 @@ export async function runReconcileArtifacts(args: string[], { onPhase }: Reconci
     return handler(args);
   }
   const values = parse(args);
+  const { finishWorkspaceDatabaseClose, withWorkspaceDatabaseClose: withOwnedClose } =
+    await import('../src/config/workspace-database-raw.js');
   const { createCliHostStateStore, closeWorkspaceDatabaseWithAdmission, openCliHostStateDatabase } =
     await import('./workspace-database-cli.ts');
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');

@@ -44,8 +44,14 @@ const sourceBytes = readFileSync(path.join(repositoryRoot, 'agent-runtime.config
 
 import { captureCoverageConsumerBinding, assertCoverageConsumerBinding } from '../tooling/coverage-consumer-binding.ts';
 
-async function completeFreshUpgrade(root: string, operationId: string): Promise<void> {
+async function completeFreshUpgrade(
+  root: string,
+  operationId: string,
+  onPhase?: (phase: string) => void,
+): Promise<void> {
+  onPhase?.('upgrade module import');
   const upgrade = await import('../src/config/project-upgrade.ts');
+  onPhase?.('upgrade planning');
   const planned = await upgrade.planProjectUpgradeRepair(root, {
     operation_id: operationId,
     actor: 'test-owner: activated runtime config reader',
@@ -53,6 +59,7 @@ async function completeFreshUpgrade(root: string, operationId: string): Promise<
   });
   expect(planned.plan.operation_id).toBe(operationId);
   expect(planned.plan.database_mode).toBe('fresh');
+  onPhase?.('upgrade resume');
   const completed = await upgrade.resumeProjectUpgrade(root, operationId);
   expect(completed.phase).toBe('completed');
 }
@@ -610,20 +617,46 @@ describe('current-v1 exact-byte config repair boundary', () => {
 describe('activated project config reader closure', () => {
   test('loads completed project config and rejects changed receipt identity after warming its cache', async () => {
     const deadlineAt = performance.now() + 10_000;
-    const root = await makeFreshRepository('config-repair-activated-shared-');
+    const diagnosticEnabled = process.env.VIDA_ACTIVATED_CONFIG_PHASE_DIAGNOSTIC === '1';
+    const diagnosticStartedAt = performance.now();
+    const phases: { phase: string; elapsed_ms: number }[] = [];
+    let currentPhase = 'fixture construction';
+    let phaseStartedAt = diagnosticStartedAt;
+    let cleanupRoot: string | undefined;
     let passed = false;
+    const markPhase = (nextPhase?: string): void => {
+      if (!diagnosticEnabled) return;
+      const now = performance.now();
+      const elapsed_ms = now - phaseStartedAt;
+      phases.push({ phase: currentPhase, elapsed_ms });
+      process.stderr.write(
+        `${JSON.stringify({
+          diagnostic: 'activated-config-phase-v1',
+          phase: currentPhase,
+          elapsed_ms,
+        })}\n`,
+      );
+      currentPhase = nextPhase ?? '';
+      phaseStartedAt = performance.now();
+    };
     try {
-      await completeFreshUpgrade(root, 'config-reader-activated-shared-001');
+      const root = await makeFreshRepository('config-repair-activated-shared-');
+      cleanupRoot = root;
+      await completeFreshUpgrade(root, 'config-reader-activated-shared-001', markPhase);
+      markPhase('activated config reader success');
       const loaded = expectReturned(() => loadRuntimeConfig(root));
+      markPhase('active config capability probe');
       expect(activeRuntimeConfigurationSource(requireSafeRepositoryAccess(root))).toBe(
         PROJECT_CONFIGURATION_PATHS.project,
       );
+      markPhase('captured config binding probe');
       const binding = expectReturned(() => capturedRuntimeConfigurationBinding(loaded));
       expect(binding.repository_root).toBe(root);
       expect(binding.source).toBe(PROJECT_CONFIGURATION_PATHS.project);
       expect(binding.source_digest).toMatch(/^[0-9a-f]{64}$/u);
       expect(Object.isFrozen(binding)).toBe(true);
 
+      markPhase('output drift preparation');
       const outputPath = path.join(root, INITIALIZED_PROJECT_PATHS.sidecar);
       const originalOutputBytes = readFileSync(outputPath);
       const changedOutputBytes = Buffer.concat([
@@ -632,21 +665,27 @@ describe('activated project config reader closure', () => {
       ]);
       writeFileSync(outputPath, changedOutputBytes);
       expect(readFileSync(outputPath)).toEqual(changedOutputBytes);
+      markPhase('output drift reader denial');
       expect(() => loadRuntimeConfig(root)).toThrow(
         `activated project output changed: ${INITIALIZED_PROJECT_PATHS.sidecar}`,
       );
       expect(readFileSync(outputPath)).toEqual(changedOutputBytes);
+      markPhase('output restoration');
       writeFileSync(outputPath, originalOutputBytes);
       expect(readFileSync(outputPath)).toEqual(originalOutputBytes);
+      markPhase('cached config reader probe');
       expect(expectReturned(() => loadRuntimeConfig(root))).toBe(loaded);
 
       const receiptPath = path.join(root, PROJECT_INITIALIZATION_PATH);
+      markPhase('initialization receipt validation');
       const receiptValue: unknown = JSON.parse(readFileSync(receiptPath, 'utf8'));
       const receipt = validateProjectInitializationReceipt(receiptValue);
       expect(receipt.current_input_digest).toMatch(/^[0-9a-f]{64}$/u);
       expect(receipt.current_input_digest).not.toBe('0'.repeat(64));
+      markPhase('initialization receipt mutation');
       writeFileSync(receiptPath, JSON.stringify({ ...receipt, current_input_digest: '0'.repeat(64) }) + '\n');
       const changedReceiptBytes = readFileSync(receiptPath);
+      markPhase('receipt identity reader denial');
       expect(() => loadRuntimeConfig(root)).toThrow(
         'activated project configuration differs from its exact initialization closure',
       );
@@ -654,7 +693,23 @@ describe('activated project config reader closure', () => {
       if (performance.now() >= deadlineAt) throw new Error('Activated config fixture deadline expired.');
       passed = true;
     } finally {
-      finishActivatedConfigFixture(root, passed, deadlineAt);
+      try {
+        markPhase('cleanup');
+        if (cleanupRoot !== undefined) finishActivatedConfigFixture(cleanupRoot, passed, deadlineAt);
+      } finally {
+        markPhase();
+        if (diagnosticEnabled) {
+          process.stderr.write(
+            `${JSON.stringify({
+              diagnostic: 'activated-config-phase-v1',
+              passed,
+              case_deadline_ms: 10_000,
+              elapsed_ms: performance.now() - diagnosticStartedAt,
+              phases,
+            })}\n`,
+          );
+        }
+      }
     }
   }, 10_000);
 });

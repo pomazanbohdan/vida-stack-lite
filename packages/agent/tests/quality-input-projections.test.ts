@@ -869,6 +869,64 @@ describe('final quality input projections', () => {
     expect(selected.input_bytes['src/runtime-kernel.ts']).toBeUndefined();
   });
 
+  test('captures computed test roots and non-code leaves without widening selected Source', async () => {
+    const root = fixtureRoot();
+    const testPath = 'tests/envelopes-boundary.test.ts';
+    const subject = 'src/contracts/envelopes.ts';
+    const leaf = 'src/contracts/computed-leaf.ts';
+    const data = 'src/contracts/computed-data.json';
+    mkdirSync(path.join(root, 'src/contracts'));
+    const subjectBytes = Buffer.from(
+      "import './computed-leaf.ts';\nimport './computed-data.json';\nexport const subject = true;\n",
+    );
+    writeFileSync(path.join(root, subject), subjectBytes);
+    writeFileSync(path.join(root, leaf), "import './envelopes.ts';\nexport const leaf = true;\n");
+    writeFileSync(path.join(root, data), '{"enabled":true}\n');
+    writeFileSync(
+      path.join(root, testPath),
+      "const subject = ['..', 'src', 'contracts', 'envelopes.ts'].join('/'); void require(subject);\ntest('computed root', () => {});\n",
+    );
+    const selection = {
+      mode: 'focused-diagnostic' as const,
+      contour: 'computed-root-fixture',
+      sources: ['src/host-state.ts'],
+      tests: [testPath],
+    };
+    try {
+      const before = await coverageInputs(root, selection);
+      expect(before.sources.map(({ path: file }) => file)).toEqual(selection.sources);
+      expect(before.tests).toEqual(selection.tests);
+      expect(before.input_bytes[subject]).toEqual(subjectBytes);
+      for (const file of [subject, leaf, data]) {
+        expect(before.tool_inputs.map(({ path: captured }) => captured)).toContain(file);
+        expect(before.module_inputs.filter(({ path: captured }) => captured === file)).toEqual([
+          {
+            path: file,
+            sha256: createHash('sha256')
+              .update(readFileSync(path.join(root, file)))
+              .digest('hex'),
+          },
+        ]);
+      }
+      writeFileSync(path.join(root, data), '{"enabled":false}\n');
+      const after = await coverageInputs(root, selection);
+      expect(after.source_fingerprint).toBe(before.source_fingerprint);
+      expect(after.test_fingerprint).toBe(before.test_fingerprint);
+      expect(after.tool_fingerprint).not.toBe(before.tool_fingerprint);
+      expect(qualityFingerprint(after)).not.toBe(qualityFingerprint(before));
+      const selectedSubject = await coverageInputs(root, { ...selection, sources: [subject] });
+      expect(selectedSubject.sources.map(({ path: file }) => file)).toEqual([subject]);
+      expect(selectedSubject.tool_inputs.map(({ path: file }) => file)).not.toContain(subject);
+      expect(selectedSubject.module_inputs.filter(({ path: file }) => file === subject)).toHaveLength(1);
+      rmSync(path.join(root, subject));
+      await expectRejected(() => coverageInputs(root, selection), /envelopes\.ts/u);
+    } catch (error) {
+      temporaryRoots.splice(temporaryRoots.indexOf(root), 1);
+      console.error(`Retained failed computed-root fixture: ${root}`);
+      throw error;
+    }
+  });
+
   test('captures the computed legacy release adapter in the focused module snapshot and freshness fingerprint', async () => {
     const root = fixtureRoot();
     const adapter = 'bin/local-release-artifacts.ts';
