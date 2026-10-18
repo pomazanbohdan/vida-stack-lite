@@ -79,7 +79,7 @@ export function contourStagePublicationAdmitted(result: MutationProcessResult, l
 async function main(): Promise<void> {
   if (process.argv.length === 3 && process.argv[2] === '--help') {
     process.stdout.write(
-      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers]\nRuns one declared contour stage, retains terminal custody and automatically publishes its exact report. Frozen CRAP and the separate data-only applicability lane require coverage-run and budget-ref. Isolated workers are mutation-only and subject to the native owner allowlist. Partial native runs never publish a score.\n',
+      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]]\nRuns one declared contour stage, retains terminal custody and automatically publishes its exact report. Frozen CRAP and the separate data-only applicability lane require coverage-run and budget-ref. Worker count is an explicit opt-in (default2), mutation-only with isolated-workers, and subject to the native owner allowlist. Partial native runs never publish a score.\n',
     );
     return;
   }
@@ -94,6 +94,7 @@ async function main(): Promise<void> {
       'coverage-run': { type: 'string' },
       'budget-ref': { type: 'string' },
       'isolated-workers': { type: 'boolean', default: false },
+      workers: { type: 'string' },
     },
   });
   const { lane } = values;
@@ -113,7 +114,8 @@ async function main(): Promise<void> {
   if (
     (frozen && (!values['coverage-run'] || !values['budget-ref'])) ||
     (!frozen && (values['coverage-run'] || values['budget-ref'])) ||
-    (values['isolated-workers'] && lane !== 'mutation')
+    (values['isolated-workers'] && lane !== 'mutation') ||
+    (values.workers !== undefined && (!values['isolated-workers'] || !['2', '4'].includes(values.workers)))
   )
     throw new Error('Stage arguments differ from the selected lane contract.');
   const selectedLane: Lane =
@@ -150,6 +152,7 @@ async function main(): Promise<void> {
           '128',
           '--admit-complete',
           ...(values['isolated-workers'] ? ['--isolated-workers'] : []),
+          ...(values.workers !== undefined ? ['--workers', values.workers] : []),
         ];
   const isolated = isolatedCommand(
     directory,

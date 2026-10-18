@@ -50,7 +50,7 @@ while(!await Bun.file(path.join(output,'go')).exists())await Bun.sleep(5);
 writeFileSync(path.join(output,'done'),id);
 `;
 
-function fixture(storage = tmpdir()) {
+function fixture(storage = tmpdir(), count = 2) {
   const repositoryRoot = mkdtempSync(path.join(storage, 'native-mutation-mechanics-'));
   const directory = path.join(repositoryRoot, '.tmp/operation');
   const sandbox = path.join(directory, 'inputs/sandbox');
@@ -72,7 +72,7 @@ function fixture(storage = tmpdir()) {
     setInterval(()=>{},1000);
   `,
   );
-  const outputs = ['first', 'second'].map((id) => {
+  const outputs = ['first', 'second', 'third', 'fourth'].slice(0, count).map((id) => {
     const output = path.join(directory, 'outputs', id);
     for (const leaf of ['scratch', 'tmp/bun-install-cache']) mkdirSync(path.join(output, leaf), { recursive: true });
     return output;
@@ -116,7 +116,7 @@ function launch(
       WORKER_ID: String(index),
       WORKER_MODE: mode,
       WORKER_OUTPUT: output,
-      WORKER_SIBLING: current.outputs[1 - index],
+      WORKER_SIBLING: current.outputs[(index + 1) % current.outputs.length],
       SHARED_INPUT: current.sharedInput,
       SHARED_DESCRIPTOR: current.sharedDescriptor,
       REPORT_DIRECTORY: current.directory,
@@ -135,10 +135,14 @@ async function waitForFile(file: string): Promise<void> {
   }
 }
 
-test.each([tmpdir(), '/dev/shm'])(
-  'two native mechanics workers isolate resources and disable disposable transpiler caches under %s',
-  async (storage) => {
-    const current = fixture(storage);
+test.each(
+  [tmpdir(), '/dev/shm'].flatMap((storage) =>
+    [2, 4].map((count) => [`${count} workers under ${storage}`, storage, count] as const),
+  ),
+)(
+  'native mechanics isolate resources and disable disposable transpiler caches: %s',
+  async (_scenario, storage, count) => {
+    const current = fixture(storage, count);
     const prepared = commands(current);
     const budget = executionBudget(4000, 300);
     const pending = prepared.map((command, index) => launch(current, command, index, 'hold', budget));
@@ -180,7 +184,7 @@ test.each([tmpdir(), '/dev/shm'])(
         expect(existsSync(path.join(output, 'tmp/bun-transpiler-cache'))).toBe(false);
         expect(existsSync(path.join(output, 'forbidden'))).toBe(false);
       }
-      expect(new Set(namespaces).size).toBe(2);
+      expect(new Set(namespaces).size).toBe(count);
       expect(namespaces).not.toContain(readlinkSync('/proc/self/ns/pid'));
       expect(readFileSync(current.sharedInput, 'utf8')).toBe('immutable input');
       expect(readFileSync(current.sharedDescriptor, 'utf8')).toBe('{"immutable":true}');

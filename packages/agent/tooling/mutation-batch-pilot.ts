@@ -125,7 +125,10 @@ export async function collectIsolatedNativeMutationBatch(
   invoke: NativeCollectorArguments[2],
   progress: NativeCollectorArguments[3],
   minimumAllowanceMs = 1,
+  maximumWorkers = 2,
 ): Promise<IsolatedNativeBatchResult> {
+  if (maximumWorkers !== 2 && maximumWorkers !== 4)
+    throw new Error('Isolated native workers require an explicit bound of two or four.');
   const identities = [...batch.identities];
   const ids = [...batch.local_ids];
   if (
@@ -202,7 +205,7 @@ export async function collectIsolatedNativeMutationBatch(
       }
     }
   };
-  await Promise.all([worker(), worker()]);
+  await Promise.all(Array.from({ length: maximumWorkers }, worker));
   outcome.results = rows.filter((row) => row !== undefined);
   outcome.resourceBlocks.sort((left, right) => left.offset - right.offset);
   outcome.failures.sort((left, right) => left.offset - right.offset);
@@ -221,6 +224,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
       'diagnostic-mutant-ids': { type: 'string' },
       'capture-per-test-diagnostic': { type: 'boolean', default: false },
       'isolated-workers': { type: 'boolean', default: false },
+      workers: { type: 'string' },
     },
     strict: true,
     allowPositionals: false,
@@ -242,6 +246,8 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
   const diagnosticMutantIds = values['diagnostic-mutant-ids']?.split(',');
   const perTestCapture = values['capture-per-test-diagnostic'] === true ? ('diagnostic-v2' as const) : undefined;
   const isolatedWorkers = values['isolated-workers'] === true;
+  if (values.workers !== undefined && (!isolatedWorkers || !['2', '4'].includes(values.workers)))
+    throw new Error('Worker count requires isolated workers and must be exactly 2 or 4.');
   if (
     isolatedWorkers &&
     (perTestCapture !== undefined ||
@@ -290,6 +296,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
     diagnosticMutantIds,
     perTestCapture,
     isolatedWorkers,
+    ...(values.workers === undefined ? {} : { maximumWorkers: Number(values.workers) }),
   };
 }
 
@@ -502,6 +509,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     diagnosticMutantIds,
     perTestCapture,
     isolatedWorkers,
+    maximumWorkers = 2,
   } = selectMutationBatchPilot(args, mutationPartitions());
   const pin = readPin(root);
   checkManifest(root, pin);
@@ -779,6 +787,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
           );
         },
         mutantAllowanceMs,
+        maximumWorkers,
       );
       const observed =
         'failures' in collected
@@ -851,7 +860,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       schema: 'MutationBatchPilotSummary/v2',
       scope: 'diagnostic-only',
       full_contour_qualification: false,
-      ...(isolatedWorkers ? { execution_mode: 'isolated-workers-diagnostic', maximum_workers: 2 } : {}),
+      ...(isolatedWorkers ? { execution_mode: 'isolated-workers-diagnostic', maximum_workers: maximumWorkers } : {}),
       binding,
       universe_sha256: plan.universe_sha256,
       baseline_cases: baseline.cases.length,
@@ -950,7 +959,7 @@ if (import.meta.main) {
   if (process.argv.length === 3 && process.argv[2] === '--help')
     console.log(
       'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--capture-per-test-diagnostic] [--diagnostic-mutant-id <generated local ID> | --diagnostic-mutant-ids <comma-separated generated local IDs>]. Per-test capture is diagnostic-v2 baseline-only: it binds the input fingerprint/descriptor/receipt and full test selection, executes no mutants, and cannot combine with complete admission or mutant selection. Unattempted mutants keep the diagnostic exit nonzero. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. ID sets allow1..32 unique IDs and share one budget across selected mutants. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
-      '--isolated-workers opts into private report overlays and at most two native workers for bun-project-upgrade-existing-storage-image, bun-fs-safe-attestation, main-envelopes, bun-service-operation-custody or bun-runtime-initialization. These reviewed selections may request complete admission through the unchanged full-universe native proof gates. It preserves the full test argv and one deadline, retains private outputs, and forbids per-test capture and ID selectors. Default execution remains serial.',
+      '--isolated-workers opts into private report overlays with a two-worker default; --workers 2|4 explicitly selects a bounded pool for bun-project-upgrade-existing-storage-image, bun-fs-safe-attestation, main-envelopes, bun-service-operation-custody or bun-runtime-initialization. These reviewed selections may request complete admission through the unchanged full-universe native proof gates. It preserves the full test argv and one deadline, retains private outputs, and forbids per-test capture and ID selectors. Default execution remains serial.',
     );
   else
     await runMutationBatchPilot(

@@ -1176,6 +1176,21 @@ identifies `.pile` output as disposable; cleanup may remove only that derived ca
 preserving fixtures, databases, Source, raw reports/receipts and outcome classes.
 This bounded route does not activate broader parallel mutation or global qualification.
 
+`--isolated-workers --workers 4` is an explicit bounded throughput option for the
+same admitted contour allowlist; omission retains the two-worker default and
+ordinary execution remains serial. Other counts and serial use are rejected.
+It changes neither the full selected test argv nor the single baseline/image,
+900/930s budgets, per-case limits, assertion evidence or complete-universe gates.
+UNKNOWN, resource denial, callback failure or insufficient remaining allowance
+stops new assignment and drains every in-flight sibling. Publication retains
+canonical input order and actual observations; later unassigned IDs stay unattempted.
+The terminal summary records the selected maximum, never a guessed concurrency.
+Qualify real four-process namespaces, immutable shared input/descriptor, private
+scratch/output, disabled caches and full group closure on the target storage.
+Then run a bounded generated-image diagnostic on each selected contour before
+requesting complete four-worker admission. A diagnostic is not a score or a union
+with old runs. Do not increase deadlines or change the default based on it.
+
 The report overlay binds each private output at the original logical operation
 directory, then rebinds the shared sandbox and descriptor read-only, followed by
 private scratch. Actual temp/shm controls establish host bind-source visibility

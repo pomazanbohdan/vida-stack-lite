@@ -72,6 +72,67 @@ test('isolated pool rolls at most two workers and reports actual observations in
   }
 });
 
+test('explicit four-worker pool refills one slot and retains ordered observations', async () => {
+  const current = fixture(6);
+  const pending = collectIsolatedNativeMutationBatch(current.batch, () => 1000, current.invoke, current.progress, 1, 4);
+  try {
+    expect(current.calls).toEqual(['0', '1', '2', '3']);
+    current.tickets[3]!.resolve({ status: 'killed' });
+    await current.started[4]!.promise;
+    expect(current.calls).toEqual(['0', '1', '2', '3', '4']);
+    expect(current.publications).toEqual([]);
+    current.tickets[4]!.resolve({ status: 'killed' });
+    await current.started[5]!.promise;
+    current.finish();
+    const result = await pending;
+    expect(result.results.map(({ local_id }) => local_id)).toEqual(['0', '1', '2', '3', '4', '5']);
+    expect(result.results.every(({ status }) => status === 'killed')).toBe(true);
+    expect(current.publications.map(({ id }) => id)).toEqual(['0', '1', '2', '3', '4', '5']);
+    expect(result.failures).toEqual([]);
+  } finally {
+    current.finish();
+    await pending;
+  }
+});
+
+test('four-worker UNKNOWN stops assignment and drains all three held siblings', async () => {
+  const current = fixture(6);
+  let settled = false;
+  const pending = collectIsolatedNativeMutationBatch(
+    current.batch,
+    () => 1000,
+    current.invoke,
+    current.progress,
+    1,
+    4,
+  ).finally(() => {
+    settled = true;
+  });
+  try {
+    current.tickets[1]!.resolve({ status: 'unknown', reason: 'unobserved termination' });
+    await Promise.resolve();
+    expect(current.calls).toEqual(['0', '1', '2', '3']);
+    expect(settled).toBe(false);
+    for (const index of [0, 2, 3]) current.tickets[index]!.resolve({ status: 'killed' });
+    const result = await pending;
+    expect(current.calls).toEqual(['0', '1', '2', '3']);
+    expect(result.results.map(({ status }) => status)).toEqual(['killed', 'unknown', 'killed', 'killed']);
+    expect(result.failures).toEqual([]);
+  } finally {
+    current.finish();
+    await pending;
+  }
+});
+
+test.each([0, 1, 3, 5, 2.5, NaN, Infinity])('pool rejects an unsupported worker bound %s', async (count) => {
+  const current = fixture();
+  await expectRejection(
+    collectIsolatedNativeMutationBatch(current.batch, () => 1000, current.invoke, current.progress, 1, count),
+    /two or four/u,
+  );
+  expect(current.calls).toEqual([]);
+});
+
 test('UNKNOWN stops assignment immediately and drains a held sibling without classifying later IDs', async () => {
   const current = fixture();
   let settled = false;

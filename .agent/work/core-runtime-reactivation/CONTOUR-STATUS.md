@@ -8,8 +8,8 @@ Historical contours with exact F/L/S/B coverage: **15/45**.
 Historical same-coverage-run coverage + scoped frozen CRAP pairs: **14/45**.
 Historical complete coverage + assertion-confirmed mutation pair closures: **7/45**; static contours: **1**.
 Separate same-coverage-run local triples with scoped frozen CRAP: **7/45**.
-Separate independently reviewed data-only coverage + CRAP N/A + full native closures: **0**; excluded from numeric triples.
-Contours without a complete numeric triple or reviewed data-only closure: **38**.
+Separate independently reviewed data-only coverage + CRAP N/A + full native closures: **1**; excluded from numeric triples.
+Contours without a complete numeric triple or reviewed data-only closure: **37**.
 Executable contours without a recorded coverage + mutation pair: **38**.
 Executable contours without a recorded complete local triple: **38**.
 
@@ -439,6 +439,7 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 Historical complete local closure: not recorded.
 Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
 Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
+Separate reviewed data-only closure: `64fcf47f-816c-452c-9807-921ccbef8b7b` + `f9b1cb6e-bb22-46d5-8269-531f0446d6de` + `64fcf47f-816c-452c-9807-921ccbef8b7b`. CC/CRAP are N/A (null), never numeric 0/0 or a triple.
 Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
 Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
@@ -455,6 +456,10 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | native-mutation | b5632d5f-23d1-4437-9fce-954ad1fb44ae | 3d5a60b4a3d5960db137e3bae1e12b3e4d0af063 | 2026-10-17T17:28:26.608Z | pilot-pass; owner accepted locally; selection bound | 7/7 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | /dev/shm/vida-rolling-measure-v212/packages/agent/.tmp/mutation-batch-b5632d5f-23d1-4437-9fce-954ad1fb44ae-75GChd/native-partition-report.json |
 | coverage | 28d0bbc4-768b-4773-b9bc-fb6238d811fb | 379b4fb520edb52894849acbe0f563663e788a52 | 2026-10-18T04:03:35.360Z | focused-diagnostic; owner accepted locally; selection bound | 0/0 · 4/4 · 4/4 · 0/0 | /tmp/vida-rolling-measure-v316/packages/agent/coverage/bun-unified/diagnostics/28d0bbc4-768b-4773-b9bc-fb6238d811fb.focused-coverage.json |
 | coverage-outcome | 28d0bbc4-768b-4773-b9bc-fb6238d811fb | 379b4fb520edb52894849acbe0f563663e788a52 | 2026-10-18T04:03:35.369Z | BLOCKED; unqualified; selection unbound | no metric evidence | /tmp/vida-rolling-measure-v316/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/28d0bbc4-768b-4773-b9bc-fb6238d811fb.json |
+| coverage | 64fcf47f-816c-452c-9807-921ccbef8b7b | 2b795e9ee590ee99f5348aefb679ab3209fb2fa6 | 2026-10-18T04:12:55.500Z | focused-diagnostic; owner accepted locally; selection bound | 0/0 · 4/4 · 4/4 · 0/0 | /tmp/vida-rolling-measure-v318/packages/agent/coverage/bun-unified/diagnostics/64fcf47f-816c-452c-9807-921ccbef8b7b.focused-coverage.json |
+| coverage-outcome | 64fcf47f-816c-452c-9807-921ccbef8b7b | 2b795e9ee590ee99f5348aefb679ab3209fb2fa6 | 2026-10-18T04:12:55.509Z | BLOCKED; unqualified; selection unbound | no metric evidence | /tmp/vida-rolling-measure-v318/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/64fcf47f-816c-452c-9807-921ccbef8b7b.json |
+| crap-applicability | 64fcf47f-816c-452c-9807-921ccbef8b7b | 2b795e9ee590ee99f5348aefb679ab3209fb2fa6 | 2026-10-18T04:13:24.299Z | reviewed-not-applicable; owner accepted locally; selection bound | N/A (reviewed data-only applicability; no numeric score) | /tmp/vida-rolling-measure-v318/packages/agent/coverage/bun-unified/diagnostics/64fcf47f-816c-452c-9807-921ccbef8b7b.crap-applicability.json |
+| native-mutation | f9b1cb6e-bb22-46d5-8269-531f0446d6de | 2b795e9ee590ee99f5348aefb679ab3209fb2fa6 | 2026-10-18T04:14:09.976Z | pilot-pass; owner accepted locally; selection bound | 7/7 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | /tmp/vida-rolling-measure-v318/packages/agent/.tmp/mutation-batch-f9b1cb6e-bb22-46d5-8269-531f0446d6de-tZBT8F/native-partition-report.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

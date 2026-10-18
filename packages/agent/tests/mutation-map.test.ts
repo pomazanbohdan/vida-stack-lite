@@ -293,6 +293,18 @@ test('isolated workers reserve diagnostics and complete requests for the same re
   ];
   expect(selectMutationBatchPilot(['--contour', name], declared).isolatedWorkers).toBe(false);
   expect(selectMutationBatchPilot(['--contour', name, '--isolated-workers'], declared).isolatedWorkers).toBe(true);
+  expect(selectMutationBatchPilot(['--contour', name, '--isolated-workers'], declared).maximumWorkers).toBeUndefined();
+  expect(
+    selectMutationBatchPilot(['--contour', name, '--isolated-workers', '--workers', '4'], declared).maximumWorkers,
+  ).toBe(4);
+  expect(
+    selectMutationBatchPilot(['--contour', name, '--isolated-workers', '--workers', '2'], declared).maximumWorkers,
+  ).toBe(2);
+  expect(() => selectMutationBatchPilot(['--contour', name, '--workers', '4'], declared)).toThrow('requires isolated');
+  for (const count of ['0', '1', '3', '5', '04', '2.0', 'Infinity'])
+    expect(() =>
+      selectMutationBatchPilot(['--contour', name, '--isolated-workers', '--workers', count], declared),
+    ).toThrow('exactly 2 or 4');
   expect(selectMutationBatchPilot(['--contour', name, '--admit-complete'], declared).admitComplete).toBe(true);
   for (const contour of [
     name,
