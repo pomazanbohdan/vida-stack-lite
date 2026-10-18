@@ -225924,5 +225924,33 @@
     "actual_inventory_review": ".agent/work/core-runtime-reactivation/ENVELOPES-FRACTION-LINEAGE-REVIEW-20261018.md",
     "previous_review_key": "scope_review_main_envelopes_release_ticket_identity_20261017",
     "previous_review_ref": "747579196b592087576efef434c609c8f2715a33"
+  },
+  "scope_review_existing_storage_admission_digest_reuse_20261018": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-project-upgrade-storage-admission",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/project-upgrade-existing-storage-admission.ts"
+    ],
+    "removed_source_paths": [],
+    "current_source_bindings": [
+      {
+        "file": "src/config/project-upgrade-existing-storage-admission.ts",
+        "sha256": "4f2b17dbd2f34b77e538e23307becc5ee798dd3358d188bd978dbf6e9db5f103"
+      }
+    ],
+    "reviewed_source_context": "94d315c65f9c6f14c2aadf9c6e9033b798ad0ca3",
+    "review_artifacts": [
+      ".agent/work/core-runtime-reactivation/STORAGE-ADMISSION-DIGEST-LINEAGE-REVIEW-20261018.md"
+    ],
+    "selected_rows": {
+      "retained": 0,
+      "new": 18,
+      "removed": 0
+    },
+    "limits": "Independent v354 current-source comparison retains the same18prospective10/10 roles, without additions, removals, identity reuse or allowance transfer. Actual source binding updates after closed-image link revalidation, owned request/fence snapshot and digest reuse. Original b549951 has no selected Source file. This is local lineage only, not global numeric admission; original rows and all ceilings stay unchanged."
   }
 }

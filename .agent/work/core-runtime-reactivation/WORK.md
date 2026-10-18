@@ -4,15 +4,36 @@ Status date: 2026-10-18. Current execution and evidence record. This document do
 
 ## Current state and owners
 
+The storage-admission import-time gap has an identity-preserving correction in
+the existing mutation image owner: Babel resolves function-body reads of the
+instrumented module const, without reloading the module or resetting capability
+state. Only the supported immutable-string initializer is tracked; a read must
+observe the replacement value and the selected activation helper. Shadowed,
+type-only and typeof reads are excluded; TDZ reads happen before attribution.
+The full original universe is retained. Existing assertion/JUnit/child custody
+readers are unchanged. The generated image records the tracking version and
+binds changed tool bytes; original UNKNOWN660f66cc is never reclassified.
+Controlled native adapter checks retain the same opaque WeakSet owner across
+static/dynamic consumers, pass their unmutated baseline, confirm the mutation's
+assertion kill and reject hook-only/shadow/typeof activation. The affected
+three-file tool suite passes169cases/876assertions at v354, including its
+unmutated baseline. Strict Source TS and scoped typed lint pass. Blind Luna
+found a wrapped-typeof omission; the correction excludes its ancestor and adds
+as/angle/non-null/type-only controls. Independent activation and Source-lineage
+reviews are retained beside WORK. All18 prospective10/10 roles remain unchanged;
+a new scope key binds current4f2b17db without rewriting the old review. Publish
+and pin that payload, then obtain real ID0 native evidence. These are preparation
+and tool controls, not complete contour admission.
+
 Storage-admission v350 binds760be31 on the persistent attachment filesystem.
 Coverage19022dd4-ebbd-452d-9ea6-a98d7cec6daf closes18310ms with exact
 F18/18,L102/102,S105/105,B17/17, measured5/5, complete captures, closed groups,
 unchanged boot/commit and clean measured inputs. The projection imports its
 BLOCKED operation separately from these counters. Frozen stageP3ufk8 fails792ms:
 the d6cab7c review binds324ba3d8, while current Source is4f2b17db after the
-owned-digest reuse. No budget or binding was relaxed. A fresh independent Luna
-lineage review is pending; the latest invocation reports a usage limit until
-2026-11-17. The prior review artifact named by that pin is also absent locally.
+owned-digest reuse. No budget or binding was relaxed. The subsequent v354 Luna
+review succeeds despite the earlier quota observation and supplies a fresh
+current-source comparison. The prior artifact named by the old pin stays absent.
 Native660f66cc-7bf2-4441-8cd9-ff29a8ccdff1 closes100632ms with11Killed,
 0Survived,1UNKNOWN and216unattempted of228generated; no score is published.
 Local0 mutates the import-time diagnostic prefix; its assertion fails but has

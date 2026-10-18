@@ -21,6 +21,89 @@ import { generateMutationImage } from '../tooling/mutation-generation.ts';
 const preloadPath = fileURLToPath(new URL('../tooling/mutation-test-preload.ts', import.meta.url));
 const elapsedMatcher: unknown = expect.any(Number);
 
+test('module constant consumption keeps opaque capability identity and rejects unrelated activation', async () => {
+  const source = `const schema = 'schema/v1';
+const owned = new WeakSet<object>();
+export function mint() { const value = { schema }; owned.add(value); return value; }
+export function owns(value: object) { return owned.has(value); }
+export function read() { return schema; }
+export function shadow(schema: string) { return schema; }
+export function kind() { return typeof schema; }
+export function wrappedKind() { return typeof (schema as string); }
+export function assertedKind() { return typeof (<string>schema); }
+export function nonNullKind() { return typeof schema!; }
+export function typeOnly(): typeof schema { return 'schema/v1'; }
+`;
+  const packageRoot = path.resolve(import.meta.dir, '..');
+  const image = await generateMutationImage(
+    packageRoot,
+    {
+      run_id: '00000000-0000-4000-8000-000000000002',
+      partition: 'module-state',
+      input_fingerprint: '1'.repeat(64),
+      source_fingerprint: '2'.repeat(64),
+      test_fingerprint: '3'.repeat(64),
+      tool_fingerprint: '4'.repeat(64),
+      partition_sources: [{ path: 'src/state.ts', sha256: createHash('sha256').update(source).digest('hex') }],
+    },
+    { 'src/state.ts': Buffer.from(source) },
+  );
+  const mutant = image.universe.mutants.find((row) => row.location.start.line === 1 && row.replacement === '""');
+  if (!mutant) throw new Error('Module constant mutation is missing.');
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-module-consumption-'));
+  let completed = false;
+  try {
+    await mkdir(path.join(root, 'src'));
+    await writeFile(path.join(root, 'src/state.ts'), image.files[0]!.content);
+    const scenario = `import { test, expect } from 'bun:test';
+import * as subject from '../src/state.ts';
+test('constant value is consumed through one live capability owner', async () => {
+  const value = subject.mint();
+  expect(subject.owns(value)).toBe(true);
+  const same = await import('../src/state.ts');
+  expect(same.owns(value)).toBe(true);
+  expect(subject.read()).toBe('schema/v1');
+});`;
+    const baseline = await runAdapterChild(root, scenario, 'module-baseline', { exitCode: 0 });
+    expect(junitOutcome(baseline.junit, [baseline.selectedTest], [], baseline.events).outcome).toBe('passed');
+    const positive = await runAdapterChild(root, scenario, 'module-consumption', { activeMutantId: mutant.local_id });
+    const positiveOutcome = junitOutcome(positive.junit, [positive.selectedTest], [], positive.events);
+    expect(
+      confirmedRunnerOutcome(
+        positive.exitCode,
+        positiveOutcome.outcome,
+        nativeMutationActivationHitCount(positive.events, mutant.local_id),
+      ),
+    ).toBe('killed');
+
+    for (const hook of [false, true]) {
+      const negative = await runAdapterChild(
+        root,
+        `import { beforeAll, test, expect } from 'bun:test';
+import * as subject from '../src/state.ts';
+${hook ? 'beforeAll(() => { subject.read(); });' : ''}
+test('shadow and typeof do not consume the changed value in this body', () => {
+  expect(subject.shadow('unchanged')).toBe('unchanged');
+  expect(subject.kind()).toBe('string');
+  expect(subject.wrappedKind()).toBe('string');
+  expect(subject.assertedKind()).toBe('string');
+  expect(subject.nonNullKind()).toBe('string');
+  expect(subject.typeOnly()).toBe('schema/v1');
+  expect(false).toBe(true);
+});`,
+        `module-unrelated-${hook}`,
+        { activeMutantId: mutant.local_id },
+      );
+      const outcome = junitOutcome(negative.junit, [negative.selectedTest], [], negative.events);
+      expect(nativeMutationActivationHitCount(negative.events, mutant.local_id)).toBe(0);
+      expect(confirmedRunnerOutcome(negative.exitCode, outcome.outcome, 0)).toBe('unknown');
+    }
+    completed = true;
+  } finally {
+    if (completed) await rm(root, { recursive: true, force: true });
+  }
+});
+
 async function runAdapterChild(
   root: string,
   body: string,

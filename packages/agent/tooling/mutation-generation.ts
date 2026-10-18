@@ -4,6 +4,9 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { Mutant } from '@stryker-mutator/api/core';
 import type { Logger } from '@stryker-mutator/api/logging';
+import { parse } from '@babel/parser';
+import { traverse } from '@babel/core';
+import { typescriptSyntaxPlugins } from './babel-syntax.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
 import { sha256 } from './bun-coverage-evidence.ts';
 import { mutationGeneratedUniverse, type MutationMapBinding } from './mutation-map.ts';
@@ -46,6 +49,71 @@ type Instrumenter = {
     mutants: readonly Mutant[];
   }>;
 };
+
+/** Attribute consumption of an instrumented immutable string without reloading its module. */
+function trackModuleConstantReads(content: string, file: string, mutantIds: ReadonlySet<string>): string {
+  const tree = parse(content, { sourceType: 'unambiguous', plugins: typescriptSyntaxPlugins(file) });
+  const edits: { start: number; end: number; text: string }[] = [];
+  traverse(tree, {
+    VariableDeclarator(declaration) {
+      const { id, init } = declaration.node;
+      if (
+        id.type !== 'Identifier' ||
+        !declaration.parentPath.isVariableDeclaration({ kind: 'const' }) ||
+        !declaration.scope.path.isProgram() ||
+        init?.type !== 'ConditionalExpression' ||
+        init.test.type !== 'CallExpression' ||
+        init.test.callee.type !== 'Identifier' ||
+        !/^stryMutAct_[A-Za-z0-9_]+$/u.test(init.test.callee.name) ||
+        init.test.arguments.length !== 1 ||
+        init.test.arguments[0]?.type !== 'StringLiteral' ||
+        !mutantIds.has(init.test.arguments[0].value) ||
+        init.consequent.type !== 'StringLiteral' ||
+        init.alternate.type !== 'SequenceExpression' ||
+        init.alternate.expressions.length !== 2
+      )
+        return;
+      const [coverage, original] = init.alternate.expressions;
+      if (
+        original?.type !== 'StringLiteral' ||
+        original.value === init.consequent.value ||
+        coverage?.type !== 'CallExpression' ||
+        coverage.callee.type !== 'Identifier' ||
+        coverage.callee.name !== init.test.callee.name.replace('stryMutAct_', 'stryCov_') ||
+        coverage.arguments.length !== 1 ||
+        coverage.arguments[0]?.type !== 'StringLiteral' ||
+        coverage.arguments[0].value !== init.test.arguments[0].value
+      )
+        return;
+      const binding = declaration.scope.getBinding(id.name);
+      if (!binding?.constant || binding.path !== declaration) return;
+      const activation = `${init.test.callee.name}(${JSON.stringify(init.test.arguments[0].value)})`;
+      for (const reference of binding.referencePaths) {
+        if (
+          !reference.isIdentifier() ||
+          !reference.getFunctionParent() ||
+          reference.findParent((parent) => parent.isTSType()) ||
+          reference.findParent((parent) => parent.isUnaryExpression({ operator: 'typeof' }))
+        )
+          continue;
+        const { start, end } = reference.node;
+        if (start == null || end == null) throw new Error('Module constant read lacks captured positions.');
+        const name = content.slice(start, end);
+        const shorthand = reference.parentPath.isObjectProperty({ shorthand: true });
+        // Read before attribution so a temporal-dead-zone failure never becomes a hit.
+        edits.push({
+          start,
+          end,
+          text: `${shorthand ? name + ': ' : ''}(${name}, ${name} === ${JSON.stringify(init.consequent.value)} && ${activation}, ${name})`,
+        });
+      }
+    },
+  });
+  let result = content;
+  for (const edit of edits.sort((left, right) => right.start - left.start))
+    result = result.slice(0, edit.start) + edit.text + result.slice(edit.end);
+  return result;
+}
 
 /** Generate once in memory. This neither executes tests nor writes an active Source file. */
 export async function generateMutationImage(
@@ -114,12 +182,14 @@ export async function generateMutationImage(
   if (warnings.length || sha256(await readFile(entry)) !== entryHash)
     throw new Error('Mutation generation warnings or instrumenter drift prevent admission.');
   const seen = new Set<string>();
+  const mutantIds = new Set(generated.mutants.map((mutant) => mutant.id));
   const imageFiles = generated.files.map((file) => {
     const relative = path.relative(root, file.name).replaceAll('\\', '/');
     if (!selected.sources.includes(relative) || seen.has(relative) || typeof file.content !== 'string')
       throw new Error('Mutation instrumented image differs from its exact Source domain.');
     seen.add(relative);
-    return { path: relative, content: file.content, sha256: sha256(file.content) };
+    const content = trackModuleConstantReads(file.content, relative, mutantIds);
+    return { path: relative, content, sha256: sha256(content) };
   });
   if (seen.size !== selected.sources.length) throw new Error('Mutation instrumented image is incomplete.');
   return {
@@ -128,6 +198,7 @@ export async function generateMutationImage(
       core_version: installed.version,
       instrumenter_version: installed.version,
       entry_sha256: entryHash,
+      module_constant_read_tracking: 'immutable-string-consumption/v1' as const,
       options: { plugins: null, ignorers: [], excludedMutations: [] },
     },
     universe: mutationGeneratedUniverse(root, binding, generated.mutants),

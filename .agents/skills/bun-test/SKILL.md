@@ -78,6 +78,10 @@ and exact body-owned activation; a direct suite pass or static review is insuffi
 Reuse one typed test-local operation forwarder for a stateless subject invoked
 from multiple bodies. Load the exact subject synchronously before the operation;
 never rely on registration order or a different case's fresh load for attribution.
+For opaque-capability modules, preserve their namespace and registry. TESTING's
+immutable-string consumption tracking qualifies supported import-time constants
+through their actual body-owned reads; never substitute a fresh module or dummy
+utility call. Unsupported initialization evidence remains UNKNOWN.
 
 Start from the contract and the function or boundary that owns it. Map each
 plausible regression to a fixture, a concrete case, and an assertion at that

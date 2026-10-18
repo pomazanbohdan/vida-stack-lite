@@ -1722,6 +1722,16 @@ identity on the qualified Bun probe. Preserve its canonical owner and leave miss
 static-initialization evidence as an explicit GAP until a safe owner is qualified.
 A child-only activation still needs qualified child evidence; a parent assertion
 or a fresh import alone does not supply that proof.
+For a Stryker-instrumented module-level immutable string, the generated image
+tracks actual value consumption without reloading the namespace. Babel binding
+references identify function-body reads of the exact const; an initial read
+preserves temporal-dead-zone behavior, then the selected mutation helper runs
+only when the value equals that mutation's replacement. Shadowed bindings,
+type-only references and typeof are excluded. Import-time or hook-only hits do
+not become body hits. Unsupported initializers retain UNKNOWN rather than a
+synthetic activation. The generated image and tracking version remain bound to
+the captured tool inputs. Existing assertion, JUnit and child-custody requirements
+remain unchanged; the mechanism does not supply a mutation result by itself.
 When a stateful subject calls a separately owned stateless utility, an exact
 test-local dependency spy may delegate the real observed arguments to a fresh
 synchronous utility load within that actual call. Keep the stateful namespace and
