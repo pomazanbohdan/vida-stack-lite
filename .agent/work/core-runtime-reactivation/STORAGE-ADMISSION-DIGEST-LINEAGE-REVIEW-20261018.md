@@ -15,3 +15,25 @@ The only Source binding in the selected partial scope is the frozen digest `324b
 ## Limits
 
 This is a bounded source-lineage review, not numeric qualification or global acceptance. I read only the named budget section and the two assigned Source files. I did not run a function inventory, scan the full budget JSON, calculate hashes, run tests or launch numeric producers. The supplied digests are treated as Root-provided bindings; I did not independently verify them. Root retains responsibility for updating and pinning the current binding, exact inventory checks, and numeric evidence.
+
+## Current shared-close binding review v446
+
+Blind Luna independently compared the immutable1d3f135 Source above with the
+shared-close Source published as073b770. Root's existing single-file digest is
+`0e9b25ad47ba71dd40d8c08b1bf03a19d5f1c8d9a3fe0926349783efb15c4ed0`;
+the prior digest remains `4f2b17dbd2f34b77e538e23307becc5ee798dd3358d188bd978dbf6e9db5f103`.
+The review confirms the same18prospective10/10 roles, zero additions/removals,
+no identity reuse and no allowance transfer. `verifyCurrentFence.bind` adapts
+the existing verifier without adding a Source-defined callable. The shared
+`withWorkspaceDatabaseClose` preserves verify-before-close, paired close custody,
+sole values including undefined, and ordered simultaneous causes with the same
+aggregate message. Subsequent client drain, checkpoints, identity checks and
+capability lifetime remain unchanged.
+
+The independent bounded note is retained at
+`/workspace/attachments/storage-frozen-shared-close-review-v446.md`. It generated
+no numeric proof, AST inventory or hash. Root's fresh existing coverage run
+`0f43bb36-f4ee-45ca-87b7-6a36cb12fbec` observes18functions and measured maxCC/CRAP4/4;
+the frozen owner must still validate the exact current roles and unchanged
+ceilings against a published, registered review pin. No historical evidence is
+re-attested by this binding update.

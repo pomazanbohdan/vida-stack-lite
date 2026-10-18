@@ -225965,5 +225965,35 @@
       "removed": 0
     },
     "limits": "Independent v354 current-source comparison retains the same18prospective10/10 roles, without additions, removals, identity reuse or allowance transfer. Actual source binding updates after closed-image link revalidation, owned request/fence snapshot and digest reuse. Original b549951 has no selected Source file. This is local lineage only, not global numeric admission; original rows and all ceilings stay unchanged."
+  },
+  "scope_review_existing_storage_admission_shared_close_20261018": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-project-upgrade-storage-admission",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/project-upgrade-existing-storage-admission.ts"
+    ],
+    "removed_source_paths": [],
+    "current_source_bindings": [
+      {
+        "file": "src/config/project-upgrade-existing-storage-admission.ts",
+        "sha256": "0e9b25ad47ba71dd40d8c08b1bf03a19d5f1c8d9a3fe0926349783efb15c4ed0"
+      }
+    ],
+    "reviewed_source_context": "073b7702bce2eda556dac43b80bcab3f17ba9b45",
+    "review_artifacts": [
+      ".agent/work/core-runtime-reactivation/STORAGE-ADMISSION-DIGEST-LINEAGE-REVIEW-20261018.md"
+    ],
+    "selected_rows": {
+      "retained": 0,
+      "new": 18,
+      "removed": 0
+    },
+    "previous_review_key": "scope_review_existing_storage_admission_digest_reuse_20261018",
+    "previous_review_ref": "cabdb4395a5e202c68d53910f5a7b603f5122728",
+    "limits": "Independent blind Luna v446 confirms the same18prospective10/10 roles after replacing the duplicate initial Host verify/close loop with the existing paired-close owner and a bound existing verifier. No Source-defined callable is added or removed, no role moves, and no allowance transfers. Original b549951 has no selected Source file. This is local Source lineage only; exact inventory, published-pin registration and fresh numeric validation remain required. Original rows and ceilings stay unchanged."
   }
 }

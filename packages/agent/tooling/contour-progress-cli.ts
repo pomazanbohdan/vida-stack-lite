@@ -185,8 +185,8 @@ function readStageOutcome(file: string, commit: string, recorded_at: string): Re
       : rawReport;
   const diagnostic = contourRecord(rawReport.diagnostic);
   const result = contourRecord(execution.result);
-  const custody = contourRecord(result.processCustody);
-  const capture = contourRecord(result.output_capture);
+  const custody = result.processCustody === null ? {} : contourRecord(result.processCustody);
+  const capture = result.output_capture === undefined ? {} : contourRecord(result.output_capture);
   const observations: readonly (readonly [unknown, unknown])[] = [
     [report.run_id, run_id],
     [diagnostic.directory, directory],

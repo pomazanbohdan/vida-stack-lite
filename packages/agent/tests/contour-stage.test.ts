@@ -364,6 +364,51 @@ test('failed-stage outcome import binds retained custody and cannot promote diag
       ),
       /scope or terminal custody/u,
     );
+    const variants: { name: string; result: MutationProcessResult; process: string }[] = [
+      {
+        name: 'spawn-without-capture',
+        result: { exitCode: null, signal: null, spawnError: 'ENOENT', timedOut: false, processCustody: null },
+        process: 'unknown',
+      },
+      { name: 'timeout', result: { ...result, exitCode: null, signal: 'SIGKILL', timedOut: true }, process: 'timeout' },
+      { name: 'sigkill', result: { ...result, exitCode: null, signal: 'SIGKILL' }, process: 'failed' },
+      { name: 'partial-capture', result: { ...result, output_capture: { complete: false } }, process: 'failed' },
+    ];
+    for (const variant of variants) {
+      const partial = {
+        ...diagnostic,
+        process: variant.process,
+        exit_code: variant.result.exitCode,
+        signal: variant.result.signal,
+        timed_out: variant.result.timedOut,
+        spawn_error: variant.result.spawnError,
+        capture_complete: variant.result.output_capture?.complete === true,
+        group_closed: variant.result.processCustody?.processGroupTerminationObserved === true,
+      };
+      writeFileSync(path.join(stage, 'execution.json'), JSON.stringify({ ...execution, result: variant.result }));
+      writeFileSync(path.join(stage, 'publication-error.json'), JSON.stringify({ ...failure, diagnostic: partial }));
+      const variantOutput = path.join(root, variant.name);
+      await runContourProgressWithNative(
+        [
+          '--output',
+          variantOutput,
+          '--commit',
+          'fixture-commit',
+          '--stage-outcome',
+          path.join(stage, 'publication-error.json'),
+        ],
+        root,
+      );
+      const raw: unknown = JSON.parse(readFileSync(path.join(variantOutput, 'CONTOUR-STATUS.json'), 'utf8'));
+      const observed = mergeContourProgress(raw, []).attempts[0];
+      expect(observed).toMatchObject({
+        status: `mutation/${variant.process}/unknown-or-partial`,
+        accepted: false,
+        coverage: null,
+        killed: null,
+        mutants: null,
+      });
+    }
     passed = true;
   } finally {
     if (passed) rmSync(root, { recursive: true, force: true });

@@ -113,7 +113,42 @@ close result and awaits its fallback cleanup, preserving both causes; the stage
 test uses the shared rejection owner. Changed controls pass9/0(v442) and1/0(v443).
 The next hook rejects explicit throws in finally; cleanup follows the caught
 body outside finally, preserving both causes. The changed client case passes
-again(v445). Strict hook and publication follow this packet.
+again(v445). The complete normal hookv447 passes507-file format,514-file strict
+TypeScript, typed lint, focused-test guard and Knip. Packet073b770 is pushed to
+main without bypassing hooks.
+
+Fresh immutablev448 binds073b770; SDK stagem2n2hr completes2473.796909ms without
+suites. Coverage stagein2bKG completes26123.559924ms,32PASS/340assertions:
+F18/18,L94/94,S95/95,B13/13, measured maxCC/CRAP4/4. Run
+0f43bb36-f4ee-45ca-87b7-6a36cb12fbec is imported; global BLOCKED remains explicit.
+The new Source removes16generated mutations through the shared-close refactor,
+leaving212; no old row is relabelled Killed or excluded.
+
+The single exact canonical-ID diagnosticv454 resolves all7requests before its
+one full32-case baseline(27384.813967ms), retains sparse original plan indices
+and closes99515.730856ms atstageqDnzHX with complete captures/group closure and
+unchanged clean boot/commit. Run8a26ea06-9d5e-477b-819f-5813be6fc526 has6assertion-
+confirmed Killed,1Survived,0UNKNOWN and205unattempted. Current IDs46/88/180/188/200/204
+are Killed;142remains Survived. In particular the new real client regression
+distinguishes readonly checkpoint mode. Expected partial exit1 automatically
+imports the failed-stage outcome, proving the actual catch/publisher path. No
+complete contour score or union with the old134-row run is admitted.
+
+Blind source-lineage reviewv446 confirms the unchanged18prospective10/10 roles;
+the current review binding is prepared in the existing partial owner and must
+be published/registered before the scoped frozen check. Independent reviewv456
+finds no existing safe read-only verifier replacement: readOnlyInspection lacks
+project authority, while assertMaintenanceFence requires the supplied projectIds.
+The null/undefined callback equivalence stays GAP, without callback reflection,
+authorization changes or a denominator waiver.
+
+Follow-up stage-reader review finds a real spawn-error edge: the execution owner
+returns null custody and may omit output_capture, while the new decoder expected
+objects. Correctly selected REDv452 fails at that decoder; GREENv453 passes9cases/
+93assertions after mapping only those documented absent values to false flags.
+TIMEOUT, SIGKILL and incomplete-capture projections remain nonmetric/unaccepted.
+The v451 selector matched zero tests and supplies no RED evidence. Its failed
+fixture and all original logs remain retained. No measured checkout is modified.
 
 Execution choices use measured facts separately from estimates:
 
