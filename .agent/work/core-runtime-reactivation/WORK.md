@@ -28,9 +28,10 @@ main-envelopes awaits a measured correction rather than an unchanged full retry.
 The storage deficit observed at v798 is resolved by the verified v803 retirement
 below. Fresh dispatch coveragev804 completes on e67216b; its residual exact-gate
 deficits remain OPEN. The rejected v798 attempt has no numeric result.
-The owner now requests two further coverage cycles. Root adds public missing-root
-and missing-repair-ID denials for dispatch, while blind Luna prepares one bounded
-governance test proposal outside Source. Numeric producers remain serial.
+The owner requests two further coverage cycles. Fresh dispatchv805 completes after
+public missing-root and missing-repair-ID denials. Blind Luna confirms the SDK
+snapshot seam; Root qualifies its actual state shape for the second governance
+cycle. Numeric producers remain serial.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
@@ -137,7 +138,7 @@ are incomplete and are not contour closure:
 | Contour/run | Functions | Lines | Statements | Branches | maxCC/CRAP |
 | --- | --- | --- | --- | --- | --- |
 | Governanceccc6c4d2(v780) |105/105|365/365|406/407|249/251|32/32|
-| Dispatch438eea30(v804) |70/70|305/312|325/334|245/256|39/39|
+| Dispatch17e6c4f3(v805) |70/70|305/312|325/334|247/256|39/39|
 | Controller7071caed(v564) |27/28|132/156|144/182|127/164|14/20|
 
 Published e34393b contains the hash correction and four regressions; ordinary
@@ -317,6 +318,25 @@ missing-option diagnostic and no project-directory creation. Both focused cases
 pass with8assertions in1256ms;29other cases are filtered, not qualified. The new
 cases exercise the two absent-option fallbacks from v804's counters. No product
 behavior, evidence gate or budget changes. Full contour coverage follows publication.
+
+Fresh dispatchv805 on bd0e270 completes60PASS/0FAIL with630assertions in151.80s test
+time and156417.179851ms stage time. Run17e6c4f3-4a6b-40d4-ad42-bc058091c643 uses
+/workspace/.vida-quality-inputs/d7c2ccd480c04b8ca430747fcb0bcee1d89e29a9/repository;
+stage /workspace/contour-stage-ZcVcHx retains complete capture/group closure and
+unchanged boot/image. F70/70 L305/312 S325/334 B247/256, maxCC/entryCRAP39/39,
+improves two branch arms over v804. The exact gate remains BLOCKED. The stage
+updates the automatic projection once. No frozen or mutation pass is inferred.
+
+Root adds one governance dependency-fault control through the public SDK's
+WorkflowsInMemory.loadWorkflowSnapshot. The wrapper delegates the real operation,
+changes only its returned clone and restores the prototype through owned cleanup.
+The installed SDK uses snapshot.value for state, confirmed by the retained failed
+context.__state probe and the actual SDK resume implementation. The corrected
+focused case passes1test/7assertions in1.86s, with a30.88ms body. It checks one
+completion entry, the completion event, result evidence and a healthy call after
+restoration. Probe logs remain under /workspace/.vida-retained/coverage-cycles-v805.
+This is a controlled dependency output, not a claim of a valid duplicate-ID
+workflow, process-crash recovery, numeric coverage or mutation acceptance.
 
 Root integrates one public1000/1001result-capacity regression from blind Lunav767.
 It uses real SDK transitions, checks ordered immutable evidence and all subsequent

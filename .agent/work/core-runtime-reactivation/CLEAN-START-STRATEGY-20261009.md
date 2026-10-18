@@ -104,6 +104,11 @@ The owner's single requested coverage cyclev804 now completes on e67216b with
 Continue dispatch repairs from its retained counters, with9statement and11branch
 deficits still OPEN. The automatic projection is updated; no second producer or
 frozen/mutation acceptance follows from that nonexact coverage.
+The next owner request authorizes two more cycles. Dispatchv805 completes after
+two missing-option regressions with60PASS/0FAIL and B247/256. Lines/statements and
+maxCC/entryCRAP remain305/312,325/334and39/39. Root now runs governance coverage
+after its observed SDK clone-state completion control; preserve both exact-gate
+deficits and all failed fixture probes. Keep one serial numeric owner.
 
 The fresh governance producer exposes missing pre-capture of explicit computed
 module roots outside the selected coverage Source. Capture these roots through

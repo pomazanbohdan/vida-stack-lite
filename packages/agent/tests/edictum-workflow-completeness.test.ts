@@ -1,4 +1,5 @@
-import { afterAll, describe, expect, mock, onTestFinished, test } from 'bun:test';
+import { afterAll, describe, expect, mock, onTestFinished, spyOn, test } from 'bun:test';
+import { WorkflowsInMemory } from '@mastra/core/storage';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -224,6 +225,72 @@ describe('configured Edictum workflow completeness', () => {
     expect(() => new PolicyWorkflowRuntime(definition, 'empty-policy-session')).toThrow(
       'governance workflow needs a stage',
     );
+  });
+
+  test('policy completion preserves a previously recorded stage in a loaded SDK snapshot', async () => {
+    const definition = terminalPolicyDefinition(
+      ['runtime.commit'],
+      [{ condition: "result.accepted === 'true'", message: 'A successful commit result is required' }],
+    );
+    const sessionId = `completion-recovery-${randomUUID()}`;
+    const candidate = new PolicyWorkflowRuntime(definition, sessionId);
+    const session = new PolicySession(sessionId);
+    const call = { toolName: 'runtime.commit', args: {} };
+    await expectAsyncReturned(() => candidate.evaluate(session, call));
+
+    const originalLoadDescriptor = Object.getOwnPropertyDescriptor(WorkflowsInMemory.prototype, 'loadWorkflowSnapshot');
+    if (typeof originalLoadDescriptor?.value !== 'function') throw new Error('the SDK snapshot loader is unavailable');
+    const originalLoad = originalLoadDescriptor.value as WorkflowsInMemory['loadWorkflowSnapshot'];
+    let injectedLoads = 0;
+    const snapshotRead = spyOn(WorkflowsInMemory.prototype, 'loadWorkflowSnapshot').mockImplementation(async function (
+      this: WorkflowsInMemory,
+      input,
+    ) {
+      const snapshot = await originalLoad.call(this, input);
+      if (input.runId !== sessionId || injectedLoads !== 0) return snapshot;
+      const state: unknown = snapshot?.value;
+      if (
+        !isRecord(state) ||
+        state.activeStage !== 'final' ||
+        !Array.isArray(state.completedStages) ||
+        state.completedStages.length !== 0
+      )
+        throw new Error('expected the real suspended SDK policy state before completion');
+      state.completedStages = ['final'];
+      injectedLoads += 1;
+      return snapshot;
+    });
+    let restored = false;
+    const restore = () => {
+      if (!restored) {
+        snapshotRead.mockRestore();
+        restored = true;
+      }
+      return undefined;
+    };
+    onTestFinished(restore);
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      const events = await expectAsyncReturned(() =>
+        candidate.recordResult(session, 'final', call, { accepted: 'true' }),
+      );
+      expect(injectedLoads).toBe(1);
+      expect(events).toMatchObject([
+        { action: 'workflow_completed', workflow: { activeStage: '', completedStages: ['final'] } },
+      ]);
+      const state = await candidate.state(session);
+      expect(state.activeStage).toBe('');
+      expect(state.completedStages).toEqual(['final']);
+      expect(state.evidence.mcpResults['runtime.commit']).toEqual([{ accepted: 'true' }]);
+    } catch (error: unknown) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup([restore], primaryFailure);
+    }
+    const healthy = await expectAsyncReturned(() => candidate.evaluate(session, { toolName: 'runtime.any', args: {} }));
+    expect(healthy.action).toBe('allow');
+    expect((await candidate.state(session)).completedStages).toEqual(['final']);
   });
 
   test('policy workflow gates, completes, rewinds, and replays terminal evidence', async () => {
