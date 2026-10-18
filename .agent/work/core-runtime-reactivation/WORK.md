@@ -91,11 +91,11 @@ sidecar-after-byte-read and repository-root replacement regressions. The entire
 updated file passes32cases/340assertions in23.87s(v431). Initial Host verify/close
 now reuses the existing paired-close owner, retaining error order, undefined
 causes and pending-close custody. This removes the equivalent duplicate manual
-length comparison, rather than excluding a mutant. The changed Source needs a
-fresh frozen binding; cabdb43 and the pair above remain historical evidence.
+length comparison, rather than excluding a mutant. The changed Source's fresh
+frozen binding is recorded below; cabdb43 and the pair above remain historical.
 The unused null/undefined readonly verifier mutation remains an explicit possible
 equivalence GAP; no reflective assertion or waiver fabricates a kill. The readonly
-checkpoint survivor also remains unconfirmed until a fresh native diagnostic.
+checkpoint survivor is resolved by the fresh native diagnostic recorded below.
 Existing exact diagnostic ID options now accept local or canonical tokens against
 the complete generated plan before baseline. They reject alias duplication and
 ambiguity, preserve original indices/full tests and share one baseline. This
@@ -135,8 +135,8 @@ imports the failed-stage outcome, proving the actual catch/publisher path. No
 complete contour score or union with the old134-row run is admitted.
 
 Blind source-lineage reviewv446 confirms the unchanged18prospective10/10 roles;
-the current review binding is prepared in the existing partial owner and must
-be published/registered before the scoped frozen check. Independent reviewv456
+the current review binding is published in the existing partial owner and
+registered before the scoped frozen check below. Independent reviewv456
 finds no existing safe read-only verifier replacement: readOnlyInspection lacks
 project authority, while assertMaintenanceFence requires the supplied projectIds.
 The null/undefined callback equivalence stays GAP, without callback reflection,
@@ -160,6 +160,24 @@ not dynamic CRAP or current numeric closure. No ceiling is raised.
 Independent causal reviewv455 confirms mutant88's active-body assertion fails
 because readonly checkpoint leaves the Mastra WAL sidecar in the real client
 case. Its unchanged writable path satisfies the required postcondition.
+
+Normal hookv461 passes507-file format,514-file strict TypeScript, typed lint,
+focused-test guard and Knip;78e9462 is pushed. Final immutablev462 binds that
+published tooling and Source. SDK stagerKsEAH completes2060.16004ms without suites.
+Because the failure reader and registered gate changed captured tooling inputs,
+the final coverage uses a fresh capture rather than re-attestingv448. Stage
+nypExa completes25360.444755ms:32PASS/340assertions, exact F18/18,L94/94,S95/95,B13/13,
+maxCC/CRAP4/4, run512a3c16-48bc-4e27-8483-149bdc3aca0e. Same-run scoped frozen
+stage7Znb9J passes787.73877ms against immutable6ea9bd1's independently reviewed
+18-role binding and unchanged ceilings. Both terminal captures are complete,
+groups closed, and clean commit/boot unchanged. The existing owner imports both.
+This closes the local fresh coverage/frozen pair; it does not merge the older
+mutation diagnostic into a score or establish global/runtime acceptance.
+The global projection remains15/45historical exact coverage,14/45same-run frozen
+pairs,9/45numeric triples plus1separate reviewed data-only closure,35unclosed.
+The final SDK's normal admission observes3124424704available bytes against the
+same2147483648floor. This reuses its receipt, not another disk scan; no cleanup
+or threshold change is performed.
 
 Execution choices use measured facts separately from estimates:
 

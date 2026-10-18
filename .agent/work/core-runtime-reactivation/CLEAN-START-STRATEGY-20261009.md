@@ -65,10 +65,10 @@ mutation attempt stops partial with134/228attempted. Integrate the actual surviv
 regressions/shared-close repair and failed-stage projection, publish normally,
 then recheck repaired IDs together on fresh inputs. Do not repeat the unchanged
 full campaign or promote the earlier pair after changed Source. The fresh7-ID
-diagnostic now confirms6kills with1null/undefined verifier survivor. Publish and
-register the independently reviewed18-role binding, reuse the fresh coverage
-inventory for scoped frozen verification, and resolve the full-partition cost
-and equivalence GAP before another complete mutation attempt. Core's30/60s
+diagnostic now confirms6kills with1null/undefined verifier survivor. The published
+and registered18-role binding passes the fresh same-run coverage/frozen pair.
+Resolve the full-partition cost and equivalence GAP before another complete
+mutation attempt; no unchanged full campaign is queued. Core's30/60s
 setup issue stays OPEN. Reuse each capture, full baseline and canonical mutant
 map; known repair IDs share one diagnostic baseline. WORK owns the measured
 receipts and resource margin.
