@@ -77,6 +77,18 @@ fix permits only unstaged changes to its two existing derived projection files;
 all other Source/staged/untracked changes remain denied. Native Git queries now
 keep the existing5s bound. A fresh qualifying review contour is the next pilot.
 
+Freshv725main-envelopes reaches full Source typecheck but exposes the next
+integration boundary: configuration reads need native CAS guard writes, denied
+at the read-only image root. Root reuses the existing four-file mutation context
+materializer for a separate per-coverage-run caller fixture; validator derives
+its path from the image root and validated UUID, checks layout/bytes and recaptures
+the real config binding. No product CAS or image mount is weakened. Native Luna
+reviewv690finds no new concern with this reuse. v727has116PASS/0FAIL/535assertions
+across four affected context, shard, report-validator and custody files in13.13s.
+The transient exec-server transport disconnect did not change the observed boot
+identity or local Source. The retained static log has0diagnostics; final ordinary
+hooks will recheck the exact current packet. Numeric qualification remains open.
+
 Active contours: governance/public contracts, dispatch repair and controller
 observation. Published88e8052includes the checked v4 partition-capture repair,
 on top of the verified capacity recovery through ordinary hooks/push. Freshv655

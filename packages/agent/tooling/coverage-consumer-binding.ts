@@ -1,10 +1,76 @@
 import path from 'node:path';
+import { mkdir } from 'node:fs/promises';
 import { canonicalJson, coverageReviewEnvironmentSha256, sha256 } from './bun-coverage-evidence.ts';
 import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
 import { canonicalCoverageReviewScope } from './coverage-shard-eligibility.ts';
 import type { CoverageReviewScope } from './coverage-shard-eligibility.ts';
 import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { LEGACY_RUNTIME_CONFIGURATION_PATH, PROJECT_CONFIGURATION_PATHS } from '../src/config/project-paths.ts';
+import {
+  mutationTestContextBinding,
+  materializeMutationTestContext,
+  assertMutationTestContext,
+} from './mutation-command-runner.ts';
+
+/** Derive an owned mutable caller fixture, never select a root from report metadata. */
+export function coverageImageTestContext(
+  packageRoot: string,
+  runId: string,
+  focused: boolean,
+  inputs: Pick<CoverageInputs, 'tool_inputs'>,
+  environment: NodeJS.ProcessEnv,
+): ReturnType<typeof mutationTestContextBinding> {
+  if (environment.VIDA_QUALITY_IMAGE_MANIFEST === undefined) return null;
+  if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/u.test(runId))
+    throw new Error('Image coverage context requires a native run UUID.');
+  const junit = path.join(
+    packageRoot,
+    'coverage/bun-unified',
+    ...(focused ? ['diagnostics'] : []),
+    'runs',
+    runId,
+    'suite.xml',
+  );
+  const binding = mutationTestContextBinding(junit, inputs.tool_inputs);
+  if (binding === null) throw new Error('Image coverage consumer context inputs are missing.');
+  return binding;
+}
+
+export function coverageImageConsumerEnvironment(
+  binding: ReturnType<typeof mutationTestContextBinding>,
+  environment: NodeJS.ProcessEnv,
+): NodeJS.ProcessEnv {
+  return binding === null
+    ? environment
+    : {
+        ...environment,
+        AGENT_RUNTIME_TEST_REPOSITORY_ROOT: binding.root,
+        AGENT_RUNTIME_TEST_CONTEXT_ROOT: binding.root,
+      };
+}
+
+export async function prepareCoverageImageTestContext(
+  binding: ReturnType<typeof mutationTestContextBinding>,
+  inputs: Pick<CoverageInputs, 'input_bytes'>,
+): Promise<void> {
+  if (binding === null) return;
+  const bytes = new Map<string, Buffer>();
+  for (const row of binding.inputs) {
+    const value = inputs.input_bytes[row.path];
+    if (!Buffer.isBuffer(value) || sha256(value) !== row.sha256)
+      throw new Error('Image coverage context input changed.');
+    bytes.set(row.path, value);
+  }
+  await mkdir(path.dirname(binding.root), { recursive: true, mode: 0o700 });
+  await materializeMutationTestContext(binding, bytes);
+}
+
+export async function assertCoverageImageTestContext(
+  binding: ReturnType<typeof mutationTestContextBinding>,
+  inputs: Pick<CoverageInputs, 'input_bytes'>,
+): Promise<void> {
+  await assertMutationTestContext(binding, inputs.input_bytes);
+}
 
 const configurationPaths = ['.bun-version', 'bunfig.toml', 'package.json', 'bun.lock'] as const;
 const digestPattern = /^[0-9a-f]{64}$/u;

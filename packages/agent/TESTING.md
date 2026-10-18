@@ -1744,6 +1744,16 @@ custody and validates reports against that image. SDK formation receipts retain 
 original bytes and owner; the image records their digests. Frozen CRAP reads a bounded
 native-Git baseline/budget capsule with a caller-held digest, without live Git fallback.
 
+Configured coverage tests get one mutable caller fixture per run, formed from the
+same four captured repository context files through the existing mutation-context
+owner. Runtime configuration reads keep their CAS guards inside this fixture;
+the captured Source image stays read-only. The producer and validator derive the
+fixture path from the selected image package root, native run UUID and focused/full
+namespace. Both child root variables name this fixture. Validate its exact layout
+and original bytes after tests and before configuration freshness admission; never
+select a caller root from a report's `repository_root`. A fixture is not shared
+across runs and carries no consumer DB, lease, attempt or Runtime acceptance.
+
 The dependency binding records lock/pin and installation directory identity; it is
 not a new full-tree content attestation. Preserve existing executable/external-module
 checks. Root fences installs and dependency edits until every dependent producer has

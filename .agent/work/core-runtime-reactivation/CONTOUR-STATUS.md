@@ -24,7 +24,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-config | 350/350 · 964/964 · 1022/1022 · 253/253 | 16 / 16 | unknown (unknown) | BLOCKED | open / unknown | 16 / 16 | open / unknown |
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | mutation/failed/unknown-or-partial | local maximum recorded | 3 / 3 | local triple recorded |
 | main-public-ingress | 20/20 · 79/79 · 91/91 · 36/36 | 14 / 14 | 335/335 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 14 / 14 | local triple recorded |
-| main-envelopes | 79/79 · 214/214 · 230/230 · 106/106 | 9 / 9 | 739/739 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
+| main-envelopes | 79/79 · 214/214 · 230/230 · 106/106 | 9 / 9 | 739/739 (pilot-pass; assertion-confirmed) | coverage/failed/unknown-or-partial | local maximum recorded | 9 / 9 | local triple recorded |
 | main-cedar | 25/25 · 56/56 · 60/60 · 17/17 | 4 / 4 | 189/189 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 4 / 4 | local triple recorded |
 | main-governance-validation | 206/206 · 705/705 · 730/730 · 90/90 | 6 / 6 | unknown (unknown) | BLOCKED | open / unknown | 6 / 6 | open / unknown |
 | main-mastra | 191/191 · 642/642 · 686/686 · 205/205 | 8 / 8 | unknown (unknown) | BLOCKED | open / unknown | unknown | open / unknown |
@@ -341,6 +341,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | e3b10f5d-f0ba-4fdb-aedb-639f7f995159 | 0f5cf274b143293c95f13ff5d180a493fbbaf018 | 2026-10-18T06:25:06.956Z | focused-diagnostic; owner accepted locally; selection bound | 79/79 · 214/214 · 230/230 · 106/106 | /dev/shm/vida-rolling-measure-v336/packages/agent/coverage/bun-unified/diagnostics/e3b10f5d-f0ba-4fdb-aedb-639f7f995159.focused-coverage.json |
 | coverage-outcome | e3b10f5d-f0ba-4fdb-aedb-639f7f995159 | 0f5cf274b143293c95f13ff5d180a493fbbaf018 | 2026-10-18T06:25:06.968Z | BLOCKED; unqualified; selection unbound | no metric evidence | /dev/shm/vida-rolling-measure-v336/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/e3b10f5d-f0ba-4fdb-aedb-639f7f995159.json |
 | frozen-crap | e3b10f5d-f0ba-4fdb-aedb-639f7f995159 | 0f5cf274b143293c95f13ff5d180a493fbbaf018 | 2026-10-18T06:25:17.150Z | scoped-proof-pass; owner accepted locally; selection bound | 9 / 9 (scoped proof; owner measured) | /dev/shm/vida-rolling-measure-v336/packages/agent/coverage/bun-unified/diagnostics/e3b10f5d-f0ba-4fdb-aedb-639f7f995159.scoped-crap.json |
+| stage-outcome | contour-stage-rd1pRM | e88bad461060a6e37094caa0ecd7ee020e4a2458 | 2026-10-18T17:44:17.277Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-rd1pRM/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

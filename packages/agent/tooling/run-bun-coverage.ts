@@ -42,7 +42,14 @@ import {
   resolveCoverageShardEligibility,
   type CoverageReviewScope,
 } from './coverage-shard-eligibility.ts';
-import { buildCoverageReviewScope, captureCoverageConsumerBinding } from './coverage-consumer-binding.ts';
+import {
+  buildCoverageReviewScope,
+  captureCoverageConsumerBinding,
+  coverageImageTestContext,
+  coverageImageConsumerEnvironment,
+  prepareCoverageImageTestContext,
+  assertCoverageImageTestContext,
+} from './coverage-consumer-binding.ts';
 import {
   instrumentedArtifactPath,
   maxInstrumentedArtifactBytes,
@@ -923,6 +930,11 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     delete environment.BUN_OPTIONS;
     delete environment.VIDA_QUALITY_IMAGE_MANIFEST;
     delete environment.VIDA_QUALITY_IMAGE_SHA256;
+    const consumer = manifest.execution_scope?.consumer_configuration;
+    if (process.env.VIDA_QUALITY_IMAGE_MANIFEST !== undefined && consumer) {
+      environment.AGENT_RUNTIME_TEST_REPOSITORY_ROOT = consumer.repository_root;
+      environment.AGENT_RUNTIME_TEST_CONTEXT_ROOT = consumer.repository_root;
+    }
     return {
       ...environment,
       VIDA_BUN_COVERAGE_ROOT: root,
@@ -1267,11 +1279,16 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     if (!capturedPin || new TextDecoder('utf-8', { fatal: true }).decode(capturedPin).trim() !== pinnedBun)
       throw new Error('Captured Bun version differs from the selected runtime pin.');
     assertCurrentCoverageSdkFreshness(root, lockedInputs);
-    const consumerConfiguration =
+    const requiresConsumer =
       selectionMode === 'current' &&
-      lockedInputs.test_inputs.some((entry) => entry.path === 'tests/configured-context.ts')
-        ? await captureCoverageConsumerBinding(root, process.env)
-        : undefined;
+      lockedInputs.test_inputs.some((entry) => entry.path === 'tests/configured-context.ts');
+    const imageContext = requiresConsumer
+      ? coverageImageTestContext(root, runId, focused !== undefined, lockedInputs, process.env)
+      : null;
+    await prepareCoverageImageTestContext(imageContext, lockedInputs);
+    const consumerConfiguration = requiresConsumer
+      ? await captureCoverageConsumerBinding(root, coverageImageConsumerEnvironment(imageContext, process.env))
+      : undefined;
     commandBudget.remaining();
     const runtimeExecutableSha256 = sha256(readFileSync(process.execPath));
     const { input_bytes: inputBytes, ...evidence } = lockedInputs;
@@ -1691,6 +1708,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
         if (!bytes.equals(inputBytes[file]!)) throw new Error('Focused coverage input changed: ' + file);
       commandBudget.remaining();
     }
+    await assertCoverageImageTestContext(imageContext, lockedInputs);
     writeAtomic(finalPath, finalReport);
     if (focused && process.env.VIDA_QUALITY_IMAGE_MANIFEST === undefined) {
       try {
