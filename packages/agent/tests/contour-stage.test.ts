@@ -186,11 +186,13 @@ test('terminal mutation diagnostics expose incomplete counters without granting 
 });
 
 test('observed failed or timed-out coverage may preserve its paired outcome without admitting native mutation', () => {
+  expect(contourStagePublicationAdmitted(terminal(), 'frozen-crap')).toBe(true);
   expect(contourStagePublicationAdmitted(terminal(), 'mutation')).toBe(true);
   expect(contourStagePublicationAdmitted(terminal(), 'crap-applicability')).toBe(true);
   for (const patch of [{ exitCode: 1 }, { timedOut: true }, { signal: 'SIGKILL' as const }, { spawnError: 'failed' }]) {
     const result = { ...terminal(), ...patch };
     expect(contourStagePublicationAdmitted(result, 'coverage')).toBe(true);
+    expect(contourStagePublicationAdmitted(result, 'frozen-crap')).toBe(false);
     expect(contourStagePublicationAdmitted(result, 'mutation')).toBe(false);
     expect(contourStagePublicationAdmitted(result, 'crap-applicability')).toBe(false);
   }

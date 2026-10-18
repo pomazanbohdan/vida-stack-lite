@@ -237,13 +237,13 @@ function ledgerTimestamp(value: string, path: string): number {
 type ClaimLeaseOrderingValue = {
   readonly claim: Pick<CoordinationClaim, 'lease_expires_at'>;
   readonly leaseExpiry: number;
-  readonly leaseSubmillisecond: number;
+  readonly leaseFraction: number;
 };
 
 function compareClaimLeaseExpiry(left: ClaimLeaseOrderingValue, right: ClaimLeaseOrderingValue): number {
   return (
     left.leaseExpiry - right.leaseExpiry ||
-    left.leaseSubmillisecond - right.leaseSubmillisecond ||
+    left.leaseFraction - right.leaseFraction ||
     (left.claim.lease_expires_at < right.claim.lease_expires_at
       ? -1
       : Number(left.claim.lease_expires_at > right.claim.lease_expires_at))
@@ -359,12 +359,10 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
 
   const activeClaimsByTicket = new Map<
     string,
-    {
+    (ClaimLeaseOrderingValue & {
       readonly claim: CoordinationClaim;
       readonly resourceKeys: readonly string[];
-      readonly leaseExpiry: number;
-      readonly leaseSubmillisecond: number;
-    }[]
+    })[]
   >();
   const tickets = new Map(
     ledger.tickets.map((ticket) => {
@@ -408,8 +406,9 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
         claim,
         resourceKeys,
         leaseExpiry,
-        // Timestamp validation above permits nine fractional digits; Date.parse retains only three.
-        leaseSubmillisecond: Number((/\.(\d+)/u.exec(claim.lease_expires_at)?.[1] ?? '').padEnd(9, '0').slice(3)),
+        // Only compared after epoch milliseconds tie; the complete nine-digit
+        // fraction preserves submillisecond order without another substring.
+        leaseFraction: Number((/\.(\d+)/u.exec(claim.lease_expires_at)?.[1] ?? '').padEnd(9, '0')),
       });
   });
 

@@ -225892,5 +225892,37 @@
     "numeric_ceilings": null,
     "prospective_receipt_schema": "VidaScopedCrapApplicabilityNA/v1",
     "limits": "This review authorizes only a separately reported FS-file CRAP non-applicability receipt. It does not alter numeric CRAP schemas or ceilings, admit coverage or mutation, close a numeric triple, or waive current full-input/native gates."
+  },
+  "scope_review_main_envelopes_fraction_reuse_20261018": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [
+      "src/contracts/envelopes.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/contracts/envelopes.ts",
+        "current_path": "src/contracts/envelopes.ts",
+        "rationale": "The same79 callable roles remain in the same Source owner. Removing a redundant fractional substring and reusing the existing private ordering type preserves all prior mappings; no callable is added, removed, delegated or reused."
+      }
+    ],
+    "review_artifact": ".agent/work/core-runtime-reactivation/ENVELOPES-FRACTION-LINEAGE-REVIEW-20261018.md",
+    "additional_role_review": "/workspace/attachments/release-operation-identity-budget-review-v269.md",
+    "correspondence": "Original82=76retained+6removed remains unchanged. Current79=76retained+3added (existing capture facade, existing named lease comparator, new exact release-ticket identity predicate). Preserve every original ceiling, both existing added ceilings and all six removals. Original operation callback remainsCC7/cap7 and validatorCC2/cap2; new predicate independently frozen4/4 before published Source adoption. No cap/identity/measurement transfer, global qualification or contour closure. The fraction-only candidate preserves all79 roles and every ceiling; the comparator retains4/4 and release identity retains its separate4/4. No equivalent-mutant exclusion or measurement transfer.",
+    "limits": "Lineage-only proposal. Exact coverage, scoped frozen CRAP admission and mutation evidence remain separate. The missing older lineage attachment remains recorded; this bounded independent current review does not establish the missing original global baseline admission.",
+    "independent_review_lane": "blind-native-luna-envelopes-fraction-review-v334",
+    "prospective_plan_ref": "97cc7b1",
+    "retained": 76,
+    "new_functions": 3,
+    "removed_functions": 6,
+    "prototype_context": "Prior named lease comparator prototype disclosure is unchanged. New release identity prototype existed in isolatedv264 and uncommittedRoot before plan freeze and is explicitly disclosed; published97cc7b1 freezes the reviewed domain/risk4/4 plan before Source adoption, without claiming pre-prototype chronology.",
+    "current_source_bindings": [
+      {
+        "file": "src/contracts/envelopes.ts",
+        "sha256": "39683ab3d97ee23fbf16e04cc6f3a9512197b353e3dd24707cb836814eca0cec"
+      }
+    ],
+    "actual_inventory_review": ".agent/work/core-runtime-reactivation/ENVELOPES-FRACTION-LINEAGE-REVIEW-20261018.md",
+    "previous_review_key": "scope_review_main_envelopes_release_ticket_identity_20261017",
+    "previous_review_ref": "747579196b592087576efef434c609c8f2715a33"
   }
 }

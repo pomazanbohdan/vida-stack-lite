@@ -1929,6 +1929,10 @@ the primary error. Neither case asserts that nothing was written.
 Failed coverage retains its actual operation status. Partial/UNKNOWN native
 summaries are retained and never imported as a score or closure. Native workers
 remain subject to their existing allowlist; the flag grants no admission.
+The campaign and stage share one terminal-publication predicate: frozen CRAP,
+applicability N/A and mutation require completed producers with complete captures
+and observed child/group termination. A report emitted before a failed exit is
+not publishable evidence. Coverage's paired operation outcome remains separate.
 The native controller uses batches of128 to reduce parent barriers while keeping
 the same complete selection, fixed worker limit and900/930-second budgets. This
 is an execution setting, not a measured speedup or a new timeout allowance.
@@ -1959,6 +1963,15 @@ diagnostic keeps its nonzero exit and retained diagnostic counters; it never
 publishes a mutation score or a closure. Confirm the intended IDs are assertion-
 Killed, then run the full selected universe. This replaces private launcher
 copies without adding another test runner or report authority.
+
+For an isolated worker-width pilot, use `--diagnostic-batch-size 16` with the
+mutation lane and the requested qualified worker flags. It forwards exactly one
+native batch, with the complete baseline/universe still captured and no complete
+admission request. The native owner validates the batch bound. Batch and ID
+selectors are mutually exclusive; batch diagnostics may use isolation, while ID
+selection remains serial. Require actual all-Killed bounded evidence for that
+contour and width before launching its complete isolated run. Partial diagnostics
+retain their original classification and never publish a score.
 
 Arbitrary private launchers still require an explicit Root import after terminal
 custody. Audit a suspected omission against retained report paths and the existing

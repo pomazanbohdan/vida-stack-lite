@@ -827,8 +827,40 @@ f5702ad6-c659-4478-8007-7df793d833ff at /dev/shm/contour-stage-Io7nd8 has exact
 F79/79,L214/214,S230/230,B106/106, max9/9. Its original7475791 frozen check at
 /dev/shm/contour-stage-BCPkqf passes the same coverage run and Source bindings.
 Both compact outcomes directly supply the next absolute report arguments and
-closed custody without another raw-log extraction. The current complete784native
-proof remains pending; the existing nine triples stay historical/local.
+closed custody without another raw-log extraction. Full native230ff699-98f2-4b39-b033-f6ba99ad4d17
+at /dev/shm/contour-stage-XwbWo5 closes880005ms with620assertion-Killed,
+1Survived,0UNKNOWN and163unattempted of784. Captures/groups/boot/commit/clean
+inputs close; resource_blocked=null and the partition budget is exhausted.
+Publication correctly denies the partial result; the nine triples stay historical/local.
+
+Blind Luna review identifies survivor366's removed fractional substring as an
+equivalent operation for accepted timestamps. The legitimate Source simplification
+removes that unnecessary substring and reuses ClaimLeaseOrderingValue rather than
+duplicating its private fields. It neither waives the old survivor nor changes
+guard order or lexical tie-breaking. The appended fraction-reuse review preserves
+all79roles and original ceilings, with current Source39683ab3. The independent
+[lineage review](ENVELOPES-FRACTION-LINEAGE-REVIEW-20261018.md) retains the missing
+older attachment as GAP. Fresh coverage/frozen/current-universe mutation remain
+required; old partial results cannot be combined into closure.
+
+The audit's independent completion review finds a second actual tooling defect:
+failed frozen CRAP could emit a report before nonzero exit and reach import in
+both stage and campaign. They now share campaignReportPublicationAdmitted, with
+the campaign guard before extraction. Frozen CRAP, mutation and applicability N/A
+require completed producers; failed coverage retains its paired outcome. Negative
+controls cover nonzero exit, timeout, signal, spawn error and incomplete custody.
+The campaign also removes its redundant preliminary terminal-report read, leaving
+one bounded read for the existing proof parser. Review:
+/workspace/attachments/contour-publication-completion-review-v334.md.
+
+Maintained --diagnostic-batch-size forwards one native batch without complete
+admission, reusing native validation and qualified worker allowlists. It replaces
+private width-pilot launch variants; IDs remain serial and mutually exclusive.
+Fresh four-worker16 evidence must precede an envelopes full four-worker run;
+900/930s budgets and full baseline/universe remain unchanged. Source TypeScript
+and scoped typed lint pass. Owned pOjeKQ passes70cases/0skipped in4275ms with full
+captures, closed group and unchanged boot; actual new batch CLI qualification is
+still pending. The shared predicate and selector have no numeric admission power.
 
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed

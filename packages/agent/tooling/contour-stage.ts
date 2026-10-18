@@ -7,11 +7,12 @@ import { isRecord } from '../src/contracts/forward-controller-values.ts';
 import {
   campaignPartition,
   campaignProcessState,
+  campaignReportPublicationAdmitted as contourStagePublicationAdmitted,
   isolatedCommand,
   throwAfterCampaignReceiptFailure,
 } from './contour-campaign.ts';
 import { readContourArtifact, runContourProgressWithNative } from './contour-progress-cli.ts';
-import { executeMutationCommand, type MutationProcessResult } from './mutation-evidence.ts';
+import { executeMutationCommand } from './mutation-evidence.ts';
 import { mutationPartitions } from './mutation-partitions.ts';
 
 type Lane = 'coverage' | 'frozen-crap' | 'crap-applicability' | 'mutation';
@@ -97,22 +98,12 @@ export function contourStageOutput(repository: string, output: string): string {
   return canonical;
 }
 
-/** Publication observes terminal custody; failed coverage retains its paired owner outcome. */
-export function contourStagePublicationAdmitted(result: MutationProcessResult, lane: Lane): boolean {
-  return (
-    result.processCustody?.terminationObserved === true &&
-    result.processCustody.processGroupTerminationObserved === true &&
-    result.output_capture?.complete === true &&
-    !result.output_capture.stdout.truncated &&
-    !result.output_capture.stderr.truncated &&
-    (!['mutation', 'crap-applicability'].includes(lane) || campaignProcessState(result) === 'completed')
-  );
-}
+export { contourStagePublicationAdmitted };
 
 async function main(): Promise<void> {
   if (process.argv.length === 3 && process.argv[2] === '--help') {
     process.stdout.write(
-      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]] [--diagnostic-mutant-ids <id[,id...]>]\nRuns one declared contour stage, retains terminal custody and automatically publishes its exact report. Frozen CRAP and the separate data-only applicability lane require coverage-run and budget-ref. Worker count is an explicit opt-in (default2), mutation-only with isolated-workers, and subject to the native owner allowlist. Diagnostic ID selection is serial mutation-only and forwards to the existing native owner; its incomplete result remains nonzero and never publishes a score. Full launch data stays in launch.json; stdout prints compact location and terminal outcome records.\n',
+      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]] [--diagnostic-mutant-ids <id[,id...]> | --diagnostic-batch-size <1..128>]\nRuns one declared contour stage, retains terminal custody and automatically publishes its exact report. Frozen CRAP and the separate data-only applicability lane require coverage-run and budget-ref. Worker count is an explicit opt-in (default2), mutation-only with isolated-workers, and subject to the native owner allowlist. Diagnostic ID selection is serial mutation-only; a diagnostic batch forwards one bounded batch to the native owner and permits qualified isolation. Both diagnostic selectors omit complete admission and never publish a score. Full launch data stays in launch.json; stdout prints compact location and terminal outcome records.\n',
     );
     return;
   }
@@ -129,6 +120,7 @@ async function main(): Promise<void> {
       'isolated-workers': { type: 'boolean', default: false },
       workers: { type: 'string' },
       'diagnostic-mutant-ids': { type: 'string' },
+      'diagnostic-batch-size': { type: 'string' },
     },
   });
   const { lane } = values;
@@ -145,12 +137,16 @@ async function main(): Promise<void> {
   const partition = campaignPartition(declared);
   if (!partition.sources?.length || !partition.tests?.length) throw new Error('Stage selection is empty.');
   const frozen = lane === 'frozen-crap' || lane === 'crap-applicability';
+  const diagnosticIds = values['diagnostic-mutant-ids'];
+  const diagnosticBatchSize = values['diagnostic-batch-size'];
+  const diagnosticRequested = diagnosticIds !== undefined || diagnosticBatchSize !== undefined;
   if (
     (frozen && (!values['coverage-run'] || !values['budget-ref'])) ||
     (!frozen && (values['coverage-run'] || values['budget-ref'])) ||
     (values['isolated-workers'] && lane !== 'mutation') ||
     (values.workers !== undefined && (!values['isolated-workers'] || !['2', '4'].includes(values.workers))) ||
-    (values['diagnostic-mutant-ids'] !== undefined && (lane !== 'mutation' || values['isolated-workers']))
+    (diagnosticIds !== undefined && (lane !== 'mutation' || values['isolated-workers'])) ||
+    (diagnosticBatchSize !== undefined && (lane !== 'mutation' || diagnosticIds !== undefined))
   )
     throw new Error('Stage arguments differ from the selected lane contract.');
   const selectedLane: Lane =
@@ -182,12 +178,14 @@ async function main(): Promise<void> {
           '--contour',
           partition.name,
           '--batch-size',
-          values['diagnostic-mutant-ids'] !== undefined ? '1' : '128',
+          diagnosticIds !== undefined ? '1' : (diagnosticBatchSize ?? '128'),
           '--max-batches',
-          values['diagnostic-mutant-ids'] !== undefined ? '1' : '128',
-          ...(values['diagnostic-mutant-ids'] !== undefined
-            ? ['--diagnostic-mutant-ids', values['diagnostic-mutant-ids']]
-            : ['--admit-complete']),
+          diagnosticRequested ? '1' : '128',
+          ...(diagnosticIds !== undefined
+            ? ['--diagnostic-mutant-ids', diagnosticIds]
+            : diagnosticRequested
+              ? []
+              : ['--admit-complete']),
           ...(values['isolated-workers'] ? ['--isolated-workers'] : []),
           ...(values.workers !== undefined ? ['--workers', values.workers] : []),
         ];

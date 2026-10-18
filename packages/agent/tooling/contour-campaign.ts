@@ -177,6 +177,21 @@ export function campaignProcessState(result: MutationProcessResult): CampaignOut
   return result.exitCode === 0 ? 'completed' : 'failed';
 }
 
+/** Only coverage may preserve a failed producer's separately paired operation outcome. */
+export function campaignReportPublicationAdmitted(
+  result: MutationProcessResult,
+  lane: Lane | 'crap-applicability',
+): boolean {
+  return (
+    result.processCustody?.terminationObserved === true &&
+    result.processCustody.processGroupTerminationObserved === true &&
+    result.output_capture?.complete === true &&
+    !result.output_capture.stdout.truncated &&
+    !result.output_capture.stderr.truncated &&
+    (lane === 'coverage' || campaignProcessState(result) === 'completed')
+  );
+}
+
 function jsonFile(file: string): unknown {
   const bytes = readContourArtifact(file, maximumOutputBytes);
   return JSON.parse(bytes.toString('utf8')) as unknown;
@@ -476,13 +491,14 @@ async function main(): Promise<void> {
         });
         assertCleanCommit(commit);
         if (state === 'unknown' || state === 'timeout') return { state, detail: stageDirectory };
+        if (!campaignReportPublicationAdmitted(child, applicabilityNA ? 'crap-applicability' : lane))
+          return { state: state === 'completed' ? 'gap' : state, detail: stageDirectory };
         let report: string | undefined;
         try {
           if (lane === 'mutation') {
             const summary = jsonFile(path.join(stageDirectory, 'stdout.log'));
             if (isRecord(summary) && typeof summary.evidence_directory === 'string') {
               report = path.join(summary.evidence_directory, 'terminal-summary.json');
-              jsonFile(report);
             }
           } else {
             const lines = readContourArtifact(path.join(stageDirectory, 'stdout.log'), maximumOutputBytes)
