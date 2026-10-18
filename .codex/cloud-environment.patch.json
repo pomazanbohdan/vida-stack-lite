@@ -4,15 +4,19 @@
   "platform": "linux-x64-glibc>=2.35",
   "workingDirectory": "repository checkout root",
   "prerequisites": [
-    "package-selected Bun",
     "curl",
+    "git",
+    "sha256sum",
     "tar",
     "unzip",
+    "install",
     "getconf",
     "taskset",
-    "Codex CLI for Pstack provisioning"
+    "Codex CLI for Git plugin provisioning"
   ],
-  "script": "export PATH=\"$HOME/.local/bin:$HOME/.bun/bin:$PATH\"\nbun tooling/agent/cloud-tooling-setup.ts\n. \"$HOME/.cache/vida-cloud-tooling/environment.sh\"\nbun tooling/agent/cloud-pstack-setup.ts --install\n",
+  "script": "set -eu\nexport PATH=\"$HOME/.local/bin:$HOME/.bun/bin:$PATH\"\nvida_bun_pin=$(tr -d \"\\r\\n\" < packages/agent/.bun-version)\nif ! command -v bun >/dev/null 2>&1 || [ \"$(bun --version)\" != \"$vida_bun_pin\" ]; then\n  vida_bun_stage=$(mktemp -d)\n  vida_bun_release=\"https://github.com/oven-sh/bun/releases/download/bun-v$vida_bun_pin\"\n  curl --fail --silent --show-error --location --retry 2 --connect-timeout 20 --max-time 180 \"$vida_bun_release/SHASUMS256.txt\" -o \"$vida_bun_stage/SHASUMS256.txt\"\n  curl --fail --silent --show-error --location --retry 2 --connect-timeout 20 --max-time 180 \"$vida_bun_release/bun-linux-x64.zip\" -o \"$vida_bun_stage/bun-linux-x64.zip\"\n  (cd \"$vida_bun_stage\" && sha256sum --check --ignore-missing SHASUMS256.txt)\n  unzip -q \"$vida_bun_stage/bun-linux-x64.zip\" -d \"$vida_bun_stage\"\n  test \"$(\"$vida_bun_stage/bun-linux-x64/bun\" --version)\" = \"$vida_bun_pin\"\n  mkdir -p \"$HOME/.local/bin\"\n  install -m 755 \"$vida_bun_stage/bun-linux-x64/bun\" \"$HOME/.local/bin/bun.vida-$$\"\n  mv -f \"$HOME/.local/bin/bun.vida-$$\" \"$HOME/.local/bin/bun\"\n  test \"$(bun --version)\" = \"$vida_bun_pin\"\n  rm -- \"$vida_bun_stage/SHASUMS256.txt\" \"$vida_bun_stage/bun-linux-x64.zip\" \"$vida_bun_stage/bun-linux-x64/bun\"\n  rmdir -- \"$vida_bun_stage/bun-linux-x64\" \"$vida_bun_stage\"\nfi\nbun tooling/agent/cloud-tooling-setup.ts\n. \"$HOME/.cache/vida-cloud-tooling/environment.sh\"\nbun tooling/agent/cloud-pstack-setup.ts --install --provision-only\n",
+  "bunBootstrap": "Read the version from packages/agent/.bun-version; verify the Linux x64 archive against that official release's SHASUMS256.txt before atomic installation. A matching Bun skips download.",
+  "plugins": ["superpowers@superpowers-dev", "pstack@open-pstack"],
   "pluginTrust": "Verify the native enabled trusted SessionStart hook. New or changed hook trust requires native /hooks review; setup reports GAP without a bypass.",
   "projectMcpConfig": ".codex/config.toml",
   "configurationSaveStatus": "requires supported host configuration editor; not saved by runtime-status API",

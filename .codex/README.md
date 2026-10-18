@@ -9,22 +9,28 @@ configuration and a fresh-session startup observation remain required.
 
 ## Deployment setup
 
-Use Linux x86_64 with glibc >=2.35 and the package-selected Bun. Setup requires
-curl, tar, unzip, getconf and taskset. The Pstack phase additionally requires Codex.
+Use Linux x86_64 with glibc >=2.35. The startup patch installs a missing or
+mismatched package-selected Bun from its official release archive after verifying
+the release checksums. Setup requires curl, git, sha256sum, tar, unzip, install,
+getconf and taskset. Plugin provisioning additionally requires Codex.
 Run from the checkout root with the host proxy and CA settings inherited:
 
 ```sh
 export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"
 bun tooling/agent/cloud-tooling-setup.ts
 . "$HOME/.cache/vida-cloud-tooling/environment.sh"
-bun tooling/agent/cloud-pstack-setup.ts --install
+bun tooling/agent/cloud-pstack-setup.ts --install --provision-only
 ```
 
 Native binaries live in ~/.local/bin; verified receipts and disk-backed scratch
 live in ~/.cache/vida-cloud-tooling. Repeat setup reuses verified downloads.
 It provisions the configured semantic model but never automatically indexes Source.
 It copies the qualified executing Bun to persistent host storage; it cannot
-bootstrap Bun in an image without Bun. Build/install run no product suites.
+bootstrap Bun itself. The shell prelude in the startup patch handles that first
+step. Build/install run no product suites. Provisioning installs and enables
+Superpowers and Pstack directly from their Git marketplaces, prepares Pstack's
+locked production dependencies with lifecycle scripts disabled, and reports
+hook trust separately. It does not run cold indexing or model invocations.
 
 Profile adoption preserves unrelated bytes. An intact managed source block is
 unchanged; a marker-only block can be completed. Ambiguous or unowned trailing
@@ -150,14 +156,22 @@ prepared instructions into the worker brief. The legacy contract is prompt-only;
 it does not restrict inherited tools or qualify hard isolation. Keep each result
 in its assigned artifact path and independently review it before Source joins.
 
-cloud-pstack-setup.ts --install installs/enables pstack@open-pstack through the
-native Codex marketplace, discovers its actual skill path and installs locked
-production script dependencies with Bun and lifecycle scripts disabled.
-Without --install it checks only the existing installation. Both modes verify
+cloud-pstack-setup.ts --install installs/enables pstack@open-pstack and
+superpowers@superpowers-dev through the native Codex Git marketplaces. It discovers
+the actual Pstack skill path and installs locked production script dependencies
+with Bun and lifecycle scripts disabled. Without --install it checks the existing
+installation. These modes verify
 entry-skill availability, model-policy CLI and one enabled trusted SessionStart
 hook through the native app-server. They send no model turn or external-provider
 request. Actual version and hook hash are printed; no provider sheet or spending
 authorization is inferred.
+
+The startup-only --install --provision-only mode prepares those same plugins and
+dependencies but returns a provisioned-not-qualified observation before requiring
+hook trust. A new hook therefore does not prevent the remaining environment from
+being installed. Run the command without flags to qualify the trusted hook.
+New or changed hashes require the native /hooks review. The user's explicit
+approval can be applied through that UI; never synthesize a trust record.
 
 A fresh or changed hook may require review in the native Codex /hooks UI.
 The script reports that trust GAP and applies no trust bypass. Current host

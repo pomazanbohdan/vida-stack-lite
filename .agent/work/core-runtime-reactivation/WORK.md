@@ -15,6 +15,87 @@ Status date: 2026-10-18. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
+### Test-authoring workflow audit and Cloud bootstrap — 2026-10-18
+
+The analysis reuses the retained110-launch diagnostic window17:37–05:37UTC and
+the45test/tooling-related commits in18:34–06:34UTC. These windows differ; they
+are not an exhaustive last12-hour shell or per-test latency census. Aggregate
+artifact is /workspace/attachments/test-authoring-cycle-analysis-20261018.json;
+three blind Luna contour reviews cover image, initialization and envelopes.
+The observed expensive repetition is native mutation, not SDK/frozen overhead.
+Image's10closed full attempts total6208s;9exit nonzero. Initialization's10closed
+full attempts total2917s; all10exit nonzero in that retained snapshot. Its later
+164/164closure is outside that snapshot. Nonzero partials/UNKNOWN are not all bugs.
+
+Keep three independent contour repair writers and one numeric owner/pool. Image
+has a real full488/488four-worker closure at721s; initialization has a real full
+164/164two-worker closure at822s. Different Source/tests/universes prevent a
+controlled1/2/4-worker speed comparison. Three simultaneous numeric pools or
+more repair writers have no demonstrated benefit on this4-CPU/16-GiB host.
+Prefer an owning-case regression and its actual assertion/activation witness,
+then batched focused/static checks, a published immutable candidate, one shared
+baseline for known-ID diagnostics, exact coverage/same-run frozen CRAP and one
+complete compatible mutation run. The existing campaign order/gates remain.
+An optional known-ID diagnostic can reject an unready repair before another
+numeric pair; it neither replaces that pair nor grants a partial score.
+
+Do not repeat full runs after each matcher change. First settle expected-success
+assertions before cleanup, phase-scoped faults, exact accepted/rejected bounds,
+fixture validity and targeted mutant assertions. Reuse current input formation
+and the existing AST/map/report owners. The successful100000-row fixture change
+retains real cardinality/integrity and observes1665–2016ms bodies across four
+concurrent development checks, instead of the observed5133ms timeout. This is
+fixture evidence, not an end-to-end worker-width speedup. A16-mutant pilot cannot
+establish sustained full-universe memory or disk behavior.
+
+Envelopes v336 at0f5cf27 forms SDK once in1689ms, then records exact
+79/214/230/106coverage in e3b10f5d-f0ba-4fdb-aedb-639f7f995159 and same-run
+review4b9fa9a maxCC9/maxCRAP9. Four-worker diagnostic88f2e9e8-31ab-42d0-a739-22f3a7dbd4f3
+closes24275ms with16assertion-Killed/0Survived/UNKNOWN,767unattempted of783.
+The full successor /dev/shm/contour-stage-IzggeJ loses observation before terminal
+closure. New boot89093463-dd07-4789-abcd-d15842df2ba2 replaces14b0bfa9; prior
+/tmp and /dev/shm measurement roots are absent. Preserve this as UNKNOWN, never
+aggregate its last15Killed observation or replay the old operation. The restart's
+cause is unknown. Future expensive producers need retained storage and sufficient
+space before launch; current root free space143MiB is below the existing2-GiB
+admission floor. No new full numeric run is started in this packet.
+
+The requested three-hour automation is enabled for this chat. Each iteration
+separately audits script correctness and test-authoring/execution order over its
+last3hours, applies verified fixes, checks/publishes and continues the current
+coverage queue. It avoids another writer/suite and stays quiet without meaningful
+changes. First scheduled trigger is2026-10-18T09:37:20Z.
+
+Current host tools are installed and verified: Bun1.4.3, Vex1.27.4 and
+LeanCTX3.11.4. LeanCTX's real MCP check passes the four-tool surface, explicit
+read, failed-command status and archive/full-file delivery. Shell archives remain
+summaries, not exact evidence. Vex's cold semantic build finishes in585.62s with
+10457symbols/541files,514TypeScript files, embeddings enabled and0missing files;
+70unsupported-extension files use rg. This is current host readiness, not a
+saved provider template. Git-installed Superpowers7.0.0 and Pstack1.17.5 are
+enabled. Root reviews the Pstack wrapper/body and grants trust through native
+Codex /hooks UI. Strict app-server readback passes61skills, enabled/trusted
+SessionStart and hash7cf45ffec43dd60d1827458e17b07977c4cdea83e04588c387bf582bf98aa0f4.
+No model turn or external-provider probe is issued by this qualification.
+
+The startup proposal now installs missing/mismatched Bun before TS setup,
+validates official release checksums and staged version before atomic replacement,
+then provisions tools and both Git plugins. --install --provision-only prepares
+dependencies without treating a new hook hash as qualified; strict no-flag
+qualification still requires trusted/enabled hook readback. The runtime-status
+API has no configuration-write operation and no browser-control surface is
+exposed. Provider-template activation/save and a fresh deployment remain GAP;
+the repository patch is not represented as saved Cloud configuration.
+Both full startup invocations pass idempotently on this host. A separate real
+Bun-absent prelude control n3jFCZ downloads/verifies the official archive and
+installs the selected executable with exit0, complete capture and closed group;
+its derived private binary is removed afterward. Bootstrap/Cloud contract tests
+pass13/13, including matching Bun, checksum rejection, wrong-version preservation
+and invalid provisioning options. Source TypeScript/scoped typed lint and22local
+documentation links pass. The requested exact Cloud Environment Onboarding:
+Setup skill is absent from the complete cloud/executor skill catalogs and local
+sources; available Cloud Environment Runtime remains read-only configuration.
+
 ### Initialization owned activation and native retry simplification — 2026-10-17
 
 Current Source retains16roles, original11retained/5active-added/1removed baseline

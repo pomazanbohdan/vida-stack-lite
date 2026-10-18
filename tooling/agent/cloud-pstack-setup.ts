@@ -5,20 +5,32 @@ import { appendBoundedCloudReply, runCloudToolWithCleanup } from './cloud-toolin
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const install = process.argv.slice(2);
-if (install.length > 1 || install.some((arg) => arg !== '--install')) throw new Error('Use --install or no arguments.');
+if (
+  install.some((arg) => !['--install', '--provision-only'].includes(arg)) ||
+  new Set(install).size !== install.length ||
+  (install.includes('--provision-only') && !install.includes('--install'))
+)
+  throw new Error('Use --install [--provision-only] or no arguments.');
 const pin = (await Bun.file(path.join(root, 'packages/agent/.bun-version')).text()).trim();
 if (process.versions.bun !== pin) throw new Error('Use the package-selected Bun: ' + pin);
 const pluginId = 'pstack@open-pstack';
+const wantedPlugins = [
+  { id: pluginId, source: 'https://github.com/arjitj2/open-pstack.git' },
+  { id: 'superpowers@superpowers-dev', source: 'https://github.com/obra/superpowers.git' },
+];
 function command(argv: string[], cwd = root): string {
   const result = Bun.spawnSync(argv, { cwd, stdout: 'pipe', stderr: 'pipe' });
   if (result.exitCode !== 0) throw new Error(argv[0] + ' failed: ' + result.stderr.toString());
   return result.stdout.toString();
 }
-function installedPlugin() {
+function installedPlugins(): unknown[] {
   const value: unknown = JSON.parse(command(['codex', 'plugin', 'list', '--json']));
   if (!isRecord(value) || !Array.isArray(value.installed)) throw new Error('Malformed Codex plugin listing.');
-  const matches = value.installed.filter((item: unknown) => isRecord(item) && item.pluginId === pluginId);
-  if (matches.length > 1) throw new Error('Ambiguous Pstack installation.');
+  return value.installed;
+}
+function installedPlugin(listed: readonly unknown[], id: string) {
+  const matches = listed.filter((item: unknown) => isRecord(item) && item.pluginId === id);
+  if (matches.length > 1) throw new Error('Ambiguous plugin installation: ' + id);
   const item: unknown = matches[0];
   if (item === undefined) return null;
   if (
@@ -27,16 +39,21 @@ function installedPlugin() {
     typeof item.enabled !== 'boolean' ||
     typeof item.version !== 'string'
   )
-    throw new Error('Malformed Pstack installation.');
+    throw new Error('Malformed plugin installation: ' + id);
   return item;
 }
-let plugin = installedPlugin();
-if ((!plugin || plugin.enabled !== true) && install.length) {
-  command(['codex', 'plugin', 'marketplace', 'add', 'arjitj2/open-pstack', '--json']);
-  command(['codex', 'plugin', 'add', pluginId, '--json']);
-  plugin = installedPlugin();
+let listed = installedPlugins();
+const missing = wantedPlugins.filter(({ id }) => installedPlugin(listed, id)?.enabled !== true);
+if (missing.length && install.includes('--install')) {
+  for (const { id, source } of missing) {
+    command(['codex', 'plugin', 'marketplace', 'add', source, '--json']);
+    command(['codex', 'plugin', 'add', id, '--json']);
+  }
+  listed = installedPlugins();
 }
-if (!plugin || plugin.enabled !== true) throw new Error('Pstack is not enabled. Run this script with --install.');
+for (const { id } of wantedPlugins)
+  if (installedPlugin(listed, id)?.enabled !== true) throw new Error(id + ' is not enabled; use --install.');
+const plugin = installedPlugin(listed, pluginId)!;
 
 const child = Bun.spawn(['codex', 'app-server', '--stdio'], {
   cwd: root,
@@ -116,7 +133,7 @@ await runCloudToolWithCleanup(
     );
     if (!isRecord(entry) || typeof entry.path !== 'string') throw new Error('Pstack entry skill is unavailable.');
     const scripts = path.resolve(path.dirname(entry.path), 'scripts');
-    if (install.length)
+    if (install.includes('--install'))
       command([process.execPath, 'install', '--production', '--frozen-lockfile', '--ignore-scripts'], scripts);
     command([path.join(scripts, 'model-policy/pstack-model-policy'), '--help']);
     const hooks = data(await request('hooks/list', { cwds: [root] }));
@@ -126,6 +143,21 @@ await runCloudToolWithCleanup(
       (item: unknown) => isRecord(item) && item.pluginId === pluginId && item.eventName === 'sessionStart',
     );
     const hook: unknown = startup[0];
+    if (install.includes('--provision-only')) {
+      console.log(
+        JSON.stringify({
+          plugins: wantedPlugins.map(({ id }) => ({
+            id,
+            version: installedPlugin(listed, id)!.version,
+            enabled: true,
+          })),
+          qualification: 'provisioned-not-qualified',
+          startupHook: startup.length === 1 && isRecord(hook) ? hook.trustStatus : 'unverified',
+          providerTemplateSave: 'not performed by this script',
+        }),
+      );
+      return;
+    }
     if (
       startup.length !== 1 ||
       !isRecord(hook) ||

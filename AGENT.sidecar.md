@@ -12,6 +12,12 @@ The single tool-selection table is in [.codex/README.md](.codex/README.md#bootst
 Use `rg --files --hidden` when searching `.agent`, `.agents` or `.codex`.
 An omitted hidden path is not evidence that a file is absent.
 
+On a new Cloud host, the lead follows the single
+[deployment setup](.codex/README.md#deployment-setup) for Bun, Vex, LeanCTX and
+the Git-installed Superpowers/Pstack plugins. Reuse the host's verified receipts;
+delegates do not repeat installation or indexing. Keep provisioning, native hook
+trust, semantic-index readiness and provider-template activation distinct.
+
 Delegation includes the repository root and this bootstrap pointer, including
 for blind agents. Agents read [.codex/README.md](.codex/README.md) for Vex/LeanCTX and the relevant
 project skill for ast-grep; inspect selected paths and reuse current results. If the
