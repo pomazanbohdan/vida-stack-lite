@@ -4,7 +4,13 @@ Status date: 2026-10-18. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-Lock admission/release repair is in progress. The corrected three v369 cases
+The lock repair and lineage packet is published as883ffbb. Normal strict hooks
+pass formatting,514-file TypeScript, typed lint, focused-test guard and Knip.
+Its core scoped review pin now selects those published unchanged ceilings and
+the recovered removal anchor; this pin itself does not prove the full partition
+or admit a numeric baseline. Fresh immutable measurements follow below.
+
+Lock admission/release repair is implemented. The corrected three v369 cases
 fail assertions on unchanged published2c74c7d Source for the missing fresh-create guard, futile live-lock create
 attempt and lost primary error during simultaneous lock/guard cleanup failure.
 The candidate owns the guard through exclusive creation/payload publication,
