@@ -147,7 +147,7 @@ keep baseline/setup cost and pure assertion time distinct. The current P1 schema
 analysisv536 supplies explicit collision-ownership design/tests in CLEAR, without
 implementing a waiver or claiming a new frozen proof.
 
-**Current resource blocker:** controllerv547 stops before any child or launch
+**Prior resource blocker, resolved by v555 cleanup below:** controllerv547 stops before any child or launch
 receipt. Native admission at `/workspace/attachments/contour-stage-8dzxu5`
 observes2044248064bytes against2147483648minimum: exact floor deficit103235584.
 Raw stdout/stderr are retained as `/workspace/attachments/controller-coverage-v547.*`.
@@ -176,6 +176,35 @@ integrated hunks and must be reviewed against current Source before application.
 No proposed case counts, coverage or mutation improvements are counted. Preserve
 their own worker checkouts and raw notes. Root retains sole next writer and
 numeric custody when the actual resource GAP is resolved.
+
+### Current cleanup and worker checkout retirement
+
+The owner explicitly requests obsolete worktree removal and immediate retirement
+after future terminal handoffs. The sidecar now owns that rule and TESTING links
+to it: preserve integration/proposals and all local/staged/untracked bytes before
+Root removes the worker checkout. Heavy cleanup waits for final producers to
+terminate. Immutable measured checkouts and original evidence stay protected.
+
+v553/v554 reuse the registered-worktree catalog and select19terminal preparation
+checkouts,17with local edits, without ignored data or installed dependencies.
+All19heads remain ancestors of published canonical Source. v555 archives all
+working bytes, separate staged/unstaged patches and untracked paths, plus the
+complete worktree Git administration, then compares each archive against its
+original before native Git removal. No numeric/build/install owner is active;
+no observed cwd/executable/open descriptor points into a selected checkout.
+All19removals complete. v556/v557 also prune56registrations whose directories
+were already absent, after preserving their metadata and checking head retention.
+Registered worktrees decrease131->56; the56existing measured/retained checkouts
+are not modified.
+
+The [cleanup manifest](WORKTREE-CLEANUP-20261018.v1.json) records every exact path,
+base commit, archive, comparison and removal result, plus restoration steps.
+Full original receipt and archives remain at
+`/workspace/attachments/retired-prep-worktrees-v555/manifest.json` and its siblings.
+Available durable space rises2038956032->2808283136bytes: net769327104bytes,
+including stale-registration cleanup. This resolves the observed2GiB floor GAP;
+the next producer still performs its own admission. No cache, Source history,
+SDK, original journal/receipt or UNKNOWN evidence is deleted or re-attested.
 
 Custody incident: worker473 temporarily changed and reversed only canonical
 `packages/agent/bin/reconcile-readonly-dispatch.ts`, violating its read-only

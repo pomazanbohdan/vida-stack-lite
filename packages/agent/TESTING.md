@@ -1673,6 +1673,11 @@ product fixes and tests. Shared files have one writer. Root integrates, runs
 checks, admits numeric results and owns Git. Workers prepare independently; they
 do not start duplicate suites, scans, hashes or inventories.
 
+After each terminal handoff, Root retires the completed preparation checkout
+under the [sidecar's worktree retention rule](../../AGENT.sidecar.md#orchestration-and-delegation).
+Retain pending patches and all local/staged data before removal; closure of a
+worker does not release an immutable measured checkout or its evidence.
+
 1. Reuse the existing contour selection, current canonical mutant map and retained
    failures. Map each gap to the supported contract and applicable scenario. Search
    analogous paths inside the contour before choosing the correction.

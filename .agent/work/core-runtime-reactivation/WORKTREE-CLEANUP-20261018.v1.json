@@ -1,0 +1,489 @@
+{
+  "schema": "VerifiedWorkerWorktreeRetirement/v1",
+  "status": "completed-preparation-checkouts-only",
+  "source_head": "777da13d63c54f1dcdcbb66410cf3ab1cb899dcb",
+  "boot": "89093463-dd07-4789-abcd-d15842df2ba2",
+  "before_free_bytes": "2038956032",
+  "after_free_bytes": "2808283136",
+  "net_free_bytes": "769327104",
+  "registered_before": 131,
+  "registered_after": 56,
+  "retention_manifest": "/workspace/attachments/retired-prep-worktrees-v555/manifest.json",
+  "git_metadata_archive": "/workspace/attachments/retired-prep-worktrees-v555/worktree-administration.tar.gz",
+  "removed_preparation_worktrees": [
+    {
+      "source": "/workspace/attachments/audit-error-display-v137",
+      "head": "b7fa92fd61d59e39954bbf8ddd4843f3912d33f7",
+      "status": "M packages/agent/tests/forward-controller-values.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/audit-error-display-v137.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2073657344"
+    },
+    {
+      "source": "/workspace/attachments/audit-facade-v136",
+      "head": "b7fa92fd61d59e39954bbf8ddd4843f3912d33f7",
+      "status": "M packages/agent/src/lifecycle/runtime-facade.ts\n M packages/agent/tests/runtime-facade-boundary.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/audit-facade-v136.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2112163840"
+    },
+    {
+      "source": "/workspace/attachments/audit-host-snapshot-v140",
+      "head": "b7fa92fd61d59e39954bbf8ddd4843f3912d33f7",
+      "status": "M packages/agent/src/host-state.ts\n M packages/agent/tests/contour-progress.test.ts\n M packages/agent/tests/stopped-source-capture.test.ts\n M packages/agent/tooling/mutation-partitions.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/audit-host-snapshot-v140.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2150670336"
+    },
+    {
+      "source": "/workspace/attachments/audit-lease-projection-v139",
+      "head": "b7fa92fd61d59e39954bbf8ddd4843f3912d33f7",
+      "status": "M packages/agent/src/contracts/envelopes.ts\n M packages/agent/tests/envelopes-boundary.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/audit-lease-projection-v139.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2189176832"
+    },
+    {
+      "source": "/workspace/attachments/audit-resource-cleanup-v138",
+      "head": "b7fa92fd61d59e39954bbf8ddd4843f3912d33f7",
+      "status": "",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/audit-resource-cleanup-v138.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2227695616"
+    },
+    {
+      "source": "/workspace/attachments/contour-diagnostics-author-v243",
+      "head": "ebc323bc8c4d35920aed6b18f0878971c4d47c1d",
+      "status": "M packages/agent/TESTING.md\n M packages/agent/tests/mutation-map.test.ts\n M packages/agent/tests/ts-only-source-gate.test.ts\n M packages/agent/tooling/mutation-batch-pilot.ts\n M packages/agent/tooling/ts-only-source-gate.ts\n?? original/packages/agent/TESTING.md\n?? original/packages/agent/tests/mutation-map.test.ts\n?? original/packages/agent/tooling/mutation-batch-pilot.ts\n?? proposed/packages/agent/TESTING.md\n?? proposed/packages/agent/tests/mutation-map.test.ts\n?? proposed/packages/agent/tooling/mutation-batch-pilot.ts\n?? runtime-initialization-isolated-diagnostic.patch",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/contour-diagnostics-author-v243.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2269061120"
+    },
+    {
+      "source": "/workspace/attachments/rolling-author-custody-v195",
+      "head": "a94321f3948e9de9f545aeea3dccfddfe98812b5",
+      "status": "M packages/agent/tests/bun/service-operation-launch-capability.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/rolling-author-custody-v195.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2307428352"
+    },
+    {
+      "source": "/workspace/attachments/rolling-author-custody-v197",
+      "head": "eda2fa4cfcb833d2f1c3d5aa42766d045e4c2c51",
+      "status": "M packages/agent/tests/bun/service-operation-handoff.test.ts\n M packages/agent/tests/bun/service-operation-launch-capability.test.ts\n M packages/agent/tests/bun/service-operation-launch-predicates.test.ts\n?? packages/agent/tests/helpers/service-launch-capability.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/rolling-author-custody-v197.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2346045440"
+    },
+    {
+      "source": "/workspace/attachments/rolling-author-envelopes-v195",
+      "head": "a94321f3948e9de9f545aeea3dccfddfe98812b5",
+      "status": "M packages/agent/tests/envelopes-boundary.test.ts\n M packages/agent/tests/fuzz-envelopes.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/rolling-author-envelopes-v195.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2384396288"
+    },
+    {
+      "source": "/workspace/attachments/rolling-author-image-v195",
+      "head": "a94321f3948e9de9f545aeea3dccfddfe98812b5",
+      "status": "M packages/agent/tests/project-upgrade-existing-storage.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/rolling-author-image-v195.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2422763520"
+    },
+    {
+      "source": "/workspace/attachments/rolling-author-image-v203",
+      "head": "256e3d8a8cdadb91379e243f458819be001bb08b",
+      "status": "M packages/agent/tests/project-upgrade-existing-storage.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/rolling-author-image-v203.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2462031872"
+    },
+    {
+      "source": "/workspace/attachments/rolling-author-pilot-v198",
+      "head": "46421bf3a0e958cbf4330b43538db6bcdcbc588a",
+      "status": "M packages/agent/tests/mutation-map.test.ts\n M packages/agent/tooling/mutation-batch-pilot.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/rolling-author-pilot-v198.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2500759552"
+    },
+    {
+      "source": "/workspace/attachments/rolling-author-pilot-v199",
+      "head": "8536c35e51dbf04b6a79f2fca41354ca846d03ca",
+      "status": "M packages/agent/src/config/service-operation-custody.ts\n M packages/agent/src/config/service-operation-launch-capability.ts\n M packages/agent/tests/bun/service-operation-launch-capability.test.ts\n M packages/agent/tests/bun/service-operation-launch-predicates.test.ts\n M packages/agent/tests/envelopes-boundary.test.ts\n D packages/agent/tests/helpers/service-launch-capability.ts\n M packages/agent/tests/project-upgrade-existing-storage.test.ts\n M packages/agent/tests/storage-admission-fresh-gate.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/rolling-author-pilot-v199.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2539720704"
+    },
+    {
+      "source": "/workspace/attachments/worker-capture-review-v476",
+      "head": "37c045476e6add4865210307f1d9612717e75ed8",
+      "status": "",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/worker-capture-review-v476.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2583375872"
+    },
+    {
+      "source": "/workspace/attachments/worker-config-v477",
+      "head": "37c045476e6add4865210307f1d9612717e75ed8",
+      "status": "M packages/agent/tests/runtime-config-repair-boundary.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/worker-config-v477.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2627022848"
+    },
+    {
+      "source": "/workspace/attachments/worker-controller-v516",
+      "head": "788d1f14885cbea87c6da17206f789ba84c8bf3f",
+      "status": "M packages/agent/tests/development-controller-observation.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/worker-controller-v516.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2670690304"
+    },
+    {
+      "source": "/workspace/attachments/worker-dispatch-v475",
+      "head": "37c045476e6add4865210307f1d9612717e75ed8",
+      "status": "M packages/agent/tests/reconcile-readonly-dispatch.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/worker-dispatch-v475.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2714341376"
+    },
+    {
+      "source": "/workspace/attachments/worker-dispatch-v513",
+      "head": "788d1f14885cbea87c6da17206f789ba84c8bf3f",
+      "status": "M packages/agent/tests/read-only-dispatch-repair.test.ts\n M packages/agent/tests/repair-cli-behavior.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/worker-dispatch-v513.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2758004736"
+    },
+    {
+      "source": "/workspace/attachments/worker-governance-v509",
+      "head": "788d1f14885cbea87c6da17206f789ba84c8bf3f",
+      "status": "M packages/agent/tests/edictum-workflow-completeness.test.ts\n M packages/agent/tests/governance-completeness.test.ts",
+      "archive": "/workspace/attachments/retired-prep-worktrees-v555/worker-governance-v509.tar.gz",
+      "base_reachable_from_canonical": true,
+      "verified": true,
+      "removed": true,
+      "free_bytes_after": "2801668096"
+    }
+  ],
+  "pruned_absent_registrations": [
+    {
+      "path": "/dev/shm/vida-custody-author-v218",
+      "head": "1997612532863b88c81513fe6c0d0cc2aa164486",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-custody-author-v219",
+      "head": "cb714989396aab8c19cfd37e95287c6949616cd2",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-author-image-v204",
+      "head": "d8e0a3651385e0db37a52d556c43778eba4a589e",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v202",
+      "head": "256e3d8a8cdadb91379e243f458819be001bb08b",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v203",
+      "head": "d8e0a3651385e0db37a52d556c43778eba4a589e",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v204",
+      "head": "40416cca3190723c0e34ca98889901af851a19c8",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v205",
+      "head": "2455aa8ce80dcb4e8c1661069fb3070e6b7cbff5",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v206",
+      "head": "1e9b91750301078c06768d70be395ceb0627dcc4",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v210",
+      "head": "ce8667908af70dc709eb55b398ab9f659c2b8386",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v212",
+      "head": "3d5a60b4a3d5960db137e3bae1e12b3e4d0af063",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v215",
+      "head": "3ac41f5c6c517c2fb8a9c110f5b66152f7e15f85",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v216",
+      "head": "1997612532863b88c81513fe6c0d0cc2aa164486",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v217",
+      "head": "1997612532863b88c81513fe6c0d0cc2aa164486",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v219",
+      "head": "cb714989396aab8c19cfd37e95287c6949616cd2",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v234",
+      "head": "c5254954283a9ddc6a81bc6ca8e6a83db7f916ab",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v235",
+      "head": "37722774f8222c29c637aa8f0c35595c4ee14e55",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v237",
+      "head": "11f142c26670e0c8eab34b268f2032fa4020bb9e",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v242",
+      "head": "ebc323bc8c4d35920aed6b18f0878971c4d47c1d",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v254",
+      "head": "127ff8435e3c45103abad29f676d1a05e730e0bf",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v256",
+      "head": "127ff8435e3c45103abad29f676d1a05e730e0bf",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v262",
+      "head": "1433e74e438f3b5247aef182b53fe4a4f34484ce",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v274",
+      "head": "524aac64e67130b93e906462686df4692aafdf7e",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v279",
+      "head": "d6dc73ac511aed6a4a7c71b4f5aa95dec9f6dc10",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v332",
+      "head": "f7fc802f2a41f1ae281c582783e5f79a1af40287",
+      "locked": false
+    },
+    {
+      "path": "/dev/shm/vida-rolling-measure-v336",
+      "head": "0f5cf274b143293c95f13ff5d180a493fbbaf018",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-custody-author-v220",
+      "head": "37eba45eefb290dce3b90350c16925b5e93c5b90",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-custody-author-v221",
+      "head": "342d277ddf63db7122a3f592669c78ed2de1a83c",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-custody-author-v224",
+      "head": "6531dc3050285a99056fef7fa8f7e94097b28c24",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-envelopes-author-v264",
+      "head": "1433e74e438f3b5247aef182b53fe4a4f34484ce",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-initialization-author-v225",
+      "head": "6531dc3050285a99056fef7fa8f7e94097b28c24",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-initialization-author-v267",
+      "head": "1433e74e438f3b5247aef182b53fe4a4f34484ce",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-lock-reproducer-v312",
+      "head": "00a9652d97d609de1edb62ea3b4be5338ed3d5d4",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v220",
+      "head": "37eba45eefb290dce3b90350c16925b5e93c5b90",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v221",
+      "head": "342d277ddf63db7122a3f592669c78ed2de1a83c",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v224",
+      "head": "6531dc3050285a99056fef7fa8f7e94097b28c24",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v227",
+      "head": "f1833a27c37e5f3ebfef1dbf3b0d58b13867665d",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v228",
+      "head": "42e2b1b11edac9807902c08c63b3f5a714618c44",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v230",
+      "head": "64cc6552c222533591ecd5e43d73f64ad2f45e1f",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v231",
+      "head": "e31db894b0d2a599049e9aede052d2ff814874a7",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v233",
+      "head": "9e35f7a98f2fbdf688de39060debaa4dbb6b1315",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v282",
+      "head": "51e9e4fe16fc1cb8f47936c6c7f09daa1d2baa7a",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v295",
+      "head": "85b09b0e490784b142e9d8637768f45b5e2bf3e4",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v296",
+      "head": "c560087c70f206456629eae00ca3a712bb078d71",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v297",
+      "head": "d2a37b70f4d27ca32a6f5e093c997c2723a041b1",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v302",
+      "head": "2b0119264d32feee4f4f1b62acd1b041f7b04889",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v308",
+      "head": "00a9652d97d609de1edb62ea3b4be5338ed3d5d4",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v314",
+      "head": "93628e28772dbffcbb503fbb27e5a4977a86f814",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v316",
+      "head": "379b4fb520edb52894849acbe0f563663e788a52",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v318",
+      "head": "2b795e9ee590ee99f5348aefb679ab3209fb2fa6",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v320",
+      "head": "5d71b6f1359d8b7ee230079fe44d0c4e2494c3c8",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v322",
+      "head": "38fb0dffc6f85a8ba3346f0a063141e9b54aaac8",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v324",
+      "head": "c227568d119922cdf073df6ae91d863d2bcb74ea",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v326",
+      "head": "6ee36916f2d96c5c579892e5560e16374a175bf5",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-rolling-measure-v328",
+      "head": "171dc7e069aa07e48dcb5203dbf2f276ad2d9399",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-storage-image-author-v265",
+      "head": "1433e74e438f3b5247aef182b53fe4a4f34484ce",
+      "locked": false
+    },
+    {
+      "path": "/tmp/vida-tooling-audit-author-v330",
+      "head": "171dc7e069aa07e48dcb5203dbf2f276ad2d9399",
+      "locked": false
+    }
+  ],
+  "restoration": "For a retired preparation checkout, use git worktree add --detach --no-checkout PATH HEAD_FROM_MANIFEST; initialize its index with git read-tree HEAD; extract the full tar archive excluding ./.git; restore staged changes using git apply --cached NAME.staged.patch. Do not apply the unstaged patch over the already restored working bytes. The archived Git administration is historical retention, not a replacement for live common Git metadata.",
+  "limits": "No measured checkout, SDK artifact, original receipt/log/DB/UNKNOWN evidence was removed or requalified. All archived Source bytes/modes/symlinks were compared before native Git removal; all retired heads remain reachable from canonical Source."
+}

@@ -104,6 +104,19 @@ violate this rule. Root alone owns Git, shared-file integration and final checks
 worker proposals and static checks do not establish numeric closure.
 An unresolved finding remains OPEN and returns to the repair queue when its
 prerequisite is available; a handoff alone does not close the contour.
+
+Retire a worker checkout immediately after its terminal handoff and preservation
+of its work. Root first integrates the reviewed changes or durably retains an
+explicitly unvalidated proposal, then preserves every remaining staged/unstaged
+change and untracked file. Check for active owners and dependent paths before
+using `git worktree remove`; never let a worker remove its own checkout or leave
+completed preparation checkouts accumulating. Preserve an auditable removal
+manifest, base commit and restoration data. Measured checkouts and original
+receipts, logs, SDK artifacts, DBs and UNKNOWN evidence remain protected by their
+retention contract; terminal PASS alone does not authorize their deletion.
+Defer cleanup that competes with active final numeric/build/install operations
+until their observed completion, then retire the queued checkouts before the
+next producer. Reuse existing inventories instead of another broad scan per job.
 Pstack defaults do not replace that route or authorize external model spending.
 Use prepared worker-contract guidance and disjoint file/output assignments.
 Prompt-only guidance does not establish a sandbox or independent Git authority.

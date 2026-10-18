@@ -84,8 +84,10 @@ Do not fabricate a PID, process-group closure, test start, UNKNOWN effect or
 numeric PASS. Preserve the original exception and secondary receipt/projection
 errors. Add focused producer/reader controls before enabling this route. Actual
 resource admission remains blocking; do not lower its floor or relocate evidence
-to volatile storage. Current Root numeric work is blocked on103235584bytes of
-floor deficit, plus necessary working headroom; retained evidence is protected.
+to volatile storage. The v547 refusal recorded103235584bytes of floor deficit.
+Owner-directed v555/v557 retirement of archived preparation worktrees resolves
+that observed deficit; resume through fresh native admission with working
+headroom. Retained measured checkouts and original evidence remain protected.
 
 Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
 `nativeDiagnosticIdSet` owner and its invalid-token predicate, each with
