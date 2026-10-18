@@ -1295,12 +1295,31 @@ describe('existing storage image preparation', () => {
 
   test.each([
     [
+      'a missing input integrity row',
+      'PRAGMA integrity_check',
+      'get',
+      null,
+      1,
+      'Existing storage merge: an input image fails integrity_check',
+      false,
+    ],
+    [
+      'a missing service custody count row',
+      'SELECT COUNT(*) AS count FROM agent_host_service_operation_custody',
+      'get',
+      null,
+      2,
+      'Existing storage merge: new service custody table contains operational rows',
+      true,
+    ],
+    [
       'a missing Host table count row',
       'SELECT COUNT(*) AS count FROM "agent_host_state"',
       'get',
       null,
       1,
       'Existing storage merge: table count unavailable: agent_host_state',
+      false,
     ],
     [
       'an empty Host table_xinfo result',
@@ -1309,6 +1328,7 @@ describe('existing storage image preparation', () => {
       [],
       1,
       'Existing storage merge: table has no columns: agent_host_state',
+      false,
     ],
     [
       'an empty Mastra insertable table_xinfo result',
@@ -1317,6 +1337,7 @@ describe('existing storage image preparation', () => {
       [],
       2,
       'Existing storage merge: table has no insertable columns: mastra_threads',
+      false,
     ],
     [
       'a missing target encoding row',
@@ -1325,10 +1346,11 @@ describe('existing storage image preparation', () => {
       null,
       1,
       'Existing storage merge: SQLite schema encoding is unsupported',
+      false,
     ],
   ] as const)(
     'fails closed and closes owned databases for %s without changing either input image',
-    async (_label, faultSql, faultMethod, faultValue, faultOccurrence, expectedMessage) => {
+    async (_label, faultSql, faultMethod, faultValue, faultOccurrence, expectedMessage, targetOnly) => {
       const host = makeHost();
       const mastra = await makeMastra();
       const hostBefore = Buffer.from(host.bytes);
@@ -1336,12 +1358,14 @@ describe('existing storage image preparation', () => {
       const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
       const deserialize = Database.deserialize.bind(Database);
       const opened = new Set<Database>();
+      let finalTarget: Database | undefined;
       const occurrences = new Map<Database, number>();
       const faultDatabases = new Set<Database>();
       let faultReached = false;
       const locatingDatabases = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
         const database = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
         opened.add(database);
+        if (opened.size === 5) finalTarget = database;
         return database;
       });
       const injectingMissingRow = spyOn(Database.prototype, 'query').mockImplementation(function (
@@ -1349,7 +1373,7 @@ describe('existing storage image preparation', () => {
         sql: string,
       ) {
         const statement = Reflect.apply(query, this, [sql]);
-        if (sql !== faultSql) return statement;
+        if (sql !== faultSql || (targetOnly && this !== finalTarget)) return statement;
         const occurrence = (occurrences.get(this) ?? 0) + 1;
         occurrences.set(this, occurrence);
         if (occurrence !== faultOccurrence) return statement;

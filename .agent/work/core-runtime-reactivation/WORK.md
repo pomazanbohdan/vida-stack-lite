@@ -389,6 +389,25 @@ fixtures, DBs and raw failed/UNKNOWN evidence remain unchanged; the changed
 dependency realpath never qualifies or replays the old run. Fresh native workers
 still need attributable closure under the existing timeouts.
 
+The same image fault matrix now adds missing input-integrity and final service
+custody-count rows. Its service case pins the fifth deserialized target and its
+second custody COUNT, after the independent schema initializer's legitimate
+first COUNT. Earlier14g29X/DT8Hbk attempts intercepted the wrong dependency owner
+and remain failed development evidence. CorrectedzSrvBo passes both selected
+cases in1077ms,92unselected, with complete capture/group closure. The full next
+file selection has94cases; its fresh numeric proof remains pending.
+
+Lock architecture review rejects both a naive admission guard (it can block a
+live owner's release) and release-order-only changes (a delayed creator can still
+overlap pending quarantine). Any future guard serialization needs bounded,
+monotonic pre-release acquisition without replaying body/release effects or
+erasing uncertain state, plus deterministic interleaving proof. Existing root
+function caps/correspondence are unavailable in this checkout; nested callback
+caps do not authorize inferring parent ceilings. Exact lookup GAP:
+/workspace/attachments/safe-repository-lock-root-budget-gap-v294.md. No speculative
+Source change or frozen-cap replacement is adopted. Receipt-only phase handshake
+candidatev300 is retained separately and is not a product-lock repair.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is
