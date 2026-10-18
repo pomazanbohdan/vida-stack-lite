@@ -4,14 +4,227 @@ import {
   contourStagePublicationAdmitted,
   contourStageReportArguments,
   contourStageDiagnostic,
+  retainContourStageResourceRefusal,
 } from '../tooling/contour-stage.ts';
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { contourAttempts, mergeContourProgress } from '../tooling/contour-progress.ts';
 import { runContourProgressWithNative } from '../tooling/contour-progress-cli.ts';
 import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
-import { expectRejection } from './helpers/expect-rejection.ts';
+import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
+import { CampaignResourceError } from '../tooling/contour-campaign.ts';
+
+function prelaunchFixture() {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-prelaunch-refusal-'));
+  const stage = path.join(root, 'contour-stage-refusal_1');
+  const output = path.join(root, 'published');
+  mkdirSync(stage);
+  const request = {
+    commit: 'a'.repeat(40),
+    boot: 'observed-boot',
+    contour: 'main-host',
+    lane: 'mutation' as const,
+    output,
+    timeout_ms: 930000,
+    args: ['tooling/mutation-batch-pilot.ts', '--contour', 'main-host'],
+  };
+  const refusal = {
+    schema: 'VidaContourStagePrelaunchResourceRefusal/v1',
+    run_id: path.basename(stage),
+    directory: stage,
+    source_commit: request.commit,
+    boot: request.boot,
+    contour: request.contour,
+    lane: request.lane,
+    phase: 'prelaunch',
+    launched: false,
+    status: 'resource-refused',
+    error: 'Campaign requires at least 2 GiB free.',
+    resource_path: stage,
+    available_bytes: '2104078336',
+    minimum_free_bytes: '2147483648',
+  };
+  const file = path.join(stage, 'prelaunch-resource-refusal.json');
+  writeFileSync(path.join(stage, 'request.json'), JSON.stringify(request));
+  return { root, stage, output, request, refusal, file };
+}
+
+test('prelaunch resource refusal projects without fabricated terminal custody', async () => {
+  const { root, stage, output, request, refusal, file } = prelaunchFixture();
+  writeFileSync(file, JSON.stringify(refusal));
+  let passed = false;
+  try {
+    await runContourProgressWithNative(['--output', output, '--commit', request.commit, '--stage-outcome', file], root);
+    const snapshot = mergeContourProgress(
+      JSON.parse(readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8')),
+      [],
+    );
+    expect(snapshot.attempts).toHaveLength(1);
+    expect(snapshot.attempts[0]).toMatchObject({
+      lane: 'stage-outcome',
+      status: 'mutation/prelaunch-resource-refused',
+      accepted: false,
+      producer_schema: refusal.schema,
+      coverage: null,
+      max_cc: null,
+      max_entry_crap: null,
+      killed: null,
+      mutants: null,
+      sources: [],
+      tests: [],
+      tools: [],
+      closure: [],
+      selected_tests: [],
+      selection_complete: false,
+    });
+    expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8')).toContain(
+      'mutation/prelaunch-resource-refused',
+    );
+    for (const promotion of [
+      { accepted: true },
+      { confirmed_killed: 1 },
+      { killed: 1, mutants: 1 },
+      { selection_complete: true },
+      { status: 'mutation/completed/unknown-or-partial' },
+      { producer_schema: 'VidaContourStagePublicationError/v1' },
+      { lane: 'mutation' },
+    ])
+      expect(() =>
+        mergeContourProgress({ schema: snapshot.schema, attempts: [{ ...snapshot.attempts[0], ...promotion }] }, []),
+      ).toThrow();
+    for (const patch of [
+      { source_commit: 'b'.repeat(40) },
+      { run_id: 'contour-stage-foreign' },
+      { directory: root },
+      { boot: 'other-boot' },
+      { contour: 'bun-governance-and-public-contracts' },
+      { lane: 'coverage' },
+      { resource_path: 'relative' },
+    ]) {
+      writeFileSync(file, JSON.stringify({ ...refusal, ...patch }));
+      await expectRejection(
+        runContourProgressWithNative(['--output', output, '--commit', request.commit, '--stage-outcome', file], root),
+        /retained request/u,
+      );
+    }
+    writeFileSync(file, JSON.stringify(refusal));
+    for (const terminalFile of ['launch.json', 'execution.json']) {
+      writeFileSync(path.join(stage, terminalFile), '{}');
+      await expectRejection(
+        runContourProgressWithNative(['--output', output, '--commit', request.commit, '--stage-outcome', file], root),
+        /includes a launch/u,
+      );
+      rmSync(path.join(stage, terminalFile));
+    }
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true });
+    else console.error(`Retained failed prelaunch refusal fixture: ${root}`);
+  }
+});
+
+test('prelaunch resource schema rejects successful capacity, process claims and noncanonical bytes', () => {
+  const { root, request, refusal, file } = prelaunchFixture();
+  const receipt = { artifact: file, commit: request.commit, recorded_at: new Date().toISOString() };
+  let passed = false;
+  try {
+    for (const available_bytes of [null, '0', '2147483647'])
+      expect(contourAttempts({ ...refusal, available_bytes }, receipt)[0]?.accepted).toBe(false);
+    for (const patch of [
+      { launched: true },
+      { phase: 'execution' },
+      { status: 'PASS' },
+      { available_bytes: '2147483648' },
+      { available_bytes: '-1' },
+      { available_bytes: '01' },
+      { available_bytes: '1.5' },
+      { available_bytes: 1 },
+      { available_bytes: undefined },
+      { minimum_free_bytes: '1' },
+      { minimum_free_bytes: undefined },
+      { pid: 123 },
+      { result: {} },
+      { group_closed: true },
+      { capture_complete: true },
+      { contour: 'foreign-contour' },
+      { source_commit: 'b'.repeat(40) },
+    ])
+      expect(() => contourAttempts({ ...refusal, ...patch }, receipt)).toThrow();
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true });
+    else console.error(`Retained failed prelaunch schema fixture: ${root}`);
+  }
+});
+
+test('resource refusal owner retains and projects the original error before rejecting', async () => {
+  const { root, stage, output, request, file } = prelaunchFixture();
+  const error = new CampaignResourceError(stage, null);
+  let passed = false;
+  try {
+    expect(await rejectionReason(retainContourStageResourceRefusal(error, stage, request, root))).toBe(error);
+    const retained: unknown = JSON.parse(readFileSync(file, 'utf8'));
+    expect(retained).toMatchObject({
+      available_bytes: null,
+      resource_path: stage,
+      error: String(error),
+      launched: false,
+    });
+    expect(existsSync(path.join(stage, 'launch.json'))).toBe(false);
+    expect(existsSync(path.join(stage, 'execution.json'))).toBe(false);
+    const snapshot = mergeContourProgress(
+      JSON.parse(readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8')),
+      [],
+    );
+    expect(snapshot.attempts[0]).toMatchObject({ status: 'mutation/prelaunch-resource-refused', accepted: false });
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true });
+    else console.error(`Retained failed prelaunch owner fixture: ${root}`);
+  }
+});
+
+test('resource refusal keeps primary errors when receipt or projection fails', async () => {
+  const { root, stage, output, request, file } = prelaunchFixture();
+  const error = new CampaignResourceError(path.join(stage, 'scratch-observation'), '0');
+  let passed = false;
+  try {
+    const unrelated = new Error('Unrelated configuration failure');
+    expect(await rejectionReason(retainContourStageResourceRefusal(unrelated, stage, request, root))).toBe(unrelated);
+    expect(existsSync(file)).toBe(false);
+    writeFileSync(output, 'blocked projection');
+    try {
+      await retainContourStageResourceRefusal(error, stage, request, root);
+      expect.unreachable('Projection must fail');
+    } catch (failure) {
+      expect(failure).toBeInstanceOf(AggregateError);
+      if (!(failure instanceof AggregateError)) throw failure;
+      expect(failure.cause).toBe(error);
+      expect(failure.errors[0]).toBe(error);
+      expect(failure.errors).toHaveLength(2);
+    }
+    expect(JSON.parse(readFileSync(file, 'utf8'))).toMatchObject({
+      resource_path: error.observedPath,
+      available_bytes: '0',
+    });
+    const original = readFileSync(file, 'utf8');
+    try {
+      await retainContourStageResourceRefusal(error, stage, request, root);
+      expect.unreachable('Exclusive receipt creation must fail');
+    } catch (failure) {
+      expect(failure).toBeInstanceOf(AggregateError);
+      if (!(failure instanceof AggregateError)) throw failure;
+      expect(failure.errors[0]).toBe(error);
+      expect(failure.errors[1]).toHaveProperty('code', 'EEXIST');
+    }
+    expect(readFileSync(file, 'utf8')).toBe(original);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true });
+    else console.error(`Retained failed prelaunch error fixture: ${root}`);
+  }
+});
 
 function terminal(): MutationProcessResult {
   return {
@@ -310,7 +523,13 @@ test('failed-stage outcome import binds retained custody and cannot promote diag
     expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8')).toContain(
       'mutation/failed/unknown-or-partial',
     );
-    for (const promotion of [{ accepted: true }, { confirmed_killed: 2 }, { mutants: 5 }, { selection_complete: true }])
+    for (const promotion of [
+      { accepted: true },
+      { confirmed_killed: 2 },
+      { mutants: 5 },
+      { selection_complete: true },
+      { lane: 'mutation' },
+    ])
       expect(() =>
         mergeContourProgress({ schema: snapshot.schema, attempts: [{ ...snapshot.attempts[0], ...promotion }] }, []),
       ).toThrow();

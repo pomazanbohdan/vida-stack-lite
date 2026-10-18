@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
 import {
   campaignPartition,
+  CampaignResourceError,
   campaignProcessState,
   campaignReportPublicationAdmitted as contourStagePublicationAdmitted,
   isolatedCommand,
@@ -100,6 +101,61 @@ export function contourStageOutput(repository: string, output: string): string {
 
 export { contourStagePublicationAdmitted };
 
+type StageRequest = { commit: string; boot: string; contour: string; lane: Lane; output: string; timeout_ms: number };
+
+export async function retainContourStageResourceRefusal(
+  error: unknown,
+  directory: string,
+  request: StageRequest,
+  packageRoot: string,
+  explicitSnapshot?: string,
+): Promise<never> {
+  if (!(error instanceof CampaignResourceError)) throw error;
+  const file = path.join(directory, 'prelaunch-resource-refusal.json');
+  const refusal = {
+    schema: 'VidaContourStagePrelaunchResourceRefusal/v1',
+    run_id: path.basename(directory),
+    directory,
+    source_commit: request.commit,
+    boot: request.boot,
+    contour: request.contour,
+    lane: request.lane,
+    phase: 'prelaunch',
+    launched: false,
+    status: 'resource-refused',
+    error: String(error),
+    resource_path: error.observedPath,
+    available_bytes: error.availableBytes,
+    minimum_free_bytes: String(2n * 1024n ** 3n),
+  };
+  try {
+    writeFileSync(file, JSON.stringify(refusal, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+    process.stdout.write(JSON.stringify(refusal) + '\n');
+  } catch (receiptError) {
+    return throwAfterCampaignReceiptFailure(error, receiptError, { source_commit: request.commit, boot: request.boot });
+  }
+  const snapshot = explicitSnapshot ?? path.join(request.output, 'CONTOUR-STATUS.json');
+  try {
+    await runContourProgressWithNative(
+      [
+        '--output',
+        request.output,
+        '--commit',
+        request.commit,
+        ...(explicitSnapshot || existsSync(snapshot) ? ['--snapshot', snapshot] : []),
+        '--stage-outcome',
+        file,
+      ],
+      packageRoot,
+    );
+  } catch (projectionError) {
+    throw new AggregateError([error, projectionError], 'Resource refusal and outcome projection failure', {
+      cause: error,
+    });
+  }
+  throw error;
+}
+
 async function main(): Promise<void> {
   if (process.argv.length === 3 && process.argv[2] === '--help') {
     process.stdout.write(
@@ -189,17 +245,24 @@ async function main(): Promise<void> {
           ...(values['isolated-workers'] ? ['--isolated-workers'] : []),
           ...(values.workers !== undefined ? ['--workers', values.workers] : []),
         ];
-  const isolated = isolatedCommand(
-    directory,
-    args,
-    {
-      tini: process.env.VIDA_QUALITY_TINI ?? '/home/agent/.local/bin/tini',
-      bwrap: 'bwrap',
-    },
-    process.env.VIDA_QUALITY_RETAINED_SCRATCH_ROOT,
-  );
   const timeout = lane === 'mutation' ? 930_000 : lane === 'coverage' ? 330_000 : 60_000;
-  const launch = { commit, boot, contour: partition.name, lane, output, timeout_ms: timeout, ...isolated };
+  const request = { commit, boot, contour: partition.name, lane: selectedLane, output, timeout_ms: timeout };
+  record('request', { ...request, args });
+  let isolated: ReturnType<typeof isolatedCommand>;
+  try {
+    isolated = isolatedCommand(
+      directory,
+      args,
+      {
+        tini: process.env.VIDA_QUALITY_TINI ?? '/home/agent/.local/bin/tini',
+        bwrap: 'bwrap',
+      },
+      process.env.VIDA_QUALITY_RETAINED_SCRATCH_ROOT,
+    );
+  } catch (error) {
+    return retainContourStageResourceRefusal(error, directory, request, packageRoot, values.snapshot);
+  }
+  const launch = { ...request, ...isolated };
   record('launch', launch);
   process.stdout.write(
     JSON.stringify({

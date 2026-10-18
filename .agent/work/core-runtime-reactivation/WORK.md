@@ -185,6 +185,40 @@ change or synthetic fault seam is justified by that hypothesis.
 
 ## Execution order
 
+Current dependency-ready packet repairs the prelaunch resource-reporting GAP
+while numeric work remains blocked. Root remains the only writer; blind read-only
+Lunav624 reviews the design and final implementation with no scoped blockers.
+The prepared v629 native read-only contract is prompt-only, not isolation.
+Pstack Model the Domain selects a distinct prelaunch outcome; Laziness Protocol
+keeps the existing stage-outcome projection route and shared nonmetric attempt
+constructor instead of a new ledger. No second cycle or checkout is created.
+
+The producer now retains request.json before isolated setup. Only a native
+CampaignResourceError produces prelaunch-resource-refusal.json with exact
+Source/run/boot/contour/lane and resource path/free/null/minimum. The reader binds
+the request, rejects launch/execution files and validates a strict versioned
+schema. All metrics remain null and selections empty. Snapshot merge also rejects
+relabeling either new refusals or old publication errors as another lane; normal
+terminal outcomes retain their existing custody checks. Receipt/projection
+failure preserves the original resource error plus secondary failures.
+
+REDv625 fails at the original filename-only reader, with its failed root retained.
+GREENv626 passes the new route. Regressionv627 passes165cases/597assertions in443ms
+across the complete stage/progress files. Finalv631 includes both legacy and new
+lane-promotion controls:165PASS/599assertions in533ms. The one scoped existing Babel inventoryv628
+observes new owner complexities7/5/1/5against prospective10/10ceilings. This is
+static complexity only, not CRAP/coverage/frozen acceptance or contour closure.
+Throughput checkpoint: one producer/reader patch, focused regressions, static
+checks, current docs and normal publication; no numeric producer or global scan.
+One current df observes2104078336bytes free on checkout/evidence,43405312below
+the unchanged floor. /tmp is a different9.44GB mount and is not an eligible
+durable-evidence destination. No additional deletion or numeric retry occurs.
+The normal hook catches two new await-thenable matcher warnings after strict
+TypeScript passes. Both tests now await the existing rejectionReason owner
+before checking exact error identity/fixture cleanup; no helper is added or
+changed. The changed refusal cases pass focusedv632. Formatting is corrected
+through the existing Bun-invoked oxfmt owner; hooks are never bypassed.
+
 1. The assertion/workflow/controller packet is checked and published asa14c98b.
    Preserve its normal-hook evidence and each failed attempt's original custody/
    classification. Never bypass hooks or edit a measured checkout.
@@ -197,10 +231,9 @@ change or synthetic fault seam is justified by that hypothesis.
    role#2; retained mcpResults#3->#2and recordedStages#4->#3keep their own caps.
    Core entered-effect/adapter lineage and complete global correspondence remain
    separate GAPs. No transferred allowance or fresh invented historical baseline.
-4. Fix the confirmed prelaunch admission reporting gap in the existing stage/
-   projection owners: an explicit nonmetric resource refusal with path/free/min
-   and Source identity; no fake PID/closure/test start/PASS/UNKNOWN effect. Keep
-   original plus secondary publication errors. CLEAR owns its exact acceptance.
+4. Preserve the repaired prelaunch resource reporting and its focused negative
+   controls. Admission remains blocking; structured refusal grants no numeric
+   acceptance or permission to lower the floor. CLEAR owns its contract.
 5. Profile the actual activated-config10s case before optimizing: v517 total
    16025.472423ms, resume13174.230755ms, planning1717.340541ms, import681.433117ms.
    Its original failure remains; neither its bound nor core30/60s bounds increase.

@@ -160,6 +160,7 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
               'CandidateMutationReport/v4',
               'CandidateNativeMutationReport/v1',
               'VidaContourStagePublicationError/v1',
+              'VidaContourStagePrelaunchResourceRefusal/v1',
             ],
           },
           selection_artifact: { type: ['string', 'null'] },
@@ -399,6 +400,54 @@ function selectedTests(
 /** Adapts owner-issued terminal reports only. It does not re-admit their receipts or establish current freshness. */
 export { object as contourRecord };
 
+const validatePrelaunchRefusal = new Ajv().compile({
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'schema',
+    'run_id',
+    'directory',
+    'source_commit',
+    'boot',
+    'contour',
+    'lane',
+    'phase',
+    'launched',
+    'status',
+    'error',
+    'resource_path',
+    'available_bytes',
+    'minimum_free_bytes',
+  ],
+  properties: {
+    schema: { const: 'VidaContourStagePrelaunchResourceRefusal/v1' },
+    run_id: { type: 'string', pattern: '^contour-stage-[a-zA-Z0-9_-]+$' },
+    directory: { type: 'string', minLength: 1 },
+    source_commit: { type: 'string', pattern: '^[a-f0-9]{40}$' },
+    boot: { type: 'string', minLength: 1 },
+    contour: { type: 'string', minLength: 1 },
+    lane: { enum: ['coverage', 'frozen-crap', 'crap-applicability', 'mutation'] },
+    phase: { const: 'prelaunch' },
+    launched: { const: false },
+    status: { const: 'resource-refused' },
+    error: { type: 'string', minLength: 1 },
+    resource_path: { type: 'string', minLength: 1 },
+    available_bytes: { anyOf: [{ type: 'null' }, { type: 'string', pattern: '^(0|[1-9][0-9]*)$', maxLength: 32 }] },
+    // This version binds the existing serialized 2 GiB admission policy.
+    minimum_free_bytes: { const: '2147483648' },
+  },
+});
+
+function prelaunchRefusalAttempts(report: Record<string, unknown>, receipt: Receipt): Attempt[] {
+  if (
+    !validatePrelaunchRefusal(report) ||
+    report.source_commit !== receipt.commit ||
+    (report.available_bytes !== null && BigInt(text(report.available_bytes)) >= BigInt(text(report.minimum_free_bytes)))
+  )
+    throw new Error('Prelaunch resource refusal is malformed or admitted.');
+  return stageOutcomeAttempt(report, receipt, text(report.contour), `${text(report.lane)}/prelaunch-resource-refused`);
+}
+
 function stageOutcomeAttempts(report: Record<string, unknown>, receipt: Receipt): Attempt[] {
   const diagnostic = object(report.diagnostic);
   const status = text(report.status);
@@ -422,6 +471,15 @@ function stageOutcomeAttempts(report: Record<string, unknown>, receipt: Receipt)
     ].some(Boolean)
   )
     throw new Error('Stage publication outcome is malformed or successful.');
+  return stageOutcomeAttempt(report, receipt, contour, `${stageLane}/${process}/${status}`);
+}
+
+function stageOutcomeAttempt(
+  report: Record<string, unknown>,
+  receipt: Receipt,
+  contour: string,
+  status: string,
+): Attempt[] {
   declaredSources(contour);
   return [
     {
@@ -438,7 +496,7 @@ function stageOutcomeAttempts(report: Record<string, unknown>, receipt: Receipt)
       producer_schema: text(report.schema),
       selection_artifact: null,
       tool_fingerprint: null,
-      status: `${stageLane}/${process}/${status}`,
+      status,
       accepted: false,
       coverage: null,
       max_cc: null,
@@ -450,13 +508,18 @@ function stageOutcomeAttempts(report: Record<string, unknown>, receipt: Receipt)
 }
 
 function assertStageOutcomeObservation(attempt: Attempt): void {
+  const statusPattern =
+    attempt.producer_schema === 'VidaContourStagePrelaunchResourceRefusal/v1'
+      ? /^(?:coverage|frozen-crap|crap-applicability|mutation)\/prelaunch-resource-refused$/u
+      : /^(?:coverage|frozen-crap|crap-applicability|mutation)\/(?:completed|failed|timeout|unknown|resource)\/(?:unknown-or-partial|published-receipt-failed)$/u;
   if (
     [
+      attempt.lane !== 'stage-outcome',
       attempt.accepted,
-      attempt.producer_schema !== 'VidaContourStagePublicationError/v1',
-      !/^(?:coverage|frozen-crap|crap-applicability|mutation)\/(?:completed|failed|timeout|unknown|resource)\/(?:unknown-or-partial|published-receipt-failed)$/u.test(
-        attempt.status,
+      !['VidaContourStagePublicationError/v1', 'VidaContourStagePrelaunchResourceRefusal/v1'].includes(
+        attempt.producer_schema,
       ),
+      !statusPattern.test(attempt.status),
       attempt.sources.length !== 0,
       attempt.tests.length !== 0,
       attempt.tools.length !== 0,
@@ -484,6 +547,7 @@ export function contourAttempts(value: unknown, receipt: Receipt, artifactSha256
   if (artifactSha256 !== undefined && !/^[a-f0-9]{64}$/u.test(artifactSha256))
     throw new Error('Invalid observed contour artifact digest.');
   const report = object(value);
+  if (report.schema === 'VidaContourStagePrelaunchResourceRefusal/v1') return prelaunchRefusalAttempts(report, receipt);
   if (report.schema === 'CandidateNativeMutationReport/v1')
     throw new Error('Native mutation reports require the validated --native-report route.');
   if (report.schema === 'VidaContourStagePublicationError/v1') return stageOutcomeAttempts(report, receipt);
@@ -1258,7 +1322,13 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
         attempt.max_entry_crap !== null)
     )
       throw new Error('Parent outcome is not metric evidence.');
-    if (attempt.lane === 'stage-outcome') assertStageOutcomeObservation(attempt);
+    if (
+      attempt.lane === 'stage-outcome' ||
+      ['VidaContourStagePublicationError/v1', 'VidaContourStagePrelaunchResourceRefusal/v1'].includes(
+        attempt.producer_schema,
+      )
+    )
+      assertStageOutcomeObservation(attempt);
     if (!Number.isFinite(Date.parse(attempt.recorded_at))) throw new Error('Invalid contour receipt time.');
     for (const metric of Object.values(attempt.coverage ?? {}))
       if (metric.covered > metric.total) throw new Error('Coverage exceeds denominator.');

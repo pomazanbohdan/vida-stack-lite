@@ -88,13 +88,14 @@ freshness fingerprints. Preserve strict selected-suite completeness; a failed
 baseline with partial JUnit is not a kill. Validate changed inputs before another
 fresh bounded diagnostic, without replaying the old unknown baseline result.
 
-The v547 resource refusal exposes a second reporting prerequisite: admission can
-throw before contour-stage records launch and enters its terminal-publication
-handler. Persist an explicit non-metric prelaunch resource outcome with exact
-path/free/minimum and Source identity, and project it through the existing owner.
-Do not fabricate a PID, process-group closure, test start, UNKNOWN effect or
-numeric PASS. Preserve the original exception and secondary receipt/projection
-errors. Add focused producer/reader controls before enabling this route. Actual
+The v547 prelaunch reporting defect is repaired in the current stage/projection
+owners. A request record precedes isolated setup; a native CampaignResourceError
+retains VidaContourStagePrelaunchResourceRefusal/v1 with exact path/free/minimum
+and Source identity. The existing stage-outcome route binds the request and
+rejects launch/execution claims. It supplies no PID, process-group closure, test
+start, UNKNOWN effect or numeric PASS. Strict schema and merge guards prevent
+metric-lane promotion; original and secondary publication errors remain retained.
+WORK owns the focused RED/GREEN evidence and independent review. Actual
 resource admission remains blocking; do not lower its floor or relocate evidence
 to volatile storage. The v547 refusal recorded103235584bytes of floor deficit.
 Owner-directed v555/v557 retirement of archived preparation worktrees resolves

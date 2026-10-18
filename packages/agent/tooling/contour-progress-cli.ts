@@ -169,8 +169,38 @@ export function recordContourReport(root: string, report: unknown, artifact: str
   }
 }
 
-/** Bind a failed stage outcome to its retained launch and terminal execution before projection. */
+function readPrelaunchStageOutcome(
+  file: string,
+  commit: string,
+  recorded_at: string,
+): ReturnType<typeof contourAttempts> {
+  const directory = path.dirname(file);
+  const report = contourRecord(load(file));
+  const request = contourRecord(load(path.join(directory, 'request.json')));
+  const bindings: readonly (readonly [unknown, unknown])[] = [
+    [report.schema, 'VidaContourStagePrelaunchResourceRefusal/v1'],
+    [report.run_id, path.basename(directory)],
+    [report.directory, directory],
+    [report.source_commit, request.commit],
+    [commit, request.commit],
+    [report.boot, request.boot],
+    [report.contour, request.contour],
+    [report.lane, request.lane],
+  ];
+  if (
+    bindings.some(([observed, expected]) => observed !== expected) ||
+    !path.isAbsolute(String(report.resource_path)) ||
+    existsSync(path.join(directory, 'launch.json')) ||
+    existsSync(path.join(directory, 'execution.json'))
+  )
+    throw new Error('Prelaunch refusal differs from its retained request or includes a launch.');
+  return contourAttempts(report, { artifact: file, commit, recorded_at });
+}
+
+/** Bind outcomes to a retained request or to actual launch and terminal execution. */
 function readStageOutcome(file: string, commit: string, recorded_at: string): ReturnType<typeof contourAttempts> {
+  if (path.basename(file) === 'prelaunch-resource-refusal.json')
+    return readPrelaunchStageOutcome(file, commit, recorded_at);
   if (path.basename(file) !== 'publication-error.json')
     throw new Error('Stage outcome must name publication-error.json.');
   const directory = path.dirname(file);

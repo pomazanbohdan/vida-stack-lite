@@ -1851,6 +1851,16 @@ with at least2GiB free. This root stays outside `packages/agent` so bundle
 fixtures cannot recursively copy their own scratch. Whole-bundle copies also
 exclude generated `coverage` output. Capacity denial fences every successor and
 records `resource-incomplete`; it is not a test failure or a mutation kill.
+For the single-stage owner, `request.json` precedes isolated setup. A native
+`CampaignResourceError` before launch retains a separate
+`prelaunch-resource-refusal.json` (`VidaContourStagePrelaunchResourceRefusal/v1`).
+The existing `--stage-outcome` route binds it to that request and Source commit,
+rejects any launch/execution record, and projects `stage-outcome` without metrics.
+It records the observed resource path, free bytes (null when unobservable), and
+the unchanged 2 GiB floor. It claims no PID, termination, capture or test start.
+Receipt/projection failure preserves the resource error and secondary cause.
+Such an outcome cannot be relabeled as a metric lane or accepted evidence;
+ordinary failed-stage outcomes still require their original terminal custody.
 Record the actual filesystem type and available bytes in `launch.json`; the
 private `/tmp` bind does not imply tmpfs. `TMPDIR` and `BUN_TMPDIR` both select
 that private root. `BUN_INSTALL_CACHE_DIR` selects its fresh writable
