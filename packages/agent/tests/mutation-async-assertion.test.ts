@@ -1681,8 +1681,9 @@ test('real adapter confirms failure when the shared rejection helper receives fu
   }
 });
 
-test('real adapter observes node assert in shared async return helper for undefined outcomes', async () => {
+test('real adapter observes node assert in shared async return helper for undefined and synchronous failures', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-async-returned-helper-'));
+  let completed = false;
   try {
     const helperPath = fileURLToPath(new URL('./helpers/expect-rejection.ts', import.meta.url));
     const copiedHelperPath = path.join(root, 'tests', 'helpers', 'expect-rejection.ts');
@@ -1693,7 +1694,7 @@ test('real adapter observes node assert in shared async return helper for undefi
 
     const child = await runAdapterChild(
       root,
-      `import { test } from 'bun:test';\nimport { expectAsyncReturned } from ${JSON.stringify(copiedHelperPath)};\ntest('fulfilled undefined is returned', async () => { const value = await expectAsyncReturned(async () => undefined); if (value !== undefined) throw new Error('undefined fulfillment was not preserved'); });\ntest('rejected undefined fails the success helper', async () => { await expectAsyncReturned(async () => { throw undefined; }); });\n`,
+      `import { test } from 'bun:test';\nimport { expectAsyncReturned } from ${JSON.stringify(copiedHelperPath)};\ntest('fulfilled undefined is returned', async () => { const value = await expectAsyncReturned(async () => undefined); if (value !== undefined) throw new Error('undefined fulfillment was not preserved'); });\ntest('rejected undefined fails the success helper', async () => { await expectAsyncReturned(async () => { throw undefined; }); });\ntest('synchronous TypeError fails the success helper', async () => { await expectAsyncReturned(() => { throw new TypeError('optional result failed before returning a promise'); }); });\n`,
       'async-returned-helper',
     );
     expect(child.events).toEqual([
@@ -1705,14 +1706,22 @@ test('real adapter observes node assert in shared async return helper for undefi
         assertion_cause: true,
         assertion_source: 'node-assert',
       },
+      {
+        schema: 'MutationBodyEvent/v1',
+        test_file: child.selectedTest,
+        kind: 'body',
+        body_id: 3,
+        assertion_cause: true,
+        assertion_source: 'node-assert',
+      },
     ]);
 
     const cases: MutationJUnitCase[] = [];
     const outcome = junitOutcome(child.junit, [child.selectedTest], [], child.events, (row) => cases.push(row));
     expect(outcome).toMatchObject({
-      tests: 2,
+      tests: 3,
       assertions: 0,
-      failures: 1,
+      failures: 2,
       errors: 0,
       skipped: 0,
       outcome: 'killed',
@@ -1728,10 +1737,17 @@ test('real adapter observes node assert in shared async return helper for undefi
         name: '[mutation-body:2] rejected undefined fails the success helper',
         outcome: 'failed',
       },
+      {
+        test_file: child.selectedTest,
+        name: '[mutation-body:3] synchronous TypeError fails the success helper',
+        outcome: 'failed',
+      },
     ]);
     expect(confirmedRunnerOutcome(child.exitCode, outcome.outcome)).toBe('killed');
+    completed = true;
   } finally {
-    await rm(root, { recursive: true, force: true });
+    if (completed) await rm(root, { recursive: true, force: true });
+    else console.error(`Retained failed async-return helper attribution: ${root}`);
   }
 });
 

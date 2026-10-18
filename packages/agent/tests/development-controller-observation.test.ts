@@ -364,7 +364,10 @@ test('retains a spawn error and keeps its reservation UNKNOWN', () => {
   const stored = receipt(controllerRoot);
   assert.equal(stored.capture_status, 'UNKNOWN');
   const spawnError = asRecord(stored.spawn_error, 'spawn error');
+  assert.equal(spawnError.name, 'Error');
+  assert.match(asString(spawnError.message, 'spawn error message'), /ENOENT/);
   assert.equal(spawnError.code, 'ENOENT');
+  assert.equal(spawnError.path, missing);
   assert.equal(existsSync(path.join(controllerRoot, 'observations/active/reservation.json')), true);
 });
 
@@ -643,6 +646,94 @@ test('rejects a linked active reservation before issuing the nested child', () =
   preserve.delete(controllerRoot);
 });
 
+test('rejects invalid public nested-child declarations before creating observations', () => {
+  const cases: Array<{ readonly name: string; readonly nestedChildren: readonly unknown[] }> = [
+    { name: 'non-string role', nestedChildren: [17] },
+    { name: 'undeclared role', nestedChildren: ['undeclared-role'] },
+    { name: 'duplicate role', nestedChildren: [roles[0]!, roles[0]!] },
+    { name: 'incomplete declaration', nestedChildren: [roles[0]!] },
+  ];
+
+  for (const scenario of cases) {
+    const controllerRoot = fixtureRoot();
+    preserve.add(controllerRoot);
+    const child = script(controllerRoot, `${scenario.name.replaceAll(' ', '-')}.mjs`, "process.stdout.write('ran');\n");
+    assert.throws(
+      () =>
+        invokeObservedControllerChild({
+          controllerRoot,
+          executable: process.execPath,
+          args: [child],
+          cwd: packageRoot,
+          env: process.env,
+          nestedChildren: scenario.nestedChildren,
+        }),
+      /nested child declaration/,
+      scenario.name,
+    );
+    assert.equal(
+      existsSync(path.join(controllerRoot, 'observations')),
+      false,
+      `${scenario.name} creates no reservation`,
+    );
+    preserve.delete(controllerRoot);
+  }
+});
+
+test('runs a declared nested child through the public in-process API with its active reservation', () => {
+  const controllerRoot = fixtureRoot();
+  preserve.add(controllerRoot);
+  const observations = path.join(controllerRoot, 'observations');
+  const runId = 'valid-nested-run';
+  const runRoot = path.join(observations, runId);
+  const active = path.join(observations, 'active');
+  const token = 'valid-nested-token';
+  const role = asString(roles[0], 'nested role');
+  const marker = path.join(controllerRoot, 'valid-nested-child-ran');
+  const markerChild = script(
+    controllerRoot,
+    'valid-nested-child.mjs',
+    `import { writeFileSync } from 'node:fs'; writeFileSync(${jsonText(marker)}, 'ran'); process.stdout.write('nested-ok');\n`,
+  );
+  mkdirSync(path.join(runRoot, 'nested'), { recursive: true });
+  mkdirSync(active);
+  writeFileSync(
+    path.join(active, 'reservation.json'),
+    `${JSON.stringify({
+      schema: 'DevelopmentControllerObservationReservation/v1',
+      status: 'active',
+      run_id: runId,
+      token,
+      observations_root: observations,
+      expected_nested: roles,
+      created_at: '2026-10-18T00:00:00.000Z',
+    })}\n`,
+  );
+
+  const restore = installInternalEnvironment(contextVariables(observations, runId, token, runRoot));
+  try {
+    const result = invokeNestedObservedControllerChild({
+      role,
+      executable: process.execPath,
+      args: [markerChild],
+      cwd: packageRoot,
+      timeout: 1000,
+    });
+    assert.equal(result.status, 0);
+    assert.equal(capturedText(result.stdout), 'nested-ok');
+    assert.equal(existsSync(marker), true);
+    const nested = receipt(controllerRoot, `nested/${role}.json`);
+    assert.equal(nested.capture_status, 'complete');
+    assert.equal(nested.role, role);
+    assert.equal(nested.parent_id, runId);
+    assert.equal(existsSync(path.join(runRoot, 'nested', `${role}.pending.json`)), false);
+    assert.equal(existsSync(path.join(active, 'reservation.json')), true);
+  } finally {
+    restore();
+  }
+  preserve.delete(controllerRoot);
+});
+
 test('correlates only the declared qualification children and denies independent or duplicate launches', () => {
   const controllerRoot = fixtureRoot();
   const marker = path.join(controllerRoot, 'forbidden-child-ran');
@@ -678,6 +769,49 @@ test('correlates only the declared qualification children and denies independent
   for (const role of roles) {
     assert.equal(receipt(controllerRoot, `nested/${role}.json`).capture_status, 'complete');
   }
+});
+
+test('marks a missing declared nested receipt UNKNOWN and retains the active reservation', () => {
+  const controllerRoot = fixtureRoot();
+  preserve.add(controllerRoot);
+  const helperUrl = new URL('../bin/development-controller-observation.ts', import.meta.url).href;
+  const nestedFiles = new Map<string, string>();
+  for (const role of roles) {
+    nestedFiles.set(role, script(controllerRoot, `${role}.mjs`, `process.stdout.write(${jsonText(role)});\n`));
+  }
+  const omittedRole = asString(roles[2], 'omitted nested role');
+  const parent = script(
+    controllerRoot,
+    'missing-nested-receipt-parent.mjs',
+    `import { invokeNestedObservedControllerChild } from ${jsonText(helperUrl)};\n` +
+      `for (const role of ${jsonText(roles.slice(0, 2))}) { const file = process.env.TEST_NESTED_FILES.split('|')[${jsonText(roles)}.indexOf(role)]; const result = invokeNestedObservedControllerChild({ role, executable: process.execPath, args: [file], cwd: process.cwd(), timeout: 500 }); if (result.status !== 0) process.exit(21); }\n` +
+      `process.stdout.write('parent-finished');\n`,
+  );
+  const result = runChild(controllerRoot, parent, {
+    nestedChildren: roles,
+    timeout: 1000,
+    env: { TEST_NESTED_FILES: roles.map((role) => nestedFile(nestedFiles, role)).join('|') },
+  });
+
+  assert.equal(result.status, 0, capturedText(result.stderr));
+  assert.equal(result.observation_complete, false);
+  assert.equal(capturedText(result.stdout), 'parent-finished');
+  assert.equal(receipt(controllerRoot).capture_status, 'complete');
+  assert.equal(receipt(controllerRoot, `nested/${roles[0]}.json`).capture_status, 'complete');
+  assert.equal(receipt(controllerRoot, `nested/${roles[1]}.json`).capture_status, 'complete');
+  assert.equal(existsSync(path.join(latestRun(controllerRoot), 'nested', `${omittedRole}.json`)), false);
+  const parentUnknown = receipt(controllerRoot, 'parent-unknown.json');
+  assert.equal(parentUnknown.schema, 'DevelopmentControllerObservationCompletion/v1');
+  assert.equal(parentUnknown.run_id, path.basename(latestRun(controllerRoot)));
+  assert.equal(parentUnknown.status, 'UNKNOWN');
+  assert.equal(parentUnknown.controller_child, 'complete');
+  assert.match(asString(parentUnknown.observed_at, 'UNKNOWN observation time'), /^\d{4}-\d\d-\d\dT/);
+  assert.deepEqual(parentUnknown.nested, [
+    { role: 'qualifier-repair-apply', capture_status: 'UNKNOWN' },
+    { role: 'qualifier-repair-inspect', capture_status: 'complete' },
+    { role: 'qualifier-repair-plan', capture_status: 'complete' },
+  ]);
+  assert.equal(existsSync(path.join(controllerRoot, 'observations/active/reservation.json')), true);
 });
 
 test('retains UNKNOWN when final compound receipt persistence fails after child completion', () => {

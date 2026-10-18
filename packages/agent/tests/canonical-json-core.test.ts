@@ -272,6 +272,8 @@ describe('canonical JSON core contract', () => {
   });
 
   test('accepts plain and null-prototype records only', () => {
+    expect(() => isPlainRecord(undefined)).not.toThrow();
+    expect(isPlainRecord(undefined)).toBe(false);
     expect(isPlainRecord({})).toBe(true);
     expect(isPlainRecord(Object.assign(Object.create(null), { a: 1 }))).toBe(true);
     expect(isPlainRecord(null)).toBe(false);

@@ -10,6 +10,9 @@ import { runtimeConfigurationSourceFor, sessionHandoffDatabaseRelativePath } fro
 import { HostStateStore, inspectHostWorkspaceDatabase, openHostStateDatabase } from '../src/host-state.js';
 import { deriveWorkspaceId } from '../src/workspace-identity.js';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
+import { expectAsyncReturned } from './helpers/expect-rejection.ts';
+import { PolicySession } from '../src/governance/operation-policy.js';
+import { PolicyWorkflowRuntime, type WorkflowDefinition } from '../src/governance/policy-workflow.js';
 import {
   computeEdictumWorkflowApprovalEvidenceDigest,
   createConfiguredEdictumWorkflow,
@@ -132,6 +135,88 @@ async function createInitializedFixture(onCreated?: (root: string) => void): Pro
 afterAll(() => rmSync(repositoryRoot, { recursive: true, force: true }));
 
 describe('configured Edictum workflow completeness', () => {
+  test('policy workflow rejects an empty public definition', () => {
+    const definition: WorkflowDefinition = {
+      apiVersion: 'vida.agent/v1',
+      kind: 'PolicyWorkflow',
+      metadata: { name: 'empty-policy', description: 'Empty policy boundary', version: '1' },
+      stages: [],
+    };
+
+    expect(() => new PolicyWorkflowRuntime(definition, 'empty-policy-session')).toThrow(
+      'governance workflow needs a stage',
+    );
+  });
+
+  test('policy workflow gates, completes, rewinds, and replays terminal evidence', async () => {
+    const definition: WorkflowDefinition = {
+      apiVersion: 'vida.agent/v1',
+      kind: 'PolicyWorkflow',
+      metadata: { name: 'terminal-policy', description: 'Terminal evidence policy', version: '1' },
+      stages: [
+        {
+          id: 'commit',
+          description: 'Approve and record a governed commit',
+          tools: ['runtime.commit'],
+          entry: [],
+          checks: [],
+          exit: [{ condition: "result.accepted === 'true'", message: 'A successful commit result is required' }],
+          approval: { message: 'Commit approval is required' },
+          terminal: true,
+        },
+      ],
+    };
+    const candidate = new PolicyWorkflowRuntime(definition, 'terminal-policy-session');
+    const session = new PolicySession('terminal-policy-session');
+    const unrelatedCall = { toolName: 'runtime.deploy', args: {} };
+    const commitCall = { toolName: 'runtime.commit', args: {} };
+
+    expect(() => candidate.state(new PolicySession('foreign-session'))).toThrow(/session binding differs/);
+    expect(await candidate.state(session)).toMatchObject({ activeStage: 'commit', completedStages: [] });
+
+    const missingEvidence = await candidate.evaluate(session, unrelatedCall);
+    expect(missingEvidence).toMatchObject({
+      action: 'block',
+      reason: 'A successful commit result is required',
+      records: [{ passed: false, metadata: { gate_kind: 'mcp_result_matches' } }],
+    });
+
+    expect(await candidate.recordResult(session, 'commit', commitCall, { accepted: 'true' })).toEqual([]);
+    expect(await candidate.evaluate(session, unrelatedCall)).toMatchObject({
+      action: 'pending_approval',
+      reason: 'Commit approval is required',
+      records: [{ metadata: { approval_requested_for: 'commit' } }],
+    });
+    await candidate.recordApproval(session, 'commit');
+
+    expect(await candidate.evaluate(session, unrelatedCall)).toMatchObject({
+      action: 'block',
+      reason: 'Tool is not allowed in this workflow stage',
+    });
+    expect(await candidate.evaluate(session, commitCall)).toMatchObject({ action: 'allow', stageId: 'commit' });
+
+    expect(await candidate.recordResult(session, 'commit', commitCall, { accepted: 'true' })).toMatchObject([
+      { action: 'workflow_completed', workflow: { activeStage: '', completedStages: ['commit'] } },
+    ]);
+    expect(await candidate.evaluate(session, unrelatedCall)).toMatchObject({ action: 'allow', stageId: '' });
+
+    await candidate.reset(session, 'commit');
+    expect(await candidate.state(session)).toMatchObject({
+      activeStage: 'commit',
+      completedStages: [],
+      approvals: {},
+      evidence: { mcpResults: {} },
+    });
+    expect(await candidate.evaluate(session, unrelatedCall)).toMatchObject({ action: 'block' });
+
+    expect(await candidate.recordResult(session, 'commit', commitCall, { accepted: 'true' })).toEqual([]);
+    expect(await candidate.evaluate(session, unrelatedCall)).toMatchObject({ action: 'pending_approval' });
+    await candidate.recordApproval(session, 'commit');
+    expect(await candidate.recordResult(session, 'commit', commitCall, { accepted: 'true' })).toMatchObject([
+      { action: 'workflow_completed', workflow: { activeStage: '', completedStages: ['commit'] } },
+    ]);
+  });
+
   test('direct workflow controls preserve gate decisions and clear only rewound evidence', async () => {
     const candidate = workflow();
     const writeStage = candidate.definition.stages.find((stage) => stage.id === 'governed-write');
@@ -198,7 +283,7 @@ describe('configured Edictum workflow completeness', () => {
     expect(candidate.config_digest).toMatch(/^[a-f0-9]{64}$/);
     expect(candidate.definition.stages).toHaveLength(5);
     expect((await candidate.evaluate('runtime.read')).action).toBe('allow');
-    await Promise.resolve(expect(candidate.recordResult('read-evidence', 'runtime.read')).resolves.toEqual([]));
+    expect(await expectAsyncReturned(() => candidate.recordResult('read-evidence', 'runtime.read'))).toEqual([]);
     expect((await candidate.evaluate('runtime.write', operation)).action).toBe('pending_approval');
 
     await candidate.approve(receipt('governed-write-approval'));
@@ -240,7 +325,7 @@ describe('configured Edictum workflow completeness', () => {
 
     const complete = workflow();
     await complete.evaluate('runtime.read');
-    await complete.recordResult('read-evidence', 'runtime.read');
+    await expectAsyncReturned(() => complete.recordResult('read-evidence', 'runtime.read'));
     await complete.evaluate('runtime.write', operation);
     await complete.approve(receipt('governed-write-approval', { approval_id: 'complete-write-approval' }));
     await complete.recordResult('governed-write', 'runtime.write', operation, { accepted: true });
@@ -534,14 +619,15 @@ describe('configured Edictum workflow completeness', () => {
 
   test('write result normalization accepts optional evidence and rejects wrong accepted type', async () => {
     const candidate = workflow();
-    await Promise.resolve(expect(candidate.recordResult('read-evidence', 'runtime.read')).resolves.toEqual([]));
-    const nullResult = Promise.resolve(
-      invokeUnknown(candidate.recordResult, candidate, ['read-evidence', 'runtime.read', {}, null]),
-    );
-    await Promise.resolve(expect(nullResult).resolves.toEqual([]));
-    await Promise.resolve(
-      expect(candidate.recordResult('governed-write', 'runtime.write', operation, {})).resolves.toEqual([]),
-    );
+    expect(await expectAsyncReturned(() => candidate.recordResult('read-evidence', 'runtime.read'))).toEqual([]);
+    expect(
+      await expectAsyncReturned(async () =>
+        invokeUnknown(candidate.recordResult, candidate, ['read-evidence', 'runtime.read', {}, null]),
+      ),
+    ).toEqual([]);
+    expect(
+      await expectAsyncReturned(() => candidate.recordResult('governed-write', 'runtime.write', operation, {})),
+    ).toEqual([]);
     expect(() => candidate.recordResult('governed-write', 'runtime.write', operation, { accepted: 'yes' })).toThrow(
       /boolean/,
     );
