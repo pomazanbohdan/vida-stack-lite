@@ -8,6 +8,8 @@ Historical contours with exact F/L/S/B coverage: **15/45**.
 Historical same-coverage-run coverage + scoped frozen CRAP pairs: **14/45**.
 Historical complete coverage + assertion-confirmed mutation pair closures: **7/45**; static contours: **1**.
 Separate same-coverage-run local triples with scoped frozen CRAP: **7/45**.
+Separate independently reviewed data-only coverage + CRAP N/A + full native closures: **0**; excluded from numeric triples.
+Contours without a complete numeric triple or reviewed data-only closure: **38**.
 Executable contours without a recorded coverage + mutation pair: **38**.
 Executable contours without a recorded complete local triple: **38**.
 
@@ -451,6 +453,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | ca97cf91-0968-489e-b000-417d0af2dc37 | ec3b3ba66d85368e1f380c0728bbfe523fb8e381 | 2026-10-17T12:13:51.230Z | focused-diagnostic; owner accepted locally; selection bound | 0/0 · 4/4 · 4/4 · 0/0 | /workspace/attachments/rolling-measure-v191/packages/agent/coverage/bun-unified/diagnostics/ca97cf91-0968-489e-b000-417d0af2dc37.focused-coverage.json |
 | native-mutation | ef294555-ebf3-4029-97a0-5ad34b506322 | ec3b3ba66d85368e1f380c0728bbfe523fb8e381 | 2026-10-17T12:15:21.745Z | pilot-pass; owner accepted locally; selection bound | 7/7 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | /workspace/attachments/rolling-measure-v191/packages/agent/.tmp/mutation-batch-ef294555-ebf3-4029-97a0-5ad34b506322-LFUEJm/native-partition-report.json |
 | native-mutation | b5632d5f-23d1-4437-9fce-954ad1fb44ae | 3d5a60b4a3d5960db137e3bae1e12b3e4d0af063 | 2026-10-17T17:28:26.608Z | pilot-pass; owner accepted locally; selection bound | 7/7 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | /dev/shm/vida-rolling-measure-v212/packages/agent/.tmp/mutation-batch-b5632d5f-23d1-4437-9fce-954ad1fb44ae-75GChd/native-partition-report.json |
+| coverage | 28d0bbc4-768b-4773-b9bc-fb6238d811fb | 379b4fb520edb52894849acbe0f563663e788a52 | 2026-10-18T04:03:35.360Z | focused-diagnostic; owner accepted locally; selection bound | 0/0 · 4/4 · 4/4 · 0/0 | /tmp/vida-rolling-measure-v316/packages/agent/coverage/bun-unified/diagnostics/28d0bbc4-768b-4773-b9bc-fb6238d811fb.focused-coverage.json |
+| coverage-outcome | 28d0bbc4-768b-4773-b9bc-fb6238d811fb | 379b4fb520edb52894849acbe0f563663e788a52 | 2026-10-18T04:03:35.369Z | BLOCKED; unqualified; selection unbound | no metric evidence | /tmp/vida-rolling-measure-v316/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/28d0bbc4-768b-4773-b9bc-fb6238d811fb.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

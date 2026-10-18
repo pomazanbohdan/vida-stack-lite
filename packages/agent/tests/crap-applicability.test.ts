@@ -7,9 +7,11 @@ import {
 import { contourAttempts, contourAttemptMaximum, mergeContourProgress } from '../tooling/contour-progress.ts';
 import { crapApplicabilityFixture, crapApplicabilityReceiptFixture } from './helpers/crap-applicability-fixture.ts';
 import { instrumentSource } from '../tooling/bun-coverage-evidence.ts';
+import { exactFullCoverage } from '../tooling/coverage-math.ts';
 
 test('data-only review proves null applicability from the existing canonical function map', () => {
   const { input } = crapApplicabilityFixture();
+  expect(() => exactFullCoverage(input.summary, 'functions', fsSafeApplicabilityReview.source)).toThrow('functions');
   expect(proveFsSafeCrapApplicability(input)).toMatchObject({
     current_callable_count: 0,
     original_callable_count: 0,

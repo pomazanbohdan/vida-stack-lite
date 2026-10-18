@@ -2940,7 +2940,11 @@ test, tool, module and test-selection bindings. It cannot be represented as nume
 
 The producer reuses the already validated current coverage inputs and canonical
 function/branch maps from that same Source AST; it adds no parse, Source walk or
-Source hash pass. Reject if the current Source binding is missing/stale, any callable is
+Source hash pass. Its counter-only validator checks the complete existing provenance,
+maps and raw counters but explicitly grants no numeric coverage admission. The
+ordinary focused validator still requires a positive exact function denominator.
+The separate applicability owner alone requires positive exact lines/statements
+and zero functions/branches. Reject if the current Source binding is missing/stale, any callable is
 present, the pinned historical inventory contains the selected path, any callable
 responsibility is removed or delegated, or inventory lookup is incomplete. The
 N/A receipt reader admits only this exact contour and review key. It requires matching

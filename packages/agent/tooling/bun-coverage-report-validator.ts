@@ -1072,7 +1072,7 @@ async function validateCoverageReportInternal(
     root,
     run,
     current,
-    focusedSelection ? true : (options.requireFullCoverage ?? true),
+    options.requireFullCoverage ?? true,
   );
   const result = {
     // Full provenance, snapshot, map and counter validation precedes these trusted views.
@@ -1118,6 +1118,23 @@ export async function validateFocusedCoverageReport(
   selection: FocusedDiagnosticSelection,
 ) {
   return validateCoverageReportInternal(reportPath, root, {}, undefined, undefined, selection);
+}
+
+/** Full provenance/map/counter validation without numeric admission; applicability stays with its reviewed owner. */
+export async function validateFocusedCoverageCounters(
+  reportPath: string,
+  root: string,
+  selection: FocusedDiagnosticSelection,
+) {
+  const validated = await validateCoverageReportInternal(
+    reportPath,
+    root,
+    { requireFullCoverage: false },
+    undefined,
+    undefined,
+    selection,
+  );
+  return { ...validated, numeric_coverage_admission: false as const };
 }
 
 /** Consume an already admitted historical measurement while current tools remain the admission authority. */

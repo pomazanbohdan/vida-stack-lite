@@ -1244,7 +1244,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
 
   if (scoped) {
     const { mutationPartitions } = await import('./mutation-partitions.ts');
-    const { validateFocusedCoverageReport } = await import('./bun-coverage-report-validator.js');
+    const { validateFocusedCoverageReport, validateFocusedCoverageCounters } =
+      await import('./bun-coverage-report-validator.js');
     const partition = mutationPartitions().find((row) => row.name === scopedArguments[1]);
     if (
       !partition?.sources?.length ||
@@ -1292,12 +1293,16 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       throw new Error('Reviewed v2 source mappings are malformed; the route cannot fall back to v1.');
     if (!v2Review && partition.sources.some((file) => !reviewedFiles.has(file)))
       throw new Error('Scoped CRAP contour is outside the pinned independent source-lineage review.');
-    const validation = await validateFocusedCoverageReport(coveragePath, root, {
+    const validateFocused = applicabilityNA ? validateFocusedCoverageCounters : validateFocusedCoverageReport;
+    const validation = await validateFocused(coveragePath, root, {
       mode: 'focused-diagnostic',
       contour: partition.name,
       sources: partition.sources,
       tests: partition.tests,
     });
+    const counterOnly = 'numeric_coverage_admission' in validation && validation.numeric_coverage_admission === false;
+    if (applicabilityNA !== counterOnly)
+      throw new Error('Scoped CRAP validation kind differs from its numeric or applicability lane.');
     assertReviewedCurrentSourceBindings(review, partition.sources, validation.inputs.sources);
     if (applicabilityNA) {
       if (budgetSha256 !== fsSafeApplicabilityReview.budget_sha256)

@@ -158,10 +158,12 @@ test('partial mutation counters and foreign or ambiguous locations never become 
 
 test('observed failed or timed-out coverage may preserve its paired outcome without admitting native mutation', () => {
   expect(contourStagePublicationAdmitted(terminal(), 'mutation')).toBe(true);
+  expect(contourStagePublicationAdmitted(terminal(), 'crap-applicability')).toBe(true);
   for (const patch of [{ exitCode: 1 }, { timedOut: true }, { signal: 'SIGKILL' as const }, { spawnError: 'failed' }]) {
     const result = { ...terminal(), ...patch };
     expect(contourStagePublicationAdmitted(result, 'coverage')).toBe(true);
     expect(contourStagePublicationAdmitted(result, 'mutation')).toBe(false);
+    expect(contourStagePublicationAdmitted(result, 'crap-applicability')).toBe(false);
   }
 });
 
@@ -184,6 +186,7 @@ test('missing descendant closure or incomplete capture fences every publication 
   ]) {
     expect(contourStagePublicationAdmitted(result, 'coverage')).toBe(false);
     expect(contourStagePublicationAdmitted(result, 'frozen-crap')).toBe(false);
+    expect(contourStagePublicationAdmitted(result, 'crap-applicability')).toBe(false);
     expect(contourStagePublicationAdmitted(result, 'mutation')).toBe(false);
   }
 });

@@ -72,7 +72,7 @@ export function contourStagePublicationAdmitted(result: MutationProcessResult, l
     result.output_capture?.complete === true &&
     !result.output_capture.stdout.truncated &&
     !result.output_capture.stderr.truncated &&
-    (lane !== 'mutation' || campaignProcessState(result) === 'completed')
+    (!['mutation', 'crap-applicability'].includes(lane) || campaignProcessState(result) === 'completed')
   );
 }
 

@@ -564,6 +564,22 @@ The same contour's negative path controls now match their exact path-validation
 causes so an earlier resource denial cannot pass them. No production storage
 floor, timeout, native proof rule or frozen ceiling changes.
 
+Checked379b4fb passes the ordinary strict hook and is pushed. Fresh immutablev316
+SDK S37Nt3 closes1863ms without suites. FS coverage28d0bbc4-768b-4773-b9bc-fb6238d811fb
+at /tmp/contour-stage-9M93CG passes5cases/37assertions in207ms, L4/4,S4/4,
+F0/0,B0/0 with null CC/CRAP. The first actual applicability stage sVItWj
+correctly fails before publication because the ordinary focused validator still
+requires a positive function denominator. No receipt or closure is inferred.
+The corrective packet separates fully validated focused counters from numeric
+coverage admission: the dedicated counter view is tagged numeric_coverage_admission=false,
+and the reviewed applicability owner alone applies its explicit data-only rules.
+Ordinary focused and global validators keep exact positive numeric admission.
+The gate rejects mismatched validation kinds, and applicability stage publication
+now additionally requires successful terminal execution, complete capture and
+closed groups. Existing numeric correspondence and zero-function rejection
+controls remain required. The immutable failed v316 image is retained unchanged;
+the corrected actual cycle must use a new published checkout.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is
