@@ -39,6 +39,14 @@ unmatched or unreadable files in place. Lossless compression must reproduce the
 original byte count and SHA-256 before removing the uncompressed manifest.
 Cleanup neither changes FAIL/UNKNOWN classifications nor resumes an old attempt.
 Do not touch an active producer's input image, output or scratch.
+After a producer's observed process/group closure and original evidence retention,
+retire its exact install/transpiler cache outside an immutable measured checkout
+before launching the next producer. Confirm no active user or dependent path;
+record exact paths, owner receipts and free space before/after. Preserve all other
+scratch fixtures, DBs and failure evidence unless separately qualified for removal.
+Reuse the current inventory; do not rescan attachments after every stage. Reuse
+one frozen checkout for compatible coverage/frozen/mutation lanes at the same
+published inputs. Read-only reviews use existing Source, without another worktree.
 
 Coverage must use a provider compatible with Bun and report all required
 metrics. The frozen-budget CRAP policy must match its executable gate; a fixed

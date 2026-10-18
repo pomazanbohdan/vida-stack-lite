@@ -59,6 +59,11 @@ known coverage prerequisite failure.
 If an interrupted checkout retains coverage custody, keep it intact and use a
 clean same-commit checkout with matching SDK inputs for independent diagnostics.
 Record both namespaces; never turn the old lock or UNKNOWN into a completed run.
+Keep disk usage bounded through TESTING's terminal cache-retirement rule. Reuse
+one same-input measured checkout across compatible lanes and give read-only agents
+existing paths instead of creating preparation worktrees. Delete only verified
+regenerable caches outside immutable checkouts after custody closes; keep original
+failure evidence and all other retained scratch. Reuse the latest inventory.
 
 ## Design a regression
 

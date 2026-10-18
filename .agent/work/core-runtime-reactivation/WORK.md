@@ -357,6 +357,30 @@ to assert absent audit member alongside retained null state. Focusedv664passes
 four public gate/result/rewind cases,23assertions in2.85s including setup. Fresh
 coverage of this resulting byte state remains pending.
 
+The snapshot simplification is published8d59d70after the normal hook: formatting,
+514-file typecheck in2.39s, typed lint and Knip, then ordinary push.
+Owner requests attachments cleanup and lower ongoing resource consumption before
+the next numeric stage. With all numeric/build/install processes terminal, Root
+reuses v633inventory and selects only the three populated external stage install
+caches. Actual launch/execution records bind their exact /tmp/bun-install-cache
+mounts and closed process groups. Same-user refs/maps/argv/environment find no
+dependent process; privileged Docker infrastructure remains opaque, with no
+containers. The cooperative fence is not kernel CAS.
+
+v665removes only bun-install-cache beneath rolling-contour-r6dXMC/scratch-Ng8mJo,
+contour-stage-ZZYfpb/scratch-x1u3la and contour-stage-ezqEDD/scratch-nQU5IA, each
+under /workspace/attachments with its intervening scratch directory. No broad
+du/scan/hash is repeated, and no measured checkout entry, original journal/receipt,
+SDK, installed dependency, DB, fixture or UNKNOWN evidence is removed. Free bytes
+2674675712to3343712256, net669036544. Exact path/identity/custody plan, fsynced
+per-root removal journal and result remain at /workspace/attachments/stage-cache-
+retirement-v665.{plan.json,applied.ndjson,result.json}. The tracked cleanup manifest
+links those originals. Future work reuses same-input measured checkouts across
+lanes, allocates no worktree for read-only review and retires exact regenerable
+external caches after terminal custody. Existing rolling writer-isolation and
+immediate completed-preparation retirement rules remain. Preserve unique evidence;
+lower storage consumption does not authorize deleting retained measured Source.
+
 Current dependency-ready packet repairs the prelaunch resource-reporting GAP
 while numeric work remains blocked. Root remains the only writer; blind read-only
 Lunav624 reviews the design and final implementation with no scoped blockers.

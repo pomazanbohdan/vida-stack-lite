@@ -636,5 +636,23 @@
       "postinspection": "/workspace/attachments/retained-dependency-postinspection-v637.json",
       "limits": "Standalone closed dependency regular files only; paths, directories, symlink targets, bytes, modes, uid/gid and filemtime preserved. Inode, nlink and ctime change in external retained trees. No active/dependent writer; same-user references qualified, opaque root Docker services with no containers. Numeric floor unchanged; no race-free kernel CAS claim."
     }
+  ],
+  "cache_retirements": [
+    {
+      "schema": "VidaCompletedStageCacheRetirementResult/v1",
+      "removed": [
+        "/workspace/attachments/rolling-contour-r6dXMC/scratch-Ng8mJo/scratch/bun-install-cache",
+        "/workspace/attachments/contour-stage-ZZYfpb/scratch-x1u3la/scratch/bun-install-cache",
+        "/workspace/attachments/contour-stage-ezqEDD/scratch-nQU5IA/scratch/bun-install-cache"
+      ],
+      "before_free_bytes": "2674675712",
+      "after_free_bytes": "3343712256",
+      "net_free_bytes": "669036544",
+      "source_inventory": "/workspace/attachments/disk-top10-v633.du.tsv",
+      "protected": "All original logs/receipts/SDK/Source/DB and immutable measured checkout entries retained.",
+      "plan": "/workspace/attachments/stage-cache-retirement-v665.plan.json",
+      "journal": "/workspace/attachments/stage-cache-retirement-v665.applied.ndjson",
+      "result": "/workspace/attachments/stage-cache-retirement-v665.result.json"
+    }
   ]
 }
