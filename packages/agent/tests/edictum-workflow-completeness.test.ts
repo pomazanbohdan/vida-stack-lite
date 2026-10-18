@@ -132,6 +132,66 @@ async function createInitializedFixture(onCreated?: (root: string) => void): Pro
 afterAll(() => rmSync(repositoryRoot, { recursive: true, force: true }));
 
 describe('configured Edictum workflow completeness', () => {
+  test('direct workflow controls preserve gate decisions and clear only rewound evidence', async () => {
+    const candidate = workflow();
+    const writeStage = candidate.definition.stages.find((stage) => stage.id === 'governed-write');
+    const readStage = candidate.definition.stages.find((stage) => stage.id === 'read-evidence');
+    if (!writeStage || !readStage) throw new Error('configured workflow omitted a required evidence stage');
+    const writeCall = { toolName: 'runtime.write', args: operation };
+
+    await candidate.runtime.setStage(candidate.session, readStage.id);
+    await candidate.runtime.recordResult(
+      candidate.session,
+      readStage.id,
+      { toolName: 'runtime.read', args: {} },
+      {
+        accepted: 'true',
+        source: 'before-write-rewind',
+      },
+    );
+    await candidate.runtime.setStage(candidate.session, writeStage.id);
+    await candidate.runtime.recordApproval(candidate.session, 'governed-write-approval');
+    await candidate.runtime.recordResult(candidate.session, writeStage.id, writeCall, { accepted: 'true' });
+    const acceptedState = await candidate.runtime.state(candidate.session);
+    expect(acceptedState.evidence.mcpResults['runtime.write']).toEqual([{ accepted: 'true' }]);
+    expect(
+      await candidate.runtime.evaluateWorkflowGates(writeStage, acceptedState, writeCall, writeStage.exit),
+    ).toMatchObject({ blocked: false, evaluation: { action: 'allow' } });
+    await Promise.resolve(
+      expect(candidate.runtime.evaluateWorkflowGates(writeStage, acceptedState, writeCall, [])).rejects.toThrow(
+        /unsupported governance gates/,
+      ),
+    );
+
+    await candidate.runtime.reset(candidate.session, writeStage.id);
+    const rewoundWriteState = await candidate.runtime.state(candidate.session);
+    expect(rewoundWriteState.evidence.mcpResults).not.toHaveProperty('runtime.write');
+    expect(rewoundWriteState.evidence.mcpResults['runtime.read']).toEqual([
+      { accepted: 'true', source: 'before-write-rewind' },
+    ]);
+    expect(rewoundWriteState.evidence.stageCalls).toEqual({});
+    expect(rewoundWriteState.approvals).toHaveProperty('governed-write-approval', 'approved');
+
+    await candidate.runtime.setStage(candidate.session, readStage.id);
+    await candidate.runtime.recordResult(
+      candidate.session,
+      readStage.id,
+      { toolName: 'runtime.read', args: {} },
+      {
+        accepted: 'true',
+        source: 'after-write-rewind',
+      },
+    );
+    expect((await candidate.runtime.state(candidate.session)).evidence.mcpResults['runtime.read']).toEqual([
+      { accepted: 'true', source: 'before-write-rewind' },
+      { accepted: 'true', source: 'after-write-rewind' },
+    ]);
+    await candidate.runtime.reset(candidate.session, readStage.id);
+    const rewoundReadState = await candidate.runtime.state(candidate.session);
+    expect(rewoundReadState.evidence.mcpResults).toEqual({});
+    expect(rewoundReadState.approvals).toEqual({});
+  });
+
   test('valid workflow advances through both approvals and result stages', async () => {
     const candidate = workflow();
     expect(candidate.approval_authority).toBe('workflow-gate-only');

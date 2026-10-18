@@ -16,7 +16,10 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, mock, test } from 'bun:test';
 import { readPin } from '../bin/bun.ts';
-import { invokeObservedControllerChild } from '../bin/development-controller-observation.ts';
+import {
+  invokeNestedObservedControllerChild,
+  invokeObservedControllerChild,
+} from '../bin/development-controller-observation.ts';
 import { prepareDevelopmentController } from '../bin/development-controller.ts';
 
 type ChildInvocation = Parameters<typeof invokeObservedControllerChild>[0];
@@ -145,6 +148,49 @@ function restartAttempt(controllerRoot: string, marker: string): void {
   assert.equal(attempt.status, 0, attempt.stderr);
   assert.equal(attempt.stdout, 'blocked');
   assert.equal(existsSync(marker), false);
+}
+
+const internalEnvironmentKeys = [
+  'VIDA_CONTROLLER_OBSERVATION_ROOT',
+  'VIDA_CONTROLLER_OBSERVATION_RUN_ID',
+  'VIDA_CONTROLLER_OBSERVATION_TOKEN',
+  'VIDA_CONTROLLER_OBSERVATION_RUN_ROOT',
+] as const;
+
+function installInternalEnvironment(values: Readonly<Record<string, string>>): () => void {
+  const previous = new Map(internalEnvironmentKeys.map((key) => [key, process.env[key]]));
+  for (const key of internalEnvironmentKeys) delete process.env[key];
+  Object.assign(process.env, values);
+  return () => {
+    for (const key of internalEnvironmentKeys) {
+      const value = previous.get(key);
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  };
+}
+
+function contextVariables(
+  observations: string,
+  runId: string,
+  token: string,
+  runRoot: string,
+): Readonly<Record<string, string>> {
+  return {
+    VIDA_CONTROLLER_OBSERVATION_ROOT: observations,
+    VIDA_CONTROLLER_OBSERVATION_RUN_ID: runId,
+    VIDA_CONTROLLER_OBSERVATION_TOKEN: token,
+    VIDA_CONTROLLER_OBSERVATION_RUN_ROOT: runRoot,
+  };
+}
+
+function invokeNestedWithMarker(marker: string): void {
+  invokeNestedObservedControllerChild({
+    role: roles[0]!,
+    executable: process.execPath,
+    args: [marker],
+    cwd: packageRoot,
+  });
 }
 
 afterEach(() => {
@@ -380,6 +426,221 @@ test('rejects an existing compound reservation and a linked observation root bef
   );
   assert.throws(() => runChild(linkedRoot, linkedChild), /observation|linked/i);
   assert.equal(existsSync(linkedMarker), false);
+});
+
+test('strips caller supplied observation context before launching a controller child', () => {
+  const controllerRoot = fixtureRoot();
+  preserve.add(controllerRoot);
+  const marker = path.join(controllerRoot, 'caller-context-child-ran');
+  const child = script(
+    controllerRoot,
+    'caller-context.mjs',
+    `import { invokeNestedObservedControllerChild } from ${jsonText(new URL('../bin/development-controller-observation.ts', import.meta.url).href)};\n` +
+      `const keys = ${jsonText(internalEnvironmentKeys)};\n` +
+      `let nestedBlocked = false; try { invokeNestedObservedControllerChild({ role: ${jsonText(roles[0]!)}, executable: process.execPath, args: [${jsonText(marker)}], cwd: process.cwd() }); } catch (error) { nestedBlocked = error instanceof Error && /lacks its active compound context/.test(error.message); }\n` +
+      `process.stdout.write(JSON.stringify({ leaked: keys.filter((key) => process.env[key] !== undefined), nestedBlocked }));\n`,
+  );
+  const result = runChild(controllerRoot, child, {
+    env: {
+      VIDA_CONTROLLER_OBSERVATION_ROOT: controllerRoot,
+      VIDA_CONTROLLER_OBSERVATION_RUN_ID: 'caller-run',
+      VIDA_CONTROLLER_OBSERVATION_TOKEN: 'caller-token',
+      VIDA_CONTROLLER_OBSERVATION_RUN_ROOT: path.join(controllerRoot, 'caller-run'),
+    },
+  });
+
+  assert.equal(result.status, 0, capturedText(result.stderr));
+  assert.equal(result.observation_complete, true);
+  assert.deepEqual(JSON.parse(capturedText(result.stdout)), { leaked: [], nestedBlocked: true });
+  assert.equal(existsSync(marker), false);
+  preserve.delete(controllerRoot);
+});
+
+test('refuses nested launches without every controller-owned command-context value', () => {
+  const controllerRoot = fixtureRoot();
+  preserve.add(controllerRoot);
+  const marker = path.join(controllerRoot, 'must-not-run');
+  const markerChild = script(
+    controllerRoot,
+    'untrusted-nested-context.mjs',
+    `import { writeFileSync } from 'node:fs'; writeFileSync(${jsonText(marker)}, 'ran');\n`,
+  );
+  const observations = path.join(controllerRoot, 'observations');
+  const runId = 'untrusted-run';
+  const runRoot = path.join(observations, runId);
+  const completeContext = contextVariables(observations, runId, 'untrusted-token', runRoot);
+
+  for (const missingKey of internalEnvironmentKeys) {
+    const incompleteContext: Record<string, string> = { ...completeContext };
+    delete incompleteContext[missingKey];
+    const restore = installInternalEnvironment(incompleteContext);
+    try {
+      assert.throws(() => invokeNestedWithMarker(markerChild), /lacks its active compound context/);
+      assert.equal(existsSync(marker), false, `${missingKey} must be required before child launch`);
+    } finally {
+      restore();
+    }
+  }
+
+  mkdirSync(path.join(controllerRoot, 'not-observations', runId), { recursive: true });
+  const nonCanonicalRoot = path.join(controllerRoot, 'not-observations');
+  const restore = installInternalEnvironment(
+    contextVariables(nonCanonicalRoot, runId, 'untrusted-token', path.join(nonCanonicalRoot, runId)),
+  );
+  try {
+    assert.throws(() => invokeNestedWithMarker(markerChild), /nested observation location differs/);
+    assert.equal(existsSync(marker), false);
+  } finally {
+    restore();
+  }
+
+  const canonicalObservations = path.join(controllerRoot, 'observations');
+  mkdirSync(path.join(canonicalObservations, 'different-run'), { recursive: true });
+  const restoreWrongRunId = installInternalEnvironment(
+    contextVariables(
+      canonicalObservations,
+      runId,
+      'untrusted-token',
+      path.join(canonicalObservations, 'different-run'),
+    ),
+  );
+  try {
+    assert.throws(() => invokeNestedWithMarker(markerChild), /nested observation location differs/);
+    assert.equal(existsSync(marker), false);
+  } finally {
+    restoreWrongRunId();
+  }
+
+  const restoreWrongParent = installInternalEnvironment(
+    contextVariables(canonicalObservations, runId, 'untrusted-token', path.join(controllerRoot, 'elsewhere')),
+  );
+  try {
+    assert.throws(() => invokeNestedWithMarker(markerChild), /nested observation location differs/);
+    assert.equal(existsSync(marker), false);
+  } finally {
+    restoreWrongParent();
+  }
+  preserve.delete(controllerRoot);
+});
+
+test('binds nested launch context to a well-formed current reservation before child launch', () => {
+  const cases: Array<{
+    readonly name: string;
+    readonly mutate: (reservation: Record<string, unknown>) => void;
+    readonly message: RegExp;
+  }> = [
+    {
+      name: 'schema',
+      mutate: (value) => (value.schema = 'DevelopmentControllerObservationReservation/v0'),
+      message: /reservation identity differs/,
+    },
+    { name: 'status', mutate: (value) => (value.status = 'complete'), message: /reservation identity differs/ },
+    { name: 'run id type', mutate: (value) => (value.run_id = 17), message: /reservation identity differs/ },
+    { name: 'token type', mutate: (value) => (value.token = null), message: /reservation identity differs/ },
+    { name: 'root type', mutate: (value) => (value.observations_root = []), message: /reservation identity differs/ },
+    {
+      name: 'nested role type',
+      mutate: (value) => (value.expected_nested = [17]),
+      message: /reservation identity differs/,
+    },
+    { name: 'created time type', mutate: (value) => (value.created_at = 17), message: /reservation identity differs/ },
+    {
+      name: 'run id binding',
+      mutate: (value) => (value.run_id = 'another-run'),
+      message: /reservation identity differs/,
+    },
+    {
+      name: 'token binding',
+      mutate: (value) => (value.token = 'another-token'),
+      message: /reservation identity differs/,
+    },
+    {
+      name: 'observation root binding',
+      mutate: (value) => (value.observations_root = '/another/observations'),
+      message: /reservation identity differs/,
+    },
+    {
+      name: 'incomplete nested declaration',
+      mutate: (value) => (value.expected_nested = []),
+      message: /nested reservation is incomplete/,
+    },
+  ];
+  const controllerRoot = fixtureRoot();
+  preserve.add(controllerRoot);
+  const observations = path.join(controllerRoot, 'observations');
+  const runId = 'bound-run';
+  const runRoot = path.join(observations, runId);
+  const active = path.join(observations, 'active');
+  const marker = path.join(controllerRoot, 'reservation-child-must-not-run');
+  const markerChild = script(
+    controllerRoot,
+    'reservation-child.mjs',
+    `import { writeFileSync } from 'node:fs'; writeFileSync(${jsonText(marker)}, 'ran');\n`,
+  );
+  mkdirSync(path.join(runRoot, 'nested'), { recursive: true });
+  mkdirSync(active);
+  const token = 'current-token';
+  const restore = installInternalEnvironment(contextVariables(observations, runId, token, runRoot));
+  try {
+    for (const scenario of cases) {
+      const reservation: Record<string, unknown> = {
+        schema: 'DevelopmentControllerObservationReservation/v1',
+        status: 'active',
+        run_id: runId,
+        token,
+        observations_root: observations,
+        expected_nested: roles,
+        created_at: '2026-10-18T00:00:00.000Z',
+      };
+      scenario.mutate(reservation);
+      writeFileSync(path.join(active, 'reservation.json'), `${JSON.stringify(reservation)}\n`);
+      assert.throws(() => invokeNestedWithMarker(markerChild), scenario.message, scenario.name);
+      assert.equal(existsSync(marker), false, `${scenario.name} must fail before child launch`);
+    }
+  } finally {
+    restore();
+  }
+  preserve.delete(controllerRoot);
+});
+
+test('rejects a linked active reservation before issuing the nested child', () => {
+  const controllerRoot = fixtureRoot();
+  preserve.add(controllerRoot);
+  const observations = path.join(controllerRoot, 'observations');
+  const runId = 'linked-reservation-run';
+  const runRoot = path.join(observations, runId);
+  const active = path.join(observations, 'active');
+  const token = 'current-token';
+  const marker = path.join(controllerRoot, 'linked-reservation-child-ran');
+  const markerChild = script(
+    controllerRoot,
+    'linked-reservation.mjs',
+    `import { writeFileSync } from 'node:fs'; writeFileSync(${jsonText(marker)}, 'ran');\n`,
+  );
+  mkdirSync(path.join(runRoot, 'nested'), { recursive: true });
+  mkdirSync(active);
+  const externalReservation = path.join(controllerRoot, 'external-reservation.json');
+  writeFileSync(
+    externalReservation,
+    `${JSON.stringify({
+      schema: 'DevelopmentControllerObservationReservation/v1',
+      status: 'active',
+      run_id: runId,
+      token,
+      observations_root: observations,
+      expected_nested: roles,
+      created_at: '2026-10-18T00:00:00.000Z',
+    })}\n`,
+  );
+  symlinkSync(externalReservation, path.join(active, 'reservation.json'), 'file');
+  const restore = installInternalEnvironment(contextVariables(observations, runId, token, runRoot));
+  try {
+    assert.throws(() => invokeNestedWithMarker(markerChild), /active reservation is not a regular file/);
+    assert.equal(existsSync(marker), false);
+  } finally {
+    restore();
+  }
+  preserve.delete(controllerRoot);
 });
 
 test('correlates only the declared qualification children and denies independent or duplicate launches', () => {

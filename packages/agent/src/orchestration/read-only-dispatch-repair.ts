@@ -9,6 +9,7 @@ import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js
 import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
 import { selectPausedLocalOwner } from './resume-paused-local-work.js';
 import {
+  readHistoricalObservedActivationUse,
   validateActivationUse,
   validateObservedActivationUseWritePlan,
   type ActivationUse,
@@ -18,7 +19,6 @@ import type { StateVersion, WorkState, HostStateSnapshot, HostWorkSessionSnapsho
 import type { CoordinationLedger } from '../contracts/envelopes.js';
 import type { MastraSessionLedgerState, MastraLedgerItem } from './persistent-session-handoff.js';
 import type { SessionBridgeRequest } from './mastra-session-bridge.js';
-import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 export interface ActivationEvidence {
@@ -109,7 +109,6 @@ export function isActivationEvidence(value: unknown): value is ActivationEvidenc
     return false;
   }
 }
-const sha256 = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 function committedActivation(
   root: string,
   config: AgentRuntimeConfig,
@@ -151,28 +150,11 @@ function committedActivation(
       use.scope_id !== bind.scope_id
     )
       return false;
-    const history = requireSafeRepositoryAccess(root).readText(
-      plan.history_path,
-      'read-only repair activation history',
-    );
-    const lines = history.split('\n');
-    if (lines.at(-1) !== '') return false;
-    let offset = 0;
-    for (const line of lines.slice(0, -1)) {
-      const before = history.slice(0, offset);
-      offset += line.length + 1;
-      const observed = validateActivationUse(JSON.parse(line));
-      if (observed.use_id === use.use_id)
-        return (
-          observed.digest === use.digest &&
-          (plan.history_pre_sha256 === null ? before === '' : sha256(before) === plan.history_pre_sha256) &&
-          sha256(history.slice(0, offset)) === plan.history_sha256
-        );
-    }
+    readHistoricalObservedActivationUse({ root, feature: config.research_decision, plan, use });
+    return true;
   } catch {
     return false;
   }
-  return false;
 }
 function deterministicIssueId(binding: unknown) {
   const hex = canonicalJsonDigest(binding).slice(0, 32);

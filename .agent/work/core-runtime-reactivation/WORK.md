@@ -6,7 +6,7 @@ Status date: 2026-10-18. Current execution and evidence record. This document do
 
 ### Current rolling repair cycle
 
-Resume base37c0454 is clean; no previous producer is active. Root selects
+Resume base37c0454 was clean; no previous producer was active. Root selects
 governance/public contracts, dispatch repair and controller observation from the
 existing projection. Blind Luna reads bounded independent contours; Root owns
 canonical integration, checks, Git and numeric publication. Vex statusv467 and
@@ -51,11 +51,82 @@ cleanup-primary misuse; no old evidence is reclassified. Existing research
 cleanup callers pass2cases/20assertions in3.29s(v488).
 
 The activated-config10s case now has opt-in point-phase diagnostics without
-repeating any operation or changing assertions/deadlines. Its one real isolated
-diagnostic is pending fresh published inputs. No speedup or deadline acceptance
+repeating any operation or changing assertions/deadlines. At publication its real
+isolated diagnostic was pending; the completed result is below. No speedup or deadline acceptance
 is claimed from this instrumentation. Staticv491 passed514files before the
 descriptor test. Staticv496 then caught a mutable-descriptor narrowing error in
 that test; the closed descriptor is now captured as a const before its assertion.
+
+The correction packet is published as788d1f1 through normal hooks and ordinary
+push. Blind caller auditv494 finds no additional swallowed-primary caller.
+Fresh immutablev502 uses byte-matched manifest/lock and only the retained package
+dependency link. SDKv503/Zp05kW forms test inputs in1897.554158ms without suites.
+No earlier immutable checkout was edited.
+
+Fresh governance v504/s0vy2P completes53671.182095ms with152PASS/8397assertions:
+F94/106,L334/367,S360/409,B185/253,maxCC32/maxCRAP32. The automatic projection
+records BLOCKED numeric coverage, not closure. Dispatchv506/wCmX7q completes
+162204.173834ms with41PASS/3FAIL/555assertions. The real failures are an invalid
+activation pointer and negative fixtures rejected before their intended guards;
+the missing report-location diagnostic is secondary. Controller observation
+v512/ezqEDD completes75278.297722ms with18PASS/58assertions:
+F23/28,L108/156,S116/182,B95/164,maxCC14/maxCRAP90. All retain complete captures,
+closed groups and unchanged boot/commit/clean inputs. No frozen or mutation
+acceptance follows; no unchanged complete suite is repeated.
+
+The valid activation fixture exposes a product defect in committedActivation:
+returning on the first committed use admits a duplicate suffix. REDv525 confirms
+the unexpected prepared plan. The caller now reuses readHistoricalObservedActivationUse
+after all existing Work/Ledger/Journal/lease checks. It keeps valid unique suffixes
+and rejects missing, duplicate and malformed use histories. Independentv524
+supports the shared full-history and stable-read contract; the local hash closure
+is retired without transferring its original1/2ceiling. No effect or right is added.
+
+Governance session/counter/error-result and workflow rewind tests now exercise
+existing public mechanisms. Independentv523 proves stageCalls remains empty
+through all supported private-machine writers; its redundant reset filter is
+removed while retaining the strict field and public empty image. A real earlier
+read survives write rewind and is removed by read rewind. v527 exposed an incorrect
+single-read expected array; the test now distinguishes both retained read records.
+Controller tests cover missing/mismatched internal context, validly framed bad
+reservations and linked reservation refusal without repeating its expensive build.
+New denial fixtures stay retained on assertion/cleanup failure. Staticv528 passes
+514files/515captured TS/0diagnostics; targetedv529 passes21cases/130assertions
+in16.87s, including the complete16-case dispatch-repair file and four controller
+guards. No fresh numeric result exists for these changed bytes yet.
+
+Only three changed Source files receive a necessary one-pass static inventory/hash
+v530; existing reports supply other scope data. Their80current roles reconcile
+exactly to metadata. Preserve two retired original rows, add the genuinely new
+writePlan callback with its independently declared prospective10/10, and retain
+every original ceiling. The governance review initially misidentified the removed
+role; actual spans correct it to the stageCalls filter suffix#2, not the retained
+cleared-Set mapper. Its surviving mcpResults predicate shifts#3->#2 and the
+recordedStages predicate#4->#3 by inspected responsibility. Current v3 cannot
+represent this retired/retained lexical identity reuse. Record that exact gate
+schema GAP; do not pin an invalid review, match by ordinal, waive correspondence
+or transfer an allowance. The lineage checkpoint remains explicitly non-executable.
+
+The one real activated-config diagnosticv517/PoUbrR fails at16025.472423ms against
+the unchanged10s case limit. Upgrade resume accounts for13174.230755ms, planning
+1717.340541ms and module import681.433117ms; the reader probes are much smaller.
+Keep its retained expired root and full phase capture. This locates a setup
+bottleneck, not a speed comparison or a passed deadline. Vex outlinev522 is reused
+after all numeric producers terminate; no cold rebuild or duplicate code scan.
+
+Disk analysis reuses the qualified admission receipts instead of another wide
+walk: latest phase admission records2287153152bytes available on retained scratch
+against the unchanged2147483648floor. No confirmed obsolete owned cache/archive
+or temporary derivative is identified by the retained inventory, so nothing is
+deleted. Source, SDK artifacts, dependency custody and all FAIL/UNKNOWN evidence
+remain protected. Future numeric admission must independently enforce its floor;
+no evidence moves to tmpfs and no old run is re-attested.
+
+The ordinary v533 hook catches four await-thenable warnings in new governance
+assertions and one default object-stringification warning. Reuse the maintained
+async completion/rejection helpers, await the actual gate result, and state the
+expected error messages explicitly. Focused v534 passes both changed controls;
+no lint rule, hook or deadline is bypassed.
 
 Custody incident: worker473 temporarily changed and reversed only canonical
 `packages/agent/bin/reconcile-readonly-dispatch.ts`, violating its read-only

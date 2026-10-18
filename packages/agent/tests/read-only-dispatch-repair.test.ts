@@ -79,22 +79,18 @@ test('read-only repair admits only persisted activation evidence bound to its re
     const plan = planReadOnlyDispatchRepair(value.input);
     expect(plan.prior_activation).toEqual({ use: persisted.use, plan: persisted.plan });
 
+    const foreignIssueId = '10000000-0000-4000-8000-000000000099';
     const foreignBinding = {
       ...persisted.state,
-      items: persisted.state.items.map((item) =>
-        item.request.action_id === value.input.actionId
-          ? {
-              ...item,
-              research_activation: {
-                ...item.research_activation!,
-                plan: {
-                  ...item.research_activation!.plan,
-                  binding: { ...item.research_activation!.plan.binding, issue_id: 'foreign-issue' },
-                },
-              },
-            }
-          : item,
-      ),
+      items: persisted.state.items.map((item) => {
+        if (item.request.action_id !== value.input.actionId) return item;
+        const activation = item.research_activation!;
+        const binding = { ...activation.plan.binding, issue_id: foreignIssueId };
+        const { digest: previousDigest, ...planBody } = activation.plan;
+        void previousDigest;
+        const plan = { ...planBody, binding, digest: canonicalJsonDigest({ ...planBody, binding }) };
+        return { ...item, research_activation: { ...activation, plan } };
+      }),
     };
     replaceJournalRow(
       value.database,
@@ -114,7 +110,23 @@ test('read-only repair admits only persisted activation evidence bound to its re
       9,
       persisted.state,
     );
+    const { digest: previousDigest, ...alternateUseBody } = {
+      ...persisted.use,
+      use_id: 'fixture-other-research-use',
+    };
+    void previousDigest;
+    const alternateUse = { ...alternateUseBody, digest: canonicalJsonDigest(alternateUseBody) };
+    writeFileSync(persisted.historyFile, `${canonicalJson(alternateUse)}\n`);
+    expect(() => planReadOnlyDispatchRepair(value.input)).toThrow(/one exact unobserved read-only issue is required/);
+
+    writeFileSync(persisted.historyFile, `${canonicalJson(persisted.use)}\n${canonicalJson(alternateUse)}\n`);
+    expect(planReadOnlyDispatchRepair(value.input).prior_activation).toEqual({
+      use: persisted.use,
+      plan: persisted.plan,
+    });
     writeFileSync(persisted.historyFile, `${canonicalJson(persisted.use)}\n${canonicalJson(persisted.use)}\n`);
+    expect(() => planReadOnlyDispatchRepair(value.input)).toThrow(/one exact unobserved read-only issue is required/);
+    writeFileSync(persisted.historyFile, `${canonicalJson(persisted.use)}\n{\n`);
     expect(() => planReadOnlyDispatchRepair(value.input)).toThrow(/one exact unobserved read-only issue is required/);
     passed = true;
   } finally {
@@ -479,7 +491,7 @@ function addPersistedActivation(value: ReturnType<typeof fixture>) {
     source_digests: [{ instruction_id: 'research-protocol', source_sha256: 'c'.repeat(64) }],
     cache_status: 'cold',
     actor: 'fixture-operator',
-    pointer: 'fixture:persisted-activation',
+    pointer: 'fixture-persisted-activation',
     timestamp: '2026-09-28T09:59:00.000Z',
   };
   const use: ActivationUse = { ...useBody, digest: canonicalJsonDigest(useBody) };
@@ -1019,7 +1031,8 @@ test('read-only dispatch repair rejects a different actor for an already recorde
   }
 });
 
-// Existing schema-valid history may still carry a release from a different source binding.
+// The ledger schema binds release identity fields to the ticket; resources remain
+// independently validated so the owner-provenance guard can reject a foreign set.
 test('read-only dispatch repair rejects a released owner with foreign release provenance', () => {
   const value = fixture();
   let passed = false;
@@ -1027,7 +1040,7 @@ test('read-only dispatch repair rejects a released owner with foreign release pr
     const ledger = {
       ...value.ledger,
       revision: 3,
-      operations: value.ledger.operations.map((operation) => ({ ...operation, source_revision: 'e'.repeat(64) })),
+      operations: value.ledger.operations.map((operation) => ({ ...operation, resources: ['file:other.txt'] })),
     };
     replaceHostRow(value.database, value.input.workspaceId, 'ledger', 'shared', 3, ledger);
     expect(() => planReadOnlyDispatchRepair(value.input)).toThrow(/released owner provenance differs/);

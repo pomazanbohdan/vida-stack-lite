@@ -13,6 +13,7 @@ import {
 } from '../src/index.ts';
 import { toAuthorizationReceipt } from '../src/contracts/public-ingress.ts';
 import { computeGovernedWriteRequestDigest } from '../src/contracts/public-ingress.ts';
+import { OperationPolicyGuard, PolicySession } from '../src/governance/operation-policy.js';
 import type {
   GovernedWriteIntent,
   TrustedProjectIdentity,
@@ -176,6 +177,75 @@ function callWithMalformedArgument<Target extends (...arguments_: never[]) => un
 }
 
 describe('governed write completeness', () => {
+  test('policy session counters stay isolated and the operation guard records post-effect failures', async () => {
+    const session = new PolicySession('counter-session');
+    const peerSession = new PolicySession('peer-counter-session');
+    expect(await session.getValue('cursor')).toBeNull();
+    await session.setValue('cursor', 'first');
+    expect(await session.getValue('cursor')).toBe('first');
+    await session.deleteValue('cursor');
+    expect(await session.getValue('cursor')).toBeNull();
+    expect(await session.incrementAttempts()).toBe(1);
+    expect(await session.incrementAttempts()).toBe(2);
+    await session.recordExecution('runtime.read', false);
+    expect(await session.executionCount()).toBe(1);
+    expect(await session.toolExecutionCount('runtime.read')).toBe(1);
+    expect(await session.consecutiveFailures()).toBe(1);
+    await session.recordExecution('runtime.read', true);
+    expect(await session.consecutiveFailures()).toBe(0);
+    expect(await peerSession.attemptCount()).toBe(0);
+    expect(await peerSession.executionCount()).toBe(0);
+    expect(await session.batchGetCounters()).toEqual({ attempts: 2, execs: 2, consec_fail: 0 });
+    expect(await session.batchGetCounters({ includeTool: 'runtime.read' })).toEqual({
+      attempts: 2,
+      execs: 2,
+      consec_fail: 0,
+      'tool:runtime.read': 2,
+    });
+
+    const guard = new OperationPolicyGuard(
+      {
+        policyVersion: 'test-v1',
+        maxAttempts: 5,
+        maxToolCalls: 5,
+        maxCallsPerTool: { 'runtime.read': 3 },
+        tools: { 'runtime.read': { side_effect: 'read', idempotent: true } },
+      },
+      () => undefined,
+    );
+    expect((await guard.evaluate('runtime.read', {})).decision).toBe('allow');
+    expect((await guard.evaluate('runtime.write', {})).decision).toBe('deny');
+    await expectRejection(guard.evaluate('invalid/name', {}), /tool name is invalid/);
+
+    const args = { value: 'captured-before-effect' };
+    const completed = guard.run('runtime.read', args, async (snapshot) => {
+      expect(Object.isFrozen(snapshot)).toBe(true);
+      return { accepted: snapshot.value };
+    });
+    args.value = 'caller-mutated-after-admission';
+    expect(await expectAsyncReturned(() => completed)).toEqual({ accepted: 'captured-before-effect' });
+
+    for (const { result, expectedMessage } of [
+      { result: { is_error: true, message: 'tool denied' }, expectedMessage: '[object Object]' },
+      { result: 'fatal: tool failed', expectedMessage: 'fatal: tool failed' },
+    ]) {
+      const error: unknown = await guard
+        .run('runtime.read', {}, () => result)
+        .then(
+          () => null,
+          (candidate: unknown) => candidate,
+        );
+      expect(error).toMatchObject({ name: 'EdictumToolError', message: expectedMessage });
+    }
+    const limited: unknown = await guard
+      .run('runtime.read', {}, () => ({ accepted: true }))
+      .then(
+        () => null,
+        (candidate: unknown) => candidate,
+      );
+    expect(limited).toMatchObject({ name: 'EdictumDenied', decisionSource: 'operation_limit' });
+  });
+
   test('rejects a stale config snapshot when loading the configured Edictum policy', () => {
     const matching = expectReturned(() => loadConfiguredEdictumGovernancePolicy(repositoryRoot, config));
     expect(matching.policyVersion).toBe(config.governance.edictum.policy_version);

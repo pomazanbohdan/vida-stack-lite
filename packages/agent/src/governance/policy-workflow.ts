@@ -452,9 +452,6 @@ export class PolicyWorkflowRuntime {
         const cleared = new Set(this.definition.stages.slice(index).map((item) => item.id));
         const tools = new Set(this.definition.stages.slice(index).flatMap((item) => item.tools));
         state.approvals = Object.fromEntries(Object.entries(state.approvals).filter(([key]) => !cleared.has(key)));
-        state.evidence.stageCalls = Object.fromEntries(
-          Object.entries(state.evidence.stageCalls).filter(([key]) => !cleared.has(key)),
-        );
         state.evidence.mcpResults = Object.fromEntries(
           Object.entries(state.evidence.mcpResults).filter(([key]) => index > 0 && !tools.has(key)),
         );

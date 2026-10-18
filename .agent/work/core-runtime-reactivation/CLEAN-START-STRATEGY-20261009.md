@@ -48,6 +48,22 @@ parent allowance. Verify actual opened descriptor, delegated native close,
 ordered causes including undefined and retained afterimage through the public CLI.
 Keep the database body in its current owner through the existing tagged finisher.
 
+Dispatch activation-prefix validation returns on the first matching use and
+can miss a duplicate or malformed suffix. Confirm through the real persisted
+fixture, then reuse readHistoricalObservedActivationUse after the existing
+Work/Ledger/Journal/lease binding checks. Preserve valid unrelated suffixes,
+exact original-prefix authentication, full-history validation and stable reread.
+Retire the private duplicated history loop/hash callback without allowance
+transfer; no new helper, rights, effects or changed UNKNOWN handling is planned.
+
+Governance coverage exposes a dead reset filter over evidence.stageCalls. The
+private machine initializes this compatibility map empty and no supported
+command populates it. Review that complete writer invariant independently;
+if confirmed, remove only the redundant reset traversal/callback while preserving
+the empty public field and state validation. Record its original callable as
+removed with the invariant owner, never transfer its frozen allowance. Test
+real read/write evidence retention through rewind; do not fabricate private state.
+
 Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
 `nativeDiagnosticIdSet` owner and its invalid-token predicate, each with
 prospective CC/CRAP10/10. Reuse its validated Set in plan resolution instead of

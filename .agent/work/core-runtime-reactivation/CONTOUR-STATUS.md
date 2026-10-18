@@ -46,7 +46,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-observed-validation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
 | bun-observed-research | 161/419 · 599/2005 · 647/2225 · 438/1977 | 51 / 2652 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | main-local-entrypoint | 88/249 · 483/1163 · 507/1258 · 409/1608 | 107 / 11556 | unknown | FAIL | open / unknown | unknown | open / unknown |
-| bun-dispatch-repair | 58/70 · 270/319 · 286/343 · 213/265 | 39 / 39 | unknown | FAIL | open / unknown | unknown | open / unknown |
+| bun-dispatch-repair | 58/70 · 270/319 · 286/343 · 213/265 | 39 / 39 | unknown | coverage/failed/unknown-or-partial | open / unknown | unknown | open / unknown |
 | bun-runtime-code-rebind | 56/159 · 255/781 · 267/817 · 280/1042 | 148 / 12882 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-specialized-repair | 239/244 · 852/889 · 908/991 · 678/782 | 56 / 56 | unknown | FAIL | open / unknown | unknown | open / unknown |
 | bun-runtime-config-rebind | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
@@ -55,13 +55,13 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-completed-readonly-capture | 2/113 · 8/339 · 8/360 · 3/347 | 90 / 90 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-routing-contracts | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
 | bun-project-configuration-lifecycle | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
-| bun-governance-and-public-contracts | 94/106 · 329/362 · 355/404 · 182/249 | 32 / 32 | unknown | coverage/failed/unknown-or-partial | open / unknown | unknown | open / unknown |
+| bun-governance-and-public-contracts | 94/106 · 334/367 · 360/409 · 185/253 | 32 / 32 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-lifecycle | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-storage-admission | 18/18 · 94/94 · 95/95 · 13/13 | 4 / 4 | unknown | BLOCKED | open / unknown | 4 / 4 | open / unknown |
 | bun-project-upgrade-existing-storage-image | 49/49 · 203/203 · 222/222 · 61/61 | 9 / 9 | 488/488 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
 | bun-orchestration-recovery-contracts | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-cli-release-and-installation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
-| bun-controller-observation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
+| bun-controller-observation | 23/28 · 108/156 · 116/182 · 95/164 | 14 / 90 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-source-preflight-and-task-binding | 162/169 · 736/786 · 771/824 · 1090/1204 | 135 / 135 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | linux | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
 | windows | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
@@ -955,6 +955,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | 12a1daaa-d9a5-4fad-a0ce-075358e33369 | not-captured | 2026-10-16T06:57:24.926Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/12a1daaa-d9a5-4fad-a0ce-075358e33369.json |
 | coverage-outcome | f2f0cd4c-715d-4642-8a97-5a4ec02577d7 | not-captured | 2026-10-16T09:41:37.459Z | FAIL; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/f2f0cd4c-715d-4642-8a97-5a4ec02577d7.json |
 | coverage-outcome | 736df7ed-93ba-4b61-b5ff-f9c3d9bc98b7 | not-captured | 2026-10-16T11:32:12.631Z | FAIL; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/736df7ed-93ba-4b61-b5ff-f9c3d9bc98b7.json |
+| coverage-outcome | b4643e55-407d-42ba-bd11-37a08dcea7c9 | not-captured | 2026-10-18T11:33:20.770Z | FAIL; unqualified; selection unbound | no metric evidence | /workspace/attachments/rolling-measure-v502/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/b4643e55-407d-42ba-bd11-37a08dcea7c9.json |
+| stage-outcome | contour-stage-wCmX7q | 788d1f14885cbea87c6da17206f789ba84c8bf3f | 2026-10-18T11:33:20.872Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-stage-wCmX7q/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
@@ -1096,6 +1098,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | 0af4d7d1-b65a-4be6-b75f-8c6cd051473d | not-captured | 2026-10-16T07:07:15.579Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/0af4d7d1-b65a-4be6-b75f-8c6cd051473d.json |
 | coverage-outcome | 4c90afa4-ef09-47af-b1c7-af6ceada8317 | not-captured | 2026-10-18T10:59:25.559Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/rolling-measure-v462/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/4c90afa4-ef09-47af-b1c7-af6ceada8317.json |
 | stage-outcome | contour-stage-Tv2GGu | 78e9462dcae4c44e360059b6dfe0a3a3238d5dbc | 2026-10-18T10:59:25.864Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-stage-Tv2GGu/publication-error.json |
+| coverage | 416134f9-5681-4cf5-b9aa-a4c0ff956389 | 788d1f14885cbea87c6da17206f789ba84c8bf3f | 2026-10-18T11:30:07.677Z | focused-diagnostic; owner accepted locally; selection bound | 94/106 · 334/367 · 360/409 · 185/253 | /workspace/attachments/rolling-measure-v502/packages/agent/coverage/bun-unified/diagnostics/416134f9-5681-4cf5-b9aa-a4c0ff956389.focused-coverage.json |
+| coverage-outcome | 416134f9-5681-4cf5-b9aa-a4c0ff956389 | 788d1f14885cbea87c6da17206f789ba84c8bf3f | 2026-10-18T11:30:07.692Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/rolling-measure-v502/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/416134f9-5681-4cf5-b9aa-a4c0ff956389.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
@@ -1316,6 +1320,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
 | coverage-outcome | 5e82db9a-8c8a-42b5-b902-a3b5ce7444aa | not-captured | 2026-10-16T07:18:23.440Z | FAIL; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/5e82db9a-8c8a-42b5-b902-a3b5ce7444aa.json |
+| coverage | e2b8e76b-5381-41d5-a7b2-c976f77b1131 | 788d1f14885cbea87c6da17206f789ba84c8bf3f | 2026-10-18T11:34:44.355Z | focused-diagnostic; owner accepted locally; selection bound | 23/28 · 108/156 · 116/182 · 95/164 | /workspace/attachments/rolling-measure-v502/packages/agent/coverage/bun-unified/diagnostics/e2b8e76b-5381-41d5-a7b2-c976f77b1131.focused-coverage.json |
+| coverage-outcome | e2b8e76b-5381-41d5-a7b2-c976f77b1131 | 788d1f14885cbea87c6da17206f789ba84c8bf3f | 2026-10-18T11:34:44.371Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/rolling-measure-v502/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/e2b8e76b-5381-41d5-a7b2-c976f77b1131.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

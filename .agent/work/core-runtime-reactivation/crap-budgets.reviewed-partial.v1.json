@@ -10,10 +10,10 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5447,
-    "new": 1664,
-    "removed": 98,
-    "current_roles": 7111,
+    "retained": 5445,
+    "new": 1665,
+    "removed": 100,
+    "current_roles": 7110,
     "source_files": 149
   },
   "source_bindings": [
@@ -31,7 +31,7 @@
     },
     {
       "file": "src/governance/policy-workflow.ts",
-      "sha256": "a73bd1d185e26fc2581d1770e3851a2b605681cf9c66b494ce1a461ee383462e"
+      "sha256": "94a0d66693d0d7b66146c51bf6ad62581c527c6e9be01fc0482d36010ba61d8e"
     },
     {
       "file": "src/lifecycle/lifecycle-state.ts",
@@ -339,7 +339,7 @@
     },
     {
       "file": "bin/reconcile-readonly-dispatch.ts",
-      "sha256": "0b8b8d00885e216f84f8bb733280946b707431efc6edc301a2b659556ce805b5"
+      "sha256": "a9a5dcabe5ca9cd59d3ba482d98ab90f8c1cbb9fb71e714956d49839ad5a3ecc"
     },
     {
       "file": "src/contracts/acceptance-manifest-schema.ts",
@@ -403,7 +403,7 @@
     },
     {
       "file": "src/orchestration/read-only-dispatch-repair.ts",
-      "sha256": "fdfee4462d6b0b74455d3448ec87fd24b1cff39a7efe870f66e06d65f368112d"
+      "sha256": "f5a796a8ff57db0ad9fb9f5e03c99242272b5d5c2b61f9ce49af6a6490c3b4f9"
     },
     {
       "file": "bin/development-controller-observation.ts",
@@ -741,7 +741,8 @@
         "bodyColumn": 2,
         "bodyEndLine": 116,
         "bodyEndColumn": 1
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/governance/policy-workflow.ts#fn:createPolicyGraph#0/binding:step/property:execute#0",
@@ -773,7 +774,8 @@
         "bodyColumn": 34,
         "bodyEndLine": 111,
         "bodyEndColumn": 7
-      }
+      },
+      "current_complexity": 7
     },
     {
       "identity": "src/governance/policy-workflow.ts#fn:copy#0",
@@ -805,7 +807,8 @@
         "bodyColumn": 30,
         "bodyEndLine": 121,
         "bodyEndColumn": 1
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#fn:initialState#0",
@@ -837,7 +840,8 @@
         "bodyColumn": 86,
         "bodyEndLine": 135,
         "bodyEndColumn": 1
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#fn:workflowSnapshot#0",
@@ -869,7 +873,8 @@
         "bodyColumn": 103,
         "bodyEndLine": 147,
         "bodyEndColumn": 1
-      }
+      },
+      "current_complexity": 3
     },
     {
       "identity": "src/governance/policy-workflow.ts#fn:acceptedResult#0",
@@ -901,7 +906,8 @@
         "bodyColumn": 77,
         "bodyEndLine": 153,
         "bodyEndColumn": 1
-      }
+      },
+      "current_complexity": 4
     },
     {
       "identity": "src/governance/policy-workflow.ts#fn:acceptedResult#0/closure:CallExpression:arguments[0]#0",
@@ -933,7 +939,8 @@
         "bodyColumn": 77,
         "bodyEndLine": 151,
         "bodyEndColumn": 103
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#fn:gateRecord#0",
@@ -965,7 +972,8 @@
         "bodyColumn": 27,
         "bodyEndLine": 178,
         "bodyEndColumn": 1
-      }
+      },
+      "current_complexity": 3
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:constructor#0",
@@ -997,7 +1005,8 @@
         "bodyColumn": 65,
         "bodyEndLine": 202,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:constructor#0/closure:CallExpression:arguments[1]#0",
@@ -1029,7 +1038,8 @@
         "bodyColumn": 6,
         "bodyEndLine": 199,
         "bodyEndColumn": 47
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#createRun#0",
@@ -1061,7 +1071,8 @@
         "bodyColumn": 21,
         "bodyEndLine": 206,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#checkSession#0",
@@ -1093,7 +1104,8 @@
         "bodyColumn": 46,
         "bodyEndLine": 209,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#serialized#0",
@@ -1125,7 +1137,8 @@
         "bodyColumn": 82,
         "bodyEndLine": 218,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#serialized#0/closure:CallExpression:arguments[0]#0",
@@ -1157,7 +1170,8 @@
         "bodyColumn": 12,
         "bodyEndLine": 214,
         "bodyEndColumn": 21
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#serialized#0/closure:CallExpression:arguments[1]#0",
@@ -1189,7 +1203,8 @@
         "bodyColumn": 12,
         "bodyEndLine": 215,
         "bodyEndColumn": 21
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#dispatch#0",
@@ -1221,7 +1236,8 @@
         "bodyColumn": 77,
         "bodyEndLine": 247,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 10
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#stage#0",
@@ -1253,7 +1269,8 @@
         "bodyColumn": 41,
         "bodyEndLine": 252,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#stage#0/binding:stage/closure:CallExpression:arguments[0]#0",
@@ -1285,7 +1302,8 @@
         "bodyColumn": 56,
         "bodyEndLine": 249,
         "bodyEndColumn": 75
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#apply#0",
@@ -1317,7 +1335,8 @@
         "bodyColumn": 100,
         "bodyEndLine": 331,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 32
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#completeStage#0",
@@ -1349,7 +1368,8 @@
         "bodyColumn": 80,
         "bodyEndLine": 341,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 5
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#setEvaluation#0",
@@ -1381,7 +1401,8 @@
         "bodyColumn": 10,
         "bodyEndLine": 369,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 5
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#gates#0",
@@ -1413,7 +1434,8 @@
         "bodyColumn": 107,
         "bodyEndLine": 394,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 4
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#gates#0/binding:records/closure:CallExpression:arguments[0]#0",
@@ -1445,7 +1467,8 @@
         "bodyColumn": 6,
         "bodyEndLine": 381,
         "bodyEndColumn": 7
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#resultEvents#0",
@@ -1477,7 +1500,8 @@
         "bodyColumn": 45,
         "bodyEndLine": 398,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#resultEvents#0/closure:CallExpression:arguments[0]#0",
@@ -1509,7 +1533,8 @@
         "bodyColumn": 57,
         "bodyEndLine": 397,
         "bodyEndColumn": 106
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:evaluate#0",
@@ -1541,7 +1566,8 @@
         "bodyColumn": 80,
         "bodyEndLine": 406,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:evaluate#0/closure:CallExpression:arguments[1]#0",
@@ -1573,7 +1599,8 @@
         "bodyColumn": 49,
         "bodyEndLine": 405,
         "bodyEndColumn": 5
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:state#0",
@@ -1605,7 +1632,8 @@
         "bodyColumn": 56,
         "bodyEndLine": 413,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:state#0/closure:CallExpression:arguments[1]#0",
@@ -1637,7 +1665,8 @@
         "bodyColumn": 49,
         "bodyEndLine": 412,
         "bodyEndColumn": 5
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:recordedStages#0",
@@ -1669,7 +1698,8 @@
         "bodyColumn": 69,
         "bodyEndLine": 419,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:recordedStages#0/closure:CallExpression:arguments[1]#0",
@@ -1701,7 +1731,8 @@
         "bodyColumn": 49,
         "bodyEndLine": 418,
         "bodyEndColumn": 5
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:recordApproval#0",
@@ -1733,7 +1764,8 @@
         "bodyColumn": 73,
         "bodyEndLine": 423,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:recordApproval#0/closure:CallExpression:arguments[1]#0",
@@ -1765,7 +1797,8 @@
         "bodyColumn": 43,
         "bodyEndLine": 422,
         "bodyEndColumn": 88
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:recordResult#0",
@@ -1797,7 +1830,8 @@
         "bodyColumn": 49,
         "bodyEndLine": 437,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 3
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:recordResult#0/closure:CallExpression:arguments[1]#0",
@@ -1829,7 +1863,8 @@
         "bodyColumn": 49,
         "bodyEndLine": 436,
         "bodyEndColumn": 5
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:reset#0",
@@ -1861,7 +1896,8 @@
         "bodyColumn": 94,
         "bodyEndLine": 440,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:setStage#0",
@@ -1893,7 +1929,8 @@
         "bodyColumn": 97,
         "bodyEndLine": 443,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0",
@@ -1920,12 +1957,13 @@
         "line": 444,
         "column": 2,
         "start": 17327,
-        "end": 19022,
+        "end": 18865,
         "bodyLine": 444,
         "bodyColumn": 110,
-        "bodyEndLine": 473,
+        "bodyEndLine": 470,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0",
@@ -1952,12 +1990,13 @@
         "line": 446,
         "column": 37,
         "start": 17514,
-        "end": 19016,
+        "end": 18859,
         "bodyLine": 446,
         "bodyColumn": 49,
-        "bodyEndLine": 472,
+        "bodyEndLine": 469,
         "bodyEndColumn": 5
-      }
+      },
+      "current_complexity": 5
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#0",
@@ -1989,7 +2028,8 @@
         "bodyColumn": 83,
         "bodyEndLine": 450,
         "bodyEndColumn": 90
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/binding:cleared/closure:CallExpression:arguments[0]#0",
@@ -2021,7 +2061,8 @@
         "bodyColumn": 82,
         "bodyEndLine": 452,
         "bodyEndColumn": 89
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/binding:tools/closure:CallExpression:arguments[0]#0",
@@ -2053,7 +2094,8 @@
         "bodyColumn": 84,
         "bodyEndLine": 453,
         "bodyEndColumn": 94
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#1",
@@ -2085,43 +2127,12 @@
         "bodyColumn": 95,
         "bodyEndLine": 454,
         "bodyEndColumn": 112
-      }
-    },
-    {
-      "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
-      "current_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
-      "file": "src/governance/policy-workflow.ts",
-      "source_address": {
-        "line": 456,
-        "column": 59,
-        "start": 18198,
-        "end": 18226,
-        "bodyLine": 456,
-        "bodyColumn": 70,
-        "bodyEndLine": 456,
-        "bodyEndColumn": 87
       },
-      "name": "closure:CallExpression:arguments[0]",
-      "baseline_complexity": 1,
-      "baseline_coverage": 0,
-      "max_complexity": 1,
-      "baseline_crap": 2,
-      "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/governance/policy-workflow.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
-      "current_source_address": {
-        "line": 456,
-        "column": 59,
-        "start": 18198,
-        "end": 18226,
-        "bodyLine": 456,
-        "bodyColumn": 70,
-        "bodyEndLine": 456,
-        "bodyEndColumn": 87
-      }
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#3",
-      "current_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#3",
+      "current_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
       "file": "src/governance/policy-workflow.ts",
       "source_address": {
         "line": 459,
@@ -2139,21 +2150,22 @@
       "max_complexity": 2,
       "baseline_crap": 6,
       "max_crap": 6,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/governance/policy-workflow.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/governance/policy-workflow.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase. Current reviewed predicate still filters mcpResults; deletion of earlier dead stageCalls callback shifts lexical identity. Exact responsibility mapping reviewed v523; v3 identity reuse admission remains a GAP.",
       "current_source_address": {
-        "line": 459,
+        "line": 456,
         "column": 59,
-        "start": 18355,
-        "end": 18394,
-        "bodyLine": 459,
+        "start": 18198,
+        "end": 18237,
+        "bodyLine": 456,
         "bodyColumn": 70,
-        "bodyEndLine": 459,
+        "bodyEndLine": 456,
         "bodyEndColumn": 98
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#4",
-      "current_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#4",
+      "current_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#3",
       "file": "src/governance/policy-workflow.ts",
       "source_address": {
         "line": 461,
@@ -2171,17 +2183,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/governance/policy-workflow.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/governance/policy-workflow.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase. Current reviewed predicate still filters recordedStages after rewind; lexical identity shifts after removal of dead stageCalls callback. No allowance transfer; v3 identity reuse admission remains a GAP.",
       "current_source_address": {
-        "line": 461,
+        "line": 458,
         "column": 59,
-        "start": 18467,
-        "end": 18491,
-        "bodyLine": 461,
+        "start": 18310,
+        "end": 18334,
+        "bodyLine": 458,
         "bodyColumn": 67,
-        "bodyEndLine": 461,
+        "bodyEndLine": 458,
         "bodyEndColumn": 83
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:evaluateWorkflowGates#0",
@@ -2205,15 +2218,16 @@
       "max_crap": 6,
       "rationale": "Retains method:evaluateWorkflowGates at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/governance/policy-workflow.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
       "current_source_address": {
-        "line": 474,
+        "line": 471,
         "column": 2,
-        "start": 19025,
-        "end": 19438,
-        "bodyLine": 479,
+        "start": 18868,
+        "end": 19281,
+        "bodyLine": 476,
         "bodyColumn": 67,
-        "bodyEndLine": 483,
+        "bodyEndLine": 480,
         "bodyEndColumn": 3
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/lifecycle/lifecycle-state.ts#fn:verifyCurrentDocumentation#0",
@@ -34731,13 +34745,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 196,
+        "line": 178,
         "column": 7,
-        "start": 7552,
-        "end": 14339,
-        "bodyLine": 214,
+        "start": 6822,
+        "end": 13609,
+        "bodyLine": 196,
         "bodyColumn": 31,
-        "bodyEndLine": 371,
+        "bodyEndLine": 353,
         "bodyEndColumn": 1
       },
       "name": "fn:planReadOnlyDispatchRepair",
@@ -34746,7 +34760,8 @@
       "max_complexity": 40,
       "baseline_crap": 1640,
       "max_crap": 1640,
-      "rationale": "Corrected independently reviewed implementation responsibility: historical pure planner request/authority/issue/source/report checks and plan construction moved into this builder. CLI context/snapshot acquisition is a new wrapper. Historical allowance retained once, unchanged; current CC43 exceeds old CC40 and remains a blocker. No numeric qualification."
+      "rationale": "Corrected independently reviewed implementation responsibility: historical pure planner request/authority/issue/source/report checks and plan construction moved into this builder. CLI context/snapshot acquisition is a new wrapper. Historical allowance retained once, unchanged; current CC43 exceeds old CC40 and remains a blocker. No numeric qualification.",
+      "current_complexity": 39
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:applyReadOnlyDispatchRepair#0",
@@ -34828,13 +34843,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 121,
+        "line": 126,
         "column": 83,
-        "start": 4316,
-        "end": 4415,
-        "bodyLine": 121,
+        "start": 4465,
+        "end": 4564,
+        "bodyLine": 126,
         "bodyColumn": 107,
-        "bodyEndLine": 123,
+        "bodyEndLine": 128,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -34842,7 +34857,8 @@
       "max_complexity": 2,
       "baseline_crap": 6,
       "max_crap": 6,
-      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase.",
+      "current_complexity": 2
     },
     {
       "identity": "bin/reconcile-readonly-dispatch.mjs#binding:planFile/binding:planFile#0",
@@ -34860,13 +34876,13 @@
         "bodyEndColumn": 94
       },
       "current_source_address": {
-        "line": 129,
+        "line": 134,
         "column": 17,
-        "start": 4642,
-        "end": 4729,
-        "bodyLine": 129,
+        "start": 4791,
+        "end": 4878,
+        "bodyLine": 134,
         "bodyColumn": 47,
-        "bodyEndLine": 129,
+        "bodyEndLine": 134,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 1,
@@ -34874,7 +34890,8 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase.",
+      "current_complexity": 1
     },
     {
       "identity": "bin/reconcile-readonly-dispatch.mjs#fn:argsObject#0",
@@ -34892,13 +34909,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 131,
+        "line": 136,
         "column": 0,
-        "start": 4732,
-        "end": 6258,
-        "bodyLine": 131,
+        "start": 4881,
+        "end": 6407,
+        "bodyLine": 136,
         "bodyColumn": 60,
-        "bodyEndLine": 167,
+        "bodyEndLine": 172,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 13,
@@ -34906,7 +34923,8 @@
       "max_complexity": 13,
       "baseline_crap": 182,
       "max_crap": 182,
-      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase.",
+      "current_complexity": 11
     },
     {
       "identity": "bin/reconcile-readonly-dispatch.mjs#fn:readPlan#0",
@@ -34924,13 +34942,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 169,
+        "line": 174,
         "column": 0,
-        "start": 6260,
-        "end": 6828,
-        "bodyLine": 169,
+        "start": 6409,
+        "end": 6977,
+        "bodyLine": 174,
         "bodyColumn": 72,
-        "bodyEndLine": 180,
+        "bodyEndLine": 185,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -34938,7 +34956,8 @@
       "max_complexity": 4,
       "baseline_crap": 20,
       "max_crap": 20,
-      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase.",
+      "current_complexity": 4
     },
     {
       "identity": "bin/reconcile-readonly-dispatch.mjs#fn:writePlan#0",
@@ -34956,13 +34975,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 182,
+        "line": 187,
         "column": 0,
-        "start": 6830,
-        "end": 7369,
-        "bodyLine": 182,
+        "start": 6979,
+        "end": 7619,
+        "bodyLine": 187,
         "bodyColumn": 85,
-        "bodyEndLine": 194,
+        "bodyEndLine": 202,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -34970,7 +34989,8 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase.",
+      "current_complexity": 1
     },
     {
       "identity": "bin/reconcile-readonly-dispatch.mjs#fn:runReadOnlyDispatchRepair#0",
@@ -34988,13 +35008,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 197,
+        "line": 205,
         "column": 7,
-        "start": 7476,
-        "end": 10979,
-        "bodyLine": 203,
+        "start": 7726,
+        "end": 11526,
+        "bodyLine": 211,
         "bodyColumn": 2,
-        "bodyEndLine": 283,
+        "bodyEndLine": 300,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 8,
@@ -35002,7 +35022,8 @@
       "max_complexity": 8,
       "baseline_crap": 72,
       "max_crap": 72,
-      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase.",
+      "current_complexity": 9
     },
     {
       "identity": "src/orchestration/observed-synthesis-result.ts#binding:sha256/binding:sha256#0",
@@ -47609,8 +47630,8 @@
       "current_source_address": {
         "line": 73,
         "column": 89,
-        "start": 2852,
-        "end": 2960,
+        "start": 2849,
+        "end": 2957,
         "bodyLine": 73,
         "bodyColumn": 113,
         "bodyEndLine": 75,
@@ -47622,39 +47643,8 @@
       "max_complexity": 2,
       "baseline_crap": 6,
       "max_crap": 6,
-      "rationale": "Same assertion owner and error prefix/message construction; planner callsites preserve the rejection boundary. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
-    },
-    {
-      "identity": "bin/read-only-dispatch-repair.mjs#binding:sha256/binding:sha256#0",
-      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#binding:sha256/binding:sha256#0",
-      "file": "src/orchestration/read-only-dispatch-repair.ts",
-      "source_address": {
-        "line": 17,
-        "column": 15,
-        "start": 948,
-        "end": 1007,
-        "bodyLine": 17,
-        "bodyColumn": 26,
-        "bodyEndLine": 17,
-        "bodyEndColumn": 74
-      },
-      "current_source_address": {
-        "line": 112,
-        "column": 15,
-        "start": 4390,
-        "end": 4470,
-        "bodyLine": 112,
-        "bodyColumn": 47,
-        "bodyEndLine": 112,
-        "bodyEndColumn": 95
-      },
-      "name": "binding:sha256",
-      "baseline_complexity": 1,
-      "baseline_coverage": 0,
-      "max_complexity": 1,
-      "baseline_crap": 2,
-      "max_crap": 2,
-      "rationale": "Same SHA-256 helper verifies activation-history prefix and record bytes. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      "rationale": "Same assertion owner and error prefix/message construction; planner callsites preserve the rejection boundary. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence.",
+      "current_complexity": 2
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:committedActivation#0",
@@ -47671,13 +47661,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 113,
+        "line": 112,
         "column": 0,
-        "start": 4472,
-        "end": 6869,
-        "bodyLine": 121,
+        "start": 4372,
+        "end": 6139,
+        "bodyLine": 120,
         "bodyColumn": 2,
-        "bodyEndLine": 176,
+        "bodyEndLine": 158,
         "bodyEndColumn": 1
       },
       "name": "fn:committedActivation",
@@ -47686,7 +47676,8 @@
       "max_complexity": 27,
       "baseline_crap": 756,
       "max_crap": 756,
-      "rationale": "Same activation bindings across work, attempt, run, issue, scope, config and released lease, followed by exact history byte/digest validation. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      "rationale": "Same activation bindings across work, attempt, run, issue, scope, config and released lease, followed by exact history byte/digest validation. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence.",
+      "current_complexity": 21
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:committedActivation#0/binding:ticket/closure:CallExpression:arguments[0]#0",
@@ -47703,13 +47694,13 @@
         "bodyEndColumn": 90
       },
       "current_source_address": {
-        "line": 127,
+        "line": 126,
         "column": 39,
-        "start": 4962,
-        "end": 5013,
-        "bodyLine": 127,
+        "start": 4862,
+        "end": 4913,
+        "bodyLine": 126,
         "bodyColumn": 50,
-        "bodyEndLine": 127,
+        "bodyEndLine": 126,
         "bodyEndColumn": 90
       },
       "name": "closure:CallExpression:arguments[0]",
@@ -47718,7 +47709,8 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Same ledger ticket lookup by bound lease ticket ID. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      "rationale": "Same ledger ticket lookup by bound lease ticket ID. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence.",
+      "current_complexity": 1
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:deterministicIssueId#0",
@@ -47735,13 +47727,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 177,
+        "line": 159,
         "column": 0,
-        "start": 6870,
-        "end": 7176,
-        "bodyLine": 177,
+        "start": 6140,
+        "end": 6446,
+        "bodyLine": 159,
         "bodyColumn": 48,
-        "bodyEndLine": 181,
+        "bodyEndLine": 163,
         "bodyEndColumn": 1
       },
       "name": "fn:deterministicIssueId",
@@ -47750,7 +47742,8 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Same deterministic replacement issue identifier derived from repair, prior issue and generation binding. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      "rationale": "Same deterministic replacement issue identifier derived from repair, prior issue and generation binding. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence.",
+      "current_complexity": 1
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/binding:pending/closure:CallExpression:arguments[0]#0",
@@ -47767,13 +47760,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 300,
+        "line": 282,
         "column": 37,
-        "start": 11273,
-        "end": 11334,
-        "bodyLine": 300,
+        "start": 10543,
+        "end": 10604,
+        "bodyLine": 282,
         "bodyColumn": 47,
-        "bodyEndLine": 300,
+        "bodyEndLine": 282,
         "bodyEndColumn": 98
       },
       "name": "closure:CallExpression:arguments[0]",
@@ -47782,7 +47775,8 @@
       "max_complexity": 2,
       "baseline_crap": 6,
       "max_crap": 6,
-      "rationale": "Same selection of pending rows with a non-null issue and null observation. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      "rationale": "Same selection of pending rows with a non-null issue and null observation. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence.",
+      "current_complexity": 2
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/binding:item/closure:CallExpression:arguments[0]#0",
@@ -47799,13 +47793,13 @@
         "bodyEndColumn": 76
       },
       "current_source_address": {
-        "line": 301,
+        "line": 283,
         "column": 28,
-        "start": 11365,
-        "end": 11413,
-        "bodyLine": 301,
+        "start": 10635,
+        "end": 10683,
+        "bodyLine": 283,
         "bodyColumn": 39,
-        "bodyEndLine": 301,
+        "bodyEndLine": 283,
         "bodyEndColumn": 76
       },
       "name": "closure:CallExpression:arguments[0]",
@@ -47814,7 +47808,8 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Same pending row lookup by requested action ID. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      "rationale": "Same pending row lookup by requested action ID. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence.",
+      "current_complexity": 1
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
@@ -47831,13 +47826,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 311,
+        "line": 293,
         "column": 67,
-        "start": 11826,
-        "end": 11866,
-        "bodyLine": 311,
+        "start": 11096,
+        "end": 11136,
+        "bodyLine": 293,
         "bodyColumn": 78,
-        "bodyEndLine": 311,
+        "bodyEndLine": 293,
         "bodyEndColumn": 107
       },
       "name": "closure:OptionalCallExpression:arguments[0]",
@@ -47846,7 +47841,8 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Same workflow stage lookup by requested stage ID. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      "rationale": "Same workflow stage lookup by requested stage ID. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence.",
+      "current_complexity": 1
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/binding:freshSource/closure:CallExpression:arguments[0]#0",
@@ -47863,13 +47859,13 @@
         "bodyEndColumn": 56
       },
       "current_source_address": {
-        "line": 331,
+        "line": 313,
         "column": 35,
-        "start": 12784,
-        "end": 12805,
-        "bodyLine": 331,
+        "start": 12054,
+        "end": 12075,
+        "bodyLine": 313,
         "bodyColumn": 46,
-        "bodyEndLine": 331,
+        "bodyEndLine": 313,
         "bodyEndColumn": 56
       },
       "name": "closure:CallExpression:arguments[0]",
@@ -47878,7 +47874,8 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Same projection of source-scope entries to paths for a fresh source snapshot. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      "rationale": "Same projection of source-scope entries to paths for a fresh source snapshot. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence.",
+      "current_complexity": 1
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/closure:CallExpression:arguments[0]#1",
@@ -47895,13 +47892,13 @@
         "bodyEndColumn": 64
       },
       "current_source_address": {
-        "line": 183,
+        "line": 165,
         "column": 0,
-        "start": 7178,
-        "end": 7543,
-        "bodyLine": 187,
+        "start": 6448,
+        "end": 6813,
+        "bodyLine": 169,
         "bodyColumn": 11,
-        "bodyEndLine": 194,
+        "bodyEndLine": 176,
         "bodyEndColumn": 1
       },
       "name": "closure:CallExpression:arguments[0]",
@@ -47910,7 +47907,8 @@
       "max_complexity": 4,
       "baseline_crap": 20,
       "max_crap": 20,
-      "rationale": "Old every-callback predicate (same dispatched item, or reported-complete under matching scope/config digests) now lives in this helper. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      "rationale": "Old every-callback predicate (same dispatched item, or reported-complete under matching scope/config digests) now lives in this helper. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence.",
+      "current_complexity": 4
     },
     {
       "identity": "bin/read-only-dispatch-repair.mjs#fn:applyReadOnlyDispatchRepair#0/closure:CallExpression:arguments[0]#0",
@@ -181734,13 +181732,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 23,
+        "line": 28,
         "column": 0,
-        "start": 998,
-        "end": 1148,
-        "bodyLine": 23,
+        "start": 1147,
+        "end": 1297,
+        "bodyLine": 28,
         "bodyColumn": 68,
-        "bodyEndLine": 25,
+        "bodyEndLine": 30,
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -181751,13 +181749,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 26,
+        "line": 31,
         "column": 0,
-        "start": 1149,
-        "end": 1294,
-        "bodyLine": 26,
+        "start": 1298,
+        "end": 1443,
+        "bodyLine": 31,
         "bodyColumn": 58,
-        "bodyEndLine": 28,
+        "bodyEndLine": 33,
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -181768,13 +181766,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 27,
+        "line": 32,
         "column": 45,
-        "start": 1254,
-        "end": 1290,
-        "bodyLine": 27,
+        "start": 1403,
+        "end": 1439,
+        "bodyLine": 32,
         "bodyColumn": 56,
-        "bodyEndLine": 27,
+        "bodyEndLine": 32,
         "bodyEndColumn": 81
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -181785,13 +181783,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 29,
+        "line": 34,
         "column": 0,
-        "start": 1295,
-        "end": 1547,
-        "bodyLine": 29,
+        "start": 1444,
+        "end": 1696,
+        "bodyLine": 34,
         "bodyColumn": 87,
-        "bodyEndLine": 36,
+        "bodyEndLine": 41,
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -181802,13 +181800,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 37,
+        "line": 42,
         "column": 0,
-        "start": 1548,
-        "end": 2066,
-        "bodyLine": 37,
+        "start": 1697,
+        "end": 2215,
+        "bodyLine": 42,
         "bodyColumn": 66,
-        "bodyEndLine": 50,
+        "bodyEndLine": 55,
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -181819,13 +181817,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 51,
+        "line": 56,
         "column": 0,
-        "start": 2067,
-        "end": 2618,
-        "bodyLine": 51,
+        "start": 2216,
+        "end": 2767,
+        "bodyLine": 56,
         "bodyColumn": 65,
-        "bodyEndLine": 63,
+        "bodyEndLine": 68,
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -181836,13 +181834,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 64,
+        "line": 69,
         "column": 0,
-        "start": 2619,
-        "end": 2769,
-        "bodyLine": 64,
+        "start": 2768,
+        "end": 2918,
+        "bodyLine": 69,
         "bodyColumn": 66,
-        "bodyEndLine": 66,
+        "bodyEndLine": 71,
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -181853,13 +181851,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 67,
+        "line": 72,
         "column": 0,
-        "start": 2770,
-        "end": 3264,
-        "bodyLine": 67,
+        "start": 2919,
+        "end": 3413,
+        "bodyLine": 72,
         "bodyColumn": 64,
-        "bodyEndLine": 79,
+        "bodyEndLine": 84,
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -181870,13 +181868,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 80,
+        "line": 85,
         "column": 0,
-        "start": 3265,
-        "end": 4231,
-        "bodyLine": 80,
+        "start": 3414,
+        "end": 4380,
+        "bodyLine": 85,
         "bodyColumn": 79,
-        "bodyEndLine": 119,
+        "bodyEndLine": 124,
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -181887,13 +181885,13 @@
       "max_complexity": 10,
       "max_crap": 10,
       "current_source_address": {
-        "line": 124,
+        "line": 129,
         "column": 0,
-        "start": 4417,
-        "end": 4624,
-        "bodyLine": 124,
+        "start": 4566,
+        "end": 4773,
+        "bodyLine": 129,
         "bodyColumn": 77,
-        "bodyEndLine": 128,
+        "bodyEndLine": 133,
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived.",
@@ -186049,8 +186047,8 @@
       "current_source_address": {
         "line": 82,
         "column": 0,
-        "start": 3247,
-        "end": 3399,
+        "start": 3244,
+        "end": 3396,
         "bodyLine": 82,
         "bodyColumn": 95,
         "bodyEndLine": 84,
@@ -186066,8 +186064,8 @@
       "current_source_address": {
         "line": 85,
         "column": 0,
-        "start": 3400,
-        "end": 3731,
+        "start": 3397,
+        "end": 3728,
         "bodyLine": 90,
         "bodyColumn": 2,
         "bodyEndLine": 92,
@@ -186083,8 +186081,8 @@
       "current_source_address": {
         "line": 102,
         "column": 7,
-        "start": 4051,
-        "end": 4374,
+        "start": 4048,
+        "end": 4371,
         "bodyLine": 102,
         "bodyColumn": 82,
         "bodyEndLine": 111,
@@ -186098,13 +186096,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 283,
+        "line": 265,
         "column": 8,
-        "start": 10808,
-        "end": 10877,
-        "bodyLine": 283,
+        "start": 10078,
+        "end": 10147,
+        "bodyLine": 265,
         "bodyColumn": 19,
-        "bodyEndLine": 283,
+        "bodyEndLine": 265,
         "bodyEndColumn": 77
       },
       "rationale": "New callback selects a snapshot host work row for caller-side owner selection. No original counterpart; prospective new-function policy is 10/10."
@@ -186117,8 +186115,8 @@
       "current_source_address": {
         "line": 93,
         "column": 0,
-        "start": 3732,
-        "end": 4043,
+        "start": 3729,
+        "end": 4040,
         "bodyLine": 93,
         "bodyColumn": 69,
         "bodyEndLine": 101,
@@ -186132,13 +186130,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 338,
+        "line": 320,
         "column": 22,
-        "start": 12991,
-        "end": 13048,
-        "bodyLine": 338,
+        "start": 12261,
+        "end": 12318,
+        "bodyLine": 320,
         "bodyColumn": 33,
-        "bodyEndLine": 338,
+        "bodyEndLine": 320,
         "bodyEndColumn": 79
       },
       "rationale": "New thin every callback forwards entries to retained isReusableReadOnlyReport predicate helper. No original counterpart; prospective new-function policy is 10/10."
@@ -203794,8 +203792,8 @@
       "current_source_address": {
         "line": 79,
         "column": 0,
-        "start": 3096,
-        "end": 3246,
+        "start": 3093,
+        "end": 3243,
         "bodyLine": 79,
         "bodyColumn": 68,
         "bodyEndLine": 81,
@@ -206328,6 +206326,24 @@
         "bodyEndColumn": 1
       },
       "current_complexity": 1
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:writePlan#0/closure:CallExpression:arguments[1]#0",
+      "file": "bin/reconcile-readonly-dispatch.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New tiny write/fsync operation callback at existing close owner; prospective10/10 declared in CLEAR before Source implementation. Independent v524 confirms parent allowance cannot cover this role; no inherited ceiling. Parent plan publication and cleanup errors remain independently owned.",
+      "current_source_address": {
+        "line": 195,
+        "column": 4,
+        "start": 7465,
+        "end": 7531,
+        "bodyLine": 195,
+        "bodyColumn": 10,
+        "bodyEndLine": 198,
+        "bodyEndColumn": 5
+      },
+      "current_complexity": 1
     }
   ],
   "removed_functions": [
@@ -207042,6 +207058,78 @@
     {
       "identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
       "rationale": "Replace the Promise executor and timer callback with await Bun.sleep(25) inside the existing retry owner. No replacement callable, transferred ceiling, deadline reset, guard change or baseline recapture."
+    },
+    {
+      "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
+      "rationale": "Private stageCalls starts empty and no supported command populates it. Remove its redundant reset filter; retain schema/empty public field. Independent review v523 corrects the initial Set-map misidentification and binds the actual stageCalls filter at line456. No allowance transfer.",
+      "preserved_frozen_disposition": {
+        "identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
+        "current_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
+        "file": "src/governance/policy-workflow.ts",
+        "source_address": {
+          "line": 456,
+          "column": 59,
+          "start": 18198,
+          "end": 18226,
+          "bodyLine": 456,
+          "bodyColumn": 70,
+          "bodyEndLine": 456,
+          "bodyEndColumn": 87
+        },
+        "name": "closure:CallExpression:arguments[0]",
+        "baseline_complexity": 1,
+        "baseline_coverage": 0,
+        "max_complexity": 1,
+        "baseline_crap": 2,
+        "max_crap": 2,
+        "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/governance/policy-workflow.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+        "current_source_address": {
+          "line": 456,
+          "column": 59,
+          "start": 18198,
+          "end": 18226,
+          "bodyLine": 456,
+          "bodyColumn": 70,
+          "bodyEndLine": 456,
+          "bodyEndColumn": 87
+        }
+      }
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#binding:sha256/binding:sha256#0",
+      "rationale": "Remove duplicated local history-prefix hash helper after adoption of existing readHistoricalObservedActivationUse. Full-history uniqueness, framing, prefix and stable read now remain with that existing owner. Independent review v524; no successor allowance transfer.",
+      "preserved_frozen_disposition": {
+        "identity": "bin/read-only-dispatch-repair.mjs#binding:sha256/binding:sha256#0",
+        "current_identity": "src/orchestration/read-only-dispatch-repair.ts#binding:sha256/binding:sha256#0",
+        "file": "src/orchestration/read-only-dispatch-repair.ts",
+        "source_address": {
+          "line": 17,
+          "column": 15,
+          "start": 948,
+          "end": 1007,
+          "bodyLine": 17,
+          "bodyColumn": 26,
+          "bodyEndLine": 17,
+          "bodyEndColumn": 74
+        },
+        "current_source_address": {
+          "line": 112,
+          "column": 15,
+          "start": 4390,
+          "end": 4470,
+          "bodyLine": 112,
+          "bodyColumn": 47,
+          "bodyEndLine": 112,
+          "bodyEndColumn": 95
+        },
+        "name": "binding:sha256",
+        "baseline_complexity": 1,
+        "baseline_coverage": 0,
+        "max_complexity": 1,
+        "baseline_crap": 2,
+        "max_crap": 2,
+        "rationale": "Same SHA-256 helper verifies activation-history prefix and record bytes. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+      }
     }
   ],
   "review": {
@@ -225995,5 +226083,47 @@
     "previous_review_key": "scope_review_existing_storage_admission_digest_reuse_20261018",
     "previous_review_ref": "cabdb4395a5e202c68d53910f5a7b603f5122728",
     "limits": "Independent blind Luna v446 confirms the same18prospective10/10 roles after replacing the duplicate initial Host verify/close loop with the existing paired-close owner and a bound existing verifier. No Source-defined callable is added or removed, no role moves, and no allowance transfers. Original b549951 has no selected Source file. This is local Source lineage only; exact inventory, published-pin registration and fresh numeric validation remain required. Original rows and ceilings stay unchanged."
+  },
+  "rolling_shared_history_and_rewind_20261018": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "reviewed_source_context": "788d1f14885cbea87c6da17206f789ba84c8bf3f plus exact changed bytes in v530",
+    "current_source_bindings": [
+      {
+        "file": "src/governance/policy-workflow.ts",
+        "sha256": "94a0d66693d0d7b66146c51bf6ad62581c527c6e9be01fc0482d36010ba61d8e"
+      },
+      {
+        "file": "src/orchestration/read-only-dispatch-repair.ts",
+        "sha256": "f5a796a8ff57db0ad9fb9f5e03c99242272b5d5c2b61f9ce49af6a6490c3b4f9"
+      },
+      {
+        "file": "bin/reconcile-readonly-dispatch.ts",
+        "sha256": "a9a5dcabe5ca9cd59d3ba482d98ab90f8c1cbb9fb71e714956d49839ad5a3ecc"
+      }
+    ],
+    "review_artifacts": [
+      "/workspace/attachments/governance-stage-calls-review-v523.md",
+      "/workspace/attachments/dispatch-shared-activation-review-v524.md"
+    ],
+    "removed_original_roles": [
+      "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
+      "bin/read-only-dispatch-repair.mjs#binding:sha256/binding:sha256#0"
+    ],
+    "new_roles": [
+      "bin/reconcile-readonly-dispatch.ts#fn:writePlan#0/closure:CallExpression:arguments[1]#0"
+    ],
+    "responsibility_mappings": [
+      {
+        "original_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#3",
+        "current_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
+        "responsibility": "mcpResults rewind filter"
+      },
+      {
+        "original_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#4",
+        "current_identity": "src/governance/policy-workflow.ts#class:PolicyWorkflowRuntime/method:#seek#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#3",
+        "responsibility": "recordedStages rewind filter"
+      }
+    ],
+    "unresolved_gate_gap": "v3 cannot represent a retired original callback lexical identity reused by a distinct retained successor after an earlier callback deletion. Do not pin or numerically admit this governance scope until explicit correspondence is supported. No ceilings are changed."
   }
 }
