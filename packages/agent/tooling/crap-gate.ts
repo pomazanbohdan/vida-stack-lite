@@ -332,7 +332,6 @@ const scopedBudgetReviews = new Map([
     '747579196b592087576efef434c609c8f2715a33:main-envelopes',
     'scope_review_main_envelopes_release_ticket_identity_20261017',
   ],
-  ['4b9fa9adf90a4cb9af424f84efd246bd720e01e1:main-envelopes', 'scope_review_main_envelopes_fraction_reuse_20261018'],
   [
     'fb6fdbdc39c4c1615b561a46a98c75d73df26763:bun-service-operation-custody',
     'scope_review_custody_uuid_predicate_20261017',
@@ -370,6 +369,7 @@ const scopedBudgetReviews = new Map([
     'cac34ce64dd6d4c1dbb69e15c9fa0bbe1efce208:bun-project-upgrade-existing-storage-image',
     'scope_review_storage_image_shared_quote_20261017',
   ],
+  ['4b9fa9adf90a4cb9af424f84efd246bd720e01e1:main-envelopes', 'scope_review_main_envelopes_fraction_reuse_20261018'],
   [`${fsSafeApplicabilityReview.commit}:${fsSafeApplicabilityReview.contour}`, fsSafeApplicabilityReview.key],
 ]);
 
@@ -377,7 +377,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** Choose only an already pinned review; the producer still validates its immutable bytes and exact roles. */
+/** Last registered review wins. Append newer contour reviews after older ones; exact bytes/roles are still validated. */
 export function latestScopedCrapBudgetRef(contour: string, sources: readonly string[], plan: unknown): string | null {
   if (!isRecord(plan)) throw new Error('Expected reviewed lineage plan.');
   for (const [key, reviewKey] of [...scopedBudgetReviews].reverse()) {

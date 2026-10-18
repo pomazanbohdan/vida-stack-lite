@@ -45,8 +45,8 @@ before launching the next producer. Confirm no active user or dependent path;
 record exact paths, owner receipts and free space before/after. Preserve all other
 scratch fixtures, DBs and failure evidence unless separately qualified for removal.
 Reuse the current inventory; do not rescan attachments after every stage. Reuse
-one frozen checkout for compatible coverage/frozen/mutation lanes at the same
-published inputs. Read-only reviews use existing Source, without another worktree.
+one captured gitless image for compatible coverage/frozen/mutation lanes at the
+same published inputs. Read-only reviews use existing Source, without another worktree.
 
 Coverage must use a provider compatible with Bun and report all required
 metrics. The frozen-budget CRAP policy must match its executable gate; a fixed
@@ -1743,6 +1743,9 @@ excluded from the captured input set. Root verifies image bytes/modes after term
 custody and validates reports against that image. SDK formation receipts retain their
 original bytes and owner; the image records their digests. Frozen CRAP reads a bounded
 native-Git baseline/budget capsule with a caller-held digest, without live Git fallback.
+The launch receipt retains the exact lane-specific environment overrides passed
+to the child, including the frozen capsule path/digest and coverage report path.
+Do not serialize the inherited process environment or its secrets into that receipt.
 
 Configured coverage tests get one mutable caller fixture per run, formed from the
 same four captured repository context files through the existing mutation-context

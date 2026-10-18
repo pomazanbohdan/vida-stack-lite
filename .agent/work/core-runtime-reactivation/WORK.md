@@ -53,7 +53,7 @@ incomplete fixture setup; the original logs remain retained. New helper complexi
 is checked against prospective10rather than increasing a baseline. Independent
 native Luna reviewv690reported no additional confirmed issue; directory identity
 is explicitly weaker than full dependency byte identity. Final hook checks and a
-small same-image coverage/frozen/mutation pilot remain pending at this publication.
+small same-image coverage/frozen/mutation pilot were pending at publication968abe7.
 
 Published968abe7passes the ordinary hooks, followed bybbd9a8b's SDK-scope
 regression repair (48PASS/0FAIL). Freshv707stopped before launch on that SDK drift;
@@ -75,7 +75,8 @@ Root removes that duplicate classification while retaining the subject's origina
 Source digest and full image bytes; v721tests the invariant. A separate campaign
 fix permits only unstaged changes to its two existing derived projection files;
 all other Source/staged/untracked changes remain denied. Native Git queries now
-keep the existing5s bound. A fresh qualifying review contour is the next pilot.
+keep the existing5s bound. The next pilot uses main-envelopes with its already
+published current-source review.
 
 Freshv725main-envelopes reaches full Source typecheck but exposes the next
 integration boundary: configuration reads need native CAS guard writes, denied
@@ -87,7 +88,52 @@ reviewv690finds no new concern with this reuse. v727has116PASS/0FAIL/535assertio
 across four affected context, shard, report-validator and custody files in13.13s.
 The transient exec-server transport disconnect did not change the observed boot
 identity or local Source. The retained static log has0diagnostics; final ordinary
-hooks will recheck the exact current packet. Numeric qualification remains open.
+hooks rechecked and published that exact packet asfa469e8.
+
+The same-image main-envelopes pilot now bindsfa469e8and manifest
+5787b3e8e0e1c3d587959d34a3b888ac30f0e7cfe0c31949cebaeed76574d965.
+Coveragev731has F79/79 L214/214 S230/230 B106/106, maxCC/entryCRAP9/9,
+9005.270932ms, stage `/workspace/contour-stage-QDH1PN`, run
+eff25ea4-1444-4010-8dab-5ce531202f4f. Frozenv734passes in1595.326497ms,
+stage `/workspace/contour-stage-mwfZZj`, with that coverage run and published
+review4b9fa9adf90a4cb9af424f84efd246bd720e01e1. Both have complete output,
+observed process-group closure, unchanged boot and unchanged captured inputs.
+Frozenv732retains the original stale-review rejection: Map insertion order had
+selected17October's review after the approved18October entry. Root corrects the
+registration order and adds a selector regression; no review or budget is changed.
+The launch record now retains the exact safe lane overrides used at spawn,
+including frozen Git capsule and coverage locators, without inherited secrets.
+Native mutationv735closes in879126.850429ms under the unchanged900s partition
+budget:212Killed,0Survived,0UNKNOWN,571unattempted from783generated mutants.
+Its second batch records budget_exhausted:true, interrupted:false and no resource
+refusal. Stage `/workspace/contour-stage-IqLI72` retains complete output and
+observed process-group closure; boot and image remain unchanged. Its native run
+is16560d32-2a4d-43a6-98cb-eb2a302f4eab. The automatic projection records the
+refused full admission, not Killed100 or a compatible triple. This demonstrates
+terminal partial-result custody, not complete mutation qualification. Source-only
+controller/documentation edits after capture did not modify the image or shared
+dependencies; its evidence remains bound tofa469e8. No latest-Source, global or
+Runtime qualification is claimed. Default serial throughput remains the measured
+GAP; any existing isolated-worker option needs its own explicit qualification,
+without increasing deadlines or replaying archivedUNKNOWN.
+
+Final targetedv737finds a fixture-closure regression, not a numeric product
+failure: the controlled CRAP child copied a manual tool list without the new
+Git capsule import. Root reuses the existing runtime-import closure once per
+test module and explicitly controls the unit's maintained subject inventory;
+real dependency files are not additional synthetic numeric subjects. v738passes
+the91other focused cases; corrected correspondencev739passes55/55with154assertions
+in1.96s. All original failed fixtures/logs remain retained. Hook checks still own
+the final staged-byte validation; build/install run no suites.
+
+After observed numeric closure, v740retires only the terminal run's1941regular
+Bun.pile derivatives, empty stage install cache and completed four-filev736
+proposal directory. The proposal is preserved in a tar archive with byte/mode
+comparison and restoration data. Exact paths, ownership and custody are retained
+in `/workspace/attachments/image-retirement-v740.json`. Free space changes from
+2865881088to2946695168bytes (+80814080); the2GiB threshold stays unchanged.
+All captured inputs, native reports, original failed fixtures, receipts, SDK
+artifacts and old measured checkouts remain retained.
 
 Active contours: governance/public contracts, dispatch repair and controller
 observation. Published88e8052includes the checked v4 partition-capture repair,

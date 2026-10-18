@@ -4,9 +4,15 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { coverageToolInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
+import {
+  captureRuntimeInputClosure,
+  coverageToolInputs,
+  instrumentSource,
+  sha256,
+} from '../tooling/bun-coverage-evidence.ts';
 import {
   assertReviewedCurrentSourceBindings,
+  latestScopedCrapBudgetRef,
   scopedCrapDispositionProof,
   type ScopedFunctionDisposition,
 } from '../tooling/crap-gate.ts';
@@ -19,6 +25,7 @@ const tools = new Map(
     .filter((file) => file.startsWith('tooling/'))
     .map((file) => [file, readFileSync(path.join(packageRoot, file))]),
 );
+await captureRuntimeInputClosure(packageRoot, [...tools.keys()], [], [], tools);
 
 function unitCounters(file: string, source: string): FileCoverageData {
   const data = instrumentSource(file, source).fileCoverage;
@@ -51,6 +58,12 @@ const v2Rows = [
   },
 ] satisfies ScopedFunctionDisposition[];
 const v2Caps = new Map([['src/a.ts#old', { max_complexity: 2, max_crap: 3 }]]);
+
+test('main-envelopes selects its latest registered reviewed CRAP budget', () => {
+  expect(latestScopedCrapBudgetRef('main-envelopes', ['src/contracts/envelopes.ts'], {})).toBe(
+    '4b9fa9adf90a4cb9af424f84efd246bd720e01e1',
+  );
+});
 
 test('scoped CRAP current Source bindings match the exact validated selection and bytes', () => {
   const digestA = 'a'.repeat(64);
@@ -709,8 +722,9 @@ test('scoped CRAP v2 accepts only the exact reviewed legacy .mjs to current .ts 
   ).toThrow('Scoped CRAP v2 source mapping is invalid, duplicated or outside exact inventories.');
 });
 
-// Controlled post-validation CLI units: Git and the report validator are mocked
-// in an isolated child. These counters are synthetic unit data, never accepted
+// Controlled post-validation CLI units: Git, maintained inventory and the report
+// validator are mocked in an isolated child. Runtime tool dependencies are not
+// numeric subjects. These counters are synthetic unit data, never accepted
 // current/published coverage, frozen budgets, or mutation evidence.
 for (const scenario of [
   'rename',
@@ -851,6 +865,7 @@ for (const scenario of [
       write(planPath, planBytes);
       const payload = {
         root,
+        currentFile: file,
         baselinePath,
         oldInputs,
         currentInputs,
@@ -877,6 +892,11 @@ const data = JSON.parse(readFileSync(new URL('./unit-payload.json', import.meta.
 const gitCalls = new Map<string, number>();
 const historicalRuntimeCalls: string[] = [];
 const actual = await import('node:child_process');
+const inventoryUrl = new URL('./tooling/maintained-source-inventory.ts', import.meta.url).pathname;
+const actualInventory = await import(inventoryUrl);
+mock.module(inventoryUrl, () => ({ ...actualInventory, maintainedSourceInventory() {
+  return { mutationSources: [data.currentFile] };
+} }));
 mock.module('node:child_process', () => ({ ...actual, spawnSync(command: string, args: string[], options: {encoding?: string}) {
   if (command !== 'git') throw new Error('Unexpected unit command: ' + command);
   const key = JSON.stringify(args); gitCalls.set(key, (gitCalls.get(key) ?? 0) + 1);

@@ -529,6 +529,13 @@ async function main(): Promise<void> {
         }
         const timeoutMs =
           lane === 'mutation' ? mutationLimits.partitionMs + 30_000 : lane === 'coverage' ? 330_000 : 60_000;
+        const frozenEnvironment =
+          lane === 'frozen-crap' ? retainQualityGitSnapshot(repositoryRoot, privateScratchDirectory, budget!) : {};
+        const laneEnvironment = {
+          ...isolated.environment,
+          ...frozenEnvironment,
+          ...(lane === 'frozen-crap' && coverage ? { VIDA_BUN_COVERAGE_REPORT: coverage } : {}),
+        };
         writeRecord(stageDirectory, 'launch.json', {
           source_commit: commit,
           boot,
@@ -537,9 +544,8 @@ async function main(): Promise<void> {
           timeout_ms: timeoutMs,
           execution_image: image,
           ...isolated,
+          environment: laneEnvironment,
         });
-        const frozenEnvironment =
-          lane === 'frozen-crap' ? retainQualityGitSnapshot(repositoryRoot, privateScratchDirectory, budget!) : {};
         const started = performance.now();
         const child = await executeMutationCommand(isolated.command, image.packageRoot, timeoutMs, {
           ownedProcessGroup: true,
@@ -548,9 +554,7 @@ async function main(): Promise<void> {
           stderrFile: path.join(stageDirectory, 'stderr.log'),
           env: {
             ...process.env,
-            ...isolated.environment,
-            ...frozenEnvironment,
-            ...(coverage ? { VIDA_BUN_COVERAGE_REPORT: coverage } : {}),
+            ...laneEnvironment,
           },
         });
         const bootAfter = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();

@@ -58,9 +58,9 @@ baseline and budget inputs form a bounded read capability before isolation.
 SDK receipts are referenced by digest, never rewritten to include an image ID.
 Never recapture a partial materialization as a complete inventory.
 
-First implement image capture/materialization and strict loading, then wire the
-existing numeric producers and proof join, then qualify one small contour with
-known complete prerequisites. All new private helpers have prospective CC and
+Image capture/materialization, strict loading, existing numeric producers and
+the proof join are implemented. Qualify the integrated path with complete
+prerequisites and retain the exact outcomes in WORK. All new private helpers have prospective CC and
 CRAP ceilings of10, with no transferred allowances. Root owns the shared files
 and integrates bounded agent patches prepared in separate ordinary directories.
 No new Git worktree is needed for those proposals. Test Source changes after

@@ -346,7 +346,12 @@ async function main(): Promise<void> {
   } catch (error) {
     return retainContourStageResourceRefusal(error, directory, request, packageRoot, values.snapshot);
   }
-  const launch = { ...request, ...isolated };
+  const laneEnvironment = {
+    ...isolated.environment,
+    ...frozenEnvironment,
+    ...(frozen ? { VIDA_BUN_COVERAGE_REPORT: path.resolve(values['coverage-run']!) } : {}),
+  };
+  const launch = { ...request, ...isolated, environment: laneEnvironment };
   record('launch', launch);
   process.stdout.write(
     JSON.stringify({
@@ -366,9 +371,7 @@ async function main(): Promise<void> {
     stderrFile: path.join(directory, 'stderr.log'),
     env: {
       ...process.env,
-      ...isolated.environment,
-      ...frozenEnvironment,
-      ...(frozen ? { VIDA_BUN_COVERAGE_REPORT: path.resolve(values['coverage-run']!) } : {}),
+      ...laneEnvironment,
     },
   });
   let imageFailure: { error: unknown } | undefined;
