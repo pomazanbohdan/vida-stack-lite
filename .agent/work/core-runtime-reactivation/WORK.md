@@ -23,7 +23,7 @@ No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 
 The active pool has three contours: governance/public contracts, dispatch repair
 and main-envelopes. Root serializes numeric producers; blind Luna prepares and
-reviews bounded patches. Dispatch's fixture repair awaits qualified SDK inputs;
+reviews bounded patches. Dispatch's fixture repair now binds SDK and package data;
 main-envelopes awaits a measured correction rather than an unchanged full retry.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
@@ -130,7 +130,7 @@ are incomplete and are not contour closure:
 
 | Contour/run | Functions | Lines | Statements | Branches | maxCC/CRAP |
 | --- | --- | --- | --- | --- | --- |
-| Governance527729f1(v765) |105/105|365/365|405/407|248/251|32/32|
+| Governanceccc6c4d2(v780) |105/105|365/365|406/407|249/251|32/32|
 | Dispatch78614afc(v542) |61/70|289/312|308/334|240/256|39/39|
 | Controller7071caed(v564) |27/28|132/156|144/182|127/164|14/20|
 
@@ -171,9 +171,39 @@ preparation eligibility for both tests. No new scan, hash or formation owner is
 introduced. v774 passes all13formation-capture cases/135assertions in481ms,
 including focused launcher stale/missing artifact denials. v775 passes all4
 focused preparation policy cases/32assertions in1414ms, including non-SDK and
-review denials. The current Source has no dist/sdk-formation.json; dispatch needs
-qualified SDK formation inputs before its next image. The ready governance lane
-can continue independently. TESTING and bun-test skill now preserve this boundary.
+review denials. The initial checkout lacks dist/sdk-formation.json, so the next
+dispatch image waits for qualified SDK formation inputs. TESTING and bun-test
+skill preserve this boundary; the acquisition outcome is recorded below.
+
+Normal hookv778 and pushv779 publish1a68ca6. Fresh governancev780 on its own
+image closes in62294.285257ms with F105/105 L365/365 S406/407 B249/251,
+maxCC/entryCRAP32/32. Stage /workspace/contour-stage-Kv1xWL retains run
+ccc6c4d2-8829-4a54-b557-4f87243f23e4 and complete unchanged boot/image/capture
+custody. Its capacity body takes2149.39ms under coverage, default5s unchanged.
+It remains BLOCKED by the exact gate. No frozen pass or mutation closure is inferred.
+
+SDK preparationv781 reaches successful CI run39157929418/attempt1/artifact
+12147273786 but native gh ZIP transport fails. The existing connector bridge
+provides the exact ZIP; readinessv782 verifies API artifact digest, formation
+receipt and current inputs before publication. Artifact SHA256 is
+7e16a78886c16506477ec265a11866c9b787fe4558b96b78dfd8a5e8caf898aa;
+original SDK receipt SHA256 is
+7f88ab41d15cac53eb68058332f6aab1479d8cb5a4419b469159dafffe8b0cba.
+The archive remains /workspace/attachments/vida-sdk-inputs-1a68ca6.zip;
+the native download receipt remains under dist. No local build, install, receipt
+rewrite or runtime cutover is used. A single post-preparation df observes
+2377957376available bytes on the common checkout/image/scratch/evidence overlay,
+above the unchanged2147483648threshold. No broad scan or cleanup is repeated.
+
+Fresh dispatchv783 closes with54PASS/2FAIL and449assertions in46.34s test time,
+50637.888902ms stage time. Its complete original failure custody remains in
+/workspace/contour-stage-ViwbDm; no coverage report or score is fabricated.
+The three configured-context repairs pass the full selected files. Both remaining
+launcher cases need package TESTING.md, an fs-read input absent from capture.
+The existing bounded fixture-data owner now binds it for this actual test closure,
+without changing numeric Source or SDK formation scope. v784 passes all13capture
+cases/142assertions in394ms, including exact single binding, changed-data
+fingerprint and missing-data rejection. Immutable failed images stay unchanged.
 
 Root integrates one public1000/1001result-capacity regression from blind Lunav767.
 It uses real SDK transitions, checks ordered immutable evidence and all subsequent

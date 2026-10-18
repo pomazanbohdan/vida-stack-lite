@@ -65,6 +65,7 @@ describe('SDK formation capture projection', () => {
       write('bin/cli-metadata.ts', 'export const inert = true;\n');
       write('tests/sdk-package-compatibility.test.ts', "import '../bin/cli-metadata.ts';\n");
       write('tests/paused-replacement-entrypoint.test.ts', "import '../bin/cli-metadata.ts';\n");
+      write('TESTING.md', '# Captured launcher fixture contract\n');
       write('templates/inert.yaml', 'inert: true\n');
       write('instructions/inert.md', 'inert\n');
       write('tooling/build-package.ts', "import './sdk-leaf.ts';\n");
@@ -93,13 +94,11 @@ describe('SDK formation capture projection', () => {
       };
       write('dist/sdk-formation.json', JSON.stringify(receipt));
       const selectedSource = mode === 'focused-bin' ? 'bin/cli-metadata.ts' : 'src/index.ts';
-      const inputs = await qualityInputs(
-        root,
-        [],
+      const selection =
         mode === 'full'
           ? 'current'
           : {
-              mode: 'focused-diagnostic',
+              mode: 'focused-diagnostic' as const,
               contour: 'sdk-fixture',
               sources: [selectedSource],
               tests: [
@@ -107,8 +106,20 @@ describe('SDK formation capture projection', () => {
                   ? 'tests/paused-replacement-entrypoint.test.ts'
                   : 'tests/sdk-package-compatibility.test.ts',
               ],
-            },
-      );
+            };
+      const inputs = await qualityInputs(root, [], selection);
+      if (mode === 'focused-launcher') {
+        expect(inputs.input_bytes['TESTING.md']?.toString()).toBe('# Captured launcher fixture contract\n');
+        expect(inputs.tool_inputs.filter((entry) => entry.path === 'TESTING.md')).toHaveLength(1);
+        write('TESTING.md', '# Changed launcher fixture contract\n');
+        const changed = await qualityInputs(root, [], selection);
+        expect(changed.source_fingerprint).toBe(inputs.source_fingerprint);
+        expect(changed.test_fingerprint).toBe(inputs.test_fingerprint);
+        expect(changed.tool_fingerprint).not.toBe(inputs.tool_fingerprint);
+        rmSync(path.join(root, 'TESTING.md'));
+        await expectRejected(() => qualityInputs(root, [], selection), /TESTING\.md/u);
+        write('TESTING.md', '# Captured launcher fixture contract\n');
+      }
       const projected = sdkFormationInputsFromQualityCapture(inputs);
       expect([...projected.selectedInputs.keys()]).toEqual([...sdkInputs.keys()]);
       for (const [file, bytes] of sdkInputs) expect(projected.selectedInputs.get(file)).toEqual(bytes);

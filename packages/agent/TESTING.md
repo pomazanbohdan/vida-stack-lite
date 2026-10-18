@@ -3075,6 +3075,9 @@ selectedTestsRequireSdkArtifacts owner for capture, freshness, restoration and
 preparation eligibility; it includes both compatibility and paused-replacement
 tests. A missing SDK formation receipt is a prerequisite gap, not permission to
 omit dist or fabricate exports. Pure selections still avoid SDK preparation.
+That launcher's package TESTING.md is also fixture data. Capture it through the
+existing bounded fixture-data owner, bind freshness and reject missing bytes;
+do not copy it into an already formed image after a failed test.
 
 ## Required agent regressions
 

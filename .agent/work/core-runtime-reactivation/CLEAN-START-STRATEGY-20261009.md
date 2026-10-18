@@ -85,6 +85,10 @@ The dispatch context repairs and launcher SDK selection now have targeted proof.
 Retain mandatory SDK exports and acquire qualified formation inputs before a
 fresh dispatch image; absent formation receipt leaves that lane OPEN. Continue
 the ready governance lane while preserving its residual defensive-branch gaps.
+The current SDK inputs are now qualified through the existing artifact bridge.
+Dispatch improves to54PASS/2FAIL; bind its remaining package TESTING.md input
+through the existing bounded owner before another fresh image. WORK owns the
+measured Source/inputs; do not infer coverage or closure from partial success.
 
 The fresh governance producer exposes missing pre-capture of explicit computed
 module roots outside the selected coverage Source. Capture these roots through
