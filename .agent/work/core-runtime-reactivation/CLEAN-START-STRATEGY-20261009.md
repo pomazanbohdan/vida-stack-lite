@@ -139,6 +139,14 @@ unreachable lastRecordedEvidence spread. Delete only that expression after the
 producer is terminal, preserving the public null state field, callable identity
 and its own predecessor budget. Recheck changed public cases, publish normally
 and use one fresh coverage run; no contour closure follows from the diagnostic.
+That fresh v667run completes161tests with105/105functions,363/365lines,
+398/407statements and243/251branches; frozen acceptance remains open. The saved
+compact mapv668is the next input owner. It leaves one canonical serializer guard,
+workflow SDK defensive states and the result-capacity/failure-latch boundary.
+Reuse these observations before designing the next bounded cases; do not repeat
+unchanged coverage or relabel an SDK/setup error as an assertion kill. Root's
+external completed-cache cleanup frees669036544bytes; after terminal custody,
+retire eligible external caches before the next producer and keep all originals.
 
 Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
 `nativeDiagnosticIdSet` owner and its invalid-token predicate, each with

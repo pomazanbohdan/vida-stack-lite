@@ -26,8 +26,10 @@ observation. Published88e8052includes the checked v4 partition-capture repair,
 on top of the verified capacity recovery through ordinary hooks/push. Freshv655
 exposes its next standalone tool-closure dependency before the baseline starts;
 the causal correction and public governance cases are published05a43ac. Native
-v663now validates the standalone closure and confirms the repaired guard mutant's
-assertion kill. Its diagnostic-only scope leaves980mutants unattempted.
+v663validates the standalone closure and confirms the repaired guard mutant's
+assertion kill before the later snapshot simplification. Its diagnostic-only
+scope leaves980mutants unattempted. The latest focused coveragev667binds published
+f9f6f71and is complete but nonexact; no current compatible triple is established.
 All immutable rolling-measure-* checkouts remain untouched. v637 resolves the
 observed resource deficit without changing them; next measurement waits for the
 current packet's normal checks/publication and fresh native admission.
@@ -37,14 +39,14 @@ new residual test changes. They are incomplete and are not contour closure:
 
 | Contour/run | Functions | Lines | Statements | Branches | maxCC/CRAP |
 | --- | --- | --- | --- | --- | --- |
-| Governance4fe5297d(v641) |105/105|363/365|395/407|236/253|32/32|
+| Governance18c28918(v667) |105/105|363/365|398/407|243/251|32/32|
 | Dispatch78614afc(v542) |61/70|289/312|308/334|240/256|39/39|
 | Controller7071caed(v564) |27/28|132/156|144/182|127/164|14/20|
 
 The maintained stage owner imported every terminal result. Exact full artifact
 paths, hashes and commit/input bindings remain in CONTOUR-STATUS.json and the
 original producer directories, not a reconstructed union. Existing compact maps
-are governance-deficits-v604.json, dispatch-deficits-v544.json and the controller
+are governance-deficits-v668.json, dispatch-deficits-v544.json and the controller
 v562 report under /workspace/attachments. Reuse them; no whole-codebase rescan.
 
 ### Three-hour audit and current verification repairs
@@ -380,6 +382,22 @@ lanes, allocates no worktree for read-only review and retires exact regenerable
 external caches after terminal custody. Existing rolling writer-isolation and
 immediate completed-preparation retirement rules remain. Preserve unique evidence;
 lower storage consumption does not authorize deleting retained measured Source.
+
+The cleanup policy packet passes the normal hook and ordinary push asf9f6f71:
+formatting,514-file strict typecheck in4.07s, typed lint and Knip. Newv666reuses the
+same retained package dependencies, compares manifest/lock/pin and freezes this
+published commit, without root dependencies or SDK formation. One coveragev667/
+1XdkdR(run18c28918-c242-4e6e-ab80-59c7eaab220c) terminates in71703.451258ms:
+161tests/8476assertions,0fail, complete capture, groups closed, unchanged boot/
+commit and clean inputs. Automatic projection imports769attempts and the paired
+BLOCKED operation, not a contour PASS. Functions105/105,lines363/365,statements
+398/407,branches243/251,maxCC/entryCRAP32/32. Compared withv641:+3covered statements,
++7covered branch arms and2fewer dead arms, with functions/lines unchanged. This
+is diagnostic CRAP, not reviewed frozen-budget proof. The v663mutation is from
+earlier Source and cannot be combined into a current triple. Compact zero-slot
+mapv668reuses this existing report only; no new AST/scan/hash pass. Timing is not
+improved:71.7s versusv641's51.5s are different input states and uncontrolled host
+samples, so no throughput gain or parallel-resource qualification is inferred.
 
 Current dependency-ready packet repairs the prelaunch resource-reporting GAP
 while numeric work remains blocked. Root remains the only writer; blind read-only
