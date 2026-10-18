@@ -408,6 +408,59 @@ caps do not authorize inferring parent ceilings. Exact lookup GAP:
 Source change or frozen-cap replacement is adopted. Receipt-only phase handshake
 candidatev300 is retained separately and is not a product-lock repair.
 
+Fresh immutable2b01192 SDK formationhzRmX2 closes1889ms without suites. Image
+coverage6c7d56ee-d6fb-4f60-86e0-74bff735d8ad passes94cases/751assertions in5.34s,
+exact F49/49,L203/203,S222/222,B61/61. Same-run frozen cac34ce passes9/9 at
+/tmp/contour-stage-vrfjqr. Addressed native diagnostic
+b9bc0a95-e1b6-4dd3-904b-0a7eebeeb5d0 at /tmp/rolling-contour-NI9yY8 closes42273ms:
+all12selected currentIDs151,399,160,118,517,156,131,127,322,528,509,489 are
+assertion-confirmed Killed,0Survived/0UNKNOWN/476unattempted of488. Baseline94
+passes5883ms; captures/group/boot/commit/clean inputs close. Nonzero diagnostic
+exit correctly reflects the unattempted universe; this is not full native
+qualification. Previous UNKNOWN outcomes stay unchanged. The current full488
+plan completed through the maintained stage owner on those same immutable bytes.
+
+Full image8d8c98c6-687a-496c-a0b0-9fd109ebd880 closes880968ms at
+/tmp/contour-stage-kviUHk:426attempted,424assertion-Killed,2Survived,
+0UNKNOWN and62unattempted of488. The900s partition budget is exhausted;
+captures/group/boot/commit/clean inputs close and resource_blocked=null.
+The complete native proof is correctly denied. Survived88 forces the second WAL
+header condition true;253 weakens fallback close(true) to close(false).
+Prepared public Host/Mastra 3/3 and2/3 rejection plus readable2/1 controls and
+pre-native SDK-close faults with live native cursor/statement probes address
+those gaps without changing product Source, inventory or frozen caps. The next
+full selection has101cases. FocusedtzuQRJ passes12selected/89unselected in1496ms,
+with complete captures/group/boot; this is development evidence, not mutation proof.
+
+Worker startup unnecessarily loaded Babel/Istanbul through coverage helpers.
+The synchronous wrapper now lazily calls its same captured instrumentation owner;
+the literal require edge and its transitive hashes remain in the module closure.
+Coverage math/counters/input projections pass51cases at bPfWnW; producer-map and
+preload lifecycle pass11cases at Mn6u6V with complete captures/group/boot.
+Alternating five-pair fresh-process import-only measurements with cache disabled
+are retained at /tmp/lazy-instrumentation-import-AZN3CO/report.json:
+coverage-helper imports334.9/312.8/312.5/315.3/347.9ms before versus
+48.5/51.9/51.7/39.5/51.8ms after; runner346.4/358.5/346.5/328.9/364.2ms
+versus69.9/67.3/63.5/56.1/64.8ms. These establish import cost only.
+Earlier runner-receipt/JUnit differences excluded launcher startup; retained
+launcher file timestamps show roughly508–668ms outside four child receipts.
+Do not attribute all campaign cost to tests from the narrower measurement.
+No shared writable worker cache, timeout increase, result reuse or full-suite
+timing improvement is claimed. Fresh bound coverage/frozen/native proofs follow.
+
+The first strict commit hook passes formatting and511-file TypeScript, then
+tsgolint is OOM-killed: cgroup oom2/oom_kill4 versus prior1/3. No lint PASS or
+commit is claimed. With all quality/numeric owners terminal, retentionv306
+verifies the existing disk dependency owner against its saved inventory, then
+independently verifies five closed v220/v221/v224/v219/v217 copies byte-for-byte,
+including modes and internal link targets. Each has26823entries/405716961file
+bytes; replacing only those installed copies with links retains exact contents
+and releases2028584805logical bytes from tmpfs. Manifest:
+/workspace/attachments/closed-dependency-dedup-v306/retention.json. No Source,
+SDK, raw results, fixtures, DBs or UNKNOWN outcomes are removed. Historical
+dependency realpaths change and never requalify their old measurements. Normal
+strict hooks are rerun without bypass or gate changes.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is

@@ -290,7 +290,7 @@ function nativeStatementMember(statement: object, property: PropertyKey): unknow
 
 async function expectPinnedPhaseFailure(
   phase: 'inventory' | 'Host clone',
-  faults: { serialize: boolean; storeClose: boolean; databaseClose: boolean },
+  faults: { serialize: boolean; storeClose: boolean; databaseClose: boolean; storeCloseBeforeNative?: boolean },
 ): Promise<void> {
   const host = makeHost();
   const mastra = await makeMastra();
@@ -311,6 +311,7 @@ async function expectPinnedPhaseFailure(
   let storeCloseReached = false;
   let databaseCloseReached = false;
   let closingStoreInProgress = false;
+  const closeProbes: { first: unknown; next: () => unknown; all: () => unknown; finalize: () => void }[] = [];
   const initializing = spyOn(LibSQLStore.prototype, 'init').mockImplementation(async function (
     this: LibSQLStore,
     ...args
@@ -350,6 +351,22 @@ async function expectPinnedPhaseFailure(
   ) {
     closingStoreInProgress = true;
     try {
+      if (targetStores.has(this) && faults.storeCloseBeforeNative) {
+        storeCloseReached = true;
+        for (const database of targetDatabases) {
+          const statement = database.prepare<{ value: number | bigint }, []>(
+            'SELECT 1 AS value UNION ALL SELECT 2 AS value',
+          );
+          const cursor = statement.iterate();
+          closeProbes.push({
+            first: cursor.next(),
+            next: () => cursor.next(),
+            all: () => statement.all(),
+            finalize: () => statement.finalize(),
+          });
+        }
+        throw storeCloseError;
+      }
       const result = await storeClose.apply(this, args);
       if (targetStores.has(this)) {
         storeCloseReached = true;
@@ -367,6 +384,8 @@ async function expectPinnedPhaseFailure(
       if (faults.databaseClose && !closingStoreInProgress) throw undefined;
     }
   });
+  let fixtureFailure: { error: unknown } | undefined;
+  const cleanupFailures: unknown[] = [];
   try {
     const failure = await rejectionReason(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
     expect(initCount).toBe(targetInit);
@@ -390,15 +409,65 @@ async function expectPinnedPhaseFailure(
           : 'pinned schema initialization and close failed',
       );
     } else expect(failure).toBe(expected[0]);
+    if (faults.storeCloseBeforeNative) expect(closeProbes).toHaveLength(1);
+    for (const probe of closeProbes) {
+      expect(probe.first).toEqual({ value: { value: 1n }, done: false });
+      expect(probe.next).toThrow('Database has closed');
+      expect(probe.all).toThrow('Database has closed');
+    }
+    for (const database of targetDatabases) expect(() => database.query('SELECT 1').get()).toThrow();
+  } catch (error) {
+    fixtureFailure = { error };
   } finally {
     closingDatabase.mockRestore();
     closingStore.mockRestore();
     serializing.mockRestore();
     observingQueries.mockRestore();
     initializing.mockRestore();
+    for (const probe of closeProbes) {
+      try {
+        probe.finalize();
+      } catch (error) {
+        cleanupFailures.push(error);
+      }
+    }
+    if (faults.storeCloseBeforeNative) {
+      for (const store of targetStores) {
+        try {
+          await storeClose.call(store);
+        } catch (error) {
+          cleanupFailures.push(error);
+        }
+      }
+      for (const database of targetDatabases) {
+        try {
+          databaseClose.call(database, true);
+        } catch (error) {
+          cleanupFailures.push(error);
+        }
+      }
+    }
   }
-  for (const database of targetDatabases) expect(() => database.query('SELECT 1').get()).toThrow();
+  if (cleanupFailures.length)
+    throw new AggregateError(
+      [...(fixtureFailure ? [fixtureFailure.error] : []), ...cleanupFailures],
+      'Pinned phase fixture cleanup failed',
+      fixtureFailure ? { cause: fixtureFailure.error } : undefined,
+    );
+  if (fixtureFailure) throw fixtureFailure.error;
 }
+
+test.each(['inventory', 'Host clone'] as const)(
+  'force-closes the owned %s cursor when SDK close fails before native close',
+  async (phase) => {
+    await expectPinnedPhaseFailure(phase, {
+      serialize: false,
+      storeClose: true,
+      databaseClose: false,
+      storeCloseBeforeNative: true,
+    });
+  },
+);
 
 test.each([
   ['inventory / clean teardown', 'inventory', true, false, false],
@@ -1002,30 +1071,42 @@ async function assertWalImageMerge(walHost: boolean, walMastra: boolean): Promis
 }
 
 describe('existing storage image preparation', () => {
-  test('rejects a malformed SQLite journal-version header without rewriting either source image', async () => {
-    const originalHost = makeHost();
-    const mastra = await makeMastra();
-    const malformedHostBytes = Uint8Array.from(originalHost.bytes);
-    malformedHostBytes[18] = 3;
-    malformedHostBytes[19] = 3;
-    const host: ClosedDatabaseImage = {
-      ...originalHost,
-      size: malformedHostBytes.byteLength,
-      sha256: sha256(malformedHostBytes),
-      bytes: malformedHostBytes,
-    };
-    const hostBefore = Buffer.from(host.bytes);
-    const mastraBefore = Buffer.from(mastra.bytes);
-
-    await expectRejection(
-      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
-      /file is not a database/u,
-    );
-
-    expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
-    expect(host.sha256).toBe(sha256(hostBefore));
-    expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
-  });
+  test.each(
+    (
+      [
+        ['Host', 3, 3],
+        ['Mastra', 3, 3],
+        ['Host', 2, 3],
+        ['Mastra', 2, 3],
+      ] as const
+    ).map(
+      ([label, writeVersion, readVersion]) =>
+        [`${label} ${writeVersion}/${readVersion}`, label, writeVersion, readVersion] as const,
+    ),
+  )(
+    'rejects malformed SQLite journal versions %s without rewriting either source image',
+    async (_scenario, label, writeVersion, readVersion) => {
+      const originalHost = makeHost();
+      const originalMastra = await makeMastra();
+      const original = label === 'Host' ? originalHost : originalMastra;
+      const bytes = Buffer.from(original.bytes);
+      bytes[18] = writeVersion;
+      bytes[19] = readVersion;
+      const malformed = { ...original, bytes, sha256: sha256(bytes) };
+      const host = label === 'Host' ? malformed : originalHost;
+      const mastra = label === 'Mastra' ? malformed : originalMastra;
+      const hostBefore = Buffer.from(host.bytes);
+      const mastraBefore = Buffer.from(mastra.bytes);
+      await expectRejection(
+        prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+        /file is not a database/u,
+      );
+      expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
+      expect(host.sha256).toBe(sha256(hostBefore));
+      expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
+      expect(mastra.sha256).toBe(sha256(mastraBefore));
+    },
+  );
 
   test.each([
     ['Host', 'source_host_digest'],
@@ -1848,6 +1929,35 @@ describe('existing storage image preparation', () => {
     await assertWalImageMerge(true, true);
   });
 
+  test.each(['Host', 'Mastra'] as const)(
+    'accepts a readable %s 2/1 header without changing either input image',
+    async (label) => {
+      const host = makeHost();
+      const mastra = await makeMastra();
+      const original = label === 'Host' ? host : mastra;
+      const bytes = Buffer.from(original.bytes);
+      bytes[18] = 2;
+      bytes[19] = 1;
+      const readable = { ...original, bytes, sha256: sha256(bytes) };
+      const selectedHost = label === 'Host' ? readable : host;
+      const selectedMastra = label === 'Mastra' ? readable : mastra;
+      const hostBefore = Buffer.from(selectedHost.bytes);
+      const mastraBefore = Buffer.from(selectedMastra.bytes);
+      const image = await expectAsyncReturned(() =>
+        prepareUnifiedExistingStorageImage(selectedHost, selectedMastra, binding(selectedHost, selectedMastra)),
+      );
+      expect(image.binding).toEqual(binding(selectedHost, selectedMastra));
+      expect(Buffer.from(selectedHost.bytes).equals(hostBefore)).toBe(true);
+      expect(Buffer.from(selectedMastra.bytes).equals(mastraBefore)).toBe(true);
+      const merged = openUnified(image.bytes_base64);
+      try {
+        expect(merged.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
+      } finally {
+        merged.close(true);
+      }
+    },
+  );
+
   test.each([
     ['fractional REAL', 1.5],
     ['unsafe Number integer', 9007199254740992],
@@ -1997,14 +2107,18 @@ describe('existing storage image preparation', () => {
     },
   );
 
-  test.each([
-    ['Host', 'digest', 0],
-    ['Mastra', 'digest', 1],
-    ['Host', 'size', 0],
-    ['Mastra', 'size', 1],
-  ] as const)(
-    'rejects a %s image with stale %s metadata before deserializing it',
-    async (label, mismatch, expectedOpens) => {
+  test.each(
+    (
+      [
+        ['Host', 'digest', 0],
+        ['Mastra', 'digest', 1],
+        ['Host', 'size', 0],
+        ['Mastra', 'size', 1],
+      ] as const
+    ).map(([label, mismatch, expectedOpens]) => [`${label} ${mismatch}`, label, mismatch, expectedOpens] as const),
+  )(
+    'rejects an image with stale %s metadata before deserializing it',
+    async (_scenario, label, mismatch, expectedOpens) => {
       const host = makeHost();
       const mastra = await makeMastra();
       const image = label === 'Host' ? host : mastra;

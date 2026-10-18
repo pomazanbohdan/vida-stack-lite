@@ -6,7 +6,7 @@ import { closeSync, fstatSync } from 'node:fs';
 import type { Dirent } from 'node:fs';
 import path from 'node:path';
 import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
-import { instrumentSource as instrumentCapturedSource } from './source-instrumentation.ts';
+import type { instrumentSource as instrumentCapturedSource } from './source-instrumentation.ts';
 import {
   expectedJavascriptFiles,
   maintainedSourceInventory,
@@ -670,7 +670,10 @@ function publishedBaselineSelection(root: string): TestSelection {
 export function instrumentSource(
   ...args: Parameters<typeof instrumentCapturedSource>
 ): ReturnType<typeof instrumentCapturedSource> {
-  return instrumentCapturedSource(...args);
+  // Mutation workers validate captured inputs without instrumenting Source. Keep
+  // the synchronous instrumentation owner lazy, with a literal captured edge.
+  const implementation = require('./source-instrumentation.ts') as typeof import('./source-instrumentation.ts');
+  return implementation.instrumentSource(...args);
 }
 
 async function walkFiles(root: string, directory: string, depth = 0): Promise<string[]> {

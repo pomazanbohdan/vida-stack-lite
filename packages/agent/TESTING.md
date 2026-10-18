@@ -641,8 +641,13 @@ prepared-statement and partially consumed cursor behavior before test cleanup;
 finalizing statements or force-closing handles first would mask the defect.
 Instrument each handle's first close only, preserving defensive repeated closes,
 and always restore/finalize retained probes in finally. A malformed serialized
-journal-header fixture must actually fail Bun's native parser (3/3 does;0/0 does
-not); rebind its digest and prove both source images remain unchanged. These
+journal-header fixture must actually fail Bun's native parser after a query
+(deserialization is lazy): 3/3 and 2/3 fail, while 2/1 remains readable. Exercise
+both Host and Mastra inputs; rebind digests and prove both images remain unchanged.
+An SDK-close fault injected after native close cannot qualify fallback force-close:
+inject before native close and observe the retained statement/cursor before cleanup.
+Use one complete scenario label in Bun test.each titles so repeated placeholders
+do not collapse distinct cases into duplicate test IDs. These
 native observations do not substitute for assertion-confirmed mutation results.
 Controlled dependency-fault cases may exercise existing defensive diagnostics
 with missing COUNT/PRAGMA rows or appended hidden metadata. Label that fault
@@ -1366,6 +1371,13 @@ sandbox can write. This caches compiled bytes, never test execution or admission
 evidence: input/executable readbacks, full selected tests, activation, assertions,
 JUnit and custody checks all remain required. Qualify the actual generated-image
 run before claiming any timing improvement.
+
+The coverage-input helper loads its synchronous instrumentation owner only when
+instrumentSource is called. Its literal require edge remains in the captured
+module closure and fingerprints; it must not add Babel/Istanbul startup to
+workers that only validate inputs. Keep the complete instrumentation/map tests
+and lazy-edge invalidation check. Import-only benchmarks qualify startup cost
+only; they do not establish a complete mutation campaign speedup.
 
 The shared mutation preload accepts diagnostic `AGENT_MUTATION_PER_TEST_CAPTURE=1`
 and writes `per-test-coverage.json` exclusively inside its invocation-owned

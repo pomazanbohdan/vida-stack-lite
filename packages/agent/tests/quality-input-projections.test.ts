@@ -1063,7 +1063,7 @@ describe('final quality input projections', () => {
     expect(after.guard.tool_inputs.map(({ path: file }) => file)).not.toContain('src/host-state.ts');
   });
 
-  test('resolves TypeScript extension aliases and closes cycles plus literal dynamic imports', async () => {
+  test('resolves TypeScript aliases and closes cycles, dynamic imports and lazy literal requires', async () => {
     const root = fixtureRoot();
     writeFileSync(
       path.join(root, 'tests/fixture.test.mjs'),
@@ -1071,19 +1071,24 @@ describe('final quality input projections', () => {
     );
     writeFileSync(
       path.join(root, 'tooling/discovered-runtime.ts'),
-      "import './discovered-leaf.ts';\nvoid import('./dynamic-target.ts');\nexport const runtime = true;\n",
+      "import './discovered-leaf.ts';\nvoid import('./dynamic-target.ts');\nexport function runtime() { return require('./lazy-target.ts'); }\n",
     );
     writeFileSync(
       path.join(root, 'tooling/discovered-leaf.ts'),
       "import './discovered-runtime.js';\nexport const leaf = true;\n",
     );
     writeFileSync(path.join(root, 'tooling/dynamic-target.ts'), 'export const dynamic = true;\n');
+    writeFileSync(path.join(root, 'tooling/lazy-target.ts'), 'export const lazy = true;\n');
 
     const { guard } = await qualityInputProjections(root, { coverage: [], mutation: [], guard: [] });
     const capturedTools = guard.tool_inputs.map(({ path: file }) => file);
     expect(capturedTools).toContain('tooling/discovered-runtime.ts');
     expect(capturedTools).toContain('tooling/discovered-leaf.ts');
     expect(capturedTools).toContain('tooling/dynamic-target.ts');
+    expect(capturedTools).toContain('tooling/lazy-target.ts');
+    writeFileSync(path.join(root, 'tooling/lazy-target.ts'), 'export const lazy = false;\n');
+    const changed = await qualityInputProjections(root, { coverage: [], mutation: [], guard: [] });
+    expect(changed.guard.tool_fingerprint).not.toBe(guard.tool_fingerprint);
   });
 
   test('rejects unresolved and escaping relative runtime imports during capture', async () => {
