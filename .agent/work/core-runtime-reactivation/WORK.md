@@ -131,7 +131,7 @@ are incomplete and are not contour closure:
 | Contour/run | Functions | Lines | Statements | Branches | maxCC/CRAP |
 | --- | --- | --- | --- | --- | --- |
 | Governanceccc6c4d2(v780) |105/105|365/365|406/407|249/251|32/32|
-| Dispatch78614afc(v542) |61/70|289/312|308/334|240/256|39/39|
+| Dispatch38b4557e(v788) |70/70|298/312|318/334|244/256|39/39|
 | Controller7071caed(v564) |27/28|132/156|144/182|127/164|14/20|
 
 Published e34393b contains the hash correction and four regressions; ordinary
@@ -204,6 +204,27 @@ The existing bounded fixture-data owner now binds it for this actual test closur
 without changing numeric Source or SDK formation scope. v784 passes all13capture
 cases/142assertions in394ms, including exact single binding, changed-data
 fingerprint and missing-data rejection. Immutable failed images stay unchanged.
+
+Normal hookv785 and pushv786 publish d2e557f. Preflight of the already retained
+SDK receipt shows bun-coverage-evidence.ts is a formation input, so Root obtains
+the matching new CI artifact before launching another image. Existing bridge
+plus readinessv787 qualifies run39158486802/attempt1/artifact12147723086,
+archive SHA256b9f1f2eec9c6cd124e30c8f651c3dc50f5f40165eead05f99eea2c73a317248c.
+No repeated native ZIP failure, synthetic SDK or additional suite is needed.
+
+Fresh dispatchv788 on d2e557f passes all56cases/604assertions in147.29s;
+stage /workspace/contour-stage-Z6c2jC closes in152150.066275ms. Run
+38b4557e-b049-4bb2-90c0-ab4237367508 retains complete capture/group custody,
+unchanged boot/image and original SDK receipts. F70/70 L298/312 S318/334 B244/256,
+maxCC/entryCRAP39/39 remain exact-gate BLOCKED. The image is
+/workspace/.vida-quality-inputs/9dcd4d178f07979080f85333b741e4ef392bcb1e/repository;
+manifest SHA256d873e9cb10a2e45d5dd4800fe9e5055ba4076d4c92c29d8e8b36e66b61e5f449.
+No mutation/frozen pass or global closure is inferred. Reading its existing
+counter map once locates all16uncovered statements in bin/reconcile-artifacts.ts,
+11missing branch arms there and1guard-constrained CLI fallback. Both read-only
+repair implementations have exact counters. The same blind Luna writer prepares
+one bounded public-router regression packetv789; Root retains sole Source/Git
+and numeric ownership. No second cycle, new worktree or wider scan is started.
 
 Root integrates one public1000/1001result-capacity regression from blind Lunav767.
 It uses real SDK transitions, checks ordered immutable evidence and all subsequent

@@ -89,6 +89,10 @@ The current SDK inputs are now qualified through the existing artifact bridge.
 Dispatch improves to54PASS/2FAIL; bind its remaining package TESTING.md input
 through the existing bounded owner before another fresh image. WORK owns the
 measured Source/inputs; do not infer coverage or closure from partial success.
+That correction is published as d2e557f; matched SDK inputs and fresh dispatch
+coverage now pass all56tests with exact functions. Next repair the residual public
+reconcile-artifacts router paths from v788's own counters, using its existing
+contour writer. Exact lines/statements/branches and complete mutation remain OPEN.
 
 The fresh governance producer exposes missing pre-capture of explicit computed
 module roots outside the selected coverage Source. Capture these roots through
