@@ -9,6 +9,7 @@ import {
   nativeMutationAttempt,
   renderContourProgress,
   selectContourCampaign,
+  reviewedDataOnlyClosure,
 } from '../tooling/contour-progress.ts';
 import type { NativeMutationProjection } from '../tooling/contour-progress.ts';
 import {
@@ -19,6 +20,7 @@ import {
 import { campaignReportArguments } from '../tooling/contour-campaign.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
+import { crapApplicabilityReceiptFixture } from './helpers/crap-applicability-fixture.ts';
 
 const activeCount = mutationPartitions().filter((row) => row.environment !== 'static').length;
 const oneOfActive = '**1/' + activeCount + '**';
@@ -32,6 +34,139 @@ const receipt = {
   recorded_at: '2026-10-15T00:00:00.000Z',
 };
 const empty = { schema: 'VidaContourProgress/v1', attempts: [] };
+
+function dataOnlyProjectionFixture() {
+  const applicability = crapApplicabilityReceiptFixture();
+  const { read } = nativeProjectionFixture();
+  const report = {
+    ...coverage(),
+    run_id: applicability.run_id,
+    manifest_sha256: applicability.manifest_sha256,
+    sources: applicability.sources,
+    test_inputs: applicability.test_inputs,
+    tool_inputs: applicability.tool_inputs,
+    module_inputs: applicability.module_inputs,
+    test_selection: applicability.test_selection,
+    metrics: [
+      {
+        file: applicability.sources[0]!.path,
+        functions: [],
+        coverage: {
+          functions: { covered: 0, total: 0 },
+          branches: { covered: 0, total: 0 },
+          lines: { covered: 4, total: 4 },
+          statements: { covered: 4, total: 4 },
+        },
+      },
+    ],
+  };
+  read.report.binding.partition = applicability.contour;
+  read.report.binding.partition_sources = applicability.sources;
+  read.report.tests = applicability.test_selection.tests;
+  read.proof.binding = structuredClone(read.report.binding);
+  read.descriptor = {
+    test_inputs: applicability.test_inputs,
+    tool_inputs: applicability.tool_inputs,
+    partition_source_inputs: applicability.sources,
+  };
+  read.context.source_inputs = applicability.module_inputs;
+  const native = nativeMutationAttempt(read, receipt);
+  return mergeContourProgress(empty, [
+    ...contourAttempts(report, receipt, applicability.coverage_report_sha256),
+    ...contourAttempts(applicability, receipt),
+    native,
+  ]);
+}
+
+test('reviewed data-only closure remains separate from numeric maxima and triples', () => {
+  const snapshot = dataOnlyProjectionFixture();
+  const closure = reviewedDataOnlyClosure(
+    snapshot.attempts.filter((row) => row.lane === 'coverage'),
+    snapshot.attempts.filter((row) => row.lane === 'native-mutation'),
+    snapshot.attempts.filter((row) => row.lane === 'crap-applicability'),
+  );
+  expect(closure).toHaveLength(3);
+  expect(contourAttemptMaximum(closure![0])).toBe(false);
+  expect(contourAttemptMaximum(closure![2])).toBe(false);
+  const report = renderContourProgress(snapshot);
+  expect(report).toContain('full native closures: **1**; excluded from numeric triples');
+  expect(report).toContain(`local triples with scoped frozen CRAP: ${zeroOfActive}`);
+  expect(
+    selectContourCampaign(snapshot, 'unclosed', receipt.commit).some((row) => row.name === 'bun-fs-safe-attestation'),
+  ).toBe(false);
+});
+
+test.each([
+  'missing native',
+  'partial native',
+  'unknown native',
+  'legacy native',
+  'coverage hash',
+  'manifest hash',
+  'tools',
+  'tests',
+  'module',
+  'selection',
+  'function',
+  'branch',
+  'uncovered',
+  'empty data',
+  'numeric NA',
+])('reviewed data-only closure rejects incompatible %s evidence', (scenario) => {
+  const snapshot = dataOnlyProjectionFixture();
+  const current = snapshot.attempts.find((row) => row.lane === 'coverage')!;
+  const native = snapshot.attempts.find((row) => row.lane === 'native-mutation')!;
+  const applicability = snapshot.attempts.find((row) => row.lane === 'crap-applicability')!;
+  switch (scenario) {
+    case 'missing native':
+      break;
+    case 'partial native':
+      native.killed = 1;
+      break;
+    case 'unknown native':
+      native.status = 'UNKNOWN';
+      break;
+    case 'legacy native':
+      native.lane = 'mutation';
+      break;
+    case 'coverage hash':
+      applicability.coverage_binding!.report_sha256 = 'f'.repeat(64);
+      break;
+    case 'manifest hash':
+      applicability.coverage_binding!.manifest_sha256 = 'f'.repeat(64);
+      break;
+    case 'tools':
+      applicability.tools = [digest('foreign-tool')];
+      break;
+    case 'tests':
+      applicability.tests = [digest('foreign-test')];
+      break;
+    case 'module':
+      applicability.closure = [digest('foreign-module')];
+      break;
+    case 'selection':
+      applicability.selected_tests = [digest('foreign-test')];
+      break;
+    case 'function':
+      current.coverage!.functions = { total: 1, covered: 1 };
+      break;
+    case 'branch':
+      current.coverage!.branches = { total: 1, covered: 1 };
+      break;
+    case 'uncovered':
+      current.coverage!.lines.covered--;
+      break;
+    case 'empty data':
+      current.coverage!.lines = { total: 0, covered: 0 };
+      break;
+    case 'numeric NA':
+      applicability.max_cc = applicability.max_entry_crap = 0;
+      break;
+  }
+  expect(
+    reviewedDataOnlyClosure([current], scenario === 'missing native' ? [] : [native], [applicability]),
+  ).toBeUndefined();
+});
 const nativeArtifact = (file: string, hash = 'e') => ({ file, bytes: 1, sha256: hash.repeat(64) });
 function nativeProjectionFixture() {
   const c = coverage();

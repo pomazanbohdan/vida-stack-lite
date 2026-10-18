@@ -65,6 +65,33 @@ test('one terminal structured location routes through the existing report owner'
   ).toEqual(['--native-report', '/retained/native/native-partition-report.json']);
 });
 
+test('data-only applicability has a distinct paired stage and cannot route as numeric frozen CRAP', () => {
+  const line = JSON.stringify({
+    schema: 'VidaScopedCrapApplicabilityNA/v1',
+    status: 'reviewed-not-applicable',
+    report: '/synthetic-unit/applicability.json',
+  });
+  expect(contourStageReportArguments('crap-applicability', line, '/synthetic-unit/coverage.json')).toEqual([
+    '--coverage-run',
+    '/synthetic-unit/coverage.json',
+    '--report',
+    '/synthetic-unit/applicability.json',
+  ]);
+  expect(() => contourStageReportArguments('frozen-crap', line, '/synthetic-unit/coverage.json')).toThrow();
+  expect(() => contourStageReportArguments('crap-applicability', line)).toThrow();
+  expect(() =>
+    contourStageReportArguments(
+      'crap-applicability',
+      JSON.stringify({
+        schema: 'VidaScopedCrapBudgetReport/v3',
+        status: 'scoped-proof-pass',
+        report: '/synthetic-unit/frozen.json',
+      }),
+      '/synthetic-unit/coverage.json',
+    ),
+  ).toThrow();
+});
+
 test('canonical output cannot write through direct or nested symlinks into the measured checkout', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'contour-output-alias-'));
   const repository = path.join(root, 'measured');

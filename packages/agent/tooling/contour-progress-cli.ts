@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   closeSync,
   existsSync,
@@ -28,11 +28,13 @@ import { readNativeMutationPartitionProof } from './native-mutation-proof-reader
 const empty = { schema: 'VidaContourProgress/v1', attempts: [] };
 const maximumBytes = 32 * 1024 * 1024;
 const fatalDecoder = new TextDecoder('utf-8', { fatal: true });
-function load(file: string): unknown {
+function load(file: string): unknown;
+function load(file: string, withDigest: true): { value: unknown; sha256: string };
+function load(file: string, withDigest = false): unknown {
   const bytes = readFileSync(file);
   if (bytes.length > maximumBytes) throw new Error('Contour artifact exceeds byte bound: ' + file);
   const value: unknown = JSON.parse(bytes.toString('utf8'));
-  return value;
+  return withDigest ? { value, sha256: createHash('sha256').update(bytes).digest('hex') } : value;
 }
 function outputRoot(root: string): string {
   return path.join(root, 'coverage/bun-unified/contours');
@@ -203,12 +205,16 @@ export function runContourProgress(
   }
   const coverageRuns: unknown[] = [];
   for (const { file, pair } of reports) {
-    const value = load(file);
-    const attempts = contourAttempts(withSelections(value, selections), {
-      artifact: file,
-      commit,
-      recorded_at: recordedAt,
-    });
+    const { value, sha256 } = pair ? load(file, true) : { value: load(file), sha256: undefined };
+    const attempts = contourAttempts(
+      withSelections(value, selections),
+      {
+        artifact: file,
+        commit,
+        recorded_at: recordedAt,
+      },
+      sha256,
+    );
     incoming.push(...attempts);
     if (pair) {
       const outcome = coverageRun(file, value);

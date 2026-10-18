@@ -11,7 +11,7 @@ import {
   selectContourCampaign,
 } from './contour-progress.ts';
 import { runContourProgress } from './contour-progress-cli.ts';
-import { latestScopedCrapBudgetRef } from './crap-gate.ts';
+import { fsSafeApplicabilityReview, latestScopedCrapBudgetRef } from './crap-gate.ts';
 import { executeMutationCommand, type MutationProcessResult } from './mutation-evidence.ts';
 import { mutationLimits } from './mutation-limits.ts';
 import { mutationPartitionSources, mutationPartitions, type MutationPartition } from './mutation-partitions.ts';
@@ -415,12 +415,23 @@ async function main(): Promise<void> {
             ? { state: 'resource', detail: String(error) }
             : { state: 'failed', detail: `Stage setup failed before producer launch: ${String(error)}` };
         }
+        const applicabilityNA =
+          lane === 'frozen-crap' &&
+          partition.name === fsSafeApplicabilityReview.contour &&
+          budget === fsSafeApplicabilityReview.commit;
         const args =
           lane === 'coverage'
             ? ['tooling/contour-campaign.ts', '--coverage-child', partition.name]
             : lane === 'mutation'
               ? ['tooling/mutation-gate.ts', '--pilot-partition', partition.name]
-              : ['tooling/crap-gate.ts', '--contour', partition.name, '--budget-ref', budget!];
+              : [
+                  'tooling/crap-gate.ts',
+                  '--contour',
+                  partition.name,
+                  '--budget-ref',
+                  budget!,
+                  ...(applicabilityNA ? ['--applicability-na'] : []),
+                ];
         let isolated: ReturnType<typeof isolatedCommand>;
         try {
           isolated = isolatedCommand(
@@ -484,7 +495,9 @@ async function main(): Promise<void> {
                 typeof value.report === 'string' &&
                 (lane === 'coverage'
                   ? value.schema === 'VidaBunFocusedCoverageDiagnosticLocation/v1'
-                  : value.status === 'scoped-proof-pass')
+                  : applicabilityNA
+                    ? value.schema === 'VidaScopedCrapApplicabilityNA/v1' && value.status === 'reviewed-not-applicable'
+                    : value.status === 'scoped-proof-pass')
               )
                 report = value.report;
             }
@@ -502,10 +515,14 @@ async function main(): Promise<void> {
           });
           reports.push({ file: report, lane });
           incoming.push(...attempts);
-          const maximum = attempts.some(
-            (row) => row.contour === partition.name && row.lane === lane && contourAttemptMaximum(row),
+          const stageSatisfied = attempts.some(
+            (row) =>
+              row.contour === partition.name &&
+              (applicabilityNA
+                ? row.lane === 'crap-applicability' && row.accepted
+                : row.lane === lane && contourAttemptMaximum(row)),
           );
-          return { state: state === 'completed' && !maximum ? 'failed' : state, detail: stageDirectory, report };
+          return { state: state === 'completed' && !stageSatisfied ? 'failed' : state, detail: stageDirectory, report };
         } catch (error) {
           return { state: 'gap', detail: `Report proof rejected: ${String(error)}; ${stageDirectory}`, report };
         }

@@ -10,6 +10,206 @@ import { validateCoverageReport, validateHistoricalBaselineCoverageReport } from
 import { baselineFunctionEvidenceForSource, exactFullCoverage, validateCoverageLocations } from './coverage-math.js';
 import type { BaselineFunctionEvidence } from './coverage-math.js';
 
+type FileCoverageData = import('istanbul-lib-instrument').FileCoverageData;
+
+export const fsSafeApplicabilityReview = Object.freeze({
+  contour: 'bun-fs-safe-attestation',
+  key: 'scope_review_fs_safe_attestation_na_20261018',
+  commit: '93628e28772dbffcbb503fbb27e5a4977a86f814',
+  budget_sha256: '45eab77d8dc4908ea0df08f7470c149c387e20fe751536600f7c8e05e4c90e4b',
+  source: 'src/config/fs-safe-attestation.ts',
+  source_sha256: 'd0c12f0f3168e558f2aa372f5866ff4c8d844af481c5924094639295094711c7',
+  baseline_commit: 'b5499511e64b2165a8c97ae3d2b455b25b1ac5b6',
+});
+export const fsSafeBaselineAliases = Object.freeze([
+  'src/config/fs-safe-attestation.ts',
+  'src/config/fs-safe-attestation.mjs',
+  'src/config/fs-safe-attestation.js',
+]);
+
+/** Bind a frozen review to exactly the Source bytes already validated by coverage. */
+export function assertReviewedCurrentSourceBindings(
+  review: unknown,
+  selectedSources: readonly string[],
+  currentSources: readonly { path: string; sha256: string }[],
+): void {
+  if (!isRecord(review) || !Array.isArray(review.current_source_bindings))
+    throw new Error('Scoped CRAP review requires explicit current Source bindings.');
+  if (
+    new Set(selectedSources).size !== selectedSources.length ||
+    new Set(currentSources.map(({ path }) => path)).size !== currentSources.length
+  )
+    throw new Error('Scoped CRAP current Source bindings contain duplicate paths.');
+  const byPath = new Map<string, string>();
+  for (const raw of review.current_source_bindings) {
+    if (
+      !isRecord(raw) ||
+      Object.keys(raw).length !== 2 ||
+      typeof raw.file !== 'string' ||
+      typeof raw.sha256 !== 'string' ||
+      !/^[0-9a-f]{64}$/u.test(raw.sha256)
+    )
+      throw new Error('Scoped CRAP current Source binding is malformed.');
+    if (byPath.has(raw.file)) throw new Error('Scoped CRAP current Source bindings contain duplicate paths.');
+    byPath.set(raw.file, raw.sha256);
+  }
+  const actual = new Map(currentSources.map(({ path, sha256 }) => [path, sha256]));
+  if (
+    byPath.size !== selectedSources.length ||
+    actual.size !== selectedSources.length ||
+    selectedSources.some((file) => {
+      const reviewed = byPath.get(file);
+      const current = actual.get(file);
+      return (
+        reviewed === undefined || current === undefined || !/^[0-9a-f]{64}$/u.test(current) || reviewed !== current
+      );
+    })
+  )
+    throw new Error('Scoped CRAP review is not bound to the exact current Source selection and bytes.');
+}
+
+/** A file-specific applicability proof, never a numeric ceiling or mutation proof. */
+export function proveFsSafeCrapApplicability(input: {
+  reviewKey: string;
+  review: unknown;
+  contour: string;
+  sources: readonly { path: string; sha256: string }[];
+  baselineCommit: string;
+  baselineAliases: readonly { path: string; source: string | null }[];
+  summary: CoverageSummaryData;
+  sourceMap: FileCoverageData;
+}) {
+  const { review, summary, sourceMap } = input;
+  const scope = fsSafeApplicabilityReview;
+  if (
+    input.reviewKey !== scope.key ||
+    input.contour !== scope.contour ||
+    !isRecord(review) ||
+    review.schema !== 'VidaReviewedCrapApplicabilityNA/v1' ||
+    review.status !== 'reviewed-not-applicable-non-executable' ||
+    review.contour !== scope.contour ||
+    JSON.stringify(review.files) !== JSON.stringify([scope.source]) ||
+    review.current_callable_count !== 0 ||
+    review.numeric_ceilings !== null ||
+    JSON.stringify(review.selected_rows) !== JSON.stringify({ retained: 0, new: 0, removed: 0 })
+  )
+    throw new Error('CRAP applicability requires the exact independently reviewed data-only scope.');
+  assertReviewedCurrentSourceBindings(review, [scope.source], input.sources);
+  if (input.sources[0]?.sha256 !== scope.source_sha256)
+    throw new Error('CRAP applicability Source differs from the pinned data-only review.');
+  const original = review.original_baseline;
+  if (
+    !isRecord(original) ||
+    original.ref !== 'b549951' ||
+    original.commit !== scope.baseline_commit ||
+    input.baselineCommit !== scope.baseline_commit ||
+    original.path !== 'packages/agent/' + scope.source ||
+    original.path_status !== 'absent' ||
+    original.owned_callable_count !== 0 ||
+    JSON.stringify(original.baseline_aliases) !== JSON.stringify(fsSafeBaselineAliases) ||
+    JSON.stringify(input.baselineAliases.map(({ path }) => path)) !== JSON.stringify(fsSafeBaselineAliases) ||
+    input.baselineAliases.some(({ source }) => source !== null)
+  )
+    throw new Error('CRAP applicability requires complete exact baseline alias absence.');
+  const responsibility = review.responsibility_review;
+  if (
+    !isRecord(responsibility) ||
+    responsibility.original_owner_path !== 'packages/agent/src/config/safe-repository-access.ts' ||
+    responsibility.current_owner_path !== responsibility.original_owner_path ||
+    typeof responsibility.finding !== 'string' ||
+    responsibility.finding.length < 16
+  )
+    throw new Error('CRAP applicability cannot transfer executable responsibility.');
+  if (
+    Object.keys(sourceMap.fnMap).length !== 0 ||
+    Object.keys(sourceMap.branchMap).length !== 0 ||
+    Object.keys(sourceMap.statementMap).length !== summary.statements.total ||
+    summary.functions.total !== 0 ||
+    summary.functions.covered !== 0 ||
+    summary.branches.total !== 0 ||
+    summary.branches.covered !== 0 ||
+    ![summary.lines, summary.statements].every(
+      ({ total, covered }) => Number.isSafeInteger(total) && total > 0 && covered === total,
+    )
+  )
+    throw new Error('CRAP applicability requires zero callables/branches and positive exact data coverage.');
+  return {
+    current_callable_count: 0,
+    original_callable_count: 0,
+    original_aliases: input.baselineAliases.map(({ path }) => ({ path, status: 'absent' })),
+    maximum_complexity: null,
+    maximum_crap: null,
+  };
+}
+
+/** Persisted local applicability only; the projection joins native proof separately. */
+export function assertFsSafeCrapApplicabilityReceipt(value: unknown): asserts value is Record<string, unknown> {
+  const keys = [
+    'schema',
+    'status',
+    'contour',
+    'qualification_scope',
+    'full_qualification',
+    'baseline_ref',
+    'baseline_commit',
+    'budget_commit',
+    'budget_review_key',
+    'budget_file',
+    'budget_sha256',
+    'run_id',
+    'coverage_run_id',
+    'coverage_report',
+    'coverage_report_sha256',
+    'manifest_sha256',
+    'sources',
+    'test_inputs',
+    'tool_inputs',
+    'module_inputs',
+    'test_selection',
+    'current_callable_count',
+    'original_callable_count',
+    'original_aliases',
+    'maximum_complexity',
+    'maximum_crap',
+    'limits',
+  ];
+  const scope = fsSafeApplicabilityReview;
+  if (
+    !isRecord(value) ||
+    Object.keys(value).length !== keys.length ||
+    keys.some((key) => !Object.hasOwn(value, key)) ||
+    value.schema !== 'VidaScopedCrapApplicabilityNA/v1' ||
+    value.status !== 'reviewed-not-applicable' ||
+    value.contour !== scope.contour ||
+    value.qualification_scope !== 'reviewed-data-only-crap-applicability' ||
+    value.full_qualification !== false ||
+    value.baseline_ref !== 'b549951' ||
+    value.baseline_commit !== scope.baseline_commit ||
+    value.budget_commit !== scope.commit ||
+    value.budget_review_key !== scope.key ||
+    value.budget_sha256 !== scope.budget_sha256 ||
+    value.budget_file !== '.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json' ||
+    value.current_callable_count !== 0 ||
+    value.original_callable_count !== 0 ||
+    value.maximum_complexity !== null ||
+    value.maximum_crap !== null ||
+    typeof value.run_id !== 'string' ||
+    !value.run_id ||
+    value.coverage_run_id !== value.run_id ||
+    typeof value.coverage_report !== 'string' ||
+    !path.isAbsolute(value.coverage_report) ||
+    typeof value.limits !== 'string' ||
+    value.limits.length < 16 ||
+    JSON.stringify(value.sources) !== JSON.stringify([{ path: scope.source, sha256: scope.source_sha256 }]) ||
+    JSON.stringify(value.original_aliases) !==
+      JSON.stringify(fsSafeBaselineAliases.map((file) => ({ path: file, status: 'absent' }))) ||
+    !['coverage_report_sha256', 'manifest_sha256'].every(
+      (key) => typeof value[key] === 'string' && /^[a-f0-9]{64}$/u.test(value[key]),
+    )
+  )
+    throw new Error('Invalid pinned local-only CRAP non-applicability receipt.');
+}
+
 type FunctionRow = import('./function-inventory.js').FunctionRow;
 type BaselineFunctionBudget = {
   identity: string;
@@ -159,6 +359,7 @@ const scopedBudgetReviews = new Map([
     'cac34ce64dd6d4c1dbb69e15c9fa0bbe1efce208:bun-project-upgrade-existing-storage-image',
     'scope_review_storage_image_shared_quote_20261017',
   ],
+  [`${fsSafeApplicabilityReview.commit}:${fsSafeApplicabilityReview.contour}`, fsSafeApplicabilityReview.key],
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -184,48 +385,6 @@ function reviewedSourcePaths(value: unknown): string[] {
   if (!Array.isArray(value) || !value.every((entry: unknown): entry is string => typeof entry === 'string'))
     throw new Error('Reviewed v3 Source additions and removals must be explicit path arrays.');
   return value;
-}
-
-/** Bind a frozen review to exactly the current Source bytes already validated from the coverage run. */
-export function assertReviewedCurrentSourceBindings(
-  review: unknown,
-  selectedSources: readonly string[],
-  currentSources: readonly { path: string; sha256: string }[],
-): void {
-  if (!isRecord(review) || !Array.isArray(review.current_source_bindings))
-    throw new Error('Scoped CRAP review requires explicit current Source bindings.');
-  if (
-    new Set(selectedSources).size !== selectedSources.length ||
-    new Set(currentSources.map(({ path }) => path)).size !== currentSources.length
-  )
-    throw new Error('Scoped CRAP current Source bindings contain duplicate paths.');
-  const bindings = review.current_source_bindings;
-  const byPath = new Map<string, string>();
-  for (const raw of bindings) {
-    if (
-      !isRecord(raw) ||
-      Object.keys(raw).length !== 2 ||
-      typeof raw.file !== 'string' ||
-      typeof raw.sha256 !== 'string' ||
-      !/^[0-9a-f]{64}$/u.test(raw.sha256)
-    )
-      throw new Error('Scoped CRAP current Source binding is malformed.');
-    if (byPath.has(raw.file)) throw new Error('Scoped CRAP current Source bindings contain duplicate paths.');
-    byPath.set(raw.file, raw.sha256);
-  }
-  const actual = new Map(currentSources.map(({ path, sha256 }) => [path, sha256]));
-  if (
-    byPath.size !== selectedSources.length ||
-    actual.size !== selectedSources.length ||
-    selectedSources.some((file) => {
-      const reviewed = byPath.get(file);
-      const current = actual.get(file);
-      return (
-        reviewed === undefined || current === undefined || !/^[0-9a-f]{64}$/u.test(current) || reviewed !== current
-      );
-    })
-  )
-    throw new Error('Scoped CRAP review is not bound to the exact current Source selection and bytes.');
 }
 
 function assertCrapPlanIdentity(value: unknown): asserts value is Record<string, unknown> {
@@ -616,9 +775,10 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   }
   const scopedArguments = process.argv.slice(2);
   const scoped = scopedArguments[0] === '--contour';
+  const applicabilityNA = scopedArguments[4] === '--applicability-na';
   if (
     scoped
-      ? scopedArguments.length !== 4 ||
+      ? (scopedArguments.length !== 4 && !(scopedArguments.length === 5 && applicabilityNA)) ||
         scopedArguments[2] !== '--budget-ref' ||
         !/^[a-f0-9]{40}$/u.test(scopedArguments[3] ?? '')
       : scopedArguments.length > 0
@@ -1101,6 +1261,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       throw new Error('Scoped CRAP budget reference is not an immutable commit.');
     const budgetFile = '.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json';
     const budgetBytes = gitText(['show', `${budgetCommit}:${budgetFile}`]);
+    const budgetSha256 = sha256(budgetBytes);
     const budget: unknown = JSON.parse(budgetBytes);
     if (
       !isRecord(budget) ||
@@ -1110,6 +1271,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     )
       throw new Error('Scoped CRAP proof has no immutable reviewed function lineage.');
     const review = budget[reviewKey];
+    const reviewedNA = isRecord(review) && review.schema === 'VidaReviewedCrapApplicabilityNA/v1';
+    if (applicabilityNA !== reviewedNA)
+      throw new Error('Data-only CRAP applicability requires its separate explicit N/A lane.');
     const reviewedFiles = isRecord(review) && Array.isArray(review.files) ? new Set(review.files) : new Set();
     const v2Review = isRecord(review) && Object.hasOwn(review, 'source_mappings');
     const sourceMappingKind =
@@ -1135,6 +1299,57 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       tests: partition.tests,
     });
     assertReviewedCurrentSourceBindings(review, partition.sources, validation.inputs.sources);
+    if (applicabilityNA) {
+      if (budgetSha256 !== fsSafeApplicabilityReview.budget_sha256)
+        throw new Error('CRAP applicability budget differs from its pinned review.');
+      const baselineCommit = gitText(['rev-parse', '--verify', `${baselineRef}^{commit}`]).trim();
+      const applicability = proveFsSafeCrapApplicability({
+        reviewKey,
+        review,
+        contour: partition.name,
+        sources: validation.inputs.sources,
+        baselineCommit,
+        baselineAliases: fsSafeBaselineAliases.map((file) => ({ path: file, source: baselineSource(file) })),
+        summary: validation.totals,
+        sourceMap: validation.canonical_source_maps[path.resolve(root, fsSafeApplicabilityReview.source)]!,
+      });
+      const report = validation.report;
+      const result = {
+        schema: 'VidaScopedCrapApplicabilityNA/v1',
+        status: 'reviewed-not-applicable',
+        contour: partition.name,
+        qualification_scope: 'reviewed-data-only-crap-applicability',
+        full_qualification: false,
+        baseline_ref: baselineRef,
+        baseline_commit: baselineCommit,
+        budget_commit: budgetCommit,
+        budget_review_key: reviewKey,
+        budget_file: budgetFile,
+        budget_sha256: budgetSha256,
+        run_id: report.run_id,
+        coverage_run_id: report.run_id,
+        coverage_report: coveragePath,
+        coverage_report_sha256: validation.report_sha256,
+        manifest_sha256: report.manifest_sha256,
+        sources: validation.inputs.sources,
+        test_inputs: validation.inputs.test_inputs,
+        tool_inputs: validation.inputs.tool_inputs,
+        module_inputs: validation.inputs.module_inputs,
+        test_selection: validation.inputs.test_selection,
+        ...applicability,
+        limits: 'CRAP applicability only; no numeric score, mutation proof, local triple or global qualification.',
+      };
+      assertFsSafeCrapApplicabilityReceipt(result);
+      const scopedPath = path.join(
+        root,
+        'coverage/bun-unified/diagnostics',
+        `${report.run_id}.crap-applicability.json`,
+      );
+      await mkdir(path.dirname(scopedPath), { recursive: true });
+      await writeFile(scopedPath, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
+      process.stdout.write(JSON.stringify({ schema: result.schema, status: result.status, report: scopedPath }) + '\n');
+      process.exit(0);
+    }
     if (v2Review && isRecord(review) && Array.isArray(review.source_mappings)) {
       const identityReuses: ScopedIdentityReuse[] = [];
       if (sourceMappingKind === 'reviewed-pairs') {
@@ -1298,7 +1513,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         baseline_commit: gitText(['rev-parse', '--verify', `${baselineRef}^{commit}`]).trim(),
         budget_commit: budgetCommit,
         budget_file: budgetFile,
-        budget_sha256: sha256(budgetBytes),
+        budget_sha256: budgetSha256,
         original_sources: originalSourceEvidence,
         source_mappings: sourceMappings,
         run_id: report.run_id,
@@ -1356,7 +1571,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       baseline_commit: gitText(['rev-parse', '--verify', `${baselineRef}^{commit}`]).trim(),
       budget_commit: budgetCommit,
       budget_file: budgetFile,
-      budget_sha256: sha256(budgetBytes),
+      budget_sha256: budgetSha256,
       original_sources: originalSources,
       run_id: report.run_id,
       coverage_run_id: report.run_id,

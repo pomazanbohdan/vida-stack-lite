@@ -4,13 +4,14 @@ import { isRecord } from '../src/contracts/forward-controller-values.ts';
 import { mutationPartitionSources, mutationPartitions } from './mutation-partitions.ts';
 import type { NativeMutationPartitionRead } from './native-mutation-proof-reader.ts';
 import type { NativeMutationArtifactRef } from './mutation-map.ts';
+import { assertFsSafeCrapApplicabilityReceipt, fsSafeApplicabilityReview } from './crap-gate.ts';
 
 type Digest = { path: string; sha256: string };
 type Counter = { covered: number; total: number };
 type Coverage = Record<'functions' | 'lines' | 'statements' | 'branches', Counter>;
 type Attempt = {
   contour: string;
-  lane: 'coverage' | 'frozen-crap' | 'mutation' | 'native-mutation' | 'coverage-outcome';
+  lane: 'coverage' | 'frozen-crap' | 'crap-applicability' | 'mutation' | 'native-mutation' | 'coverage-outcome';
   run_id: string;
   coverage_run_id?: string;
   function_count?: number;
@@ -34,6 +35,7 @@ type Attempt = {
   killed: number | null;
   mutants: number | null;
   confirmed_killed?: number;
+  coverage_binding?: { report_sha256: string; manifest_sha256: string };
   native_provenance?: {
     binding_fingerprints: {
       input_fingerprint: string;
@@ -111,7 +113,9 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
         ],
         properties: {
           contour: { type: 'string', minLength: 1 },
-          lane: { enum: ['coverage', 'frozen-crap', 'mutation', 'native-mutation', 'coverage-outcome'] },
+          lane: {
+            enum: ['coverage', 'frozen-crap', 'crap-applicability', 'mutation', 'native-mutation', 'coverage-outcome'],
+          },
           run_id: { type: 'string', minLength: 1 },
           coverage_run_id: { type: 'string', minLength: 1 },
           function_count: { type: 'integer', minimum: 1 },
@@ -131,6 +135,7 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
               'VidaScopedCrapBudgetReport/v1',
               'VidaScopedCrapBudgetReport/v2',
               'VidaScopedCrapBudgetReport/v3',
+              'VidaScopedCrapApplicabilityNA/v1',
               'CandidateMutationPilotReport/v2',
               'CandidateMutationReport/v4',
               'CandidateNativeMutationReport/v1',
@@ -158,6 +163,14 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
             ]),
           ),
           confirmed_killed: { type: 'integer', minimum: 0 },
+          coverage_binding: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['report_sha256', 'manifest_sha256'],
+            properties: Object.fromEntries(
+              ['report_sha256', 'manifest_sha256'].map((key) => [key, { type: 'string', pattern: '^[a-f0-9]{64}$' }]),
+            ),
+          },
           native_provenance: {
             type: 'object',
             additionalProperties: false,
@@ -363,10 +376,60 @@ function selectedTests(
 }
 
 /** Adapts owner-issued terminal reports only. It does not re-admit their receipts or establish current freshness. */
-export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
+export function contourAttempts(value: unknown, receipt: Receipt, artifactSha256?: string): Attempt[] {
+  if (artifactSha256 !== undefined && !/^[a-f0-9]{64}$/u.test(artifactSha256))
+    throw new Error('Invalid observed contour artifact digest.');
   const report = object(value);
   if (report.schema === 'CandidateNativeMutationReport/v1')
     throw new Error('Native mutation reports require the validated --native-report route.');
+  if (report.schema === 'VidaScopedCrapApplicabilityNA/v1') {
+    assertFsSafeCrapApplicabilityReceipt(report);
+    const contour = text(report.contour);
+    const sources = checkedSources(contour, report.sources);
+    const tests = digests(report.test_inputs);
+    const tools = digests(report.tool_inputs);
+    const modules = digests(report.module_inputs);
+    const selection = object(report.test_selection);
+    if (
+      !tests.length ||
+      !tools.length ||
+      !modules.length ||
+      selection.mode !== 'focused-diagnostic' ||
+      selection.contour !== contour ||
+      JSON.stringify(selection.sources) !== JSON.stringify(sources.map(({ path }) => path))
+    )
+      throw new Error('CRAP applicability requires complete captured contour inputs.');
+    const selected = selectedTests(contour, selection.tests, tests);
+    if (!selected.selection_complete) throw new Error('CRAP applicability test selection is incomplete.');
+    return [
+      {
+        ...receipt,
+        contour,
+        lane: 'crap-applicability',
+        run_id: text(report.run_id),
+        coverage_run_id: text(report.coverage_run_id),
+        sources,
+        tests,
+        tools,
+        closure: inputClosure(modules, tests, tools, sources),
+        ...selected,
+        producer_schema: report.schema,
+        selection_artifact: receipt.artifact,
+        tool_fingerprint: null,
+        status: 'reviewed-not-applicable',
+        accepted: true,
+        coverage_binding: {
+          report_sha256: text(report.coverage_report_sha256),
+          manifest_sha256: text(report.manifest_sha256),
+        },
+        coverage: null,
+        max_cc: null,
+        max_entry_crap: null,
+        killed: null,
+        mutants: null,
+      },
+    ];
+  }
   if (report.schema === 'VidaBunCoverageOperationOutcome/v1') {
     const contour = text(object(report.selection).contour);
     declaredSources(contour);
@@ -453,6 +516,11 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
         closure: inputClosure(digests(report.module_inputs), common.tests, common.tools, sources),
         sources,
         status: accepted ? 'focused-diagnostic' : 'unknown',
+        ...(artifactSha256 &&
+        typeof report.manifest_sha256 === 'string' &&
+        /^[a-f0-9]{64}$/u.test(report.manifest_sha256)
+          ? { coverage_binding: { report_sha256: artifactSha256, manifest_sha256: report.manifest_sha256 } }
+          : {}),
         accepted,
         coverage,
         max_cc: functions.length ? Math.max(...functions.map((row) => number(row.complexity))) : null,
@@ -966,6 +1034,7 @@ function evidence(attempt: Attempt): string {
     selected_tests: _selectedTests,
     selection_complete: _selectionComplete,
     confirmed_killed: _confirmedKilled,
+    coverage_binding: _coverageBinding,
     ...data
   } = attempt;
   return canonicalJson(data);
@@ -1028,6 +1097,32 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
     )
       throw new Error('Contour lane metrics differ.');
     if (
+      (attempt.coverage_binding !== undefined && !['coverage', 'crap-applicability'].includes(attempt.lane)) ||
+      (attempt.lane !== 'crap-applicability' && attempt.producer_schema === 'VidaScopedCrapApplicabilityNA/v1') ||
+      (attempt.lane === 'crap-applicability' &&
+        (attempt.contour !== fsSafeApplicabilityReview.contour ||
+          !attempt.accepted ||
+          attempt.producer_schema !== 'VidaScopedCrapApplicabilityNA/v1' ||
+          attempt.status !== 'reviewed-not-applicable' ||
+          attempt.coverage_run_id !== attempt.run_id ||
+          attempt.function_count !== undefined ||
+          attempt.coverage !== null ||
+          attempt.max_cc !== null ||
+          attempt.max_entry_crap !== null ||
+          attempt.killed !== null ||
+          attempt.mutants !== null ||
+          !attempt.coverage_binding ||
+          !attempt.selection_complete ||
+          JSON.stringify(attempt.sources) !==
+            JSON.stringify([
+              {
+                path: fsSafeApplicabilityReview.source,
+                sha256: fsSafeApplicabilityReview.source_sha256,
+              },
+            ])))
+    )
+      throw new Error('Invalid distinct CRAP applicability observation.');
+    if (
       attempt.confirmed_killed !== undefined &&
       (attempt.lane !== 'mutation' ||
         attempt.killed === null ||
@@ -1059,6 +1154,12 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
     )
       throw new Error('Invalid mutation denominator.');
     const before = merged.get(key(attempt));
+    if (
+      before?.coverage_binding &&
+      attempt.coverage_binding &&
+      canonicalJson(before.coverage_binding) !== canonicalJson(attempt.coverage_binding)
+    )
+      throw new Error('Conflicting coverage report/manifest binding: ' + key(attempt));
     if (before && evidence(before) !== evidence(attempt)) throw new Error('Conflicting contour run: ' + key(attempt));
     if (
       before &&
@@ -1108,6 +1209,9 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
       ...((before.confirmed_killed ?? attempt.confirmed_killed) !== undefined
         ? { confirmed_killed: before.confirmed_killed ?? attempt.confirmed_killed }
         : {}),
+      ...((before.coverage_binding ?? attempt.coverage_binding) !== undefined
+        ? { coverage_binding: before.coverage_binding ?? attempt.coverage_binding }
+        : {}),
     });
   }
   return {
@@ -1131,11 +1235,9 @@ function compatible(coverage: Attempt, mutation: Attempt): boolean {
     contains(mutation.closure, coverage.closure)
   );
 }
-function compatibleFrozenCrap(coverage: Attempt, crap: Attempt): boolean {
+function compatibleScopedMeasurement(coverage: Attempt, crap: Attempt): boolean {
   return (
-    crap.lane === 'frozen-crap' &&
     crap.coverage_run_id === coverage.run_id &&
-    crap.function_count === coverage.coverage?.functions.total &&
     coverage.selection_complete &&
     crap.selection_complete &&
     canonicalJson(coverage.selected_tests) === canonicalJson(crap.selected_tests) &&
@@ -1145,8 +1247,16 @@ function compatibleFrozenCrap(coverage: Attempt, crap: Attempt): boolean {
     canonicalJson(coverage.closure) === canonicalJson(crap.closure)
   );
 }
+function compatibleFrozenCrap(coverage: Attempt, crap: Attempt): boolean {
+  return (
+    crap.lane === 'frozen-crap' &&
+    crap.function_count === coverage.coverage?.functions.total &&
+    compatibleScopedMeasurement(coverage, crap)
+  );
+}
 function maximum(attempt: Attempt): boolean {
   return (
+    attempt.lane !== 'crap-applicability' &&
     attempt.accepted &&
     (attempt.lane === 'mutation' || attempt.lane === 'native-mutation'
       ? attempt.killed === attempt.mutants && attempt.mutants! > 0
@@ -1177,6 +1287,7 @@ function counts(attempt: Attempt | undefined): string {
   }
   if (attempt.lane === 'frozen-crap')
     return `${attempt.max_cc} / ${attempt.max_entry_crap} (scoped proof; owner measured)`;
+  if (attempt.lane === 'crap-applicability') return 'N/A (reviewed data-only applicability; no numeric score)';
   return metrics.map((name) => `${attempt.coverage![name].covered}/${attempt.coverage![name].total}`).join(' · ');
 }
 
@@ -1205,6 +1316,59 @@ function lastCompleteTripleClosure(
   return undefined;
 }
 
+/** The reviewed data file has no numeric triple; only a separate compatible closure. */
+export function reviewedDataOnlyClosure(coverage: Attempt[], mutation: Attempt[], applicability: Attempt[]) {
+  for (const current of coverage.toReversed()) {
+    const counters = current.coverage;
+    if (
+      current.contour !== fsSafeApplicabilityReview.contour ||
+      !current.accepted ||
+      !counters ||
+      current.max_cc !== null ||
+      current.max_entry_crap !== null ||
+      !current.coverage_binding ||
+      JSON.stringify(current.sources) !==
+        JSON.stringify([
+          {
+            path: fsSafeApplicabilityReview.source,
+            sha256: fsSafeApplicabilityReview.source_sha256,
+          },
+        ]) ||
+      counters.functions.total !== 0 ||
+      counters.functions.covered !== 0 ||
+      counters.branches.total !== 0 ||
+      counters.branches.covered !== 0 ||
+      ![counters.lines, counters.statements].every(({ total, covered }) => total > 0 && covered === total)
+    )
+      continue;
+    const reviewed = applicability.find(
+      (row) =>
+        row.lane === 'crap-applicability' &&
+        row.contour === current.contour &&
+        row.accepted &&
+        row.status === 'reviewed-not-applicable' &&
+        row.producer_schema === 'VidaScopedCrapApplicabilityNA/v1' &&
+        row.max_cc === null &&
+        row.max_entry_crap === null &&
+        compatibleScopedMeasurement(current, row) &&
+        canonicalJson(row.coverage_binding) === canonicalJson(current.coverage_binding),
+    );
+    if (!reviewed) continue;
+    const killed = mutation.find(
+      (row) =>
+        row.lane === 'native-mutation' &&
+        row.contour === current.contour &&
+        row.status === 'pilot-pass' &&
+        row.producer_schema === 'CandidateNativeMutationReport/v1' &&
+        row.native_provenance &&
+        maximum(row) &&
+        compatible(current, row),
+    );
+    if (killed) return [current, killed, reviewed] as const;
+  }
+  return undefined;
+}
+
 /** Selection only: same-commit local proofs never establish global acceptance or host freshness. */
 export function selectContourCampaign(snapshot: Snapshot, mode: 'all' | 'unclosed', commit: string) {
   const currentByContour =
@@ -1218,10 +1382,19 @@ export function selectContourCampaign(snapshot: Snapshot, mode: 'all' | 'unclose
     if (partition.environment === 'static') return false;
     if (mode === 'all') return true;
     const current = currentByContour?.get(partition.name) ?? [];
-    return !lastCompleteTripleClosure(
-      current.filter((row) => row.lane === 'coverage'),
-      current.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation'),
-      current.filter((row) => row.lane === 'frozen-crap'),
+    const coverage = current.filter((row) => row.lane === 'coverage');
+    const mutation = current.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation');
+    return (
+      !lastCompleteTripleClosure(
+        coverage,
+        mutation,
+        current.filter((row) => row.lane === 'frozen-crap'),
+      ) &&
+      !reviewedDataOnlyClosure(
+        coverage,
+        mutation,
+        current.filter((row) => row.lane === 'crap-applicability'),
+      )
     );
   });
 }
@@ -1239,6 +1412,7 @@ export function renderContourProgress(snapshot: Snapshot): string {
   let tripleCompleted = 0;
   let coverageCompleted = 0;
   let coverageFrozenCompleted = 0;
+  let reviewedDataOnlyCompleted = 0;
   const body: string[] = [];
   const details: string[] = [];
   const attemptsByContour = Map.groupBy(snapshot.attempts, (row) => row.contour);
@@ -1247,6 +1421,9 @@ export function renderContourProgress(snapshot: Snapshot): string {
     const coverage = attempts.filter((row) => row.lane === 'coverage');
     const mutation = attempts.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation');
     const crap = attempts.filter((row) => row.lane === 'frozen-crap');
+    const applicability = attempts.filter((row) => row.lane === 'crap-applicability');
+    const dataOnly = reviewedDataOnlyClosure(coverage, mutation, applicability);
+    if (dataOnly) reviewedDataOnlyCompleted++;
     const staticOnly = partition.environment === 'static';
     const best = lastCompleteClosure(coverage, mutation);
     const triple = lastCompleteTripleClosure(coverage, mutation, crap);
@@ -1272,6 +1449,11 @@ export function renderContourProgress(snapshot: Snapshot): string {
       `Historical complete local closure: ${best ? best.map((row) => `\`${row.run_id}\``).join(' + ') : 'not recorded'}.`,
       `Achieved in that closure: F/L/S/B ${counts(best?.[0])}; CC / entry CRAP ${best ? `${best[0].max_cc} / ${best[0].max_entry_crap}` : 'unknown'}; mutation ${counts(best?.[1])}.`,
       `Historical complete local coverage + mutation + frozen CRAP closure: ${triple ? triple.map((row) => `\`${row.run_id}\``).join(' + ') : 'not recorded'}.`,
+      ...(applicability.length
+        ? [
+            `Separate reviewed data-only closure: ${dataOnly ? dataOnly.map((row) => `\`${row.run_id}\``).join(' + ') : 'not recorded; applicability alone does not close the contour'}. CC/CRAP are N/A (null), never numeric 0/0 or a triple.`,
+          ]
+        : []),
       `Frozen CRAP measurement in that closure: ${triple ? `${triple[2].max_cc} / ${triple[2].max_entry_crap}` : 'unknown'}; scoped receipt coverage run: ${triple ? `\`${triple[2].coverage_run_id}\`` : 'unknown'}.`,
       'Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.',
       '',
@@ -1314,6 +1496,8 @@ export function renderContourProgress(snapshot: Snapshot): string {
       `Historical same-coverage-run coverage + scoped frozen CRAP pairs: **${coverageFrozenCompleted}/${executableCount}**.`,
       `Historical complete coverage + assertion-confirmed mutation pair closures: **${completed}/${executableCount}**; static contours: **${partitions.length - executableCount}**.`,
       `Separate same-coverage-run local triples with scoped frozen CRAP: **${tripleCompleted}/${executableCount}**.`,
+      `Separate independently reviewed data-only coverage + CRAP N/A + full native closures: **${reviewedDataOnlyCompleted}**; excluded from numeric triples.`,
+      `Contours without a complete numeric triple or reviewed data-only closure: **${executableCount - tripleCompleted - reviewedDataOnlyCompleted}**.`,
       `Executable contours without a recorded coverage + mutation pair: **${executableCount - completed}**.`,
       `Executable contours without a recorded complete local triple: **${executableCount - tripleCompleted}**.`,
       '',

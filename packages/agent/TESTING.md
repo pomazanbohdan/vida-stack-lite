@@ -2924,11 +2924,12 @@ See the [scenario contracts](docs/research/test-regression-contracts.md#typed-no
 The reviewed partial plan records only that file, the exact current source digest,
 the `b549951` path absence, zero current callable roles, and that executable
 attestation remains owned by `safe-repository-access.ts`. Its disposition is
-prospective and non-executable until the plan is pinned and the separate receipt
-producer/reader controls are implemented. The older broad
+bound to immutable review `93628e28772dbffcbb503fbb27e5a4977a86f814`; it authorizes
+only the separate applicability lane and requires qualified producer/reader controls.
+The older broad
 `scope_review_20261013_small` entry is not this authority.
 
-The eventual receipt uses `VidaScopedCrapApplicabilityNA/v1`, a separate lane
+The receipt uses `VidaScopedCrapApplicabilityNA/v1`, a separate lane
 from every numeric `VidaScopedCrapBudgetReport/v1` through `/v3`. It carries
 `status: reviewed-not-applicable`, null CC and CRAP fields, the exact contour,
 review commit/key and budget digest, `baseline_ref: b549951`, explicit path
@@ -2937,8 +2938,9 @@ selected Source digest and coverage run/report/manifest digests, and the complet
 test, tool, module and test-selection bindings. It cannot be represented as numeric
 `0/0` and cannot satisfy `maximum` or the ordinary frozen-CRAP triple.
 
-The producer reuses the already validated current coverage inputs and function
-inventory: reject if the current Source binding is missing/stale, any callable is
+The producer reuses the already validated current coverage inputs and canonical
+function/branch maps from that same Source AST; it adds no parse, Source walk or
+Source hash pass. Reject if the current Source binding is missing/stale, any callable is
 present, the pinned historical inventory contains the selected path, any callable
 responsibility is removed or delegated, or inventory lookup is incomplete. The
 N/A receipt reader admits only this exact contour and review key. It requires matching
@@ -2956,3 +2958,17 @@ inventory, non-null numeric metrics, 0/0 or incomplete line/statement evidence,
 nonzero branch denominator, mismatched coverage/report/manifest/test/tool/module/
 selection bindings, partial or non-all-K native proof, and any attempt to treat N/A
 as a numeric frozen report or completed ordinary triple.
+
+Use the explicit `contour-stage.ts --lane crap-applicability` with the FS contour,
+the fresh absolute `--coverage-run`, the immutable review commit as `--budget-ref`
+and the canonical external `--output`. The stage forwards `--applicability-na` to
+the existing CRAP owner; ordinary numeric frozen stages reject N/A receipts.
+The progress owner captures the coverage report digest during its existing bounded
+read, only for coverage imports. The separate join matches both that digest and
+the manifest digest, selected tests and Source/test/tool/module closure against
+the applicability receipt and the existing reader-validated full native proof.
+Missing legacy report-digest metadata keeps this separate join open; it does not
+invalidate or numerically promote any historical triple. Conflicting retained
+digests are rejected; a newly captured digest may only enrich an otherwise
+identical observation. Do not launch an older strict projection controller after
+the new applicability observations have been published.

@@ -525,6 +525,45 @@ The corrected bounded regression patch is retained in Git at
 RECLAIM-LOCK-REGRESSION-20261018.patch for Source-owner custody across environment
 replacement; it is an unapplied failing diagnostic, not an active suite exception.
 
+Published93628e2 passes the normal strict hook and is pushed. Fresh immutablev314
+SDK K0qS0V closes1766ms without suites. Coverage7193007a-4dd6-48ff-95b2-5a418a3705fb
+at /tmp/contour-stage-5vSJ7B passes101cases/1011assertions in5.49s, exact
+F49/49,L203/203,S222/222,B61/61. Same-run cac34ce frozen at
+/tmp/contour-stage-fnxgW5 passes9/9. Diagnostic10761943-183f-4cce-92a1-69ccef036281
+at /tmp/rolling-contour-rC26L1 closes18925ms with all3selected448/253/88
+assertion-confirmed Killed,0Survived/0UNKNOWN/485unattempted of488.
+Full nativebd16a591-0aa7-488b-a970-5ed9a7faf0f5 at /tmp/contour-stage-xdjp4w
+closes879751ms:397attempted/397assertion-Killed/0Survived/0UNKNOWN/91unattempted.
+Batch3 is budget-exhausted, not interrupted or resource-blocked; all outer
+capture/group/boot/commit/clean-input custody closes. No numeric native proof is
+published. Do not repeat the unchanged full plan before addressing throughput.
+No timeout increase, excluded mutant or cross-run union is authorized.
+
+The separate FS applicability implementation now uses published93628e2's exact
+review, budget digest45eab77d8dc4908ea0df08f7470c149c387e20fe751536600f7c8e05e4c90e4b,
+current data Source digest and all three exact absent baseline aliases. Its
+explicit lane emits VidaScopedCrapApplicabilityNA/v1 with null numeric metrics,
+zero owned roles and positive exact data coverage from the existing validated
+canonical Source maps. It performs no additional Source AST/walk/hash pass and
+never reads native artifacts. The ordinary frozen gate rejects this receipt.
+The progress owner binds the paired coverage report digest during its existing
+bounded read, rejects conflicting enrichment and joins full reader-validated
+native proof separately with matching run/manifest/Source/test/tool/module and
+selection bindings. N/A can neither satisfy maximum nor form a numeric triple;
+the automatic projection counts its qualified closure separately. Actual fresh
+FS producer/coverage/native qualification remains pending publication.
+
+Static514captured TypeScript inputs pass with0diagnostics; scoped typed lint
+passes. FocusedNhxPT9 passes234cases/907assertions across applicability, existing
+CRAP correspondence, stage, campaign and projection controls in2377ms, complete
+captures/closed group/unchanged boot. Earlier YbOk5K exposes one missing N/A
+renderer branch and two campaign fixture roots tied to the nearly-full repository
+disk. The renderer now explicitly displays nonnumeric N/A; scratch fixtures use
+owned system-temporary directories under the unchanged2GiB storage admission.
+The same contour's negative path controls now match their exact path-validation
+causes so an earlier resource denial cannot pass them. No production storage
+floor, timeout, native proof rule or frozen ceiling changes.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is

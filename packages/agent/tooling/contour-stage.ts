@@ -14,7 +14,7 @@ import { runContourProgressWithNative } from './contour-progress-cli.ts';
 import { executeMutationCommand, type MutationProcessResult } from './mutation-evidence.ts';
 import { mutationPartitions } from './mutation-partitions.ts';
 
-type Lane = 'coverage' | 'frozen-crap' | 'mutation';
+type Lane = 'coverage' | 'frozen-crap' | 'crap-applicability' | 'mutation';
 
 /** Exact structured producer locations only; partial native summaries are never reports. */
 export function contourStageReportArguments(lane: Lane, stdout: string, coverageRun?: string): string[] {
@@ -27,7 +27,10 @@ export function contourStageReportArguments(lane: Lane, stdout: string, coverage
       (lane === 'coverage' && value.schema === 'VidaBunFocusedCoverageDiagnosticLocation/v1') ||
       (lane === 'frozen-crap' &&
         /^VidaScopedCrapBudgetReport\/v[123]$/u.test(String(value.schema)) &&
-        value.status === 'scoped-proof-pass')
+        value.status === 'scoped-proof-pass') ||
+      (lane === 'crap-applicability' &&
+        value.schema === 'VidaScopedCrapApplicabilityNA/v1' &&
+        value.status === 'reviewed-not-applicable')
     ) {
       if (typeof value.report !== 'string' || !path.isAbsolute(value.report))
         throw new Error('Stage report location must be absolute.');
@@ -43,7 +46,7 @@ export function contourStageReportArguments(lane: Lane, stdout: string, coverage
     }
   }
   if (reports.length !== 1) throw new Error('Stage must produce exactly one attributable report location.');
-  if (lane === 'frozen-crap') {
+  if (lane === 'frozen-crap' || lane === 'crap-applicability') {
     if (!coverageRun || !path.isAbsolute(coverageRun))
       throw new Error('Frozen stage must publish its input coverage run.');
     return ['--coverage-run', coverageRun, '--report', reports[0]!];
@@ -76,7 +79,7 @@ export function contourStagePublicationAdmitted(result: MutationProcessResult, l
 async function main(): Promise<void> {
   if (process.argv.length === 3 && process.argv[2] === '--help') {
     process.stdout.write(
-      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|mutation --output <absolute canonical directory> [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers]\nRuns one declared contour stage, retains terminal custody and automatically publishes its exact report. Frozen CRAP requires coverage-run and budget-ref. Isolated workers are mutation-only and subject to the native owner allowlist. Partial native runs never publish a score.\n',
+      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers]\nRuns one declared contour stage, retains terminal custody and automatically publishes its exact report. Frozen CRAP and the separate data-only applicability lane require coverage-run and budget-ref. Isolated workers are mutation-only and subject to the native owner allowlist. Partial native runs never publish a score.\n',
     );
     return;
   }
@@ -97,7 +100,7 @@ async function main(): Promise<void> {
   if (
     !values.output ||
     !path.isAbsolute(values.output) ||
-    !['coverage', 'frozen-crap', 'mutation'].includes(lane ?? '')
+    !['coverage', 'frozen-crap', 'crap-applicability', 'mutation'].includes(lane ?? '')
   )
     throw new Error('Stage requires an explicit lane and absolute canonical output directory.');
   if (values.snapshot && !existsSync(values.snapshot)) throw new Error('Missing explicit contour snapshot.');
@@ -106,14 +109,15 @@ async function main(): Promise<void> {
     throw new Error('Stage requires an active declared executable contour.');
   const partition = campaignPartition(declared);
   if (!partition.sources?.length || !partition.tests?.length) throw new Error('Stage selection is empty.');
-  const frozen = lane === 'frozen-crap';
+  const frozen = lane === 'frozen-crap' || lane === 'crap-applicability';
   if (
     (frozen && (!values['coverage-run'] || !values['budget-ref'])) ||
     (!frozen && (values['coverage-run'] || values['budget-ref'])) ||
     (values['isolated-workers'] && lane !== 'mutation')
   )
     throw new Error('Stage arguments differ from the selected lane contract.');
-  const selectedLane: Lane = lane === 'coverage' ? 'coverage' : frozen ? 'frozen-crap' : 'mutation';
+  const selectedLane: Lane =
+    lane === 'coverage' ? 'coverage' : lane === 'crap-applicability' ? lane : frozen ? 'frozen-crap' : 'mutation';
   const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const repository = realpathSync(path.resolve(packageRoot, '../..'));
   const output = contourStageOutput(repository, values.output);
@@ -126,7 +130,14 @@ async function main(): Promise<void> {
   const record = (name: string, value: unknown) =>
     writeFileSync(path.join(directory, name + '.json'), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
   const args = frozen
-    ? ['tooling/crap-gate.ts', '--contour', partition.name, '--budget-ref', values['budget-ref']!]
+    ? [
+        'tooling/crap-gate.ts',
+        '--contour',
+        partition.name,
+        '--budget-ref',
+        values['budget-ref']!,
+        ...(lane === 'crap-applicability' ? ['--applicability-na'] : []),
+      ]
     : lane === 'coverage'
       ? ['tooling/contour-campaign.ts', '--coverage-child', partition.name]
       : [

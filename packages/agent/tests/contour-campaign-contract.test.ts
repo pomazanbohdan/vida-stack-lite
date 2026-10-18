@@ -14,22 +14,13 @@ import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import type { MutationPartition } from '../tooling/mutation-partitions.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import { selectContourCampaign } from '../tooling/contour-progress.ts';
-import {
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  statfsSync,
-  symlinkSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, statfsSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
 
 test('campaign retains private scratch with its stage instead of accumulating host tmpfs roots', () => {
-  const parent = path.resolve('.tmp');
-  mkdirSync(parent, { recursive: true });
+  const parent = tmpdir();
   const stage = mkdtempSync(path.join(parent, 'contour-scratch-control-'));
   let completed = false;
   try {
@@ -69,9 +60,7 @@ test('campaign retains private scratch with its stage instead of accumulating ho
 });
 
 test('campaign can retain isolated scratch under an explicit external existing root', () => {
-  const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-  const operationParent = path.resolve(packageRoot, '../..', '.tmp');
-  mkdirSync(operationParent, { recursive: true });
+  const operationParent = tmpdir();
   const stage = mkdtempSync(path.join(operationParent, 'contour-scratch-stage-'));
   const retainedRoot = mkdtempSync(path.join(operationParent, 'contour-retained-scratch-'));
   let completed = false;
@@ -111,8 +100,7 @@ test('campaign can retain isolated scratch under an explicit external existing r
 
 test('campaign rejects invalid or package-contained retained scratch roots before allocating scratch', () => {
   const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-  const operationParent = path.resolve(packageRoot, '../..', '.tmp');
-  mkdirSync(operationParent, { recursive: true });
+  const operationParent = tmpdir();
   const stage = mkdtempSync(path.join(operationParent, 'contour-scratch-validation-'));
   const external = mkdtempSync(path.join(operationParent, 'contour-scratch-root-validation-'));
   const escapedLink = path.join(external, 'package-link');
@@ -123,14 +111,14 @@ test('campaign rejects invalid or package-contained retained scratch roots befor
   const tools = { tini: '/control/tini', bwrap: '/control/bwrap' };
   let completed = false;
   try {
-    for (const root of [
-      'relative-scratch-root',
-      path.join(external, 'missing'),
-      regularFile,
-      packageRoot,
-      escapedLink,
-    ]) {
-      expect(() => isolatedCommand(stage, args, tools, root)).toThrow();
+    for (const [root, reason] of [
+      ['relative-scratch-root', /absolute directory/u],
+      [path.join(external, 'missing'), /existing directory/u],
+      [regularFile, /existing directory/u],
+      [packageRoot, /resolve outside packages\/agent/u],
+      [escapedLink, /resolve outside packages\/agent/u],
+    ] as const) {
+      expect(() => isolatedCommand(stage, args, tools, root)).toThrow(reason);
       expect(readdirSync(stage)).toEqual([]);
     }
     completed = true;
