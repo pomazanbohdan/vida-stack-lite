@@ -675,6 +675,32 @@ resource-heavy cases. Focused5HVUag passes13cases/152assertions,88unselected,
 1187ms with full captures/closed group/unchanged boot; scoped static checks pass.
 Fresh generated247assertion proof and the next complete image remain pending.
 
+Checkedc227568 passes the normal strict hook and is pushed. Fresh immutablev324
+SDK ZLcVdk closes3131ms without suites. Coverage80abedc2-611f-467d-ab65-0109cdbc8154
+at /tmp/contour-stage-fhkk3i passes101cases/1017assertions in5.85s, exact49/203/222/61;
+same-run cac34ce frozen at /tmp/contour-stage-ibZwZI passes9/9. Diagnostic
+a303c957-a6b1-4af0-9be8-20411f6c0b8e at /tmp/rolling-contour-aisEQS closes16645ms:
+31/247/253 are all assertion-confirmed Killed,0Survived/UNKNOWN/timeout and
+485unattempted of488 after one101-case baseline. Capture/group/boot/commit/clean
+inputs close. The fresh complete four-worker488attempt6ef1dbd4-0cdb-4be2-95e6-aad292a780d2
+at /tmp/contour-stage-UPDZTp closes365assertion-Killed/0Survived/1UNKNOWN/
+122unattempted. Generated492 replaces the pinned-catalog bound with true, but
+its worker stops earlier at unrelated body95's real100000-row timeout5133ms.
+The private worker key is23e8b0175874e1bb3b4799e13a6634a8eddb456c1b8675b871e07ec09abc0c07;
+all captures/groups/boot/commit/clean inputs close. No old UNKNOWN is reclassified
+or used as fresh evidence, and native admission remains denied.
+
+The next test-only packet retains the exact native100000 Host+Mastra total,
+both boundary markers, exact interior multiplicity and reopened integrity while
+using one TEXT column for the bulk-bound fixture. Integer/BLOB fidelity remains
+in its dedicated cases; the old bulk fixture repeated unnecessary bigint
+canonicalization for every row. Four concurrent focused ownersxA6Oao/kBK5a6/
+MNUtlO/eFS9Qp each pass1selected/100unselected with complete captures/closed
+groups/unchanged boot; measured bodies1665/2016/1719/1669ms. Static checks pass.
+This is a development contention control, not native mutant or whole-campaign
+speed proof. All5000ms case and900/930s mutation bounds remain unchanged.
+Fresh492 assertion evidence and the next complete run remain pending.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is

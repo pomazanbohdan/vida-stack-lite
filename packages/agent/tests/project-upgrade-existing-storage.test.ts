@@ -2331,7 +2331,9 @@ describe('existing storage image preparation', () => {
     let host: ClosedDatabaseImage;
     let expectedBoundaryTableRows: bigint;
     try {
-      database.exec('CREATE TABLE merge_exact_total_boundary(id INTEGER NOT NULL, payload TEXT NOT NULL)');
+      // This case owns the real total-row bound; exact integer/BLOB values have
+      // dedicated cases. Keep its repeated rows cheap under isolated mutation.
+      database.exec('CREATE TABLE merge_exact_total_boundary(marker TEXT NOT NULL)');
       const existingHostRows = countUserTableRows(database);
       expectedBoundaryTableRows = 100_000n - existingHostRows - mastraRowCount;
       if (expectedBoundaryTableRows <= 0n || expectedBoundaryTableRows > 100_000n)
@@ -2339,8 +2341,8 @@ describe('existing storage image preparation', () => {
       database
         .query(
           'WITH RECURSIVE rows(id) AS (SELECT 1 UNION ALL SELECT id+1 FROM rows WHERE id<?) ' +
-            'INSERT INTO merge_exact_total_boundary(id,payload) ' +
-            "SELECT CASE WHEN id IN (1,?) THEN id ELSE 0 END,'x' FROM rows",
+            'INSERT INTO merge_exact_total_boundary(marker) ' +
+            "SELECT CASE WHEN id=1 THEN 'first' WHEN id=? THEN 'last' ELSE 'interior' END FROM rows",
         )
         .run(expectedBoundaryTableRows, expectedBoundaryTableRows);
       expect(countUserTableRows(database) + mastraRowCount).toBe(100_000n);
@@ -2364,16 +2366,13 @@ describe('existing storage image preparation', () => {
       ).toBe(expectedBoundaryTableRows);
       expect(
         merged
-          .query<{ id: number | bigint; payload: string }, [bigint]>(
-            'SELECT id,payload FROM merge_exact_total_boundary WHERE id IN (1,?) ORDER BY id',
+          .query<{ marker: string }, []>(
+            "SELECT marker FROM merge_exact_total_boundary WHERE marker IN ('first','last') ORDER BY marker",
           )
-          .all(expectedBoundaryTableRows),
-      ).toEqual([
-        { id: 1n, payload: 'x' },
-        { id: expectedBoundaryTableRows, payload: 'x' },
-      ]);
+          .all(),
+      ).toEqual([{ marker: 'first' }, { marker: 'last' }]);
       expect(
-        merged.query("SELECT COUNT(*) AS count FROM merge_exact_total_boundary WHERE id=0 AND payload='x'").get(),
+        merged.query("SELECT COUNT(*) AS count FROM merge_exact_total_boundary WHERE marker='interior'").get(),
       ).toEqual({ count: expectedBoundaryTableRows - 2n });
       expect(merged.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
     } finally {
