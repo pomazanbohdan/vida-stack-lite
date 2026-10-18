@@ -25,7 +25,9 @@ Active contours: governance/public contracts, dispatch repair and controller
 observation. Published88e8052includes the checked v4 partition-capture repair,
 on top of the verified capacity recovery through ordinary hooks/push. Freshv655
 exposes its next standalone tool-closure dependency before the baseline starts;
-the causal correction and public governance cases are pending publication below.
+the causal correction and public governance cases are published05a43ac. Native
+v663now validates the standalone closure and confirms the repaired guard mutant's
+assertion kill. Its diagnostic-only scope leaves980mutants unattempted.
 All immutable rolling-measure-* checkouts remain untouched. v637 resolves the
 observed resource deficit without changing them; next measurement waits for the
 current packet's normal checks/publication and fresh native admission.
@@ -331,6 +333,29 @@ algorithm change is made. SDK defensive states, the unassigned compatibility
 field and1001-dispatch capacity boundary remain explicitly unresolved; no numeric
 exemption is introduced. Publish this checked packet before another fresh native
 diagnostic; no repeated unchanged full suite or concurrent producer is queued.
+
+Published05a43acpasses normal formatting,514-file strict typecheck in2.42s,
+typed lint and Knip, then ordinary push. Freshv662compares the actual package
+manifest/lock/pin before freeze and adds no SDK. Nativev663/T6RPvBrun579e0ceb-
+e5ca-4852-9fb7-aecb99b9a3fecompletes in98548.6902ms with complete captures,
+closed groups, unchanged boot/commit and clean Source. Baseline161cases passes
+in53292.704144ms. Canonical guard mutant0038b9fb(local50)is assertion-confirmed
+Killed;981generated/1attempted/1killed/0survived/0unknown/980unattempted. Summary
+and all native receipts remain in v662's original mutation-batch directory.
+The deliberate incomplete-universe exit1is retained as a partial stage outcome;
+projection attempts767, no score or contour closure. This fresh proof neither
+relabels nor replays v603's archival UNKNOWN.
+
+BlindLunav653checks every supported snapshot writer/alias/reset/SDK path. The
+private graph copies initial/current state; result/approval/evaluate/seek never
+assign lastRecordedEvidence, returns are copied/frozen, and evaluateWorkflowGates
+does not install caller state. Keep the public schema/initial null and delete
+only workflowSnapshot's unreachable conditional audit spread after numericv663
+is terminal. Same callable identity and predecessor allowance; no callable is
+removed/replaced and no coverage exclusion is added. Strengthen the public test
+to assert absent audit member alongside retained null state. Focusedv664passes
+four public gate/result/rewind cases,23assertions in2.85s including setup. Fresh
+coverage of this resulting byte state remains pending.
 
 Current dependency-ready packet repairs the prelaunch resource-reporting GAP
 while numeric work remains blocked. Root remains the only writer; blind read-only

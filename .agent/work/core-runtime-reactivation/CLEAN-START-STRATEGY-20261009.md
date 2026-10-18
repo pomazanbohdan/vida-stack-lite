@@ -132,7 +132,13 @@ Add the independently identified public zero-tool/result guards in the existing
 governance test owner, check this packet once, publish normally, then measure a
 fresh diagnostic. Defer SDK/private-corruption-only guards and the costly1001-
 dispatch capacity case until their contract/setup cost is resolved; no exclusion
-or weaker coverage gate is authorized.
+or weaker coverage gate is authorized. Freshv663validates the published standalone
+closure and confirms one repaired assertion kill, with980mutants unattempted.
+Independent review closes the private-write invariant for workflowSnapshot's
+unreachable lastRecordedEvidence spread. Delete only that expression after the
+producer is terminal, preserving the public null state field, callable identity
+and its own predecessor budget. Recheck changed public cases, publish normally
+and use one fresh coverage run; no contour closure follows from the diagnostic.
 
 Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
 `nativeDiagnosticIdSet` owner and its invalid-token predicate, each with

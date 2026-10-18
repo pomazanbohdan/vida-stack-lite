@@ -142,7 +142,6 @@ function workflowSnapshot(definition: WorkflowDefinition, state: PolicyState): R
     blockedReason: state.blockedReason,
     pendingApproval: { ...state.pendingApproval },
     ...(state.lastBlockedAction ? { lastBlockedAction: { ...state.lastBlockedAction } } : {}),
-    ...(state.lastRecordedEvidence ? { lastRecordedEvidence: { ...state.lastRecordedEvidence } } : {}),
   };
 }
 function acceptedResult(stage: WorkflowStage, state: WorkflowState): boolean {

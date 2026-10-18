@@ -174,7 +174,12 @@ describe('configured Edictum workflow completeness', () => {
         },
       ],
     });
-    expect(await candidate.state(session)).toMatchObject({ activeStage: 'final', completedStages: [] });
+    expect(evaluation.audit).not.toHaveProperty('lastRecordedEvidence');
+    expect(await candidate.state(session)).toMatchObject({
+      activeStage: 'final',
+      completedStages: [],
+      lastRecordedEvidence: null,
+    });
   });
 
   test('zero-tool stage without a boundary admits arbitrary tools', async () => {
