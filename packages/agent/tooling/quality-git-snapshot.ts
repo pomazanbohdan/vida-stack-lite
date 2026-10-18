@@ -42,7 +42,7 @@ function nativeGit(repositoryRoot: string, args: string[], input?: Buffer): Buff
   const result = spawnSync('git', args, {
     cwd: repositoryRoot,
     input,
-    timeout: 30_000,
+    timeout: 5000,
     maxBuffer: MAX_SNAPSHOT_BYTES + 1024 * 1024,
     windowsHide: true,
   });

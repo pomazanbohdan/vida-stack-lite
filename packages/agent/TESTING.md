@@ -1729,6 +1729,12 @@ older image remains evidence only for its declared original commit and inputs.
 The global `test:contours --all|--unclosed` campaign caches one image per contour
 and retains its existing single-commit selection contract. It publishes each lane
 once through the same native reader; no second final report import is needed.
+Only unstaged changes to the existing `CONTOUR-STATUS.json` and `.md` derived
+outputs are allowed during new image formation. They are never captured numeric
+inputs. Every other dirty/staged/untracked path remains denied, and all captured
+tracked bytes still have to match their published Git blobs. Selected mutated
+subjects belong to Source inputs, not duplicated tool inputs; descriptor readback
+continues to reject drift in every genuine tool file.
 
 The Linux launcher binds captured inputs and the shared dependency installation
 read-only, then hides live Source behind an empty read-only mount. Only the image's

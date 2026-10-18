@@ -64,6 +64,19 @@ inputs. The correction captures its original Git blob as compiler metadata;
 v712has48PASS/0FAIL/542assertions. Neither failure admits coverage or a mutation
 kill; their original artifacts and automatic failed-stage projection are retained.
 
+The real v716gitless coverage run for main-host reaches F7/7 L21/21 S22/22
+B11/11, maxCC/entryCRAP3/3 in3744.064031ms with complete capture, observed group
+closure, unchanged boot and image. Frozenv717correctly refuses the old host
+review because it has no mandatory current_source_bindings; this is a review GAP,
+not permission to relax the gate. Mutationv720retains pre-test input rejection:
+semantic compiler capture duplicated the selected mutated subject among tool
+inputs, so the unchanged descriptor reader correctly denied instrumented bytes.
+Root removes that duplicate classification while retaining the subject's original
+Source digest and full image bytes; v721tests the invariant. A separate campaign
+fix permits only unstaged changes to its two existing derived projection files;
+all other Source/staged/untracked changes remain denied. Native Git queries now
+keep the existing5s bound. A fresh qualifying review contour is the next pilot.
+
 Active contours: governance/public contracts, dispatch repair and controller
 observation. Published88e8052includes the checked v4 partition-capture repair,
 on top of the verified capacity recovery through ordinary hooks/push. Freshv655

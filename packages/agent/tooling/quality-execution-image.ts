@@ -136,7 +136,11 @@ function safeLogicalPath(value: string): void {
 }
 
 function git(root: string, args: string[]): string {
-  const child = spawnSync('git', ['-C', root, ...args], { encoding: 'buffer', maxBuffer: 16 * 1024 * 1024 });
+  const child = spawnSync('git', ['-C', root, ...args], {
+    encoding: 'buffer',
+    maxBuffer: 16 * 1024 * 1024,
+    timeout: 5000,
+  });
   if (child.error || child.status !== 0)
     throw new Error(
       `Native Git query failed (${args[0]}): ${child.error?.message ?? child.stderr.toString('utf8').trim()}`,
@@ -527,13 +531,21 @@ async function verifyMaterialized(
   return inputs;
 }
 
+/** Only the existing projection owner may dirty these uncaptured derived outputs. */
+export function qualitySourceStatusAdmitted(status: string): boolean {
+  return status
+    .split(/\r?\n/u)
+    .filter(Boolean)
+    .every((row) => /^(?: M|M) \.agent\/work\/core-runtime-reactivation\/CONTOUR-STATUS\.(?:json|md)$/u.test(row));
+}
+
 function publishedGitTree(repository: string): {
   commit: string;
   tree: string;
   entries: Map<string, { oid: string; mode: string; type: string }>;
 } {
   assert(
-    git(repository, ['status', '--porcelain=v1', '--untracked-files=all']).length === 0,
+    qualitySourceStatusAdmitted(git(repository, ['status', '--porcelain=v1', '--untracked-files=all'])),
     'Quality images require a clean published Git source.',
   );
   const commit = git(repository, ['rev-parse', 'HEAD']).trim();

@@ -6,6 +6,7 @@ import path from 'node:path';
 import {
   loadQualityExecutionImageInputs,
   prepareQualityExecutionImage,
+  qualitySourceStatusAdmitted,
   readQualityExecutionImageDescriptor,
   readQualityExecutionImageInputs,
   verifyQualityExecutionImage,
@@ -79,6 +80,8 @@ async function fixture(): Promise<{ root: string; packageRoot: string; sourcePac
   }
   await mkdir(path.join(root, 'tests/agent'), { recursive: true });
   await writeFile(path.join(root, 'package.json'), '{"type":"module"}\n');
+  await mkdir(path.join(root, '.agent/work/core-runtime-reactivation'), { recursive: true });
+  await writeFile(path.join(root, '.agent/work/core-runtime-reactivation/CONTOUR-STATUS.json'), '{}\n');
   await writeFile(path.join(root, 'tests/agent/compiler-only.ts'), 'export const compilerOnly = true;\n');
   nativeGit(root, ['init', '--quiet']);
   nativeGit(root, ['config', 'user.name', 'Quality image test']);
@@ -103,6 +106,21 @@ afterEach(async () => {
 });
 
 describe('quality execution images', () => {
+  test('only unstaged owned derived projections may differ from the Source commit', () => {
+    expect(qualitySourceStatusAdmitted('')).toBe(true);
+    const output = '.agent/work/core-runtime-reactivation/CONTOUR-STATUS.json';
+    expect(qualitySourceStatusAdmitted(` M ${output}\n`)).toBe(true);
+    expect(qualitySourceStatusAdmitted(`M ${output}`)).toBe(true);
+    for (const status of [
+      `M  ${output}\n`,
+      `?? ${output}\n`,
+      ` M src/changed.ts\n`,
+      ` D ${output}\n`,
+      ` M ${output}\n M AGENTS.md\n`,
+      ` M ${output}.old\n`,
+    ])
+      expect(qualitySourceStatusAdmitted(status)).toBe(false);
+  });
   test('materializes one native-Git capture, reuses it, and keeps it stable after Source advances', async () => {
     const source = await fixture();
     const first = await prepareQualityExecutionImage({ ...source, selection, additionalToolInputs: [] });
@@ -115,6 +133,11 @@ describe('quality execution images', () => {
     expect(captured.input_bytes['_repository/compiler/package.json']?.toString()).toBe('{"type":"module"}\n');
     const reused = await prepareQualityExecutionImage({ ...source, selection, additionalToolInputs: [] });
     expect(reused).toEqual(first);
+    await writeFile(
+      path.join(source.root, '.agent/work/core-runtime-reactivation/CONTOUR-STATUS.json'),
+      '{"attempts":1}\n',
+    );
+    expect(await prepareQualityExecutionImage({ ...source, selection, additionalToolInputs: [] })).toEqual(first);
 
     const changedSource = path.join(source.packageRoot, 'src/host-state.ts');
     await writeFile(changedSource, 'export const fixture = false;\n');

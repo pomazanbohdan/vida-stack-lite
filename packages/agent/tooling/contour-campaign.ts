@@ -14,6 +14,7 @@ import { qualityImageMountArguments } from './quality-image-mounts.ts';
 import { retainQualityGitSnapshot } from './quality-git-snapshot.ts';
 import {
   prepareQualityExecutionImage,
+  qualitySourceStatusAdmitted,
   verifyQualityExecutionImage,
   type QualityExecutionImage,
 } from './quality-execution-image.ts';
@@ -209,7 +210,7 @@ function git(args: string[]): string {
 }
 
 function assertCleanCommit(commit: string): void {
-  if (git(['rev-parse', 'HEAD']) !== commit || git(['status', '--porcelain']))
+  if (git(['rev-parse', 'HEAD']) !== commit || !qualitySourceStatusAdmitted(git(['status', '--porcelain'])))
     throw new Error('Campaign requires one unchanged clean Source commit; commit fixes after all producers terminate.');
 }
 

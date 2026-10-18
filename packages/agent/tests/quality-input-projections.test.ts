@@ -172,6 +172,7 @@ describe('final quality input projections', () => {
     expect(image.tool_fingerprint).toBe(createHash('sha256').update(JSON.stringify(image.tool_inputs)).digest('hex'));
     expect(image.tool_inputs.map(({ path: file }) => file)).toContain('src/lifecycle/lifecycle-state.ts');
     expect(image.tool_inputs.map(({ path: file }) => file)).toContain('bin/cli-metadata.ts');
+    expect(image.tool_inputs.map(({ path: file }) => file)).not.toContain('src/host-state.ts');
     for (const file of [
       'tsconfig.json',
       'tsconfig.checked-js.json',

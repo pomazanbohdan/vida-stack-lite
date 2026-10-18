@@ -1401,6 +1401,7 @@ async function projectQualityInputCapture(
   additionalToolInputs: readonly string[],
   selectionMode: 'current' | 'published-baseline-bun-native',
 ): Promise<CoverageInputs> {
+  const numericSources = new Set(capture.sources.map((entry) => entry.path));
   const tools = [
     ...new Set([
       ...qualityToolInputPaths(additionalToolInputs, capture.contractInputs, selectionMode),
@@ -1411,7 +1412,9 @@ async function projectQualityInputCapture(
         (file) => !capture.sources.some((entry) => entry.path === file),
       ),
     ]),
-  ].sort();
+  ]
+    .filter((file) => capture.executionImageToolPaths === undefined || !numericSources.has(file))
+    .sort();
   const sources = capture.sources;
   const sourceJson = canonicalJson(sources);
   if (sourceJson === undefined) throw new Error('Coverage source identity is not serializable.');
