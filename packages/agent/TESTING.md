@@ -661,6 +661,13 @@ before numeric, string or binary assertions. Numeric matchers given undefined
 throw an argument error rather than an assertion failure. Keep this guard in the
 shared positive-result helper; negative tests must still invoke the original
 operation directly, so a helper assertion cannot count as product rejection.
+Exact row-count boundaries retain the real100000-row SQLite population, total
+count, edge witnesses, bulk multiplicity and integrity check, while using minimal
+repeating payloads for the interior rows. Keep heterogeneous values, primary keys,
+BLOBs and large integers in their existing dedicated preservation cases. Avoid
+making every boundary row a distinct sorting/serialization workload when that is
+not the boundary's contract. The real4MiB image case also round-trips through the
+public validator; its ordinary success is independently asserted in that body.
 When a test helper retains an action failure, restore its owned resources and
 rethrow that same failure before any success-path assertion. A later successful
 matcher can consume causal assertion evidence; it must not mask the primary

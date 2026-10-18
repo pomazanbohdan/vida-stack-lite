@@ -615,6 +615,36 @@ receipts or failures. Manifest:
 memory drops to11762466816bytes; OOM counters remain2/4. Changed historical
 dependency realpaths never requalify or replay an old measurement.
 
+Checked5d71b6f passes the normal strict hook and is pushed. Fresh immutablev320
+SDK r1Sfcf closes3133ms without suites. Image coveraged5e0f4a8-d2f7-4463-a8ef-6b3df74f75ee
+at /tmp/contour-stage-HCitCn passes101cases/1011assertions in5.77s, exact49/203/222/61;
+same-run cac34ce frozen at /tmp/contour-stage-5F49PW passes9/9. Four-worker
+diagnostica2c9b2ac-1953-492d-b6be-a2bcff7e1d64 at /tmp/rolling-contour-imBaXg
+closes123999ms with64/64assertion-Killed,0Survived/UNKNOWN,424unattempted of488,
+one101-case baseline, complete captures/closed group/unchanged boot/commit/inputs.
+Its nonzero diagnostic exit is expected; this is eligibility, not a full score.
+
+Fresh full four-worker0db64118-32a1-4423-97ab-e1fae6089c7b at
+/tmp/contour-stage-vTf8hZ then closes with14assertion-Killed/0Survived/1UNKNOWN/
+473unattempted. Current31 forces the public validator's byte-size/digest guard
+false, but before that validator executes body95's unrelated exact100000-row
+positive case times out at5161ms under the unchanged5s case bound. No activation/
+assertion proof is credited. Captures/group/boot/commit/clean inputs close and
+OOM counters remain2/4; this is not a proven product defect or Killed result.
+The failed image remains unchanged. The repair keeps100000real rows, input/output
+counts, first/last witnesses and integrity, replaces high-entropy interior rows
+with repeated minimal values, and adds their exact bulk-multiplicity assertion.
+Existing dedicated PK/BLOB/large-integer/heterogeneous cases remain. The4MiB case
+also exercises successful public metadata validation, so that contract's mutants
+need not wait for a later independent case. No case is reordered or excluded.
+
+Scoped static checks pass. Four concurrent targeted development owners
+9pOFeH/M4UibM/QnJcLB/FtmOnp each pass both cases,99unselected, complete capture/
+closed groups/same boot. Exact-row case times are2527/2453/2229/1993ms;4MiB
+round-trip350/460/357/368ms. These isolate the repaired contention scenario, not
+a full native speedup or score. Fresh published coverage/frozen/generated proof
+is still required, with no timeout increase or old result transfer.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is
@@ -3551,8 +3581,8 @@ CLEAR and backlog retain the P0/P1/P2 definitions and all stable task IDs. Missi
 ## Evidence boundaries
 
 - The retained capture has exact local coverage and same-run scoped CRAP for its bound inputs. Subsequent changes need fresh evidence. No complete config mutation outcome exists.
-- Partial 7,113-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
-- Historical local contour triples are 7/45; 38 remain unclosed. They stay qualified as historical/local and do not imply a globally ready system.
+- Partial 7,111-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
+- Historical local numeric triples are7/45, plus1separate reviewed data-only closure;37remain without either complete closure. They stay qualified as historical/local and do not imply a globally ready system.
 - Adapter/unit evidence does not establish physical HostState or native Windows behavior. Formation is not installation; installation is not attributable user Runtime acceptance.
 - Keep failures, expected failures and UNKNOWN outcomes with original classifications and receipts. Do not turn interruption, missing output, timeout or partial counters into PASS or Killed.
 

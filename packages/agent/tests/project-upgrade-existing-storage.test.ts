@@ -2064,6 +2064,7 @@ describe('existing storage image preparation', () => {
       prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
     );
     expect(image.size).toBeLessThanOrEqual(maximumBytes);
+    expect(expectReturned(() => loadFreshStorageImage().validateUnifiedDatabaseImage(image))).toEqual(image);
     expect(Buffer.from(host.bytes).equals(before)).toBe(true);
     const merged = openUnified(image.bytes_base64);
     try {
@@ -2317,7 +2318,7 @@ describe('existing storage image preparation', () => {
     let host: ClosedDatabaseImage;
     let expectedBoundaryTableRows: bigint;
     try {
-      database.exec('CREATE TABLE merge_exact_total_boundary(id INTEGER PRIMARY KEY, payload TEXT NOT NULL)');
+      database.exec('CREATE TABLE merge_exact_total_boundary(id INTEGER NOT NULL, payload TEXT NOT NULL)');
       const existingHostRows = countUserTableRows(database);
       expectedBoundaryTableRows = 100_000n - existingHostRows - mastraRowCount;
       if (expectedBoundaryTableRows <= 0n || expectedBoundaryTableRows > 100_000n)
@@ -2325,9 +2326,10 @@ describe('existing storage image preparation', () => {
       database
         .query(
           'WITH RECURSIVE rows(id) AS (SELECT 1 UNION ALL SELECT id+1 FROM rows WHERE id<?) ' +
-            "INSERT INTO merge_exact_total_boundary(id,payload) SELECT id,'boundary-row' FROM rows",
+            'INSERT INTO merge_exact_total_boundary(id,payload) ' +
+            "SELECT CASE WHEN id IN (1,?) THEN id ELSE 0 END,'x' FROM rows",
         )
-        .run(expectedBoundaryTableRows);
+        .run(expectedBoundaryTableRows, expectedBoundaryTableRows);
       expect(countUserTableRows(database) + mastraRowCount).toBe(100_000n);
       host = closedImage(database);
     } finally {
@@ -2354,9 +2356,12 @@ describe('existing storage image preparation', () => {
           )
           .all(expectedBoundaryTableRows),
       ).toEqual([
-        { id: 1n, payload: 'boundary-row' },
-        { id: expectedBoundaryTableRows, payload: 'boundary-row' },
+        { id: 1n, payload: 'x' },
+        { id: expectedBoundaryTableRows, payload: 'x' },
       ]);
+      expect(
+        merged.query("SELECT COUNT(*) AS count FROM merge_exact_total_boundary WHERE id=0 AND payload='x'").get(),
+      ).toEqual({ count: expectedBoundaryTableRows - 2n });
       expect(merged.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
     } finally {
       merged.close(true);
