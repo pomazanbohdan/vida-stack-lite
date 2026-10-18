@@ -3,6 +3,7 @@ import { Database } from 'bun:sqlite';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import { requireSafeRepositoryAccess } from './safe-repository-access.js';
+import { STORAGE_ADMISSION_GATE_FILE } from './project-paths.js';
 import {
   assertWorkspaceDatabaseRelativePath,
   closeNativeWorkspaceDatabase,
@@ -13,7 +14,7 @@ import {
   workspaceDatabaseFileIdentity,
 } from './workspace-database-raw.js';
 
-export const STORAGE_ADMISSION_GATE_FILE = 'storage-admission.v1.sqlite';
+export { STORAGE_ADMISSION_GATE_FILE };
 const gateRelative = '.vida/' + STORAGE_ADMISSION_GATE_FILE;
 const gateLabel = 'project storage admission';
 const gateSchema = 'VidaStorageAdmission/v1';

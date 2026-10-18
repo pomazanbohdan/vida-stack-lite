@@ -1,5 +1,18 @@
-import { describe, expect, test } from 'bun:test';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { describe, expect, spyOn, test } from 'bun:test';
+import {
+  existsSync,
+  lstatSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import * as nodeFs from 'node:fs';
+import * as safeRepositoryAccess from '../src/config/safe-repository-access.ts';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
@@ -7,6 +20,8 @@ import {
   PROJECT_ACTIVATION_PATH,
   PROJECT_INITIALIZATION_PATH,
   PROJECT_CONFIGURATION_PATHS,
+  PROJECT_UPGRADE_OPERATION_PATH,
+  STORAGE_ADMISSION_GATE_FILE,
 } from '../src/config/project-paths.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { validateProjectInitializationReceipt } from '../src/config/project-initialization-record.ts';
@@ -85,6 +100,31 @@ function closeLegacyConfigFixture(
   if (errors.length) throw new AggregateError(errors, 'Configuration fixture cleanup failed.');
 }
 
+function observeLiveLayoutCasLock(root: string): { name: string; bytes: Buffer<ArrayBuffer> } {
+  const vida = path.join(root, '.vida');
+  const access = requireSafeRepositoryAccess(root);
+  const originalFsync = nodeFs.fsyncSync;
+  const observation: { lock?: { name: string; bytes: Buffer<ArrayBuffer> } } = {};
+  const fsync = spyOn(nodeFs, 'fsyncSync').mockImplementation((fd) => {
+    originalFsync(fd);
+    if (observation.lock) return;
+    const names = readdirSync(vida).filter((entry) => entry.endsWith('.cas.lock'));
+    if (names.length !== 1) return;
+    const name = names[0]!;
+    const bytes = readFileSync(path.join(vida, name));
+    const owner: unknown = JSON.parse(bytes.toString('utf8'));
+    expect(owner).toMatchObject({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid });
+    observation.lock = { name, bytes };
+  });
+  try {
+    expect(access.fileExists('.vida/layout.v1.json', 'observe actual layout CAS lock')).toBe(false);
+  } finally {
+    fsync.mockRestore();
+  }
+  if (!observation.lock) throw new Error('Real layout read did not expose its live CAS lock.');
+  return observation.lock;
+}
+
 describe('current-v1 exact-byte config repair boundary', () => {
   test.each([
     ['prepared upgrade intent staging', '.vida/.upgrade-intent-reader-barrier.json'],
@@ -107,6 +147,8 @@ describe('current-v1 exact-byte config repair boundary', () => {
       const outputBytes = Buffer.from('retained reader barrier evidence\n');
       mkdirSync(path.dirname(outputPath), { recursive: true });
       writeFileSync(outputPath, outputBytes);
+      mkdirSync(path.join(root, '.vida'), { recursive: true });
+      writeFileSync(path.join(root, '.vida', STORAGE_ADMISSION_GATE_FILE), 'unvalidated gate fixture bytes\n');
       expect(existsSync(path.join(root, PROJECT_ACTIVATION_PATH))).toBe(false);
       if (performance.now() >= fixture.deadlineAt) throw new Error('Configuration reader fixture deadline expired.');
 
@@ -125,6 +167,202 @@ describe('current-v1 exact-byte config repair boundary', () => {
       process.stderr.write(`Retained blocked configuration reader fixture: ${root}\n`);
     }
   });
+
+  test('uses legacy config with only the gate and keeps the root and both fresh barriers', () => {
+    const fixture = createLegacyConfigFixture();
+    const { root, configFile } = fixture;
+    const vida = path.join(root, '.vida');
+    const gate = path.join(vida, STORAGE_ADMISSION_GATE_FILE);
+    const gateBytes = Buffer.from('intentionally unvalidated gate bytes\n');
+    mkdirSync(vida);
+    writeFileSync(gate, gateBytes);
+    let vidaExistenceChecks = 0;
+    let vidaListings = 0;
+    const originalRequire = safeRepositoryAccess.requireSafeRepositoryAccess;
+    const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((requestedRoot) => {
+      const access = originalRequire(requestedRoot);
+      if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
+      return {
+        ...access,
+        fileExists(target: string, label: string): boolean {
+          if (target === '.vida') vidaExistenceChecks++;
+          return access.fileExists(target, label);
+        },
+        listFiles(target: string, label: string): readonly string[] {
+          if (target === '.vida') vidaListings++;
+          return access.listFiles(target, label);
+        },
+      };
+    });
+    let retain = true;
+    try {
+      const loaded = loadRuntimeConfig(root);
+      expect(capturedRuntimeConfigurationBinding(loaded).source).toBe('agent-runtime.config.v1.yaml');
+      expect(readFileSync(configFile)).toEqual(sourceBytes);
+      expect(readFileSync(gate)).toEqual(gateBytes);
+      expect(readdirSync(vida)).toEqual([STORAGE_ADMISSION_GATE_FILE]);
+      expect(vidaExistenceChecks).toBeGreaterThanOrEqual(2);
+      expect(vidaListings).toBeGreaterThanOrEqual(2);
+      retain = false;
+    } finally {
+      accessSpy.mockRestore();
+      closeLegacyConfigFixture(fixture, !retain);
+    }
+  });
+
+  test('uses old guarded probes when the gate has any additional unknown entry', () => {
+    const fixture = createLegacyConfigFixture();
+    const { root, configFile } = fixture;
+    const vida = path.join(root, '.vida');
+    const extra = path.join(vida, 'owner-data.bin');
+    const extraBytes = Buffer.from('preserve unknown owner data\n');
+    mkdirSync(vida);
+    writeFileSync(path.join(vida, STORAGE_ADMISSION_GATE_FILE), 'unvalidated gate fixture bytes\n');
+    writeFileSync(extra, extraBytes);
+    let sawGuardedLayoutProbe = false;
+    let vidaExistenceChecks = 0;
+    const originalRequire = safeRepositoryAccess.requireSafeRepositoryAccess;
+    const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((requestedRoot) => {
+      const access = originalRequire(requestedRoot);
+      if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
+      return {
+        ...access,
+        fileExists(target: string, label: string): boolean {
+          if (target === '.vida') vidaExistenceChecks++;
+          if (target === '.vida/layout.v1.json' && label === 'project upgrade output evidence')
+            sawGuardedLayoutProbe = true;
+          return access.fileExists(target, label);
+        },
+      };
+    });
+    let retain = true;
+    try {
+      expect(capturedRuntimeConfigurationBinding(loadRuntimeConfig(root)).source).toBe('agent-runtime.config.v1.yaml');
+      expect(sawGuardedLayoutProbe).toBe(true);
+      expect(vidaExistenceChecks).toBeGreaterThanOrEqual(2);
+      expect(readFileSync(configFile)).toEqual(sourceBytes);
+      expect(readFileSync(extra)).toEqual(extraBytes);
+      retain = false;
+    } finally {
+      accessSpy.mockRestore();
+      closeLegacyConfigFixture(fixture, !retain);
+    }
+  });
+
+  test.each([
+    ['recognized output', '.vida/layout.v1.json'],
+    ['upgrade staging', '.vida/.upgrade-intent-fastpath-race.json'],
+    ['activation', PROJECT_ACTIVATION_PATH],
+    ['upgrade intent', PROJECT_UPGRADE_OPERATION_PATH],
+  ])('final barrier catches %s published after initial listing', (_label, relativePath) => {
+    const fixture = createLegacyConfigFixture();
+    const { root } = fixture;
+    const vida = path.join(root, '.vida');
+    const injected = path.join(root, relativePath);
+    const injectedBytes = Buffer.from('reader barrier published between listings\n');
+    mkdirSync(vida, { recursive: true });
+    writeFileSync(path.join(vida, STORAGE_ADMISSION_GATE_FILE), 'unvalidated gate fixture bytes\n');
+    let vidaListings = 0;
+    const originalRequire = safeRepositoryAccess.requireSafeRepositoryAccess;
+    const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((requestedRoot) => {
+      const access = originalRequire(requestedRoot);
+      if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
+      return {
+        ...access,
+        listFiles(target: string, label: string): readonly string[] {
+          const entries = access.listFiles(target, label);
+          if (target === '.vida' && ++vidaListings === 1) {
+            mkdirSync(path.dirname(injected), { recursive: true });
+            writeFileSync(injected, injectedBytes);
+          }
+          return entries;
+        },
+      };
+    });
+    try {
+      expect(() => loadRuntimeConfig(root)).toThrow(
+        relativePath === PROJECT_UPGRADE_OPERATION_PATH
+          ? 'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.'
+          : 'runtime configuration source changed during its read.',
+      );
+      if (relativePath === PROJECT_ACTIVATION_PATH || relativePath === PROJECT_UPGRADE_OPERATION_PATH)
+        expect(vidaListings).toBe(1);
+      else expect(vidaListings).toBeGreaterThanOrEqual(2);
+      expect(readFileSync(injected)).toEqual(injectedBytes);
+    } finally {
+      accessSpy.mockRestore();
+      process.stderr.write(`Retained raced configuration reader fixture: ${root}\n`);
+    }
+  });
+
+  test('blocks and preserves a persistent upgrade intent', () => {
+    const fixture = createLegacyConfigFixture();
+    const { root } = fixture;
+    mkdirSync(path.join(root, '.vida'), { recursive: true });
+    writeFileSync(path.join(root, '.vida', STORAGE_ADMISSION_GATE_FILE), 'unvalidated gate fixture bytes\n');
+    const intent = path.join(root, '.vida/project-upgrade.v1.json');
+    const intentBytes = Buffer.from('retained unresolved upgrade intent\n');
+    mkdirSync(path.dirname(intent), { recursive: true });
+    writeFileSync(intent, intentBytes);
+    try {
+      expect(() => loadRuntimeConfig(root)).toThrow(
+        'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',
+      );
+      expect(readFileSync(intent)).toEqual(intentBytes);
+    } finally {
+      process.stderr.write(`Retained unresolved upgrade-intent fixture: ${root}\n`);
+    }
+  });
+
+  test.skipIf(process.platform !== 'linux')(
+    'rejects and preserves an orphan own-PID layout CAS lock observed in .vida',
+    () => {
+      const fixture = createLegacyConfigFixture();
+      const { root } = fixture;
+      const vida = path.join(root, '.vida');
+      mkdirSync(vida, { recursive: true });
+      writeFileSync(path.join(vida, STORAGE_ADMISSION_GATE_FILE), 'unvalidated gate fixture bytes\n');
+      const { name: lockName, bytes: lockBytes } = observeLiveLayoutCasLock(root);
+      const lockPath = path.join(vida, lockName);
+      writeFileSync(lockPath, lockBytes, { flag: 'wx' });
+      const identity = lstatSync(lockPath, { bigint: true });
+      try {
+        expect(() => loadRuntimeConfig(root)).toThrow(/lock/i);
+        expect(readFileSync(lockPath)).toEqual(lockBytes);
+        const after = lstatSync(lockPath, { bigint: true });
+        expect(after.dev).toBe(identity.dev);
+        expect(after.ino).toBe(identity.ino);
+      } finally {
+        process.stderr.write(`Retained orphan-lock configuration reader fixture: ${root}\n`);
+      }
+    },
+  );
+
+  test.skipIf(process.platform !== 'linux')(
+    'rejects a UUID retained layout-lock quarantine without changing its custody',
+    () => {
+      const fixture = createLegacyConfigFixture();
+      const { root } = fixture;
+      const vida = path.join(root, '.vida');
+      mkdirSync(vida, { recursive: true });
+      writeFileSync(path.join(vida, STORAGE_ADMISSION_GATE_FILE), 'unvalidated gate fixture bytes\n');
+      const { name: lockName } = observeLiveLayoutCasLock(root);
+      const quarantineName = '.' + lockName + '.' + randomUUID() + '.reclaimed';
+      const quarantinePath = path.join(vida, quarantineName);
+      const quarantineBytes = Buffer.from('retained lock quarantine custody\n');
+      writeFileSync(quarantinePath, quarantineBytes, { flag: 'wx' });
+      const identity = lstatSync(quarantinePath, { bigint: true });
+      try {
+        expect(() => loadRuntimeConfig(root)).toThrow(/quarantine .* pending|lock/i);
+        expect(readFileSync(quarantinePath)).toEqual(quarantineBytes);
+        const after = lstatSync(quarantinePath, { bigint: true });
+        expect(after.dev).toBe(identity.dev);
+        expect(after.ino).toBe(identity.ino);
+      } finally {
+        process.stderr.write(`Retained quarantine configuration reader fixture: ${root}\n`);
+      }
+    },
+  );
 
   test('rejects the previous physical identity after replacing a consumer directory at the same path', async () => {
     const original = createLegacyConfigFixture();

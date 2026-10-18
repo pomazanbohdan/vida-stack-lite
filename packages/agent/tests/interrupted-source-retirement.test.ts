@@ -21,6 +21,7 @@ import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orc
 import { openAdmittedSessionExecution } from '../src/orchestration/admitted-session-execution.ts';
 import {
   openConfiguredMastraSessionLedger,
+  type MastraSessionLedger,
   type MastraLedgerItem,
   type MastraSessionLedgerState,
 } from '../src/orchestration/persistent-session-handoff.ts';
@@ -218,6 +219,16 @@ function readPersistedApproval(
 }
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const traceFixturePhases = process.env.VIDA_TEST_FIXTURE_PHASES === '1';
+
+function beginFixturePhase(enabled: boolean, label: string): () => void {
+  const started = performance.now();
+  if (enabled) console.error(`[interrupted-source phase:start] ${label}`);
+  return () => {
+    if (enabled)
+      console.error(`[interrupted-source phase:end] ${label} elapsed_ms=${(performance.now() - started).toFixed(1)}`);
+  };
+}
 const writeJson = (root: string, file: string, value: unknown): void => {
   mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
   const serialized = JSON.stringify(value);
@@ -225,211 +236,26 @@ const writeJson = (root: string, file: string, value: unknown): void => {
   writeFileSync(path.join(root, file), serialized);
 };
 
-async function prepareFixture({ issueWriter = true } = {}) {
+async function prepareFixture({
+  deadline,
+  issueWriter = true,
+  tracePhases = false,
+}: {
+  deadline: number;
+  issueWriter?: boolean;
+  tracePhases?: boolean;
+}) {
+  function requireSetupTime(phase: string) {
+    if (!Number.isFinite(deadline))
+      throw new Error(`Interrupted Source fixture has an invalid case deadline before ${phase}`);
+    if (!(performance.now() < deadline))
+      throw new Error(`Interrupted Source fixture case deadline expired before ${phase}`);
+  }
+  requireSetupTime('fixture-files');
   const root = mkdtempSync(path.join(tmpdir(), 'vida-stopped-source-'));
-  writeFileSync(
-    path.join(root, 'agent-runtime.config.v1.yaml'),
-    readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
-      .replaceAll('{{REPOSITORY}}', 'stopped-source-repository')
-      .replaceAll('{{PROJECT}}', 'sample')
-      .replaceAll('{{BUNDLE}}', 'vida-agent'),
-  );
-  writeFileSync(path.join(root, 'AGENTS.md'), 'Synthetic fixture policy');
-  writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Synthetic source preimage');
-  writeJson(root, 'docs/agent-instructions/documentation-policy.v1.json', {
-    schema: 'DocumentationPolicy/v1',
-    policy_id: 'synthetic-stopped-policy',
-    project_id: 'sample',
-    source_path: 'docs/agent-instructions/documentation-policy.v1.json',
-    owner: 'synthetic-fixture',
-    required: false,
-    canonical_roots: ['docs'],
-    map_paths: ['AGENT.sidecar.md'],
-    excluded_roots: [],
-    changelog_required: false,
-    changelog_path: null,
-    relations: ['documents'],
-    updated_at: new Date().toISOString(),
-  });
-  const config: AgentRuntimeConfig = loadRuntimeConfig(root),
-    workspace = deriveWorkspaceId(config.repository.repository_id, root),
-    ledger = openConfiguredMastraSessionLedger(root),
-    store = ledger.hostState;
-  const readJournal = (id: string, attempt: number) => requireValue(ledger.resume(id, attempt), 'session journal');
-  const selection: WorkItemSelection = {
-    team: 'default-development',
-    kind: 'task',
-    intent: 'task_execution',
-    project: 'sample',
-    risk_flags: [],
-    labels: [],
-  };
-  function admission(id: string = 'stopped', file: string = 'AGENT.sidecar.md', thread: string = 'synthetic-owner') {
-    const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), [file]),
-      scopePath = `.agent/work/${id}/scope.json`,
-      acceptancePath = `.agent/work/${id}/acceptance.json`,
-      ac = 'AC-' + id;
-    const scope = {
-      schema: 'ImplementationScope/v1',
-      scope_id: 'scope-' + id,
-      work_id: id,
-      source_revision: source.digest,
-      ac_ids: [ac],
-      allowed_paths: [file],
-      implementation_paths: [file],
-      documentation_paths: [],
-      changed_symbols: [],
-      non_goals: ['Runtime acceptance'],
-      acceptance_trace: [ac],
-      behavior_trace: ['SR-' + id],
-      test_trace: ['synthetic fixture'],
-      diagnostic_trace: ['synthetic fixture'],
-      attribution: { thread_id: thread, pointer: 'synthetic-request:' + id },
-      owner: 'synthetic-fixture',
-      created_at: new Date().toISOString(),
-    };
-    writeJson(root, scopePath, scope);
-    writeJson(root, acceptancePath, {
-      schema: 'AcceptanceManifest/v1',
-      id: 'acceptance-' + id,
-      version: 1,
-      ac_ids: [ac],
-      source: file,
-      scope: scope.scope_id,
-      source_revision: source.digest,
-      contracts: [
-        {
-          id: ac,
-          definition: 'Preserve original terminal failure without acceptance',
-          sr: 'SR-' + id,
-          evidence: ['synthetic fixture'],
-        },
-      ],
-    });
-    const authorizationPath = `.agent/work/${id}/authorization.json`;
-    writeJson(root, authorizationPath, {
-      schema: 'LocalSourceWriteAuthorization/v1',
-      action: 'source.write',
-      user_instruction_ref: 'synthetic-request:' + id,
-      work_id: id,
-      attempt: 1,
-      scope_digest: source.digest,
-      config_digest: runtimeConfigDigest(config),
-      workflow_id: 'task_execution',
-      stage_ids: ['develop_task'],
-      implementation_paths: [file],
-      native_session_handle: thread,
-    });
-    const input: LocalWorkAdmissionInput = {
-      repositoryRoot: root,
-      config,
-      store,
-      selection,
-      context: { work_id: id, attempt: 1, scope_digest: source.digest },
-      nativeSessionHandle: thread,
-      workItem: {
-        schema: 'WorkItem/v1',
-        id,
-        canonical_kind: 'task',
-        intent: 'task_execution',
-        project_id: 'sample',
-        title: 'Synthetic stopped fixture ' + id,
-        description: 'Synthetic boundary fixture',
-        risk_flags: [],
-        labels: [],
-        provider: 'local',
-        provider_type: 'Task',
-      },
-      scopePath,
-      acceptancePath,
-      sourceAuthorizationPath: authorizationPath,
-      runtimeCodePaths: ['vida-agent/bin/run.ts'],
-      route: 'R2',
-      risk: 'low',
-      changeKind: 'feature',
-    };
-    const intakePath = `.agent/work/${id}/raw-intake.json`;
-    writeJson(root, intakePath, {
-      schema: 'VidaLocalSessionIntake/v1',
-      work_item: input.workItem,
-      native_session_handle: thread,
-      scope_path: scopePath,
-      acceptance_path: acceptancePath,
-      source_authorization_path: authorizationPath,
-      runtime_code_paths: input.runtimeCodePaths,
-      route: input.route,
-      risk: input.risk,
-      change_kind: input.changeKind,
-    });
-    const admittedInput: LocalWorkAdmissionInput = { ...input, intakePath };
-    const admitted = admitLocalSessionWork(admittedInput),
-      work = requireValue(admitted.host.work, 'admitted work'),
-      identity = {
-        repository_id: work.binding.repository_id,
-        project_ids: work.binding.project_ids,
-        integrations_digest: work.binding.integrations_digest,
-        work_id: id,
-      };
-    return { input: admittedInput, source, identity, admitted };
-  }
-  function publicFixture(admissionResult: ReturnType<typeof admission>) {
-    const { input: admittedInput, source: admittedSource, admitted } = admissionResult;
-    return {
-      args: [
-        '--project-root',
-        root,
-        '--repository',
-        config.repository.repository_id,
-        '--project',
-        selection.project,
-        '--work-path',
-        requireValue(admittedSource.entries[0], 'Admitted Source path').path,
-        '--work-id',
-        admittedInput.context.work_id,
-        '--attempt',
-        String(admittedInput.context.attempt),
-        '--scope-digest',
-        admittedSource.digest,
-        '--team',
-        selection.team,
-        '--kind',
-        selection.kind,
-        '--intent',
-        selection.intent,
-        '--workflow',
-        'task_execution',
-      ],
-      publicRun: run,
-      sync: () => readJournal(admittedInput.context.work_id, admittedInput.context.attempt),
-      repositoryRoot: root,
-      workId: admittedInput.context.work_id,
-      attempt: admittedInput.context.attempt,
-      work: requireValue(admitted.host.work, 'Admitted public fixture work'),
-    };
-  }
+  let ledgerHandle: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined,
+    bridgeHandle: MastraSessionBridgeInstance | undefined;
   const extraBridges: MastraSessionBridgeInstance[] = [];
-  const original = admission(),
-    { input, identity, source } = original;
-  const bridge = await MastraSessionBridge.open({
-    ledger,
-    projectIds: [selection.project],
-    repositoryRoot: root,
-    config,
-    selection,
-    context: input.context,
-    workflowId: 'task_execution',
-    workspaceId: workspace,
-  });
-  await bridge.start(source);
-  const sync = () => readJournal('stopped', 1);
-  await bindControlledRuntimeInitialization(root, config, store);
-  const originalPublicFixture = publicFixture(original);
-  let journal = await runTaskSynthesisPublicActions(originalPublicFixture);
-  const readonlyObservation = requireValue(
-    journal.state.completed[0]?.items[0]?.observation,
-    'Completed readonly observation',
-  );
-  let reservation: WorkflowSessionReservation | undefined, executionCapability: WorkflowExecutionCapability | undefined;
   let connectionsClosed = false,
     primaryBridgeClosed = false,
     ledgerClosed = false;
@@ -446,17 +272,17 @@ async function prepareFixture({ issueWriter = true } = {}) {
         failures.push(error);
       }
     }
-    if (!primaryBridgeClosed) {
+    if (bridgeHandle !== undefined && !primaryBridgeClosed) {
       try {
-        await bridge.close();
+        await bridgeHandle.close();
         primaryBridgeClosed = true;
       } catch (error) {
         failures.push(error);
       }
     }
-    if (!ledgerClosed) {
+    if (ledgerHandle !== undefined && !ledgerClosed) {
       try {
-        ledger.close();
+        ledgerHandle.close();
         ledgerClosed = true;
       } catch (error) {
         failures.push(error);
@@ -468,9 +294,12 @@ async function prepareFixture({ issueWriter = true } = {}) {
     }
     connectionsClosed = true;
   }
-  async function close({ removeRoot = false, deadline = Number.NEGATIVE_INFINITY } = {}): Promise<boolean> {
+  async function close({
+    removeRoot = false,
+    deadline: cleanupDeadline = Number.NEGATIVE_INFINITY,
+  } = {}): Promise<boolean> {
     await closeConnections();
-    if (!removeRoot || !Number.isFinite(deadline) || !(performance.now() < deadline)) {
+    if (!removeRoot || !Number.isFinite(cleanupDeadline) || !(performance.now() < cleanupDeadline)) {
       console.warn(`Retained incomplete or expired interrupted Source fixture root: ${root}`);
       return false;
     }
@@ -482,18 +311,300 @@ async function prepareFixture({ issueWriter = true } = {}) {
       throw error;
     }
   }
-  type AdmissionResult = ReturnType<typeof admission>;
-  async function laterWriter(
-    id: string,
-    file: string,
-    { readonly = false, ownershipOnly = false }: { readonly?: boolean; ownershipOnly?: boolean } = {},
-  ): Promise<AdmissionResult & { readonly journal: ReturnType<typeof readJournal> | null }> {
-    if (file !== 'AGENT.sidecar.md') writeFileSync(path.join(root, file), 'Synthetic disjoint source');
-    const next = admission(id, file, 'synthetic-' + id);
-    if (ownershipOnly) {
-      const host = store.readHostStateSnapshot(next.identity),
-        expectedWork = requireValue(host.workVersion, 'work version'),
-        expectedLedger = requireValue(host.ledgerVersion, 'ledger version');
+  try {
+    const endFixtureFiles = beginFixturePhase(tracePhases, 'fixture-files');
+    try {
+      writeFileSync(
+        path.join(root, 'agent-runtime.config.v1.yaml'),
+        readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
+          .replaceAll('{{REPOSITORY}}', 'stopped-source-repository')
+          .replaceAll('{{PROJECT}}', 'sample')
+          .replaceAll('{{BUNDLE}}', 'vida-agent'),
+      );
+      writeFileSync(path.join(root, 'AGENTS.md'), 'Synthetic fixture policy');
+      writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Synthetic source preimage');
+      writeJson(root, 'docs/agent-instructions/documentation-policy.v1.json', {
+        schema: 'DocumentationPolicy/v1',
+        policy_id: 'synthetic-stopped-policy',
+        project_id: 'sample',
+        source_path: 'docs/agent-instructions/documentation-policy.v1.json',
+        owner: 'synthetic-fixture',
+        required: false,
+        canonical_roots: ['docs'],
+        map_paths: ['AGENT.sidecar.md'],
+        excluded_roots: [],
+        changelog_required: false,
+        changelog_path: null,
+        relations: ['documents'],
+        updated_at: new Date().toISOString(),
+      });
+    } finally {
+      endFixtureFiles();
+    }
+    requireSetupTime('config-and-ledger-open');
+    const endConfigLedger = beginFixturePhase(tracePhases, 'config-and-ledger-open');
+    const config: AgentRuntimeConfig = loadRuntimeConfig(root),
+      workspace = deriveWorkspaceId(config.repository.repository_id, root);
+    requireSetupTime('ledger-open');
+    const ledger = openConfiguredMastraSessionLedger(root);
+    ledgerHandle = ledger;
+    const store = ledger.hostState;
+    const readJournal = (id: string, attempt: number) => requireValue(ledger.resume(id, attempt), 'session journal');
+    const selection: WorkItemSelection = {
+      team: 'default-development',
+      kind: 'task',
+      intent: 'task_execution',
+      project: 'sample',
+      risk_flags: [],
+      labels: [],
+    };
+    endConfigLedger();
+    function admission(id: string = 'stopped', file: string = 'AGENT.sidecar.md', thread: string = 'synthetic-owner') {
+      const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), [file]),
+        scopePath = `.agent/work/${id}/scope.json`,
+        acceptancePath = `.agent/work/${id}/acceptance.json`,
+        ac = 'AC-' + id;
+      const scope = {
+        schema: 'ImplementationScope/v1',
+        scope_id: 'scope-' + id,
+        work_id: id,
+        source_revision: source.digest,
+        ac_ids: [ac],
+        allowed_paths: [file],
+        implementation_paths: [file],
+        documentation_paths: [],
+        changed_symbols: [],
+        non_goals: ['Runtime acceptance'],
+        acceptance_trace: [ac],
+        behavior_trace: ['SR-' + id],
+        test_trace: ['synthetic fixture'],
+        diagnostic_trace: ['synthetic fixture'],
+        attribution: { thread_id: thread, pointer: 'synthetic-request:' + id },
+        owner: 'synthetic-fixture',
+        created_at: new Date().toISOString(),
+      };
+      writeJson(root, scopePath, scope);
+      writeJson(root, acceptancePath, {
+        schema: 'AcceptanceManifest/v1',
+        id: 'acceptance-' + id,
+        version: 1,
+        ac_ids: [ac],
+        source: file,
+        scope: scope.scope_id,
+        source_revision: source.digest,
+        contracts: [
+          {
+            id: ac,
+            definition: 'Preserve original terminal failure without acceptance',
+            sr: 'SR-' + id,
+            evidence: ['synthetic fixture'],
+          },
+        ],
+      });
+      const authorizationPath = `.agent/work/${id}/authorization.json`;
+      writeJson(root, authorizationPath, {
+        schema: 'LocalSourceWriteAuthorization/v1',
+        action: 'source.write',
+        user_instruction_ref: 'synthetic-request:' + id,
+        work_id: id,
+        attempt: 1,
+        scope_digest: source.digest,
+        config_digest: runtimeConfigDigest(config),
+        workflow_id: 'task_execution',
+        stage_ids: ['develop_task'],
+        implementation_paths: [file],
+        native_session_handle: thread,
+      });
+      const input: LocalWorkAdmissionInput = {
+        repositoryRoot: root,
+        config,
+        store,
+        selection,
+        context: { work_id: id, attempt: 1, scope_digest: source.digest },
+        nativeSessionHandle: thread,
+        workItem: {
+          schema: 'WorkItem/v1',
+          id,
+          canonical_kind: 'task',
+          intent: 'task_execution',
+          project_id: 'sample',
+          title: 'Synthetic stopped fixture ' + id,
+          description: 'Synthetic boundary fixture',
+          risk_flags: [],
+          labels: [],
+          provider: 'local',
+          provider_type: 'Task',
+        },
+        scopePath,
+        acceptancePath,
+        sourceAuthorizationPath: authorizationPath,
+        runtimeCodePaths: ['vida-agent/bin/run.ts'],
+        route: 'R2',
+        risk: 'low',
+        changeKind: 'feature',
+      };
+      const intakePath = `.agent/work/${id}/raw-intake.json`;
+      writeJson(root, intakePath, {
+        schema: 'VidaLocalSessionIntake/v1',
+        work_item: input.workItem,
+        native_session_handle: thread,
+        scope_path: scopePath,
+        acceptance_path: acceptancePath,
+        source_authorization_path: authorizationPath,
+        runtime_code_paths: input.runtimeCodePaths,
+        route: input.route,
+        risk: input.risk,
+        change_kind: input.changeKind,
+      });
+      const admittedInput: LocalWorkAdmissionInput = { ...input, intakePath };
+      const admitted = admitLocalSessionWork(admittedInput),
+        work = requireValue(admitted.host.work, 'admitted work'),
+        identity = {
+          repository_id: work.binding.repository_id,
+          project_ids: work.binding.project_ids,
+          integrations_digest: work.binding.integrations_digest,
+          work_id: id,
+        };
+      return { input: admittedInput, source, identity, admitted };
+    }
+    function publicFixture(admissionResult: ReturnType<typeof admission>) {
+      const { input: admittedInput, source: admittedSource, admitted } = admissionResult;
+      return {
+        args: [
+          '--project-root',
+          root,
+          '--repository',
+          config.repository.repository_id,
+          '--project',
+          selection.project,
+          '--work-path',
+          requireValue(admittedSource.entries[0], 'Admitted Source path').path,
+          '--work-id',
+          admittedInput.context.work_id,
+          '--attempt',
+          String(admittedInput.context.attempt),
+          '--scope-digest',
+          admittedSource.digest,
+          '--team',
+          selection.team,
+          '--kind',
+          selection.kind,
+          '--intent',
+          selection.intent,
+          '--workflow',
+          'task_execution',
+        ],
+        publicRun: async (args: string[]) => {
+          const label = args.includes('--issue-wave') ? 'public-cli-issue-wave' : 'public-cli-report';
+          requireSetupTime(label);
+          const end = beginFixturePhase(tracePhases, label);
+          try {
+            return await run(args);
+          } finally {
+            end();
+          }
+        },
+        sync: () => readJournal(admittedInput.context.work_id, admittedInput.context.attempt),
+        repositoryRoot: root,
+        workId: admittedInput.context.work_id,
+        attempt: admittedInput.context.attempt,
+        work: requireValue(admitted.host.work, 'Admitted public fixture work'),
+      };
+    }
+    const endAdmissionBridge = beginFixturePhase(tracePhases, 'admission-and-bridge-start');
+    let original: ReturnType<typeof admission>, bridge: MastraSessionBridgeInstance;
+    try {
+      requireSetupTime('admission-and-bridge-start');
+      original = admission();
+      const { input: admittedInput } = original;
+      requireSetupTime('bridge-open');
+      bridge = await MastraSessionBridge.open({
+        ledger,
+        projectIds: [selection.project],
+        repositoryRoot: root,
+        config,
+        selection,
+        context: admittedInput.context,
+        workflowId: 'task_execution',
+        workspaceId: workspace,
+      });
+      bridgeHandle = bridge;
+      requireSetupTime('bridge-start');
+      await bridge.start(original.source);
+    } finally {
+      endAdmissionBridge();
+    }
+    const { input, identity, source } = original;
+    const sync = () => readJournal('stopped', 1);
+    requireSetupTime('runtime-initialization-binding');
+    const endRuntimeBinding = beginFixturePhase(tracePhases, 'runtime-initialization-binding');
+    try {
+      await bindControlledRuntimeInitialization(root, config, store);
+    } finally {
+      endRuntimeBinding();
+    }
+    const originalPublicFixture = publicFixture(original);
+    requireSetupTime('task-synthesis-helper');
+    const endSynthesis = beginFixturePhase(tracePhases, 'task-synthesis-helper');
+    let journal: ReturnType<typeof readJournal>;
+    try {
+      journal = await runTaskSynthesisPublicActions(originalPublicFixture);
+    } finally {
+      endSynthesis();
+    }
+    const readonlyObservation = requireValue(
+      journal.state.completed[0]?.items[0]?.observation,
+      'Completed readonly observation',
+    );
+    let reservation: WorkflowSessionReservation | undefined,
+      executionCapability: WorkflowExecutionCapability | undefined;
+    type AdmissionResult = ReturnType<typeof admission>;
+    async function laterWriter(
+      id: string,
+      file: string,
+      { readonly = false, ownershipOnly = false }: { readonly?: boolean; ownershipOnly?: boolean } = {},
+    ): Promise<AdmissionResult & { readonly journal: ReturnType<typeof readJournal> | null }> {
+      if (file !== 'AGENT.sidecar.md') writeFileSync(path.join(root, file), 'Synthetic disjoint source');
+      const next = admission(id, file, 'synthetic-' + id);
+      if (ownershipOnly) {
+        const host = store.readHostStateSnapshot(next.identity),
+          expectedWork = requireValue(host.workVersion, 'work version'),
+          expectedLedger = requireValue(host.ledgerVersion, 'ledger version');
+        acquireLocalSourceWriterLease({
+          repositoryRoot: root,
+          config,
+          store,
+          identity: next.identity,
+          nativeSessionHandle: next.input.nativeSessionHandle,
+          stageId: 'develop_task',
+          assignmentIndex: 0,
+          expectedWork,
+          expectedLedger,
+        });
+        return { ...next, journal: null };
+      }
+      const nextBridge = await MastraSessionBridge.open({
+        ledger,
+        projectIds: [selection.project],
+        repositoryRoot: root,
+        config,
+        selection,
+        context: next.input.context,
+        workflowId: 'task_execution',
+        workspaceId: workspace,
+      });
+      extraBridges.push(nextBridge);
+      await nextBridge.start(next.source);
+      const nextSync = () => readJournal(id, 1);
+      let nextJournal = nextSync();
+      if (readonly) {
+        nextJournal = ledger.issueWave(id, 1, nextJournal.version);
+        return { ...next, journal: nextJournal };
+      }
+      const nextPublicFixture = publicFixture(next);
+      await runTaskSynthesisPublicActions(nextPublicFixture);
+      nextJournal = await runSourcePrewriterPublicActions(nextPublicFixture);
+      const host = store.readHostStateSnapshot(next.identity);
       acquireLocalSourceWriterLease({
         repositoryRoot: root,
         config,
@@ -502,104 +613,99 @@ async function prepareFixture({ issueWriter = true } = {}) {
         nativeSessionHandle: next.input.nativeSessionHandle,
         stageId: 'develop_task',
         assignmentIndex: 0,
-        expectedWork,
-        expectedLedger,
+        expectedWork: requireValue(host.workVersion, 'work version'),
+        expectedLedger: requireValue(host.ledgerVersion, 'ledger version'),
+        expectedSessionJournal: { attempt: 1, version: nextJournal.version },
       });
-      return { ...next, journal: null };
-    }
-    const nextBridge = await MastraSessionBridge.open({
-      ledger,
-      projectIds: [selection.project],
-      repositoryRoot: root,
-      config,
-      selection,
-      context: next.input.context,
-      workflowId: 'task_execution',
-      workspaceId: workspace,
-    });
-    extraBridges.push(nextBridge);
-    await nextBridge.start(next.source);
-    const nextSync = () => readJournal(id, 1);
-    let nextJournal = nextSync();
-    if (readonly) {
-      nextJournal = ledger.issueWave(id, 1, nextJournal.version);
       return { ...next, journal: nextJournal };
     }
-    const nextPublicFixture = publicFixture(next);
-    await runTaskSynthesisPublicActions(nextPublicFixture);
-    nextJournal = await runSourcePrewriterPublicActions(nextPublicFixture);
-    const host = store.readHostStateSnapshot(next.identity);
-    acquireLocalSourceWriterLease({
-      repositoryRoot: root,
-      config,
-      store,
-      identity: next.identity,
-      nativeSessionHandle: next.input.nativeSessionHandle,
-      stageId: 'develop_task',
-      assignmentIndex: 0,
-      expectedWork: requireValue(host.workVersion, 'work version'),
-      expectedLedger: requireValue(host.ledgerVersion, 'ledger version'),
-      expectedSessionJournal: { attempt: 1, version: nextJournal.version },
-    });
-    return { ...next, journal: nextJournal };
-  }
-  const issue = () =>
-    run([
-      ...originalPublicFixture.args,
-      '--issue-wave',
-      'true',
-      '--expected-revision',
-      String(journal.version.revision),
-      '--expected-digest',
-      journal.version.digest,
-    ]);
-  try {
-    journal = await runSourcePrewriterPublicActions(originalPublicFixture);
-    if (issueWriter) {
-      await issue();
-      journal = sync();
-      const item = requireValue(journal.state.items[0], 'Public writer action');
-      if (item.request.stage_id !== 'develop_task' || item.issue_id === null)
-        throw new Error('Public fixture did not issue its configured writer');
-      reservation = requireValue(item.host_reservation, 'Kernel-produced writer reservation');
-      const execution = await openAdmittedSessionExecution(root, store, 'sample', 'stopped');
-      executionCapability = requireValue(
-        execution.composition.workflowExecutionCapability,
-        'Actual execution capability',
-      );
+    const issue = async () => {
+      requireSetupTime('public-cli-writer-issue');
+      const end = beginFixturePhase(tracePhases, 'public-cli-writer-issue');
+      try {
+        return await run([
+          ...originalPublicFixture.args,
+          '--issue-wave',
+          'true',
+          '--expected-revision',
+          String(journal.version.revision),
+          '--expected-digest',
+          journal.version.digest,
+        ]);
+      } finally {
+        end();
+      }
+    };
+    requireSetupTime('source-prewriter-helper');
+    const endPrewriter = beginFixturePhase(tracePhases, 'source-prewriter-helper');
+    try {
+      journal = await runSourcePrewriterPublicActions(originalPublicFixture);
+    } finally {
+      endPrewriter();
     }
+    if (issueWriter) {
+      requireSetupTime('writer-issue-and-execution-open');
+      const endWriterIssue = beginFixturePhase(tracePhases, 'writer-issue-and-execution-open');
+      try {
+        await issue();
+        journal = sync();
+        const item = requireValue(journal.state.items[0], 'Public writer action');
+        if (item.request.stage_id !== 'develop_task' || item.issue_id === null)
+          throw new Error('Public fixture did not issue its configured writer');
+        reservation = requireValue(item.host_reservation, 'Kernel-produced writer reservation');
+        requireSetupTime('execution-open');
+        const execution = await openAdmittedSessionExecution(root, store, 'sample', 'stopped');
+        executionCapability = requireValue(
+          execution.composition.workflowExecutionCapability,
+          'Actual execution capability',
+        );
+      } finally {
+        endWriterIssue();
+      }
+    }
+    requireSetupTime('fixture-ready');
+    return {
+      root,
+      config,
+      workspace,
+      ledger,
+      store,
+      identity,
+      executionCapability,
+      readJournal,
+      input,
+      source,
+      reservation,
+      issue,
+      readonlyObservation,
+      close,
+      closeConnections,
+      admission,
+      laterWriter,
+    };
   } catch (error) {
+    console.warn(`Retained interrupted Source fixture root after setup failure: ${root}`);
     try {
       await close();
     } catch (cleanupError) {
-      throw new AggregateError([error, cleanupError], 'Source fixture issue and cleanup failed');
+      throw new AggregateError([error, cleanupError], 'Source fixture setup and cleanup failed');
     }
     throw error;
   }
-  return {
-    root,
-    config,
-    workspace,
-    ledger,
-    store,
-    identity,
-    executionCapability,
-    readJournal,
-    input,
-    source,
-    reservation,
-    issue,
-    readonlyObservation,
-    close,
-    closeConnections,
-    admission,
-    laterWriter,
-  };
 }
 
-async function fixture() {
-  const prepared = await prepareFixture();
-  return { ...prepared, reservation: requireValue(prepared.reservation, 'workflow reservation') };
+async function fixture(options: { deadline: number; tracePhases?: boolean }) {
+  const prepared = await prepareFixture(options);
+  try {
+    return { ...prepared, reservation: requireValue(prepared.reservation, 'workflow reservation') };
+  } catch (error) {
+    try {
+      await prepared.close();
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'Source fixture return and cleanup failed');
+    }
+    throw error;
+  }
 }
 
 type RetirementFixtureCaseOutcome = {
@@ -629,6 +735,8 @@ async function closeTestFixture(
   } catch (error) {
     failures.push(error);
   }
+  if (outcome.completed && performance.now() >= outcome.deadline)
+    failures.push(new Error('Completed case exceeded its fixture cleanup deadline'));
   if (failures.length > 0)
     throw new AggregateError(
       [...(outcome.bodyFailed ? [outcome.bodyError] : []), ...failures],
@@ -654,13 +762,72 @@ async function closeRecoveryFixture(
   }
 }
 
+test.each([
+  ['timely', false],
+  ['expired', true],
+] as const)('completed %s fixture distinguishes retained custody from late completion', async (_label, expired) => {
+  const deadline = performance.now() + (expired ? -1 : 5000);
+  const owner = { close: () => Promise.resolve(false) };
+  const close = spyOn(owner, 'close');
+  const completion = closeTestFixture(owner, { deadline, completed: true, bodyFailed: false });
+  if (expired) await expectRejection(completion, /Interrupted Source case fixture cleanup failed/);
+  else expect(await completion).toBe(false);
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(close).toHaveBeenCalledWith({ removeRoot: true, deadline });
+});
+
+test('expired fixture setup rejects before opening resources', async () => {
+  await expectRejection(prepareFixture({ deadline: performance.now() - 1 }), /case deadline expired/);
+  await expectRejection(prepareFixture({ deadline: Number.NaN }), /invalid case deadline/);
+});
+
+test.each([
+  ['successful close', false],
+  ['failed close', true],
+] as const)('setup failure preserves its primary cause with %s', async (_label, failClose) => {
+  const setupError = new Error('controlled bridge-open failure');
+  const closeError = new Error('controlled setup ledger-close failure');
+  const closed: MastraSessionLedger[] = [];
+  const restoreCloseSpies: (() => void)[] = [];
+  const openSpy = spyOn(MastraSessionBridge, 'open').mockImplementation((options) => {
+    const closeLedger = options.ledger.close.bind(options.ledger);
+    const closeSpy = spyOn(options.ledger, 'close').mockImplementation(() => {
+      closed.push(options.ledger);
+      closeLedger();
+      if (failClose) throw closeError;
+    });
+    restoreCloseSpies.push(() => closeSpy.mockRestore());
+    return Promise.reject(setupError);
+  });
+  try {
+    const error = await rejectionReason(prepareFixture({ deadline: performance.now() + 5000 }));
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const options = requireValue(openSpy.mock.calls[0]?.[0], 'observed bridge-open options');
+    expect(closed).toHaveLength(1);
+    expect(closed[0]).toBe(options.ledger);
+    expect(readdirSync(options.repositoryRoot)).toContain('agent-runtime.config.v1.yaml');
+    if (failClose) {
+      if (!(error instanceof AggregateError)) throw new Error('Setup and cleanup causes were not aggregated');
+      expect(error.errors).toHaveLength(2);
+      expect(error.errors[0]).toBe(setupError);
+      const cleanupError: unknown = error.errors[1];
+      if (!(cleanupError instanceof AggregateError)) throw new Error('Ledger close cause was not preserved');
+      expect(cleanupError.errors).toHaveLength(1);
+      expect(cleanupError.errors[0]).toBe(closeError);
+    } else expect(error).toBe(setupError);
+  } finally {
+    openSpy.mockRestore();
+    for (const restore of restoreCloseSpies) restore();
+  }
+});
+
 test('protected public issue aborts an unentered attempt and fences approval replay', async () => {
   const deadline = performance.now() + 30000;
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
   const failure = new Error('controlled protected entry failure before effect');
-  const f = await prepareFixture({ issueWriter: false });
+  const f = await prepareFixture({ deadline, issueWriter: false });
   let database: Database | undefined;
   try {
     const { issue, root, config, store, identity } = f;
@@ -751,10 +918,12 @@ test('admitted protected session commits an observed result and its approval exa
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture();
+  const f = await fixture({ deadline, tracePhases: traceFixturePhases });
   let database: Database | undefined;
   try {
+    const endDatabaseOpen = beginFixturePhase(traceFixturePhases, 'selected-case-extra-host-db-open');
     database = openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace);
+    endDatabaseOpen();
     const db = database;
     const journal = f.readJournal('stopped', 1);
     const item = requireValue(journal.state.items[0], 'issued protected action');
@@ -791,23 +960,38 @@ test('admitted protected session commits an observed result and its approval exa
         approval: { ...approval, binding: { ...approval.binding, operation_hash: '0'.repeat(64) } },
       },
     };
-    await expectRejection(
-      completeWorkflowAssignmentForSession(capability, foreignApproval, observed),
-      /workflow approval fencing conflict/,
-    );
+    const endForeignApproval = beginFixturePhase(traceFixturePhases, 'foreign-approval-rejection');
+    try {
+      await expectRejection(
+        completeWorkflowAssignmentForSession(capability, foreignApproval, observed),
+        /workflow approval fencing conflict/,
+      );
+    } finally {
+      endForeignApproval();
+    }
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(readApproval()).toEqual(approvalBefore);
-    await expectRejection(
-      completeWorkflowAssignmentForSession(
-        capability,
-        { ...f.reservation, request: { ...f.reservation.request, workContextDigest: '0'.repeat(64) } },
-        observed,
-      ),
-      /workflow native result context changed/,
-    );
+    const endChangedContext = beginFixturePhase(traceFixturePhases, 'changed-context-rejection');
+    try {
+      await expectRejection(
+        completeWorkflowAssignmentForSession(
+          capability,
+          { ...f.reservation, request: { ...f.reservation.request, workContextDigest: '0'.repeat(64) } },
+          observed,
+        ),
+        /workflow native result context changed/,
+      );
+    } finally {
+      endChangedContext();
+    }
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(readApproval()).toEqual(approvalBefore);
-    await assert.doesNotReject(() => completeWorkflowAssignmentForSession(capability, f.reservation, observed));
+    const endCommit = beginFixturePhase(traceFixturePhases, 'observed-result-and-approval-commit');
+    try {
+      await assert.doesNotReject(() => completeWorkflowAssignmentForSession(capability, f.reservation, observed));
+    } finally {
+      endCommit();
+    }
     const after = f.store.readHostStateSnapshot(f.identity);
     const attempts = requireValue(after.work, 'completed protected Work').execution.assignment_attempts;
     expect(attempts).toHaveLength(1);
@@ -827,16 +1011,26 @@ test('admitted protected session commits an observed result and its approval exa
       fencing_token: approval.fencing_token,
       binding: approval.binding,
     });
-    await expectRejection(
-      reserveWorkflowAssignmentForSession(capability, f.reservation.request),
-      /workflow session action was already completed or requires reconciliation/,
-    );
+    const endReserveReplay = beginFixturePhase(traceFixturePhases, 'completed-reservation-replay-rejection');
+    try {
+      await expectRejection(
+        reserveWorkflowAssignmentForSession(capability, f.reservation.request),
+        /workflow session action was already completed or requires reconciliation/,
+      );
+    } finally {
+      endReserveReplay();
+    }
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
     expect(readApproval()).toEqual(applied);
-    await expectRejection(
-      completeWorkflowAssignmentForSession(capability, f.reservation, observed),
-      /workflow approval attempt binding invalid/,
-    );
+    const endStaleCompletion = beginFixturePhase(traceFixturePhases, 'stale-completion-rejection');
+    try {
+      await expectRejection(
+        completeWorkflowAssignmentForSession(capability, f.reservation, observed),
+        /workflow approval attempt binding invalid/,
+      );
+    } finally {
+      endStaleCompletion();
+    }
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
     expect(readApproval()).toEqual(applied);
     expect(f.readJournal('stopped', 1)).toEqual(journal);
@@ -846,9 +1040,14 @@ test('admitted protected session commits an observed result and its approval exa
     bodyError = error;
     throw error;
   } finally {
-    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError }, () => {
-      if (database !== undefined) closeWorkspaceDatabaseWithAdmission(database);
-    });
+    const endCleanup = beginFixturePhase(traceFixturePhases, 'selected-case-cleanup');
+    try {
+      await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError }, () => {
+        if (database !== undefined) closeWorkspaceDatabaseWithAdmission(database);
+      });
+    } finally {
+      endCleanup();
+    }
   }
 }, 30000);
 
@@ -857,7 +1056,7 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture();
+  const f = await fixture({ deadline });
   try {
     const before = f.store.readHostStateSnapshot(f.identity),
       beforeWork = requireValue(before.work, 'retirement work'),
@@ -958,7 +1157,7 @@ test('an interrupted Source owner keeps a later FIFO contender queued', async ()
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture();
+  const f = await fixture({ deadline });
   try {
     await expectRejection(
       f.laterWriter('fifo-contender', 'AGENT.sidecar.md'),
@@ -996,7 +1195,7 @@ test('public owner retirement restarts after lease expiry and package drift with
     bodyFailed = false,
     bodyError: unknown;
   mkdirSync(path.join(bundle, '.tmp'), { recursive: true });
-  const f = await fixture(),
+  const f = await fixture({ deadline }),
     cloneRoot = mkdtempSync(path.join(bundle, '.tmp', 'interrupted-recovery-')),
     packageRoot = path.join(cloneRoot, 'vida-agent'),
     realNow = Date.now;
@@ -1111,7 +1310,7 @@ test('interrupted Source retirement rejects missing, running, foreign, and stale
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture();
+  const f = await fixture({ deadline });
   try {
     const before = f.store.readHostStateSnapshot(f.identity),
       beforeWorkVersion = requireValue(before.workVersion, 'work version'),
@@ -1208,7 +1407,7 @@ test('interrupted Source retirement transaction rolls back the attempt downgrade
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture();
+  const f = await fixture({ deadline });
   try {
     const before = f.store.readHostStateSnapshot(f.identity),
       beforeWorkVersion = requireValue(before.workVersion, 'work version'),
@@ -1265,7 +1464,7 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture();
+  const f = await fixture({ deadline });
   let database: Database | undefined;
   const repair = (mode: 'inspect' | 'plan' | 'apply' | 'resume' | 'restore', actor?: string) =>
     runWorkStateRepair([
@@ -1534,7 +1733,7 @@ test('interrupted correction defaults repair rejects partial authority and misma
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture();
+  const f = await fixture({ deadline });
   let database: Database | undefined;
   const repair = () =>
     runWorkStateRepair([

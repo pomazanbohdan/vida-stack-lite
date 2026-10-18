@@ -15,6 +15,7 @@ import {
   PROJECT_UPGRADE_OPERATION_PATH,
   PROJECT_ACTIVATION_PATH,
   PROJECT_WORKSPACE_DATABASE_PATH,
+  STORAGE_ADMISSION_GATE_FILE,
   bindLoadedConfigurationSource,
   projectUpgradeHistoryPath,
   type RuntimeConfigurationSource,
@@ -1762,6 +1763,9 @@ function hasProjectUpgradeStagingEvidence(access: SafeRepositoryAccess): boolean
 
 function hasProjectUpgradeOutputEvidence(access: SafeRepositoryAccess): boolean {
   if (!access.fileExists('.vida', 'project upgrade output directory')) return false;
+  const entries = access.listFiles('.vida', 'project upgrade output directory');
+  // A lone admission gate is legacy reader control. Any other entry keeps the guarded probes.
+  if (entries.length === 1 && entries[0] === STORAGE_ADMISSION_GATE_FILE) return false;
   const fixedOutputExists = PROJECT_UPGRADE_OUTPUT_EVIDENCE_PATHS.some((file) =>
     access.fileExists(file, 'project upgrade output evidence'),
   );

@@ -39,6 +39,7 @@ export const INITIALIZED_PROJECT_PATHS = Object.freeze({
 export const RUNTIME_INITIALIZATION_PATH = '.agent/runtime-initialization.v1.json';
 /** Current upgrade intent is a reader barrier until its owner retires the active slot. */
 export const PROJECT_UPGRADE_OPERATION_PATH = '.vida/project-upgrade.v1.json';
+export const STORAGE_ADMISSION_GATE_FILE = 'storage-admission.v1.sqlite';
 /** Prepared unified storage; active consumers switch only after the upgrade closure is ready. */
 export const PROJECT_WORKSPACE_DATABASE_PATH = '.vida/work/workspace.v1.sqlite';
 export const PROJECT_INITIALIZATION_PATH = '.vida/runtime-initialization.v2.json';

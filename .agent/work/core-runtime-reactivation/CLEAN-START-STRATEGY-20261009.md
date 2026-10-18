@@ -33,6 +33,15 @@ Migrate current callers to the shared helpers, then delete forward-only duplicat
 
 ### 4. Frozen quality prerequisites and complete run
 
+Current three-hour review keeps Root's numeric producers serial and three
+independent preparation slots. Finish the config fastpath's guarded fallback/race
+regressions and setup-deadline custody before repeating the failed core selection.
+Do not repeat its unchanged270s failed campaign or treat late Bun PASS rows as
+deadline proof. Queue fresh storage-admission coverage/frozen proof and the
+qualified two-worker complete mutation route while core's30/60s setup issue stays
+OPEN. Reuse each capture, full baseline and canonical mutant map; known repair IDs
+share one diagnostic baseline. WORK owns the measured receipts and resource margin.
+
 The2026-10-16 user instruction adds an explicit complete diagnostic campaign via
 `bun run test:contours --unclosed` (`--all` selects every executable contour;
 `--plan` inspects selection). Run current coverage/scoped frozen CRAP first and

@@ -40,6 +40,16 @@ if (!isolated && !underStryker) {
   let payloadLockPath: string | undefined;
   let payloadRootPath: string | undefined;
   let reclaimGuardOwnerPath: string | undefined;
+  type CasAdmissionObservation = {
+    readonly failure: Error;
+    creates: number;
+    lockPath?: string;
+    guardPath?: string;
+    parentFd?: number;
+    cleanupFsyncAfterLock: boolean;
+    parentCloseArmed: boolean;
+  };
+  let activeCasAdmission: CasAdmissionObservation | undefined;
   let failPayloadFsync = false;
   let payloadFsyncCount = 0;
   let failedPayloadFd: number | undefined;
@@ -122,6 +132,47 @@ if (!isolated && !underStryker) {
     openSync(file: string | Buffer | URL, flags: number | string, mode?: number | string): number {
       const fd = actualFs.openSync(file, flags, mode);
       const descriptorPath = readlinkSync(`/proc/self/fd/${fd}`);
+      const cas = activeCasAdmission;
+      if (
+        cas &&
+        payloadRootPath &&
+        typeof flags === 'number' &&
+        (flags & actualFs.constants.O_CREAT) !== 0 &&
+        (flags & actualFs.constants.O_EXCL) !== 0 &&
+        path.basename(descriptorPath) === 'owner.json' &&
+        path.dirname(path.dirname(descriptorPath)) === payloadRootPath
+      ) {
+        cas.guardPath = path.dirname(descriptorPath);
+        reclaimGuardOwnerPath = descriptorPath;
+        postDeleteFsyncRoot = payloadRootPath;
+        postDeleteFsyncQuarantine = {
+          prefix: '.' + path.basename(cas.guardPath) + '.',
+          suffix: '.released',
+        };
+        postDeleteRemovalObserved = false;
+        postDeleteFsyncCount = 0;
+        postDeleteFsyncFailure = cas.failure;
+      }
+      if (
+        cas &&
+        payloadRootPath &&
+        typeof flags === 'number' &&
+        (flags & actualFs.constants.O_CREAT) !== 0 &&
+        (flags & actualFs.constants.O_EXCL) !== 0 &&
+        path.dirname(descriptorPath) === payloadRootPath
+      ) {
+        const parentMatch = typeof file === 'string' ? /^\/proc\/self\/fd\/(\d+)\//.exec(file) : null;
+        if (!parentMatch) throw new Error('CAS O_EXCL lock create did not expose its descriptor-relative parent');
+        const parentFd = Number(parentMatch[1]);
+        if (readlinkSync(`/proc/self/fd/${parentFd}`) !== payloadRootPath)
+          throw new Error('Observed CAS lock parent descriptor does not name the test root');
+        cas.parentFd = parentFd;
+        ownedParentFd = parentFd;
+        ownedDescriptorIdentities.set(parentFd, descriptorIdentity(parentFd));
+        payloadLockPath = descriptorPath;
+        cas.lockPath = descriptorPath;
+        cas.creates += 1;
+      }
       if (payloadLockPath && descriptorPath === payloadLockPath && ownedLockFd === undefined) {
         ownedLockFd = fd;
         ownedDescriptorIdentities.set(fd, descriptorIdentity(fd));
@@ -175,6 +226,19 @@ if (!isolated && !underStryker) {
       if (postDeleteFsyncRoot && descriptorPath === postDeleteFsyncRoot && postDeleteRemovalObserved) {
         postDeleteFsyncCount += 1;
         postDeleteRemovalObserved = false;
+        const cas = activeCasAdmission;
+        if (cas) {
+          if (
+            cas.creates !== 1 ||
+            cas.guardPath === undefined ||
+            cas.parentFd === undefined ||
+            ownedParentFd !== cas.parentFd
+          )
+            throw new Error('CAS parent-close fault reached before observed lock admission cleanup');
+          cas.cleanupFsyncAfterLock = true;
+          failOwnedParentClose = true;
+          cas.parentCloseArmed = true;
+        }
         throw postDeleteFsyncFailure;
       }
       if (reclaimGuardOwnerPath && descriptorPath === reclaimGuardOwnerPath) {
@@ -486,6 +550,74 @@ if (!isolated && !underStryker) {
     const parentIdentity = ownedDescriptorIdentities.get(parentFd);
     if (parentIdentity === undefined) throw new Error('admission parent identity was not captured');
     expect(descriptorIdentity(parentFd)).toEqual(parentIdentity);
+    closeOnlyCapturedDescriptor(parentFd, root);
+  });
+
+  linuxTest('CAS admission and parent close failures preserve the primary error and retained lock', () => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    expect(access.provider).toBe('linux-proc-fd');
+    resetOwnedCloseCase(root);
+    payloadRootPath = root;
+    payloadLockPath = undefined;
+    reclaimGuardOwnerPath = undefined;
+    postDeleteFsyncRoot = undefined;
+    postDeleteFsyncQuarantine = undefined;
+    const cas: CasAdmissionObservation = {
+      failure: Object.assign(new Error('injected CAS admission guard cleanup failure'), { code: 'EIO' }),
+      creates: 0,
+      cleanupFsyncAfterLock: false,
+      parentCloseArmed: false,
+    };
+    activeCasAdmission = cas;
+    failOwnedParentClose = false;
+    const label = 'CAS admission plus parent close failure';
+    let observedError: unknown;
+    try {
+      access.fileExists('missing-target.txt', label);
+    } catch (error) {
+      observedError = error;
+    } finally {
+      activeCasAdmission = undefined;
+    }
+
+    expect(cas.creates).toBe(1);
+    expect(postDeleteFsyncCount).toBe(1);
+    expect(cas.cleanupFsyncAfterLock).toBe(true);
+    expect(observedError).toBeInstanceOf(AggregateError);
+    if (!(observedError instanceof AggregateError))
+      throw new Error('CAS admission and parent close errors were not preserved');
+    expect(observedError.errors).toEqual([cas.failure, ownedParentCloseFailure]);
+    expect(observedError.cause).toBe(cas.failure);
+    expect(cas.parentCloseArmed).toBe(true);
+    const target = cas.lockPath;
+    const guardPath = cas.guardPath;
+    const lockFd = ownedLockFd;
+    const parentFd = ownedParentFd;
+    expect(target).toBeDefined();
+    expect(guardPath).toBeDefined();
+    expect(lockFd).toBeDefined();
+    expect(parentFd).toBeDefined();
+    if (!target || !guardPath || lockFd === undefined || parentFd === undefined || cas.parentFd === undefined)
+      throw new Error('CAS admission syscall identities were not captured');
+    expect(actualFs.existsSync(guardPath)).toBe(false);
+    const expectedBytes = Buffer.from(
+      JSON.stringify({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid, label }),
+    );
+    expect(readFileSync(target)).toEqual(expectedBytes);
+    const lockIdentity = ownedDescriptorIdentities.get(lockFd);
+    expect(lockIdentity).toBeDefined();
+    if (!lockIdentity) throw new Error('CAS lock descriptor identity was not captured');
+    const retainedLock = lstatSync(target, { bigint: true });
+    expect(retainedLock.dev).toBe(lockIdentity.dev);
+    expect(retainedLock.ino).toBe(lockIdentity.ino);
+    expect(readFileSync(target)).toEqual(expectedBytes);
+    expectClosedWithEbafd(lockFd);
+    const parentIdentity = ownedDescriptorIdentities.get(parentFd);
+    if (parentIdentity === undefined) throw new Error('CAS parent descriptor identity was not captured');
+    expect(descriptorIdentity(parentFd)).toEqual(parentIdentity);
+    expect(parentFd).toBe(cas.parentFd);
+    expect(readlinkSync(`/proc/self/fd/${parentFd}`)).toBe(root);
     closeOnlyCapturedDescriptor(parentFd, root);
   });
 

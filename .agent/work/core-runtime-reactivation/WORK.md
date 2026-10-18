@@ -4,6 +4,85 @@ Status date: 2026-10-18. Current execution and evidence record. This document do
 
 ## Current state and owners
 
+The three-hour review reuses terminal receipts and existing inventories. Root is
+the sole Source/Git/numeric owner; no other cycle or numeric producer is active.
+Fresh core coverage on5063aae failed at stage dP0KdB after270393.741046ms with
+complete captures, closed groups and unchanged boot/clean inputs. Two cases
+exceeded30/60s; the owner retains effect custody and emits no numeric report.
+The wrapper's missing report-location error is secondary; no capture-loss defect
+was found. Existing reports and UNKNOWN outcomes are not promoted or replayed.
+
+Plain Bun reported PASS after118917ms(v386) and84482ms on published2c74c7d(v392)
+despite the declared30s bound. The new monotonic cleanup guard correctly fails
+v394 at136016ms and v400 at44955ms. These single runs, including instrumented
+ones, are diagnostics, not a controlled speed comparison. Cleanup takes8–12ms;
+admission/bridge and real public synthesis/prewriter/writer setup dominate.
+The24retained CAS stacks(v396) bind repeated per-file probes to
+hasProjectUpgradeOutputEvidence through fresh ledger/Host configuration checks.
+The narrow independently reviewed gate-only fastpath skips those output probes
+only for the exact singleton storage-admission filename. It keeps both intent
+and activation barriers, fresh final listing, every fallback probe, and gate
+validation with its existing opener. The filename moves to pure project-paths
+with its old storage module export preserved; no SQLite import edge is added.
+
+The first v403 check found two new fixture errors (resource lock mistaken for CAS)
+and the separate activated-config10s case expired at15.127s. Corrected fixtures
+observe the actual CAS payload under delegated fsync, retain own-PID lock and
+quarantine bytes/inodes, and restore spies before loader assertions. v406 passes
+the23legacy cases/141assertions in4.10s; v407 separately passes the added final
+intent race. The activated case remains OPEN; its timeout is not raised.
+CAS parent-close dual-fault proof v398 passes the complete23-case isolated pool.
+It phase-arms the exact observed parent descriptor and verifies primary-first
+causes, one close, no callback entry and retained lock bytes/inode.
+
+Setup now registers close ownership before any ledger/bridge acquisition and
+carries each existing case deadline through all nine callers. Expiry prevents
+later public setup calls; setup errors close only opened handles and retain the
+root plus original/cleanup causes. v408 passes3controls/19assertions in3.18s,
+including real ledger cleanup after failed bridge-open and simultaneous close
+failure. v409 passes2retained-versus-expired completion controls/7assertions.
+Distinct string labels replace unexpanded Boolean %s case names so body IDs do
+not collide. The bounded real v410 recovery recheck now fails at36022.85ms
+before execution-open, closes its opened connections and retains its fresh root;
+later capability operations do not run. This proves the new stop boundary, not
+recovery completion or a case within30s. The final5fast controls pass26assertions
+in2.53s(v411), with unique rendered case names. Documentation checks pass4changed
+documents/52local links. The first ordinary hook catches one Buffer generic
+mismatch in the test observer; its non-shared return type is now explicit,
+without copying expected bytes or weakening assertions. Typed lint then rejects
+an unbound prototype close reference. The fault control now binds/spies only on
+the exact ledger received by bridge-open, reducing global mock scope without a
+rule waiver. Its two changed cases are rechecked atv414. Final static checks follow.
+
+Execution choices use measured facts separately from estimates:
+
+| Combination | Decision and evidence |
+| --- | --- |
+| One numeric owner plus three bounded preparation/review slots | Keep. Matches custody and immutable inputs; independent read-only audits overlap without duplicate suites/scans. No new throughput claim. |
+| Several known repair IDs with one full baseline | Keep the existing sequential diagnostic route. Reuses capture/image/baseline; no combined score or new filter. |
+| Two isolated workers inside storage-admission | Existing16-ID pilot completed96.275s with16assertion-confirmed kills. Full228 proof remains required; four workers stay rejected. |
+| Three simultaneous numeric contours | Reject. Resource/parallel qualification is absent;4CPU/16GiB does not establish safe overlap. |
+
+Do not remove fresh ledger/Host config checks or the independent approval DB
+reader: each protects a distinct boundary/assertion. No additional redundant
+AST/hash pass or capture-loss repair was justified. Use one correction batch,
+normal hook/publication, then fresh storage-admission coverage/frozen/mutation
+before another full core attempt. Detailed bounded audits are retained at
+`/workspace/attachments/scripts-three-hour-audit-v401.md` and
+`/workspace/attachments/test-sequence-audit-v402.md`; Root corrected the former's
+initial mixed timing attribution against raw v400. Fix Root Causes kept the
+deadline/setup repair causal; Laziness Protocol kept the loader change local.
+
+Disk admission was checked once after producers terminated. Checkout,
+`/workspace/attachments` and retained host scratch all use the same overlay,
+with3456618496available bytes versus the unchanged2147483648-byte floor
+(1309134848-byte margin). Reused the v349 retention inventories; their six exact
+dependency joins are already complete. No additional obsolete owned archive or
+cache is established by that inventory, so this audit deletes nothing and
+performs no broad du/hash scan. Source, SDK, Git, all DB/lease/attempt data and
+raw FAIL/TIMEOUT/UNKNOWN custody remain intact. No capacity GAP exists at this
+observation; a later producer still performs its own current admission.
+
 The lock repair and lineage packet is published as883ffbb. Normal strict hooks
 pass formatting,514-file TypeScript, typed lint, focused-test guard and Knip.
 Its core scoped review pin now selects those published unchanged ceilings and

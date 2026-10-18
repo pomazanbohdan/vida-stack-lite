@@ -2154,6 +2154,15 @@ Keep aggregate process budgets separate and preserve their cleanup/report
 allowance. The product operation target remains 2 seconds; neither test defaults
 nor exceptions change it. Do not shorten protocol quarantine to fit a test.
 
+Bun's timer can run late during synchronous fixture work. A PASS row after the
+declared deadline is not time-budget evidence. Carry the same monotonic case
+deadline through setup and cleanup, reject completion after it, and stop issuing
+later setup operations once it expires. Establish cleanup ownership before the
+first handle opens; preserve the original setup error and every close failure.
+Keep a failed or expired root even when the body eventually settles. Opt-in phase
+timings may diagnose setup, but nested timings are part of their enclosing phase
+and must not be added twice or treated as a controlled benchmark.
+
 For initialization read-admission expiry, first observe a real pending retry
 and unchanged receipt, guard/quarantine and Host images before the original5s
 deadline. A serial test-local `Date.now` jump may then cross that deadline while

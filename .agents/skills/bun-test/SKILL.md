@@ -579,6 +579,11 @@ Do not delete fixture state until assertions and owned checks succeed.
 
 ## Diagnose performance and parallel conflicts
 
+When a Bun PASS row exceeds its declared case bound, follow TESTING's monotonic
+setup/cleanup deadline rule. Check whether preparation throws before the body's
+finally exists. Establish owned close handling before opening resources, preserve
+setup and cleanup causes, and do not launch another phase after expiry.
+
 Separate case timeout from protocol age thresholds. Compare identical complete
 scopes under the same resource conditions. Record whole-command timing and
 startup, collection, setup and child outcomes separately. Partial reporter rows
