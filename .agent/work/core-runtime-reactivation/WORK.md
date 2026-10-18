@@ -149,13 +149,24 @@ objects. Correctly selected REDv452 fails at that decoder; GREENv453 passes9case
 TIMEOUT, SIGKILL and incomplete-capture projections remain nonmetric/unaccepted.
 The v451 selector matched zero tests and supplies no RED evidence. Its failed
 fixture and all original logs remain retained. No measured checkout is modified.
+Packet6ea9bd1 publishes that decoder correction and the reviewed binding through
+normal hooksv458 (format507, strict TypeScript514, typed lint, focused guard and
+Knip). A subsequent correction registers its immutable review pin. It also
+consolidates repeated CLI/resolver token bounds into one validated-Set owner;
+v459 passes99cases/400assertions. The existing inventory owner analyzes only the
+three changed tooling files once(v460): validatorCC5, predicate2, resolver9,
+window4, stage reader8 and non-admission helpers2/2. This is static CC only,
+not dynamic CRAP or current numeric closure. No ceiling is raised.
+Independent causal reviewv455 confirms mutant88's active-body assertion fails
+because readonly checkpoint leaves the Mastra WAL sidecar in the real client
+case. Its unchanged writable path satisfies the required postcondition.
 
 Execution choices use measured facts separately from estimates:
 
 | Combination | Decision and evidence |
 | --- | --- |
 | One numeric owner plus three bounded preparation/review slots | Keep. Matches custody and immutable inputs; independent read-only audits overlap without duplicate suites/scans. No new throughput claim. |
-| Several known repair IDs with one full baseline | Keep the existing sequential diagnostic route. Reuses capture/image/baseline; no combined score or new filter. |
+| Several known repair IDs with one full baseline | Keep. Fresh7-ID diagnostic completes99.516s with one27.385s baseline. Seven separate baselines would add about164.3s if costs stayed equal; this is an estimate, not a measured speedup. No combined score or new filter. |
 | Two isolated workers inside storage-admission | Existing16-ID pilot completed96.275s with16assertion-confirmed kills; the full attempt stops partial at846.811s with134/228attempted. Keep diagnostic qualification only; four workers stay rejected. |
 | Three simultaneous numeric contours | Reject. Resource/parallel qualification is absent;4CPU/16GiB does not establish safe overlap. |
 
@@ -168,6 +179,8 @@ before another full core attempt. Detailed bounded audits are retained at
 `/workspace/attachments/test-sequence-audit-v402.md`; Root corrected the former's
 initial mixed timing attribution against raw v400. Fix Root Causes kept the
 deadline/setup repair causal; Laziness Protocol kept the loader change local.
+Retained receipts do not provide a complete tool-call/token census or a controlled
+one-versus-two-worker benchmark; no percentage improvement is inferred for them.
 
 Disk admission was checked once after producers terminated. Checkout,
 `/workspace/attachments` and retained host scratch all use the same overlay,

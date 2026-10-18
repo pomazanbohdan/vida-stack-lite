@@ -303,6 +303,10 @@ const scopedBudgetReviews = new Map([
     'scope_review_existing_storage_admission_digest_reuse_20261018',
   ],
   [
+    '6ea9bd1f47ad49bdb50f74a762b571a46667ad3f:bun-project-upgrade-storage-admission',
+    'scope_review_existing_storage_admission_shared_close_20261018',
+  ],
+  [
     '9469a4e1663750e8de022e8f9dfca7a4327c9a08:bun-project-upgrade-existing-storage-image',
     'scope_review_existing_storage_image_20261016',
   ],

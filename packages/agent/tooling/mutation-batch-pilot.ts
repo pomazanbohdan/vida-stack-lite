@@ -278,18 +278,12 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
     throw new Error('Targeted diagnostics require one mutant, one batch and no complete admission.');
   if (
     diagnosticMutantIds !== undefined &&
-    (diagnosticMutantId !== undefined ||
-      diagnosticMutantIds.length < 1 ||
-      diagnosticMutantIds.length > 32 ||
-      diagnosticMutantIds.some((id) => !id || id.length > 200) ||
-      new Set(diagnosticMutantIds).size !== diagnosticMutantIds.length ||
-      batchSize !== 1 ||
-      maxBatches !== 1 ||
-      admitComplete)
+    (diagnosticMutantId !== undefined || batchSize !== 1 || maxBatches !== 1 || admitComplete)
   )
     throw new Error(
       'Targeted diagnostic sets require 1 through 32 unique IDs, singleton batches and no complete admission.',
     );
+  if (diagnosticMutantIds !== undefined) nativeDiagnosticIdSet(diagnosticMutantIds);
   return {
     partition: selected.partitions[0],
     batchSize,
@@ -303,17 +297,23 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
   };
 }
 
+/** Shared token validation for CLI requests and defensive generated-plan resolution. */
+function nativeDiagnosticIdSet(diagnosticMutantIds: readonly string[]): Set<string> {
+  if (diagnosticMutantIds.length < 1 || diagnosticMutantIds.length > 32)
+    throw new Error('Targeted diagnostic sets require 1 through 32 IDs.');
+  const wanted = new Set(diagnosticMutantIds);
+  if (wanted.size !== diagnosticMutantIds.length || diagnosticMutantIds.some((id) => !id || id.length > 200))
+    throw new Error('Targeted diagnostic set IDs must be unique nonempty tokens up to 200 characters.');
+  return wanted;
+}
+
 /** Resolve a bounded diagnostic set against the complete original singleton plan. */
 export function selectNativeMutationBatchIndices(
   plan: Pick<ReturnType<typeof planMutationBatches>, 'limit' | 'batches'>,
   diagnosticMutantIds: readonly string[],
 ): number[] {
   if (plan.limit !== 1) throw new Error('Targeted diagnostics require singleton batches.');
-  if (diagnosticMutantIds.length < 1 || diagnosticMutantIds.length > 32)
-    throw new Error('Targeted diagnostic sets require 1 through 32 IDs.');
-  const wanted = new Set(diagnosticMutantIds);
-  if (wanted.size !== diagnosticMutantIds.length || diagnosticMutantIds.some((id) => !id || id.length > 200))
-    throw new Error('Targeted diagnostic set IDs must be unique nonempty tokens up to 200 characters.');
+  const wanted = nativeDiagnosticIdSet(diagnosticMutantIds);
   const requested = new Set(wanted);
   const indices: number[] = [];
   for (const [index, batch] of plan.batches.entries()) {

@@ -33,6 +33,13 @@ Migrate current callers to the shared helpers, then delete forward-only duplicat
 
 ### 4. Frozen quality prerequisites and complete run
 
+Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
+`nativeDiagnosticIdSet` owner and its invalid-token predicate, each with
+prospective CC/CRAP10/10. Reuse its validated Set in plan resolution instead of
+adding boolean-array guards or changing limits. Preserve both CLI mode checks
+and the resolver's defensive full-plan validation. This is shared validation,
+not a transfer of another role's allowance or a new selection/filter mechanism.
+
 The failed-stage projection repair uses the existing snapshot publisher and
 paired raw launch/execution records. Its decoder and non-admission invariant
 helpers have prospective CC/CRAP ceilings10/10 before extraction. Reuse the
