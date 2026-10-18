@@ -18,6 +18,7 @@ import {
   coverageReviewInputPaths,
   sdkFormationToolInputPaths,
   qualityFingerprint,
+  qualityInputs,
   qualityInputProjections,
   readQualityInputs,
   testSelectionFingerprint,
@@ -809,6 +810,50 @@ describe('final quality input projections', () => {
 
     expect(after.guard.tool_fingerprint).not.toBe(before.guard.tool_fingerprint);
     expect(qualityFingerprint(after.guard)).not.toBe(qualityFingerprint(before.guard));
+  });
+
+  test('captures mutation runner dependencies without borrowing unrelated test imports or SDK artifacts', async () => {
+    const root = fixtureRoot();
+    try {
+      writeFileSync(
+        path.join(root, 'tooling/mutation-command-runner.ts'),
+        "import { commandMs } from './mutation-limits.ts';\nexport const timeout = commandMs;\n",
+      );
+      const dependency = 'tooling/mutation-limits.ts';
+      const original = Buffer.from('export const commandMs = 5000;\n');
+      writeFileSync(path.join(root, dependency), original);
+      writeFileSync(
+        path.join(root, 'tests/unselected.test.ts'),
+        "import '../tooling/mutation-limits.ts';\ntest('unselected', () => {});\n",
+      );
+      const selection = {
+        mode: 'focused-diagnostic' as const,
+        contour: 'fixture-contour',
+        sources: ['src/host-state.ts'],
+        tests: ['tests/fixture.test.mjs'],
+      };
+      const before = await qualityInputs(root, mutationToolInputs, selection);
+      expect(before.input_bytes[dependency]).toEqual(original);
+      expect(before.tool_inputs.filter(({ path: file }) => file === dependency)).toEqual([
+        { path: dependency, sha256: createHash('sha256').update(original).digest('hex') },
+      ]);
+      expect(before.sources.map(({ path: file }) => file)).toEqual(selection.sources);
+      expect(before.tests).toEqual(selection.tests);
+      expect(before.input_bytes['tests/unselected.test.ts']).toBeUndefined();
+      expect(before.input_bytes['dist/sdk-formation.json']).toBeUndefined();
+      writeFileSync(path.join(root, dependency), 'export const commandMs = 4000;\n');
+      const after = await qualityInputs(root, mutationToolInputs, selection);
+      expect(after.tool_fingerprint).not.toBe(before.tool_fingerprint);
+      expect(qualityFingerprint(after)).not.toBe(qualityFingerprint(before));
+      expect(after.source_fingerprint).toBe(before.source_fingerprint);
+      expect(after.test_fingerprint).toBe(before.test_fingerprint);
+      rmSync(path.join(root, dependency));
+      await expectRejected(() => qualityInputs(root, mutationToolInputs, selection), /Unresolved package-local/u);
+    } catch (error) {
+      temporaryRoots.splice(temporaryRoots.indexOf(root), 1);
+      console.error(`Retained failed mutation tool closure fixture: ${root}`);
+      throw error;
+    }
   });
 
   test('captures an explicitly focused diagnostic selection and fingerprints only its selected inputs', async () => {

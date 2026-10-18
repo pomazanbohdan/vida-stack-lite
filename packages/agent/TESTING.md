@@ -997,6 +997,13 @@ Both versions bind actual source/test/tool bytes and fingerprints. A partition
 descriptor supplies no global qualification or exemption from complete mutant
 universe, native baseline, JUnit completeness or assertion-confirmed Killed gates.
 Invalid descriptors retain an input_rejection stage and launch no test child.
+Standalone qualityInputs also seeds its declared executable tool inputs into the
+same bounded runtime traversal. Runner dependencies must not be borrowed from
+unselected tests; their bytes enter that capture's existing tool fingerprint.
+The shared multi-projection capture retains its existing explicit owner sets;
+this standalone fix does not establish per-projection transitive provenance.
+An absent runner receipt requires inspecting the retained launcher stderr before
+another run. An import/compile error remains UNKNOWN, never an assertion kill.
 When the captured runtime closure includes tests/configured-context.ts, the
 same capture/tool fingerprint binds exactly four _repository/test-context
 inputs: root runtime config, AGENTS.md, AGENT.sidecar.md and the declared

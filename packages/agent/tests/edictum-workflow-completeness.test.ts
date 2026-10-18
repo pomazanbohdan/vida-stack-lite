@@ -134,7 +134,80 @@ async function createInitializedFixture(onCreated?: (root: string) => void): Pro
 
 afterAll(() => rmSync(repositoryRoot, { recursive: true, force: true }));
 
+function terminalPolicyDefinition(
+  tools: readonly string[],
+  exit: WorkflowDefinition['stages'][number]['exit'],
+): WorkflowDefinition {
+  return {
+    apiVersion: 'vida.agent/v1',
+    kind: 'PolicyWorkflow',
+    metadata: { name: 'direct-policy', description: 'Direct public policy boundary', version: '1' },
+    stages: [
+      { id: 'final', description: 'Final stage', tools, entry: [], checks: [], exit, approval: null, terminal: true },
+    ],
+  };
+}
+
 describe('configured Edictum workflow completeness', () => {
+  test('zero-tool boundary retains exit evidence requirements', async () => {
+    const definition = terminalPolicyDefinition(
+      [],
+      [{ condition: "result.accepted === 'true'", message: 'A successful result is required' }],
+    );
+    const candidate = new PolicyWorkflowRuntime(definition, 'exit-only-policy');
+    const session = new PolicySession('exit-only-policy');
+    const evaluation = await expectAsyncReturned(() =>
+      candidate.evaluate(session, { toolName: 'runtime.any', args: {} }),
+    );
+    expect(evaluation).toMatchObject({
+      action: 'block',
+      reason: 'A successful result is required',
+      stageId: 'final',
+      records: [
+        {
+          passed: false,
+          metadata: {
+            gate_condition: "result.accepted === 'true'",
+            gate_kind: 'mcp_result_matches',
+            gate_evidence: '',
+          },
+        },
+      ],
+    });
+    expect(await candidate.state(session)).toMatchObject({ activeStage: 'final', completedStages: [] });
+  });
+
+  test('zero-tool stage without a boundary admits arbitrary tools', async () => {
+    const candidate = new PolicyWorkflowRuntime(terminalPolicyDefinition([], []), 'open-policy');
+    const session = new PolicySession('open-policy');
+    expect(
+      await expectAsyncReturned(() => candidate.evaluate(session, { toolName: 'runtime.any', args: {} })),
+    ).toMatchObject({
+      action: 'allow',
+      stageId: 'final',
+      records: [{ passed: true, metadata: { gate_condition: 'tools', gate_evidence: 'runtime.any' } }],
+    });
+  });
+
+  test('direct result validation rejects foreign inputs and retains an ungated terminal stage', async () => {
+    const candidate = new PolicyWorkflowRuntime(terminalPolicyDefinition(['runtime.commit'], []), 'ungated-policy');
+    const session = new PolicySession('ungated-policy');
+    const call = { toolName: 'runtime.commit', args: {} };
+    expect(() => candidate.recordResult(session, 'missing-stage', call)).toThrow(
+      'workflow: unknown stage "missing-stage"',
+    );
+    expect(() => candidate.recordResult(session, 'final', { toolName: 'runtime.foreign', args: {} })).toThrow(
+      'workflow result tool is not configured for stage',
+    );
+    expect(await expectAsyncReturned(() => candidate.recordResult(session, 'final', call))).toEqual([]);
+    expect(await candidate.state(session)).toMatchObject({
+      activeStage: 'final',
+      completedStages: [],
+      evidence: { mcpResults: {} },
+    });
+    expect(await candidate.recordedStages(session)).toEqual(['final']);
+  });
+
   test('policy workflow rejects an empty public definition', () => {
     const definition: WorkflowDefinition = {
       apiVersion: 'vida.agent/v1',

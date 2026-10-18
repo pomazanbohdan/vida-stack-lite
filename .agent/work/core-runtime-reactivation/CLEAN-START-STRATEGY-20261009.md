@@ -123,6 +123,16 @@ runner and offline reader together, preserving v3 full-current behavior. Require
 exact declared Source/test sets and digest-bound closure. Sort capture metadata
 while retaining registry execution order. Do not build SDK to conceal this scope
 defect or weaken complete-universe, JUnit or assertion-confirmed Killed gates.
+The published v4 scope repair88e8052gets past SDK capture in freshv655 but exposes
+a missing standalone tool dependency before the baseline starts. Seed only that
+standalone capture's declared executable tools into the existing bounded runtime
+traversal; preserve shared-projection owner sets and captured-byte hashing.
+Do not copy files into immutablev654or count the missing-receipt UNKNOWN as a kill.
+Add the independently identified public zero-tool/result guards in the existing
+governance test owner, check this packet once, publish normally, then measure a
+fresh diagnostic. Defer SDK/private-corruption-only guards and the costly1001-
+dispatch capacity case until their contract/setup cost is resolved; no exclusion
+or weaker coverage gate is authorized.
 
 Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
 `nativeDiagnosticIdSet` owner and its invalid-token predicate, each with

@@ -22,9 +22,10 @@ No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 ### Current rolling repair cycle
 
 Active contours: governance/public contracts, dispatch repair and controller
-observation. Published9b2cfbd includes the checked test packet and verified
-capacity recovery through ordinary hooks/push. The latest native capture defect
-is repaired in canonical Source pending its fresh checks/publication below.
+observation. Published88e8052includes the checked v4 partition-capture repair,
+on top of the verified capacity recovery through ordinary hooks/push. Freshv655
+exposes its next standalone tool-closure dependency before the baseline starts;
+the causal correction and public governance cases are pending publication below.
 All immutable rolling-measure-* checkouts remain untouched. v637 resolves the
 observed resource deficit without changing them; next measurement waits for the
 current packet's normal checks/publication and fresh native admission.
@@ -289,7 +290,47 @@ two-test unsorted-execution control and full regressionsv650pass304cases/
 1269assertions in1.84s. Luna confirms the ordering blocker resolved. The first
 normal commit hook passes formatting/typecheck but rejects an unsafe JSON fixture
 assignment; the fixture now narrows unknown through the existing isRecord owner.
-Native validation of the repaired capture is still pending.
+The corrected normal hook passes formatting,514-file typecheck in2.31s,
+typed lint and Knip; published88e8052. The changed fixture file separately
+passes14cases/50assertions in322ms(v651).
+
+Freshv654compares package-owned manifest/lock/pin and binds88e8052without SDK.
+The first preparation receipt incorrectly claimed lock/pin checks at absent
+root paths; its original is retained and explicitly superseded by governance-
+preparation-v654-correction.json after fail-closed absolute-path comparisons.
+No producer starts before those actual comparisons. This is operator correction,
+not a product fix or permission to weaken preparation.
+
+Nativev655/qIwUAS(run28cceba9-29b6-49ec-82d5-ce61aa20fd00) terminates in4004.883833ms
+with complete captures, closed groups, unchanged boot/commit and clean inputs.
+SDK capture is fixed, but runner initialization cannot import mutation-limits.ts
+from the sandbox. No baseline tests or mutants execute; missing receipt stays
+UNKNOWN. The original launcher stderr, baseline.json and terminal-error.json are
+preserved under v654's mutation-batch root, and automatic projection records766
+attempts. Do not modify that checkout or count this setup failure as a kill.
+
+Standalone qualityInputs now seeds declared executable tool roots through the
+same bounded traversal/visited map/read snapshot and hash projection. No manual
+transitive list or second scan is added. An all-tools prototype first exposed
+shared-projection overbinding(v657:40PASS/1FAIL); Root narrows seeding to the
+single standalone projection and leaves multi-projection capture semantics
+unchanged. Luna confirms no scoped blocker or extra SDK formation requirement.
+REDv656fails the missing-byte assertion; finalv659passes41cases/482assertions in
+566ms, including exact bytes/digest once, mutation-only import, unchanged selected
+Source/tests, no unrelated test or SDK receipt, hash drift and missing-import
+rejection. No shared-projection transitive-provenance improvement is claimed.
+
+BlindLunav653reuses compact v643 and identifies public governance cases. Three
+small tests assert a zero-tool exit gate's exact message/empty evidence, an open
+zero-tool stage's tools gate and direct unknown-stage/unconfigured-tool rejection
+plus retained ungated terminal state. v660passes3cases in1.80s(file setup included);
+the full affected owner v661passes29cases/224assertions in13.90s. The individual
+new bodies take25.31/3.57/1.56ms in the focused sample; these are not global timing
+percentiles. No private-state injection, mutation classification or product
+algorithm change is made. SDK defensive states, the unassigned compatibility
+field and1001-dispatch capacity boundary remain explicitly unresolved; no numeric
+exemption is introduced. Publish this checked packet before another fresh native
+diagnostic; no repeated unchanged full suite or concurrent producer is queued.
 
 Current dependency-ready packet repairs the prelaunch resource-reporting GAP
 while numeric work remains blocked. Root remains the only writer; blind read-only

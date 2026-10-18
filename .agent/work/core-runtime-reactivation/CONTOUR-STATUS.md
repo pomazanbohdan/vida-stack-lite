@@ -1112,6 +1112,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | 4fe5297d-12d3-4723-8c4a-92e63268212b | 9b2cfbdb56088366728f259330a42cf9f93193eb | 2026-10-18T15:57:24.192Z | focused-diagnostic; owner accepted locally; selection bound | 105/105 · 363/365 · 395/407 · 236/253 | /workspace/attachments/rolling-measure-v639/packages/agent/coverage/bun-unified/diagnostics/4fe5297d-12d3-4723-8c4a-92e63268212b.focused-coverage.json |
 | coverage-outcome | 4fe5297d-12d3-4723-8c4a-92e63268212b | 9b2cfbdb56088366728f259330a42cf9f93193eb | 2026-10-18T15:57:24.211Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/rolling-measure-v639/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/4fe5297d-12d3-4723-8c4a-92e63268212b.json |
 | stage-outcome | contour-stage-tuGUZG | 9b2cfbdb56088366728f259330a42cf9f93193eb | 2026-10-18T15:58:31.699Z | mutation/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-stage-tuGUZG/publication-error.json |
+| stage-outcome | contour-stage-qIwUAS | 88e8052be7da5c2bea037cc63daf89722c37baed | 2026-10-18T16:17:16.457Z | mutation/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-stage-qIwUAS/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

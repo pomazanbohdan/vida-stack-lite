@@ -1220,6 +1220,7 @@ async function captureQualityInputBase(
   root: string,
   additionalToolInputs: readonly string[],
   selection: QualityInputSelectionMode,
+  runtimeToolEntrypoints: readonly string[] = [],
 ): Promise<QualityInputCapture> {
   const focused = typeof selection === 'string' ? undefined : selection;
   const selectionMode = typeof selection === 'string' ? selection : 'current';
@@ -1255,7 +1256,7 @@ async function captureQualityInputBase(
     contractInputs,
     selectionMode,
   );
-  const runtimeEntrypoints = [...testSelection.tests];
+  const runtimeEntrypoints = [...testSelection.tests, ...runtimeToolEntrypoints];
   for (const testPath of selectionMode === 'current' ? testSelection.tests : [])
     runtimeEntrypoints.push(...(computedModuleEntryPointsByTest[testPath] ?? []));
   const allInputs = [
@@ -1490,7 +1491,12 @@ export async function qualityInputs(
   additionalToolInputs: readonly string[] = [],
   selectionMode: QualityInputSelectionMode = 'current',
 ): Promise<CoverageInputs> {
-  const capture = await captureQualityInputBase(root, additionalToolInputs, selectionMode);
+  const capture = await captureQualityInputBase(
+    root,
+    additionalToolInputs,
+    selectionMode,
+    additionalToolInputs.filter(importScanSource),
+  );
   return projectQualityInputCapture(
     capture,
     additionalToolInputs,

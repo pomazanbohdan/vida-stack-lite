@@ -42,6 +42,10 @@ The native batch pilot uses the v4 complete-partition descriptor described in
 TESTING. Preserve registry execution order while sorting only capture metadata;
 never relabel focused input as v3 full-current evidence. A pre-baseline SDK error
 in a non-SDK contour needs its capture scope checked before another SDK build.
+If no runner receipt exists, read the original launcher result and stderr before
+changing tests. Standalone captures traverse declared executable tools through
+the same bounded closure owner; do not rely on an unrelated test importing their
+dependencies or repair a sealed sandbox by copying live files into it.
 
 After a focused producer terminates, use the maintained contour progress CLI's
 `--coverage-run <focused.json>` to import its matching operation outcome and
