@@ -25,8 +25,9 @@ The active pool has three contours: governance/public contracts, dispatch repair
 and main-envelopes. Root serializes numeric producers; blind Luna prepares and
 reviews bounded patches. Dispatch's fixture repair now binds SDK and package data;
 main-envelopes awaits a measured correction rather than an unchanged full retry.
-The next numeric launch is resource-blocked as recorded below; do not retry it
-unchanged while storage is below admission.
+The storage deficit observed at v798 is resolved by the verified v803 retirement
+below. The next producer still needs fresh admission; the rejected attempt has no
+numeric result and is not resumed.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
@@ -242,7 +243,8 @@ the actual retained preimage before equality, keeping both assertions and the
 original failed log. Numericv798 then refuses before image formation or any
 test child: available2006683648bytes at /workspace versus required2147483648,
 an exact admission GAP of140800000bytes, before further operation headroom.
-The original refusal remains /workspace/attachments/dispatch-public-restore-coverage-v798.log.
+The original refusal's path is /workspace/attachments/dispatch-public-restore-coverage-v798.log.
+Its bytes now reside in v803's remaining-attachments.tar.zst as recorded below.
 There is no run UUID/report to import and v788 is not relabeled for4361802.
 
 Root observes no active numeric/test/build/install/hook owner before bounded
@@ -252,10 +254,43 @@ cache candidate paths for v751/v754 do not exist. The host tooling receipt root
 contains installed-tool receipts and protected fixture scratch, not a retained
 download archive. Prior v740/v760 retirement receipts remain authoritative;
 no broad du/hash scan or unknown-directory deletion is attempted. Current known
-safe candidates cannot recover the140800000-byte GAP. Preserve all retained
-fixtures, SDK archives, failures and measured inputs. Additional durable capacity
-or separately qualified safe retirement is required before the next numeric run;
-do not lower the threshold, delete evidence or move it into tmpfs.
+safe candidates could not recover the140800000-byte GAP. The subsequent explicit
+whole-directory retirement resolves that storage deficit without lowering the
+threshold or moving durable evidence into tmpfs.
+
+#### Verified attachments retirement
+
+The owner explicitly requested deletion of the entire /workspace/attachments
+directory after adopting gitless execution. Root observed no active dependent
+producer or container and reused the v801 inventory. Blind Luna reviewed the
+retention plan. The directory is now absent and all63historical worktrees are
+unregistered; only /workspace/vida-stack-lite remains registered.
+
+Before removal, Root compressed each complete worktree and its Git administration
+directory, compared each archive with its original, and pinned each HEAD under
+refs/vida-retained/attachments-v803/. The remaining attachments were archived and
+compared together. All127archives, SHA256 values, original paths, Git indexes and
+restoration records reside at /workspace/.vida-retained/attachments-delete-v803.
+The archive payload is5483402816bytes. Per-worktree *.preserved.json records and
+remaining.preserved.json map original paths to their archives; intent.json,
+applied.ndjson and result.json record authorization, progress and final checks.
+An old absolute attachments locator resolves through these records for offline
+evidence inspection. Archiving does not requalify old numeric results or permit
+DB, lease, attempt or UNKNOWN replay.
+
+The first git worktree removal encountered read-only evidence directories after
+removing its registration and some files. Its complete compared archives already
+existed. failure.json retains that outcome; reconciliation.json records the
+observed partial removal. Root added owner write/execute permissions to directories
+only after preservation, completed that removal, and applied the same ordering to
+the remaining roots. Original archived modes remain preserved.
+
+At2026-10-18T20:16:31Z, available overlay space rose from2006511616to23519653888bytes,
+recovering21513142272bytes. Root verified unchanged Source HEAD c823b74, index
+SHA256 and status, the absent attachments root, and no remaining worktree there.
+Current gitless images, contour stages, SDK outputs and Root Git history remain
+outside the removed directory. No new suite or numeric qualification ran during
+retirement. Subsequent scratch and logs use paths outside attachments.
 
 Root integrates one public1000/1001result-capacity regression from blind Lunav767.
 It uses real SDK transitions, checks ordered immutable evidence and all subsequent
