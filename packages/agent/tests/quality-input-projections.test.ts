@@ -161,7 +161,8 @@ describe('final quality input projections', () => {
     }
 
     const ordinary = await qualityInputs(root, [], selection);
-    const image = await executionImageQualityInputs(root, [], selection);
+    writeFileSync(path.join(root, 'tooling/build-package.ts'), 'export const compilerOnly = true;\n');
+    const image = await executionImageQualityInputs(root, [], selection, ['tooling/build-package.ts']);
     expect(image.sources).toEqual(ordinary.sources);
     expect(image.source_fingerprint).toBe(ordinary.source_fingerprint);
     expect(image.test_inputs).toEqual(ordinary.test_inputs);

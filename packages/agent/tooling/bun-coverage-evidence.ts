@@ -1303,7 +1303,11 @@ async function captureQualityInputBase(
   if (selectionMode === 'published-baseline-bun-native')
     verifyPublishedBaselineInputs(root, inputBytes, sources, testInputsAll);
   const sdkBuilderEntrypoint =
-    selectionMode === 'current' && inputBytes.has('tooling/build-package.ts') ? 'tooling/build-package.ts' : undefined;
+    selectionMode === 'current' &&
+    inputBytes.has('tooling/build-package.ts') &&
+    (!executionImage || testSelection.tests.includes(sdkArtifactTestPath))
+      ? 'tooling/build-package.ts'
+      : undefined;
   const sdkBuilderEdges = new Map<string, Set<string>>();
   const runtimeTestPaths = focused ? testSelection.tests : testInputsAll;
   if (sdkBuilderEntrypoint) runtimeEntrypoints.push(sdkBuilderEntrypoint);
