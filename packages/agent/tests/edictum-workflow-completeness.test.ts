@@ -1319,4 +1319,17 @@ describe('configured Edictum workflow completeness', () => {
       if (bodyFailed) throw bodyError;
     },
   );
+  test('workflow command validation rejection preserves its snapshot and recovers the serial queue', async () => {
+    const candidate = workflow();
+    const before = await candidate.runtime.state(candidate.session);
+    await Promise.resolve(
+      expect(candidate.runtime.evaluate(candidate.session, { toolName: '', args: {} })).rejects.toThrow(),
+    );
+    expect(await candidate.runtime.state(candidate.session)).toEqual(before);
+
+    expect(await candidate.runtime.evaluate(candidate.session, { toolName: 'runtime.read', args: {} })).toMatchObject({
+      action: 'allow',
+      stageId: 'read-evidence',
+    });
+  });
 });

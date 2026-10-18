@@ -166,16 +166,45 @@ Source, instructions, Git, SDK and all original evidence remain protected.
 Resume needs additional free durable storage beyond the exact floor deficit and
 working room; about1GiB extra is a practical buffer, not a changed admission floor.
 
-All Luna lanes finish their bounded work. Preserve unapplied **UNVALIDATED** drafts
+All Luna lanes finish their bounded work. Preserve the original **UNVALIDATED** drafts
 in [governance residual proposal](pending-proposals/governance-residual-repair-v543.patch)
 and [dispatch residual proposal](pending-proposals/dispatch-residual-repair-v546.patch).
 The first adds two registered cases for operation-policy branches and queue
 rejection/recovery. The second adds one case with four malformed CLI vectors;
 the nine research-handler closures remain unfinished. They exclude earlier
 integrated hunks and must be reviewed against current Source before application.
-No proposed case counts, coverage or mutation improvements are counted. Preserve
-their own worker checkouts and raw notes. Root retains sole next writer and
-numeric custody when the actual resource GAP is resolved.
+At that checkpoint no proposed case counts, coverage or mutation improvements
+were counted. The worker checkout bytes and raw notes are retained by the cleanup
+manifest below. Root retains sole integration and numeric custody.
+
+### Residual scenarios after resource recovery
+
+Fresh immutablev562 binds published6c9dd6f and byte-matched dependency inputs.
+SDKv563/Jbad9J completes2096.990244ms without suites. Controller coveragev564/ZZYfpb,
+run7071caed-5d2c-4ecc-b0db-f294be93104b, completes64985.299507ms:
+22PASS/58Bun assertions, F27/28,L132/156,S144/182,B127/164,maxCC14/maxCRAP20.
+Complete captures, closed groups, unchanged boot/commit and clean inputs pass;
+the automatic projection records incomplete numeric coverage, not closure.
+
+Root reviews the two retained residual drafts against current canonical bytes.
+Their hand-written hunk counts and stale/zero-context anchors fail application;
+no partial patch is applied. Root extracts only the three new registered cases
+and required imports at unique current anchors, preserving integrated tests.
+Future code handoffs use Root-exported actual bounded diffs from the assigned
+base, not manually composed hunk counts; workers retain no Git authority.
+
+The cases cover policy denial/capacity reservation, invalid workflow command
+queue recovery, and four malformed public CLI parser vectors. Staticv565 passes
+514files/515captured TS/0diagnostics; targetedv567 passes3cases/22assertions in2.29s.
+Independentv566 identifies an ambiguous equality boundary for maxAttempts and a
+pending-effect handshake that could hang on an early rejection. The revised
+test consumes preparation denials before asserting strictly over-limit denial,
+without defining the disputed equality behavior. Concurrent readiness races
+effect entry against first-operation settlement; shared cleanup still releases
+and joins that operation. Explicit effect counters prove global/per-tool denial
+does not invoke rejected callbacks. Focusedv571 passes1case/18assertions in1.85s.
+No changed-input coverage, frozen or mutation improvement is inferred from these
+targeted checks. The exact maxAttempts equality contract remains an explicit GAP.
 
 ### Current cleanup and worker checkout retirement
 

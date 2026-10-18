@@ -13,7 +13,7 @@ import {
 } from '../src/index.ts';
 import { toAuthorizationReceipt } from '../src/contracts/public-ingress.ts';
 import { computeGovernedWriteRequestDigest } from '../src/contracts/public-ingress.ts';
-import { OperationPolicyGuard, PolicySession } from '../src/governance/operation-policy.js';
+import { GovernanceDenied, OperationPolicyGuard, PolicySession } from '../src/governance/operation-policy.js';
 import type {
   GovernedWriteIntent,
   TrustedProjectIdentity,
@@ -38,6 +38,7 @@ import {
 import type { GovernanceBindings } from '../src/governance/edictum-boundary.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
+import { withWorkspaceDatabaseCloseAsync } from '../src/config/workspace-database-raw.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
 import { expectAsyncReturned, expectRejection, expectReturned } from './helpers/expect-rejection.ts';
 import * as repositoryAccess from '../src/config/safe-repository-access.ts';
@@ -244,6 +245,178 @@ describe('governed write completeness', () => {
         (candidate: unknown) => candidate,
       );
     expect(limited).toMatchObject({ name: 'EdictumDenied', decisionSource: 'operation_limit' });
+  });
+
+  test('operation policy limits preserve pre-effect denial and reserve concurrent tool capacity', async () => {
+    expect(new GovernanceDenied('denied')).toMatchObject({
+      name: 'EdictumDenied',
+      reason: 'denied',
+      decisionSource: null,
+      decisionName: null,
+    });
+    const counters = new PolicySession('unknown-tool-counter');
+    expect(await counters.batchGetCounters({ includeTool: 'never-executed' })).toEqual({
+      attempts: 0,
+      execs: 0,
+      consec_fail: 0,
+      'tool:never-executed': 0,
+    });
+
+    const validationFailure: unknown = 'write arguments are malformed';
+    const writeValidation = new OperationPolicyGuard(
+      {
+        policyVersion: 'write-validation-v1',
+        maxAttempts: 2,
+        maxToolCalls: 2,
+        maxCallsPerTool: {},
+        tools: { 'runtime.write': { side_effect: 'write', idempotent: false } },
+      },
+      () => {
+        throw validationFailure;
+      },
+    );
+    expect(await expectAsyncReturned(() => writeValidation.evaluate('runtime.write', {}))).toMatchObject({
+      decision: 'deny',
+      rules: [{ passed: false, message: 'write arguments are malformed' }],
+    });
+    let unconfiguredEffectCalls = 0;
+    const unconfiguredError: unknown = await writeValidation
+      .run('runtime.read', {}, () => {
+        unconfiguredEffectCalls += 1;
+        return { accepted: true };
+      })
+      .then(
+        () => null,
+        (error: unknown) => error,
+      );
+    expect(unconfiguredError).toMatchObject({ name: 'EdictumDenied', decisionSource: 'precondition' });
+    expect(unconfiguredEffectCalls).toBe(0);
+
+    const uncappedTool = new OperationPolicyGuard(
+      {
+        policyVersion: 'uncapped-tool-v1',
+        maxAttempts: 3,
+        maxToolCalls: 2,
+        maxCallsPerTool: {},
+        tools: { 'runtime.read': { side_effect: 'read', idempotent: true } },
+      },
+      () => undefined,
+    );
+    expect(await expectAsyncReturned(() => uncappedTool.run('runtime.read', {}, () => ({ count: 1 })))).toEqual({
+      count: 1,
+    });
+    expect(await expectAsyncReturned(() => uncappedTool.run('runtime.read', {}, () => ({ count: 2 })))).toEqual({
+      count: 2,
+    });
+
+    const attemptLimited = new OperationPolicyGuard(
+      {
+        policyVersion: 'attempt-limit-v1',
+        maxAttempts: 2,
+        maxToolCalls: 5,
+        maxCallsPerTool: {},
+        tools: { 'runtime.read': { side_effect: 'read', idempotent: true } },
+      },
+      () => undefined,
+    );
+    // Preparation denials consume attempts under either interpretation of the
+    // equality boundary; the following tool call is strictly beyond the limit.
+    for (let index = 0; index < 2; index += 1) {
+      const preparationError = new GovernanceDenied('preparation denied', 'precondition', 'preparation');
+      const denied: unknown = await attemptLimited.rejectPreparation(preparationError).then(
+        () => null,
+        (error: unknown) => error,
+      );
+      expect(denied).toBeInstanceOf(GovernanceDenied);
+    }
+    let deniedEffectCalls = 0;
+    const attemptError: unknown = await attemptLimited
+      .run('runtime.read', {}, () => {
+        deniedEffectCalls += 1;
+        return { accepted: true };
+      })
+      .then(
+        () => null,
+        (error: unknown) => error,
+      );
+    expect(attemptError).toMatchObject({ name: 'EdictumDenied', decisionSource: 'attempt_limit' });
+    expect(deniedEffectCalls).toBe(0);
+
+    const globalLimited = new OperationPolicyGuard(
+      {
+        policyVersion: 'global-limit-v1',
+        maxAttempts: 5,
+        maxToolCalls: 1,
+        maxCallsPerTool: { 'runtime.read': 1 },
+        tools: { 'runtime.read': { side_effect: 'read', idempotent: true } },
+      },
+      () => undefined,
+    );
+    let globalEffects = 0;
+    const globalEffect = () => {
+      globalEffects += 1;
+      return { accepted: true };
+    };
+    expect(await expectAsyncReturned(() => globalLimited.run('runtime.read', {}, globalEffect))).toEqual({
+      accepted: true,
+    });
+    const globalError: unknown = await globalLimited.run('runtime.read', {}, globalEffect).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    expect(globalError).toMatchObject({ name: 'EdictumDenied', decisionName: 'max_tool_calls' });
+    expect(globalEffects).toBe(1);
+
+    const concurrentLimit = new OperationPolicyGuard(
+      {
+        policyVersion: 'concurrent-limit-v1',
+        maxAttempts: 5,
+        maxToolCalls: 2,
+        maxCallsPerTool: { 'runtime.read': 1 },
+        tools: { 'runtime.read': { side_effect: 'read', idempotent: true } },
+      },
+      () => undefined,
+    );
+    let enterEffect: () => void = () => undefined;
+    let releaseEffect: () => void = () => undefined;
+    const effectEntered = new Promise<void>((resolve) => {
+      enterEffect = resolve;
+    });
+    const effectReleased = new Promise<void>((resolve) => {
+      releaseEffect = resolve;
+    });
+    const first = concurrentLimit.run('runtime.read', {}, async () => {
+      enterEffect();
+      await effectReleased;
+      return { accepted: true };
+    });
+    let deniedConcurrentEffects = 0;
+    await withWorkspaceDatabaseCloseAsync(
+      first,
+      async () => {
+        const entered = await Promise.race([effectEntered.then(() => true), first.then(() => false)]);
+        expect(entered).toBe(true);
+        const concurrentError: unknown = await concurrentLimit
+          .run('runtime.read', {}, () => {
+            deniedConcurrentEffects += 1;
+            return { accepted: true };
+          })
+          .then(
+            () => null,
+            (error: unknown) => error,
+          );
+        expect(concurrentError).toMatchObject({
+          name: 'EdictumDenied',
+          decisionName: 'max_calls_per_tool:runtime.read',
+        });
+        expect(deniedConcurrentEffects).toBe(0);
+      },
+      async (pending) => {
+        releaseEffect();
+        expect(await expectAsyncReturned(() => pending)).toEqual({ accepted: true });
+      },
+      'Concurrent admission assertion and pending effect completion failed',
+    );
   });
 
   test('rejects a stale config snapshot when loading the configured Edictum policy', () => {

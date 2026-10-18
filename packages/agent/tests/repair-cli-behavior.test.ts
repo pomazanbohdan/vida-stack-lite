@@ -689,6 +689,34 @@ test('research identity dispatcher plans exact rewrites and rejects dependencies
   expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
 });
 
+test('research identity default CLI reports malformed parser inputs through public errors', async () => {
+  const root = path.resolve(tmpdir());
+  const missingValue = executeReconcileArtifacts(['--mode']);
+  await Promise.resolve(expect(missingValue).rejects.toThrow('invalid arguments'));
+
+  const unknownOption = executeReconcileArtifacts(['--unknown', 'value']);
+  await Promise.resolve(expect(unknownOption).rejects.toThrow('invalid arguments'));
+
+  const missingMode = executeReconcileArtifacts(['--project-root', root, '--repair-id', 'repair-test']);
+  await Promise.resolve(expect(missingMode).rejects.toThrow('mode, root or repair id invalid'));
+
+  const invalidRepairId = executeReconcileArtifacts([
+    '--mode',
+    'inspect',
+    '--project-root',
+    root,
+    '--repair-id',
+    'BAD',
+    '--actor',
+    'test',
+    '--timestamp',
+    timestamp,
+    '--records',
+    path.join(root, 'records.json'),
+  ]);
+  await Promise.resolve(expect(invalidRepairId).rejects.toThrow('mode, root or repair id invalid'));
+});
+
 test('research identity dispatcher fails closed on third-party post-plan bytes', async () => {
   const context = fixture();
   const results = [research(context, 'research-a', 'source-a.md'), research(context, 'research-b', 'source-b.md')];
