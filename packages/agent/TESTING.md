@@ -644,6 +644,13 @@ and always restore/finalize retained probes in finally. A malformed serialized
 journal-header fixture must actually fail Bun's native parser (3/3 does;0/0 does
 not); rebind its digest and prove both source images remain unchanged. These
 native observations do not substitute for assertion-confirmed mutation results.
+Controlled dependency-fault cases may exercise existing defensive diagnostics
+with missing COUNT/PRAGMA rows or appended hidden metadata. Label that fault
+model explicitly; it proves fail-closed handling or metadata filtering, not that
+native SQLite returns an invalid row or that a new schema family is supported.
+Assert the exact intercepted query/handle/occurrence, unchanged input images and
+owned closure before test cleanup. Keep native-output and dependency-fault
+evidence distinct, without excluding survivors or inferring mutation results.
 When a test helper retains an action failure, restore its owned resources and
 rethrow that same failure before any success-path assertion. A later successful
 matcher can consume causal assertion evidence; it must not mask the primary

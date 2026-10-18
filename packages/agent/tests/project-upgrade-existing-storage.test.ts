@@ -1293,6 +1293,179 @@ describe('existing storage image preparation', () => {
     expect(healthy.schema).toBe('VidaUnifiedWorkspaceImage/v1');
   });
 
+  test.each([
+    [
+      'a missing Host table count row',
+      'SELECT COUNT(*) AS count FROM "agent_host_state"',
+      'get',
+      null,
+      1,
+      'Existing storage merge: table count unavailable: agent_host_state',
+    ],
+    [
+      'an empty Host table_xinfo result',
+      'PRAGMA table_xinfo("agent_host_state")',
+      'all',
+      [],
+      1,
+      'Existing storage merge: table has no columns: agent_host_state',
+    ],
+    [
+      'an empty Mastra insertable table_xinfo result',
+      'PRAGMA table_xinfo("mastra_threads")',
+      'all',
+      [],
+      2,
+      'Existing storage merge: table has no insertable columns: mastra_threads',
+    ],
+    [
+      'a missing target encoding row',
+      'PRAGMA encoding',
+      'get',
+      null,
+      1,
+      'Existing storage merge: SQLite schema encoding is unsupported',
+    ],
+  ] as const)(
+    'fails closed and closes owned databases for %s without changing either input image',
+    async (_label, faultSql, faultMethod, faultValue, faultOccurrence, expectedMessage) => {
+      const host = makeHost();
+      const mastra = await makeMastra();
+      const hostBefore = Buffer.from(host.bytes);
+      const mastraBefore = Buffer.from(mastra.bytes);
+      const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+      const deserialize = Database.deserialize.bind(Database);
+      const opened = new Set<Database>();
+      const occurrences = new Map<Database, number>();
+      const faultDatabases = new Set<Database>();
+      let faultReached = false;
+      const locatingDatabases = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
+        const database = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
+        opened.add(database);
+        return database;
+      });
+      const injectingMissingRow = spyOn(Database.prototype, 'query').mockImplementation(function (
+        this: Database,
+        sql: string,
+      ) {
+        const statement = Reflect.apply(query, this, [sql]);
+        if (sql !== faultSql) return statement;
+        const occurrence = (occurrences.get(this) ?? 0) + 1;
+        occurrences.set(this, occurrence);
+        if (occurrence !== faultOccurrence) return statement;
+        faultDatabases.add(this);
+        faultReached = true;
+        return new Proxy(statement, {
+          get(target, property) {
+            if (property === faultMethod) return () => faultValue;
+            return nativeStatementMember(target, property);
+          },
+        });
+      } as typeof Database.prototype.query);
+      try {
+        const failure = await rejectionReason(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+        expect(faultReached).toBe(true);
+        expect(faultDatabases.size).toBe(1);
+        expect([...faultDatabases].every((database) => opened.has(database))).toBe(true);
+        expect(failure).toBeInstanceOf(Error);
+        expect((failure as Error).message).toBe(expectedMessage);
+        expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
+        expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
+        expect(opened.size).toBeGreaterThan(0);
+        for (const database of opened) expect(() => database.query('SELECT 1').get()).toThrow();
+      } finally {
+        injectingMissingRow.mockRestore();
+        locatingDatabases.mockRestore();
+        for (const database of opened) {
+          try {
+            database.close(true);
+          } catch {}
+        }
+      }
+    },
+  );
+
+  test('ignores dependency-injected hidden table_xinfo columns in Host digest and Mastra import', async () => {
+    const host = makeHost();
+    const mastra = await makeMastra();
+    const hostBefore = Buffer.from(host.bytes);
+    const mastraBefore = Buffer.from(mastra.bytes);
+    const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+    const deserialize = Database.deserialize.bind(Database);
+    const occurrences = new Map<Database, number>();
+    const observed = { hostHiddenRow: 0, mastraImportHiddenRows: 0 };
+    let sourceHost: Database | undefined;
+    let sourceMastra: Database | undefined;
+    let readonlyInputs = 0;
+    const locatingInputs = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
+      const database = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
+      if (typeof options !== 'boolean' && options?.readonly === true) {
+        readonlyInputs++;
+        if (readonlyInputs === 1) sourceHost = database;
+        if (readonlyInputs === 2) sourceMastra = database;
+      }
+      return database;
+    });
+    const injectingHiddenColumns = spyOn(Database.prototype, 'query').mockImplementation(function (
+      this: Database,
+      sql: string,
+    ) {
+      const statement = Reflect.apply(query, this, [sql]);
+      let injected: { readonly name: string; readonly hidden: number }[] | undefined;
+      if (this === sourceHost && sql === 'PRAGMA table_xinfo("agent_host_state")') {
+        observed.hostHiddenRow++;
+        injected = [{ name: '__injected_hidden_host_column__', hidden: 1 }];
+      } else if (this === sourceMastra && sql === 'PRAGMA table_xinfo("mastra_threads")') {
+        const occurrence = (occurrences.get(this) ?? 0) + 1;
+        occurrences.set(this, occurrence);
+        if (occurrence === 2) {
+          observed.mastraImportHiddenRows++;
+          injected = [1, 2, 3].map((hidden) => ({
+            name: '__injected_hidden_mastra_column_' + hidden + '__',
+            hidden,
+          }));
+        }
+      }
+      if (injected === undefined) return statement;
+      const extraRows = injected;
+      return new Proxy(statement, {
+        get(target, property) {
+          if (property === 'all')
+            return (...args: unknown[]) => {
+              const nativeAll = nativeStatementMember(target, property) as (...values: unknown[]) => unknown;
+              const rows = nativeAll(...args);
+              if (!Array.isArray(rows)) throw new Error('Native table_xinfo result is not an array');
+              const nativeRows: readonly unknown[] = rows;
+              return [...nativeRows, ...extraRows];
+            };
+          return nativeStatementMember(target, property);
+        },
+      });
+    } as typeof Database.prototype.query);
+    let image: Awaited<ReturnType<PrepareUnifiedExistingStorageImage>>;
+    try {
+      image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+    } finally {
+      injectingHiddenColumns.mockRestore();
+      locatingInputs.mockRestore();
+    }
+    expect(observed.hostHiddenRow).toBe(1);
+    expect(observed.mastraImportHiddenRows).toBe(1);
+    expect(occurrences.get(sourceMastra as Database)).toBe(2);
+    expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: binding(host, mastra) });
+    expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
+    expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
+    const merged = openUnified(image.bytes_base64);
+    try {
+      expect(
+        merged.query<{ id: string }, [string]>('SELECT id FROM mastra_threads WHERE id=?').get('merge-thread-1'),
+      ).toEqual({ id: 'merge-thread-1' });
+      expect(merged.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
+    } finally {
+      merged.close(true);
+    }
+  });
+
   test('accepts a healthy Host schema above sixteen objects within the supported bounds', async () => {
     const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
     let host: ClosedDatabaseImage;

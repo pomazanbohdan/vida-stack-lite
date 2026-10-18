@@ -1,10 +1,10 @@
 # Core runtime reactivation work
 
-Status date: 2026-10-17. Current execution and evidence record. This document does not authorize replay of old operations or claim complete quality or Runtime acceptance.
+Status date: 2026-10-18. Current execution and evidence record. This document does not authorize replay of old operations or claim complete quality or Runtime acceptance.
 
 ## Current state and owners
 
-- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Fresh85b09b0 initialization and image pairs have exact local F/L/S/B100 and same-run frozen9/9; image's current49-role Source binding is checked. Initialization native8703f0b1 stops8Killed/0Survived/1UNKNOWN/155unattempted of164 on primary-assertion evidence loss. The reviewed helper correction preserves that evidence and still rejects every forbidden retry, pending fresh native proof. Envelopes'64-mutant diagnostic is all assertion-Killed after the mixed-precision regression. All three complete native proofs remain pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability and admission stateful initialization remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Their latest exact local coverage/frozen pairs and incomplete native outcomes are recorded below; image's49-role Source binding is checked. Initialization's primary assertion evidence repair is confirmed, but the later real cross-process CAS-release failure blocks its native closure. Envelopes'64-mutant diagnostic is all assertion-Killed after the mixed-precision regression. All three complete native proofs remain pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability and admission stateful initialization remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -333,6 +333,61 @@ reviewer agree; no reader or error contract is weakened. Immutablec560087 covera
 bf21ec99-5d24-4418-bb8c-f47e57ff3a52 passes exact16/84/95/53,21cases/261assertions,
 but native is deliberately not started on that superseded helper. Preserve the
 issued local observation without promoting it to full acceptance.
+
+Immutabled2a37b7 forms SDK inputs without suites, then fresh initialization
+d108cb61-4137-45aa-a40b-4f44ba9262ad passes21cases/261assertions, exact
+F16/16,L84/84,S95/95,B53/53 and same-run frozen cf118c9 max9/9. Full native
+098bdf54-d09a-4e2c-9c82-ce140c80af9b closes346826ms at
+/tmp/contour-stage-9YySdN:73assertion-Killed/0Survived/1UNKNOWN/90unattempted
+of164. Corrected115 now has primary bun-expect failure and native body12 hit1,
+independently reviewed. New UNKNOWN92 instead fails the real separate-process
+body21 before native activation: RuntimeInitializationBindingError wraps
+SafeRepositoryLockReleaseError for ..vida.cas.lock under runtime configuration
+preflight. Its node-assert cause is real but hit_count=0; no Killed claim is
+permitted. Both children are drained and the fixture is retained at the original
+scratch owner. Captures/group/boot/commit/clean-input custody closes fully;
+resource_blocked=null. Separate bounded author/reviewer lanes inspect fixture
+sequencing and product release/reclaim without changing old leases or states.
+The already qualified85b09b0 image coverage/frozen pair proceeds to native while
+that actual initialization failure is investigated; its image Source/tests are
+unchanged by the later initialization-only repairs. No duplicate pair is run.
+The retained failed fixture is under that native operation's
+workers/8241649609f88ccd2a0a5b233a07a538ec313ff6adf695aa44a969dbca39f67d/tmp/vida-init-binding-dO3w5z,
+not the outer scratch root. Its regular0600lock payload names the project-upgrade
+directory and PID15; final guard/quarantine absence cannot prove the transient
+owner. Source inspection identifies a plausible check-then-create window between
+the final guard probe and O_EXCL creation while another owner is releasing. This
+is a candidate product P0, pending a deterministic interleaving regression, not
+a confirmed attribution. A proposed forwarded receipt-attempt handshake scopes
+the existing race test to its declared receipt CAS; serializing configuration
+preflight there must not be claimed to repair this separate product mechanism.
+
+Image native075d1347-8f56-4c2b-abde-214ff75c51b2 on85b09b0 closes795915ms at
+/tmp/contour-stage-dZgXvQ:294assertion-Killed/10Survived/2UNKNOWN/182unattempted
+of488. The two current509/489 private workers time out at their launcher; no
+complete runner receipt is published. Both launchers retain complete captures
+and terminate their owned groups, but that is not a mutant kill. Native admission
+is denied. Outer boot/commit/clean-input/group/captures are unchanged and
+resource_blocked=null. OOM counters stay1/3, while memory.max events rise from
+223658to550402; memory pressure is observed, not established as the sole cause.
+The generated universe, every failed worker and all old classifications remain.
+
+The next test-only image packet adds four explicitly controlled dependency-row
+faults and one appended-hidden-metadata case, using the existing bound native
+statement adapter. Exact query/handle/occurrence, diagnostic or returned image,
+unchanged inputs and owned closure are asserted before cleanup. Focusedqwv8h5
+passes all5selected cases/60assertions in1230ms,87unselected, with complete
+captures/group closure. No valid-native-row or new FTS-support claim is made.
+No new Source AST/inventory or frozen ceiling is needed for this test-only delta.
+
+With all numeric children closed, retentionv301 relocates only the closedv242
+installed dependency tree from tmpfs to exact disk storage. All26823entries,
+405716961file bytes, file hashes, modes and internal links match before replacing
+the old directory with a link. Manifest:
+/workspace/attachments/closed-dependencies-v301/retention.json. Source, SDK,
+fixtures, DBs and raw failed/UNKNOWN evidence remain unchanged; the changed
+dependency realpath never qualifies or replays the old run. Fresh native workers
+still need attributable closure under the existing timeouts.
 
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
