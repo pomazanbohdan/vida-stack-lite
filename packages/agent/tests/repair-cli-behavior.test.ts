@@ -741,6 +741,21 @@ test('research identity default CLI reports malformed parser inputs through publ
   await Promise.resolve(expect(relativeRoot).rejects.toThrow('mode, root or repair id invalid'));
 });
 
+for (const missingOption of ['--project-root', '--repair-id'] as const) {
+  test(`research identity repair rejects missing ${missingOption} before project effects`, async () => {
+    const root = path.join(tmpdir(), `artifact-repair-missing-option-${randomUUID()}`);
+    const args = [
+      '--mode',
+      'inspect',
+      ...(missingOption === '--project-root' ? [] : ['--project-root', root]),
+      ...(missingOption === '--repair-id' ? [] : ['--repair-id', 'repair-test']),
+    ];
+    expect(fs.existsSync(root)).toBe(false);
+    await expectRejection(executeReconcileArtifacts(args), 'vida repair artifacts: mode, root or repair id invalid');
+    expect(fs.existsSync(root)).toBe(false);
+  });
+}
+
 for (const cutoffPresent of [false, true]) {
   test(`public repair CLI blocks restore without effects (cutoff present: ${cutoffPresent})`, async (budget: PhaseBudget) => {
     const context = fixture();

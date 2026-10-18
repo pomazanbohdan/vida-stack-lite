@@ -28,6 +28,9 @@ main-envelopes awaits a measured correction rather than an unchanged full retry.
 The storage deficit observed at v798 is resolved by the verified v803 retirement
 below. Fresh dispatch coveragev804 completes on e67216b; its residual exact-gate
 deficits remain OPEN. The rejected v798 attempt has no numeric result.
+The owner now requests two further coverage cycles. Root adds public missing-root
+and missing-repair-ID denials for dispatch, while blind Luna prepares one bounded
+governance test proposal outside Source. Numeric producers remain serial.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
@@ -308,6 +311,12 @@ The unchanged exact gate remains BLOCKED by7lines,9statements and11branch arms.
 The stage publishes the automatic projection once through its existing owner.
 No frozen producer runs against nonexact coverage, no mutation score is inferred,
 and no second cycle is started. Historical closure counts remain unchanged.
+
+The next correction adds two default5s parser regressions that require the public
+missing-option diagnostic and no project-directory creation. Both focused cases
+pass with8assertions in1256ms;29other cases are filtered, not qualified. The new
+cases exercise the two absent-option fallbacks from v804's counters. No product
+behavior, evidence gate or budget changes. Full contour coverage follows publication.
 
 Root integrates one public1000/1001result-capacity regression from blind Lunav767.
 It uses real SDK transitions, checks ordered immutable evidence and all subsequent
