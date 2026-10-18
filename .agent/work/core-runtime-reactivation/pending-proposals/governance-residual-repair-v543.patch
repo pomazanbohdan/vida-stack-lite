@@ -1,0 +1,168 @@
+--- a/packages/agent/tests/governance-completeness.test.ts
++++ b/packages/agent/tests/governance-completeness.test.ts
+@@ -16,1 +16,1 @@
+-import { OperationPolicyGuard, PolicySession } from '../src/governance/operation-policy.js';
++import { GovernanceDenied, OperationPolicyGuard, PolicySession } from '../src/governance/operation-policy.js';
+@@ -247,3 +247,137 @@
+     expect(limited).toMatchObject({ name: 'EdictumDenied', decisionSource: 'operation_limit' });
+   });
+ 
++  test('operation policy limits preserve pre-effect denial and reserve concurrent tool capacity', async () => {
++    expect(new GovernanceDenied('denied')).toMatchObject({
++      name: 'EdictumDenied',
++      reason: 'denied',
++      decisionSource: null,
++      decisionName: null,
++    });
++    const counters = new PolicySession('unknown-tool-counter');
++    expect(await counters.batchGetCounters({ includeTool: 'never-executed' })).toEqual({
++      attempts: 0,
++      execs: 0,
++      consec_fail: 0,
++      'tool:never-executed': 0,
++    });
++
++    const writeValidation = new OperationPolicyGuard(
++      {
++        policyVersion: 'write-validation-v1',
++        maxAttempts: 2,
++        maxToolCalls: 2,
++        maxCallsPerTool: {},
++        tools: { 'runtime.write': { side_effect: 'write', idempotent: false } },
++      },
++      () => {
++        throw 'write arguments are malformed';
++      },
++    );
++    await expect(writeValidation.evaluate('runtime.write', {})).resolves.toMatchObject({
++      decision: 'deny',
++      rules: [{ passed: false, message: 'write arguments are malformed' }],
++    });
++    let unconfiguredEffectCalls = 0;
++    const unconfiguredError: unknown = await writeValidation
++      .run('runtime.read', {}, () => {
++        unconfiguredEffectCalls += 1;
++        return { accepted: true };
++      })
++      .then(
++        () => null,
++        (error: unknown) => error,
++      );
++    expect(unconfiguredError).toMatchObject({ name: 'EdictumDenied', decisionSource: 'precondition' });
++    expect(unconfiguredEffectCalls).toBe(0);
++
++    const uncappedTool = new OperationPolicyGuard(
++      {
++        policyVersion: 'uncapped-tool-v1',
++        maxAttempts: 3,
++        maxToolCalls: 2,
++        maxCallsPerTool: {},
++        tools: { 'runtime.read': { side_effect: 'read', idempotent: true } },
++      },
++      () => undefined,
++    );
++    await expect(uncappedTool.run('runtime.read', {}, () => ({ count: 1 }))).resolves.toEqual({ count: 1 });
++    await expect(uncappedTool.run('runtime.read', {}, () => ({ count: 2 }))).resolves.toEqual({ count: 2 });
++
++    const attemptLimited = new OperationPolicyGuard(
++      {
++        policyVersion: 'attempt-limit-v1',
++        maxAttempts: 1,
++        maxToolCalls: 5,
++        maxCallsPerTool: {},
++        tools: { 'runtime.read': { side_effect: 'read', idempotent: true } },
++      },
++      () => undefined,
++    );
++    let deniedEffectCalls = 0;
++    const attemptError: unknown = await attemptLimited
++      .run('runtime.read', {}, () => {
++        deniedEffectCalls += 1;
++        return { accepted: true };
++      })
++      .then(
++        () => null,
++        (error: unknown) => error,
++      );
++    expect(attemptError).toMatchObject({ name: 'EdictumDenied', decisionSource: 'attempt_limit' });
++    expect(deniedEffectCalls).toBe(0);
++
++    const globalLimited = new OperationPolicyGuard(
++      {
++        policyVersion: 'global-limit-v1',
++        maxAttempts: 5,
++        maxToolCalls: 1,
++        maxCallsPerTool: { 'runtime.read': 1 },
++        tools: { 'runtime.read': { side_effect: 'read', idempotent: true } },
++      },
++      () => undefined,
++    );
++    await expect(globalLimited.run('runtime.read', {}, () => ({ accepted: true }))).resolves.toEqual({
++      accepted: true,
++    });
++    const globalError: unknown = await globalLimited.run('runtime.read', {}, () => ({ accepted: true })).then(
++      () => null,
++      (error: unknown) => error,
++    );
++    expect(globalError).toMatchObject({ name: 'EdictumDenied', decisionName: 'max_tool_calls' });
++
++    const concurrentLimit = new OperationPolicyGuard(
++      {
++        policyVersion: 'concurrent-limit-v1',
++        maxAttempts: 5,
++        maxToolCalls: 2,
++        maxCallsPerTool: { 'runtime.read': 1 },
++        tools: { 'runtime.read': { side_effect: 'read', idempotent: true } },
++      },
++      () => undefined,
++    );
++    let enterEffect: () => void = () => undefined;
++    let releaseEffect: () => void = () => undefined;
++    const effectEntered = new Promise<void>((resolve) => {
++      enterEffect = resolve;
++    });
++    const effectReleased = new Promise<void>((resolve) => {
++      releaseEffect = resolve;
++    });
++    const first = concurrentLimit.run('runtime.read', {}, async () => {
++      enterEffect();
++      await effectReleased;
++      return { accepted: true };
++    });
++    await effectEntered;
++    try {
++      const concurrentError: unknown = await concurrentLimit
++        .run('runtime.read', {}, () => ({ accepted: true }))
++        .then(
++          () => null,
++          (error: unknown) => error,
++        );
++      expect(concurrentError).toMatchObject({
++        name: 'EdictumDenied',
++        decisionName: 'max_calls_per_tool:runtime.read',
++      });
++    } finally {
++      releaseEffect();
++    }
++    await expect(first).resolves.toEqual({ accepted: true });
++  });
++
+   test('rejects a stale config snapshot when loading the configured Edictum policy', () => {
+--- a/packages/agent/tests/edictum-workflow-completeness.test.ts
++++ b/packages/agent/tests/edictum-workflow-completeness.test.ts
+@@ -1321,2 +1321,11 @@
+       if (bodyFailed) throw bodyError;
+     },
+   );
+ 
++  test('workflow command validation rejection preserves its snapshot and recovers the serial queue', async () => {
++    const candidate = workflow();
++    const before = await candidate.runtime.state(candidate.session);
++    await expect(candidate.runtime.evaluate(candidate.session, { toolName: '', args: {} })).rejects.toThrow();
++    expect(await candidate.runtime.state(candidate.session)).toEqual(before);
++
++    await expect(
++      candidate.runtime.evaluate(candidate.session, { toolName: 'runtime.read', args: {} }),
++    ).resolves.toMatchObject({ action: 'allow', stageId: 'read-evidence' });
++  });
+ });

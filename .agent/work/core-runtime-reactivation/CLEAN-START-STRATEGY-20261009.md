@@ -64,6 +64,29 @@ the empty public field and state validation. Record its original callable as
 removed with the invariant owner, never transfer its frozen allowance. Test
 real read/write evidence retention through rewind; do not fabricate private state.
 
+Independent v523/v536 identifies a tooling prerequisite after that valid removal:
+the frozen proof cannot represent a retired original lexical ID occupied by a
+different retained predecessor's current role. Design explicit exhaustive
+cross-role collision ownership under the existing correspondence owner. Keep
+each removed role successor-free and every retained ceiling attached to its true
+original; reject missing, duplicate, foreign, surplus or misdirected edges and
+cap/coverage bypasses. Preserve the existing adapter-reuse rules. Evolve producer
+and receipt reader together with explicit versioning where serialized semantics
+change; old v3 receipts must not claim the new proof. Any new private validator
+has prospective CC/CRAP10/10. Pin only after independent review and focused tests;
+this prerequisite does not block independent coverage or mutation diagnostics.
+
+The v547 resource refusal exposes a second reporting prerequisite: admission can
+throw before contour-stage records launch and enters its terminal-publication
+handler. Persist an explicit non-metric prelaunch resource outcome with exact
+path/free/minimum and Source identity, and project it through the existing owner.
+Do not fabricate a PID, process-group closure, test start, UNKNOWN effect or
+numeric PASS. Preserve the original exception and secondary receipt/projection
+errors. Add focused producer/reader controls before enabling this route. Actual
+resource admission remains blocking; do not lower its floor or relocate evidence
+to volatile storage. Current Root numeric work is blocked on103235584bytes of
+floor deficit, plus necessary working headroom; retained evidence is protected.
+
 Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
 `nativeDiagnosticIdSet` owner and its invalid-token predicate, each with
 prospective CC/CRAP10/10. Reuse its validated Set in plan resolution instead of

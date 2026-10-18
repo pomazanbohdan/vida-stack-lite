@@ -128,6 +128,55 @@ async completion/rejection helpers, await the actual gate result, and state the
 expected error messages explicitly. Focused v534 passes both changed controls;
 no lint rule, hook or deadline is bypassed.
 
+The second correction packet is published as621a402 through normal hooks/push.
+Immutablev538 uses byte-matched manifests/lock and the same retained dependencies;
+SDKv539/J8Q1wl completes2011.674192ms without suites. Fresh governancev540/o7ajom
+passes154cases/8429assertions in53822.845565ms: F104/105,L349/365,S379/407,B205/253,
+maxCC/CRAP32/32. Fresh dispatchv542/VaEw2g passes44cases/565assertions in
+146248.785004ms: F61/70,L289/312,S308/334,B240/256,maxCC/CRAP39/39. The automatic
+projection records both incomplete numeric scopes. These are needed checks of
+changed inputs, not repeated unchanged suites. Their terminal captures, group
+closure, boot, commit and clean inputs all pass. Frozen and mutation remain open.
+
+The selected workflow is three bounded Luna contour proposal lanes and one Root
+numeric producer. Targeted21-case checks share one Bun invocation; complete
+contour runs follow corrected, published inputs. Three concurrent full producers
+and concurrent native builds are unqualified alternatives on this host, not a
+measured speedup. Separate serial samples cannot establish a parallel speedup;
+keep baseline/setup cost and pure assertion time distinct. The current P1 schema
+analysisv536 supplies explicit collision-ownership design/tests in CLEAR, without
+implementing a waiver or claiming a new frozen proof.
+
+**Current resource blocker:** controllerv547 stops before any child or launch
+receipt. Native admission at `/workspace/attachments/contour-stage-8dzxu5`
+observes2044248064bytes against2147483648minimum: exact floor deficit103235584.
+Raw stdout/stderr are retained as `/workspace/attachments/controller-coverage-v547.*`.
+No controller rerun, mutation run or partial PASS is invented. The existing stage
+owner misses a structured non-metric outcome when admission throws before its
+launch record; this newly confirmed reporting defect is queued in CLEAR rather
+than forged into the numeric projection. No numeric/build/install process remains.
+
+After observed producer completion, one shallow tooling-cache inventoryv545 finds
+only five active environment/tool receipts, no downloaded archives. A single
+bounded cache-size inquiryv548 finds63221760bytes in `/home/agent/.bun/install/cache`;
+the other two named cache paths are absent. Even that entire cache is smaller
+than the floor deficit, and no obsolete/no-dependency subset is proven. No extra
+dependency byte/mode/hash scan or deletion is justified. Nothing is removed;
+Source, instructions, Git, SDK and all original evidence remain protected.
+Resume needs additional free durable storage beyond the exact floor deficit and
+working room; about1GiB extra is a practical buffer, not a changed admission floor.
+
+All Luna lanes finish their bounded work. Preserve unapplied **UNVALIDATED** drafts
+in [governance residual proposal](pending-proposals/governance-residual-repair-v543.patch)
+and [dispatch residual proposal](pending-proposals/dispatch-residual-repair-v546.patch).
+The first adds two registered cases for operation-policy branches and queue
+rejection/recovery. The second adds one case with four malformed CLI vectors;
+the nine research-handler closures remain unfinished. They exclude earlier
+integrated hunks and must be reviewed against current Source before application.
+No proposed case counts, coverage or mutation improvements are counted. Preserve
+their own worker checkouts and raw notes. Root retains sole next writer and
+numeric custody when the actual resource GAP is resolved.
+
 Custody incident: worker473 temporarily changed and reversed only canonical
 `packages/agent/bin/reconcile-readonly-dispatch.ts`, violating its read-only
 assignment. Root observed an empty diff for that file before its own repair.
