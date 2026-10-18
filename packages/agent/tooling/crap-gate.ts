@@ -517,9 +517,65 @@ export type ScopedIdentityReuse = {
   readonly successor_identity: string;
   readonly rationale: string;
 };
+export type ScopedCrossRoleIdentityReuse = {
+  readonly identity: string;
+  readonly current_owner_original_identity: string;
+  readonly rationale: string;
+};
 type ScopedCorrespondencePolicy =
-  | { readonly source_mapping_kind: 'one-to-one'; readonly identity_reuses?: never }
-  | { readonly source_mapping_kind: 'reviewed-pairs'; readonly identity_reuses: readonly ScopedIdentityReuse[] };
+  | {
+      readonly source_mapping_kind: 'one-to-one';
+      readonly identity_reuses?: never;
+      readonly cross_role_identity_reuses?: never;
+    }
+  | {
+      readonly source_mapping_kind: 'reviewed-pairs';
+      readonly identity_reuses: readonly ScopedIdentityReuse[];
+      readonly cross_role_identity_reuses?: readonly ScopedCrossRoleIdentityReuse[];
+    };
+
+function crossRoleIdentityReuse(raw: unknown): ScopedCrossRoleIdentityReuse {
+  if (
+    !isRecord(raw) ||
+    Object.keys(raw).length !== 3 ||
+    !Object.hasOwn(raw, 'identity') ||
+    !Object.hasOwn(raw, 'current_owner_original_identity') ||
+    !Object.hasOwn(raw, 'rationale') ||
+    typeof raw.identity !== 'string' ||
+    typeof raw.current_owner_original_identity !== 'string' ||
+    typeof raw.rationale !== 'string' ||
+    raw.rationale.trim().length < 8
+  )
+    throw new Error('Scoped CRAP v4 cross-role identity reuse record is malformed.');
+  return {
+    identity: raw.identity,
+    current_owner_original_identity: raw.current_owner_original_identity,
+    rationale: raw.rationale,
+  };
+}
+
+/** Validate collision ownership only; callers retain exact partitions, coverage and individual caps. */
+export function scopedCrossRoleIdentityReuses(
+  raw: unknown,
+  originalIds: ReadonlySet<string>,
+  retainedSuccessors: ReadonlyMap<string, string>,
+): ReadonlyMap<string, string> {
+  if (!Array.isArray(raw)) throw new Error('Scoped CRAP v4 requires explicit cross-role identity reuse records.');
+  const expected = new Map<string, string>();
+  for (const [owner, identity] of retainedSuccessors) {
+    if (owner !== identity && originalIds.has(identity)) expected.set(identity, owner);
+  }
+  const owners = new Map<string, string>();
+  for (const candidate of raw) {
+    const row = crossRoleIdentityReuse(candidate);
+    if (owners.has(row.identity) || expected.get(row.identity) !== row.current_owner_original_identity)
+      throw new Error('Scoped CRAP v4 cross-role identity reuse does not bind its actual retained owner.');
+    owners.set(row.identity, row.current_owner_original_identity);
+  }
+  if (owners.size !== expected.size)
+    throw new Error('Scoped CRAP v4 cross-role identity reuse inventory is incomplete.');
+  return owners;
+}
 export type ScopedFunctionDisposition =
   | {
       readonly kind: 'retained';
@@ -555,7 +611,10 @@ export function scopedCrapDispositionProof(
   const sourceMappingKind = policy.source_mapping_kind;
   if (sourceMappingKind !== 'one-to-one' && sourceMappingKind !== 'reviewed-pairs')
     throw new Error('Scoped CRAP source mapping kind is invalid.');
-  if (sourceMappingKind === 'one-to-one' && Object.hasOwn(policy, 'identity_reuses'))
+  if (
+    sourceMappingKind === 'one-to-one' &&
+    (Object.hasOwn(policy, 'identity_reuses') || Object.hasOwn(policy, 'cross_role_identity_reuses'))
+  )
     throw new Error('Scoped CRAP v2 cannot authorize identity reuse.');
   const identityReuses = sourceMappingKind === 'reviewed-pairs' ? policy.identity_reuses : [];
   if (!Array.isArray(identityReuses)) throw new Error('Scoped CRAP v3 requires explicit identity reuse records.');
@@ -721,8 +780,11 @@ export function scopedCrapDispositionProof(
   }
   const originalPartition = [...retainedOriginal.keys(), ...removed].sort();
   const currentPartition = [...retainedCurrent, ...added].sort();
+  const crossRoleReuses = Object.hasOwn(policy, 'cross_role_identity_reuses')
+    ? scopedCrossRoleIdentityReuses(policy.cross_role_identity_reuses, new Set(originals.keys()), retainedOriginal)
+    : new Map<string, string>();
   if (
-    [...removed].some((identity) => candidates.has(identity)) ||
+    [...removed].some((identity) => candidates.has(identity) && !crossRoleReuses.has(identity)) ||
     [...added].some((identity) => originals.has(identity) && !allowedReuses.has(identity))
   )
     throw new Error('Scoped CRAP v2 cannot reset a shared original/current identity as removed plus new.');
@@ -1296,7 +1358,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     if (
       sourceMappingKind === 'one-to-one' &&
       isRecord(review) &&
-      ['identity_reuses', 'new_source_paths', 'removed_source_paths'].some((field) => Object.hasOwn(review, field))
+      ['identity_reuses', 'cross_role_identity_reuses', 'new_source_paths', 'removed_source_paths'].some((field) =>
+        Object.hasOwn(review, field),
+      )
     )
       throw new Error('Reviewed v2 correspondence cannot authorize identity reuse.');
     if (v2Review && !Array.isArray(review.source_mappings))
@@ -1367,6 +1431,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     }
     if (v2Review && isRecord(review) && Array.isArray(review.source_mappings)) {
       const identityReuses: ScopedIdentityReuse[] = [];
+      let crossRoleIdentityReuses: ScopedCrossRoleIdentityReuse[] | undefined;
       if (sourceMappingKind === 'reviewed-pairs') {
         if (!Array.isArray(review.identity_reuses))
           throw new Error('Reviewed v3 correspondence requires explicit identity reuse records.');
@@ -1384,6 +1449,13 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
             successor_identity: row.successor_identity,
             rationale: row.rationale,
           });
+        }
+        if (Object.hasOwn(review, 'cross_role_identity_reuses')) {
+          if (!Array.isArray(review.cross_role_identity_reuses))
+            throw new Error('Reviewed v4 correspondence requires explicit cross-role identity reuse records.');
+          crossRoleIdentityReuses = [];
+          for (const row of review.cross_role_identity_reuses)
+            crossRoleIdentityReuses.push(crossRoleIdentityReuse(row));
         }
       }
       const sourceMappings: ScopedSourceMapping[] = review.source_mappings.map((raw: unknown) => {
@@ -1498,7 +1570,11 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         newSourcePaths,
         retainedCeilings,
         sourceMappingKind === 'reviewed-pairs'
-          ? { source_mapping_kind: sourceMappingKind, identity_reuses: identityReuses }
+          ? {
+              source_mapping_kind: sourceMappingKind,
+              identity_reuses: identityReuses,
+              ...(crossRoleIdentityReuses === undefined ? {} : { cross_role_identity_reuses: crossRoleIdentityReuses }),
+            }
           : { source_mapping_kind: sourceMappingKind },
       );
       if (
@@ -1509,7 +1585,12 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       const report = validation.report;
       const result = {
         schema:
-          sourceMappingKind === 'reviewed-pairs' ? 'VidaScopedCrapBudgetReport/v3' : 'VidaScopedCrapBudgetReport/v2',
+          crossRoleIdentityReuses !== undefined
+            ? 'VidaScopedCrapBudgetReport/v4'
+            : sourceMappingKind === 'reviewed-pairs'
+              ? 'VidaScopedCrapBudgetReport/v3'
+              : 'VidaScopedCrapBudgetReport/v2',
+        ...(crossRoleIdentityReuses === undefined ? {} : { cross_role_identity_reuses: crossRoleIdentityReuses }),
         ...(sourceMappingKind === 'reviewed-pairs'
           ? {
               source_mapping_kind: sourceMappingKind,

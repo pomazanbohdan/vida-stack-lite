@@ -142,6 +142,140 @@ function splitProofInputs(): Parameters<typeof scopedCrapDispositionProof> {
   ];
 }
 
+function crossRoleProofInputs(): Parameters<typeof scopedCrapDispositionProof> {
+  const file = 'src/workflow.ts';
+  const removed = `${file}#predicate2`,
+    previous3 = `${file}#predicate3`,
+    previous4 = `${file}#predicate4`;
+  return [
+    [
+      { identity: removed, file, complexity: 1 },
+      { identity: previous3, file, complexity: 3 },
+      { identity: previous4, file, complexity: 5 },
+    ],
+    [
+      { identity: removed, file, complexity: 2, coverage: 1, crap: 2 },
+      { identity: previous3, file, complexity: 4, coverage: 1, crap: 4 },
+    ],
+    [
+      { kind: 'removed', identity: removed, rationale: 'Retired empty compatibility map predicate.' },
+      {
+        kind: 'retained',
+        identity: previous3,
+        current_identity: removed,
+        max_complexity: 3,
+        max_crap: 3,
+        rationale: 'Existing result predicate shifts lexical position.',
+      },
+      {
+        kind: 'retained',
+        identity: previous4,
+        current_identity: previous3,
+        max_complexity: 5,
+        max_crap: 5,
+        rationale: 'Existing stage predicate shifts lexical position.',
+      },
+    ],
+    [{ original_path: file, current_path: file, rationale: 'Same module with one retired callable.' }],
+    [file],
+    [file],
+    [],
+    [],
+    new Map([
+      [previous3, { max_complexity: 3, max_crap: 3 }],
+      [previous4, { max_complexity: 5, max_crap: 5 }],
+    ]),
+    {
+      source_mapping_kind: 'reviewed-pairs',
+      identity_reuses: [],
+      cross_role_identity_reuses: [
+        {
+          identity: removed,
+          current_owner_original_identity: previous3,
+          rationale: 'Result predicate owns this lexical identity.',
+        },
+        {
+          identity: previous3,
+          current_owner_original_identity: previous4,
+          rationale: 'Stage predicate owns this lexical identity.',
+        },
+      ],
+    },
+  ];
+}
+
+test('scoped CRAP v4 keeps retired roles successor-free and retained ceilings with their actual owners', () => {
+  const result = scopedCrapDispositionProof(...crossRoleProofInputs());
+  expect(result[0]).toEqual({
+    kind: 'removed',
+    identity: 'src/workflow.ts#predicate2',
+    file: 'src/workflow.ts',
+    rationale: 'Retired empty compatibility map predicate.',
+  });
+  expect(result[1]).toMatchObject({
+    identity: 'src/workflow.ts#predicate3',
+    current_identity: 'src/workflow.ts#predicate2',
+    original_source_complexity: 3,
+    maximum_complexity: 3,
+    maximum_crap: 3,
+    complexity: 2,
+  });
+  expect(result[2]).toMatchObject({
+    identity: 'src/workflow.ts#predicate4',
+    current_identity: 'src/workflow.ts#predicate3',
+    original_source_complexity: 5,
+    maximum_complexity: 5,
+    maximum_crap: 5,
+    complexity: 4,
+  });
+});
+
+test.each([
+  'missing',
+  'duplicate',
+  'foreign',
+  'removed-owner',
+  'wrong-owner',
+  'surplus',
+  'extra-field',
+  'inherited-field',
+  'empty-rationale',
+  'legacy-policy',
+  'cap-transfer',
+  'uncovered',
+] as const)('scoped CRAP v4 rejects %s cross-role claims without waiving ordinary proof', (kind) => {
+  const input = crossRoleProofInputs();
+  const policy = input[9];
+  if (policy?.source_mapping_kind !== 'reviewed-pairs' || !policy.cross_role_identity_reuses)
+    throw new Error('Missing cross-role fixture policy');
+  const edges = [...policy.cross_role_identity_reuses];
+  const first = edges[0]!;
+  if (kind === 'missing') edges.pop();
+  if (kind === 'duplicate') edges.push(first);
+  if (kind === 'foreign') edges[0] = { ...first, identity: 'src/foreign.ts#unknown' };
+  if (kind === 'removed-owner') edges[0] = { ...first, current_owner_original_identity: first.identity };
+  if (kind === 'wrong-owner') edges[0] = { ...first, current_owner_original_identity: 'src/workflow.ts#predicate4' };
+  if (kind === 'surplus') edges.push({ ...first, identity: 'src/workflow.ts#predicate4' });
+  if (kind === 'extra-field') Object.assign(first, { unreviewed_claim: true });
+  if (kind === 'inherited-field') {
+    Object.setPrototypeOf(first, { rationale: first.rationale });
+    Reflect.deleteProperty(first, 'rationale');
+    Object.assign(first, { unreviewed_claim: true });
+  }
+  if (kind === 'empty-rationale') edges[0] = { ...first, rationale: ' ' };
+  input[9] =
+    kind === 'legacy-policy'
+      ? { source_mapping_kind: 'reviewed-pairs', identity_reuses: [] }
+      : { ...policy, cross_role_identity_reuses: edges };
+  if (kind === 'cap-transfer') {
+    const retained = input[2][1];
+    if (retained?.kind !== 'retained') throw new Error('Missing retained fixture role');
+    input[2] = [input[2][0]!, { ...retained, max_complexity: 5, max_crap: 5 }, input[2][2]!];
+  }
+  if (kind === 'uncovered') input[1] = [{ ...input[1][0]!, coverage: 0 }, input[1][1]!];
+  expect(() => scopedCrapDispositionProof(...input)).toThrow();
+});
+
 test('scoped CRAP v3 preserves individual frozen caps across a reviewed source split', () => {
   expect(
     scopedCrapDispositionProof(...splitProofInputs()).map((row) => [

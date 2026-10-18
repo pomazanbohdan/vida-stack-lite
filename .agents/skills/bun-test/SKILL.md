@@ -121,6 +121,13 @@ resolution or copying packages into the sandbox. Bind the qualified parent
 repository read-only after fresh device and temporary mounts, then rebind only
 the owned operation directory writable, the sandbox read-only and scratch writable.
 Captured parent context/tool inputs need visibility as well as dependencies.
+For fixture data loaded through filesystem APIs rather than imports, follow
+the visited helper's input owner in the existing capture. Reuse its bounded
+read, freshness binding and final projection; do not add a global data list or
+copy uncaptured live bytes into a mutation sandbox. If JUnit lists only a subset
+of selected files, inspect the retained baseline outcome and first failing
+fixture before rerunning. A bailed setup failure is incomplete evidence, not an
+assertion-confirmed kill.
 Qualify temporary and shared-memory parent roots with actual reads/imports,
 nested spawn, denied writes, unchanged bytes and owned output/scratch writes.
 A later parent mount can hide an earlier child mount. Preserve failed runs and

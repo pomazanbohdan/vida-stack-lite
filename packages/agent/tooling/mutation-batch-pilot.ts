@@ -747,7 +747,10 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     const baselineElapsedMs = performance.now() - baselineStarted;
     const baselineArtifact = record('baseline.json', baseline);
     if (baseline.status !== 'passed' || !baseline.native_receipt)
-      throw new Error('Native mutation baseline is not a complete passing receipt.');
+      throw new Error(
+        `Native mutation baseline is not a complete passing receipt. Retained outcome: ${path.join(directory, baselineArtifact.file)}`,
+        { cause: baseline },
+      );
     mutantAllowanceMs = nativeMutationCommandAllowance(baselineElapsedMs);
     const batches: Array<Parameters<typeof validateNativeMutationPartitionProof>[4]['batches'][number]> = [];
     const results: NativeBatchRow[] = [];

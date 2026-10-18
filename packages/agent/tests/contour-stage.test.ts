@@ -50,7 +50,7 @@ test('one terminal structured location routes through the existing report owner'
     contourStageReportArguments(
       'frozen-crap',
       JSON.stringify({
-        schema: 'VidaScopedCrapBudgetReport/v3',
+        schema: 'VidaScopedCrapBudgetReport/v4',
         status: 'scoped-proof-pass',
         report: '/retained/frozen.json',
       }),

@@ -869,6 +869,52 @@ describe('final quality input projections', () => {
     expect(selected.input_bytes['src/runtime-kernel.ts']).toBeUndefined();
   });
 
+  test('captures documentation fixture package data only when its helper is reachable and binds freshness', async () => {
+    const root = fixtureRoot();
+    const helper = 'tests/helpers/documentation-policy-fixture.ts';
+    mkdirSync(path.join(root, 'tests/helpers'));
+    writeFileSync(
+      path.join(root, helper),
+      "import { readFileSync } from 'node:fs';\nexport const fixture = () => readFileSync(new URL('../../TESTING.md', import.meta.url));\n",
+    );
+    const original = Buffer.from('# Maintained fixture package data\n');
+    writeFileSync(path.join(root, 'TESTING.md'), original);
+    const selection = {
+      mode: 'focused-diagnostic' as const,
+      contour: 'fixture-data-input',
+      sources: ['src/host-state.ts'],
+      tests: ['tests/fixture.test.mjs'],
+    };
+    try {
+      const unrelated = await coverageInputs(root, selection);
+      expect(unrelated.input_bytes['TESTING.md']).toBeUndefined();
+      writeFileSync(path.join(root, selection.tests[0]!), "import './helpers/documentation-policy-fixture.ts';\n");
+      const before = await coverageInputs(root, selection);
+      expect(before.input_bytes['TESTING.md']).toEqual(original);
+      expect(before.sources.map(({ path: file }) => file)).toEqual(selection.sources);
+      expect(before.tests).toEqual(selection.tests);
+      expect(before.module_inputs.filter(({ path: file }) => file === 'TESTING.md')).toEqual([
+        { path: 'TESTING.md', sha256: createHash('sha256').update(original).digest('hex') },
+      ]);
+      expect(before.tool_inputs.filter(({ path: file }) => file === 'TESTING.md')).toHaveLength(1);
+      writeFileSync(path.join(root, 'TESTING.md'), '# Changed package data\n');
+      const after = await coverageInputs(root, selection);
+      expect(after.source_fingerprint).toBe(before.source_fingerprint);
+      expect(after.test_fingerprint).toBe(before.test_fingerprint);
+      expect(after.tool_fingerprint).not.toBe(before.tool_fingerprint);
+      expect(qualityFingerprint(after)).not.toBe(qualityFingerprint(before));
+      rmSync(path.join(root, 'TESTING.md'));
+      await expectRejected(() => coverageInputs(root, selection), /TESTING\.md/u);
+      writeFileSync(path.join(root, 'fixture-data.md'), 'linked fixture data\n');
+      symlinkSync('fixture-data.md', path.join(root, 'TESTING.md'));
+      await expectRejected(() => coverageInputs(root, selection), /TESTING\.md/u);
+    } catch (error) {
+      temporaryRoots.splice(temporaryRoots.indexOf(root), 1);
+      console.error(`Retained failed documentation fixture data capture: ${root}`);
+      throw error;
+    }
+  });
+
   test('captures computed test roots and non-code leaves without widening selected Source', async () => {
     const root = fixtureRoot();
     const testPath = 'tests/envelopes-boundary.test.ts';

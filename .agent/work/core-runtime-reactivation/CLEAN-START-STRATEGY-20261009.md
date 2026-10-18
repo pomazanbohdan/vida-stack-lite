@@ -75,6 +75,18 @@ and receipt reader together with explicit versioning where serialized semantics
 change; old v3 receipts must not claim the new proof. Any new private validator
 has prospective CC/CRAP10/10. Pin only after independent review and focused tests;
 this prerequisite does not block independent coverage or mutation diagnostics.
+The v4 producer/reader and shared exhaustive collision validator are now prepared
+with focused controls; new callable complexities are10and9against their declared10/10.
+This is not a pinned review or numeric acceptance. Complete the independent
+review/published binding before using it for a contour proof. Reuse the existing
+changed-role inventory rather than another whole-codebase pass.
+
+The next mutation diagnostic exposes a missing filesystem-loaded fixture input:
+the documentation-policy helper reads package TESTING.md, absent from its sandbox.
+Bind that data once when its helper is visited, with existing bounded reads and
+freshness fingerprints. Preserve strict selected-suite completeness; a failed
+baseline with partial JUnit is not a kill. Validate changed inputs before another
+fresh bounded diagnostic, without replaying the old unknown baseline result.
 
 The v547 resource refusal exposes a second reporting prerequisite: admission can
 throw before contour-stage records launch and enters its terminal-publication

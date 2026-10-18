@@ -1664,6 +1664,20 @@ one kind of evidence: complete contour closure separately requires compatible
 exact coverage and100% assertion-confirmed Killed mutation evidence. UNKNOWN,
 runtime/compile errors, missing suites and timeouts remain non-kills.
 
+`VidaScopedCrapBudgetReport/v4` adds explicit `cross_role_identity_reuses` to
+reviewed-pairs proofs when removal or movement lets a retained role occupy a
+different original role's lexical ID. Each edge names that occupied identity,
+its actual retained original owner and a review rationale. The producer and
+projection reader share one exhaustive edge validator: missing, duplicate,
+foreign, surplus or misdirected edges fail. An edge supplies no allowance;
+removed roles remain successor-free and retained roles keep their own original
+ceilings. Existing v2/v3 reports and independently capped adapter reuse retain
+their original meaning; they do not claim v4 ownership proof. A v4 review must
+be independently reviewed and pinned before numeric use. Projection remains a
+local owner-reported proof, not independent remeasurement of the published
+budget or global qualification. Current CC=CRAP<=original CC and exact coverage
+are still required; the reader does not independently reload reported CRAP caps.
+
 ### Rolling contour repair cycle
 
 Use the three-contour rolling pool declared by the root

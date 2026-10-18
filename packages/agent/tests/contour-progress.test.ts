@@ -878,6 +878,82 @@ function frozenCrapV3() {
   };
 }
 
+function frozenCrapV4() {
+  const report = frozenCrapV3();
+  const stem = 'src/config/runtime-config.ts#predicate';
+  Object.assign(report.functions[0]!, { identity: `${stem}3`, current_identity: `${stem}2` });
+  Object.assign(report.functions[2]!, { identity: `${stem}4`, current_identity: `${stem}3` });
+  report.functions.push({
+    kind: 'removed',
+    identity: `${stem}2`,
+    file: 'src/config/runtime-config.ts',
+    rationale: 'Retired predicate has no successor or transferred allowance.',
+  });
+  const edges: Record<string, unknown>[] = [
+    {
+      identity: `${stem}2`,
+      current_owner_original_identity: `${stem}3`,
+      rationale: 'Existing result predicate owns the occupied identity.',
+    },
+    {
+      identity: `${stem}3`,
+      current_owner_original_identity: `${stem}4`,
+      rationale: 'Existing stage predicate owns the occupied identity.',
+    },
+  ];
+  return { ...report, schema: 'VidaScopedCrapBudgetReport/v4', cross_role_identity_reuses: edges };
+}
+
+test('v4 projects exhaustive cross-role ownership without changing retained budgets or snapshot evidence', () => {
+  const [attempt] = contourAttempts(frozenCrapV4(), receipt);
+  expect(attempt).toMatchObject({
+    producer_schema: 'VidaScopedCrapBudgetReport/v4',
+    accepted: true,
+    function_count: 3,
+  });
+  const snapshot = mergeContourProgress(empty, [attempt!]);
+  expect(mergeContourProgress(snapshot, []).attempts).toHaveLength(1);
+});
+
+test.each([
+  'missing-field',
+  'malformed-list',
+  'missing-edge',
+  'duplicate',
+  'foreign',
+  'wrong-owner',
+  'removed-owner',
+  'surplus',
+  'extra-field',
+  'inherited-field',
+  'cap-transfer',
+  'uncovered',
+  'legacy-version',
+] as const)('v4 projection rejects %s cross-role proof', (kind) => {
+  const report = frozenCrapV4();
+  const malformed: Record<string, unknown> = report;
+  const first = report.cross_role_identity_reuses[0]!;
+  if (kind === 'missing-field') delete malformed.cross_role_identity_reuses;
+  if (kind === 'malformed-list') malformed.cross_role_identity_reuses = {};
+  if (kind === 'missing-edge') report.cross_role_identity_reuses.pop();
+  if (kind === 'duplicate') report.cross_role_identity_reuses.push({ ...first });
+  if (kind === 'foreign') first.identity = 'src/foreign.ts#role';
+  if (kind === 'wrong-owner') first.current_owner_original_identity = 'src/config/runtime-config.ts#predicate4';
+  if (kind === 'removed-owner') first.current_owner_original_identity = first.identity;
+  if (kind === 'surplus')
+    report.cross_role_identity_reuses.push({ ...first, identity: 'src/config/runtime-config.ts#predicate4' });
+  if (kind === 'extra-field') first.unreviewed_claim = true;
+  if (kind === 'inherited-field') {
+    Object.setPrototypeOf(first, { rationale: first.rationale });
+    Reflect.deleteProperty(first, 'rationale');
+    first.unreviewed_claim = true;
+  }
+  if (kind === 'cap-transfer') report.functions[0]!.maximum_complexity = 6;
+  if (kind === 'uncovered') report.functions[0]!.coverage = 0;
+  if (kind === 'legacy-version') report.schema = 'VidaScopedCrapBudgetReport/v3';
+  expect(() => contourAttempts(report, receipt)).toThrow();
+});
+
 function frozenCrapV3WithAdapter() {
   const report = frozenCrapV3();
   report.functions.push({

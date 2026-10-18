@@ -60,7 +60,7 @@ export function contourStageReportArguments(lane: Lane, stdout: string, coverage
     if (
       (lane === 'coverage' && value.schema === 'VidaBunFocusedCoverageDiagnosticLocation/v1') ||
       (lane === 'frozen-crap' &&
-        /^VidaScopedCrapBudgetReport\/v[123]$/u.test(String(value.schema)) &&
+        /^VidaScopedCrapBudgetReport\/v[1234]$/u.test(String(value.schema)) &&
         value.status === 'scoped-proof-pass') ||
       (lane === 'crap-applicability' &&
         value.schema === 'VidaScopedCrapApplicabilityNA/v1' &&

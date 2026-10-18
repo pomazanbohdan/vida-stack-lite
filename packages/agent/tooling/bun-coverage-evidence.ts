@@ -1127,8 +1127,12 @@ function captureConfiguredTestContextInputs(
   visited: ReadonlySet<string>,
   inputBytes: Map<string, Buffer>,
 ): string[] {
-  if (!visited.has('tests/configured-context.ts')) return [];
-  const paths = repositoryTestContextFiles.map((file) => `${repositoryTestContextInputPrefix}/${file}`);
+  const paths = visited.has('tests/configured-context.ts')
+    ? repositoryTestContextFiles.map((file) => `${repositoryTestContextInputPrefix}/${file}`)
+    : [];
+  // This helper reads package data through fs rather than a module import.
+  // Bind it once for all importing tests, without adding it to unrelated scopes.
+  if (visited.has('tests/helpers/documentation-policy-fixture.ts')) paths.push('TESTING.md');
   for (const file of paths) {
     if (inputBytes.has(file)) continue;
     const bytes = readDiscoveredRuntimeInput(root, file);

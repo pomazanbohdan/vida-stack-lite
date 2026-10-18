@@ -4,7 +4,11 @@ import { isRecord } from '../src/contracts/forward-controller-values.ts';
 import { mutationPartitionSources, mutationPartitions } from './mutation-partitions.ts';
 import type { NativeMutationPartitionRead } from './native-mutation-proof-reader.ts';
 import type { NativeMutationArtifactRef } from './mutation-map.ts';
-import { assertFsSafeCrapApplicabilityReceipt, fsSafeApplicabilityReview } from './crap-gate.ts';
+import {
+  assertFsSafeCrapApplicabilityReceipt,
+  fsSafeApplicabilityReview,
+  scopedCrossRoleIdentityReuses,
+} from './crap-gate.ts';
 
 type Digest = { path: string; sha256: string };
 type Counter = { covered: number; total: number };
@@ -150,6 +154,7 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
               'VidaScopedCrapBudgetReport/v1',
               'VidaScopedCrapBudgetReport/v2',
               'VidaScopedCrapBudgetReport/v3',
+              'VidaScopedCrapBudgetReport/v4',
               'VidaScopedCrapApplicabilityNA/v1',
               'CandidateMutationPilotReport/v2',
               'CandidateMutationReport/v4',
@@ -568,7 +573,8 @@ export function contourAttempts(value: unknown, receipt: Receipt, artifactSha256
     tool_fingerprint:
       report.schema === 'VidaScopedCrapBudgetReport/v1' ||
       report.schema === 'VidaScopedCrapBudgetReport/v2' ||
-      report.schema === 'VidaScopedCrapBudgetReport/v3'
+      report.schema === 'VidaScopedCrapBudgetReport/v3' ||
+      report.schema === 'VidaScopedCrapBudgetReport/v4'
         ? null
         : text(report.tool_fingerprint),
     producer_schema: text(report.schema),
@@ -742,8 +748,13 @@ export function contourAttempts(value: unknown, receipt: Receipt, artifactSha256
       },
     ];
   }
-  if (report.schema === 'VidaScopedCrapBudgetReport/v2' || report.schema === 'VidaScopedCrapBudgetReport/v3') {
-    const reviewedPairs = report.schema === 'VidaScopedCrapBudgetReport/v3';
+  if (
+    report.schema === 'VidaScopedCrapBudgetReport/v2' ||
+    report.schema === 'VidaScopedCrapBudgetReport/v3' ||
+    report.schema === 'VidaScopedCrapBudgetReport/v4'
+  ) {
+    const crossRoleProof = report.schema === 'VidaScopedCrapBudgetReport/v4';
+    const reviewedPairs = crossRoleProof || report.schema === 'VidaScopedCrapBudgetReport/v3';
     const allowed = [
       'schema',
       'status',
@@ -760,6 +771,7 @@ export function contourAttempts(value: unknown, receipt: Receipt, artifactSha256
       'original_sources',
       'source_mappings',
       ...(reviewedPairs ? ['source_mapping_kind', 'identity_reuses', 'new_source_paths', 'removed_source_paths'] : []),
+      ...(crossRoleProof ? ['cross_role_identity_reuses'] : []),
       'run_id',
       'coverage_run_id',
       'coverage_report',
@@ -997,6 +1009,8 @@ export function contourAttempts(value: unknown, receipt: Receipt, artifactSha256
     }
     if ([...newIds].some((identity) => originalIds.has(identity) && !allowedReuses.has(identity)))
       throw new Error('Scoped CRAP v2 new function overlaps a reviewed original identity.');
+    if (crossRoleProof)
+      scopedCrossRoleIdentityReuses(report.cross_role_identity_reuses, originalIds, retainedSuccessors);
     if (!currentRows.length) throw new Error('Scoped CRAP v2 report has no current function measurements.');
     return [
       {
@@ -1182,7 +1196,8 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
         (!attempt.accepted ||
           (attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v1' &&
             attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v2' &&
-            attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v3') ||
+            attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v3' &&
+            attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v4') ||
           attempt.coverage_run_id !== attempt.run_id ||
           !Number.isSafeInteger(attempt.function_count) ||
           attempt.coverage !== null ||

@@ -206,6 +206,80 @@ does not invoke rejected callbacks. Focusedv571 passes1case/18assertions in1.85s
 No changed-input coverage, frozen or mutation improvement is inferred from these
 targeted checks. The exact maxAttempts equality contract remains an explicit GAP.
 
+### Three-hour audit and current verification repairs
+
+The audit window is approximately2026-10-18T09:45Z–12:45Z. Reuse the published
+packets1d3f135through9c43243, native stage receipts and existing deficit maps;
+no second cycle, whole-suite repetition or whole-codebase inventory is started.
+Root preserves the dirty projection/tests, integrates and owns Git/numbers.
+
+**Script defects and simplifications.** Fresh governancev577/UT24Wq binds9c43243,
+run194a5681-cee4-4184-8850-d0c3ce0b3d2a:156PASS, F105/105,L353/365,S383/407,
+B212/253,maxCC/CRAP32/32,58613.753015ms. Full captures, closed groups, same
+boot/commit and clean measured inputs pass; the automatic projection records
+incomplete coverage. No frozen or mutation acceptance follows.
+
+Bounded mutationv578/ujHcUc terminates12636.056515ms before mutants: baseline
+809e7a36-b1a8-4db7-bff4-a4547c72f04b is unknown. Its46tests/3JUnit files are a
+proper subset of10selected files because documentation-policy-fixture reads
+missing sandbox TESTING.md and Bun bails. Complete capture/group closure proves
+this is a fixture-input failure, not lost output. Independentv579 identifies
+the original ENOENT; selected-suite completeness stays strict and no kill exists.
+The shared capture now includes TESTING.md once when its owning helper is
+visited, covering all four importers without repeating a per-test data list or
+adding an unrelated-scope read/scan/hash pass. Exact bytes, missing/link rejection,
+unchanged Source/test scope and tool/input freshness are tested. REDv584 retains
+its failed root; GREENv586 passes3cases/65assertions in409ms. Independentv591
+finds no regression. Baseline failure now points directly to its durable outcome
+and keeps the original baseline object as cause. Original failed evidence stays.
+
+Frozen v4 correspondence now uses one shared producer/reader validator for
+exhaustive cross-role ownership, preserving true-predecessor caps and removed
+roles without successors. Original v2/v3 semantics and capped adapters remain.
+Focusedv583 passes all relevant proof cases; one of nine dispatcher controls
+fails only because the proposed release-preparation diagnostic has an extra
+prefix. The actual parser throws the bare declared diagnostic; correctedv587
+passes1case/3assertions. Independentv581 initially flags reported maxCRAP claims,
+then explicitly reclassifies it in frozen-v4-cap-claim-limitation-v581.md: the
+unchanged conservative currentCC=currentCRAP<=originalCC rule admits no larger
+score. The reader's pre-existing inability to independently reload reported
+caps remains a local receipt-authority limitation, not new numeric acceptance.
+New validator complexities10and9are within their predeclared10/10 after explicit
+own-field rejection is added; v597 passes both inherited-field controls and
+v598 re-inventories only the changed gate. The fixture capture owner is6(v589,
+two changed-file inventories only). No frozen
+review is pinned and no partial plan is promoted. Projection/stage regressionv594
+passes160cases/533assertions in451ms; JUnit negative controlsv590 pass4cases/
+23assertions, including incomplete subsets remaining non-kills.
+
+**Test writing/execution.** Independentv568/v569/v570 reuse exact residual maps
+instead of rescanning Source. Dispatch adds nine public invalid-mode route
+controls, each with its distinct parser diagnostic and an absent per-case root
+before/after; v592 confirms rejection before project access. This covers actual
+dispatcher selection rather than repeating expensive successful repair flows.
+Two additional parser vectors isolate duplicate options and relative roots.
+The earlier pending-effect handshake fix and explicit callback counters replace
+hang-prone waiting and weak denial-only assertions without a timeout increase.
+
+Compared schedules: (A) one numeric producer plus three bounded contour proposal
+lanes is the selected measured workflow; SDK formation is shared once per
+immutable checkout. (B) one producer plus one author/reviewer reduces idle-agent
+work when only one ready repair remains, but its end-to-end speedup is unmeasured.
+(C) three full producers or native builds concurrently remain unqualified on
+this4CPU/16GiBhost. Separate58.6scoverage,12.6sfailed baseline and0.4–2.6sfocused
+samples cannot establish parallel speedup, average suite cost or token savings.
+Use small public controls before changed-input contour checks, finish one
+correction packet before remeasurement, and inspect the first retained baseline
+failure before retrying. Do not launch unchanged full runs to rediscover it.
+
+**Disk.** One metadata sample per filesystemv588 observes checkout, retained
+scratch and attachments on device27 with2397720576bytes free against2147483648:
+250236928bytes headroom, zero current floor GAP. Reuse v553/v554 inventory and
+v555/v557 archived retirement; no broad du/scan/hash or further deletion occurs.
+No newly confirmed obsolete owned cache or preparation checkout is available;
+all remaining measured roots and FAIL/UNKNOWN/SDK evidence remain protected.
+Future producers still perform native admission; no floor or custody is waived.
+
 ### Current cleanup and worker checkout retirement
 
 The owner explicitly requests obsolete worktree removal and immediate retirement

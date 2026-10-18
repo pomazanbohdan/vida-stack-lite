@@ -697,6 +697,9 @@ test('research identity default CLI reports malformed parser inputs through publ
   const unknownOption = executeReconcileArtifacts(['--unknown', 'value']);
   await Promise.resolve(expect(unknownOption).rejects.toThrow('invalid arguments'));
 
+  const duplicateOption = executeReconcileArtifacts(['--mode', 'inspect', '--mode', 'plan']);
+  await Promise.resolve(expect(duplicateOption).rejects.toThrow('invalid arguments'));
+
   const missingMode = executeReconcileArtifacts(['--project-root', root, '--repair-id', 'repair-test']);
   await Promise.resolve(expect(missingMode).rejects.toThrow('mode, root or repair id invalid'));
 
@@ -715,7 +718,63 @@ test('research identity default CLI reports malformed parser inputs through publ
     path.join(root, 'records.json'),
   ]);
   await Promise.resolve(expect(invalidRepairId).rejects.toThrow('mode, root or repair id invalid'));
+
+  const relativeRoot = executeReconcileArtifacts([
+    '--mode',
+    'inspect',
+    '--project-root',
+    'relative-root',
+    '--repair-id',
+    'repair-test',
+    '--actor',
+    'test',
+    '--timestamp',
+    timestamp,
+    '--records',
+    path.join(root, 'records.json'),
+  ]);
+  await Promise.resolve(expect(relativeRoot).rejects.toThrow('mode, root or repair id invalid'));
 });
+
+for (const [kind, diagnostic, extra] of [
+  ['project-upgrade', 'project upgrade options differ from declaration', []],
+  ['native-delivery-evidence', 'native evidence repair arguments differ from declaration', []],
+  [
+    'delivered-work-continuation',
+    'vida repair delivered-work-continuation: mode, project root or repair id invalid',
+    [],
+  ],
+  ['release-retarget', 'retarget arguments differ from declaration', []],
+  ['release-preparation', 'release preparation options differ from declaration', []],
+  ['work-state', 'vida work-state repair: kind, mode or absolute project root missing', []],
+  [
+    'documentation-policy',
+    'documentation policy transition: CLI contract or mode is absent',
+    [
+      '--repair-id',
+      'repair-test',
+      '--work-id',
+      'work-test',
+      '--repository',
+      'repository-test',
+      '--project',
+      'project-test',
+    ],
+  ],
+  ['runtime-config', 'vida runtime-config rebind: mode, root, identity or argument set invalid', []],
+  ['runtime-code', 'vida runtime-code rebind: kind, mode, root or repair ID invalid', []],
+] as const) {
+  test(`artifact dispatcher routes ${kind} invalid mode to its owner before project effects`, async () => {
+    const root = path.join(tmpdir(), `artifact-dispatch-no-effect-${randomUUID()}`);
+    expect(fs.existsSync(root)).toBe(false);
+    await Promise.resolve(
+      expect(
+        executeReconcileArtifacts(['--kind', kind, '--mode', 'invalid', '--project-root', root, ...extra]),
+      ).rejects.toThrow(diagnostic),
+    );
+    expect(fs.existsSync(root)).toBe(false);
+  });
+}
 
 test('research identity dispatcher fails closed on third-party post-plan bytes', async () => {
   const context = fixture();
