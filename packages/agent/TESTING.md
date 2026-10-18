@@ -656,6 +656,11 @@ native SQLite returns an invalid row or that a new schema family is supported.
 Assert the exact intercepted query/handle/occurrence, unchanged input images and
 owned closure before test cleanup. Keep native-output and dependency-fault
 evidence distinct, without excluding survivors or inferring mutation results.
+Positive image fixtures validate the returned public shape and safe-integer size
+before numeric, string or binary assertions. Numeric matchers given undefined
+throw an argument error rather than an assertion failure. Keep this guard in the
+shared positive-result helper; negative tests must still invoke the original
+operation directly, so a helper assertion cannot count as product rejection.
 When a test helper retains an action failure, restore its owned resources and
 rethrow that same failure before any success-path assertion. A later successful
 matcher can consume causal assertion evidence; it must not mask the primary
@@ -2911,3 +2916,43 @@ See the [scenario contracts](docs/research/test-regression-contracts.md#initial-
 ### Typed no-effect retirement and unchanged completion bounds
 
 See the [scenario contracts](docs/research/test-regression-contracts.md#typed-no-effect-retirement-and-unchanged-completion-bounds) for the maintained cases in this section.
+
+### Reviewed non-applicability for the FS attestation data file
+
+`src/config/fs-safe-attestation.ts` has a file-specific independent review at
+`/workspace/attachments/fs-safe-attestation-na-applicability-review-v295.md`.
+The reviewed partial plan records only that file, the exact current source digest,
+the `b549951` path absence, zero current callable roles, and that executable
+attestation remains owned by `safe-repository-access.ts`. Its disposition is
+prospective and non-executable until the plan is pinned and the separate receipt
+producer/reader controls are implemented. The older broad
+`scope_review_20261013_small` entry is not this authority.
+
+The eventual receipt uses `VidaScopedCrapApplicabilityNA/v1`, a separate lane
+from every numeric `VidaScopedCrapBudgetReport/v1` through `/v3`. It carries
+`status: reviewed-not-applicable`, null CC and CRAP fields, the exact contour,
+review commit/key and budget digest, `baseline_ref: b549951`, explicit path
+absence, `current_callable_count: 0`, `original_callable_count: 0`, the exact
+selected Source digest and coverage run/report/manifest digests, and the complete
+test, tool, module and test-selection bindings. It cannot be represented as numeric
+`0/0` and cannot satisfy `maximum` or the ordinary frozen-CRAP triple.
+
+The producer reuses the already validated current coverage inputs and function
+inventory: reject if the current Source binding is missing/stale, any callable is
+present, the pinned historical inventory contains the selected path, any callable
+responsibility is removed or delegated, or inventory lookup is incomplete. The
+N/A receipt reader admits only this exact contour and review key. It requires matching
+complete line and statement coverage with positive denominators, zero functions and
+zero branch denominator for this reviewed data-only file. A separate closure join
+requires a reader-validated full all-Killed native report with identical
+source/test/tool/module closure and selected tests; the N/A producer never reads or
+re-admits native artifacts. A distinct projection may display “reviewed N/A” only for those compatible
+observations; the ordinary numeric schemas, ceilings, maxima, and all other contour
+selection rules remain unchanged.
+
+Focused negative controls must reject a foreign contour/review key, missing or stale
+Source binding, a current or original callable, a present baseline path, incomplete
+inventory, non-null numeric metrics, 0/0 or incomplete line/statement evidence,
+nonzero branch denominator, mismatched coverage/report/manifest/test/tool/module/
+selection bindings, partial or non-all-K native proof, and any attempt to treat N/A
+as a numeric frozen report or completed ordinary triple.

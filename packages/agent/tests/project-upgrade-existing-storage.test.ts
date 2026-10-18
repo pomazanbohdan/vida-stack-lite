@@ -32,6 +32,19 @@ function prepareUnifiedExistingStorageImage(
   return loadFreshStorageImage().prepareUnifiedExistingStorageImage(...args);
 }
 
+async function expectPreparedImage(
+  operation: () => ReturnType<PrepareUnifiedExistingStorageImage>,
+): ReturnType<PrepareUnifiedExistingStorageImage> {
+  const image = await expectAsyncReturned(operation);
+  expect(image !== null && typeof image === 'object').toBe(true);
+  expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
+  expect(image.binding !== null && typeof image.binding === 'object').toBe(true);
+  expect(Number.isSafeInteger(image.size)).toBe(true);
+  for (const key of ['sha256', 'bytes_base64', 'schema_digest', 'host_rows_digest', 'mastra_rows_digest'] as const)
+    expect(typeof image[key]).toBe('string');
+  return image;
+}
+
 function closedImage(database: Database): ClosedDatabaseImage {
   const bytes = Buffer.from(database.serialize());
   return { device: 'fixture-device', inode: 'fixture-inode', size: bytes.byteLength, sha256: sha256(bytes), bytes };
@@ -810,7 +823,7 @@ test('preserves strict named bindings and exact integer reads on every prepared 
     return close.apply(this, args);
   });
   try {
-    const image = await expectAsyncReturned(() =>
+    const image = await expectPreparedImage(() =>
       prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
     );
     expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
@@ -866,7 +879,7 @@ test('imports an owned Mastra sqlite_sequence row from the serialized Mastra ima
   }
   expect(Buffer.from(generatedMastra.bytes)).toEqual(Buffer.from(originalBytes));
   const serializedMastra = Uint8Array.from(mastra.bytes);
-  const image = await expectAsyncReturned(() =>
+  const image = await expectPreparedImage(() =>
     prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
   );
   expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: binding(host, mastra) });
@@ -1042,7 +1055,7 @@ async function assertWalImageMerge(walHost: boolean, walMastra: boolean): Promis
     const hostDigest = sha256(hostBytes);
     const mastraDigest = sha256(mastraBytes);
     const expectedBinding = binding(host, mastra);
-    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    const image = await expectPreparedImage(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
 
     expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
     expect(image.binding).toEqual(expectedBinding);
@@ -1130,7 +1143,7 @@ describe('existing storage image preparation', () => {
     const host = makeHost();
     const mastra = await makeMastra();
     const expectedBinding = binding(host, mastra);
-    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    const image = await expectPreparedImage(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
 
     expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
     expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
@@ -1188,10 +1201,10 @@ describe('existing storage image preparation', () => {
       changedDatabase.close(true);
     }
     const mastra = await makeMastra();
-    const first = await expectAsyncReturned(() =>
+    const first = await expectPreparedImage(() =>
       prepareUnifiedExistingStorageImage(firstHost, mastra, binding(firstHost, mastra)),
     );
-    const second = await expectAsyncReturned(() =>
+    const second = await expectPreparedImage(() =>
       prepareUnifiedExistingStorageImage(secondHost, mastra, binding(secondHost, mastra)),
     );
 
@@ -1229,10 +1242,10 @@ describe('existing storage image preparation', () => {
     expect(forwardHost.sha256).not.toBe(reverseHost.sha256);
     const forwardBinding = binding(forwardHost, mastra);
     const reverseBinding = binding(reverseHost, mastra);
-    const forward = await expectAsyncReturned(() =>
+    const forward = await expectPreparedImage(() =>
       prepareUnifiedExistingStorageImage(forwardHost, mastra, forwardBinding),
     );
-    const reverse = await expectAsyncReturned(() =>
+    const reverse = await expectPreparedImage(() =>
       prepareUnifiedExistingStorageImage(reverseHost, mastra, reverseBinding),
     );
 
@@ -1289,7 +1302,7 @@ describe('existing storage image preparation', () => {
 
     const mastra = await makeMastra();
     const expectedBinding = binding(host, mastra);
-    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    const image = await expectPreparedImage(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
     expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
     const merged = openUnified(image.bytes_base64);
     try {
@@ -1323,7 +1336,7 @@ describe('existing storage image preparation', () => {
         database.close(true);
       }
       const mastra = await makeMastra();
-      const image = await expectAsyncReturned(() =>
+      const image = await expectPreparedImage(() =>
         prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
       );
       const merged = openUnified(image.bytes_base64);
@@ -1368,7 +1381,7 @@ describe('existing storage image preparation', () => {
     }
     expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
     expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
-    const healthy = await expectAsyncReturned(() =>
+    const healthy = await expectPreparedImage(() =>
       prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
     );
     expect(healthy.schema).toBe('VidaUnifiedWorkspaceImage/v1');
@@ -1549,7 +1562,7 @@ describe('existing storage image preparation', () => {
     } as typeof Database.prototype.query);
     let image: Awaited<ReturnType<PrepareUnifiedExistingStorageImage>>;
     try {
-      image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+      image = await expectPreparedImage(() => prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
     } finally {
       injectingHiddenColumns.mockRestore();
       locatingInputs.mockRestore();
@@ -1590,7 +1603,7 @@ describe('existing storage image preparation', () => {
     }
     const mastra = await makeMastra();
     const expectedBinding = binding(host, mastra);
-    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    const image = await expectPreparedImage(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
     expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
     const merged = openUnified(image.bytes_base64);
     try {
@@ -1653,7 +1666,7 @@ describe('existing storage image preparation', () => {
     expect(host.size).toBeLessThan(4 * 1024 * 1024);
     expect(mastra.size).toBeLessThan(4 * 1024 * 1024);
     const expectedBinding = binding(host, mastra);
-    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    const image = await expectPreparedImage(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
     expect(image.schema).toBe('VidaUnifiedWorkspaceImage/v1');
     expect(image.binding).toEqual(expectedBinding);
     expect(image.size).toBeLessThan(4 * 1024 * 1024);
@@ -1943,7 +1956,7 @@ describe('existing storage image preparation', () => {
       const selectedMastra = label === 'Mastra' ? readable : mastra;
       const hostBefore = Buffer.from(selectedHost.bytes);
       const mastraBefore = Buffer.from(selectedMastra.bytes);
-      const image = await expectAsyncReturned(() =>
+      const image = await expectPreparedImage(() =>
         prepareUnifiedExistingStorageImage(selectedHost, selectedMastra, binding(selectedHost, selectedMastra)),
       );
       expect(image.binding).toEqual(binding(selectedHost, selectedMastra));
@@ -2047,7 +2060,7 @@ describe('existing storage image preparation', () => {
     expect(host.bytes.byteLength).toBe(maximumBytes);
     const before = Buffer.from(host.bytes);
     const mastra = await makeMastra();
-    const image = await expectAsyncReturned(() =>
+    const image = await expectPreparedImage(() =>
       prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
     );
     expect(image.size).toBeLessThanOrEqual(maximumBytes);
@@ -2324,7 +2337,7 @@ describe('existing storage image preparation', () => {
     expect(host.size).toBeLessThan(4 * 1024 * 1024);
     expect(mastra.size).toBeLessThan(4 * 1024 * 1024);
     const expectedBinding = binding(host, mastra);
-    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    const image = await expectPreparedImage(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
     expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
     expect(image.binding).toEqual(expectedBinding);
     expect(image.size).toBeLessThan(4 * 1024 * 1024);
@@ -2455,7 +2468,7 @@ describe('existing storage image preparation', () => {
     const host = makeHost();
     const mastra = await makeMastra();
     const expectedBinding = binding(host, mastra);
-    const image = await expectAsyncReturned(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
+    const image = await expectPreparedImage(() => prepareUnifiedExistingStorageImage(host, mastra, expectedBinding));
     expect(image).toMatchObject({ schema: 'VidaUnifiedWorkspaceImage/v1', binding: expectedBinding });
     expect(expectReturned(() => validateUnifiedDatabaseImage(image))).toEqual({
       schema: 'VidaUnifiedWorkspaceImage/v1',

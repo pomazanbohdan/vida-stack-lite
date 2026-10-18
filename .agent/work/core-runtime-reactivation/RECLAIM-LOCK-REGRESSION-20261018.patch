@@ -1,0 +1,261 @@
+diff --git a/packages/agent/tests/reclaim-quarantine-contention.test.ts b/packages/agent/tests/reclaim-quarantine-contention.test.ts
+index 71e6a60..997a9bd 100644
+--- a/packages/agent/tests/reclaim-quarantine-contention.test.ts
++++ b/packages/agent/tests/reclaim-quarantine-contention.test.ts
+@@ -1,9 +1,12 @@
+ import { expect, test } from 'bun:test';
++import { spawn } from 'node:child_process';
+ import { createRequire } from 'node:module';
+ import { randomUUID } from 'node:crypto';
+-import { lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
++import { lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
++import { once } from 'node:events';
+ import { tmpdir } from 'node:os';
+ import path from 'node:path';
++import { pathToFileURL } from 'node:url';
+ import {
+   requireSafeRepositoryAccess,
+   SafeRepositoryLockContentionError,
+@@ -22,6 +25,242 @@ type RenameTarget = {
+ const linuxTest = test.skipIf(process.platform !== 'linux' || !safeRepositoryProviderAvailable);
+ const nativeRequire = createRequire(import.meta.url);
+ 
++linuxTest(
++  'a contender cannot create a lock from a stale final guard observation during release unlink',
++  async () => {
++    const root = mkdtempSync(path.join(tmpdir(), 'vida-reclaim-lock-check-create-race-'));
++    const data = path.join(root, 'data');
++    const control = path.join(root, 'control');
++    mkdirSync(data, { mode: 0o700 });
++    mkdirSync(control, { mode: 0o700 });
++    const resource = 'data/race';
++    const lockName = 'race.lock';
++    const lockPath = path.join(data, lockName);
++    const guardPath = lockPath + '.reclaim';
++    const sourceUrl = pathToFileURL(path.resolve('src/config/safe-repository-access.ts')).href;
++    const markerPath = (name: string): string => path.join(control, name + '.json');
++    const writeMarker = (name: string, value: unknown): void =>
++      writeFileSync(markerPath(name), JSON.stringify(value));
++    const readMarker = <T>(name: string): T => JSON.parse(readFileSync(markerPath(name), 'utf8')) as T;
++    const waitForAny = async (names: readonly string[], timeoutMs = 2_000): Promise<string> => {
++      const deadline = performance.now() + timeoutMs;
++      while (performance.now() < deadline) {
++        const found = names.find((name) => existsSync(markerPath(name)));
++        if (found !== undefined) return found;
++        await Bun.sleep(10);
++      }
++      throw new Error('timed out waiting for child protocol marker: ' + names.join(' or '));
++    };
++    const childSource = (role: 'owner' | 'candidate'): string => `
++      const role = ${JSON.stringify(role)};
++      const root = ${JSON.stringify(root)};
++      const data = ${JSON.stringify(data)};
++      const control = ${JSON.stringify(control)};
++      const sourceUrl = ${JSON.stringify(sourceUrl)};
++      const lockName = ${JSON.stringify(lockName)};
++      const resource = ${JSON.stringify(resource)};
++      const lockPath = ${JSON.stringify(lockPath)};
++      const guardPath = ${JSON.stringify(guardPath)};
++      const nodePath = await import('node:path');
++      const realFs = Object.freeze({ ...(await import('node:fs')) });
++      const marker = (name, value) => realFs.writeFileSync(nodePath.join(control, name + '.json'), JSON.stringify(value));
++      const waitFor = (name, timeoutMs = 2_000) => {
++        const deadline = Date.now() + timeoutMs;
++        while (!realFs.existsSync(nodePath.join(control, name + '.json'))) {
++          if (Date.now() >= deadline) {
++            marker(role + '-protocol-timeout', { waitingFor: name });
++            return false;
++          }
++          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
++        }
++        return true;
++      };
++      const identity = (stats) => stats === undefined ? null : { dev: String(stats.dev), ino: String(stats.ino) };
++      const isParentEntry = (target, basename) => {
++        if (typeof target !== 'string' || nodePath.basename(target) !== basename) return false;
++        try { return realFs.realpathSync(nodePath.dirname(target)) === realFs.realpathSync(data); }
++        catch { return false; }
++      };
++      const guardStat = () => realFs.lstatSync(guardPath, { bigint: true, throwIfNoEntry: false });
++      let wrappedOpen;
++      let wrappedLstat;
++      let wrappedUnlink;
++      let pausedCandidate = false;
++      wrappedLstat = (target, ...args) => realFs.lstatSync(target, ...args);
++      wrappedOpen = (target, flags, ...args) => {
++        if (role === 'candidate' && !pausedCandidate && isParentEntry(target, lockName) &&
++            typeof flags === 'number' && (flags & realFs.constants.O_EXCL) !== 0) {
++          pausedCandidate = true;
++          const lock = realFs.lstatSync(lockPath, { bigint: true, throwIfNoEntry: false });
++          const guard = wrappedLstat(guardPath, { bigint: true, throwIfNoEntry: false });
++          marker('candidate-before-exclusive', { lock: identity(lock), guard: identity(guard) });
++          const resumed = waitFor('continue-candidate');
++          const afterGuard = wrappedLstat(guardPath, { bigint: true, throwIfNoEntry: false });
++          marker('candidate-after-gate', { resumed, guard: identity(afterGuard) });
++        }
++        const fd = realFs.openSync(target, flags, ...args);
++        if (role === 'candidate' && isParentEntry(target, lockName) &&
++            typeof flags === 'number' && (flags & realFs.constants.O_EXCL) !== 0) {
++          marker('candidate-created', {
++            lock: identity(realFs.fstatSync(fd, { bigint: true })),
++            guard: identity(guardStat()),
++          });
++        }
++        return fd;
++      };
++      wrappedUnlink = (target, ...args) => {
++        if (role === 'owner' && typeof target === 'string' &&
++            nodePath.basename(target).startsWith('.' + lockName + '.') &&
++            nodePath.basename(target).endsWith('.reclaimed') &&
++            isParentEntry(target, nodePath.basename(target))) {
++          const quarantined = realFs.lstatSync(target, { bigint: true, throwIfNoEntry: false });
++          const result = realFs.unlinkSync(target, ...args);
++          const guard = guardStat();
++          marker('owner-unlinked', { lock: identity(quarantined), guard: identity(guard) });
++          waitFor('continue-owner');
++          return result;
++        }
++        return realFs.unlinkSync(target, ...args);
++      };
++      try {
++        const bunTest = await import('bun:test');
++        if (!bunTest.mock || typeof bunTest.mock.module !== 'function')
++          throw new Error('fresh child cannot access Bun mock.module');
++        await bunTest.mock.module('node:fs', () => ({
++          ...realFs,
++          default: realFs,
++          openSync: wrappedOpen,
++          lstatSync: wrappedLstat,
++          unlinkSync: wrappedUnlink,
++        }));
++        const mockedFs = await import('node:fs');
++        if (mockedFs.openSync !== wrappedOpen || mockedFs.lstatSync !== wrappedLstat ||
++            mockedFs.unlinkSync !== wrappedUnlink)
++          throw new Error('fresh node:fs mock did not intercept openSync/lstatSync/unlinkSync');
++        const safe = await import(sourceUrl);
++        const access = safe.requireSafeRepositoryAccess(root);
++        if (role === 'owner') {
++          const result = access.withExclusiveLock(resource, 'TOCTOU owner', () => {
++            marker('owner-ready', { lock: identity(realFs.lstatSync(lockPath, { bigint: true })) });
++            waitFor('release-owner');
++            return 'owner released';
++          });
++          marker('owner-done', { result });
++        } else {
++          let callbackEntered = false;
++          try {
++            access.withExclusiveLock(resource, 'TOCTOU candidate', () => {
++              callbackEntered = true;
++              marker('candidate-entered', { guard: identity(guardStat()) });
++              waitFor('continue-candidate-callback');
++              return 'candidate entered';
++            });
++            marker('candidate-outcome', { callbackEntered, returned: true });
++          } catch (error) {
++            marker('candidate-denied', {
++              callbackEntered,
++              name: error instanceof Error ? error.name : null,
++              code: typeof error === 'object' && error !== null && 'code' in error ? error.code : null,
++              message: error instanceof Error ? error.message : String(error),
++              releaseAlreadyUnlinked: realFs.existsSync(nodePath.join(control, 'owner-unlinked.json')),
++            });
++          }
++          marker('candidate-done', {});
++        }
++      } catch (error) {
++        marker(role + '-error', {
++          name: error instanceof Error ? error.name : null,
++          message: error instanceof Error ? error.message : String(error),
++          stack: error instanceof Error ? error.stack : null,
++        });
++        process.exitCode = 1;
++      }
++    `;
++    const launch = (role: 'owner' | 'candidate') => {
++      const child = spawn(process.execPath, ['--eval', childSource(role)], {
++        cwd: process.cwd(),
++        env: process.env,
++        stdio: ['ignore', 'pipe', 'pipe'],
++      });
++      let stdout = '';
++      let stderr = '';
++      child.stdout.setEncoding('utf8').on('data', (chunk: string) => (stdout += chunk));
++      child.stderr.setEncoding('utf8').on('data', (chunk: string) => (stderr += chunk));
++      const terminal = once(child, 'close').then((event) => ({ event, stdout: () => stdout, stderr: () => stderr }));
++      return { child, terminal };
++    };
++    let owner: ReturnType<typeof launch> | undefined;
++    let candidate: ReturnType<typeof launch> | undefined;
++    let passed = false;
++    try {
++      owner = launch('owner');
++      const ownerStartup = await waitForAny(['owner-ready', 'owner-error']);
++      if (ownerStartup === 'owner-error') throw new Error('owner child failed: ' + JSON.stringify(readMarker('owner-error')));
++      candidate = launch('candidate');
++      const candidatePause = await waitForAny([
++        'candidate-before-exclusive',
++        'candidate-denied',
++        'candidate-error',
++      ]);
++      if (candidatePause === 'candidate-error')
++        throw new Error('candidate child failed: ' + JSON.stringify(readMarker('candidate-error')));
++      if (candidatePause !== 'candidate-before-exclusive')
++        throw new Error('candidate did not reach the real exclusive-create boundary: ' + candidatePause);
++      const before = readMarker<{ lock: Identity | null; guard: Identity | null }>('candidate-before-exclusive');
++      expect(before.lock).toEqual(readMarker<{ lock: Identity }>('owner-ready').lock);
++      expect(before.guard).toBeNull();
++
++      writeMarker('release-owner', {});
++      const unlinked = await waitForAny(['owner-unlinked', 'owner-error']);
++      if (unlinked !== 'owner-unlinked') throw new Error('owner failed before quarantine unlink');
++      const ownerWindow = readMarker<{ lock: Identity | null; guard: Identity | null }>('owner-unlinked');
++      expect(ownerWindow.lock).toEqual(before.lock);
++      expect(ownerWindow.guard).not.toBeNull();
++      expect(lstatSync(guardPath)).toMatchObject({ dev: Number(ownerWindow.guard!.dev), ino: Number(ownerWindow.guard!.ino) });
++
++      writeMarker('continue-candidate', {});
++      const candidateOutcome = await waitForAny(['candidate-entered', 'candidate-denied', 'candidate-error']);
++      if (candidateOutcome === 'candidate-error')
++        throw new Error('candidate child failed during the interleaving: ' + JSON.stringify(readMarker('candidate-error')));
++      writeMarker('continue-owner', {});
++      await waitForAny(['owner-done', 'owner-error']);
++      writeMarker('continue-candidate-callback', {});
++      const candidateTerminal = await candidate!.terminal;
++      const ownerTerminal = await owner.terminal;
++      if (candidateOutcome === 'candidate-entered') {
++        const created = readMarker<{ lock: Identity; guard: Identity | null }>('candidate-created');
++        expect(created.guard).toEqual(ownerWindow.guard);
++        expect(created.lock).not.toEqual(before.lock);
++      } else {
++        const denied = readMarker<{ callbackEntered: boolean; name: string; code: string }>('candidate-denied');
++        expect(denied).toMatchObject({
++          callbackEntered: false,
++          name: 'SafeRepositoryLockContentionError',
++          code: 'SAFE_REPOSITORY_LOCK_CONTENTION',
++          releaseAlreadyUnlinked: true,
++        });
++      }
++      expect(candidateOutcome).toBe('candidate-denied');
++      expect(candidateTerminal.event).toEqual([0, null]);
++      expect(candidateTerminal.stderr()).toBe('');
++      expect(ownerTerminal.event).toEqual([0, null]);
++      expect(ownerTerminal.stderr()).toBe('');
++      expect(lstatSync(lockPath, { throwIfNoEntry: false })).toBeUndefined();
++      expect(lstatSync(guardPath, { throwIfNoEntry: false })).toBeUndefined();
++      passed = true;
++    } finally {
++      for (const marker of ['release-owner', 'continue-owner', 'continue-candidate', 'continue-candidate-callback']) {
++        if (!existsSync(markerPath(marker))) writeMarker(marker, {});
++      }
++      await Promise.allSettled([...(owner ? [owner.terminal] : []), ...(candidate ? [candidate.terminal] : [])]);
++      if (passed) rmSync(root, { recursive: true, force: true });
++      else console.error(`preserved lock check-create interleaving fixture root: ${root}`);
++    }
++  },
++  // Two cold Bun processes import and attest the native provider independently.
++  10_000,
++);
++
+ linuxTest('an entered release refuses pending quarantine without becoming admission contention', () => {
+   const root = mkdtempSync(path.join(tmpdir(), 'vida-reclaim-quarantine-release-refusal-'));
+   const access = requireSafeRepositoryAccess(root);

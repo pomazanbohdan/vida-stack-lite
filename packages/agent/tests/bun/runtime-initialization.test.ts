@@ -52,6 +52,7 @@ type Racer = {
   child: ChildProcess;
   stdin: Writable | null;
   ready: Promise<void>;
+  receiptLockAttempt: Promise<void>;
   done: Promise<string>;
 };
 
@@ -1275,10 +1276,35 @@ describe('separate process initialization', () => {
   beforeEach(async () => {
     const hostModule = new URL('../../src/host-state.ts', import.meta.url).href;
     const admissionModule = new URL('../../src/config/storage-read-admission.ts', import.meta.url).href;
+    const safeModule = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
     const initModule = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
+    const receiptRelative = path.relative(root, receiptPath).replaceAll('\\', '/');
     const program = `
+      import { mock } from 'bun:test';
+      import path from 'node:path';
       const mark = (stage) => console.error('INIT_RACER_' + stage, process.hrtime.bigint().toString());
       mark('START');
+      let receiptLockMarkerSent = false;
+      const safeModule = ${JSON.stringify(safeModule)};
+      const originalSafe = Object.freeze({ ...await import(safeModule) });
+      await mock.module(safeModule, () => ({
+        ...originalSafe,
+        requireSafeRepositoryAccess: (requestedRoot) => {
+          const access = originalSafe.requireSafeRepositoryAccess(requestedRoot);
+          if (path.resolve(requestedRoot) !== ${JSON.stringify(root)}) return access;
+          return {
+            ...access,
+            withExclusiveLockAsync: async (target, label, operation) => {
+              const pending = access.withExclusiveLockAsync(target, label, operation);
+              if (target.split(path.sep).join('/') === ${JSON.stringify(receiptRelative)} && !receiptLockMarkerSent) {
+                receiptLockMarkerSent = true;
+                process.stdout.write('RECEIPT_LOCK_ATTEMPT\\n');
+              }
+              return pending;
+            },
+          };
+        },
+      }));
       const { HostStateStore, openHostStateDatabase } = await import(${JSON.stringify(hostModule)});
       mark('HOST_IMPORT_DONE');
       const { closeWorkspaceDatabaseWithAdmission } = await import(${JSON.stringify(admissionModule)});
@@ -1312,6 +1338,13 @@ describe('separate process initialization', () => {
         rejectReady = reject;
       });
       void ready.catch(() => undefined);
+      let resolveReceiptLockAttempt!: () => void;
+      let rejectReceiptLockAttempt!: (error: Error) => void;
+      const receiptLockAttempt = new Promise<void>((resolve, reject) => {
+        resolveReceiptLockAttempt = resolve;
+        rejectReceiptLockAttempt = reject;
+      });
+      void receiptLockAttempt.catch(() => undefined);
       const child = execFile(
         process.execPath,
         ['-e', program],
@@ -1327,9 +1360,13 @@ describe('separate process initialization', () => {
           resolveDone(stdout);
         },
       );
-      const racer: Racer = { child, stdin: child.stdin, ready, done };
+      const racer: Racer = { child, stdin: child.stdin, ready, receiptLockAttempt, done };
       racers.push(racer);
       done.then(() => rejectReady(new Error('race process exited before release')), rejectReady);
+      done.then(
+        () => rejectReceiptLockAttempt(new Error('race process exited before its receipt lock attempt')),
+        rejectReceiptLockAttempt,
+      );
       if (!child.stdout || !child.stdin) {
         const error = new Error('Initialization racer pipes are unavailable');
         rejectReady(error);
@@ -1338,6 +1375,7 @@ describe('separate process initialization', () => {
       let output = '';
       child.stdout.on('data', (chunk: Buffer) => {
         output += chunk.toString();
+        if (output.includes('RECEIPT_LOCK_ATTEMPT\n')) resolveReceiptLockAttempt();
         if (output.includes('READY\n')) resolveReady();
       });
       await racer.ready;
@@ -1354,6 +1392,15 @@ describe('separate process initialization', () => {
       markLocked = resolve;
     });
     const access = requireSafeRepositoryAccess(root);
+    const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
+    const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
+    const originalSafeExports = Object.freeze({ ...(await import('../../src/config/safe-repository-access.ts')) });
+    const receiptRelative = path.relative(root, receiptPath).replaceAll('\\', '/');
+    let parentReceiptLockAttempts = 0;
+    let resolveParentReceiptLockAttempt!: () => void;
+    const parentReceiptLockAttempt = new Promise<void>((resolve) => {
+      resolveParentReceiptLockAttempt = resolve;
+    });
     const lock = access.withExclusiveLockAsync(
       path.relative(root, receiptPath),
       'initialization concurrency fixture',
@@ -1376,10 +1423,40 @@ describe('separate process initialization', () => {
         ]),
       );
       const receiptBytes = readFileSync(receiptPath);
-      binding = bindRuntimeInitialization(root, store);
-      observedBinding = binding.then(
+      await mock.module(safeModuleUrl, () => ({
+        ...originalSafeExports,
+        requireSafeRepositoryAccess: (requestedRoot: string) => {
+          const originalAccess = originalSafeExports.requireSafeRepositoryAccess(requestedRoot);
+          if (path.resolve(requestedRoot) !== path.resolve(root)) return originalAccess;
+          return {
+            ...originalAccess,
+            withExclusiveLockAsync: async <T>(target: string, label: string, operation: () => Promise<T>) => {
+              const pending = originalAccess.withExclusiveLockAsync(target, label, operation);
+              if (target.split(path.sep).join('/') === receiptRelative) {
+                parentReceiptLockAttempts += 1;
+                resolveParentReceiptLockAttempt();
+              }
+              return pending;
+            },
+          };
+        },
+      }));
+      const isolated = (await import(
+        `${initModuleUrl}?receipt-race=${randomUUID()}`
+      )) as typeof import('../../src/runtime-initialization.ts');
+      binding = isolated.bindRuntimeInitialization(root, store);
+      const bindingObservation = binding.then(
         () => 'settled',
         () => 'settled',
+      );
+      observedBinding = bindingObservation;
+      await expectAsyncReturned(() =>
+        Promise.race([
+          parentReceiptLockAttempt,
+          bindingObservation.then(() => {
+            throw new Error('Parent binding settled before entering the real receipt lock.');
+          }),
+        ]),
       );
       expect(
         await Promise.race([
@@ -1391,13 +1468,21 @@ describe('separate process initialization', () => {
       for (const racer of racers) {
         if (!racer.stdin) throw new Error('Initialization racer stdin is unavailable');
         racer.stdin.end('go\n');
+        await expectAsyncReturned(() => racer.receiptLockAttempt);
       }
+      expect(parentReceiptLockAttempts).toBeGreaterThanOrEqual(1);
+      expect(readFileSync(receiptPath)).toEqual(receiptBytes);
     } catch (error) {
       failure = { error };
     } finally {
       release();
       const drained = await Promise.allSettled([lock, ...(observedBinding ? [observedBinding] : [])]);
       drainErrors = drained.flatMap((outcome) => (outcome.status === 'rejected' ? [outcome.reason as unknown] : []));
+      try {
+        await mock.module(safeModuleUrl, () => originalSafeExports);
+      } catch (error) {
+        drainErrors.push(error);
+      }
     }
     if (drainErrors.length)
       throw new AggregateError(
@@ -1408,11 +1493,13 @@ describe('separate process initialization', () => {
     if (failure) throw failure.error;
     expect(await expectAsyncReturned(() => binding!)).toEqual({ ...receipt, workspace_binding_status: 'bound' });
     const outputs = await expectAsyncReturned(() => Promise.all(racers.map((racer) => racer.done)));
-    for (const output of outputs)
-      expect(JSON.parse(output.slice(output.indexOf('\n') + 1))).toEqual({
+    for (const output of outputs) {
+      expect(output.match(/RECEIPT_LOCK_ATTEMPT\n/g)).toHaveLength(1);
+      expect(JSON.parse(output.trim().split('\n').at(-1)!)).toEqual({
         ...receipt,
         workspace_binding_status: 'bound',
       });
+    }
     expect(JSON.parse(readFileSync(receiptPath, 'utf8'))).toEqual({ ...receipt, workspace_binding_status: 'bound' });
     caseCompleted = true;
   });

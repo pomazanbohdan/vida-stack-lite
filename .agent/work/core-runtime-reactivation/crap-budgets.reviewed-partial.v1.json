@@ -225845,5 +225845,52 @@
     "newly_planned_roles": [
       "src/config/project-upgrade-existing-storage.ts#fn:quoteSqlIdentifier#0"
     ]
+  },
+  "scope_review_fs_safe_attestation_na_20261018": {
+    "schema": "VidaReviewedCrapApplicabilityNA/v1",
+    "status": "reviewed-not-applicable-non-executable",
+    "contour": "bun-fs-safe-attestation",
+    "files": [
+      "src/config/fs-safe-attestation.ts"
+    ],
+    "reviewed_source_commit": "d5ddd22dd8ef5adc11f000c49253758e6c0d74c7",
+    "current_source_bindings": [
+      {
+        "file": "src/config/fs-safe-attestation.ts",
+        "sha256": "d0c12f0f3168e558f2aa372f5866ff4c8d844af481c5924094639295094711c7"
+      }
+    ],
+    "original_baseline": {
+      "ref": "b549951",
+      "commit": "b5499511e64b2165a8c97ae3d2b455b25b1ac5b6",
+      "baseline_aliases": [
+        "src/config/fs-safe-attestation.ts",
+        "src/config/fs-safe-attestation.mjs",
+        "src/config/fs-safe-attestation.js"
+      ],
+      "path": "packages/agent/src/config/fs-safe-attestation.ts",
+      "path_status": "absent",
+      "owned_callable_count": 0,
+      "absence_evidence": "/workspace/attachments/fs-safe-attestation-na-applicability-review-v295.md"
+    },
+    "current_callable_count": 0,
+    "responsibility_review": {
+      "original_owner_path": "packages/agent/src/config/safe-repository-access.ts",
+      "current_owner_path": "packages/agent/src/config/safe-repository-access.ts",
+      "finding": "The original and current executable package-attestation functions remain in safe-repository-access; only data constants were extracted into the reviewed N/A file. No callable responsibility or CRAP allowance transfers to the data-only file."
+    },
+    "independent_review": {
+      "artifact": "/workspace/attachments/fs-safe-attestation-na-applicability-review-v295.md",
+      "lane": "custodyLuna",
+      "disposition": "file-specific reviewed N/A; never numeric 0/0 or pass"
+    },
+    "selected_rows": {
+      "retained": 0,
+      "new": 0,
+      "removed": 0
+    },
+    "numeric_ceilings": null,
+    "prospective_receipt_schema": "VidaScopedCrapApplicabilityNA/v1",
+    "limits": "This review authorizes only a separately reported FS-file CRAP non-applicability receipt. It does not alter numeric CRAP schemas or ceilings, admit coverage or mutation, close a numeric triple, or waive current full-input/native gates."
   }
 }

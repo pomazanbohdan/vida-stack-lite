@@ -461,6 +461,70 @@ SDK, raw results, fixtures, DBs or UNKNOWN outcomes are removed. Historical
 dependency realpaths change and never requalify their old measurements. Normal
 strict hooks are rerun without bypass or gate changes.
 
+Checked00a9652 is pushed after the normal hook passes. A second exact closed
+dependency deduplication, v307, retains four v203/v204/v205/v206 copies at the
+same verified disk owner and releases1622867844logical tmpfs bytes. Its manifest
+is /workspace/attachments/closed-dependency-dedup-v307/retention.json. No measured
+Source or raw evidence changes; cgroup OOM counters remain2/4 thereafter.
+Fresh immutablev308 SDK formationOMOBqf closes3290ms without suites. Coverage
+6df8991a-3506-433e-af89-f1146a0fc7db passes101cases/804assertions in6.59s,
+exact F49/49,L203/203,S222/222,B61/61 at /tmp/contour-stage-QOu7TB.
+Same-run cac34ce frozen proof at /tmp/contour-stage-0SQ8Fj passes9/9.
+Targeted native067dd385-bc04-4ffb-aa04-f786526a2006 at
+/tmp/rolling-contour-ji2Bfy closes18603ms:88and253 are both assertion-confirmed
+Killed,0Survived/0UNKNOWN/486unattempted of488, baseline101passes7952ms.
+Capture/group/boot/commit/clean inputs close. Its diagnostic nonzero exit is the
+expected incomplete-universe result, never a full score. The complete immutable
+488plan at /tmp/contour-stage-jzs1lH closes298738ms:140assertion-Killed,
+0Survived,1UNKNOWN and347unattempted. Native3f480b78-7d30-4d0a-bda1-808d74437bbd
+retains complete captures/group/boot/commit/clean inputs, no timeout or resource
+denial. Its sole UNKNOWN448 replaces the returned image object with {}. Body79
+then invokes a numeric matcher with undefined; Bun reports an argument error,
+not assertion failure. Native admission is correctly denied, not credited.
+
+The next test packet consolidates positive image-result checks in
+expectPreparedImage before any numeric/string/binary inspection: complete public
+result shape and safe-integer size, then each caller's existing detailed oracle.
+Negative paths still call the original operation directly, so a helper assertion
+cannot masquerade as expected product rejection. The same numeric-matcher pattern
+was checked through the whole image file and the two other active contour files;
+their other numeric operands are fixture-owned counters or already typed native
+fixtures. FocusedfxKFUx passes four image boundary cases/97unselected in2755ms.
+Receipt-handshakeuD77zS passes its actual cross-process case/20unselected in5783ms,
+including fixture setup under the unchanged explicit bounds. Both retain complete
+captures/closed group/unchanged boot. New static, coverage/frozen and actual448
+mutation proof remain required after publication.
+
+The reviewed receipt-race handshakev301 is integrated as a pending test-only
+packet while the measured image remains immutable. It forwards actual lock calls,
+completes configuration preflight one actor at a time, observes each real receipt
+attempt and then releases the held receipt lock. It preserves real cross-process
+receipt contention and all pending/bound output assertions. Focused/static checks
+wait for the numeric producer to finish; this does not repair or close the separate
+product metadata release/reclaim candidate. The exact FS data-only N/A prospective
+review, including all three absent baseline aliases and resolved baseline commit,
+is likewise pending publication; no N/A producer or numeric exemption is active.
+
+The isolated lock regressionv312 uses the unchanged00a9652 Source and two real
+native-provider children with2s protocol gates/10s cold-process case exception.
+Its first LEejoK attempt exposed a missing child resource binding in the proposed
+fixture; no product conclusion follows from that setup error. After fixing only
+the external fixture and draining both child owners, lAEzVs fails the intended
+assertion in508ms: candidate-entered versus required candidate-denied. Eight
+assertions first verify the original lock identity, held reclaim-guard identity,
+real old-lock unlink and a distinct newly created lock while that same guard
+remains held. Captures/group/boot close without timeout or signal. Raw fixture:
+/tmp/vida-reclaim-lock-check-create-race-yA4cQ3. The admission check/create race
+is now a reproduced product P0; its exact causation of the earlier initialization
+failure remains unproven. The failing test stays in isolated
+/tmp/vida-lock-reproducer-v312, not the canonical suite. A correct repair needs
+the reviewed bounded pre-release guard acquisition plus guarded creation, original
+root-role budgets/correspondence and real interleaving/liveness tests. No speculative
+Source change, transferred cap, state replay or new UNKNOWN classification is made.
+The corrected bounded regression patch is retained in Git at
+RECLAIM-LOCK-REGRESSION-20261018.patch for Source-owner custody across environment
+replacement; it is an unapplied failing diagnostic, not an active suite exception.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is
