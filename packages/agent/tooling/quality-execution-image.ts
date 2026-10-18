@@ -701,6 +701,7 @@ export async function prepareQualityExecutionImage(args: {
       assert(logical !== null, `Compiler input has no admitted captured path: ${file}`);
       return logical;
     });
+  if (source.entries.has('package.json')) semanticInputs.push('_repository/compiler/package.json');
   const inputs = await executionImageQualityInputs(
     sourcePackage,
     args.additionalToolInputs,

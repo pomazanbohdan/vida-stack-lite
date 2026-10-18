@@ -1715,7 +1715,8 @@ are still required; the reader does not independently reload reported CRAP caps.
 `tooling/contour-stage.ts` forms a gitless execution image from one clean Source
 commit through the existing bounded capture. It preserves tracked blob identity
 and executable modes. The selected contour stays focused; the complete maintained
-runtime Source and compiler configuration are extra tool inputs, not extra numeric
+runtime Source, full maintained TypeScript compiler files and module configuration
+are extra tool inputs, not extra numeric
 coverage. The image has no `.git`, worktree registration or dependency copy.
 
 The first stage accepts `--image-store <absolute directory>`; its retained request

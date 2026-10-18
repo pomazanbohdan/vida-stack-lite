@@ -55,6 +55,15 @@ native Luna reviewv690reported no additional confirmed issue; directory identity
 is explicitly weaker than full dependency byte identity. Final hook checks and a
 small same-image coverage/frozen/mutation pilot remain pending at this publication.
 
+Published968abe7passes the ordinary hooks, followed bybbd9a8b's SDK-scope
+regression repair (48PASS/0FAIL). Freshv707stopped before launch on that SDK drift;
+freshv711then retained a terminal failed typecheck with complete output and group
+closure, image unchanged, stage `/workspace/contour-stage-ICh0BF`. Its635diagnostics
+are all module-context errors: the Root `package.json` was missing from compiler
+inputs. The correction captures its original Git blob as compiler metadata;
+v712has48PASS/0FAIL/542assertions. Neither failure admits coverage or a mutation
+kill; their original artifacts and automatic failed-stage projection are retained.
+
 Active contours: governance/public contracts, dispatch repair and controller
 observation. Published88e8052includes the checked v4 partition-capture repair,
 on top of the verified capacity recovery through ordinary hooks/push. Freshv655

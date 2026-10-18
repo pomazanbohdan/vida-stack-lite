@@ -252,6 +252,7 @@ export const repositoryToolingInputPrefix = '_repository/tooling/agent';
 const repositoryCompilerInputPrefix = '_repository/compiler';
 
 function compilerRepositoryPath(relative: string): boolean {
+  if (relative === 'package.json') return true;
   return (
     !relative.startsWith('packages/agent/') &&
     !relative.startsWith('tooling/agent/') &&

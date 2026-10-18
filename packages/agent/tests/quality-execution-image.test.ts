@@ -78,6 +78,7 @@ async function fixture(): Promise<{ root: string; packageRoot: string; sourcePac
     await writeFile(target, `captured ${file}\n`);
   }
   await mkdir(path.join(root, 'tests/agent'), { recursive: true });
+  await writeFile(path.join(root, 'package.json'), '{"type":"module"}\n');
   await writeFile(path.join(root, 'tests/agent/compiler-only.ts'), 'export const compilerOnly = true;\n');
   nativeGit(root, ['init', '--quiet']);
   nativeGit(root, ['config', 'user.name', 'Quality image test']);
@@ -111,6 +112,7 @@ describe('quality execution images', () => {
     expect(captured.input_bytes['src/host-state.ts']?.toString()).toBe('export const fixture = true;\n');
     expect(captured.tool_inputs.map((row) => row.path)).toContain('_repository/compiler/tests/agent/compiler-only.ts');
     expect(captured.tests).toEqual(selection.tests);
+    expect(captured.input_bytes['_repository/compiler/package.json']?.toString()).toBe('{"type":"module"}\n');
     const reused = await prepareQualityExecutionImage({ ...source, selection, additionalToolInputs: [] });
     expect(reused).toEqual(first);
 

@@ -22,7 +22,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-runtime-core | 162/162 · 602/602 · 632/632 · 400/400 | 31 / 31 | unknown | BLOCKED | open / unknown | 31 / 31 | open / unknown |
 | main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 1 / 1 | local triple recorded |
 | main-config | 350/350 · 964/964 · 1022/1022 · 253/253 | 16 / 16 | unknown (unknown) | BLOCKED | open / unknown | 16 / 16 | open / unknown |
-| main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 3 / 3 | local triple recorded |
+| main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | coverage/failed/unknown-or-partial | local maximum recorded | 3 / 3 | local triple recorded |
 | main-public-ingress | 20/20 · 79/79 · 91/91 · 36/36 | 14 / 14 | 335/335 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 14 / 14 | local triple recorded |
 | main-envelopes | 79/79 · 214/214 · 230/230 · 106/106 | 9 / 9 | 739/739 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
 | main-cedar | 25/25 · 56/56 · 60/60 · 17/17 | 4 / 4 | 189/189 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 4 / 4 | local triple recorded |
@@ -212,6 +212,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | 44776f41-fba2-4a71-a1c2-ccf7c0f9df24 | febad42bbc25a76d210ec0b2459479592b452e94 | 2026-10-17T09:41:42.149Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/rolling-measure-v180/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/44776f41-fba2-4a71-a1c2-ccf7c0f9df24.json |
 | coverage | 44776f41-fba2-4a71-a1c2-ccf7c0f9df24 | febad42bbc25a76d210ec0b2459479592b452e94 | 2026-10-17T09:41:42.149Z | focused-diagnostic; owner accepted locally; selection bound | 7/7 · 21/21 · 22/22 · 11/11 | /workspace/attachments/rolling-measure-v180/packages/agent/coverage/bun-unified/diagnostics/44776f41-fba2-4a71-a1c2-ccf7c0f9df24.focused-coverage.json |
 | frozen-crap | 44776f41-fba2-4a71-a1c2-ccf7c0f9df24 | febad42bbc25a76d210ec0b2459479592b452e94 | 2026-10-17T09:41:42.149Z | scoped-proof-pass; owner accepted locally; selection bound | 3 / 3 (scoped proof; owner measured) | /workspace/attachments/rolling-measure-v180/packages/agent/coverage/bun-unified/diagnostics/44776f41-fba2-4a71-a1c2-ccf7c0f9df24.scoped-crap.json |
+| stage-outcome | contour-stage-ICh0BF | bbd9a8b5e07c210761b92dedecb7cafcedf7a657 | 2026-10-18T17:33:38.266Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-ICh0BF/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
