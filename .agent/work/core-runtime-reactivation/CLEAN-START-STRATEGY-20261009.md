@@ -93,6 +93,11 @@ That correction is published as d2e557f; matched SDK inputs and fresh dispatch
 coverage now pass all56tests with exact functions. Next repair the residual public
 reconcile-artifacts router paths from v788's own counters, using its existing
 contour writer. Exact lines/statements/branches and complete mutation remain OPEN.
+Two default5s restore guard cases are published as4361802 with focused proof.
+The next numeric launchv798 is refused before tests by storage admission:
+140800000bytes missing from the unchanged2GiB threshold. Reuse WORK's bounded
+cache inventory; resume only after actual durable capacity or qualified safe
+retirement restores admission. Do not replay the rejected command unchanged.
 
 The fresh governance producer exposes missing pre-capture of explicit computed
 module roots outside the selected coverage Source. Capture these roots through

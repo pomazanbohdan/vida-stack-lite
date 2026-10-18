@@ -25,6 +25,8 @@ The active pool has three contours: governance/public contracts, dispatch repair
 and main-envelopes. Root serializes numeric producers; blind Luna prepares and
 reviews bounded patches. Dispatch's fixture repair now binds SDK and package data;
 main-envelopes awaits a measured correction rather than an unchanged full retry.
+The next numeric launch is resource-blocked as recorded below; do not retry it
+unchanged while storage is below admission.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
@@ -233,6 +235,27 @@ combined casev792 passed at4.24s, but sharing its5s budget across independent
 states left avoidable headroom risk. v793 and v794 retain the split-case evidence;
 there is no claimed speedup or new timeout exception. Root retains sole Source/Git
 and numeric ownership. No second cycle, new worktree or wider scan is started.
+
+Normal hookv796 and pushv797 publish4361802 with the two restore cases. The
+first static attemptv795 catches an optional Buffer expectation; Root narrows
+the actual retained preimage before equality, keeping both assertions and the
+original failed log. Numericv798 then refuses before image formation or any
+test child: available2006683648bytes at /workspace versus required2147483648,
+an exact admission GAP of140800000bytes, before further operation headroom.
+The original refusal remains /workspace/attachments/dispatch-public-restore-coverage-v798.log.
+There is no run UUID/report to import and v788 is not relabeled for4361802.
+
+Root observes no active numeric/test/build/install/hook owner before bounded
+cache inspection. The five latest stage launch receipts and exact scratch roots
+are reused; install-cache directories are empty. The two known terminal native
+cache candidate paths for v751/v754 do not exist. The host tooling receipt root
+contains installed-tool receipts and protected fixture scratch, not a retained
+download archive. Prior v740/v760 retirement receipts remain authoritative;
+no broad du/hash scan or unknown-directory deletion is attempted. Current known
+safe candidates cannot recover the140800000-byte GAP. Preserve all retained
+fixtures, SDK archives, failures and measured inputs. Additional durable capacity
+or separately qualified safe retirement is required before the next numeric run;
+do not lower the threshold, delete evidence or move it into tmpfs.
 
 Root integrates one public1000/1001result-capacity regression from blind Lunav767.
 It uses real SDK transitions, checks ordered immutable evidence and all subsequent
