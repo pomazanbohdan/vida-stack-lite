@@ -303,7 +303,13 @@ function nativeStatementMember(statement: object, property: PropertyKey): unknow
 
 async function expectPinnedPhaseFailure(
   phase: 'inventory' | 'Host clone',
-  faults: { serialize: boolean; storeClose: boolean; databaseClose: boolean; storeCloseBeforeNative?: boolean },
+  faults: {
+    serialize: boolean;
+    storeClose: boolean;
+    databaseClose: boolean;
+    storeCloseBeforeNative?: boolean;
+    transaction?: boolean;
+  },
 ): Promise<void> {
   const host = makeHost();
   const mastra = await makeMastra();
@@ -349,6 +355,32 @@ async function expectPinnedPhaseFailure(
     if (observingTargetInit) targetDatabases.add(this);
     return Reflect.apply(query, this, [sql]);
   } as typeof Database.prototype.query);
+  let settling: { mockRestore(): void } | undefined;
+  if (faults.transaction) {
+    const probe = new Database(':memory:', { strict: true, safeIntegers: true });
+    let settleOwner: Pick<ReturnType<typeof createInMemoryBunSqliteClient>, 'settle'>;
+    try {
+      const client = createInMemoryBunSqliteClient(probe);
+      settleOwner = Object.getPrototypeOf(client) as typeof settleOwner;
+      await client.close();
+    } finally {
+      probe.close(true);
+    }
+    const settle = settleOwner.settle;
+    settling = spyOn(settleOwner, 'settle').mockImplementation(async function (this: typeof settleOwner, ...args) {
+      const result = await settle.apply(this, args);
+      // The client already guards transactions during settle. Change real
+      // state only after that owner succeeds to exercise the caller's fence.
+      if (targetReady && !bodyReached) {
+        for (const database of targetDatabases) {
+          database.exec('BEGIN');
+          expect(database.inTransaction).toBe(true);
+        }
+        bodyReached = true;
+      }
+      return result;
+    });
+  }
   const serializing = spyOn(Database.prototype, 'serialize').mockImplementation(function (this: Database, ...args) {
     const bytes = serialize.apply(this, args);
     if (targetReady && targetDatabases.has(this)) {
@@ -408,7 +440,13 @@ async function expectPinnedPhaseFailure(
     expect(storeCloseReached).toBe(true);
     expect(databaseCloseReached).toBe(true);
     const expected: unknown[] = [];
-    if (faults.serialize) expected.push(bodyError);
+    if (faults.transaction) {
+      const cause: unknown = failure instanceof AggregateError ? failure.errors[0] : failure;
+      expect(cause).toBeInstanceOf(Error);
+      if (!(cause instanceof Error)) throw new Error('Expected an open pinned transaction denial.');
+      expect(cause.message).toBe('Existing storage merge: pinned initializer left a transaction open');
+      expected.push(cause);
+    } else if (faults.serialize) expected.push(bodyError);
     if (faults.storeClose) expected.push(storeCloseError);
     if (faults.databaseClose) expected.push(undefined);
     if (expected.length > 1) {
@@ -437,6 +475,7 @@ async function expectPinnedPhaseFailure(
     serializing.mockRestore();
     observingQueries.mockRestore();
     initializing.mockRestore();
+    settling?.mockRestore();
     for (const probe of closeProbes) {
       try {
         probe.finalize();
@@ -469,6 +508,18 @@ async function expectPinnedPhaseFailure(
     );
   if (fixtureFailure) throw fixtureFailure.error;
 }
+
+test.each(['inventory', 'Host clone'] as const)(
+  'rejects and closes a real transaction opened after the owned %s client settles',
+  async (phase) => {
+    await expectPinnedPhaseFailure(phase, {
+      serialize: false,
+      storeClose: false,
+      databaseClose: false,
+      transaction: true,
+    });
+  },
+);
 
 test.each(['inventory', 'Host clone'] as const)(
   'force-closes the owned %s cursor when SDK close fails before native close',
@@ -2199,53 +2250,66 @@ describe('existing storage image preparation', () => {
     );
   });
 
-  test('rejects a Mastra schema exceeding the 1024-object inventory bound and preserves its source bytes', async () => {
-    const initializedMastra = await makeMastra();
-    const database = Database.deserialize(Buffer.from(initializedMastra.bytes), { strict: true, safeIntegers: true });
-    let mastra: ClosedDatabaseImage;
-    try {
-      const table = database
-        .query<{ name: string }, []>(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT GLOB 'sqlite_*' ORDER BY name LIMIT 1",
-        )
-        .get()?.name;
-      if (table === undefined) throw new Error('Mastra fixture has no supported table for schema-bound indexes');
-      const column = database
-        .query<{ name: string }, []>('PRAGMA table_info("' + table.replaceAll('"', '""') + '")')
-        .get()?.name;
-      if (column === undefined) throw new Error('Mastra fixture table has no column for schema-bound indexes');
-      const quotedTable = '"' + table.replaceAll('"', '""') + '"';
-      const quotedColumn = '"' + column.replaceAll('"', '""') + '"';
-      database.exec(
-        Array.from(
-          { length: 1025 },
-          (_, index) =>
-            'CREATE VIEW merge_mastra_schema_bound_fixture_' +
-            index +
-            ' AS SELECT ' +
-            quotedColumn +
-            ' FROM ' +
-            quotedTable,
-        ).join(';'),
+  test.each([
+    ['1024', 1024],
+    ['1025', 1025],
+  ] as const)(
+    'checks the exact Mastra schema bound at %s objects and preserves its source bytes',
+    async (_label, targetCount) => {
+      const initializedMastra = await makeMastra();
+      const database = Database.deserialize(Buffer.from(initializedMastra.bytes), { strict: true, safeIntegers: true });
+      let mastra: ClosedDatabaseImage;
+      try {
+        const table = database
+          .query<{ name: string }, []>(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT GLOB 'sqlite_*' ORDER BY name LIMIT 1",
+          )
+          .get()?.name;
+        if (table === undefined) throw new Error('Mastra fixture has no supported table for schema-bound indexes');
+        const column = database
+          .query<{ name: string }, []>('PRAGMA table_info("' + table.replaceAll('"', '""') + '")')
+          .get()?.name;
+        if (column === undefined) throw new Error('Mastra fixture table has no column for schema-bound indexes');
+        const quotedTable = '"' + table.replaceAll('"', '""') + '"';
+        const quotedColumn = '"' + column.replaceAll('"', '""') + '"';
+        const initialCount = database
+          .query<{ count: bigint }, []>("SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'")
+          .get()?.count;
+        expect(typeof initialCount).toBe('bigint');
+        if (initialCount === undefined || initialCount >= BigInt(targetCount))
+          throw new Error('Mastra fixture has no room for the exact schema boundary');
+        database.exec(
+          Array.from(
+            { length: targetCount - Number(initialCount) },
+            (_, index) =>
+              'CREATE VIEW merge_mastra_schema_bound_fixture_' +
+              index +
+              ' AS SELECT ' +
+              quotedColumn +
+              ' FROM ' +
+              quotedTable,
+          ).join(';'),
+        );
+        const objectCount = database
+          .query<{ count: bigint }, []>("SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'")
+          .get()?.count;
+        expect(objectCount).toBe(BigInt(targetCount));
+        mastra = closedImage(database);
+      } finally {
+        database.close(true);
+      }
+      const host = makeHost();
+      expect(mastra.size).toBeLessThan(4 * 1024 * 1024);
+      const before = Buffer.from(mastra.bytes);
+      await expectRejection(
+        prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+        targetCount === 1024
+          ? /Mastra schema differs from pinned empty-init inventory/u
+          : /schema inventory exceeds bound/u,
       );
-      const objectCount = database
-        .query<{ count: bigint }, []>("SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'")
-        .get()?.count;
-      if (objectCount === undefined || objectCount <= 1024n)
-        throw new Error('Mastra fixture did not exceed the schema object bound');
-      mastra = closedImage(database);
-    } finally {
-      database.close(true);
-    }
-    const host = makeHost();
-    expect(mastra.size).toBeLessThan(4 * 1024 * 1024);
-    const before = Buffer.from(mastra.bytes);
-    await expectRejection(
-      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
-      /schema inventory exceeds bound/u,
-    );
-    expect(Buffer.from(mastra.bytes).equals(before)).toBe(true);
-  });
+      expect(Buffer.from(mastra.bytes).equals(before)).toBe(true);
+    },
+  );
 
   test('rejects a merged serialized image above 4 MiB when both source images are below the input bound', async () => {
     const hostDatabase = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });

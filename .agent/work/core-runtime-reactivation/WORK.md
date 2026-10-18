@@ -701,6 +701,36 @@ This is a development contention control, not native mutant or whole-campaign
 speed proof. All5000ms case and900/930s mutation bounds remain unchanged.
 Fresh492 assertion evidence and the next complete run remain pending.
 
+Checked6ee3691 passes the normal strict hook and is pushed. Immutablev326 SDK
+Rji2dc completes1914ms without suites. Fresh focused coverage
+1d673351-555f-46c3-a8cb-432949bbb446 at /tmp/contour-stage-wyxF3q passes101cases/
+1017assertions in5.52s with exact49/203/222/61. Same-run original cac34ce frozen
+at /tmp/contour-stage-IUTZMP passes9/9. Targeted generated492 diagnostic
+e9e41da0-cb5c-4122-b919-082c49547118 at /tmp/rolling-contour-NMe9Em completes15963ms:
+1assertion-confirmed Killed/0Survived/UNKNOWN/487unattempted, baseline101/6477ms.
+Capture/group/boot/commit/clean-input custody closes. The complete four-worker
+run67564c66-ec69-4e3d-b9fd-6d4dabb099ee at /tmp/contour-stage-pio8Ui closes726504ms:
+all488attempted,486assertion-Killed/2Survived/0UNKNOWN/0unattempted,
+resource_blocked=null, complete captures/closed groups/unchanged boot/commit/clean
+inputs. Admission correctly denies the non-all-K result. The bulk fixture change
+allows the complete universe to finish within the unchanged900/930s budget;
+it does not close mutation or establish a production bug.
+
+Survivor196 tightens the Mastra input schema bound from <=1024 to <1024;
+the existing over-bound case lacked the exact accepted boundary. Its same fixture
+now constructs exactly1024 and1025 native catalog objects, asserts those counts,
+distinguishes the later pinned-schema denial from the initial bound denial and
+preserves the serialized input. String scenario labels keep names distinct.
+Survivor237 blanks the caller's open-transaction diagnostic. Both owned phases
+now forward real client settlement and then BEGIN on the exact native handle,
+requiring the public diagnostic and owned store/database closure. The private
+client prototype comes from an owned real probe, not an exported test hook.
+The earlier UQEJ9h control leaves BEGIN before settle and fails at the earlier
+client fence; it remains failed development evidence. CorrectedEtSTEr passes
+all4selected cases/36assertions,100unselected,1669ms with full captures/closed
+group/unchanged boot. Strict TypeScript and scoped typed lint pass. Generated
+196/237 assertion confirmation and the fresh full104-case run remain pending.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is
