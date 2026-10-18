@@ -24,6 +24,8 @@ bun tooling/agent/cloud-pstack-setup.ts --install --provision-only
 
 Native binaries live in ~/.local/bin; verified receipts and disk-backed scratch
 live in ~/.cache/vida-cloud-tooling. Repeat setup reuses verified downloads.
+The tooling setup installs Vex, LeanCTX, ast-grep (including its sg alias) and
+actionlint from the lock, verifying archive checksums and installed binary receipts.
 It provisions the configured semantic model but never automatically indexes Source.
 It copies the qualified executing Bun to persistent host storage; it cannot
 bootstrap Bun itself. The shell prelude in the startup patch handles that first
@@ -206,6 +208,16 @@ These checks do not run product suites or qualify full Vex semantics, saved
 provider configuration or VIDA Runtime. ast-grep matching/nonmatching rules,
 snapshots and diagnostic-message checks live under .agents/ast-grep. Version
 qualification is separate from generated tool output or syntax matches.
+
+To qualify the installed ast-grep against the repository's rule fixtures:
+
+```sh
+ast-grep --version
+ast-grep test --config sgconfig.yml
+```
+
+Use the unambiguous `ast-grep` executable in agent commands; a host may already
+provide an unrelated system command named sg.
 
 Upstream references: [Vex](https://github.com/tenatarika/vex),
 [LeanCTX](https://github.com/yvgude/lean-ctx),
