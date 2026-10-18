@@ -985,6 +985,17 @@ Zero mutants, survivors, unconfirmed Killed and UNKNOWN cannot pass the pilot.
 MutationInputDescriptor/v3 keeps the complete captured test_selection separate
 from partition tests. Both producer and runner use the coverage owner's test
 fingerprint formula; selected tests must belong to that captured selection.
+The native batch pilot emits MutationInputDescriptor/v4 for the complete declared
+partition. Its focused selection names that contour and exactly its Source/test
+sets, with canonical sorted capture metadata. Descriptor tests retain the registry
+order used by execution and proof joins. Runner and offline reader share the
+versioned selection validator; v3 cannot carry a focused selection, and v4 cannot
+claim full-current scope or omit/add partition tests. The existing input owner
+captures the transitive closure and requires SDK artifacts only when that selection
+contains the SDK compatibility test. The general full-current producer retains v3.
+Both versions bind actual source/test/tool bytes and fingerprints. A partition
+descriptor supplies no global qualification or exemption from complete mutant
+universe, native baseline, JUnit completeness or assertion-confirmed Killed gates.
 Invalid descriptors retain an input_rejection stage and launch no test child.
 When the captured runtime closure includes tests/configured-context.ts, the
 same capture/tool fingerprint binds exactly four _repository/test-context

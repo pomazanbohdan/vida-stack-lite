@@ -55,7 +55,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-completed-readonly-capture | 2/113 · 8/339 · 8/360 · 3/347 | 90 / 90 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-routing-contracts | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
 | bun-project-configuration-lifecycle | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
-| bun-governance-and-public-contracts | 105/105 · 353/365 · 383/407 · 212/253 | 32 / 32 | unknown | mutation/failed/unknown-or-partial | open / unknown | unknown | open / unknown |
+| bun-governance-and-public-contracts | 105/105 · 363/365 · 395/407 · 236/253 | 32 / 32 | unknown | mutation/failed/unknown-or-partial | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-lifecycle | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-storage-admission | 18/18 · 94/94 · 95/95 · 13/13 | 4 / 4 | unknown | BLOCKED | open / unknown | 4 / 4 | open / unknown |
 | bun-project-upgrade-existing-storage-image | 49/49 · 203/203 · 222/222 · 61/61 | 9 / 9 | 488/488 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
@@ -1109,6 +1109,9 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | stage-outcome | contour-stage-ujHcUc | 9c432439ec77a868560f03d7e09f3ea0cf5e6ebf | 2026-10-18T12:36:20.653Z | mutation/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-stage-ujHcUc/publication-error.json |
 | stage-outcome | contour-stage-WO5PF1 | 8e572c5be0d7944ed66be0c0f62b0a4e6a1723c4 | 2026-10-18T12:53:16.340Z | mutation/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-stage-WO5PF1/publication-error.json |
 | stage-outcome | contour-stage-jlZKl6 | a14c98bd0b094aa853486421729efd84a2d9d90d | 2026-10-18T13:14:25.958Z | mutation/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-stage-jlZKl6/publication-error.json |
+| coverage | 4fe5297d-12d3-4723-8c4a-92e63268212b | 9b2cfbdb56088366728f259330a42cf9f93193eb | 2026-10-18T15:57:24.192Z | focused-diagnostic; owner accepted locally; selection bound | 105/105 · 363/365 · 395/407 · 236/253 | /workspace/attachments/rolling-measure-v639/packages/agent/coverage/bun-unified/diagnostics/4fe5297d-12d3-4723-8c4a-92e63268212b.focused-coverage.json |
+| coverage-outcome | 4fe5297d-12d3-4723-8c4a-92e63268212b | 9b2cfbdb56088366728f259330a42cf9f93193eb | 2026-10-18T15:57:24.211Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/rolling-measure-v639/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/4fe5297d-12d3-4723-8c4a-92e63268212b.json |
+| stage-outcome | contour-stage-tuGUZG | 9b2cfbdb56088366728f259330a42cf9f93193eb | 2026-10-18T15:58:31.699Z | mutation/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-stage-tuGUZG/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

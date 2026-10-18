@@ -38,6 +38,10 @@ For a focused selection, reuse `sdkFormationToolInputPaths` and the declared tes
 to determine SDK dependency. A selection without the SDK compatibility test does
 not capture dist or need a separate artifact preparation. Keep automatic CI
 formation and all freshness checks for selections that actually consume the SDK.
+The native batch pilot uses the v4 complete-partition descriptor described in
+TESTING. Preserve registry execution order while sorting only capture metadata;
+never relabel focused input as v3 full-current evidence. A pre-baseline SDK error
+in a non-SDK contour needs its capture scope checked before another SDK build.
 
 After a focused producer terminates, use the maintained contour progress CLI's
 `--coverage-run <focused.json>` to import its matching operation outcome and

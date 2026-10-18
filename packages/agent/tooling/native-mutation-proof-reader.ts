@@ -3,7 +3,12 @@ import { isRecord as isObject } from '../src/contracts/forward-controller-values
 import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import { readBoundedMutationArtifact, mutationArtifactByteLimit } from './mutation-artifact-reader.ts';
 import { mutationPartitionSources, type MutationPartition } from './mutation-partitions.ts';
-import { mutationPartitionSourceBinding, mutationTestContextBinding } from './mutation-command-runner.ts';
+import {
+  descriptorHasValidSelection,
+  isMutationInputDescriptorSchema,
+  mutationPartitionSourceBinding,
+  mutationTestContextBinding,
+} from './mutation-command-runner.ts';
 import {
   buildMutationTestCommand,
   executionIdentityDigest,
@@ -413,17 +418,11 @@ function assertDescriptor(
   ];
   if (
     !exactKeys(descriptor, keys) ||
-    descriptor.schema !== 'MutationInputDescriptor/v3' ||
+    !isMutationInputDescriptorSchema(descriptor.schema) ||
     descriptor.partition !== partition.name ||
     !stringArray(descriptor.tests) ||
     !same(descriptor.tests, proof.tests) ||
     !same(descriptor.tests, partition.tests) ||
-    !isObject(descriptor.test_selection) ||
-    !exactKeys(descriptor.test_selection, ['mode', 'tests']) ||
-    descriptor.test_selection.mode !== 'full-current-test-set' ||
-    !stringArray(descriptor.test_selection.tests) ||
-    descriptor.test_selection.tests.length < 1 ||
-    descriptor.test_selection.tests.some((test) => !test) ||
     !Array.isArray(descriptor.partition_sources) ||
     descriptor.partition_sources.some((source) => typeof source !== 'string') ||
     !Array.isArray(descriptor.test_inputs) ||
@@ -434,9 +433,12 @@ function assertDescriptor(
   assertDigestRows(descriptor.test_inputs, 'descriptor test input');
   assertDigestRows(descriptor.tool_inputs, 'descriptor tool input');
   assertDigestRows(descriptor.partition_source_inputs, 'descriptor partition Source input');
-  const selected = descriptor.test_selection.tests;
-  // This is the producer's captured full-selection claim. The offline reader
-  // checks its internal metadata and exact executed partition, but cannot prove
+  const selectedDescriptor = { ...descriptor, test_inputs: descriptor.test_inputs };
+  if (!descriptorHasValidSelection(selectedDescriptor))
+    throw new Error('Native mutation input descriptor partition selection is invalid.');
+  const selected = selectedDescriptor.test_selection.tests;
+  // v3 captures the full current set; v4 captures the complete declared partition.
+  // Both readers check exact executed selection and digests, without proving
   // current global inventory exhaustiveness; the returned proof stays local.
   if (new Set(selected).size !== selected.length || descriptor.tests.some((test) => !selected.includes(test)))
     throw new Error('Native mutation partition tests are outside the captured full test selection.');
@@ -461,10 +463,8 @@ function assertDescriptor(
     if (descriptor[field] !== proof.binding[field])
       throw new Error(`Native mutation descriptor ${field} differs from its proof binding.`);
   if (
-    testSelectionFingerprint(
-      descriptor.test_selection as { mode: 'full-current-test-set'; tests: string[] },
-      descriptor.test_inputs,
-    ) !== descriptor.test_fingerprint ||
+    testSelectionFingerprint(selectedDescriptor.test_selection, descriptor.test_inputs) !==
+      descriptor.test_fingerprint ||
     sha256(canonicalJson(descriptor.tool_inputs)!) !== descriptor.tool_fingerprint ||
     sha256(canonicalJson(context.source_inputs)!) !== descriptor.source_fingerprint ||
     qualityFingerprint({

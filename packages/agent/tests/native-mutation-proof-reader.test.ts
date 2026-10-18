@@ -108,7 +108,11 @@ async function replaceRecord(root: string, file: string, value: unknown) {
   return { file, bytes: bytes.length, sha256: digest(bytes) };
 }
 
-async function syntheticClosure(root: string, invocationExecutable = process.execPath) {
+async function syntheticClosure(
+  root: string,
+  invocationExecutable = process.execPath,
+  scope: 'global' | 'partition' = 'global',
+) {
   const sourceText = 'export const enabled = true;\n';
   const test = 'import { expect, test } from "bun:test"; test("enabled", () => expect(true).toBe(true));\n';
   await mkdir(path.join(root, 'src'), { recursive: true });
@@ -117,7 +121,10 @@ async function syntheticClosure(root: string, invocationExecutable = process.exe
   await writeFile(path.join(root, 'src/runtime-kernel.ts'), sourceText);
   await writeFile(path.join(root, 'tests/runtime-kernel-boundary.test.ts'), test);
   const tests = [...partition.tests];
-  const testSelection = { mode: 'full-current-test-set' as const, tests };
+  const testSelection =
+    scope === 'partition'
+      ? { mode: 'focused-diagnostic' as const, contour: partition.name, sources: [...partition.sources].sort(), tests }
+      : { mode: 'full-current-test-set' as const, tests };
   const sourceInputs = [{ path: 'src/runtime-kernel.ts', sha256: digest(Buffer.from(sourceText)) }];
   const testInputs = [{ path: tests[0]!, sha256: digest(Buffer.from(test)) }];
   const toolInputs: Array<{ path: string; sha256: string }> = [];
@@ -140,7 +147,7 @@ async function syntheticClosure(root: string, invocationExecutable = process.exe
     partition_sources: partitionSource.sourceInputs,
   };
   const descriptor = {
-    schema: 'MutationInputDescriptor/v3',
+    schema: scope === 'partition' ? 'MutationInputDescriptor/v4' : 'MutationInputDescriptor/v3',
     partition: partition.name,
     partition_sources: partitionSource.sources,
     partition_source_inputs: partitionSource.sourceInputs,
@@ -399,6 +406,40 @@ const partition = {
 };
 
 describe('offline native mutation proof reader', () => {
+  test('v4 admits an exact declared partition closure and rejects a foreign selection contour', async () => {
+    await withRoot(async (root) => {
+      const closure = await syntheticClosure(root, process.execPath, 'partition');
+      const accepted = await readNativeMutationPartitionProof({
+        packageRoot: root,
+        artifactDirectory: root,
+        report: closure.candidate,
+        expectedPartition: partition,
+      });
+      expect(accepted.descriptor).toHaveProperty('schema', 'MutationInputDescriptor/v4');
+      expect(accepted.descriptor).toHaveProperty('test_selection.mode', 'focused-diagnostic');
+      expect(accepted.report.full_qualification).toBe(false);
+      const ref = closure.proof.artifacts.input_descriptor;
+      const descriptor: unknown = JSON.parse(await readFile(path.join(root, ref.file), 'utf8'));
+      if (!isRecord(descriptor) || !isRecord(descriptor.test_selection))
+        throw new Error('Expected a partition mutation descriptor fixture');
+      descriptor.test_selection.contour = 'foreign-partition';
+      const changed = await replaceRecord(root, ref.file, descriptor);
+      const proof = await replaceRecord(root, 'proof.json', {
+        ...closure.proof,
+        artifacts: { ...closure.proof.artifacts, input_descriptor: changed },
+      });
+      await expectRejection(
+        readNativeMutationPartitionProof({
+          packageRoot: root,
+          artifactDirectory: root,
+          report: { ...closure.candidate, native_partition_proof: proof },
+          expectedPartition: partition,
+        }),
+        /partition selection is invalid/u,
+      );
+    });
+  });
+
   test.each(['duplicate', 'unordered', 'invalid-digest'] as const)(
     'rejects %s captured Source rows before fingerprint admission',
     async (kind) => {

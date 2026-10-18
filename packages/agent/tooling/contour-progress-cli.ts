@@ -15,6 +15,7 @@ import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 import { readBoundedMutationArtifact, mutationArtifactByteLimit } from './mutation-artifact-reader.ts';
 import { mutationPartitions } from './mutation-partitions.ts';
 import { readNativeMutationPartitionProof } from './native-mutation-proof-reader.ts';
+import { isMutationInputDescriptorSchema } from './mutation-command-runner.ts';
 import { readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
 
 const empty = { schema: 'VidaContourProgress/v1', attempts: [] };
@@ -105,7 +106,7 @@ function withSelections(value: unknown, selections: { file: string; value: unkno
       const descriptor = selected.value;
       if (
         !isRecord(descriptor) ||
-        descriptor.schema !== 'MutationInputDescriptor/v3' ||
+        !isMutationInputDescriptorSchema(descriptor.schema) ||
         ['input_fingerprint', 'test_fingerprint', 'tool_fingerprint'].some((key) => descriptor[key] !== value[key]) ||
         descriptor.partition_source_fingerprint !== binding.source_fingerprint ||
         canonicalJson(descriptor.partition_source_inputs) !== canonicalJson(binding.source_inputs) ||

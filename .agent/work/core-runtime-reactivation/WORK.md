@@ -22,8 +22,9 @@ No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 ### Current rolling repair cycle
 
 Active contours: governance/public contracts, dispatch repair and controller
-observation. The checked test-only packet is published asa14c98b through ordinary
-hooks/push. It addresses the latest UNKNOWN and adds workflow/controller cases.
+observation. Published9b2cfbd includes the checked test packet and verified
+capacity recovery through ordinary hooks/push. The latest native capture defect
+is repaired in canonical Source pending its fresh checks/publication below.
 All immutable rolling-measure-* checkouts remain untouched. v637 resolves the
 observed resource deficit without changing them; next measurement waits for the
 current packet's normal checks/publication and fresh native admission.
@@ -33,7 +34,7 @@ new residual test changes. They are incomplete and are not contour closure:
 
 | Contour/run | Functions | Lines | Statements | Branches | maxCC/CRAP |
 | --- | --- | --- | --- | --- | --- |
-| Governance194a5681(v577) |105/105|353/365|383/407|212/253|32/32|
+| Governance4fe5297d(v641) |105/105|363/365|395/407|236/253|32/32|
 | Dispatch78614afc(v542) |61/70|289/312|308/334|240/256|39/39|
 | Controller7071caed(v564) |27/28|132/156|144/182|127/164|14/20|
 
@@ -246,6 +247,49 @@ and is rejected for this cycle. No whole-cycle/token/parallel speedup is measure
 Neither useful cleanup nor a focused PASS closes a contour or supplies CRAP/Killed.
 
 ## Execution order
+
+Current confirmed follow-up: mutationv642on immutablev639 exits before baseline
+because the pilot captures the full current test set and requires an unrelated
+SDK receipt. Coveragev641properly needs no SDK. Preserve the failed root; do not
+form SDK merely to hide this selection mismatch. Extend the existing descriptor
+contract explicitly tov4focused selection with exact declared partition Sources/
+tests, while preserving v3full-current semantics. Evolve runner, native offline
+reader, reporter and projection readers together. Reuse the runner's selection
+validator instead of duplicating it. Any new shape validator has prospective
+CC/CRAP10/10; no old allowance is transferred. Root is the only writer; blind
+Lunav644confirms the v3constraint and partition-scoped mutation generation.
+
+v641run4fe5297d-12d3-4723-8c4a-92e63268212bon9b2cfbd completes in51476.8319ms:
+complete captures, groups closed, unchanged boot/commit, clean inputs. Compared
+with v577, lines+10,statements+12,branches+24; functions stay105/105. The operation
+is still BLOCKED by nonexact coverage, not a contour closure. forward-controller-
+values, implementation-scope and operation-policy now have no zero statement or
+branch slots. The compact saved mapv643 leaves canonical-json-core1statement/
+1branch and policy-workflow11statements/16branches. It reads only the retained
+report; no Source/AST/hash pass. A mistaken ad-hoc query dumped a raw map first;
+schema inspection must print keys, never raw coverage values. The existing CLI
+already prints trusted concise totals; use that before local hole extraction.
+
+v642/tuGUZG retains pre-baseline failure3baa1ea1-26fd-4b8d-9ba1-03d9ff56e97f:
+the old pilot's full-current capture demands absent dist/sdk-formation.json
+despite SDK eligibilityv640being empty for this partition.349.960581ms elapsed,
+no baseline or mutant result. v639 remains immutable; no SDK is added afterward.
+The selected correction is explicit v4 partition capture. Runner/offline reader
+share exact version/mode/contour/source/test validation; reporter and legacy
+selection projection recognize the finite schema pair. General mutation-gate v3
+full-current semantics remain. No baseline, test, universe, hash or Killed gate
+is removed. New schema/shape validator complexities2/9(v649) respect10/10.
+
+REDv646fails original descriptor-shape admission and keeps its fixture; GREENv647
+passes. v648passes304cases/1267assertions in1.86s across descriptor, offline proof,
+command contract, map and progress files. IndependentLunav644finds actual registry
+ordering missing from that synthetic positive. Producer now sorts capture arrays
+only, preserving descriptor.tests/executed argv in registry order. The strengthened
+two-test unsorted-execution control and full regressionsv650pass304cases/
+1269assertions in1.84s. Luna confirms the ordering blocker resolved. The first
+normal commit hook passes formatting/typecheck but rejects an unsafe JSON fixture
+assignment; the fixture now narrows unknown through the existing isRecord owner.
+Native validation of the repaired capture is still pending.
 
 Current dependency-ready packet repairs the prelaunch resource-reporting GAP
 while numeric work remains blocked. Root remains the only writer; blind read-only

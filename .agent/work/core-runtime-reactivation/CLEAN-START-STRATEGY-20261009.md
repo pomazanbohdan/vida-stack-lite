@@ -114,6 +114,16 @@ against the unchanged2147483648floor; fresh native admission still applies. Resu
 one serial producer after the checked packet is published. WORK and the existing
 cleanup manifest own exact paths, equality/custody limits and receipts.
 
+The next v641 governance coverage improves to105/105functions,363/365lines,
+395/407statements and236/253branches; frozen proof and exact closure remain open.
+v642 exposes unrelated SDK capture before mutation baseline: the native pilot
+captures full-current inputs despite executing one declared partition. Adopt the
+explicit v4 complete-partition descriptor through the existing capture owner,
+runner and offline reader together, preserving v3 full-current behavior. Require
+exact declared Source/test sets and digest-bound closure. Sort capture metadata
+while retaining registry execution order. Do not build SDK to conceal this scope
+defect or weaken complete-universe, JUnit or assertion-confirmed Killed gates.
+
 Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
 `nativeDiagnosticIdSet` owner and its invalid-token predicate, each with
 prospective CC/CRAP10/10. Reuse its validated Set in plan resolution instead of

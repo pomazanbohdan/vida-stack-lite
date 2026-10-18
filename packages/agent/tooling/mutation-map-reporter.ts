@@ -5,7 +5,7 @@ import type { MutantResult, schema } from '@stryker-mutator/api/core';
 import { declareFactoryPlugin, PluginKind } from '@stryker-mutator/api/plugin';
 import type { DryRunCompletedEvent, MutationTestingPlanReadyEvent, Reporter } from '@stryker-mutator/api/report';
 import { readBoundedInput } from './bun-coverage-evidence.ts';
-import { mutationPartitionSourceBinding } from './mutation-command-runner.ts';
+import { isMutationInputDescriptorSchema, mutationPartitionSourceBinding } from './mutation-command-runner.ts';
 import {
   mutationPartitionMap,
   mutationResultMapRow,
@@ -25,7 +25,7 @@ function reporterBinding(directory: string, partition: string): MutationMapBindi
     throw new Error('Mutation map descriptor is invalid.');
   const read = (key: string): unknown => Reflect.get(descriptor, key);
   if (
-    read('schema') !== 'MutationInputDescriptor/v3' ||
+    !isMutationInputDescriptorSchema(read('schema')) ||
     read('partition') !== partition ||
     !Array.isArray(read('partition_sources')) ||
     !Array.isArray(read('partition_source_inputs'))

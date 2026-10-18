@@ -29,22 +29,37 @@ const perTestCaptureFile = 'per-test-coverage.json';
 const activeMutant = process.env.__STRYKER_ACTIVE_MUTANT__;
 
 type MutationInputDigest = { path: string; sha256: string };
+export type MutationDescriptorTestSelection =
+  | { mode: 'full-current-test-set'; tests: string[] }
+  | { mode: 'focused-diagnostic'; contour: string; sources: string[]; tests: string[] };
+export function isMutationInputDescriptorSchema(
+  value: unknown,
+): value is 'MutationInputDescriptor/v3' | 'MutationInputDescriptor/v4' {
+  return value === 'MutationInputDescriptor/v3' || value === 'MutationInputDescriptor/v4';
+}
 type MutationInputDescriptor = {
-  schema: 'MutationInputDescriptor/v3';
   partition: string;
   partition_sources: string[];
   partition_source_inputs: MutationInputDigest[];
   partition_source_fingerprint: string;
   source_fingerprint: string;
   tests: string[];
-  test_selection: { mode: 'full-current-test-set'; tests: string[] };
   test_inputs: MutationInputDigest[];
   tool_inputs: MutationInputDigest[];
   per_test_capture?: 'diagnostic-v2';
   input_fingerprint: string;
   test_fingerprint: string;
   tool_fingerprint: string;
-};
+} & (
+  | {
+      schema: 'MutationInputDescriptor/v3';
+      test_selection: Extract<MutationDescriptorTestSelection, { mode: 'full-current-test-set' }>;
+    }
+  | {
+      schema: 'MutationInputDescriptor/v4';
+      test_selection: Extract<MutationDescriptorTestSelection, { mode: 'focused-diagnostic' }>;
+    }
+);
 type MutationRunnerConfig = {
   root: string;
   partition: string;
@@ -102,7 +117,7 @@ export function mutationPartitionSourceBindingMatches(
   value: unknown,
   expected: { partition: string; sources: string[]; sourceInputs: MutationInputDigest[]; fingerprint: string },
 ): boolean {
-  if (!record(value) || value.schema !== 'MutationInputDescriptor/v3') return false;
+  if (!record(value) || !isMutationInputDescriptorSchema(value.schema)) return false;
   if (
     !Array.isArray(value.partition_sources) ||
     !value.partition_sources.every((source) => typeof source === 'string') ||
@@ -303,17 +318,33 @@ function descriptorHasExactKeys(value: Record<string, unknown>): boolean {
   );
 }
 
-function descriptorHasValidSelection(value: Record<string, unknown> & { test_inputs: MutationInputDigest[] }): boolean {
+function descriptorSelectionShape(
+  value: Record<string, unknown>,
+): value is Record<string, unknown> & { test_selection: Record<string, unknown> } {
+  const selection = value.test_selection;
+  if (!record(selection)) return false;
+  if (value.schema === 'MutationInputDescriptor/v3')
+    return Object.keys(selection).sort().join(',') === 'mode,tests' && selection.mode === 'full-current-test-set';
+  return (
+    value.schema === 'MutationInputDescriptor/v4' &&
+    Object.keys(selection).sort().join(',') === 'contour,mode,sources,tests' &&
+    selection.mode === 'focused-diagnostic' &&
+    selection.contour === value.partition &&
+    Array.isArray(selection.sources) &&
+    JSON.stringify(selection.sources) === JSON.stringify(value.partition_sources)
+  );
+}
+
+export function descriptorHasValidSelection(
+  value: Record<string, unknown> & { test_inputs: MutationInputDigest[] },
+): value is Record<string, unknown> & {
+  test_inputs: MutationInputDigest[];
+  test_selection: MutationDescriptorTestSelection;
+} {
+  if (!descriptorSelectionShape(value)) return false;
   const tests = value.tests;
   const selection = value.test_selection;
-  if (
-    !record(selection) ||
-    Object.keys(selection).sort().join(',') !== 'mode,tests' ||
-    selection.mode !== 'full-current-test-set' ||
-    !Array.isArray(selection.tests) ||
-    !selection.tests.length
-  )
-    return false;
+  if (!Array.isArray(selection.tests) || !selection.tests.length) return false;
   const boundPaths = new Set(value.test_inputs.map((entry) => entry.path));
   let previous = '';
   for (const test of selection.tests) {
@@ -329,12 +360,12 @@ function descriptorHasValidSelection(value: Record<string, unknown> & { test_inp
   }
   const selected = new Set(selection.tests);
   return (
-    value.schema === 'MutationInputDescriptor/v3' &&
     typeof value.partition === 'string' &&
     Array.isArray(tests) &&
     tests.length > 0 &&
     new Set(tests).size === tests.length &&
-    tests.every((test) => selected.has(test))
+    tests.every((test) => selected.has(test)) &&
+    (value.schema === 'MutationInputDescriptor/v3' || selection.tests.length === tests.length)
   );
 }
 

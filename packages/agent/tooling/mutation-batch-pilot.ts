@@ -536,11 +536,17 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
   );
   const record = (file: string, value: unknown) => writeMutationMapArtifact(directory, file, value);
   try {
-    const inputs = await qualityInputs(root, mutationToolInputs);
+    const tests = partition.tests;
+    if (!tests) throw new Error('Mutation batch Source/test binding is incomplete.');
+    const inputs = await qualityInputs(root, mutationToolInputs, {
+      mode: 'focused-diagnostic',
+      contour: partition.name,
+      sources: [...mutationPartitionSources(partition)].sort(),
+      tests: [...tests].sort(),
+    });
     const fingerprint = qualityFingerprint(inputs, perTestCapture);
     const source = mutationPartitionSourceBinding(partition.name, mutationPartitionSources(partition), inputs.sources);
-    if (!source || !partition.tests) throw new Error('Mutation batch Source/test binding is incomplete.');
-    const tests = partition.tests;
+    if (!source) throw new Error('Mutation batch Source/test binding is incomplete.');
     const binding: MutationMapBinding = {
       run_id: runId,
       partition: partition.name,
@@ -564,7 +570,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       generated_image: record('generated-image.json', image),
       batch_plan: record('batch-plan.json', plan),
       input_descriptor: record(`${partition.name}.inputs.json`, {
-        schema: 'MutationInputDescriptor/v3',
+        schema: 'MutationInputDescriptor/v4',
         partition: partition.name,
         partition_sources: source.sources,
         partition_source_inputs: source.sourceInputs,

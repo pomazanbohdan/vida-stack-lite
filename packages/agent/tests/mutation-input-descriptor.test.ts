@@ -24,7 +24,7 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-function fixture() {
+function fixture(executedTests = ['tests/a.test.ts']) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'mutation-input-descriptor-'));
   roots.push(root);
   const write = (file: string, contents: string) => {
@@ -52,7 +52,7 @@ function fixture() {
     partition_source_inputs: binding.sourceInputs,
     partition_source_fingerprint: binding.fingerprint,
     ...fingerprints,
-    tests: [tests[0] as string],
+    tests: executedTests,
     test_selection: selection,
     test_inputs: testInputs,
     tool_inputs: toolInputs,
@@ -95,7 +95,7 @@ function fixture() {
         root,
         root,
         'one',
-        ['tests/a.test.ts'],
+        executedTests,
         binding.sources,
         binding.fingerprint,
         fingerprints.source_fingerprint,
@@ -121,6 +121,50 @@ test('mutation runner accepts a partition subset bound to the full captured test
   // The original source digest remains valid while Stryker changes the active subject.
   input.write('src/a.ts', 'mutated source');
   expect((await input.verify()).rejection).toBeNull();
+});
+
+test('v4 binds the complete partition selection without a global SDK prerequisite', async () => {
+  const input = fixture(['tests/b.test.ts', 'tests/a.test.ts']);
+  const selection = {
+    mode: 'focused-diagnostic' as const,
+    contour: input.descriptor.partition,
+    sources: input.descriptor.partition_sources,
+    tests: [...input.descriptor.tests].sort(),
+  };
+  const descriptor = { ...input.descriptor, schema: 'MutationInputDescriptor/v4', test_selection: selection };
+  descriptor.test_fingerprint = testSelectionFingerprint(selection, descriptor.test_inputs);
+  descriptor.input_fingerprint = qualityFingerprint(descriptor);
+  process.env.AGENT_RUNTIME_TEST_FINGERPRINT = descriptor.test_fingerprint;
+  process.env.AGENT_RUNTIME_INPUT_FINGERPRINT = descriptor.input_fingerprint;
+  let passed = false;
+  try {
+    expect((await input.verify(descriptor)).rejection).toBeNull();
+    expect(descriptor.tests).toEqual(['tests/b.test.ts', 'tests/a.test.ts']);
+    for (const replacement of [
+      { ...selection, contour: 'foreign' },
+      { ...selection, sources: [] },
+      { ...selection, sources: [...selection.sources, 'src/b.ts'] },
+      { ...selection, tests: [] },
+      { ...selection, tests: selection.tests.slice(0, 1) },
+      { ...selection, tests: [...selection.tests, 'tests/helpers/fixture.ts'] },
+      { ...selection, extra: true },
+      { mode: 'full-current-test-set' as const, tests: selection.tests },
+    ]) {
+      const altered = { ...descriptor, test_selection: replacement };
+      altered.test_fingerprint = testSelectionFingerprint(replacement, altered.test_inputs);
+      altered.input_fingerprint = qualityFingerprint(altered);
+      process.env.AGENT_RUNTIME_TEST_FINGERPRINT = altered.test_fingerprint;
+      process.env.AGENT_RUNTIME_INPUT_FINGERPRINT = altered.input_fingerprint;
+      expect((await input.verify(altered)).rejection).not.toBeNull();
+    }
+    expect((await input.verify({ ...descriptor, schema: 'MutationInputDescriptor/v3' })).rejection).not.toBeNull();
+    passed = true;
+  } finally {
+    if (!passed) {
+      roots.splice(roots.indexOf(input.root), 1);
+      console.error(`Retained failed v4 descriptor fixture: ${input.root}`);
+    }
+  }
 });
 
 test('mutation input verification rejects drift beyond the first read batch and permits only restored bytes', async () => {

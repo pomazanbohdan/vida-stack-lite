@@ -18,6 +18,7 @@ import {
   mutationPartitionSourceBinding,
   mutationPartitionSourceBindingMatches,
   mutationTestEnvironment,
+  isMutationInputDescriptorSchema,
 } from '../tooling/mutation-command-runner.ts';
 import { maintainedSourceInventory } from '../tooling/maintained-source-inventory.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
@@ -482,6 +483,21 @@ test('mutation partition descriptor binds the owned source list to its captured 
     fingerprint: binding.fingerprint,
   };
   expect(mutationPartitionSourceBindingMatches(descriptor, expected)).toBe(true);
+  expect(mutationPartitionSourceBindingMatches({ ...descriptor, schema: 'MutationInputDescriptor/v4' }, expected)).toBe(
+    true,
+  );
+  expect(isMutationInputDescriptorSchema('MutationInputDescriptor/v3')).toBe(true);
+  expect(isMutationInputDescriptorSchema('MutationInputDescriptor/v4')).toBe(true);
+  let coerced = 0;
+  expect(
+    isMutationInputDescriptorSchema({
+      toString() {
+        coerced++;
+        return 'MutationInputDescriptor/v4';
+      },
+    }),
+  ).toBe(false);
+  expect(coerced).toBe(0);
   expect(
     mutationPartitionSourceBinding(
       'owned-partition',
