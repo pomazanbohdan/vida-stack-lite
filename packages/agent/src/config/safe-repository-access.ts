@@ -912,47 +912,72 @@ function openExclusiveLockAt(parentFd: number, name: string, label: string): Ope
   );
   choose(
     existsSync(target),
-    () =>
+    () => {
       choose(
         removeStaleLock(parentFd, name, label),
         () => undefined,
-        () => undefined,
-      ),
-    () => undefined,
-  );
-  choose(
-    lockReclaimGuardExists(parentFd, name, label),
-    () => {
-      throw new SafeRepositoryLockContentionError(label);
+        () => {
+          throw new SafeRepositoryLockContentionError(label);
+        },
+      );
     },
     () => undefined,
   );
-  let fd: number;
-  try {
-    fd = openSync(target, fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow, 0o600);
-  } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'EEXIST')
-      throw new SafeRepositoryLockContentionError(label, error);
-    throw error;
-  }
-  publishOwnedLockPayload(fd, label);
+  const guard = requireReclaimGuard(parentFd, name, label, 'admission');
+  let ownedFd: number | undefined;
+  const fd = withReclaimedEntryCleanup(
+    () => {
+      let createdFd: number;
+      try {
+        createdFd = openSync(target, fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow, 0o600);
+      } catch (error) {
+        if (error instanceof Error && 'code' in error && error.code === 'EEXIST')
+          throw new SafeRepositoryLockContentionError(label, error);
+        throw error;
+      }
+      ownedFd = createdFd;
+      try {
+        publishOwnedLockPayload(createdFd, label);
+      } catch (error) {
+        ownedFd = undefined;
+        throw error;
+      }
+      return createdFd;
+    },
+    () => {
+      const released = Result.fromThrowable(() => releaseReclaimGuard(guard, label))();
+      if (released.isErr()) {
+        if (ownedFd === undefined) throw released.error;
+        const closed = Result.fromThrowable(() => closeQuietly(ownedFd as number))();
+        ownedFd = undefined;
+        if (closed.isErr())
+          throw new AggregateError([released.error, closed.error], 'Lock guard release and descriptor close failed', {
+            cause: released.error,
+          });
+        throw released.error;
+      }
+    },
+  );
+  ownedFd = undefined;
   return { fd, parentFd, name };
 }
 function openExclusiveLock(root: string, target: string, label: string): OpenedExclusiveLock {
   const parent = openParent(root, safeRelative(root, target, label), label);
   const opened = { succeeded: false };
-  try {
-    const lockName = resourceLockName(parent.name);
-    const lock = openExclusiveLockAt(parent.fd, lockName, label);
-    opened.succeeded = true;
-    return lock;
-  } finally {
-    choose(
-      opened.succeeded,
-      () => undefined,
-      () => closeQuietly(parent.fd),
-    );
-  }
+  return withReclaimedEntryCleanup(
+    () => {
+      const lockName = resourceLockName(parent.name);
+      const lock = openExclusiveLockAt(parent.fd, lockName, label);
+      opened.succeeded = true;
+      return lock;
+    },
+    () =>
+      choose(
+        opened.succeeded,
+        () => undefined,
+        () => closeQuietly(parent.fd),
+      ),
+  );
 }
 function resourceLockName(resourceName: string): string {
   // Leave 56 bytes for the longest reclaim-guard quarantine component.
@@ -963,35 +988,41 @@ function resourceLockName(resourceName: string): string {
 }
 function releaseExclusiveLock(parentFd: number, name: string, fd: number): void {
   const guard = requireReclaimGuard(parentFd, name, 'exclusive lock release', 'release');
-  try {
-    const owner = fstatSync(fd, { bigint: true });
-    try {
-      const currentFd = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+  return withReclaimedEntryCleanup(
+    () => {
+      const owner = fstatSync(fd, { bigint: true });
+      let currentFd: number;
       try {
-        choose(
-          all(sameFileIdentity(owner, fstatSync(currentFd, { bigint: true })), lockOwnerPid(currentFd) === process.pid),
-          () => {
-            moveAndRemovePinnedLock(
-              parentFd,
-              name,
-              'exclusive lock release',
-              owner,
-              (_stats, ownerPid) => ownerPid === process.pid,
-              true,
-              currentFd,
-            );
-          },
-          () => undefined,
-        );
-      } finally {
-        closeQuietly(currentFd);
+        currentFd = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+      } catch (error) {
+        if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return;
+        throw error;
       }
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    }
-  } finally {
-    releaseReclaimGuard(guard, 'exclusive lock release');
-  }
+      withReclaimedEntryCleanup(
+        () =>
+          choose(
+            all(
+              sameFileIdentity(owner, fstatSync(currentFd, { bigint: true })),
+              lockOwnerPid(currentFd) === process.pid,
+            ),
+            () => {
+              moveAndRemovePinnedLock(
+                parentFd,
+                name,
+                'exclusive lock release',
+                owner,
+                (_stats, ownerPid) => ownerPid === process.pid,
+                true,
+                currentFd,
+              );
+            },
+            () => undefined,
+          ),
+        () => closeQuietly(currentFd),
+      );
+    },
+    () => releaseReclaimGuard(guard, 'exclusive lock release'),
+  );
 }
 function readBoundedBuffer(
   fd: number,
@@ -1317,14 +1348,21 @@ type LinuxCasLock = {
 };
 function acquireLinuxCasLock(root: string, target: string, label: string): LinuxCasLock {
   const parent = openParent(root, safeRelative(root, target, label), label);
-  try {
-    const lockName = linuxCasLockName(parent.name);
-    const lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
-    return { parentFd: parent.fd, name: parent.name, lockName, lockFd };
-  } catch (error) {
-    closeQuietly(parent.fd);
-    throw error;
-  }
+  const opened = { succeeded: false };
+  return withReclaimedEntryCleanup(
+    () => {
+      const lockName = linuxCasLockName(parent.name);
+      const lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
+      opened.succeeded = true;
+      return { parentFd: parent.fd, name: parent.name, lockName, lockFd };
+    },
+    () =>
+      choose(
+        opened.succeeded,
+        () => undefined,
+        () => closeQuietly(parent.fd),
+      ),
+  );
 }
 function releaseLinuxCasLock(lock: LinuxCasLock, release: boolean): void {
   finalizeOwnedLock(lock.parentFd, lock.lockName, lock.lockFd, release, []);

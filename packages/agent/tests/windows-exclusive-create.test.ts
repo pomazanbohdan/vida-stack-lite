@@ -17,6 +17,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
   requireSafeRepositoryAccess,
+  SafeRepositoryLockContentionError,
   type ExclusiveRepositoryCreation,
   type SafeRepositoryAccess,
 } from '../src/config/safe-repository-access.js';
@@ -176,7 +177,9 @@ test('resource sidecar locks preserve existing payloads and exclude concurrent h
         contender.withExclusiveLockAsync('operation.json', 'contender', async () => {
           throw new Error('contender callback must not run');
         }),
-      ).rejects.toThrow(/EEXIST|file lock timeout|already held/),
+      ).rejects.toThrow(
+        process.platform === 'linux' ? SafeRepositoryLockContentionError : /EEXIST|file lock timeout|already held/,
+      ),
     );
     if (process.platform === 'linux') {
       const child = spawnSync(
@@ -184,13 +187,13 @@ test('resource sidecar locks preserve existing payloads and exclude concurrent h
         [
           '-e',
           `
-        const { requireSafeRepositoryAccess } = await import('./src/config/safe-repository-access.ts');
+        const { requireSafeRepositoryAccess, SafeRepositoryLockContentionError } = await import('./src/config/safe-repository-access.ts');
         const access = requireSafeRepositoryAccess(process.argv[1]);
         try {
           await access.withExclusiveLockAsync('operation.json', 'child contender', async () => process.exit(9));
           process.exit(8);
         } catch (error) {
-          if (error.code !== 'EEXIST') throw error;
+          if (!(error instanceof SafeRepositoryLockContentionError)) throw error;
         }
       `,
           root,

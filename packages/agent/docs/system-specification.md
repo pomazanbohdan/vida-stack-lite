@@ -2462,8 +2462,15 @@ On Linux, sidecar names longer than 199 UTF-8 bytes use a fixed-size
 `.vida-resource-lock-<sha256 of resource basename>.lock` name in the same
 directory, reserving room for reclaim and quarantine suffixes within NAME_MAX.
 Linux lock acquisition, stale-lock quarantine and release stay bound to opened
-directory/file identities and fail closed on foreign or changed entries. Failure
-to acquire a release guard is reported as
+directory/file identities and fail closed on foreign or changed entries. A lock
+that cannot be reclaimed denies a live contender before it acquires a
+guard. Fresh creation owns the admission guard across exclusive creation and
+owner-payload publication, then releases it before callback entry. A failed
+admission cleanup withholds callback entry, closes unreturned descriptors and
+retains unresolved lock/guard custody. A live owner PID is not stale-reclaim
+authorization, including when its admission failed. Concurrent publication and
+guard-release failures retain their primary-first causes.
+Failure to acquire a release guard is reported as
 `SAFE_REPOSITORY_LOCK_RELEASE_INCOMPLETE`; the exact lock remains in custody.
 This is a release failure after the protected callback entered, never an
 acquisition-only contention signal or permission to replay that callback. Finalizers

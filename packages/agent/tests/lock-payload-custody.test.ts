@@ -52,7 +52,9 @@ if (!isolated && !underStryker) {
   let reclaimGuardFsyncSawSettledCallback = false;
   const payloadFailure = Object.assign(new Error('injected lock payload fsync failure'), { code: 'EIO' });
   const payloadCloseFailure = Object.assign(new Error('injected lock payload close failure'), { code: 'EIO' });
+  let payloadCloseValue: unknown = payloadCloseFailure;
   let failPayloadClose = false;
+  let releaseCurrentLockFd: number | undefined;
   type DescriptorIdentity = { readonly dev: bigint; readonly ino: bigint };
   const ownedDescriptorIdentities = new Map<number, DescriptorIdentity>();
   const outstandingCloseFailures = new Map<number, DescriptorIdentity>();
@@ -68,7 +70,7 @@ if (!isolated && !underStryker) {
   let postDeleteFsyncRoot: string | undefined;
   let postDeleteFsyncQuarantine: { readonly prefix: string; readonly suffix: string } | undefined;
   let postDeleteRemovalObserved = false;
-  let postDeleteFsyncFailure: Error | undefined;
+  let postDeleteFsyncFailure: unknown;
   let postDeleteFsyncCount = 0;
 
   function isWatchedReclaimGuardDirectory(directory: string | Buffer | URL): boolean {
@@ -133,6 +135,14 @@ if (!isolated && !underStryker) {
         ownedParentFd = fd;
         ownedDescriptorIdentities.set(fd, descriptorIdentity(fd));
       }
+      if (
+        failPayloadClose &&
+        releaseCallbackSettled &&
+        payloadLockPath &&
+        descriptorPath === payloadLockPath &&
+        fd !== ownedLockFd
+      )
+        releaseCurrentLockFd = fd;
       return fd;
     },
     closeSync(fd: number): void {
@@ -150,11 +160,13 @@ if (!isolated && !underStryker) {
         }
       }
       const descriptorPath = readlinkSync(`/proc/self/fd/${fd}`);
-      if (payloadLockPath && descriptorPath === payloadLockPath && failPayloadClose) {
+      if (payloadLockPath && failPayloadClose && (descriptorPath === payloadLockPath || fd === releaseCurrentLockFd)) {
         failPayloadClose = false;
         failedPayloadFd = fd;
         outstandingCloseFailures.set(fd, descriptorIdentity(fd));
-        throw payloadCloseFailure;
+        const failure = payloadCloseValue;
+        payloadCloseValue = payloadCloseFailure;
+        throw failure;
       }
       actualFs.closeSync(fd);
     },
@@ -163,13 +175,11 @@ if (!isolated && !underStryker) {
       if (postDeleteFsyncRoot && descriptorPath === postDeleteFsyncRoot && postDeleteRemovalObserved) {
         postDeleteFsyncCount += 1;
         postDeleteRemovalObserved = false;
-        const error = postDeleteFsyncFailure;
-        if (!error) throw new Error('post-delete fsync fault was armed without its error');
-        throw error;
+        throw postDeleteFsyncFailure;
       }
       if (reclaimGuardOwnerPath && descriptorPath === reclaimGuardOwnerPath) {
         reclaimGuardFsyncCount += 1;
-        if (failReclaimGuardFsync) {
+        if (failReclaimGuardFsync && releaseCallbackSettled) {
           failReclaimGuardFsync = false;
           reclaimGuardFsyncSawSettledCallback = releaseCallbackSettled;
           const error = reclaimGuardFsyncFailure;
@@ -222,10 +232,11 @@ if (!isolated && !underStryker) {
     postDeleteFsyncQuarantine = { prefix: quarantinePrefix, suffix: quarantineSuffix };
     postDeleteRemovalObserved = false;
     postDeleteFsyncCount = 0;
-    postDeleteFsyncFailure = Object.assign(new Error('injected parent fsync after quarantine removal'), {
+    const failure = Object.assign(new Error('injected parent fsync after quarantine removal'), {
       code: 'EIO',
     });
-    return postDeleteFsyncFailure;
+    postDeleteFsyncFailure = failure;
+    return failure;
   }
 
   function expectClosedWithEbafd(fd: number): void {
@@ -281,6 +292,9 @@ if (!isolated && !underStryker) {
     failOwnedParentClose = false;
     ownedLockCloseValue = ownedLockCloseFailure;
     failPayloadClose = false;
+    failedPayloadFd = undefined;
+    payloadCloseValue = payloadCloseFailure;
+    releaseCurrentLockFd = undefined;
     failPayloadFsync = false;
     failReclaimGuardFsync = false;
   }
@@ -378,7 +392,101 @@ if (!isolated && !underStryker) {
     expect(calls).toBe(1);
     expect(payloadFsyncCount).toBe(1);
     expect(actualFs.existsSync(payloadLockPath)).toBe(false);
-    completedRoots.add(root);
+  });
+
+  linuxTest('admission guard cleanup failure retains the published lock without entering the callback', () => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    expect(access.provider).toBe('linux-proc-fd');
+    resetOwnedCloseCase(root);
+    const target = lockPath(root);
+    const guardPath = target + '.reclaim';
+    const failure = armPostDeleteFsync(root, '.' + path.basename(guardPath) + '.', '.released');
+    const label = 'admission guard cleanup failure';
+    let callbackCalls = 0;
+    let observedError: unknown;
+    try {
+      access.withExclusiveLock('owner.lock', label, () => {
+        callbackCalls += 1;
+        return 'must not enter after admission cleanup failure';
+      });
+    } catch (error) {
+      observedError = error;
+    }
+
+    expect(observedError).toBe(failure);
+    expect(callbackCalls).toBe(0);
+    expect(postDeleteFsyncCount).toBe(1);
+    expect(actualFs.existsSync(guardPath)).toBe(false);
+    const expectedBytes = Buffer.from(
+      JSON.stringify({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid, label }),
+    );
+    expect(readFileSync(target)).toEqual(expectedBytes);
+    const lockFd = ownedLockFd;
+    const parentFd = ownedParentFd;
+    expect(lockFd).toBeDefined();
+    expect(parentFd).toBeDefined();
+    if (lockFd === undefined || parentFd === undefined) throw new Error('admission descriptors were not captured');
+    const beforeIdentity = ownedDescriptorIdentities.get(lockFd);
+    expect(beforeIdentity).toBeDefined();
+    if (!beforeIdentity) throw new Error('admission lock descriptor identity was not captured');
+    const afterIdentity = lstatSync(target, { bigint: true });
+    expect(afterIdentity.dev).toBe(beforeIdentity.dev);
+    expect(afterIdentity.ino).toBe(beforeIdentity.ino);
+    expect(readFileSync(target)).toEqual(expectedBytes);
+    expectClosedWithEbafd(lockFd);
+    expectClosedWithEbafd(parentFd);
+  });
+
+  linuxTest('admission failure remains primary when parent descriptor close also fails', () => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    expect(access.provider).toBe('linux-proc-fd');
+    resetOwnedCloseCase(root);
+    const target = lockPath(root);
+    const guardPath = target + '.reclaim';
+    const admissionError = armPostDeleteFsync(root, '.' + path.basename(guardPath) + '.', '.released');
+    const label = 'admission plus parent close failure';
+    failOwnedParentClose = true;
+    let callbackCalls = 0;
+    let observedError: unknown;
+    try {
+      access.withExclusiveLock('owner.lock', label, () => {
+        callbackCalls += 1;
+      });
+    } catch (error) {
+      observedError = error;
+    }
+
+    expect(observedError).toBeInstanceOf(AggregateError);
+    if (!(observedError instanceof AggregateError))
+      throw new Error('admission and parent close errors were not preserved');
+    expect(observedError.errors).toEqual([admissionError, ownedParentCloseFailure]);
+    expect(observedError.cause).toBe(admissionError);
+    expect(callbackCalls).toBe(0);
+    expect(postDeleteFsyncCount).toBe(1);
+    expect(actualFs.existsSync(guardPath)).toBe(false);
+    const expectedBytes = Buffer.from(
+      JSON.stringify({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid, label }),
+    );
+    expect(readFileSync(target)).toEqual(expectedBytes);
+    const lockFd = ownedLockFd;
+    const parentFd = ownedParentFd;
+    expect(lockFd).toBeDefined();
+    expect(parentFd).toBeDefined();
+    if (lockFd === undefined || parentFd === undefined) throw new Error('admission descriptors were not captured');
+    const lockIdentity = ownedDescriptorIdentities.get(lockFd);
+    expect(lockIdentity).toBeDefined();
+    if (!lockIdentity) throw new Error('admission lock identity was not captured');
+    const retained = lstatSync(target, { bigint: true });
+    expect(retained.dev).toBe(lockIdentity.dev);
+    expect(retained.ino).toBe(lockIdentity.ino);
+    expect(readFileSync(target)).toEqual(expectedBytes);
+    expectClosedWithEbafd(lockFd);
+    const parentIdentity = ownedDescriptorIdentities.get(parentFd);
+    if (parentIdentity === undefined) throw new Error('admission parent identity was not captured');
+    expect(descriptorIdentity(parentFd)).toEqual(parentIdentity);
+    closeOnlyCapturedDescriptor(parentFd, root);
   });
 
   linuxTest('a nested contender does not create a reclaim guard for the current owner lock', () => {
@@ -582,7 +690,7 @@ if (!isolated && !underStryker) {
     try {
       expect(observedError).toBe(releaseError);
       expect(callbackCalls).toBe(1);
-      expect(reclaimGuardFsyncCount).toBe(1);
+      expect(reclaimGuardFsyncCount).toBe(2);
       expect(reclaimGuardFsyncSawSettledCallback).toBe(true);
       expect(lockFd).toBeDefined();
       expect(parentFd).toBeDefined();
@@ -597,6 +705,126 @@ if (!isolated && !underStryker) {
       closeOnlyCapturedDescriptor(parentFd, root);
     }
     if (assertionsPassed) completedRoots.add(root);
+  });
+
+  linuxTest('release removal and current lock descriptor close failures preserve both errors', () => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    expect(access.provider).toBe('linux-proc-fd');
+    resetOwnedCloseCase(root);
+    const target = lockPath(root);
+    const guardPath = target + '.reclaim';
+    const removalError = armPostDeleteFsync(root, '.' + path.basename(target) + '.', '.reclaimed');
+    let callbackCalls = 0;
+    let observedError: unknown;
+    try {
+      access.withExclusiveLock('owner.lock', 'release removal plus current fd close failure', () => {
+        callbackCalls += 1;
+        releaseCallbackSettled = true;
+        failPayloadClose = true;
+        return 'operation completed once';
+      });
+    } catch (error) {
+      observedError = error;
+    }
+
+    expect(observedError).toBeInstanceOf(AggregateError);
+    if (!(observedError instanceof AggregateError))
+      throw new Error('release removal and current fd close were not aggregated');
+    expect(observedError.errors).toEqual([removalError, payloadCloseFailure]);
+    expect(observedError.cause).toBe(removalError);
+    expect(callbackCalls).toBe(1);
+    expect(postDeleteFsyncCount).toBe(1);
+    expect(failPayloadClose).toBe(false);
+    const lockFd = ownedLockFd;
+    const parentFd = ownedParentFd;
+    const currentFd = failedPayloadFd;
+    expect(lockFd).toBeDefined();
+    expect(parentFd).toBeDefined();
+    expect(currentFd).toBeDefined();
+    if (lockFd === undefined || parentFd === undefined || currentFd === undefined)
+      throw new Error('release descriptors were not captured');
+    expect(currentFd).not.toBe(lockFd);
+    if (releaseCurrentLockFd === undefined) throw new Error('release read descriptor was not captured');
+    expect(currentFd).toBe(releaseCurrentLockFd);
+    expectClosedWithEbafd(lockFd);
+    expectClosedWithEbafd(parentFd);
+    const lockIdentity = ownedDescriptorIdentities.get(lockFd);
+    if (lockIdentity === undefined) throw new Error('release lock identity was not captured');
+    expect(descriptorIdentity(currentFd)).toEqual(lockIdentity);
+    expect(actualFs.existsSync(target)).toBe(false);
+    expect(actualFs.existsSync(guardPath)).toBe(false);
+    closeOnlyCapturedDescriptor(currentFd, target);
+    completedRoots.add(root);
+  });
+
+  linuxTest.each([
+    { label: 'ENOENT', failure: Object.assign(new Error('release read close ENOENT'), { code: 'ENOENT' }) },
+    { label: 'undefined', failure: undefined },
+  ])('release read descriptor close preserves $label as a failure', ({ failure }) => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    resetOwnedCloseCase(root);
+    let calls = 0;
+    let threw = false;
+    let caught: unknown;
+    try {
+      access.withExclusiveLock('owner.lock', 'release read close failure', () => {
+        calls += 1;
+        releaseCallbackSettled = true;
+        payloadCloseValue = failure;
+        failPayloadClose = true;
+      });
+    } catch (error) {
+      threw = true;
+      caught = error;
+    }
+    expect(threw).toBe(true);
+    expect(caught).toBe(failure);
+    expect(calls).toBe(1);
+    expect(failPayloadClose).toBe(false);
+    const lockFd = ownedLockFd;
+    const parentFd = ownedParentFd;
+    const currentFd = failedPayloadFd;
+    if (lockFd === undefined || parentFd === undefined || currentFd === undefined)
+      throw new Error('release close descriptors were not captured');
+    const lockIdentity = ownedDescriptorIdentities.get(lockFd);
+    if (lockIdentity === undefined) throw new Error('release close lock identity was not captured');
+    expectClosedWithEbafd(lockFd);
+    expectClosedWithEbafd(parentFd);
+    expect(descriptorIdentity(currentFd)).toEqual(lockIdentity);
+    expect(actualFs.existsSync(lockPath(root))).toBe(false);
+    expect(actualFs.existsSync(lockPath(root) + '.reclaim')).toBe(false);
+    closeOnlyCapturedDescriptor(currentFd, lockPath(root));
+  });
+
+  linuxTest('release cleanup preserves a thrown undefined after removal and closes its descriptors', () => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    resetOwnedCloseCase(root);
+    let callbackCalls = 0;
+    let threw = false;
+    let caught: unknown;
+    try {
+      access.withExclusiveLock('owner.lock', 'release cleanup undefined', () => {
+        callbackCalls += 1;
+        armPostDeleteFsync(root, '.' + path.basename(lockPath(root)) + '.', '.reclaimed');
+        postDeleteFsyncFailure = undefined;
+      });
+    } catch (error) {
+      threw = true;
+      caught = error;
+    }
+    expect(threw).toBe(true);
+    expect(caught).toBeUndefined();
+    expect(callbackCalls).toBe(1);
+    expect(postDeleteFsyncCount).toBe(1);
+    expect(actualFs.existsSync(lockPath(root))).toBe(false);
+    expect(actualFs.existsSync(lockPath(root) + '.reclaim')).toBe(false);
+    if (ownedLockFd === undefined || ownedParentFd === undefined)
+      throw new Error('owned descriptors were not captured');
+    expectClosedWithEbafd(ownedLockFd);
+    expectClosedWithEbafd(ownedParentFd);
   });
 
   linuxTest('sync release failure aggregates its exact error with the callback error', () => {
@@ -636,7 +864,7 @@ if (!isolated && !underStryker) {
       expect(observedError.errors.some((error) => error === callbackError)).toBe(true);
       expect(observedError.errors.some((error) => error === releaseError)).toBe(true);
       expect(callbackCalls).toBe(1);
-      expect(reclaimGuardFsyncCount).toBe(1);
+      expect(reclaimGuardFsyncCount).toBe(2);
       expect(reclaimGuardFsyncSawSettledCallback).toBe(true);
       expect(lockFd).toBeDefined();
       expect(parentFd).toBeDefined();
@@ -685,7 +913,7 @@ if (!isolated && !underStryker) {
     try {
       expect(observedError).toBe(releaseError);
       expect(callbackCalls).toBe(1);
-      expect(reclaimGuardFsyncCount).toBe(1);
+      expect(reclaimGuardFsyncCount).toBe(2);
       expect(reclaimGuardFsyncSawSettledCallback).toBe(true);
       expect(lockFd).toBeDefined();
       expect(parentFd).toBeDefined();
@@ -776,19 +1004,21 @@ if (!isolated && !underStryker) {
     const root = freshRoot();
     const access = requireSafeRepositoryAccess(root);
     const guardPath = lockPath(root) + '.reclaim';
-    const failure = armPostDeleteFsync(root, '.' + path.basename(guardPath) + '.', '.released');
+    let failure: Error | undefined;
     let callbackCalls = 0;
     let result: unknown;
     let observedError: unknown;
     try {
       result = access.withExclusiveLock('owner.lock', 'post-delete release guard fsync', () => {
         callbackCalls += 1;
+        failure = armPostDeleteFsync(root, '.' + path.basename(guardPath) + '.', '.released');
         return 'callback result is withheld by failed durability confirmation';
       });
     } catch (error) {
       observedError = error;
     }
 
+    expect(failure).toBeDefined();
     expect(observedError).toBe(failure);
     expect(observedError).toMatchObject({ code: 'EIO' });
     expect(observedError).not.toHaveProperty('name', 'SafeRepositoryLockRestoreError');
@@ -980,7 +1210,7 @@ if (!isolated && !underStryker) {
       expect(observedError.cause).toBe(callbackError);
       expect(calls).toBe(1);
       expect(ownedCloseAttempts).toEqual([lockFd, parentFd]);
-      expect(reclaimGuardFsyncCount).toBe(1);
+      expect(reclaimGuardFsyncCount).toBe(2);
       expect(reclaimGuardFsyncSawSettledCallback).toBe(true);
       expectRetainedLock(root, label, beforeBytes, beforeIdentity);
       passed = true;

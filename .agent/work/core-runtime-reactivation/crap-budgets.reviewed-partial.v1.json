@@ -206663,7 +206663,19 @@
     },
     {
       "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entered/closure:CallExpression:arguments[0]#0",
-      "rationale": "The old begin-only serializeState callback was consolidated into the current serializeState callback that revalidates/pins context and begins the effect. That current callback is retained once under the larger original context-validation ceiling; no second historical allowance is transferred. The same textual inventory identity now labels a new outer cleanup-wrapper callback, which is a distinct current role and receives its own new-role row."
+      "file": "src/runtime-kernel.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 1959,
+        "column": 41,
+        "start": 85599,
+        "end": 85672,
+        "bodyLine": 1959,
+        "bodyColumn": 53,
+        "bodyEndLine": 1959,
+        "bodyEndColumn": 114
+      },
+      "rationale": "Published inventory confirms this distinct begin-only serializeState callback at line 1959, bytes 85599-85672, source complexity 1. Its beginWorkflowAttemptEffect operation is consolidated into the retained context-validation callback's reviewed current successor at entryAcknowledgement. Record this original role as removed; its historical coverage, CRAP and ceilings are unavailable and no allowance transfers. The separate current acknowledgement/freeze cleanup-wrapper reuses the original context callback identity, is covered by the existing identity_reuses record, and retains its independently prospective 10/10 new-function row."
     },
     {
       "identity": "src/config/runtime-config.ts#fn:loadRuntimeConfig#0/closure:CallExpression:arguments[2]#0",
@@ -224732,7 +224744,8 @@
     "review_artifacts": [
       "/workspace/attachments/luna-core-conservative-budget-v47-20261016.md",
       "/workspace/attachments/luna-core-entry-identity-review-v48-20261016.md",
-      "/workspace/attachments/luna-core-exact-scope-review-v49-20261016.md"
+      "/workspace/attachments/luna-core-exact-scope-review-v49-20261016.md",
+      ".agent/work/core-runtime-reactivation/RUNTIME-CORE-FROZEN-LINEAGE-REVIEW-20261018.md"
     ],
     "correspondence": "151 original roles partition into149 retained and two existing removals;149 retained plus13 independently capped prospective roles exactly cover162 current roles. Original identities, baseline provenance and all ceilings stay unchanged; current Source locators and the acknowledgement binding are refreshed.",
     "limits": "Root mechanically checked exact callable sets and static ceilings; blind Luna independently reviewed saved row counts, caps, removals, semantic moves and the identity reuse. Neither establishes measured coverage/CRAP. Candidate numeric qualification remains pending; a subsequent exact-commit pin must preserve these reviewed bytes. Global original numeric admission, mutation and Runtime acceptance remain separate."

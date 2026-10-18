@@ -4,6 +4,54 @@ Status date: 2026-10-18. Current execution and evidence record. This document do
 
 ## Current state and owners
 
+Lock admission/release repair is in progress. The corrected three v369 cases
+fail assertions on unchanged published2c74c7d Source for the missing fresh-create guard, futile live-lock create
+attempt and lost primary error during simultaneous lock/guard cleanup failure.
+The candidate owns the guard through exclusive creation/payload publication,
+releases it before callback entry and preserves ordered cleanup errors. The
+phase-aligned reclaim suitev366 passes six cases/94assertions. The five older
+payload fixtures now inject at their intended release phase. Independently
+reviewed parent/current-descriptor cleanup repairs preserve simultaneous causes
+in public and CAS lock acquisition and release. The v370 two new dual-failure
+assertions fail before that repair and pass afterward. The seven-file v373
+check passes64cases, skips one Windows-only case and has zero failures; its
+isolated payload child completes the full declared pool. A subsequent added
+cleanup-undefined regression fails on published Source with a masking TypeError
+(v375), and the current complete payload pool passes(v374). Failed admission
+fixtures retain their physical locks even when denial assertions pass. Original
+RED and failed GREEN captures remain
+in `/workspace/attachments/lock-guard-regression-v36*-*`. The v368 invocation used
+the wrong working directory and supplies no product evidence. This is not numeric
+main-config closure; missing original root budgets and a CAS-specific dual-fault
+behavioral case remain separate. The final v378 seven-file result remains
+64PASS/1Windows-only skip/0FAIL, with22isolated payload cases. Independent review
+also exposes cleanup ENOENT being swallowed by a catch around the full release
+body. ENOENT handling now covers only the missing-path open; cleanup stays outside.
+Two exact close-code controls fail on published Source(v379) and pass in the
+current pool. The first strict hook catches three test-only narrowing errors;
+those assertions now validate the captured identity and descriptor types first.
+
+Storage-admission two-worker diagnostic6156295d-df28-4325-9800-6a6f8bb0f558
+binds2c74c7d and closes96275ms with16/16 assertion-confirmed Killed, no survivors
+or UNKNOWN, and212unattempted of228. Baseline28cases closes16880ms; full capture,
+closed groups and unchanged clean boot/commit are retained by stageAk8wTB.
+The expected partial exit1 denies a score. This qualifies the bounded two-worker
+pilot only; full mutation, fresh coverage and its exact frozen pair remain open.
+The v359 real-fixture CPU profile identifies durable filesystem operations as
+the largest observed cost. Reviewv361 permits private operation-local access
+reuse, but v363 declines that edit because wrapper construction is not shown as
+a hot path. No unmeasured speedup or durability reduction is admitted.
+
+Core correspondence now records the genuine published begin-only callback's
+line1959/bytes85599–85672 as a removed role, without importing another role's
+allowance. The independent tracked lineage review distinguishes the retained
+context/begin successor from the new acknowledgement/freeze adapter that reuses
+its old lexical identity. Existing caps,149retained/2removed/13new declarations
+and the identity-reuse edge are unchanged. The retained ef1d coverage inventory
+is absent on this host; fresh coverage and authoritative full-set validation
+are still required. The recovered151-function Source inventory explicitly does
+not admit a numeric original baseline.
+
 Real v357 ID0 control d80a128f-3451-4816-bb52-59a9373e1bc5 binds56999f9
 and closes17720ms with1assertion-confirmed Killed,0Survived/UNKNOWN and227
 unattempted of228. StageL4Fwca retains complete captures, closed groups and clean
@@ -12,8 +60,8 @@ import-time UNKNOWN stays unchanged. Blind Luna's worker review at
 `/workspace/attachments/storage-admission-worker-review-v357.md` finds private
 fixture/module/SQLite/spy/report ownership suitable for a bounded two-worker
 pilot. The selector adds this exact contour, rejects four workers, retains full
-argv/baseline/proof gates and has a60-assertion selector control. No parallel
-execution or full score is claimed before the real16-ID pilot closes.
+argv/baseline/proof gates and has a60-assertion selector control. Its subsequently
+closed16-ID diagnostic is recorded above; complete score admission remains open.
 
 The storage-admission import-time gap has an identity-preserving correction in
 the existing mutation image owner: Babel resolves function-body reads of the
