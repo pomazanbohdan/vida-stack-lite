@@ -668,6 +668,11 @@ BLOBs and large integers in their existing dedicated preservation cases. Avoid
 making every boundary row a distinct sorting/serialization workload when that is
 not the boundary's contract. The real4MiB image case also round-trips through the
 public validator; its ordinary success is independently asserted in that body.
+That same positive operation records actual SDK init/close receivers and requires
+each observed owned store to be closed exactly once before publishing the result.
+Compare receiver identities, not a fixed store count or deep-equal stand-ins.
+Scope and restore these observers around that one operation; never let a skipped
+cleanup survive until an unrelated large fixture times out.
 When a test helper retains an action failure, restore its owned resources and
 rethrow that same failure before any success-path assertion. A later successful
 matcher can consume causal assertion evidence; it must not mask the primary

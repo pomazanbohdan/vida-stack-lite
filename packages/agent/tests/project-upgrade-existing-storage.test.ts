@@ -2060,9 +2060,22 @@ describe('existing storage image preparation', () => {
     expect(host.bytes.byteLength).toBe(maximumBytes);
     const before = Buffer.from(host.bytes);
     const mastra = await makeMastra();
-    const image = await expectPreparedImage(() =>
-      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
-    );
+    const initializing = spyOn(LibSQLStore.prototype, 'init');
+    const closing = spyOn(LibSQLStore.prototype, 'close');
+    let image: Awaited<ReturnType<PrepareUnifiedExistingStorageImage>>;
+    try {
+      image = await expectPreparedImage(() => prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+      const initializedStores: readonly unknown[] = initializing.mock.contexts;
+      const closedStores: readonly unknown[] = closing.mock.contexts;
+      const ownedStores = new Set(initializedStores);
+      expect(ownedStores.size).toBeGreaterThan(0);
+      expect(closedStores.every((store) => ownedStores.has(store))).toBe(true);
+      expect(new Set(closedStores).size).toBe(ownedStores.size);
+      expect(closedStores).toHaveLength(ownedStores.size);
+    } finally {
+      closing.mockRestore();
+      initializing.mockRestore();
+    }
     expect(image.size).toBeLessThanOrEqual(maximumBytes);
     expect(expectReturned(() => loadFreshStorageImage().validateUnifiedDatabaseImage(image))).toEqual(image);
     expect(Buffer.from(host.bytes).equals(before)).toBe(true);

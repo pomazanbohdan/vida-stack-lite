@@ -645,6 +645,36 @@ round-trip350/460/357/368ms. These isolate the repaired contention scenario, not
 a full native speedup or score. Fresh published coverage/frozen/generated proof
 is still required, with no timeout increase or old result transfer.
 
+Checked38fb0df passes the ordinary strict hook and is pushed. Fresh immutablev322
+SDK NonzwG closes1803ms without suites. Coverage4ff37ddd-bb15-487e-a858-6d9fab2c5e1b
+at /tmp/contour-stage-R81ahn passes101cases/1013assertions in5.50s, exact F49/49,
+L203/203,S222/222,B61/61; same-run cac34ce frozen at /tmp/contour-stage-MdExfM
+passes9/9. Bounded four-workerba1a281e-3b6d-4d39-9fe3-a6135d23f6b5 at
+/tmp/rolling-contour-hWtlAy closes34254ms with16/16assertion-Killed including31,
+0Survived/UNKNOWN/timeout,472unattempted of488 and one101-case baseline.
+Captures/group/boot/commit/clean inputs close. The current full488four-worker
+attempt is active at /tmp/contour-stage-AIYl8M on those same immutable inputs.
+Do not infer a full score or merge the diagnostic outcomes into its results.
+
+Full four-worker72129ff3-14c4-4a04-85ed-4edaafefcbbe at
+/tmp/contour-stage-AIYl8M closes446676ms:275assertion-Killed/0Survived/1UNKNOWN/
+212unattempted of488. All capture/group/boot/commit/clean-input custody closes;
+OOM counters remain2/4 and resource_blocked=null. Current247 removes the SDK-close
+block at Source291–297. Its worker hits a5s timeout in the real100000-row positive
+case before a later explicit cleanup assertion; no Killed result is inferred.
+Unlike31, this operator changes cleanup in the preparation path. No production
+defect is demonstrated: the unmodified implementation closes its stores.
+
+The existing4MiB positive operation now observes actual SDK init/close receivers
+and asserts every observed owned store is closed exactly once, without a fixed
+instance count. Identity membership and unique close cardinality prevent a deep
+comparison or duplicate close from satisfying ownership. Observers restore in
+finally and no success matcher runs after an action failure. This catches omitted
+SDK cleanup in its own successful operation instead of waiting for unrelated
+resource-heavy cases. Focused5HVUag passes13cases/152assertions,88unselected,
+1187ms with full captures/closed group/unchanged boot; scoped static checks pass.
+Fresh generated247assertion proof and the next complete image remain pending.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is
