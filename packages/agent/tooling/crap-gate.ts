@@ -322,6 +322,7 @@ const scopedBudgetReviews = new Map([
     '747579196b592087576efef434c609c8f2715a33:main-envelopes',
     'scope_review_main_envelopes_release_ticket_identity_20261017',
   ],
+  ['4b9fa9adf90a4cb9af424f84efd246bd720e01e1:main-envelopes', 'scope_review_main_envelopes_fraction_reuse_20261018'],
   [
     'fb6fdbdc39c4c1615b561a46a98c75d73df26763:bun-service-operation-custody',
     'scope_review_custody_uuid_predicate_20261017',
