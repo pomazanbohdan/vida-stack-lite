@@ -102,13 +102,17 @@ Owner-directed v555/v557 retirement of archived preparation worktrees resolves
 that observed deficit; resume through fresh native admission with working
 headroom. Retained measured checkouts and original evidence remain protected.
 
-The later v621 native per-mutant admission is currently blocking: its158-case
+The later v621 native per-mutant admission refused: its158-case
 baseline passes, but2109136896bytes free is38346752below the unchanged2147483648
 floor. No mutant launches;981generated/0attempted is not a score. The terminal
 stage and automatic projection retain the refusal. v610 already retires both
 newly completed worker checkouts; v623 identifies no safely obsolete independent
-cache subset. Add durable capacity and working room before another producer;
-reuse these observations and preserve measured roots. WORK owns exact receipts.
+cache subset. v637 subsequently recovers874029056bytes through verified identical
+external closed dependency files and obsolete Bun extraction, preserving all
+measured checkout entries and original evidence. Available space becomes2943197184
+against the unchanged2147483648floor; fresh native admission still applies. Resume
+one serial producer after the checked packet is published. WORK and the existing
+cleanup manifest own exact paths, equality/custody limits and receipts.
 
 Consolidate the duplicated CLI/resolver diagnostic-token bounds in one private
 `nativeDiagnosticIdSet` owner and its invalid-token predicate, each with

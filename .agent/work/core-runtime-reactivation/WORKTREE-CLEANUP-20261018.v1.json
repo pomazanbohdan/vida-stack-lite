@@ -610,5 +610,31 @@
         }
       ]
     }
+  ],
+  "dependency_consolidations": [
+    {
+      "receipt": "/workspace/attachments/retained-dependency-dedup-v636/result.json",
+      "plan": "/workspace/attachments/retained-dependency-dedup-v636/plan.json",
+      "journal": "/workspace/attachments/retained-dependency-dedup-v636/applied.ndjson",
+      "before_available_bytes": "2069168128",
+      "after_available_bytes": "2943197184",
+      "observed_net_recovered_bytes": "874029056",
+      "hardlinked_files": 41256,
+      "skipped_metadata_copies": 6170,
+      "retained_dependency_owner": "/workspace/attachments/closed-dependencies-v281/vida-rolling-measure-v230-node_modules",
+      "preserved_dependency_roots": [
+        "/workspace/attachments/closed-dependencies-v281/vida-rolling-measure-v231-node_modules",
+        "/workspace/attachments/closed-dependencies-v301/vida-rolling-measure-v242-node_modules"
+      ],
+      "removed_paths": [
+        "/workspace/attachments/bun-1.4.3/bun-linux-x64-baseline/bun",
+        "/workspace/attachments/bun-1.4.3/bun-linux-x64-baseline",
+        "/workspace/attachments/bun-1.4.3"
+      ],
+      "measured_checkouts_modified": false,
+      "no_reattestation": true,
+      "postinspection": "/workspace/attachments/retained-dependency-postinspection-v637.json",
+      "limits": "Standalone closed dependency regular files only; paths, directories, symlink targets, bytes, modes, uid/gid and filemtime preserved. Inode, nlink and ctime change in external retained trees. No active/dependent writer; same-user references qualified, opaque root Docker services with no containers. Numeric floor unchanged; no race-free kernel CAS claim."
+    }
   ]
 }

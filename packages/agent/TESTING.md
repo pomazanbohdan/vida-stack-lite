@@ -204,6 +204,12 @@ so an unrelated binding rejection does not mask the intended boundary. The
 builder must consume the returned intent. Native matcher argument errors are
 runtime failures, not assertion-confirmed kills. Neither a generic JUnit Error
 nor a positive testcase assertion count establishes the throwing matcher's cause.
+For exact rejection identity, await the existing `rejectionReason` helper before
+asserting the returned error and disposing of fixtures. A Bun matcher typed as
+returning void is not an awaitable completion boundary. Format changed TypeScript
+files with the pinned oxfmt owner before staging, then run the unchanged normal
+hook. Keep full captured static checks there; do not repeat full suites to fix a
+formatting or matcher-typing failure.
 
 The main-host contour selects `tests/host-capability-boundary.test.ts`. Its two
 native cases own the seven host assertions extracted from the combined Cedar

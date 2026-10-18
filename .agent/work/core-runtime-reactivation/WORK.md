@@ -24,8 +24,9 @@ No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 Active contours: governance/public contracts, dispatch repair and controller
 observation. The checked test-only packet is published asa14c98b through ordinary
 hooks/push. It addresses the latest UNKNOWN and adds workflow/controller cases.
-All immutable rolling-measure-* checkouts remain untouched. Further numeric work
-is resource-blocked at v621 below; no replacement producer is launched.
+All immutable rolling-measure-* checkouts remain untouched. v637 resolves the
+observed resource deficit without changing them; next measurement waits for the
+current packet's normal checks/publication and fresh native admission.
 
 Latest local observations below apply only to their own captured inputs, before
 new residual test changes. They are incomplete and are not contour closure:
@@ -154,7 +155,7 @@ device27,2397720576bytes free against2147483648floor. That historical sample has
 value. Existing inventories v553/v554 are reused; no broad du/scan/hash or cache
 removal is performed. Native admission still applies to each new producer.
 
-### Current resource blocker
+### Resource refusal and verified capacity recovery
 
 Fresh immutablev619 binds publisheda14c98b; SDKv620 forms inputs without suites.
 Mutationv621/jlZKl6, runf18a4f24-fb21-40e3-b908-9f6c76202c47, passes its158-case
@@ -175,13 +176,74 @@ No cache is deleted. Completed worker checkouts have already been retired;
 remaining measured roots, dependency owner and original evidence stay protected.
 No new broad disk/AST/hash scan, checkout or numeric producer is started.
 
-Continuation needs durable capacity above the observed38346752-byte deficit,
-plus working room for the next producer. About1GiB extra is a practical buffer,
-not a changed admission threshold or a measured estimate of peak demand. Do not
-lower the floor or move evidence to volatile storage. Controller native raw-fault
+v637 recovers874029056bytes:2069168128->2943197184free,795713536above the unchanged
+2147483648numeric floor. Its exact paths/manifest and limits are recorded below;
+this resolves the observed capacity refusal, not numeric acceptance or a guarantee
+of peak demand. Fresh native admission still owns every successor. Do not lower
+the floor or move evidence to volatile storage. Controller native raw-fault
 reachability remains a separate GAP after read-onlyv622: a Proxy/getter hypothesis
 has neither native qualification nor a truthful durable argv receipt. No Source
 change or synthetic fault seam is justified by that hypothesis.
+
+### Latest three-hour audit and correction — 2026-10-18
+
+Requested evidence window12:39–15:39Z; current repairs follow that inspection.
+Published8e572c5/a14c98b/20f615d/9219801and their retained receipts already implement
+fixture-data capture, optional-result assertions, prelaunch reporting and metric-
+lane fencing. Reuse those changes and existing projection; no second writer,
+full suite, numeric producer, global AST/hash pass or repeated du is started.
+
+**Scripts.** One requested v633 inventory identifies42rolling-measure roots and
+repeated installed dependencies. Later queries only aggregate that saved TSV;
+the scan's permission denials remain recorded, so it is not a full privileged
+filesystem inventory. Read retention JSON through selected fields instead of
+dumping large process_snapshot bodies. Three original dependency inventories
+match; one bounded live comparison verifies every recorded path/type/mode,
+directory membership, symlink target and23713files/tree against actual bytes
+and original hashes. Shared buffers would reduce comparison allocation on a
+future implementation; no speedup is claimed for this one completed operation.
+
+BlindLunav634reviews the plan and corrected apply script. Root accepts a sealed
+plan, safe/index-bound paths, full lstat identity comparisons, per-file mapping
+journal and read-only reconciliation. Root rejects using the numeric2GiB floor
+as a cleanup prerequisite: cleanup is expressly outside numeric/build/install,
+and the numeric floor itself is unchanged. No active/dependent writer is found;
+same-user refs/maps/argv are checked, Docker has no containers, and privileged
+dockerd/containerd descriptors remain explicitly opaque. This cooperative
+no-writer fence is not a kernel race-free compare-and-swap primitive.
+
+Standalone retained dependency treesv231/v242 now hardlink41256identical regular
+files to retainedv230.6170copies are skipped for differing metadata/link counts.
+UID/GID, modes and file mtime remain exact; paths/directories/symlink targets and
+all measured checkout entries remain unchanged. Inodes/link counts/ctime change
+in these external retained trees; old runs are never reattested. Postinspection
+observes41256linked,0original selected copies,0staged temporaries and0foreign.
+The original inventories, receipts and all failure evidence are untouched.
+The exact obsolete extracted Bun1.4.3binary is also removed after matching bytes/
+mode to the retained installed process executable. Bun still reports1.4.3.
+Receipt: /workspace/attachments/retained-dependency-dedup-v636/result.json;
+sealed plan, original inventory refs, applied.ndjson, custody and recovery
+inspection remain alongside it. The tracked cleanup manifest links that receipt.
+
+**Tests/execution.** The9219801packet required two failed hook attempts before
+success: formatting, then await-thenable warnings. Format changed files before
+staging and reuse rejectionReason for awaited rejection identity; normal hooks
+retain complete captured static checks. A qualified ast-grep patternv635 finds
+no remaining same-shape awaited rejects chain in maintained tests (positive
+control1match, negative0); this is syntactic scope only, not all async correctness.
+The saved governance coverage map also identifies errorMessage's absent-own-
+message branch. Add a real new Error() control, prove its own descriptor is
+absent, then assert exact empty rendering through expectReturned. Focusedv638
+passes all6file cases in17ms; new contour coverage/mutation evidence is pending.
+
+Schedule comparison: (A) formatter + changed focused controls + one normal hook
+then one serial numeric producer is selected; current matched samples are17ms
+for six utility cases and533ms for165stage/progress cases, not comparable suite
+throughput. (B) one producer plus up to three ready disjoint proposal/review
+lanes remains policy; fewer ready tasks use fewer lanes instead of filler work.
+(C) three concurrent numeric producers/builds remains unqualified on4CPU/16GiB
+and is rejected for this cycle. No whole-cycle/token/parallel speedup is measured.
+Neither useful cleanup nor a focused PASS closes a contour or supplies CRAP/Killed.
 
 ## Execution order
 
@@ -222,7 +284,7 @@ through the existing Bun-invoked oxfmt owner; hooks are never bypassed.
 1. The assertion/workflow/controller packet is checked and published asa14c98b.
    Preserve its normal-hook evidence and each failed attempt's original custody/
    classification. Never bypass hooks or edit a measured checkout.
-2. Resolve the resource GAP, then run the next bounded mutation diagnostic and
+2. With v637 capacity recovery, run the next bounded mutation diagnostic and
    current incomplete contour coverage on immutable checked inputs. Fresh SDK
    formation only when required; do not repeat unchanged suites or existing
    AST/inventory/hash passes.

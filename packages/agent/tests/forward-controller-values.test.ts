@@ -54,6 +54,12 @@ test('isRecord retains the generic non-null non-array object predicate', () => {
 });
 
 test('errorMessage preserves Error.message and String conversion for other values', () => {
+  const emptyError = new Error();
+  assert.equal(Object.getOwnPropertyDescriptor(emptyError, 'message'), undefined);
+  assert.equal(
+    expectReturned(() => errorMessage(emptyError)),
+    '',
+  );
   const error = new Error('exact message');
   assert.equal(
     expectReturned(() => errorMessage(error)),
