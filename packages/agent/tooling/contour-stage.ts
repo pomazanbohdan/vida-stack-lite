@@ -10,11 +10,44 @@ import {
   isolatedCommand,
   throwAfterCampaignReceiptFailure,
 } from './contour-campaign.ts';
-import { runContourProgressWithNative } from './contour-progress-cli.ts';
+import { readContourArtifact, runContourProgressWithNative } from './contour-progress-cli.ts';
 import { executeMutationCommand, type MutationProcessResult } from './mutation-evidence.ts';
 import { mutationPartitions } from './mutation-partitions.ts';
 
 type Lane = 'coverage' | 'frozen-crap' | 'crap-applicability' | 'mutation';
+
+/** Owner-reported diagnostic counters never enter report routing or native proof admission. */
+export function contourStageDiagnostic(stdout: string): Record<string, unknown> {
+  let mutation: Record<string, unknown> | undefined;
+  for (const line of stdout.split('\n')) {
+    if (!line.startsWith('{')) continue;
+    const value: unknown = JSON.parse(line);
+    if (!isRecord(value) || value.schema !== 'MutationBatchPilotSummary/v2') continue;
+    if (mutation) throw new Error('Ambiguous mutation diagnostic summaries.');
+    if (
+      !isRecord(value.binding) ||
+      typeof value.binding.run_id !== 'string' ||
+      value.binding.run_id.length === 0 ||
+      value.binding.run_id.length > 128 ||
+      !isRecord(value.totals)
+    )
+      throw new Error('Mutation diagnostic omits its run or counters.');
+    const totals: Record<string, number> = {};
+    for (const key of ['generated', 'attempted', 'killed', 'survived', 'unknown', 'unattempted']) {
+      const count = value.totals[key];
+      if (typeof count !== 'number' || !Number.isSafeInteger(count) || count < 0)
+        throw new Error('Invalid mutation diagnostic counter.');
+      totals[key] = count;
+    }
+    if (
+      totals.attempted !== totals.killed! + totals.survived! + totals.unknown! ||
+      totals.generated !== totals.attempted! + totals.unattempted!
+    )
+      throw new Error('Mutation diagnostic counters do not reconcile.');
+    mutation = { qualification: 'diagnostic-only', run_id: value.binding.run_id, totals };
+  }
+  return mutation ? { mutation } : {};
+}
 
 /** Exact structured producer locations only; partial native summaries are never reports. */
 export function contourStageReportArguments(lane: Lane, stdout: string, coverageRun?: string): string[] {
@@ -79,7 +112,7 @@ export function contourStagePublicationAdmitted(result: MutationProcessResult, l
 async function main(): Promise<void> {
   if (process.argv.length === 3 && process.argv[2] === '--help') {
     process.stdout.write(
-      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]]\nRuns one declared contour stage, retains terminal custody and automatically publishes its exact report. Frozen CRAP and the separate data-only applicability lane require coverage-run and budget-ref. Worker count is an explicit opt-in (default2), mutation-only with isolated-workers, and subject to the native owner allowlist. Partial native runs never publish a score.\n',
+      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]] [--diagnostic-mutant-ids <id[,id...]>]\nRuns one declared contour stage, retains terminal custody and automatically publishes its exact report. Frozen CRAP and the separate data-only applicability lane require coverage-run and budget-ref. Worker count is an explicit opt-in (default2), mutation-only with isolated-workers, and subject to the native owner allowlist. Diagnostic ID selection is serial mutation-only and forwards to the existing native owner; its incomplete result remains nonzero and never publishes a score. Full launch data stays in launch.json; stdout prints compact location and terminal outcome records.\n',
     );
     return;
   }
@@ -95,6 +128,7 @@ async function main(): Promise<void> {
       'budget-ref': { type: 'string' },
       'isolated-workers': { type: 'boolean', default: false },
       workers: { type: 'string' },
+      'diagnostic-mutant-ids': { type: 'string' },
     },
   });
   const { lane } = values;
@@ -115,7 +149,8 @@ async function main(): Promise<void> {
     (frozen && (!values['coverage-run'] || !values['budget-ref'])) ||
     (!frozen && (values['coverage-run'] || values['budget-ref'])) ||
     (values['isolated-workers'] && lane !== 'mutation') ||
-    (values.workers !== undefined && (!values['isolated-workers'] || !['2', '4'].includes(values.workers)))
+    (values.workers !== undefined && (!values['isolated-workers'] || !['2', '4'].includes(values.workers))) ||
+    (values['diagnostic-mutant-ids'] !== undefined && (lane !== 'mutation' || values['isolated-workers']))
   )
     throw new Error('Stage arguments differ from the selected lane contract.');
   const selectedLane: Lane =
@@ -147,10 +182,12 @@ async function main(): Promise<void> {
           '--contour',
           partition.name,
           '--batch-size',
-          '128',
+          values['diagnostic-mutant-ids'] !== undefined ? '1' : '128',
           '--max-batches',
-          '128',
-          '--admit-complete',
+          values['diagnostic-mutant-ids'] !== undefined ? '1' : '128',
+          ...(values['diagnostic-mutant-ids'] !== undefined
+            ? ['--diagnostic-mutant-ids', values['diagnostic-mutant-ids']]
+            : ['--admit-complete']),
           ...(values['isolated-workers'] ? ['--isolated-workers'] : []),
           ...(values.workers !== undefined ? ['--workers', values.workers] : []),
         ];
@@ -166,7 +203,16 @@ async function main(): Promise<void> {
   const timeout = lane === 'mutation' ? 930_000 : lane === 'coverage' ? 330_000 : 60_000;
   const launch = { commit, boot, contour: partition.name, lane, output, timeout_ms: timeout, ...isolated };
   record('launch', launch);
-  process.stdout.write(JSON.stringify({ schema: 'VidaContourStageLocation/v1', directory, ...launch }) + '\n');
+  process.stdout.write(
+    JSON.stringify({
+      schema: 'VidaContourStageLocation/v1',
+      directory,
+      commit,
+      contour: partition.name,
+      lane,
+      timeout_ms: timeout,
+    }) + '\n',
+  );
   const started = performance.now();
   const result = await executeMutationCommand(isolated.command, packageRoot, timeout, {
     ownedProcessGroup: true,
@@ -189,6 +235,48 @@ async function main(): Promise<void> {
   };
   record('execution', terminal);
   let published = false;
+  let captured: { ok: true; stdout: string } | { ok: false; error: unknown } | undefined;
+  const capturedOutput = () => {
+    if (!captured) {
+      try {
+        captured = {
+          ok: true,
+          stdout: readContourArtifact(path.join(directory, 'stdout.log'), 128 * 1024 * 1024).toString('utf8'),
+        };
+      } catch (error) {
+        captured = { ok: false, error };
+      }
+    }
+    if (!captured.ok) throw captured.error;
+    return captured.stdout;
+  };
+  const diagnostic = (detail: Record<string, unknown>) => {
+    let counters: Record<string, unknown>;
+    try {
+      counters = contourStageDiagnostic(capturedOutput());
+    } catch (error) {
+      counters = { diagnostic_error: String(error) };
+    }
+    return {
+      schema: 'VidaContourStageOutcome/v1',
+      directory,
+      contour: partition.name,
+      lane,
+      process: campaignProcessState(result),
+      elapsed_ms: terminal.elapsed_ms,
+      exit_code: result.exitCode,
+      signal: result.signal,
+      timed_out: result.timedOut,
+      spawn_error: result.spawnError,
+      capture_complete: result.output_capture?.complete === true,
+      group_closed: result.processCustody?.processGroupTerminationObserved === true,
+      boot_unchanged: terminal.boot_after === boot,
+      commit_unchanged: terminal.commit_after === commit,
+      clean_inputs: !terminal.tracked_status_after,
+      ...counters,
+      ...detail,
+    };
+  };
   try {
     if (
       terminal.boot_after !== boot ||
@@ -201,7 +289,7 @@ async function main(): Promise<void> {
       );
     const reportArgs = contourStageReportArguments(
       selectedLane,
-      readFileSync(path.join(directory, 'stdout.log'), 'utf8'),
+      capturedOutput(),
       frozen ? path.resolve(values['coverage-run']!) : undefined,
     );
     const snapshot = values.snapshot ?? path.join(output, 'CONTOUR-STATUS.json');
@@ -223,13 +311,20 @@ async function main(): Promise<void> {
       reports: reportArgs,
       snapshot: path.join(output, 'CONTOUR-STATUS.json'),
     });
+    process.stdout.write(JSON.stringify(diagnostic({ publication: 'published', reports: reportArgs })) + '\n');
   } catch (error) {
     try {
+      const detail = diagnostic({
+        publication: published ? 'published-receipt-failed' : 'unknown-or-partial',
+        error: String(error),
+      });
       record('publication-error', {
         error: String(error),
         status: published ? 'published-receipt-failed' : 'unknown-or-partial',
         source_commit: commit,
+        diagnostic: detail,
       });
+      process.stdout.write(JSON.stringify(detail) + '\n');
     } catch (receiptError) {
       return throwAfterCampaignReceiptFailure(error, receiptError, { source_commit: commit, boot });
     }

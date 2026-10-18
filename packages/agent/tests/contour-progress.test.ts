@@ -1,5 +1,5 @@
-import { expect, test } from 'bun:test';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { expect, spyOn, test } from 'bun:test';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, truncateSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
@@ -16,6 +16,7 @@ import {
   recordContourReport,
   runContourProgress,
   runContourProgressWithNative,
+  readContourArtifact,
 } from '../tooling/contour-progress-cli.ts';
 import { campaignReportArguments } from '../tooling/contour-campaign.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
@@ -34,6 +35,42 @@ const receipt = {
   recorded_at: '2026-10-15T00:00:00.000Z',
 };
 const empty = { schema: 'VidaContourProgress/v1', attempts: [] };
+
+test('shared contour reads bound native allocation even for a huge sparse artifact', () => {
+  const deadline = performance.now() + 5_000;
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-bounded-artifact-'));
+  const file = path.join(root, 'artifact');
+  let passed = false;
+  try {
+    const exact = Buffer.from([0, 1, 255]);
+    writeFileSync(file, exact);
+    expect(readContourArtifact(file, exact.length)).toEqual(exact);
+    writeFileSync(file, '');
+    truncateSync(file, 1024 ** 3);
+    const allocate = Buffer.allocUnsafe.bind(Buffer);
+    const allocations: number[] = [];
+    const allocating = spyOn(Buffer, 'allocUnsafe').mockImplementation((size) => {
+      allocations.push(size);
+      return allocate(size);
+    });
+    let failure: { error: unknown } | undefined;
+    try {
+      readContourArtifact(file, 16);
+    } catch (error) {
+      failure = { error };
+    } finally {
+      allocating.mockRestore();
+    }
+    expect(failure?.error).toBeInstanceOf(Error);
+    expect(String(failure?.error)).toMatch(/limit/u);
+    expect(allocations.length).toBeGreaterThan(0);
+    expect(allocations.every((size) => size <= 17)).toBe(true);
+    passed = true;
+  } finally {
+    if (passed && performance.now() < deadline) rmSync(root, { recursive: true });
+    else console.error('Retained bounded contour artifact fixture: ' + root);
+  }
+});
 
 function dataOnlyProjectionFixture() {
   const applicability = crapApplicabilityReceiptFixture();

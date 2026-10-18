@@ -6,12 +6,12 @@ Derived, non-gating view of owner-issued reports. WORK remains the decision owne
 
 Historical contours with exact F/L/S/B coverage: **15/45**.
 Historical same-coverage-run coverage + scoped frozen CRAP pairs: **14/45**.
-Historical complete coverage + assertion-confirmed mutation pair closures: **7/45**; static contours: **1**.
-Separate same-coverage-run local triples with scoped frozen CRAP: **7/45**.
+Historical complete coverage + assertion-confirmed mutation pair closures: **9/45**; static contours: **1**.
+Separate same-coverage-run local triples with scoped frozen CRAP: **9/45**.
 Separate independently reviewed data-only coverage + CRAP N/A + full native closures: **1**; excluded from numeric triples.
-Contours without a complete numeric triple or reviewed data-only closure: **37**.
-Executable contours without a recorded coverage + mutation pair: **38**.
-Executable contours without a recorded complete local triple: **38**.
+Contours without a complete numeric triple or reviewed data-only closure: **35**.
+Executable contours without a recorded coverage + mutation pair: **36**.
+Executable contours without a recorded complete local triple: **36**.
 
 Current freshness is unverified. Parent operation statuses are owner-reported without re-admitting their receipts. The scoped frozen CRAP lane records its owner-issued local measurements; exact coverage qualification and global frozen-gate acceptance remain pending. A local triple is not global acceptance.
 
@@ -36,7 +36,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-runtime-facade | 23/23 · 89/89 · 103/103 · 96/96 | 9 / 9 | 311/311 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
 | bun-lifecycle-state | 29/29 · 184/184 · 193/193 · 129/129 | 21 / 21 | 521/877 (fail; raw runner Killed; unqualified) | BLOCKED | open / unknown | 21 / 21 | open / unknown |
 | bun-final-assurance | 95/95 · 324/325 · 361/364 · 295/305 | 32 / 32 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
-| bun-runtime-initialization | 16/16 · 84/84 · 95/95 · 53/53 | 9 / 9 | unknown | BLOCKED | open / unknown | 9 / 9 | open / unknown |
+| bun-runtime-initialization | 16/16 · 84/84 · 95/95 · 53/53 | 9 / 9 | 164/164 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
 | bun-development-controller | 49/62 · 180/243 · 192/273 · 194/282 | 17 / 132 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-public-entrypoints | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-cli-toolchain | 38/39 · 247/265 · 271/299 · 317/397 | 34 / 34 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
@@ -58,7 +58,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-governance-and-public-contracts | 94/106 · 329/362 · 355/404 · 182/249 | 32 / 32 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-lifecycle | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-storage-admission | 18/18 · 102/102 · 105/105 · 17/17 | 5 / 5 | unknown | BLOCKED | open / unknown | 5 / 5 | open / unknown |
-| bun-project-upgrade-existing-storage-image | 49/49 · 203/203 · 222/222 · 61/61 | 9 / 9 | unknown | BLOCKED | open / unknown | 9 / 9 | open / unknown |
+| bun-project-upgrade-existing-storage-image | 49/49 · 203/203 · 222/222 · 61/61 | 9 / 9 | 488/488 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
 | bun-orchestration-recovery-contracts | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-cli-release-and-installation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
 | bun-controller-observation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
@@ -698,10 +698,10 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 ### bun-runtime-initialization
 
-Historical complete local closure: not recorded.
-Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
-Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
-Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Historical complete local closure: `c273b5ef-baf2-4382-acf0-5e06491dda42` + `66522aee-3069-44ae-b7d6-fc1cde4cdf12`.
+Achieved in that closure: F/L/S/B 16/16 · 84/84 · 95/95 · 53/53; CC / entry CRAP 9 / 9; mutation 164/164 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only).
+Historical complete local coverage + mutation + frozen CRAP closure: `c273b5ef-baf2-4382-acf0-5e06491dda42` + `66522aee-3069-44ae-b7d6-fc1cde4cdf12` + `c273b5ef-baf2-4382-acf0-5e06491dda42`.
+Frozen CRAP measurement in that closure: 9 / 9; scoped receipt coverage run: `c273b5ef-baf2-4382-acf0-5e06491dda42`.
 Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
@@ -759,6 +759,10 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | d108cb61-4137-45aa-a40b-4f44ba9262ad | d2a37b70f4d27ca32a6f5e093c997c2723a041b1 | 2026-10-17T23:55:56.524Z | focused-diagnostic; owner accepted locally; selection bound | 16/16 · 84/84 · 95/95 · 53/53 | /tmp/vida-rolling-measure-v297/packages/agent/coverage/bun-unified/diagnostics/d108cb61-4137-45aa-a40b-4f44ba9262ad.focused-coverage.json |
 | coverage-outcome | d108cb61-4137-45aa-a40b-4f44ba9262ad | d2a37b70f4d27ca32a6f5e093c997c2723a041b1 | 2026-10-17T23:55:56.537Z | BLOCKED; unqualified; selection unbound | no metric evidence | /tmp/vida-rolling-measure-v297/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/d108cb61-4137-45aa-a40b-4f44ba9262ad.json |
 | frozen-crap | d108cb61-4137-45aa-a40b-4f44ba9262ad | d2a37b70f4d27ca32a6f5e093c997c2723a041b1 | 2026-10-17T23:56:02.878Z | scoped-proof-pass; owner accepted locally; selection bound | 9 / 9 (scoped proof; owner measured) | /tmp/vida-rolling-measure-v297/packages/agent/coverage/bun-unified/diagnostics/d108cb61-4137-45aa-a40b-4f44ba9262ad.scoped-crap.json |
+| coverage | c273b5ef-baf2-4382-acf0-5e06491dda42 | 171dc7e069aa07e48dcb5203dbf2f276ad2d9399 | 2026-10-18T05:32:00.163Z | focused-diagnostic; owner accepted locally; selection bound | 16/16 · 84/84 · 95/95 · 53/53 | /tmp/vida-rolling-measure-v328/packages/agent/coverage/bun-unified/diagnostics/c273b5ef-baf2-4382-acf0-5e06491dda42.focused-coverage.json |
+| coverage-outcome | c273b5ef-baf2-4382-acf0-5e06491dda42 | 171dc7e069aa07e48dcb5203dbf2f276ad2d9399 | 2026-10-18T05:32:00.174Z | BLOCKED; unqualified; selection unbound | no metric evidence | /tmp/vida-rolling-measure-v328/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/c273b5ef-baf2-4382-acf0-5e06491dda42.json |
+| frozen-crap | c273b5ef-baf2-4382-acf0-5e06491dda42 | 171dc7e069aa07e48dcb5203dbf2f276ad2d9399 | 2026-10-18T05:32:13.620Z | scoped-proof-pass; owner accepted locally; selection bound | 9 / 9 (scoped proof; owner measured) | /tmp/vida-rolling-measure-v328/packages/agent/coverage/bun-unified/diagnostics/c273b5ef-baf2-4382-acf0-5e06491dda42.scoped-crap.json |
+| native-mutation | 66522aee-3069-44ae-b7d6-fc1cde4cdf12 | 171dc7e069aa07e48dcb5203dbf2f276ad2d9399 | 2026-10-18T05:47:19.769Z | pilot-pass; owner accepted locally; selection bound | 164/164 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | /tmp/vida-rolling-measure-v328/packages/agent/.tmp/mutation-batch-66522aee-3069-44ae-b7d6-fc1cde4cdf12-wQiEBq/native-partition-report.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
@@ -1150,10 +1154,10 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 ### bun-project-upgrade-existing-storage-image
 
-Historical complete local closure: not recorded.
-Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
-Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
-Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Historical complete local closure: `b0097b37-3bc9-4de9-b3ec-e81fbd481c2d` + `b4334b84-111a-4c79-905c-1c1baca94114`.
+Achieved in that closure: F/L/S/B 49/49 · 203/203 · 222/222 · 61/61; CC / entry CRAP 9 / 9; mutation 488/488 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only).
+Historical complete local coverage + mutation + frozen CRAP closure: `b0097b37-3bc9-4de9-b3ec-e81fbd481c2d` + `b4334b84-111a-4c79-905c-1c1baca94114` + `b0097b37-3bc9-4de9-b3ec-e81fbd481c2d`.
+Frozen CRAP measurement in that closure: 9 / 9; scoped receipt coverage run: `b0097b37-3bc9-4de9-b3ec-e81fbd481c2d`.
 Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
@@ -1246,6 +1250,10 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | 1d673351-555f-46c3-a8cb-432949bbb446 | 6ee36916f2d96c5c579892e5560e16374a175bf5 | 2026-10-18T05:01:40.218Z | focused-diagnostic; owner accepted locally; selection bound | 49/49 · 203/203 · 222/222 · 61/61 | /tmp/vida-rolling-measure-v326/packages/agent/coverage/bun-unified/diagnostics/1d673351-555f-46c3-a8cb-432949bbb446.focused-coverage.json |
 | coverage-outcome | 1d673351-555f-46c3-a8cb-432949bbb446 | 6ee36916f2d96c5c579892e5560e16374a175bf5 | 2026-10-18T05:01:40.238Z | BLOCKED; unqualified; selection unbound | no metric evidence | /tmp/vida-rolling-measure-v326/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/1d673351-555f-46c3-a8cb-432949bbb446.json |
 | frozen-crap | 1d673351-555f-46c3-a8cb-432949bbb446 | 6ee36916f2d96c5c579892e5560e16374a175bf5 | 2026-10-18T05:01:59.402Z | scoped-proof-pass; owner accepted locally; selection bound | 9 / 9 (scoped proof; owner measured) | /tmp/vida-rolling-measure-v326/packages/agent/coverage/bun-unified/diagnostics/1d673351-555f-46c3-a8cb-432949bbb446.scoped-crap.json |
+| coverage | b0097b37-3bc9-4de9-b3ec-e81fbd481c2d | 171dc7e069aa07e48dcb5203dbf2f276ad2d9399 | 2026-10-18T05:18:36.325Z | focused-diagnostic; owner accepted locally; selection bound | 49/49 · 203/203 · 222/222 · 61/61 | /tmp/vida-rolling-measure-v328/packages/agent/coverage/bun-unified/diagnostics/b0097b37-3bc9-4de9-b3ec-e81fbd481c2d.focused-coverage.json |
+| coverage-outcome | b0097b37-3bc9-4de9-b3ec-e81fbd481c2d | 171dc7e069aa07e48dcb5203dbf2f276ad2d9399 | 2026-10-18T05:18:36.337Z | BLOCKED; unqualified; selection unbound | no metric evidence | /tmp/vida-rolling-measure-v328/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/b0097b37-3bc9-4de9-b3ec-e81fbd481c2d.json |
+| frozen-crap | b0097b37-3bc9-4de9-b3ec-e81fbd481c2d | 171dc7e069aa07e48dcb5203dbf2f276ad2d9399 | 2026-10-18T05:18:41.964Z | scoped-proof-pass; owner accepted locally; selection bound | 9 / 9 (scoped proof; owner measured) | /tmp/vida-rolling-measure-v328/packages/agent/coverage/bun-unified/diagnostics/b0097b37-3bc9-4de9-b3ec-e81fbd481c2d.scoped-crap.json |
+| native-mutation | b4334b84-111a-4c79-905c-1c1baca94114 | 171dc7e069aa07e48dcb5203dbf2f276ad2d9399 | 2026-10-18T05:31:15.360Z | pilot-pass; owner accepted locally; selection bound | 488/488 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | /tmp/vida-rolling-measure-v328/packages/agent/.tmp/mutation-batch-b4334b84-111a-4c79-905c-1c1baca94114-oUjA61/native-partition-report.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

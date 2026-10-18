@@ -10,7 +10,7 @@ import {
   mergeContourProgress,
   selectContourCampaign,
 } from './contour-progress.ts';
-import { runContourProgress } from './contour-progress-cli.ts';
+import { readContourArtifact, runContourProgress } from './contour-progress-cli.ts';
 import { fsSafeApplicabilityReview, latestScopedCrapBudgetRef } from './crap-gate.ts';
 import { executeMutationCommand, type MutationProcessResult } from './mutation-evidence.ts';
 import { mutationLimits } from './mutation-limits.ts';
@@ -178,8 +178,7 @@ export function campaignProcessState(result: MutationProcessResult): CampaignOut
 }
 
 function jsonFile(file: string): unknown {
-  const bytes = readFileSync(file);
-  if (bytes.length > maximumOutputBytes) throw new Error('Campaign artifact exceeds byte bound: ' + file);
+  const bytes = readContourArtifact(file, maximumOutputBytes);
   return JSON.parse(bytes.toString('utf8')) as unknown;
 }
 
@@ -486,7 +485,10 @@ async function main(): Promise<void> {
               jsonFile(report);
             }
           } else {
-            const lines = readFileSync(path.join(stageDirectory, 'stdout.log'), 'utf8').trim().split('\n');
+            const lines = readContourArtifact(path.join(stageDirectory, 'stdout.log'), maximumOutputBytes)
+              .toString('utf8')
+              .trim()
+              .split('\n');
             for (const line of lines) {
               if (!line.startsWith('{')) continue;
               const value: unknown = JSON.parse(line);

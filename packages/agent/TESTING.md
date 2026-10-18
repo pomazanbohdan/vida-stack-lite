@@ -1933,6 +1933,33 @@ The native controller uses batches of128 to reduce parent barriers while keeping
 the same complete selection, fixed worker limit and900/930-second budgets. This
 is an execution setting, not a measured speedup or a new timeout allowance.
 
+Stage stdout contains a compact `VidaContourStageLocation/v1` and terminal
+`VidaContourStageOutcome/v1`; full argv/environment remain in `launch.json`.
+The terminal record carries retained paths, elapsed time, process/exit/signal/
+timeout/spawn result, capture/group closure, boot/commit/clean-input checks and
+publication outcome. It reuses the one retained stdout read, including a failed
+read, and adds no Source/AST/hash scan. Mutation counters are explicitly
+`diagnostic-only`: even all-Killed counters cannot substitute for the existing
+native report reader or be routed through ordinary report admission. Missing,
+malformed, ambiguous or inconsistent diagnostics never replace the primary
+publication error. Read diagnostic artifacts with the shared bounded descriptor
+owner; enforce the byte limit while reading, before JSON parsing/allocation can
+consume an arbitrarily large file. Preserve existing per-caller limits and the
+stricter native proof reader.
+
+For a repair's generated-mutant controls, use the same maintained controller:
+
+```sh
+bun run test:contour:stage --contour bun-runtime-initialization --lane mutation --diagnostic-mutant-ids 92,115 --output /absolute/canonical/.agent/work/core-runtime-reactivation
+```
+
+ID selection remains serial and mutation-only; it cannot combine with isolated
+workers. The native owner validates the IDs and selection bound. A partial
+diagnostic keeps its nonzero exit and retained diagnostic counters; it never
+publishes a mutation score or a closure. Confirm the intended IDs are assertion-
+Killed, then run the full selected universe. This replaces private launcher
+copies without adding another test runner or report authority.
+
 Arbitrary private launchers still require an explicit Root import after terminal
 custody. Audit a suspected omission against retained report paths and the existing
 snapshot; do not rerun tests or rescan Source to repair an import gap.

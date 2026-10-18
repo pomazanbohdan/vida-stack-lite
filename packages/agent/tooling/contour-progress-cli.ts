@@ -1,15 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import {
-  closeSync,
-  existsSync,
-  fsyncSync,
-  mkdirSync,
-  openSync,
-  readFileSync,
-  readdirSync,
-  renameSync,
-  writeFileSync,
-} from 'node:fs';
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -24,15 +14,35 @@ import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 import { readBoundedMutationArtifact, mutationArtifactByteLimit } from './mutation-artifact-reader.ts';
 import { mutationPartitions } from './mutation-partitions.ts';
 import { readNativeMutationPartitionProof } from './native-mutation-proof-reader.ts';
+import { readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
 
 const empty = { schema: 'VidaContourProgress/v1', attempts: [] };
 const maximumBytes = 32 * 1024 * 1024;
 const fatalDecoder = new TextDecoder('utf-8', { fatal: true });
+/** Bounded diagnostic bytes only; native proof still uses its stricter persisted reader. */
+export function readContourArtifact(file: string, byteLimit = maximumBytes): Buffer {
+  const descriptor = openSync(file, 'r');
+  let failure: { error: unknown } | undefined;
+  try {
+    return readFileDescriptorBoundedSync(descriptor, byteLimit);
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeSync(descriptor);
+        },
+      ],
+      failure,
+    );
+  }
+}
 function load(file: string): unknown;
 function load(file: string, withDigest: true): { value: unknown; sha256: string };
 function load(file: string, withDigest = false): unknown {
-  const bytes = readFileSync(file);
-  if (bytes.length > maximumBytes) throw new Error('Contour artifact exceeds byte bound: ' + file);
+  const bytes = readContourArtifact(file);
   const value: unknown = JSON.parse(bytes.toString('utf8'));
   return withDigest ? { value, sha256: createHash('sha256').update(bytes).digest('hex') } : value;
 }

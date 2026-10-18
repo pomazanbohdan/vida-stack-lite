@@ -3,6 +3,7 @@ import {
   contourStageOutput,
   contourStagePublicationAdmitted,
   contourStageReportArguments,
+  contourStageDiagnostic,
 } from '../tooling/contour-stage.ts';
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -154,6 +155,34 @@ test('partial mutation counters and foreign or ambiguous locations never become 
     ),
   ).toThrow('absolute');
   expect(() => contourStageReportArguments('coverage', '{broken')).toThrow();
+});
+
+test('terminal mutation diagnostics expose incomplete counters without granting report authority', () => {
+  const totals = { generated: 7, attempted: 5, killed: 3, survived: 1, unknown: 1, unattempted: 2 };
+  const summary = { schema: 'MutationBatchPilotSummary/v2', binding: { run_id: 'retained-run' }, totals };
+  const stdout = 'ordinary diagnostic\n' + JSON.stringify(summary);
+  expect(contourStageDiagnostic(stdout)).toEqual({
+    mutation: { qualification: 'diagnostic-only', run_id: 'retained-run', totals },
+  });
+  expect(() => contourStageReportArguments('mutation', stdout)).toThrow('exactly one');
+  expect(contourStageDiagnostic(JSON.stringify({ schema: 'MutationBatchPilotProgress/v1', totals }))).toEqual({});
+  expect(() => contourStageDiagnostic(stdout + '\n' + JSON.stringify(summary))).toThrow('Ambiguous');
+  for (const replacement of [
+    undefined,
+    { ...totals, killed: -1 },
+    { ...totals, killed: 1.5 },
+    { ...totals, generated: 8 },
+    { ...totals, attempted: 6 },
+  ])
+    expect(() => contourStageDiagnostic(JSON.stringify({ ...summary, totals: replacement }))).toThrow();
+  expect(() => contourStageDiagnostic(JSON.stringify({ ...summary, binding: {} }))).toThrow();
+  expect(() => contourStageDiagnostic('{broken')).toThrow();
+  const allKilled = JSON.stringify({
+    ...summary,
+    totals: { generated: 7, attempted: 7, killed: 7, survived: 0, unknown: 0, unattempted: 0 },
+  });
+  expect(contourStageDiagnostic(allKilled)).toHaveProperty('mutation.qualification', 'diagnostic-only');
+  expect(() => contourStageReportArguments('mutation', allKilled)).toThrow('exactly one');
 });
 
 test('observed failed or timed-out coverage may preserve its paired outcome without admitting native mutation', () => {
