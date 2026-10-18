@@ -167,7 +167,7 @@ console.log(${JSON.stringify(completion)});\n`,
   }
 });
 
-test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy: %s', async (mode) => {
+test.each(['sdk', 'launcher-sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy: %s', async (mode) => {
   const root = await createRunnerCandidate();
   let passed = false;
   try {
@@ -175,6 +175,7 @@ test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy:
     const capture = path.join(root, 'coverage-capture-probe.json');
     const typecheck = path.join(root, 'typecheck.marker');
     write(root, 'tests/sdk-package-compatibility.test.ts', 'export const inert = true;\n');
+    write(root, 'tests/paused-replacement-entrypoint.test.ts', 'export const launcher = true;\n');
     write(root, 'tests/configured-workflow.test.ts', 'export const sourceOnly = true;\n');
     const preload = writeCaptureProbe(
       root,
@@ -194,7 +195,7 @@ test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy:
         focusedDiagnostic: {
           mode: 'focused-diagnostic', contour: 'sdk-policy-fixture',
           sources: ['src/runtime-kernel.ts'],
-          tests: [${JSON.stringify(mode === 'no-sdk' ? 'tests/configured-workflow.test.ts' : 'tests/sdk-package-compatibility.test.ts')}],
+          tests: [${JSON.stringify(mode === 'no-sdk' ? 'tests/configured-workflow.test.ts' : mode === 'launcher-sdk' ? 'tests/paused-replacement-entrypoint.test.ts' : 'tests/sdk-package-compatibility.test.ts')}],
         },
         prepareSdkInputs: async ({ root: preparedRoot }) => {
           writeFileSync(${JSON.stringify(prepared)}, JSON.stringify({
@@ -210,7 +211,7 @@ test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy:
     expect(result.error).toBeUndefined();
     expect(result.signal).toBeNull();
     expect(result.status).toBe(1);
-    if (mode === 'sdk') {
+    if (mode === 'sdk' || mode === 'launcher-sdk') {
       expect(result.stderr).toContain('focused SDK capture stop');
       const preparation: unknown = JSON.parse(readFileSync(prepared, 'utf8'));
       expect(preparation).toEqual({ root, typecheck_seen: false, capture_seen: false });
@@ -221,7 +222,7 @@ test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy:
       expect(result.stderr).toContain(
         mode === 'review'
           ? 'Focused coverage diagnostics cannot use historical selection or input review callbacks.'
-          : 'Focused SDK preparation requires the SDK package compatibility test.',
+          : 'Focused SDK preparation requires a selected SDK-dependent test.',
       );
       expect(existsSync(prepared)).toBe(false);
       expect(existsSync(typecheck)).toBe(false);

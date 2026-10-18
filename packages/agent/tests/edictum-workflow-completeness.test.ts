@@ -10,7 +10,7 @@ import { runtimeConfigurationSourceFor, sessionHandoffDatabaseRelativePath } fro
 import { HostStateStore, inspectHostWorkspaceDatabase, openHostStateDatabase } from '../src/host-state.js';
 import { deriveWorkspaceId } from '../src/workspace-identity.js';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
-import { expectAsyncReturned } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
 import { PolicySession } from '../src/governance/operation-policy.js';
 import { PolicyWorkflowRuntime, type WorkflowDefinition } from '../src/governance/policy-workflow.js';
 import {
@@ -1549,6 +1549,46 @@ describe('configured Edictum workflow completeness', () => {
     );
     expect(retryFailure).toMatchObject({ message: 'governance policy snapshot failed; session is unavailable' });
     expect(injectedCalls).toBe(1);
+  });
+
+  test('policy workflow enforces the result evidence capacity and fences the failed session', async () => {
+    const runtime = new PolicyWorkflowRuntime(
+      terminalPolicyDefinition(['runtime.commit'], []),
+      'result-capacity-session',
+    );
+    const session = new PolicySession('result-capacity-session');
+    const call = { toolName: 'runtime.commit', args: {} };
+
+    expect(await runtime.recordResult(session, 'final', call, { sequence: 0 })).toEqual([]);
+    for (let sequence = 1; sequence < 1000; sequence += 1) {
+      await runtime.recordResult(session, 'final', call, { sequence });
+    }
+    const snapshot = await runtime.state(session);
+    const results = snapshot.evidence.mcpResults['runtime.commit'];
+    expect(Object.isFrozen(snapshot)).toBe(true);
+    expect(Object.isFrozen(snapshot.evidence)).toBe(true);
+    expect(Object.isFrozen(snapshot.evidence.mcpResults)).toBe(true);
+    expect(Object.isFrozen(results)).toBe(true);
+    expect(results).toHaveLength(1000);
+    expect(results?.slice(-2)).toEqual([{ sequence: 998 }, { sequence: 999 }]);
+    const recordedStages = await runtime.recordedStages(session);
+    expect(recordedStages).toEqual(['final']);
+    expect(Object.isFrozen(recordedStages)).toBe(true);
+
+    await expectRejection(
+      runtime.recordResult(session, 'final', call, { sequence: 1000 }),
+      'governance policy did not retain its suspended snapshot',
+    );
+    await expectRejection(runtime.state(session), 'governance policy snapshot is unavailable');
+    await expectRejection(runtime.recordedStages(session), 'governance policy snapshot is unavailable');
+    await expectRejection(
+      runtime.recordResult(session, 'final', call, { sequence: 1000 }),
+      'governance policy snapshot failed; session is unavailable',
+    );
+    await expectRejection(runtime.reset(session, 'final'), 'governance policy snapshot failed; session is unavailable');
+    expect(results).toHaveLength(1000);
+    expect(results?.slice(-2)).toEqual([{ sequence: 998 }, { sequence: 999 }]);
+    expect(recordedStages).toEqual(['final']);
   });
 
   test('workflow command validation rejection preserves its snapshot and recovers the serial queue', async () => {

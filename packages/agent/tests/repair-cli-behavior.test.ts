@@ -40,6 +40,7 @@ import {
   type SessionBridgeRequest,
 } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import type { MastraLedgerItem, MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
+import { configuredTestContext } from './configured-context.ts';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = path.resolve(bundle, '../..');
@@ -457,12 +458,13 @@ afterEach(() => {
 function fixture() {
   if (repairOutcomeUnknown) throw Error('Prior repair child outcome prevents fixture reuse.');
   const started = performance.now();
+  const contextRoot = configuredTestContext().repositoryRoot;
   const root = mkdtempSync(path.join(tmpdir(), 'vida-repair-cli-'));
   roots.push(root);
   mkdirSync(path.join(root, '.git'));
   const copiedBundle = path.join(root, 'packages/agent');
   for (const relative of ['agent-runtime.config.v1.yaml', 'AGENTS.md', 'AGENT.sidecar.md'])
-    writeFileSync(path.join(root, relative), readFileSync(path.join(repository, relative)));
+    writeFileSync(path.join(root, relative), readFileSync(path.join(contextRoot, relative)));
   cpSync(bundle, copiedBundle, {
     recursive: true,
     // Source repair runs physical JS/TS; native assets have their own qualification fixtures.
@@ -472,7 +474,9 @@ function fixture() {
   });
   symlinkSync(path.join(bundle, 'node_modules'), path.join(copiedBundle, 'node_modules'), 'junction');
   cpSync(path.join(repository, 'packages/plugin'), path.join(root, 'packages/plugin'), { recursive: true });
-  cpSync(path.join(repository, 'docs'), path.join(root, 'docs'), { recursive: true });
+  const documentationPolicy = 'docs/agent-instructions/documentation-policy.v1.json';
+  mkdirSync(path.dirname(path.join(root, documentationPolicy)), { recursive: true });
+  writeFileSync(path.join(root, documentationPolicy), readFileSync(path.join(contextRoot, documentationPolicy)));
   const config = loadRuntimeConfig(root);
   const records = config.research_decision.paths.research_records;
   const changelog = config.research_decision.paths.changelog;

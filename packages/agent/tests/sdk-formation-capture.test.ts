@@ -45,7 +45,7 @@ async function expectRejected(action: () => Promise<unknown>, expected: RegExp):
 }
 
 describe('SDK formation capture projection', () => {
-  test.each(['full', 'focused', 'focused-bin'] as const)(
+  test.each(['full', 'focused', 'focused-bin', 'focused-launcher'] as const)(
     'joins %s quality capture to SDK formation without another input read and rejects stale artifacts',
     async (mode) => {
       const root = fixtureRoot();
@@ -64,6 +64,7 @@ describe('SDK formation capture projection', () => {
       );
       write('bin/cli-metadata.ts', 'export const inert = true;\n');
       write('tests/sdk-package-compatibility.test.ts', "import '../bin/cli-metadata.ts';\n");
+      write('tests/paused-replacement-entrypoint.test.ts', "import '../bin/cli-metadata.ts';\n");
       write('templates/inert.yaml', 'inert: true\n');
       write('instructions/inert.md', 'inert\n');
       write('tooling/build-package.ts', "import './sdk-leaf.ts';\n");
@@ -101,14 +102,19 @@ describe('SDK formation capture projection', () => {
               mode: 'focused-diagnostic',
               contour: 'sdk-fixture',
               sources: [selectedSource],
-              tests: ['tests/sdk-package-compatibility.test.ts'],
+              tests: [
+                mode === 'focused-launcher'
+                  ? 'tests/paused-replacement-entrypoint.test.ts'
+                  : 'tests/sdk-package-compatibility.test.ts',
+              ],
             },
       );
       const projected = sdkFormationInputsFromQualityCapture(inputs);
       expect([...projected.selectedInputs.keys()]).toEqual([...sdkInputs.keys()]);
       for (const [file, bytes] of sdkInputs) expect(projected.selectedInputs.get(file)).toEqual(bytes);
       if (mode === 'full') expect(inputs.sources.map((entry) => entry.path)).toContain('bin/cli-metadata.ts');
-      if (mode === 'focused') expect(inputs.tool_inputs.map((entry) => entry.path)).toContain('bin/cli-metadata.ts');
+      if (mode === 'focused' || mode === 'focused-launcher')
+        expect(inputs.tool_inputs.map((entry) => entry.path)).toContain('bin/cli-metadata.ts');
       else expect(inputs.tool_inputs.map((entry) => entry.path)).not.toContain('bin/cli-metadata.ts');
       if (mode !== 'full') {
         expect(inputs.sources.map((entry) => entry.path)).toEqual([selectedSource]);

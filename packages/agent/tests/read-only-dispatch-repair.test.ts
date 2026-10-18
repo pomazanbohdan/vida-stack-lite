@@ -4,7 +4,6 @@ import { createHash } from 'node:crypto';
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { planReadOnlyDispatchRepair, applyReadOnlyDispatchRepair } from '../bin/read-only-dispatch-repair.ts';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
@@ -19,9 +18,7 @@ import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import type { ActivationUse, ObservedActivationUseWritePlan } from '../src/research-decision.ts';
-
-const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const repositoryTemplateRoot = path.resolve(bundle, '../..');
+import { configuredTestContext } from './configured-context.ts';
 
 const syntaxRequest = {
   repairId: 'syntax-fixture',
@@ -189,9 +186,10 @@ function readRepairRows(database: Database): readonly unknown[] {
 }
 
 function makeFixtureRoot(): string {
+  const contextRoot = configuredTestContext().repositoryRoot;
   const root = mkdtempSync(path.join(tmpdir(), 'readonly-dispatch-repair-'));
   for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'])
-    copyFileSync(path.join(repositoryTemplateRoot, file), path.join(root, file));
+    copyFileSync(path.join(contextRoot, file), path.join(root, file));
   for (const directory of [
     '.git',
     'docs/agent-instructions',
@@ -202,7 +200,7 @@ function makeFixtureRoot(): string {
   ])
     mkdirSync(path.join(root, directory), { recursive: true });
   copyFileSync(path.join(root, 'AGENT.sidecar.md'), path.join(root, 'packages/agent/AGENT.sidecar.md'));
-  const sourcePolicy = path.join(repositoryTemplateRoot, 'docs/agent-instructions/documentation-policy.v1.json');
+  const sourcePolicy = path.join(contextRoot, 'docs/agent-instructions/documentation-policy.v1.json');
   copyFileSync(sourcePolicy, path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'));
   return root;
 }

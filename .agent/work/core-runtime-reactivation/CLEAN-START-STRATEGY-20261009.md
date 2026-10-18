@@ -75,9 +75,16 @@ a64-mutant all-Killed diagnostic, but its first full request remains budget-limi
 Do not repeat the unchanged full request or combine diagnostics into a score.
 Use the closed results to select the next bounded correction. The three-hour
 audit selects a measured executable-hash buffer correction, preserving every
-fresh full hash and identity fence. Verify and publish the correction packet,
-then continue the current governance/dispatch coverage queue. WORK owns the
+fresh full hash and identity fence. The correction packet is published as e34393b.
+Governance now has exact functions/lines but residual statement/branch gaps.
+Continue its public capacity regression and repair dispatch fixtures to reuse
+the configured context owner after the sealed-image source-root failure; do not
+copy live files into an image or retry unchanged input. WORK owns the
 observed results and estimates; no numeric threshold or budget is increased.
+The dispatch context repairs and launcher SDK selection now have targeted proof.
+Retain mandatory SDK exports and acquire qualified formation inputs before a
+fresh dispatch image; absent formation receipt leaves that lane OPEN. Continue
+the ready governance lane while preserving its residual defensive-branch gaps.
 
 The fresh governance producer exposes missing pre-capture of explicit computed
 module roots outside the selected coverage Source. Capture these roots through

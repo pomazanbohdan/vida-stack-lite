@@ -21,8 +21,10 @@ No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 
 ### Current rolling repair cycle
 
-The active pool has three contours: main-envelopes (Root numeric owner),
-governance/public contracts and dispatch repair (blind Luna proposal lanes).
+The active pool has three contours: governance/public contracts, dispatch repair
+and main-envelopes. Root serializes numeric producers; blind Luna prepares and
+reviews bounded patches. Dispatch's fixture repair awaits qualified SDK inputs;
+main-envelopes awaits a measured correction rather than an unchanged full retry.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
@@ -123,14 +125,74 @@ The exact paths, base9407b08 and restoration data remain in
 from2557005824to2557198336bytes (+192512). The original numeric/SDK/FAIL/UNKNOWN
 artifacts, installed dependencies and measured checkouts are unchanged.
 
-Latest local observations below apply only to their own captured inputs, before
-new residual test changes. They are incomplete and are not contour closure:
+Latest local observations below apply only to their own captured inputs. They
+are incomplete and are not contour closure:
 
 | Contour/run | Functions | Lines | Statements | Branches | maxCC/CRAP |
 | --- | --- | --- | --- | --- | --- |
-| Governance18c28918(v667) |105/105|363/365|398/407|243/251|32/32|
+| Governance527729f1(v765) |105/105|365/365|405/407|248/251|32/32|
 | Dispatch78614afc(v542) |61/70|289/312|308/334|240/256|39/39|
 | Controller7071caed(v564) |27/28|132/156|144/182|127/164|14/20|
+
+Published e34393b contains the hash correction and four regressions; ordinary
+hooks and pushv763/v764 pass. Governancev765 runs that exact published image:
+/workspace/.vida-quality-inputs/68ffbcd9b4388c715f27e8db8fc62b2ad3624a4f/repository,
+manifest SHA2566cc80510d6c97f8a767ade4e798ce1cfef522604c377d10ed7540e251fbbd20e,
+stage /workspace/contour-stage-BTZjZH. Complete capture/group closure and unchanged
+boot/image hold in70754.019549ms. Its operation remains BLOCKED: F/L100does not
+satisfy S405/407or B248/251. Remaining counters are policy-workflow statements
+82/133and branch arms29:0,44:1,56:0; no new inventory or whole-tree scan was needed.
+Root does not launch frozen CRAP solely to reconfirm that known nonexact gate.
+
+The next dispatchv769 on e34393b terminates in5269.485673ms with14PASS/42FAIL,
+complete output/group custody and unchanged image/boot. The retained stage is
+/workspace/contour-stage-QVs2rg, outer log
+/workspace/attachments/dispatch-current-coverage-v769.log. Tests climb parent
+directories for config/sidecar that are intentionally absent in the sealed image;
+the configured consumer fixture already exists through the coverage owner.
+No coverage report is published and no numeric score is inferred from the partial
+test result. The original suite error and subsequent missing-report refusal stay
+retained. The same dispatch writer prepares the context-root repair; no live
+Source is copied into the measured image or old failed attempt resumed.
+
+Root integrates v770's three configured-context fixture repairs, removing the
+duplicate parent-climbing resolver and whole-docs copy. Targetedv772 passes
+3cases/32assertions across the changed files in3.94s;49filtered cases are not
+qualified. The fourth dispatch file also needs real SDK exports. The initial
+read-only proposal missed bin/run.ts's export-completeness guard: removing its
+dist copy makes both targeted launcher cases fail in v773. Root reverts that
+one-line change, retains both failed fixtures/logs and corrects the handoff.
+No missing export is synthesized or guard bypassed.
+
+The actual SDK defect is selection: only the compatibility test was recognized,
+so paused-replacement images omitted SDK receipt/output capture. One shared
+selectedTestsRequireSdkArtifacts now owns capture, freshness, restoration and
+preparation eligibility for both tests. No new scan, hash or formation owner is
+introduced. v774 passes all13formation-capture cases/135assertions in481ms,
+including focused launcher stale/missing artifact denials. v775 passes all4
+focused preparation policy cases/32assertions in1414ms, including non-SDK and
+review denials. The current Source has no dist/sdk-formation.json; dispatch needs
+qualified SDK formation inputs before its next image. The ready governance lane
+can continue independently. TESTING and bun-test skill now preserve this boundary.
+
+Root integrates one public1000/1001result-capacity regression from blind Lunav767.
+It uses real SDK transitions, checks ordered immutable evidence and all subsequent
+read/retry/reset fences. The exact public error is the existing dispatch owner's
+non-suspended-snapshot denial, not a guessed private SDK cause. Targetedv771
+passes1case/22assertions,1599.51ms case/3.58s process, default5s unchanged.
+The remaining30filtered cases are not qualification. Before this measurement,
+exceeding5s was only a cost hypothesis; no exception is introduced. Snapshot
+retention after failure is checked again independently. Blind Lunav755 finds no
+confirmed defect in this case. It also finds no supported valid-workflow activation
+for the duplicate-completion or missing-evaluation arms. Those remain exact-gate
+gaps, not invented N/A exemptions or permission to remove defensive checks.
+
+A bounded Bun1.4.3 native matcher controlv768 observes undefined return but actual
+operation settlement before the matcher returns. Therefore Promise.resolve around
+that matcher is not evidence of an async race on this host. Existing explicit
+rejection helpers remain preferred, without mass rewrites or a fabricated defect.
+Its original control/log remains under /workspace/attachments. Token totals are
+unavailable; no token or full-suite throughput saving is claimed.
 
 The maintained stage owner imported every terminal result. Exact full artifact
 paths, hashes and commit/input bindings remain in CONTOUR-STATUS.json and the

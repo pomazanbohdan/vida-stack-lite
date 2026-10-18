@@ -826,14 +826,19 @@ function qualityToolInputPaths(
   return [...new Set([...coverageToolInputs, ...additionalToolInputs, ...contractInputs, ...baselineInputs])].sort();
 }
 
-export const sdkArtifactTestPath = 'tests/sdk-package-compatibility.test.ts';
+const sdkArtifactTestPaths = ['tests/sdk-package-compatibility.test.ts', 'tests/paused-replacement-entrypoint.test.ts'];
+
+/** Source launcher tests also require the public SDK export completeness fence. */
+export function selectedTestsRequireSdkArtifacts(tests: readonly string[]): boolean {
+  return sdkArtifactTestPaths.some((file) => tests.includes(file));
+}
 
 /** Shared capture/review inventory; membership comes from selection and the maintained SDK owner. */
 export function sdkFormationToolInputPaths(
   selectionMode: 'current' | 'published-baseline-bun-native',
   selection: TestSelection,
 ): string[] {
-  if (selectionMode !== 'current' || !selection.tests.includes(sdkArtifactTestPath)) return [];
+  if (selectionMode !== 'current' || !selectedTestsRequireSdkArtifacts(selection.tests)) return [];
   return [
     'tooling/build-package.ts',
     'tsconfig.json',
@@ -1273,7 +1278,7 @@ async function captureQualityInputBase(
     : selectTestSelection(root, testInputsAll, supportedTest, selectionMode);
   const sources = testSelection.mode === 'focused-diagnostic' ? testSelection.sources : maintainedSources;
   const sdkFormationSourcePaths =
-    focused && testSelection.tests.includes(sdkArtifactTestPath)
+    focused && selectedTestsRequireSdkArtifacts(testSelection.tests)
       ? maintainedSources.filter((file) => file.startsWith('src/'))
       : undefined;
   const capturedTestPaths = focused ? testSelection.tests : testInputsAll;
@@ -1306,7 +1311,7 @@ async function captureQualityInputBase(
   const sdkBuilderEntrypoint =
     selectionMode === 'current' &&
     inputBytes.has('tooling/build-package.ts') &&
-    (!executionImage || testSelection.tests.includes(sdkArtifactTestPath))
+    (!executionImage || selectedTestsRequireSdkArtifacts(testSelection.tests))
       ? 'tooling/build-package.ts'
       : undefined;
   const sdkBuilderEdges = new Map<string, Set<string>>();
@@ -1513,7 +1518,7 @@ export function sdkFormationInputsFromQualityCapture(inputs: CoverageInputs): Sd
 export function sdkFormationInputDigestsFromQualityCapture(inputs: CoverageInputs): readonly InputDigest[] | null {
   const requiresSdkFormation =
     (inputs.test_selection.mode === 'full-current-test-set' || inputs.test_selection.mode === 'focused-diagnostic') &&
-    inputs.tests.includes(sdkArtifactTestPath);
+    selectedTestsRequireSdkArtifacts(inputs.tests);
   if (!requiresSdkFormation) return null;
   const snapshot = sdkFormationInputsFromQualityCapture(inputs);
   return Object.freeze(
@@ -1560,7 +1565,7 @@ export async function restoreSdkFormationInputsFromQualityCapture(
 ): Promise<void> {
   const requiresSdkFormation =
     (inputs.test_selection.mode === 'full-current-test-set' || inputs.test_selection.mode === 'focused-diagnostic') &&
-    inputs.tests.includes(sdkArtifactTestPath);
+    selectedTestsRequireSdkArtifacts(inputs.tests);
   if (!requiresSdkFormation) {
     if (rows !== null) throw new Error('SDK formation rows are not permitted for a non-SDK test selection.');
     sdkFormationQualityInputs.delete(inputs);

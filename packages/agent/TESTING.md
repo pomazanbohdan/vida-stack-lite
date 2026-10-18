@@ -1022,6 +1022,8 @@ configuredTestContext() and configured YAML, fuzz and repair fixture reads;
 AGENT_RUNTIME_TEST_REPOSITORY_ROOT keeps the parent Source/tooling binding.
 Fixture readers prefer the context root when present. Do not redirect parent
 input verification to it or read shared repository state as a fixture instead.
+Dispatch fixtures reuse configuredTestContext().repositoryRoot for these four
+files. Do not climb parent directories or copy the whole repository docs tree.
 Package schemas and templates resolve from the executing captured package root,
 such as the test module's package-relative location; they are not project context
 files. Keep project output/configuration reads on the sealed context. Do not
@@ -3067,6 +3069,12 @@ are diagnostic; only complete reports joined with assertion and process receipts
 can establish Killed. Partial events or a quiet log cannot establish a score.
 
 Source-only fixtures exclude the exact generated `dist/standalone` directory. Keep required sources, schemas, instructions and current SDK outputs. Do not change the repository text-read limit.
+The paused-replacement launcher enters the public export-completeness guard even
+when invoked through bin/run.ts. Its SDK dist remains mandatory. Use the shared
+selectedTestsRequireSdkArtifacts owner for capture, freshness, restoration and
+preparation eligibility; it includes both compatibility and paused-replacement
+tests. A missing SDK formation receipt is a prerequisite gap, not permission to
+omit dist or fabricate exports. Pure selections still avoid SDK preparation.
 
 ## Required agent regressions
 

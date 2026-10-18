@@ -4,7 +4,6 @@ import * as fs from 'node:fs';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
@@ -18,6 +17,7 @@ import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import * as workspaceDatabaseCli from '../bin/workspace-database-cli.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
+import { configuredTestContext } from './configured-context.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import {
   observationSchema,
@@ -26,7 +26,6 @@ import {
   type SessionBridgeRequest,
 } from '../src/orchestration/mastra-session-bridge-contract.ts';
 
-const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 type Fixture = {
   readonly root: string;
   readonly args: (mode: string) => string[];
@@ -77,22 +76,8 @@ function completedObservation(actionId: string, issueId: string): SessionBridgeO
   return observationSchema.parse(candidate);
 }
 
-function sourceRoot(): string {
-  let current = path.dirname(bundle);
-  for (;;) {
-    if (
-      existsSync(path.join(current, 'agent-runtime.config.v1.yaml')) &&
-      existsSync(path.join(current, 'AGENT.sidecar.md'))
-    )
-      return current;
-    const parent = path.dirname(current);
-    if (parent === current) throw new Error('source fixture missing');
-    current = parent;
-  }
-}
-
 function fixture(): Fixture {
-  const source = sourceRoot();
+  const contextRoot = configuredTestContext().repositoryRoot;
   const root = mkdtempSync(path.join(tmpdir(), 'vida-readonly-dispatch-'));
   let database: Database | undefined;
   try {
@@ -108,7 +93,7 @@ function fixture(): Fixture {
       'agent-runtime.config.v1.yaml',
       'docs/agent-instructions/documentation-policy.v1.json',
     ])
-      put(relative, readFileSync(path.join(source, relative)));
+      put(relative, readFileSync(path.join(contextRoot, relative)));
     const config = loadRuntimeConfig(root);
     const fixturePaths = loadProjectSetContext(
       root,
