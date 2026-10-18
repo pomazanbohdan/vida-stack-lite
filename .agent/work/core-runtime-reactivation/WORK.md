@@ -4,6 +4,45 @@ Status date: 2026-10-18. Current execution and evidence record. This document do
 
 ## Current state and owners
 
+Storage-admission v350 binds760be31 on the persistent attachment filesystem.
+Coverage19022dd4-ebbd-452d-9ea6-a98d7cec6daf closes18310ms with exact
+F18/18,L102/102,S105/105,B17/17, measured5/5, complete captures, closed groups,
+unchanged boot/commit and clean measured inputs. The projection imports its
+BLOCKED operation separately from these counters. Frozen stageP3ufk8 fails792ms:
+the d6cab7c review binds324ba3d8, while current Source is4f2b17db after the
+owned-digest reuse. No budget or binding was relaxed. A fresh independent Luna
+lineage review is pending; the latest invocation reports a usage limit until
+2026-11-17. The prior review artifact named by that pin is also absent locally.
+Native660f66cc-7bf2-4441-8cd9-ff29a8ccdff1 closes100632ms with11Killed,
+0Survived,1UNKNOWN and216unattempted of228generated; no score is published.
+Local0 mutates the import-time diagnostic prefix; its assertion fails but has
+zero body-owned activation. Original artifacts stay under
+`/workspace/attachments/rolling-measure-v350/packages/agent/.tmp/`; failed stage
+receipts stay in `/workspace/attachments/contour-stage-P3ufk8` and
+`/workspace/attachments/contour-stage-w9qZNd`.
+
+A body-owned whole-module proposal passes28/28tests,320assertions, strict Source
+TS and scoped typed lint after correcting its authoring errors. It remains
+NOT ADMITTED: TESTING explicitly prohibits fresh-loading an opaque-capability
+owner because require-cache restoration does not restore later ESM identity.
+Canonical test/tool files were restored to their unchanged published bytes;
+the bounded proposal is retained only at
+`/workspace/attachments/storage-admission-body-proposal-v352.NOT-ADMITTED.patch`.
+The earlier failed authoring checks remain in v351 captures. No dummy activation,
+weakened proof or new Source identity is introduced to obtain a score. A safe
+identity-preserving import-time proof route and independent current frozen review
+remain prerequisites; no product defect or new contour closure is claimed.
+
+Before v350, exact dependency-only retentionv349 linked six closed measurement
+trees188/190/193/197/199/201 to the retained v301 owner after checking all26823
+entries and405716961file bytes per tree, including modes and symlink targets.
+Free disk rose from142MiB to2.5GiB. Source/SDK/DB/raw FAIL/UNKNOWN bytes were
+preserved; manifests are in `/workspace/attachments/closed-dependency-dedup-v349/`.
+The existing three-hour audit timer now also inspects storage and safely cleans
+confirmed obsolete derived data after active producers terminate. It preserves
+admission thresholds and protected evidence, records exact paths and before/after
+space, and avoids competing scans or a second writer.
+
 - The automatic projection records9/45historical numeric local triples plus1separately qualified data-only closure,35unclosed. Image's49-role contour closes at171dc7e/v328: exact F/L/S/B100, original frozen9/9 and488/488assertion-confirmed Killed. Initialization's16-role contour closes on the same checked inputs: exact F/L/S/B100, original frozen9/9 and164/164assertion-confirmed Killed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Next is envelopes and then the next ready open contour. The separate reproduced repository-lock P0 remains OPEN; initialization test closure does not repair it. Envelopes'64-mutant diagnostic is all assertion-Killed after the mixed-precision regression, with complete current proof still pending. Earlier UNKNOWN outcomes stay retained. FS data-only CRAP N/A and full native closure are qualified separately; admission stateful initialization remains OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
