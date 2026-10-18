@@ -9,6 +9,7 @@ import { functionInventory } from './function-inventory.js';
 import { validateCoverageReport, validateHistoricalBaselineCoverageReport } from './bun-coverage-report-validator.js';
 import { baselineFunctionEvidenceForSource, exactFullCoverage, validateCoverageLocations } from './coverage-math.js';
 import type { BaselineFunctionEvidence } from './coverage-math.js';
+import { QUALITY_BUDGET_FILE, QUALITY_BASELINE_COMMIT, readQualityGitSnapshot } from './quality-git-snapshot.js';
 
 type FileCoverageData = import('istanbul-lib-instrument').FileCoverageData;
 
@@ -799,16 +800,22 @@ export function scopedCrapDispositionProof(
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
-  const repoRootResult = spawnSync('git', ['rev-parse', '--show-toplevel'], {
-    cwd: root,
-    encoding: 'utf8',
-    timeout: 5000,
-    maxBuffer: 32 * 1024 * 1024,
-    windowsHide: true,
-  });
-  if (repoRootResult.status !== 0 || repoRootResult.signal || repoRootResult.error)
+  const snapshotPath = process.env.VIDA_QUALITY_GIT_SNAPSHOT;
+  const snapshotEnabled = Object.hasOwn(process.env, 'VIDA_QUALITY_GIT_SNAPSHOT');
+  if (snapshotEnabled && (!snapshotPath || !path.isAbsolute(snapshotPath)))
+    throw new Error('Quality Git snapshot path must be absolute.');
+  const repoRootResult = snapshotEnabled
+    ? undefined
+    : spawnSync('git', ['rev-parse', '--show-toplevel'], {
+        cwd: root,
+        encoding: 'utf8',
+        timeout: 5000,
+        maxBuffer: 32 * 1024 * 1024,
+        windowsHide: true,
+      });
+  if (repoRootResult && (repoRootResult.status !== 0 || repoRootResult.signal || repoRootResult.error))
     throw new Error('CRAP budget gate cannot identify the Source repository root.');
-  const repoRoot = path.resolve(repoRootResult.stdout.trim());
+  const repoRoot = snapshotEnabled ? path.resolve(root, '../..') : path.resolve(repoRootResult!.stdout.trim());
   const planPath = path.resolve(
     process.env.VIDA_CRAP_BUDGET_PLAN ??
       path.join(repoRoot, '.agent/work/core-runtime-reactivation/crap-budgets.v1.json'),
@@ -856,6 +863,16 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       : scopedArguments.length > 0
   )
     throw new Error('Unsupported CRAP budget gate arguments.');
+
+  let snapshotReader: ReturnType<typeof readQualityGitSnapshot> | undefined;
+  if (snapshotEnabled) {
+    if (!snapshotPath) throw new Error('Quality Git snapshot path must be absolute.');
+    const snapshotBytes = await readFile(snapshotPath);
+    if (sha256(snapshotBytes) !== process.env.VIDA_QUALITY_GIT_SNAPSHOT_SHA256)
+      throw new Error('Quality Git snapshot differs from its caller-held digest.');
+    const snapshotValue: unknown = JSON.parse(snapshotBytes.toString('utf8'));
+    snapshotReader = readQualityGitSnapshot(snapshotValue, scoped ? scopedArguments[3] : undefined);
+  }
 
   // One invocation, one immutable published commit; never retain live package state.
   const baselineTextByPath = new Map<string, string | null>();
@@ -962,10 +979,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   }
 
   function publishedTestPaths(): string[] {
-    return gitText(['ls-tree', '-r', '--name-only', baselineRef, '--', 'packages/agent/tests'])
-      .split(/\r?\n/u)
-      .filter(Boolean)
-      .map((full) => full.slice('packages/agent/'.length));
+    return listCommittedPaths(baselineRef, ['packages/agent/tests']).map((full) =>
+      full.slice('packages/agent/'.length),
+    );
   }
 
   function verifyPublishedTestSelection(
@@ -1266,23 +1282,35 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     return new TextDecoder('utf-8', { fatal: true }).decode(result.stdout);
   }
 
+  function resolveCommit(ref: string): string {
+    return snapshotReader
+      ? snapshotReader.resolveCommit(ref)
+      : gitText(['rev-parse', '--verify', `${ref}^{commit}`]).trim();
+  }
+
+  function readCommittedBlob(commit: string, file: string): string | null {
+    return snapshotReader
+      ? snapshotReader.readBlob(resolveCommit(commit), file)
+      : gitText(['show', `${commit}:${file}`]);
+  }
+
+  function listCommittedPaths(commit: string, prefixes: string[]): string[] {
+    if (snapshotReader)
+      return [...new Set(prefixes.flatMap((prefix) => snapshotReader.listPaths(resolveCommit(commit), prefix)))].sort();
+    return gitText(['ls-tree', '-r', '--name-only', commit, '--', ...prefixes])
+      .split(/\r?\n/u)
+      .filter(Boolean);
+  }
+
   function baselineSources(): string[] {
     if (baselineSourcePaths) return baselineSourcePaths;
-    const manifest = JSON.parse(gitText(['show', `${baselineRef}:packages/agent/package.json`])) as unknown;
+    const manifestText = readCommittedBlob(baselineRef, 'packages/agent/package.json');
+    if (manifestText === null) throw new Error('Published package manifest is absent.');
+    const manifest = JSON.parse(manifestText) as unknown;
     if (!isRecord(manifest) || !Array.isArray(manifest.files))
       throw new Error('Published package source inventory is invalid.');
     const patterns = manifest.files.filter((file) => typeof file === 'string' && /^(?:!?)(?:src|bin)\//u.test(file));
-    const files = gitText([
-      'ls-tree',
-      '-r',
-      '--name-only',
-      baselineRef,
-      '--',
-      'packages/agent/src',
-      'packages/agent/bin',
-    ])
-      .split(/\r?\n/u)
-      .filter(Boolean)
+    const files = listCommittedPaths(baselineRef, ['packages/agent/src', 'packages/agent/bin'])
       .map((full) => full.slice('packages/agent/'.length))
       .filter((file) => /^src\/.+\.ts$|^bin\/.+\.mjs$/u.test(file));
     baselineSourcePaths = selectMaintainedSourcePaths(files, patterns as string[]);
@@ -1291,6 +1319,16 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
 
   function baselineSource(file: string) {
     if (baselineTextByPath.has(file)) return baselineTextByPath.get(file) ?? null;
+    if (snapshotReader) {
+      const source = snapshotReader.readBlob(QUALITY_BASELINE_COMMIT, `packages/agent/${file}`);
+      if (source === null) {
+        baselineTextByPath.set(file, null);
+        return null;
+      }
+      new TextDecoder('utf-8', { fatal: true }).decode(Buffer.from(source, 'utf8'));
+      baselineTextByPath.set(file, source);
+      return source;
+    }
     const result = spawnSync('git', ['show', `${baselineRef}:packages/agent/${file}`], {
       cwd: repoRoot,
       timeout: 5000,
@@ -1330,10 +1368,11 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       scopedBudgetReviews.get(`${budgetCommit}:${partition.name}`) ?? scopedBudgetReviews.get(budgetCommit);
     if (reviewKey === undefined)
       throw new Error('Scoped CRAP proof requires the pinned published reviewed budget commit.');
-    if (gitText(['rev-parse', '--verify', `${budgetCommit}^{commit}`]).trim() !== budgetCommit)
+    if (resolveCommit(budgetCommit) !== budgetCommit)
       throw new Error('Scoped CRAP budget reference is not an immutable commit.');
-    const budgetFile = '.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json';
-    const budgetBytes = gitText(['show', `${budgetCommit}:${budgetFile}`]);
+    const budgetFile = QUALITY_BUDGET_FILE;
+    const budgetBytes = readCommittedBlob(budgetCommit, budgetFile);
+    if (budgetBytes === null) throw new Error('Pinned CRAP budget bytes are absent.');
     const budgetSha256 = sha256(budgetBytes);
     const budget: unknown = JSON.parse(budgetBytes);
     if (
@@ -1381,7 +1420,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     if (applicabilityNA) {
       if (budgetSha256 !== fsSafeApplicabilityReview.budget_sha256)
         throw new Error('CRAP applicability budget differs from its pinned review.');
-      const baselineCommit = gitText(['rev-parse', '--verify', `${baselineRef}^{commit}`]).trim();
+      const baselineCommit = resolveCommit(baselineRef);
       const applicability = proveFsSafeCrapApplicability({
         reviewKey,
         review,
@@ -1606,7 +1645,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         historical_measurement_admitted: false,
         historical_coverage_runtime_artifacts: 'not-consumed/not-admitted',
         baseline_ref: baselineRef,
-        baseline_commit: gitText(['rev-parse', '--verify', `${baselineRef}^{commit}`]).trim(),
+        baseline_commit: resolveCommit(baselineRef),
         budget_commit: budgetCommit,
         budget_file: budgetFile,
         budget_sha256: budgetSha256,
@@ -1664,7 +1703,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       historical_measurement_admitted: false,
       historical_coverage_runtime_artifacts: 'not-consumed/not-admitted',
       baseline_ref: baselineRef,
-      baseline_commit: gitText(['rev-parse', '--verify', `${baselineRef}^{commit}`]).trim(),
+      baseline_commit: resolveCommit(baselineRef),
       budget_commit: budgetCommit,
       budget_file: budgetFile,
       budget_sha256: budgetSha256,
@@ -1690,14 +1729,16 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     process.exit(0);
   }
 
-  const baselineCheck = spawnSync('git', ['rev-parse', '--verify', `${baselineRef}^{commit}`], {
-    cwd: repoRoot,
-    encoding: 'utf8',
-    timeout: 5000,
-    maxBuffer: 32 * 1024 * 1024,
-    windowsHide: true,
-  });
-  if (baselineCheck.status !== 0 || baselineCheck.signal || baselineCheck.error)
+  const baselineCheck = snapshotReader
+    ? undefined
+    : spawnSync('git', ['rev-parse', '--verify', `${baselineRef}^{commit}`], {
+        cwd: repoRoot,
+        encoding: 'utf8',
+        timeout: 5000,
+        maxBuffer: 32 * 1024 * 1024,
+        windowsHide: true,
+      });
+  if (baselineCheck && (baselineCheck.status !== 0 || baselineCheck.signal || baselineCheck.error))
     throw new Error('Published CRAP baseline commit is unavailable.');
   const currentCoverage = await validateCoverageReport(coveragePath, root);
   // This diagnostic records the validator's completed work even if the later

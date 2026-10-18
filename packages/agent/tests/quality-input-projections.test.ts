@@ -7,8 +7,10 @@ import { mutationToolInputs } from '../tooling/mutation-evidence.js';
 import { orchestrationDeadline, remainingChildTimeoutMs } from '../tooling/quality-final.js';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { expectedJavascriptFiles } from '../tooling/maintained-source-inventory.ts';
+import { captureSdkFormationInputs } from '../tooling/build-package.ts';
 import {
   coverageInputs,
+  executionImageQualityInputs,
   canonicalCapturedModulePath,
   capturedModuleAbsolutePath,
   capturedModuleInputs,
@@ -17,6 +19,9 @@ import {
   type CoverageReviewGitChange,
   coverageReviewInputPaths,
   sdkFormationToolInputPaths,
+  sdkFormationInputDigestsFromQualityCapture,
+  sdkFormationInputsFromQualityCapture,
+  restoreSdkFormationInputsFromQualityCapture,
   qualityFingerprint,
   qualityInputs,
   qualityInputProjections,
@@ -132,6 +137,188 @@ describe('final quality input projections', () => {
     expect(before.mutation.input_bytes['_repository/test-context/AGENTS.md']?.toString()).toBe('captured AGENTS.md\n');
     rmSync(path.join(repositoryRoot, 'AGENT.sidecar.md'));
     await expectRejected(() => qualityInputProjections(root, selection), /missing|rejected/u);
+  });
+
+  test('captures the complete execution image beside the unchanged focused numeric selection', async () => {
+    const root = fixtureRoot();
+    const selection = {
+      mode: 'focused-diagnostic' as const,
+      contour: 'execution-image',
+      sources: ['src/host-state.ts'],
+      tests: ['tests/fixture.test.mjs'],
+    };
+    for (const [file, value] of [
+      ['tsconfig.json', '{"compilerOptions":{"strict":true}}\n'],
+      ['tsconfig.checked-js.json', '{"extends":"./bin/tsconfig.json"}\n'],
+      ['bin/tsconfig.json', '{"extends":"../tsconfig.json"}\n'],
+      ['tooling/quality-current.ts', 'export const quality = true;\n'],
+      ['tooling/ts-only-source-gate.ts', 'export const sourceGate = true;\n'],
+      ['bin/bun.ts', 'export const bun = true;\n'],
+    ] as const) {
+      const target = path.join(root, file);
+      mkdirSync(path.dirname(target), { recursive: true });
+      writeFileSync(target, value);
+    }
+
+    const ordinary = await qualityInputs(root, [], selection);
+    const image = await executionImageQualityInputs(root, [], selection);
+    expect(image.sources).toEqual(ordinary.sources);
+    expect(image.source_fingerprint).toBe(ordinary.source_fingerprint);
+    expect(image.test_inputs).toEqual(ordinary.test_inputs);
+    expect(image.test_fingerprint).toBe(ordinary.test_fingerprint);
+    expect(image.tests).toEqual(ordinary.tests);
+    expect(image.test_selection).toEqual(ordinary.test_selection);
+    expect(image.tool_fingerprint).toBe(createHash('sha256').update(JSON.stringify(image.tool_inputs)).digest('hex'));
+    expect(image.tool_inputs.map(({ path: file }) => file)).toContain('src/lifecycle/lifecycle-state.ts');
+    expect(image.tool_inputs.map(({ path: file }) => file)).toContain('bin/cli-metadata.ts');
+    for (const file of [
+      'tsconfig.json',
+      'tsconfig.checked-js.json',
+      'bin/tsconfig.json',
+      'tooling/quality-current.ts',
+      'tooling/ts-only-source-gate.ts',
+      'bin/bun.ts',
+    ]) {
+      const bytes = image.input_bytes[file];
+      expect(bytes).toBeDefined();
+      expect(image.tool_inputs).toContainEqual({
+        path: file,
+        sha256: createHash('sha256').update(bytes!).digest('hex'),
+      });
+    }
+    expect(ordinary.tool_inputs.map(({ path: file }) => file)).not.toContain('bin/tsconfig.json');
+    expect(sdkFormationInputDigestsFromQualityCapture(image)).toBeNull();
+    await expectRejected(() => restoreSdkFormationInputsFromQualityCapture(root, image, []), /non-SDK/u);
+    await restoreSdkFormationInputsFromQualityCapture(root, image, null);
+  });
+
+  test('execution image capture keeps bounded missing and linked input denials', async () => {
+    const missing = fixtureRoot();
+    await expectRejected(
+      () =>
+        executionImageQualityInputs(missing, [], {
+          mode: 'focused-diagnostic',
+          contour: 'missing-image-config',
+          sources: ['src/host-state.ts'],
+          tests: ['tests/fixture.test.mjs'],
+        }),
+      /missing|rejected/u,
+    );
+
+    const linked = fixtureRoot();
+    for (const file of [
+      'tsconfig.checked-js.json',
+      'bin/tsconfig.json',
+      'tooling/quality-current.ts',
+      'tooling/ts-only-source-gate.ts',
+      'bin/bun.ts',
+    ]) {
+      const target = path.join(linked, file);
+      mkdirSync(path.dirname(target), { recursive: true });
+      writeFileSync(target, 'fixture\n');
+    }
+    symlinkSync(path.join(linked, 'src/host-state.ts'), path.join(linked, 'tsconfig.json'));
+    await expectRejected(
+      () =>
+        executionImageQualityInputs(linked, [], {
+          mode: 'focused-diagnostic',
+          contour: 'linked-image-config',
+          sources: ['src/host-state.ts'],
+          tests: ['tests/fixture.test.mjs'],
+        }),
+      /link|regular file|rejected/u,
+    );
+  });
+
+  test('restores the exact SDK formation snapshot from image path and digest rows', async () => {
+    const root = fixtureRoot();
+    const write = (file: string, contents: string | Buffer): void => {
+      const target = path.join(root, file);
+      mkdirSync(path.dirname(target), { recursive: true });
+      writeFileSync(target, contents);
+    };
+    write('tests/sdk-package-compatibility.test.ts', "test('sdk fixture', () => {});\n");
+    write('package.json', JSON.stringify({ version: '1.2.3', files: ['src/**', 'bin/**'], engines: { node: '24.x' } }));
+    write('bun.lock', 'fixture lock\n');
+    write('.bun-version', `${Bun.version}\n`);
+    write('bunfig.toml', '[install]\n');
+    write('tooling/build-package.ts', 'export const fixture = true;\n');
+    for (const file of [
+      'tsconfig.json',
+      'tsconfig.checked-js.json',
+      'bin/tsconfig.json',
+      'tooling/quality-current.ts',
+      'tooling/ts-only-source-gate.ts',
+      'bin/bun.ts',
+    ])
+      write(file, '{}\n');
+    const sdkInputs = await captureSdkFormationInputs(root);
+    const outputRows = expectedJavascriptFiles.map((member) => {
+      const file = `dist/src/${member}`;
+      const bytes = Buffer.from('export const fixture = true;\n');
+      write(file, bytes);
+      return { path: file, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+    });
+    write(
+      'dist/sdk-formation.json',
+      JSON.stringify({
+        schema: 'CandidatePackageBuild/v1',
+        version: '1.2.3',
+        declared_node_engine: '24.x',
+        declaration_runtime: 'bun',
+        bun_version: Bun.version,
+        production_entrypoints: ['dist/src/index.js', 'dist/src/trusted-host.js'],
+        test_issuers_shipped: false,
+        schemas: 1,
+        inputs: [...sdkInputs].map(([file, bytes]) => ({
+          path: file,
+          bytes: bytes.length,
+          sha256: createHash('sha256').update(bytes).digest('hex'),
+        })),
+        outputs: outputRows,
+        virtual_runtime_entry: { path: 'src/runtime.ts', sha256: 'a'.repeat(64) },
+        dependency_custody:
+          'External node_modules is linked; selected manifest and frozen lock are captured, dependency bytes are outside snapshot custody.',
+      }),
+    );
+    const image = await executionImageQualityInputs(root, [], {
+      mode: 'focused-diagnostic',
+      contour: 'sdk-image-roundtrip',
+      sources: ['src/host-state.ts'],
+      tests: ['tests/sdk-package-compatibility.test.ts'],
+    });
+    const rows = sdkFormationInputDigestsFromQualityCapture(image);
+    if (!rows) throw new Error('SDK image capture omitted its formation path and digest rows.');
+    const rehydrated = {
+      ...image,
+      sources: image.sources.map((entry) => ({ ...entry })),
+      test_inputs: image.test_inputs.map((entry) => ({ ...entry })),
+      tool_inputs: image.tool_inputs.map((entry) => ({ ...entry })),
+      module_inputs: image.module_inputs.map((entry) => ({ ...entry })),
+      input_bytes: Object.fromEntries(
+        Object.entries(image.input_bytes).map(([file, bytes]) => [file, Buffer.from(bytes)]),
+      ),
+    };
+    await restoreSdkFormationInputsFromQualityCapture(root, rehydrated, rows);
+    expect([...sdkFormationInputsFromQualityCapture(rehydrated).selectedInputs.keys()]).toEqual([...sdkInputs.keys()]);
+    await expectRejected(
+      () =>
+        restoreSdkFormationInputsFromQualityCapture(
+          root,
+          { ...rehydrated, test_selection: { mode: 'published-baseline-bun-native', tests: image.tests } },
+          rows,
+        ),
+      /non-SDK/u,
+    );
+    await expectRejected(
+      () =>
+        restoreSdkFormationInputsFromQualityCapture(
+          root,
+          { ...image, input_bytes: rehydrated.input_bytes },
+          rows?.slice(1) ?? null,
+        ),
+      /projection|receipt|input|missing/u,
+    );
   });
 
   test('reads logical repository inputs from their retained snapshot without live checkout resolution', async () => {

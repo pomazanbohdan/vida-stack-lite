@@ -1710,16 +1710,56 @@ local owner-reported proof, not independent remeasurement of the published
 budget or global qualification. Current CC=CRAP<=original CC and exact coverage
 are still required; the reader does not independently reload reported CRAP caps.
 
+### Gitless contour execution
+
+`tooling/contour-stage.ts` forms a gitless execution image from one clean Source
+commit through the existing bounded capture. It preserves tracked blob identity
+and executable modes. The selected contour stays focused; the complete maintained
+runtime Source and compiler configuration are extra tool inputs, not extra numeric
+coverage. The image has no `.git`, worktree registration or dependency copy.
+
+The first stage accepts `--image-store <absolute directory>`; its retained request
+and launch contain `execution_image`. Pass its `manifest_file` and caller-held
+`manifest_sha256` as `--image-manifest` and `--image-sha256` to subsequent lanes.
+Reuse validates the same captured files and selection without walking live Source,
+rebuilding an AST/inventory or capturing new test inputs. Coverage, frozen CRAP and
+mutation must use the same image. A changed Source commit needs new evidence; an
+older image remains evidence only for its declared original commit and inputs.
+The global `test:contours --all|--unclosed` campaign caches one image per contour
+and retains its existing single-commit selection contract. It publishes each lane
+once through the same native reader; no second final report import is needed.
+
+The Linux launcher binds captured inputs and the shared dependency installation
+read-only, then hides live Source behind an empty read-only mount. Only the image's
+`coverage/`, `.tmp/`, the owned stage and scratch namespaces are writable. They are
+excluded from the captured input set. Root verifies image bytes/modes after terminal
+custody and validates reports against that image. SDK formation receipts retain their
+original bytes and owner; the image records their digests. Frozen CRAP reads a bounded
+native-Git baseline/budget capsule with a caller-held digest, without live Git fallback.
+
+The dependency binding records lock/pin and installation directory identity; it is
+not a new full-tree content attestation. Preserve existing executable/external-module
+checks. Root fences installs and dependency edits until every dependent producer has
+observed closure. Numeric producers remain serial; three agents are repair/review
+lanes. Build/install still run no suites. The storage admission threshold is unchanged.
+
+New stage outcome v2 separates `source_commit`, `execution_image` and
+`image_inputs_unchanged`; never reinterpret these as legacy live-Git
+`commit_unchanged`/`clean_inputs`. Historical v1 receipts retain their original claims.
+Retain partial images, failed formation and every original FAIL/TIMEOUT/UNKNOWN.
+Do not repair an image in place or automatically remove old measured worktrees.
+Reclaim only terminal, dependency-free derivatives under the existing retention rule.
+
 ### Rolling contour repair cycle
 
 Use the three-contour rolling pool declared by the root
 [sidecar](../../AGENT.sidecar.md#orchestration-and-delegation). Assign one blind
-Luna writer and one isolated checkout to each active contour, including its
+Luna writer and one isolated patch directory to each active contour, including its
 product fixes and tests. Shared files have one writer. Root integrates, runs
 checks, admits numeric results and owns Git. Workers prepare independently; they
 do not start duplicate suites, scans, hashes or inventories.
 
-After each terminal handoff, Root retires the completed preparation checkout
+After each terminal handoff, Root retires the completed preparation directory
 under the [sidecar's worktree retention rule](../../AGENT.sidecar.md#orchestration-and-delegation).
 Retain pending patches and all local/staged data before removal; closure of a
 worker does not release an immutable measured checkout or its evidence.
@@ -1749,7 +1789,7 @@ worker does not release an immutable measured checkout or its evidence.
 Archived UNKNOWN operations, fixtures and issued effects are never replayed under
 either an old or new ID, and unresolved resource custody still blocks successors.
 This does not ban fresh regression or mutation evidence for repaired Source:
-use a new clean immutable checkout/run and new fixtures, preserve the original
+use a newly captured immutable image/run and new fixtures, preserve the original
 artifacts and classification, and require observed process-group closure before
 resource reuse. Matching semantic mutant identity alone is not operation replay.
 

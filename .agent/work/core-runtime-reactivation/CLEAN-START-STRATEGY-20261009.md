@@ -33,6 +33,43 @@ Migrate current callers to the shared helpers, then delete forward-only duplicat
 
 ### 4. Frozen quality prerequisites and complete run
 
+#### Execute captured inputs without measurement worktrees
+
+The owner requests implementation after Pstack's independent design comparison.
+Root integrates one gitless execution image from the existing captured bytes.
+The capture owner retains Source, tests, tool roles and one bounded traversal.
+Include the complete semantic Source and compiler configuration as tool inputs
+for the unchanged Source typecheck, without widening numeric coverage scope.
+Bind Git commit, tree, blob paths and executable modes separately from the image
+identity. Generated SDK inputs retain their original formation receipts.
+
+Use the existing stage, campaign, coverage and mutation owners. Add no service,
+database, general Git interpreter or additional canonical-freeze execution mode.
+The image has read-only captured files and explicit writable coverage, mutation
+evidence and temporary namespaces. Keep those namespaces outside the captured
+file set, with each operation's existing exclusive run identity. Mount installed
+dependencies read-only before hiding live Source, and fence dependency installs
+while an image is active. Preserve current external-module and executable checks.
+
+Replace live Source readback with image readback only in the explicit image
+contract. Producers and readers must distinguish Source provenance from image
+stability. Old receipts retain their original schema and claims. Frozen Git
+baseline and budget inputs form a bounded read capability before isolation.
+SDK receipts are referenced by digest, never rewritten to include an image ID.
+Never recapture a partial materialization as a complete inventory.
+
+First implement image capture/materialization and strict loading, then wire the
+existing numeric producers and proof join, then qualify one small contour with
+known complete prerequisites. All new private helpers have prospective CC and
+CRAP ceilings of10, with no transferred allowances. Root owns the shared files
+and integrates bounded agent patches prepared in separate ordinary directories.
+No new Git worktree is needed for those proposals. Test Source changes after
+seal, denied Source/image writes, exact input/readback bindings, no live fallback,
+same-image lane reuse and retained failures. Qualification needs the unchanged
+exact coverage, reviewed frozen proof and complete assertion-confirmed Killed
+criteria. Stop adoption on a missing binding or isolation failure. Existing
+measured checkouts and FAIL/TIMEOUT/UNKNOWN evidence remain protected.
+
 The fresh governance producer exposes missing pre-capture of explicit computed
 module roots outside the selected coverage Source. Capture these roots through
 the same bounded initial read, then classify every visited runtime input once,

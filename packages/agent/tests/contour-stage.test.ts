@@ -9,11 +9,32 @@ import {
 import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { contourAttempts, mergeContourProgress } from '../tooling/contour-progress.ts';
+import { contourAttempts, mergeContourProgress, contourStageInputOutcome } from '../tooling/contour-progress.ts';
 import { runContourProgressWithNative } from '../tooling/contour-progress-cli.ts';
 import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { CampaignResourceError } from '../tooling/contour-campaign.ts';
+
+test('image outcomes separate captured inputs from legacy live Git claims', () => {
+  const image = {
+    schema: 'VidaQualityExecutionImage/v1',
+    source_commit: 'a'.repeat(40),
+    manifest_sha256: 'b'.repeat(64),
+  };
+  const value = {
+    schema: 'VidaContourStageOutcome/v2',
+    source_commit: image.source_commit,
+    execution_image: image,
+    image_inputs_unchanged: true,
+  };
+  expect(contourStageInputOutcome(value)).toBe(true);
+  expect(contourStageInputOutcome({ ...value, image_inputs_unchanged: false })).toBe(true);
+  expect(contourStageInputOutcome({ ...value, commit_unchanged: true })).toBe(false);
+  expect(contourStageInputOutcome({ ...value, clean_inputs: true })).toBe(false);
+  expect(contourStageInputOutcome({ ...value, source_commit: 'different' })).toBe(false);
+  expect(contourStageInputOutcome({ ...value, execution_image: { ...image, manifest_sha256: 'invalid' } })).toBe(false);
+  expect(contourStageInputOutcome({ ...value, schema: 'VidaContourStageOutcome/v1' })).toBe(false);
+});
 
 function prelaunchFixture() {
   const root = mkdtempSync(path.join(tmpdir(), 'contour-prelaunch-refusal-'));

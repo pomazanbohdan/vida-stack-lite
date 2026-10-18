@@ -578,6 +578,8 @@ export function mutationTestEnvironment(logs: RunnerLogs, perTestCapture?: 'diag
   const environment: Record<string, string> = {};
   for (const [name, value] of Object.entries(process.env)) if (typeof value === 'string') environment[name] = value;
   for (const name of [
+    'VIDA_QUALITY_IMAGE_MANIFEST',
+    'VIDA_QUALITY_IMAGE_SHA256',
     'AGENT_RUNTIME_MUTATION_DIRECTORY',
     'AGENT_RUNTIME_MUTATION_REPORT',
     'AGENT_RUNTIME_MUTATION_RUN_ID',

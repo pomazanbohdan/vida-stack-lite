@@ -9,7 +9,7 @@ Root owns canonical Source, shared files, Git, final checks and numbers. The
 sidecar owns delegation/documentation policy, TESTING owns gates, the
 [CLEAR plan](CLEAN-START-STRATEGY-20261009.md) owns order, and the existing backlog
 retains stable task IDs and P0/P1/P2 boundaries. Native blind Luna prepares one
-contour per writer in separate checkouts; the rolling pool has three contours.
+contour per writer in separate bounded patch directories; the rolling pool has three contours.
 
 The [automatic projection](CONTOUR-STATUS.md) and sibling JSON are the only
 measurement projection. They keep historical/local qualification distinct from
@@ -20,6 +20,40 @@ bundle repair, lifetime exclusion and native/runtime qualification remain open.
 No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 
 ### Current rolling repair cycle
+
+The owner now requests implementation of worktree-free numeric execution.
+Pstack Architect compares independent native blind Luna candidatesv672/v673;
+cross-judgev674selects the captured gitless image and rejects a second canonical
+freeze mode. Root rejects the unmeasured throughput claim in candidateB because
+numeric producers are already serial. Root also rejects candidateA's optional
+alias map, new runner wrappers and image-ID rewrite of SDK receipts. Reuse the
+existing capture, launchers, proof readers and original SDK receipt joins.
+Laziness Protocol removes the proposed general store. Subtract Before You Add
+puts reuse of captured bytes ahead of new storage layers. The current plugin is
+locally enabled Pstack1.17.5; remote catalog listing451does not prevent local
+skill use and proves no new hook qualification. The v671worker contract is
+prompt-only. Two bounded patch lanes own capture and frozen Git inputs in
+separate ordinary artifact directories; Root owns image/stage/proof integration.
+Root has integrated capture, materializer, ordered mounts, frozen Git capability,
+single-stage and global campaign changes. One image is reused across a contour's
+lanes; global campaign retains its declared one-commit plan. Stagev2 records the
+Source commit separately from image integrity; the native reader now honors the
+explicit image package root. Full maintained TypeScript compiler files come from
+the same native tree metadata as semantic tool inputs, without a second AST pass
+or widened numeric selection. Shared dependency installation identity is not a new
+full-tree byte attestation: Root fences installs and retains existing native
+executable/external-module checks. No new worktree, service or DB is allocated.
+
+Verification before publication: v699has139PASS/0FAIL/1515assertions in8.04s across
+nine focused files; native bwrap controls hide live Source, deny writes to Source,
+image and dependencies, and permit only declared output writes. v697strict
+TypeScript has0diagnostics across521captured TS paths. Earlier RED results found
+and fixed descriptor JSON-order comparison, an omitted capture projection and
+incomplete fixture setup; the original logs remain retained. New helper complexity
+is checked against prospective10rather than increasing a baseline. Independent
+native Luna reviewv690reported no additional confirmed issue; directory identity
+is explicitly weaker than full dependency byte identity. Final hook checks and a
+small same-image coverage/frozen/mutation pilot remain pending at this publication.
 
 Active contours: governance/public contracts, dispatch repair and controller
 observation. Published88e8052includes the checked v4 partition-capture repair,

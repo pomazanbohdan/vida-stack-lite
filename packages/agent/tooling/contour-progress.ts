@@ -448,6 +448,25 @@ function prelaunchRefusalAttempts(report: Record<string, unknown>, receipt: Rece
   return stageOutcomeAttempt(report, receipt, text(report.contour), `${text(report.lane)}/prelaunch-resource-refused`);
 }
 
+export function contourStageInputOutcome(diagnostic: Record<string, unknown>): boolean {
+  if (diagnostic.schema === 'VidaContourStageOutcome/v1')
+    return typeof diagnostic.commit_unchanged === 'boolean' && typeof diagnostic.clean_inputs === 'boolean';
+  if (diagnostic.schema !== 'VidaContourStageOutcome/v2' || typeof diagnostic.image_inputs_unchanged !== 'boolean')
+    return false;
+  if (Object.hasOwn(diagnostic, 'commit_unchanged') || Object.hasOwn(diagnostic, 'clean_inputs')) return false;
+  return contourStageImageBinding(diagnostic.execution_image, diagnostic.source_commit);
+}
+
+function contourStageImageBinding(image: unknown, sourceCommit: unknown): boolean {
+  return (
+    isRecord(image) &&
+    image.schema === 'VidaQualityExecutionImage/v1' &&
+    image.source_commit === sourceCommit &&
+    typeof image.manifest_sha256 === 'string' &&
+    /^[a-f0-9]{64}$/u.test(image.manifest_sha256)
+  );
+}
+
 function stageOutcomeAttempts(report: Record<string, unknown>, receipt: Receipt): Attempt[] {
   const diagnostic = object(report.diagnostic);
   const status = text(report.status);
@@ -459,15 +478,13 @@ function stageOutcomeAttempts(report: Record<string, unknown>, receipt: Receipt)
       !['unknown-or-partial', 'published-receipt-failed'].includes(status),
       report.source_commit !== receipt.commit,
       text(report.error) !== text(diagnostic.error),
-      diagnostic.schema !== 'VidaContourStageOutcome/v1',
+      !contourStageInputOutcome(diagnostic),
       diagnostic.publication !== status,
       !['coverage', 'frozen-crap', 'crap-applicability', 'mutation'].includes(stageLane),
       !['completed', 'failed', 'timeout', 'unknown', 'resource'].includes(process),
       typeof diagnostic.capture_complete !== 'boolean',
       typeof diagnostic.group_closed !== 'boolean',
       typeof diagnostic.boot_unchanged !== 'boolean',
-      typeof diagnostic.commit_unchanged !== 'boolean',
-      typeof diagnostic.clean_inputs !== 'boolean',
     ].some(Boolean)
   )
     throw new Error('Stage publication outcome is malformed or successful.');

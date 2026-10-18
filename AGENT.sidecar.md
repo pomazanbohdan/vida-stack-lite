@@ -92,25 +92,30 @@ When a contour has a complete compatible passing triple, record its closure and
 immediately assign the next ready contour to that slot. A finished patch or review
 alone does not close a contour. A dependency-blocked contour remains OPEN with its
 exact prerequisite; keep its prepared bytes and use its idle slot for ready work.
-Give each code-producing lane its own checkout and exact file ownership. Each
+Give each code-producing lane an isolated ordinary patch directory and exact file
+ownership; do not allocate a Git worktree for preparation or measurement. Each
 handoff names the immutable base commit and provides a bounded diff for those
 files. Root compares that diff with current canonical bytes and preserves
 unrelated intervening changes. Do not integrate a stale whole-file replacement
 when its diff deletes tests or fixes outside the assigned change.
-During numeric measurement, the measured checkout stays immutable: workers may prepare
-fixes in their assigned isolated checkouts, and Root integrates only after the
-affected producers are terminal. Temporary edits followed by restoration also
-violate this rule. Root alone owns Git, shared-file integration and final checks;
+During numeric measurement, the captured execution image stays immutable: workers
+prepare patches separately. Source may advance after image formation; it does not
+change that image's Source identity or make its evidence current for new bytes.
+Use [TESTING's gitless execution contract](packages/agent/TESTING.md#gitless-contour-execution).
+Do not install or modify shared dependencies until all dependent producers close.
+Temporary edits followed by restoration also violate image immutability. Root
+alone owns Git, shared-file integration and final checks;
 worker proposals and static checks do not establish numeric closure.
 An unresolved finding remains OPEN and returns to the repair queue when its
 prerequisite is available; a handoff alone does not close the contour.
 
-Retire a worker checkout immediately after its terminal handoff and preservation
+Retire a worker patch directory immediately after its terminal handoff and preservation
 of its work. Root first integrates the reviewed changes or durably retains an
 explicitly unvalidated proposal, then preserves every remaining staged/unstaged
 change and untracked file. Check for active owners and dependent paths before
-using `git worktree remove`; never let a worker remove its own checkout or leave
-completed preparation checkouts accumulating. Preserve an auditable removal
+removal; never let a worker remove its own inputs or leave completed preparation
+copies accumulating. Existing historical worktrees still require `git worktree
+remove` and their retention checks. Preserve an auditable removal
 manifest, base commit and restoration data. Measured checkouts and original
 receipts, logs, SDK artifacts, DBs and UNKNOWN evidence remain protected by their
 retention contract; terminal PASS alone does not authorize their deletion.

@@ -13,6 +13,7 @@ import {
   selectMaintainedSourcePaths,
 } from './maintained-source-inventory.ts';
 import type { PublishedFixtureIdentity } from './published-coverage-inputs.js';
+import { classifyMaintainedSourcePath } from './ts-only-source-gate.ts';
 import {
   assertPublishedCoverageInputs,
   parsePublishedGitBatch,
@@ -91,6 +92,7 @@ type QualityInputCapture = {
   runtimeToolPaths: string[];
   sdkBuilderToolPaths?: string[];
   sdkFormationSourcePaths?: string[];
+  executionImageToolPaths?: string[];
   publishedContract?: PublishedContract;
 };
 export type SdkFormationQualityInputCapture = {
@@ -145,6 +147,15 @@ export const coverageToolInputs: string[] = [
   // so static runtime-import traversal cannot discover it before execution.
   'bin/local-release-artifacts.ts',
 ];
+
+const executionImageConfigInputs = [
+  'tsconfig.json',
+  'tsconfig.checked-js.json',
+  'bin/tsconfig.json',
+  'tooling/quality-current.ts',
+  'tooling/ts-only-source-gate.ts',
+  'bin/bun.ts',
+] as const;
 
 export const sha256 = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 export const canonicalJson = (value: unknown): string | undefined => JSON.stringify(value);
@@ -238,6 +249,22 @@ export function coverageReviewEnvironmentSha256(environment: NodeJS.ProcessEnv, 
   });
 }
 export const repositoryToolingInputPrefix = '_repository/tooling/agent';
+const repositoryCompilerInputPrefix = '_repository/compiler';
+
+function compilerRepositoryPath(relative: string): boolean {
+  return (
+    !relative.startsWith('packages/agent/') &&
+    !relative.startsWith('tooling/agent/') &&
+    classifyMaintainedSourcePath(relative) === 'typescript'
+  );
+}
+
+function compilerRepositoryRelativePath(logical: string): string | null {
+  const prefix = repositoryCompilerInputPrefix + '/';
+  if (!logical.startsWith(prefix)) return null;
+  const relative = logical.slice(prefix.length);
+  return compilerRepositoryPath(relative) ? relative : null;
+}
 // Computed module loads are invisible to Bun's static import scanner. Keep
 // their test-owned entrypoints explicit, then let the shared bounded closure
 // capture each entrypoint's literal transitive imports and freshness inputs.
@@ -311,6 +338,7 @@ export function canonicalCapturedModulePath(packageRoot: string, absolutePath: s
   const repositoryToolingPrefix = `tooling${path.sep}agent${path.sep}`;
   if (repositoryRelative.startsWith(repositoryToolingPrefix) && !path.isAbsolute(repositoryRelative))
     return `${repositoryToolingInputPrefix}/${repositoryRelative.slice(repositoryToolingPrefix.length).split(path.sep).join('/')}`;
+  if (compilerRepositoryPath(contextPath)) return `${repositoryCompilerInputPrefix}/${contextPath}`;
   return null;
 }
 
@@ -329,6 +357,7 @@ function requireCapturedInputPath(logicalPath: string): void {
     logicalPath === '_repository' ||
     (logicalPath.startsWith('_repository/') &&
       !logicalPath.startsWith(`${repositoryToolingInputPrefix}/`) &&
+      compilerRepositoryRelativePath(logicalPath) === null &&
       repositoryTestContextRelativePath(logicalPath) === null)
   )
     throw new Error(`Captured module path is outside admitted roots: ${logicalPath}`);
@@ -339,11 +368,12 @@ export function capturedModuleAbsolutePath(packageRoot: string, logicalPath: str
   const packageBase = path.resolve(packageRoot);
   const repositoryPrefix = `${repositoryToolingInputPrefix}/`;
   const contextPath = repositoryTestContextRelativePath(logicalPath);
+  const compilerPath = compilerRepositoryRelativePath(logicalPath);
   if (logicalPath.startsWith('_repository/') && !repositoryRootForPackage(packageBase))
     throw new Error(`Captured module path is outside admitted roots: ${logicalPath}`);
   const absolute =
-    contextPath !== null
-      ? path.resolve(packageBase, '../..', contextPath)
+    contextPath !== null || compilerPath !== null
+      ? path.resolve(packageBase, '../..', contextPath ?? compilerPath!)
       : logicalPath.startsWith(repositoryPrefix)
         ? path.resolve(packageBase, '../..', 'tooling/agent', logicalPath.slice(repositoryPrefix.length))
         : path.resolve(packageBase, ...logicalPath.split('/'));
@@ -1221,6 +1251,8 @@ async function captureQualityInputBase(
   additionalToolInputs: readonly string[],
   selection: QualityInputSelectionMode,
   runtimeToolEntrypoints: readonly string[] = [],
+  executionImage = false,
+  semanticToolInputs: readonly string[] = [],
 ): Promise<QualityInputCapture> {
   const focused = typeof selection === 'string' ? undefined : selection;
   const selectionMode = typeof selection === 'string' ? selection : 'current';
@@ -1252,7 +1284,12 @@ async function captureQualityInputBase(
   const repositoryToolInputs = selectionMode === 'current' ? await repositoryToolingInputPaths(root) : [];
   const sdkFormationTools = sdkFormationToolInputPaths(selectionMode, testSelection);
   const tools = qualityToolInputPaths(
-    [...additionalToolInputs, ...sdkFormationTools, ...repositoryToolInputs],
+    [
+      ...additionalToolInputs,
+      ...sdkFormationTools,
+      ...repositoryToolInputs,
+      ...(executionImage ? [...maintainedSources, ...executionImageConfigInputs, ...semanticToolInputs] : []),
+    ],
     contractInputs,
     selectionMode,
   );
@@ -1331,6 +1368,9 @@ async function captureQualityInputBase(
     runtimeToolPaths: [...new Set([...capturedRuntimeTools, ...repositoryToolInputs])].sort(),
     ...(sdkBuilderToolPaths ? { sdkBuilderToolPaths } : {}),
     ...(sdkFormationSourcePaths ? { sdkFormationSourcePaths } : {}),
+    ...(executionImage
+      ? { executionImageToolPaths: [...maintainedSources, ...executionImageConfigInputs, ...semanticToolInputs] }
+      : {}),
     ...(selectionMode === 'published-baseline-bun-native'
       ? { publishedContract: capturePublishedBaselineContract(root) }
       : {}),
@@ -1360,6 +1400,7 @@ async function projectQualityInputCapture(
     ...new Set([
       ...qualityToolInputPaths(additionalToolInputs, capture.contractInputs, selectionMode),
       ...capture.runtimeToolPaths,
+      ...(capture.executionImageToolPaths ?? []),
       ...sdkFormationToolInputPaths(selectionMode, capture.testSelection),
       ...(capture.sdkFormationSourcePaths ?? []).filter(
         (file) => !capture.sources.some((entry) => entry.path === file),
@@ -1460,6 +1501,86 @@ export function sdkFormationInputsFromQualityCapture(inputs: CoverageInputs): Sd
   });
 }
 
+/** Return the exact SDK formation path and digest rows for an image manifest. */
+export function sdkFormationInputDigestsFromQualityCapture(inputs: CoverageInputs): readonly InputDigest[] | null {
+  const requiresSdkFormation =
+    (inputs.test_selection.mode === 'full-current-test-set' || inputs.test_selection.mode === 'focused-diagnostic') &&
+    inputs.tests.includes(sdkArtifactTestPath);
+  if (!requiresSdkFormation) return null;
+  const snapshot = sdkFormationInputsFromQualityCapture(inputs);
+  return Object.freeze(
+    [...snapshot.inputDigests]
+      .map(([file, digest]) => Object.freeze({ path: file, sha256: digest }))
+      .sort((left, right) => left.path.localeCompare(right.path)),
+  );
+}
+
+/** Restore SDK ownership from image bytes and require the existing formation receipt to match exactly. */
+function checkedSdkImageRow(row: unknown): InputDigest {
+  if (typeof row !== 'object' || row === null || Array.isArray(row))
+    throw new Error('SDK formation input rows are malformed.');
+  if (!('path' in row) || !('sha256' in row)) throw new Error('SDK formation input rows are malformed.');
+  if (
+    typeof row.path !== 'string' ||
+    !isSafeProjectionPath(row.path) ||
+    typeof row.sha256 !== 'string' ||
+    !/^[a-f0-9]{64}$/u.test(row.sha256)
+  )
+    throw new Error('SDK formation input rows are malformed.');
+  return { path: row.path, sha256: row.sha256 };
+}
+
+function sdkImageSnapshot(inputs: CoverageInputs, rows: readonly InputDigest[]): SdkFormationQualityInputCapture {
+  const selectedInputs = new Map<string, Buffer>();
+  const inputDigests = new Map<string, string>();
+  for (const value of rows as readonly unknown[]) {
+    const row = checkedSdkImageRow(value);
+    if (inputDigests.has(row.path)) throw new Error(`SDK formation input row is duplicated: ${row.path}`);
+    const bytes = inputs.input_bytes[row.path];
+    if (!Buffer.isBuffer(bytes)) throw new Error(`SDK formation image input is missing: ${row.path}`);
+    if (sha256(bytes) !== row.sha256) throw new Error(`SDK formation image input digest changed: ${row.path}`);
+    selectedInputs.set(row.path, Buffer.from(bytes));
+    inputDigests.set(row.path, row.sha256);
+  }
+  return Object.freeze({ selectedInputs, inputDigests });
+}
+
+export async function restoreSdkFormationInputsFromQualityCapture(
+  root: string,
+  inputs: CoverageInputs,
+  rows: readonly InputDigest[] | null,
+): Promise<void> {
+  const requiresSdkFormation =
+    (inputs.test_selection.mode === 'full-current-test-set' || inputs.test_selection.mode === 'focused-diagnostic') &&
+    inputs.tests.includes(sdkArtifactTestPath);
+  if (!requiresSdkFormation) {
+    if (rows !== null) throw new Error('SDK formation rows are not permitted for a non-SDK test selection.');
+    sdkFormationQualityInputs.delete(inputs);
+    return;
+  }
+  if (!Array.isArray(rows) || rows.length === 0) throw new Error('SDK formation input rows are incomplete.');
+  const snapshot = sdkImageSnapshot(inputs, rows);
+  sdkFormationQualityInputs.set(inputs, snapshot);
+  try {
+    const artifactPaths = ['dist/sdk-formation.json', ...expectedJavascriptFiles.map((file) => `dist/src/${file}`)];
+    const artifacts = new Map<string, Buffer>();
+    for (const file of artifactPaths) {
+      const bytes = inputs.input_bytes[file];
+      if (!Buffer.isBuffer(bytes)) throw new Error(`Captured SDK formation artifact is missing: ${file}`);
+      artifacts.set(file, bytes);
+    }
+    const { captureSelectedSdkJavascriptOutputsFromCapturedBytes } = await import('./sdk-artifact-capture.ts');
+    captureSelectedSdkJavascriptOutputsFromCapturedBytes(
+      root,
+      sdkFormationInputsFromQualityCapture(inputs).selectedInputs,
+      artifacts,
+    );
+  } catch (error) {
+    sdkFormationQualityInputs.delete(inputs);
+    throw error;
+  }
+}
+
 function freezeQualityProjection(inputs: CoverageInputs): CoverageInputs {
   for (const entries of [inputs.sources, inputs.test_inputs, inputs.tool_inputs, inputs.module_inputs]) {
     for (const entry of entries) Object.freeze(entry);
@@ -1491,6 +1612,11 @@ export async function qualityInputs(
   additionalToolInputs: readonly string[] = [],
   selectionMode: QualityInputSelectionMode = 'current',
 ): Promise<CoverageInputs> {
+  const image =
+    process.env.VIDA_QUALITY_IMAGE_MANIFEST === undefined && process.env.VIDA_QUALITY_IMAGE_SHA256 === undefined
+      ? null
+      : await (await import('./quality-execution-image.ts')).loadQualityExecutionImageInputs(root);
+  if (image) return checkedImageProjection(image, additionalToolInputs, selectionMode);
   const capture = await captureQualityInputBase(
     root,
     additionalToolInputs,
@@ -1502,6 +1628,43 @@ export async function qualityInputs(
     additionalToolInputs,
     typeof selectionMode === 'string' ? selectionMode : 'current',
   );
+}
+
+function checkedImageProjection(
+  inputs: CoverageInputs,
+  tools: readonly string[],
+  selection: QualityInputSelectionMode,
+): CoverageInputs {
+  const declared = inputs.test_selection;
+  if (typeof selection === 'string' || declared.mode !== 'focused-diagnostic')
+    throw new Error('Focused execution image cannot establish full or historical input coverage.');
+  if (
+    selection.contour !== declared.contour ||
+    JSON.stringify([...selection.sources].sort()) !== JSON.stringify([...declared.sources].sort()) ||
+    JSON.stringify([...selection.tests].sort()) !== JSON.stringify([...declared.tests].sort())
+  )
+    throw new Error('Requested selection differs from the execution image.');
+  if (tools.some((file) => !Object.hasOwn(inputs.input_bytes, file)))
+    throw new Error('Execution image does not contain a requested tool input.');
+  return inputs;
+}
+
+/** Capture focused numeric inputs together with the maintained execution image. */
+export async function executionImageQualityInputs(
+  root: string,
+  additionalToolInputs: readonly string[],
+  selection: FocusedDiagnosticSelection,
+  semanticToolInputs: readonly string[] = [],
+): Promise<CoverageInputs> {
+  const capture = await captureQualityInputBase(
+    root,
+    additionalToolInputs,
+    selection,
+    additionalToolInputs.filter(importScanSource),
+    true,
+    semanticToolInputs,
+  );
+  return projectQualityInputCapture(capture, additionalToolInputs, 'current');
 }
 
 export const coverageInputs = (

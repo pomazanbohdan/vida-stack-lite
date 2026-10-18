@@ -1,5 +1,4 @@
 import { parseArgs } from 'node:util';
-import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,13 +9,87 @@ import {
   campaignProcessState,
   campaignReportPublicationAdmitted as contourStagePublicationAdmitted,
   isolatedCommand,
+  requireCampaignStorage,
   throwAfterCampaignReceiptFailure,
 } from './contour-campaign.ts';
 import { readContourArtifact, runContourProgressWithNative } from './contour-progress-cli.ts';
 import { executeMutationCommand } from './mutation-evidence.ts';
 import { mutationPartitions } from './mutation-partitions.ts';
+import { mutationToolInputs } from './mutation-evidence.ts';
+import { retainQualityGitSnapshot } from './quality-git-snapshot.ts';
+import {
+  prepareQualityExecutionImage,
+  readQualityExecutionImageDescriptor,
+  readQualityExecutionImageInputs,
+  verifyQualityExecutionImage,
+  type QualityExecutionImage,
+} from './quality-execution-image.ts';
 
 type Lane = 'coverage' | 'frozen-crap' | 'crap-applicability' | 'mutation';
+
+type ImageOptions = {
+  'image-manifest'?: string | undefined;
+  'image-sha256'?: string | undefined;
+  'image-store'?: string | undefined;
+};
+
+function checkedStageImageOptions(values: ImageOptions): void {
+  const reuse = values['image-manifest'] !== undefined;
+  if (reuse !== (values['image-sha256'] !== undefined) || (reuse && values['image-store'] !== undefined))
+    throw new Error('Image reuse requires both manifest and digest; image-store is formation-only.');
+}
+
+async function stageExecutionImage(
+  packageRoot: string,
+  repository: string,
+  partition: ReturnType<typeof campaignPartition>,
+  values: ImageOptions,
+): Promise<QualityExecutionImage> {
+  const manifest = values['image-manifest'];
+  const digest = values['image-sha256'];
+  checkedStageImageOptions(values);
+  requireCampaignStorage(
+    values['image-store'] === undefined ? path.dirname(repository) : path.dirname(values['image-store']),
+  );
+  const image =
+    manifest !== undefined && digest !== undefined
+      ? await readQualityExecutionImageDescriptor(manifest, digest)
+      : await prepareQualityExecutionImage({
+          sourcePackageRoot: packageRoot,
+          storeRoot: values['image-store'] ?? path.join(path.dirname(repository), '.vida-quality-inputs'),
+          selection: {
+            mode: 'focused-diagnostic',
+            contour: partition.name,
+            sources: partition.sources ?? [],
+            tests: partition.tests ?? [],
+          },
+          additionalToolInputs: [
+            ...mutationToolInputs,
+            'tooling/contour-stage.ts',
+            'tooling/quality-execution-image.ts',
+          ],
+        });
+  if (image.source_repository !== repository)
+    throw new Error('Execution image belongs to a different Source repository.');
+  await assertStageImageSelection(image, partition);
+  return image;
+}
+
+async function assertStageImageSelection(
+  image: QualityExecutionImage,
+  partition: ReturnType<typeof campaignPartition>,
+): Promise<void> {
+  const selection = (await readQualityExecutionImageInputs(image)).test_selection;
+  if (selection.mode !== 'focused-diagnostic') throw new Error('Stage image is not focused.');
+  const same = (left: readonly string[], right: readonly string[]) =>
+    JSON.stringify([...left].sort()) === JSON.stringify([...right].sort());
+  if (
+    selection.contour !== partition.name ||
+    !same(selection.sources, partition.sources ?? []) ||
+    !same(selection.tests, partition.tests ?? [])
+  )
+    throw new Error('Stage selection differs from its execution image.');
+}
 
 /** Owner-reported diagnostic counters never enter report routing or native proof admission. */
 export function contourStageDiagnostic(stdout: string): Record<string, unknown> {
@@ -159,7 +232,7 @@ export async function retainContourStageResourceRefusal(
 async function main(): Promise<void> {
   if (process.argv.length === 3 && process.argv[2] === '--help') {
     process.stdout.write(
-      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]] [--diagnostic-mutant-ids <id[,id...]> | --diagnostic-batch-size <1..128>]\nRuns one declared contour stage, retains terminal custody and automatically publishes its exact report. Frozen CRAP and the separate data-only applicability lane require coverage-run and budget-ref. Worker count is an explicit opt-in (default2), mutation-only with isolated-workers, and subject to the native owner allowlist. Diagnostic ID selection is serial mutation-only; a diagnostic batch forwards one bounded batch to the native owner and permits qualified isolation. Both diagnostic selectors omit complete admission and never publish a score. Full launch data stays in launch.json; stdout prints compact location and terminal outcome records.\n',
+      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--image-store <absolute directory> | --image-manifest <absolute JSON> --image-sha256 <digest>] [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]] [--diagnostic-mutant-ids <id[,id...]> | --diagnostic-batch-size <1..128>]\nForms a gitless execution image from clean Source, or reuses the exact manifest/digest across lanes without recapturing Source. Source may advance after formation. Input bytes stay read-only; coverage and .tmp are separate writable output namespaces. Retains terminal custody and publishes the exact report. Frozen lanes require coverage-run and budget-ref. Isolated workers default2, opt-in and mutation-only; diagnostics never publish a complete mutation score. Full launch data stays in launch.json.\n',
     );
     return;
   }
@@ -177,6 +250,9 @@ async function main(): Promise<void> {
       workers: { type: 'string' },
       'diagnostic-mutant-ids': { type: 'string' },
       'diagnostic-batch-size': { type: 'string' },
+      'image-manifest': { type: 'string' },
+      'image-sha256': { type: 'string' },
+      'image-store': { type: 'string' },
     },
   });
   const { lane } = values;
@@ -209,11 +285,9 @@ async function main(): Promise<void> {
     lane === 'coverage' ? 'coverage' : lane === 'crap-applicability' ? lane : frozen ? 'frozen-crap' : 'mutation';
   const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const repository = realpathSync(path.resolve(packageRoot, '../..'));
-  const output = contourStageOutput(repository, values.output);
-  const git = (...args: string[]) =>
-    execFileSync('git', ['--no-optional-locks', ...args], { cwd: repository, encoding: 'utf8', timeout: 5000 }).trim();
-  const commit = git('rev-parse', 'HEAD');
-  if (git('status', '--porcelain')) throw new Error('Publish checked fixes before measurement.');
+  const image = await stageExecutionImage(packageRoot, repository, partition, values);
+  const output = contourStageOutput(image.repository, values.output);
+  const commit = image.source_commit;
   const boot = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
   const directory = mkdtempSync(path.join(path.dirname(repository), 'contour-stage-'));
   const record = (name: string, value: unknown) =>
@@ -246,8 +320,17 @@ async function main(): Promise<void> {
           ...(values.workers !== undefined ? ['--workers', values.workers] : []),
         ];
   const timeout = lane === 'mutation' ? 930_000 : lane === 'coverage' ? 330_000 : 60_000;
-  const request = { commit, boot, contour: partition.name, lane: selectedLane, output, timeout_ms: timeout };
+  const request = {
+    commit,
+    boot,
+    contour: partition.name,
+    lane: selectedLane,
+    output,
+    timeout_ms: timeout,
+    execution_image: image,
+  };
   record('request', { ...request, args });
+  const frozenEnvironment = frozen ? retainQualityGitSnapshot(repository, directory, values['budget-ref']!) : {};
   let isolated: ReturnType<typeof isolatedCommand>;
   try {
     isolated = isolatedCommand(
@@ -258,6 +341,7 @@ async function main(): Promise<void> {
         bwrap: 'bwrap',
       },
       process.env.VIDA_QUALITY_RETAINED_SCRATCH_ROOT,
+      image,
     );
   } catch (error) {
     return retainContourStageResourceRefusal(error, directory, request, packageRoot, values.snapshot);
@@ -275,7 +359,7 @@ async function main(): Promise<void> {
     }) + '\n',
   );
   const started = performance.now();
-  const result = await executeMutationCommand(isolated.command, packageRoot, timeout, {
+  const result = await executeMutationCommand(isolated.command, image.packageRoot, timeout, {
     ownedProcessGroup: true,
     outputByteLimit: 128 * 1024 * 1024,
     stdoutFile: path.join(directory, 'stdout.log'),
@@ -283,16 +367,23 @@ async function main(): Promise<void> {
     env: {
       ...process.env,
       ...isolated.environment,
+      ...frozenEnvironment,
       ...(frozen ? { VIDA_BUN_COVERAGE_REPORT: path.resolve(values['coverage-run']!) } : {}),
     },
   });
+  let imageFailure: { error: unknown } | undefined;
+  try {
+    await verifyQualityExecutionImage(image);
+  } catch (error) {
+    imageFailure = { error };
+  }
   const terminal = {
     ...launch,
     result,
     elapsed_ms: performance.now() - started,
     boot_after: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
-    commit_after: git('rev-parse', 'HEAD'),
-    tracked_status_after: git('status', '--porcelain'),
+    image_inputs_unchanged: imageFailure === undefined,
+    ...(imageFailure === undefined ? {} : { image_error: String(imageFailure.error) }),
   };
   record('execution', terminal);
   let published = false;
@@ -319,7 +410,7 @@ async function main(): Promise<void> {
       counters = { diagnostic_error: String(error) };
     }
     return {
-      schema: 'VidaContourStageOutcome/v1',
+      schema: 'VidaContourStageOutcome/v2',
       directory,
       contour: partition.name,
       lane,
@@ -332,8 +423,9 @@ async function main(): Promise<void> {
       capture_complete: result.output_capture?.complete === true,
       group_closed: result.processCustody?.processGroupTerminationObserved === true,
       boot_unchanged: terminal.boot_after === boot,
-      commit_unchanged: terminal.commit_after === commit,
-      clean_inputs: !terminal.tracked_status_after,
+      source_commit: commit,
+      execution_image: image,
+      image_inputs_unchanged: terminal.image_inputs_unchanged,
       ...counters,
       ...detail,
     };
@@ -341,12 +433,11 @@ async function main(): Promise<void> {
   try {
     if (
       terminal.boot_after !== boot ||
-      terminal.commit_after !== commit ||
-      terminal.tracked_status_after ||
+      !terminal.image_inputs_unchanged ||
       !contourStagePublicationAdmitted(result, selectedLane)
     )
       throw new Error(
-        `Stage publication denied: boot_unchanged=${terminal.boot_after === boot}, commit_unchanged=${terminal.commit_after === commit}, clean_inputs=${!terminal.tracked_status_after}, process=${campaignProcessState(result)}, exit=${result.exitCode}, capture_complete=${result.output_capture?.complete === true}, group_closed=${result.processCustody?.processGroupTerminationObserved === true}.`,
+        `Stage publication denied: boot_unchanged=${terminal.boot_after === boot}, image_inputs_unchanged=${terminal.image_inputs_unchanged}, process=${campaignProcessState(result)}, exit=${result.exitCode}, capture_complete=${result.output_capture?.complete === true}, group_closed=${result.processCustody?.processGroupTerminationObserved === true}.`,
       );
     const reportArgs = contourStageReportArguments(
       selectedLane,
@@ -363,7 +454,7 @@ async function main(): Promise<void> {
         ...(values.snapshot || existsSync(snapshot) ? ['--snapshot', snapshot] : []),
         ...reportArgs,
       ],
-      packageRoot,
+      image.packageRoot,
     );
     published = true;
     record('publication', {

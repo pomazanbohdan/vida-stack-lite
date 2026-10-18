@@ -921,6 +921,8 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     if (prior.trim()) throw new Error('Ambient BUN_OPTIONS are unsupported for coverage.');
     const environment = { ...process.env };
     delete environment.BUN_OPTIONS;
+    delete environment.VIDA_QUALITY_IMAGE_MANIFEST;
+    delete environment.VIDA_QUALITY_IMAGE_SHA256;
     return {
       ...environment,
       VIDA_BUN_COVERAGE_ROOT: root,
@@ -1690,7 +1692,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       commandBudget.remaining();
     }
     writeAtomic(finalPath, finalReport);
-    if (focused) {
+    if (focused && process.env.VIDA_QUALITY_IMAGE_MANIFEST === undefined) {
       try {
         recordContourReport(root, finalReport, finalPath);
       } catch (error) {
@@ -1829,7 +1831,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       }
     }
   }
-  if (focused) {
+  if (focused && process.env.VIDA_QUALITY_IMAGE_MANIFEST === undefined) {
     try {
       recordContourReport(
         root,

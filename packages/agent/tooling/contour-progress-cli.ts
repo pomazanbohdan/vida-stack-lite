@@ -235,8 +235,17 @@ function readStageOutcome(file: string, commit: string, recorded_at: string): Re
     [diagnostic.capture_complete, capture.complete === true],
     [diagnostic.group_closed, custody.processGroupTerminationObserved === true],
     [diagnostic.boot_unchanged, execution.boot_after === launch.boot],
-    [diagnostic.commit_unchanged, execution.commit_after === launch.commit],
-    [diagnostic.clean_inputs, execution.tracked_status_after === ''],
+    ...(diagnostic.schema === 'VidaContourStageOutcome/v2'
+      ? ([
+          [diagnostic.source_commit, launch.commit],
+          [JSON.stringify(diagnostic.execution_image), JSON.stringify(launch.execution_image)],
+          [JSON.stringify(diagnostic.execution_image), JSON.stringify(execution.execution_image)],
+          [diagnostic.image_inputs_unchanged, execution.image_inputs_unchanged],
+        ] as const)
+      : ([
+          [diagnostic.commit_unchanged, execution.commit_after === launch.commit],
+          [diagnostic.clean_inputs, execution.tracked_status_after === ''],
+        ] as const)),
     [diagnostic.elapsed_ms, execution.elapsed_ms],
   ];
   if (observations.some(([observed, expected]) => observed !== expected))
@@ -357,7 +366,7 @@ export async function runContourProgressWithNative(
   const atIndex = ordinary.lastIndexOf('--at');
   const commit = commitIndex >= 0 ? (ordinary[commitIndex + 1] ?? 'not-captured') : 'not-captured';
   const recorded_at = atIndex >= 0 ? (ordinary[atIndex + 1] ?? new Date().toISOString()) : new Date().toISOString();
-  const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const packageRoot = root;
   const attempts: ReturnType<typeof contourAttempts> = [];
   for (const file of stageOutcomeFiles) attempts.push(...readStageOutcome(file, commit, recorded_at));
   for (const file of nativeFiles) {

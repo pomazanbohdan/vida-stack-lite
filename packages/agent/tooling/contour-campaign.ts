@@ -4,17 +4,19 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, statSync, statfsSyn
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
-import {
-  contourAttempts,
-  contourAttemptMaximum,
-  mergeContourProgress,
-  selectContourCampaign,
-} from './contour-progress.ts';
-import { readContourArtifact, runContourProgress } from './contour-progress-cli.ts';
+import { contourAttemptMaximum, mergeContourProgress, selectContourCampaign } from './contour-progress.ts';
+import { readContourArtifact, runContourProgressWithNative } from './contour-progress-cli.ts';
 import { fsSafeApplicabilityReview, latestScopedCrapBudgetRef } from './crap-gate.ts';
-import { executeMutationCommand, type MutationProcessResult } from './mutation-evidence.ts';
+import { executeMutationCommand, mutationToolInputs, type MutationProcessResult } from './mutation-evidence.ts';
 import { mutationLimits } from './mutation-limits.ts';
 import { mutationPartitionSources, mutationPartitions, type MutationPartition } from './mutation-partitions.ts';
+import { qualityImageMountArguments } from './quality-image-mounts.ts';
+import { retainQualityGitSnapshot } from './quality-git-snapshot.ts';
+import {
+  prepareQualityExecutionImage,
+  verifyQualityExecutionImage,
+  type QualityExecutionImage,
+} from './quality-execution-image.ts';
 
 type Lane = 'coverage' | 'frozen-crap' | 'mutation';
 export function campaignReportArguments(reports: readonly { file: string; lane: Lane }[]): string[] {
@@ -68,7 +70,7 @@ function isCampaignResourceFailure(error: unknown): boolean {
 }
 
 export function campaignScratchDirectory(runId: string, stage: string): string {
-  return path.join(statusDirectory, 'campaign-scratch', runId, stage);
+  return path.join(path.dirname(repositoryRoot), '.vida-quality-inputs', 'campaign-scratch', runId, stage);
 }
 
 export function throwAfterCampaignReceiptFailure(
@@ -215,11 +217,49 @@ function writeRecord(directory: string, file: string, record: unknown): void {
   writeFileSync(path.join(directory, file), JSON.stringify(record, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
 }
 
+async function campaignImage(partition: MutationPartition): Promise<QualityExecutionImage> {
+  return prepareQualityExecutionImage({
+    sourcePackageRoot: packageRoot,
+    storeRoot: path.join(path.dirname(repositoryRoot), '.vida-quality-inputs'),
+    selection: {
+      mode: 'focused-diagnostic',
+      contour: partition.name,
+      sources: partition.sources ?? [],
+      tests: partition.tests ?? [],
+    },
+    additionalToolInputs: [
+      ...mutationToolInputs,
+      'tooling/contour-campaign.ts',
+      'tooling/contour-stage.ts',
+      'tooling/quality-execution-image.ts',
+    ],
+  });
+}
+
+function campaignNativeReport(stdout: string): string {
+  const locations: string[] = [];
+  for (const line of stdout.split('\n')) {
+    if (!line.startsWith('{')) continue;
+    const value: unknown = JSON.parse(line);
+    if (!isRecord(value) || value.schema !== 'CandidateNativeMutationReportLocation/v1') continue;
+    if (
+      typeof value.directory !== 'string' ||
+      !path.isAbsolute(value.directory) ||
+      value.report !== 'native-partition-report.json'
+    )
+      throw new Error('Invalid native mutation report location.');
+    locations.push(path.join(value.directory, value.report));
+  }
+  if (locations.length !== 1) throw new Error('Expected exactly one native mutation report location.');
+  return locations[0]!;
+}
+
 export function isolatedCommand(
   directory: string,
   args: string[],
   tools: { tini: string; bwrap: string },
   retainedScratchRoot?: string,
+  image?: QualityExecutionImage,
 ) {
   requireCampaignStorage(directory);
   let scratchParent = directory;
@@ -251,7 +291,14 @@ export function isolatedCommand(
   mkdirSync(path.join(scratch, 'bun-install-cache'));
   return {
     temporary,
-    environment: { TMPDIR: '/tmp', BUN_TMPDIR: '/tmp', BUN_INSTALL_CACHE_DIR: '/tmp/bun-install-cache' },
+    environment: {
+      TMPDIR: '/tmp',
+      BUN_TMPDIR: '/tmp',
+      BUN_INSTALL_CACHE_DIR: '/tmp/bun-install-cache',
+      ...(image
+        ? { VIDA_QUALITY_IMAGE_MANIFEST: image.manifest_file, VIDA_QUALITY_IMAGE_SHA256: image.manifest_sha256 }
+        : {}),
+    },
     scratch_storage: {
       filesystem_type: String(info.type),
       available_bytes: String(info.bavail * info.bsize),
@@ -274,14 +321,11 @@ export function isolatedCommand(
       '--bind',
       scratch,
       '/tmp',
-      '--bind',
-      repositoryRoot,
-      repositoryRoot,
-      '--bind',
-      directory,
-      directory,
+      ...(image
+        ? qualityImageMountArguments(image, directory)
+        : ['--bind', repositoryRoot, repositoryRoot, '--bind', directory, directory]),
       '--chdir',
-      packageRoot,
+      image?.packageRoot ?? packageRoot,
       process.execPath,
       '--no-env-file',
       '--no-install',
@@ -399,9 +443,8 @@ async function main(): Promise<void> {
   }
   const isolationTools = { tini: tools.tini, bwrap: tools.bwrap };
   const boot = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
-  const reports: { file: string; lane: Lane }[] = [];
-  const incoming: ReturnType<typeof contourAttempts> = [];
   const coverageReports = new Map<string, string>();
+  const images = new Map<string, QualityExecutionImage>();
   let index = 0;
   try {
     const result = await executeContourCampaign(
@@ -433,11 +476,34 @@ async function main(): Promise<void> {
           lane === 'frozen-crap' &&
           partition.name === fsSafeApplicabilityReview.contour &&
           budget === fsSafeApplicabilityReview.commit;
+        let image = images.get(partition.name);
+        try {
+          if (!image) {
+            image = await campaignImage(partition);
+            if (image.source_repository !== repositoryRoot || image.source_commit !== commit)
+              throw new Error('Execution image does not bind the campaign Source commit.');
+            images.set(partition.name, image);
+          }
+        } catch (error) {
+          return {
+            state: 'failed',
+            detail: `Execution image formation failed before producer launch: ${String(error)}`,
+          };
+        }
         const args =
           lane === 'coverage'
             ? ['tooling/contour-campaign.ts', '--coverage-child', partition.name]
             : lane === 'mutation'
-              ? ['tooling/mutation-gate.ts', '--pilot-partition', partition.name]
+              ? [
+                  'tooling/mutation-batch-pilot.ts',
+                  '--contour',
+                  partition.name,
+                  '--batch-size',
+                  '128',
+                  '--max-batches',
+                  '128',
+                  '--admit-complete',
+                ]
               : [
                   'tooling/crap-gate.ts',
                   '--contour',
@@ -453,6 +519,7 @@ async function main(): Promise<void> {
             args,
             isolationTools,
             process.env.VIDA_QUALITY_RETAINED_SCRATCH_ROOT,
+            image,
           );
         } catch (error) {
           return isCampaignResourceFailure(error)
@@ -467,10 +534,13 @@ async function main(): Promise<void> {
           partition,
           lane,
           timeout_ms: timeoutMs,
+          execution_image: image,
           ...isolated,
         });
+        const frozenEnvironment =
+          lane === 'frozen-crap' ? retainQualityGitSnapshot(repositoryRoot, privateScratchDirectory, budget!) : {};
         const started = performance.now();
-        const child = await executeMutationCommand(isolated.command, packageRoot, timeoutMs, {
+        const child = await executeMutationCommand(isolated.command, image.packageRoot, timeoutMs, {
           ownedProcessGroup: true,
           outputByteLimit: maximumOutputBytes,
           stdoutFile: path.join(stageDirectory, 'stdout.log'),
@@ -478,28 +548,42 @@ async function main(): Promise<void> {
           env: {
             ...process.env,
             ...isolated.environment,
+            ...frozenEnvironment,
             ...(coverage ? { VIDA_BUN_COVERAGE_REPORT: coverage } : {}),
           },
         });
         const bootAfter = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
         const state = bootAfter === boot ? campaignProcessState(child) : 'unknown';
+        let imageFailure: { error: unknown } | undefined;
+        try {
+          await verifyQualityExecutionImage(image);
+        } catch (error) {
+          imageFailure = { error };
+        }
         writeRecord(stageDirectory, 'execution.json', {
           result: child,
           elapsed_ms: performance.now() - started,
           boot,
           boot_after: bootAfter,
+          execution_image: image,
+          image_inputs_unchanged: imageFailure === undefined,
+          ...(imageFailure === undefined ? {} : { image_error: String(imageFailure.error) }),
         });
         assertCleanCommit(commit);
+        if (imageFailure !== undefined)
+          return {
+            state: 'unknown',
+            detail: `Execution image verification failed: ${String(imageFailure.error)}; ${stageDirectory}`,
+          };
         if (state === 'unknown' || state === 'timeout') return { state, detail: stageDirectory };
         if (!campaignReportPublicationAdmitted(child, applicabilityNA ? 'crap-applicability' : lane))
           return { state: state === 'completed' ? 'gap' : state, detail: stageDirectory };
         let report: string | undefined;
         try {
           if (lane === 'mutation') {
-            const summary = jsonFile(path.join(stageDirectory, 'stdout.log'));
-            if (isRecord(summary) && typeof summary.evidence_directory === 'string') {
-              report = path.join(summary.evidence_directory, 'terminal-summary.json');
-            }
+            report = campaignNativeReport(
+              readContourArtifact(path.join(stageDirectory, 'stdout.log'), maximumOutputBytes).toString('utf8'),
+            );
           } else {
             const lines = readContourArtifact(path.join(stageDirectory, 'stdout.log'), maximumOutputBytes)
               .toString('utf8')
@@ -526,21 +610,33 @@ async function main(): Promise<void> {
         }
         if (!report) return { state: 'gap', detail: stageDirectory };
         try {
-          const attempts = contourAttempts(jsonFile(report), {
+          const reportArgs = [
+            '--output',
+            statusDirectory,
+            '--snapshot',
+            snapshotPath,
+            '--commit',
             commit,
-            artifact: report,
-            recorded_at: new Date().toISOString(),
-          });
-          reports.push({ file: report, lane });
-          incoming.push(...attempts);
+            ...(lane === 'mutation'
+              ? ['--native-report', report]
+              : lane === 'coverage'
+                ? ['--coverage-run', report]
+                : ['--coverage-run', coverage!, '--report', report]),
+          ];
+          await runContourProgressWithNative(reportArgs, image.packageRoot);
+          const projected = mergeContourProgress(jsonFile(snapshotPath), []);
+          const attempts = projected.attempts.filter(
+            (row) => row.contour === partition.name && row.artifact === report && row.commit === commit,
+          );
           const stageSatisfied = attempts.some(
             (row) =>
               row.contour === partition.name &&
               (applicabilityNA
                 ? row.lane === 'crap-applicability' && row.accepted
-                : row.lane === lane && contourAttemptMaximum(row)),
+                : row.lane === (lane === 'mutation' ? 'native-mutation' : lane) && contourAttemptMaximum(row)),
           );
-          return { state: state === 'completed' && !stageSatisfied ? 'failed' : state, detail: stageDirectory, report };
+          if (state === 'completed' && !stageSatisfied) return { state: 'failed', detail: stageDirectory, report };
+          return { state, detail: stageDirectory, report };
         } catch (error) {
           return { state: 'gap', detail: `Report proof rejected: ${String(error)}; ${stageDirectory}`, report };
         }
@@ -551,21 +647,10 @@ async function main(): Promise<void> {
       },
     );
     assertCleanCommit(commit);
-    const remaining = selectContourCampaign(mergeContourProgress(snapshot, incoming), 'unclosed', commit)
+    const currentProgress = mergeContourProgress(jsonFile(snapshotPath), []);
+    const remaining = selectContourCampaign(currentProgress, 'unclosed', commit)
       .filter((partition) => partitions.some((selected) => selected.name === partition.name))
       .map((partition) => partition.name);
-    runContourProgress(
-      [
-        '--snapshot',
-        snapshotPath,
-        '--output',
-        statusDirectory,
-        '--commit',
-        commit,
-        ...campaignReportArguments(reports),
-      ],
-      packageRoot,
-    );
     writeRecord(directory, 'terminal.json', {
       schema: 'VidaContourCampaignOutcome/v1',
       source_commit: commit,
