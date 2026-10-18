@@ -223,7 +223,15 @@ No mutation/frozen pass or global closure is inferred. Reading its existing
 counter map once locates all16uncovered statements in bin/reconcile-artifacts.ts,
 11missing branch arms there and1guard-constrained CLI fallback. Both read-only
 repair implementations have exact counters. The same blind Luna writer prepares
-one bounded public-router regression packetv789; Root retains sole Source/Git
+one bounded public-router regression packetv789. Root integrates its restore
+guards as two independent default5s cases, using real direct owner and child CLI
+boundaries. Each checks exact denial, exit/blocked serialization and preserved
+selector/cutoff bytes with no database/work creation. The present cutoff marker
+has deliberately untrusted bytes; presence grants no authority. Targetedv794
+passes2cases/18assertions in5.12s process time, each case below5s. The earlier
+combined casev792 passed at4.24s, but sharing its5s budget across independent
+states left avoidable headroom risk. v793 and v794 retain the split-case evidence;
+there is no claimed speedup or new timeout exception. Root retains sole Source/Git
 and numeric ownership. No second cycle, new worktree or wider scan is started.
 
 Root integrates one public1000/1001result-capacity regression from blind Lunav767.

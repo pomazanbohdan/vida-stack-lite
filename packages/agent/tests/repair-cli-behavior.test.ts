@@ -41,6 +41,7 @@ import {
 } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import type { MastraLedgerItem, MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
 import { configuredTestContext } from './configured-context.ts';
+import { expectRejection } from './helpers/expect-rejection.ts';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = path.resolve(bundle, '../..');
@@ -739,6 +740,46 @@ test('research identity default CLI reports malformed parser inputs through publ
   ]);
   await Promise.resolve(expect(relativeRoot).rejects.toThrow('mode, root or repair id invalid'));
 });
+
+for (const cutoffPresent of [false, true]) {
+  test(`public repair CLI blocks restore without effects (cutoff present: ${cutoffPresent})`, async (budget: PhaseBudget) => {
+    const context = fixture();
+    const selectorPath = path.join(context.root, '.agent/active-runtime-selector.v1.json');
+    const selectorBefore = readFileSync(selectorPath);
+    const cutoffPath = path.join(context.root, '.agent/cutover/test-setup/cutoff-witness.json');
+    if (cutoffPresent) {
+      mkdirSync(path.dirname(cutoffPath), { recursive: true });
+      // Presence alone denies restore; these bytes grant no cutoff authority.
+      writeFileSync(cutoffPath, 'untrusted cutoff marker\n');
+    }
+    const cutoffBefore = cutoffPresent ? readFileSync(cutoffPath) : undefined;
+    const repairRoot = path.join(context.root, '.agent/work/repair-test');
+    const databasePath = path.resolve(context.root, sessionHandoffDatabaseRelativePath(context.config));
+    const restoreArgs = ['--mode', 'restore', '--project-root', context.root, '--repair-id', 'repair-test'];
+    const expectedMessage = cutoffPresent
+      ? 'vida repair artifacts: restore is forbidden after the first-work cutoff; resume forward'
+      : 'vida reconcile artifacts: pre-cutoff restore requires a separately bound undo plan';
+    await expectRejection(runReconcileArtifacts(restoreArgs), expectedMessage);
+    const child = boundedSpawnSync(
+      spawnSync,
+      process.execPath,
+      [path.join(bundle, 'bin/reconcile-artifacts.ts'), ...restoreArgs],
+      { cwd: bundle, encoding: 'utf8', windowsHide: true, timeout: 15_000, budget, diagnostics: true },
+      'research repair restore guard',
+    );
+    if (commandOutcomeUnknown(child)) repairOutcomeUnknown = true;
+    requireTerminalCommand(child, 'research repair restore guard');
+    expect(child.status).toBe(1);
+    const terminalResult = parseRecord(childStderr(child), 'research repair restore terminal result');
+    expect(stringField(terminalResult, 'status', 'research repair restore terminal result')).toBe('blocked');
+    expect(stringField(terminalResult, 'message', 'research repair restore terminal result')).toBe(expectedMessage);
+    expect(readFileSync(selectorPath)).toEqual(selectorBefore);
+    expect(fs.existsSync(repairRoot)).toBe(false);
+    expect(fs.existsSync(databasePath)).toBe(false);
+    if (cutoffBefore !== undefined) expect(readFileSync(cutoffPath)).toEqual(cutoffBefore);
+    else expect(fs.existsSync(cutoffPath)).toBe(false);
+  });
+}
 
 for (const [kind, diagnostic, extra] of [
   ['project-upgrade', 'project upgrade options differ from declaration', []],
