@@ -811,8 +811,24 @@ terminate, Root applies its checked exact diff. Strict TypeScript/scoped typed l
 pass. Owned DjwPAh passes160cases/760assertions across the three affected tooling
 owners in771ms with complete captures/closed group/unchanged boot. Sparse allocation,
 ambiguous/invalid counters and all-Killed-summary admission negatives pass.
-Actual maintained diagnostic CLI and next coverage on fresh immutable inputs
-remain pending; the existing nine triples stay historical/local.
+Checkedf7fc802 passes the normal strict hook and is pushed. Fresh immutablev332
+reuses one SDK formation YJevhR(1939ms, no suite). Actual maintained stage diagnostic
+at /dev/shm/contour-stage-z6z7nt closes17024ms with generated196/237 both
+assertion-confirmed Killed,486unattempted,0Survived/UNKNOWN. Its new compact outcome
+exposes run6bf3d92a-7077-4a2e-9619-9f307ebdaafe, exact counters, failed process/
+exit1 and complete captures/groups/boot/commit/clean-input checks directly.
+Native report publication remains denied and its retained error includes the
+diagnostic; no partial score or proof is imported. Actual CLI controls reject
+ID selection with coverage or isolated workers before stage creation; retained
+stdout/stderr are /workspace/attachments/contour-diagnostic-denied-{coverage,isolation}-v332.*.
+
+Coverage immediately continues through the maintained controller. Envelopes
+f5702ad6-c659-4478-8007-7df793d833ff at /dev/shm/contour-stage-Io7nd8 has exact
+F79/79,L214/214,S230/230,B106/106, max9/9. Its original7475791 frozen check at
+/dev/shm/contour-stage-BCPkqf passes the same coverage run and Source bindings.
+Both compact outcomes directly supply the next absolute report arguments and
+closed custody without another raw-log extraction. The current complete784native
+proof remains pending; the existing nine triples stay historical/local.
 
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
