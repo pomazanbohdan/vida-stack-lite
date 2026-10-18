@@ -865,6 +865,56 @@ test('read-only dispatch repair denies stale report and source/config drift', ()
   }
 });
 
+test('read-only dispatch repair denies a pending request whose workflow has no configured assignment', () => {
+  const value = fixture();
+  let passed = false;
+  try {
+    const missingWorkflowState = {
+      ...value.state,
+      items: value.state.items.map((item, index) =>
+        index === 1 ? { ...item, request: { ...item.request, workflow_id: 'missing-workflow' } } : item,
+      ),
+    };
+    replaceJournalRow(
+      value.database,
+      value.input.workspaceId,
+      value.input.workId,
+      value.input.attempt,
+      10,
+      missingWorkflowState,
+    );
+    const beforeRejectedPlan = {
+      host: value.database
+        .query(
+          'SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state ORDER BY workspace_id,kind,id',
+        )
+        .all(),
+      journal: value.database
+        .query('SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger')
+        .all(),
+      repairs: readRepairRows(value.database),
+    };
+
+    expect(() => planReadOnlyDispatchRepair(value.input)).toThrow(
+      'vida read-only dispatch repair: issued assignment is not configured cooperative read-only work',
+    );
+    expect({
+      host: value.database
+        .query(
+          'SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state ORDER BY workspace_id,kind,id',
+        )
+        .all(),
+      journal: value.database
+        .query('SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger')
+        .all(),
+      repairs: readRepairRows(value.database),
+    }).toEqual(beforeRejectedPlan);
+    passed = true;
+  } finally {
+    closeFixture(value, !passed);
+  }
+});
+
 test('read-only dispatch repair commit rejects work, shared-ledger and journal CAS drift without recording', () => {
   for (const changed of ['work', 'ledger', 'journal'] as const) {
     const value = fixture();

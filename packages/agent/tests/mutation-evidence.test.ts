@@ -1,4 +1,5 @@
 import { describe, expect, spyOn, test } from 'bun:test';
+import { createHash } from 'node:crypto';
 import strykerConfig from '../stryker.config.ts';
 import { mkdtemp, writeFile, rm, rename, open as openFile } from 'node:fs/promises';
 import { readlinkSync } from 'node:fs';
@@ -25,7 +26,9 @@ test('parent invocation projection matches a fresh identity and isolates command
   let passed = false;
   try {
     const executable = path.join(root, 'fixture-executable');
-    await writeFile(executable, 'controlled byte identity fixture');
+    const bytes = Buffer.alloc(4 * 1024 * 1024 + 97, 0x61);
+    bytes.fill(0x62, 4 * 1024 * 1024);
+    await writeFile(executable, bytes);
     const input = {
       executable,
       cwd: root,
@@ -41,6 +44,8 @@ test('parent invocation projection matches a fresh identity and isolates command
       arch: process.arch,
     };
     const observation = await collectExecutionIdentity(input);
+    expect(observation.bun_executable_sha256).toBe(createHash('sha256').update(bytes).digest('hex'));
+    expect(observation.bun_executable_file.size).toBe(String(bytes.byteLength));
     const command = ['bun', 'test', './tests/one.test.ts'];
     const tests = ['tests/one.test.ts'];
     const projected = executionIdentityForInvocation(observation, command, tests);

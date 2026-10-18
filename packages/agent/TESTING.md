@@ -1429,7 +1429,7 @@ including rejected undefined. Reuse this boundary for persisted-proof readers;
 matching artifact hashes alone do not replace observed runner/assertion custody
 or activate a new numeric admission route.
 
-Parent receipt validation reuses one partition-local execution observation and
+The full Stryker gate's parent receipt validation reuses one partition-local execution observation and
 lifecycle-hook analysis of the already captured immutable test/import bytes.
 Each receipt still binds its exact command, tests, sources, tools, JUnit, context
 and assertion evidence. Full executable observations bracket all parent joins;
@@ -1438,6 +1438,15 @@ confirmations to UNKNOWN. Worker before/after full executable hashes are unchang
 No process-global or stat-only cache is admitted. The summary's aggregate
 `receipt_validation_timing` separates measured identity/lifecycle cost and counts
 from a reduction in repeated operations; only a real contour run proves timing.
+That field belongs to `mutation-gate.ts`; do not assume the native batch pilot
+emits it or infer its per-phase cost from another producer's summary.
+
+Executable hashing uses a bounded 1 MiB read buffer, hashes only observed bytes,
+and continues across legal short reads to the expected size. Keep the early-EOF
+denial, same opened handle, and before/after device, inode, size, mtime and ctime
+checks. This reduces read-loop operations; it neither caches a digest nor skips
+a fresh full hash at any boundary. The identity regression crosses 4 MiB plus a
+distinct tail and checks the independent full digest and exact byte count.
 
 The native pilot confines Bun's derived runtime transpiler cache to a fresh0700
 subdirectory of its private operation directory. Runner/test children reuse it
@@ -1784,6 +1793,14 @@ under the [sidecar's worktree retention rule](../../AGENT.sidecar.md#orchestrati
 Retain pending patches and all local/staged data before removal; closure of a
 worker does not release an immutable measured checkout or its evidence.
 
+Before another complete mutation attempt, reuse the latest closed diagnostic's
+baseline, actual attempted count, elapsed time and worker width for planning.
+A projection is an estimate, not qualification. Do not divide an already parallel
+run's elapsed cost by its worker count again. Keep different Source/tool inputs
+separate when comparing serial and parallel runs. Repeat a complete attempt only
+for a necessary first full-route qualification, changed inputs or a measured
+throughput correction; avoid unchanged full reruns after budget exhaustion.
+
 1. Reuse the existing contour selection, current canonical mutant map and retained
    failures. Map each gap to the supported contract and applicable scenario. Search
    analogous paths inside the contour before choosing the correction.
@@ -1792,10 +1809,12 @@ worker does not release an immutable measured checkout or its evidence.
 3. Once the correction packet is stable, Root publishes its checked bytes and runs
    exact F/L/S/B coverage plus same-run frozen CRAP against the original budgets.
    Prepare required SDK inputs through their existing owner. Resolve readiness
-   from the producer's actual captured input set: the native mutation owner also
-   captures full SDK formation inputs for a pure partition. Form missing or stale
-   test inputs once before capture; keep failed setup separate from attempted
-   mutants. Formation runs no suites and establishes no Runtime acceptance.
+   from the producer's actual captured input set. A pure gitless contour does not
+   require SDK formation solely because compiler metadata includes build tooling.
+   Reuse the image's declared SDK dependency and original formation receipt;
+   do not import a legacy live-capture prerequisite into that image. Form missing
+   or stale selected test inputs once before capture; keep failed setup separate
+   from attempted mutants. Formation runs no suites and establishes no Runtime acceptance.
 4. Run bounded mutation diagnostics for current repair IDs with one shared full
    baseline. Repair survivors and assertion weaknesses; timeout, missing coverage,
    compile/runtime error and UNKNOWN remain distinct failures. After repairs,

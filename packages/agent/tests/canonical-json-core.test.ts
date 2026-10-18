@@ -63,6 +63,36 @@ describe('canonical JSON core contract', () => {
     expect(canonicalJsonAtDepth({ item: 1 }, 8)).toBe('{"item":1}');
   });
 
+  test('fails closed when the canonical serializer returns no output', () => {
+    expect(canonicalJson(17)).toBe('17');
+    const originalStringify = JSON.stringify;
+    let injectedCalls = 0;
+    const failure = withRestoredOwnProperty(JSON, 'stringify', () => {
+      Object.defineProperty(JSON, 'stringify', {
+        configurable: true,
+        writable: true,
+        value(value: unknown) {
+          if (value === 17) {
+            injectedCalls += 1;
+            return undefined;
+          }
+          return originalStringify(value);
+        },
+      });
+      try {
+        canonicalJson(17);
+      } catch (error: unknown) {
+        return error;
+      }
+      return undefined;
+    });
+
+    expect(injectedCalls).toBe(1);
+    expect(failure).toBeInstanceOf(Error);
+    expect((failure as Error).message).toBe('canonical JSON serializer returned no output');
+    expect(canonicalJson(17)).toBe('17');
+  });
+
   test('serializes the descriptor image of Proxies without invoking proxy get or toJSON traps', () => {
     let valueGets = 0;
     let hookCalls = 0;

@@ -21,132 +21,107 @@ No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 
 ### Current rolling repair cycle
 
-The owner now requests implementation of worktree-free numeric execution.
-Pstack Architect compares independent native blind Luna candidatesv672/v673;
-cross-judgev674selects the captured gitless image and rejects a second canonical
-freeze mode. Root rejects the unmeasured throughput claim in candidateB because
-numeric producers are already serial. Root also rejects candidateA's optional
-alias map, new runner wrappers and image-ID rewrite of SDK receipts. Reuse the
-existing capture, launchers, proof readers and original SDK receipt joins.
-Laziness Protocol removes the proposed general store. Subtract Before You Add
-puts reuse of captured bytes ahead of new storage layers. The current plugin is
-locally enabled Pstack1.17.5; remote catalog listing451does not prevent local
-skill use and proves no new hook qualification. The v671worker contract is
-prompt-only. Two bounded patch lanes own capture and frozen Git inputs in
-separate ordinary artifact directories; Root owns image/stage/proof integration.
-Root has integrated capture, materializer, ordered mounts, frozen Git capability,
-single-stage and global campaign changes. One image is reused across a contour's
-lanes; global campaign retains its declared one-commit plan. Stagev2 records the
-Source commit separately from image integrity; the native reader now honors the
-explicit image package root. Full maintained TypeScript compiler files come from
-the same native tree metadata as semantic tool inputs, without a second AST pass
-or widened numeric selection. Shared dependency installation identity is not a new
-full-tree byte attestation: Root fences installs and retains existing native
-executable/external-module checks. No new worktree, service or DB is allocated.
+The active pool has three contours: main-envelopes (Root numeric owner),
+governance/public contracts and dispatch repair (blind Luna proposal lanes).
+Controller observation remains queued with its retained deficit locator below.
+Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
-Verification before publication: v699has139PASS/0FAIL/1515assertions in8.04s across
-nine focused files; native bwrap controls hide live Source, deny writes to Source,
-image and dependencies, and permit only declared output writes. v697strict
-TypeScript has0diagnostics across521captured TS paths. Earlier RED results found
-and fixed descriptor JSON-order comparison, an omitted capture projection and
-incomplete fixture setup; the original logs remain retained. New helper complexity
-is checked against prospective10rather than increasing a baseline. Independent
-native Luna reviewv690reported no additional confirmed issue; directory identity
-is explicitly weaker than full dependency byte identity. Final hook checks and a
-small same-image coverage/frozen/mutation pilot were pending at publication968abe7.
+Published9407b08 completes gitless image execution and the current-review/launch
+receipt repairs. TESTING owns that execution contract. The complete implementation
+record, original failed pilots and exact cleanup receipts remain in
+[the published WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/9407b08/.agent/work/core-runtime-reactivation/WORK.md#current-rolling-repair-cycle)
+and their original producer directories. Those records are history, not a new
+qualification. The main-host review still lacks mandatory current-source bindings.
 
-Published968abe7passes the ordinary hooks, followed bybbd9a8b's SDK-scope
-regression repair (48PASS/0FAIL). Freshv707stopped before launch on that SDK drift;
-freshv711then retained a terminal failed typecheck with complete output and group
-closure, image unchanged, stage `/workspace/contour-stage-ICh0BF`. Its635diagnostics
-are all module-context errors: the Root `package.json` was missing from compiler
-inputs. The correction captures its original Git blob as compiler metadata;
-v712has48PASS/0FAIL/542assertions. Neither failure admits coverage or a mutation
-kill; their original artifacts and automatic failed-stage projection are retained.
+Fresh main-envelopes evidence now uses one published9407b08 image at
+/workspace/.vida-quality-inputs/fcfe1a139d6c6a4ad78b7206fb23a69dbe4c03c2/repository.
+Coveragev749 has F79/79 L214/214 S230/230 B106/106, maxCC/entryCRAP9/9,
+13244.383486ms, stage /workspace/contour-stage-w9oChm, run
+04e8d447-f218-48ef-80c8-70e433f21ae1. Same-image frozenv750 passes in2134.55498ms,
+stage /workspace/contour-stage-FOXTHu, with the already published4b9fa9ad review.
+Both retain complete output, closed groups, unchanged boot and unchanged image.
 
-The real v716gitless coverage run for main-host reaches F7/7 L21/21 S22/22
-B11/11, maxCC/entryCRAP3/3 in3744.064031ms with complete capture, observed group
-closure, unchanged boot and image. Frozenv717correctly refuses the old host
-review because it has no mandatory current_source_bindings; this is a review GAP,
-not permission to relax the gate. Mutationv720retains pre-test input rejection:
-semantic compiler capture duplicated the selected mutated subject among tool
-inputs, so the unchanged descriptor reader correctly denied instrumented bytes.
-Root removes that duplicate classification while retaining the subject's original
-Source digest and full image bytes; v721tests the invariant. A separate campaign
-fix permits only unstaged changes to its two existing derived projection files;
-all other Source/staged/untracked changes remain denied. Native Git queries now
-keep the existing5s bound. The next pilot uses main-envelopes with its already
-published current-source review.
+Native worker mechanics/poolv746 passes41/41 with506assertions. Fresh four-worker
+v751 closes64/64Killed with48baseline cases, no UNKNOWN/resource refusal, complete
+capture and group closure in141608.922731ms. It is diagnostic-only:719of783remain
+unattempted and the expected incomplete admission is retained. Serialv735's
+212Killed/571unattempted remains separate; no union becomes a score. These times
+do not isolate transpilation cost or prove a full-run speedup. No new cache path,
+filter, deadline increase or speculative optimization is enabled.
 
-Freshv725main-envelopes reaches full Source typecheck but exposes the next
-integration boundary: configuration reads need native CAS guard writes, denied
-at the read-only image root. Root reuses the existing four-file mutation context
-materializer for a separate per-coverage-run caller fixture; validator derives
-its path from the image root and validated UUID, checks layout/bytes and recaptures
-the real config binding. No product CAS or image mount is weakened. Native Luna
-reviewv690finds no new concern with this reuse. v727has116PASS/0FAIL/535assertions
-across four affected context, shard, report-validator and custody files in13.13s.
-The transient exec-server transport disconnect did not change the observed boot
-identity or local Source. The retained static log has0diagnostics; final ordinary
-hooks rechecked and published that exact packet asfa469e8.
+The first complete four-worker attemptv754 closes on that same image, native
+run55fcfc5a-f5b2-477e-81b3-7215968130bc, stage /workspace/contour-stage-QhqP7O.
+It records389Killed,0Survived,0UNKNOWN and394unattempted in882028.475281ms.
+The final batch is budget-exhausted, not interrupted or resource-blocked. All
+output/group custody closes and the boot/image stay unchanged. Its900s
+partition/930s supervisor budgets and assertion-confirmed Killed rules are
+unchanged. Incomplete admission remains refused; no contour closes from it.
 
-The same-image main-envelopes pilot now bindsfa469e8and manifest
-5787b3e8e0e1c3d587959d34a3b888ac30f0e7cfe0c31949cebaeed76574d965.
-Coveragev731has F79/79 L214/214 S230/230 B106/106, maxCC/entryCRAP9/9,
-9005.270932ms, stage `/workspace/contour-stage-QDH1PN`, run
-eff25ea4-1444-4010-8dab-5ce531202f4f. Frozenv734passes in1595.326497ms,
-stage `/workspace/contour-stage-mwfZZj`, with that coverage run and published
-review4b9fa9adf90a4cb9af424f84efd246bd720e01e1. Both have complete output,
-observed process-group closure, unchanged boot and unchanged captured inputs.
-Frozenv732retains the original stale-review rejection: Map insertion order had
-selected17October's review after the approved18October entry. Root corrects the
-registration order and adds a selector regression; no review or budget is changed.
-The launch record now retains the exact safe lane overrides used at spawn,
-including frozen Git capsule and coverage locators, without inherited secrets.
-Native mutationv735closes in879126.850429ms under the unchanged900s partition
-budget:212Killed,0Survived,0UNKNOWN,571unattempted from783generated mutants.
-Its second batch records budget_exhausted:true, interrupted:false and no resource
-refusal. Stage `/workspace/contour-stage-IqLI72` retains complete output and
-observed process-group closure; boot and image remain unchanged. Its native run
-is16560d32-2a4d-43a6-98cb-eb2a302f4eab. The automatic projection records the
-refused full admission, not Killed100 or a compatible triple. This demonstrates
-terminal partial-result custody, not complete mutation qualification. Source-only
-controller/documentation edits after capture did not modify the image or shared
-dependencies; its evidence remains bound tofa469e8. No latest-Source, global or
-Runtime qualification is claimed. Default serial throughput remains the measured
-GAP; any existing isolated-worker option needs its own explicit qualification,
-without increasing deadlines or replaying archivedUNKNOWN.
+Root integrates two bounded test proposals against9407b08: a real serializer
+no-output failure through restored JSON.stringify, and a missing configured
+workflow denial with unchanged dispatch Host/journal/repair rows. Exact targeted
+v752 passes2cases/7assertions in2.07s;31other cases are filtered, not qualified.
+They close test gaps, not confirmed product bugs or numeric contours. Two more
+cases cover missing required CLI options with unchanged persisted state, and
+an actual SDK timestamp failure with fenced state/recorded-stage/session reads.
+The latter restores Date both in finally and through one idempotent finish
+owner, with a healthy timestamp control. Independent blind Lunav755 finds no
+confirmed issue; the fault's private SDK callsite is not claimed. v757 passes
+all4new cases with18assertions in3.03s; filtered cases are not qualification.
+Root alone checks/publishes changes. No runtime/loader/DB cutover or consumer
+effect is authorized or performed.
 
-Final targetedv737finds a fixture-closure regression, not a numeric product
-failure: the controlled CRAP child copied a manual tool list without the new
-Git capsule import. Root reuses the existing runtime-import closure once per
-test module and explicitly controls the unit's maintained subject inventory;
-real dependency files are not additional synthetic numeric subjects. v738passes
-the91other focused cases; corrected correspondencev739passes55/55with154assertions
-in1.96s. All original failed fixtures/logs remain retained. Hook checks still own
-the final staged-byte validation; build/install run no suites.
+#### Three-hour script and execution audit
 
-After observed numeric closure, v740retires only the terminal run's1941regular
-Bun.pile derivatives, empty stage install cache and completed four-filev736
-proposal directory. The proposal is preserved in a tar archive with byte/mode
-comparison and restoration data. Exact paths, ownership and custody are retained
-in `/workspace/attachments/image-retirement-v740.json`. Free space changes from
-2865881088to2946695168bytes (+80814080); the2GiB threshold stays unchanged.
-All captured inputs, native reports, original failed fixtures, receipts, SDK
-artifacts and old measured checkouts remain retained.
+The read-only Git query observes12published commits from9b2cfbd through9407b08.
+Already repaired image/compiler/SDK/context/selector defects are reused, not
+reimplemented. Existing receipts and projection own the measured outcomes.
+The WORK current section was reduced from129to44lines before these new results;
+the published history and original receipts remain resolvable.
 
-Active contours: governance/public contracts, dispatch repair and controller
-observation. Published88e8052includes the checked v4 partition-capture repair,
-on top of the verified capacity recovery through ordinary hooks/push. Freshv655
-exposes its next standalone tool-closure dependency before the baseline starts;
-the causal correction and public governance cases are published05a43ac. Native
-v663validates the standalone closure and confirms the repaired guard mutant's
-assertion kill before the later snapshot simplification. Its diagnostic-only
-scope leaves980mutants unattempted. The latest focused coveragev667binds published
-f9f6f71and is complete but nonexact; no current compatible triple is established.
-All immutable rolling-measure-* checkouts remain untouched. v637 resolves the
-observed resource deficit without changing them; next measurement waits for the
-current packet's normal checks/publication and fresh native admission.
+| Combination | Observed result | Limit of the comparison |
+| --- | --- | --- |
+| Captured image, serial mutation | v735:212Killed/879126.850429ms | Tool inputs differ from9407b08; no controlled whole-suite speedup claim. |
+| Same9407image, four-worker diagnostic | v751:64Killed/141608.922731ms | Includes baseline/generation and already includes parallelism; do not divide by4again. |
+| Same9407image, first complete four-worker request | v754:389Killed/882028.475281ms | Still budget-limited; no unchanged complete rerun is justified. |
+| Three preparation lanes, one numeric owner | Four bounded test proposals, one integration/check owner | No measured token total or claim that more writers improve throughput. |
+
+After observed closure, v756compares full SHA256 reads of the same retained
+native Bun executable with identical file identity. Two serial warm-filesystem
+samples per buffer give means:64KiB241.947ms/1358reads;256KiB154.570ms/340reads;
+1MiB112.034ms/85reads;4MiB135.483ms/22reads. Exact samples and checksum binding
+remain in /workspace/attachments/identity-hash-benchmark-v756.json. This is a
+bounded executable experiment, not a Source scan, suite speedup or new attestation.
+Root selects1MiB without memoizing any digest or removing any before/after hash.
+The existing identity fixture now exceeds4MiB with a distinct tail and independent
+full-digest/size assertions. v758passes55cases/304assertions in857ms across identity
+and canonical JSON files. The native batch pilot has no receipt_validation_timing
+field; TESTING now attributes that field to its actual mutation-gate owner.
+The current pure main-envelopes manifest has sdk_formation_inputs:null. TESTING's
+rolling sequence now removes the stale claim that every pure image requires full
+SDK formation; the actual selected-input/receipt contract stays authoritative.
+The complete SDK-failure neighbor filev759 passes30cases/233assertions in17.35s,
+including the faulted and healthy workflow paths after global-clock restoration.
+The first staged checkv761 passes formatting/strict521-file TypeScript, then
+finds one await-thenable diagnostic on Bun's void-typed rejection matcher. Root
+reuses expectRejection, preserving actual Promise settlement and fixture custody;
+the original hook rejection remains retained. Final staged checks and ordinary
+publication are owned by /workspace/attachments/three-hour-audit-commit-v763.log.
+They do not qualify a
+Runtime installation or a complete current mutation score.
+
+The initial filesystem observations are2941247488available bytes on checkout,
+image/scratch parent and retained-evidence overlay. Current launchv754 independently
+records2822250496available bytes on the actual scratch filesystem; both exceed
+the unchanged2147483648-byte threshold. No new du/tree/hash sweep or cleanup
+competed with active numeric. Proposal retirement waits for closed owners and
+preserved restoration data; captured/failed/UNKNOWN/SDK evidence remains protected.
+After observed closure and all named owners' terminal handoffs, v760 archives and
+byte/mode-compares8proposal files before retiring their3preparation directories.
+The exact paths, base9407b08 and restoration data remain in
+/workspace/attachments/contour-preparation-retirement-v760.json. Free space changes
+from2557005824to2557198336bytes (+192512). The original numeric/SDK/FAIL/UNKNOWN
+artifacts, installed dependencies and measured checkouts are unchanged.
 
 Latest local observations below apply only to their own captured inputs, before
 new residual test changes. They are incomplete and are not contour closure:

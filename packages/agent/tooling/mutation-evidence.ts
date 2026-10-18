@@ -1101,7 +1101,7 @@ async function hashExecutable(
   expected: import('node:fs').BigIntStats,
 ): Promise<string> {
   const hash = createHash('sha256');
-  const buffer = Buffer.alloc(64 * 1024);
+  const buffer = Buffer.alloc(1024 * 1024);
   let position = 0;
   while (position < Number(expected.size)) {
     const { bytesRead } = await handle.read(

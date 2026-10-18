@@ -18,6 +18,7 @@ import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import * as workspaceDatabaseCli from '../bin/workspace-database-cli.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
+import { expectRejection } from './helpers/expect-rejection.ts';
 import {
   observationSchema,
   requestSchema,
@@ -448,6 +449,34 @@ test('sole public reconcile CLI plans and applies one paused read-only dispatch 
     } finally {
       db.close();
     }
+    succeeded = true;
+  } finally {
+    finishFixture(value, succeeded);
+  }
+});
+
+test('public read-only dispatch CLI rejects a missing required option without changing persisted state', async () => {
+  const value = fixture();
+  let succeeded = false;
+  try {
+    const args = value.args('inspect');
+    const projectsIndex = args.indexOf('--projects');
+    if (projectsIndex < 0) throw new Error('read-only dispatch fixture projects option is missing');
+    args.splice(projectsIndex, 2);
+    const database = new Database(value.databasePath, { readonly: true });
+    try {
+      const before = dispatchStorageSnapshot(database);
+      await expectRejection(
+        runReconcileArtifacts(args),
+        'vida repair artifacts: read-only dispatch has missing or unexpected arguments',
+      );
+      expect(dispatchStorageSnapshot(database)).toEqual(before);
+    } finally {
+      database.close();
+    }
+    expect(existsSync(path.join(value.root, '.agent/work/fixture-dispatch/read-only-dispatch-plan.v1.json'))).toBe(
+      false,
+    );
     succeeded = true;
   } finally {
     finishFixture(value, succeeded);

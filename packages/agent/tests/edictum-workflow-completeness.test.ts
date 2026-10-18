@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, mock, test } from 'bun:test';
+import { afterAll, describe, expect, mock, onTestFinished, test } from 'bun:test';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -1483,6 +1483,74 @@ describe('configured Edictum workflow completeness', () => {
       if (bodyFailed) throw bodyError;
     },
   );
+  test('SDK timestamp failure fences the policy snapshot and prevents later session reuse', async () => {
+    const runtime = new PolicyWorkflowRuntime(
+      terminalPolicyDefinition(['runtime.commit'], []),
+      'failed-policy-session',
+    );
+    const session = new PolicySession('failed-policy-session');
+    expect(await runtime.evaluate(session, { toolName: 'runtime.commit', args: {} })).toMatchObject({
+      action: 'allow',
+      stageId: 'final',
+    });
+
+    const originalDescriptor = Object.getOwnPropertyDescriptor(Date.prototype, 'toISOString');
+    if (typeof originalDescriptor?.value !== 'function')
+      throw new Error('Date.prototype.toISOString is unavailable for the SDK failure control');
+    const originalToISOString = originalDescriptor.value as (this: Date) => string;
+    const injectedFailure = new Error('injected policy-step timestamp failure');
+    let restored = false;
+    const restore = () => {
+      if (!restored) {
+        Object.defineProperty(Date.prototype, 'toISOString', originalDescriptor);
+        restored = true;
+      }
+    };
+    onTestFinished(restore);
+    let armed = true;
+    let injectedCalls = 0;
+    let evaluationFailure: unknown;
+    Object.defineProperty(Date.prototype, 'toISOString', {
+      ...originalDescriptor,
+      value(this: Date) {
+        if (armed) {
+          armed = false;
+          injectedCalls += 1;
+          throw injectedFailure;
+        }
+        return originalToISOString.call(this);
+      },
+    });
+    try {
+      evaluationFailure = await runtime.evaluate(session, { toolName: 'runtime.foreign', args: {} }).then(
+        () => undefined,
+        (error: unknown) => error,
+      );
+    } finally {
+      restore();
+    }
+
+    expect(new Date(0).toISOString()).toBe('1970-01-01T00:00:00.000Z');
+    expect(injectedCalls).toBe(1);
+    expect(evaluationFailure).toBeInstanceOf(Error);
+    const stateFailure: unknown = await runtime.state(session).then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    expect(stateFailure).toMatchObject({ message: 'governance policy snapshot is unavailable' });
+    const recordedStagesFailure: unknown = await runtime.recordedStages(session).then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    expect(recordedStagesFailure).toMatchObject({ message: 'governance policy snapshot is unavailable' });
+    const retryFailure: unknown = await runtime.evaluate(session, { toolName: 'runtime.commit', args: {} }).then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    expect(retryFailure).toMatchObject({ message: 'governance policy snapshot failed; session is unavailable' });
+    expect(injectedCalls).toBe(1);
+  });
+
   test('workflow command validation rejection preserves its snapshot and recovers the serial queue', async () => {
     const candidate = workflow();
     const before = await candidate.runtime.state(candidate.session);

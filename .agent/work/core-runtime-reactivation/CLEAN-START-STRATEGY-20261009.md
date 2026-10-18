@@ -70,6 +70,15 @@ exact coverage, reviewed frozen proof and complete assertion-confirmed Killed
 criteria. Stop adoption on a missing binding or isolation failure. Existing
 measured checkouts and FAIL/TIMEOUT/UNKNOWN evidence remain protected.
 
+The native four-worker main-envelopes route now has closed resource controls and
+a64-mutant all-Killed diagnostic, but its first full request remains budget-limited.
+Do not repeat the unchanged full request or combine diagnostics into a score.
+Use the closed results to select the next bounded correction. The three-hour
+audit selects a measured executable-hash buffer correction, preserving every
+fresh full hash and identity fence. Verify and publish the correction packet,
+then continue the current governance/dispatch coverage queue. WORK owns the
+observed results and estimates; no numeric threshold or budget is increased.
+
 The fresh governance producer exposes missing pre-capture of explicit computed
 module roots outside the selected coverage Source. Capture these roots through
 the same bounded initial read, then classify every visited runtime input once,
