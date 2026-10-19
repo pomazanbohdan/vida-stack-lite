@@ -190,7 +190,7 @@ S-документи, які створює Stage 1.
 | D-07 | Матеріалізація §6 | `LifecycleArtifactReference/v1` (kind, artifact_schema, record_id, path, sha256, source_revision, scope_id, ac_ids, generation, `implementation_fingerprint`, delivery_cycle_id, principal, decision, disposition) і `WorkArtifactReference` уже існують. У `artifact_contracts` чинного конфігу: `WorkItem/v1`, `ResearchResult/v1`, `ResearchSynthesis/v1`, `DecisionRecord/v1`. `AcceptanceManifest/v1`, `ImplementationScope/v1`, `WorkState/v1` існують як схеми й кодифіковані контракти в коді, але **не** як записи `artifact_contracts` | Stage 6: перевикористати наявні контракти, додати лише прогалини |
 | D-08 | Findings: реєстр дефектів (§8.3, §8.4) | `findings` — поле `ResearchResult/v1`, `ResearchSynthesis/v1`, `final-assurance-review/state`; окремого defect-registry з життєвим циклом і dedup немає | Stage 6 |
 | D-09 | Runtime: HostState/CAS/lease (§8.1, §10) | Реалізовано; окрема storage-admission БД лишається GAP проти цільової `workspace.v1.sqlite`; чинні v1-контракти дійсні | Stage 7a / 7b |
-| D-10 | Decision Provider «Jeff/Jev» (§4.8) | У коді відсутній | Рішення D5 |
+| D-10 | Decision Provider «Jeff/Jev» (§4.8) | У коді відсутній; згадки в research оновлено (D5) | D5: provider-нейтральний `decision.evaluate` |
 | D-11 | Wiki/work layout, ID, relations (§9) | У конфігу є `wiki_root`, `wiki_output_root`, `task_prefix`; продуктових Wiki-сторінок немає | Stage 6 |
 | D-12 | Standalone + marketplace (§1, §3) | Публічна доставка агента — native executable; npm = лише SDK; marketplace відсутній | Stage 5 (D4: три канали) |
 | D-13 | Розташування продукту | `packages/plugin` = «Vida Codex» — Codex-прослойка між хостом Codex і агентом (`README.md:14`; `openai-execution-backends.md:34-36`); `packages/powers` — третій продукт, ще не зареєстрований; у конфігу лише `agent` і `plugin` | D1 вирішено: `packages/powers`; реєстрація — Stage 0 |
@@ -208,7 +208,7 @@ S-документи, які створює Stage 1.
 | D3 | Формат інструкції та каталогу | (a) розширити `InstructionRegistry/v1`; (b) `VPCatalog/v1` + проекція; (c) окрема VP-активація; (d) два режими | **ВИРІШЕНО 2026-10-19**: (d) — VP самостійний: власний каталог `VPCatalog/v1` і власні скрипти `catalog.*`, плагін зі скілом запуску і хуком; у режимі збирання в пакет агента пакет мусить мати свій розширений instruction registry (runtime work item). `research_decision.registry` не змінюється. Decision: `docs/decisions/D3-instruction-catalog-and-registry.md` | вирішено |
 | D4 | Канал доставки | Codex plugin marketplace / власний пакет / обидва | **ВИРІШЕНО 2026-10-19**: три канали в scope — окремий плагін VP, збірка в пакет агента, публічний marketplace-канал. Поверхня скілів: `vp-mode` (основний скіл оркестрації) і `vp-setup` (допоміжний). Decision: `docs/decisions/D4-delivery-channels.md` | вирішено |
 | D4b | Marketplace-власник і хости | marketplace у корені репо / `packages/powers` сам / окремий репозиторій; набір хостів | **ВИРІШЕНО 2026-10-19**: `packages/powers` сам є marketplace (`source: "./"`, публікація як Git-репозиторій через наявний патерн дзеркала Source); Codex — перевірений перший хост, решта — заявлена підтримка з обмеженням. Decision: `docs/decisions/D4b-marketplace-and-hosts.md` | вирішено |
-| D5 | Decision Provider | конкретний провайдер / provider-нейтральний інтерфейс | Provider-нейтральний `decision.evaluate` + обов'язковий Agent Fallback; «Jeff» не існує в коді | 2, 4, 5 |
+| D5 | Decision Provider і роутінг | конкретний провайдер / provider-нейтральний інтерфейс | **ВИРІШЕНО 2026-10-19**: provider-нейтральний контракт `decision.evaluate` (реалізації: master LLM агента / зовнішній провайдер за host-конфігом), Agent Fallback обов'язковий; роутінг = вибір LLM + формування агентів із фіксованого довідника + рівень флоу (Light/Medium/Full); власник графа виконання недоторканий. Decision: `docs/decisions/D5-decision-provider.md` | вирішено |
 | D6 | Журнал змін research | створити `*.changelog.md` / прибрати посилання | Вирішено форматом: bundle-журнал `packages/powers/docs/log.md` (OKF §9), на який вказує `vida.changelog_ref`; окремий `*.changelog.md` не потрібен | 0 |
 | D7 | Цільовий споживацький layout | чинний v1-конфіг / `.vida` cutover | Цілитися в чинний v1-конфіг; `.vida` — залежність від окремого runtime-треку (cutover не виконано) | 4, 7 |
 | D8 | Де живе схема методологічного профілю | (a) розділ у `agent-runtime.config.v1.yaml`; (b) VP-owned схема/файл | **(b)**: `agent-runtime-config.v1.schema.json` і валідатор у `runtime-config.ts` належать runtime-власнику, тож додавання розділу = runtime work item. VP-owned схема `Type/vN` не торкається runtime; інтеграція з runtime — лише через наявні `context_skill_refs`/конфіг. **(a)** — лише за окремим погодженим runtime work item | 4 |
@@ -461,8 +461,11 @@ AC:
   інструкцій → bundle (роль, task contract, ефективна методологія, scope, вимоги
   матеріалізації, посилання на артефакти) → делегування або виконання; fallback
   на головного агента.
-- `workflow.options` і `decision.evaluate` (§4.8) як provider-нейтральні операції;
-  поріг relevance — калібрований параметр, не універсальна константа.
+- **Роутінг (D5):** вибір LLM → формування агентів за фіксованим довідником
+  (каталогом інструкцій) → рівень флоу (`Full` / `Medium` / `Light`) за
+  методологічним профілем. `workflow.options` і `decision.evaluate` (§4.8) —
+  provider-нейтральні операції; поріг relevance — калібрований параметр, не
+  універсальна константа; власник графа виконання лишається недоторканим.
 - **`vp-setup` — допоміжний скіл налаштування:** виявлення проєктів; ідемпотентне
   додавання керованого блоку **у project-owned поверхню споживача** (не в пакет
   агента); збереження сторонніх інструкцій; налаштування доступних host hooks;

@@ -1,6 +1,8 @@
 # Directory Update Log
 
 ## 2026-10-19
+* **Update**: [Рішення D5](decisions/D5-decision-provider.md) уточнено до rev 2: роутінг — це вибір LLM, формування агентів за фіксованим довідником (каталогом інструкцій) і рівень флоу (`Full`/`Medium`/`Light`); власник графа виконання лишається недоторканим.
+* **Update**: [Research-документ](research/vida-powers-product-research.md) §4.8 — Workflow Routing визначено як вибір LLM + формування агентів + рівень флоу; згадки провайдера «Jeff»/«Jev» (§4.8, §8.4, §12) замінено на provider-нейтральне формулювання.
 * **Creation**: [Рішення D4b — marketplace-власник і хости](decisions/D4b-marketplace-and-hosts.md) зафіксовано: `packages/powers` сам є marketplace-власником (per-host `marketplace.json` із `source: "./"`, публікація як Git-репозиторій через наявний патерн дзеркала Source); Codex — перевірений перший хост, решта хостів — заявлена підтримка з позначеним обмеженням. Уточнює D4, не скасовує його.
 * **Creation**: [Рішення D4 — канали доставки VP](decisions/D4-delivery-channels.md) зафіксовано: у scope входять три канали — окремий плагін VP, збірка в пакет поставки агента і публічний marketplace-канал; поверхня скілів — `vp-mode` (основний скіл оркестрації) та `vp-setup` (допоміжний налаштування).
 * **Update**: [Research-документ](research/vida-powers-product-research.md) уточнено: основна робоча точка входу названа `vp-mode` (скіл оркестрації), `vp-setup` — допоміжний скіл налаштування. Зміст концепції не змінювався.

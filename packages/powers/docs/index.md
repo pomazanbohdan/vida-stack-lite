@@ -25,6 +25,7 @@ Bundle документації продукту Vida Powers у форматі O
 * [D3 — Каталог інструкцій VP: самостійний плагін і розширений реєстр у пакеті агента](decisions/D3-instruction-catalog-and-registry.md) - VP зберігає власний каталог і власні скрипти пошуку та використання інструкцій; у режимі збирання в пакет поставки агента пакет агента мусить мати свій розширений instruction registry.
 * [D4 — Канали доставки VP: окремий плагін, збірка в пакет агента, marketplace](decisions/D4-delivery-channels.md) - Три канали доставки в scope; поверхня скілів VP: `vp-mode` (основний скіл оркестрації) і `vp-setup` (допоміжний налаштування).
 * [D4b — Marketplace-власник VP і набір хостів першого релізу](decisions/D4b-marketplace-and-hosts.md) - `packages/powers` сам є marketplace-власником; Codex — перевірений перший хост, решта — заявлена підтримка.
+* [D5 — Decision Provider і роутінг у VP: provider-нейтральний інтерфейс, LLM-вибір і формування агентів](decisions/D5-decision-provider.md) - Контракт `decision.evaluate` з двома реалізаціями та обов'язковим Agent Fallback; роутінг = вибір LLM, формування агентів і рівень флоу.
 
 # Поза межами bundle
 
