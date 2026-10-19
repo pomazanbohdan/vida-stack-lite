@@ -170,10 +170,9 @@ compatibility_excludes:
   - test-after-development
 compatibility_requires:
   - define-acceptance-criteria
-provenance_donor: superpowers
-provenance_license: MIT
-provenance_source_revision: bb92a77741419a4ab5f06e711a283343f1ada0c3
-provenance_source_path: skills/test-driven-development/SKILL.md
+provenance:
+  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/test-driven-development/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=workflows/.../test-driven.md
 status: active
 revision: 1
 ---
@@ -193,7 +192,7 @@ revision: 1
 | `conditions.applies_when` / `.does_not_apply_when` | `conditions_applies_when` / `conditions_does_not_apply_when` |
 | `artifact_contract.output_type` / `.required_data` / `.verified_by` | `artifact_contract_output_type` / `_required_data` / `_verified_by` |
 | `compatibility.excludes` / `.requires` | `compatibility_excludes` / `compatibility_requires` |
-| `provenance.donor` / `.license` / `.source_revision` / `.source_path` | `provenance_donor` / `_license` / `_source_revision` / `_source_path` |
+| `provenance` (джерело: donor, license, source_revision, source_path) | `provenance[]` — список рядків `donor=…; license=…; revision=…; path=…` |
 | `status`, `revision` | `status`, `revision` |
 
 **Правила валідації**
@@ -207,12 +206,60 @@ revision: 1
 | `conditions_*` — непорожні рядки | `CATALOG_INVALID` |
 | `artifact_contract_*` — непорожні; `required_data` може бути порожнім для настановчих | `CATALOG_INVALID` |
 | `compatibility_excludes`/`_requires` — відомі `instruction_id`; `requires` не містить себе | `CATALOG_DEPENDENCY_MISSING` / `CATALOG_INVALID` |
-| `provenance_*` обов'язкові; `license` ∈ ліцензій `donors.yaml` або `internal`; `source_revision` — 40-hex або `internal` | `CATALOG_INVALID` |
+| `provenance` — список із щонайменше одного джерела; кожне: `donor` ∈ `donors.yaml`, `license` збігається з маніфестом, `revision` — 40-hex; те саме джерело двічі — не приймається | `CATALOG_INVALID` |
 | `status` ∈ `active` | `disabled`; `revision` — ціле ≥1 | `CATALOG_INVALID` |
 | Виняток із правила тегів — лише через `catalog.json` → `tag_exemptions[]` (`instruction_id`, `dimension`, `reason`) | `CATALOG_INVALID` |
 
 Тіло інструкції — нормативний текст; без дублювання research (research — концепція,
 інструкція — норма).
+
+## 5a. Формування інструкцій (крок D)
+
+**Принцип: скрипт ніколи не пише нормативний текст.** Семантика (відбір,
+сегментація, теґування, злиття) — робота агента; механіка (інвентаризація,
+рендер, provenance, валідація) — робота скрипта. Конвертер — агент-процедура зі
+скриптовою опорою, а не «магічний скрипт».
+
+| Фаза | Хто | Що робить | Артефакт |
+|---|---|---|---|
+| 1. Інвентаризація | скрипт | обхід клону донора, перелік файлів-носіїв: шлях, розмір, frontmatter, заголовки | `inventory/<donor>.json` |
+| 2. Відбір кандидатів | агент | відсіює те, що не є методологією (changelog, docs, інфраструктура) | звіт відбору з причинами |
+| 3. Сегментація | агент | один donor-skill містить кілька норм — ділить на атомарні інструкції | специфікації інструкцій (JSON) |
+| 4. Рендер + provenance | скрипт `convert.ts` | з специфікації генерує `.md` і **проставляє джерела** (донор, ліцензія, SHA, шлях) | `instructions/<id>.md` |
+| 5. Злиття дублікатів | агент | одна норма = одна інструкція з усіма джерелами | інструкція + `provenance[]` |
+| 6. Валідація й рецензія | скрипт + власник | `check-corpus.ts` → вибірка на рецензію → затвердження словника й груп | звіт покриття |
+
+**Злиття дублікатів (фаза 5).** Семантично однакові норми з різних донорів не
+лишаються окремими інструкціями:
+
+- Одна норма присутня в корпусі **рівно один раз**; її джерела — в `provenance[]`.
+- Формулювання зливається: береться **краща термінологія** з набору джерел, і
+  терміни зводяться до контрольованого словника (теги, групи профілю, наші імена
+  полів). Donor'івські формулювання зберігаються лише там, де вони несуть зміст, а
+  не лексику.
+- Зміна тексту або додавання джерела піднімає `revision` інструкції; подія
+  записується в журнал bundle.
+- Джерело одного донора може обґрунтувати кілька інструкцій (сегментація) — це
+  нормально; заборонено лише дублювання самої норми.
+
+**Обсяг кандидатів (виміряно у клонах із `donors.yaml`)**
+
+| Донор | `.md` | SKILL.md | Коментар |
+|---|---|---|---|
+| superpowers | 65 | 15 | + 45 доп. `.md` у skill'ах |
+| ponytail | 60 | 12 | MVP-пара |
+| BMAD | 327 | — | workflows/agents |
+| matt-skills | 132 | — | |
+| addy-skills | 113 | — | |
+| pstack (у cursor/plugins) | 430 | — | наш донор — лише підкаталог `pstack/` |
+| GSD | 1815 | — | переважно docs, не методологія |
+
+MVP = superpowers + ponytail: ≈ 125 файлів-кандидатів → орієнтовно 25–40
+інструкцій; остаточну кількість задає exit criteria кроку D.
+
+**Що не переноситься** (research §4.1): execution engines, tracker integrations,
+журнали стану донорів. Відсіювання — на фазі 2, і кожне відсіювання фіксується з
+причиною у звіті відбору.
 
 # 6. Формат `catalog.json`
 
@@ -359,6 +406,9 @@ bun run --cwd packages/agent lint:knip:pinned                   # репозит
 | Рішення | Хто | Альтернативи, які відкинуто |
 |---|---|---|
 | Інструкція = `.md` + метадані, плоска тека | **власник** | JSON-файли; директорії за донорами |
+| Джерела інструкції — список; злиття дублікатів з кращою термінологією | **власник** | «канонічна + відкинута» |
+| Кодування списку джерел — скаляри `donor=…; license=…; revision=…; path=…` | **власник (a)** | список мапів; компактний рядок |
+| Конвеєр формування (фази 1–6) — у дизайні | **власник** | лише в плані кроку D |
 | Тулінг усередині скіла; підтримка продукту — у `scripts/` | **власник** | усе в `tooling/` |
 | Каталог VP **замінює** модель D3: джерело — `.md`-інструкції, `catalog.json` — ідентичність + словник + аліаси + винятки | **власник** | JSON-каталог з інструкціями всередині |
 | Вантаж плагіна = коренець пакета (`skills/` + `instructions/` + `catalog.json`) | **власник** | окрема інсталяція корпусу |
@@ -385,14 +435,17 @@ bun run --cwd packages/agent lint:knip:pinned                   # репозит
 | CAT-D5 | Ієрархія каталогу (підкаталоги) | v1 — плоско |
 | CAT-D6 | CRAP/mutation-гейт для VP | Відкладено: потрібна нова залежність (Stryker) — потребує згоди власника |
 | CAT-D7 | Чи VP має власний `index.md`/навігацію корпусом | Відкладено: bundle-індекс уже є; корпус навігується пошуком |
+| CAT-D8 | Хто затверджує словник тегів і групи | Відкладено до кроку D: власник |
+| CAT-D9 | Скільки інструкцій вважається достатньою для MVP | Відкладено до кроку D: exit criteria |
+| CAT-D10 | Де зберігається звіт відбору та злиття | Відкладено до кроку D: звіт кроку, не корпус |
 
 # 14. Синхронізація нормативних документів (у межах цього work item)
 
 | Документ | Що змінюється |
 |---|---|
 | `decisions/D3-instruction-catalog-and-registry.md` | rev 2: канонічний каталог = `.md`-інструкції + `catalog.json` (ідентичність, словник, аліаси, винятки); bundled-проєкція без змін |
-| `system-specification.md` | SR-01, SR-06 (канонічні імена полів і їхня кодування), SR-15 (формат каталогу й формат інструкції), SR-34 (документ = `.md` з frontmatter), SR-62 (виняток для формату інструкції) |
-| `acceptance.md` | AC-01 (валідація інструкції-файлу), AC-09 (JSON-сумісність маніфесту каталогу), новий AC на відкидання неактивної альтернативи профілем |
+| `system-specification.md` | SR-01, SR-06 (канонічні імена полів і їхня кодування), SR-07 (джерела — список), SR-15 (формат каталогу й формат інструкції), SR-34 (документ = `.md` з frontmatter), SR-62 (виняток для формату інструкції) |
+| `acceptance.md` | AC-01 (валідація інструкції-файлу, список джерел), AC-09 (JSON-сумісність маніфесту каталогу), AC-29 (відкидання неактивної альтернативи профілем), AC-30 (злиття дублікатів) |
 | `traceability.md` | рядок D3; посилання на дизайн каталогу як джерело |
 | `docs/index.md`, `docs/log.md` | дизайн у bundle-індексі; записи про зміни |
 
@@ -400,8 +453,8 @@ bun run --cwd packages/agent lint:knip:pinned                   # репозит
 
 | Research § | Елемент дизайну |
 |---|---|
-| §4.1 канонізація донорів | формат інструкції, `provenance_*`, ліцензійна прив'язка |
-| §4.2 два виміри тегів | `capability_tags`, `pattern_tags`, ≥2 компоненти, словник, аліаси |
+| §4.1 канонізація донорів | формат інструкції, `provenance[]` (кілька джерел), ліцензійна прив'язка, злиття дублікатів (§5a) |
+| §4.2 два виміри тегів | `capability_tags`, `pattern_tags`, ≥2 компоненти, словник, аліаси; термінологія зливається за словником |
 | §4.3–4.5 методологія як політика | `compose` + профіль як розв'язувач конфліктів; успадкування/override — Stage 4 |
 | §4.6 risk-adaptive оновлення | `revision` інструкції + журнал змін (OKF) |
 | §4.7 операції каталогу | `tags/search/get/compose` (§7) |

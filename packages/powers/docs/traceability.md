@@ -38,7 +38,7 @@ revision: '1'
 | §2.2 рекурсивні підзадачі, делегування | BR-07 | SR-44, SR-48 | AC-22 |
 | §2.3 Selective Join, Lifecycle Scope | BR-16 | SR-48, SR-49, SR-50, SR-51 | AC-22 |
 | §3 установлення, bootstrap, hooks | BR-20 | SR-56, SR-57, SR-59, SR-60, SR-61 | AC-25, AC-26, AC-27 |
-| §4.1 канонізація донорів | BR-02 | SR-06, SR-07, SR-34, SR-35 | AC-01 |
+| §4.1 канонізація донорів | BR-02 | SR-06, SR-07, SR-34, SR-35 | AC-01, AC-30 |
 | §4.2 два виміри тегів | BR-01 | SR-02, SR-03, SR-04, SR-05 | AC-02, AC-03, AC-04 |
 | §4.3 методологія як політика | BR-13 | SR-25, SR-26 | AC-15 |
 | §4.4 успадкування, override | BR-14, BR-15 | SR-27, SR-28, SR-29 | AC-15, AC-16 |
@@ -72,7 +72,7 @@ revision: '1'
 |---|---|
 | D1 VP = `packages/powers` | BR-21; реєстрація — Stage 0 |
 | D2 монорепозиторій продуктів | BR-21; NFR-06 |
-| D3 власний каталог (`.md`-інструкції + `catalog.json`) + розширений реєстр у пакеті агента | SR-01, SR-06, SR-15, SR-34, SR-36; AC-01, AC-09, AC-29; runtime-запит; дизайн `catalog-design.md` |
+| D3 власний каталог (`.md`-інструкції + `catalog.json`) + розширений реєстр у пакеті агента | SR-01, SR-06, SR-07, SR-15, SR-34, SR-36; AC-01, AC-09, AC-29, AC-30; runtime-запит; дизайн `catalog-design.md` |
 | D4 три канали доставки, скіли `vp-mode`/`vp-setup` | BR-19; SR-22, SR-56, SR-58 |
 | D4b marketplace-власник, Codex першим | BR-19; AC-27 (обмеження для решти хостів) |
 | D5 provider-нейтральний Decision Provider | SR-16, SR-17; AC-10 |
