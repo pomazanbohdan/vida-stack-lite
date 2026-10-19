@@ -2346,36 +2346,12 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
     },
   );
 
-  test('always runs the read-only source plan and keeps security review risk-filtered', async () => {
-    workItem = {
-      ...workItem,
-      provider: 'azure',
-      provider_type: 'Feature',
-      canonical_kind: 'feature',
-      intent: 'implementation_new',
-      risk_flags: [],
-    };
+  test('always compiles the read-only source plan and keeps security review risk-filtered', () => {
     const compiled = compileDevelopmentWorkflow(config, 'default-development', 'implementation_new', []);
     const prewriter = compiled.waves.flat().find((stage) => stage.id === 'review_source_prewrite');
     expect(prewriter?.mode).toBe('parallel');
     expect(prewriter?.assignments).toEqual([expect.objectContaining({ role: 'source-planner', profile: 'architect' })]);
     expect(prewriter?.required_after).toEqual(['synthesize_task']);
-
-    const result = await configuredGraph(await compose()).dispatch(workItem.id);
-    expect(result.failedAssignments).toEqual([]);
-    expect(requireFixtureValue(result.stageOutputs.review_source_prewrite).map((value) => value.role)).toEqual([
-      'source-planner',
-    ]);
-    expect(
-      calls.filter((call) => call.stage.id === 'review_source_prewrite').map((call) => call.assignment.role),
-    ).toEqual(['source-planner']);
-    const developer = calls.find((call) => call.stage.kind === 'develop');
-    expect(
-      arrayValues(readRecordField(readRecordField(developer?.input, 'stage_outputs'), 'review_source_prewrite')).map(
-        (value) => readRecordField(value, 'role'),
-      ),
-    ).toEqual(['source-planner']);
-    expect(calls.some((call) => call.stage.kind === 'validate')).toBe(true);
   });
 
   test.each(['implementation_new', 'implementation_change', 'bug_fix', 'task_execution'])(
@@ -2803,8 +2779,15 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       provider_type: 'Feature',
       canonical_kind: 'feature',
       intent: 'implementation_new',
-      risk_flags: ['security'],
+      risk_flags: ['high'],
     };
+    const compiled = compileDevelopmentWorkflow(config, 'default-development', 'implementation_new', ['high']);
+    expect(
+      compiled.waves
+        .flat()
+        .find((stage) => stage.id === 'review_source_prewrite')
+        ?.assignments.map(({ role }) => role),
+    ).toEqual(['source-planner', 'security-prewriter']);
     const host = await compose();
     const graph = configuredGraph(host, {
       kind: 'feature',
@@ -2815,7 +2798,12 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       labels: [],
     });
     await graph.dispatch(workItem.id);
-    expect(calls.some((call) => call.assignment.risk_flags?.includes('security'))).toBe(true);
+    expect(
+      calls
+        .filter((call) => call.stage.id === 'review_source_prewrite')
+        .map((call) => call.assignment.role)
+        .sort(),
+    ).toEqual(['security-prewriter', 'source-planner']);
   });
 
   test('pins the authoritative work item and rejects drift before assignment', async () => {

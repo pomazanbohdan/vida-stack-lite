@@ -1372,3 +1372,35 @@ coverage scope, exact gates, frozen CRAP, mutation policy or execution budgets.
 The full contour is still open. A fresh exact F/L/S/B run needs the committed
 Source and its matching successful CI SDK test-input artifact. The failed stage
 is not replayed or counted as coverage evidence.
+
+### F/L/S/B main-runtime-core per-test timeout repair — 2026-10-19
+
+The fresh exact coverage stage `contour-stage-Xu5jOO` ran on immutable Source
+commit `1d4ca35c60bf7b608f8a24a7cf0c3054b398d928` with the matching SDK test
+input. It ended after 199.834 seconds with shard 0001 failing and shard 0002
+passing. The publisher retained the failed observation and reported an
+incomplete selection; no F/L/S/B counters were accepted. Two tests in
+`tests/configured-workflow.test.ts` hit the existing per-test 5-second timeout
+while the other coverage shard was active. The stage, JUnit, stdout/stderr,
+process receipts and publication error remain retained under
+`/workspace/contour-stage-Xu5jOO` and the corresponding immutable execution
+image. This was not a stage-process timeout and does not qualify as coverage.
+
+The configured-workflow tests had duplicated a full graph dispatch: the
+neighboring `test.each(configuredWorkflows)` already dispatches each full graph
+and verifies stage outputs, required predecessor inputs and output digests. The
+separate low-risk source-planner test now checks the compile contract directly.
+The distinct preview-risk integration test still dispatches the full graph and
+now asserts the exact source-planner/security-prewriter roles. It uses the
+`high` risk flag, which activates the same mandatory source prewriter without
+also scheduling unrelated security researcher and validator assignments. The
+preview still supplies no risk flags, so host-authoritative risk remains the
+behavior under test. No product code, timeout, coverage gate, or shard budget
+changed.
+
+The two focused tests passed under `bun test --timeout=5000`: 2 tests and 5
+assertions in 6.33 seconds total; the full graph mismatch test itself took
+4.61 seconds. Scoped formatter completed. Source typecheck, diff checks and a
+fresh full F/L/S/B stage remain pending. The next exact stage must use a new
+commit and its matching successful SDK test-input artifact; this failed stage
+is retained and will not be replayed.
