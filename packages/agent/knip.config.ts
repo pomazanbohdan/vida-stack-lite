@@ -60,11 +60,12 @@ const config = {
       project: [codeFiles],
     },
     'packages/powers': {
+      // Bun's built-in check subcommand is not an npm binary.
+      ignoreBinaries: ['check'],
       // Every product script is a manual entrypoint; the test files are entrypoints too.
+      // The scratch area (.tmp) is already excluded through .gitignore.
       entry: ['tooling/*.ts', ...tests],
       project: [codeFiles],
-      // Scratch area: cloned donor repositories and one-off scripts are not product source.
-      ignore: ['.tmp/**'],
     },
   },
 } satisfies KnipConfig;

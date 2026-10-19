@@ -54,8 +54,9 @@ corpus, єдиним скілом оркестрації `vp-mode`, допомі
 - **Код плагіна — runtime-агностичний.** Модулі VP мають працювати в будь-якому
   середовищі (Bun, Node, Deno) без зовнішніх залежностей: лише стандартні
   `node:` модулі (`fs`, `path`, `process`, `child_process`). Bun-специфічні API
-  (`Bun.YAML`, `Bun.file`, `Bun.spawn`, `import.meta.dir`) — тільки в dev-інструментах,
-  з fallback; у runtime-частині їх немає.
+  (`Bun.YAML`, `Bun.file`, `Bun.spawn`, `import.meta.dir`) дозволені **лише в
+  dev-інструментах** (вони працюють під рантаймом проєкту); у коді, що
+  постачається в скілах, їх немає.
 - **Машинні формати — JSON.** Канонічні дані, які читає код (корпус, профілі,
   реєстр інструкцій) зберігаються в JSON: `JSON.parse` доступний у будь-якому
   середовищі. YAML — лише для людських маніфестів (`donors.yaml`), де розбір
@@ -87,20 +88,27 @@ bun packages/powers/tooling/check-okf.ts
 # Локальна перевірка посилань і заголовків репозиторним інструментом
 bun tooling/agent/check-documentation.ts packages/powers/docs
 
+# Тести продукту
+bun run --cwd packages/powers test
+
+# Типізація продукту (bun check; tsconfig з erasableSyntaxOnly)
+bun run --cwd packages/powers typecheck
+
+# Репозиторний lint-гейт, який охоплює й код VP
+bun run --cwd packages/agent lint:knip:pinned
+
 # Маніфест донорів (scratch-інструмент у .tmp, ігнорується Git)
 bun packages/powers/.tmp/validate-donors.ts
 ```
 
-Після кроку **A** (скелет продукту) додаються:
-
-```sh
-bun run --cwd packages/powers test          # bun:test без зовнішніх залежностей
-bun run --cwd packages/powers typecheck     # bun check --project tsconfig.json
-bun run --cwd packages/powers format:check
-```
-
 > Форма виклику: `bun run --cwd <dir> <script>`. Варіант `bun --cwd <dir> run <script>`
 > друкує usage і не виконує скрипт.
+
+**Встановлення залежностей.** VP має власну install-теку (`packages/powers/bun.lock`,
+`packages/powers/node_modules`) — як `packages/agent`; у VP лише dev-типи
+(`@types/bun`, `@types/node`). Команда: `bun install --cwd packages/powers`.
+Для репозиторію: `bun install --frozen-lockfile --cwd packages/agent` (tracked-файл
+`packages/agent/bun.lock` не змінюється).
 
 Після кроку **C** — операції каталогу: `catalog.tags`, `catalog.search`,
 `catalog.get`, `catalog.compose`; після кроку **D** — `convert` і
@@ -176,9 +184,12 @@ bun run --cwd packages/powers format:check
 - **A0-гейт (до першого TS-файлу):** knip агента сканує репозиторій цілом і не має
   workspace для `packages/powers` → можливі «unlisted files» і падіння
   `lint:knip` (`--max-issues 0`). Перевірка: `bun run --cwd packages/agent
-  lint:knip:pinned`. **Статус: частково закрито** — блок `packages/powers` додано до
-  `packages/agent/knip.config.ts` (owner-рішення), маніфест пакета створено, але
-  фактичний прогін knip **не виконано**: залежності репозиторію не встановлені.
+  lint:knip:pinned`. **Статус: закрито** — залежності встановлено
+  (`bun install --frozen-lockfile --cwd packages/agent`), гейт повертає
+  `{"issues":[]}` і exit 0. Workspace `packages/powers` додано до
+  `packages/agent/knip.config.ts` (owner-виняток, D9 rev 2) з
+  `ignoreBinaries: ['check']` (підкоманда Bun `check` — не npm-бінарник);
+  scratch-тека `.tmp` виключена вже самим `.gitignore`, окремий `ignore` не потрібен.
 - `packages/powers/docs` **не входить** у `canonical_roots` документаційної
   політики репозиторію: документи продукту ведуться за власною OKF-дисципліною
   (`check-okf.ts` + журнал).
