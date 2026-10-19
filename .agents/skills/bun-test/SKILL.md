@@ -150,6 +150,18 @@ copy uncaptured live bytes into a mutation sandbox. If JUnit lists only a subset
 of selected files, inspect the retained baseline outcome and first failing
 fixture before rerunning. A bailed setup failure is incomplete evidence, not an
 assertion-confirmed kill.
+Reuse the existing initialization-bundle helper for matching copied-resource
+fixtures; qualify exact bytes, modes and path sets before replacing a manual
+list. Bind reached contained-controller docs through the same capture, checking
+its running aggregate before retaining another bounded read. Do not add a
+separate scan or global documentation list. Writer setup may reuse the existing
+in-process preparation helper while retaining actual public operations under
+test; readonly setup must stay at its earlier synthesis-only boundary.
+For constructor failure, register handles as acquired and verify reverse cleanup,
+all causes and thrown undefined with real native handles. Distinguish that unit
+proof from bridge faults and persisted recovery. Separate independent state
+matrices when each needs its own original case budget; preserve every mutation
+and real restoration, and measure total cost separately.
 Qualify temporary and shared-memory parent roots with actual reads/imports,
 nested spawn, denied writes, unchanged bytes and owned output/scratch writes.
 A later parent mount can hide an earlier child mount. Preserve failed runs and

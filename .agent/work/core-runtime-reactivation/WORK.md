@@ -7,11 +7,76 @@ Status date: 2026-10-19. Current execution/evidence only. This document does not
 
 The latest owner instruction supersedes the earlier three-contour pool and the
 all-contour coverage run: work on one contour only, finish exact F/L/S/B100,
-then select the next. The next contour is `main-host`, after the current
-core/timing/config exact milestones recorded below; no other contour is being repaired
+then select the next. The active contour is `bun-host-state`, after the exact
+observations below; no other contour is being repaired
 or measured in this cycle. CRAP, complexity qualification and
 mutation are deferred. Root remains the sole Source integrator, Git owner and
 numeric producer.
+
+### Sequential coverage observations and active repair
+
+The cycle recorded the following complete F/L/S/B observations. These keep
+their own Source/input bindings; they are not a same-HEAD global qualification.
+Each retained operation reports BLOCKED independently of its complete counters.
+The generated projection owns historical totals, still16/45 exact contours.
+
+| Contour | F / L / S / B | Retained stage |
+| --- | --- | --- |
+| main-runtime-core | 162/162 · 602/602 · 632/632 · 400/400 | `/workspace/contour-stage-8VSTRY` |
+| main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | `/workspace/contour-stage-Uq9ux2` |
+| main-config | 354/354 · 976/976 · 1035/1035 · 259/259 | `/workspace/contour-stage-qw2fxM` |
+| main-host | 7/7 · 21/21 · 22/22 · 11/11 | `/workspace/contour-stage-3eKxaT` |
+| main-public-ingress | 20/20 · 79/79 · 91/91 · 36/36 | `/workspace/contour-stage-1lmaWE` |
+| main-envelopes | 79/79 · 214/214 · 230/230 · 106/106 | `/workspace/contour-stage-f221Q6` |
+| main-cedar | 25/25 · 56/56 · 60/60 · 17/17 | `/workspace/contour-stage-FmJkKS` |
+| main-governance-validation | 206/206 · 705/705 · 730/730 · 90/90 | `/workspace/contour-stage-BlyG1C` |
+| main-mastra | 191/191 · 647/647 · 691/691 · 203/203 | `/workspace/contour-stage-ysQ0ti` |
+| bun-service-operation-custody | 59/59 · 236/236 · 243/243 · 121/121 | `/workspace/contour-stage-3UkjIf` |
+
+The separate data-only `bun-fs-safe-attestation` stage
+`/workspace/contour-stage-KsmYar` records L4/4,S4/4 and reviewed F0/0,B0/0 N/A.
+`main-exports` remains a declared static contour, not an invented numeric run.
+
+The first `bun-host-state` stage on34e1020 ended UNKNOWN after270854.906ms,
+without a complete numeric report. Preserve `/workspace/contour-stage-xSDEeu`
+and its unchanged image. Five workflow fixtures lacked captured TESTING.md;
+contained-controller setup lacked captured package docs. The reached helper now
+binds those filesystem data through the existing bounded capture, sharing its
+running byte total and enforcing the existing path/aggregate ceilings before
+retention. Unrelated selections and numeric Source/test selection stay unchanged.
+The Host workflow fixture now reuses `createInitializationBundle`; its38files
+match the former preparation in exact bytes, modes and paths. All five workflow
+cases pass317assertions in57.58s. The capture suite passes50cases/604assertions;
+the subsequent bounds/reachability checks pass2cases/27assertions.
+
+Stopped-source setup now registers each acquired ledger/bridge handle before
+the next setup operation and drains acquired handles in reverse order after
+failure, preserving the primary error and every close failure. Its native SQLite
+negative control passes13assertions in2.76ms, including thrown undefined. This
+is constructor/handle custody evidence, not a native bridge fault-injection proof.
+Writer fixture preparation reuses the existing in-process helper; the real public
+writer issue and capture calls remain. The same retired-source case passes the
+same29assertions before/after in37.640s/21.630s; setup-to-ready is36.649s/20.300s.
+These are single traced samples, not full-contour speed or admission proof.
+Readonly setup retains its synthesis-only boundary.
+
+The completed-wave-chain test separately reproduced a30s timeout at32.133s.
+Its suspended and complete corruption matrices are now distinct fresh cases,
+retaining all8+6mutations, both denial routes, exact restoration and unchanged
+Host rows under the original30s bounds. Both cases pass45assertions in12.701s
+and22.094s (36.31s command). The extra fresh setup increases total work slightly;
+the correction establishes individual deadlines, not a throughput improvement.
+Blind Luna reviewed capture/cleanup and setup semantics; its aggregate-allocation
+finding was corrected without another scan/hash pass. Package-resource independence
+is still unqualified, so no additional parallel producer is enabled.
+
+Current diagnostics are retained under
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/`.
+The one filesystem observation reports13612404736bytes free on the common
+checkout/scratch/evidence overlay, above the unchanged2GiB admission threshold.
+No cleanup, runtime/loader/DB cutover or consumer effect was performed.
+
+### Retained core diagnostics
 
 The latest prior campaign receipt is
 `910bb47f-25b1-4304-a562-f7a7fa291cb2`: 45 serial stages, 14 completed exact

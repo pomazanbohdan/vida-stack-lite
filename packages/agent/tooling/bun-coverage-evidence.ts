@@ -1171,14 +1171,20 @@ export async function captureRuntimeInputClosure(
       queued.push(resolved);
     }
   }
-  return [...new Set([...runtimeTools, ...captureConfiguredTestContextInputs(root, visited, inputBytes)])].sort();
+  return [
+    ...new Set([
+      ...runtimeTools,
+      ...(await captureConfiguredTestContextInputs(root, visited, inputBytes, capturedBytes)),
+    ]),
+  ].sort();
 }
 
-function captureConfiguredTestContextInputs(
+async function captureConfiguredTestContextInputs(
   root: string,
   visited: ReadonlySet<string>,
   inputBytes: Map<string, Buffer>,
-): string[] {
+  capturedBytes: number,
+): Promise<string[]> {
   const paths = visited.has('tests/configured-context.ts')
     ? repositoryTestContextFiles.map((file) => `${repositoryTestContextInputPrefix}/${file}`)
     : [];
@@ -1188,6 +1194,7 @@ function captureConfiguredTestContextInputs(
     visited.has('tests/helpers/documentation-policy-fixture.ts') ||
     visited.has('tests/helpers/init-bundle.ts') ||
     visited.has('tests/helpers/runtime-config-rebind-fixture.ts') ||
+    visited.has('tests/contained-controller-fixture.ts') ||
     visited.has('tests/init-entrypoint-v8.test.ts') ||
     visited.has('tests/initialization.test.ts') ||
     visited.has('tests/audit-partial-init.test.ts') ||
@@ -1196,14 +1203,17 @@ function captureConfiguredTestContextInputs(
   )
     paths.push('TESTING.md');
   if (visited.has('tests/init-entrypoint-v8.test.ts')) paths.push('README.md');
+  if (visited.has('tests/contained-controller-fixture.ts'))
+    paths.push(...(await walkFiles(root, path.join(root, 'docs'))));
   for (const file of paths) {
     if (inputBytes.has(file)) continue;
+    if (inputBytes.size + 1 > maxInputPaths) throw new Error('Coverage input path limit exceeded.');
     const bytes = readDiscoveredRuntimeInput(root, file);
     if (!bytes) throw new Error(`Configured test context input is missing: ${file}`);
+    capturedBytes += bytes.byteLength;
+    if (capturedBytes > maxInputBytes) throw new Error('Coverage input aggregate byte limit exceeded.');
     inputBytes.set(file, bytes);
   }
-  // The shared final projection enforces the combined path/byte ceilings before
-  // any captured image is returned; each added file also uses the bounded reader.
   return paths;
 }
 

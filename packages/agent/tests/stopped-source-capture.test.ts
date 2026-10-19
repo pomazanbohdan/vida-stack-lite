@@ -32,7 +32,11 @@ import type { WorkflowSessionReservation } from '../src/runtime-kernel.ts';
 import { suspendLocalWork, suspendCompletedReadOnlyWork } from '../src/orchestration/suspend-local-work.ts';
 import { run } from '../bin/run.ts';
 import { bindControlledRuntimeInitialization } from './helpers/controlled-runtime-initialization-fixture.ts';
-import { runTaskSynthesisPublicActions, runSourcePrewriterPublicActions } from './helpers/public-prewriter-fixture.ts';
+import {
+  runPreparationFixtureInProcess,
+  runTaskSynthesisPublicActions,
+  runSourcePrewriterPublicActions,
+} from './helpers/public-prewriter-fixture.ts';
 import { createPublicCliFixturePhaseMarker } from './helpers/public-cli-fixture-runner.ts';
 import { containedControllerFixture, type ContainedControllerFixture } from './contained-controller-fixture.ts';
 import { snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';
@@ -269,7 +273,27 @@ const writeJson = (root: string, file: string, value: unknown): void => {
   writeFileSync(path.join(root, file), jsonText(value));
 };
 
-async function fixture({ writer = true }: { writer?: boolean } = {}) {
+type FixtureSetupClose = () => void | Promise<void>;
+
+async function fixture(options: { writer?: boolean } = {}, prepare: typeof buildFixture = buildFixture) {
+  const closes: FixtureSetupClose[] = [];
+  try {
+    return await prepare(options, closes);
+  } catch (error) {
+    const failures: unknown[] = [error];
+    for (const close of closes.reverse()) {
+      try {
+        await close();
+      } catch (failure) {
+        failures.push(failure);
+      }
+    }
+    if (failures.length > 1) throw new AggregateError(failures, 'Stopped-source fixture setup and cleanup failed.');
+    throw error;
+  }
+}
+
+async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses: FixtureSetupClose[]) {
   markPhase?.('fixture:start');
   const root = mkdtempSync(path.join(tmpdir(), 'vida-stopped-source-'));
   if (deferFixtureCleanup) activeConsumerRoots.push(root);
@@ -301,6 +325,7 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     workspace = deriveWorkspaceId(config.repository.repository_id, root),
     ledger = openConfiguredMastraSessionLedger(root),
     store = ledger.hostState;
+  setupCloses.push(() => ledger.close());
   const selection: WorkItemSelection = {
     team: 'default-development',
     kind: 'task',
@@ -432,6 +457,7 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     workflowId: 'task_execution',
     workspaceId: workspace,
   });
+  setupCloses.push(() => bridge.close());
   await bridge.start(source);
   const sync = () => currentJournal(ledger, 'stopped', 1);
   const args = [
@@ -470,15 +496,15 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
   markPhase?.('fixture:bind-runtime');
   await bindControlledRuntimeInitialization(root, config, store);
   markPhase?.('fixture:task-synthesis');
-  let journal = await runTaskSynthesisPublicActions(publicFixture);
+  let journal = writer
+    ? await runPreparationFixtureInProcess(publicFixture, { ledger, bridge, source })
+    : await runTaskSynthesisPublicActions(publicFixture);
   const readonlyObservation = required(
     at(journal.state.completed, 0, 'Completed readonly wave').items[0]?.observation,
     'Completed readonly observation',
   );
   let reservation: WorkflowReservation | undefined;
   if (writer) {
-    markPhase?.('fixture:source-prewriter');
-    journal = await runSourcePrewriterPublicActions(publicFixture);
     markPhase?.('fixture:issue-wave');
     await publicRun([
       ...args,
@@ -976,6 +1002,55 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     laterWriter,
   };
 }
+
+test(
+  'stopped-source setup preserves primary and cleanup errors and closes acquired SQLite handles',
+  async () => {
+    const deadlineAt = performance.now() + 5000;
+    for (const setupFailure of [new Error('controlled setup failure'), undefined]) {
+      const first = new Database(':memory:');
+      const second = new Database(':memory:');
+      const cleanupFailure = new Error('controlled cleanup acknowledgement failure');
+      const calls: string[] = [];
+      let firstClosed = false;
+      let secondClosed = false;
+      try {
+        let failure: unknown;
+        try {
+          await fixture({ writer: false }, async (options, closes) => {
+            expect(options).toEqual({ writer: false });
+            closes.push(() => {
+              calls.push('first');
+              first.close(true);
+              firstClosed = true;
+            });
+            closes.push(async () => {
+              calls.push('second');
+              second.close(true);
+              secondClosed = true;
+              throw cleanupFailure;
+            });
+            throw setupFailure;
+          });
+        } catch (error) {
+          failure = error;
+        }
+        expect(failure).toBeInstanceOf(AggregateError);
+        if (!(failure instanceof AggregateError)) throw new Error('Expected setup and cleanup causes.');
+        expect(failure.errors).toEqual([setupFailure, cleanupFailure]);
+        expect(calls).toEqual(['second', 'first']);
+        expect(() => first.query('SELECT 1').get()).toThrow(/closed|not open/u);
+        expect(() => second.query('SELECT 1').get()).toThrow(/closed|not open/u);
+      } finally {
+        if (!secondClosed) second.close(true);
+        if (!firstClosed) first.close(true);
+      }
+    }
+    expect(performance.now()).toBeLessThan(deadlineAt);
+  },
+  5000,
+  { sourceOnly: true },
+);
 
 test(
   'retired Source capture settles only the issued failure and retries through its separate public route',

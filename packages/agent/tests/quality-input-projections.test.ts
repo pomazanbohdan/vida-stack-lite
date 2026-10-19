@@ -14,6 +14,7 @@ import {
   canonicalCapturedModulePath,
   capturedModuleAbsolutePath,
   capturedModuleInputs,
+  captureRuntimeInputClosure,
   coverageToolInputs,
   repositoryToolingInputPrefix,
   type CoverageReviewGitChange,
@@ -1190,6 +1191,68 @@ describe('final quality input projections', () => {
     } catch (error) {
       temporaryRoots.splice(temporaryRoots.indexOf(root), 1);
       console.error(`Retained failed copied fixture data capture: ${root}`);
+      throw error;
+    }
+  });
+
+  test('rejects controller data additions at the existing aggregate byte and path bounds', async () => {
+    const root = fixtureRoot();
+    const helper = 'tests/contained-controller-fixture.ts';
+    const module = Buffer.from('export const fixture = true;\n');
+    writeFileSync(path.join(root, 'TESTING.md'), '# Bound controller input\n');
+    mkdirSync(path.join(root, 'docs'));
+    const shared = Buffer.alloc(4 * 1024 * 1024);
+    const byteBound = new Map<string, Buffer>([[helper, module]]);
+    for (let index = 0; index < 31; index++) byteBound.set(`src/retained-${index}.ts`, shared);
+    byteBound.set('src/remaining.ts', shared.subarray(module.byteLength));
+    await expectRejected(() => captureRuntimeInputClosure(root, [helper], [], [], byteBound), /aggregate byte limit/u);
+    expect(byteBound.has('TESTING.md')).toBe(false);
+    const pathBound = new Map<string, Buffer>([[helper, module]]);
+    for (let index = 1; index < 20000; index++) pathBound.set(`src/retained-${index}.ts`, module);
+    await expectRejected(() => captureRuntimeInputClosure(root, [helper], [], [], pathBound), /path limit/u);
+    expect(pathBound.has('TESTING.md')).toBe(false);
+  });
+
+  test('captures reachable controller documentation once without widening unrelated closures', async () => {
+    const root = fixtureRoot();
+    try {
+      const selection = {
+        mode: 'focused-diagnostic' as const,
+        contour: 'controller-fixture-data',
+        sources: ['src/host-state.ts'],
+        tests: ['tests/fixture.test.mjs'],
+      };
+      const helper = 'tests/contained-controller-fixture.ts';
+      const files = ['TESTING.md', 'docs/system-specification.md', 'docs/research/fixture.md'];
+      writeFileSync(path.join(root, helper), 'export const fixture = true;\n');
+      for (const file of files) {
+        mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+        writeFileSync(path.join(root, file), '# Captured controller data\n');
+      }
+      const unrelated = await coverageInputs(root, selection);
+      for (const file of files) expect(unrelated.input_bytes[file]).toBeUndefined();
+      writeFileSync(path.join(root, selection.tests[0]!), "import './contained-controller-fixture.ts';\n");
+      const before = await coverageInputs(root, selection);
+      expect(before.sources.map((entry) => entry.path)).toEqual(selection.sources);
+      expect(before.tests).toEqual(selection.tests);
+      for (const file of files) {
+        expect(before.input_bytes[file]?.toString()).toBe('# Captured controller data\n');
+        expect(before.module_inputs.filter((entry) => entry.path === file)).toHaveLength(1);
+        expect(before.tool_inputs.filter((entry) => entry.path === file)).toHaveLength(1);
+      }
+      writeFileSync(path.join(root, files[2]!), '# Changed controller data\n');
+      const changed = await coverageInputs(root, selection);
+      expect(changed.source_fingerprint).toBe(before.source_fingerprint);
+      expect(changed.test_fingerprint).toBe(before.test_fingerprint);
+      expect(changed.tool_fingerprint).not.toBe(before.tool_fingerprint);
+      rmSync(path.join(root, files[2]!));
+      symlinkSync('../system-specification.md', path.join(root, files[2]!));
+      await expectRejected(() => coverageInputs(root, selection), /symlink/u);
+      rmSync(path.join(root, 'docs'), { recursive: true });
+      await expectRejected(() => coverageInputs(root, selection), /docs/u);
+    } catch (error) {
+      temporaryRoots.splice(temporaryRoots.indexOf(root), 1);
+      console.error(`Retained failed controller data capture: ${root}`);
       throw error;
     }
   });

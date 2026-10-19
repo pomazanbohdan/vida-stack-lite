@@ -3,6 +3,7 @@ import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
 import { expectReturned, rejectionReason } from '../helpers/expect-rejection.ts';
 import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-reconciliation-authorization-fixture.ts';
+import { createInitializationBundle } from '../helpers/init-bundle.ts';
 import { validateWorkState } from '../../src/contracts/work-state-schema.ts';
 import type {
   CoordinationClaim,
@@ -32,7 +33,7 @@ import type { LifecycleState } from '../../src/lifecycle/lifecycle-state.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import * as nodeFs from 'node:fs';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -2353,160 +2354,169 @@ test(
   { timeout: 30_000 },
 );
 
-test(
-  'session producer rejects missing and substituted completed wave chains before acquisition',
-  async () => {
-    const f = producerFixture('chain'),
-      bridge = await MastraSessionBridge.open(f.args);
-    const database = new Database(f.enginePath, { strict: true });
-    const persisted = (runId: string) =>
-      database
-        .query<MastraWorkflowSnapshotSqlRow, [string]>(
-          'SELECT snapshot,json(snapshot) AS parsed FROM mastra_workflow_snapshot WHERE run_id=?',
-        )
-        .get(runId);
-    const replace = (runId: string, value: unknown) =>
-      database
-        .query<never, SQLQueryBindings[]>('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
-        .run(JSON.stringify(value), runId);
-    const resume = async (engine: Awaited<ReturnType<typeof bridge.start>>) => {
-      let journal = requiredSessionJournal(f.ledger);
-      journal = f.ledger.issueWave('producer', 1, journal.version);
-      for (const item of journal.state.items) {
-        const stage = requiredValue(
-          requiredRuntimeWorkflow(f.args.config, 'task_execution').stages.find(
-            (entry) => entry.id === item.request.stage_id,
-          ),
-          'task execution stage fixture',
-        );
-        const kind = stage.kind;
-        const issueId = requiredValue(item.issue_id, 'issued chain item id');
-        const summary =
-          kind === 'validate'
-            ? JSON.stringify({
-                schema: 'VidaValidatorVerdict/v1',
-                verdict: 'pass',
-                findings: [],
-                evidence_refs: ['local://chain'],
-              })
-            : kind === 'test'
+for (const completed of [false, true]) {
+  test(
+    'session producer rejects missing and substituted wave chains before acquisition when ' +
+      (completed ? 'complete' : 'suspended'),
+    async () => {
+      const f = producerFixture('chain'),
+        bridge = await MastraSessionBridge.open(f.args);
+      const database = new Database(f.enginePath, { strict: true });
+      const persisted = (runId: string) =>
+        database
+          .query<MastraWorkflowSnapshotSqlRow, [string]>(
+            'SELECT snapshot,json(snapshot) AS parsed FROM mastra_workflow_snapshot WHERE run_id=?',
+          )
+          .get(runId);
+      const replace = (runId: string, value: unknown) =>
+        database
+          .query<never, SQLQueryBindings[]>('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
+          .run(JSON.stringify(value), runId);
+      const resume = async (engine: Awaited<ReturnType<typeof bridge.start>>) => {
+        let journal = requiredSessionJournal(f.ledger);
+        journal = f.ledger.issueWave('producer', 1, journal.version);
+        for (const item of journal.state.items) {
+          const stage = requiredValue(
+            requiredRuntimeWorkflow(f.args.config, 'task_execution').stages.find(
+              (entry) => entry.id === item.request.stage_id,
+            ),
+            'task execution stage fixture',
+          );
+          const kind = stage.kind;
+          const issueId = requiredValue(item.issue_id, 'issued chain item id');
+          const summary =
+            kind === 'validate'
               ? JSON.stringify({
-                  schema: 'VidaTesterVerdict/v1',
-                  status: 'pass',
+                  schema: 'VidaValidatorVerdict/v1',
+                  verdict: 'pass',
+                  findings: [],
                   evidence_refs: ['local://chain'],
                 })
-              : 'Actual chain fixture observation';
-        journal = f.ledger.report('producer', 1, journal.version, {
-          schema: 'VidaSessionObservation/v1',
-          action_id: item.request.action_id,
-          issue_id: issueId,
-          agent_id: 'fixture',
-          tool_call_ref: 'local:chain/' + issueId,
-          status: 'reported_complete',
-          summary,
-          output_digest: canonicalJsonDigest(summary),
-          evidence_refs: ['local://chain'],
-        });
-      }
-      return await bridge.resume(
-        requiredValue(engine.step_id, 'chain engine step id'),
-        journal.state.items.map((item) => requiredValue(item.observation, 'chain observation')),
-      );
-    };
-    const rejects = async (engine: Awaited<ReturnType<typeof bridge.start>>, changes: readonly SnapshotMutation[]) => {
-      const original = persisted(engine.run_id);
-      if (!original) throw new Error('persisted Mastra workflow fixture is missing');
-      const rows = f.rows();
+              : kind === 'test'
+                ? JSON.stringify({
+                    schema: 'VidaTesterVerdict/v1',
+                    status: 'pass',
+                    evidence_refs: ['local://chain'],
+                  })
+                : 'Actual chain fixture observation';
+          journal = f.ledger.report('producer', 1, journal.version, {
+            schema: 'VidaSessionObservation/v1',
+            action_id: item.request.action_id,
+            issue_id: issueId,
+            agent_id: 'fixture',
+            tool_call_ref: 'local:chain/' + issueId,
+            status: 'reported_complete',
+            summary,
+            output_digest: canonicalJsonDigest(summary),
+            evidence_refs: ['local://chain'],
+          });
+        }
+        return await bridge.resume(
+          requiredValue(engine.step_id, 'chain engine step id'),
+          journal.state.items.map((item) => requiredValue(item.observation, 'chain observation')),
+        );
+      };
+      const rejects = async (
+        engine: Awaited<ReturnType<typeof bridge.start>>,
+        changes: readonly SnapshotMutation[],
+      ) => {
+        const original = persisted(engine.run_id);
+        if (!original) throw new Error('persisted Mastra workflow fixture is missing');
+        const rows = f.rows();
+        try {
+          for (const change of changes) {
+            const value = parseJsonRecord(original.parsed);
+            change(value);
+            replace(engine.run_id, value);
+            await Promise.resolve(expect(bridge.snapshot()).rejects.toThrow(/Session engine/));
+            await Promise.resolve(expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/Session engine/));
+            expect(f.rows()).toEqual(rows);
+          }
+        } finally {
+          database
+            .query<never, SQLQueryBindings[]>('UPDATE mastra_workflow_snapshot SET snapshot=? WHERE run_id=?')
+            .run(original.snapshot, engine.run_id);
+        }
+        expect(await bridge.snapshot()).toEqual(engine);
+      };
       try {
-        for (const change of changes) {
-          const value = parseJsonRecord(original.parsed);
-          change(value);
-          replace(engine.run_id, value);
-          await Promise.resolve(expect(bridge.snapshot()).rejects.toThrow(/Session engine/));
-          await Promise.resolve(expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/Session engine/));
-          expect(f.rows()).toEqual(rows);
+        let engine = await resume(await bridge.start());
+        if (!completed) {
+          await rejects(engine, [
+            (s) => {
+              delete recordAt(s, 'context')['wave-0'];
+            },
+            (s) => {
+              recordAt(recordAt(s, 'context'), 'wave-0').status = 'failed';
+            },
+            (s) => {
+              const step = recordAt(recordAt(s, 'context'), 'wave-0');
+              recordAt(step, 'payload').observations = recordAt(step, 'output').observations;
+            },
+            (s) => {
+              recordAt(recordAt(recordAt(s, 'context'), 'wave-1'), 'payload').observations = [];
+            },
+            (s) => {
+              const output = recordAt(recordAt(recordAt(s, 'context'), 'wave-0'), 'output');
+              const first = arrayAt(output, 'observations')[0];
+              if (!isPlainRecord(first)) throw new Error('expected first persisted observation');
+              first.summary = 'Substituted output';
+            },
+            (s) => {
+              const context = recordAt(s, 'context');
+              const output = recordAt(recordAt(context, 'wave-0'), 'output');
+              const first = arrayAt(output, 'observations')[0];
+              if (!isPlainRecord(first)) throw new Error('expected first persisted observation');
+              first.action_id = 'd'.repeat(64);
+              recordAt(context, 'wave-1').payload = structuredClone(output);
+            },
+            (s) => {
+              const context = recordAt(s, 'context');
+              context['wave-999'] = structuredClone(recordAt(context, 'wave-0'));
+            },
+            (s) => {
+              s.status = 'success';
+              s.suspendedPaths = {};
+              const context = recordAt(s, 'context');
+              s.result = recordAt(context, 'wave-1').payload;
+              s.context = { input: context.input };
+            },
+          ]);
+        } else {
+          while (engine.status === 'suspended') engine = await resume(engine);
+          expect(engine.status).toBe('success');
+          await rejects(engine, [
+            (s) => {
+              delete recordAt(s, 'context')['wave-0'];
+            },
+            (s) => {
+              delete recordAt(s, 'context')['wave-4'];
+            },
+            (s) => {
+              recordAt(recordAt(recordAt(s, 'context'), 'wave-1'), 'payload').observations = [];
+            },
+            (s) => {
+              recordAt(s, 'result').observations = [];
+            },
+            (s) => {
+              const resumePayload = recordAt(recordAt(recordAt(s, 'context'), 'wave-0'), 'resumePayload');
+              const first = arrayAt(resumePayload, 'observations')[0];
+              if (!isPlainRecord(first)) throw new Error('expected first resumed observation');
+              first.agent_id = 'foreign';
+            },
+            (s) => {
+              recordAt(recordAt(s, 'context'), 'wave-0').status = 'failed';
+            },
+          ]);
         }
       } finally {
-        database
-          .query<never, SQLQueryBindings[]>('UPDATE mastra_workflow_snapshot SET snapshot=? WHERE run_id=?')
-          .run(original.snapshot, engine.run_id);
+        closeWorkspaceDatabaseWithAdmission(database);
+        await bridge.close();
       }
-      expect(await bridge.snapshot()).toEqual(engine);
-    };
-    try {
-      let engine = await resume(await bridge.start());
-      await rejects(engine, [
-        (s) => {
-          delete recordAt(s, 'context')['wave-0'];
-        },
-        (s) => {
-          recordAt(recordAt(s, 'context'), 'wave-0').status = 'failed';
-        },
-        (s) => {
-          const step = recordAt(recordAt(s, 'context'), 'wave-0');
-          recordAt(step, 'payload').observations = recordAt(step, 'output').observations;
-        },
-        (s) => {
-          recordAt(recordAt(recordAt(s, 'context'), 'wave-1'), 'payload').observations = [];
-        },
-        (s) => {
-          const output = recordAt(recordAt(recordAt(s, 'context'), 'wave-0'), 'output');
-          const first = arrayAt(output, 'observations')[0];
-          if (!isPlainRecord(first)) throw new Error('expected first persisted observation');
-          first.summary = 'Substituted output';
-        },
-        (s) => {
-          const context = recordAt(s, 'context');
-          const output = recordAt(recordAt(context, 'wave-0'), 'output');
-          const first = arrayAt(output, 'observations')[0];
-          if (!isPlainRecord(first)) throw new Error('expected first persisted observation');
-          first.action_id = 'd'.repeat(64);
-          recordAt(context, 'wave-1').payload = structuredClone(output);
-        },
-        (s) => {
-          const context = recordAt(s, 'context');
-          context['wave-999'] = structuredClone(recordAt(context, 'wave-0'));
-        },
-        (s) => {
-          s.status = 'success';
-          s.suspendedPaths = {};
-          const context = recordAt(s, 'context');
-          s.result = recordAt(context, 'wave-1').payload;
-          s.context = { input: context.input };
-        },
-      ]);
-      while (engine.status === 'suspended') engine = await resume(engine);
-      expect(engine.status).toBe('success');
-      await rejects(engine, [
-        (s) => {
-          delete recordAt(s, 'context')['wave-0'];
-        },
-        (s) => {
-          delete recordAt(s, 'context')['wave-4'];
-        },
-        (s) => {
-          recordAt(recordAt(recordAt(s, 'context'), 'wave-1'), 'payload').observations = [];
-        },
-        (s) => {
-          recordAt(s, 'result').observations = [];
-        },
-        (s) => {
-          const resumePayload = recordAt(recordAt(recordAt(s, 'context'), 'wave-0'), 'resumePayload');
-          const first = arrayAt(resumePayload, 'observations')[0];
-          if (!isPlainRecord(first)) throw new Error('expected first resumed observation');
-          first.agent_id = 'foreign';
-        },
-        (s) => {
-          recordAt(recordAt(s, 'context'), 'wave-0').status = 'failed';
-        },
-      ]);
-    } finally {
-      closeWorkspaceDatabaseWithAdmission(database);
-      await bridge.close();
-    }
-  },
-  { timeout: 30_000 },
-);
+    },
+    { timeout: 30_000 },
+  );
+}
 
 for (const phase of ['before-init', 'before-start', 'before-resume', 'before-journal', 'before-settle']) {
   test(
@@ -4653,27 +4663,13 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
   test.each(workflowCases)(
     'real Mastra + SQLite executes and resumes %s without repeated dispatch (fixture host identity)',
     async (workflowId, intent, kind, provider, providerType) => {
-      await mkdir(path.join(root, 'runtime'), { recursive: true });
       await mkdir(path.join(root, 'docs'), { recursive: true });
-      await cp(new URL('../../schemas', import.meta.url), path.join(root, 'runtime/schemas'), { recursive: true });
-      await mkdir(path.join(root, 'runtime/instructions'), { recursive: true });
-      await Promise.all([
-        cp(new URL('../../TESTING.md', import.meta.url), path.join(root, 'runtime/TESTING.md')),
-        ...[
-          'development-lifecycle',
-          'agent-allocation',
-          'request-clarification',
-          'adaptive-reporting',
-          'requirement-routing',
-          'knowledge-graph',
-        ].map((name) =>
-          cp(
-            new URL(`../../instructions/${name}.md`, import.meta.url),
-            path.join(root, `runtime/instructions/${name}.md`),
-            {},
-          ),
-        ),
-      ]);
+      createInitializationBundle(
+        path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..'),
+        root,
+        ['schemas', 'instructions', 'TESTING.md'],
+        'runtime',
+      );
       const yaml = (
         await readFile(new URL('../../templates/agent-runtime.config.template.v1.yaml', import.meta.url), 'utf8')
       )

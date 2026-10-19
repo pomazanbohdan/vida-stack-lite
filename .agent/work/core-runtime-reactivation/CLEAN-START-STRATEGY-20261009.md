@@ -41,11 +41,14 @@ Preserve complete Source/test selections, deadlines, report custody and UNKNOWN
 semantics. Do not exclude paths, trim assertions or weaken gates to create a
 maximum. Keep a blocked contour active and record its exact GAP until resolved.
 
-Core, timing and main-config have fresh exact observations in this sequential
-cycle. Main-config's138-test stage on4b4fe7b records F354/354,L976/976,S1035/1035,
-B259/259 under unchanged budgets after the published b04a76e blocker repair.
-WORK owns the image/report bindings, operation BLOCKED status and open full
-qualification. The next contour is main-host only. No coverage milestone supplies
+The cycle has recorded10executable exact observations and1separate data-only
+observation, each bound to its own Source/image; WORK owns their retained stages
+and the independent BLOCKED operation status. The active contour is
+`bun-host-state`. Repair its captured documentation, fixture custody and measured
+completed-wave-chain timeout before its next complete exact stage. Reuse current
+focused evidence; do not repeat unchanged full selections. Package-resource
+independence remains unqualified, so keep the existing serial fallback.
+No coverage milestone supplies
 frozen/mutation closure, and historical exact counts remain16/45.
 
 For each contour, use the existing one-contour stage route:

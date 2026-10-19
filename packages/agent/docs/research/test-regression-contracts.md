@@ -387,6 +387,22 @@ lifecycle references directly or relax production approval to make setup pass.
 
 Stopped-source capture uses a physically contained, qualified immutable controller and separate consumer fixtures. Fresh pinned processes call the copied public route for their own target. Do not use controller execution for a foreign target. Recheck package binding before and after each case. Preserve the mutable-package drift control, the original missing/null completion denial and unchanged Host. Fixture review manifests are setup data, not real independent review or Runtime proof.
 
+Its constructor registers each opened ledger/bridge handle before the next
+setup operation. A setup failure drains acquired handles in reverse order,
+retains the failed consumer root and preserves primary plus cleanup causes,
+including thrown undefined. The constructor control uses real native SQLite
+handles and verifies that new statements fail after close; this is handle
+custody evidence, not a bridge fault, disk recovery or mutation result.
+Bun documents [strict SQLite close](https://bun.com/reference/bun/sqlite/Database/close)
+and its [uncatchable test timeout](https://bun.com/docs/test/writing-tests#timeouts),
+so establish ownership before construction can fail rather than relying only
+on a caller's finally block after successful setup.
+Writer setup reuses the existing real in-process preparation helper and keeps
+public writer issue/capture calls; readonly fixtures preserve synthesis-only
+setup. The complete and suspended wave-chain corruption matrices use separate
+fresh native fixtures under their existing30s bounds. Retain all8+6mutations,
+both snapshot/open denials, unchanged operation rows and exact snapshot restore.
+
 Release-retarget checks use inert data. Cover same operation/version, bounded release-field changes, pointer absence, sealed archive/log custody, active/failed/UNKNOWN/install-started denial, admission/worker exclusion, planning reservation and source/path/archive drift. Check known-phase interruption, lost ACK and legitimate later worker progress. Local logs cannot replace trusted delivery evidence.
 
 Consumer migration keeps canonical DB/WAL/SHM paths and a consistent backup. Partition work children. Restore semantic beforeimages under maintenance/CAS with synchronous idempotent callbacks. Deny inflight or UNKNOWN state before callbacks. Exact retry receives no new initial backup. Keep the fence through interrupted restore.

@@ -413,6 +413,14 @@ Keep direct runtime dependencies of the coverage evidence module in
 For example, `bun-coverage-evidence.ts` imports `ts-only-source-gate.ts`, so
 omitting that module makes coverage children fail at load.
 
+Filesystem data copied by reached fixture helpers belongs to that same capture.
+`contained-controller-fixture.ts` requires package docs and TESTING.md; unrelated
+selections do not capture them. Share the closure's running byte total, check
+path limits before another read and the aggregate byte limit before retention,
+then retain the existing final projection checks. Reuse initialization-bundle
+helpers instead of maintaining another copy list. Qualify equivalent fixture
+trees with exact paths, bytes and modes; never repair a sealed image in place.
+
 Mutation partition descriptors bind the exact sorted Source subset and its
 original captured digests to the parent Source fingerprint. Stryker rewrites
 the sandbox subject, so those original digests are metadata bindings, not
@@ -2398,6 +2406,17 @@ first handle opens; preserve the original setup error and every close failure.
 Keep a failed or expired root even when the body eventually settles. Opt-in phase
 timings may diagnose setup, but nested timings are part of their enclosing phase
 and must not be added twice or treated as a controlled benchmark.
+
+Stopped-source writer setup reuses the existing in-process preparation helper
+with the real Ledger, Bridge, admission and Source snapshot. Keep its public
+writer issue and capture calls, and keep readonly fixtures at synthesis-only
+setup. Register acquired setup handles immediately; on failure attempt every
+close in reverse order and preserve the original cause, including thrown undefined.
+The native in-memory SQLite control proves constructor cleanup ownership only;
+it is not a real bridge fault or persistence-recovery proof. Independent suspended
+and complete wave-chain corruption matrices keep separate fresh fixtures and
+the existing30s exceptions, all mutations, dual rejection routes and restoration
+checks. Their split bounds individual cases; it does not promise a faster suite.
 
 For initialization read-admission expiry, first observe a real pending retry
 and unchanged receipt, guard/quarantine and Host images before the original5s
