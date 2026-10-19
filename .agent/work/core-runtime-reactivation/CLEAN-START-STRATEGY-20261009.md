@@ -64,8 +64,12 @@ and unprepared-release contracts through existing shared fixtures:77focused
 assertions pass, including native rollback/idempotence and all three CAS fences.
 Blind Luna's wrong-stage near-miss finding is fixed; the bounded resource review
 and exact Host test pin are refreshed without widening the selection. The next
-single complete stage must measure the changed inputs; coverage gains remain
-pending that result.
+single complete stage on ee67fa0 finishes272tests in225.818s and advances counters
+to F652/1128,L2502/4967,S2680/5297,B2315/5640. Its paired operation is still BLOCKED;
+exact historical closure remains16/45. The next checked Source packet directly
+tests terminal correction-generation repair, including real Work/Journal receipt
+normalization, native rollback and exact retries through existing shared fixtures.
+Its55focused assertions pass; its numeric gain needs the next changed-input stage.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

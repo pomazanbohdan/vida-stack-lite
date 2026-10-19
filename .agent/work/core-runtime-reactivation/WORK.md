@@ -96,11 +96,49 @@ remain retained; it was a fixture setup omission, not a demonstrated product bug
 Blind Luna review at /tmp/vida-host-new-cases-review.md identified a missing
 same-length, unique wrong-stage denial; the checked packet now covers it and
 explicitly proves missing-engine inspection creates no engine file. No remaining
-blocking finding was reported. No numeric increase is inferred from these passes.
-The complete baseline below remains the latest numeric observation until the next
-current-input stage terminates.
+blocking finding was reported. The complete observation below, rather than these
+targeted passes, owns the measured numeric increase.
 
-### Latest host-state stage and measured presence-guard repair
+### Latest complete host-state coverage observation
+
+The changed-input stage on ee67fa0 is complete at /workspace/contour-stage-P5VlYC:
+225818.276ms, exit0, complete capture, closed child group, unchanged boot and image,
+published diagnostic. Host256tests/1879assertions pass in152.19s; stopped-source
+16tests/206assertions pass in218.58s,272tests total. The independent coverage
+operation remains BLOCKED. Exact counters are F652/1128 (57.80%), L2502/4967
+(50.37%), S2680/5297 (50.59%), B2315/5640 (41.05%). Against the prior complete
+baseline below, the checked authorization/release packet covers42more functions,
+156lines,173statements and148branches with unchanged denominators. This is a
+coverage gain, not exact closure or an unchanged-input throughput comparison.
+Historical exact coverage closure remains16/45; frozen/CRAP and mutation remain
+deferred and unqualified.
+
+Run60c6224a-e1a8-45c6-813f-b13e7da2e738 binds image
+/workspace/.vida-quality-inputs/61403442d2f945a45947729bd66c00e08c101ca4/repository,
+manifest SHAa72422b43ba57830cd4d07a1cc9fbf8725191d115fd5165e7f4b40a36389153f,
+input fingerprint d9a0c1d5d6ce7d7a474444710198ecd2871d8837b85183326165adb85818de88.
+SDK CI39339842044 attempt1/artifact12227684302 passed; ZIP SHA
+7537adeaef9eb48028cbe9937146566834e48492e620b96d13ad98666c84225a matches transport.
+The stage owner's admission records9811845120bytes free on durable scratch,
+above the unchanged2147483648byte minimum. Reuse that observation; no cleanup,
+new disk walk, cutover or consumer effect was needed. The generated projection
+imports this result automatically,1027retained attempts.
+
+The next Source packet stays inside this contour: direct correction-generation
+repair preserves a real terminal attempt and an unchanged quiescent Journal;
+a second case reuses the failed-final fixture's genuine terminal reservations
+to normalize both Work and Journal receipts. The shared fixture exposes its
+existing owned SQLite handle, adding no connection or lifecycle. A native Journal
+UPDATE trigger aborts after the Work update and proves atomic rollback, retained
+request retry, resume and restore with original terminal evidence. Both cases
+pass55assertions in14.90s (341.89ms/12854.80ms), under default5s/justified20s
+bounds. Targeted strict169files and scoped type-aware lint pass. This packet was
+authored outside the measured image and contributes no claim to the counters above.
+Blind reviews at /tmp/vida-host-terminal-repair-review.md and
+/tmp/vida-host-terminal-journal-repair-review.md report no blocking defect and
+confirm both fixture-only preimages and unchanged shard resource ownership.
+
+### Prior complete presence-guard baseline
 
 On4ae4a36, /workspace/contour-stage-F04pyx completes in201042.948ms, publishes
 the complete focused diagnostic and closes every native child. Both serial-file
@@ -338,6 +376,12 @@ review traces both added shared fixtures and their engine/authority writes to th
 Host child's unique TMPDIR consumer roots; neither writes shared package config.
 Selection, namespace ownership, supported provider and serial fallback remain
 unchanged. The updated focused eligibility control passes10assertions in5.03ms.
+
+The terminal correction-generation packet refreshes the Host test digest to
+046ddadde0ff9dc3173ac8d046fa1358ab9599431ca8d7936e8118cb6d9f624d after the same
+bounded resource review. Both new cases write only the existing private fixture
+databases; the shared helper exposes an already-owned connection. No new shared
+namespace, child, Source/test selection or eligibility allowance is introduced.
 
 Final blind code review found no blocking defect. Its missing captured-Source
 metadata control is added and passes the focused case with10assertions in4.43ms.

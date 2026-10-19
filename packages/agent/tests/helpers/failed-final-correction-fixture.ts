@@ -45,6 +45,7 @@ export interface FailedFinalCorrectionFixture {
   readonly root: string;
   readonly config: AgentRuntimeConfig;
   readonly store: HostStateStore;
+  readonly database: ReturnType<typeof createAutomaticWorkAdmissionFixture>['database'];
   readonly identity: WorkIdentity;
   readonly journal: MastraSessionLedgerSnapshot;
   readonly tracedHost: HostStateSnapshot | null;
@@ -536,6 +537,7 @@ export async function createFailedFinalCorrectionFixture(
       root: fixture.root,
       config: fixture.config,
       store: host,
+      database: fixture.database,
       identity,
       journal,
       tracedHost,

@@ -1066,6 +1066,213 @@ test('bundled work-state repair plans atomically, resumes exact postimages and r
   expect(store.repairRequestTransitionFields({ mode: 'restore', operationId: 'fixture-repair' })).toEqual(restored);
 });
 
+test('correction-generation repair preserves terminal results and a quiescent journal through apply and restore', () => {
+  commitHostState(fixture());
+  const started = store.claimWorkflowAttempt(attemptRequest());
+  const completed = store.completeWorkflowAttempt(started, { terminal: 'observed Host fixture result' });
+  const terminal = readPresentSnapshot(store, identity);
+  const journal = quiescentJournal();
+  const raw = parseJsonRecord(canonicalJson(terminal.work));
+  const execution = recordAt(raw, 'execution');
+  const attempts = arrayAt(execution, 'assignment_attempts');
+  const attempt = firstOf(attempts, 'terminal repair attempt');
+  if (!isPlainRecord(attempt)) throw new Error('Terminal repair attempt is not a record.');
+  expect(Reflect.deleteProperty(attempt, 'correction_generation')).toBe(true);
+  expect(Reflect.deleteProperty(attempt, 'correction_authorization')).toBe(true);
+  raw.lease = null;
+  execution.status = 'suspended';
+  const releasedLedger: CoordinationLedger = {
+    ...terminal.ledger,
+    claims: terminal.ledger.claims.map((claim) => ({ ...claim, status: 'released' })),
+    tickets: terminal.ledger.tickets.map((ticket) => ({
+      ...ticket,
+      status: 'released',
+      active_resources: [],
+      blocked_resources: [],
+      expires_at: null,
+    })),
+  };
+  database
+    .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'")
+    .run(canonicalJson(raw), canonicalJsonDigest(raw));
+  database
+    .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+    .run(canonicalJson(releasedLedger), canonicalJsonDigest(releasedLedger));
+  const retained = database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all();
+  const retainedJournal = database
+    .query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger')
+    .all();
+  expect(() => store.readHostStateSnapshot(identity)).toThrow('work record must match current WorkState/v1');
+  const request = { operationId: 'terminal-generation-repair' };
+  const inspected = store.repairCorrectionGeneration({ ...request, mode: 'inspect' });
+  expect(inspected.changed_work).toHaveLength(1);
+  expect(inspected.changed_journals).toBe(0);
+  expect(database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(
+    retained,
+  );
+  expect(database.query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(
+    retainedJournal,
+  );
+  const planned = store.repairCorrectionGeneration({
+    ...request,
+    mode: 'plan',
+    actor: 'fixture:terminal-repair-owner',
+  });
+  expect(planned.status).toBe('planned');
+  expect(database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(
+    retained,
+  );
+  expect(database.query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(
+    retainedJournal,
+  );
+  const applied = store.repairCorrectionGeneration({ ...request, mode: 'apply' });
+  expect(applied.status).toBe('applied');
+  const repaired = readPresentSnapshot(store, identity);
+  expect(repaired.work.execution.assignment_attempts).toEqual([completed.attempt]);
+  expect(repaired.work.execution.status).toBe('suspended');
+  expect(repaired.work.lease).toBeNull();
+  expect(repaired.ledger).toEqual(releasedLedger);
+  expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal.state);
+  expect(store.repairCorrectionGeneration({ ...request, mode: 'resume' })).toEqual(applied);
+  const restored = store.repairCorrectionGeneration({ ...request, mode: 'restore' });
+  expect(restored.status).toBe('restored');
+  const after = readPresentSnapshot(store, identity);
+  expect(after.work.execution).toEqual(repaired.work.execution);
+  expect(after.work.lease).toBeNull();
+  expect(after.work.revision).toBe(repaired.work.revision + 1);
+  expect(after.ledger).toEqual(releasedLedger);
+  expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal.state);
+  expect(database.query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(
+    retainedJournal,
+  );
+  expect(store.repairCorrectionGeneration({ ...request, mode: 'restore' })).toEqual(restored);
+});
+
+// Real writer/report preparation supplies terminal reservation receipts for both persisted rows.
+test('correction-generation repair atomically normalizes genuine terminal Host and Journal receipts', async () => {
+  const f = await createFailedFinalCorrectionFixture();
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const before = readPresentSnapshot(f.store, f.identity);
+    const journal = f.store.readWorkSessionJournal(f.identity);
+    if (!journal) throw new Error('Terminal repair journal is missing.');
+    expect(before.work.execution.assignment_attempts.length).toBeGreaterThan(0);
+    expect(
+      before.work.execution.assignment_attempts.every((attempt) => ['completed', 'no_effect'].includes(attempt.status)),
+    ).toBe(true);
+    const legacyWork = parseJsonRecord(canonicalJson(before.work));
+    const legacyJournal = parseJsonRecord(canonicalJson(journal.state));
+    const stripAuthority = (value: unknown) => {
+      if (!isPlainRecord(value)) throw new Error('Terminal authority preimage is not a record.');
+      expect(Object.hasOwn(value, 'correction_generation')).toBe(true);
+      expect(Object.hasOwn(value, 'correction_authorization')).toBe(true);
+      Reflect.deleteProperty(value, 'correction_generation');
+      Reflect.deleteProperty(value, 'correction_authorization');
+    };
+    const execution = recordAt(legacyWork, 'execution');
+    for (const attempt of arrayAt(execution, 'assignment_attempts')) stripAuthority(attempt);
+    legacyWork.lease = null;
+    execution.status = 'suspended';
+    const releasedLedger: CoordinationLedger = {
+      ...before.ledger,
+      claims: before.ledger.claims.map((claim) => ({ ...claim, status: 'released' })),
+      tickets: before.ledger.tickets.map((ticket) => ({
+        ...ticket,
+        status: 'released',
+        active_resources: [],
+        blocked_resources: [],
+        expires_at: null,
+      })),
+    };
+    const items = [...arrayAt(legacyJournal, 'items')];
+    for (const wave of arrayAt(legacyJournal, 'completed')) {
+      if (!isPlainRecord(wave)) throw new Error('Terminal repair wave is not a record.');
+      items.push(...arrayAt(wave, 'items'));
+    }
+    let reservations = 0;
+    for (const item of items) {
+      if (!isPlainRecord(item)) throw new Error('Terminal repair item is not a record.');
+      if (!item.host_reservation) continue;
+      const reservation = recordAt(item, 'host_reservation');
+      stripAuthority(recordAt(reservation, 'receipt').attempt);
+      if (reservation.authorization)
+        stripAuthority(recordAt(recordAt(reservation, 'authorization'), 'receipt').attempt);
+      reservations++;
+    }
+    expect(reservations).toBeGreaterThan(0);
+    f.database
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'")
+      .run(canonicalJson(legacyWork), canonicalJsonDigest(legacyWork));
+    f.database
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+      .run(canonicalJson(releasedLedger), canonicalJsonDigest(releasedLedger));
+    f.database
+      .query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE work_id=?')
+      .run(canonicalJson(legacyJournal), canonicalJsonDigest(legacyJournal), f.identity.work_id);
+    const rows = () => f.database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all();
+    const journals = () =>
+      f.database
+        .query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id,attempt')
+        .all();
+    const retainedRows = rows(),
+      retainedJournals = journals();
+    const request = { operationId: 'terminal-journal-generation-repair' };
+    const inspection = f.store.repairCorrectionGeneration({ ...request, mode: 'inspect' });
+    expect(inspection.changed_work).toHaveLength(1);
+    expect(inspection.changed_journals).toBe(1);
+    expect(rows()).toEqual(retainedRows);
+    expect(journals()).toEqual(retainedJournals);
+    const planned = f.store.repairCorrectionGeneration({
+      ...request,
+      mode: 'plan',
+      actor: 'fixture:terminal-journal-repair-owner',
+    });
+    expect(planned.status).toBe('planned');
+    f.database.exec(
+      "CREATE TEMP TRIGGER deny_generation_journal BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT, 'controlled generation journal failure'); END",
+    );
+    try {
+      expect(() => f.store.repairCorrectionGeneration({ ...request, mode: 'apply' })).toThrow(
+        'controlled generation journal failure',
+      );
+      expect(rows()).toEqual(retainedRows);
+      expect(journals()).toEqual(retainedJournals);
+    } finally {
+      f.database.exec('DROP TRIGGER deny_generation_journal');
+    }
+    const applied = f.store.repairCorrectionGeneration({ ...request, mode: 'apply' });
+    expect(applied.status).toBe('applied');
+    const after = readPresentSnapshot(f.store, f.identity);
+    expect(after.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
+    expect(after.work.execution.status).toBe('suspended');
+    expect(after.work.lease).toBeNull();
+    expect(after.ledger).toEqual(releasedLedger);
+    expect(f.store.readWorkSessionJournal(f.identity)?.state).toEqual(journal.state);
+    expect(f.store.readWorkSessionJournal(f.identity)?.version.revision).toBe(journal.version.revision + 1);
+    expect(f.store.repairCorrectionGeneration({ ...request, mode: 'resume' })).toEqual(applied);
+    const restored = f.store.repairCorrectionGeneration({ ...request, mode: 'restore' });
+    expect(restored.status).toBe('restored');
+    expect(readPresentSnapshot(f.store, f.identity).work.execution).toEqual(after.work.execution);
+    expect(f.store.readWorkSessionJournal(f.identity)?.state).toEqual(journal.state);
+    expect(f.store.readWorkSessionJournal(f.identity)?.version.revision).toBe(journal.version.revision + 2);
+    expect(f.store.repairCorrectionGeneration({ ...request, mode: 'restore' })).toEqual(restored);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(completed);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+}, 20000);
+
 test('stored repair decoder rejects malformed changes, foreign identity and extra fields without Host mutation', () => {
   const original = commitHostState(fixture());
   store.repairRequestTransitionFields({ mode: 'plan', operationId: 'decoder-regression', actor: 'fixture-owner' });
