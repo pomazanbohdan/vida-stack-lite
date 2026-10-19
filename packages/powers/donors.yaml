@@ -82,7 +82,7 @@ donors:
     snapshot_source: research-frontmatter
     note: >
       монорепозиторій; джерелом є каталог pstack (169 tracked-файлів),
-      file_count 947 — розмір всього клону; ліцензія власна для pstack
+      file_count 947 — розмір всього клону; окремий LICENSE-файл pstack/LICENSE (MIT)
 
   - id: gsd-core
     role: methodology-donor

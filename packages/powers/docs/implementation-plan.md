@@ -1,4 +1,4 @@
-# Vida Powers — план впровадження (rev 2)
+# Vida Powers — план впровадження (rev 2.1)
 
 Owner: продуктовий власник Vida Powers. Class: **derived execution roadmap** —
 порядок робіт і ворота, не нормативна специфікація і не дозвіл на мутації.
@@ -26,6 +26,11 @@ S-документи, які створює Stage 1.
 **Rev 2** переписано після незалежної валідації (вердикт **REJECTED**, 6 blocker /
 12 major / 4 minor). Стан на 2026-10-19, гілка `powers`.
 
+**Rev 2.1** — виправлення за раундом 2 валідації (вердикт
+**ACCEPTED-WITH-CHANGES**): одна major (M-01 — місце схеми методологічного
+профілю, додано рішення D8), шість minor, залишок DAG-суперечності (R-12) і
+чотири прогалини покриття research. Див. §1a.
+
 ---
 
 ## Global Constraints
@@ -45,7 +50,7 @@ S-документи, які створює Stage 1.
 - `.vida/*` — **цільовий** споживацький layout, не чинний. Чинна конфігурація —
   `agent-runtime.config.v1.yaml` (секція `workflows:`) і поточні v1-контракти.
 - Інструментальний ланцюг — лише Bun. `node`/`npm`/`npx` не підключаються до команд
-  розробки. Numeral-адреса Bun на поточній машині:
+  розробки. Повний шлях до Bun на поточній машині:
   `C:\Users\pomaz\AppData\Local\Microsoft\WinGet\Packages\Oven-sh.Bun_Microsoft.Winget.Source_8wekyb3d8bbwe\bun-windows-x64\bun.exe`
   (не в PATH — виклик через повний шлях).
 - Один writer на файл. Root володіє Git, спільними root-файлами (sidecar, config,
@@ -53,7 +58,7 @@ S-документи, які створює Stage 1.
   перевірками. Працівники не виконують Git-операцій.
 - Доказ: `BR → SR → AC → evidence`. `passed` неможливий без фактичного запуску.
   Статичний аналіз або наявність коду не закривають AC.
-- Змінений вхід інварідує лише прив'язаний до нього доказ.
+- Змінений вхід інвалідує лише прив'язаний до нього доказ.
 
 ## Review Focus
 
@@ -68,7 +73,7 @@ S-документи, які створює Stage 1.
    застосувати «останній завантажений перемагає».
 4. **Запізнілий результат підзадачі** — не переписує вже прийнятий результат
    батька; має окремий запис і явне опрацювання.
-5. **Позa межами Work Scope** — знахідка блокуюча AC, але поза виданними
+5. **Поза межами Work Scope** — знахідка блокуюча AC, але поза виданними
    повноваженнями, фіксується як блокер із запитом дозволу; scope не розширюється
    автоматично, а помилка чужого коду не тягне за собою чужу роботу.
 
@@ -82,7 +87,7 @@ S-документи, які створює Stage 1.
 | R-02 | `vp-setup` не має права редагувати `packages/agent/templates/AGENTS.template.md` | Stage 5 пише у project-owned поверхню споживача; зміна шаблону — окремий runtime-запит. D-04 виправлено |
 | R-03 | `.vida/*` — ціль, а не чинний layout | Global Constraints + D-06; Stage 4/7 ціляться у чинний v1-конфіг. Додано рішення D7 |
 | R-04 | Stage 1 фіксує S-контракти до D3/D4/D5 | D3/D4/D5 перенесені в Stage 0; Stage 1 розділено на стабільні інваріанти й відкладені розділи |
-| R-05 | Розділ «plan не змінює runtime» суперечив Stage 2/5/7 | Кожен етап має блок **Runtime-запитів** з owner-ом; §9 переписано |
+| R-05 | Розділ «plan не змінює runtime» суперечив Stage 2/5/7 | Кожен етап має блок **Runtime-запитів** з owner-ом; §8 переписано |
 | R-06 | Дистрибуція поза scope, але Stage 8 вимагає `install+run` | Stage 5 отримує deliverable «пакунок + локальна інсталяція»; D4 блокує Stage 8; marketplace лишається Stage 9 |
 | R-07 | Storage GAP надмірно блокує Runtime-режим | Stage 7 розділено на 7a (чинні v1-контракти) і 7b (workspace-БД після GAP) |
 | R-08 | `findings` є не лише в `ResearchResult/v1` | D-08 переписано: перелічено `ResearchResult/v1`, `ResearchSynthesis/v1`, `final-assurance-review/state`; відсутній саме defect-registry |
@@ -105,6 +110,26 @@ S-документи, які створює Stage 1.
 
 ---
 
+## 1a. Що змінено у rev 2.1 (раунд 2 валідації)
+
+Раунд 2 (`opencode/glm-5.3-flash-free`) дав вердикт **ACCEPTED-WITH-CHANGES**:
+усі 24 знахідки раунду 1 виправлено фактичною зміною плану, перевіреною по Source;
+залишилися одна major, шість minor і часткове покриття research.
+
+| ID | Зауваження раунду 2 | Виправлення в rev 2.1 |
+|---|---|---|
+| M-01 (major) | Stage 4: поверхня конфігурації методології в чинному v1-конфізі вимагає розширення `agent-runtime-config.v1.schema.json` і валідатора `runtime-config.ts` — це runtime-owned зміна без Runtime-запиту; D7 вирішує layout споживача, а не місце схеми | Додано рішення **D8** (де живе схема профілю; рекомендація — VP-owned `Type/vN`, варіант (a) лише за runtime work item) + блок Runtime-запиту в Stage 4; D7 відділено від D8 |
+| m-02 (minor) | D-07 приписував `AcceptanceManifest/v1`, `ImplementationScope/v1`, `WorkState/v1` до `artifact_contracts` конфігу — там лише `WorkItem/v1`, `ResearchResult/v1`, `ResearchSynthesis/v1`, `DecisionRecord/v1` | D-07 переписано з точним переліком обох груп |
+| m-03 (minor) | D-07 називав поле `fingerprint` | Виправлено на `implementation_fingerprint` |
+| m-04 (minor) | Таблиця правок посилалася на «§9», а розділ «Межі плану» — §8 | Посилання виправлено |
+| m-05 (minor) | Проекція в реєстр має матеріалізуватися в `agent-runtime.config.v1.yaml#research_decision.registry.instructions.N` (жорсткий шаблон `source_path`), тобто в Root-owned root-файлі; Stage 2 не зазначав координацію з Root | Stage 2: додано межу реєстру, узгодження з Root і заборону паралельного запису в root-конфіг + AC на `test:config:pinned` |
+| m-06 (minor) | Формулювання note у `donors.yaml` про ліцензію pstack плутане | `donors.yaml`: note переформульовано (окремий `pstack/LICENSE`, MIT) |
+| m-07 (minor) | Друкарські помилки («Позa межами», «Numeral-адреса», «інварідує») | Виправлено |
+| R-12 (залишок) | ASCII-DAG показував Stage 5 → 6, а таблиця — залежності Stage 6 від 1, 2, 3; Stage 7a не показано | DAG перемальовано за таблицею залежностей |
+| Покриття research | Частково не покриті: §12 (межі автономності), §7.3 (життєвий цикл Work Item), §9.3 (похідний індекс), §5 (UI-агент ≠ людське прийняття) | Додано AC у Stage 1 (§7.3), Stage 6 (§9.3, UI≠human acceptance), Stage 8 (§12, compaction) |
+
+---
+
 ## 2. Звірка концепції з поточним Source (rev 2)
 
 | ID | Твердження research | Фактичний стан | Дія |
@@ -115,7 +140,7 @@ S-документи, які створює Stage 1.
 | D-04 | `vp-setup` керує `AGENTS.md` (§3) | `AGENTS.template.md` забороняє project-specific content і замінюється wholesale; consumer не редагує встановлений пакет | Stage 5: писати у project-owned поверхню |
 | D-05 | Session/compaction hooks (§3) | Runtime-hook API в `packages/agent/src` відсутній. Хост-поверхня є: Codex native `/hooks` review, trusted `SessionStart` hook, кваліфікація через `tooling/agent/cloud-pstack-setup.ts`; новий/змінений hash потребує native review — trust GAP, не синтезується | Stage 5: перевикористання + кваліфікація, trust GAP явний |
 | D-06 | Методологія як політика продукту (§4.3, §4.4) | Чинна конфігурація — `agent-runtime.config.v1.yaml` (`workflows:`); `.vida/project.yaml` — ціль. Профілів методології немає | Stage 4 + рішення D7 |
-| D-07 | Матеріалізація §6 | `LifecycleArtifactReference/v1` (kind, artifact_schema, record_id, path, sha256, source_revision, scope_id, ac_ids, generation, fingerprint, delivery_cycle_id, principal, decision, disposition) і `WorkArtifactReference` уже існують; `ResearchResult/v1`, `ResearchSynthesis/v1`, `DecisionRecord/v1`, `AcceptanceManifest/v1`, `ImplementationScope/v1`, `WorkItem/v1`, `WorkState/v1` — у `artifact_contracts` конфігу | Stage 6: перевикористати, додати лише прогалини |
+| D-07 | Матеріалізація §6 | `LifecycleArtifactReference/v1` (kind, artifact_schema, record_id, path, sha256, source_revision, scope_id, ac_ids, generation, `implementation_fingerprint`, delivery_cycle_id, principal, decision, disposition) і `WorkArtifactReference` уже існують. У `artifact_contracts` чинного конфігу: `WorkItem/v1`, `ResearchResult/v1`, `ResearchSynthesis/v1`, `DecisionRecord/v1`. `AcceptanceManifest/v1`, `ImplementationScope/v1`, `WorkState/v1` існують як схеми й кодифіковані контракти в коді, але **не** як записи `artifact_contracts` | Stage 6: перевикористати наявні контракти, додати лише прогалини |
 | D-08 | Findings: реєстр дефектів (§8.3, §8.4) | `findings` — поле `ResearchResult/v1`, `ResearchSynthesis/v1`, `final-assurance-review/state`; окремого defect-registry з життєвим циклом і dedup немає | Stage 6 |
 | D-09 | Runtime: HostState/CAS/lease (§8.1, §10) | Реалізовано; окрема storage-admission БД лишається GAP проти цільової `workspace.v1.sqlite`; чинні v1-контракти дійсні | Stage 7a / 7b |
 | D-10 | Decision Provider «Jeff/Jev» (§4.8) | У коді відсутній | Рішення D5 |
@@ -138,6 +163,7 @@ S-документи, які створює Stage 1.
 | D5 | Decision Provider | конкретний провайдер / provider-нейтральний інтерфейс | Provider-нейтральний `decision.evaluate` + обов'язковий Agent Fallback; «Jeff» не існує в коді | 2, 4, 5 |
 | D6 | Журнал змін research | створити `*.changelog.md` / прибрати посилання | Створити — research сам вимагає (§7.1) | 0 |
 | D7 | Цільовий споживацький layout | чинний v1-конфіг / `.vida` cutover | Цілитися в чинний v1-конфіг; `.vida` — залежність від окремого runtime-треку (cutover не виконано) | 4, 7 |
+| D8 | Де живе схема методологічного профілю | (a) розділ у `agent-runtime.config.v1.yaml`; (b) VP-owned схема/файл | **(b)**: `agent-runtime-config.v1.schema.json` і валідатор у `runtime-config.ts` належать runtime-власнику, тож додавання розділу = runtime work item. VP-owned схема `Type/vN` не торкається runtime; інтеграція з runtime — лише через наявні `context_skill_refs`/конфіг. **(a)** — лише за окремим погодженим runtime work item | 4 |
 
 ---
 
@@ -158,8 +184,9 @@ S-документи, які створює Stage 1.
 **Role:** product owner + Root (shared-файли). **Оцінка:** S. **Work item:** VP-0.
 
 Роботи:
-- Decision-записи (окремий артефакт, research §7.2) за D1, D2, D3, D4, D5, D6, D7.
-  D3 і D4 — до Stage 1, бо Stage 1 фіксує S-контракти.
+- Decision-записи (окремий артефакт, research §7.2) за D1, D2, D3, D4, D5, D6, D7, D8.
+  D3, D4 і D8 — до Stage 1, бо Stage 1 фіксує S-контракти, а Stage 4 потребує
+  визначеного місця схеми профілю.
 - Реєстрація продукту: рядок ownership map у `AGENT.sidecar.md`; `projects` у
   `agent-runtime.config.v1.yaml` з повним набором полів (schema вимагає
   `project_id`, `title`, `wiki_root`, `wiki_path`, `wiki_output_root`,
@@ -214,6 +241,11 @@ AC:
 - Research-документ не містить хронології, нотаток попередніх версій і
   формулювань «раніше було …»; зміни зафіксовано в changelog-артефакті з датою,
   виконавцем і причиною; нові теми мають окремі документи, а не копії.
+- Життєвий цикл Work Item (§7.3) зафіксовано в S-документі з окремими AC:
+  чернетка уточнюється на місці; після прийняття scope заморожується, зміни
+  вимагають контрольованого перегляду; завершена задача не переписується під
+  новий запит — створюється новий Work Item із зв'язком (`changes`, `extends`,
+  `follows-up`, `fixes`) зі своїми AC та evidence.
 - `bun tooling/agent/check-documentation.ts packages/powers/docs/*.md` → `failures: []`.
 
 Доказ: три документи, матриця, doc-check, незалежний review документа.
@@ -244,6 +276,11 @@ AC:
 
 Runtime-запит (власник — runtime-власник): розширення існуючого реєстру під VP —
 лише якщо D3(b) вимагає; VP не редагує `packages/agent` сам.
+Межа реєстру: `source_path` у `instruction-registry.v1.schema.json` жорстко прив'язаний
+до `agent-runtime.config.v1.yaml#research_decision.registry.instructions.N`, тому
+проекція матеріалізується в **root-конфізі (Root-owned)**. Проекція = запис у
+root-файл, тому Stage 2 має узгодження з Root; паралельний запис у root-конфіг
+заборонений.
 
 AC:
 - Схема валідує інструкцію; невалідна — зрозуміла помилка з полями.
@@ -253,6 +290,8 @@ AC:
   relevance-score; конфліктні групи виявляються помилкою сумісності.
 - Проекція в реєстр ≤64 записів; при перевищенні — явна помилка, не тихе
   відсікання.
+- Проектовані записи відповідають шаблону `source_path` і валідуються валідатором
+  конфігу; `bun --cwd packages/agent run test:config:pinned` → exit 0.
 - Точний набір команд і тестів — у task-плані етапу; код VP має exact coverage 100%
   і CRAP у базовій лінії.
 
@@ -304,12 +343,13 @@ AC:
 ---
 
 ### Stage 4 — Методологічна політика продукту
-**Role:** product owner + implementer. **Оцінка:** M. **Work item:** VP-4. **Потребує:** Stage 2, 3.
+**Role:** product owner + implementer. **Оцінка:** M. **Work item:** VP-4. **Потребує:** Stage 2, 3; D8.
 
 Роботи:
-- Поверхня конфігурації: розділ методологічних профілів у чинному v1-конфізі
-  (`agent-runtime.config.v1.yaml`, секція продукту) або окремий розділ — за D7, з
-  власною схемою `Type/vN` та одним owner-ом.
+- Поверхня конфігурації: схема методологічного профілю — VP-owned `Type/vN`
+  (D8-варіант b), з одним owner-ом. D8-варіант (a) (розділ у
+  `agent-runtime.config.v1.yaml`) можливий лише за окремим runtime work item;
+  D7 визначає цільовий layout споживача, а не місце схеми профілю.
 - `Effective Methodology Profile`: групи (testing-sequence, review-strategy,
   architecture, delivery), явне вибіркове успадкування між продуктами, локальне
   перевизначення, конфлікт → питання власнику.
@@ -319,6 +359,11 @@ AC:
   = новий pattern ID.
 - Light/Medium/Full і рольова композиція (research §5): глибина, обов'язковість
   (`required`/`conditional`/`optional`) і застосовність — окремі властивості.
+
+Runtime-запит (власник — runtime-власник): якщо D8 = (a), розширення
+`agent-runtime-config.v1.schema.json` і валідатора `runtime-config.ts` під
+методологічний розділ. VP не редагує `packages/agent` сам; за D8 = (b) запиту не
+потрібно.
 
 AC:
 - Профіль визначається детерміновано для (продукт × задача) — тестова матриця.
@@ -385,6 +430,10 @@ AC:
 - Work layout: стабільні ID, алокатор ID, типізовані relations (`derived-from`,
   `informs`, `implements`, `tests`, `blocks`, `supersedes`, `changes`,
   `found-during`), shallow storage.
+- Пошук і навігація (§9.3): первинний пошук за ID, filename, title, body, тип,
+  продукт, tags/labels і relations; повнотекстовий індекс — **похідний**,
+  відновлюваний, не дублює нормативні документи; чужі нормативні документи поза
+  `wiki_root` індексуються за посиланням, а не копіюються.
 - Findings: Standalone — append-only JSONL на продукт; Runtime — продуктова
   ізоляція в наявній SQLite/HostState; централізований запис через один writer;
   hybrid dedup (ідентичність → fingerprint → семантичні кандидати → перевірка
@@ -400,6 +449,12 @@ AC:
   нового evidence; неоднозначність не об'єднується; повторна доставка не створює
   повторної події (таблиця випадків).
 - Створення findings не є авторизацією виправлення (тест).
+- Похідний індекс відновлюється з нормативних джерел і не є їхньою копією; після
+  перенесення нормативного документа поза `wiki_root` він індексується за
+  посиланням (тест).
+- UI-агент, що виконав сценарій у браузері, **не** є людським прийняттям: без
+  потрібної відповіді людини результат лишається `awaiting-human-verification`, а не
+  PASS (тест на заборону фіктивного PASS).
 
 Доказ: контрактні тести, тести інтеграції Runtime-режиму, тести Standalone, таблиця
 dedup-випадків.
@@ -463,6 +518,11 @@ AC:
   спостереження з датою і хостом.
 - У Standalone немає durable execution-інфраструктури: перевірка — відсутність
   файлів стану/БД, крім явних локальних записів.
+- Межі автономності (§12): агент не розширює scope без дозволу, не змінює
+  методологію продукту самостійно, не скасовує mandatory gates; реальні failures,
+  обмеження й незавершені GAPs фіксуються, псевдодокументи не створюються.
+- Відновлення після compaction відновлює pointers і стан, а не повторює вже
+  завершені змістовні дії.
 
 Доказ: матриця хостів із записами спостережень, журнал сесій, запис інсталяції.
 
@@ -480,23 +540,25 @@ AC:
 ## 5. Залежності та оцінки
 
 ```text
-Stage 0 ──► Stage 1 ──► Stage 2 ──► Stage 3 ──► Stage 4 ──► Stage 5 ──► Stage 6
-   S          M          L          L          M          L          L
-                        │          │          │          │          │
-                        └──────────┴──► Stage 8 ◄────────────────────┘
-                                      M          (після 5 і 6)
+Stage 0 ──► Stage 1 ──► Stage 2 ──► Stage 3 ──► Stage 4 ──► Stage 5
+   S          M          L          L          M          L
+                        │          │          │          │
+                        └──► Stage 6 ◄─────────┘          │
+                             (1,2,3)  ▲                 │
+                                   └───┴── Stage 7a (5,6) ──► Stage 7b
+                                        │
+                                        └──► Stage 8 (5,6)
 
-Stage 7a ──► Stage 7b   (7b після закриття storage GAP поза VP)
-   L
+Stage 7b — після закриття storage GAP поза VP.
 ```
 
 | Stage | Залежності | Оцінка | Зовнішні залежності |
 |---|---|---|---|
-| 0 | — | S | рішення власника D1–D7 |
+| 0 | — | S | рішення власника D1–D8 |
 | 1 | 0 | M | — |
 | 2 | 1 | L | D3; можливий runtime-запит |
 | 3 | 2 | L | — |
-| 4 | 2, 3 | M | D7 |
+| 4 | 2, 3 | M | D8; D7 (layout споживача) |
 | 5 | 3, 4 | L | D4; host-hook кваліфікація |
 | 6 | 1, 2, 3 | L | runtime-власник для Runtime-реєстрів |
 | 7a | 5, 6 | L | — |
