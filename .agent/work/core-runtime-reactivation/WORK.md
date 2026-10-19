@@ -1516,3 +1516,31 @@ and writer-issue plus execution setup at 8.386s. The test has a justified
 30-second exception and no timeout was raised. The focused full-graph run now
 reduces concurrent load; its effect on the protected-session deadline must be
 rechecked by the next commit-bound F/L/S/B stage.
+
+### F/L/S/B main-runtime-core two-shard partial run — 2026-10-19
+
+Stage `contour-stage-q1xRfe` ran immutable commit
+`19488d155ebd6eeae5f9077728ce87efdfedd82e` with its matching SDK test inputs.
+The stage closed after 220.080 seconds with complete output capture, a closed
+process group and unchanged image inputs. Shard 1 passed 227 tests with 1,098
+assertions. Shard 2 passed 12 tests with 229 assertions and failed one test:
+`admitted protected session commits an observed result and its approval exactly
+once` hit the existing 30-second per-test timeout at 31.620 seconds; fixture
+cleanup then recorded the expired deadline. The coverage producer rejected the
+unsuccessful shard terminal and produced no attributable report. The stage
+wrapper's later “exactly one attributable report location” error is secondary;
+the preserved JUnit identifies the test timeout as the primary failure. No
+F/L/S/B counters are accepted. The manifest, both shard logs/JUnit files,
+producer receipts, stage logs and publication error remain under
+`/workspace/contour-stage-q1xRfe`; this stage will not be replayed.
+
+Root retained the configured Source-prewriter and verified that a compact
+fixture omitting it is correctly denied with `workflow approval denied`; that
+shortcut was reverted. The current test change removes two redundant persisted
+HostState/approval reread pairs after grouped rejected operations while keeping
+the final unchanged-state assertions. Its focused local Bun run passes 1/1
+tests with 27 assertions in 21.962 seconds (23.15 seconds including Bun
+startup), versus the previous 24.625-second local body without coverage. The
+30-second test timeout and its fixture deadline were not raised. This local
+measurement does not qualify F/L/S/B; the updated test digest is pinned for the
+next exact stage.

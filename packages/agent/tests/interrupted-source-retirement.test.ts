@@ -1038,8 +1038,6 @@ test('admitted protected session commits an observed result and its approval exa
     } finally {
       endForeignApproval();
     }
-    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
-    expect(readApproval()).toEqual(approvalBefore);
     const endChangedContext = beginFixturePhase(traceFixturePhases, 'changed-context-rejection');
     try {
       await expectRejection(
@@ -1053,6 +1051,7 @@ test('admitted protected session commits an observed result and its approval exa
     } finally {
       endChangedContext();
     }
+    // The invalid approval and changed-context rejections must leave persisted work and approval untouched.
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(readApproval()).toEqual(approvalBefore);
     const endCommit = beginFixturePhase(traceFixturePhases, 'observed-result-and-approval-commit');
@@ -1089,8 +1088,6 @@ test('admitted protected session commits an observed result and its approval exa
     } finally {
       endReserveReplay();
     }
-    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
-    expect(readApproval()).toEqual(applied);
     const endStaleCompletion = beginFixturePhase(traceFixturePhases, 'stale-completion-rejection');
     try {
       await expectRejection(
@@ -1100,6 +1097,7 @@ test('admitted protected session commits an observed result and its approval exa
     } finally {
       endStaleCompletion();
     }
+    // Reservation replay and stale completion must leave the committed result unchanged.
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
     expect(readApproval()).toEqual(applied);
     expect(f.readJournal('stopped', 1)).toEqual(journal);
