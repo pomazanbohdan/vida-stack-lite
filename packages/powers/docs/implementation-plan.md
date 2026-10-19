@@ -202,7 +202,7 @@ S-документи, які створює Stage 1.
 | ID | Рішення | Варіанти | Рекомендація | Блокує |
 |---|---|---|---|---|
 | D1 | Розташування продукту | (a) VP = `packages/plugin`; (b) `packages/powers` як третій продукт; (c) окремий репозиторій/пакет | **ВИРІШЕНО 2026-10-19**: (b) — VP живе в `packages/powers` як третій продукт; `packages/plugin` лишається Codex-прослойкою. Decision: `docs/decisions/D1-product-placement.md` | вирішено |
-| D2 | Власник і реєстрація | призначений product owner; рядки в sidecar, `projects`, `code_selectors`, `delivery_group`, `docs/products.map.md`, doc-policy, root `package.json` | Призначити product owner; реєстрація — Stage 0 | 0, 1 |
+| D2 | Власник і реєстрація | окрема роль «Vida Powers owner»; реєстрація продукту | **ВИРІШЕНО 2026-10-19**: монорепозиторій продуктів — кожен плагін має власного owner'а, документацію, набір задач і простір роботи; Work Items VP — у продукті, координація — у `.agent/`. Decision: `docs/decisions/D2-ownership-and-work-space.md` | вирішено |
 | D3 | Формат інструкції та каталогу | (a) розширити `InstructionRegistry/v1`; (b) `VPCatalog/v1` + обмежена проекція в `InstructionRegistry/v1` | **(b)**: `maxItems: 64` не протримає корпус, а вбудований реєстр прив'язаний до research/synthesis-стадій. Проекція — reuse існуючого activation-шляху, не друга активація | 2, 3 |
 | D4 | Канал доставки | Codex plugin marketplace / власний пакет / обидва | Обидва: мінімальний локальний/git-пакунок (блокує Stage 8) + marketplace як окреме рішення Stage 9 | 5, 8 |
 | D5 | Decision Provider | конкретний провайдер / provider-нейтральний інтерфейс | Provider-нейтральний `decision.evaluate` + обов'язковий Agent Fallback; «Jeff» не існує в коді | 2, 4, 5 |
@@ -248,6 +248,9 @@ S-документи, які створює Stage 1.
      `packages/powers`, плюс `packages/powers/package.json` і `.bun-version`.
 - `packages/plugin` лишається Codex-прослойкою і не входить у реєстрацію VP; його
   canonical documents заповнює Plugin owner.
+- Product-space VP за D2: `ledger_root: packages/powers/docs/work` (Work Items і
+  докази — версіоновані OKF-концепції в продукті), координація — у `.agent/`;
+  `task_prefix` VP відмінний від `TASK`, щоб не було колізій ідентифікаторів.
 - Product KEY (для `<KEY>-W<NNNN>` / `<KEY>-<N>`) і правило алокації ID.
 - Changelog research-документа: bundle-журнал `packages/powers/docs/log.md`
   (OKF §9) ведеться при кожній зміні концепції; посилання `vida.changelog_ref`

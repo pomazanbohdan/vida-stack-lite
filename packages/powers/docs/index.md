@@ -21,6 +21,7 @@ Bundle документації продукту Vida Powers у форматі O
 # Рішення
 
 * [D1 — Розташування продукту Vida Powers](decisions/D1-product-placement.md) - VP живе в `packages/powers` як третій продукт репозиторію; `packages/plugin` лишається Codex-прослойкою між хостом Codex і агентом.
+* [D2 — Модель власності й робочого простору VP у монорепозиторії](decisions/D2-ownership-and-work-space.md) - Монорепозиторій продуктів: кожен плагін має власного owner'а, документацію, набір задач і простір роботи; Work Items VP — у продукті, координація — у репозиторії.
 
 # Поза межами bundle
 
