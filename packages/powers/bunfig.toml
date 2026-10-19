@@ -13,7 +13,6 @@ auto = "disable"
 root = "./tests"
 randomize = true
 seed = 20261019
-coverage = false
 coverageReporter = ["text", "lcov"]
 coverageDir = "./coverage"
 coverageThreshold = { lines = 1.0, functions = 1.0, statements = 1.0 }

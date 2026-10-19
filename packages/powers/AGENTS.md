@@ -122,7 +122,7 @@ bun packages/powers/scripts/validate-donors.ts
 | `docs/decisions/` | Ухвалені рішення (одне рішення — одна концепція) | D1–D9 |
 | `docs/work/` | Work Items VP: стабільний ID, AC, evidence, зв'язки | F |
 | `docs/requests/` | Runtime-запити до agent maintainer | G |
-| `config/` | Схеми VP: `VPCatalog/v1`, `VPMethodologyProfile/v1` | C |
+| `config/` | Схеми VP: `VPCatalog/v1` (маніфест каталогу), `VPInstruction/v1` (frontmatter інструкції), `VPEffectiveProfile/v1` (резолвнутий профіль для `compose`; джерельний — `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (мапа обробки) | C |
 | `instructions/` | канонічні інструкції: `.md` + метадані, плоско | D |
 | `corpus-map.json` | мапа обробки корпусу: донор + файл → converted/split/merged/rejected | D |
 | `skills/vp-mode/`, `skills/vp-setup/` | Скіли (оркестрація, налаштування) разом із їхніми `scripts/` — тулінг каталогу й setup; постачаються в плагіні | C, D, E |
@@ -197,6 +197,9 @@ bun packages/powers/scripts/validate-donors.ts
   `packages/agent/knip.config.ts` (owner-виняток, D9 rev 2) з
   `ignoreBinaries: ['check']` (підкоманда Bun `check` — не npm-бінарник);
   scratch-тека `.tmp` виключена вже самим `.gitignore`, окремий `ignore` не потрібен.
+  На кроці **C** до entry-патернів додано `skills/*/scripts/*.ts` — одразу з
+  появою першого скрипта скіла (`skills/vp-mode/scripts/schema.ts`); без нього
+  knip не бачить `skills/` і дає config hint. Це той самий owner-виняток D9 rev 2.
 - `packages/powers/docs` **не входить** у `canonical_roots` документаційної
   політики репозиторію: документи продукту ведуться за власною OKF-дисципліною
   (`check-okf.ts` + журнал).

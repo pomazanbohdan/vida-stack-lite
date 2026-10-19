@@ -105,9 +105,13 @@ test `tests/schema.test.ts`.
 - `Schema` — тип входу валідатора.
 
 **Підмножина схем (межа валідатора):** `type`, `required`, `properties`,
-`additionalProperties: false`, `enum`, `const`, `pattern`, `minLength`, `maxLength`,
-`minimum`, `maximum`, `minItems`, `maxItems`, `items`, `$ref` → `#/definitions/*`,
-`allOf`, `if`/`then`. Решта — не підтримується і має бути відсутня у схемах VP.
+`additionalProperties` (`false` **або** схема — для динамічних мап), `enum`,
+`const`, `pattern`, `minLength`, `maxLength`, `minimum`, `maximum`, `minItems`,
+`maxItems`, `items`, `$ref` → `#/definitions/*`, `allOf`, `if`/`then`, `not`.
+Анотації `title`/`description` приймаються та **ігноруються** (документація
+схем, без валідаційної семантики); `$schema`/`$id` — також ігноруються. Решта —
+не підтримується і має бути відсутня у схемах VP. Guard-тест: кожен файл
+`config/*.schema.json` має проходити `inspectSchema` без помилок.
 
 **Кроки:**
 1. Тест `tests/schema.test.ts`: валідний об'єкт → `[]`; відсутній обов'язковий
@@ -232,6 +236,27 @@ test `tests/schema.test.ts`.
    (записи `rejected`/`merged`/`converted`).
 4. Створити `scripts/check-corpus.ts`: інструкції за схемою, словник, alias-напрям,
    manifest ↔ диск ↔ digest, мапа ↔ корпус, provenance ↔ `donors.yaml`.
+   Обов'язкові семантичні правила, яких **не виражає** схема (крос-файлові зв'язки,
+   `donors.yaml`, унікальність, зв'язок зі словником) і які перевіряє саме цей
+   валідатор:
+   - `artifact_contract_output_type` ≠ `none` → `artifact_contract_verified_by`
+     непорожній (SR-08); для guidance `output_type` = `none` і `required_data` порожній;
+   - `capability_tags`/`pattern_tags` ≥ 1 — окрім інструкцій із `tag_exemptions`
+     у `catalog.json` (виняток потребує `reason`);
+   - `provenance`: список із щонайменше одного джерела; кожне джерело —
+     `donor` ∈ `donors.yaml`, `license` збігається з маніфестом, `revision` дорівнює
+     `donors.yaml[donor].head_sha`, `path` існує в клоні; те саме джерело двічі — не
+     приймається;
+   - `compatibility_requires`/`_excludes` — відомі `instruction_id`; `requires` не
+     містить себе;
+   - `instruction_id` у frontmatter дорівнює імені файлу; унікальність id у корпусі;
+   - `tag_aliases`: напрям «**аліас → канонічний**»; канонічний тег має бути в
+     `tag_dictionary`; аліас не є канонічним тегом;
+   - мапа обробки (`corpus-map.json`): `status: split` → щонайменше два
+     `instruction_ids` (§5a: «файл розщеплено на кілька атомарних інструкцій»);
+     `status: converted` → рівно один `instruction_id`; `status: rejected` →
+     `reason` обов'язковий, `instruction_ids` відсутній (схема мапи); `merged` →
+     `instruction_ids` і `contributed_sources` присутні.
 5. `bun run --cwd packages/powers test` → проходить; `bun packages/powers/scripts/check-corpus.ts` → exit 0;
    `typecheck` → 0 помилок.
 6. Коміт: `build(powers): add seed corpus, manifests and the corpus validator`.
@@ -256,6 +281,17 @@ test `tests/schema.test.ts`.
 3. `bun run --cwd packages/powers test` → проходить; `typecheck` → 0 помилок;
    `bun packages/powers/scripts/check-corpus.ts` → exit 0.
 4. Коміт: `build(powers): add the corpus converter as the single writer`.
+
+## Хід виконання
+
+| Task | Статус | Доказ |
+|---|---|---|
+| 1. Схеми VP + міні-валідатор | **закрито** | `config/vpcatalog.v1.schema.json`, `config/vpinstruction.v1.schema.json`, `config/vpeffectiveprofile.v1.schema.json`, `skills/vp-mode/scripts/schema.ts`, `tests/schema.test.ts` — 32 тести, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 4 незалежні рев'ю-раунди, фінальний вердикт ACCEPT |
+| 2. Парсер frontmatter | у черзі | — |
+| 3. Модель каталогу + `catalog.*` | у черзі | — |
+| 4. `decision.evaluate` + CLI | у черзі | — |
+| 5. Seed-корпус + манифести + валідатор | у черзі | — |
+| 6. `convert.ts` (єдиний writer) | у черзі | — |
 
 ---
 

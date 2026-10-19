@@ -99,6 +99,7 @@ packages/powers/
     vp-mode/
       SKILL.md                    ← основний скіл оркестрації (host-конвенція)
       scripts/
+        schema.ts                 ← валідатор обмеженої підмножини JSON Schema
         frontmatter.ts            ← парсер обмеженого YAML-підмножини
         catalog.ts                ← операції tags/search/get/compose (+ CLI)
     vp-setup/
@@ -117,7 +118,7 @@ packages/powers/
   config/
     vpcatalog.v1.schema.json      ← схема catalog.json
     vpcorpusmap.v1.schema.json     ← схема мапи обробки (SR-66)
-    vpinstruction.v1.schema.json   ← довідкова схема інструкції
+    vpinstruction.v1.schema.json   ← схема frontmatter інструкції (§5)
     vpeffectiveprofile.v1.schema.json ← схема ефективного профілю для compose
   docs/                           ← OKF-bundle (цей дизайн — частина bundle)
   tests/
@@ -147,8 +148,9 @@ packages/powers/
   `tests/**/*.ts` — інакше typecheck мовчки перестає перевіряти
   новий код.
 - У knip-конфіг (`packages/agent/knip.config.ts`, owner-виняток D9 rev 2)
-  entry-патерн workspace `packages/powers` → `scripts/*.ts`; патерн `skills/*/scripts/*.ts`
-  додається на кроці E, коли з'явиться тека скілів (інакше knip дає config hint).
+  entry-патерни workspace `packages/powers`: `scripts/*.ts` і `skills/*/scripts/*.ts`.
+  Другий патерн додано на кроці C — одразу з появою першого скрипта скіла
+  (без нього knip не бачить `skills/` і дає config hint).
 
 # 5. Формат інструкції
 
@@ -214,7 +216,7 @@ revision: 1
 | `artifact_contract_*` — для інструкцій, що виробляють результат, `output_type` і `verified_by` непорожні; для guidance — `output_type` = `none`, `required_data` порожній | `CATALOG_INVALID` |
 | `compatibility_excludes`/`_requires` — відомі `instruction_id`; `requires` не містить себе | `CATALOG_DEPENDENCY_MISSING` / `CATALOG_INVALID` |
 | `provenance` — список із щонайменше одного джерела; кожне — рядок `donor=…; license=…; revision=…; path=…`: `donor` ∈ `donors.yaml`, `license` збігається з маніфестом, `revision` **дорівнює** `donors.yaml[donor].head_sha`; те саме джерело двічі — не приймається | `CATALOG_INVALID` |
-| `status` ∈ `active` | `disabled`; `revision` — ціле ≥1 | `CATALOG_INVALID` |
+| `status` ∈ `active` \| `disabled`; `revision` — ціле ≥1 | `CATALOG_INVALID` |
 | Виняток із правила тегів — лише через `catalog.json` → `tag_exemptions[]` (`instruction_id`, `dimension`, `reason`) | `CATALOG_INVALID` |
 
 Тіло інструкції — нормативний текст; без дублювання research (research — концепція,
@@ -310,13 +312,14 @@ MVP = superpowers + ponytail: ≈ 125 файлів-кандидатів → ор
 ```
 
 - `catalog.json` — єдиний машинний файл каталогу: ідентичність + словник тегів +
+  аліаси + винятки + перелік інструкцій із `sha256`.
 - Опис тегу обов'язковий: тег без опису → помилка (SR-05).
 - `tag_aliases` — напрям **«аліас → канонічний»** (`{ "tdd": "test-first-development" }`); пошук зводить аліас до канонічного тегу, `catalog.tags` показує канонічні теги й їхні аліаси.
 - `tag_exemptions` — єдиний механізм запису відхилень.
 
 **Як фіксується довідник тегів.** `catalog.json` —
 єдине місце словника: `tag_dictionary` (тег → опис), `tag_aliases`
-(канонічний → аліас), `tag_exemptions`. Процес пакетний, без перепитувань на
+(у `tag_aliases` напрям **«аліас → канонічний»**), `tag_exemptions`. Процес пакетний, без перепитувань на
 кожен тег:
 
 1. Під час формування агент збирає потрібні теги, але **не** додає їх у словник.

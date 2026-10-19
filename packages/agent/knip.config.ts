@@ -64,8 +64,7 @@ const config = {
       ignoreBinaries: ['check'],
       // Every product script is a manual entrypoint; the test files are entrypoints too.
       // The scratch area (.tmp) is already excluded through .gitignore.
-      // The skills/*/scripts entry pattern is added with the skills directory (step E).
-      entry: ['scripts/*.ts', ...tests],
+      entry: ['scripts/*.ts', 'skills/*/scripts/*.ts', ...tests],
       project: [codeFiles],
     },
   },
