@@ -1804,30 +1804,32 @@ Reclaim only terminal, dependency-free derivatives under the existing retention 
 
 ### Rolling contour repair cycle
 
-Use the three-contour rolling pool declared by the root
-[sidecar](../../AGENT.sidecar.md#orchestration-and-delegation). Assign one blind
-Luna writer and one isolated patch directory to each active contour, including its
-product fixes and tests. Shared files have one writer. Root integrates, runs
-checks, admits numeric results and owns Git. Workers prepare independently; they
-do not start duplicate suites, scans, hashes or inventories.
+Work on one contour at a time, as declared by the root
+[sidecar](../../AGENT.sidecar.md#orchestration-and-delegation). Keep its product
+fixes, tests and exact coverage in the same active lane. Do not prepare or measure
+another contour until the current contour has accepted full F/L/S/B100. Root
+integrates, runs checks, admits numeric results and owns Git. Any delegated work
+must remain inside the active contour, with one writer per shared file; do not
+start duplicate suites, scans, hashes or inventories.
 
-The owner's 2026-10-19 order is coverage first across all contours. During this
-phase run focused repairs and complete declared-contour coverage only. Exact
-F/L/S/B means every covered count equals its full positive denominator, with
-complete test execution, capture, terminal group custody and bound unchanged
-inputs. Keep data-only zero denominators under their existing explicit N/A
-contract. Do not exclude defensive paths, omit files, reduce scope or weaken
-assertions to manufacture a maximum. A blocked path needs a real regression,
-reviewed behavior-preserving correction or an explicit unresolved GAP.
+The owner's 2026-10-19 order is sequential exact F/L/S/B coverage: close one
+contour to F/L/S/B100 before opening the next. During this phase run focused
+repairs and complete coverage for the active contour only. Exact F/L/S/B means
+every covered count equals its full positive denominator, with complete test
+execution, capture, terminal group custody and bound unchanged inputs. Keep
+data-only zero denominators under their existing explicit N/A contract. Do not
+exclude defensive paths, omit files, reduce scope or weaken assertions to
+manufacture a maximum. A blocked path stays the active contour with a real
+regression, reviewed behavior-preserving correction or an explicit unresolved GAP.
 
-After an exact coverage milestone, refill that preparation slot with the next
-coverage contour. Keep the contour OPEN for frozen CRAP and mutation; their
-existing historical evidence and current gaps remain separate. Do not launch
-those producers during this phase. After all contours have compatible exact
-coverage, reuse each unchanged image/report for frozen correspondence and CRAP,
-then complete assertion-confirmed mutation. Revalidate affected inputs before
-reuse; historical maxima alone do not establish current coverage. Static checks,
-frozen budgets, full closure rules and all numeric timeouts remain unchanged.
+After an exact coverage milestone, select the next contour and only then begin its
+repair cycle. Keep each contour OPEN for frozen CRAP and mutation; their existing
+historical evidence and current gaps remain separate. Do not launch those producers
+during this phase. After all contours have compatible exact coverage, reuse each
+unchanged image/report for frozen correspondence and CRAP, then complete
+assertion-confirmed mutation. Revalidate affected inputs before reuse; historical
+maxima alone do not establish current coverage. Static checks, frozen budgets, full
+closure rules and all numeric timeouts remain unchanged.
 
 After each terminal handoff, Root retires the completed preparation directory
 under the [sidecar's worktree retention rule](../../AGENT.sidecar.md#orchestration-and-delegation).
@@ -1848,8 +1850,8 @@ throughput correction; avoid unchanged full reruns after budget exhaustion.
 2. Reproduce a new defect with a focused regression, repair its cause, then run
    static and affected checks. Preserve failed artifacts and exact cleanup custody.
 3. Once the correction packet is stable, Root publishes its checked bytes and runs
-   exact F/L/S/B coverage. Record its milestone and refill the slot during the
-   coverage-first phase; same-run frozen CRAP remains pending against the original budgets.
+   exact F/L/S/B coverage. Record its milestone; only after acceptance may Root
+   select the next contour. Keep frozen CRAP outside this coverage cycle.
    Prepare required SDK inputs through their existing owner. Resolve readiness
    from the producer's actual captured input set. A pure gitless contour does not
    require SDK formation solely because compiler metadata includes build tooling.
@@ -1974,26 +1976,27 @@ when a complete partition schedule cannot finish within it.
 ### Automatic contour progress document
 
 Repair dispatch follows the root sidecar and the
-[rolling contour cycle](#rolling-contour-repair-cycle): one agent owns one of
-three active contours, with immediate refill after the active phase's verified
-milestone. Exact coverage alone does not close the deferred frozen/mutation work.
-Workers search analogous defects within their contour and report shared causes
-to Root; Root owns the shared helper and integration. Keep active measurement
-inputs immutable, including transient edits. Parallel preparation uses separate
-checkouts; integration and numeric rechecks wait for terminal producer custody.
-Track each contour through verified repair or an explicit remaining GAP, without
-promoting a proposal, timeout, UNKNOWN or static check into numeric acceptance.
-An unresolved finding stays OPEN and is requeued once its prerequisite is ready.
+[sequential contour cycle](#rolling-contour-repair-cycle): only the active
+contour may have an implementation writer or numeric producer. Exact coverage
+does not close the deferred frozen/mutation work. Workers search analogous defects
+within that contour and report shared causes to Root; Root owns shared helpers and
+integration. Keep active measurement inputs immutable, including transient edits.
+Do not prepare or measure another contour until the active one has complete
+accepted exact coverage. Track each contour through verified repair or an explicit
+remaining GAP, without promoting a proposal, timeout, UNKNOWN or static check into
+numeric acceptance.
 
-During coverage first, use `bun run test:contours --unclosed --coverage-only`,
-or `--all --coverage-only` for an explicitly requested complete coverage pass.
-Add `--plan` to inspect selection without launching tests. The coverage-only route
-executes no frozen or mutation lane and reads no frozen budget lineage. Its
-`--unclosed` skips accepted, selection-complete, report-bound exact numeric
-coverage recorded at the same commit. The one reviewed data-only Source scope
-uses the separate N/A rules above; it is never promoted to an exact numeric
-milestone. Partial, unbound, failed or historical observations cannot suppress
-a contour.
+During this sequential coverage phase, select only the active contour through
+
+```sh
+bun run test:contour:stage --contour NAME --lane coverage --output /absolute/existing/canonical/output
+```
+
+This route executes one declared contour; it does not run frozen or mutation
+lanes. Do not use the all-contour campaign's `--all` or `--unclosed` selectors
+in this strategy. The one reviewed data-only Source scope uses the separate N/A
+rules above; it is never promoted to an exact numeric milestone. Partial,
+unbound, failed or historical observations cannot suppress a contour.
 
 The existing commands without `--coverage-only` retain the full three-lane
 sequence and same-commit complete-triple `--unclosed` selection. They are reserved

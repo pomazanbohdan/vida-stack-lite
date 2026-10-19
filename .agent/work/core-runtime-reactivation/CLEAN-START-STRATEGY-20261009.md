@@ -31,35 +31,32 @@ Implement the approved Cloud and profile guards and make Pstack execution reprod
 
 Migrate current callers to the shared helpers, then delete forward-only duplicate implementations. Retire Vitest from maintained test paths and configurations. Do not reinterpret generated SDK output as maintained Source. Preserve runtime behavior and public contracts while reducing duplicate ownership.
 
-### 4. Exact coverage first, then frozen quality and mutation
+### 4. Sequential exact F/L/S/B coverage
 
-The owner's 2026-10-19 directive supersedes per-contour triple-first scheduling.
-First repair every executable contour to exact F/L/S/B100 through the existing
-coverage producer, then qualify frozen correspondence/CRAP and complete mutation.
-Keep all gates, budgets, complete Source/test selections and UNKNOWN custody.
-Exact coverage is a phase milestone, not full contour closure or Runtime acceptance.
+The owner's 2026-10-19 directive replaces the earlier three-contour pool. Work
+on one contour only; complete its current, input-bound F/L/S/B coverage at 100%
+before selecting another. Root is the sole Source integrator, Git owner and
+numeric producer. Repair and focused checks stay within the active contour.
+Preserve complete Source/test selections, deadlines, report custody and UNKNOWN
+semantics. Do not exclude paths, trim assertions or weaken gates to create a
+maximum. Keep a blocked contour active and record its exact GAP until resolved.
 
-Use the three existing independent preparation slots and one serial Root numeric
-owner. Refill a slot when its contour has compatible exact coverage; keep deferred
-frozen/mutation work OPEN. A blocked contour retains its exact GAP and yields its
-slot to ready coverage work. Prioritize known small deficits and shared causes,
-then setup failures and larger contours. Reuse retained counters and input images;
-do not repeat unchanged complete suites merely to refresh a commit label. Changed
-inputs need affected proof, and historical exact counts alone do not establish a
-fresh all-contour result. The automatic projection remains the sole metric ledger.
+For each contour, use the existing one-contour stage route:
 
-Use only coverage stages during this phase. The existing campaign adapter now
-has an explicit `--coverage-only` route. Use `test:contours --unclosed
---coverage-only` or individual coverage stages; its default three-lane sequence
-belongs to the later phase. Retain
-incidental CC/entryCRAP from coverage as observations, without a frozen-pass claim.
+```sh
+bun run test:contour:stage --contour <name> --lane coverage --output <absolute-existing-canonical-output-directory>
+```
 
-The first coverage-only campaign completes all 44 selected stages on 567ab50.
-WORK owns its terminal classification and the separate exact governance milestone.
-Continue with bounded affected stages after the shared SDK/data/context repairs,
-then the remaining measured deficits. Resolve the activated-config resume cost and
-qualify CLI child counters through existing capture/report owners. Do not rerun
-all unchanged contours after each correction or count child assertions as counters.
+Do not use the all-contour campaign's `--all` or `--unclosed` selectors in this sequential phase. Keep
+frozen CRAP, complexity qualification and mutation outside this F/L/S/B cycle.
+The automatic projection remains the sole metric ledger. Reuse retained
+counters and input images only when their complete input bindings still match;
+historical maxima and focused checks do not establish a fresh contour result.
+
+The historical coverage-only campaign completed all 44 selected stages on 567ab50.
+Its terminal classification and the separate exact governance milestone remain
+in WORK. The remaining notes in this section record that earlier portfolio batch;
+they do not authorize selecting or measuring another contour in the active cycle.
 
 #### Execute captured inputs without measurement worktrees
 
@@ -343,13 +340,14 @@ After each terminal batch, one final owner refreshes it through TESTING's
 `quality:contours` command. Preserve/export its JSON snapshot after freezes before
 commit/push; never maintain manual duplicate percentage tables.
 
-The rolling wave follows the root sidecar's
-[one-agent-per-contour policy](../../../AGENT.sidecar.md#orchestration-and-delegation)
-for three active contours and isolated preparation. Apply
+The sequential wave follows the root sidecar's
+[one-contour-at-a-time policy](../../../AGENT.sidecar.md#orchestration-and-delegation)
+with Root as the sole writer/integrator and numeric owner. Apply
 [TESTING's repair/measurement cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle):
-repair, check, measure and repair again. Immediately refill a completely qualified
-slot. A handoff or partial diagnostic does not close it; dependency-blocked work
-remains OPEN while ready work uses the released capacity. Root has published baseline-only per-test custody;
+repair, check, measure and repair again. Select another contour only after the
+current one has accepted exact F/L/S/B100. A handoff, partial diagnostic or
+dependency-blocked result does not close it; keep resolving that same contour.
+Root has published baseline-only per-test custody;
 the actual main-host pilot passed69/69, while public body/JUnit joins remain open.
 The published integration batch moved fourteen mixed completeness cases to their
 source owners and strengthened activated-config, storage-admission, governance

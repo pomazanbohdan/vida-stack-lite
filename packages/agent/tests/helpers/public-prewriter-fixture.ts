@@ -7,7 +7,12 @@ import {
   parseSessionBridgeRequest,
   type SessionBridgeObservation,
 } from '../../src/orchestration/mastra-session-bridge.js';
-import type { MastraSessionLedgerSnapshot } from '../../src/orchestration/persistent-session-handoff.js';
+import type { ScopedSourceSnapshot } from '../../src/orchestration/scoped-source-snapshot.js';
+import type { MastraSessionBridge } from '../../src/orchestration/mastra-session-bridge.js';
+import type {
+  MastraSessionLedger,
+  MastraSessionLedgerSnapshot,
+} from '../../src/orchestration/persistent-session-handoff.js';
 
 interface PublicPrewriterAction {
   readonly issue_id: string;
@@ -265,6 +270,58 @@ export async function runTaskSynthesisPublicActions(input: PublicPrewriterInput)
     observation,
     '.agent/work/' + input.workId + '/synthesis-report.json',
   );
+}
+
+export async function runPreparationFixtureInProcess(
+  input: PublicPrewriterInput,
+  producer: {
+    readonly ledger: MastraSessionLedger;
+    readonly bridge: MastraSessionBridge;
+    readonly source: ScopedSourceSnapshot;
+  },
+): Promise<MastraSessionLedgerSnapshot> {
+  const current = currentSnapshot(input),
+    synthIssue = producer.ledger.issueWave(input.workId, input.attempt, current.version),
+    synthItem = synthIssue.state.items[0];
+  if (!synthItem?.issue_id || synthItem.request.stage_id !== 'synthesize_task')
+    throw new Error('In-process preparation fixture omitted task synthesis');
+  const synthesisSummary = 'The accepted task and scope are ready for current Source planning.';
+  const synthesisObservation: SessionBridgeObservation = {
+    schema: 'VidaSessionObservation/v1',
+    action_id: synthItem.request.action_id,
+    issue_id: synthItem.issue_id,
+    agent_id: 'fixture:' + synthItem.request.role,
+    tool_call_ref: 'fixture:task-synthesis',
+    status: 'reported_complete',
+    summary: synthesisSummary,
+    output_digest: canonicalJsonDigest(synthesisSummary),
+    evidence_refs: [],
+  };
+  producer.ledger.report(input.workId, input.attempt, synthIssue.version, synthesisObservation, producer.source);
+  const synthStep = current.state.step_id;
+  if (!synthStep) throw new Error('In-process preparation fixture has no task-synthesis step');
+  await producer.bridge.resume(synthStep, [synthesisObservation], producer.source);
+
+  const prewriter = currentSnapshot(input),
+    prewriterIssue = producer.ledger.issueWave(input.workId, input.attempt, prewriter.version),
+    actions = prewriterIssue.state.items.map((item) => {
+      if (!item.issue_id) throw new Error('In-process preparation fixture omitted prewriter issuance');
+      return { issue_id: item.issue_id, request: parseSessionBridgeRequest(item.request) };
+    });
+  assertPrewriterActions(actions);
+  let report = prewriterIssue;
+  const observations = actions.map((action) =>
+    reportedObservation(action, controlledPreparation(action, input, input.attempt)),
+  );
+  for (const observation of observations)
+    report = producer.ledger.report(input.workId, input.attempt, report.version, observation, producer.source);
+  const prewriterStep = prewriter.state.step_id;
+  if (!prewriterStep) throw new Error('In-process preparation fixture has no Source-prewriter step');
+  await producer.bridge.resume(prewriterStep, observations, producer.source);
+  const prepared = currentSnapshot(input);
+  if (!prepared.state.items.some((item) => item.request.stage_id === 'develop_task'))
+    throw new Error('In-process preparation fixture did not reach the configured writer stage');
+  return prepared;
 }
 
 export async function runSourcePrewriterPublicActions(

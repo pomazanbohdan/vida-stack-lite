@@ -57,10 +57,10 @@ print concise metrics in one step. Do not dump complete instrumented maps just
 to read totals. Preserve the actual BLOCKED/FAIL/UNKNOWN status independently
 of coverage. Reuse `campaignProcessState` in session launchers and separately
 check unchanged boot identity; do not duplicate a weaker custody/log predicate.
-During the owner's coverage-first phase, defer frozen CRAP and mutation producers
-for every contour, including contours with exact coverage. Preserve their existing
-gaps and evidence; a coverage milestone is not complete-triple closure. Do not
-launch CRAP merely to reconfirm a known coverage prerequisite failure.
+During the owner's sequential exact F/L/S/B phase, work on one contour only and
+defer frozen CRAP and mutation producers. Preserve their existing gaps and
+evidence; a coverage milestone is not complete-triple closure. Do not launch CRAP
+merely to reconfirm a known coverage prerequisite failure.
 If an interrupted checkout retains coverage custody, keep it intact and use a
 clean same-commit checkout with matching SDK inputs for independent diagnostics.
 Record both namespaces; never turn the old lock or UNKNOWN into a completed run.
@@ -380,17 +380,22 @@ Work or version is not this control, and the stale snapshot grants no authority.
 ## Run focused checks safely
 
 Follow [TESTING's rolling contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle)
-with the sidecar's three active contours. Keep one writer per contour and Root as
-the sole final-check owner. During coverage first, refill a slot after verified
-exact F/L/S/B coverage while full closure remains pending for frozen CRAP and
-mutation. A prepared patch or partial diagnostic proves no milestone. This working pool does not activate
-parallel numeric producers or coverage shards.
+with exactly one active contour. Keep Root as the sole final-check and numeric
+owner. Select the next contour only after the active contour has accepted exact
+F/L/S/B100. A prepared patch or partial diagnostic proves no milestone. This
+strategy does not activate parallel numeric producers or coverage shards.
 
-Use `bun run test:contours --unclosed --coverage-only` for the current phase;
-append `--plan` to inspect the selection without launching producers. Exact
-numeric selection stays same-commit and input-bound, while data-only N/A remains
-separate. The default command without this flag still includes deferred lanes,
-so use individual `test:contour:stage --lane coverage` for bounded repairs.
+Use the stage command for the active contour:
+
+```sh
+bun run test:contour:stage --contour NAME --lane coverage --output /absolute/existing/canonical/output
+```
+
+This stage selects one declared contour and runs only its coverage lane. Do not
+use the all-contour campaign's `--all` or `--unclosed` selectors while the
+sequential strategy is active. Exact numeric evidence stays same-commit and
+input-bound, while data-only N/A remains separate. Frozen CRAP, complexity and
+mutation remain deferred for this cycle.
 
 Run selected package tests from the package working directory with explicit
 `./tests/...` paths. Bare filters from the repository root can also match retained

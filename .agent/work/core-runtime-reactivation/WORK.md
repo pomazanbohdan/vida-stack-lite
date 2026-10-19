@@ -3,13 +3,46 @@
 Status date: 2026-10-19. Current execution/evidence only. This document does not
  authorize old operations, state replay, runtime cutover or global acceptance.
 
+## Current sequential F/L/S/B cycle
+
+The latest owner instruction supersedes the earlier three-contour pool and the
+all-contour coverage run: work on one contour only, finish exact F/L/S/B100,
+then select the next. The active contour is `main-runtime-core`; no other contour
+is being repaired or measured in this cycle. CRAP, complexity qualification and
+mutation are deferred. Root remains the sole Source integrator, Git owner and
+numeric producer.
+
+The latest prior campaign receipt is
+`910bb47f-25b1-4304-a562-f7a7fa291cb2`: 45 serial stages, 14 completed exact
+F/L/S/B contours and 31 incomplete/gap/failed. `main-runtime-core` is among the
+incomplete stages: its prior FIFO case exceeded 60 seconds at 68.561 seconds;
+the protected issue-abort and admitted-completion cases exceeded their 30-second
+deadlines at 38.335 and 36.862 seconds. These are historical failures, not a
+current exact result.
+
+Within the active contour, the latest FIFO rerun passes in 43.024 seconds of test
+time (44.44 seconds for the command) with 6 assertions. The protected issue abort
+passes in 23.226 seconds with 19 expectations; admitted protected completion
+passes in 21.356 seconds with 33 expectations. The strict
+targeted Bun typecheck reports no errors in 126 files, and the changed TypeScript
+files pass the pinned formatter check. These focused and static results do not
+close F/L/S/B. A fresh immutable single-contour coverage stage remains pending.
+Other contour Source/test changes are retained in Git stash
+`e14e88d648dd1e09abc0f9ed8794cfd47468d41c` and are not in this packet. Keep the
+generated projection and its bound historical receipts; the active stage updates
+that same projection after its terminal result.
+The selected test set includes `tests/interrupted-source-retirement.test.ts`,
+which is an SDK-artifact consumer. The fresh stage must pass the existing
+commit-bound SDK readiness check; an artifact for another Source commit cannot
+be substituted.
+
 ## Current state and owners
 
 Root owns canonical Source, shared files, Git, final checks and numbers. The
 sidecar owns delegation/documentation policy, TESTING owns gates, the
 [CLEAR plan](CLEAN-START-STRATEGY-20261009.md) owns order, and the existing backlog
-retains stable task IDs and P0/P1/P2 boundaries. Native blind Luna prepares one
-contour per writer in separate bounded patch directories; the rolling pool has three contours.
+retains stable task IDs and P0/P1/P2 boundaries. The active contour is processed
+sequentially; no rolling contour pool is active.
 
 The [automatic projection](CONTOUR-STATUS.md) and sibling JSON are the only
 measurement projection. They keep historical/local qualification distinct from
@@ -19,7 +52,11 @@ Source migration to TypeScript is complete; full coverage/frozen/mutation gates,
 bundle repair, lifetime exclusion and native/runtime qualification remain open.
 No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 
-### Current rolling repair cycle
+### Previous portfolio coverage-first batch (historical)
+
+The following entries preserve the outcomes and plans from earlier portfolio
+batches. Their multi-contour scheduling is superseded by the sequential cycle at
+the top of this document.
 
 The owner changes the order to coverage first across all contours on2026-10-19.
 Frozen CRAP and mutation producers are deferred; their gates and pending evidence

@@ -1,5 +1,9 @@
 import { bindControlledRuntimeInitialization } from './helpers/controlled-runtime-initialization-fixture.ts';
-import { runTaskSynthesisPublicActions, runSourcePrewriterPublicActions } from './helpers/public-prewriter-fixture.ts';
+import {
+  runPreparationFixtureInProcess,
+  runTaskSynthesisPublicActions,
+  runSourcePrewriterPublicActions,
+} from './helpers/public-prewriter-fixture.ts';
 import { run } from '../bin/run.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { test, expect, spyOn } from 'bun:test';
@@ -28,6 +32,7 @@ import {
 import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.ts';
 import {
   completeWorkflowAssignmentForSession,
+  prepareWorkflowExecution,
   reserveWorkflowAssignmentForSession,
   retireInterruptedSourceOwnerForSession,
   type WorkflowExecutionCapability,
@@ -240,10 +245,12 @@ async function prepareFixture({
   deadline,
   issueWriter = true,
   tracePhases = false,
+  inProcessPreparation = false,
 }: {
   deadline: number;
   issueWriter?: boolean;
   tracePhases?: boolean;
+  inProcessPreparation?: boolean;
 }) {
   function requireSetupTime(phase: string) {
     if (!Number.isFinite(deadline))
@@ -548,7 +555,9 @@ async function prepareFixture({
     const endSynthesis = beginFixturePhase(tracePhases, 'task-synthesis-helper');
     let journal: ReturnType<typeof readJournal>;
     try {
-      journal = await runTaskSynthesisPublicActions(originalPublicFixture);
+      journal = inProcessPreparation
+        ? await runPreparationFixtureInProcess(originalPublicFixture, { ledger, bridge, source })
+        : await runTaskSynthesisPublicActions(originalPublicFixture);
     } finally {
       endSynthesis();
     }
@@ -564,9 +573,11 @@ async function prepareFixture({
       file: string,
       { readonly = false, ownershipOnly = false }: { readonly?: boolean; ownershipOnly?: boolean } = {},
     ): Promise<AdmissionResult & { readonly journal: ReturnType<typeof readJournal> | null }> {
+      requireSetupTime('later-writer-admission');
       if (file !== 'AGENT.sidecar.md') writeFileSync(path.join(root, file), 'Synthetic disjoint source');
       const next = admission(id, file, 'synthetic-' + id);
       if (ownershipOnly) {
+        requireSetupTime('later-writer-ownership');
         const host = store.readHostStateSnapshot(next.identity),
           expectedWork = requireValue(host.workVersion, 'work version'),
           expectedLedger = requireValue(host.ledgerVersion, 'ledger version');
@@ -636,29 +647,79 @@ async function prepareFixture({
         end();
       }
     };
-    requireSetupTime('source-prewriter-helper');
-    const endPrewriter = beginFixturePhase(tracePhases, 'source-prewriter-helper');
-    try {
-      journal = await runSourcePrewriterPublicActions(originalPublicFixture);
-    } finally {
-      endPrewriter();
+    if (!inProcessPreparation) {
+      requireSetupTime('source-prewriter-helper');
+      const endPrewriter = beginFixturePhase(tracePhases, 'source-prewriter-helper');
+      try {
+        journal = await runSourcePrewriterPublicActions(originalPublicFixture);
+      } finally {
+        endPrewriter();
+      }
     }
     if (issueWriter) {
       requireSetupTime('writer-issue-and-execution-open');
       const endWriterIssue = beginFixturePhase(tracePhases, 'writer-issue-and-execution-open');
       try {
-        await issue();
-        journal = sync();
-        const item = requireValue(journal.state.items[0], 'Public writer action');
-        if (item.request.stage_id !== 'develop_task' || item.issue_id === null)
-          throw new Error('Public fixture did not issue its configured writer');
-        reservation = requireValue(item.host_reservation, 'Kernel-produced writer reservation');
-        requireSetupTime('execution-open');
-        const execution = await openAdmittedSessionExecution(root, store, 'sample', 'stopped');
-        executionCapability = requireValue(
-          execution.composition.workflowExecutionCapability,
-          'Actual execution capability',
-        );
+        if (inProcessPreparation) {
+          journal = sync();
+          const item = requireValue(
+            journal.state.items.find((entry) => entry.request.stage_id === 'develop_task'),
+            'Prepared public writer action',
+          );
+          const before = store.readHostStateSnapshot(identity);
+          acquireLocalSourceWriterLease({
+            repositoryRoot: root,
+            config,
+            store,
+            identity,
+            nativeSessionHandle: input.nativeSessionHandle,
+            stageId: item.request.stage_id,
+            assignmentIndex: item.request.assignment_index,
+            expectedWork: requireValue(before.workVersion, 'writer work version'),
+            expectedLedger: requireValue(before.ledgerVersion, 'writer ledger version'),
+            expectedSessionJournal: { attempt: input.context.attempt, version: journal.version },
+          });
+          requireSetupTime('execution-open');
+          const execution = await openAdmittedSessionExecution(root, store, 'sample', 'stopped');
+          executionCapability = requireValue(
+            execution.composition.workflowExecutionCapability,
+            'Actual execution capability',
+          );
+          const prepared = await prepareWorkflowExecution(executionCapability, {
+            repositoryRoot: root,
+            configDigest: runtimeConfigDigest(config),
+            teamId: selection.team,
+            workItemId: input.context.work_id,
+          });
+          reservation = await reserveWorkflowAssignmentForSession(executionCapability, {
+            repositoryRoot: root,
+            configDigest: runtimeConfigDigest(config),
+            teamId: selection.team,
+            workflowId: item.request.workflow_id,
+            stageId: item.request.stage_id,
+            assignmentIndex: item.request.assignment_index,
+            workItemId: input.context.work_id,
+            workItemDigest: prepared.workItemDigest,
+            workContextDigest: prepared.workContextDigest,
+            input: { bindings_manifest_ref: item.request.bindings_manifest_ref },
+          });
+          journal = ledger.issueWave('stopped', input.context.attempt, journal.version, {
+            [item.request.action_id]: reservation,
+          });
+        } else {
+          await issue();
+          journal = sync();
+          const item = requireValue(journal.state.items[0], 'Public writer action');
+          if (item.request.stage_id !== 'develop_task' || item.issue_id === null)
+            throw new Error('Public fixture did not issue its configured writer');
+          reservation = requireValue(item.host_reservation, 'Kernel-produced writer reservation');
+          requireSetupTime('execution-open');
+          const execution = await openAdmittedSessionExecution(root, store, 'sample', 'stopped');
+          executionCapability = requireValue(
+            execution.composition.workflowExecutionCapability,
+            'Actual execution capability',
+          );
+        }
       } finally {
         endWriterIssue();
       }
@@ -694,7 +755,7 @@ async function prepareFixture({
   }
 }
 
-async function fixture(options: { deadline: number; tracePhases?: boolean }) {
+async function fixture(options: { deadline: number; tracePhases?: boolean; inProcessPreparation?: boolean }) {
   const prepared = await prepareFixture(options);
   try {
     return { ...prepared, reservation: requireValue(prepared.reservation, 'workflow reservation') };
@@ -821,13 +882,18 @@ test.each([
   }
 });
 
-test('protected public issue aborts an unentered attempt and fences approval replay', async () => {
+test('protected public issue aborts an unentered attempt and fences stale authorization replay', async () => {
   const deadline = performance.now() + 30000;
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
   const failure = new Error('controlled protected entry failure before effect');
-  const f = await prepareFixture({ deadline, issueWriter: false });
+  const f = await prepareFixture({
+    deadline,
+    issueWriter: false,
+    tracePhases: traceFixturePhases,
+    inProcessPreparation: true,
+  });
   let database: Database | undefined;
   try {
     const { issue, root, config, store, identity } = f;
@@ -897,7 +963,7 @@ test('protected public issue aborts an unentered attempt and fences approval rep
     const terminalAt = requireValue(persisted.record.terminal_at, 'aborted approval timestamp');
     expect(persisted.record).toEqual({ ...approval, status: 'aborted', terminal_at: terminalAt });
     expect(typeof persisted.record.terminal_at).toBe('string');
-    await expectRejection(issue(), /workflow approval receipt replay/);
+    expect(() => store.beginWorkflowAttemptEffect(authorization)).toThrow('workflow approval attempt binding invalid');
     expect(readPersistedApproval(database, store.workspaceId, approval)).toEqual(persisted);
     expect(store.readHostStateSnapshot(identity)).toEqual(after);
     expect(readJournal()).toEqual(journal);
@@ -918,7 +984,7 @@ test('admitted protected session commits an observed result and its approval exa
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture({ deadline, tracePhases: traceFixturePhases });
+  const f = await fixture({ deadline, tracePhases: traceFixturePhases, inProcessPreparation: true });
   let database: Database | undefined;
   try {
     const endDatabaseOpen = beginFixturePhase(traceFixturePhases, 'selected-case-extra-host-db-open');
@@ -1154,13 +1220,13 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
 
 test('an interrupted Source owner keeps a later FIFO contender queued', async () => {
   const deadline = performance.now() + 60000;
+  const f = await fixture({ deadline });
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture({ deadline });
   try {
     await expectRejection(
-      f.laterWriter('fifo-contender', 'AGENT.sidecar.md'),
+      f.laterWriter('fifo-contender', 'AGENT.sidecar.md', { ownershipOnly: true }),
       'source writer ownership is queued behind an earlier exclusive resource',
     );
     const after = f.store.readHostStateSnapshot(f.identity),
