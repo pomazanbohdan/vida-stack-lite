@@ -12,6 +12,10 @@ Bundle документації продукту Vida Powers у форматі O
 # Концепції
 
 * [Vida Powers — наступні дії в межах packages/powers](next-actions.md) - Поточний обсяг робіт у каталозі продукту: harness і скелет, канонічні документи, каталог зі скриптами, вертикальний зріз корпусу, скіли й маніфести, Work Items і findings, runtime-запити.
+* [Vida Powers — бізнес-вимоги](business-requirements.md) - B-рівень: цілі, межі відповідальності, обмеження автономності, методологічна політика, доставка, нефункціональні вимоги.
+* [Vida Powers — системна специфікація](system-specification.md) - S-рівень: модель інструкції, операції каталогу, Decision Provider, роутінг, методологічний профіль, матеріалізація, findings, операційні правила.
+* [Vida Powers — критерії прийняття](acceptance.md) - Перевірювані умови з прив'язкою до SR, видом доказу, типом і станом; окремо — що не доводимо.
+* [Vida Powers — матриця простеження](traceability.md) - Зв'язок research § → BR → SR → AC та рішень D1–D9 із нормативними пунктами.
 * [Vida Powers — план впровадження](implementation-plan.md) - Порядок етапів, ворота й приймальні критерії реалізації: від реєстрації продукту й канонічних документів до конвертації корпусу, Router, матеріалізації, Runtime-інтеграції та Standalone-режиму.
 * [Vida Powers — продуктова концепція та архітектурний baseline](research/vida-powers-product-research.md) - Фіналізована концепція: межі VP і VIDA Runtime, канонічний instruction corpus із двома вимірами тегів, методологічна політика, artifact-first матеріалізація, Findings, wiki/work layout і режими Configured/Dynamic.
 
