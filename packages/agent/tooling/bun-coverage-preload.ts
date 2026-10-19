@@ -104,7 +104,8 @@ if (manifest.schema === 'VidaBunCoverageRun/v3') {
   if ((process.env.BUN_OPTIONS ?? '').trim().length > 0)
     throw new Error('Ambient BUN_OPTIONS are unsupported for versioned coverage.');
   if (
-    manifest.test_selection.mode !== 'full-current-test-set' ||
+    (manifest.test_selection.mode !== 'full-current-test-set' &&
+      manifest.test_selection.mode !== 'focused-diagnostic') ||
     !manifest.coverage_plan ||
     !manifest.shard_invocations ||
     !Array.isArray(manifest.coverage_plan.waves)

@@ -225,9 +225,13 @@ for (const outcome of [
   );
 }
 
-test.each([1, 2] as const)(
-  'captured preload accepts one exact current v3 assignment with %i assigned file(s)',
-  (fileCount) => {
+test.each([
+  ['full current one-file', 1, 'full-current-test-set'],
+  ['full current two-file', 2, 'full-current-test-set'],
+  ['focused two-file', 2, 'focused-diagnostic'],
+] as const)(
+  'captured preload accepts the %s v3 assignment',
+  (_label, fileCount, mode) => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-preload-v3-lifecycle-'));
     let passed = false;
     try {
@@ -267,7 +271,10 @@ test.each([1, 2] as const)(
       const testInputs = digestRows(testFiles);
       const toolInputs = digestRows(coverageToolInputs);
       const runtimeHash = sha256(readFileSync(process.execPath));
-      const selection = { mode: 'full-current-test-set', tests: testFiles };
+      const selection =
+        mode === 'focused-diagnostic'
+          ? { mode, contour: 'focused-preload-lifecycle', sources: ['src/fixture.ts'], tests: testFiles }
+          : { mode, tests: testFiles };
       const reviewScope = 'a'.repeat(64);
       const sharedResource = `lifecycle:${'b'.repeat(64)}`;
       const reviews = testInputs.map((entry) => ({

@@ -375,15 +375,23 @@ copied preparation does not close a contour.
 
 Prepare edits in parallel, then drain writers and review their actual diffs
 before one shared static/focused acceptance batch and publication. Freeze every
-captured input before numerical production. Root qualifies each complete declared
-selection serially: exact F/L/S/B, same-run scoped frozen proof, then complete
-assertion-confirmed mutation. Read-only review may overlap that freeze only with
-no refresh, probe or mutation. A failed stage returns its contour to correction;
-other ready scopes remain queued, and earlier failed/UNKNOWN evidence is retained.
-Reuse existing producer inputs, registry and derived progress document. This work
-schedule does not activate pending parallel coverage, filtered mutation or a new
-runner. A prospective-cap or correspondence GAP stays open; it cannot inherit
-another function's original allowance or become a closure from a partial score.
+captured input before numerical production. Root owns each complete declared
+selection and its exact F/L/S/B evidence. A failed stage returns its contour to
+correction; other ready scopes remain queued, and earlier failed/UNKNOWN evidence
+is retained. Reuse existing producer inputs, registry and derived progress
+document.
+
+The active sequential `main-runtime-core` F/L/S/B stage may use one narrowly
+scoped exception to serial test execution: the existing two-worker coverage
+supervisor is enabled only for its exact source and five tests with a built-in
+review bound to their captured SHA-256 digests. Per-worker outputs and temporary
+roots remain distinct; both workers share the existing deadline and must join
+one validated report with complete receipts. Any selection or digest drift
+falls back to serial. This is a contour-specific coverage pilot, not general
+parallel coverage qualification; every other selection remains serial. CRAP and
+mutation stay outside this cycle. A prospective-cap or correspondence GAP stays
+open; it cannot inherit another function's original allowance or become a
+closure from a partial score.
 
 The internal max-two inert worker mechanics now have scoped controls under
 [TESTING's existing native/parallel contract](../../../packages/agent/TESTING.md#completion-commands);

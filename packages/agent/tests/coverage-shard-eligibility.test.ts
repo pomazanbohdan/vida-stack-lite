@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as coverageConsumerBinding from '../tooling/coverage-consumer-binding.ts';
 import { buildCoverageReviewScope, captureCoverageConsumerBinding } from '../tooling/coverage-consumer-binding.ts';
 import {
@@ -16,9 +17,11 @@ import {
   sha256,
 } from '../tooling/bun-coverage-evidence.ts';
 import type { CoverageReviewScope } from '../tooling/coverage-shard-eligibility.ts';
-import { prepareCoverageShardLaunches } from '../tooling/run-bun-coverage.ts';
+import { mainRuntimeCoreCoverageShardReview, prepareCoverageShardLaunches } from '../tooling/run-bun-coverage.ts';
+import type { CurrentCoverageReviewCallback } from '../tooling/run-bun-coverage.ts';
 import * as runBunCoverageModule from '../tooling/run-bun-coverage.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import {
   coverageAssignmentPlanSha256,
   validateCoverageShardLaunchBinding,
@@ -37,6 +40,7 @@ const scope = {
   architecture: 'x64',
   package_root_identity_sha256: 'e'.repeat(64),
 };
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const input = (name: string, fill = 'f'): InputDigest => ({ path: `tests/${name}.test.ts`, sha256: fill.repeat(64) });
 const resource = `package-root:${'9'.repeat(64)}`;
 const configurationRows = [
@@ -583,6 +587,74 @@ describe('resolveCoverageShardEligibility', () => {
 });
 
 describe('prepareCurrentCoverageShardLaunches', () => {
+  test('reviews only the digest-pinned main runtime core selection for two isolated workers', () => {
+    const partition = mutationPartitions().find(({ name }) => name === 'main-runtime-core');
+    expect(partition).toBeDefined();
+    if (!partition?.sources || !partition.tests) throw new Error('Main runtime core selection is missing.');
+    const selection = {
+      mode: 'focused-diagnostic' as const,
+      contour: partition.name,
+      sources: partition.sources,
+      tests: partition.tests,
+    };
+    const callback = mainRuntimeCoreCoverageShardReview(selection);
+    expect(callback).toBeDefined();
+    if (!callback) throw new Error('Reviewed main runtime core selection was not recognized.');
+    const testInputs = partition.tests.map((file) => ({
+      path: file,
+      sha256: sha256(readFileSync(path.join(packageRoot, file))),
+    }));
+    const metadata = {
+      sources: partition.sources.map((file) => ({ path: file, sha256: 'a'.repeat(64) })),
+      tests: [...partition.tests],
+      test_selection: selection,
+      test_inputs: testInputs,
+    } as unknown as Parameters<CurrentCoverageReviewCallback>[0]['metadata'];
+    const envelope = callback({ metadata, scope });
+    if (
+      typeof envelope !== 'object' ||
+      envelope === null ||
+      !('reviews' in envelope) ||
+      !Array.isArray(envelope.reviews)
+    )
+      throw new Error('Pinned review callback returned no resource decisions.');
+    const envelopeRecord = envelope as Record<string, unknown>;
+    const reviews = envelope.reviews as Record<string, unknown>[];
+    expect(envelopeRecord.schema).toBe('VidaCoverageShardEligibility/v1');
+    expect(reviews.map(({ test_file }) => test_file)).toEqual([...partition.tests].sort());
+    expect(
+      reviews.every(
+        ({ shared_resources, exclusive_run, reviewer_ref }) =>
+          Array.isArray(shared_resources) &&
+          shared_resources.length === 0 &&
+          exclusive_run === false &&
+          typeof reviewer_ref === 'string' &&
+          reviewer_ref.includes('main-runtime-core-focused-shard-resource-review'),
+      ),
+    ).toBe(true);
+    const eligibility = resolveCoverageShardEligibility({
+      mode: 'current',
+      envelope,
+      selectedTests: testInputs,
+      scope,
+    });
+    if (eligibility.status !== 'eligible')
+      throw new Error('Pinned main runtime core selection was denied: ' + eligibility.reason);
+    expect(eligibility.status).toBe('eligible');
+    expect(eligibility.plan.waves).toHaveLength(1);
+    expect(eligibility.plan.waves[0]?.assignments.map(({ tests }) => [...tests].sort())).toEqual([
+      ['tests/configured-workflow.test.ts', 'tests/runtime-kernel-boundary.test.ts', 'tests/smoke.test.ts'],
+      ['tests/interrupted-source-retirement.test.ts', 'tests/runtime-kernel-composition.test.ts'],
+    ]);
+
+    const staleMetadata = {
+      ...metadata,
+      test_inputs: testInputs.map((entry, index) => (index === 0 ? { ...entry, sha256: 'f'.repeat(64) } : entry)),
+    } as unknown as Parameters<CurrentCoverageReviewCallback>[0]['metadata'];
+    expect(callback({ metadata: staleMetadata, scope })).toBeNull();
+    expect(mainRuntimeCoreCoverageShardReview({ ...selection, contour: 'another-contour' })).toBeUndefined();
+  });
+
   test('reads the fixed review artifact and prepares two fixture assignments without creating outputs', () => {
     const fixture = currentShardPolicyFixture();
     let passed = false;

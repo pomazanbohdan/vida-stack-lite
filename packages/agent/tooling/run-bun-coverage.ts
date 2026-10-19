@@ -117,6 +117,90 @@ function freezeCopiedReviewMetadata(inputs: CoverageInputs): CoverageReviewMetad
   return freezeCopiedReviewValue(metadata) as CoverageReviewMetadata;
 }
 
+const mainRuntimeCoreShardSources = ['src/runtime-kernel.ts'] as const;
+const mainRuntimeCoreShardTests: readonly InputDigest[] = [
+  {
+    path: 'tests/configured-workflow.test.ts',
+    sha256: '63eaab576a6d0f697ff0cca9c275a88f84beb197de51f9dce6060fda236848b0',
+  },
+  {
+    path: 'tests/interrupted-source-retirement.test.ts',
+    sha256: '7e51e1025a022089c9657e6f9d4b6eaba9b6f30e4ad2fbe861d6ff57c4463a79',
+  },
+  {
+    path: 'tests/runtime-kernel-boundary.test.ts',
+    sha256: 'c940135c3ccc4fc789be2ece04a6e912048fb669f42f63192a50da498684452b',
+  },
+  {
+    path: 'tests/runtime-kernel-composition.test.ts',
+    sha256: '55fa3125239425c8d1be6494b95b68694fcf996fb46e4bcbd7c1864f42deb297',
+  },
+  {
+    path: 'tests/smoke.test.ts',
+    sha256: '7de674ab7ef3f01b3974253ba1002cc95996c1afe53fa8f612188328f67f6632',
+  },
+];
+const mainRuntimeCoreShardReviewRef =
+  '.agent/work/core-runtime-reactivation/WORK.md#main-runtime-core-focused-shard-resource-review';
+
+function sameStrings(actual: readonly string[], expected: readonly string[]): boolean {
+  if (actual.length !== expected.length) return false;
+  const sortedActual = [...actual].sort();
+  const sortedExpected = [...expected].sort();
+  return sortedActual.every((value, index) => value === sortedExpected[index]);
+}
+
+/** Permit two focused workers only for the reviewed, digest-pinned main runtime core test selection. */
+export function mainRuntimeCoreCoverageShardReview(
+  selection: FocusedDiagnosticSelection,
+): CurrentCoverageReviewCallback | undefined {
+  const selectedTests = mainRuntimeCoreShardTests.map(({ path: file }) => file);
+  if (
+    selection.contour !== 'main-runtime-core' ||
+    !sameStrings(selection.sources, mainRuntimeCoreShardSources) ||
+    !sameStrings(selection.tests, selectedTests)
+  )
+    return undefined;
+
+  return ({ metadata, scope }) => {
+    const capturedSelection = metadata.test_selection;
+    if (
+      capturedSelection.mode !== 'focused-diagnostic' ||
+      capturedSelection.contour !== 'main-runtime-core' ||
+      !sameStrings(capturedSelection.sources, mainRuntimeCoreShardSources) ||
+      !sameStrings(capturedSelection.tests, selectedTests) ||
+      !sameStrings(
+        metadata.sources.map(({ path: file }) => file),
+        mainRuntimeCoreShardSources,
+      ) ||
+      !sameStrings(metadata.tests, selectedTests)
+    )
+      return null;
+
+    const selected = new Set(selectedTests);
+    const capturedTests = metadata.test_inputs
+      .filter(({ path: file }) => selected.has(file))
+      .map(({ path: file, sha256: digest }) => ({ path: file, sha256: digest }))
+      .sort((left, right) => left.path.localeCompare(right.path));
+    if (JSON.stringify(capturedTests) !== JSON.stringify(mainRuntimeCoreShardTests)) return null;
+
+    const reviewScopeSha256 = canonicalCoverageReviewScope(scope);
+    return {
+      schema: 'VidaCoverageShardEligibility/v1',
+      scope: { ...scope },
+      review_scope_sha256: reviewScopeSha256,
+      reviews: mainRuntimeCoreShardTests.map(({ path: test_file, sha256: test_sha256 }) => ({
+        test_file,
+        test_sha256,
+        review_scope_sha256: reviewScopeSha256,
+        shared_resources: [],
+        exclusive_run: false,
+        reviewer_ref: mainRuntimeCoreShardReviewRef,
+      })),
+    };
+  };
+}
+
 /** Deny stale emitted SDKs before allocating coverage outputs or launching tests. */
 export function assertCurrentCoverageSdkFreshness(root: string, inputs: CoverageInputs): void {
   if (
@@ -157,7 +241,7 @@ type RunManifest = {
   sources: SourceDigest[];
   source_maps: Record<string, FileCoverageData>;
   instrumented_sources: InstrumentedSourceDigest[];
-  /** Present only for a future, separately qualified current-only shard run. */
+  /** Present only when a complete current-selection shard review was admitted. */
   coverage_plan?: CoverageShardPlan;
   assignment_plan_sha256?: string;
   shard_invocations?: CoverageShardInvocation[];
@@ -403,11 +487,15 @@ export function prepareCoverageShardLaunches(input: {
   temporary_root: string;
   run_id: string;
   scope: CoverageReviewScope;
+  test_selection_mode?: 'full-current-test-set' | 'focused-diagnostic';
   selected_test_inputs: readonly InputDigest[];
   eligibility: unknown;
   environment: NodeJS.ProcessEnv;
   wrapped_invocation?: boolean;
 }) {
+  const selectionMode = input.test_selection_mode ?? 'full-current-test-set';
+  if (selectionMode !== 'full-current-test-set' && selectionMode !== 'focused-diagnostic')
+    throw new Error('Coverage shards require a current input selection.');
   const eligibility = resolveCoverageShardEligibility({
     mode: 'current',
     envelope: input.eligibility,
@@ -463,7 +551,7 @@ export function prepareCoverageShardLaunches(input: {
       VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT: input.scope.source_fingerprint,
       VIDA_BUN_COVERAGE_TEST_FINGERPRINT: input.scope.test_fingerprint,
       VIDA_BUN_COVERAGE_TOOL_FINGERPRINT: input.scope.tool_fingerprint,
-      VIDA_BUN_COVERAGE_TEST_SELECTION_MODE: 'full-current-test-set',
+      VIDA_BUN_COVERAGE_TEST_SELECTION_MODE: selectionMode,
       VIDA_BUN_COVERAGE_ACTIVE_ARGV: JSON.stringify(args),
       VIDA_BUN_COVERAGE_SHARD_ID: assignment.shard_id,
       VIDA_BUN_COVERAGE_ASSIGNED_TESTS: JSON.stringify(assignment.tests),
@@ -536,6 +624,8 @@ export function prepareCurrentCoverageShardLaunches(input: {
     ...(artifactSha256 === undefined ? {} : { artifact_sha256: artifactSha256 }),
     ...(reviewScopeSha256 === undefined ? {} : { review_scope_sha256: reviewScopeSha256 }),
   });
+  const testSelectionMode = input.inputs.test_selection.mode;
+  if (testSelectionMode === 'published-baseline-bun-native') return fallback('historical-mode');
 
   let packageAccess: SafeRepositoryAccess;
   try {
@@ -613,6 +703,7 @@ export function prepareCurrentCoverageShardLaunches(input: {
     temporary_root: temporaryRoot,
     run_id: input.run_id,
     scope,
+    test_selection_mode: testSelectionMode,
     selected_test_inputs: selectedTestInputs,
     eligibility: envelope,
     environment,
@@ -902,6 +993,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
   if (args.length > 1) throw new Error('Bun coverage runner accepts one baseline selection flag.');
   const selectionMode = args.length ? 'published-baseline-bun-native' : 'current';
   const focused = options.focusedDiagnostic;
+  const focusedShardReview = focused ? mainRuntimeCoreCoverageShardReview(focused) : undefined;
   if (focused && (args.length || options.reviewCurrentInputs))
     throw new Error('Focused coverage diagnostics cannot use historical selection or input review callbacks.');
   const runOutputRoot = focused ? path.join(outputRoot, 'diagnostics') : outputRoot;
@@ -1297,8 +1389,9 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     const runtimeExecutableSha256 = sha256(readFileSync(process.execPath));
     const { input_bytes: inputBytes, ...evidence } = lockedInputs;
     const externalTemporaryRoot = path.resolve(process.env.TMPDIR ?? tmpdir());
+    const shardReview = options.reviewCurrentInputs ?? focusedShardReview;
     const shardPreparation =
-      selectionMode === 'current' && !focused
+      selectionMode === 'current' && (!focused || focusedShardReview !== undefined)
         ? prepareCurrentCoverageShardLaunches({
             root,
             temporary_root: externalTemporaryRoot,
@@ -1308,7 +1401,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
             bunVersion: pinnedBun,
             environment: process.env,
             wrappedInvocation,
-            ...(options.reviewCurrentInputs ? { reviewCurrentInputs: options.reviewCurrentInputs } : {}),
+            ...(shardReview ? { reviewCurrentInputs: shardReview } : {}),
             ...(consumerConfiguration ? { consumerConfiguration } : {}),
           })
         : undefined;

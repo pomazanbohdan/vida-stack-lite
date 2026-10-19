@@ -52,8 +52,53 @@ budget. I combined FIFO queueing, invalid-evidence denials and rollback-on-relea
 failure in one fixture; all assertions remain, and the focused combined test
 passes with 19 expectations in 20.37 seconds. The strict targeted Bun typecheck
 reports no errors in 126 files, and the changed TypeScript files pass the pinned
-formatter check. These focused and static results do not close F/L/S/B. The next
-action is another exact coverage stage on the updated commit.
+formatter check. These focused and static results do not close F/L/S/B.
+
+The exact stage on `d9386b3` also ended UNKNOWN at 270,942.623 ms after SIGKILL;
+its image and capture were complete, but it produced no report. The log records
+183 passing tests before cutoff: interrupted-Source took 165.132 seconds,
+configured-workflow 98.428 seconds, and smoke 0.354 seconds. Neither runtime
+kernel test file started. Preserve `/workspace/contour-stage-DvSeqP` and its
+immutable image; this is partial execution, not a coverage result.
+
+### Main-runtime-core focused shard resource review
+
+I enabled the existing two-worker coverage supervisor only for this exact
+focused selection: `src/runtime-kernel.ts` and the five current tests below.
+The runner checks the selected contour, Source list, test list and captured
+test-file SHA-256 values before it supplies resource review. Any changed path,
+test byte, or contour returns to the existing serial path. It does not perform a
+second file hash pass; the callback consumes the already-captured digests.
+
+| Worker | Exact selected tests | Prior measured time |
+| --- | --- | ---: |
+| shard 1 | `tests/configured-workflow.test.ts`, `tests/runtime-kernel-boundary.test.ts`, `tests/smoke.test.ts` | configured 98.428 s; smoke 0.354 s; boundary not reached |
+| shard 2 | `tests/interrupted-source-retirement.test.ts`, `tests/runtime-kernel-composition.test.ts` | interrupted-source 165.132 s; composition not reached |
+
+The resource review found unique temporary roots and SQLite paths in the
+runtime-kernel tests, temporary project roots in configured-workflow, and
+per-fixture roots in interrupted-Source. That file restores its `Date.now`
+override; boundary and configured-workflow restore their process-environment
+changes. `smoke.test.ts` has no filesystem or process-global write sites in the
+bounded side-effect search. Each shard receives a distinct `TMPDIR`, coverage
+directory, JUnit path, log, receipt directory and process. There are no reviewed
+shared write resources, so the two assignments fit one wave. Each worker still
+runs Bun serially with `--parallel=1 --no-isolate`; the existing shared 300,000 ms
+budget and cleanup reserve are unchanged.
+
+Measured environment capacity is four CPUs and 16 GiB. In serial, the latest
+stage used 270.943 seconds and stopped after 183 tests. The two-worker estimate
+is `max(165.132 s + composition, 98.782 s + boundary)` plus startup/merge work.
+The two kernel-file costs are still unknown, so this is not a predicted PASS.
+Three or more workers were not considered: the existing planner enforces a
+maximum of two. A complete exact report and process receipts must prove whether
+this split fits; no partial shard or partial metrics qualify.
+
+The focused review controls pass: shard eligibility 48/48, preload lifecycle
+11/11, and strict TypeScript check reports no errors in 127 files. The pinned
+formatter check passes on all five changed TypeScript files. This verifies the
+pilot mechanics only; current contour F/L/S/B remains pending until the exact
+stage validates the single merged report.
 Other contour Source/test changes are retained in Git stash
 `e14e88d648dd1e09abc0f9ed8794cfd47468d41c` and are not in this packet. Keep the
 generated projection and its bound historical receipts; the active stage updates

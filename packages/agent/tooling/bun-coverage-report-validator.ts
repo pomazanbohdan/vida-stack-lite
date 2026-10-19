@@ -888,10 +888,11 @@ function mergeProcessCoverage(
 ) {
   const historical = validateHistoricalReference(root, report, manifest, current);
   if (manifest.schema === 'VidaBunCoverageRun/v3') {
-    if (report.schema === 'VidaBunCoverageReport/v2' && current.test_selection.mode !== 'full-current-test-set')
+    const currentSelection =
+      current.test_selection.mode === 'full-current-test-set' || current.test_selection.mode === 'focused-diagnostic';
+    if (report.schema === 'VidaBunCoverageReport/v2' && !currentSelection)
       throw new Error('Coverage report v2 is current-selection only.');
-    if (current.test_selection.mode !== 'full-current-test-set')
-      throw new Error('Versioned coverage shard evidence is current-selection only.');
+    if (!currentSelection) throw new Error('Versioned coverage shard evidence is current-selection only.');
     if (historical) throw new Error('Historical coverage cannot use versioned shard evidence.');
     const plan = decodeCoverageShardPlan(manifest.coverage_plan);
     const invocations = decodeCoverageShardInvocations(manifest.shard_invocations);

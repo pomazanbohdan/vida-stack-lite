@@ -1637,14 +1637,28 @@ sources, tests } })`. Both path sets must be nonempty, unique and members of
 their maintained inventories. The selected import closure binds transitive
 test helpers and unselected dependencies without claiming their coverage.
 This route uses the same capture, instrumentation, preload, counter merge,
-300000ms budget and shared coverage lock. It remains serial.
+300000ms budget and shared coverage lock. It remains serial by default.
+
+The only focused parallel-coverage exception is the active `main-runtime-core`
+pilot. Its built-in resource review admits exactly the five declared test files
+and `src/runtime-kernel.ts`, and only while each captured test SHA-256 matches
+the review's pinned digest. The two assignments use the existing maximum of two
+workers; each Bun process stays at `--parallel=1 --no-isolate`, with separate
+output paths and `TMPDIR`, one shared producer deadline, complete process
+receipts and one validated merged report. The callback uses already-captured
+metadata and does not rescan or rehash test files. Any contour, source, test or
+digest drift falls back to serial execution. This pilot qualifies neither other
+contours nor frozen complexity/CRAP or mutation. Its exact F/L/S/B result remains
+pending until the complete stage and all receipts validate.
 
 A focused SDK package compatibility selection retains the full maintained SDK Source
 inventory privately in that same capture. Omitted SDK Source is bound as tool
 input, with no added coverage claim. Formation projection and freshness use
 those complete captured bytes. The existing prepareSdkInputs callback is allowed
 only when this SDK-dependent test is selected and runs before typecheck/capture.
-Focused input-review callbacks and historical preparation remain forbidden.
+Externally supplied focused input-review callbacks and historical preparation
+remain forbidden. Only the fixed resource review above is synthesized by the
+runner for its exact pinned contour selection.
 Full-current Source/tool classification and historical SDK behavior stay intact.
 Use the maintained SDK readiness owner; do not form SDK outputs locally.
 

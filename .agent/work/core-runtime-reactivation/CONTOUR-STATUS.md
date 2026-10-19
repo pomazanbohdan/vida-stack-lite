@@ -98,6 +98,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | frozen-crap | fa695231-baf7-4d77-92fe-811e4dda5b55 | bbb777e97a7fa896604cec80f2ff8075a93ec734 | 2026-10-16T21:26:36.410Z | scoped-proof-pass; owner accepted locally; selection bound | 31 / 31 (scoped proof; owner measured) | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/fa695231-baf7-4d77-92fe-811e4dda5b55.scoped-crap.json |
 | stage-outcome | contour-stage-0EeN3h | a5e69746fb24d3016af8439271c04345d3f5a9a5 | 2026-10-19T13:25:23.783Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-0EeN3h/publication-error.json |
 | stage-outcome | contour-stage-1zr3jD | 723818a1c8b82493d3ba31b732601e9974f9a9e4 | 2026-10-19T13:39:03.975Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-1zr3jD/publication-error.json |
+| stage-outcome | contour-stage-DvSeqP | d9386b380c647c7aade4d17d36e6caadb2ba4e5b | 2026-10-19T13:51:07.405Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-DvSeqP/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
