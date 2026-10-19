@@ -99,7 +99,61 @@ explicitly proves missing-engine inspection creates no engine file. No remaining
 blocking finding was reported. The complete observation below, rather than these
 targeted passes, owns the measured numeric increase.
 
-### Latest complete host-state coverage observation
+### Latest complete host-state coverage and Task-source unit packet
+
+The ea86777 stage at /workspace/contour-stage-41AWBl completes in200664.533ms,
+exit0, with complete capture, closed group, unchanged boot/image inputs and
+published diagnostic077e6132-f974-4a9c-b45a-b884b0d2d9d1. Exact counters are
+F702/1129,L2653/4966,S2842/5296,B2514/5640. Against the prior complete ee67fa0
+observation this covers50more functions,151lines,162statements and199branches;
+the product close-error fix changes the denominators, so these are distinct
+input-bound observations, not an unchanged-input performance comparison.
+The operation remains BLOCKED, historical exact closure16/45. CRAP/frozen and
+mutation are deferred; this complete observation is not contour acceptance.
+
+Its immutable image is
+/workspace/.vida-quality-inputs/29b0ca191ee4893e0653bcafd112ead77461f773/repository,
+manifest SHA0bc4c8bf5c358805fa5b3b39399183ad5d3c695c34670f479a275ec71c393ff0,
+input fingerprint6e911ad8a3aff99b3586e46aa3bc41296475308dca1a7b23f5fd8502829ea807.
+SDK CI39343801056/artifact12230260726 succeeds; ZIP SHA
+afc4633e46b25949ee3c44533795cb11064d640d94bb992628dd747cde3d9fbf matches transport.
+Admission observes8532275200free bytes against2147483648required. No cleanup,
+additional inventory/AST/hash scan or runtime effect was needed. Projection1031
+imports the terminal result. Reusing its function inventory identifies427uncovered
+functions/closures under121outer owners; the derivative is
+packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/host-uncovered-plan-current.json.
+
+The next checked packet extracts the existing coordination fixture into
+tests/helpers/task-source-host-fixture.ts, preserving native SQLite, exact Work/
+Ledger/Journal seeds, peer reservation and the two original async issue cases.
+Three Host cases cover preparation, retry, fresh inspection/not-found, changed
+request/authority denial, expired owner before callback, verifier denial, all four
+CAS dimensions, transactional lazy-schema rollback and duplicate request IDs.
+They assert no action/claim tables and unchanged persisted Host/journal state.
+The explicitly trusted callback proves this Host unit seam only, not public
+authorization, Source effects or Runtime acceptance. Expiry is exercised after
+committing a live owner, with only the serial case's wall clock advanced past
+its deadline and restored before cleanup; no real protocol threshold changes.
+The initial expired-seed setup failure and mismatched CAS error expectation are
+retained in host-task-source-unit.log. Setup now pairs post-open failure closure
+with the existing cleanup owner, preserving the primary cause and private root.
+
+Corrected focused cases pass3tests/53assertions in2.14s; the original async issue
+regressions pass2tests/26assertions in1.89s. Targeted strict171files and scoped
+type-aware lint pass. The exact shard control passes1test/10assertions in0.300s;
+an earlier zero-match wrong-file invocation is not counted as verification.
+Logs are host-task-source-unit-corrected.log,
+task-source-shared-fixture-regression.log and
+task-source-unit-shard-eligibility-corrected.log in the same diagnostic directory.
+Blind final review /tmp/vida-host-task-source-unit-final-review.md confirms the
+native-unit evidence boundary and unchanged private resource ownership. Only the
+selected Host test pin changes to
+00db050c7c236e90973a72e5c40c0669f83f9d21ba3e5e4a74ec5001c3497314;
+the stopped-source selection/pin is unchanged. The moved coordination test remains
+outside the selected contour. No test selection or budget is widened. Require
+one changed-input stage after ordinary checked publication.
+
+### Prior complete authorization/release coverage observation
 
 The changed-input stage on ee67fa0 is complete at /workspace/contour-stage-P5VlYC:
 225818.276ms, exit0, complete capture, closed child group, unchanged boot and image,

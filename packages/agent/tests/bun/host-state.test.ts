@@ -6,6 +6,7 @@ import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-r
 import { createInitializationBundle } from '../helpers/init-bundle.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
+import { createTaskSourceHostFixture } from '../helpers/task-source-host-fixture.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import {
   prepareLifecycleForCorrection,
@@ -776,6 +777,210 @@ test('fresh task-source projection preserves the admitted owner and rejects nonc
       [
         () => {
           f.close({ retainRoot: !completed });
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test('task-source preparation and inspection persist one retry-stable operation without action effects', () => {
+  const f = createTaskSourceHostFixture();
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const input = { request: f.request, identity: f.identity, verifyCurrent: f.trustedVerifyCurrent };
+    const before = f.store.readHostStateSnapshot(f.identity);
+    const journalBefore = f.store.readWorkSessionJournal(f.identity);
+    expect(f.store.inspectTaskSourceBindingOperation(input)).toEqual({
+      schema: 'TaskSourceBindingOperationResult/v1',
+      status: 'not_found',
+      operation_id: f.request.operation_id,
+      request_id: f.request.request_id,
+      operation: null,
+      state_version: null,
+    });
+    expect(
+      f.database.query("SELECT name FROM sqlite_master WHERE name='agent_host_task_source_binding_operation'").get(),
+    ).toBeNull();
+    const prepared = f.prepare();
+    expect(prepared.status).toBe('prepared');
+    expect(prepared.operation_id).toBe(f.request.operation_id);
+    expect(prepared.request_id).toBe(f.request.request_id);
+    expect(prepared.operation).toMatchObject({
+      schema: 'TaskSourceBindingOperation/v1',
+      status: 'prepared',
+      revision: 1,
+      request: f.request,
+      request_digest: canonicalJsonDigest(f.request),
+      authority: { source_authorization_sha256: 'c'.repeat(64), source_scope_digest: f.journal.source_scope?.digest },
+    });
+    expect(prepared.state_version).toEqual({ revision: 1, digest: canonicalJsonDigest(prepared.operation) });
+    expect(f.prepare()).toEqual(prepared);
+    expect(f.store.inspectTaskSourceBindingOperation(input)).toEqual({ ...prepared, status: 'inspected' });
+    const missing = {
+      ...f.request,
+      operation_id: 'task-source-not-prepared',
+      request_id: 'task-source-not-prepared-request',
+    };
+    expect(f.store.inspectTaskSourceBindingOperation({ ...input, request: missing }).status).toBe('not_found');
+    expect(() =>
+      f.store.prepareTaskSourceBindingOperation({ ...input, request: { ...f.request, request_id: 'changed-request' } }),
+    ).toThrow('task source operation retry changed');
+    const changedAuthority = () => ({
+      source_authorization_sha256: 'd'.repeat(64),
+      source_scope_digest: f.journal.source_scope!.digest,
+    });
+    expect(() => f.prepare(changedAuthority)).toThrow('task source operation retry changed');
+    expect(() => f.store.inspectTaskSourceBindingOperation({ ...input, verifyCurrent: changedAuthority })).toThrow(
+      'task source inspection request or current authority differs',
+    );
+    expect(() => f.database.transaction(() => f.store.inspectTaskSourceBindingOperation(input)).deferred()).toThrow(
+      'nested task source operation inspection forbidden',
+    );
+    expect(
+      f.database
+        .query<{ count: number }, []>('SELECT count(*) AS count FROM agent_host_task_source_binding_operation')
+        .get()?.count,
+    ).toBe(1);
+    expect(
+      f.database
+        .query(
+          "SELECT name FROM sqlite_master WHERE name IN ('agent_host_task_source_binding_action','agent_host_task_source_binding_claim')",
+        )
+        .all(),
+    ).toEqual([]);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    expect(f.store.inspectTaskSourceBindingOperation(input)).toEqual({ ...prepared, status: 'inspected' });
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(completed);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test('task-source expired owner denies preparation and inspection before the trusted verifier or lazy schema', () => {
+  const expires = Date.now() + 30 * 60_000;
+  const f = createTaskSourceHostFixture({ expiresAt: new Date(expires).toISOString() });
+  const clock = spyOn(Date, 'now').mockReturnValue(expires + 1);
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const before = f.store.readHostStateSnapshot(f.identity);
+    const journalBefore = f.store.readWorkSessionJournal(f.identity);
+    const verifyCurrent = mock(f.trustedVerifyCurrent);
+    expect(() => f.prepare(verifyCurrent)).toThrow(/owner|expiry|expired|stale/i);
+    expect(() =>
+      f.store.inspectTaskSourceBindingOperation({ request: f.request, identity: f.identity, verifyCurrent }),
+    ).toThrow('task source inspection owner, lease or current scope differs');
+    expect(verifyCurrent).not.toHaveBeenCalled();
+    expect(
+      f.database.query("SELECT name FROM sqlite_master WHERE name LIKE 'agent_host_task_source_binding_%'").all(),
+    ).toEqual([]);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    clock.mockRestore();
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(completed);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test('task-source trusted-verifier and CAS denials roll back native preparation without granting effects', () => {
+  const f = createTaskSourceHostFixture();
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const before = f.store.readHostStateSnapshot(f.identity);
+    const journalBefore = f.store.readWorkSessionJournal(f.identity);
+    const denial = new Error('fixture trusted verifier denied');
+    expect(() =>
+      f.prepare(() => {
+        throw denial;
+      }),
+    ).toThrow(denial);
+    const invalid = () => ({
+      source_authorization_sha256: 'invalid',
+      source_scope_digest: f.journal.source_scope!.digest,
+    });
+    expect(() => f.prepare(invalid)).toThrow('task source preparation authorization is invalid');
+    expect(() =>
+      f.store.inspectTaskSourceBindingOperation({ request: f.request, identity: f.identity, verifyCurrent: invalid }),
+    ).toThrow('task source inspection authorization is invalid');
+    for (const expected_host of [
+      {
+        ...f.request.expected_host,
+        work: { ...f.request.expected_host.work, revision: f.request.expected_host.work.revision + 1 },
+      },
+      {
+        ...f.request.expected_host,
+        ledger: { ...f.request.expected_host.ledger, revision: f.request.expected_host.ledger.revision + 1 },
+      },
+      {
+        ...f.request.expected_host,
+        journal: {
+          ...f.request.expected_host.journal,
+          version: { ...f.request.expected_host.journal.version, revision: 2 },
+        },
+      },
+      { ...f.request.expected_host, maintenance_generation: f.request.expected_host.maintenance_generation + 1 },
+    ]) {
+      const verifyCurrent = mock(f.trustedVerifyCurrent);
+      expect(() =>
+        f.store.prepareTaskSourceBindingOperation({
+          request: { ...f.request, expected_host },
+          identity: f.identity,
+          verifyCurrent,
+        }),
+      ).toThrow(/CAS|compare-and-swap|revision|version/i);
+      expect(verifyCurrent).toHaveBeenCalledTimes(1);
+      expect(
+        f.database.query("SELECT name FROM sqlite_master WHERE name LIKE 'agent_host_task_source_binding_%'").all(),
+      ).toEqual([]);
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    }
+    const prepared = f.prepare();
+    expect(prepared.status).toBe('prepared');
+    expect(() =>
+      f.store.prepareTaskSourceBindingOperation({
+        request: { ...f.request, operation_id: 'duplicate-request-operation' },
+        identity: f.identity,
+        verifyCurrent: f.trustedVerifyCurrent,
+      }),
+    ).toThrow('task source request ID is already bound');
+    expect(f.prepare()).toEqual(prepared);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(completed);
         },
       ],
       primaryFailure,

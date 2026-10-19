@@ -84,6 +84,17 @@ preparation inputs for that repair and reuses synthesis-only Source setup for
 readonly cases. Targeted terminal repair, readonly public release and writer
 capture/rollback/retry pass; both test-byte resource pins are refreshed. Keep the
 same contour active and measure the changed inputs once after publication.
+That ea86777 stage now completes in200.665s and publishes
+F702/1129,L2653/4966,S2842/5296,B2514/5640. It remains nonexact with BLOCKED
+operation status; historical exact closure is16/45. The next checked packet
+reuses the maintained native Task-source coordination fixture for Host
+preparation/inspection, ownership, verifier and four-dimensional CAS rollback
+tests. Its3cases/53assertions and the preserved2async issue cases/26assertions
+pass. The trusted callback is explicitly a unit seam, not external authorization.
+Post-open setup failure now preserves primary/close errors and its private root;
+the reviewed Host test resource pin is refreshed without selection/budget drift.
+Measure this checked changed-input packet once and continue repairing remaining
+owners from the already-built inventory in this same contour.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
