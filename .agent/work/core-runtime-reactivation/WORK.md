@@ -1434,18 +1434,20 @@ test file or shared writable resource:
 | 1 | `configured-workflow.test.ts`, `runtime-kernel-boundary.test.ts`, `smoke.test.ts` |
 | 2 | `interrupted-source-retirement.test.ts`, `runtime-kernel-composition.test.ts` |
 
-The current `configured-workflow.test.ts` digest is
-`9c8312294817f74dbcf3f1b07310b7378a04c3c7a18a68489303e8b9f717c3da`; the
-coverage review callback now pins this exact test input. Its reviewer reference
-is this section's `#main-runtime-core-focused-shard-resource-review` anchor.
-The latest focused mismatch test still dispatches the real graph and now also
-checks predecessor input and downstream developer receipt. The duplicate
-high-risk full graph run was merged into it; the per-risk plan assertions remain
-in the existing table-driven tests. Focused tests passed: 2 tests, 11
-assertions, 5.55 seconds total; the graph mismatch case took 4.16 seconds. This
-resource review only enables the exact F/L/S/B diagnostic shard plan; it does
-not publish coverage or close the contour. Typecheck, staged hooks, and a fresh
-exact coverage stage on the next matching Source/SDK artifact remain pending.
+The review callback pins the exact test-input digest below; its reviewer
+reference is this section's
+`#main-runtime-core-focused-shard-resource-review` anchor. The mismatch test
+dispatches the real graph, compares authoritative high-risk work-item data with
+an empty preview, and checks that both mandatory prewriter results reach the
+developer. Its isolated fixture keeps one researcher to produce the synthesis
+packet, while the table-driven cases retain full-graph coverage; the host
+adapter deliberately stops after recording the developer input. The exact
+current digest is `17fefec740452a1d44239ae127d9970d1ced3cfe947352e43994aff4d5c26d4f`.
+The targeted check passed 1/1 tests and 9 assertions; the latest test body time
+was 2.49s (3.69s including Bun startup). This resource review only enables the
+exact F/L/S/B diagnostic shard plan; it does not publish coverage or close the
+contour. Typecheck, staged hooks, and a fresh exact coverage stage on the next
+matching Source/SDK artifact remain pending.
 
 ### main-runtime-core-focused-shard-resource-review
 
@@ -1461,3 +1463,24 @@ plan is eligible. Source/test/config/tool fingerprints still bind every
 execution; a changed input falls back to serial mode until its digest is
 reviewed. This review is scoped to the five listed tests and the
 `main-runtime-core` focused diagnostic only.
+
+### F/L/S/B main-runtime-core two-shard partial run — 2026-10-19
+
+Stage `contour-stage-iQ4zgj` ran immutable commit
+`a9746c0661668cfec6768e9b062eda287efcaa10` with its matching SDK test inputs.
+The reviewed two-shard selection launched and the outer group closed after
+207.281 seconds with complete capture and unchanged image inputs. Shard 1 ran
+227 tests and 1,105 assertions: 226 passed; the risk-mismatch graph test timed
+out at 5.626 seconds against the 5-second per-test limit. The shard producer
+rejected the unsuccessful terminal and produced no attributable report, so
+publication is `unknown-or-partial`; no F/L/S/B counters are accepted. The
+execution, partial logs, publication error, and image remain retained under
+`/workspace/contour-stage-iQ4zgj`; this stage will not be replayed.
+
+Root reduced that same graph test's fixture to one researcher while preserving
+the synthesis, real prewriter graph, and developer-input assertions. It now
+stops the host adapter at the developer boundary after capturing the relevant
+input, avoiding downstream workflow work. The focused test passes in 2.49s
+(3.69s including Bun startup); the pinned digest and this exact selection's
+resource review are updated. The fresh commit still needs its matching CI SDK
+artifact before another F/L/S/B stage can run.

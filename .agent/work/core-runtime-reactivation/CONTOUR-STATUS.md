@@ -102,6 +102,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | stage-outcome | contour-stage-TILZZZ | 128c85f0dcec77f10f3a81a8ec42c8a33b2db1ee | 2026-10-19T14:13:23.090Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-TILZZZ/publication-error.json |
 | stage-outcome | contour-stage-Xu5jOO | 1d4ca35c60bf7b608f8a24a7cf0c3054b398d928 | 2026-10-19T14:26:16.020Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-Xu5jOO/publication-error.json |
 | stage-outcome | contour-stage-k9nPCu | 6c8cbc4bc9433df465d65a1686da1975d272b6d9 | 2026-10-19T14:43:08.097Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-k9nPCu/publication-error.json |
+| stage-outcome | contour-stage-iQ4zgj | a9746c0661668cfec6768e9b062eda287efcaa10 | 2026-10-19T14:55:44.716Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-iQ4zgj/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

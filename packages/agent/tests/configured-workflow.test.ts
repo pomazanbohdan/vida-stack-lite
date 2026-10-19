@@ -2744,6 +2744,18 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       intent: 'implementation_new',
       risk_flags: ['high'],
     };
+    // One researcher preserves synthesis while avoiding four unrelated dispatches.
+    // Table-driven cases still exercise full graph fan-out.
+    const compact = mutableFixtureConfig();
+    const implementation = requireFixtureValue(compact.workflows.implementation_new);
+    const research = requireFixtureValue(implementation.stages.find((stage) => stage.id === 'research_parallel'));
+    setFixtureField(
+      research,
+      'assignments',
+      research.assignments.filter(({ role }) => role === 'requirements-researcher'),
+    );
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(compact));
+    config = loadRuntimeConfig(root);
     const compiled = compileDevelopmentWorkflow(config, 'default-development', 'implementation_new', ['high']);
     expect(
       compiled.waves
@@ -2751,7 +2763,11 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
         .find((stage) => stage.id === 'review_source_prewrite')
         ?.assignments.map(({ role }) => role),
     ).toEqual(['source-planner', 'security-prewriter']);
-    const host = await compose();
+    const host = await compose(['workflow', 'runtime.write'], async (call) => {
+      calls.push(call);
+      if (call.stage.kind === 'develop') throw new Error('fixture stopped after developer input inspection');
+      return { observed: call.assignment.role };
+    });
     const graph = configuredGraph(host, {
       kind: 'feature',
       intent: 'implementation_new',
@@ -2760,14 +2776,8 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       risk_flags: [],
       labels: [],
     });
-    const result = await graph.dispatch(workItem.id);
-    expect(result.failedAssignments).toEqual([]);
+    await expectRejection(graph.dispatch(workItem.id), /fixture stopped after developer input inspection/);
     const expectedRoles = ['security-prewriter', 'source-planner'];
-    expect(
-      requireFixtureValue(result.stageOutputs.review_source_prewrite)
-        .map((value) => value.role)
-        .sort((left, right) => left.localeCompare(right)),
-    ).toEqual(expectedRoles);
     const prewriterCalls = calls.filter((call) => call.stage.id === 'review_source_prewrite');
     expect(prewriterCalls.map((call) => call.assignment.role).sort((left, right) => left.localeCompare(right))).toEqual(
       expectedRoles,
@@ -2786,6 +2796,7 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       ),
     ).toBe(true);
     const developer = calls.find((call) => call.stage.kind === 'develop');
+    expect(developer).toBeDefined();
     expect(
       arrayValues(readRecordField(readRecordField(developer?.input, 'stage_outputs'), 'review_source_prewrite'))
         .map((value) => readRecordField(value, 'role'))
