@@ -121,7 +121,7 @@ const mainRuntimeCoreShardSources = ['src/runtime-kernel.ts'] as const;
 const mainRuntimeCoreShardTests: readonly InputDigest[] = [
   {
     path: 'tests/configured-workflow.test.ts',
-    sha256: '17fefec740452a1d44239ae127d9970d1ced3cfe947352e43994aff4d5c26d4f',
+    sha256: 'ab66245ad2594df09fad52f5f628ad4131d1d2291c33ab0bb4e7910d8d3e11e7',
   },
   {
     path: 'tests/interrupted-source-retirement.test.ts',

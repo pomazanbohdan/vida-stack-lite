@@ -1440,14 +1440,15 @@ reference is this section's
 dispatches the real graph, compares authoritative high-risk work-item data with
 an empty preview, and checks that both mandatory prewriter results reach the
 developer. Its isolated fixture keeps one researcher to produce the synthesis
-packet, while the table-driven cases retain full-graph coverage; the host
+packet; table-driven cases retain full-graph stage coverage with one researcher
+per workflow. The host
 adapter deliberately stops after recording the developer input. The exact
-current digest is `17fefec740452a1d44239ae127d9970d1ced3cfe947352e43994aff4d5c26d4f`.
+current digest is `ab66245ad2594df09fad52f5f628ad4131d1d2291c33ab0bb4e7910d8d3e11e7`.
 The targeted check passed 1/1 tests and 9 assertions; the latest test body time
 was 2.49s (3.69s including Bun startup). This resource review only enables the
 exact F/L/S/B diagnostic shard plan; it does not publish coverage or close the
-contour. Typecheck, staged hooks, and a fresh exact coverage stage on the next
-matching Source/SDK artifact remain pending.
+contour. The next matching commit-bound Source/SDK artifact stage is recorded
+below.
 
 ### main-runtime-core-focused-shard-resource-review
 
@@ -1482,5 +1483,36 @@ the synthesis, real prewriter graph, and developer-input assertions. It now
 stops the host adapter at the developer boundary after capturing the relevant
 input, avoiding downstream workflow work. The focused test passes in 2.49s
 (3.69s including Bun startup); the pinned digest and this exact selection's
-resource review are updated. The fresh commit still needs its matching CI SDK
-artifact before another F/L/S/B stage can run.
+resource review are updated. The next F/L/S/B stage on the following commit is
+recorded below.
+
+### F/L/S/B main-runtime-core two-shard partial run — 2026-10-19
+
+Stage `contour-stage-T9AqXk` ran commit
+`afa3e6d2ea52fbc48d740efccb6f3c637a432071` with SDK test inputs from successful
+CI run `39274692474`, artifact `12196906884`, SHA-256
+`34c306b7f4537721ad63a74a3bc027078d1ca7a12eb9a683005f4e5085c72342`. The
+reviewed two-shard selection closed after 234.435 seconds with complete output
+capture, unchanged image inputs and a closed process group. Shard 1 completed
+227 tests and 1,106 assertions with two timeouts: the full configured graph for
+`implementation_new` took 5.912s and `implementation_change` took 5.446s against
+the 5-second per-test limit. Shard 2 completed 13 tests and 196 assertions with
+one timeout: `admitted protected session commits an observed result and its
+approval exactly once` took 31.503s and its 30-second fixture deadline expired
+before `fixture-ready`. The shard producer rejected these unsuccessful
+terminals and published no attributable report; F/L/S/B counters remain
+unaccepted. Full JUnit, logs, supervisor receipt, image and publication error
+are retained under `/workspace/contour-stage-T9AqXk`; this run will not be
+replayed.
+
+The fixture-only graph optimization now keeps one effective researcher in each
+table-driven workflow that has a research stage. All configured stages and
+their output/dependency assertions still run; the selected research stage still
+produces the synthesis consumed by later stages. The six focused graph cases
+passed with 116 assertions; the slowest test body was 3.492s. The separate
+protected-session setup passed in 24.625s without coverage. Its opt-in phase
+trace measured admission/bridge startup at 7.781s, task synthesis at 4.970s,
+and writer-issue plus execution setup at 8.386s. The test has a justified
+30-second exception and no timeout was raised. The focused full-graph run now
+reduces concurrent load; its effect on the protected-session deadline must be
+rechecked by the next commit-bound F/L/S/B stage.

@@ -130,6 +130,17 @@ function mutableFixtureConfig(): AgentRuntimeConfig {
   return structuredClone(parseRuntimeConfigYaml(yaml));
 }
 
+async function keepOneResearchAssignment(workflowId: string): Promise<void> {
+  const fixture = mutableFixtureConfig();
+  const workflow = requireFixtureValue(fixture.workflows[workflowId]);
+  const research = workflow.stages.find((stage) => stage.kind === 'research');
+  if (!research) return;
+  const assignment = requireFixtureValue(research.assignments.find(({ risk_flags }) => !risk_flags?.length));
+  setFixtureField(research, 'assignments', [assignment]);
+  await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
+  config = loadRuntimeConfig(root);
+}
+
 function requireFixtureValue<Value>(value: Value | undefined): Value {
   if (value === undefined) throw new Error('configured fixture is missing a required element');
   return value;
@@ -2317,6 +2328,7 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
     'executes every configured stage for %s through the host',
     async (workflowId, intent, kind, provider, providerType) => {
       workItem = { ...workItem, intent, canonical_kind: kind, provider, provider_type: providerType };
+      await keepOneResearchAssignment(workflowId);
       const host = await compose();
       const graph = configuredGraph(host);
       const result = await graph.dispatch(workItem.id);
@@ -2744,18 +2756,8 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       intent: 'implementation_new',
       risk_flags: ['high'],
     };
-    // One researcher preserves synthesis while avoiding four unrelated dispatches.
-    // Table-driven cases still exercise full graph fan-out.
-    const compact = mutableFixtureConfig();
-    const implementation = requireFixtureValue(compact.workflows.implementation_new);
-    const research = requireFixtureValue(implementation.stages.find((stage) => stage.id === 'research_parallel'));
-    setFixtureField(
-      research,
-      'assignments',
-      research.assignments.filter(({ role }) => role === 'requirements-researcher'),
-    );
-    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(compact));
-    config = loadRuntimeConfig(root);
+    // One researcher preserves synthesis while avoiding unrelated host dispatches.
+    await keepOneResearchAssignment('implementation_new');
     const compiled = compileDevelopmentWorkflow(config, 'default-development', 'implementation_new', ['high']);
     expect(
       compiled.waves
