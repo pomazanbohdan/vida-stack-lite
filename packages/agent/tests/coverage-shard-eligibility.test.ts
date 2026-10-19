@@ -694,6 +694,44 @@ describe('prepareCurrentCoverageShardLaunches', () => {
     }
   });
 
+  test('binds focused shard config, preload and manifest to the diagnostic snapshot root', () => {
+    const fixture = currentShardPolicyFixture();
+    const runOutputRoot = path.join(fixture.root, 'coverage', 'bun-unified', 'diagnostics');
+    const inputs: CoverageInputs = {
+      ...fixture.inputs,
+      test_selection: {
+        mode: 'focused-diagnostic',
+        contour: 'focused-fixture',
+        sources: fixture.inputs.sources.map(({ path: file }) => file),
+        tests: [...fixture.inputs.tests],
+      },
+    };
+    let passed = false;
+    try {
+      writeCurrentShardReview(fixture, { inputs });
+      const prepared = callCurrentShardBuilder(fixture, { inputs });
+
+      expect(prepared.status).toBe('prepared');
+      if (prepared.status !== 'prepared') throw new Error('Focused fixture review was not admitted.');
+      const runDirectory = path.join(runOutputRoot, 'runs', fixture.runId);
+      const snapshotDirectory = path.join(runDirectory, 'snapshot');
+      expect(prepared.binding.snapshot_directory).toBe(snapshotDirectory);
+      expect(existsSync(runDirectory)).toBe(false);
+      for (const launch of prepared.launches) {
+        expect(launch.args).toContain(`--config=${path.join(snapshotDirectory, 'bunfig.toml')}`);
+        const preloadIndex = launch.args.indexOf('--preload');
+        expect(preloadIndex).toBeGreaterThanOrEqual(0);
+        expect(launch.args[preloadIndex + 1]).toBe(path.join(snapshotDirectory, 'tooling', 'bun-coverage-preload.ts'));
+        expect(launch.env.VIDA_BUN_COVERAGE_MANIFEST).toBe(path.join(runDirectory, 'manifest.json'));
+        expect(launch.env.VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY).toBe(snapshotDirectory);
+      }
+      passed = true;
+    } finally {
+      if (passed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('Preserved failed focused shard path fixture at ' + fixture.root);
+    }
+  });
+
   test('offers copied captured metadata and the current owner scope to an optional review callback', () => {
     const fixture = currentShardPolicyFixture();
     let passed = false;

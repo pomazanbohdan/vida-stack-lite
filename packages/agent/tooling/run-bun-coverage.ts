@@ -519,7 +519,14 @@ export function prepareCoverageShardLaunches(input: {
       reason: 'review-environment-stale-or-mismatched',
       reviewScopeSha256: eligibility.reviewScopeSha256,
     };
-  const runDirectory = path.join(input.root, 'coverage', 'bun-unified', 'runs', input.run_id);
+  const runDirectory = path.join(
+    input.root,
+    'coverage',
+    'bun-unified',
+    ...(selectionMode === 'focused-diagnostic' ? ['diagnostics'] : []),
+    'runs',
+    input.run_id,
+  );
   const snapshotDirectory = path.join(runDirectory, 'snapshot');
   const manifestPath = path.join(runDirectory, 'manifest.json');
   const tests = input.selected_test_inputs.map(({ path: file }) => file).sort();

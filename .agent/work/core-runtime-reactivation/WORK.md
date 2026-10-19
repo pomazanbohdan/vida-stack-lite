@@ -1344,3 +1344,31 @@ serial dispatch; token/tool-call totals are unavailable. Keep numeric producers
 under the single Root owner. Next coverage repairs require a current immutable
 Source/SDK image and a fresh, complete accepted report after the compact publisher
 change is committed; historical counters remain unqualified and unchanged.
+
+### F/L/S/B main-runtime-core focused path correction — 2026-10-19
+
+The exact focused coverage stage `contour-stage-TILZZZ` used Source commit
+`128c85f0dcec77f10f3a81a8ec42c8a33b2db1ee`. It ended in 7.07 seconds with exit
+code 1, complete output capture, unchanged execution-image inputs and no timeout.
+Both shard processes exited 1. Report validation rejected their sealed argv
+because the focused manifest and snapshot lived under
+`coverage/bun-unified/diagnostics/runs`, while shard preparation pointed Bun's
+config and preload at `coverage/bun-unified/runs`. No exact F/L/S/B report was
+published. The stage and its original logs remain retained at
+`/workspace/contour-stage-TILZZZ`.
+
+The `CoverageInputs.test_selection` mode now selects the matching run directory
+when shard preparation seals config, preload and manifest paths. A focused
+regression test failed before the fix with the two snapshot paths shown above.
+After the fix, the focused shard-eligibility and shard-evidence tests passed: 80
+tests, 304 assertions, 1.34 seconds. Source typecheck passed for 101 files, and
+OxFmt plus `git diff --check` passed. Vex incrementally updated 2 changed files,
+0 deleted, 10,678 indexed symbols.
+
+The failing-before test fixture remains retained at
+`/home/agent/.cache/vida-cloud-tooling/tmp/coverage-current-shard-policy-PqViTt`.
+This repair changes coverage-launch path binding only. It does not change the
+coverage scope, exact gates, frozen CRAP, mutation policy or execution budgets.
+The full contour is still open. A fresh exact F/L/S/B run needs the committed
+Source and its matching successful CI SDK test-input artifact. The failed stage
+is not replayed or counted as coverage evidence.
