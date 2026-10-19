@@ -39,6 +39,9 @@ export type Catalog = {
 export type TagEntry = { tag: string; description: string; aliases: string[] };
 export type InstructionMetadata = { instruction_id: string; title: string; summary: string; capability_tags: string[]; pattern_tags: string[]; revision: number };
 export type SearchQuery = { capability_tags?: string[]; pattern_tags?: string[]; instruction_ids?: string[]; roles?: string[]; products?: string[]; conditions?: string[] };
+export type DecisionRequest = { operation: string; product?: string; context?: string; tags?: string[]; candidates: string[] };
+export type DecisionFallbackReason = 'no-candidates' | 'unknown-candidate' | 'candidate-not-allowed' | 'invalid-format';
+export type DecisionResult = { selected: string[]; score: number; rationale: string; provider: 'catalog' | 'agent'; fallback: boolean; fallbackReason: DecisionFallbackReason | null };
 export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }> };
 export type ComposeQuery = SearchQuery & { required_ids?: string[]; profile?: EffectiveProfile; role?: string; task_contract?: string; effective_methodology?: string; work_scope?: string; materialization_requirements?: string[]; artifact_references?: string[] };
 export type ComposedInstruction = { instruction_id: string; title: string; summary: string; content: string; capability_tags: string[]; pattern_tags: string[]; artifact_contract: Instruction['artifact_contract']; provenance: Provenance[]; selection_reason: 'matched' | 'dependency' | 'required' };
@@ -55,7 +58,7 @@ function invalid(message: string, details: Record<string, unknown> = {}): Catalo
   return new CatalogError('CATALOG_INVALID', message, details);
 }
 
-async function readSchema(directory: string, name: string): Promise<Schema> {
+export async function readSchema(directory: string, name: string): Promise<Schema> {
   let text: string;
   try {
     text = await readFile(join(directory, 'config', name), 'utf8');
@@ -247,6 +250,70 @@ export function catalogSearch(catalog: Catalog, instructions: Map<string, Instru
     .filter((instruction) => matchesConditions(instruction, query.conditions))
     .sort((left, right) => compareNames(left.instruction_id, right.instruction_id))
     .map(({ instruction_id, title, summary, capability_tags, pattern_tags, revision }) => ({ instruction_id, title, summary, capability_tags, pattern_tags, revision }));
+}
+
+function decisionFallback(fallbackReason: DecisionFallbackReason, rationale: string): DecisionResult {
+  return { selected: [], score: 0, rationale, provider: 'agent', fallback: true, fallbackReason };
+}
+
+export function decisionEvaluate(catalog: Catalog, instructions: Map<string, Instruction>, request: DecisionRequest): DecisionResult {
+  if (typeof request !== 'object' || request === null) {
+    return decisionFallback('invalid-format', 'Request is malformed: request must be an object.');
+  }
+  const malformed: string[] = [];
+  if (typeof request.operation !== 'string' || request.operation.trim() === '') malformed.push('operation must be a non-empty string');
+  if (!Array.isArray(request.candidates)) malformed.push('candidates must be an array');
+  else if (request.candidates.some((candidate) => typeof candidate !== 'string')) malformed.push('candidates must contain only strings');
+  if (request.tags !== undefined && (!Array.isArray(request.tags) || request.tags.some((tag) => typeof tag !== 'string'))) {
+    malformed.push('tags must be an array of strings');
+  }
+  if (request.product !== undefined && typeof request.product !== 'string') malformed.push('product must be a string when present');
+  if (request.context !== undefined && typeof request.context !== 'string') malformed.push('context must be a string when present');
+  if (malformed.length > 0) return decisionFallback('invalid-format', `Request is malformed: ${malformed.join('; ')}.`);
+  const candidates = request.candidates;
+  const tags = request.tags ?? [];
+  if (candidates.length === 0) return decisionFallback('no-candidates', `Operation "${request.operation}" has no candidates; the agent must decide.`);
+  const manifestIds = new Set(catalog.instructions.map((entry) => entry.instruction_id));
+  const unknown = candidates.find((id) => !manifestIds.has(id));
+  if (unknown !== undefined) return decisionFallback('unknown-candidate', `Candidate "${unknown}" is not in the catalog; the agent must decide.`);
+  const disallowed = candidates.find((id) => {
+    const instruction = instructions.get(id);
+    return instruction === undefined || instruction.status !== 'active';
+  });
+  if (disallowed !== undefined) return decisionFallback('candidate-not-allowed', `Candidate "${disallowed}" is not admissible; the agent must decide.`);
+
+  const requestedTags: string[] = [];
+  const unknownTags: string[] = [];
+  for (const tag of tags) {
+    const canonical = catalog.tag_aliases[tag] ?? tag;
+    if (Object.prototype.hasOwnProperty.call(catalog.tag_dictionary.capability, canonical)
+      || Object.prototype.hasOwnProperty.call(catalog.tag_dictionary.pattern, canonical)) requestedTags.push(canonical);
+    else unknownTags.push(tag);
+  }
+  if (unknownTags.length > 0) return decisionFallback('invalid-format', `Request is malformed: unknown tag${unknownTags.length === 1 ? '' : 's'} ${unknownTags.map((tag) => `"${tag}"`).join(', ')}.`);
+  const uniqueTags = [...new Set(requestedTags)];
+  const ranked = [...new Set(candidates)]
+    .map((id) => instructions.get(id))
+    .filter((instruction): instruction is Instruction => instruction !== undefined)
+    .map((instruction) => ({
+      instruction,
+      matchedTags: uniqueTags.filter((tag) => instruction.capability_tags.includes(tag) || instruction.pattern_tags.includes(tag)),
+    }))
+    .filter(({ matchedTags }) => uniqueTags.length === 0 || matchedTags.length > 0)
+    .sort((left, right) => compareNames(left.instruction.instruction_id, right.instruction.instruction_id));
+  const score = ranked.reduce((best, item) => Math.max(best, item.matchedTags.length), 0);
+  const tagText = tags.length === 0 ? 'no tags' : `tags [${tags.join(', ')}]`;
+  const productText = request.product === undefined ? '' : ` for product "${request.product}"`;
+  const contextText = request.context === undefined ? '' : ` in context "${request.context}"`;
+  const rationale = `Operation "${request.operation}" requested ${tagText}${productText}${contextText}; evaluated ${candidates.length} candidates and shortlisted ${ranked.length}; matched ${score} of ${uniqueTags.length} requested tags; score is uncalibrated.`;
+  return {
+    selected: ranked.map(({ instruction }) => instruction.instruction_id),
+    score,
+    rationale,
+    provider: 'catalog',
+    fallback: false,
+    fallbackReason: null,
+  };
 }
 
 export function catalogGet(_catalog: Catalog, instructions: Map<string, Instruction>, id: string): Instruction {

@@ -214,23 +214,34 @@ test `tests/schema.test.ts`.
 
 ### Task 4 — `decision.evaluate` (детермінована версія) і CLI
 
-**Files:** create `skills/vp-mode/scripts/catalog-cli.ts`; test `tests/catalog-cli.test.ts`.
+**Files:** extend `skills/vp-mode/scripts/catalog.ts` (операція `decision.evaluate` —
+чиста функція каталогу); create `skills/vp-mode/scripts/catalog-cli.ts`; test
+`tests/catalog-cli.test.ts`.
 
 **Interfaces:**
-- `decisionEvaluate(catalog, request): DecisionResult` — вхід: `{ operation, product, context, tags, candidates[] }`;
-  вихід: `{ selected: string[], score, rationale, provider: 'catalog' | 'agent', fallback: boolean, fallbackReason: string | null }`.
-  Детермінована поведінка: candidates порожні → `fallback: true` з причиною
-  `no-candidates`; candidate поза `candidates[]` → `fallback: true` (`unknown-candidate`);
-  інакше — shortlist за тегами з `provider: 'catalog'`.
+- `decisionEvaluate(catalog, instructions, request): DecisionResult` — вхід:
+  `{ operation, product?, context?, tags?, candidates[] }`; вихід:
+  `{ selected: string[], score, rationale, provider: 'catalog' | 'agent', fallback: boolean, fallbackReason: 'no-candidates' | 'unknown-candidate' | 'candidate-not-allowed' | 'invalid-format' | null }`.
+  Детермінована поведінка (SR-16, SR-18, SR-20): некоректний запит →
+  `invalid-format`; порожні кандидати → `no-candidates`; невідомий ID →
+  `unknown-candidate`; вимкнений кандидат → `candidate-not-allowed`; усі
+  кандидати допустимі → shortlist за тегами (alias → канонічний; «хоча б один» у
+  вимірі, «і» між вимірами), `provider: 'catalog'`, `score` = число збігів
+  вимірів у найкращого кандидата (шкала **не** відкалібрована — це видно з
+  rationale), `fallback: false`. Жодного збігу кандидатів — **не** відмова: порожній
+  shortlist із `provider: 'catalog'`.
 - CLI: `bun catalog-cli.ts <tags|search|get|compose|evaluate> [--catalog <path>]
-  [--capability a,b] [--pattern c] [--id x] [--required y] [--profile <path>]
-  [--json]`; JSON на stdout, помилки — JSON на stderr + exit 1.
+  [--capability a,b] [--pattern c,d] [--id x] [--required a,b] [--role r]
+  [--product p] [--condition text] [--profile <path>] [--operation name]
+  [--context text] [--tag t]... [--candidate id]... [--json]`; JSON на stdout,
+  помилки — JSON `{code,message,details}` на stderr + exit 1. Каталог
+  знаходиться **від власного файлу** (`import.meta.url`), перекриття — `--catalog`.
 
 **Кроки:**
 1. Тести `tests/catalog-cli.test.ts`: JSON на stdout; помилка → JSON на stderr і
    ненульовий exit; `evaluate` без кандидатів → `fallback: true`; пошук каталогу
    відносно файлу (без cwd). → тести падають.
-2. Створити `catalog-cli.ts`.
+2. Створити `catalog-cli.ts` і додати `decisionEvaluate` у `catalog.ts`.
 3. `bun run --cwd packages/powers test` → проходить; `typecheck` → 0 помилок.
 4. Коміт: `build(powers): add deterministic decision evaluation and the catalog CLI`.
 
@@ -305,7 +316,7 @@ test `tests/schema.test.ts`.
 | 1. Схеми VP + міні-валідатор | **закрито** | `config/vpcatalog.v1.schema.json`, `config/vpinstruction.v1.schema.json`, `config/vpeffectiveprofile.v1.schema.json`, `skills/vp-mode/scripts/schema.ts`, `tests/schema.test.ts` — 32 тести, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 4 незалежні рев'ю-раунди, фінальний вердикт ACCEPT |
 | 2. Парсер frontmatter | **закрито** | `skills/vp-mode/scripts/frontmatter.ts`, `tests/frontmatter.test.ts` — 47 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 рев'ю-раунди, фінальний вердикт ACCEPT |
 | 3. Модель каталогу + `catalog.*` | **закрито** | `skills/vp-mode/scripts/catalog.ts`, `tests/catalog.test.ts`, `tests/fixtures/catalog/` — 96 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 рев'ю-раунди, фінальний вердикт ACCEPT |
-| 4. `decision.evaluate` + CLI | у черзі | — |
+| 4. `decision.evaluate` + CLI | **закрито** | `skills/vp-mode/scripts/catalog.ts` (+`decisionEvaluate`), `skills/vp-mode/scripts/catalog-cli.ts`, `tests/catalog-cli.test.ts` — 126 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 2 рев'ю-раунди, фінальний вердикт ACCEPT |
 | 5. Seed-корпус + манифести + валідатор | у черзі | — |
 | 6. `convert.ts` (єдиний writer) | у черзі | — |
 
