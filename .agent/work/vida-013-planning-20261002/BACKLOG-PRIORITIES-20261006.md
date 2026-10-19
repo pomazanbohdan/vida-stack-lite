@@ -1,6 +1,6 @@
 # VIDA backlog priorities
 
-Status date: 2026-10-18. This page is the current priority index. The eight P0 and ten P1 rows are work contours, not counts of confirmed defects. Stable task IDs and historical decisions remain recoverable at `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e:.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md`.
+Status date: 2026-10-19. This page is the current priority index. The eight P0 and ten P1 rows are work contours, not counts of confirmed defects. Stable task IDs and historical decisions remain recoverable at `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e:.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md`.
 
 The execution order lives in [CLEAN-START-STRATEGY-20261009.md](../core-runtime-reactivation/CLEAN-START-STRATEGY-20261009.md). Current evidence lives in [WORK.md](../core-runtime-reactivation/WORK.md). Root owns integration and final acceptance.
 Current preparation and terminal measurements are maintained once in
@@ -47,8 +47,10 @@ acceptance. Complete numeric qualification and runtime cutover remain open.
 ## Test acceptance boundary
 
 The owner now selects the [rolling three-contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle): one blind Luna lane per contour,
-repair and affected checks before numeric qualification, immediate slot refill
-only after a compatible exact coverage/frozen-CRAP/assertion-Killed100 closure.
+repair and affected checks before numeric qualification. The 2026-10-19 owner
+directive now refills a slot after compatible exact F/L/S/B coverage and defers
+frozen CRAP and mutation until all coverage contours are ready. Full closure still
+requires their compatible complete triple; all original gates remain unchanged.
 Root owns final checks and integrates isolated preparation after terminal custody.
 Current audit corrections and unresolved per-field validation, cleanup analogues
 and optimization candidates are recorded once in WORK, under the existing P0/P1

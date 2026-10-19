@@ -999,8 +999,10 @@ sets, with canonical sorted capture metadata. Descriptor tests retain the regist
 order used by execution and proof joins. Runner and offline reader share the
 versioned selection validator; v3 cannot carry a focused selection, and v4 cannot
 claim full-current scope or omit/add partition tests. The existing input owner
-captures the transitive closure and requires SDK artifacts only when that selection
-contains the SDK compatibility test. The general full-current producer retains v3.
+captures the transitive closure and requires SDK artifacts when
+selectedTestsRequireSdkArtifacts identifies a selected SDK consumer, including
+public launch/controller tests that check emitted-export completeness. Source
+execution alone does not remove that dependency. The general full-current producer retains v3.
 Both versions bind actual source/test/tool bytes and fingerprints. A partition
 descriptor supplies no global qualification or exemption from complete mutant
 universe, native baseline, JUnit completeness or assertion-confirmed Killed gates.

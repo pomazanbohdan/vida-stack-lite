@@ -2,7 +2,6 @@ import { expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.js';
 import { projectInitializationIdentityDigest } from '../src/config/project-activation.js';
 import type { ProjectInitializationReceipt } from '../src/config/project-initialization-record.js';
@@ -12,12 +11,13 @@ import {
   PROJECT_WORKSPACE_DATABASE_PATH,
   projectConfigurationRebindPath,
 } from '../src/config/project-paths.js';
-import { loadRuntimeConfig, type AgentRuntimeConfig } from '../src/config/runtime-config.js';
+import type { AgentRuntimeConfig } from '../src/config/runtime-config.js';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from '../src/config/safe-repository-access.js';
 import {
   assertCurrentProjectConfigurationBinding,
   type ProjectConfigurationInputTexts,
 } from '../src/config/project-configuration-rebind.js';
+import { configuredTestContext } from './configured-context.ts';
 
 interface ProjectInputSet {
   schema: 'ProjectConfigurationInputSet/v1';
@@ -71,8 +71,7 @@ interface Fixture {
   operation: RebindOperation;
 }
 
-const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const config = loadRuntimeConfig(repositoryRoot);
+const { config } = configuredTestContext();
 const operationId = 'fixture-rebind';
 const workspaceId = 'a'.repeat(64);
 

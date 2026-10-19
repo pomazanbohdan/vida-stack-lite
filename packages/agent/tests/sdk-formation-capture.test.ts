@@ -45,9 +45,26 @@ async function expectRejected(action: () => Promise<unknown>, expected: RegExp):
 }
 
 describe('SDK formation capture projection', () => {
-  test.each(['full', 'focused', 'focused-bin', 'focused-launcher'] as const)(
+  test.each([
+    ['full', 'tests/sdk-package-compatibility.test.ts'],
+    ['focused', 'tests/sdk-package-compatibility.test.ts'],
+    ['focused-bin', 'tests/sdk-package-compatibility.test.ts'],
+    ['focused-launcher', 'tests/paused-replacement-entrypoint.test.ts'],
+    ['focused-retirement', 'tests/interrupted-source-retirement.test.ts'],
+    ['focused-stopped-source', 'tests/stopped-source-capture.test.ts'],
+    ['focused-controller', 'tests/development-controller.test.ts'],
+    ['focused-final-assurance', 'tests/final-assurance-public.test.ts'],
+    ['focused-absorption', 'tests/automatic-work-absorption.test.ts'],
+    ['focused-source-continuation', 'tests/initial-source-continuation.test.ts'],
+    ['focused-initialization', 'tests/initialization.test.ts'],
+    ['focused-task-binding', 'tests/task-source-binding-operations.test.ts'],
+    ['focused-run', 'tests/run-entrypoint.test.ts'],
+    ['focused-config-rebind', 'tests/runtime-config-rebind.test.ts'],
+    ['focused-source-config-rebind', 'tests/runtime-config-rebind-source.test.ts'],
+    ['focused-scoped-source', 'tests/scoped-source-snapshot.test.ts'],
+  ] as const)(
     'joins %s quality capture to SDK formation without another input read and rejects stale artifacts',
-    async (mode) => {
+    async (mode, sdkTest) => {
       const root = fixtureRoot();
       const write = (relative: string, bytes: string | Buffer): void => {
         const target = path.join(root, relative);
@@ -65,6 +82,7 @@ describe('SDK formation capture projection', () => {
       write('bin/cli-metadata.ts', 'export const inert = true;\n');
       write('tests/sdk-package-compatibility.test.ts', "import '../bin/cli-metadata.ts';\n");
       write('tests/paused-replacement-entrypoint.test.ts', "import '../bin/cli-metadata.ts';\n");
+      write(sdkTest, "import '../bin/cli-metadata.ts';\n");
       write('TESTING.md', '# Captured launcher fixture contract\n');
       write('templates/inert.yaml', 'inert: true\n');
       write('instructions/inert.md', 'inert\n');
@@ -101,11 +119,7 @@ describe('SDK formation capture projection', () => {
               mode: 'focused-diagnostic' as const,
               contour: 'sdk-fixture',
               sources: [selectedSource],
-              tests: [
-                mode === 'focused-launcher'
-                  ? 'tests/paused-replacement-entrypoint.test.ts'
-                  : 'tests/sdk-package-compatibility.test.ts',
-              ],
+              tests: [sdkTest],
             };
       const inputs = await qualityInputs(root, [], selection);
       if (mode === 'focused-launcher') {
@@ -124,7 +138,7 @@ describe('SDK formation capture projection', () => {
       expect([...projected.selectedInputs.keys()]).toEqual([...sdkInputs.keys()]);
       for (const [file, bytes] of sdkInputs) expect(projected.selectedInputs.get(file)).toEqual(bytes);
       if (mode === 'full') expect(inputs.sources.map((entry) => entry.path)).toContain('bin/cli-metadata.ts');
-      if (mode === 'focused' || mode === 'focused-launcher')
+      if (mode !== 'full' && mode !== 'focused-bin')
         expect(inputs.tool_inputs.map((entry) => entry.path)).toContain('bin/cli-metadata.ts');
       else expect(inputs.tool_inputs.map((entry) => entry.path)).not.toContain('bin/cli-metadata.ts');
       if (mode !== 'full') {

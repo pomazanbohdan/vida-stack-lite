@@ -1149,6 +1149,51 @@ describe('final quality input projections', () => {
     }
   });
 
+  test.each([
+    ['tests/helpers/init-bundle.ts', ['TESTING.md']],
+    ['tests/helpers/runtime-config-rebind-fixture.ts', ['TESTING.md']],
+    ['tests/init-entrypoint-v8.test.ts', ['TESTING.md', 'README.md']],
+    ['tests/session-handoff.test.ts', ['TESTING.md']],
+    ['tests/audit-partial-init.test.ts', ['TESTING.md']],
+  ] as const)('captures copied package data for %s without widening unrelated selections', async (reader, files) => {
+    const root = fixtureRoot();
+    const helper = path.join(root, reader);
+    mkdirSync(path.dirname(helper), { recursive: true });
+    writeFileSync(helper, 'export const fixture = true;\n');
+    for (const file of files) writeFileSync(path.join(root, file), '# Original fixture data\n');
+    const selection = {
+      mode: 'focused-diagnostic' as const,
+      contour: 'copied-fixture-data',
+      sources: ['src/host-state.ts'],
+      tests: ['tests/fixture.test.mjs'],
+    };
+    try {
+      const unrelated = await coverageInputs(root, selection);
+      for (const file of files) expect(unrelated.input_bytes[file]).toBeUndefined();
+      writeFileSync(path.join(root, selection.tests[0]!), `import './${reader.slice('tests/'.length)}';\n`);
+      const before = await coverageInputs(root, selection);
+      expect(before.sources.map(({ path: file }) => file)).toEqual(selection.sources);
+      expect(before.tests).toEqual(selection.tests);
+      for (const file of files) {
+        expect(before.input_bytes[file]?.toString()).toBe('# Original fixture data\n');
+        expect(before.tool_inputs.filter((entry) => entry.path === file)).toHaveLength(1);
+        expect(before.module_inputs.filter((entry) => entry.path === file)).toHaveLength(1);
+        writeFileSync(path.join(root, file), '# Changed fixture data\n');
+        const changed = await coverageInputs(root, selection);
+        expect(changed.source_fingerprint).toBe(before.source_fingerprint);
+        expect(changed.test_fingerprint).toBe(before.test_fingerprint);
+        expect(changed.tool_fingerprint).not.toBe(before.tool_fingerprint);
+        rmSync(path.join(root, file));
+        await expectRejected(() => coverageInputs(root, selection), new RegExp(file.replace('.', '\\.'), 'u'));
+        writeFileSync(path.join(root, file), '# Original fixture data\n');
+      }
+    } catch (error) {
+      temporaryRoots.splice(temporaryRoots.indexOf(root), 1);
+      console.error(`Retained failed copied fixture data capture: ${root}`);
+      throw error;
+    }
+  });
+
   test('captures computed test roots and non-code leaves without widening selected Source', async () => {
     const root = fixtureRoot();
     const testPath = 'tests/envelopes-boundary.test.ts';

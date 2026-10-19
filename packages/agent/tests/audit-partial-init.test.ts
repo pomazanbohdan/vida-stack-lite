@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from 'bun:test';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { stringify } from 'yaml';
@@ -22,7 +23,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const scratch = path.resolve(bundle, '../../.tmp/audit-partial-init-fixtures');
 const roots: string[] = [];
 const cleanupRoots = new Set<string>();
 const children = new Set<Promise<BoundedSubprocessResult>>();
@@ -38,8 +38,7 @@ function allowFixtureCleanup(...fixtureRoots: readonly string[]): void {
   for (const root of fixtureRoots) cleanupRoots.add(root);
 }
 async function consumer(): Promise<string> {
-  await mkdir(scratch, { recursive: true });
-  const root = await mkdtemp(path.join(scratch, 'consumer-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'vida-audit-partial-init-'));
   roots.push(root);
   await mkdir(path.join(root, '.git'));
   return root;

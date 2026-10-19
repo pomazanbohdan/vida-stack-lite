@@ -3,9 +3,7 @@ import { expect } from 'bun:test';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { deriveWorkspaceId } from '../../src/workspace-identity.js';
-import { loadRuntimeConfig } from '../../src/config/runtime-config.js';
 import {
   closeServiceOperationDatabase,
   openServiceOperationDatabase,
@@ -13,6 +11,7 @@ import {
 import { acquireStorageReadAdmission } from '../../src/config/storage-read-admission.js';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.js';
 import { expectReturned } from './expect-rejection.js';
+import { configuredTestContext } from '../configured-context.ts';
 
 // Independent test oracle: fixture preparation must not execute the mutable
 // schema initializer. Its real SQLite output is checked against this contract.
@@ -91,12 +90,13 @@ export function openCustodyFixture(prefix = 'service-capability-'): ServiceCusto
 function openRepositoryFixture(prefix: string): { readonly root: string; readonly workspaceId: string } {
   const root = mkdtempSync(path.join(tmpdir(), prefix));
   try {
-    copyRepositoryConfiguration(root);
+    const configured = configuredTestContext();
+    copyRepositoryConfiguration(root, configured.repositoryRoot);
     mkdirSync(path.join(root, '.vida'));
     const configuration = readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8');
     let repositoryId = repositoryIdsByConfiguration.get(configuration);
     if (repositoryId === undefined) {
-      repositoryId = loadRuntimeConfig(root).repository.repository_id;
+      repositoryId = configured.config.repository.repository_id;
       repositoryIdsByConfiguration.clear();
       repositoryIdsByConfiguration.set(configuration, repositoryId);
     }
@@ -107,10 +107,7 @@ function openRepositoryFixture(prefix: string): { readonly root: string; readonl
   }
 }
 
-function copyRepositoryConfiguration(root: string): void {
-  const repositoryRoot =
-    process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
-    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+function copyRepositoryConfiguration(root: string, repositoryRoot: string): void {
   for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'])
     copyFileSync(path.join(repositoryRoot, file), path.join(root, file));
 }

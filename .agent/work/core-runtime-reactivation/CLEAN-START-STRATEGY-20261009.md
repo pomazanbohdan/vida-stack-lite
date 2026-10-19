@@ -54,6 +54,13 @@ has an explicit `--coverage-only` route. Use `test:contours --unclosed
 belongs to the later phase. Retain
 incidental CC/entryCRAP from coverage as observations, without a frozen-pass claim.
 
+The first coverage-only campaign completes all 44 selected stages on 567ab50.
+WORK owns its terminal classification and the separate exact governance milestone.
+Continue with bounded affected stages after the shared SDK/data/context repairs,
+then the remaining measured deficits. Resolve the activated-config resume cost and
+qualify CLI child counters through existing capture/report owners. Do not rerun
+all unchanged contours after each correction or count child assertions as counters.
+
 #### Execute captured inputs without measurement worktrees
 
 The owner requests implementation after Pstack's independent design comparison.

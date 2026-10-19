@@ -11,7 +11,7 @@ import {
 } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { test } from 'bun:test';
 import { expectReturned } from './helpers/expect-rejection.ts';
@@ -23,8 +23,7 @@ const source = path.resolve(process.env.VIDA_CACHE_ROUTING_SOURCE_ROOT ?? bundle
 const baseline = path.resolve(process.env.VIDA_CACHE_ROUTING_BASELINE_ROOT ?? bundle);
 const dependencies = path.resolve(process.env.VIDA_CACHE_ROUTING_DEPENDENCY_ROOT ?? baseline);
 const scratch = path.resolve(
-  process.env.VIDA_CACHE_ROUTING_FIXTURE_ROOT ??
-    path.join(path.dirname(realpathSync(baseline)), '.tmp/vida-bun-cache-routing-fixtures'),
+  process.env.VIDA_CACHE_ROUTING_FIXTURE_ROOT ?? mkdtempSync(path.join(tmpdir(), 'vida-bun-cache-routing-fixtures-')),
 );
 const scratchWithinBaseline = path.relative(realpathSync(baseline), scratch);
 assert.ok(

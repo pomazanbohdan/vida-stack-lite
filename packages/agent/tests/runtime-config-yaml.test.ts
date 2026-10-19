@@ -5,6 +5,7 @@ import { rejectionReason } from './helpers/expect-rejection.ts';
 import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import * as fsPromises from 'node:fs/promises';
 import { LibSQLStore } from '@mastra/libsql';
+import * as libsql from '@mastra/libsql';
 import { Workflow } from '@mastra/core/workflows';
 
 import { tmpdir } from 'node:os';
@@ -2574,6 +2575,41 @@ test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
   if (!afterToolCall) throw new Error('Expected the configured afterToolCall hook.');
   expect(await afterToolCall({ toolName: 'source.read', input: {}, context: {} })).toBeUndefined();
 });
+
+test('LibSQL constructor failure preserves its cause and removes the temporary root', async () => {
+  const deadline = performance.now() + 5_000;
+  const failure = new Error('injected LibSQL constructor failure');
+  const originalConstructor = libsql.LibSQLStore;
+  const rootObservation = await observeLibSqlSmokeRoot();
+  let observedRoot: string | undefined;
+  try {
+    const constructor = spyOn(libsql, 'LibSQLStore');
+    try {
+      // Bun's spy types cover callable exports, while this dependency is constructed.
+      Reflect.apply(constructor.mockImplementation.bind(constructor), undefined, [
+        function failConstruction() {
+          throw failure;
+        },
+      ]);
+      const rejected = await rejectionReason(rootObservation.run(() => runLibSqlSmoke()));
+      rootObservation.assertOneRoot();
+      observedRoot = rootObservation.root();
+      expect(rejected).toBe(failure);
+      expect(constructor).toHaveBeenCalledTimes(1);
+      expect(await libSqlSmokeRootExists(observedRoot)).toBe(false);
+    } finally {
+      constructor.mockRestore();
+    }
+  } catch (error) {
+    if (observedRoot !== undefined) console.error(`Failed LibSQL constructor fixture root: ${observedRoot}`);
+    throw error;
+  } finally {
+    await rootObservation.restore();
+  }
+  expect(libsql.LibSQLStore).toBe(originalConstructor);
+  expect(await runLibSqlSmoke()).toEqual({ reopened: true, persisted: true, cleanupDeferred: false });
+  assertLibSqlSmokeDeadline(deadline, 'constructor failure and restored store');
+}, 5_000);
 
 test('LibSQL cleanup retries the first store after its initial close fails', async () => {
   const deadline = performance.now() + 5_000;

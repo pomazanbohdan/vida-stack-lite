@@ -7,7 +7,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, write
 import { tmpdir } from 'node:os';
 import * as runtime from '../src/index.ts';
 import type { DocumentationClearCheckpoint, DocumentationClearInput } from '../src/documentation/clear.ts';
-import { documentationRelativePath } from '../src/documentation/policy.ts';
+import { documentationRelativePath, validateDocumentationPolicy } from '../src/documentation/policy.ts';
 import { expectAsyncReturned, expectReturned } from './helpers/expect-rejection.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
@@ -157,6 +157,37 @@ async function documentationCloseout(fixture: DocumentationClearFixture): Promis
   return { result, checkpoint };
 }
 describe('documentation CLEAR public ZOMBIES boundary', () => {
+  test('policy validation rejects invalid schema, path binding and timestamp', () => {
+    const policy = {
+      schema: 'DocumentationPolicy/v1',
+      policy_id: 'policy-validation',
+      project_id: 'project-one',
+      source_path: 'docs/policy.json',
+      owner: 'project:project-one',
+      required: true,
+      canonical_roots: ['docs/agent-instructions'],
+      map_paths: ['docs/agent-instructions/index.md'],
+      excluded_roots: ['.agent'],
+      changelog_required: false,
+      changelog_path: null,
+      relations: ['owns'],
+      updated_at: '2026-10-19T00:00:00.000Z',
+    };
+    expect(validateDocumentationPolicy(policy, policy.source_path)).toMatchObject({
+      schema: 'DocumentationPolicy/v1',
+      source_path: policy.source_path,
+    });
+    expect(() =>
+      validateDocumentationPolicy({ ...policy, schema: 'DocumentationPolicy/v2' }, policy.source_path),
+    ).toThrow('documentation policy schema invalid');
+    expect(() => validateDocumentationPolicy(policy, 'docs/other-policy.json')).toThrow(
+      'documentation policy source path differs from config',
+    );
+    expect(() => validateDocumentationPolicy({ ...policy, updated_at: 'not-a-timestamp' }, policy.source_path)).toThrow(
+      'documentation policy timestamp invalid',
+    );
+  });
+
   test('Zero: CLEAR rejects missing baseline and absent accepted work scope', async () => {
     const fixture = documentationClearFixture();
     try {

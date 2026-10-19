@@ -2,7 +2,6 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { Database } from 'bun:sqlite';
 import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
@@ -11,6 +10,7 @@ import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
+import { configuredTestContext } from '../configured-context.ts';
 import { expectReturned } from '../helpers/expect-rejection.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import type {
@@ -43,10 +43,7 @@ import {
 import { sessionActionsForWave } from '../../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../../src/orchestration/workflow-plan.ts';
 
-const root =
-  process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
-const config = loadRuntimeConfig(root);
+const { repositoryRoot: root, config } = configuredTestContext();
 const workspaceId = 'a'.repeat(64);
 const context = { work_id: 'new-work', attempt: 1, scope_digest: 'b'.repeat(64) };
 const flows: [string, WorkItemSelection['kind'], WorkItemSelection['intent']][] = [

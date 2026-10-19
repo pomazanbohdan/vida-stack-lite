@@ -826,7 +826,22 @@ function qualityToolInputPaths(
   return [...new Set([...coverageToolInputs, ...additionalToolInputs, ...contractInputs, ...baselineInputs])].sort();
 }
 
-const sdkArtifactTestPaths = ['tests/sdk-package-compatibility.test.ts', 'tests/paused-replacement-entrypoint.test.ts'];
+const sdkArtifactTestPaths = [
+  'tests/sdk-package-compatibility.test.ts',
+  'tests/paused-replacement-entrypoint.test.ts',
+  'tests/automatic-work-absorption.test.ts',
+  'tests/development-controller.test.ts',
+  'tests/final-assurance-public.test.ts',
+  'tests/initial-source-continuation.test.ts',
+  'tests/initialization.test.ts',
+  'tests/interrupted-source-retirement.test.ts',
+  'tests/run-entrypoint.test.ts',
+  'tests/runtime-config-rebind.test.ts',
+  'tests/runtime-config-rebind-source.test.ts',
+  'tests/scoped-source-snapshot.test.ts',
+  'tests/stopped-source-capture.test.ts',
+  'tests/task-source-binding-operations.test.ts',
+];
 
 /** Source launcher tests also require the public SDK export completeness fence. */
 export function selectedTestsRequireSdkArtifacts(tests: readonly string[]): boolean {
@@ -1170,9 +1185,16 @@ function captureConfiguredTestContextInputs(
   // Bind it once for their closures, without adding it to unrelated scopes.
   if (
     visited.has('tests/helpers/documentation-policy-fixture.ts') ||
+    visited.has('tests/helpers/init-bundle.ts') ||
+    visited.has('tests/helpers/runtime-config-rebind-fixture.ts') ||
+    visited.has('tests/init-entrypoint-v8.test.ts') ||
+    visited.has('tests/initialization.test.ts') ||
+    visited.has('tests/audit-partial-init.test.ts') ||
+    visited.has('tests/session-handoff.test.ts') ||
     visited.has('tests/paused-replacement-entrypoint.test.ts')
   )
     paths.push('TESTING.md');
+  if (visited.has('tests/init-entrypoint-v8.test.ts')) paths.push('README.md');
   for (const file of paths) {
     if (inputBytes.has(file)) continue;
     const bytes = readDiscoveredRuntimeInput(root, file);

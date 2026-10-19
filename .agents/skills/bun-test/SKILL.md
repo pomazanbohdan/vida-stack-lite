@@ -36,7 +36,9 @@ locally, rewrite a receipt or disable freshness. Transport preparation is not
 Runtime acceptance. Do not print temporary signed URLs or credential bytes.
 For a focused selection, reuse `sdkFormationToolInputPaths` and the declared tests
 to determine SDK dependency. Reuse selectedTestsRequireSdkArtifacts: public
-paused-replacement launchers also require the SDK export-completeness fence.
+run/controller fixtures can require the SDK export-completeness fence even when
+they execute Source directly. Follow the actual guard and positive caller path;
+a negative case that exits before that guard is not an SDK consumer by import alone.
 A selection without SDK-dependent tests does not capture dist or need separate
 artifact preparation. Keep automatic CI
 formation and all freshness checks for selections that actually consume the SDK.
@@ -403,6 +405,11 @@ For local coverage/CC/CRAP diagnosis, use TESTING's focusedDiagnostic route in
 the existing producer. Its diagnostic exit0 and function-entry counters are not
 exact coverage or frozen-budget acceptance. Keep the diagnostic schema/output
 separate from global reports and retain explicit child-counter gaps.
+Before proposing a missing-branch case, match its zero counter to the captured
+branchMap type, exact locations and Source expression. A line can contain several
+short-circuit or nullish arms. Compare the existing case's resolved inputs before
+adding another spelling of the same path. Child output assertions supply no
+child counters without qualified capture and custody.
 For sdk-package-compatibility, the focused capture retains complete SDK formation
 inputs privately while instrumenting only selected coverage Source. Prepare
 through the existing SDK readiness callback before capture; input review remains

@@ -23,10 +23,10 @@ No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 
 The owner changes the order to coverage first across all contours on2026-10-19.
 Frozen CRAP and mutation producers are deferred; their gates and pending evidence
-remain unchanged. Historical exact coverage is15/45, not a fresh global pass.
-The active preparation pool is governance/public contracts, dispatch repair and
-the existing campaign tooling's coverage-only route. Root serializes numeric
-producers; blind Luna prepares bounded proposals. Main-envelopes mutation work is
+remain unchanged. Historical exact coverage is16/45, not a fresh global pass.
+The current correction packet repairs SDK/data capture and configured fixtures,
+with public Mastra and documentation-policy regressions. Root serializes numeric
+producers; blind Luna prepares bounded proposals and review. Main-envelopes mutation work is
 deferred rather than retried. No automation is resumed by this strategy change.
 The storage deficit observed at v798 is resolved by the verified v803 retirement
 below. Fresh dispatch coveragev804 completes on e67216b; its residual exact-gate
@@ -35,7 +35,9 @@ Both further requested coverage cycles are complete. Dispatchv805 adds two publi
 missing-option denials; governancev806 qualifies duplicate completion suppression
 through the observed SDK clone state. Both exact gates remain BLOCKED. No third
 numeric producer was started under that bounded request. The new coverage-first
-request now governs subsequent producers; the chat automation remains paused.
+request now governs subsequent producers. The owner's later request resumes the
+existing three-hour audit automation and pauses this manual cycle after its
+checked commit and ordinary push; no further numeric producer starts before pause.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
@@ -48,6 +50,57 @@ Its same-commit unclosed selection requires accepted, complete, bound exact
 numeric coverage. Data-only zero denominators remain explicit N/A. Default
 three-lane behavior and all proof gates remain unchanged. No frozen lineage is
 read and no deferred producer is launched in the coverage-only route.
+
+Published567ab50 governance coveragefb1f5035-62a8-4dd2-a531-5f013abc07e2
+reaches F105/105 L365/365 S407/407 B251/251 with166PASS/0FAIL,
+8525assertions and56896.215549ms stage elapsed. Its image is
+/workspace/.vida-quality-inputs/3d7afe38a135b365eca050aab80d97977554297a/repository;
+complete capture, closed group and unchanged image/boot are observed. Frozen
+and mutation producers remain deferred, so this is an exact coverage milestone.
+
+The same-commit coverage-only campaignb8de0d11-5af9-4bb4-9b45-cbbf406c4e46
+terminates execution-complete after44coverage stages. Eleven reach exact numeric
+coverage; ten have partial counters, one is the existing zero-function/branch
+data-only N/A, and22have no accepted completed-suite coverage report. All44outer
+groups close with complete output and unchanged image/boot. Exit1 preserves
+the remaining gates. Governance is the separately completed same-commit milestone,
+not a45th replay. The existing projection imports each terminal observation once.
+Dispatch96f23824 improves to F70/70 L305/312 S326/334 B248/256,
+61PASS/0FAIL and639assertions; its EACCES regression adds one statement/branch.
+Original logs, images, failed fixtures and the upgrade producer's UNKNOWN remain
+at their original paths under packages/agent/coverage/contour-campaigns and the
+gitless image store. The compact read-only classification is retained at
+/workspace/.vida-retained/coverage-first-v807/campaign-summary.json.
+
+The correction packet keeps one SDK-selection/capture owner and adds actual
+public-run/controller consumers of the export-completeness fence. Merely importing
+Source is not the SDK dependency criterion: bin/run.ts checks emitted exports
+after trusted initialization. Negative controller-observation cases that stop
+before that fence remain outside the selector. Missing README/TESTING fixture
+inputs join the existing bounded closure and freshness projection. Configured
+fixtures reuse configuredTestContext; audit/cache scratch moves outside captured
+Source into private temporary roots. No image, SDK receipt or dist byte is repaired
+in place. Changed SDK builder inputs need fresh CI formation before dependent
+coverage. The initial19-case correction check passes356assertions in1.86s;
+the final correction check passes 32 cases with 492 assertions in 4.92s across
+ten affected files. The existing strict Source gate reports zero diagnostics.
+
+Root rejects unmeasured assertion deletion and a duplicate empty-value test whose
+actual missed counter belongs to optionsByMode's nullish fallback. The constructor
+fault uses the real public LibSQLStore namespace spy, preserves the exact error,
+observes root removal, restores the export and verifies a real healthy smoke.
+Failed fixture evidence is retained, with its observed path printed; review's
+proposed deletion on assertion failure is not applied. Child CLI assertions still
+provide no child coverage counters. Qualifying explicit captured preload, terminal
+custody and report merge through the existing owners remains a required coverage
+task, not inferred coverage. Bounded Luna proposals/reviews remain under
+/workspace/.vida-retained/coverage-first-v807; none establishes numeric acceptance.
+
+One isolated activated-config diagnostic reproduces the10s case deadline failure
+in19132.371392ms, including15650.635907ms in upgrade resume and1712.888359ms
+in planning. The three post-upgrade reader probes total under1s. Preserve
+config-phase.log and its failed fixture; investigate resume before another full
+main-config run. Neither the deadline nor its integrity assertions is relaxed.
 
 Root reduces Luna's campaign proposal to preserve the existing data-only closure
 reader unchanged and removes an unsafe test cast. The campaign/progress contracts

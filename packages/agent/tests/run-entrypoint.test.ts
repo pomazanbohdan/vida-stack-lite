@@ -52,6 +52,7 @@ import type { LocalWorkAdmissionInput } from '../src/orchestration/local-work-ad
 import { Console } from 'node:console';
 import { Writable } from 'node:stream';
 import { createAutomaticWorkAdmissionFixture } from './helpers/automatic-work-admission-fixture.ts';
+import { configuredTestContext } from './configured-context.ts';
 import {
   isTerminalUtf8SpawnResult,
   parseJsonUnknown,
@@ -68,7 +69,7 @@ test('readonly local inspection validates decoded rows and retains uncertain jou
   const root = mkdtempSync(path.join(tmpdir(), 'vida-readonly-inspection-'));
   if (!path.resolve(root).startsWith(path.resolve(tmpdir(), 'vida-readonly-inspection-')))
     throw Error('owned inspection fixture cleanup target differs');
-  const config = loadRuntimeConfig(path.resolve(import.meta.dirname, '..', '..', '..'));
+  const { config } = configuredTestContext();
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
   const file = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
   mkdirSync(path.dirname(file), { recursive: true });
