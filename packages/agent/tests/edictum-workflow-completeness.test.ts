@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, mock, onTestFinished, spyOn, test } from 'bun:test';
 import { WorkflowsInMemory } from '@mastra/core/storage';
+import { Run } from '@mastra/core/workflows';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -291,6 +292,59 @@ describe('configured Edictum workflow completeness', () => {
     const healthy = await expectAsyncReturned(() => candidate.evaluate(session, { toolName: 'runtime.any', args: {} }));
     expect(healthy.action).toBe('allow');
     expect((await candidate.state(session)).completedStages).toEqual(['final']);
+  });
+
+  test('policy evaluation rejects a suspended SDK resume that processes a different command', async () => {
+    const sessionId = `missing-evaluation-${randomUUID()}`;
+    const candidate = new PolicyWorkflowRuntime(terminalPolicyDefinition(['runtime.commit'], []), sessionId);
+    const session = new PolicySession(sessionId);
+    const call = { toolName: 'runtime.commit', args: {} };
+    await expectAsyncReturned(() => candidate.evaluate(session, call));
+    const before = await candidate.state(session);
+    const descriptor = Object.getOwnPropertyDescriptor(Run.prototype, 'resume');
+    if (typeof descriptor?.value !== 'function') throw new Error('the public SDK resume method is unavailable');
+    const originalResume = descriptor.value as Run['resume'];
+    let injectedResumes = 0;
+    let observedStatus: string | undefined;
+    const resume = spyOn(Run.prototype, 'resume').mockImplementation(async function (this: Run, params) {
+      if (this.runId !== sessionId) return Reflect.apply(originalResume, this, [params]) as ReturnType<Run['resume']>;
+      if (
+        !isRecord(params.resumeData) ||
+        !isRecord(params.resumeData.command) ||
+        params.resumeData.command.kind !== 'evaluate'
+      )
+        throw new Error('expected the real public evaluation command at the SDK boundary');
+      injectedResumes += 1;
+      const result = await (Reflect.apply(originalResume, this, [
+        { ...params, resumeData: { command: { kind: 'seek', stageId: 'final' } } },
+      ]) as ReturnType<Run['resume']>);
+      observedStatus = result.status;
+      return result;
+    });
+    let restored = false;
+    const restore = () => {
+      if (!restored) {
+        resume.mockRestore();
+        restored = true;
+      }
+      return undefined;
+    };
+    onTestFinished(restore);
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      await expectRejection(candidate.evaluate(session, call), 'governance evaluation is unavailable');
+      expect(injectedResumes).toBe(1);
+      expect(observedStatus).toBe('suspended');
+      expect(await candidate.state(session)).toEqual(before);
+    } catch (error: unknown) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup([restore], primaryFailure);
+    }
+    const healthy = await expectAsyncReturned(() => candidate.evaluate(session, call));
+    expect(healthy.action).toBe('allow');
+    expect(healthy.stageId).toBe('final');
   });
 
   test('policy workflow gates, completes, rewinds, and replays terminal evidence', async () => {

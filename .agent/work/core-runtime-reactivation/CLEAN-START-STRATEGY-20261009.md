@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date: 2026-10-18. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
+Status date: 2026-10-19. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
 
 ## Objective
 
@@ -31,7 +31,28 @@ Implement the approved Cloud and profile guards and make Pstack execution reprod
 
 Migrate current callers to the shared helpers, then delete forward-only duplicate implementations. Retire Vitest from maintained test paths and configurations. Do not reinterpret generated SDK output as maintained Source. Preserve runtime behavior and public contracts while reducing duplicate ownership.
 
-### 4. Frozen quality prerequisites and complete run
+### 4. Exact coverage first, then frozen quality and mutation
+
+The owner's 2026-10-19 directive supersedes per-contour triple-first scheduling.
+First repair every executable contour to exact F/L/S/B100 through the existing
+coverage producer, then qualify frozen correspondence/CRAP and complete mutation.
+Keep all gates, budgets, complete Source/test selections and UNKNOWN custody.
+Exact coverage is a phase milestone, not full contour closure or Runtime acceptance.
+
+Use the three existing independent preparation slots and one serial Root numeric
+owner. Refill a slot when its contour has compatible exact coverage; keep deferred
+frozen/mutation work OPEN. A blocked contour retains its exact GAP and yields its
+slot to ready coverage work. Prioritize known small deficits and shared causes,
+then setup failures and larger contours. Reuse retained counters and input images;
+do not repeat unchanged complete suites merely to refresh a commit label. Changed
+inputs need affected proof, and historical exact counts alone do not establish a
+fresh all-contour result. The automatic projection remains the sole metric ledger.
+
+Use only coverage stages during this phase. The existing campaign adapter now
+has an explicit `--coverage-only` route. Use `test:contours --unclosed
+--coverage-only` or individual coverage stages; its default three-lane sequence
+belongs to the later phase. Retain
+incidental CC/entryCRAP from coverage as observations, without a frozen-pass claim.
 
 #### Execute captured inputs without measurement worktrees
 

@@ -118,15 +118,23 @@ function recordCampaignFailure(directory: string, commit: string, boot: string, 
   throw error;
 }
 
-export function campaignOptions(args: readonly string[]): { mode: 'all' | 'unclosed'; plan: boolean } {
+export function campaignOptions(args: readonly string[]): {
+  mode: 'all' | 'unclosed';
+  plan: boolean;
+  coverageOnly: boolean;
+} {
   const selection = args.filter((arg) => arg === '--all' || arg === '--unclosed');
   if (
     selection.length !== 1 ||
-    args.some((arg) => !['--all', '--unclosed', '--plan'].includes(arg)) ||
+    args.some((arg) => !['--all', '--unclosed', '--plan', '--coverage-only'].includes(arg)) ||
     new Set(args).size !== args.length
   )
-    throw new Error('Usage: bun run test:contours --all|--unclosed [--plan]');
-  return { mode: selection[0] === '--all' ? 'all' : 'unclosed', plan: args.includes('--plan') };
+    throw new Error('Usage: bun run test:contours --all|--unclosed [--coverage-only] [--plan]');
+  return {
+    mode: selection[0] === '--all' ? 'all' : 'unclosed',
+    plan: args.includes('--plan'),
+    coverageOnly: args.includes('--coverage-only'),
+  };
 }
 
 /** Campaign producers and reviewed budgets must receive the same complete registry Source selection. */
@@ -139,11 +147,13 @@ export async function executeContourCampaign(
   partitions: readonly MutationPartition[],
   execute: (partition: MutationPartition, lane: Lane) => Promise<CampaignOutcome>,
   record: (step: Step) => void,
+  coverageOnly = false,
 ): Promise<{ complete: boolean; steps: Step[] }> {
   const steps: Step[] = [];
   const completeCoverage = new Set<string>();
   // Finish the inexpensive diagnostic pass before spending mutation budgets.
-  for (const lanes of [['coverage', 'frozen-crap'], ['mutation']] as const) {
+  const phases = coverageOnly ? ([['coverage']] as const) : ([['coverage', 'frozen-crap'], ['mutation']] as const);
+  for (const lanes of phases) {
     for (const partition of partitions) {
       for (const lane of lanes) {
         const outcome: CampaignOutcome =
@@ -338,7 +348,7 @@ export function isolatedCommand(
 async function main(): Promise<void> {
   if (process.argv.length === 3 && process.argv[2] === '--help') {
     process.stdout.write(
-      'Usage: bun run test:contours --all|--unclosed [--plan]\nRuns coverage, frozen CRAP and mutation for declared executable contours.\n--all: every active contour; --unclosed: no compatible same-commit local triple.\n--plan: print selection without launching tests. Linux requires bwrap and tini (or VIDA_QUALITY_TINI).\n',
+      'Usage: bun run test:contours --all|--unclosed [--coverage-only] [--plan]\nRuns coverage, frozen CRAP and mutation for declared executable contours.\n--all: every active contour; --unclosed: no compatible same-commit local triple.\n--coverage-only: run only the coverage phase; --plan: print selection without launching tests. Linux requires bwrap and tini (or VIDA_QUALITY_TINI).\n',
     );
     return;
   }
@@ -364,13 +374,18 @@ async function main(): Promise<void> {
   assertCleanCommit(commit);
   const snapshotPath = path.join(statusDirectory, 'CONTOUR-STATUS.json');
   const snapshot = mergeContourProgress(jsonFile(snapshotPath), []);
-  const selected = selectContourCampaign(snapshot, options.mode, commit);
-  const lineage = jsonFile(path.join(statusDirectory, 'crap-budgets.reviewed-partial.v1.json'));
+  const phase = options.coverageOnly ? 'coverage-only' : 'all';
+  const selected = selectContourCampaign(snapshot, options.mode, commit, phase);
+  const lineage = options.coverageOnly
+    ? undefined
+    : jsonFile(path.join(statusDirectory, 'crap-budgets.reviewed-partial.v1.json'));
   const partitions = selected.map((row) => {
     const partition = campaignPartition(row);
     return {
       ...partition,
-      budget_ref: latestScopedCrapBudgetRef(partition.name, partition.sources!, lineage),
+      budget_ref: options.coverageOnly
+        ? undefined
+        : latestScopedCrapBudgetRef(partition.name, partition.sources!, lineage),
     };
   });
   const plan = {
@@ -378,11 +393,14 @@ async function main(): Promise<void> {
     run_id: randomUUID(),
     source_commit: commit,
     ...options,
-    selection_policy:
-      'all executable contours, or those without a compatible same-commit local triple; no global freshness claim',
+    selection_policy: options.coverageOnly
+      ? options.mode === 'all'
+        ? 'all executable contours for coverage-only; no global freshness claim'
+        : 'executable contours without accepted, bound exact same-commit numeric coverage; data-only N/A stays separate; no global freshness claim'
+      : 'all executable contours, or those without a compatible same-commit local triple; no global freshness claim',
     partitions,
     coverage_deadline_ms: 330_000,
-    mutation_deadline_ms: mutationLimits.partitionMs + 30_000,
+    ...(options.coverageOnly ? {} : { mutation_deadline_ms: mutationLimits.partitionMs + 30_000 }),
   };
   if (options.plan) {
     process.stdout.write(JSON.stringify(plan, null, 2) + '\n');
@@ -650,10 +668,11 @@ async function main(): Promise<void> {
         writeRecord(directory, `${step.contour}.${step.lane}.json`, step);
         process.stdout.write(JSON.stringify(step) + '\n');
       },
+      options.coverageOnly,
     );
     assertCleanCommit(commit);
     const currentProgress = mergeContourProgress(jsonFile(snapshotPath), []);
-    const remaining = selectContourCampaign(currentProgress, 'unclosed', commit)
+    const remaining = selectContourCampaign(currentProgress, 'unclosed', commit, phase)
       .filter((partition) => partitions.some((selected) => selected.name === partition.name))
       .map((partition) => partition.name);
     writeRecord(directory, 'terminal.json', {
@@ -666,7 +685,9 @@ async function main(): Promise<void> {
           ? 'execution-complete'
           : 'unknown-fenced',
       qualification: 'individual producer proofs only; execution-complete does not mean gates passed',
-      selected_contours_without_complete_triple: remaining,
+      ...(options.coverageOnly
+        ? { selected_contours_without_complete_coverage: remaining }
+        : { selected_contours_without_complete_triple: remaining }),
       ...result,
     });
     // This is an execution command; a successful exit requires all lane owners to finish without a gap.

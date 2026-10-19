@@ -1,6 +1,6 @@
 # Core runtime reactivation work
 
-Status date: 2026-10-18. Current execution/evidence only. This document does not
+Status date: 2026-10-19. Current execution/evidence only. This document does not
  authorize old operations, state replay, runtime cutover or global acceptance.
 
 ## Current state and owners
@@ -21,19 +21,52 @@ No runtime/loader/DB cutover or consumer effect is performed by this cycle.
 
 ### Current rolling repair cycle
 
-The active pool has three contours: governance/public contracts, dispatch repair
-and main-envelopes. Root serializes numeric producers; blind Luna prepares and
-reviews bounded patches. Dispatch's fixture repair now binds SDK and package data;
-main-envelopes awaits a measured correction rather than an unchanged full retry.
+The owner changes the order to coverage first across all contours on2026-10-19.
+Frozen CRAP and mutation producers are deferred; their gates and pending evidence
+remain unchanged. Historical exact coverage is15/45, not a fresh global pass.
+The active preparation pool is governance/public contracts, dispatch repair and
+the existing campaign tooling's coverage-only route. Root serializes numeric
+producers; blind Luna prepares bounded proposals. Main-envelopes mutation work is
+deferred rather than retried. No automation is resumed by this strategy change.
 The storage deficit observed at v798 is resolved by the verified v803 retirement
 below. Fresh dispatch coveragev804 completes on e67216b; its residual exact-gate
 deficits remain OPEN. The rejected v798 attempt has no numeric result.
 Both further requested coverage cycles are complete. Dispatchv805 adds two public
 missing-option denials; governancev806 qualifies duplicate completion suppression
 through the observed SDK clone state. Both exact gates remain BLOCKED. No third
-numeric producer is started and the chat automation remains paused.
+numeric producer was started under that bounded request. The new coverage-first
+request now governs subsequent producers; the chat automation remains paused.
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
+
+#### Coverage-first adoption
+
+The owner directs exact F/L/S/B100 across all contours before frozen CRAP or
+mutation. Sidecar, TESTING, bun-test skill and CLEAR plan now share that order.
+The existing campaign accepts --coverage-only without another scheduler or ledger.
+Its same-commit unclosed selection requires accepted, complete, bound exact
+numeric coverage. Data-only zero denominators remain explicit N/A. Default
+three-lane behavior and all proof gates remain unchanged. No frozen lineage is
+read and no deferred producer is launched in the coverage-only route.
+
+Root reduces Luna's campaign proposal to preserve the existing data-only closure
+reader unchanged and removes an unsafe test cast. The campaign/progress contracts
+pass172tests/728assertions in503ms, including partial/zero-denominator/foreign-input
+selection, default sequence, failure continuation and UNKNOWN/resource fencing.
+Two new public regressions pass2tests/16assertions in3.44s. Governance delegates
+the real SDK Run.resume with a deliberately changed command, observes suspended
+success, verifies the missing-evaluation rejection and unchanged state, restores
+the method and confirms a healthy evaluate call. Dispatch injects EACCES only at
+the owned lock probe and retains its held maintenance fence, plan, Source and
+changelog afterimages. Neither is a real runtime effect or mutation proof.
+
+The blind governance lane returns a bounded reachability GAP; Root's separate
+SDK-resume control supplies the executable observation. The dispatch worker
+reports briefly editing and reverting its canonical test despite its proposal-only
+assignment. Root observes no residual diff before its own integration and no
+active numeric image during that interval; the retained handoff records the
+deviation. Only Root's reviewed patches enter Source. Proposal/check artifacts
+reside outside attachments; no worktree is created or automation resumed.
 
 Published9407b08 completes gitless image execution and the current-review/launch
 receipt repairs. TESTING owns that execution contract. The complete implementation

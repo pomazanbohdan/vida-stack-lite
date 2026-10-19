@@ -323,6 +323,7 @@ interface RepairFilesystemFaults {
   readonly owner: RepairFileOwner;
   readonly openCollision?: string;
   readonly afterRename?: string;
+  readonly lstat?: Fault;
   readonly write?: Fault;
   readonly fsync?: Fault;
   readonly close?: Fault;
@@ -352,6 +353,13 @@ async function injectRepairFilesystemFaults(
   let renameInjected = false;
   const replacement = {
     ...originalFsExports,
+    lstatSync: ((...args: Parameters<typeof fs.lstatSync>) => {
+      if (fileOwner(String(args[0]), root) === faults.owner && faults.lstat) {
+        events.push('lstat');
+        throw faults.lstat.value;
+      }
+      return Reflect.apply(originalFsExports.lstatSync, originalFsExports, args) as ReturnType<typeof fs.lstatSync>;
+    }) as typeof fs.lstatSync,
     openSync: ((...args: Parameters<typeof fs.openSync>) => {
       if (fileOwner(String(args[0]), root) === faults.owner && faults.openCollision !== undefined) {
         originalFsExports.writeFileSync(args[0], faults.openCollision, { flag: 'wx' });
@@ -2104,6 +2112,41 @@ function researchIdentityRepairFixture() {
 function repairApplyArgs(root: string): string[] {
   return ['--mode', 'apply', '--project-root', root, '--repair-id', 'repair-test'];
 }
+
+test('public research repair retains non-ENOENT lock probe failure after acquiring its maintenance fence', async () => {
+  const { context, paths, recordsFile, beforeRecords } = researchIdentityRepairFixture();
+  await runReconcileArtifacts(planning(context, 'plan', ['--records', recordsFile]));
+  const planPath = path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json');
+  const planBytes = readFileSync(planPath);
+  const lockPath = path.join(context.root, '.agent/work/repair-test/repair-lock.v1.json');
+  const databasePath = path.resolve(context.root, sessionHandoffDatabaseRelativePath(context.config));
+  const accessError = Object.assign(new Error('injected repair lock probe denial'), { code: 'EACCES' });
+  retainRepairFixture(context.root, 'unknown maintenance fence after lock probe denial');
+  const filesystem = await injectRepairFilesystemFaults(context.root, {
+    owner: 'lock',
+    lstat: { value: accessError },
+  });
+  let outcome: RepairCallOutcome;
+  try {
+    outcome = await repairCallOutcome(() => runReconcileArtifacts(repairApplyArgs(context.root)));
+  } finally {
+    await filesystem.restore();
+  }
+
+  expect(filesystem.events).toEqual(['lstat']);
+  expectRepairFailures(outcome, [accessError]);
+  expect(readFileSync(planPath)).toEqual(planBytes);
+  expect(fs.existsSync(lockPath)).toBe(false);
+  expect(paths.map((relative) => readFileSync(path.join(context.root, relative), 'utf8'))).toEqual(beforeRecords);
+  expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
+  expect(fs.existsSync(path.join(context.root, '.agent/work/repair-test/repair-journal.v1.jsonl'))).toBe(false);
+  const observer = new Database(databasePath);
+  try {
+    expect(maintenanceStatus(new HostStateStore(observer, context.workspace))).toBe('held');
+  } finally {
+    observer.close(true);
+  }
+});
 
 test('public research repair plan retains write and real-close failures at first plan publication', async () => {
   const { context, paths, recordsFile, beforeRecords } = researchIdentityRepairFixture();

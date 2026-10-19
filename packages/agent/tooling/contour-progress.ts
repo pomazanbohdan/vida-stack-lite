@@ -1573,7 +1573,12 @@ export function reviewedDataOnlyClosure(coverage: Attempt[], mutation: Attempt[]
 }
 
 /** Selection only: same-commit local proofs never establish global acceptance or host freshness. */
-export function selectContourCampaign(snapshot: Snapshot, mode: 'all' | 'unclosed', commit: string) {
+export function selectContourCampaign(
+  snapshot: Snapshot,
+  mode: 'all' | 'unclosed',
+  commit: string,
+  phase: 'all' | 'coverage-only' = 'all',
+) {
   const currentByContour =
     mode === 'unclosed'
       ? Map.groupBy(
@@ -1586,6 +1591,12 @@ export function selectContourCampaign(snapshot: Snapshot, mode: 'all' | 'unclose
     if (mode === 'all') return true;
     const current = currentByContour?.get(partition.name) ?? [];
     const coverage = current.filter((row) => row.lane === 'coverage');
+    if (phase === 'coverage-only') {
+      const exactCoverage = coverage.some(
+        (row) => maximum(row) && row.selection_complete && row.coverage_binding !== undefined,
+      );
+      return !exactCoverage;
+    }
     const mutation = current.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation');
     return (
       !lastCompleteTripleClosure(

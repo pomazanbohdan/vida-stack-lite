@@ -192,9 +192,26 @@ const completed: CampaignOutcome = { state: 'completed', detail: 'fixture comple
 const fail = (state: CampaignOutcome['state']): CampaignOutcome => ({ state, detail: `fixture ${state}` });
 
 test('campaign options require exactly one strict selection and reject malformed flags', () => {
-  expect(campaignOptions(['--all'])).toEqual({ mode: 'all', plan: false });
-  expect(campaignOptions(['--unclosed', '--plan'])).toEqual({ mode: 'unclosed', plan: true });
-  for (const args of [[], ['--all', '--unclosed'], ['--all', '--all'], ['--all', '--wat'], ['--plan']]) {
+  expect(campaignOptions(['--all'])).toEqual({ mode: 'all', plan: false, coverageOnly: false });
+  expect(campaignOptions(['--unclosed', '--plan'])).toEqual({
+    mode: 'unclosed',
+    plan: true,
+    coverageOnly: false,
+  });
+  expect(campaignOptions(['--all', '--coverage-only'])).toEqual({
+    mode: 'all',
+    plan: false,
+    coverageOnly: true,
+  });
+  for (const args of [
+    [],
+    ['--all', '--unclosed'],
+    ['--all', '--all'],
+    ['--all', '--wat'],
+    ['--plan'],
+    ['--coverage-only'],
+    ['--all', '--coverage-only', '--coverage-only'],
+  ]) {
     expect(() => campaignOptions(args)).toThrow();
   }
 });
@@ -219,6 +236,61 @@ test('campaign selection normalizes every active executable registry Source and 
   expect(linux.tests).toEqual(registry.find((partition) => partition.name === 'linux')?.tests);
 });
 
+test('coverage-only selection accepts only current accepted bound exact coverage', () => {
+  const target = mutationPartitions().find((partition) => partition.environment !== 'static')!;
+  const proof: Parameters<typeof selectContourCampaign>[0]['attempts'][number] = {
+    contour: target.name,
+    lane: 'coverage',
+    run_id: 'coverage-proof',
+    recorded_at: '2026-10-19T00:00:00.000Z',
+    commit: 'fixture-commit',
+    artifact: '/retained/report.json',
+    sources: [],
+    tests: [],
+    tools: [],
+    closure: [],
+    selected_tests: [{ path: 'tests/fixture.test.ts', sha256: 'a'.repeat(64) }],
+    selection_complete: true,
+    producer_schema: 'VidaBunFocusedCoverageDiagnostic/v1',
+    selection_artifact: null,
+    tool_fingerprint: null,
+    status: 'pass',
+    accepted: true,
+    coverage: {
+      functions: { covered: 1, total: 1 },
+      lines: { covered: 1, total: 1 },
+      statements: { covered: 1, total: 1 },
+      branches: { covered: 1, total: 1 },
+    },
+    max_cc: 1,
+    max_entry_crap: 1,
+    killed: null,
+    mutants: null,
+    coverage_binding: { report_sha256: 'b'.repeat(64), manifest_sha256: 'c'.repeat(64) },
+  };
+  const included = (attempts: Parameters<typeof selectContourCampaign>[0]['attempts']) =>
+    selectContourCampaign(
+      { schema: 'VidaContourProgress/v1', attempts },
+      'unclosed',
+      'fixture-commit',
+      'coverage-only',
+    ).some((partition) => partition.name === target.name);
+  expect(included([proof])).toBe(false);
+  expect(included([{ ...proof, commit: 'historical-commit' }])).toBe(true);
+  expect(included([{ ...proof, accepted: false }])).toBe(true);
+  expect(included([{ ...proof, selection_complete: false }])).toBe(true);
+  const unbound = { ...proof };
+  delete unbound.coverage_binding;
+  expect(included([unbound])).toBe(true);
+  expect(included([{ ...proof, coverage: { ...proof.coverage!, branches: { covered: 0, total: 1 } } }])).toBe(true);
+  expect(included([{ ...proof, coverage: { ...proof.coverage!, functions: { covered: 0, total: 0 } } }])).toBe(true);
+  expect(
+    selectContourCampaign({ schema: 'VidaContourProgress/v1', attempts: [proof] }, 'unclosed', 'fixture-commit').some(
+      (partition) => partition.name === target.name,
+    ),
+  ).toBe(true);
+});
+
 test('every contour completes coverage and frozen CRAP before any mutation begins', async () => {
   const events: string[] = [];
   const result = await executeContourCampaign(
@@ -239,6 +311,38 @@ test('every contour completes coverage and frozen CRAP before any mutation begin
     'lane-b:mutation',
   ]);
   expect(result.steps).toHaveLength(6);
+});
+
+test.each(['failed', 'gap', 'timeout'] as const)('coverage-only continues after settled %s', async (state) => {
+  const calls: string[] = [];
+  const result = await executeContourCampaign(
+    contours,
+    async (partition, lane) => {
+      calls.push(`${partition.name}:${lane}`);
+      return partition.name === 'lane-a' ? fail(state) : completed;
+    },
+    () => {},
+    true,
+  );
+  expect(result.complete).toBe(true);
+  expect(calls).toEqual(['lane-a:coverage', 'lane-b:coverage']);
+  expect(result.steps.map((step) => step.outcome.state)).toEqual([state, 'completed']);
+});
+
+test.each(['unknown', 'resource'] as const)('coverage-only %s fences the next contour', async (state) => {
+  const calls: string[] = [];
+  const result = await executeContourCampaign(
+    contours,
+    async (partition, lane) => {
+      calls.push(`${partition.name}:${lane}`);
+      return fail(state);
+    },
+    () => {},
+    true,
+  );
+  expect(result.complete).toBe(false);
+  expect(calls).toEqual(['lane-a:coverage']);
+  expect(result.steps).toHaveLength(1);
 });
 
 test('settled known failures, gaps and timeouts preserve remaining independent lanes', async () => {

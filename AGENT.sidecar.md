@@ -86,11 +86,15 @@ Native blind Luna is the selected provider/model route for all delegated lanes.
 
 For test-contour repairs, assign exactly one contour to each agent and keep a
 rolling pool of three active contours under the owner's 2026-10-17 instruction.
-Each lane repeats repair, focused checks, coverage/frozen CRAP and mutation through
+The owner's 2026-10-19 order is coverage first across all contours, followed by
+frozen CRAP and mutation. Each lane repeats repair, focused checks and exact
+F/L/S/B coverage through
 [TESTING's contour cycle](packages/agent/TESTING.md#rolling-contour-repair-cycle).
-When a contour has a complete compatible passing triple, record its closure and
-immediately assign the next ready contour to that slot. A finished patch or review
-alone does not close a contour. A dependency-blocked contour remains OPEN with its
+Once a contour has complete, input-bound exact coverage, record that milestone
+and assign the next coverage contour to its slot. Full closure still requires the
+compatible passing triple; frozen budgets and assertion-confirmed Killed100 stay
+unchanged. Defer their producers until the coverage phase finishes. A patch or
+review alone proves no milestone. A dependency-blocked contour remains OPEN with its
 exact prerequisite; keep its prepared bytes and use its idle slot for ready work.
 Give each code-producing lane an isolated ordinary patch directory and exact file
 ownership; do not allocate a Git worktree for preparation or measurement. Each
