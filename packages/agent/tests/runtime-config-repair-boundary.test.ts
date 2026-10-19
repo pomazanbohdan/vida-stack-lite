@@ -640,17 +640,8 @@ describe('activated project config reader closure', () => {
       phaseStartedAt = performance.now();
     };
     try {
-      const root = await makeFreshRepository('config-repair-activated-shared-');
+      const root = await makeFreshRepository('config-repair-activated-shared-', { includeLocalInstructions: false });
       cleanupRoot = root;
-      // This case asserts the activated config reader's complete output closure,
-      // not migration of each unrelated local instruction body. Other upgrade
-      // tests cover that artifact family. Retain the required documentation
-      // policy input while avoiding five extra per-publication full-image scans
-      // inside the strict ten-second fixture deadline.
-      const localInstructionRoot = path.join(root, 'docs/agent-instructions');
-      for (const name of readdirSync(localInstructionRoot)) {
-        if (name.endsWith('.md')) rmSync(path.join(localInstructionRoot, name));
-      }
       await completeFreshUpgrade(root, 'config-reader-activated-shared-001', markPhase);
       markPhase('activated config reader success');
       const loaded = expectReturned(() => loadRuntimeConfig(root));

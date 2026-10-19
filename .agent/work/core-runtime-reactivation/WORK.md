@@ -1896,3 +1896,66 @@ captured executable. The corrected regression passes with19 Bun assertions
 plus the native thrown-error check. This does not replace the full validator's
 independent package-pinned runtime validation. A native assertion bounds the
 large-map missing-throw diagnostic. No numeric producer ran for this correction.
+
+### Current accepted coverage and main-config blocker — 2026-10-19
+
+Both checked corrections were pushed through normal hooks. The measured Source
+is `bde00cb79042b8e88c570610961de7ba131aa390`. SDK formation run39307058501
+succeeded, artifact12213239130, ZIP SHA-256
+`5781e996bed9b5502766aa0d3d83565c6b8bd34423db55c3768299cc49ec8bb5`.
+
+Main-runtime-core stage `/workspace/contour-stage-8VSTRY`, coverage run
+`18da62bf-652c-473c-9513-0e6e953677a7`, completed in192.197 seconds with exit0,
+complete capture, closed group and unchanged boot/image inputs. Both shards
+passed:227 tests/1098 assertions and13 tests/220 assertions. The abort/replay
+case now ran after the other shard's heavy work and passed in19.448 seconds.
+This single observation is not a controlled speedup claim. The actual focused
+v3 diagnostic was successfully published with exact F162/162, L602/602,
+S632/632 and B400/400. Its immutable image is
+`/workspace/.vida-quality-inputs/de6e477e768a6158b317e619fce4d6f157647c62/repository`.
+This qualifies the previously blocked producer-to-projection path on real
+receipts, beyond the synthetic controls. Entry CC/CRAP31 is diagnostic only.
+
+Only after that accepted coverage, main-runtime-timing ran sequentially at
+`/workspace/contour-stage-Uq9ux2`, run `00f0c93c-5fbf-45ac-b67f-ef75b132215a`.
+It completed in7.353 seconds with the same terminal/input guarantees and
+published F36/36, L72/72, S81/81, B1/1. Its image is
+`/workspace/.vida-quality-inputs/abd7299aa67ea9ef30a8eb5fa3dc4e03f47224db/repository`.
+Both paired operation statuses remain BLOCKED: coverage does not qualify
+deferred frozen quality or resource/effect quiescence. Historical coverage stays
+16/45; these two current refreshes do not add new historical contour counts.
+The automatic canonical `.agent/work/core-runtime-reactivation/CONTOUR-STATUS`
+JSON/Markdown now contain both receipts and the next failed stage,999 attempts.
+
+The first main-config launch request lost exec transport before a stage was
+observed. Connectivity recovered; Root checked unchanged HEAD, preserved only
+the two derived status edits, and observed no new stage or active producer.
+The confirmed next stage is `/workspace/contour-stage-3ndbSC`, not the refused
+transport call. It completed in44.979 seconds, exit1, complete capture/closed
+group and unchanged boot/image. Its image is
+`/workspace/.vida-quality-inputs/21be39ed397153bc75dbf419c601a16444eb2a87/repository`.
+The five-file suite passed136 and failed1 test,2978 assertions. Activated config
+reader setup exceeded its10-second deadline at12.367 seconds. No attributable
+numeric report was emitted; main-config remains active and open.
+
+The required isolated trace also failed at13.319 seconds with17 assertions:
+planning2.262s and resume9.744s dominate, while reader/corruption/cache probes
+are below0.5s together. A blind Luna review found six instruction Markdown files
+copied and immediately deleted before planning. The fixture builder now has
+an opt-in minimal-instruction mode; its default remains unchanged. The reader
+uses that mode without changing its actual plan/resume, assertions or deadline.
+Root compared the old copy/delete result with the direct minimal result: all
+four retained files have identical bytes/modes and the same inventory; default
+instruction copying remains intact. The redundant copy/delete/list operations
+are gone, but the isolated case still fails at13.459 seconds, with17 assertions.
+This is a setup simplification, not an unblock or measured speed improvement.
+Root retained the direct active-source probe because its public wrapper is
+separately in the selected coverage inventory. Live bundle,
+dependency, output and CAS observations remain unchanged across publication.
+
+Retained diagnostic copies are under
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/`; original
+logs/fixtures and all stage FAIL/BLOCKED evidence remain untouched. No unchanged
+full main-config retry is authorized by the small copy reduction. The remaining
+cost GAP is real fresh plan/resume versus the unchanged10-second case bound.
+Resolve that same contour with evidence before another exact stage or contour.

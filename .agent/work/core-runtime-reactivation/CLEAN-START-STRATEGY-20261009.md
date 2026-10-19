@@ -393,12 +393,14 @@ mutation stay outside this cycle. A prospective-cap or correspondence GAP stays
 open; it cannot inherit another function's original allowance or become a
 closure from a partial score.
 
-The completed `8af4648` pilot exposed a focused publication defect after both
-shards passed. Repair the common diagnostic projection and canonical output
-namespace, check their regression controls, then publish Source before one
-new stage. Preserve the original `contour-stage-SiOqcH` receipts and failed
-publication. Do not relabel its raw report or overwrite its BLOCKED operation.
-WORK owns the resulting checked commit and fresh stage outcome.
+The `8af4648` publication defect is repaired. Fresh `bde00cb` stages admit exact
+F/L/S/B100 for main-runtime-core and main-runtime-timing; WORK owns their receipts.
+Preserve the original `contour-stage-SiOqcH` and subsequent failed-stage evidence.
+The active contour is now main-config. Its real activated-reader fixture exceeds
+the unchanged ten-second case deadline during fresh upgrade plan/resume. Keep
+its output/cache/receipt assertions and live publication guards; do not repeat
+the same full selection until a causal cost correction is verified. CRAP,
+mutation and other contours remain deferred while this coverage contour is open.
 
 The internal max-two inert worker mechanics now have scoped controls under
 [TESTING's existing native/parallel contract](../../../packages/agent/TESTING.md#completion-commands);

@@ -5,11 +5,15 @@ import { fileURLToPath } from 'node:url';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
-export async function makeFreshRepository(prefix = 'project-upgrade-lifecycle-'): Promise<string> {
+export async function makeFreshRepository(
+  prefix = 'project-upgrade-lifecycle-',
+  options: { includeLocalInstructions?: boolean } = {},
+): Promise<string> {
   const root = await mkdtemp(path.join(os.tmpdir(), prefix));
   await mkdir(path.join(root, '.git'));
   await mkdir(path.join(root, 'docs/agent-instructions'), { recursive: true });
-  await cp(path.join(packageRoot, 'instructions'), path.join(root, 'docs/agent-instructions'), { recursive: true });
+  if (options.includeLocalInstructions !== false)
+    await cp(path.join(packageRoot, 'instructions'), path.join(root, 'docs/agent-instructions'), { recursive: true });
 
   const render = (value: string): string =>
     value
