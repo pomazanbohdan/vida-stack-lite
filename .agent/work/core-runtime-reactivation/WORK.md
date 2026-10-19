@@ -1544,3 +1544,64 @@ startup), versus the previous 24.625-second local body without coverage. The
 30-second test timeout and its fixture deadline were not raised. This local
 measurement does not qualify F/L/S/B; the updated test digest is pinned for the
 next exact stage.
+
+### Three-hour test and tooling review — 2026-10-19
+
+This review covers the retained stage records from 13:25 through 15:20 UTC.
+Nine exact-stage attempts consumed about 32 minutes 33 seconds of measured stage
+time. All ended failed, UNKNOWN, or partial. None published accepted F/L/S/B
+metrics. The individual causes and original evidence remain in the stage records
+above and under their retained stage directories.
+
+The three reviewed two-worker stages took 207.281, 234.435, and 220.080 seconds.
+Their median was 220.080 seconds and their range was 27.154 seconds. Each ended
+without accepted coverage because a selected test timed out. The serial fallback
+stage took 271.488 seconds before SIGKILL after the eligibility digest mismatch.
+These runs do not prove a parallel speedup. None completed with an accepted
+report, and the serial failure is not a successful comparison. Each coverage
+worker ran Bun with `--parallel=1`; the two-worker bound remains the only reviewed
+assignment. The planner does not admit a third worker.
+
+The cheaper next sequence is a focused behavior repair, one target test, static
+checks and digest review, then one commit-bound exact contour stage. This order
+avoids another multi-minute stage when a changed test digest already disqualifies
+the shard review. The latest protected-session local run took 21.962 seconds for
+the test body, versus 24.625 seconds in the prior single local run. The 2.663
+second difference is one before/after pair without coverage or a profiler. It
+does not identify the limiter or predict the coverage-instrumented result. Treat
+it as inconclusive performance evidence, not a suite speedup.
+
+The recent script findings do not show lost failure evidence. The TILZZZ stage
+rejected mismatched config/preload paths before test execution. The owner fixed
+the path binding, and the focused shard tests passed 80 tests with 304 assertions.
+The k9nPCu callback rejected a stale pinned digest and correctly selected serial
+fallback. The q1xRfe test timeout remained primary in JUnit and logs. The later
+single-report-location error was secondary, and the stage outcome stayed
+unqualified. Capture was complete, the process group closed, and the execution
+image stayed unchanged. No runner-report change is warranted from these receipts.
+
+The test edits retained the public Source prewriter and all protected-session
+authorization, persisted-state, approval, replay, and stale-completion checks.
+They remove only repeated HostState and approval reads after grouped rejection
+cases. No product-code defect was established by these stage results. The
+available receipts do not record model-token or tool-call totals, so those costs
+cannot be compared. The earlier five parallel receipt checks have no serial
+baseline or measured wall-time saving.
+
+The audit found and corrected one stale current-policy sentence in
+`../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md`. It named a
+three-contour cycle despite the current sequential one-contour rule. The backlog
+now agrees with the sidecar, CLEAR plan, TESTING and this WORK. The automatic
+contour projection remains unchanged because no new numeric report was admitted.
+
+At 15:39 UTC, `df` showed 14,181,208 KiB free on the overlay used by the checkout,
+scratch and retained stage evidence, and 9,219,692 KiB free on `/tmp`. Both exceed
+the unchanged 2 GiB admission floor. No cleanup was needed or performed. The
+failed stage directories and all receipts remain protected.
+
+GitHub run `39279070596` for `bb741bf` was still `queued` at 15:39 UTC. Its
+artifact listing included artifact `12198074668` with digest
+`bc74f7c10da36f36f6f8c3be6d51f276454d141ceaf77725c52d6cd57807e0cb`, but the
+workflow had no successful terminal result, so the artifact was not consumed.
+This documentation correction changes the commit. The next coverage stage must
+wait for a successful SDK-input artifact bound to the new commit.

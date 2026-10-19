@@ -46,12 +46,13 @@ acceptance. Complete numeric qualification and runtime cutover remain open.
 
 ## Test acceptance boundary
 
-The owner now selects the [rolling three-contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle): one blind Luna lane per contour,
-repair and affected checks before numeric qualification. The 2026-10-19 owner
-directive now refills a slot after compatible exact F/L/S/B coverage and defers
-frozen CRAP and mutation until all coverage contours are ready. Full closure still
-requires their compatible complete triple; all original gates remain unchanged.
-Root owns final checks and integrates isolated preparation after terminal custody.
+The owner's 2026-10-19 directive selects the sequential
+[one-contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle):
+repair and run focused checks for the active contour, then accept its complete,
+input-bound F/L/S/B100 result before selecting another. Root owns integration,
+numeric production, final checks and Git. Frozen CRAP and mutation remain
+deferred until every contour has exact coverage; complete closure still requires
+their compatible evidence and all original gates remain unchanged.
 Current audit corrections and unresolved per-field validation, cleanup analogues
 and optimization candidates are recorded once in WORK, under the existing P0/P1
 and TEST013 tasks; external report labels do not replace their stable IDs.
