@@ -150,28 +150,51 @@ function sameStrings(actual: readonly string[], expected: readonly string[]): bo
   return sortedActual.every((value, index) => value === sortedExpected[index]);
 }
 
-/** Permit two focused workers only for the reviewed, digest-pinned main runtime core test selection. */
-export function mainRuntimeCoreCoverageShardReview(
+/** Reuse current captured metadata for the explicitly reviewed, digest-pinned focused selections. */
+export function focusedCoverageShardReview(
   selection: FocusedDiagnosticSelection,
 ): CurrentCoverageReviewCallback | undefined {
-  const selectedTests = mainRuntimeCoreShardTests.map(({ path: file }) => file);
+  const hostState = selection.contour === 'bun-host-state';
+  const contour = hostState ? 'bun-host-state' : 'main-runtime-core';
+  const sources = hostState
+    ? ['src/host-state.ts', 'src/trusted-host.ts', 'src/contracts/work-state-schema.ts']
+    : mainRuntimeCoreShardSources;
+  const tests = hostState
+    ? [
+        {
+          path: 'tests/bun/host-state.test.ts',
+          sha256: 'f37c31ce3a2a74a232e0b1ef13dfd1db863772e9d91a424c6dfc8dfb8167b636',
+        },
+        {
+          path: 'tests/stopped-source-capture.test.ts',
+          sha256: 'e37358ea8d36436a6b890edff1d258c2fe581cbe6af330390628b5ef8ef43e9c',
+        },
+      ]
+    : mainRuntimeCoreShardTests;
+  const selectedTests = tests.map(({ path: file }) => file);
   if (
-    selection.contour !== 'main-runtime-core' ||
-    !sameStrings(selection.sources, mainRuntimeCoreShardSources) ||
+    selection.contour !== contour ||
+    !sameStrings(selection.sources, sources) ||
     !sameStrings(selection.tests, selectedTests)
   )
     return undefined;
 
-  return ({ metadata, scope }) => {
+  return ({ metadata, scope, consumer_configuration }) => {
+    const callerNamespace = consumer_configuration?.root_identity_sha256 ?? '';
+    if (
+      hostState &&
+      (scope.platform !== 'linux' || scope.provider !== 'linux-proc-fd' || !/^[a-f0-9]{64}$/u.test(callerNamespace))
+    )
+      return null;
     const capturedSelection = metadata.test_selection;
     if (
       capturedSelection.mode !== 'focused-diagnostic' ||
-      capturedSelection.contour !== 'main-runtime-core' ||
-      !sameStrings(capturedSelection.sources, mainRuntimeCoreShardSources) ||
+      capturedSelection.contour !== contour ||
+      !sameStrings(capturedSelection.sources, sources) ||
       !sameStrings(capturedSelection.tests, selectedTests) ||
       !sameStrings(
         metadata.sources.map(({ path: file }) => file),
-        mainRuntimeCoreShardSources,
+        sources,
       ) ||
       !sameStrings(metadata.tests, selectedTests)
     )
@@ -182,20 +205,26 @@ export function mainRuntimeCoreCoverageShardReview(
       .filter(({ path: file }) => selected.has(file))
       .map(({ path: file, sha256: digest }) => ({ path: file, sha256: digest }))
       .sort((left, right) => left.path.localeCompare(right.path));
-    if (JSON.stringify(capturedTests) !== JSON.stringify(mainRuntimeCoreShardTests)) return null;
+    if (JSON.stringify(capturedTests) !== JSON.stringify(tests)) return null;
 
     const reviewScopeSha256 = canonicalCoverageReviewScope(scope);
     return {
       schema: 'VidaCoverageShardEligibility/v1',
       scope: { ...scope },
       review_scope_sha256: reviewScopeSha256,
-      reviews: mainRuntimeCoreShardTests.map(({ path: test_file, sha256: test_sha256 }) => ({
+      reviews: tests.map(({ path: test_file, sha256: test_sha256 }) => ({
         test_file,
         test_sha256,
         review_scope_sha256: reviewScopeSha256,
-        shared_resources: [],
+        shared_resources: hostState
+          ? [
+              `namespace:${test_file === 'tests/bun/host-state.test.ts' ? callerNamespace : sha256(scope.package_root_identity_sha256 + '\0.tmp')}`,
+            ]
+          : [],
         exclusive_run: false,
-        reviewer_ref: mainRuntimeCoreShardReviewRef,
+        reviewer_ref: hostState
+          ? '.agent/work/core-runtime-reactivation/WORK.md#bun-host-state-focused-shard-resource-review'
+          : mainRuntimeCoreShardReviewRef,
       })),
     };
   };
@@ -1048,7 +1077,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
   if (args.length > 1) throw new Error('Bun coverage runner accepts one baseline selection flag.');
   const selectionMode = args.length ? 'published-baseline-bun-native' : 'current';
   const focused = options.focusedDiagnostic;
-  const focusedShardReview = focused ? mainRuntimeCoreCoverageShardReview(focused) : undefined;
+  const focusedShardReview = focused ? focusedCoverageShardReview(focused) : undefined;
   if (focused && (args.length || options.reviewCurrentInputs))
     throw new Error('Focused coverage diagnostics cannot use historical selection or input review callbacks.');
   const runOutputRoot = focused ? path.join(outputRoot, 'diagnostics') : outputRoot;

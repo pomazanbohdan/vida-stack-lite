@@ -46,8 +46,10 @@ observation, each bound to its own Source/image; WORK owns their retained stages
 and the independent BLOCKED operation status. The active contour is
 `bun-host-state`. Repair its captured documentation, fixture custody and measured
 completed-wave-chain timeout before its next complete exact stage. Reuse current
-focused evidence; do not repeat unchanged full selections. Package-resource
-independence remains unqualified, so keep the existing serial fallback.
+focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
+resource review permits the existing two-worker supervisor only for its pinned
+Host-state selection on the reviewed Linux provider. Complete stage qualification
+is pending; all other selections retain their existing serial fallback.
 No coverage milestone supplies
 frozen/mutation closure, and historical exact counts remain16/45.
 

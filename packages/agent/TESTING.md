@@ -1650,7 +1650,7 @@ test helpers and unselected dependencies without claiming their coverage.
 This route uses the same capture, instrumentation, preload, counter merge,
 300000ms budget and shared coverage lock. It remains serial by default.
 
-The only focused parallel-coverage exception is the active `main-runtime-core`
+The initial focused parallel-coverage exception is the `main-runtime-core`
 pilot. Its built-in resource review admits exactly the five declared test files
 and `src/runtime-kernel.ts`, and only while each captured test SHA-256 matches
 the review's pinned digest. The two assignments use the existing maximum of two
@@ -1661,6 +1661,20 @@ metadata and does not rescan or rehash test files. Any contour, source, test or
 digest drift falls back to serial execution. This pilot qualifies neither other
 contours nor frozen complexity/CRAP or mutation. Its exact F/L/S/B result remains
 pending until the complete stage and all receipts validate.
+
+The same owner has a second bounded pilot for the exact `bun-host-state` three
+Source files and two test files named in WORK's
+[resource review](../../.agent/work/core-runtime-reactivation/WORK.md#bun-host-state-focused-shard-resource-review).
+Its captured test SHA-256 pins and complete selection must match. Only Linux
+`linux-proc-fd` with the captured caller identity is eligible. The Host file owns
+the fresh configured-caller namespace; stopped-source owns the permitted package
+.tmp namespace derived from the captured package identity and literal child path.
+Neither row is resource-empty. Common package reads use the reviewed verified
+no-CAS closure; the native instruction overlap control is bounded evidence only.
+Keep separate serial child outputs/TMPDIR and all existing shared deadline,
+custody, image and merged-report checks. This does not enable other selections,
+package-wide independence, frozen/mutation producers or a new concurrent flag.
+Full contour qualification remains pending its complete native stage.
 
 Focused shard outputs share the manifest's `diagnostics/runs/<run-id>`
 namespace. The validator owns their single checked merge using the producer's

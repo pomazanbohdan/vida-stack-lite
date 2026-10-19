@@ -61,6 +61,12 @@ During the owner's sequential exact F/L/S/B phase, work on one contour only and
 defer frozen CRAP and mutation producers. Preserve their existing gaps and
 evidence; a coverage milestone is not complete-triple closure. Do not launch CRAP
 merely to reconfirm a known coverage prerequisite failure.
+Before reviewing image resources, trace the actual launch environment: its
+configured caller fixture differs from immutable Source, while its .tmp and
+coverage outputs are explicitly writable. Attribute physical owners using the
+captured identities. The pinned Host-state two-file pilot reuses the existing
+supervisor and leaves unsupported/stale selections serial; it does not permit
+empty resource declarations or infer package-wide independence from one control.
 If an interrupted checkout retains coverage custody, keep it intact and use a
 clean same-commit checkout with matching SDK inputs for independent diagnostics.
 Record both namespaces; never turn the old lock or UNKNOWN into a completed run.

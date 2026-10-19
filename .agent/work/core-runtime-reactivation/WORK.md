@@ -67,14 +67,114 @@ Host rows under the original30s bounds. Both cases pass45assertions in12.701s
 and22.094s (36.31s command). The extra fresh setup increases total work slightly;
 the correction establishes individual deadlines, not a throughput improvement.
 Blind Luna reviewed capture/cleanup and setup semantics; its aggregate-allocation
-finding was corrected without another scan/hash pass. Package-resource independence
-is still unqualified, so no additional parallel producer is enabled.
+finding was corrected without another scan/hash pass. The bounded two-file review
+below does not qualify package-wide independence or any other contour.
 
 Current diagnostics are retained under
 `packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/`.
 The one filesystem observation reports13612404736bytes free on the common
 checkout/scratch/evidence overlay, above the unchanged2GiB admission threshold.
 No cleanup, runtime/loader/DB cutover or consumer effect was performed.
+
+### Three-hour audit, 18:38–21:38 UTC on 2026-10-19
+
+Scope is the current sequential cycle, not a second writer or campaign. Git and
+retained stage/fixture receipts cover the inspected window; complete tool-call,
+token and setup telemetry is unavailable, so no reduction percentage is claimed
+for those costs. Eight published commits in this window include the earlier
+focused-report runtime/merge repairs, exact config milestone and077f105 fixture
+packet. This count is not a count of closed contours or product defects.
+
+Script findings: the reached-controller documentation gap and delayed aggregate
+allocation check are fixed in077f105. One capture supplies bytes, imported closure,
+digests, image and projection; no new whole scan, AST or hash lane was added.
+The original270.855s UNKNOWN and all missing-input/timeout evidence remain intact.
+No counter, timeout or runtime failure was reclassified as Killed. The normal hook
+initially rejected an unused cp import after shared-helper reuse; it was removed,
+then the ordinary hook passed formatting514files, strict TypeScript521files and
+lint before publication. Run affected scoped lint with the existing static check
+before expensive case probes; keep mandatory hooked validation.
+
+Authoring/execution findings: manually maintained bundle preparation was equivalent
+across38files and now has one helper owner. Constructor cleanup was missing before
+returning the fixture and is now owned during setup. The failed expensive bridge
+spy control is retained; the constructor regression uses real SQLite handles
+without repeating a complete workflow to test cleanup bookkeeping. Writer fixture
+setup removes repeated public synthesis/prewriter orchestration while the public
+operation under test and its assertions remain real. Separating the two independent
+wave-chain states preserves all counterexamples and fixes the individual30s failure;
+it does not reduce the combined36.31s command cost.
+
+| Order / parallelism | Evidence and decision |
+| --- | --- |
+| Full selection after each helper edit, one producer | Repeats expensive setup without resolving the first missing input; reject this sequence. |
+| One repair batch, scoped static and causal cases, then one final exact stage | Selected default. The same retired-source case is37.640s before and21.630s after; no second unchanged complete suite. |
+| Two reviewed serial-file producers inside this one contour | Candidate only. Prior partial Host bodies already total205.131s with five workflows failing before work; repaired workflows separately take57.58s. Complete duration remains unknown. A current native reader overlap control passes47assertions in1.831s, but the two actual files still need resource closure and exact eligibility. |
+| Three or more numeric producers, concurrent build/indexing or another contour | Unqualified; not enabled. Five available CPUs are capped by cpu.max at four CPU equivalents; memory.max is16GiB. |
+
+The first blind resource review assumed shared live context and treated package
+.tmp as wholly immutable. The actual gitless owner redirects both context variables
+to a fresh captured caller fixture and explicitly permits owned .tmp outputs.
+These differences required an actual launch-chain review, not dismissal of the
+review or fabricated empty resource rows. The subsequent blind review closes the
+static caller attribution for these two files; full production qualification is
+still pending. Any bounded two-file pilot must retain explicit context
+and package-scratch ownership, separate child outputs/TMPDIR, the same captured
+metadata and the complete selected union under unchanged300s/30s reserve.
+
+Disk uses the single current observation above. The exact admission owner is
+`packages/agent/tooling/contour-stage.ts`, minimum2147483648bytes. Observed free
+13612404736bytes exceeds it by11464921088bytes on the common overlay. No broad
+du/scan/hash, dependency deduplication or environment cache deletion was needed.
+Preserve Source, SDK artifacts, original journals/receipts and every failed or
+unknown image. Readiness for SDK run39328923317 on077f105 is a terminal CI success;
+no archive was downloaded merely for inspection or treated as Runtime acceptance.
+
+### Bun-host-state focused shard resource review
+
+The existing two-worker coverage supervisor may pilot only the complete current
+`bun-host-state` selection: `src/host-state.ts`, `src/trusted-host.ts` and
+`src/contracts/work-state-schema.ts`, with the two exact test SHA-256 values
+retained in `focusedCoverageShardReview`. It shares the existing core review
+owner, formerly named `mainRuntimeCoreCoverageShardReview`; that rename does not
+reset frozen roles or allowances. Any selected path/test-byte drift keeps serial
+fallback, as do a missing caller identity or a provider other than Linux
+`linux-proc-fd`. All Source/tool/config/dependency/environment inputs still bind
+the current native scope; the callback consumes captured metadata, with no second
+test hash or filesystem-discovery pass during the run.
+
+| Serial child | Mutable owner |
+| --- | --- |
+| `tests/bun/host-state.test.ts` | `namespace:<consumer_configuration.root_identity_sha256>` from the actual fresh captured caller fixture; its ordinary config CAS reads remain real. Other fixture DBs/children use its unique TMPDIR roots. |
+| `tests/stopped-source-capture.test.ts` | `namespace:<sha256(package_root_identity_sha256 + NUL + .tmp)>` for the permitted package scratch subtree and its owned drift clone. Other consumer/controller state uses its unique TMPDIR roots. |
+
+Only the Host file uses `configuredTestContext`; the existing image owner derives
+and validates that fresh caller fixture and both child root variables. The other
+file copies repository docs through filesystem reads, not shared-root configuration
+loading. Common executing-package reads in this reviewed closure use the available
+verified no-CAS resource reader. Process-local mocks/clocks/env are restored and
+are isolated by the separate serial children. Image tracked inputs/dependencies
+stay read-only; package `.tmp` and coverage remain their already permitted outputs.
+The parent fences installs, Git changes, indexing and additional producers.
+
+Fresh blind actual-launch/caller review is retained at
+`/tmp/vida-host-image-resource-review.md`; its earlier generic-assumption review
+remains `/tmp/vida-host-resource-closure.md`. Root's current bounded native reader
+control passes47assertions in1.831s. The complete eligibility-control file passes
+50cases/271assertions in0.965s, retaining the existing core pilot and rejecting
+missing/stale Source/test selection, unsupported provider/platform and missing or
+malformed caller namespace. These are resource/control observations, not contour
+F/L/S/B, process-custody qualification or a speedup measurement. Require the next
+single complete stage to validate both direct producers, exact union, receipts,
+unchanged image and merged counters before recording any contour result.
+The existing300s budget and30s report reserve are unchanged; UNKNOWN remains fenced.
+
+Final blind code review found no blocking defect. Its missing captured-Source
+metadata control is added and passes the focused case with10assertions in4.43ms.
+Strict targeted TypeScript passes123files, scoped lint has0diagnostics, and the
+changed documentation's53local links/headings pass. The independent code review
+is retained at `/tmp/vida-host-pilot-code-review.md`; these remain static/focused
+proofs until the complete stage qualifies its own native outcome.
 
 ### Retained core diagnostics
 
@@ -163,8 +263,9 @@ this split fits; no partial shard or partial metrics qualify.
 The focused review controls pass: shard eligibility 48/48, preload lifecycle
 11/11, and strict TypeScript check reports no errors in 127 files. The pinned
 formatter check passes on all five changed TypeScript files. This verifies the
-pilot mechanics only; current contour F/L/S/B remains pending until the exact
-stage validates the single merged report.
+pilot mechanics only. The later complete stage onbde00cb records240PASS,
+1318assertions and exact F162/162,L602/602,S632/632,B400/400 in192.197s;
+its retained stage and independent BLOCKED operation status are listed above.
 Other contour Source/test changes are retained in Git stash
 `e14e88d648dd1e09abc0f9ed8794cfd47468d41c` and are not in this packet. Keep the
 generated projection and its bound historical receipts; the active stage updates

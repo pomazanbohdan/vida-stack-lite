@@ -17,7 +17,7 @@ import {
   sha256,
 } from '../tooling/bun-coverage-evidence.ts';
 import type { CoverageReviewScope } from '../tooling/coverage-shard-eligibility.ts';
-import { mainRuntimeCoreCoverageShardReview, prepareCoverageShardLaunches } from '../tooling/run-bun-coverage.ts';
+import { focusedCoverageShardReview, prepareCoverageShardLaunches } from '../tooling/run-bun-coverage.ts';
 import type { CurrentCoverageReviewCallback } from '../tooling/run-bun-coverage.ts';
 import * as runBunCoverageModule from '../tooling/run-bun-coverage.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -587,6 +587,82 @@ describe('resolveCoverageShardEligibility', () => {
 });
 
 describe('prepareCurrentCoverageShardLaunches', () => {
+  test('binds the two host-state files to distinct captured caller and package scratch namespaces', () => {
+    const partition = mutationPartitions().find(({ name }) => name === 'bun-host-state');
+    if (!partition?.sources || !partition.tests) throw new Error('Host-state selection is missing.');
+    const selection = {
+      mode: 'focused-diagnostic' as const,
+      contour: partition.name,
+      sources: partition.sources,
+      tests: partition.tests,
+    };
+    const callback = focusedCoverageShardReview(selection);
+    if (!callback) throw new Error('Reviewed host-state selection was not recognized.');
+    const testInputs = partition.tests.map((file) => ({
+      path: file,
+      sha256: sha256(readFileSync(path.join(packageRoot, file))),
+    }));
+    const metadata = {
+      sources: partition.sources.map((file) => ({ path: file, sha256: 'a'.repeat(64) })),
+      tests: [...partition.tests],
+      test_selection: selection,
+      test_inputs: testInputs,
+    } as unknown as Parameters<CurrentCoverageReviewCallback>[0]['metadata'];
+    const hostScope = { ...scope, platform: 'linux', provider: 'linux-proc-fd' };
+    const consumer = {
+      repository_root: '/fixture/host-consumer',
+      root_identity_sha256: '4'.repeat(64),
+      source: 'agent-runtime.config.v1.yaml' as const,
+      source_digest: 'agent-runtime.config.v1.yaml:' + '5'.repeat(64),
+    };
+    const envelope = callback({ metadata, scope: hostScope, consumer_configuration: consumer });
+    const eligibility = resolveCoverageShardEligibility({
+      mode: 'current',
+      envelope,
+      selectedTests: testInputs,
+      scope: hostScope,
+    });
+    if (eligibility.status !== 'eligible') throw new Error('Reviewed host resource selection was denied.');
+    const assignments = eligibility.plan.waves[0]?.assignments;
+    expect(assignments?.map(({ tests }) => tests)).toEqual(partition.tests.map((file) => [file]));
+    expect(assignments?.map(({ shared_resources }) => shared_resources)).toEqual([
+      ['namespace:' + consumer.root_identity_sha256],
+      ['namespace:' + sha256(hostScope.package_root_identity_sha256 + '\0.tmp')],
+    ]);
+    expect(callback({ metadata, scope: hostScope })).toBeNull();
+    expect(
+      callback({ metadata, scope: { ...hostScope, platform: 'win32' }, consumer_configuration: consumer }),
+    ).toBeNull();
+    expect(
+      callback({
+        metadata,
+        scope: { ...hostScope, provider: 'cooperative-fallback' },
+        consumer_configuration: consumer,
+      }),
+    ).toBeNull();
+    expect(
+      callback({
+        metadata,
+        scope: hostScope,
+        consumer_configuration: { ...consumer, root_identity_sha256: 'invalid' },
+      }),
+    ).toBeNull();
+    const staleMetadata = {
+      ...metadata,
+      test_inputs: testInputs.map((row, index) => (index === 0 ? { ...row, sha256: 'f'.repeat(64) } : row)),
+    };
+    expect(callback({ metadata: staleMetadata, scope: hostScope, consumer_configuration: consumer })).toBeNull();
+    expect(
+      callback({
+        metadata: { ...metadata, sources: metadata.sources.slice(1) },
+        scope: hostScope,
+        consumer_configuration: consumer,
+      }),
+    ).toBeNull();
+    expect(focusedCoverageShardReview({ ...selection, sources: selection.sources.slice(1) })).toBeUndefined();
+    expect(focusedCoverageShardReview({ ...selection, tests: selection.tests.slice(1) })).toBeUndefined();
+  });
+
   test('reviews only the digest-pinned main runtime core selection for two isolated workers', () => {
     const partition = mutationPartitions().find(({ name }) => name === 'main-runtime-core');
     expect(partition).toBeDefined();
@@ -597,7 +673,7 @@ describe('prepareCurrentCoverageShardLaunches', () => {
       sources: partition.sources,
       tests: partition.tests,
     };
-    const callback = mainRuntimeCoreCoverageShardReview(selection);
+    const callback = focusedCoverageShardReview(selection);
     expect(callback).toBeDefined();
     if (!callback) throw new Error('Reviewed main runtime core selection was not recognized.');
     const testInputs = partition.tests.map((file) => ({
@@ -652,7 +728,7 @@ describe('prepareCurrentCoverageShardLaunches', () => {
       test_inputs: testInputs.map((entry, index) => (index === 0 ? { ...entry, sha256: 'f'.repeat(64) } : entry)),
     } as unknown as Parameters<CurrentCoverageReviewCallback>[0]['metadata'];
     expect(callback({ metadata: staleMetadata, scope })).toBeNull();
-    expect(mainRuntimeCoreCoverageShardReview({ ...selection, contour: 'another-contour' })).toBeUndefined();
+    expect(focusedCoverageShardReview({ ...selection, contour: 'another-contour' })).toBeUndefined();
   });
 
   test('reads the fixed review artifact and prepares two fixture assignments without creating outputs', () => {
