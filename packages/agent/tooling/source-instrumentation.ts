@@ -23,29 +23,6 @@ function enterWithPrivateMethods(path: NodePath<types.Program>, visitor: ReturnT
   }
 }
 
-/** Resolve Istanbul's coverage object once instead of calling its accessor at every counter hit. */
-function cacheCoverageCounterTarget(code: string): string {
-  const functionName = /\bfunction (cov_[A-Za-z0-9_$]+)\(\)\s*\{/u.exec(code)?.[1];
-  if (!functionName) throw new Error('Coverage instrumentation has no Istanbul counter accessor.');
-  const escapedFunctionName = functionName.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-  const counterAccess = new RegExp(`\\b${escapedFunctionName}\\(\\)\\.([sfb])\\[`, 'gu');
-  const probe = counterAccess.exec(code);
-  if (!probe) return code;
-  counterAccess.lastIndex = 0;
-
-  let alias = `${functionName}_coverage`;
-  while (code.includes(alias)) alias += '_';
-  const bootstrap = `${functionName}();`;
-  const bootstrapIndex = code.indexOf(bootstrap);
-  if (bootstrapIndex < 0) throw new Error('Coverage instrumentation has no Istanbul bootstrap call.');
-  const lineStart = code.lastIndexOf('\n', bootstrapIndex) + 1;
-  const lineEnd = code.indexOf('\n', bootstrapIndex);
-  if (code.slice(lineStart, lineEnd < 0 ? undefined : lineEnd).trim() !== bootstrap)
-    throw new Error('Coverage instrumentation Istanbul bootstrap call is not standalone.');
-  let optimized = code.slice(0, lineStart) + `var ${alias} = ${bootstrap}` + (lineEnd < 0 ? '' : code.slice(lineEnd));
-  return optimized.replace(counterAccess, (_match, counter: string) => `${alias}.${counter}[`);
-}
-
 /** One parse/generation; all counters use original Source locations. */
 export function instrumentSource(
   file: string,
@@ -85,5 +62,5 @@ export function instrumentSource(
   });
   if (typeof transformed?.code !== 'string' || !fileCoverage)
     throw new Error('Source instrumentation did not produce a fresh coverage map: ' + file);
-  return { code: cacheCoverageCounterTarget(transformed.code), fileCoverage: structuredClone(fileCoverage) };
+  return { code: transformed.code, fileCoverage: structuredClone(fileCoverage) };
 }

@@ -279,9 +279,14 @@ export async function runPreparationFixtureInProcess(
     readonly bridge: MastraSessionBridge;
     readonly source: ScopedSourceSnapshot;
   },
+  tracePhase?: <T>(label: string, operation: () => T | Promise<T>) => Promise<Awaited<T>>,
 ): Promise<MastraSessionLedgerSnapshot> {
   const current = currentSnapshot(input),
-    synthIssue = producer.ledger.issueWave(input.workId, input.attempt, current.version),
+    synthIssue = tracePhase
+      ? await tracePhase('synthesis-issue-wave', () =>
+          producer.ledger.issueWave(input.workId, input.attempt, current.version),
+        )
+      : producer.ledger.issueWave(input.workId, input.attempt, current.version),
     synthItem = synthIssue.state.items[0];
   if (!synthItem?.issue_id || synthItem.request.stage_id !== 'synthesize_task')
     throw new Error('In-process preparation fixture omitted task synthesis');
@@ -297,28 +302,52 @@ export async function runPreparationFixtureInProcess(
     output_digest: canonicalJsonDigest(synthesisSummary),
     evidence_refs: [],
   };
-  producer.ledger.report(input.workId, input.attempt, synthIssue.version, synthesisObservation, producer.source);
+  if (tracePhase)
+    await tracePhase('synthesis-report', () =>
+      producer.ledger.report(input.workId, input.attempt, synthIssue.version, synthesisObservation, producer.source),
+    );
+  else producer.ledger.report(input.workId, input.attempt, synthIssue.version, synthesisObservation, producer.source);
   const synthStep = current.state.step_id;
   if (!synthStep) throw new Error('In-process preparation fixture has no task-synthesis step');
-  await producer.bridge.resume(synthStep, [synthesisObservation], producer.source);
+  if (tracePhase)
+    await tracePhase('synthesis-bridge-resume', () =>
+      producer.bridge.resume(synthStep, [synthesisObservation], producer.source),
+    );
+  else await producer.bridge.resume(synthStep, [synthesisObservation], producer.source);
 
   const prewriter = currentSnapshot(input),
-    prewriterIssue = producer.ledger.issueWave(input.workId, input.attempt, prewriter.version),
+    prewriterIssue = tracePhase
+      ? await tracePhase('prewriter-issue-wave', () =>
+          producer.ledger.issueWave(input.workId, input.attempt, prewriter.version),
+        )
+      : producer.ledger.issueWave(input.workId, input.attempt, prewriter.version),
     actions = prewriterIssue.state.items.map((item) => {
       if (!item.issue_id) throw new Error('In-process preparation fixture omitted prewriter issuance');
       return { issue_id: item.issue_id, request: parseSessionBridgeRequest(item.request) };
     });
   assertPrewriterActions(actions);
   let report = prewriterIssue;
-  const observations = actions.map((action) =>
-    reportedObservation(action, controlledPreparation(action, input, input.attempt)),
-  );
-  for (const observation of observations)
-    report = producer.ledger.report(input.workId, input.attempt, report.version, observation, producer.source);
+  const observations = tracePhase
+    ? await tracePhase('prewriter-observation-build', () =>
+        actions.map((action) => reportedObservation(action, controlledPreparation(action, input, input.attempt))),
+      )
+    : actions.map((action) => reportedObservation(action, controlledPreparation(action, input, input.attempt)));
+  const reportObservations = () => {
+    for (const observation of observations)
+      report = producer.ledger.report(input.workId, input.attempt, report.version, observation, producer.source);
+  };
+  if (tracePhase) await tracePhase('prewriter-reports', reportObservations);
+  else reportObservations();
   const prewriterStep = prewriter.state.step_id;
   if (!prewriterStep) throw new Error('In-process preparation fixture has no Source-prewriter step');
-  await producer.bridge.resume(prewriterStep, observations, producer.source);
-  const prepared = currentSnapshot(input);
+  if (tracePhase)
+    await tracePhase('prewriter-bridge-resume', () =>
+      producer.bridge.resume(prewriterStep, observations, producer.source),
+    );
+  else await producer.bridge.resume(prewriterStep, observations, producer.source);
+  const prepared = tracePhase
+    ? await tracePhase('prepared-writer-snapshot', () => currentSnapshot(input))
+    : currentSnapshot(input);
   if (!prepared.state.items.some((item) => item.request.stage_id === 'develop_task'))
     throw new Error('In-process preparation fixture did not reach the configured writer stage');
   return prepared;

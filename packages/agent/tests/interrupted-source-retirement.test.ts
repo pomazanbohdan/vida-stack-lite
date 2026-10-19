@@ -234,6 +234,27 @@ function beginFixturePhase(enabled: boolean, label: string): () => void {
       console.error(`[interrupted-source phase:end] ${label} elapsed_ms=${(performance.now() - started).toFixed(1)}`);
   };
 }
+async function traceFixtureOperation<T>(
+  enabled: boolean,
+  label: string,
+  operation: () => T | Promise<T>,
+): Promise<Awaited<T>> {
+  const end = beginFixturePhase(enabled, label);
+  try {
+    return await operation();
+  } finally {
+    end();
+  }
+}
+function traceFixtureValue<T>(enabled: boolean, label: string, operation: () => T): T {
+  if (!enabled) return operation();
+  const end = beginFixturePhase(enabled, label);
+  try {
+    return operation();
+  } finally {
+    end();
+  }
+}
 const writeJson = (root: string, file: string, value: unknown): void => {
   mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
   const serialized = JSON.stringify(value);
@@ -367,7 +388,9 @@ async function prepareFixture({
     };
     endConfigLedger();
     function admission(id: string = 'stopped', file: string = 'AGENT.sidecar.md', thread: string = 'synthetic-owner') {
-      const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), [file]),
+      const source = traceFixtureValue(tracePhases, 'admission-source-snapshot', () =>
+          snapshotDeclaredSources(requireSafeRepositoryAccess(root), [file]),
+        ),
         scopePath = `.agent/work/${id}/scope.json`,
         acceptancePath = `.agent/work/${id}/acceptance.json`,
         ac = 'AC-' + id;
@@ -464,7 +487,9 @@ async function prepareFixture({
         change_kind: input.changeKind,
       });
       const admittedInput: LocalWorkAdmissionInput = { ...input, intakePath };
-      const admitted = admitLocalSessionWork(admittedInput),
+      const admitted = traceFixtureValue(tracePhases, 'admit-local-session-work', () =>
+          admitLocalSessionWork(admittedInput),
+        ),
         work = requireValue(admitted.host.work, 'admitted work'),
         identity = {
           repository_id: work.binding.repository_id,
@@ -525,19 +550,22 @@ async function prepareFixture({
       original = admission();
       const { input: admittedInput } = original;
       requireSetupTime('bridge-open');
-      bridge = await MastraSessionBridge.open({
-        ledger,
-        projectIds: [selection.project],
-        repositoryRoot: root,
-        config,
-        selection,
-        context: admittedInput.context,
-        workflowId: 'task_execution',
-        workspaceId: workspace,
-      });
+      const openBridge = () =>
+        MastraSessionBridge.open({
+          ledger,
+          projectIds: [selection.project],
+          repositoryRoot: root,
+          config,
+          selection,
+          context: admittedInput.context,
+          workflowId: 'task_execution',
+          workspaceId: workspace,
+        });
+      bridge = await (tracePhases ? traceFixtureOperation(true, 'bridge-open', openBridge) : openBridge());
       bridgeHandle = bridge;
       requireSetupTime('bridge-start');
-      await bridge.start(original.source);
+      if (tracePhases) await traceFixtureOperation(true, 'bridge-start', () => bridge.start(original.source));
+      else await bridge.start(original.source);
     } finally {
       endAdmissionBridge();
     }
@@ -556,7 +584,13 @@ async function prepareFixture({
     let journal: ReturnType<typeof readJournal>;
     try {
       journal = inProcessPreparation
-        ? await runPreparationFixtureInProcess(originalPublicFixture, { ledger, bridge, source })
+        ? await runPreparationFixtureInProcess(
+            originalPublicFixture,
+            { ledger, bridge, source },
+            tracePhases
+              ? (label, operation) => traceFixtureOperation(true, `preparation-${label}`, operation)
+              : undefined,
+          )
         : await runTaskSynthesisPublicActions(originalPublicFixture);
     } finally {
       endSynthesis();
@@ -666,46 +700,67 @@ async function prepareFixture({
             journal.state.items.find((entry) => entry.request.stage_id === 'develop_task'),
             'Prepared public writer action',
           );
-          const before = store.readHostStateSnapshot(identity);
-          acquireLocalSourceWriterLease({
-            repositoryRoot: root,
-            config,
-            store,
-            identity,
-            nativeSessionHandle: input.nativeSessionHandle,
-            stageId: item.request.stage_id,
-            assignmentIndex: item.request.assignment_index,
-            expectedWork: requireValue(before.workVersion, 'writer work version'),
-            expectedLedger: requireValue(before.ledgerVersion, 'writer ledger version'),
-            expectedSessionJournal: { attempt: input.context.attempt, version: journal.version },
-          });
+          const before = tracePhases
+            ? await traceFixtureOperation(true, 'writer-host-snapshot', () => store.readHostStateSnapshot(identity))
+            : store.readHostStateSnapshot(identity);
+          const acquireWriterLease = () =>
+            acquireLocalSourceWriterLease({
+              repositoryRoot: root,
+              config,
+              store,
+              identity,
+              nativeSessionHandle: input.nativeSessionHandle,
+              stageId: item.request.stage_id,
+              assignmentIndex: item.request.assignment_index,
+              expectedWork: requireValue(before.workVersion, 'writer work version'),
+              expectedLedger: requireValue(before.ledgerVersion, 'writer ledger version'),
+              expectedSessionJournal: { attempt: input.context.attempt, version: journal.version },
+            });
+          if (tracePhases) await traceFixtureOperation(true, 'writer-lease-acquire', acquireWriterLease);
+          else acquireWriterLease();
           requireSetupTime('execution-open');
-          const execution = await openAdmittedSessionExecution(root, store, 'sample', 'stopped');
+          const openExecution = () => openAdmittedSessionExecution(root, store, 'sample', 'stopped');
+          const execution = await (tracePhases
+            ? traceFixtureOperation(true, 'writer-execution-open', openExecution)
+            : openExecution());
           executionCapability = requireValue(
             execution.composition.workflowExecutionCapability,
             'Actual execution capability',
           );
-          const prepared = await prepareWorkflowExecution(executionCapability, {
-            repositoryRoot: root,
-            configDigest: runtimeConfigDigest(config),
-            teamId: selection.team,
-            workItemId: input.context.work_id,
-          });
-          reservation = await reserveWorkflowAssignmentForSession(executionCapability, {
-            repositoryRoot: root,
-            configDigest: runtimeConfigDigest(config),
-            teamId: selection.team,
-            workflowId: item.request.workflow_id,
-            stageId: item.request.stage_id,
-            assignmentIndex: item.request.assignment_index,
-            workItemId: input.context.work_id,
-            workItemDigest: prepared.workItemDigest,
-            workContextDigest: prepared.workContextDigest,
-            input: { bindings_manifest_ref: item.request.bindings_manifest_ref },
-          });
-          journal = ledger.issueWave('stopped', input.context.attempt, journal.version, {
-            [item.request.action_id]: reservation,
-          });
+          const prepareWriter = () =>
+            prepareWorkflowExecution(executionCapability!, {
+              repositoryRoot: root,
+              configDigest: runtimeConfigDigest(config),
+              teamId: selection.team,
+              workItemId: input.context.work_id,
+            });
+          const prepared = await (tracePhases
+            ? traceFixtureOperation(true, 'writer-workflow-prepare', prepareWriter)
+            : prepareWriter());
+          const reserveWriter = () =>
+            reserveWorkflowAssignmentForSession(executionCapability!, {
+              repositoryRoot: root,
+              configDigest: runtimeConfigDigest(config),
+              teamId: selection.team,
+              workflowId: item.request.workflow_id,
+              stageId: item.request.stage_id,
+              assignmentIndex: item.request.assignment_index,
+              workItemId: input.context.work_id,
+              workItemDigest: prepared.workItemDigest,
+              workContextDigest: prepared.workContextDigest,
+              input: { bindings_manifest_ref: item.request.bindings_manifest_ref },
+            });
+          const issuedReservation = await (tracePhases
+            ? traceFixtureOperation(true, 'writer-reserve', reserveWriter)
+            : reserveWriter());
+          reservation = issuedReservation;
+          const issueWriter = () =>
+            ledger.issueWave('stopped', input.context.attempt, journal.version, {
+              [item.request.action_id]: issuedReservation,
+            });
+          journal = tracePhases
+            ? await traceFixtureOperation(true, 'writer-journal-issue', issueWriter)
+            : issueWriter();
         } else {
           await issue();
           journal = sync();

@@ -1649,3 +1649,67 @@ publish these checked bytes, wait for the matching successful SDK-input
 artifact, and run one new exact `main-runtime-core` F/L/S/B stage. Keep the
 candidate only if the exact gate completes; otherwise preserve the failure and
 repair the same contour without changing any budget.
+
+The exact attempt on the published candidate is now complete. Stage
+`contour-stage-h4Swos` measured commit `60e1f940fcba399186578feb835cd5196ea98760`
+for 240.861 seconds. Capture completed, the process group closed and image
+inputs stayed unchanged, but shard 2 exited unsuccessfully, so the run has no
+accepted F/L/S/B report. Its JUnit records 12 passes and one failure: the
+protected-session case reached 35.096 seconds against its existing 30-second
+case timeout; cleanup then recorded the expired fixture deadline as a secondary
+error. Shard 1 passed 227 tests and 1,098 assertions in 170.847 seconds; shard 2
+ran 13 tests and 223 assertions in 234.488 seconds. Original evidence is
+retained under `/workspace/contour-stage-h4Swos` and the run projection records
+the unqualified failure. No contour is closed by this attempt.
+
+The exact result establishes no benefit from the counter-accessor rewrite. It
+also is not a clean A/B comparison: the published commit contains the new
+runtime counter test as well as the rewrite. Root has reverted only the
+instrumentation rewrite in the working Source; the counter behavior test stays
+published. An attempted fixture that omitted `review_source_prewrite` was
+reverted after the protected completion was rejected with `workflow approval
+denied`. The current configured prewriter explicitly depends on task synthesis
+and is required for Source authorization, so neither stage may be skipped.
+
+A focused Bun 1.4.3 run of the protected-session test without the custom Istanbul
+coverage stage passed in 25.02 seconds. Its existing opt-in phase trace measured
+fixture files 1.1 ms, config/ledger open 492 ms, admission/bridge start 7.322 s,
+controlled runtime initialization 92 ms, task-synthesis plus prewriter 5.271 s,
+writer issue/execution open 8.075 s, and the approval/replay assertions about
+2.5 s. This isolates fixture setup as the main optimization target, but the
+plain Bun timing does not predict exact-stage timing. The exact case is slower
+under custom instrumentation and concurrent shards; resource contention is a
+plausible cause, not yet isolated. Two-worker exact runs took 234.221 s and
+240.861 s and both failed this case. A serial run is not a viable first
+alternative: the observed shard totals project to about 405 s before overhead,
+above the unchanged 330-second stage budget. Three workers remain unmeasured and
+could add contention.
+
+The next repair keeps task synthesis, the configured read-only prewriter,
+workflow authorization, persisted approval assertions, and the 30-second test
+limit. Root split the opt-in fixture trace into admission, bridge, preparation,
+and writer operations. In a second focused Bun run, source snapshot took 6.9 ms,
+`admitLocalSessionWork` 661 ms, `MastraSessionBridge.open` 5.572 s, and
+`bridge.start` 2.724 s. Synthesis issue/report took 304 ms, synthesis bridge
+resume 2.028 s, prewriter issue/report 365 ms, prewriter bridge resume 1.948 s,
+and observation construction 2.6 ms. Writer lease took 149 ms, execution open
+884 ms, workflow preparation 614 ms, reservation 5.870 s, and journal issue
+122 ms. The trace-enabled case passed in 24.597 s; the untraced case passed in
+25.416 s. Both are plain Bun diagnostics, not custom-coverage evidence.
+
+The two measured product boundaries worth investigating are bridge open and
+workflow reservation. The current kernel deliberately reloads and rechecks
+configuration around asynchronous authority resolution and before beginning
+the protected attempt. That validation is a concurrency/CAS boundary, so it
+must not be removed based only on elapsed time. Repeated
+`runtimeConfigDigest(config)` calls were also checked: loaded immutable configs
+are memoized by identity, so they are not a confirmed hashing hot spot and were
+left unchanged. The test-only nested phase trace is opt-in and keeps the
+untraced synchronous path direct. Targeted typecheck (101 files), oxlint,
+format check and `git diff --check` passed. The protected-session test passed
+once with tracing and once without it; each was a single-test Bun 1.4.3 run,
+not an exact coverage result. Next, inspect bridge setup and reservation for
+work that can be shared without weakening freshness, ownership or
+authorization, make only a measured change, then publish and run one exact
+`main-runtime-core` F/L/S/B stage. Do not rerun a full suite or start another
+contour for this diagnosis.
