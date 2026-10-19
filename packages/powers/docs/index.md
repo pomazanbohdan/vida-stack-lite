@@ -26,6 +26,8 @@ Bundle документації продукту Vida Powers у форматі O
 * [D4 — Канали доставки VP: окремий плагін, збірка в пакет агента, marketplace](decisions/D4-delivery-channels.md) - Три канали доставки в scope; поверхня скілів VP: `vp-mode` (основний скіл оркестрації) і `vp-setup` (допоміжний налаштування).
 * [D4b — Marketplace-власник VP і набір хостів першого релізу](decisions/D4b-marketplace-and-hosts.md) - `packages/powers` сам є marketplace-власником; Codex — перевірений перший хост, решта — заявлена підтримка.
 * [D5 — Decision Provider і роутінг у VP: provider-нейтральний інтерфейс, LLM-вибір і формування агентів](decisions/D5-decision-provider.md) - Контракт `decision.evaluate` з двома реалізаціями та обов'язковим Agent Fallback; роутінг = вибір LLM, формування агентів і рівень флоу.
+* [D7 — Ініціалізація VP за середовищем: три носія конфігурації](decisions/D7-consumer-initialization.md) - `vp-setup` пише у проєктний instruction-файл, конфіг-файл агентного runtime або конфіг-файл проєкту від хост-прослойки.
+* [D8 — Методологічний профіль: одна схема VP, носій за середовищем](decisions/D8-methodology-profile.md) - `VPMethodologyProfile/v1` — VP-owned схема; носій залежить від середовища.
 
 # Поза межами bundle
 

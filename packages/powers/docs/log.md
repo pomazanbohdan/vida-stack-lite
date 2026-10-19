@@ -1,6 +1,8 @@
 # Directory Update Log
 
 ## 2026-10-19
+* **Creation**: [Рішення D8 — методологічний профіль](decisions/D8-methodology-profile.md) зафіксовано: одна схема `VPMethodologyProfile/v1` належить VP; носій залежить від середовища — Runtime має розділ у `.vida/project.yaml`, Standalone — керований YAML-блок проєктного instruction-файлу, хост-прослойка — конфіг-файл проєкту.
+* **Creation**: [Рішення D7 — ініціалізація за середовищем](decisions/D7-consumer-initialization.md) зафіксовано: `vp-setup` визначає середовище і пише конфігурацію у відповідний носій — проєктний instruction-файл, конфіг-файл агентного runtime або конфіг-файл проєкту з шаблонів.
 * **Update**: [Рішення D5](decisions/D5-decision-provider.md) уточнено до rev 2: роутінг — це вибір LLM, формування агентів за фіксованим довідником (каталогом інструкцій) і рівень флоу (`Full`/`Medium`/`Light`); власник графа виконання лишається недоторканим.
 * **Update**: [Research-документ](research/vida-powers-product-research.md) §4.8 — Workflow Routing визначено як вибір LLM + формування агентів + рівень флоу; згадки провайдера «Jeff»/«Jev» (§4.8, §8.4, §12) замінено на provider-нейтральне формулювання.
 * **Creation**: [Рішення D4b — marketplace-власник і хости](decisions/D4b-marketplace-and-hosts.md) зафіксовано: `packages/powers` сам є marketplace-власником (per-host `marketplace.json` із `source: "./"`, публікація як Git-репозиторій через наявний патерн дзеркала Source); Codex — перевірений перший хост, решта хостів — заявлена підтримка з позначеним обмеженням. Уточнює D4, не скасовує його.

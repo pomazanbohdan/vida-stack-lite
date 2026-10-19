@@ -186,7 +186,7 @@ S-документи, які створює Stage 1.
 | D-03 | Один вхід: `vp-mode` (оркестрація) + `vp-setup` (налаштування) | Skill refs підтримані **лише** як workflow-stage `context_skill_refs` (`.codex/skills/<name>/SKILL.md`): `src/orchestration/configured-context.ts:63`, `src/config/runtime-config.ts:1330-1333`. Загального skill discovery немає. Per-host plugin manifests у репо відсутні; зразок — у донорів (superpowers, cursor/plugins) | Stage 5 |
 | D-04 | `vp-setup` керує `AGENTS.md` (§3) | `AGENTS.template.md` забороняє project-specific content і замінюється wholesale; consumer не редагує встановлений пакет | Stage 5: писати у project-owned поверхню |
 | D-05 | Session/compaction hooks (§3) | Runtime-hook API в `packages/agent/src` відсутній. Хост-поверхня є: Codex native `/hooks` review, trusted `SessionStart` hook, кваліфікація через `tooling/agent/cloud-pstack-setup.ts`; новий/змінений hash потребує native review — trust GAP, не синтезується | Stage 5: перевикористання + кваліфікація, trust GAP явний |
-| D-06 | Методологія як політика продукту (§4.3, §4.4) | Чинна конфігурація — `agent-runtime.config.v1.yaml` (`workflows:`); `.vida/project.yaml` — ціль. Профілів методології немає | Stage 4 + рішення D7 |
+| D-06 | Методологія як політика продукту (§4.3, §4.4) | Чинна конфігурація — `agent-runtime.config.v1.yaml` (`workflows:`); `.vida/project.yaml` — ціль. Профілів методології немає | Stage 4 + D7/D8 (схема VP-owned, носій за середовищем) |
 | D-07 | Матеріалізація §6 | `LifecycleArtifactReference/v1` (kind, artifact_schema, record_id, path, sha256, source_revision, scope_id, ac_ids, generation, `implementation_fingerprint`, delivery_cycle_id, principal, decision, disposition) і `WorkArtifactReference` уже існують. У `artifact_contracts` чинного конфігу: `WorkItem/v1`, `ResearchResult/v1`, `ResearchSynthesis/v1`, `DecisionRecord/v1`. `AcceptanceManifest/v1`, `ImplementationScope/v1`, `WorkState/v1` існують як схеми й кодифіковані контракти в коді, але **не** як записи `artifact_contracts` | Stage 6: перевикористати наявні контракти, додати лише прогалини |
 | D-08 | Findings: реєстр дефектів (§8.3, §8.4) | `findings` — поле `ResearchResult/v1`, `ResearchSynthesis/v1`, `final-assurance-review/state`; окремого defect-registry з життєвим циклом і dedup немає | Stage 6 |
 | D-09 | Runtime: HostState/CAS/lease (§8.1, §10) | Реалізовано; окрема storage-admission БД лишається GAP проти цільової `workspace.v1.sqlite`; чинні v1-контракти дійсні | Stage 7a / 7b |
@@ -210,8 +210,8 @@ S-документи, які створює Stage 1.
 | D4b | Marketplace-власник і хости | marketplace у корені репо / `packages/powers` сам / окремий репозиторій; набір хостів | **ВИРІШЕНО 2026-10-19**: `packages/powers` сам є marketplace (`source: "./"`, публікація як Git-репозиторій через наявний патерн дзеркала Source); Codex — перевірений перший хост, решта — заявлена підтримка з обмеженням. Decision: `docs/decisions/D4b-marketplace-and-hosts.md` | вирішено |
 | D5 | Decision Provider і роутінг | конкретний провайдер / provider-нейтральний інтерфейс | **ВИРІШЕНО 2026-10-19**: provider-нейтральний контракт `decision.evaluate` (реалізації: master LLM агента / зовнішній провайдер за host-конфігом), Agent Fallback обов'язковий; роутінг = вибір LLM + формування агентів із фіксованого довідника + рівень флоу (Light/Medium/Full); власник графа виконання недоторканий. Decision: `docs/decisions/D5-decision-provider.md` | вирішено |
 | D6 | Журнал змін research | створити `*.changelog.md` / прибрати посилання | Вирішено форматом: bundle-журнал `packages/powers/docs/log.md` (OKF §9), на який вказує `vida.changelog_ref`; окремий `*.changelog.md` не потрібен | 0 |
-| D7 | Цільовий споживацький layout | чинний v1-конфіг / `.vida` cutover | Цілитися в чинний v1-конфіг; `.vida` — залежність від окремого runtime-треку (cutover не виконано) | 4, 7 |
-| D8 | Де живе схема методологічного профілю | (a) розділ у `agent-runtime.config.v1.yaml`; (b) VP-owned схема/файл | **(b)**: `agent-runtime-config.v1.schema.json` і валідатор у `runtime-config.ts` належать runtime-власнику, тож додавання розділу = runtime work item. VP-owned схема `Type/vN` не торкається runtime; інтеграція з runtime — лише через наявні `context_skill_refs`/конфіг. **(a)** — лише за окремим погодженим runtime work item | 4 |
+| D7 | Ініціалізація VP за середовищем | один layout для всього / три носія | **ВИРІШЕНО 2026-10-19**: `vp-setup` визначає середовище — Standalone → керований YAML-блок у `AGENTS.md`/`CLAUDE.md`; agent-delivery → конфіг-файл агентного runtime; host shim → конфіг-файл проєкту з шаблонів. Decision: `docs/decisions/D7-consumer-initialization.md` | вирішено |
+| D8 | Методологічний профіль: схема і носій | (a) розділ у runtime-конфізі; (b) VP-owned файл; (c) одна схема, носій за середовищем; (d) лише `.vida/project.yaml` | **ВИРІШЕНО 2026-10-19**: (c) — схема `VPMethodologyProfile/v1` належить VP; Runtime — розділ у `.vida/project.yaml`, Standalone — керований YAML-блок instruction-файлу, host shim — конфіг-файл проєкту. Decision: `docs/decisions/D8-methodology-profile.md` | вирішено |
 
 ---
 
@@ -419,10 +419,11 @@ AC:
 **Role:** product owner + implementer. **Оцінка:** M. **Work item:** VP-4. **Потребує:** Stage 2, 3; D8.
 
 Роботи:
-- Поверхня конфігурації: схема методологічного профілю — VP-owned `Type/vN`
-  (D8-варіант b), з одним owner-ом. D8-варіант (a) (розділ у
-  `agent-runtime.config.v1.yaml`) можливий лише за окремим runtime work item;
-  D7 визначає цільовий layout споживача, а не місце схеми профілю.
+- **Схема профілю — VP-owned** (D8): `VPMethodologyProfile/v1` у `packages/powers/config/`,
+  з одним owner-ом. **Носій за середовищем (D7):** Runtime — розділ у
+  `.vida/project.yaml`; Standalone — той самий розділ у керованому YAML-блоці
+  проєктного instruction-файлу; host shim — конфіг-файл проєкту. Одна семантика,
+  різні файли-носії.
 - `Effective Methodology Profile`: групи (testing-sequence, review-strategy,
   architecture, delivery), явне вибіркове успадкування між продуктами, локальне
   перевизначення, конфлікт → питання власнику.
@@ -433,10 +434,10 @@ AC:
 - Light/Medium/Full і рольова композиція (research §5): глибина, обов'язковість
   (`required`/`conditional`/`optional`) і застосовність — окремі властивості.
 
-Runtime-запит (власник — runtime-власник): якщо D8 = (a), розширення
-`agent-runtime-config.v1.schema.json` і валідатора `runtime-config.ts` під
-методологічний розділ. VP не редагує `packages/agent` сам; за D8 = (b) запиту не
-потрібно.
+Runtime-запит (власник — runtime-власник): **один спільний запит** на два пункти —
+розширений instruction registry (D3) і читання методологічного профілю з
+`.vida/project.yaml`. VP не редагує `packages/agent` сам; схема профілю належить
+VP, тож лише runtime-частина потребує зміни пакета.
 
 AC:
 - Профіль визначається детерміновано для (продукт × задача) — тестова матриця.
@@ -466,10 +467,13 @@ AC:
   методологічним профілем. `workflow.options` і `decision.evaluate` (§4.8) —
   provider-нейтральні операції; поріг relevance — калібрований параметр, не
   універсальна константа; власник графа виконання лишається недоторканим.
-- **`vp-setup` — допоміжний скіл налаштування:** виявлення проєктів; ідемпотентне
-  додавання керованого блоку **у project-owned поверхню споживача** (не в пакет
-  агента); збереження сторонніх інструкцій; налаштування доступних host hooks;
-  зіставлення layout; перевірка активації.
+- **`vp-setup` — допоміжний скіл налаштування (D7):** контекстно-залежна ініціалізація
+  з трьома writers: Standalone → керований YAML-блок у проєктному `AGENTS.md`
+  (або `CLAUDE.md`, якщо `AGENTS.md` відсутній); agent-delivery → конфіг-файл
+  агентного runtime; host shim → конфіг-файл проєкту з шаблонів. Усі три:
+  ідемпотентність, збереження сторонніх інструкцій, налаштування доступних host
+  hooks, зіставлення layout, перевірка активації. Жоден writer не змінює пакет
+  агента.
 - Host-hook кваліфікація: перевикористати наявну native `/hooks` поверхню; зміна
   hash потребує native review — trust GAP фіксується, не обходиться.
 - **Канал 1 — окремий плагін:** per-host plugin manifests (`.codex-plugin/plugin.json`,
@@ -486,7 +490,8 @@ AC:
   хостів — заявлена підтримка з позначеним обмеженням.
 
 AC:
-- Повторний запуск `vp-setup` на незміненому вході → порожній diff (тест).
+- Повторний запуск `vp-setup` на незміненому вході → порожній diff (тест) **для
+  кожного з трьох середовищ** (Standalone, agent-delivery, host shim).
 - `vp-setup` не змінює жодного файлу встановленого пакета агента (тест на
   read-only до встановлених шляхів).
 - Активація перевіряється для: початку сесії, відновлення після compaction, контексту
