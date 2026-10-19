@@ -72,10 +72,13 @@ bun packages/powers/.tmp/validate-donors.ts
 Після кроку **A** (скелет продукту) додаються:
 
 ```sh
-bun --cwd packages/powers run test          # bun:test без зовнішніх залежностей
-bun --cwd packages/powers run typecheck     # bun check --project tsconfig.json
-bun --cwd packages/powers run format:check
+bun run --cwd packages/powers test          # bun:test без зовнішніх залежностей
+bun run --cwd packages/powers typecheck     # bun check --project tsconfig.json
+bun run --cwd packages/powers format:check
 ```
+
+> Форма виклику: `bun run --cwd <dir> <script>`. Варіант `bun --cwd <dir> run <script>`
+> друкує usage і не виконує скрипт.
 
 Після кроку **C** — операції каталогу: `catalog.tags`, `catalog.search`,
 `catalog.get`, `catalog.compose`; після кроку **D** — `convert` і
@@ -96,6 +99,7 @@ bun --cwd packages/powers run format:check
 | `tooling/` | Скрипти: `catalog.ts`, `convert.ts`, `check-corpus.ts`, `check-okf.ts` | C, D |
 | `tests/` | Тести harness'у VP | A–F |
 | `donors.yaml` | Маніфест донорів: точні ревізії, ліцензії, лічильники | наявний |
+| `package.json` | Манifest пакета VP: knip бачить `packages/powers` як workspace лише з `package.json` | A |
 | `.tmp/` | Scratch: клони донорів, одноразові скрипти. **Ігнорується Git** | D |
 
 ## 6. Інваріанти — не порушувати
@@ -142,8 +146,10 @@ bun --cwd packages/powers run format:check
 
 - **A0-гейт (до першого TS-файлу):** knip агента сканує репозиторій цілом і не має
   workspace для `packages/powers` → можливі «unlisted files» і падіння
-  `lint:knip` (`--max-issues 0`). Перевірка: `bun --cwd packages/agent run
-  lint:knip:pinned`. **Статус: не перевірено** — залежності не встановлені.
+  `lint:knip` (`--max-issues 0`). Перевірка: `bun run --cwd packages/agent
+  lint:knip:pinned`. **Статус: частково закрито** — блок `packages/powers` додано до
+  `packages/agent/knip.config.ts` (owner-рішення), маніфест пакета створено, але
+  фактичний прогін knip **не виконано**: залежності репозиторію не встановлені.
 - `packages/powers/docs` **не входить** у `canonical_roots` документаційної
   політики репозиторію: документи продукту ведуться за власною OKF-дисципліною
   (`check-okf.ts` + журнал).

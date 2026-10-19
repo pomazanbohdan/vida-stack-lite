@@ -53,7 +53,7 @@ A0 (gate) ──► A harness+скелет ──► B канонічні док
 
 | Крок | Зміст | Ворота (має бути доказ) | Оцінка |
 |---|---|---|---|
-| **A0** | Перевірити ризик для чужого lint-гейту до першого TS-файлу | `bun --cwd packages/agent run lint:knip:pinned` — exit 0 **або** зафіксований підтверджений ризик і рішення власника | S |
+| **A0** | Перевірити ризик для чужого lint-гейту до першого TS-файлу | `bun run --cwd packages/agent lint:knip:pinned` — exit 0 **або** зафіксований підтверджений ризик і рішення власника | S |
 | **A** | Скелет продукту й harness: `package.json`, `.bun-version`, `tsconfig.json`, `bunfig.toml`, каталоги `tooling/ tests/ config/ corpus/ skills/ docs/work/ docs/requests/`, перший тест | `bun --cwd packages/powers run test` → exit 0; `bun --cwd packages/powers run typecheck` → exit 0 | S |
 | **B** | Канонічні документи продукту: `business-requirements.md`, `system-specification.md`, `acceptance.md`, матриця research § → SR § → AC id | Матриця повна; `check-okf.ts` → exit 0; doc-check → `failures: []` | M |
 | **C** | Схеми `VPCatalog/v1` і `VPMethodologyProfile/v1` у `config/`; операції `catalog.tags/search/get/compose` у `tooling/`; `decision.evaluate` з fallback (D5) | Тести операцій: лише ID/опис у пошуку, обов'язкові + залежності в compose, конфлікт груп → помилка, кожен trigger fallback → fallback з причиною | L |
@@ -79,15 +79,15 @@ A0 (gate) ──► A harness+скелет ──► B канонічні док
 
 # Вимоги до першого TS-файлу (A0-гейт)
 
-1. `packages/powers` **не** входить у workspace root-пакета → `bun --cwd packages/powers run …`
+1. `packages/powers` **не** входить у workspace root-пакета → `bun run --cwd packages/powers test`
    має працювати на власному `package.json` і власному `bunfig.toml`.
-2. Knip агента сканує репозиторій цілом; workspace для `packages/powers` немає.
-   Підтвердження ризику: `bun --cwd packages/agent run lint:knip:pinned` (потрібні
-   встановлені залежності — у поточному середовищі `node_modules` відсутні, тому
-   перевірка **не виконана**).
-3. Якщо ризик підтвердиться — три варіанти на вибір власника: root-зміна в
-   knip-конфіг (поза поточним scope), відкладення TS-коду до реєстрації, або
-   прийняття ризику як відомого.
+2. Knip агента сканує репозиторій цілом; workspace для `packages/powers` додано
+   (owner-рішення, D9 rev 2): `packages/agent/knip.config.ts`, блок `packages/powers`
+   з `entry: ['tooling/*.ts', ...tests]`, `project: [codeFiles]`, `ignore: ['.tmp/**']`.
+   Підтвердження ризику фактичним прогоном: `bun run --cwd packages/agent
+   lint:knip:pinned` — **ще не виконано** (залежності репозиторію не встановлені).
+3. Якщо прогін виявить інші зауваження (напр. «unlisted binary» для `bun`), рішення —
+   точечна правка блоку `packages/powers` у knip-конфізі (owner-виняток D9 rev 2).
 4. Тести VP не повинні залежати від залежностей агента; стандартна бібліотека Bun
    і локальні модулі.
 

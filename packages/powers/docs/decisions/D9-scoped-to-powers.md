@@ -25,7 +25,7 @@ sources:
   title: DocumentationPolicy/v1
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T00:00:00Z' }
-revision: '1'
+revision: '2'
 ---
 
 # Рішення
@@ -35,6 +35,16 @@ root-файл репозиторію не змінюється. Реєстрац
 `agent-runtime.config.v1.yaml`, документаційна політика, `docs/products.map.md`,
 `README.md`, knip-конфігурація, root `package.json`) — **відкладена** як зовнішня
 залежність, яка потребує окремого кроку з власником репозиторію.
+
+## Виняток, дозволений власником (rev 2)
+
+Рішення власника від 2026-10-19 дозволяє **одну** зміну поза каталогом продукту:
+реєстрацію workspace VP у `packages/agent/knip.config.ts` (додавання блоку
+`packages/powers` з entry/project/ignore). Причина — knip 6.41 трактує workspace
+лише як каталог із `package.json`, а без реєстрації файли `packages/powers/**`
+потрапляють у репозиторний скан як «unlisted» і ламають `lint:knip`
+(`--max-issues 0`). Інших змін у `packages/agent` цей виняток не охоплює;
+runtime-запити лишаються документами в `docs/requests/`.
 
 # Що залишається в межах каталогу
 
@@ -63,7 +73,9 @@ root-файл репозиторію не змінюється. Реєстрац
    `bun --cwd packages/agent run lint:knip:pinned`. Якщо ризик підтвердиться —
    потрібна root-зміна (owner) або відкладення TS-коду.
 4. **Bun-версія продукту** — пін `1.4.3`, як у `packages/agent/.bun-version`;
-   інструментальний ланцюг — лише Bun.
+   інструментальний ланцюг — лише Bun. Перевірена форма виклику:
+   `bun run --cwd packages/powers test` (варіант `bun --cwd <dir> run <script>`
+   друкує usage і не виконує скрипт).
 5. **Runtime-режим VP не доводиться** у поточному scope: немає ані реєстрації, ані
    runtime-запиту. Доведеться Standalone-частину: власний каталог, власні скрипти,
    скіли, корпус, Work Items, findings.

@@ -59,6 +59,13 @@ const config = {
       entry: [],
       project: [codeFiles],
     },
+    'packages/powers': {
+      // Every product script is a manual entrypoint; the test files are entrypoints too.
+      entry: ['tooling/*.ts', ...tests],
+      project: [codeFiles],
+      // Scratch area: cloned donor repositories and one-off scripts are not product source.
+      ignore: ['.tmp/**'],
+    },
   },
 } satisfies KnipConfig;
 
