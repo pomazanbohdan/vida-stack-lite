@@ -19,7 +19,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 
 | Contour | Latest F / L / S / B | CC / entry CRAP | Latest mutation report | Latest stage / coverage outcome | Historical coverage + mutation pair | Latest frozen CC / CRAP | Same-run local triple |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| main-runtime-core | 162/162 · 602/602 · 632/632 · 400/400 | 31 / 31 | unknown | BLOCKED | open / unknown | 31 / 31 | open / unknown |
+| main-runtime-core | 162/162 · 602/602 · 632/632 · 400/400 | 31 / 31 | unknown | coverage/failed/unknown-or-partial | open / unknown | 31 / 31 | open / unknown |
 | main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 1 / 1 | local triple recorded |
 | main-config | 350/350 · 964/964 · 1022/1022 · 253/253 | 16 / 16 | unknown (unknown) | BLOCKED | open / unknown | 16 / 16 | open / unknown |
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 3 / 3 | local triple recorded |
@@ -96,6 +96,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | fa695231-baf7-4d77-92fe-811e4dda5b55 | bbb777e97a7fa896604cec80f2ff8075a93ec734 | 2026-10-16T21:26:16.515Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/fa695231-baf7-4d77-92fe-811e4dda5b55.json |
 | coverage | fa695231-baf7-4d77-92fe-811e4dda5b55 | bbb777e97a7fa896604cec80f2ff8075a93ec734 | 2026-10-16T21:26:16.515Z | focused-diagnostic; owner accepted locally; selection bound | 162/162 · 602/602 · 632/632 · 400/400 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/fa695231-baf7-4d77-92fe-811e4dda5b55.focused-coverage.json |
 | frozen-crap | fa695231-baf7-4d77-92fe-811e4dda5b55 | bbb777e97a7fa896604cec80f2ff8075a93ec734 | 2026-10-16T21:26:36.410Z | scoped-proof-pass; owner accepted locally; selection bound | 31 / 31 (scoped proof; owner measured) | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/fa695231-baf7-4d77-92fe-811e4dda5b55.scoped-crap.json |
+| stage-outcome | contour-stage-0EeN3h | a5e69746fb24d3016af8439271c04345d3f5a9a5 | 2026-10-19T13:25:23.783Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-0EeN3h/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

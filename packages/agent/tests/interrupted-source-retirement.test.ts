@@ -756,7 +756,10 @@ async function prepareFixture({
 }
 
 async function fixture(options: { deadline: number; tracePhases?: boolean; inProcessPreparation?: boolean }) {
-  const prepared = await prepareFixture(options);
+  const prepared = await prepareFixture({
+    ...options,
+    tracePhases: options.tracePhases ?? traceFixturePhases,
+  });
   try {
     return { ...prepared, reservation: requireValue(prepared.reservation, 'workflow reservation') };
   } catch (error) {
@@ -1122,7 +1125,7 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture({ deadline });
+  const f = await fixture({ deadline, inProcessPreparation: true });
   try {
     const before = f.store.readHostStateSnapshot(f.identity),
       beforeWork = requireValue(before.work, 'retirement work'),
@@ -1220,7 +1223,7 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
 
 test('an interrupted Source owner keeps a later FIFO contender queued', async () => {
   const deadline = performance.now() + 60000;
-  const f = await fixture({ deadline });
+  const f = await fixture({ deadline, inProcessPreparation: true });
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
@@ -1261,7 +1264,7 @@ test('public owner retirement restarts after lease expiry and package drift with
     bodyFailed = false,
     bodyError: unknown;
   mkdirSync(path.join(bundle, '.tmp'), { recursive: true });
-  const f = await fixture({ deadline }),
+  const f = await fixture({ deadline, inProcessPreparation: true }),
     cloneRoot = mkdtempSync(path.join(bundle, '.tmp', 'interrupted-recovery-')),
     packageRoot = path.join(cloneRoot, 'vida-agent'),
     realNow = Date.now;
@@ -1376,7 +1379,7 @@ test('interrupted Source retirement rejects missing, running, foreign, and stale
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture({ deadline });
+  const f = await fixture({ deadline, inProcessPreparation: true });
   try {
     const before = f.store.readHostStateSnapshot(f.identity),
       beforeWorkVersion = requireValue(before.workVersion, 'work version'),
@@ -1473,7 +1476,7 @@ test('interrupted Source retirement transaction rolls back the attempt downgrade
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture({ deadline });
+  const f = await fixture({ deadline, inProcessPreparation: true });
   try {
     const before = f.store.readHostStateSnapshot(f.identity),
       beforeWorkVersion = requireValue(before.workVersion, 'work version'),
@@ -1530,7 +1533,7 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture({ deadline });
+  const f = await fixture({ deadline, inProcessPreparation: true });
   let database: Database | undefined;
   const repair = (mode: 'inspect' | 'plan' | 'apply' | 'resume' | 'restore', actor?: string) =>
     runWorkStateRepair([
@@ -1799,7 +1802,7 @@ test('interrupted correction defaults repair rejects partial authority and misma
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
-  const f = await fixture({ deadline });
+  const f = await fixture({ deadline, inProcessPreparation: true });
   let database: Database | undefined;
   const repair = () =>
     runWorkStateRepair([

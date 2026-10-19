@@ -20,13 +20,28 @@ the protected issue-abort and admitted-completion cases exceeded their 30-second
 deadlines at 38.335 and 36.862 seconds. These are historical failures, not a
 current exact result.
 
-Within the active contour, the latest FIFO rerun passes in 43.024 seconds of test
-time (44.44 seconds for the command) with 6 assertions. The protected issue abort
-passes in 23.226 seconds with 19 expectations; admitted protected completion
-passes in 21.356 seconds with 33 expectations. The strict
-targeted Bun typecheck reports no errors in 126 files, and the changed TypeScript
-files pass the pinned formatter check. These focused and static results do not
-close F/L/S/B. A fresh immutable single-contour coverage stage remains pending.
+The latest exact stage on `a5e6974` ended UNKNOWN, not PASS: its test child
+received SIGKILL after 270,769 ms with timeout observed; no complete coverage
+report was emitted. The runner uses a 300,000 ms command budget with a 30,000 ms
+cleanup reserve, and the Bun child receives the remaining budget. The outer
+stage's 330,000 ms limit is not a per-test allowance. No assertion failure or
+coverage number is inferred from this partial run; preserve its original
+evidence at `/workspace/contour-stage-0EeN3h` and the immutable image.
+
+The confirmed cost was repeated public synthesis/prewriter work used only to
+prepare fixtures in direct Host-state cases. Those cases now use the existing
+in-process preparation helper; public CLI behavior remains under test in the
+public-issue and public-retirement cases. On the FIFO case, the previous focused
+command took 44.44 seconds; after this change, the traced focused command passed
+in 23.62 seconds (22.392 seconds reported for the test, 6 assertions). Measured
+fixture phases were 6.717 seconds for admission/bridge start, 6.186 seconds for
+preparation, and 8.186 seconds for writer issue/execution open. This is a single
+before/after sample, not a suite-wide speed claim. The public-retirement case
+also passes with the optimized fixture in 22.92 seconds, 17 expectations. The
+strict targeted Bun typecheck reports no errors in 126 files, and the changed
+TypeScript files pass the pinned formatter check. These focused and static
+results do not close F/L/S/B. A fresh immutable single-contour coverage stage
+remains pending.
 Other contour Source/test changes are retained in Git stash
 `e14e88d648dd1e09abc0f9ed8794cfd47468d41c` and are not in this packet. Keep the
 generated projection and its bound historical receipts; the active stage updates
