@@ -41,14 +41,12 @@ Preserve complete Source/test selections, deadlines, report custody and UNKNOWN
 semantics. Do not exclude paths, trim assertions or weaken gates to create a
 maximum. Keep a blocked contour active and record its exact GAP until resolved.
 
-The active contour is main-config after fresh core/timing exact observations.
-Its activated-reader case now has focused proof within the unchanged10s bound
-after fresh no-write upgrade observations and an exact-YAML parsing memo.
-WORK owns the diagnostic, review and regression results. Correction b04a76e
-is published; its complete137-test stage has exact branches but two uncovered
-identity-observation functions. Cover those through the existing fresh fixture,
-publish the regression/projection packet and repeat only main-config before
-selecting another contour. No focused result supplies frozen/mutation closure.
+Core, timing and main-config have fresh exact observations in this sequential
+cycle. Main-config's138-test stage on4b4fe7b records F354/354,L976/976,S1035/1035,
+B259/259 under unchanged budgets after the published b04a76e blocker repair.
+WORK owns the image/report bindings, operation BLOCKED status and open full
+qualification. The next contour is main-host only. No coverage milestone supplies
+frozen/mutation closure, and historical exact counts remain16/45.
 
 For each contour, use the existing one-contour stage route:
 

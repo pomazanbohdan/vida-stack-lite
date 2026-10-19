@@ -7,8 +7,8 @@ Status date: 2026-10-19. Current execution/evidence only. This document does not
 
 The latest owner instruction supersedes the earlier three-contour pool and the
 all-contour coverage run: work on one contour only, finish exact F/L/S/B100,
-then select the next. The active contour is `main-config`, after the current
-core/timing exact milestones recorded below; no other contour is being repaired
+then select the next. The next contour is `main-host`, after the current
+core/timing/config exact milestones recorded below; no other contour is being repaired
 or measured in this cycle. CRAP, complexity qualification and
 mutation are deferred. Root remains the sole Source integrator, Git owner and
 numeric producer.
@@ -2034,5 +2034,18 @@ runtime-config.ts:1707-1721. A new test uses the existing fresh legacy fixture
 to check exact cold identity, no write/fsync, a real warmed-cache configuration
 change, preservation of the older loaded object, relative-root denial and
 unchanged caller bytes. Its targeted check passes12 assertions in0.587s.
-Publish this test/projection packet through ordinary hooks, then repeat exactly
-main-config. Historical exact counts stay16/45; no next contour is selected.
+Test/projection packet4b4fe7b is published through ordinary hooks, with
+formatting, strict TS521 and lint passing. The next exact main-config run is
+`7a4a6c3f-bf9f-4b65-a66d-683cb218ebe1` at
+`/workspace/contour-stage-qw2fxM`:138PASS/0FAIL,2990 assertions,39,628.630ms,
+exit0 and complete capture/group closure with unchanged boot/image inputs.
+Its counters are F354/354,L976/976,S1035/1035,B259/259. Root accepts this
+as the current sequential coverage-only milestone. The report's operation
+status remains BLOCKED; full frozen/correspondence/mutation/resource acceptance
+is not established. No frozen or mutation producer was launched.
+The image is
+`/workspace/.vida-quality-inputs/2a3ab705cf4fff4d82ad8605897c4391ae8b1548/repository`,
+manifest SHA `013979e92d1b175cda3ced3f13e1f4af6202c35ba632f6374d0d6073a41ee8ff`.
+The automatic projection records1003 attempts and historical exact counts16/45;
+main-config was already in that historical count, so this fresh result adds0.
+Next select main-host only, preserving the same sequential coverage-first rule.
