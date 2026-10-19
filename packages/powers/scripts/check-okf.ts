@@ -15,7 +15,7 @@
  *      timestamps are ISO 8601 with an explicit UTC offset.
  *   5. Markdown links in bodies resolve inside the repository.
  *
- * Usage: bun packages/powers/tooling/check-okf.ts
+ * Usage: bun packages/powers/scripts/check-okf.ts
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';

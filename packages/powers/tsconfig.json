@@ -19,6 +19,6 @@
     "outDir": "dist",
     "types": ["node", "bun"]
   },
-  "include": ["tooling/**/*.ts", "tests/**/*.ts"],
+  "include": ["scripts/**/*.ts", "skills/**/*.ts", "tests/**/*.ts"],
   "exclude": ["dist", "node_modules", ".tmp"]
 }

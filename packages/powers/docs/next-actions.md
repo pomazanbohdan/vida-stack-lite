@@ -63,7 +63,7 @@ A0 (gate) ──► A harness+скелет ──► B канонічні док
 | Крок | Зміст | Ворота (має бути доказ) | Оцінка |
 |---|---|---|---|
 | **A0** | Перевірити ризик для чужого lint-гейту до першого TS-файлу | `bun run --cwd packages/agent lint:knip:pinned` → `{"issues":[]}`, exit 0 | S | **закрито 2026-10-19** |
-| **A** | Скелет продукту й harness **за конвенціями `packages/agent`** (без власної інфраструктури): `package.json`, `.bun-version`, `tsconfig.json`, `bunfig.toml`, власна install-тека (`bun.lock`), каталоги `tooling/ tests/ config/ corpus/ skills/ docs/work/ docs/requests/` | `bun run --cwd packages/powers test` → 13 pass / 0 fail; `bun run --cwd packages/powers typecheck` → «No type errors»; plain-TS скрипт однаково виконується під `node` і `bun` | S | **закрито 2026-10-19** |
+| **A** | Скелет продукту й harness **за конвенціями `packages/agent`** (без власної інфраструктури): `package.json`, `.bun-version`, `tsconfig.json`, `bunfig.toml`, власна install-тека (`bun.lock`), каталоги `scripts/ tests/ config/ instructions/ skills/ docs/work/ docs/requests/` | `bun run --cwd packages/powers test` → 13 pass / 0 fail; `bun run --cwd packages/powers typecheck` → «No type errors»; plain-TS скрипт однаково виконується під `node` і `bun` | S | **закрито 2026-10-19** |
 | **B** | Канонічні документи продукту: `business-requirements.md`, `system-specification.md`, `acceptance.md`, матриця research § → SR § → AC id | Матриця повна; `check-okf.ts` → exit 0; doc-check → `failures: []` | M |
 | **C** | Схеми `VPCatalog/v1` і `VPMethodologyProfile/v1` у `config/`; операції `catalog.tags/search/get/compose` у `tooling/`; `decision.evaluate` з fallback (D5) | Тести операцій: лише ID/опис у пошуку, обов'язкові + залежності в compose, конфлікт груп → помилка, кожен trigger fallback → fallback з причиною | L |
 | **D** | Вертикальний зріз корпусу на superpowers: інвентар → атомарні інструкції → теги → dedup → provenance; конвертер `tooling/convert.ts` як тестований інструмент | Інвентар 100% tracked-файлів-носіїв; кожна інструкція: ≥2 змістовні компоненти в кожному тегу, provenance, ліцензія; dedup-рішення зафіксовані; тести конвертера + `check-corpus.ts` → exit 0 | L |
@@ -92,9 +92,11 @@ A0 (gate) ──► A harness+скелет ──► B канонічні док
    має працювати на власному `package.json` і власному `bunfig.toml`.
 2. Knip агента сканує репозиторій цілом; workspace для `packages/powers` додано
    (owner-рішення, D9 rev 2): `packages/agent/knip.config.ts`, блок `packages/powers`
-   з `entry: ['tooling/*.ts', ...tests]`, `project: [codeFiles]`, `ignore: ['.tmp/**']`.
+   з `entry: ['scripts/*.ts', ...tests]`, `project: [codeFiles]`, `ignoreBinaries: ['check']`;
+   scratch-тека `.tmp` виключена самим `.gitignore`; патерн `skills/*/scripts/*.ts`
+   додається на кроці E, коли з'явиться тека скілів (інакше knip дає config hint).
    Підтвердження ризику фактичним прогоном: `bun run --cwd packages/agent
-   lint:knip:pinned` — **ще не виконано** (залежності репозиторію не встановлені).
+   lint:knip:pinned` — **виконано 2026-10-19**, `{"issues":[]}`, exit 0.
 3. Якщо прогін виявить інші зауваження (напр. «unlisted binary» для `bun`), рішення —
    точечна правка блоку `packages/powers` у knip-конфізі (owner-виняток D9 rev 2).
 4. Тести VP не повинні залежати від залежностей агента; стандартна бібліотека Bun
@@ -105,13 +107,14 @@ A0 (gate) ──► A harness+скелет ──► B канонічні док
 | Шлях | Відповідальність | Крок |
 |---|---|---|
 | `package.json`, `.bun-version`, `tsconfig.json`, `bunfig.toml` | Скелет пакета, дзеркалить конвенції `packages/agent` | A |
-| `tooling/catalog.ts` | Операції `catalog.*` + `decision.evaluate` | C |
-| `tooling/convert.ts` | Конвертер донорів → каталог | D |
-| `tooling/check-corpus.ts` | Перевірка корпусу: теги, provenance, dedup, покриття | D |
-| `tooling/check-okf.ts` | Перевірка OKF-сумісності bundle (вже створено) | наявний |
+| `skills/vp-mode/scripts/catalog.ts` | Операції `catalog.*` + `decision.evaluate` | C |
+| `scripts/convert.ts` | Конвертер донорів → каталог | D |
+| `scripts/check-corpus.ts` | Перевірка корпусу: теги, provenance, dedup, покриття | D |
+| `scripts/check-okf.ts` | Перевірка OKF-сумісності bundle (вже створено) | наявний |
 | `config/vpcatalog.v1.schema.json`, `config/vp-methodology-profile.v1.schema.json` | Схеми VP | C |
-| `corpus/` | Канонічний корпус інструкцій (дані) | D |
-| `skills/vp-mode/SKILL.md`, `skills/vp-setup/SKILL.md` | Поверхня скілів | E |
+| `instructions/` | Канонічні інструкції: `.md` + метадані, плоско | D |
+| `corpus-map.json` | Мапа обробки: донор + файл → converted/split/merged/rejected | D |
+| `skills/vp-mode/SKILL.md`, `skills/vp-setup/SKILL.md` + їхні `scripts/` | Скіли оркестрації й налаштування разом із тулінгом | C, D, E |
 | `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | Per-host plugin/marketplace manifests | E |
 | `docs/work/` | Work Items VP (OKF-концепції) | F |
 | `docs/requests/` | Runtime-запити до agent maintainer | G |

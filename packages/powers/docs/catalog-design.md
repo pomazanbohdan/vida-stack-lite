@@ -26,7 +26,7 @@ sources:
   resource: /next-actions.md
   title: Vida Powers — наступні дії в межах packages/powers
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '2'
+revision: '5'
 ---
 
 # 1. Навіщо і для кого
@@ -116,6 +116,7 @@ packages/powers/
     convert.ts                    ← конвертер донорів (крок D)
   config/
     vpcatalog.v1.schema.json      ← схема catalog.json
+    vpcorpusmap.v1.schema.json     ← схема мапи обробки (SR-66)
     vpinstruction.v1.schema.json   ← довідкова схема інструкції
     vpeffectiveprofile.v1.schema.json ← схема ефективного профілю для compose
   docs/                           ← OKF-bundle (цей дизайн — частина bundle)
@@ -205,9 +206,9 @@ revision: 1
 | `capability_tags` ≥ 1; кожен тег kebab-case із ≥2 змістовними компонентами; є в словнику | `CATALOG_INVALID` / `CATALOG_TAG_UNKNOWN` |
 | `pattern_tags` ≥ 1; ті самі правила | `CATALOG_INVALID` / `CATALOG_TAG_UNKNOWN` |
 | `conditions_*` — непорожні рядки | `CATALOG_INVALID` |
-| `artifact_contract_*` — непорожні; `required_data` може бути порожнім для настановчих | `CATALOG_INVALID` |
+| `artifact_contract_*` — для інструкцій, що виробляють результат, `output_type` і `verified_by` непорожні; для guidance — `output_type` = `none`, `required_data` порожній | `CATALOG_INVALID` |
 | `compatibility_excludes`/`_requires` — відомі `instruction_id`; `requires` не містить себе | `CATALOG_DEPENDENCY_MISSING` / `CATALOG_INVALID` |
-| `provenance` — список із щонайменше одного джерела; кожне: `donor` ∈ `donors.yaml`, `license` збігається з маніфестом, `revision` — 40-hex; те саме джерело двічі — не приймається | `CATALOG_INVALID` |
+| `provenance` — список із щонайменше одного джерела; кожне — рядок `donor=…; license=…; revision=…; path=…`: `donor` ∈ `donors.yaml`, `license` збігається з маніфестом, `revision` **дорівнює** `donors.yaml[donor].head_sha`; те саме джерело двічі — не приймається | `CATALOG_INVALID` |
 | `status` ∈ `active` | `disabled`; `revision` — ціле ≥1 | `CATALOG_INVALID` |
 | Виняток із правила тегів — лише через `catalog.json` → `tag_exemptions[]` (`instruction_id`, `dimension`, `reason`) | `CATALOG_INVALID` |
 
@@ -270,7 +271,7 @@ revision: 1
 | BMAD | 327 | — | workflows/agents |
 | matt-skills | 132 | — | |
 | addy-skills | 113 | — | |
-| pstack (у cursor/plugins) | 430 | — | наш донор — лише підкаталог `pstack/` |
+| pstack (у cursor/plugins) | 430 | — | наш донор — лише підкаталог `pstack/` (169 tracked-файлів — це `content_file_count` у `donors.yaml`; 430 — увесь монорепозиторій) |
 | GSD | 1815 | — | переважно docs, не методологія |
 
 MVP = superpowers + ponytail: ≈ 125 файлів-кандидатів → орієнтовно 25–40
@@ -303,7 +304,7 @@ MVP = superpowers + ponytail: ≈ 125 файлів-кандидатів → ор
 - `catalog.json` — єдиний машинний файл каталогу: ідентичність + словник тегів +
   аліаси + винятки. Список інструкцій не дублюється — його дає скан теки.
 - Опис тегу обов'язковий: тег без опису → помилка (SR-05).
-- `tag_aliases` — напрям «канонічний → аліас»; пошук зводить аліас до канонічного
+- `tag_aliases` — напрям **«аліас → канонічний»** (`{ "tdd": "test-first-development" }`); пошук зводить аліас до канонічного тегу, `catalog.tags` показує канонічні теги й їхні аліаси.
   тегу, `catalog.tags` показує канонічні й аліаси.
 - `tag_exemptions` — єдиний механізм запису відхилень.
 
@@ -377,9 +378,12 @@ LLM, хости й репозиторій; каталог знаходить **�
 5. Без профілю: будь-яка пара з `compatibility_excludes` → помилка (SR-14).
 6. Порядок виводу — стабільний (за `instruction_id`).
 
-**Семантика `decision.evaluate` (D5).** У v1 каталог не реалізує семантичного
-оцінювання: `catalog.search` повертає детермінований shortlist, а вибір робить скіл
-`vp-mode`. Контракт D5/SR-16…SR-21 лишається протоколом для майбутньої реалізації.
+**Семантика `decision.evaluate` (D5).** У v1 операція реалізована **детерміновано**:
+`decision.evaluate` приймає вже допустимі кандидати й повертає shortlist або причину
+відмови (немає кандидатів, невідомий candidate ID, кандидат поза допустимими,
+некоректний формат). Семантичне оцінювання робить скіл `vp-mode`; зовнішній
+провайдер — можливість хоста, а не обов'язок VP. Контракт D5/SR-16…SR-21 зберігає
+усі поля (джерело рішення, обрані ID, причина fallback).
 
 # 8. Потік використання
 

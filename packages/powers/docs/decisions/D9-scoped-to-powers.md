@@ -65,7 +65,9 @@ runtime-запити лишаються документами в `docs/requests
    документаційна дисципліна продукту: OKF-bundle, журнал `docs/log.md`,
    `bun packages/powers/tooling/check-okf.ts` і репозиторний
    `bun tooling/agent/check-documentation.ts` як локальна перевірка посилань.
-3. **Ризик для чужого lint-гейту** (не перевірено: залежності не встановлені):
+3. **Ризик для чужого lint-гейту** (перевірено 2026-10-19: залежності встановлено,
+   гейт `lint:knip` повертає `{"issues":[]}` і exit 0; workspace `packages/powers`
+   зареєстровано в `packages/agent/knip.config.ts` за owner-винятком rev 2):
    knip-конфігурація агента сканує репозиторій цілом (`--directory ../..`) і має
    workspace для `.`, `packages/agent`, `packages/plugin` — файли `packages/powers/**`
    можуть опинитися «unlisted» і впасти на `lint:knip` (`--max-issues 0`,

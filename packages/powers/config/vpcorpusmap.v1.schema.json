@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://vida-powers.invalid/schemas/vpcorpusmap.v1.schema.json",
+  "title": "VPCorpusMap/v1",
+  "description": "Мапа обробки корпусу: для кожного донора (з зафіксованою ревізією) і кожного файлу-носія — результат обробки (converted | split | merged | rejected).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "revision", "updated_at", "donors"],
+  "properties": {
+    "schema": { "const": "VPCorpusMap/v1" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "updated_at": { "type": "string", "minLength": 1 },
+    "donors": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/donor" }
+    }
+  },
+  "definitions": {
+    "donor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_revision", "files"],
+      "properties": {
+        "source_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Точна ревізія клона донора, з якої взято файли."
+        },
+        "files": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/file" }
+        }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["converted", "split", "merged", "rejected"] },
+        "instruction_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Інструкції, отримані з цього файлу (converted: одна; split: кілька; merged: ціль злиття)."
+        },
+        "contributed_sources": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Джерела, що внесли в інструкцію під час злиття, у форматі donor:path."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Обов'язковий для rejected: чому файл не перетворився на інструкцію."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "rejected" } }, "required": ["status"] },
+          "then": { "required": ["reason"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "rejected" } }, "required": ["status"] },
+          "then": { "not": { "required": ["instruction_ids"] } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "converted" } }, "required": ["status"] },
+          "then": { "required": ["instruction_ids"] }
+        }
+      ]
+    }
+  }
+}

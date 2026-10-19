@@ -108,7 +108,7 @@ S-документи, які створює Stage 1.
   `packages/powers/docs`; кореневий `index.md` оголошує `okf_version`; журнал
   `log.md` веде історію; кожна концепція має frontmatter із `type`, `sources`,
   `generated`, `verified`, `status`, `stale_after`. Перевірка —
-  `bun packages/powers/tooling/check-okf.ts` (exit 0).
+  `bun packages/powers/scripts/check-okf.ts` (exit 0).
 - Доказ: `BR → SR → AC → evidence`. `passed` неможливий без фактичного запуску.
   Статичний аналіз або наявність коду не закривають AC.
 - Змінений вхід інвалідує лише прив'язаний до нього доказ.
@@ -136,7 +136,7 @@ S-документи, які створює Stage 1.
 
 | ID | Зауваження валідації | Виправлення в rev 2 |
 |---|---|---|
-| R-01 | `InstructionRegistry/v1` має `maxItems: 64` і вбудований у `research_decision.registry`; корпус туди не вміщується | Stage 2 розділяє **каталог** (`VPCatalog/v1`, джерело корпусу) і **activation** (обмежена проекція ≤ 64 у наявний реєстр). D3 переформульовано |
+| R-01 | `InstructionRegistry/v1` має `maxItems: 64` і вбудований у `research_decision.registry`; корпус туди не вміщується | Stage 2 розділяє **каталог** (`VPCatalog/v1`, джерело корпусу) і **activation** (окремий розширений реєстр пакета агента, той самий engine). D3 переформульовано |
 | R-02 | `vp-setup` не має права редагувати `packages/agent/templates/AGENTS.template.md` | Stage 5 пише у project-owned поверхню споживача; зміна шаблону — окремий runtime-запит. D-04 виправлено |
 | R-03 | `.vida/*` — ціль, а не чинний layout | Global Constraints + D-06; Stage 4/7 ціляться у чинний v1-конфіг. Додано рішення D7 |
 | R-04 | Stage 1 фіксує S-контракти до D3/D4/D5 | D3/D4/D5 перенесені в Stage 0; Stage 1 розділено на стабільні інваріанти й відкладені розділи |
@@ -266,11 +266,11 @@ S-документи, які створює Stage 1.
   веде саме туди.
 
 AC:
-- `bun --cwd packages/agent run test:config:pinned` → exit 0 (config валідний).
+- `bun run --cwd packages/agent test:config:pinned` → exit 0 (config валідний).
 - `bun tooling/agent/check-documentation.ts <усі змінені .md>` → `failures: []`.
-- `bun --cwd packages/agent run test:pinned` → exit 0 (doc-policy тест проходить
+- `bun run --cwd packages/agent test:pinned` → exit 0 (doc-policy тест проходить
   після розширення `canonical_roots`).
-- `bun packages/powers/tooling/check-okf.ts` → exit 0 (bundle відповідає OKF v0.2).
+- `bun packages/powers/scripts/check-okf.ts` → exit 0 (bundle відповідає OKF v0.2).
 - Кожне з D1–D8 має Decision-запис із owner, датою, варіантами та причиною.
 - `git ls-files packages/powers` показує зареєстровані файли; `packages/powers/docs`
   присутня в `canonical_roots`.
@@ -317,7 +317,7 @@ AC:
   `follows-up`, `fixes`) зі своїми AC та evidence.
 - `bun tooling/agent/check-documentation.ts packages/powers/docs/*.md` → `failures: []`.
 - Створені S-документи входять до bundle за OKF v0.2 (frontmatter, `sources`,
-  `generated`, `verified`, `status`, `stale_after`); `bun packages/powers/tooling/check-okf.ts`
+  `generated`, `verified`, `status`, `stale_after`); `bun packages/powers/scripts/check-okf.ts`
   → exit 0.
 
 Доказ: три документи, матриця, doc-check, незалежний review документа.
@@ -330,8 +330,8 @@ AC:
 **Role:** product owner + implementer. **Оцінка:** L. **Work item:** VP-2. **Потребує:** Stage 1 (D3).
 
 Роботи (за D3: VP самостійний — власний каталог і власні скрипти):
-- `VPCatalog/v1`: канонічний корпус у продукті (`packages/powers/corpus/`), без
-  ліміту на кількість записів. Поля інструкції: `instruction_id`,
+- `VPCatalog/v1`: канонічний корпус у продукті — інструкції `.md` з frontmatter у
+  `packages/powers/instructions/` (дизайн каталогу), без ліміту на кількість записів. Поля інструкції: `instruction_id`,
   `capability_tags[]`, `pattern_tags[]`, `conditions`, `artifact_contract`,
   `compatibility` (групи/виключення/залежності), `provenance` (донор, ліцензія,
   ревізія джерела), `revision`, `status`, `content`.
@@ -370,7 +370,7 @@ AC:
   результат у процесі без пакета агента.
 - Специфікація розширеного реєстра пакета агента прийнята runtime-власником до
   закриття Stage 2; запис у секцію реєстра валідується валідатором конфігу;
-  `bun --cwd packages/agent run test:config:pinned` → exit 0.
+  `bun run --cwd packages/agent test:config:pinned` → exit 0.
 - Точний набір команд і тестів — у task-плані етапу; код VP має exact coverage 100%
   і CRAP у базовій лінії.
 
@@ -408,9 +408,11 @@ AC:
 - Кожна інструкція має `provenance` (донор + ліцензія + ревізія з `donors.yaml`),
   `revision`, `status`.
 - Невирішені конфлікти — у реєстрі конфліктів, не заховані в тексті.
-- Рішення про кожен dedup-збіг зафіксоване (канонічний ID + зв'язок).
+- Кожен dedup-збіг **зливається** в одну інструкцію: `provenance[]` містить усі
+  джерела, термінологія зведена до словника, `revision` піднято; окремих
+  «відкинутих» дублікатів не лишається.
 - Інструкції, що виробляють результат, мають `artifact_contract`.
-- Конвертер має тести; `bun --cwd packages/powers run test:coverage` — exit 0.
+- Конвертер має тести; `bun run --cwd packages/powers test:coverage` — exit 0.
 - License/NOTICE manifest присутній для кожного донора.
 
 Доказ: інвентарі, звіти покриття, digest корпусу, тести конвертера, семплинг
@@ -440,10 +442,13 @@ AC:
 - Light/Medium/Full і рольова композиція (research §5): глибина, обов'язковість
   (`required`/`conditional`/`optional`) і застосовність — окремі властивості.
 
-Runtime-запит (власник — runtime-власник): **один спільний запит** на два пункти —
-розширений instruction registry (D3) і читання методологічного профілю з
-`.vida/project.yaml`. VP не редагує `packages/agent` сам; схема профілю належить
-VP, тож лише runtime-частина потребує зміни пакета.
+Runtime-запит (власник — runtime-власник): **один спільний запит** на три пункти —
+розширений instruction registry пакета агента (D3), читання методологічного
+профілю (D8) і рішення щодо `instruction_root` для VP-інструкцій. Профіль у
+Runtime-режимі читається з **чинного** конфігу (`agent-runtime.config.v1.yaml`),
+а `.vida/project.yaml` — цільовий layout, недоступний до cutover; тому Runtime-частина
+Stage 4 позначена як заблокована cutover, а Standalone-частина — повністю
+виконувана. VP не редагує `packages/agent` сам.
 
 AC:
 - Профіль визначається детерміновано для (продукт × задача) — тестова матриця.
@@ -508,7 +513,7 @@ AC:
 - Канал 1: плагін встановлюється локально й проходить smoke-перевірку; per-host
   manifests валідні (тест на схему маніфесту).
 - Канал 2: збірка в пакет агента відтворювана, містить Source-зв'язок і digest;
-  `bun --cwd packages/agent run test:resources:pinned` → exit 0.
+  `bun run --cwd packages/agent test:resources:pinned` → exit 0.
 - Канал 3: marketplace-визначення валідне, встановлення через Git-маркетплейс
   проходить на реальному хості (Codex — перевірений); доказ — запис інсталяції з
   датою, хостом і версією.
@@ -696,7 +701,7 @@ Stage 7b — після закриття storage GAP поза VP.
 | Документація (repo) | `bun tooling/agent/check-documentation.ts <paths>` |
 
 Для VP-продукту Stage 2 створює власний harness з паралельними скриптами
-(`bun --cwd packages/powers run test|typecheck|format:check|test:coverage|crap`).
+(`bun run --cwd packages/powers test|typecheck|format:check|test:coverage`).
 До Stage 2 VP не має коду, тому його ворота не застосовуються — документи
 перевіряються doc-check-ом, а конфіг — `test:config:pinned`.
 
@@ -711,7 +716,7 @@ VP-лейки не торкаються frozen-вимірювань; `local:cand
 
 | Ризик | Наслідок | Запобіжник |
 |---|---|---|
-| `VPCatalog/v1` + проекція сприймають як «другий реєстр» | Два activation-шляди | Проекція ≤64 у наявний реєстр; mapping-тест; runtime-запит замість локального роздвоєння |
+| VP-каталог сприймають як «другий реєстр» | Два activation-шляди | Окремий розширений реєстр пакета агента з тим самим activation-движком; mapping-тест; runtime-запит замість локального роздвоєння |
 | `vp-setup` піде в пакет агента | Псування шаблону, зараження споживачів | AC на read-only до встановлених шляхів; managed-блок у project-owned поверхні |
 | VP-дизайн спирається на `.vida`, якого немає | Етапи 4/7 не виконуються | Ціль — чинний v1-конфіг; `.vida` — окремий cutover-трек (D7) |
 | Scope розширюється на сусідні продукти | Непомітна підміна методології | Явне успадкування; конфлікт → питання; AC у Stage 4 |

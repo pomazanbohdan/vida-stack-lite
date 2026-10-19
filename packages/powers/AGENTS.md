@@ -83,7 +83,7 @@ corpus, єдиним скілом оркестрації `vp-mode`, допомі
 
 ```sh
 # Сумісність bundle з Open Knowledge Format v0.2
-bun packages/powers/tooling/check-okf.ts
+bun packages/powers/scripts/check-okf.ts
 
 # Локальна перевірка посилань і заголовків репозиторним інструментом
 bun tooling/agent/check-documentation.ts packages/powers/docs
@@ -123,10 +123,12 @@ bun packages/powers/.tmp/validate-donors.ts
 | `docs/work/` | Work Items VP: стабільний ID, AC, evidence, зв'язки | F |
 | `docs/requests/` | Runtime-запити до agent maintainer | G |
 | `config/` | Схеми VP: `VPCatalog/v1`, `VPMethodologyProfile/v1` | C |
-| `corpus/` | Канонічний корпус інструкцій (дані, не код) | D |
-| `skills/vp-mode/`, `skills/vp-setup/` | Поверхня скілів (оркестрація, налаштування) + їхні `scripts/` — постачаються в плагіні | E |
+| `instructions/` | канонічні інструкції: `.md` + метадані, плоско | D |
+| `corpus-map.json` | мапа обробки корпусу: донор + файл → converted/split/merged/rejected | D |
+| `skills/vp-mode/`, `skills/vp-setup/` | Скіли (оркестрація, налаштування) разом із їхніми `scripts/` — тулінг каталогу й setup; постачаються в плагіні | C, D, E |
 | `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | Per-host plugin і marketplace manifests | E |
-| `tooling/` | Скрипти: `catalog.ts`, `convert.ts`, `check-corpus.ts`, `check-okf.ts` | C, D |
+| `scripts/` | Скрипти підтримки продукту: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts` | C, D |
+| `skills/*/scripts/` | Тулінг, що постачається в скілах (каталог, setup) | C, D, E |
 | `tests/` | Тести harness'у VP | A–F |
 | `donors.yaml` | Маніфест донорів: точні ревізії, ліцензії, лічильники | наявний |
 | `package.json` | Манifest пакета VP: knip бачить `packages/powers` як workspace лише з `package.json` | A |
@@ -201,10 +203,11 @@ bun packages/powers/.tmp/validate-donors.ts
 ## 9. Definition of done для зміни в продукті
 
 1. Тест або перевірка, яка падає **до** зміни і проходить **після** неї.
-2. `bun --cwd packages/powers run test` → exit 0 (коли harness створено).
-3. `bun packages/powers/tooling/check-okf.ts` → exit 0, якщо змінено bundle.
-4. `bun tooling/agent/check-documentation.ts packages/powers/docs` → `failures: []`,
-   якщо змінено документи.
+2. `bun run --cwd packages/powers test` → exit 0.
+3. `bun packages/powers/scripts/check-okf.ts` → exit 0, якщо змінено bundle.
+4. `bun tooling/agent/check-documentation.ts <явний список .md-файлів>` → `failures: []`
+   і `selectedDocuments > 0`; передавання каталогу замість списку файлів обирає
+   один документ і перевірку фактично робить порожньою.
 5. Запис у `docs/log.md` (OKF §9): дата, вид зміни, що саме змінилося.
 6. Для продуктових рішень — окрема концепція в `docs/decisions/` з підставами.
 

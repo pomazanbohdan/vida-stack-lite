@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "typecheck": "bun check --project tsconfig.json"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 # Vida Powers
 
-**Порт��більний агентний плагін із канонічним instruction corpus, єдиним скілом
+**Портативний агентний плагін із канонічним instruction corpus, єдиним скілом
 оркестрації та матеріалізацією результатів.**
 
 Живе в `packages/powers/` — третій продукт цього репозиторію поруч із
@@ -45,12 +45,12 @@ VP дає:
 ```text
         джерела (superpowers, BMAD, matt-skills, addy-skills, pstack, GSD, ponytail, OKF)
                               │
-                     конвертація (tooling/convert.ts)
+                     конвертація (scripts/convert.ts)
                               ▼
    канонічний корпус  packages/powers/corpus/        VPCatalog/v1
    (інструкції + capability_tags / pattern_tags + умови + compatibility + provenance)
                               │
-              пошук і добір  tooling/catalog.ts        catalog.tags / search / get / compose
+              пошук і добір  skills/vp-mode/scripts/catalog.ts   catalog.tags / search / get / compose
                               │                        decision.evaluate (+ Agent Fallback)
                               ▼
    bundle інструкцій  (роль, task contract, ефективна методологія, scope, AC, артефакти)
@@ -183,11 +183,13 @@ packages/powers/
   README.md                     цей файл
   donors.yaml                   маніфест донорів (ревізії, ліцензії, лічильники)
   docs/                         OKF-bundle (index.md, log.md, research/, decisions/, work/, requests/)
-  config/                       схеми VP (VPCatalog/v1, VPMethodologyProfile/v1)
-  corpus/                       канонічний корпус інструкцій
-  skills/                       vp-mode, vp-setup
+  config/                       схеми VP (VPCatalog/v1, VPInstruction/v1, VPEffectiveProfile/v1, VPCorpusMap/v1)
+  instructions/                 канонічні інструкції: .md + метадані, плоско
+  skills/                       vp-mode, vp-setup (+ їхні scripts/)
   .codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/   per-host маніфести
-  tooling/                      скрипти: catalog.ts, convert.ts, check-corpus.ts, check-okf.ts
+  scripts/                      підтримка продукту: check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts
+  catalog.json                  ідентичність каталогу, словник тегів, аліаси, винятки
+  corpus-map.json               мапа обробки: донор + файл → converted/split/merged/rejected
   tests/                        тести harness'у
   .tmp/                         scratch: клони донорів (ігнорується Git)
 ```
@@ -212,17 +214,18 @@ provenance; зафіксувати рішення про кожен dedup-збі
 **Завести Work Item** — концепція в `docs/work/`: стабільний ID, мета, scope, AC,
 зв'язки з іншими Work Items; докази — окремими записами.
 
-**Перевірити продукт** — `bun packages/powers/tooling/check-okf.ts`,
-`bun tooling/agent/check-documentation.ts packages/powers/docs`, а з появою
-harness'у — `bun --cwd packages/powers run test`.
+**Перевірити продукт** — `bun packages/powers/scripts/check-okf.ts`,
+`bun tooling/agent/check-documentation.ts <явний список .md-файлів>` (каталог замість
+списку обирає один документ і робить перевірку порожньою), `bun run --cwd
+packages/powers test`, `bun run --cwd packages/powers test:coverage`.
 
 ## 11. Дорожня карта
 
 | Крок | Зміст | Статус |
 |---|---|---|
-| A0 | Перевірка ризику для lint-гейту агента | **не виконано** (залежності не встановлені) |
-| A | Скелет продукту й harness (Bun-пакет, тести) | план |
-| B | Канонічні документи продукту (BR/SR/AC + матриця) | план |
+| A0 | Перевірка ризику для lint-гейту агента | **закрито** — гейт `{"issues":[]}`, exit 0 |
+| A | Скелет продукту й harness (Bun-пакет, тести) | **закрито** — 13/13 тестів, typecheck exit 0 |
+| B | Канонічні документи продукту (BR/SR/AC + матриця) | **закрито** |
 | C | `VPCatalog/v1`, `VPMethodologyProfile/v1`, операції `catalog.*`, `decision.evaluate` | план |
 | D | Вертикальний зріз корпусу: superpowers → ponytail → решта | план |
 | E | Скіли `vp-mode`/`vp-setup`, per-host маніфести, marketplace | план |
@@ -233,16 +236,16 @@ harness'у — `bun --cwd packages/powers run test`.
 
 ## 12. Статус і відкладене
 
-**Готово:** продуктова концепція (research), roadmap, дев'ять ухвалених рішень
-(D1–D9), OKF-bundle з валідатором, маніфест донорів із 8 зафіксованими
-знімками.
+**Готово:** продуктова концепція (research), roadmap, дизайн каталогу, десять записів
+рішень (D1–D9 і D4b), OKF-bundle з валідатором, маніфест донорів із 8
+зафіксованими знімками (7 методологічних донорів і Open Knowledge Format).
 
 **Відкладене за межами поточного scope:** реєстрація в спільних root-файлах
 репозиторію; runtime-запит D3+D8; cutover `.vida/*`; публікація marketplace;
 Runtime-режим VP загалом.
 
-**Статус:** `research_status: finalized`, `implementation_status: not-started` —
-реалізація починається з кроку A0.
+**Статус:** `research_status: finalized`; реалізація: кроки A0, A і B закрито —
+наступний крок C (каталог і скрипти).
 
 ## 13. Ліцензії джерел
 
