@@ -1,0 +1,102 @@
+{
+  "schema": "VPCatalog/v1",
+  "catalog_id": "vida-powers",
+  "revision": 13,
+  "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
+  "updated_at": "2026-10-19T23:07:41.846Z",
+  "tag_dictionary": {
+    "capability": {
+      "write-tests-first": "Починає зміну поведінки з перевірки очікуваного результату.",
+      "verify-work-results": "Підтверджує результат виконаними перевірками.",
+      "plan-implementation": "Розкладає вимогу на послідовні виконувані задачі.",
+      "debug-root-cause": "Встановлює початкову причину збою.",
+      "clarify-requirements": "Уточнює мету, межі та критерії приймання.",
+      "review-code": "Залучає незалежну перевірку визначеної зміни.",
+      "apply-review-feedback": "Виправляє підтверджені зауваження й перевіряє наслідки.",
+      "isolate-workspace": "Відокремлює нову зміну від іншої роботи.",
+      "integrate-branch": "Приєднує завершену зміну до погодженої гілки.",
+      "parallelize-tasks": "Виконує незалежні задачі одночасно.",
+      "delegate-subagent-tasks": "Передає чітко обмежені задачі іншим виконавцям.",
+      "minimize-code-surface": "Обмежує реалізацію найменшим повним набором змін."
+    },
+    "pattern": {
+      "test-first-development": "Спершу перевіряє очікувану поведінку, потім додає реалізацію.",
+      "verification-before-completion": "Підтверджує твердження свіжими результатами перевірок.",
+      "implementation-planning": "Організовує залежні кроки в перевірний план.",
+      "systematic-debugging": "Знаходить і підтверджує першопричину до виправлення.",
+      "requirements-clarification": "З'ясовує потребу й узгоджує напрям до проєктування.",
+      "code-review": "Незалежно оцінює зміну та її відповідність вимогам.",
+      "worktree-isolation": "Відокремлює розробку в окремому робочому дереві.",
+      "branch-integration": "Перевіряє завершену роботу перед узгодженим приєднанням.",
+      "parallel-execution": "Виконує незалежну роботу одночасно без спільного стану.",
+      "subagent-delegation": "Передає обмежену задачу й перевіряє її результат.",
+      "code-minimization": "Задовольняє вимогу найменшою повною зміною."
+    }
+  },
+  "tag_aliases": {
+    "tdd": "test-first-development"
+  },
+  "tag_exemptions": [],
+  "instructions": [
+    {
+      "instruction_id": "apply-code-review",
+      "path": "instructions/apply-code-review.md",
+      "sha256": "a7a8122009e48ee96610a21bc358569d3a03525ae9fe71651b6ebdbadc514d5e"
+    },
+    {
+      "instruction_id": "clarify-before-design",
+      "path": "instructions/clarify-before-design.md",
+      "sha256": "610e07fbdefe6fbd2ad9465dad447d35d2c52783cd10f4f2f806979c44440cad"
+    },
+    {
+      "instruction_id": "debug-systematically",
+      "path": "instructions/debug-systematically.md",
+      "sha256": "518679c303acc98151652b117b3d0d02d721755d940cdce7a48f975ef4727f7f"
+    },
+    {
+      "instruction_id": "delegate-subagent-work",
+      "path": "instructions/delegate-subagent-work.md",
+      "sha256": "33a21d14d6cf3d022c2ec1a961bdc9ddf0a3779999d2f5b88283f8c9f0017c97"
+    },
+    {
+      "instruction_id": "integrate-completed-work",
+      "path": "instructions/integrate-completed-work.md",
+      "sha256": "a21bb4f68b249e8c1d6d3844bb6904d4e7324cd997436e932d59c834442501f7"
+    },
+    {
+      "instruction_id": "isolate-work-in-worktree",
+      "path": "instructions/isolate-work-in-worktree.md",
+      "sha256": "e3280c4f6d99c171acbf9ec9a18fca4094fa0ac800047753069f719f5763da0b"
+    },
+    {
+      "instruction_id": "minimize-code-surface",
+      "path": "instructions/minimize-code-surface.md",
+      "sha256": "c3cdab0ebea5205578249fbbb90ebbb8f3dedcbe681061044fc42ad58f5ee33d"
+    },
+    {
+      "instruction_id": "parallelize-independent-tasks",
+      "path": "instructions/parallelize-independent-tasks.md",
+      "sha256": "9428af616d6fae795ca8a2272acc5eb0e0797c3f1260351637dd0a191a923dc9"
+    },
+    {
+      "instruction_id": "request-independent-review",
+      "path": "instructions/request-independent-review.md",
+      "sha256": "245edcd244bd3bd1ffe36c168764550a5e2e5e2674ae333342f56d78a9f93c55"
+    },
+    {
+      "instruction_id": "test-first-development",
+      "path": "instructions/test-first-development.md",
+      "sha256": "cbdf57e4948f75f4c52af108637dd6c6a9e46352db9f81f549ea847002de792d"
+    },
+    {
+      "instruction_id": "verify-before-completion",
+      "path": "instructions/verify-before-completion.md",
+      "sha256": "b713744760cb63244d57753cc6483a1ef701f8b404d9746be1171415044b686e"
+    },
+    {
+      "instruction_id": "write-implementation-plan",
+      "path": "instructions/write-implementation-plan.md",
+      "sha256": "9735804d917216a861d7cbc44a7739e138d638e7d618d67eff5b2679c0d03706"
+    }
+  ]
+}

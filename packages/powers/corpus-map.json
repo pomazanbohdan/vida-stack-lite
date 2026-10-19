@@ -1,0 +1,89 @@
+{
+  "schema": "VPCorpusMap/v1",
+  "revision": 12,
+  "updated_at": "2026-10-19T23:07:41.847Z",
+  "donors": {
+    "superpowers": {
+      "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
+      "files": {
+        "skills/receiving-code-review/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "apply-code-review"
+          ]
+        },
+        "skills/brainstorming/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "clarify-before-design"
+          ]
+        },
+        "skills/systematic-debugging/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "debug-systematically"
+          ]
+        },
+        "skills/subagent-driven-development/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "delegate-subagent-work"
+          ]
+        },
+        "skills/finishing-a-development-branch/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "integrate-completed-work"
+          ]
+        },
+        "skills/using-git-worktrees/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "isolate-work-in-worktree"
+          ]
+        },
+        "skills/dispatching-parallel-agents/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "parallelize-independent-tasks"
+          ]
+        },
+        "skills/requesting-code-review/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "request-independent-review"
+          ]
+        },
+        "skills/test-driven-development/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "test-first-development"
+          ]
+        },
+        "skills/verification-before-completion/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "verify-before-completion"
+          ]
+        },
+        "skills/writing-plans/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-implementation-plan"
+          ]
+        }
+      }
+    },
+    "ponytail": {
+      "source_revision": "6f1c2bfff0c837d268929a7c4e490918eb4fab29",
+      "files": {
+        ".openclaw/skills/ponytail/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "minimize-code-surface"
+          ]
+        }
+      }
+    }
+  }
+}
