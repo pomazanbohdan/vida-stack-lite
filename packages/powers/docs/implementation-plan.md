@@ -81,7 +81,9 @@ S-документи, які створює Stage 1.
   `WorkState/v1`, `ResearchResult/v1`, `DecisionRecord/v1`, `AcceptanceManifest/v1`,
   `WorkItem/v1`, `ImplementationScope/v1`, `ResearchSynthesis/v1`,
   `LifecycleArtifactReference/v1`, `WorkArtifactReference` — перевикористовуються,
-  не дублюються.
+  не дублюються. Розширений instruction registry пакета агента (D3) — окремий
+  реєстр **для VP** з reuse наявного activation-шляху; друга активація не
+  створюється, `research_decision.registry` не змінюється.
 - `packages/agent` — власник runtime-власника. VP не редагує їх без окремого
   погодженого work item з runtime-власником.
 - Кореневий `AGENTS.md` генерується з `packages/agent/templates/AGENTS.template.md`;
@@ -179,7 +181,7 @@ S-документи, які створює Stage 1.
 
 | ID | Твердження research | Фактичний стан | Дія |
 |---|---|---|---|
-| D-01 | Каталог атомарних інструкцій із двома вимірами тегів (§4.2) | `InstructionRegistry/v1`: `instruction_id`, `owner`, `revision`, `source_path`, `source_sha256`, `summary_sha256`, `activation_class` (`always_on`\|`lane_entry`\|`triggered_domain`\|`closure_reflection`), `triggers`, `phases`, `lanes`, `output_schema`, `max_bytes`, `privacy`, `status`, `content`; `instructions` — `maxItems: 64`; вбудований у `research_decision.registry` конфігу; активація через `src/research-decision.ts` | Stage 2: окремий `VPCatalog/v1` + проекція ≤64 у наявний реєстр |
+| D-01 | Каталог атомарних інструкцій із двома вимірами тегів (§4.2) | `InstructionRegistry/v1`: `instruction_id`, `owner`, `revision`, `source_path`, `source_sha256`, `summary_sha256`, `activation_class` (`always_on`\|`lane_entry`\|`triggered_domain`\|`closure_reflection`), `triggers`, `phases`, `lanes`, `output_schema`, `max_bytes`, `privacy`, `status`, `content`; `instructions` — `maxItems: 64`; вбудований у `research_decision.registry` конфігу; активація через `src/research-decision.ts` | Stage 2: `VPCatalog/v1` + власні скрипти; розширений реєстр пакета агента — runtime work item (D3) |
 | D-02 | 7 донорів (§4.1) | 7 methodology donors + 1 format reference (OKF) у `donors.yaml`; копії в `.tmp/donors`, знімки зафіксовані | Stage 3 |
 | D-03 | Один вхід: Router + `vp-setup` | Skill refs підтримані **лише** як workflow-stage `context_skill_refs` (`.codex/skills/<name>/SKILL.md`): `src/orchestration/configured-context.ts:63`, `src/config/runtime-config.ts:1330-1333`. Загального skill discovery немає | Stage 5 |
 | D-04 | `vp-setup` керує `AGENTS.md` (§3) | `AGENTS.template.md` забороняє project-specific content і замінюється wholesale; consumer не редагує встановлений пакет | Stage 5: писати у project-owned поверхню |
@@ -203,7 +205,7 @@ S-документи, які створює Stage 1.
 |---|---|---|---|---|
 | D1 | Розташування продукту | (a) VP = `packages/plugin`; (b) `packages/powers` як третій продукт; (c) окремий репозиторій/пакет | **ВИРІШЕНО 2026-10-19**: (b) — VP живе в `packages/powers` як третій продукт; `packages/plugin` лишається Codex-прослойкою. Decision: `docs/decisions/D1-product-placement.md` | вирішено |
 | D2 | Власник і реєстрація | окрема роль «Vida Powers owner»; реєстрація продукту | **ВИРІШЕНО 2026-10-19**: монорепозиторій продуктів — кожен плагін має власного owner'а, документацію, набір задач і простір роботи; Work Items VP — у продукті, координація — у `.agent/`. Decision: `docs/decisions/D2-ownership-and-work-space.md` | вирішено |
-| D3 | Формат інструкції та каталогу | (a) розширити `InstructionRegistry/v1`; (b) `VPCatalog/v1` + обмежена проекція в `InstructionRegistry/v1` | **(b)**: `maxItems: 64` не протримає корпус, а вбудований реєстр прив'язаний до research/synthesis-стадій. Проекція — reuse існуючого activation-шляху, не друга активація | 2, 3 |
+| D3 | Формат інструкції та каталогу | (a) розширити `InstructionRegistry/v1`; (b) `VPCatalog/v1` + проекція; (c) окрема VP-активація; (d) два режими | **ВИРІШЕНО 2026-10-19**: (d) — VP самостійний: власний каталог `VPCatalog/v1` і власні скрипти `catalog.*`, плагін зі скілом запуску і хуком; у режимі збирання в пакет агента пакет мусить мати свій розширений instruction registry (runtime work item). `research_decision.registry` не змінюється. Decision: `docs/decisions/D3-instruction-catalog-and-registry.md` | вирішено |
 | D4 | Канал доставки | Codex plugin marketplace / власний пакет / обидва | Обидва: мінімальний локальний/git-пакунок (блокує Stage 8) + marketplace як окреме рішення Stage 9 | 5, 8 |
 | D5 | Decision Provider | конкретний провайдер / provider-нейтральний інтерфейс | Provider-нейтральний `decision.evaluate` + обов'язковий Agent Fallback; «Jeff» не існує в коді | 2, 4, 5 |
 | D6 | Журнал змін research | створити `*.changelog.md` / прибрати посилання | Вирішено форматом: bundle-журнал `packages/powers/docs/log.md` (OKF §9), на який вказує `vida.changelog_ref`; окремий `*.changelog.md` не потрібен | 0 |
@@ -317,33 +319,37 @@ AC:
 
 ---
 
-### Stage 2 — Формат інструкції, каталог і операції `catalog.*`
+### Stage 2 — Формат інструкції, каталог, власні скрипти `catalog.*`
 **Role:** product owner + implementer. **Оцінка:** L. **Work item:** VP-2. **Потребує:** Stage 1 (D3).
 
-Роботи:
-- `VPCatalog/v1`: джерело корпусу поза runtime-реєстром. Поля інструкції:
-  `instruction_id`, `capability_tags[]`, `pattern_tags[]`, `conditions`,
-  `artifact_contract`, `compatibility` (групи/виключення/залежності), `provenance`
-  (донор, ліцензія, ревізія джерела), `revision`, `status`, `content`.
+Роботи (за D3: VP самостійний — власний каталог і власні скрипти):
+- `VPCatalog/v1`: канонічний корпус у продукті (`packages/powers/corpus/`), без
+  ліміту на кількість записів. Поля інструкції: `instruction_id`,
+  `capability_tags[]`, `pattern_tags[]`, `conditions`, `artifact_contract`,
+  `compatibility` (групи/виключення/залежності), `provenance` (донор, ліцензія,
+  ревізія джерела), `revision`, `status`, `content`.
 - Правила тегів: kebab-case; кожен тег має ≥2 змістовні компоненти; `TDD` — аліас
   `test-first-development`; тег ≠ агент/skill/крок/дозвіл.
-- Мапінг VP-полів на існуючі: `conditions` → `triggers`/`phases`/`lanes`,
-  `artifact_contract` → `output_schema`; документований, з обмеженням у 64 записи
-  на реєстр.
-- Операції `catalog.tags` / `catalog.search` / `catalog.get` / `catalog.compose`:
-  контракт результату, межі, поведінка при відсутності, обов'язковість залежностей.
+- **Власні скрипти VP** `catalog.tags` / `catalog.search` / `catalog.get` /
+  `catalog.compose`: детерміновані, реалізовані в коді VP, працюють без Runtime.
+  Контракт результату, межі, поведінка при відсутності, обов'язковість залежностей.
+- **Специфікація розширеного instruction registry пакета агента** (для bundled-режиму):
+  власна схема й власна секція конфігурації, з розширеним набором полів VP;
+  `research_decision.registry` не змінюється.
 - Знімок застосованих інструкцій у межах активної задачі (research §4.5).
 - Risk-adaptive оновлення (research §4.6): класи зміни → перевірка/прийняття.
 - OKF-поля для довідкових записів: `index.md`, `sources`, `stale_after`, історія
   (research §4.9).
 
-Runtime-запит (власник — runtime-власник): розширення існуючого реєстру під VP —
-лише якщо D3(b) вимагає; VP не редагує `packages/agent` сам.
-Межа реєстру: `source_path` у `instruction-registry.v1.schema.json` жорстко прив'язаний
-до `agent-runtime.config.v1.yaml#research_decision.registry.instructions.N`, тому
-проекція матеріалізується в **root-конфізі (Root-owned)**. Проекція = запис у
-root-файл, тому Stage 2 має узгодження з Root; паралельний запис у root-конфіг
-заборонений.
+Runtime-запит (власник — agent maintainer): додати в пакет агента розширений
+instruction registry (схема + секція конфігурації + читання наявним resolver'ом);
+активація, дайджести, `privacy`, `max_bytes` і перевірка `output_schema` — ті самі,
+що вже є в runtime; **другий activation engine не створюється**. VP не редагує
+`packages/agent` сам.
+Межа реєстру: VP-записи **не** потрапляють у `research_decision.registry.instructions.N`
+(жорсткий шаблон `source_path`), а йдуть у власну секцію реєстра пакета агента.
+Секція реєстра живе в root-конфізі (Root-owned), тому запис у неї — узгодження
+з Root; паралельний запис у root-конфіг заборонений.
 
 AC:
 - Схема валідує інструкцію; невалідна — зрозуміла помилка з полями.
@@ -351,10 +357,13 @@ AC:
   через `catalog.get`/`compose`.
 - `catalog.compose` включає обов'язкові інструкції та залежності незалежно від
   relevance-score; конфліктні групи виявляються помилкою сумісності.
-- Проекція в реєстр ≤64 записів; при перевищенні — явна помилка, не тихе
-  відсікання.
-- Проектовані записи відповідають шаблону `source_path` і валідуються валідатором
-  конфігу; `bun --cwd packages/agent run test:config:pinned` → exit 0.
+- Каталог не має ліміту на кількість записів; обмеження реєстру research-контуру
+  на VP не поширюється.
+- Скрипти `catalog.*` працюють **без VIDA Runtime**: каталог і операції дають
+  результат у процесі без пакета агента.
+- Специфікація розширеного реєстра пакета агента прийнята runtime-власником до
+  закриття Stage 2; запис у секцію реєстра валідується валідатором конфігу;
+  `bun --cwd packages/agent run test:config:pinned` → exit 0.
 - Точний набір команд і тестів — у task-плані етапу; код VP має exact coverage 100%
   і CRAP у базовій лінії.
 
