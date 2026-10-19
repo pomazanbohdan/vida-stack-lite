@@ -158,6 +158,12 @@ test `tests/schema.test.ts`.
 - `loadInstructions(catalog: Catalog): Promise<Map<string, Instruction>>` — читає
   `instructions/<path>`, рахує `sha256` і **звіряє з маніфестом**; розбіжність →
   `CatalogError` з `code: 'CATALOG_DIGEST_MISMATCH'`.
+- `Instruction` — точні поля інструкції (дизайн §5, узгоджено зі схемою
+  `vpinstruction.v1`): `instruction_id`, `title`, `summary`, `capability_tags[]`,
+  `pattern_tags[]`, `conditions{applies_when[],does_not_apply_when[]}`,
+  `artifact_contract{output_type,required_data[],verified_by}`,
+  `compatibility{excludes[],requires[]}`,
+  `provenance{donor,license,revision,path}`, `status`, `revision`, `content`.
 - `catalogTags(catalog): { capability: TagEntry[]; pattern: TagEntry[] }`
 - `catalogSearch(catalog, instructions, query): InstructionMetadata[]` —
   фільтри: `capability_tags`, `pattern_tags`, `instruction_ids`, `role`, `product`,
@@ -165,13 +171,21 @@ test `tests/schema.test.ts`.
 - `catalogGet(catalog, instructions, id): Instruction`
 - `catalogCompose(catalog, instructions, query): ComposedBundle` — required +
   збіги + транзитивні `compatibility.requires`; конфлікт `excludes` → `CatalogError`.
+  `ComposedBundle` містить: `catalog_id`, `catalog_revision`, `tag_dictionary`,
+  `instructions[]` (кожна — `instruction_id`, `title`, `summary`, `content`,
+  `capability_tags`, `pattern_tags`, `artifact_contract`, `provenance`,
+  `selection_reason`) і **контекст виконання** (SR-23): `role`, `task_contract`,
+  `effective_methodology`, `work_scope`, `materialization_requirements`,
+  `artifact_references` — усі з `query` або з порожнім значенням.
 - `CatalogError` має поле `code`.
 
 **Кроки:**
 1. Тести `tests/catalog.test.ts` на фікстурах `tests/fixtures/valid/`:
    search не повертає `content`; пошук за роллю/продуктом/умовою; compose включає
    required і залежності; compose без профілю на конфлікті → помилка; compose з
-   профілем відкидає неактивну альтернативу; `get` на невідомому/вимкненому id →
+   профілем відкидає неактивну альтернативу; compose повертає контекст виконання
+   (роль, task contract, ефективна методологія, scope, вимоги матеріалізації,
+   посилання на артефакти — SR-23); `get` на невідомому/вимкненому id →
    помилка; інструкція з тегом поза словником → помилка; змінений файл → помилка
    digest. → тести падають.
 2. Створити `catalog.ts`.
