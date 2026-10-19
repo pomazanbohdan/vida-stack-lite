@@ -71,15 +71,18 @@ donors:
     role: methodology-donor
     url: https://github.com/cursor/plugins
     local_path: cursor-plugins
-    content_path: pstack
     head_sha: 2f8377461fd533f5af782e1fd643783b1067b847
     checked_out: detached
     default_branch: main
     license: MIT
     license_file: pstack/LICENSE
     file_count: 947
+    content_path: pstack
+    content_file_count: 169
     snapshot_source: research-frontmatter
-    note: монорепозиторій; джерелом є каталог pstack, ліцензія власна для pstack
+    note: >
+      монорепозиторій; джерелом є каталог pstack (169 tracked-файлів),
+      file_count 947 — розмір всього клону; ліцензія власна для pstack
 
   - id: gsd-core
     role: methodology-donor
@@ -117,7 +120,9 @@ donors:
     license_file: LICENSE.md
     file_count: 132
     snapshot_source: default-branch
-    note: ревізія не була зафіксована в research-frontmatter; записано поточний HEAD гілки main
+    note: >
+      ревізія не була зафіксована в research-frontmatter; записано поточний HEAD
+      гілки main — це moving branch snapshot, не відтворюваний з research
 
 not_cloned:
   - id: vida-runtime

@@ -1,210 +1,333 @@
-# Vida Powers — план впровадження
+# Vida Powers — план впровадження (rev 2)
 
-Owner: продуктовий власник Vida Powers. Class: **derived execution plan** —
-виконуваний порядок, не нормативна специфікація. Джерела істини: research-документ
-`docs/research/vida-powers-product-research.md` (B-рівень), майбутні
-`business-requirements.md` / `system-specification.md` / `acceptance.md` продукту
-(S-рівень) та реалізація з доказами (C-рівень).
+Owner: продуктовий власник Vida Powers. Class: **derived execution roadmap** —
+порядок робіт і ворота, не нормативна специфікація і не дозвіл на мутації.
 
-Статус: план запропонований, ще не затверджений власником. Цей документ не є
-дозволом на зміни в `packages/agent`, на runtime-контракти чи на зовнішні
-репозиторії. Дата: 2026-10-19. Гілка: `powers`.
-
----
-
-## 1. Мета та рамка
+Джерела істини: research `docs/research/vida-powers-product-research.md` (B-рівень) →
+майбутні `business-requirements.md` / `system-specification.md` / `acceptance.md`
+продукту (S-рівень) → реалізація й докази (C-рівень).
 
 **Мета:** перетворити фіналізовану концепцію VP на реалізований, кваліфікований
-продукт із канонічним instruction corpus, єдиною точкою входу (Router),
-матеріалізацією результатів і роботою у двох режимах (Standalone / Runtime).
+продукт із канонічним instruction corpus, єдиною точкою входу, матеріалізацією
+результатів і роботою у двох режимах (Standalone / Runtime).
 
-**Рамка плану:** етапи 0–8 нижче. Етап 9 (дистрибуція, domain packs) — за
-декларацією research-документа поза поточним scope.
+**Архітектура:** VP — портативний плагін із власним каталогом інструкцій
+(`VPCatalog/v1`) і одним Router-входом; каталог не дублює runtime-механізмів, а
+проектується в наявний activation-шлях (`InstructionRegistry/v1` → research-декісії
+та workflow-стадії). У Runtime виконання належить VIDA Core/Mastra, у Standalone —
+головному LLM-агенту хоста.
 
-**Принципи, що залишаються недоторканими** (з research §2, §4, §12 та з
-`AGENT.sidecar.md`):
+**Стек:** Bun 1.4.3 (єдиний інструментальний ланцюг), TypeScript, JSON Schema
+(`Type/vN`), Markdown+frontmatter, SQLite/HostState лише в Runtime-режимі.
 
-- VP не має власного workflow engine, scheduler, ledger чи state store. У Runtime
-  виконання належить VIDA Core/Mastra, у Standalone — головному LLM-агенту хоста.
-- Жодного дублювання наявних runtime-контрактів. Перевикористовуємо
-  `InstructionRegistry/v1`, `ResearchResult/v1`, `DecisionRecord/v1`,
-  `AcceptanceManifest/v1`, `WorkItem/v1`, `WorkState/v1`, `HostState`.
-- Runtime залишається єдиним власником транзакційного стану, CAS, lease і
-  reservation. Standalone не вводить системи захоплення прав.
-- Жоден `passed` без фактичного виконання перевірки; доказ прив'язаний до
-  конкретної редакції входу.
-- Один writer на файл; Root володіє Git, спільними файлами та фінальними
-  перевірками.
+**Специфікація:** `docs/research/vida-powers-product-research.md` (джерело B) →
+S-документи, які створює Stage 1.
+
+**Rev 2** переписано після незалежної валідації (вердикт **REJECTED**, 6 blocker /
+12 major / 4 minor). Стан на 2026-10-19, гілка `powers`.
 
 ---
 
-## 2. Вхідні джерела
+## Global Constraints
 
-| Шар | Джерело | Роль у плані |
+- VP не має власного workflow engine, scheduler, ledger, CAS або state store. Runtime
+  залишається єдиним власником транзакційного стану, reservation і lease.
+- Один canonical owner на кожен контракт. `InstructionRegistry/v1`, `HostState`,
+  `WorkState/v1`, `ResearchResult/v1`, `DecisionRecord/v1`, `AcceptanceManifest/v1`,
+  `WorkItem/v1`, `ImplementationScope/v1`, `ResearchSynthesis/v1`,
+  `LifecycleArtifactReference/v1`, `WorkArtifactReference` — перевикористовуються,
+  не дублюються.
+- `packages/agent` — власник runtime-власника. VP не редагує їх без окремого
+  погодженого work item з runtime-власником.
+- Кореневий `AGENTS.md` генерується з `packages/agent/templates/AGENTS.template.md`;
+  шаблон забороняє project-specific content і замінюється wholesale. VP-інтеграція
+  пише у project-owned поверхню споживача, не в пакет агента.
+- `.vida/*` — **цільовий** споживацький layout, не чинний. Чинна конфігурація —
+  `agent-runtime.config.v1.yaml` (секція `workflows:`) і поточні v1-контракти.
+- Інструментальний ланцюг — лише Bun. `node`/`npm`/`npx` не підключаються до команд
+  розробки. Numeral-адреса Bun на поточній машині:
+  `C:\Users\pomaz\AppData\Local\Microsoft\WinGet\Packages\Oven-sh.Bun_Microsoft.Winget.Source_8wekyb3d8bbwe\bun-windows-x64\bun.exe`
+  (не в PATH — виклик через повний шлях).
+- Один writer на файл. Root володіє Git, спільними root-файлами (sidecar, config,
+  `docs/products.map.md`, documentation policy, root `package.json`) і фінальними
+  перевірками. Працівники не виконують Git-операцій.
+- Доказ: `BR → SR → AC → evidence`. `passed` неможливий без фактичного запуску.
+  Статичний аналіз або наявність коду не закривають AC.
+- Змінений вхід інварідує лише прив'язаний до нього доказ.
+
+## Review Focus
+
+1. **Повторний запуск `vp-setup`** — не повинно з'явитися жодного дубля керованого
+   блоку, hook-правила або запису; повторний запуск на незміненому вході дає
+   порожній diff.
+2. **Інструкція, вибрана не за тегом** — якщо інструкція обов'язкова (required) або
+   є залежністю, вона потрапляє в bundle навіть з низьким relevance; теговий пошук
+   не може її викинути.
+3. **Конфлікт успадкування методології** — два суперечливі успадковані варіанти без
+   локального рішення мають зупинити вибір і поставити питання власнику, а не
+   застосувати «останній завантажений перемагає».
+4. **Запізнілий результат підзадачі** — не переписує вже прийнятий результат
+   батька; має окремий запис і явне опрацювання.
+5. **Позa межами Work Scope** — знахідка блокуюча AC, але поза виданними
+   повноваженнями, фіксується як блокер із запитом дозволу; scope не розширюється
+   автоматично, а помилка чужого коду не тягне за собою чужу роботу.
+
+---
+
+## 1. Що змінено у rev 2
+
+| ID | Зауваження валідації | Виправлення в rev 2 |
 |---|---|---|
-| B | `docs/research/vida-powers-product-research.md` | продуктова концепція, вимоги до поведінки |
-| B/C | `donors.yaml` | зафіксовані знімки 8 донорів (7 методологічних + OKF) |
-| S | `packages/agent/docs/system-specification.md` | канонічна поведінка Runtime |
-| S | `packages/agent/instructions/development-lifecycle.md` | політика Source-авторизації, CAS, evidence |
-| S | `packages/agent/TESTING.md` | ворота перевірок |
-| S | `AGENT.sidecar.md`, `agent-runtime.config.v1.yaml`, `docs/products.map.md` | ownership, реєстрація продуктів, карта джерел |
+| R-01 | `InstructionRegistry/v1` має `maxItems: 64` і вбудований у `research_decision.registry`; корпус туди не вміщується | Stage 2 розділяє **каталог** (`VPCatalog/v1`, джерело корпусу) і **activation** (обмежена проекція ≤ 64 у наявний реєстр). D3 переформульовано |
+| R-02 | `vp-setup` не має права редагувати `packages/agent/templates/AGENTS.template.md` | Stage 5 пише у project-owned поверхню споживача; зміна шаблону — окремий runtime-запит. D-04 виправлено |
+| R-03 | `.vida/*` — ціль, а не чинний layout | Global Constraints + D-06; Stage 4/7 ціляться у чинний v1-конфіг. Додано рішення D7 |
+| R-04 | Stage 1 фіксує S-контракти до D3/D4/D5 | D3/D4/D5 перенесені в Stage 0; Stage 1 розділено на стабільні інваріанти й відкладені розділи |
+| R-05 | Розділ «plan не змінює runtime» суперечив Stage 2/5/7 | Кожен етап має блок **Runtime-запитів** з owner-ом; §9 переписано |
+| R-06 | Дистрибуція поза scope, але Stage 8 вимагає `install+run` | Stage 5 отримує deliverable «пакунок + локальна інсталяція»; D4 блокує Stage 8; marketplace лишається Stage 9 |
+| R-07 | Storage GAP надмірно блокує Runtime-режим | Stage 7 розділено на 7a (чинні v1-контракти) і 7b (workspace-БД після GAP) |
+| R-08 | `findings` є не лише в `ResearchResult/v1` | D-08 переписано: перелічено `ResearchResult/v1`, `ResearchSynthesis/v1`, `final-assurance-review/state`; відсутній саме defect-registry |
+| R-09 | `ArtifactReference` вже існує | D-07: `LifecycleArtifactReference/v1`, `WorkArtifactReference` перевикористовуються; до reuse додано `ResearchSynthesis/v1`, `ImplementationScope/v1` |
+| R-10 | Stage 3 необмежений (6375 файлів) | Stage 3 отримав MVP-корпус, per-donor exit criteria, метрику покриття, exclusion-list, тестований конвертер, license/NOTICE manifest, шарди з одним інтегратором |
+| R-11 | AC вигадував «≥2 capability-теги на інструкцію» | AC переписано на правило research: кожен тег kebab-case і має ≥2 змістовні компоненти; заповненість — де семантично застосовно, винятки задокументовані |
+| R-12 | DAG суперечив залежностям | DAG перемальовано, додано оцінки S/M/L і зовнішні залежності |
+| R-13 | AC невиконувані | Кожен етап має перевірювані AC із командою, артефактом і спостереженням; негативні AC замінено на позитивні інваріанти + конкретну перевірку; додано вимогу exact coverage/CRAP для нового VP-коду |
+| R-14 | Stage 7 ігнорує три Lifecycle Scope | Stage 7 отримав окремий AC-блок щодо `parent`/`workflow`/`independent`, старт≠завершення, запит скасування ≠ зупинка |
+| R-15 | Пропущено вимоги research §4.5, §4.6, §4.8, §4.9, §5 | Додано у Stage 2 (знімок у межах задачі, risk-adaptive updates, OKF-поля), Stage 4 (Light/Medium/Full, рольова композиція), Stage 5 (`workflow.options`, `decision.evaluate`, калібрування порога) |
+| R-16 | Реєстрація продукту неповна | Stage 0 розширено: doc-policy `canonical_roots`/`map_paths`/changelog, повний набір полів проєкту, root `package.json` workspace, product KEY + allocator |
+| R-17 | Етапи без ролей і без work item | Кожен етап має Role і Work item; shared-файли — Root; мутація тільки з work item |
+| R-18 | D1(b) суперечить «exactly two products» | D1 переписано: (b) лише як owner-approved amendment sidecar + system-spec; додано варіант (c) — окремий репозиторій/пакет; для (a) зафіксовано Codex-only ризик |
+| R-19 | Host hook-поверхня існує | D-05 переписано: runtime-hook API немає, але Codex native `/hooks` + trusted `SessionStart` hook існують; Stage 5 перевикористовує й кваліфікує їх, hook trust — явний GAP |
+| R-20 | `file_count` pstack рахував весь монорепозиторій | `donors.yaml` уточнено: `file_count` (репозиторій) + `content_file_count` (169 для `pstack/`); OKF позначено як moving branch snapshot |
+| R-21 | «7 донорів» vs «8 записів» | Узгоджено: 7 methodology donors + 1 format reference (OKF); OKF — формат/provenance-вхід, не методологія |
+| R-22 | Число комітів не відтворювалось | Замість числа — точний commit і команда `git rev-list --count` |
+| R-23 | D-01 неповний перелік полів; D-03 — неправильний шлях і сфера | Обидва рядки виправлено: повний перелік обов'язкових полів реєстру; `src/orchestration/configured-context.ts`, підтримка — лише workflow-stage `context_skill_refs` |
+| R-24 | Паралельні donor-лейни без інтегратора | Stage 3: per-donor шарди + один інтегратор (Root) + правило digest |
 
 ---
 
-## 3. Звірка концепції з поточним Source
+## 2. Звірка концепції з поточним Source (rev 2)
 
-| # | Твердження research | Фактичний стан у репозиторії | Дельта | Дія |
-|---|---|---|---|---|
-| D-01 | Канонічний каталог атомарних інструкцій із `capability_tags`/`pattern_tags` (§4.2) | `InstructionRegistry/v1` існує: `instruction_id`, `owner`, `revision`, `source_sha256`, `activation_class` (`always_on`/`lane_entry`/`triggered_domain`/`closure_reflection`), `triggers`, `phases`, `lanes`, `output_schema`, `max_bytes`, `privacy`, `content`; активується в `src/research-decision.ts` | Реєстр є, але **без вимірів тегів і сумісності**; VP їх додає | Розширити реєстр (новий optional-блок) або ввести `VPInstruction/v1` — рішення D3 |
-| D-02 | Каталог donor-методик (§4.1) | Донорів у репозиторії немає; 7 знімків зафіксовано в `donors.yaml`, локальні копії в `.tmp/donors` | Немає жодного контента | Етап 3: конвертація |
-| D-03 | Один вхід: Router Skill + `vp-setup` (§1, §3) | Хост-скіли вже підтримуються: `configured-context.ts:63` приймає `.codex/skills/<name>/SKILL.md`; `runtime-config.ts:1330` валідує skill refs | Формат хоста є, Router-логіки й corpus-резолвера немає | Етап 5 |
-| D-04 | `vp-setup` керує `AGENTS.md` (§3) | Кореневий `AGENTS.md` **генерується** з `packages/agent/templates/AGENTS.template.md`; sidecar вимагає змінювати template, а не файл | Прямий запис у `AGENTS.md` створить розбіжність із генератором | Setup пише лише власний блок у template/sidecar-суб'єкт; генерація — єдиний writer |
-| D-05 | Bootstrap і session/compaction hooks (§3) | Hooks-поверхні в `packages/agent/src` немає (пошук `hook|session_start|compaction` — лише внутрішні tool hooks Mastra) | Фіча зелена | Етап 5 з host-адаптером, без нової runtime-поверхні |
-| D-06 | Методологія як політика продукту, профілі, успадкування (§4.3, §4.4) | Споживацька конфігурація: `.vida/project.yaml` (`VidaProjectConfig/v1`), `.vida/agents.yaml`, `.vida/flows.yaml` (system-spec §132–190) | Немає поверхні для методологічних профілів і успадкування | Етап 4 |
-| D-07 | Матеріалізація: `Research → Decision → Requirement → Work Item → Test Case → Evidence` (§6) | Контракти наявні в `agent-runtime.config.v1.yaml#artifact_contracts` і `packages/agent/schemas/*.json` (31 схема) | `ArtifactReference` і `Action/Event Record` не мають власних контрактів; `WorkItem/v1`/`WorkState/v1` є | Етап 6: перевикористати наявні, додати лише прогалини |
-| D-08 | Findings: product-scoped реєстр, єдиний writer, hybrid dedup (§8.3, §8.4) | `findings` існує лише як поле `ResearchResult/v1` та в `src/research-decision.ts`; окремого реєстру дефектів немає | Потрібен новий реєстр (Standalone JSONL / Runtime — ізоляція в наявній БД) | Етап 6 |
-| D-09 | Runtime: `.vida/work/workspace.v1.sqlite`, HostState, CAS, lease (§2, §8.1, §10) | Реалізовано в `src/host-state.ts`; у system-spec зафіксовано, що окрема storage-admission БД лишається **GAP** проти цільової workspace-БД | VP не має права створювати другу БД; Runtime-режим VP залежить від закриття storage GAP | Етап 7 — залежність від окремого runtime-треку, не від VP |
-| D-10 | Decision Provider «Jeff/Jev» (§4.8) | У репозиторії такого компонента немає; згадка лише в research | Поняття не визначене | Рішення D5: або назвати конкретний провайдер, або зафіксувати provider-нейтральний інтерфейс із fallback |
-| D-11 | Wiki/work layout, стабільні ID, relations (§9) | Конфіг має `wiki_root`, `wiki_output_root`, `task_prefix`; продуктових Wiki-сторінок немає | Потрібні правила іменування + алокатор ID + типізовані relations | Етап 6 |
-| D-12 | Standalone без VIDA Runtime, marketplace-доставка (§1, §3) | Єдина публічна доставка агента — native executable; npm = лише SDK (§ sidecar «Native-only public delivery»); marketplace у репозиторії відсутній | VP = нова поверхня доставки | Рішення D4 (канал) + етап 9 |
-| D-13 | Розташування продукту | `packages/powers/` — новий каталог, **не зареєстрований**: у `agent-runtime.config.v1.yaml` лише `agent` і `plugin`; `packages/plugin` — порожній «Codex plugin product workspace» (`package.json` лише) | Collision: VP vs наявний placeholder plugin-продукту | Рішення D1 (owner) — блокує етапи 1–2 |
-| D-14 | `changelog_ref` у frontmatter research-документа | `vida-powers-product-research.changelog.md` відсутній | Порушений власний §7.1 | Етап 0/1: створити changelog-артефакт або прибрати посилання |
-| D-15 | `validation_scope: conversation-consistency` | Документ не звірявся з кодом; snapshot `bb4345e` — на 186 комітів позаду HEAD | Актуальність не підтверджена | Цей план — перша така звірка; research оновлюється за §7.1 |
+| ID | Твердження research | Фактичний стан | Дія |
+|---|---|---|---|
+| D-01 | Каталог атомарних інструкцій із двома вимірами тегів (§4.2) | `InstructionRegistry/v1`: `instruction_id`, `owner`, `revision`, `source_path`, `source_sha256`, `summary_sha256`, `activation_class` (`always_on`\|`lane_entry`\|`triggered_domain`\|`closure_reflection`), `triggers`, `phases`, `lanes`, `output_schema`, `max_bytes`, `privacy`, `status`, `content`; `instructions` — `maxItems: 64`; вбудований у `research_decision.registry` конфігу; активація через `src/research-decision.ts` | Stage 2: окремий `VPCatalog/v1` + проекція ≤64 у наявний реєстр |
+| D-02 | 7 донорів (§4.1) | 7 methodology donors + 1 format reference (OKF) у `donors.yaml`; копії в `.tmp/donors`, знімки зафіксовані | Stage 3 |
+| D-03 | Один вхід: Router + `vp-setup` | Skill refs підтримані **лише** як workflow-stage `context_skill_refs` (`.codex/skills/<name>/SKILL.md`): `src/orchestration/configured-context.ts:63`, `src/config/runtime-config.ts:1330-1333`. Загального skill discovery немає | Stage 5 |
+| D-04 | `vp-setup` керує `AGENTS.md` (§3) | `AGENTS.template.md` забороняє project-specific content і замінюється wholesale; consumer не редагує встановлений пакет | Stage 5: писати у project-owned поверхню |
+| D-05 | Session/compaction hooks (§3) | Runtime-hook API в `packages/agent/src` відсутній. Хост-поверхня є: Codex native `/hooks` review, trusted `SessionStart` hook, кваліфікація через `tooling/agent/cloud-pstack-setup.ts`; новий/змінений hash потребує native review — trust GAP, не синтезується | Stage 5: перевикористання + кваліфікація, trust GAP явний |
+| D-06 | Методологія як політика продукту (§4.3, §4.4) | Чинна конфігурація — `agent-runtime.config.v1.yaml` (`workflows:`); `.vida/project.yaml` — ціль. Профілів методології немає | Stage 4 + рішення D7 |
+| D-07 | Матеріалізація §6 | `LifecycleArtifactReference/v1` (kind, artifact_schema, record_id, path, sha256, source_revision, scope_id, ac_ids, generation, fingerprint, delivery_cycle_id, principal, decision, disposition) і `WorkArtifactReference` уже існують; `ResearchResult/v1`, `ResearchSynthesis/v1`, `DecisionRecord/v1`, `AcceptanceManifest/v1`, `ImplementationScope/v1`, `WorkItem/v1`, `WorkState/v1` — у `artifact_contracts` конфігу | Stage 6: перевикористати, додати лише прогалини |
+| D-08 | Findings: реєстр дефектів (§8.3, §8.4) | `findings` — поле `ResearchResult/v1`, `ResearchSynthesis/v1`, `final-assurance-review/state`; окремого defect-registry з життєвим циклом і dedup немає | Stage 6 |
+| D-09 | Runtime: HostState/CAS/lease (§8.1, §10) | Реалізовано; окрема storage-admission БД лишається GAP проти цільової `workspace.v1.sqlite`; чинні v1-контракти дійсні | Stage 7a / 7b |
+| D-10 | Decision Provider «Jeff/Jev» (§4.8) | У коді відсутній | Рішення D5 |
+| D-11 | Wiki/work layout, ID, relations (§9) | У конфігу є `wiki_root`, `wiki_output_root`, `task_prefix`; продуктових Wiki-сторінок немає | Stage 6 |
+| D-12 | Standalone + marketplace (§1, §3) | Публічна доставка агента — native executable; npm = лише SDK; marketplace відсутній | Stage 5/8 + D4; Stage 9 |
+| D-13 | Розташування продукту | `packages/plugin` — порожній «Codex plugin product workspace» (лише `package.json`); `packages/powers` не зареєстрований; у конфігу лише `agent` і `plugin` | Рішення D1 |
+| D-14 | `changelog_ref` у research | Файлу немає | Stage 0 (D6) |
+| D-15 | Актуальність research | Snapshot `bb4345e` — предок HEAD; відстань вимірюється командою `git rev-list --count bb4345e..HEAD` (стан змінюється щодня) | Оновлення research за §7.1 після Stage 1 |
 
 ---
 
-## 4. Відкриті рішення (owner)
+## 3. Відкриті рішення (owner)
 
 | ID | Рішення | Варіанти | Рекомендація | Блокує |
 |---|---|---|---|---|
-| D1 | Розташування продукту | (a) VP = наявний `packages/plugin`; (b) `packages/powers` = третій продукт | **(b)**, якщо VP не є Codex-специфічним продуктом: research визначає VP як host-portable, тоді як `packages/plugin` — «Codex plugin product workspace» із власною майбутньою специфікацією. Якщо VP реалізується саме як Codex plugin — **(a)**, щоб не завести третій продукт | 1, 2 |
-| D2 | Власник і реєстрація продукту | repository owner + призначений product owner | Призначити product owner; внести рядок у ownership map sidecar, `projects`/`code_selectors`/`delivery_group` у `agent-runtime.config.v1.yaml`, рядок у `docs/products.map.md` | 1, 2 |
-| D3 | Формат інструкції | (a) розширити `InstructionRegistry/v1`; (b) окрема `VPInstruction/v1` + власний реєстр | **(a)** з новим optional-блоком (`capability_tags`, `pattern_tags`, `conditions`, `compatibility`, `artifact_contract`, `provenance`): існуючі digest/privacy/activation-семантики й один власник збережуться; (b) створює другий реєстр і другий activation-шлях | 2, 3 |
-| D4 | Канал доставки | Codex plugin marketplace / власний пакет / обидва | Визначити до Stage 5: `vp-setup` і формат skill-ів залежать від каналу | 5, 9 |
-| D5 | Decision Provider | конкретний провайдер / provider-нейтральний інтерфейс | Provider-нейтральний інтерфейс `decision.evaluate` + обов'язковий Agent Fallback (research §4.8); «Jeff» не існує в коді | 3, 4 |
-| D6 | Журнал змін research | створити `*.changelog.md` / прибрати посилання | Створити changelog-артефакт — research сам вимагає його (§7.1) | 1 |
+| D1 | Розташування продукту | (a) VP = `packages/plugin`; (b) `packages/powers` як третій продукт; (c) окремий репозиторій/пакет | **(c)**, якщо VP лишається host-portable: research визначає VP як автономний плагін для різних хостів, а `packages/plugin` — Codex-специфічний workspace. **(b)** — лише як owner-approved amendment sidecar («exactly two products») і system-spec. **(a)** — лише за готовності VP бути Codex-only, з явним ризиком для portable-claim | 0, 1, 2 |
+| D2 | Власник і реєстрація | призначений product owner; рядки в sidecar, `projects`, `code_selectors`, `delivery_group`, `docs/products.map.md`, doc-policy, root `package.json` | Призначити product owner; реєстрація — Stage 0 | 0, 1 |
+| D3 | Формат інструкції та каталогу | (a) розширити `InstructionRegistry/v1`; (b) `VPCatalog/v1` + обмежена проекція в `InstructionRegistry/v1` | **(b)**: `maxItems: 64` не протримає корпус, а вбудований реєстр прив'язаний до research/synthesis-стадій. Проекція — reuse існуючого activation-шляху, не друга активація | 2, 3 |
+| D4 | Канал доставки | Codex plugin marketplace / власний пакет / обидва | Обидва: мінімальний локальний/git-пакунок (блокує Stage 8) + marketplace як окреме рішення Stage 9 | 5, 8 |
+| D5 | Decision Provider | конкретний провайдер / provider-нейтральний інтерфейс | Provider-нейтральний `decision.evaluate` + обов'язковий Agent Fallback; «Jeff» не існує в коді | 2, 4, 5 |
+| D6 | Журнал змін research | створити `*.changelog.md` / прибрати посилання | Створити — research сам вимагає (§7.1) | 0 |
+| D7 | Цільовий споживацький layout | чинний v1-конфіг / `.vida` cutover | Цілитися в чинний v1-конфіг; `.vida` — залежність від окремого runtime-треку (cutover не виконано) | 4, 7 |
 
 ---
 
-## 5. Етапи
+## 4. Етапи
 
-Кожен етап має одну відповідальну роль, приймальні критерії (AC) і доказ.
-Критерії не закриваються без фактичного виконання перевірки.
+Правила етапу: один Role, перелік файлів, інтерфейси, AC із командою й
+артефактом, доказ, залежності, оцінка. Кожен етап додатково зобов'язаний
+підготувати **власний task-level план** (bite-sized кроки, точні файли, точні
+тести) за `writing-plans` перед виконанням; цей документ визначає порядок і
+ворота, task-план визначає кроки.
 
-### Stage 0 — Рішення, реєстрація, гігієна продуктового кореня
-**Мета:** зняти блокери D1, D2, D6 і створити легальну основу продукту.
+Спільна частина AC: артефакт існує за вказаним шляхом; команда завершується
+кодом 0; доказ записано у work item. Для коду VP: exact coverage 100% і CRAP у
+межах базової лінії, за аналогією з `packages/agent` (`test:coverage` +
+`coverage:gate` + `crap`), підтверджені в task-плані етапу.
+
+### Stage 0 — Рішення, реєстрація, гігієна
+**Role:** product owner + Root (shared-файли). **Оцінка:** S. **Work item:** VP-0.
 
 Роботи:
-- Оформити Decision-записи (окремий артефакт за research §7.2) за D1, D2, D6.
-- Зареєструвати продукт: рядок ownership map у `AGENT.sidecar.md`; `projects`,
-  `code_selectors`, `delivery_group` у `agent-runtime.config.v1.yaml`; рядок у
-  `docs/products.map.md`; `package.json` продукту з власним неймом (не
-  `vida-stack-lite`).
-- Створити changelog research-документа (D6).
-- Визначити власника файла `donors.yaml` і правило: зміна `head_sha` тільки разом
-  із переопрацюванням змісту.
+- Decision-записи (окремий артефакт, research §7.2) за D1, D2, D3, D4, D5, D6, D7.
+  D3 і D4 — до Stage 1, бо Stage 1 фіксує S-контракти.
+- Реєстрація продукту: рядок ownership map у `AGENT.sidecar.md`; `projects` у
+  `agent-runtime.config.v1.yaml` з повним набором полів (schema вимагає
+  `project_id`, `title`, `wiki_root`, `wiki_path`, `wiki_output_root`,
+  `internal_root`, `ledger_root`, `task_prefix`, `code_selectors`, `delivery_group`,
+  `project_root`); `packages/powers` у `workspaces` root `package.json`; рядок у
+  `docs/products.map.md`; `packages/powers/docs` у `canonical_roots` і
+  changelog-події в `docs/agent-instructions/documentation-policy.v1.json`.
+- Product KEY (для `<KEY>-W<NNNN>` / `<KEY>-<N>`) і правило алокації ID.
+- Changelog research-документа.
 
-AC: конфіг валідується; doc-check проходить; кожне з D1/D2/D6 має Decision-запис
-із посиланням на доказ.
+AC:
+- `bun --cwd packages/agent run test:config:pinned` → exit 0 (config валідний).
+- `bun tooling/agent/check-documentation.ts <усі змінені .md>` → `failures: []`.
+- `bun --cwd packages/agent run test:pinned` → exit 0 (doc-policy тест проходить
+  після розширення `canonical_roots`).
+- Кожне з D1–D7 має Decision-запис із owner, датою, варіантами та причиною.
+- `git ls-files packages/powers` показує зареєстровані файли; `packages/powers/docs`
+  присутня в `canonical_roots`.
 
-Доказ: вивід валідації конфігу, `bun tooling/agent/check-documentation.ts`,
-decision-записи.
+Доказ: decision-записи, вивід трьох команд, diff реєстрації.
 
-Залежності: ні. Блокує: 1, 2.
+Залежності: ні.
 
 ---
 
 ### Stage 1 — Канонічні документи продукту (B → S)
-**Мета:** перенести концепцію з research-рівня в нормативні B/S документи.
+**Role:** product owner. **Оцінка:** M. **Work item:** VP-1. **Потребує:** Stage 0.
 
 Роботи:
-- `business-requirements.md`: цілі, незалежні від реалізації вимоги, межі
-  (Standalone/Runtime), обмеження автономності, розподіл зон (§2 таблиця).
-- `system-specification.md`: спостережувана поведінка — контракт Router,
-  операції `catalog.*`, модель інструкції й реєстру, методологічний профіль,
-  `artifact_contract`, Join/Lifecycle Scope, Scope-First, Findings-реєстр,
-  правила layout/ID, режими Configured/Dynamic.
+- `business-requirements.md`: цілі, межі Standalone/Runtime, обмеження
+  автономності, зони (§2), вимоги до матеріалізації й доказу.
+- `system-specification.md`: спостережувана поведінка — контракт Router, операції
+  `catalog.*`, модель інструкції та каталогу, методологічний профіль, `artifact_contract`,
+  Join/Lifecycle Scope, Scope-First, Findings-реєстр, layout/ID/relations, режими.
 - `acceptance.md`: AC зі стабільними ID, прив'язані до SR-пунктів.
-- Матриця простеження: research § → SR § → AC id. Текст, який не має SR-прив'язки,
-  переноситься або видаляється.
+- Матриця простеження research § → SR § → AC id. Нормативний текст без SR-прив'язки
+  або переноситься, або позначається «контекст, не норма».
+- Research-документ оновлюється **на місці** (§7.1): у ньому лише актуальний
+  фіналізований зміст, історія — у окремому changelog-артефакті; принципово нові
+  теми — окремі research-документи. Оновлення джерела запускає оцінку впливу на
+  пов'язані рішення, вимоги, задачі й перевірки (§7.6); актуальність записується
+  явно, а не виводиться з наявності файлу.
 
-AC: кожен нормативний абзац research має пункт SR або позначку «контекст, не норма»;
-кожен AC має ID і прив'язку; жоден AC не закритий «наявністю коду».
+Розділення на стабільне й відкладене: інваріанти, що не залежать від D3/D4/D5
+(межі, Scope-First, матеріалізація, доказова дисципліна), фіксуються зараз;
+розділи про формат каталогу, канал доставки та decision provider — після Stage 0.
 
-Доказ: doc-check, таблиця простеження, незалежний review документа.
+AC:
+- Кожен нормативний абзац research має SR-пункт або позначку «контекст».
+- Кожен AC має ID і прив'язку до SR; жоден AC не закривається «наявністю коду».
+- Матриця простеження перевірена на повноту (рядки research § 1–14).
+- Research-документ не містить хронології, нотаток попередніх версій і
+  формулювань «раніше було …»; зміни зафіксовано в changelog-артефакті з датою,
+  виконавцем і причиною; нові теми мають окремі документи, а не копії.
+- `bun tooling/agent/check-documentation.ts packages/powers/docs/*.md` → `failures: []`.
 
-Залежності: Stage 0.
+Доказ: три документи, матриця, doc-check, незалежний review документа.
+
+Залежності: Stage 0 (зокрема D3/D4/D5).
 
 ---
 
-### Stage 2 — Формат інструкції, реєстр і операції каталогу
-**Мета:** дати VP одну модель інструкції, сумісну з наявним runtime.
+### Stage 2 — Формат інструкції, каталог і операції `catalog.*`
+**Role:** product owner + implementer. **Оцінка:** L. **Work item:** VP-2. **Потребує:** Stage 1 (D3).
 
-Роботи (за D3):
-- Схема інструкції: `instruction_id`, `capability_tags[]`, `pattern_tags[]`,
-  `conditions`, `artifact_contract`, `compatibility` (групи, виключення, залежності),
-  `provenance` (донор, ліцензія, ревізія джерела), `revision`, `status`.
-- Правила тегів: kebab-case, щонайменше два змістовні компоненти; `test-first-development`
-  канонічний, `TDD` — аліас; тег ≠ агент/skill/крок/дозвіл.
+Роботи:
+- `VPCatalog/v1`: джерело корпусу поза runtime-реєстром. Поля інструкції:
+  `instruction_id`, `capability_tags[]`, `pattern_tags[]`, `conditions`,
+  `artifact_contract`, `compatibility` (групи/виключення/залежності), `provenance`
+  (донор, ліцензія, ревізія джерела), `revision`, `status`, `content`.
+- Правила тегів: kebab-case; кожен тег має ≥2 змістовні компоненти; `TDD` — аліас
+  `test-first-development`; тег ≠ агент/skill/крок/дозвіл.
+- Мапінг VP-полів на існуючі: `conditions` → `triggers`/`phases`/`lanes`,
+  `artifact_contract` → `output_schema`; документований, з обмеженням у 64 записи
+  на реєстр.
 - Операції `catalog.tags` / `catalog.search` / `catalog.get` / `catalog.compose`:
   контракт результату, межі, поведінка при відсутності, обов'язковість залежностей.
-- Інтеграція з `InstructionRegistry/v1`: один реєстр, один activation-шлях, збереження
-  digest/privacy/`max_bytes` семантики; заборона паралельного registry.
+- Знімок застосованих інструкцій у межах активної задачі (research §4.5).
+- Risk-adaptive оновлення (research §4.6): класи зміни → перевірка/прийняття.
+- OKF-поля для довідкових записів: `index.md`, `sources`, `stale_after`, історія
+  (research §4.9).
 
-AC: валідація схемою; пошук повертає лише ID/назву/короткий опис; compose не
-повертає повні тексти поза запитаним bundle; конфліктні групи виявляються;
-жоден сценарій не створює другий реєстр.
+Runtime-запит (власник — runtime-власник): розширення існуючого реєстру під VP —
+лише якщо D3(b) вимагає; VP не редагує `packages/agent` сам.
 
-Доказ: schema-тести, юніт-тести операцій каталогу, контрактний тест реєстру.
+AC:
+- Схема валідує інструкцію; невалідна — зрозуміла помилка з полями.
+- `catalog.search` повертає лише ID/назву/короткий опис; повний текст — тільки
+  через `catalog.get`/`compose`.
+- `catalog.compose` включає обов'язкові інструкції та залежності незалежно від
+  relevance-score; конфліктні групи виявляються помилкою сумісності.
+- Проекція в реєстр ≤64 записів; при перевищенні — явна помилка, не тихе
+  відсікання.
+- Точний набір команд і тестів — у task-плані етапу; код VP має exact coverage 100%
+  і CRAP у базовій лінії.
 
-Залежності: Stage 1 (D3).
+Доказ: schema-тести, юніт-тести операцій, тест проекції, звіт покриття.
+
+Залежності: Stage 1.
 
 ---
 
-### Stage 3 — Конвертація донорів у канонічний corpus
-**Мета:** перетворити 8 знімків на атомарні інструкції з provenance.
+### Stage 3 — Конвертація донорів у корпус
+**Role:** окремі donor-лейни + Root-інтегратор. **Оцінка:** L (найбільша). **Work item:** VP-3. **Потребує:** Stage 2.
 
-Роботи:
-- Детермінований інвентар: для кожного донора — перелік файлів-носіїв методологій
-  (у gsd-core 3987 файлів — інвентар обов'язковий).
-- Виділення атомарних інструкцій: одна норма/техніка = один instruction_id.
-- Тегування за capability/pattern, зіставлення дублікатів між донорами
-  (напр. TDD у superpowers/BMAD/matt-skills), реєстр конфліктів.
-- `artifact_contract` для інструкцій, що виробляють результат.
-- Provenance: донор + ліцензія + ревізія (джерело — `donors.yaml`).
-- Реєстр сумісності: взаємовиключні групи (напр. `testing-sequence`:
-  `test-first-development` vs `test-after-development`), сумісні доповнення, умовні
-  залежності.
-- Порядок: **superpowers → ponytail** (малі, самодостатні) для валідації формату,
-  далі matt-skills, addy-skills, BMAD, pstack, GSD, OKF-розширення.
+Межі обсягу (обов'язкові до старту):
+- **MVP-корпус:** superpowers + ponytail повністю, далі matt-skills, addy-skills,
+  BMAD, pstack, GSD — по черзі з exit criteria. Ціль MVP: зафіксована кількість
+  інструкцій (затверджується в task-плані) + повне покриття capability-тегів
+  життєвого циклу (research §5).
+- **Exit criteria на донора:** інвентар → атомарні інструкції → теги → dedup →
+  конфлікти → `artifact_contract` → provenance; підписаний звіт покриття.
+- **Exclusion-list:** донорські execution engines, tracker integrations, журнали
+  стану, монолітні промпти не переносяться (research §4.1).
+- **Конвертер** — підтримуваний тестований TS-інструмент під Bun, а не разова
+  процедура; має власні тести.
+- **License/NOTICE manifest** для кожного донора (MIT × 7, Apache-2.0 для OKF з
+  обов'язковим NOTICE-текстом).
+- **Шарди:** кожен донор пише власний output-шард; інтегратор — Root; digest
+  корпусу рахується після інтеграції, не під час паралельної роботи.
 
-AC: кожен донор має інвентар і покриття; кожна інструкція має ≥2 capability-теги,
-≥1 pattern-тег, provenance і ліцензію; невирішені конфлікти — у реєстрі, не
-заховані; дублікати мають зафіксоване рішення; corpus має digest і версію.
+AC:
+- Для кожного обробленого донора: інвентар із 100% файлів-носіїв (tracked) і
+  звіт покриття.
+- Кожна інструкція: `capability_tags` і `pattern_tags` заповнені там, де це
+  семантично застосовно; винятки — з обґрунтуванням у реєстрі; кожен тег —
+  kebab-case і має ≥2 змістовні компоненти.
+- Кожна інструкція має `provenance` (донор + ліцензія + ревізія з `donors.yaml`),
+  `revision`, `status`.
+- Невирішені конфлікти — у реєстрі конфліктів, не заховані в тексті.
+- Рішення про кожен dedup-збіг зафіксоване (канонічний ID + зв'язок).
+- Інструкції, що виробляють результат, мають `artifact_contract`.
+- Конвертер має тести; `bun --cwd packages/powers run test:coverage` — exit 0.
+- License/NOTICE manifest присутній для кожного донора.
 
-Доказ: вивід пайплайну, звіт покриття, семплинг людської перевірки, digest корпусу.
+Доказ: інвентарі, звіти покриття, digest корпусу, тести конвертера, семплинг
+людської перевірки (щонайменше 10% інструкцій, не менше 30 одиниць — розмір
+затверджується в task-плані етапу).
 
 Залежності: Stage 2.
 
 ---
 
 ### Stage 4 — Методологічна політика продукту
-**Мета:** визначити, як VP приймає методологічні рішення (research §4.3, §4.4, §4.5).
+**Role:** product owner + implementer. **Оцінка:** M. **Work item:** VP-4. **Потребує:** Stage 2, 3.
 
 Роботи:
-- Поверхня конфігурації: розширення `.vida/project.yaml` (`VidaProjectConfig/v1`)
-  або окремий розділ — за D-06, з одним owner і схемою `Type/vN`.
+- Поверхня конфігурації: розділ методологічних профілів у чинному v1-конфізі
+  (`agent-runtime.config.v1.yaml`, секція продукту) або окремий розділ — за D7, з
+  власною схемою `Type/vN` та одним owner-ом.
 - `Effective Methodology Profile`: групи (testing-sequence, review-strategy,
   architecture, delivery), явне вибіркове успадкування між продуктами, локальне
-  перевизначення, конфлікт → питання власнику (не «останній завантажений перемагає»).
+  перевизначення, конфлікт → питання власнику.
 - Task-scoped override: запитується один раз, фіксується, передається дочірнім
-  агентам, не змінює постійний профіль і не розширює permissions.
-- Live Inheritance: посилання на стабільні ID без version pinning + правило
-  «зміна поведінки = новий pattern ID».
+  агентам, не змінює постійний профіль, permissions і security gates.
+- Live Inheritance: посилання на стабільні ID без version pinning; зміна поведінки
+  = новий pattern ID.
+- Light/Medium/Full і рольова композиція (research §5): глибина, обов'язковість
+  (`required`/`conditional`/`optional`) і застосовність — окремі властивості.
 
-AC: профіль визначається детерміновано; конфлікт успадкування блокує вибір і
-формулює питання; override задокументований і не протікає в сусідні продукти;
-семантика інструкції не змінюється під тим самим ID.
+AC:
+- Профіль визначається детерміновано для (продукт × задача) — тестова матриця.
+- Конфлікт успадкування зупиняє вибір і формулює питання; «останній завантажений
+  перемагає» не застосовується.
+- Override задокументований, передається дочірнім агентам і не протікає в сусідні
+  продукти.
+- Семантика інструкції не змінюється під тим самим ID; зміна → новий pattern ID.
+- Light/Medium/Full не пропускають обов'язкові AC, матеріалізацію й mandatory gates.
 
 Доказ: тести матриці резолюції, schema-тести конфігурації, приклад конфлікту.
 
@@ -212,167 +335,234 @@ AC: профіль визначається детерміновано; конф
 
 ---
 
-### Stage 5 — Router Skill і `vp-setup`
-**Мета:** дати одну точку входу й безпечне налаштування (research §1, §3).
+### Stage 5 — Router Skill, `vp-setup`, пакунок
+**Role:** implementer (+ runtime-власник для host-hook кваліфікації). **Оцінка:** L. **Work item:** VP-5. **Потребує:** Stage 3, 4, D4.
 
 Роботи:
-- Router Skill: прийом запиту звичайною мовою → вибір інструкцій → композиція
-  bundle (роль, task contract, методологія, scope, вимоги матеріалізації, посилання
-  на артефакти) → делегування або виконання. Fallback на головного агента.
-- `vp-setup`: виявлення проєктів, ідемпотентне додавання керованого блоку
-  інтеграції, збереження сторонніх інструкцій, налаштування доступних hooks,
-  зіставлення layout, перевірка активації.
-- Інтеграція з генератором: керований VP-блок додається через
-  `packages/agent/templates/AGENTS.template.md` (єдиний writer) — не прямим записом
-  у `AGENTS.md`.
-- Host-адаптер сесій: bootstrap мінімальних правил, відновлення після compaction
-  без повторного виконання завершених дій.
+- Router Skill: запит звичайною мовою → вибір інструкцій → bundle (роль, task
+  contract, ефективна методологія, scope, вимоги матеріалізації, посилання на
+  артефакти) → делегування або виконання; fallback на головного агента.
+- `workflow.options` і `decision.evaluate` (§4.8) як provider-нейтральні операції;
+  поріг relevance — калібрований параметр, не універсальна константа.
+- `vp-setup`: виявлення проєктів; ідемпотентне додавання керованого блоку
+  **у project-owned поверхню споживача** (не в пакет агента); збереження
+  сторонніх інструкцій; налаштування доступних host hooks; зіставлення layout;
+  перевірка активації.
+- Host-hook кваліфікація: перевикористати наявну native `/hooks` поверхню; зміна
+  hash потребує native review — trust GAP фіксується, не обходиться.
+- Пакунок: формат + локальна/git-інсталяція (без marketplace).
 
-AC: повторний запуск setup не створює дублікатів блоків/записів; активація
-перевіряється для початку сесії, відновлення після compaction і контексту
-делегованого агента; bootstrap не завантажує весь corpus; варіативність
-вибору (за research §4.3) перепитується один раз.
+AC:
+- Повторний запуск `vp-setup` на незміненому вході → порожній diff (тест).
+- `vp-setup` не змінює жодного файлу встановленого пакета агента (тест на
+  read-only до встановлених шляхів).
+- Активація перевіряється для: початку сесії, відновлення після compaction, контексту
+  делегованого агента; точні імена подій — host-адаптер.
+- Bootstrap не завантажує весь корпус у сесію.
+- Відсутність host-можливості позначається як обмеження, а не як еквівалентна
+  перевірка.
+- Пакунок встановлюється локально й проходить smoke-перевірку.
 
-Доказ: тести setup (повторний запуск — порожній diff), матриця підтримки хостів,
-журнал активації.
+Доказ: тести setup (повторний запуск), матриця підтримки хостів, журнал активації,
+запис пакування/інсталяції.
 
 Залежності: Stage 3, 4, D4.
 
 ---
 
 ### Stage 6 — Матеріалізація, Work Items, Findings
-**Мета:** реалізувати artifact-first і централізований реєстр дефектів.
+**Role:** implementer + runtime-власник (для реєстрів Runtime). **Оцінка:** L. **Work item:** VP-6. **Потребує:** Stage 1, 2, 3.
 
 Роботи:
-- Матеріалізація: перевикористати `ResearchResult/v1`, `DecisionRecord/v1`,
-  `AcceptanceManifest/v1`, `WorkItem/v1`, `WorkState/v1`; додати лише прогалини —
-  `ArtifactReference` і `Action/Event Record` (§6.1) — з власними owner'ами.
+- Матеріалізація: перевикористати `ResearchResult/v1`, `ResearchSynthesis/v1`,
+  `DecisionRecord/v1`, `AcceptanceManifest/v1`, `ImplementationScope/v1`,
+  `WorkItem/v1`, `WorkState/v1`, `LifecycleArtifactReference/v1`,
+  `WorkArtifactReference`; створити лише відсутні частини (Action/Event Record,
+  зв'язки relations) — з власним owner-ом.
 - `artifact_contract` в інструкціях: тип виходу, дані й посилання, місце
   матеріалізації, спосіб перевірки; перевірка наявності/формату/digest окремо від
   семантичної перевірки.
-- Work layout: стабільні ID (`<KEY>-W<NNNN>-<slug>`, `<KEY>-<N>`), алокатор ID,
-  типізовані relations (`derived-from`, `informs`, `implements`, `tests`, `blocks`,
-  `supersedes`, `changes`, `found-during`), shallow storage.
+- Work layout: стабільні ID, алокатор ID, типізовані relations (`derived-from`,
+  `informs`, `implements`, `tests`, `blocks`, `supersedes`, `changes`,
+  `found-during`), shallow storage.
 - Findings: Standalone — append-only JSONL на продукт; Runtime — продуктова
-  ізоляція в наявній SQLite/HostState, без другої БД і без другого JSONL-власника.
-  Централізований запис через один writer; hybrid dedup (ідентичність → fingerprint
-  → семантичні кандидати → перевірка еквівалентності); історія append-only.
+  ізоляція в наявній SQLite/HostState; централізований запис через один writer;
+  hybrid dedup (ідентичність → fingerprint → семантичні кандидати → перевірка
+  еквівалентності); історія append-only.
 
-AC: `passed` неможливий без фактичного запуску; запізнілий результат не переписує
-прийнятий результат батька; невизначеність і блокери записуються чесно; dedup
-проходить затверджену таблицю випадків; жоден сигнал findings не стає авторизацією
-виправлення.
+AC:
+- `passed` неможливий без фактичного запуску перевірки (тест на підроблений PASS).
+- Запізнілий результат підзадачі не переписує прийнятий результат батька; має
+  окремий запис (тест).
+- Blocking-знахідка поза scope фіксується як блокер + запит дозволу; scope не
+  розширюється (тест).
+- Dedup: підтверджений дублікат зв'язується з канонічним `finding_id` зі збереженням
+  нового evidence; неоднозначність не об'єднується; повторна доставка не створює
+  повторної події (таблиця випадків).
+- Створення findings не є авторизацією виправлення (тест).
 
-Доказ: контрактні тести, тести інтеграції в Runtime-режимі, тести Standalone,
-приклад dedup-таблиці.
+Доказ: контрактні тести, тести інтеграції Runtime-режиму, тести Standalone, таблиця
+dedup-випадків.
 
 Залежності: Stage 1, 2, 3.
 
 ---
 
-### Stage 7 — Runtime-інтеграція: Configured і Dynamic
-**Мета:** вбудувати VP у наявне виконання без другої машини (§2, §2.2, §2.3, §8.2).
+### Stage 7 — Runtime-інтеграція
+**Role:** implementer + runtime-власник. **Оцінка:** L. **Work item:** VP-7. **Потребує:** Stage 5, 6.
 
-Роботи:
-- Configured: інструкції VP підставляються у етапи `.vida/flows.yaml`; зовнішні
-  етапи не додаються, gates не обходятся.
-- Dynamic: адаптація в межах затвердженої мети й scope; маршрут не компілюється
-  VP-власним графом.
-- Selective Join: `blocking` / `non-blocking`; non-blocking не робить підзадачу
-  незалежною; обов'язковість AC/gate не знижується.
-- Work Scope vs Lifecycle Scope: мапинг на наявні lease/HostState механіки; у
-  Standalone — прозора атрибуція без системи прав.
-- Scope-First: блокер зафіксовано, дозвіл запитано, scope не розширюється
-  автоматично; сторонні баги — окремий Finding.
+**7a — на чинних v1-контрактах.** Configured: інструкції VP підставляються у етапи
+конфігу; зовнішні етапи не додаються, gates не обходяться. Dynamic: адаптація в
+межах затвердженої мети й scope; VP не компілює власний граф. Selective Join:
+`blocking`/`non-blocking`; non-blocking не робить підзадачу незалежною. Scope-First:
+порушення → блокер, не тихе розширення.
 
-AC: VP-інструкції застосовуються в обох режимах; порушення scope не проходить
-непомітно; у Runtime не з'являється другий scheduler/ledger/БД; підзадача з
-`non-blocking` не блокує батьківський етап і не переписує його результат.
+**7b — цільове сховище** (після закриття storage-admission GAP на стороні
+runtime-власника): перенесення findings/work-операцій у `workspace.v1.sqlite`
+без другої БД.
+
+**Lifecycle Scope (AC-блок для 7a):** три області `parent` / `workflow` /
+`independent`; для кожної — власник, ідентичність, місце результату, спостережуваний
+стан, механізм завершення/скасування. Підтвердження старту ≠ підтвердження
+завершення; запит скасування ≠ доказ зупинки. Standalone явно не має durable
+execution.
+
+AC:
+- VP-інструкції застосовуються в обох режимах (тест із зафіксованим bundle).
+- У Runtime не з'являється другий scheduler/ledger/БД: перевірка — інвентаризація
+  процесів/файлів до і після інтеграції.
+- `non-blocking` підзадача не блокує батьківський етап і не переписує його
+  результат.
+- Runtime-режим не залежить від закриття storage GAP (7a); 7b має власний gate.
+- Lifecycle Scope: для кожної з трьох областей є зафіксований власник і
+  спостережуваний стан; тест на «start ≠ completion» і «cancel request ≠ stopped».
 
 Доказ: інтеграційні тести Runtime, фікстура configured-flow, докази роботи в
-Runtime-режимі.
+Runtime-режимі, інвентаризація відсутності другого стану.
 
-Залежності: Stage 5, 6. Зовнішня залежність: Runtime-трек storage admission
-(D-09) — VP не закриває його, але не створює другу БД.
+Залежності: Stage 5, 6; 7b — зовнішня залежність від runtime-треку.
 
 ---
 
-### Stage 8 — Standalone-режим і переносимість
-**Мета:** підтвердити, що VP працює без VIDA Runtime (§1, §3, §12).
+### Stage 8 — Standalone-режим, переносимість, інсталяція
+**Role:** implementer. **Оцінка:** M. **Work item:** VP-8. **Потребує:** Stage 5, 6, D4.
 
 Роботи:
-- Спільна детермінована бібліотека/скрипти каталогу для Standalone і Runtime
-  (Bun/TS — відповідає codebase; дублювання правил пошуку заборонено).
+- Спільна детермінована бібліотека/скрипти каталогу для Standalone і Runtime (Bun/TS);
+  дублювання правил пошуку заборонено.
 - Прозора атрибуція останнього запису без lease/локів; конфлікти розводяться
-  практичними засобами хоста, прихований перезапис заборонений.
+  практичними засобами хоста; прихований перезапис заборонений.
 - Portability contract: обмеження кожного хоста (сесійні події, compaction,
   subagents, локальні записи) і матриця підтримки.
-- Перевірка на реальних хостах, а не на папері.
+- Перевірка на реальних хостах: install + run мінімального сценарію.
 
-AC: install+run без VIDA Runtime на щонайменше двох сумісних хостах з робочими
-`catalog.*` і матеріалізацією; заявлені обмеження підтверджені спостереженням;
-жодне твердження про підтримку не залишається недоведеним.
+AC:
+- Install + run без VIDA Runtime щонайменше на двох сумісних хостах; `catalog.*` і
+  матеріалізація працюють.
+- Жодне твердження про підтримку не залишається недоведеним: матриця містить
+  спостереження з датою і хостом.
+- У Standalone немає durable execution-інфраструктури: перевірка — відсутність
+  файлів стану/БД, крім явних локальних записів.
 
-Доказ: матриця хостів із записами спостережень, журнал сесій.
+Доказ: матриця хостів із записами спостережень, журнал сесій, запис інсталяції.
 
-Залежності: Stage 5, 6.
+Залежності: Stage 5, 6, D4.
 
 ---
 
 ### Stage 9 — поза scope (окремим рішенням)
-Дистрибуція та marketplace (§1), domain packs (§11), майбутній UI поверх VIDA API
+Дистрибуція через marketplace (§1), domain packs (§11), майбутній UI поверх VIDA API
 (§9.3), зовнішня синхронізація issue-трекерів (§8.3). Кожен — з власним рішенням
 про обсяг.
 
 ---
 
-## 6. Критичний шлях і порядок
+## 5. Залежності та оцінки
 
+```text
+Stage 0 ──► Stage 1 ──► Stage 2 ──► Stage 3 ──► Stage 4 ──► Stage 5 ──► Stage 6
+   S          M          L          L          M          L          L
+                        │          │          │          │          │
+                        └──────────┴──► Stage 8 ◄────────────────────┘
+                                      M          (після 5 і 6)
+
+Stage 7a ──► Stage 7b   (7b після закриття storage GAP поза VP)
+   L
 ```
-Stage 0 ──► Stage 1 ──► Stage 2 ──► Stage 3 ──► Stage 4 ──► Stage 5 ──► Stage 6 ──► Stage 7
-                │                                        │          │
-                │                                        ▼          ▼
-                └──► (changelog, decisions)            Stage 8 (Standalone)
-```
 
-- Stage 2 — найвужче місце: від нього залежать і corpus, і методологія, і Router.
-- Stage 3 — найдовша за обсягом робота (7 донорів); паралелізація лише за
-  **дисциплінами** (окремий donor = окремий lane), з одним writer на файл корпусу.
-- Stage 5 і Stage 6 частково паралельні (Router ↔ матеріалізація) після Stage 3.
-- Stage 7 і Stage 8 — незалежні один від одного, обидва після Stage 5/6.
+| Stage | Залежності | Оцінка | Зовнішні залежності |
+|---|---|---|---|
+| 0 | — | S | рішення власника D1–D7 |
+| 1 | 0 | M | — |
+| 2 | 1 | L | D3; можливий runtime-запит |
+| 3 | 2 | L | — |
+| 4 | 2, 3 | M | D7 |
+| 5 | 3, 4 | L | D4; host-hook кваліфікація |
+| 6 | 1, 2, 3 | L | runtime-власник для Runtime-реєстрів |
+| 7a | 5, 6 | L | — |
+| 7b | 7a | M | storage-admission GAP (runtime-трек) |
+| 8 | 5, 6 | M | D4; реальні хости |
 
-## 7. Ворота якості (з `TESTING.md` і lifecycle)
+Критичний шлях: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7a. Найвужче місце — Stage 2
+(від нього залежать corpus, методологія, Router). Найдовша робота — Stage 3
+(7 донорів); паралелізація — за донорами з шардами й одним інтегратором (Root).
 
-- Інструментальний ланцюг — лише Bun; `node`/`npm`/`npx` не підключаються до
-  команд розробки.
-- Зміни в `packages/agent` — тільки за погодженим work item з окремим власником
-  файла; VP-спостереження, що вимагають змін у runtime, оформлюються як запит
-  до runtime-власника, а не як правка в VP- Lane.
-- Root виконує фінальні перевірки, інтеграцію та Git; робочі лейни не виконують
-  Git-операцій і не дублюють фінальні перевірки.
-- Числові виміри: current coverage-кампанія репозиторію не зупиняється; VP-ланки
-  не торкаються frozen-вимірювань.
-- Докази: `BR → SR → AC → evidence`; кожен AC має файл/тест із фактичним запуском.
-  Статичний аналіз або наявність коду не закривають AC.
+---
 
-## 8. Ризики
+## 6. Ворота якості
+
+Команди з `packages/agent/TESTING.md` (виконуються з `packages/agent`):
+
+| Перевірка | Команда |
+|---|---|
+| Конфігурація | `bun bin/bun.ts run test:config:pinned` |
+| Звичайна фаза агента | `bun bin/bun.ts run test:pinned` |
+| HostState і lifecycle | `bun bin/bun.ts run test:host-state:pinned` |
+| Coverage і CRAP | `bun bin/bun.ts run test:coverage:pinned` |
+| Збережений coverage-звіт | `bun bin/bun.ts run coverage:gate:pinned` |
+| Збережений CRAP-звіт | `bun bin/bun.ts run crap:pinned` |
+| Статична якість | `bun bin/bun.ts run quality:static:pinned` |
+| Формат | `bun bin/bun.ts run format:check:pinned` |
+| Локальна матриця | `bun bin/bun.ts run local:candidate:pinned` |
+| Портативний підмножина | `bun bin/bun.ts run verify:portable:pinned` |
+| Документація (repo) | `bun tooling/agent/check-documentation.ts <paths>` |
+
+Для VP-продукту Stage 2 створює власний harness з паралельними скриптами
+(`bun --cwd packages/powers run test|typecheck|format:check|test:coverage|crap`).
+До Stage 2 VP не має коду, тому його ворота не застосовуються — документи
+перевіряються doc-check-ом, а конфіг — `test:config:pinned`.
+
+Правила: mutation-гейт (`test:mutation:pinned`) запускається лише з окремою
+ручною авторизацією; поточна coverage-кампанія репозиторію не зупиняється;
+VP-лейки не торкаються frozen-вимірювань; `local:candidate`/`ci` не запускаються
+поза delivery-ланом.
+
+---
+
+## 7. Ризики
 
 | Ризик | Наслідок | Запобіжник |
 |---|---|---|
-| Третя логіка реєстру інструкцій (D3) | Два activation-шляди, розбіжна семантика | Один реєстр; D3 вирішується до Stage 2 |
-| Прямий запис у `AGENTS.md` | Розбіжність із генератором template | Managed-блок через template (D-04) |
-| Scope розширюється на сусідні продукти | Непомітна підміна методології | Явне успадкування; конфлікт → питання (Stage 4) |
-| Runtime-режим блокований storage GAP | VP-інтеграція не доводиться | VP не створює БД; залежність трекається окремо (D-09) |
-| Обсяг конвертації корпусу | Етап 3 не завершується | Почати з малих донорів; формат валідується до масштабування |
-| «Jeff»/Decision Provider не існує | Невизначена реалізація | Provider-нейтральний інтерфейс + обов'язковий fallback (D5) |
-| Незареєстрований продукт | Робота поза картою проєкту, ніхто не відповідає | Stage 0 (D1, D2) |
+| `VPCatalog/v1` + проекція сприймають як «другий реєстр» | Два activation-шляди | Проекція ≤64 у наявний реєстр; mapping-тест; runtime-запит замість локального роздвоєння |
+| `vp-setup` піде в пакет агента | Псування шаблону, зараження споживачів | AC на read-only до встановлених шляхів; managed-блок у project-owned поверхні |
+| VP-дизайн спирається на `.vida`, якого немає | Етапи 4/7 не виконуються | Ціль — чинний v1-конфіг; `.vida` — окремий cutover-трек (D7) |
+| Scope розширюється на сусідні продукти | Непомітна підміна методології | Явне успадкування; конфлікт → питання; AC у Stage 4 |
+| Runtime-режим блокований storage GAP | Інтеграція не доводиться | 7a не залежить від GAP; 7b — окремий gate |
+| Обсяг Stage 3 не завершується | Корпус не готовий | MVP-корпус, exit criteria на донора, метрика покриття |
+| Decision Provider не існує | Невизначена реалізація | Provider-нейтральний інтерфейс + обов'язковий fallback (D5) |
+| Незареєстрований продукт | Робота поза картою проєкту | Stage 0 (D1, D2) + повна реєстрація полів |
+| Hook trust GAP на новому хості | `vp-setup` не активується | Trust GAP фіксується, не обходиться; host-матриця показує обмеження |
 
-## 9. Що plan не робить
+---
 
-- Не змінює runtime-контракти, схеми й `packages/agent` — це запити до
-  runtime-власника.
-- Не створює другий scheduler, DAG-компілятор, ledger або сховище стану.
-- Не визначає «Jeff» і не прив'язує VP до vendor API.
-- Не запускає конвертацію корпусу і не стверджує, що вона виконана.
-- Не вважає дослідження доказом готовності: research-факти й код — різні
-  величини.
+## 8. Межі плану
+
+- План не змінює runtime-контракти й схеми сам. Будь-яка потреби `packages/agent`
+  оформлюється окремим runtime-owned work item із власним owner-ом.
+- План не створює другий scheduler, DAG-компілятор, ledger або сховище стану.
+- План не визначає «Jeff» і не прив'язує VP до vendor API.
+- План не запускає конвертацію корпусу і не стверджує, що вона виконана.
+- Research-документ залишається єдиним B-джерелом; S-контракти з'являються у
+  Stage 1 і зберігають research як джерело.
+- Кожен етап до виконання має власний task-level plan (bite-sized кроки, точні
+  файли, точні тести) — цей roadmap визначає порядок і ворота, не кроки.
