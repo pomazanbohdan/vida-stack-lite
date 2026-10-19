@@ -2013,5 +2013,26 @@ SIGTERM and observed its absence before the next isolated check. Preserve the
 competing-load19.850s failure separately; it is not a performance comparison.
 The Cloud reference now requires absolute `--path` on delegated Vex calls and
 terminal child observation before handoff. No active numeric image was changed.
-Normal hooked publication and one fresh exact main-config stage are next;
-historical exact counts remain16/45 until the existing projection imports proof.
+Correction b04a76e is published on main. Ordinary hooks pass formatting on514
+files, strict TS on521 files and lint. The original quality-hook rejection was
+a test Proxy's unsafe Reflect.apply return; the test now narrows that native
+result and its44-assertion control passes. No hook was bypassed.
+
+The exact stage `/workspace/contour-stage-RqIRYK` completed in42,437.101ms on
+b04a76e, exit0,137PASS/0FAIL,2978 assertions. Capture, group closure, boot and
+image-input checks pass. Its image is
+`/workspace/.vida-quality-inputs/5fb3921814584207698103a38df5f268a345fa41/repository`,
+manifest SHA `6ef9866aeb602d1c4da78f14626bc934cfeda44ca4c4158062be369322227b97`.
+The diagnostic `4e250e04-c3ba-424c-a61b-f1af8df8d245` records
+F352/354,L970/976,S1029/1035,B259/259. Operation outcome remains BLOCKED;
+this is complete but nonexact coverage, not acceptance. SDK inputs are not
+required by this selected test inventory. No second scan/AST pass was needed.
+
+The retained coverage map locates all residual gaps in
+readRuntimeConfigIdentityForObservation and its project-ID mapper at
+runtime-config.ts:1707-1721. A new test uses the existing fresh legacy fixture
+to check exact cold identity, no write/fsync, a real warmed-cache configuration
+change, preservation of the older loaded object, relative-root denial and
+unchanged caller bytes. Its targeted check passes12 assertions in0.587s.
+Publish this test/projection packet through ordinary hooks, then repeat exactly
+main-config. Historical exact counts stay16/45; no next contour is selected.

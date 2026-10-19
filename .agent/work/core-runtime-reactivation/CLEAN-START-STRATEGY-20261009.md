@@ -44,8 +44,10 @@ maximum. Keep a blocked contour active and record its exact GAP until resolved.
 The active contour is main-config after fresh core/timing exact observations.
 Its activated-reader case now has focused proof within the unchanged10s bound
 after fresh no-write upgrade observations and an exact-YAML parsing memo.
-WORK owns the diagnostic, review and regression results. Publish the correction
-with ordinary hooks, then run its single current exact coverage stage before
+WORK owns the diagnostic, review and regression results. Correction b04a76e
+is published; its complete137-test stage has exact branches but two uncovered
+identity-observation functions. Cover those through the existing fresh fixture,
+publish the regression/projection packet and repeat only main-config before
 selecting another contour. No focused result supplies frozen/mutation closure.
 
 For each contour, use the existing one-contour stage route:

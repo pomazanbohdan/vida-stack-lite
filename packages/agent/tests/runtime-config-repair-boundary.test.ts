@@ -35,12 +35,51 @@ import {
   capturedRuntimeConfigurationBinding,
   loadRuntimeConfig,
   parseRuntimeConfigYaml,
+  readRuntimeConfigIdentityForObservation,
   runtimeConfigDigest,
   validateRuntimeConfigRepairTargetBytes,
 } from '../src/config/runtime-config.ts';
 
 const repositoryRoot = process.env.AGENT_RUNTIME_TEST_CONTEXT_ROOT ?? configuredTestRepositoryRoot();
 const sourceBytes = readFileSync(path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'));
+
+test('configuration identity observation stays read-only and refreshes a warmed legacy cache', () => {
+  const fixture = createLegacyConfigFixture();
+  const original = expectReturned(() => parseRuntimeConfigYaml(sourceBytes.toString('utf8')));
+  const writes = spyOn(nodeFs, 'writeSync');
+  const syncs = spyOn(nodeFs, 'fsyncSync');
+  let passed = false;
+  try {
+    const identity = readRuntimeConfigIdentityForObservation(fixture.root);
+    expect(identity).toEqual({
+      repository_id: original.repository.repository_id,
+      project_ids: original.projects.map((project) => project.project_id),
+      bundle: original.runtime.bundle,
+    });
+    expect(Object.isFrozen(identity)).toBe(true);
+    expect(writes).not.toHaveBeenCalled();
+    expect(syncs).not.toHaveBeenCalled();
+    const loaded = loadRuntimeConfig(fixture.root);
+    const repositoryId = original.repository.repository_id + '-observed';
+    const changed = sourceBytes.toString('utf8').replace(/^(\s*repository_id:\s*).*$/mu, '$1' + repositoryId);
+    expect(expectReturned(() => parseRuntimeConfigYaml(changed)).repository.repository_id).toBe(repositoryId);
+    writeFileSync(fixture.configFile, changed);
+    writes.mockClear();
+    syncs.mockClear();
+    expect(readRuntimeConfigIdentityForObservation(fixture.root)).toEqual({ ...identity, repository_id: repositoryId });
+    expect(loaded.repository.repository_id).toBe(original.repository.repository_id);
+    expect(writes).not.toHaveBeenCalled();
+    expect(syncs).not.toHaveBeenCalled();
+    expect(() => readRuntimeConfigIdentityForObservation('.')).toThrow('repository root must be absolute');
+    expect(readFileSync(fixture.configFile, 'utf8')).toBe(changed);
+    expect(performance.now()).toBeLessThan(fixture.deadlineAt);
+    passed = true;
+  } finally {
+    writes.mockRestore();
+    syncs.mockRestore();
+    closeLegacyConfigFixture(fixture, passed);
+  }
+});
 
 import { captureCoverageConsumerBinding, assertCoverageConsumerBinding } from '../tooling/coverage-consumer-binding.ts';
 
