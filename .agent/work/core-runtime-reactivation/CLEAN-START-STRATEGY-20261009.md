@@ -59,6 +59,13 @@ contour. Reconcile existing maintained tests/helpers for the135uncovered outer
 owners before authoring duplicates. Preserve locked configuration byte readers,
 fresh barriers, complete Source scope, explicit resource review and denominators.
 Run the next full stage only after a checked causal test patch.
+The first uncovered-behavior packet adds Host-specific corrective authorization
+and unprepared-release contracts through existing shared fixtures:77focused
+assertions pass, including native rollback/idempotence and all three CAS fences.
+Blind Luna's wrong-stage near-miss finding is fixed; the bounded resource review
+and exact Host test pin are refreshed without widening the selection. The next
+single complete stage must measure the changed inputs; coverage gains remain
+pending that result.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

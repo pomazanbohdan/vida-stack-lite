@@ -4,6 +4,13 @@ import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.
 import { expectReturned, rejectionReason } from '../helpers/expect-rejection.ts';
 import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-reconciliation-authorization-fixture.ts';
 import { createInitializationBundle } from '../helpers/init-bundle.ts';
+import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
+import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
+import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
+import {
+  prepareLifecycleForCorrection,
+  correctiveAssignmentAuthorizationSchema,
+} from '../../src/orchestration/final-assurance.ts';
 import { validateWorkState } from '../../src/contracts/work-state-schema.ts';
 import type {
   CoordinationClaim,
@@ -55,7 +62,7 @@ import {
   loadRuntimeConfig,
   runtimeConfigDigest,
 } from '../../src/config/runtime-config.ts';
-import { PROJECT_UPGRADE_OPERATION_PATH } from '../../src/config/project-paths.ts';
+import { PROJECT_UPGRADE_OPERATION_PATH, sessionBridgeDatabaseRelativePath } from '../../src/config/project-paths.ts';
 import type { FlowIntent, WorkItemKind } from '../../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../../src/config/project-context.ts';
 import { createTestTrustedHostLauncherCapability, createTrustedHostComposition } from '../../src/runtime-kernel.ts';
@@ -69,7 +76,7 @@ import {
   type SessionAgentAction,
 } from '../../src/orchestration/session-handoff.ts';
 import { suspendLocalWork, suspendCompletedReadOnlyWork } from '../../src/orchestration/suspend-local-work.ts';
-import { acquireLocalSourceWriterLease } from '../../src/orchestration/local-work-admission.ts';
+import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../../src/orchestration/local-work-admission.ts';
 import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-local-work.ts';
 import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
@@ -415,6 +422,216 @@ test('trusted host source entrypoint exposes host state without a test issuer', 
   expect(trustedHostSurface.openHostStateDatabase).toBe(openHostStateDatabase);
   expect(typeof trustedHostSurface.createTrustedHostComposition).toBe('function');
   expect('createTestTrustedHostLauncherCapability' in trustedHostSurface).toBe(false);
+});
+
+// Real admission, writer completion and focused verdicts prepare the authorization boundary.
+test('Host corrective authorization preserves all three CAS boundaries and only authorizes the failed closure', async () => {
+  const f = await createFailedFinalCorrectionFixture();
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const prepared = prepareLifecycleForCorrection({
+      root: f.root,
+      config: f.config,
+      store: f.store,
+      identity: f.identity,
+      journal: f.journal,
+      preparationPath: f.preparationPath,
+    });
+    const before = f.store.readHostStateSnapshot(f.identity);
+    const journal = f.store.readWorkSessionJournal(f.identity);
+    if (!prepared.workVersion || !prepared.ledgerVersion || !before.work?.execution.run_id || !journal)
+      throw new Error('Prepared corrective Host fixture is incomplete.');
+    const request = {
+      identity: f.identity,
+      attempt: 1,
+      expectedWork: prepared.workVersion,
+      expectedLedger: prepared.ledgerVersion,
+      expectedJournal: journal.version,
+      stageIds: ['develop_task', 'validate_focused', 'test_task'],
+      userInstructionRef: 'fixture:host-corrective-owner',
+      config: f.config,
+    };
+    const denied: readonly [Partial<typeof request>, string][] = [
+      [{ userInstructionRef: ' ' }, 'attributable corrective authorization missing'],
+      [
+        { expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 } },
+        'state compare-and-swap conflict',
+      ],
+      [
+        { expectedLedger: { ...request.expectedLedger, revision: request.expectedLedger.revision + 1 } },
+        'state compare-and-swap conflict',
+      ],
+      [
+        { expectedJournal: { ...request.expectedJournal, revision: request.expectedJournal.revision + 1 } },
+        'corrective journal CAS conflict',
+      ],
+      [{ stageIds: [] }, 'corrective stage selection differs'],
+      [{ stageIds: ['develop_task', 'validate_focused', 'validate_focused'] }, 'corrective stage selection differs'],
+      [{ stageIds: ['develop_task', 'validate_focused', 'foreign-stage'] }, 'corrective stage selection differs'],
+      [
+        {
+          config: {
+            ...f.config,
+            repository: { ...f.config.repository, repository_id: f.config.repository.repository_id + '-foreign' },
+          },
+        },
+        'corrective workflow configuration differs',
+      ],
+    ];
+    const authorityPath = path.join(f.root, '.agent/work', f.identity.work_id, 'correction-1-authorization.json');
+    for (const [change, message] of denied) {
+      expect(() => f.store.authorizeCorrectiveExecution({ ...request, ...change })).toThrow(message);
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+      expect(existsSync(authorityPath)).toBe(false);
+    }
+    const issued = f.store.authorizeCorrectiveExecution(request);
+    const after = f.store.readHostStateSnapshot(f.identity);
+    const corrected = f.store.readWorkSessionJournal(f.identity);
+    if (!after.work || !corrected) throw new Error('Corrective authorization lost its persisted state.');
+    expect(after.work.lifecycle.phase).toBe('EXECUTE');
+    expect(after.work.lifecycle.assurance.correction_count).toBe(1);
+    expect(after.work.lease).toEqual(before.work.lease);
+    expect(after.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
+    expect(corrected.state.corrective_execution).toEqual(issued);
+    expect(corrected.state.items).toEqual([]);
+    expect(corrected.state.completed).toEqual([]);
+    expect(corrected.state.run_id).toBe(issued.engine_run_id);
+    expect(issued.base_run_id).toBe(before.work.execution.run_id);
+    expect(issued.stage_ids).toEqual(request.stageIds);
+    const authorityBytes = readFileSync(authorityPath);
+    const authority = correctiveAssignmentAuthorizationSchema.parse(
+      JSON.parse(authorityBytes.toString('utf8')) as unknown,
+    );
+    expect(authority.user_instruction_ref).toBe(request.userInstructionRef);
+    expect(authority.stage_ids).toEqual(request.stageIds);
+    expect(authority.allowed_paths).toEqual([...before.work.lifecycle.scope.allowed_paths]);
+    expect(authority.failed_action_ids).toEqual(
+      [...journal.state.completed.flatMap((wave) => wave.items), ...journal.state.items]
+        .filter((item) => item.observation?.status === 'reported_failed')
+        .map((item) => item.request.action_id),
+    );
+    expect(createHash('sha256').update(authorityBytes).digest('hex')).toBe(issued.authorization.sha256);
+    expect(() => f.store.authorizeCorrectiveExecution(request)).toThrow('state compare-and-swap conflict');
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(corrected);
+    expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(completed);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+}, 20000);
+
+test('Host unprepared release rolls back both rows and retries the retained request without new rights', () => {
+  const f = createAutomaticWorkAdmissionFixture(false, true);
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const admission = f.prepare('host-unprepared-release', 'fixture:unprepared-owner');
+    admission.intakePath = '.agent/work/host-unprepared-release/raw-intake.json';
+    writeFileSync(
+      path.join(f.root, admission.intakePath),
+      JSON.stringify({
+        schema: 'VidaLocalSessionIntake/v1',
+        work_item: admission.workItem,
+        native_session_handle: admission.nativeSessionHandle,
+      }),
+    );
+    const admitted = admitLocalSessionWork(admission);
+    if (!admitted.host.work) throw new Error('Unprepared admission did not persist its Host work.');
+    const identity: WorkIdentity = {
+      repository_id: admitted.host.work.binding.repository_id,
+      project_ids: admitted.host.work.binding.project_ids,
+      integrations_digest: admitted.host.work.binding.integrations_digest,
+      work_id: admission.context.work_id,
+    };
+    const context = {
+      identity,
+      attempt: 1,
+      operatorHandle: admission.nativeSessionHandle,
+      decisionPointer: 'fixture:release-unprepared',
+      config: f.config,
+    };
+    const before = f.store.readHostStateSnapshot(identity);
+    if (!before.work) throw new Error('Unprepared Host work is missing before inspection.');
+    expect(() => f.store.inspectUnpreparedWorkRecovery(context)).toThrow('preparation engine unavailable');
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+    expect(existsSync(path.join(f.root, sessionBridgeDatabaseRelativePath(f.config)))).toBe(false);
+    const engine = new Database(path.join(f.root, sessionBridgeDatabaseRelativePath(f.config)));
+    try {
+      engine.exec('CREATE TABLE mastra_workflow_snapshot (workflow_name TEXT,run_id TEXT,snapshot TEXT)');
+    } finally {
+      engine.close();
+    }
+    const request = f.store.inspectUnpreparedWorkRecovery(context);
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(identity)).toBeNull();
+    expect(request.originalWork).toEqual(before.work);
+    expect(request.originalTicket.active_resources).toEqual(['execution:' + identity.work_id]);
+    f.database.exec(
+      "CREATE TEMP TRIGGER deny_host_release BEFORE UPDATE ON agent_host_state WHEN OLD.kind='ledger' BEGIN SELECT RAISE(ABORT, 'controlled ledger publication failure'); END",
+    );
+    try {
+      expect(() => f.store.releaseUnpreparedWork(context, request)).toThrow('controlled ledger publication failure');
+      expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+      expect(f.store.readWorkSessionJournal(identity)).toBeNull();
+    } finally {
+      f.database.exec('DROP TRIGGER deny_host_release');
+    }
+    const released = f.store.releaseUnpreparedWork(context, request);
+    if (!released.work || !released.ledger) throw new Error('Release did not preserve its Host rows.');
+    expect(released.work.lease).toBeNull();
+    expect(released.work.execution.status).toBe('suspended');
+    expect(released.work.execution.run_id).toBe(request.originalWork.execution.run_id);
+    expect(released.work.execution.assignment_attempts).toEqual([]);
+    expect(released.work.lifecycle.phase).toBe('INTAKE');
+    expect(released.work.lifecycle.seal).toBeNull();
+    const ticket = released.ledger.tickets.find((item) => item.ticket_id === request.originalTicket.ticket_id);
+    expect(ticket?.status).toBe('released');
+    expect(ticket?.active_resources).toEqual([]);
+    expect(ticket?.expires_at).toBeNull();
+    expect(
+      released.ledger.claims
+        .filter((item) => item.ticket_id === request.originalTicket.ticket_id)
+        .map((item) => item.status),
+    ).toEqual(['released']);
+    expect(
+      released.ledger.operations.filter(
+        (item) => item.ticket_id === request.originalTicket.ticket_id && item.kind === 'release',
+      ),
+    ).toHaveLength(1);
+    expect(f.store.releaseUnpreparedWork(context, request)).toEqual(released);
+    expect(() => f.store.releaseUnpreparedWork({ ...context, operatorHandle: 'foreign-owner' }, request)).toThrow(
+      'unprepared recovery retained request differs',
+    );
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(released);
+    expect(f.store.readWorkSessionJournal(identity)).toBeNull();
+    expect(() => f.store.inspectUnpreparedWorkRecovery(context)).toThrow('unprepared recovery owner missing');
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close({ retainRoot: !completed });
+        },
+      ],
+      primaryFailure,
+    );
+  }
 });
 
 test('recovery namespace denies generic issuance, settlement and copied handles', () => {

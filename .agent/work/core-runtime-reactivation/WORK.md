@@ -76,6 +76,30 @@ The one filesystem observation reports13612404736bytes free on the common
 checkout/scratch/evidence overlay, above the unchanged2GiB admission threshold.
 No cleanup, runtime/loader/DB cutover or consumer effect was performed.
 
+### Host-state uncovered authorization and recovery packet
+
+The next Source test packet reuses the maintained failed-final-correction and
+automatic-admission fixtures inside the existing Host test file. Corrective
+authorization checks all three stale CAS versions, invalid attribution/stage/
+configuration requests, unchanged rejected state, the actual persisted authority
+digest and successful Journal reset, followed by a rejected stale retry. Its
+focused native case passes51assertions in14491.03ms under its justified
+20s fixture allowance. Unprepared release first rejects a missing engine without
+changing Host state, then uses a real empty engine census. A native SQLite trigger
+aborts the Ledger update: both Host rows roll back, the retained request succeeds
+on retry, the exact retry is idempotent and a foreign caller receives no rights.
+That focused case passes26assertions in775.97ms under the default5s bound.
+Both run together in17.20s,77assertions total.
+Both checks use Bun1.4.3; targeted strict TypeScript passes169files and scoped
+type-aware lint passes. The initial missing-engine fixture failure and its root
+remain retained; it was a fixture setup omission, not a demonstrated product bug.
+Blind Luna review at /tmp/vida-host-new-cases-review.md identified a missing
+same-length, unique wrong-stage denial; the checked packet now covers it and
+explicitly proves missing-engine inspection creates no engine file. No remaining
+blocking finding was reported. No numeric increase is inferred from these passes.
+The complete baseline below remains the latest numeric observation until the next
+current-input stage terminates.
+
 ### Latest host-state stage and measured presence-guard repair
 
 On4ae4a36, /workspace/contour-stage-F04pyx completes in201042.948ms, publishes
@@ -307,6 +331,13 @@ F/L/S/B, process-custody qualification or a speedup measurement. Require the nex
 single complete stage to validate both direct producers, exact union, receipts,
 unchanged image and merged counters before recording any contour result.
 The existing300s budget and30s report reserve are unchanged; UNKNOWN remains fenced.
+
+The authorization/release packet refreshes only the reviewed Host test digest to
+e6695c9dd948afe2e141db16df39780fdbe069e88831c67df7cb9e3afdaf9dfa. The same blind
+review traces both added shared fixtures and their engine/authority writes to the
+Host child's unique TMPDIR consumer roots; neither writes shared package config.
+Selection, namespace ownership, supported provider and serial fallback remain
+unchanged. The updated focused eligibility control passes10assertions in5.03ms.
 
 Final blind code review found no blocking defect. Its missing captured-Source
 metadata control is added and passes the focused case with10assertions in4.43ms.
