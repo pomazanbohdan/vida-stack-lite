@@ -12,7 +12,7 @@ tags:
 sources:
 - id: roadmap
   resource: /implementation-plan.md
-  title: Vida Powers — план впровадження (rev 2.1)
+  title: Vida Powers — наступні дії в межах packages/powers
 - id: d9
   resource: /decisions/D9-scoped-to-powers.md
   title: 'D9 — Робочий scope: лише packages/powers'
@@ -65,8 +65,8 @@ A0 (gate) ──► A harness+скелет ──► B канонічні док
 | **A0** | Перевірити ризик для чужого lint-гейту до першого TS-файлу | `bun run --cwd packages/agent lint:knip:pinned` → `{"issues":[]}`, exit 0 | S | **закрито 2026-10-19** |
 | **A** | Скелет продукту й harness **за конвенціями `packages/agent`** (без власної інфраструктури): `package.json`, `.bun-version`, `tsconfig.json`, `bunfig.toml`, власна install-тека (`bun.lock`), каталоги `scripts/ tests/ config/ instructions/ skills/ docs/work/ docs/requests/` | `bun run --cwd packages/powers test` → 13 pass / 0 fail; `bun run --cwd packages/powers typecheck` → «No type errors»; plain-TS скрипт однаково виконується під `node` і `bun` | S | **закрито 2026-10-19** |
 | **B** | Канонічні документи продукту: `business-requirements.md`, `system-specification.md`, `acceptance.md`, матриця research § → SR § → AC id | Матриця повна; `check-okf.ts` → exit 0; doc-check → `failures: []` | M |
-| **C** | Схеми `VPCatalog/v1` і `VPMethodologyProfile/v1` у `config/`; операції `catalog.tags/search/get/compose` у `tooling/`; `decision.evaluate` з fallback (D5) | Тести операцій: лише ID/опис у пошуку, обов'язкові + залежності в compose, конфлікт груп → помилка, кожен trigger fallback → fallback з причиною | L |
-| **D** | Вертикальний зріз корпусу на superpowers: інвентар → атомарні інструкції → теги → dedup → provenance; конвертер `tooling/convert.ts` як тестований інструмент | Інвентар 100% tracked-файлів-носіїв; кожна інструкція: ≥2 змістовні компоненти в кожному тегу, provenance, ліцензія; dedup-рішення зафіксовані; тести конвертера + `check-corpus.ts` → exit 0 | L |
+у `skills/vp-mode/scripts/`;
+конвертер `scripts/convert.ts`
 | **E** | Скіли `vp-mode` (оркестрація) і `vp-setup` (налаштування) у `skills/`, разом із **постачаваними скриптами** `skills/*/scripts/` (налаштування, пошук інструкцій) — plain TS без збірки; per-host `plugin.json` і `marketplace.json`; `vp-setup` writers (Standalone → керований YAML-блок у `AGENTS.md`/`CLAUDE.md`) | Повторний запуск setup → порожній diff; setup не змінює встановлений пакет агента; маніфести валідні схемою; постачавані скрипти виконуються без Bun-специфічних API (перевірка запуском під `node`) | M |
 | **F** | Work Items VP у `docs/work/` (OKF-концепції зі стабільними ID, AC, evidence); findings JSONL (Standalone, append-only); `artifact_contract` | Work Item має ID/AC/evidence і зв'язки; findings: повторна доставка не створює подію; dedup-випадки зафіксовані | M |
 | **G** | Runtime-запити як документи в `docs/requests/`: один запит на D3+D8 (розширений instruction registry + читання профілю) | Запит має власника, перелік файлів, вимірюваний результат | S |
@@ -111,7 +111,9 @@ A0 (gate) ──► A harness+скелет ──► B канонічні док
 | `scripts/convert.ts` | Конвертер донорів → каталог | D |
 | `scripts/check-corpus.ts` | Перевірка корпусу: теги, provenance, dedup, покриття | D |
 | `scripts/check-okf.ts` | Перевірка OKF-сумісності bundle (вже створено) | наявний |
-| `config/vpcatalog.v1.schema.json`, `config/vp-methodology-profile.v1.schema.json` | Схеми VP | C |
+| `config/vpcatalog.v1.schema.json`, `config/vpinstruction.v1.schema.json`, `config/vpeffectiveprofile.v1.schema.json`, `config/vpcorpusmap.v1.schema.json` | Схеми VP | C |
+| `catalog.json` | Маніфест каталогу: ідентичність, словник тегів, аліаси, перелік корпусу з `sha256` | C |
+| `corpus-map.json` | Мапа обробки: донор + файл → converted/split/merged/rejected | D |
 | `instructions/` | Канонічні інструкції: `.md` + метадані, плоско | D |
 | `corpus-map.json` | Мапа обробки: донор + файл → converted/split/merged/rejected | D |
 | `skills/vp-mode/SKILL.md`, `skills/vp-setup/SKILL.md` + їхні `scripts/` | Скіли оркестрації й налаштування разом із тулінгом | C, D, E |

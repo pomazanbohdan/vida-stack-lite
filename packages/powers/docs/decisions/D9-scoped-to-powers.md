@@ -63,16 +63,16 @@ runtime-запити лишаються документами в `docs/requests
 2. **Продукт не входить у документаційну політику репозиторію**: `canonical_roots`
    не містить `packages/powers/docs` (R-16). Еквівалент забезпечує власна
    документаційна дисципліна продукту: OKF-bundle, журнал `docs/log.md`,
-   `bun packages/powers/tooling/check-okf.ts` і репозиторний
+   `bun packages/powers/scripts/check-okf.ts` і репозиторний
    `bun tooling/agent/check-documentation.ts` як локальна перевірка посилань.
 3. **Ризик для чужого lint-гейту** (перевірено 2026-10-19: залежності встановлено,
    гейт `lint:knip` повертає `{"issues":[]}` і exit 0; workspace `packages/powers`
    зареєстровано в `packages/agent/knip.config.ts` за owner-винятком rev 2):
    knip-конфігурація агента сканує репозиторій цілом (`--directory ../..`) і має
-   workspace для `.`, `packages/agent`, `packages/plugin` — файли `packages/powers/**`
+   workspace для `.`, `packages/agent`, `packages/plugin` і `packages/powers` — файли `packages/powers/**`
    можуть опинитися «unlisted» і впасти на `lint:knip` (`--max-issues 0`,
    `--treat-config-hints-as-errors`). Перевірка перед першим TS-файлом у VP:
-   `bun --cwd packages/agent run lint:knip:pinned`. Якщо ризик підтвердиться —
+   `bun run --cwd packages/agent lint:knip:pinned`. Якщо ризик повернеться —
    потрібна root-зміна (owner) або відкладення TS-коду.
 4. **Bun-версія продукту** — пін `1.4.3`, як у `packages/agent/.bun-version`;
    інструментальний ланцюг — лише Bun. Перевірена форма виклику:

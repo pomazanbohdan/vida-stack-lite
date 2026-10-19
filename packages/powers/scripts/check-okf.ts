@@ -19,6 +19,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
+import { collectDefinitions, findDuplicateDefinitions } from './definitions.ts';
 
 const repoRoot = path.resolve(import.meta.dir, '..', '..', '..');
 const bundleRoot = path.join(repoRoot, 'packages', 'powers', 'docs');
@@ -171,6 +172,12 @@ else {
   if (version === undefined) warnings.push('bundle root index.md does not declare okf_version');
 }
 if (!existsSync(path.join(bundleRoot, 'log.md'))) warnings.push('bundle has no log.md history file');
+
+const definitions = files.flatMap((file) => collectDefinitions(path.relative(repoRoot, file).replaceAll('\\', '/'), readFileSync(file, 'utf8')));
+for (const [id, bucket] of findDuplicateDefinitions(definitions)) {
+  const places = bucket.map((entry) => `${entry.file}:${entry.line}`).join(', ');
+  failures.push(`${id} is defined ${bucket.length} times: ${places}`);
+}
 
 console.log(
   JSON.stringify(

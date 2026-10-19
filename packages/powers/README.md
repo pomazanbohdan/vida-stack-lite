@@ -47,7 +47,7 @@ VP дає:
                               │
                      конвертація (scripts/convert.ts)
                               ▼
-   канонічний корпус  packages/powers/corpus/        VPCatalog/v1
+   канонічний корпус  packages/powers/instructions/   VPCatalog/v1 (instruction .md + frontmatter)
    (інструкції + capability_tags / pattern_tags + умови + compatibility + provenance)
                               │
               пошук і добір  skills/vp-mode/scripts/catalog.ts   catalog.tags / search / get / compose
@@ -188,7 +188,7 @@ packages/powers/
   skills/                       vp-mode, vp-setup (+ їхні scripts/)
   .codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/   per-host маніфести
   scripts/                      підтримка продукту: check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts
-  catalog.json                  ідентичність каталогу, словник тегів, аліаси, винятки
+  catalog.json                  ідентичність каталогу, словник тегів, аліаси, перелік корпусу з sha256
   corpus-map.json               мапа обробки: донор + файл → converted/split/merged/rejected
   tests/                        тести harness'у
   .tmp/                         scratch: клони донорів (ігнорується Git)

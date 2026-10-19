@@ -86,7 +86,7 @@ corpus, єдиним скілом оркестрації `vp-mode`, допомі
 bun packages/powers/scripts/check-okf.ts
 
 # Локальна перевірка посилань і заголовків репозиторним інструментом
-bun tooling/agent/check-documentation.ts packages/powers/docs
+bun tooling/agent/check-documentation.ts <явний список .md-файлів bundle>
 
 # Тести продукту
 bun run --cwd packages/powers test
@@ -98,7 +98,7 @@ bun run --cwd packages/powers typecheck
 bun run --cwd packages/agent lint:knip:pinned
 
 # Маніфест донорів (scratch-інструмент у .tmp, ігнорується Git)
-bun packages/powers/.tmp/validate-donors.ts
+bun packages/powers/scripts/validate-donors.ts
 ```
 
 > Форма виклику: `bun run --cwd <dir> <script>`. Варіант `bun --cwd <dir> run <script>`
