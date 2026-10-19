@@ -21,6 +21,9 @@ sources:
 - id: acceptance
   resource: /acceptance.md
   title: Vida Powers — критерії прийняття
+- id: catalog-design
+  resource: /catalog-design.md
+  title: Vida Powers — дизайн каталогу інструкцій
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 revision: '1'
 ---
@@ -69,7 +72,7 @@ revision: '1'
 |---|---|
 | D1 VP = `packages/powers` | BR-21; реєстрація — Stage 0 |
 | D2 монорепозиторій продуктів | BR-21; NFR-06 |
-| D3 власний каталог + розширений реєстр у пакеті агента | SR-15, SR-34, SR-36; AC-09; runtime-запит |
+| D3 власний каталог (`.md`-інструкції + `catalog.json`) + розширений реєстр у пакеті агента | SR-01, SR-06, SR-15, SR-34, SR-36; AC-01, AC-09, AC-29; runtime-запит; дизайн `catalog-design.md` |
 | D4 три канали доставки, скіли `vp-mode`/`vp-setup` | BR-19; SR-22, SR-56, SR-58 |
 | D4b marketplace-власник, Codex першим | BR-19; AC-27 (обмеження для решти хостів) |
 | D5 provider-нейтральний Decision Provider | SR-16, SR-17; AC-10 |
