@@ -183,7 +183,7 @@ S-документи, які створює Stage 1.
 |---|---|---|---|
 | D-01 | Каталог атомарних інструкцій із двома вимірами тегів (§4.2) | `InstructionRegistry/v1`: `instruction_id`, `owner`, `revision`, `source_path`, `source_sha256`, `summary_sha256`, `activation_class` (`always_on`\|`lane_entry`\|`triggered_domain`\|`closure_reflection`), `triggers`, `phases`, `lanes`, `output_schema`, `max_bytes`, `privacy`, `status`, `content`; `instructions` — `maxItems: 64`; вбудований у `research_decision.registry` конфігу; активація через `src/research-decision.ts` | Stage 2: `VPCatalog/v1` + власні скрипти; розширений реєстр пакета агента — runtime work item (D3) |
 | D-02 | 7 донорів (§4.1) | 7 methodology donors + 1 format reference (OKF) у `donors.yaml`; копії в `.tmp/donors`, знімки зафіксовані | Stage 3 |
-| D-03 | Один вхід: Router + `vp-setup` | Skill refs підтримані **лише** як workflow-stage `context_skill_refs` (`.codex/skills/<name>/SKILL.md`): `src/orchestration/configured-context.ts:63`, `src/config/runtime-config.ts:1330-1333`. Загального skill discovery немає | Stage 5 |
+| D-03 | Один вхід: `vp-mode` (оркестрація) + `vp-setup` (налаштування) | Skill refs підтримані **лише** як workflow-stage `context_skill_refs` (`.codex/skills/<name>/SKILL.md`): `src/orchestration/configured-context.ts:63`, `src/config/runtime-config.ts:1330-1333`. Загального skill discovery немає. Per-host plugin manifests у репо відсутні; зразок — у донорів (superpowers, cursor/plugins) | Stage 5 |
 | D-04 | `vp-setup` керує `AGENTS.md` (§3) | `AGENTS.template.md` забороняє project-specific content і замінюється wholesale; consumer не редагує встановлений пакет | Stage 5: писати у project-owned поверхню |
 | D-05 | Session/compaction hooks (§3) | Runtime-hook API в `packages/agent/src` відсутній. Хост-поверхня є: Codex native `/hooks` review, trusted `SessionStart` hook, кваліфікація через `tooling/agent/cloud-pstack-setup.ts`; новий/змінений hash потребує native review — trust GAP, не синтезується | Stage 5: перевикористання + кваліфікація, trust GAP явний |
 | D-06 | Методологія як політика продукту (§4.3, §4.4) | Чинна конфігурація — `agent-runtime.config.v1.yaml` (`workflows:`); `.vida/project.yaml` — ціль. Профілів методології немає | Stage 4 + рішення D7 |
@@ -192,7 +192,7 @@ S-документи, які створює Stage 1.
 | D-09 | Runtime: HostState/CAS/lease (§8.1, §10) | Реалізовано; окрема storage-admission БД лишається GAP проти цільової `workspace.v1.sqlite`; чинні v1-контракти дійсні | Stage 7a / 7b |
 | D-10 | Decision Provider «Jeff/Jev» (§4.8) | У коді відсутній | Рішення D5 |
 | D-11 | Wiki/work layout, ID, relations (§9) | У конфігу є `wiki_root`, `wiki_output_root`, `task_prefix`; продуктових Wiki-сторінок немає | Stage 6 |
-| D-12 | Standalone + marketplace (§1, §3) | Публічна доставка агента — native executable; npm = лише SDK; marketplace відсутній | Stage 5/8 + D4; Stage 9 |
+| D-12 | Standalone + marketplace (§1, §3) | Публічна доставка агента — native executable; npm = лише SDK; marketplace відсутній | Stage 5 (D4: три канали) |
 | D-13 | Розташування продукту | `packages/plugin` = «Vida Codex» — Codex-прослойка між хостом Codex і агентом (`README.md:14`; `openai-execution-backends.md:34-36`); `packages/powers` — третій продукт, ще не зареєстрований; у конфігу лише `agent` і `plugin` | D1 вирішено: `packages/powers`; реєстрація — Stage 0 |
 | D-14 | `changelog_ref` у research | Файлу немає | Stage 0 (D6) |
 | D-15 | Актуальність research | Snapshot `bb4345e` — предок HEAD; відстань вимірюється командою `git rev-list --count bb4345e..HEAD` (стан змінюється щодня) | Оновлення research за §7.1 після Stage 1 |
@@ -206,7 +206,7 @@ S-документи, які створює Stage 1.
 | D1 | Розташування продукту | (a) VP = `packages/plugin`; (b) `packages/powers` як третій продукт; (c) окремий репозиторій/пакет | **ВИРІШЕНО 2026-10-19**: (b) — VP живе в `packages/powers` як третій продукт; `packages/plugin` лишається Codex-прослойкою. Decision: `docs/decisions/D1-product-placement.md` | вирішено |
 | D2 | Власник і реєстрація | окрема роль «Vida Powers owner»; реєстрація продукту | **ВИРІШЕНО 2026-10-19**: монорепозиторій продуктів — кожен плагін має власного owner'а, документацію, набір задач і простір роботи; Work Items VP — у продукті, координація — у `.agent/`. Decision: `docs/decisions/D2-ownership-and-work-space.md` | вирішено |
 | D3 | Формат інструкції та каталогу | (a) розширити `InstructionRegistry/v1`; (b) `VPCatalog/v1` + проекція; (c) окрема VP-активація; (d) два режими | **ВИРІШЕНО 2026-10-19**: (d) — VP самостійний: власний каталог `VPCatalog/v1` і власні скрипти `catalog.*`, плагін зі скілом запуску і хуком; у режимі збирання в пакет агента пакет мусить мати свій розширений instruction registry (runtime work item). `research_decision.registry` не змінюється. Decision: `docs/decisions/D3-instruction-catalog-and-registry.md` | вирішено |
-| D4 | Канал доставки | Codex plugin marketplace / власний пакет / обидва | Обидва: мінімальний локальний/git-пакунок (блокує Stage 8) + marketplace як окреме рішення Stage 9 | 5, 8 |
+| D4 | Канал доставки | Codex plugin marketplace / власний пакет / обидва | **ВИРІШЕНО 2026-10-19**: три канали в scope — окремий плагін VP, збірка в пакет агента, публічний marketplace-канал. Поверхня скілів: `vp-mode` (основний скіл оркестрації) і `vp-setup` (допоміжний). Decision: `docs/decisions/D4-delivery-channels.md` | вирішено |
 | D5 | Decision Provider | конкретний провайдер / provider-нейтральний інтерфейс | Provider-нейтральний `decision.evaluate` + обов'язковий Agent Fallback; «Jeff» не існує в коді | 2, 4, 5 |
 | D6 | Журнал змін research | створити `*.changelog.md` / прибрати посилання | Вирішено форматом: bundle-журнал `packages/powers/docs/log.md` (OKF §9), на який вказує `vida.changelog_ref`; окремий `*.changelog.md` не потрібен | 0 |
 | D7 | Цільовий споживацький layout | чинний v1-конфіг / `.vida` cutover | Цілитися в чинний v1-конфіг; `.vida` — залежність від окремого runtime-треку (cutover не виконано) | 4, 7 |
@@ -452,22 +452,33 @@ AC:
 
 ---
 
-### Stage 5 — Router Skill, `vp-setup`, пакунок
+### Stage 5 — `vp-mode`, `vp-setup`, пакунок і канали доставки
 **Role:** implementer (+ runtime-власник для host-hook кваліфікації). **Оцінка:** L. **Work item:** VP-5. **Потребує:** Stage 3, 4, D4.
 
 Роботи:
-- Router Skill: запит звичайною мовою → вибір інструкцій → bundle (роль, task
-  contract, ефективна методологія, scope, вимоги матеріалізації, посилання на
-  артефакти) → делегування або виконання; fallback на головного агента.
+- **`vp-mode` — основний скіл оркестрації:** запит звичайною мовою → вибір
+  інструкцій → bundle (роль, task contract, ефективна методологія, scope, вимоги
+  матеріалізації, посилання на артефакти) → делегування або виконання; fallback
+  на головного агента.
 - `workflow.options` і `decision.evaluate` (§4.8) як provider-нейтральні операції;
   поріг relevance — калібрований параметр, не універсальна константа.
-- `vp-setup`: виявлення проєктів; ідемпотентне додавання керованого блоку
-  **у project-owned поверхню споживача** (не в пакет агента); збереження
-  сторонніх інструкцій; налаштування доступних host hooks; зіставлення layout;
-  перевірка активації.
+- **`vp-setup` — допоміжний скіл налаштування:** виявлення проєктів; ідемпотентне
+  додавання керованого блоку **у project-owned поверхню споживача** (не в пакет
+  агента); збереження сторонніх інструкцій; налаштування доступних host hooks;
+  зіставлення layout; перевірка активації.
 - Host-hook кваліфікація: перевикористати наявну native `/hooks` поверхню; зміна
   hash потребує native review — trust GAP фіксується, не обходиться.
-- Пакунок: формат + локальна/git-інсталяція (без marketplace).
+- **Канал 1 — окремий плагін:** per-host plugin manifests (`.codex-plugin/plugin.json`,
+  `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json` тощо) з полями
+  `name`, `version`, `description`, `author`, `license`, `keywords`, `skills`,
+  `hooks`; скіли `vp-mode` і `vp-setup` у каталозі скілів.
+- **Канал 2 — збірка в пакет агента:** VP-інструкції їдуть у нативну поставку разом
+  із розширеним instruction registry (D3); канонічна копія лишається в VP, у
+  пакет — згенерований артефакт із декларованим Source-зв'язком і digest.
+- **Канал 3 — marketplace:** marketplace-визначення (per-host
+  `marketplace.json` із переліком плагінів і `source`) + інсталяція через
+  `codex plugin marketplace add <git-url>`; цільове розміщення й набір хостів —
+  D4b.
 
 AC:
 - Повторний запуск `vp-setup` на незміненому вході → порожній diff (тест).
@@ -478,7 +489,12 @@ AC:
 - Bootstrap не завантажує весь корпус у сесію.
 - Відсутність host-можливості позначається як обмеження, а не як еквівалентна
   перевірка.
-- Пакунок встановлюється локально й проходить smoke-перевірку.
+- Канал 1: плагін встановлюється локально й проходить smoke-перевірку; per-host
+  manifests валідні (тест на схему маніфесту).
+- Канал 2: збірка в пакет агента відтворювана, містить Source-зв'язок і digest;
+  `bun --cwd packages/agent run test:resources:pinned` → exit 0.
+- Канал 3: marketplace-визначення валідне, встановлення через Git-маркетплейс
+  проходить на реальному хості; доказ — запис інсталяції.
 
 Доказ: тести setup (повторний запуск), матриця підтримки хостів, журнал активації,
 запис пакування/інсталяції.
@@ -603,9 +619,9 @@ AC:
 ---
 
 ### Stage 9 — поза scope (окремим рішенням)
-Дистрибуція через marketplace (§1), domain packs (§11), майбутній UI поверх VIDA API
-(§9.3), зовнішня синхронізація issue-трекерів (§8.3). Кожен — з власним рішенням
-про обсяг.
+Domain packs (§11), майбутній UI поверх VIDA API (§9.3), зовнішня синхронізація
+issue-трекерів (§8.3). Marketplace-канал **входить у scope** (D4, Stage 5).
+Кожен із пунктів — з власним рішенням про обсяг.
 
 ---
 

@@ -1,6 +1,9 @@
 # Directory Update Log
 
 ## 2026-10-19
+* **Creation**: [Рішення D4 — канали доставки VP](decisions/D4-delivery-channels.md) зафіксовано: у scope входять три канали — окремий плагін VP, збірка в пакет поставки агента і публічний marketplace-канал; поверхня скілів — `vp-mode` (основний скіл оркестрації) та `vp-setup` (допоміжний налаштування).
+* **Update**: [Research-документ](research/vida-powers-product-research.md) уточнено: основна робоча точка входу названа `vp-mode` (скіл оркестрації), `vp-setup` — допоміжний скіл налаштування. Зміст концепції не змінювався.
+* **Update**: [План впровадження](implementation-plan.md) — Stage 5 перейменовано на «`vp-mode`, `vp-setup`, пакунок і канали доставки», додано вимоги до трьох каналів (per-host plugin manifests, збірка з provenance, marketplace-визначення); marketplace переведено зі Stage 9 у scope.
 * **Creation**: [Рішення D3 — каталог інструкцій VP](decisions/D3-instruction-catalog-and-registry.md) зафіксовано: VP самостійний — власний каталог `VPCatalog/v1` і власні скрипти `catalog.*`, встановлення окремим плагіном зі скілом запуску і хуком; у режимі збирання в пакет поставки агента пакет агента мусить мати свій розширений instruction registry (runtime work item, власник — agent maintainer). `research_decision.registry` не змінюється.
 * **Creation**: [Рішення D2 — модель власності й робочого простору](decisions/D2-ownership-and-work-space.md) зафіксовано: VP реалізується як монорепозиторій продуктів — кожен плагін має власного owner'а, власну документацію, власний набір задач і власний простір роботи; Work Items і докази VP живуть у продукті (`packages/powers/docs/work/`), координація — у репозиторії (`.agent/`).
 * **Creation**: [Рішення D1 — розташування продукту](decisions/D1-product-placement.md) зафіксовано: Vida Powers живе в `packages/powers` як третій продукт репозиторію; `packages/plugin` лишається Codex-прослойкою між хостом Codex і агентом. Додано розділ «Рішення» до bundle-індексу.
