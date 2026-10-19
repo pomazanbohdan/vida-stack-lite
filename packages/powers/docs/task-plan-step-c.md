@@ -290,23 +290,44 @@ test `tests/schema.test.ts`.
 
 ### Task 6 — Конвертер (єдиний writer)
 
+> **Порядок виконання:** ця задача виконується **перед** Task 5 — корпус і маніфест
+> матеріалізуються лише конвертером (CAT-D3, SR-76: маніфест пише лише
+> `convert.ts`).
+
 **Files:** create `scripts/convert.ts`; test `tests/convert.test.ts`.
 
 **Interfaces:**
-- `convert(specPath: string, options: { root: string }): ConversionResult` — читає
-  специфікацію інструкції (JSON), пише `instructions/<id>.md`, оновлює
-  `catalog.json` (додає/замінює запис із `sha256`) і `corpus-map.json` (запис за
-  джерелом); повертає `{ instructionId, written, manifestUpdated, mapUpdated }`.
-- Специфікація інструкції: JSON із полями інструкції + `source: { donor, path }`.
+- `parseInstructionSpec(value, source): InstructionSpec` — валідація специфікації;
+  невідоме/пропущене поле, не-kebab `instruction_id`, порожні `title`/`summary`/
+  умови, тег не-kebab або з <2 компонентами, `output_type: none` з непорожнім
+  `required_data`, порожня `provenance`, дубльоване джерело, керуючі символи в
+  однорядкових полях → `CatalogError('CATALOG_INVALID')` із назвою поля.
+- `renderInstruction(spec): string` — канонічний `.md` (порядок ключів як §5,
+  блок-списки з відступом 2, порожні списки як `key: []`, `provenance` рядками
+  `donor=…; license=…; revision=…; path=…`, тіло дослівно); результат має
+  проходити `parseFrontmatter` і `vpinstruction.v1` без помилок.
+- `convert(specPath, options): Promise<ConversionResult>` — пише
+  `instructions/<id>.md`, оновлює `catalog.json` (запис із `sha256`; інші поля
+  зберігаються) і `corpus-map.json`; **ідемпотентно**: повторна конвертація тієї
+  ж специфікації не змінює жодного файлу (`written/manifestUpdated/mapUpdated =
+  false`), ревізія маніфесту зростає лише при реальній зміні переліку.
+- `convertMany(specPaths, options): Promise<ConversionResult[]>` — похибка на
+  специфікації зупиняє прогін.
+- Опції: `{ root, catalogPath?, mapPath?, instructionsDir?, sourceRevision?, now? }`.
+- Додаткові правила конвертера: теги звіряються зі словником маніфесту (або з
+  `tag_exemptions`); вимір без жодного тега — лише за винятком; `verified_by`
+  порожній — лише для `output_type: none`; дубльований `instruction_id` у
+  наборі — помилка; мапа обробки **додає** id (один файл донора може дати
+  кілька інструкцій → `status: split`), зміна ревізії донора скидає записи
+  цього донора; усі схеми беруться з кореня пакета.
 
 **Кроки:**
 1. Тест `tests/convert.test.ts`: конвертація специфікації → `.md` із frontmatter і
    `sha256` у маніфесті; повторна конвертація зміненої специфікації → оновлений
-   digest; конвертація без `source` → помилка (синтетика без джерела заборонена);
-   запис у мапі оновлюється.
+   digest; конвертація без `provenance` → помилка (синтетика без джерела
+   заборонена); запис у мапі оновлюється; двадцять і більше випадків — нижче.
 2. Створити `scripts/convert.ts`.
-3. `bun run --cwd packages/powers test` → проходить; `typecheck` → 0 помилок;
-   `bun packages/powers/scripts/check-corpus.ts` → exit 0.
+3. `bun run --cwd packages/powers test` → проходить; `typecheck` → 0 помилок.
 4. Коміт: `build(powers): add the corpus converter as the single writer`.
 
 ## Хід виконання
@@ -317,8 +338,8 @@ test `tests/schema.test.ts`.
 | 2. Парсер frontmatter | **закрито** | `skills/vp-mode/scripts/frontmatter.ts`, `tests/frontmatter.test.ts` — 47 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 рев'ю-раунди, фінальний вердикт ACCEPT |
 | 3. Модель каталогу + `catalog.*` | **закрито** | `skills/vp-mode/scripts/catalog.ts`, `tests/catalog.test.ts`, `tests/fixtures/catalog/` — 96 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 рев'ю-раунди, фінальний вердикт ACCEPT |
 | 4. `decision.evaluate` + CLI | **закрито** | `skills/vp-mode/scripts/catalog.ts` (+`decisionEvaluate`), `skills/vp-mode/scripts/catalog-cli.ts`, `tests/catalog-cli.test.ts` — 126 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 2 рев'ю-раунди, фінальний вердикт ACCEPT |
-| 5. Seed-корпус + манифести + валідатор | у черзі | — |
-| 6. `convert.ts` (єдиний writer) | у черзі | — |
+| 5. Seed-корпус + манифести + валідатор | **закрито** | `instructions/` (12 інструкцій), `catalog.json` (12 записів + затверджений словник), `corpus-map.json` (12 записів), `scripts/check-corpus.ts`, `tests/check-corpus.test.ts` — 206 тестів, coverage 100 %, check-corpus → 0 issues / exit 0; 2 рев'ю-раунди, фінальний вердикт ACCEPT |
+| 6. `convert.ts` (єдиний writer) | **закрито** | `scripts/convert.ts`, `tests/convert.test.ts` — конвертер як єдиний writer маніфесту (CAT-D3), ідемпотентний, з `split` для одного файла донора; 3 рев'ю-раунди, усі знахідки закрито |
 
 ---
 
