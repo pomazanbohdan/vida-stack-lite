@@ -1,8 +1,9 @@
 ---
-type: research
+type: Product Research
 title: Vida Powers — продуктова концепція та архітектурний baseline
 description: Актуальна узгоджена концепція портативного агентного плагіна Vida Powers та його взаємодії з VIDA Agent Runtime.
 status: stable
+stale_after: '2027-01-19T00:00:00Z'
 tags:
 - vida-powers
 - agent-orchestration
@@ -18,51 +19,71 @@ vida:
   revision: 2
   research_status: finalized
   implementation_status: not-started
-  updated_at: '2026-10-17T00:45:42+03:00'
+  updated_at: '2026-10-19T14:01:10Z'
   runtime_source_commit: bb4345e107f9aee30db1c856075ac9556a7aa8a1
   validation_scope: conversation-consistency
-  changelog_ref: vida-powers-product-research.changelog.md
+  verification_scope: звірка тверджень research із поточним Source під час двох незалежних раундів рев'ю; не є runtime acceptance
+  changelog_ref: /log.md
   authority: current-conversation-user-decisions-and-unsuperseded-provisions
 sources:
 - id: vida-runtime
   resource: https://github.com/pomazanbohdan/vida-stack-lite
   title: VIDA Agent Runtime — source repository and system specification
+  author: team:pomazanbohdan
+  last_modified: '2026-10-16T20:22:10Z'
   research_snapshot_revision: bb4345e107f9aee30db1c856075ac9556a7aa8a1
 - id: superpowers
   resource: https://github.com/obra/superpowers
   title: Superpowers
+  author: team:obra
+  last_modified: '2026-10-09T17:28:04-07:00'
   research_snapshot_revision: bb92a77741419a4ab5f06e711a283343f1ada0c3
 - id: bmad
   resource: https://github.com/bmad-code-org/BMAD-METHOD
   title: BMAD Method
+  author: team:bmad-code-org
+  last_modified: '2026-10-16T08:12:21-05:00'
   research_snapshot_revision: cfba3ff5f982c1809e060606e399f55ebd7bce5e
 - id: matt-skills
   resource: https://github.com/mattpocock/skills
   title: Matt Pocock Skills
+  author: team:mattpocock
+  last_modified: '2026-10-09T11:56:49+01:00'
   research_snapshot_revision: 49dd158d1076134a641b33efb035946536778336
 - id: addy-skills
   resource: https://github.com/addyosmani/agent-skills
   title: Addy Osmani Agent Skills
+  author: team:addyosmani
+  last_modified: '2026-10-13T16:21:06-04:00'
   research_snapshot_revision: aeac41d4d005999432bb7312f7ff06383a91d59d
 - id: pstack
   resource: https://github.com/cursor/plugins/tree/main/pstack
   title: Cursor pstack
+  author: team:cursor
+  last_modified: '2026-10-16T10:07:24-07:00'
   research_snapshot_revision: 2f8377461fd533f5af782e1fd643783b1067b847
 - id: gsd
   resource: https://github.com/open-gsd/gsd-core
   title: GSD Core
+  author: team:open-gsd
+  last_modified: '2026-10-16T13:52:18-04:00'
   research_snapshot_revision: 19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005
   research_snapshot_ref: next
 - id: ponytail
   resource: https://github.com/DietrichGebert/ponytail
   title: Ponytail
+  author: team:DietrichGebert
+  last_modified: '2026-10-16T15:20:19+02:00'
   research_snapshot_revision: 6f1c2bfff0c837d268929a7c4e490918eb4fab29
 - id: okf
   resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
   title: Open Knowledge Format v0.2
-generated:
-  by: agent:chatgpt
-  at: '2026-10-17T00:45:42+03:00'
+  author: team:GoogleCloudPlatform
+  last_modified: '2026-08-21T13:08:36-07:00'
+generated: { by: chatgpt/2026-10-17, at: '2026-10-17T00:45:42+03:00' }
+verified:
+- { by: deepseek/deepseek-flash, at: '2026-10-19T13:36:34Z' }
+- { by: opencode/glm-5.3-flash-free, at: '2026-10-19T13:59:31Z' }
 ---
 
 # Vida Powers — продуктова концепція та архітектурний baseline
@@ -516,3 +537,11 @@ Wiki-дерево утворюють `space`, `parent_id` і `order`; ієрар
 **Актуальна концепція зафіксована. Подальші дослідження цієї самої теми мають оновлювати цей документ на місці та залишати історію в окремому пов'язаному журналі змін, не в основному тексті.**
 
 Донорські та framework-референси є джерелами методик, не правом змінювати рішення продукту. Для подальшої кваліфікації використовується семантичне розділення: artifact services (Google ADK), checkpoints і довготривале сховище (LangGraph), executor state/checkpoints (Microsoft Agent Framework), history/replay та child lifecycle (Temporal), workflow outputs і persistence (Mastra), результати агентів (OpenAI Agents SDK), task/artifact identity (A2A/MCP), provenance relations (W3C PROV). Це дослідницькі орієнтири; їхні конкретні API й версії перевіряються перед інтеграцією, жодна інтеграція не є залежністю VP Standalone.
+
+## Актуальність і верифікація
+
+Останнє значне зміна: 2026-10-19 — документ переведено на frontmatter Open Knowledge Format v0.2; зміст концепції не змінювався. Правило актуальності: `stale_after` = 2027-01-19, після цієї дати документ вважається застарілим і потребує перегляду; research-джерело змінює лише тієї джерела, до якої прив'язаний доказ.
+
+Перевірено: узгодженість тверджень із поточним Source двома незалежними рев'ю-агентами 2026-10-19 (раунд 1 — `deepseek/deepseek-flash`, раунд 2 — `opencode/glm-5.3-flash-free`). Перевірка охопила звірку концепції з Source, покриття §1–14 і узгодженість із власними §7.1/§7.5. Це підтвердження узгодженості, а не runtime acceptance.
+
+Не перевірено: кваліфікація на реальних хостах, runtime acceptance, юридичний review ліцензій донорів, місткість реєстру інструкцій понад 64 записи. Ці пункти лишаються GAP і закриваються на етапах 2, 3 і 8 плану впровадження.

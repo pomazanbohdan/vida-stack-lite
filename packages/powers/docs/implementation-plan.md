@@ -1,3 +1,37 @@
+---
+type: Implementation Plan
+title: Vida Powers — план впровадження
+description: Порядок етапів, ворота й приймальні критерії реалізації Vida Powers — від реєстрації продукту й канонічних документів до конвертації корпусу, Router, матеріалізації, Runtime-інтеграції та Standalone-режиму.
+status: draft
+stale_after: '2026-11-19T00:00:00Z'
+tags:
+- vida-powers
+- implementation-plan
+- product-roadmap
+- agent-orchestration
+sources:
+- id: research
+  resource: /research/vida-powers-product-research.md
+  title: Vida Powers — продуктова концепція та архітектурний baseline
+- id: donors-manifest
+  resource: ../donors.yaml
+  title: Маніфест донорських джерел
+- id: agent-system-specification
+  resource: /../../agent/docs/system-specification.md
+  title: Agent runtime system specification
+- id: agent-testing
+  resource: /../../agent/TESTING.md
+  title: Agent verification gates
+- id: okf
+  resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
+  title: Open Knowledge Format v0.2
+generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:01:10Z' }
+verified:
+- { by: deepseek/deepseek-flash, at: '2026-10-19T13:36:34Z' }
+- { by: opencode/glm-5.3-flash-free, at: '2026-10-19T13:59:31Z' }
+revision: '2.1'
+---
+
 # Vida Powers — план впровадження (rev 2.1)
 
 Owner: продуктовий власник Vida Powers. Class: **derived execution roadmap** —
@@ -31,6 +65,12 @@ S-документи, які створює Stage 1.
 профілю, додано рішення D8), шість minor, залишок DAG-суперечності (R-12) і
 чотири прогалини покриття research. Див. §1a.
 
+**Актуальність.** Останнє значне зміна: 2026-10-19. `stale_after` = 2026-11-19 —
+після цієї дати план вважається застарілим і потребує перегляду. Незалежна
+перевірка раунду 2 стосувалася rev 2; rev 2.1 застосувала її зауваження, тому
+незалежна перевірка rev 2.1 лишається **GAP**. Runtime acceptance не
+встановлено.
+
 ---
 
 ## Global Constraints
@@ -56,6 +96,11 @@ S-документи, які створює Stage 1.
 - Один writer на файл. Root володіє Git, спільними root-файлами (sidecar, config,
   `docs/products.map.md`, documentation policy, root `package.json`) і фінальними
   перевірками. Працівники не виконують Git-операцій.
+- Документація продукту оформлена за Open Knowledge Format v0.2: bundle —
+  `packages/powers/docs`; кореневий `index.md` оголошує `okf_version`; журнал
+  `log.md` веде історію; кожна концепція має frontmatter із `type`, `sources`,
+  `generated`, `verified`, `status`, `stale_after`. Перевірка —
+  `bun packages/powers/tooling/check-okf.ts` (exit 0).
 - Доказ: `BR → SR → AC → evidence`. `passed` неможливий без фактичного запуску.
   Статичний аналіз або наявність коду не закривають AC.
 - Змінений вхід інвалідує лише прив'язаний до нього доказ.
@@ -161,7 +206,7 @@ S-документи, які створює Stage 1.
 | D3 | Формат інструкції та каталогу | (a) розширити `InstructionRegistry/v1`; (b) `VPCatalog/v1` + обмежена проекція в `InstructionRegistry/v1` | **(b)**: `maxItems: 64` не протримає корпус, а вбудований реєстр прив'язаний до research/synthesis-стадій. Проекція — reuse існуючого activation-шляху, не друга активація | 2, 3 |
 | D4 | Канал доставки | Codex plugin marketplace / власний пакет / обидва | Обидва: мінімальний локальний/git-пакунок (блокує Stage 8) + marketplace як окреме рішення Stage 9 | 5, 8 |
 | D5 | Decision Provider | конкретний провайдер / provider-нейтральний інтерфейс | Provider-нейтральний `decision.evaluate` + обов'язковий Agent Fallback; «Jeff» не існує в коді | 2, 4, 5 |
-| D6 | Журнал змін research | створити `*.changelog.md` / прибрати посилання | Створити — research сам вимагає (§7.1) | 0 |
+| D6 | Журнал змін research | створити `*.changelog.md` / прибрати посилання | Вирішено форматом: bundle-журнал `packages/powers/docs/log.md` (OKF §9), на який вказує `vida.changelog_ref`; окремий `*.changelog.md` не потрібен | 0 |
 | D7 | Цільовий споживацький layout | чинний v1-конфіг / `.vida` cutover | Цілитися в чинний v1-конфіг; `.vida` — залежність від окремого runtime-треку (cutover не виконано) | 4, 7 |
 | D8 | Де живе схема методологічного профілю | (a) розділ у `agent-runtime.config.v1.yaml`; (b) VP-owned схема/файл | **(b)**: `agent-runtime-config.v1.schema.json` і валідатор у `runtime-config.ts` належать runtime-власнику, тож додавання розділу = runtime work item. VP-owned схема `Type/vN` не торкається runtime; інтеграція з runtime — лише через наявні `context_skill_refs`/конфіг. **(a)** — лише за окремим погодженим runtime work item | 4 |
 
@@ -195,7 +240,9 @@ S-документи, які створює Stage 1.
   `docs/products.map.md`; `packages/powers/docs` у `canonical_roots` і
   changelog-події в `docs/agent-instructions/documentation-policy.v1.json`.
 - Product KEY (для `<KEY>-W<NNNN>` / `<KEY>-<N>`) і правило алокації ID.
-- Changelog research-документа.
+- Changelog research-документа: bundle-журнал `packages/powers/docs/log.md`
+  (OKF §9) ведеться при кожній зміні концепції; посилання `vida.changelog_ref`
+  веде саме туди.
 
 AC:
 - `bun --cwd packages/agent run test:config:pinned` → exit 0 (config валідний).
@@ -247,6 +294,9 @@ AC:
   новий запит — створюється новий Work Item із зв'язком (`changes`, `extends`,
   `follows-up`, `fixes`) зі своїми AC та evidence.
 - `bun tooling/agent/check-documentation.ts packages/powers/docs/*.md` → `failures: []`.
+- Створені S-документи входять до bundle за OKF v0.2 (frontmatter, `sources`,
+  `generated`, `verified`, `status`, `stale_after`); `bun packages/powers/tooling/check-okf.ts`
+  → exit 0.
 
 Доказ: три документи, матриця, doc-check, незалежний review документа.
 
