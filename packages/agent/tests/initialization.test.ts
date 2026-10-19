@@ -347,6 +347,64 @@ test('direct initialization validates existing bindings and resumes the same pen
   }
 });
 
+test('explicit recovery recreates missing generated outputs and the documentation policy directory', async () => {
+  const projectRoot = await mkdtemp(path.join(tmpdir(), 'portable-runtime-init-recovery-'));
+  const request = {
+    projectRoot,
+    repository: 'different-repository',
+    projectMappings: ['different-project'],
+  } as const;
+  let completed = false;
+  try {
+    const initialized = await expectAsyncReturned(() => initializeProjectFromBundle(request, source));
+    expect(initialized.status).toBe('initialized');
+
+    const agentsPath = path.join(projectRoot, 'AGENTS.md');
+    const sidecarPath = path.join(projectRoot, 'AGENT.sidecar.md');
+    const configPath = path.join(projectRoot, 'agent-runtime.config.v1.yaml');
+    const policyPath = path.join(projectRoot, 'docs/agent-instructions/documentation-policy.v1.json');
+    const receiptPath = path.join(projectRoot, '.agent/runtime-initialization.v1.json');
+    const pendingPath = path.join(projectRoot, '.agent/runtime-initialization.pending.v1.json');
+    const archiveDirectory = path.join(projectRoot, '.agent/initialization-provenance');
+    const [archiveName] = await readdir(archiveDirectory);
+    if (!archiveName) throw new Error('Initialization did not archive its pending intent.');
+
+    const originalAgents = await readFile(agentsPath);
+    const originalSidecar = await readFile(sidecarPath);
+    const originalConfig = await readFile(configPath);
+    const originalPolicy = await readFile(policyPath);
+    const archivePath = path.join(archiveDirectory, archiveName);
+    const archivedIntent = await readFile(archivePath);
+
+    await writeFile(pendingPath, archivedIntent);
+    await rm(archivePath);
+    await rm(receiptPath);
+    await rm(agentsPath);
+    await rm(path.join(projectRoot, 'docs'), { recursive: true, force: true });
+
+    const recovered = await expectAsyncReturned(() =>
+      initializeProjectFromBundle({ ...request, reconcileExisting: true }, source),
+    );
+    expect(recovered).toMatchObject({
+      status: 'resumed_initialization',
+      receipt: '.agent/runtime-initialization.v1.json',
+    });
+    expect(await readFile(agentsPath)).toEqual(originalAgents);
+    expect(await readFile(sidecarPath)).toEqual(originalSidecar);
+    expect(await readFile(configPath)).toEqual(originalConfig);
+    expect(await readFile(policyPath)).toEqual(originalPolicy);
+    expect(await readInitializationReceipt(receiptPath)).toMatchObject({
+      provenance: 'generated',
+      workspace_binding_status: 'pending',
+    });
+    expect(await rejectionReason(readFile(pendingPath))).toMatchObject({ code: 'ENOENT' });
+    completed = true;
+  } finally {
+    if (completed) await rm(projectRoot, { recursive: true, force: true });
+    else console.error(`Retained failed init recovery fixture: ${projectRoot}`);
+  }
+});
+
 test('repeated initialization accepts the complete configured multi-project set', async () => {
   const projectRoot = await mkdtemp(path.join(tmpdir(), 'portable-runtime-init-multi-existing-'));
   const request = {

@@ -63,14 +63,17 @@ type ExecuteInput = { readonly controllerRoot: string; readonly command: string;
 type ControllerAction = keyof typeof developmentControllerContract.modes;
 type ModeContract = (typeof developmentControllerContract.modes)[ControllerAction];
 type PackageManifest = { readonly name?: unknown; readonly version?: unknown };
-type RuntimeConfigModule = Pick<typeof import('../src/config/runtime-config.ts'), 'loadRuntimeConfig'>;
+type RuntimeConfigModule = Pick<
+  typeof import('../src/config/runtime-config.ts'),
+  'readRuntimeConfigIdentityForObservation'
+>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function requireRuntimeConfigModule(value: unknown): asserts value is RuntimeConfigModule {
-  if (!isRecord(value) || typeof value.loadRuntimeConfig !== 'function')
+  if (!isRecord(value) || typeof value.readRuntimeConfigIdentityForObservation !== 'function')
     throw new Error('Development controller runtime config API is invalid.');
 }
 
@@ -426,13 +429,13 @@ async function targetIdentity(root: string): Promise<{ repository_id: string; pr
     pathToFileURL(path.join(executingRoot, 'src/config/runtime-config.ts')).href
   );
   requireRuntimeConfigModule(runtimeConfig);
-  const config = runtimeConfig.loadRuntimeConfig(root);
-  if (config.runtime.bundle !== 'packages/agent')
+  const identity = runtimeConfig.readRuntimeConfigIdentityForObservation(root);
+  if (identity.bundle !== 'packages/agent')
     throw new Error('Development controller is restricted to the Source logical packages/agent bundle.');
   return {
-    repository_id: config.repository.repository_id,
-    project_ids: config.projects.map((p) => p.project_id).sort(),
-    bundle: config.runtime.bundle,
+    repository_id: identity.repository_id,
+    project_ids: identity.project_ids.sort(),
+    bundle: identity.bundle,
   };
 }
 function save(file: string, value: unknown) {

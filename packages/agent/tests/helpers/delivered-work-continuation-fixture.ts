@@ -1,5 +1,5 @@
 import { Database } from 'bun:sqlite';
-import { mkdtempSync, rmSync, realpathSync, lstatSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, mkdirSync, rmSync, realpathSync, lstatSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -188,9 +188,24 @@ export function requestFixture({
 
 export const fixtureWorkspace = '9'.repeat(64);
 export const runtimeRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
+let fixtureRepositoryRoot: string | undefined;
+export function continuationFixtureRepositoryRoot(): string {
+  if (fixtureRepositoryRoot) return fixtureRepositoryRoot;
+  const root = mkdtempSync(path.join(tmpdir(), 'delivered-work-config-'));
+  for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'])
+    copyFileSync(path.join(runtimeRoot, file), path.join(root, file));
+  const policyRoot = path.join(root, 'docs', 'agent-instructions');
+  mkdirSync(policyRoot, { recursive: true });
+  copyFileSync(
+    path.join(runtimeRoot, 'docs', 'agent-instructions', 'documentation-policy.v1.json'),
+    path.join(policyRoot, 'documentation-policy.v1.json'),
+  );
+  fixtureRepositoryRoot = root;
+  return root;
+}
 let fixtureSeedConfig: AgentRuntimeConfig | undefined;
 export function continuationFixtureConfig(): AgentRuntimeConfig {
-  return (fixtureSeedConfig ??= loadRuntimeConfig(runtimeRoot));
+  return (fixtureSeedConfig ??= loadRuntimeConfig(continuationFixtureRepositoryRoot()));
 }
 const fixtureIdentity: WorkIdentity = {
   repository_id: 'vida-agent',
@@ -728,6 +743,27 @@ export function trackContinuationFixtureRoot(root: string) {
 
 // Exact absolute roots in this set have an explicit retained disposition, not a future deletion retry.
 const uncertainFixtureRoots = new Set<string>();
+process.once('exit', () => {
+  const root = fixtureRepositoryRoot;
+  if (!root || uncertainFixtureRoots.has(path.resolve(root))) return;
+  try {
+    const stat = lstatSync(root, { throwIfNoEntry: false });
+    if (!stat) return;
+    if (!stat.isDirectory() || stat.isSymbolicLink()) return;
+    const resolved = realpathSync(root);
+    const parent = realpathSync(tmpdir());
+    const relative = path.relative(parent, resolved);
+    if (relative === '' || path.isAbsolute(relative) || relative === '..' || relative.startsWith('..' + path.sep))
+      return;
+    rmSync(resolved, { recursive: true, force: true });
+  } catch (error) {
+    try {
+      process.stderr.write('Preserved continuation config fixture after cleanup failure: ' + String(error) + '\n');
+    } catch {
+      // Process shutdown cannot recover from an unavailable diagnostic stream.
+    }
+  }
+});
 export function retainContinuationFixtureRoot(root: string) {
   uncertainFixtureRoots.add(path.resolve(root));
 }

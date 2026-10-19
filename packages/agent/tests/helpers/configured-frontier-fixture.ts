@@ -27,7 +27,7 @@ import {
   sourceScope,
   lifecycleFor,
   continuationFixtureConfig,
-  runtimeRoot,
+  continuationFixtureRepositoryRoot,
   fixtureWorkspace,
 } from './delivered-work-continuation-fixture.ts';
 
@@ -63,7 +63,7 @@ interface PrewriterProjectionFixture {
 
 export function prewriterProjectionFixture(
   config: RuntimeConfig = continuationFixtureConfig(),
-  repositoryRoot: string = runtimeRoot,
+  repositoryRoot: string = continuationFixtureRepositoryRoot(),
   workspaceId: string = fixtureWorkspace,
   packet: PacketSeed | null = null,
 ): PrewriterProjectionFixture {
@@ -208,7 +208,11 @@ export function configuredFrontierRepairFixture(
 export function configuredFrontierRepairFixture(
   prewriter: boolean = false,
   changedSource: boolean = false,
-  runtime: FixtureRuntime = { config: continuationFixtureConfig(), root: runtimeRoot, workspaceId: fixtureWorkspace },
+  runtime: FixtureRuntime = {
+    config: continuationFixtureConfig(),
+    root: continuationFixtureRepositoryRoot(),
+    workspaceId: fixtureWorkspace,
+  },
   priorPhase: WorkState['execution']['phase'] = 'awaiting_followup',
   packet: PacketSeed | null = null,
   currentSourceScope: SourceScope | null = null,

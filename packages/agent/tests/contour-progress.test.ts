@@ -5,9 +5,11 @@ import path from 'node:path';
 import {
   contourAttempts,
   contourAttemptMaximum,
+  contourCoverageSatisfied,
   mergeContourProgress,
   nativeMutationAttempt,
   renderContourProgress,
+  serializeContourProgress,
   selectContourCampaign,
   reviewedDataOnlyClosure,
 } from '../tooling/contour-progress.ts';
@@ -768,6 +770,35 @@ test('data-only coverage retains observed counters without inventing function co
   expect(() => mergeContourProgress(empty, [{ ...observed, max_cc: 1, max_entry_crap: 1 }])).toThrow();
   c.metrics[0]!.coverage.functions = { covered: 1, total: 1 };
   expect(() => contourAttempts(c, receipt)).toThrow('Coverage function inventory differs.');
+});
+
+test('coverage-only treats only the source-reviewed data-only contour as N/A without numeric closure', () => {
+  const sourceBound = dataOnlyProjectionFixture().attempts.find((row) => row.lane === 'coverage')!;
+  const snapshot = mergeContourProgress(empty, [sourceBound]);
+  const target = 'bun-fs-safe-attestation';
+
+  expect(contourAttemptMaximum(sourceBound)).toBe(false);
+  expect(contourCoverageSatisfied(sourceBound)).toBe(true);
+  expect(
+    selectContourCampaign(snapshot, 'unclosed', receipt.commit, 'coverage-only').some((row) => row.name === target),
+  ).toBe(false);
+  expect(selectContourCampaign(snapshot, 'unclosed', receipt.commit).some((row) => row.name === target)).toBe(true);
+
+  const changedSource = structuredClone(sourceBound);
+  changedSource.sources[0]!.sha256 = 'f'.repeat(64);
+  const missingRegression = structuredClone(sourceBound);
+  missingRegression.selected_tests = missingRegression.selected_tests.filter(
+    (row) => row.path !== 'tests/fs-safe-attestation.test.ts',
+  );
+  const uncoveredLines = structuredClone(sourceBound);
+  uncoveredLines.coverage!.lines.covered--;
+  const numericCallable = structuredClone(sourceBound);
+  numericCallable.coverage!.functions = { total: 1, covered: 1 };
+  const missingBinding = structuredClone(sourceBound);
+  delete missingBinding.coverage_binding;
+
+  for (const candidate of [changedSource, missingRegression, uncoveredLines, numericCallable, missingBinding])
+    expect(contourCoverageSatisfied(candidate)).toBe(false);
 });
 
 function frozenCrapV2(c = coverage()) {
@@ -1689,6 +1720,65 @@ test('publication interruption after JSON commit is repaired by regenerating Mar
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test('bounded publisher normalizes repeated immutable digests and reloads every over-limit attempt', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-compact-publication-'));
+  try {
+    const base = contourAttempts({ ...coverage(), run_id: 'large-0' }, receipt)[0]!;
+    const sharedDigests = Array.from({ length: 224 }, (_, index) => ({
+      path: `packages/agent/tooling/contour-fixture/shared-input-${String(index).padStart(4, '0')}.typescript.ts`,
+      sha256: 'a'.repeat(64),
+    }));
+    const attempts = Array.from({ length: 720 }, (_, index) => ({
+      ...base,
+      run_id: `large-${index}`,
+      artifact: `/retained/coverage-${index}.json`,
+      tools: sharedDigests,
+      closure: sharedDigests,
+    }));
+    const legacyBytes = Buffer.byteLength(JSON.stringify({ schema: 'VidaContourProgress/v1', attempts }));
+    expect(legacyBytes).toBeGreaterThan(32 * 1024 * 1024);
+
+    runContourProgress([], root, attempts);
+
+    const publishedFile = path.join(root, 'coverage/bun-unified/contours/CONTOUR-STATUS.json');
+    const publishedBytes = readContourArtifact(publishedFile);
+    expect(publishedBytes.byteLength).toBeLessThanOrEqual(32 * 1024 * 1024);
+    const persisted: unknown = JSON.parse(publishedBytes.toString('utf8'));
+    expect(persisted).toMatchObject({ schema: 'VidaContourProgress/v2' });
+    const reloaded = mergeContourProgress(persisted, []);
+    expect(reloaded.attempts).toHaveLength(attempts.length);
+    expect(reloaded.attempts[0]!.tools).toEqual(sharedDigests);
+    expect(reloaded.attempts[0]!.closure).toEqual(sharedDigests);
+    expect(reloaded.attempts.find((attempt) => attempt.run_id === 'large-719')).toMatchObject({
+      run_id: 'large-719',
+      artifact: '/retained/coverage-719.json',
+      tools: sharedDigests,
+      closure: sharedDigests,
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('compact contour snapshots reject modified catalog content and missing references', () => {
+  const attempt = contourAttempts(coverage(), receipt)[0]!;
+  const compact = serializeContourProgress(mergeContourProgress(empty, [attempt]));
+  const catalogId = Object.keys(compact.digest_catalog)[0]!;
+  expect(compact.digest_catalog[catalogId]!.length).toBeGreaterThan(0);
+
+  const changedContent = structuredClone(compact);
+  changedContent.digest_catalog[catalogId]![0]!.sha256 = 'f'.repeat(64);
+  expect(() => mergeContourProgress(changedContent, [])).toThrow(
+    'Contour digest catalog content does not match its identity.',
+  );
+
+  const missingReference = structuredClone(compact);
+  delete missingReference.digest_catalog[catalogId];
+  expect(() => mergeContourProgress(missingReference, [])).toThrow(
+    'Compact contour attempt has unresolved digest references.',
+  );
 });
 
 test('legacy mutation summary needs its captured descriptor and rejects a foreign descriptor without losing the snapshot', () => {

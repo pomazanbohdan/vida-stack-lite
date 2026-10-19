@@ -323,6 +323,10 @@ export interface SafeRepositoryAccess {
   readonly readStableBytes?: (target: string, label: string) => Buffer | null;
   readonly fileExists: (target: string, label: string) => boolean;
   readonly listFiles: (target: string, label: string) => readonly string[];
+  /** No-write path observation. Linux checks the target CAS namespace before and after the observation. */
+  readonly observeFileExists?: (target: string, label: string) => boolean;
+  /** No-write directory observation. Linux verifies the opened directory and stable entry listing. */
+  readonly observeListFiles?: (target: string, label: string) => readonly string[];
   readonly removeFile: (target: string, label: string) => void;
   readonly moveNoReplaceAsync: (
     source: string,
@@ -344,6 +348,32 @@ export interface SafeRepositoryAccess {
   // The target is a resource; locking uses its `.lock` sidecar without changing resource bytes.
   readonly withExclusiveLock: <T>(target: string, label: string, operation: () => T) => T;
   readonly withExclusiveLockAsync: <T>(target: string, label: string, operation: () => Promise<T>) => Promise<T>;
+}
+
+/** Read-only repository view. It cannot create or modify repository state. */
+export interface SafeRepositoryObservation {
+  readonly repository_root: string;
+  readonly fileExists: (target: string, label: string) => boolean;
+  readonly listFiles: (target: string, label: string) => readonly string[];
+  readonly readText: (target: string, label: string) => string;
+  readonly readBytes: (target: string, label: string) => Buffer;
+}
+
+/** Create a read-only view whose Linux reads reject active CAS/reclaim owners without creating sidecars. */
+export function repositoryReadOnlyObservation(access: SafeRepositoryAccess): SafeRepositoryObservation {
+  const observeFileExists = access.observeFileExists;
+  const observeListFiles = access.observeListFiles;
+  const verifiedCapture = access.readVerifiedCaptureBytes;
+  if (observeFileExists === undefined || observeListFiles === undefined || verifiedCapture === undefined)
+    fail('safe repository provider does not expose verified read-only observation');
+  const readBytes = (target: string, label: string) => verifiedCapture(target, label);
+  return Object.freeze({
+    repository_root: access.repository_root,
+    fileExists: observeFileExists,
+    listFiles: observeListFiles,
+    readBytes,
+    readText: (target: string, label: string) => readBytes(target, label).toString('utf8'),
+  });
 }
 
 export class SafeRepositoryMoveError extends Error {
@@ -2041,6 +2071,61 @@ function fsSafeReadBytes(root: string, target: string, label: string, limit = ma
     closeQuietly(opened.fd);
   }
 }
+function sameFsSafeCaptureMetadata(left: Stats, right: Stats): boolean {
+  return (
+    sameFileIdentity(left, right) &&
+    left.mode === right.mode &&
+    left.nlink === right.nlink &&
+    left.size === right.size &&
+    left.ctimeMs === right.ctimeMs &&
+    left.mtimeMs === right.mtimeMs
+  );
+}
+function fsSafeReadVerifiedCaptureBytes(
+  root: string,
+  target: string,
+  label: string,
+  limit = maxRepositoryReadBytes,
+): Buffer {
+  const maximum = captureReadLimit(limit);
+  const absolute = fsSafeAbsolute(root, target, label);
+  const checkParents = () =>
+    assertNoSymlinkParentsSync({
+      rootDir: root,
+      targetPath: absolute,
+      allowMissing: false,
+      requireDirectories: true,
+      messagePrefix: label,
+    });
+  checkParents();
+  const opened = fsSafeOpen(root, target, label, maximum);
+  try {
+    const beforeFd = fstatSync(opened.fd);
+    const beforePath = lstatSync(absolute);
+    reject(
+      !beforeFd.isFile() ||
+        beforeFd.nlink !== 1 ||
+        !beforePath.isFile() ||
+        beforePath.isSymbolicLink() ||
+        beforePath.nlink !== 1,
+      `${label} must be a regular single-link file`,
+    );
+    reject(!sameFsSafeCaptureMetadata(beforeFd, beforePath), `${label} pathname changed before capture`);
+    reject(beforeFd.size > maximum, `${label} exceeds the bounded repository read size`);
+    const bytes = readBoundedBuffer(opened.fd, label, maximum, false, beforeFd.size);
+    const afterFd = fstatSync(opened.fd);
+    const afterPath = lstatSync(absolute);
+    reject(
+      !sameFsSafeCaptureMetadata(beforeFd, afterFd) || !sameFsSafeCaptureMetadata(beforePath, afterPath),
+      `${label} changed during capture`,
+    );
+    reject(bytes.length !== afterFd.size, `${label} did not reach the exact file EOF`);
+    checkParents();
+    return bytes;
+  } finally {
+    closeQuietly(opened.fd);
+  }
+}
 function fsSafeAssertDirectory(root: string, target: string, label: string): void {
   const absolutePath = target === '.' ? root : fsSafeAbsolute(root, target, label);
   assertNoSymlinkParentsSync({
@@ -2556,6 +2641,100 @@ function linuxListFiles(root: string, target: string, label: string): readonly s
     closeQuietly(parent.fd);
   }
 }
+function linuxObserveEntry(parentFd: number, name: string, label: string): BigIntStats | null {
+  let fd = -1;
+  try {
+    try {
+      fd = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      throw error;
+    }
+    const opened = fstatSync(fd, { bigint: true });
+    const named = lstatSync(childPath(parentFd, name), { bigint: true });
+    reject(!sameFileIdentity(opened, named), label + ' pathname changed during observation');
+    return opened;
+  } finally {
+    if (fd >= 0) closeQuietly(fd);
+  }
+}
+function sameObservedEntry(left: BigIntStats | null, right: BigIntStats | null): boolean {
+  return left === null || right === null ? left === right : sameCaptureMetadata(left, right, captureFileFields);
+}
+function sameDirectoryEntries(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false;
+  const first = [...left].sort();
+  const second = [...right].sort();
+  return first.every((entry, index) => entry === second[index]);
+}
+function linuxObserveFileExists(root: string, target: string, label: string): boolean {
+  const segments = target === '.git' ? ['.git'] : safeRelative(root, target, label);
+  let beforeChain: CaptureDirectoryIdentity[];
+  let parent: { fd: number; name: string };
+  try {
+    beforeChain = captureDirectoryChain(root, segments.slice(0, -1), label);
+    parent = openParent(root, segments, label);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  }
+  try {
+    const openedParent = fstatSync(parent.fd, { bigint: true });
+    if (target !== '.git') assertCaptureIdle(parent.fd, parent.name, label);
+    const before = linuxObserveEntry(parent.fd, parent.name, label);
+    const after = linuxObserveEntry(parent.fd, parent.name, label);
+    reject(!sameObservedEntry(before, after), label + ' changed during observation');
+    if (target !== '.git') assertCaptureIdle(parent.fd, parent.name, label);
+    const afterChain = captureDirectoryChain(root, segments.slice(0, -1), label);
+    reject(
+      beforeChain.length !== afterChain.length ||
+        beforeChain.some((item, index) => !sameCaptureMetadata(item, afterChain[index]!, captureDirectoryFields)) ||
+        !sameCaptureMetadata(openedParent, afterChain.at(-1)!, captureDirectoryFields),
+      label + ' root or parent-chain identity changed during observation',
+    );
+    return before !== null;
+  } finally {
+    closeQuietly(parent.fd);
+  }
+}
+function linuxObserveListFiles(root: string, target: string, label: string): readonly string[] {
+  const segments = safeRelative(root, target, label);
+  const beforeChain = captureDirectoryChain(root, segments.slice(0, -1), label);
+  const parent = openParent(root, segments, label);
+  let directoryFd = -1;
+  try {
+    const openedParent = fstatSync(parent.fd, { bigint: true });
+    assertCaptureIdle(parent.fd, parent.name, label);
+    directoryFd = openSync(childPath(parent.fd, parent.name), fsConstants.O_RDONLY | directoryFlag | noFollow);
+    const before = fstatSync(directoryFd, { bigint: true });
+    reject(!before.isDirectory(), label + ' must be a real directory');
+    const beforePath = lstatSync(childPath(parent.fd, parent.name), { bigint: true });
+    reject(!sameFileIdentity(before, beforePath), label + ' directory changed before observation');
+    const entries = readdirSync(childPath(directoryFd, '.'));
+    const repeatedEntries = readdirSync(childPath(directoryFd, '.'));
+    const after = fstatSync(directoryFd, { bigint: true });
+    const afterPath = lstatSync(childPath(parent.fd, parent.name), { bigint: true });
+    reject(
+      !sameCaptureMetadata(before, after, captureFileFields) ||
+        !sameCaptureMetadata(beforePath, afterPath, captureFileFields) ||
+        !sameFileIdentity(after, afterPath) ||
+        !sameDirectoryEntries(entries, repeatedEntries),
+      label + ' directory entries changed during observation',
+    );
+    assertCaptureIdle(parent.fd, parent.name, label);
+    const afterChain = captureDirectoryChain(root, segments.slice(0, -1), label);
+    reject(
+      beforeChain.length !== afterChain.length ||
+        beforeChain.some((item, index) => !sameCaptureMetadata(item, afterChain[index]!, captureDirectoryFields)) ||
+        !sameCaptureMetadata(openedParent, afterChain.at(-1)!, captureDirectoryFields),
+      label + ' root or parent-chain identity changed during observation',
+    );
+    return entries;
+  } finally {
+    if (directoryFd >= 0) closeQuietly(directoryFd);
+    closeQuietly(parent.fd);
+  }
+}
 function linuxRemoveFile(root: string, target: string, label: string): void {
   const segments = safeRelative(root, target, label);
   let parentFd = -1;
@@ -2792,8 +2971,12 @@ function windowsAccess(root: string): SafeRepositoryAccess {
     readBytes: (target, label) => fsSafeReadBytes(root, target, label),
     readCapturedBytes: (target, label, limit = maxRepositoryReadBytes) =>
       fsSafeReadBytes(root, target, label, captureReadLimit(limit)),
+    readVerifiedCaptureBytes: (target, label, limit = maxRepositoryReadBytes) =>
+      fsSafeReadVerifiedCaptureBytes(root, target, label, limit),
     fileExists: (target, label) => fsSafeFileExists(root, target, label),
     listFiles: (target, label) => fsSafeListFiles(root, target, label),
+    observeFileExists: (target, label) => fsSafeFileExists(root, target, label),
+    observeListFiles: (target, label) => fsSafeListFiles(root, target, label),
     removeFile: (target, label) => windowsRemoveFile(root, target, label),
     moveNoReplaceAsync: (source, target, expectedHash, label) =>
       windowsMoveNoReplaceAsync(root, source, target, expectedHash, label),
@@ -2912,6 +3095,8 @@ function linuxAccess(root: string): SafeRepositoryAccess {
     readStableBytes: (target, label) => linuxReadStableBytes(root, target, label),
     fileExists: (target, label) => linuxFileExists(root, target, label),
     listFiles: (target, label) => linuxListFiles(root, target, label),
+    observeFileExists: (target, label) => linuxObserveFileExists(root, target, label),
+    observeListFiles: (target, label) => linuxObserveListFiles(root, target, label),
     removeFile: (target, label) => linuxRemoveFile(root, target, label),
     moveNoReplaceAsync: (source, target, expectedHash, label) =>
       linuxMoveNoReplaceAsync(root, source, target, expectedHash, label),

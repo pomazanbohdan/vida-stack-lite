@@ -4,6 +4,7 @@ import { readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { instrumentSource } from '../tooling/bun-coverage-evidence.ts';
 import { expectReturned } from './helpers/expect-rejection.ts';
 
 type JsonRecord = Record<string, unknown>;
@@ -100,6 +101,14 @@ const rootPackage = readJson(path.join(packageRoot, 'package.json'));
 const packageDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const projectManifest = readJson(path.join(packageDirectory, 'package.json'));
 const bunLock = readJson5(path.join(packageDirectory, 'bun.lock'));
+
+test('the pinned fs-safe attestation source has no callable or branch nodes', () => {
+  const sourcePath = path.join(packageDirectory, 'src/config/fs-safe-attestation.ts');
+  const { fileCoverage } = instrumentSource(sourcePath, readFileSync(sourcePath, 'utf8'));
+
+  expect(Object.keys(fileCoverage.fnMap)).toEqual([]);
+  expect(Object.keys(fileCoverage.branchMap)).toEqual([]);
+});
 
 test('fs-safe version and integrity match the installed package and exact Bun lock entry', () => {
   const { fsSafeIntegrity, fsSafeVersion } = loadFsSafeAttestation();

@@ -14,8 +14,10 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { afterEach, mock, test } from 'bun:test';
+import { afterEach, expect, mock, test } from 'bun:test';
 import { readPin } from '../bin/bun.ts';
+import { readRuntimeConfigIdentityForObservation } from '../src/config/runtime-config.ts';
+import { repositoryReadOnlyObservation, requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import {
   invokeNestedObservedControllerChild,
   invokeObservedControllerChild,
@@ -44,7 +46,7 @@ function isJsonRecord(value: unknown): value is JsonRecord {
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const repositoryRoot = path.resolve(packageRoot, '../..');
 const fixtureParent = path.join(
-  repositoryRoot,
+  packageRoot,
   '.tmp/core-windows-resume-20261002/native15-observation-verification-20261006/fixtures',
 );
 const roles = ['qualifier-repair-inspect', 'qualifier-repair-plan', 'qualifier-repair-apply'];
@@ -200,6 +202,59 @@ afterEach(() => {
   preserve.clear();
 });
 
+test.skipIf(process.platform !== 'linux')(
+  'read-only repository observation verifies present and absent paths without sidecars and preserves CAS denial',
+  () => {
+    const root = fixtureRoot();
+    const configRoot = path.join(root, 'config');
+    mkdirSync(configRoot);
+    writeFileSync(path.join(configRoot, 'present.json'), '{"ready":true}\n');
+    const access = requireSafeRepositoryAccess(root);
+    const observation = repositoryReadOnlyObservation(access);
+
+    expect(observation.fileExists('.vida', 'observed absent project directory')).toBe(false);
+    expect(observation.fileExists('.vida/activation.v1.json', 'observed absent activation')).toBe(false);
+    expect(observation.fileExists('config/present.json', 'observed present config')).toBe(true);
+    expect(observation.fileExists('config/missing.json', 'observed missing config')).toBe(false);
+    expect(observation.listFiles('config', 'observed config directory')).toEqual(['present.json']);
+    expect(observation.readText('config/present.json', 'observed config bytes')).toBe('{"ready":true}\n');
+    expect(access.fileExists('config/present.json', 'mutable CAS file existence')).toBe(true);
+    expect(readdirSync(configRoot).sort()).toEqual(['present.json']);
+    expect(readdirSync(root).sort()).toEqual(['config']);
+    expect(existsSync(path.join(root, '..vida.cas.lock'))).toBe(false);
+    expect(() =>
+      repositoryReadOnlyObservation({ ...access, readVerifiedCaptureBytes: undefined } as unknown as typeof access),
+    ).toThrow(/verified read-only observation/);
+
+    access.withExclusiveLock('config/.present.json.cas', 'read-only observation lock owner', () => {
+      const ownerPath = path.join(configRoot, '.present.json.cas.lock');
+      const ownerBytes = readFileSync(ownerPath);
+      expect(() => observation.fileExists('config/present.json', 'contended observation')).toThrow(/active CAS writer/);
+      expect(() => observation.readText('config/present.json', 'contended observation read')).toThrow(
+        /active CAS writer/,
+      );
+      expect(() => access.fileExists('config/present.json', 'existing CAS path remains locked')).toThrow();
+      expect(readFileSync(ownerPath)).toEqual(ownerBytes);
+      expect(readFileSync(path.join(configRoot, 'present.json'), 'utf8')).toBe('{"ready":true}\n');
+    });
+  },
+);
+
+test('controller config identity uses the no-write verified observation path', () => {
+  const lockPaths = [
+    path.join(repositoryRoot, '.agent-runtime.config.v1.yaml.cas.lock'),
+    path.join(repositoryRoot, '..vida.cas.lock'),
+    path.join(repositoryRoot, '.vida', '.activation.v1.json.cas.lock'),
+    path.join(repositoryRoot, '.vida', '.project-upgrade.v1.json.cas.lock'),
+  ];
+  const before = lockPaths.map(existsSync);
+  const identity = readRuntimeConfigIdentityForObservation(repositoryRoot);
+  expect(identity.bundle).toBe('packages/agent');
+  expect(identity.repository_id.length).toBeGreaterThan(0);
+  expect(identity.project_ids.length).toBeGreaterThan(0);
+  expect(lockPaths.map(existsSync)).toEqual(before);
+});
+
 const runtimeConfigUrl = pathToFileURL(path.join(packageRoot, 'src/config/runtime-config.ts')).href;
 const originalRuntimeConfig = { ...(await import('../src/config/runtime-config.ts')) };
 
@@ -211,18 +266,21 @@ for (const mode of ['invalid-api', 'foreign-bundle', 'loader-error', 'loader-und
     const controllerRoot = path.join(scratch, 'controller');
     const calls: string[] = [];
     const bodyError = new Error('runtime config loader failed');
-    const loadRuntimeConfig =
+    const readRuntimeConfigIdentityForObservation =
       mode === 'invalid-api'
         ? 42
         : (root: string) => {
             calls.push(root);
             if (mode === 'loader-error') throw bodyError;
             if (mode === 'loader-undefined') throw undefined;
-            return { runtime: { bundle: 'foreign' } };
+            return { bundle: 'foreign', repository_id: 'fixture', project_ids: [] };
           };
     let completed = false;
     try {
-      await mock.module(runtimeConfigUrl, () => ({ ...originalRuntimeConfig, loadRuntimeConfig }));
+      await mock.module(runtimeConfigUrl, () => ({
+        ...originalRuntimeConfig,
+        readRuntimeConfigIdentityForObservation,
+      }));
       const expected =
         mode === 'invalid-api'
           ? 'Development controller runtime config API is invalid.'

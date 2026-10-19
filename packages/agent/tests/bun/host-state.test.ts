@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import { afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
 import { expectReturned, rejectionReason } from '../helpers/expect-rejection.ts';
@@ -85,6 +85,7 @@ import {
 } from '../../src/governance/edictum-boundary.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import * as persistedRows from '../../src/config/host-persisted-row.ts';
+import { configuredTestContext } from '../configured-context.ts';
 
 const workspace = 'a'.repeat(64);
 // Keep a stable export snapshot because Bun updates live builtin namespaces when
@@ -118,6 +119,7 @@ type TestJournalState = TestJournal['state'];
 type WorkBinding = WorkState['binding'];
 type LifecycleArtifact = WorkState['lifecycle']['references'][number];
 let root!: string;
+let configuredInstructionRoot!: string;
 let databasePath!: string;
 let database!: Database;
 let store!: HostStateStore;
@@ -338,6 +340,12 @@ function reserveRequiredOperation(
   if (!reservation) throw new Error('expected operation reservation fixture');
   return reservation;
 }
+
+test('Host state fixture preserves captured root instruction bytes', () => {
+  for (const name of ['AGENTS.md', 'AGENT.sidecar.md']) {
+    expect(readFileSync(path.join(root, name))).toEqual(readFileSync(path.join(configuredInstructionRoot, name)));
+  }
+});
 
 test('trusted host source entrypoint exposes host state without a test issuer', () => {
   expect(trustedHostSurface.HostStateStore).toBe(HostStateStore);
@@ -1809,15 +1817,21 @@ function reconciliationAuthorization(
 ): WorkflowAttemptReconciliationAuthorization {
   return createWorkflowReconciliationAuthorization('runtime:test-verifier', request, state);
 }
+beforeAll(() => {
+  configuredInstructionRoot = configuredTestContext().repositoryRoot;
+});
+
 beforeEach(async () => {
   preserveHostFixtureRoot = false;
   root = await mkdtemp(path.join(tmpdir(), 'host-state-'));
   try {
-    const repositoryRoot = path.resolve(bundleRoot, '../..');
-    writeFileSync(path.join(root, 'AGENTS.md'), readFileSync(path.join(repositoryRoot, 'AGENTS.md'), 'utf8'));
+    writeFileSync(
+      path.join(root, 'AGENTS.md'),
+      readFileSync(path.join(configuredInstructionRoot, 'AGENTS.md'), 'utf8'),
+    );
     writeFileSync(
       path.join(root, 'AGENT.sidecar.md'),
-      readFileSync(path.join(repositoryRoot, 'AGENT.sidecar.md'), 'utf8'),
+      readFileSync(path.join(configuredInstructionRoot, 'AGENT.sidecar.md'), 'utf8'),
     );
     const policyRoot = path.join(root, 'docs/agent-instructions');
     mkdirSync(policyRoot, { recursive: true });

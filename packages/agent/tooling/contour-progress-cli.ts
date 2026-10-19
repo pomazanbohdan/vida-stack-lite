@@ -8,6 +8,7 @@ import {
   mergeContourProgress,
   nativeMutationAttempt,
   renderContourProgress,
+  serializeContourProgress,
 } from './contour-progress.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
 import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
@@ -333,7 +334,7 @@ export function runContourProgress(
   snapshot = mergeContourProgress(snapshot, incoming);
   const document = renderContourProgress(snapshot);
   mkdirSync(output, { recursive: true });
-  atomic(target, JSON.stringify(snapshot) + '\n');
+  atomic(target, JSON.stringify(serializeContourProgress(snapshot)) + '\n');
   // JSON is the recoverable machine snapshot; Markdown is disposable and regenerated if publication was interrupted.
   atomic(path.join(output, 'CONTOUR-STATUS.md'), document);
   process.stdout.write(

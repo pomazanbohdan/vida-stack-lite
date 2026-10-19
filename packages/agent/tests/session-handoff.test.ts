@@ -5,10 +5,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { initializeProjectFromBundle } from '../bin/init-core.ts';
-import { loadRuntimeConfig, type WorkItemSelection } from '../src/config/runtime-config.js';
+import { loadRuntimeConfig, type AgentRuntimeConfig, type WorkItemSelection } from '../src/config/runtime-config.js';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.js';
 import {
   advanceSessionWorkflowHandoff,
+  allowsSharedInvocationForConfiguredSlots,
   createSessionActionProjector,
   prepareSessionWorkflowHandoff,
   validateSessionWorkflowHandoffFromConfig,
@@ -17,7 +18,11 @@ import {
   type SessionHandoffContext,
   type SessionWorkflowHandoff,
 } from '../src/orchestration/session-handoff.js';
-import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.js';
+import {
+  compileDevelopmentWorkflow,
+  effectiveWorkflowRiskFlags,
+  executableWorkflowWaveIndices,
+} from '../src/orchestration/workflow-plan.js';
 import type { CorrectiveExecution } from '../src/orchestration/final-assurance.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -139,6 +144,112 @@ function simulatedReports(
 }
 
 describe('advisory session agent handoff', () => {
+  test('workflow risk and executable-wave helpers preserve configured boundaries', async () => {
+    const flags = ['security'] as const;
+    expect(effectiveWorkflowRiskFlags(undefined, 'high')).toEqual(['high']);
+    expect(effectiveWorkflowRiskFlags(flags, 'high')).toEqual(['security', 'high']);
+    expect(effectiveWorkflowRiskFlags(['high'], 'high')).toEqual(['high']);
+    expect(effectiveWorkflowRiskFlags(flags, 'low')).toBe(flags);
+
+    const plan = {
+      waves: [[{ id: 'empty', assignments: [] }], [{ id: 'worker', assignments: [{ role: 'tester' }] }]],
+    } as unknown as Parameters<typeof executableWorkflowWaveIndices>[0];
+    expect(executableWorkflowWaveIndices(plan)).toEqual([1]);
+    expect(executableWorkflowWaveIndices(plan, ['worker'])).toEqual([1]);
+    expect(executableWorkflowWaveIndices(plan, ['missing'])).toEqual([]);
+
+    const fixtureRoot = await createFixture();
+    try {
+      const configRecord = parseConfig(fixtureRoot);
+      const workflow = recordAt(recordAt(configRecord, 'workflows'), 'implementation_new');
+      const stages = arrayAt(workflow, 'stages');
+      const researchStage = stages.find(
+        (stage): stage is MutableYamlRecord => isRecord(stage) && stage.id === 'research_parallel',
+      );
+      if (!researchStage) throw new Error('implementation workflow is missing its research stage');
+      const optionalStageFixture = structuredClone(researchStage);
+      optionalStageFixture.id = 'optional_security_research';
+      optionalStageFixture.risk_flags = ['security'];
+      optionalStageFixture.required_after = ['research_parallel'];
+      stages.push(optionalStageFixture);
+      arrayAt(workflow, 'edges').push(['research_parallel', 'optional_security_research']);
+      writeConfig(fixtureRoot, configRecord);
+
+      const compiled = compileDevelopmentWorkflow(
+        loadRuntimeConfig(fixtureRoot),
+        'default-development',
+        'implementation_new',
+      );
+      const optionalStage = compiled.waves.flat().find((stage) => stage.id === 'optional_security_research');
+      expect(optionalStage).toBeDefined();
+      expect(optionalStage?.assignments).toEqual([]);
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+
+    const config = loadRuntimeConfig(root);
+    const elevatedTask = compileDevelopmentWorkflow(config, 'default-development', 'task_execution', [], 'high');
+    const prewriteStage = elevatedTask.waves.flat().find((stage) => stage.id === 'review_source_prewrite');
+    expect(prewriteStage?.assignments.some((assignment) => assignment.role === 'security-prewriter')).toBe(true);
+  });
+
+  test('shared invocation slots require the configured focused read-only validator pair', () => {
+    const config = loadRuntimeConfig(root);
+    const left = { workflow_id: 'task_execution', stage_id: 'validate_focused', assignment_index: 0 };
+    const right = { workflow_id: 'task_execution', stage_id: 'validate_focused', assignment_index: 1 };
+    expect(allowsSharedInvocationForConfiguredSlots(config, left, right)).toBe(true);
+    expect(allowsSharedInvocationForConfiguredSlots(config, right, left)).toBe(true);
+    expect(allowsSharedInvocationForConfiguredSlots(config, left, left)).toBe(false);
+    expect(allowsSharedInvocationForConfiguredSlots(config, { ...left, workflow_id: 'bug_fix' }, right)).toBe(false);
+    expect(allowsSharedInvocationForConfiguredSlots(config, { ...left, stage_id: 'missing' }, right)).toBe(false);
+    expect(allowsSharedInvocationForConfiguredSlots(config, { ...left, assignment_index: 99 }, right)).toBe(false);
+
+    const nonParallel = structuredClone(config) as unknown as {
+      workflows: Record<string, { stages: Array<{ id: string; kind: string; mode: string }> }>;
+    };
+    const stage = nonParallel.workflows.task_execution!.stages.find((entry) => entry.id === 'validate_focused');
+    if (!stage) throw new Error('focused validator stage is missing');
+    stage.mode = 'single';
+    expect(allowsSharedInvocationForConfiguredSlots(nonParallel as unknown as AgentRuntimeConfig, left, right)).toBe(
+      false,
+    );
+
+    const nonValidate = structuredClone(config) as unknown as {
+      workflows: Record<string, { stages: Array<{ id: string; kind: string }> }>;
+    };
+    const alteredStage = nonValidate.workflows.task_execution!.stages.find((entry) => entry.id === 'validate_focused');
+    if (!alteredStage) throw new Error('focused validator stage is missing');
+    alteredStage.kind = 'develop';
+    expect(allowsSharedInvocationForConfiguredSlots(nonValidate as unknown as AgentRuntimeConfig, left, right)).toBe(
+      false,
+    );
+
+    const unexpectedRoles = structuredClone(config) as unknown as {
+      workflows: Record<string, { stages: Array<{ id: string; assignments: Array<{ role: string }> }> }>;
+    };
+    const alteredAssignments = unexpectedRoles.workflows.task_execution!.stages.find(
+      (entry) => entry.id === 'validate_focused',
+    )?.assignments;
+    if (!alteredAssignments?.[0]) throw new Error('focused validator assignment is missing');
+    alteredAssignments[0].role = 'tester';
+    expect(
+      allowsSharedInvocationForConfiguredSlots(unexpectedRoles as unknown as AgentRuntimeConfig, left, right),
+    ).toBe(false);
+
+    const mutatingProfile = structuredClone(config) as unknown as AgentRuntimeConfig & {
+      agents: { profiles: Record<string, { mutation_scope: string }> };
+    };
+    const focusedStage = config.workflows.task_execution?.stages.find((entry) => entry.id === 'validate_focused');
+    const assignment = focusedStage?.assignments[0];
+    if (!assignment) throw new Error('focused validator assignment is missing');
+    const profile = mutatingProfile.agents.profiles[assignment.profile];
+    if (!profile) throw new Error('focused validator profile is missing');
+    profile.mutation_scope = 'repository_source';
+    expect(
+      allowsSharedInvocationForConfiguredSlots(mutatingProfile as unknown as AgentRuntimeConfig, left, right),
+    ).toBe(false);
+  });
+
   test('projector exposes executable waves, stage kinds, and corrective action filtering', () => {
     const projector = createSessionActionProjector(
       loadRuntimeConfig(root),

@@ -1182,3 +1182,56 @@ Concurrent contour or full-suite producers could lower wall time in theory, but
 their shared resource and aggregate evidence costs are not qualified here; do
 not enable them as part of this repair. No additional broad scan/hash or second
 full suite was used.
+
+### Five-lane contour repair attempt — 2026-10-19
+
+Root dispatched five blind Luna writers, one per contour: `bun-doc-clear`,
+`bun-source-preflight-and-task-binding`, `bun-completed-readonly-capture`,
+`bun-observed-validation`, and `bun-documentation-policy-transition`. Each
+worker checked the latest owner-issued receipt before edits. None changed files
+or replayed an UNKNOWN result; the evidence gates correctly stopped all five.
+
+The doc-clear run `150610ab-1ecf-406e-85dd-931ef4eefa57` is BLOCKED with an
+incomplete selection and empty source/test/tool/closure bindings. The
+documentation-policy report `21456b76-98e2-4a22-a2b3-e3e18c6d3dd6` binds its
+selected source/tests but is a focused diagnostic rather than full qualification;
+34 of 574 dependency-closure entries differ and 38 `_repository` paths are
+unresolved. The completed-readonly report `bab9029d-3b8b-4b5f-aa79-271be25aafb6`
+has 34 stale dependency entries and 34 absent `_repository` entries. The
+observed-validation run `e398f93f-9806-4fc1-90e1-2a06b8a29175` is UNKNOWN at the
+report phase (`Mutation test context layout changed`, incomplete report,
+`resource_safe_to_advance=false`); it remains retained and unreplayed.
+
+The source-preflight stage from campaign `f8295b8a-6359-438b-b105-a982463fef5b`
+did execute its existing selection: 56 tests passed with 284 assertions in
+35.23 seconds, and the process exited 0. Its coverage report was rejected during
+publication because the captured v1 progress snapshot exceeded the 32 MiB
+publisher bound. That test pass is not an accepted coverage result. The live
+publisher now writes the compact digest-catalog v2 snapshot while retaining the
+v1 reader; regression tests verify round-trip recovery and reject corrupt or
+missing references. This does not repair or requalify the captured historical
+stage, whose execution image still contains v1.
+
+Root also made coverage-only recognize the single source-pinned, independently
+reviewed data-only `bun-fs-safe-attestation` scope as N/A only when its accepted
+report binds the complete selection, the instrumentation test, exact zero
+function/branch counters and complete positive line/statement counters. It is
+not a numeric maximum or full contour closure; all other zero-denominator rows
+remain open. The frozen CRAP and mutation gates are unchanged.
+
+Validation of the root-owned progress change passed: 175 targeted Bun tests,
+747 assertions in 1.90 seconds; `bun check` reported no errors in 252 files;
+scoped OxFmt, OxLint and `git diff --check` passed. Vex status was checked once;
+one bounded symbol query reported 33 changed, 0 deleted, 10,675 total symbols,
+and returned the current `serializeContourProgress` body. No cold rebuild was
+requested.
+
+Measured parallel outcome: five independent receipt checks ran without writers
+overlapping; four stopped on stale/incomplete evidence and one revealed the
+captured publisher-limit failure. No test suite was launched against those stale
+or UNKNOWN records, and the five workers produced no source edits. This confirms
+the value of parallel receipt triage but does not measure wall-time savings over
+serial dispatch; token/tool-call totals are unavailable. Keep numeric producers
+under the single Root owner. Next coverage repairs require a current immutable
+Source/SDK image and a fresh, complete accepted report after the compact publisher
+change is committed; historical counters remain unqualified and unchanged.

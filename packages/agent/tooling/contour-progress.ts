@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Ajv } from 'ajv';
 import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
@@ -219,6 +220,82 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
     },
   },
 });
+
+const digestFields = ['sources', 'tests', 'tools', 'closure', 'selected_tests'] as const;
+type DigestField = (typeof digestFields)[number];
+export type CompactSnapshot = {
+  schema: 'VidaContourProgress/v2';
+  digest_catalog: Record<string, Digest[]>;
+  attempts: (Omit<Attempt, DigestField> & { digest_refs: Record<DigestField, string> })[];
+};
+
+function digestCatalogKey(value: Digest[]): string {
+  return createHash('sha256').update(canonicalJson(value)).digest('hex');
+}
+
+/**
+ * Persist repeated immutable path/hash lists once while keeping the v1 in-memory projection.
+ * The v1 reader remains supported by mergeContourProgress; no attempt fields or evidence are dropped.
+ */
+export function serializeContourProgress(snapshot: Snapshot): CompactSnapshot {
+  const digest_catalog: Record<string, Digest[]> = {};
+  const attempts = snapshot.attempts.map((attempt) => {
+    const { sources, tests, tools, closure, selected_tests, ...rest } = attempt;
+    const lists: Record<DigestField, Digest[]> = { sources, tests, tools, closure, selected_tests };
+    const digest_refs = Object.fromEntries(
+      digestFields.map((field) => {
+        const list = lists[field];
+        const id = digestCatalogKey(list);
+        digest_catalog[id] ??= list;
+        return [field, id];
+      }),
+    ) as Record<DigestField, string>;
+    return { ...rest, digest_refs };
+  });
+  return { schema: 'VidaContourProgress/v2', digest_catalog, attempts };
+}
+
+function expandCompactSnapshot(value: unknown): Snapshot {
+  if (!isRecord(value) || value.schema !== 'VidaContourProgress/v2')
+    throw new Error('Invalid compact contour snapshot.');
+  if (
+    Object.keys(value).length !== 3 ||
+    Object.keys(value).some((key) => !['schema', 'digest_catalog', 'attempts'].includes(key)) ||
+    !isRecord(value.digest_catalog) ||
+    !Array.isArray(value.attempts)
+  )
+    throw new Error('Invalid compact contour snapshot.');
+  const catalog: Record<string, Digest[]> = {};
+  for (const [id, raw] of Object.entries(value.digest_catalog)) {
+    if (!/^[a-f0-9]{64}$/u.test(id) || !Array.isArray(raw)) throw new Error('Invalid contour digest catalog entry.');
+    const list = digests(raw);
+    if (digestCatalogKey(list) !== id || canonicalJson(list) !== canonicalJson(raw))
+      throw new Error('Contour digest catalog content does not match its identity.');
+    catalog[id] = list;
+  }
+  const referenced = new Set<string>();
+  const attempts = value.attempts.map((raw) => {
+    if (!isRecord(raw) || !isRecord(raw.digest_refs)) throw new Error('Invalid compact contour attempt.');
+    const refs = raw.digest_refs;
+    if (
+      Object.keys(refs).length !== digestFields.length ||
+      digestFields.some((field) => typeof refs[field] !== 'string' || !catalog[refs[field] as string])
+    )
+      throw new Error('Compact contour attempt has unresolved digest references.');
+    const { digest_refs: _refs, ...attempt } = raw;
+    for (const field of digestFields) referenced.add(refs[field] as string);
+    return Object.assign(
+      attempt,
+      Object.fromEntries(digestFields.map((field) => [field, catalog[refs[field] as string]])),
+    );
+  });
+  if (referenced.size !== Object.keys(catalog).length)
+    throw new Error('Compact contour snapshot has unreferenced evidence.');
+  const snapshot = { schema: 'VidaContourProgress/v1', attempts };
+  if (!validateSnapshot(snapshot))
+    throw new Error('Invalid expanded contour snapshot: ' + JSON.stringify(validateSnapshot.errors));
+  return snapshot;
+}
 
 function object(value: unknown): Record<string, unknown> {
   if (!isRecord(value)) throw new Error('Contour report requires an object.');
@@ -1237,6 +1314,7 @@ function evidence(attempt: Attempt): string {
 
 /** Merge immutable observations; preserve historical closures rather than inventing a union of maxima. */
 export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Snapshot {
+  if (isRecord(previous) && previous.schema === 'VidaContourProgress/v2') previous = expandCompactSnapshot(previous);
   if (!validateSnapshot(previous))
     throw new Error('Invalid contour snapshot: ' + JSON.stringify(validateSnapshot.errors));
   const candidate = { schema: 'VidaContourProgress/v1', attempts: incoming };
@@ -1470,6 +1548,40 @@ function maximum(attempt: Attempt): boolean {
   );
 }
 export { maximum as contourAttemptMaximum };
+
+/**
+ * Coverage-first may stop re-running the specifically reviewed data-only contour without
+ * turning its 0/0 F/B counters into numeric maxima. Full closure still requires the
+ * independently bound applicability and native-mutation receipts below.
+ */
+export function contourCoverageSatisfied(attempt: Attempt): boolean {
+  if (attempt.lane !== 'coverage') return false;
+  if (maximum(attempt)) return true;
+  const counters = attempt.coverage;
+  return (
+    attempt.contour === fsSafeApplicabilityReview.contour &&
+    attempt.accepted &&
+    attempt.producer_schema === 'VidaBunFocusedCoverageDiagnostic/v1' &&
+    attempt.selection_complete &&
+    attempt.coverage_binding !== undefined &&
+    attempt.max_cc === null &&
+    attempt.max_entry_crap === null &&
+    canonicalJson(attempt.sources) ===
+      canonicalJson([
+        {
+          path: fsSafeApplicabilityReview.source,
+          sha256: fsSafeApplicabilityReview.source_sha256,
+        },
+      ]) &&
+    attempt.selected_tests.some((row) => row.path === 'tests/fs-safe-attestation.test.ts') &&
+    counters !== null &&
+    counters.functions.total === 0 &&
+    counters.functions.covered === 0 &&
+    counters.branches.total === 0 &&
+    counters.branches.covered === 0 &&
+    [counters.lines, counters.statements].every(({ total, covered }) => total > 0 && covered === total)
+  );
+}
 function cell(value: string): string {
   return value.replaceAll('|', '\\|').replaceAll('\n', ' ');
 }
@@ -1593,7 +1705,7 @@ export function selectContourCampaign(
     const coverage = current.filter((row) => row.lane === 'coverage');
     if (phase === 'coverage-only') {
       const exactCoverage = coverage.some(
-        (row) => maximum(row) && row.selection_complete && row.coverage_binding !== undefined,
+        (row) => contourCoverageSatisfied(row) && row.selection_complete && row.coverage_binding !== undefined,
       );
       return !exactCoverage;
     }

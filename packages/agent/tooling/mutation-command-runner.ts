@@ -492,11 +492,32 @@ export async function assertMutationTestContext(
   captured: Readonly<Record<string, Buffer>>,
 ): Promise<void> {
   if (binding === null) return;
-  const expected = [...repositoryTestContextFiles, 'docs', 'docs/agent-instructions'].sort();
+  const requiredFiles = [...repositoryTestContextFiles];
+  const requiredDirectories = ['docs', 'docs/agent-instructions'];
+  // These empty directories are created by the admitted-development-packet test
+  // fixture under its configured test root. They are explicit optional outputs:
+  // no file or unlisted descendant is admitted by this inventory.
+  const fixtureOutputDirectories = [
+    '.planning',
+    '.planning/agent-flow',
+    'docs/agent-instructions/research',
+    'docs/agent-instructions/research/records',
+  ];
+  const allowed = new Set([...requiredFiles, ...requiredDirectories, ...fixtureOutputDirectories]);
   const actual = (await readdir(binding.root, { recursive: true }))
     .map((file) => file.split(path.sep).join('/'))
     .sort();
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Mutation test context layout changed.');
+  if (
+    requiredFiles.some((file) => !actual.includes(file)) ||
+    requiredDirectories.some((directory) => !actual.includes(directory)) ||
+    actual.some((entry) => !allowed.has(entry))
+  )
+    throw new Error('Mutation test context layout changed.');
+  for (const directory of [...requiredDirectories, ...fixtureOutputDirectories]) {
+    if (!actual.includes(directory)) continue;
+    const info = await lstat(path.join(binding.root, directory));
+    if (!info.isDirectory() || info.isSymbolicLink()) throw new Error('Mutation test context layout changed.');
+  }
   const bytes = await readQualityInputs(binding.root, repositoryTestContextFiles);
   for (const file of repositoryTestContextFiles)
     if (!bytes.get(file)?.equals(captured[`${repositoryTestContextInputPrefix}/${file}`]!))

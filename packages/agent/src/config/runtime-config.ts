@@ -6,7 +6,12 @@ import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject } from 'ajv';
 import { Composer, CST, Parser, isAlias, type Document } from 'yaml';
-import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './safe-repository-access.js';
+import {
+  repositoryReadOnlyObservation,
+  requireSafeRepositoryAccess,
+  type SafeRepositoryAccess,
+  type SafeRepositoryObservation,
+} from './safe-repository-access.js';
 import {
   INITIALIZED_PROJECT_PATHS,
   LEGACY_RUNTIME_CONFIGURATION_PATH,
@@ -911,8 +916,11 @@ function assertConfiguredPaths(config: AgentRuntimeConfig): void {
   );
 }
 
-function assertRequiredRepositoryReferences(config: AgentRuntimeConfig, repositoryRoot: string): void {
-  const access = requireSafeRepositoryAccess(repositoryRoot);
+function assertRequiredRepositoryReferences(
+  config: AgentRuntimeConfig,
+  repositoryRoot: string,
+  access: SafeRepositoryObservation,
+): void {
   config.repository.root_markers.forEach((value) => {
     const target = resolveConfigPath(repositoryRoot, value, 'required marker ' + value);
     assertCondition(
@@ -1623,6 +1631,16 @@ export function validateRuntimeConfig(
   repositoryRoot?: string,
   source: RuntimeConfigurationSource = CONFIG_FILE,
 ): AgentRuntimeConfig {
+  const access = repositoryRoot === undefined ? undefined : requireSafeRepositoryAccess(path.resolve(repositoryRoot));
+  return validateRuntimeConfigWithAccess(value, repositoryRoot, source, access);
+}
+
+function validateRuntimeConfigWithAccess(
+  value: unknown,
+  repositoryRoot: string | undefined,
+  source: RuntimeConfigurationSource,
+  access: SafeRepositoryObservation | SafeRepositoryAccess | undefined,
+): AgentRuntimeConfig {
   assertCondition(
     source === CONFIG_FILE || source === PROJECT_CONFIGURATION_PATHS.project,
     'runtime config source is unsupported',
@@ -1641,7 +1659,7 @@ export function validateRuntimeConfig(
   validateCandidateIsolation(config);
   choose(
     Boolean(repositoryRoot),
-    () => assertRequiredRepositoryReferences(config, path.resolve(repositoryRoot as string)),
+    () => assertRequiredRepositoryReferences(config, path.resolve(repositoryRoot as string), access!),
     () => undefined,
   );
   return config;
@@ -1685,14 +1703,54 @@ export function loadRuntimeConfig(repositoryRoot: string): AgentRuntimeConfig {
   return loadRuntimeConfigForSelectedSource(repositoryRoot);
 }
 
+/** Read and validate configured identity without creating repository CAS sidecars or granting config authority. */
+export function readRuntimeConfigIdentityForObservation(repositoryRoot: string): {
+  readonly repository_id: string;
+  readonly project_ids: string[];
+  readonly bundle: string;
+} {
+  assertCondition(path.isAbsolute(repositoryRoot), 'repository root must be absolute');
+  const root = path.resolve(repositoryRoot);
+  const access = repositoryReadOnlyObservation(requireSafeRepositoryAccess(root));
+  const snapshot = readRuntimeConfigSnapshot(root, access, configCache.get(root));
+  return Object.freeze({
+    repository_id: snapshot.config.repository.repository_id,
+    project_ids: snapshot.config.projects.map((project) => project.project_id),
+    bundle: snapshot.config.runtime.bundle,
+  });
+}
+
 function loadRuntimeConfigForSelectedSource(repositoryRoot: string): AgentRuntimeConfig {
   assertCondition(path.isAbsolute(repositoryRoot), 'repository root must be absolute');
   const root = path.resolve(repositoryRoot);
   const access = requireSafeRepositoryAccess(root);
+  const cached = configCache.get(root);
+  const snapshot = readRuntimeConfigSnapshot(root, access, cached);
+  const config = snapshot.config;
+  if (!authorizedRuntimeConfigs.has(config)) authorizedRuntimeConfigs.add(config);
+  authorizedRuntimeConfigRoots.set(config, root);
+  bindLoadedConfigurationSource(config, snapshot.source);
+  if (!cacheMatches(cached, snapshot.source_digest))
+    configCache.set(root, { source_digest: snapshot.source_digest, config });
+  capturedConfigurationBindings.set(
+    config,
+    Object.freeze({ repository_root: root, source: snapshot.source, source_digest: snapshot.source_digest }),
+  );
+  return config;
+}
+
+function readRuntimeConfigSnapshot(
+  root: string,
+  access: SafeRepositoryAccess | SafeRepositoryObservation,
+  cached: CachedConfig | undefined,
+): {
+  readonly config: AgentRuntimeConfig;
+  readonly source: RuntimeConfigurationSource;
+  readonly source_digest: string;
+} {
   assertProjectUpgradeInactive(access);
   const selection = selectRuntimeConfigurationSource(access);
   const source = selection.source;
-  const cached = configCache.get(root);
   const loaded =
     source === CONFIG_FILE
       ? readLegacyRuntimeConfiguration(access, root, cached)
@@ -1702,21 +1760,12 @@ function loadRuntimeConfigForSelectedSource(repositoryRoot: string): AgentRuntim
     () => (cached as CachedConfig).config,
     () => loaded.config,
   );
-  if (!authorizedRuntimeConfigs.has(config)) authorizedRuntimeConfigs.add(config);
-  authorizedRuntimeConfigRoots.set(config, root);
-  bindLoadedConfigurationSource(config, source);
-  if (!cacheMatches(cached, loaded.source_digest))
-    configCache.set(root, { source_digest: loaded.source_digest, config });
   assertProjectUpgradeInactive(access);
   assertCondition(
     recheckRuntimeConfigurationSelection(access, selection),
     'runtime configuration source changed during its read.',
   );
-  capturedConfigurationBindings.set(
-    config,
-    Object.freeze({ repository_root: root, source, source_digest: loaded.source_digest }),
-  );
-  return config;
+  return { config, source, source_digest: loaded.source_digest };
 }
 
 interface RuntimeConfigurationSelection {
@@ -1750,7 +1799,7 @@ function isProjectUpgradeDatabaseStagingName(name: string): boolean {
   return name.startsWith('.upgrade-') && name.endsWith('.sqlite');
 }
 
-function hasProjectUpgradeStagingEvidence(access: SafeRepositoryAccess): boolean {
+function hasProjectUpgradeStagingEvidence(access: SafeRepositoryAccess | SafeRepositoryObservation): boolean {
   const projectStaging =
     access.fileExists('.vida', 'project upgrade staging directory') &&
     access.listFiles('.vida', 'project upgrade staging directory').some(isProjectUpgradeStagingName);
@@ -1761,7 +1810,7 @@ function hasProjectUpgradeStagingEvidence(access: SafeRepositoryAccess): boolean
   return projectStaging || databaseStaging;
 }
 
-function hasProjectUpgradeOutputEvidence(access: SafeRepositoryAccess): boolean {
+function hasProjectUpgradeOutputEvidence(access: SafeRepositoryAccess | SafeRepositoryObservation): boolean {
   if (!access.fileExists('.vida', 'project upgrade output directory')) return false;
   const entries = access.listFiles('.vida', 'project upgrade output directory');
   // A lone admission gate is legacy reader control. Any other entry keeps the guarded probes.
@@ -1777,7 +1826,9 @@ function hasProjectUpgradeOutputEvidence(access: SafeRepositoryAccess): boolean 
   return publishedInstructions || hasProjectUpgradeStagingEvidence(access);
 }
 
-function selectRuntimeConfigurationSource(access: SafeRepositoryAccess): RuntimeConfigurationSelection {
+function selectRuntimeConfigurationSource(
+  access: SafeRepositoryAccess | SafeRepositoryObservation,
+): RuntimeConfigurationSelection {
   if (!access.fileExists(PROJECT_ACTIVATION_PATH, 'project activation')) {
     assertCondition(
       !hasProjectUpgradeOutputEvidence(access),
@@ -1811,7 +1862,7 @@ function selectedRuntimeConfigurationSource(access: SafeRepositoryAccess): Runti
 }
 
 function recheckRuntimeConfigurationSelection(
-  access: SafeRepositoryAccess,
+  access: SafeRepositoryAccess | SafeRepositoryObservation,
   selection: RuntimeConfigurationSelection,
 ): boolean {
   if (selection.source === CONFIG_FILE)
@@ -1825,7 +1876,7 @@ function recheckRuntimeConfigurationSelection(
 }
 
 function readLegacyRuntimeConfiguration(
-  access: SafeRepositoryAccess,
+  access: SafeRepositoryAccess | SafeRepositoryObservation,
   root: string,
   cached: CachedConfig | undefined,
 ): {
@@ -1839,12 +1890,12 @@ function readLegacyRuntimeConfiguration(
     source_digest: sourceDigest,
     config: cacheMatches(cached, sourceDigest)
       ? cached!.config
-      : validateRuntimeConfig(parseRuntimeConfigDocument(raw), root),
+      : validateRuntimeConfigWithAccess(parseRuntimeConfigDocument(raw), root, CONFIG_FILE, access),
   };
 }
 
 function readProjectRuntimeConfiguration(
-  access: SafeRepositoryAccess,
+  access: SafeRepositoryAccess | SafeRepositoryObservation,
   root: string,
   selection: RuntimeConfigurationSelection,
   cached: CachedConfig | undefined,
@@ -1900,7 +1951,7 @@ function assertProjectInputIdentity(
 }
 
 function assertProjectOutputClosure(
-  access: SafeRepositoryAccess,
+  access: SafeRepositoryAccess | SafeRepositoryObservation,
   outputs: readonly ProjectActivationOutput[],
   preparedArtifacts: ReturnType<typeof validateProjectInitializationReceipt>['prepared_artifacts'],
 ): void {
@@ -1926,7 +1977,7 @@ function assertProjectOutputClosure(
 }
 
 /** Cooperative read barrier shared by configuration and direct storage readers. */
-export function assertProjectUpgradeInactive(access: SafeRepositoryAccess): void {
+export function assertProjectUpgradeInactive(access: SafeRepositoryAccess | SafeRepositoryObservation): void {
   assertCondition(
     !access.fileExists(PROJECT_UPGRADE_OPERATION_PATH, 'active project upgrade'),
     'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',

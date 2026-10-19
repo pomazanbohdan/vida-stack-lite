@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawnSync, type SpawnSyncOptions } from 'node:child_process';
+import { spawn, spawnSync, type SpawnSyncOptions } from 'node:child_process';
 import {
   linkSync,
   mkdirSync,
@@ -11,6 +11,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
+import * as fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -25,6 +26,7 @@ import {
   findNpmCli,
   pinnedEnvironment,
   readPin,
+  resolvePinnedBun,
   runPinnedBun,
   standaloneEnvironment,
   standaloneRuntime,
@@ -109,6 +111,40 @@ test('one pin owns the checked package metadata', () => {
   assert.match(pin, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
   assert.equal(Bun.version, pin, 'toolchain tests must run under the selected pinned Bun');
   assert.doesNotThrow(() => checkManifest(path.resolve(import.meta.dirname, '..'), pin));
+});
+
+test('direct CLI entrypoint handles idempotent pin sync and an expired launch deadline', () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const entry = path.join(root, 'bin/bun.ts');
+  const manifest = path.join(root, 'package.json');
+  const before = readFileSync(manifest, 'utf8');
+  assert.doesNotThrow(() => checkManifest(root, readPin(root)));
+
+  const sync = spawnSync(process.execPath, [entry, '--sync-pin'], {
+    cwd: root,
+    encoding: 'utf8',
+    windowsHide: true,
+    timeout: 5_000,
+  });
+  assert.equal(sync.error, undefined);
+  assert.equal(sync.signal, null);
+  assert.equal(sync.status, 0, sync.stderr);
+  assert.equal(sync.stdout.trim(), 'Bun manifest mirrors already current.');
+  assert.equal(readFileSync(manifest, 'utf8'), before, 'the idempotent CLI branch must preserve Source bytes');
+
+  const expired = spawnSync(process.execPath, [entry, '--version'], {
+    cwd: root,
+    encoding: 'utf8',
+    windowsHide: true,
+    timeout: 5_000,
+    env: { ...process.env, VIDA_PINNED_COMMAND_DEADLINE_MS: String(Date.now() - 1_000) },
+  });
+  assert.equal(expired.error, undefined);
+  assert.equal(expired.signal, null);
+  assert.equal(expired.status, 1);
+  assert.match(expired.stderr, /Execution budget exhausted before child launch/);
+  assert.equal(expired.stdout, '');
+  assert.equal(readFileSync(manifest, 'utf8'), before, 'the rejected CLI launch must preserve Source bytes');
 });
 
 test('embedded runtime markers select one package root and strip loader options before wrapper dispatch', () => {
@@ -212,6 +248,25 @@ test('embedded runtime rejects partial or mismatched selectors before spawning',
       }),
     /Embedded package identity differs/,
   );
+  writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({ name: 'vida-agent', packageManager: `bun@${pin}`, engines: { bun: pin } }),
+  );
+
+  const otherRoot = mkdtempSync(path.join(os.tmpdir(), 'runtime-bun-other-root-'));
+  temporaryRoots.add(otherRoot);
+  assert.throws(() => resolvePinnedBun({ env: valid, root: otherRoot }), /Embedded runtime package root differs/);
+  assert.throws(
+    () => resolvePinnedBun({ env: valid, executable: differentExecutable }),
+    /Embedded runtime executable differs/,
+  );
+
+  writeFileSync(path.join(root, '.bun-version'), '99.0.0\n');
+  writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({ name: 'vida-agent', packageManager: 'bun@99.0.0', engines: { bun: '99.0.0' } }),
+  );
+  assert.throws(() => standaloneRuntime(valid), /Embedded runtime pin differs/);
 });
 
 test('explicit synchronization preserves other settings and is idempotent', () => {
@@ -232,6 +287,107 @@ test('explicit synchronization preserves other settings and is idempotent', () =
   });
   assert.equal(syncPin(root), false);
   assert.equal(readFileSync(file, 'utf8'), bytes);
+});
+
+test('sync rejects a non-regular package manifest before creating replacement state', () => {
+  const { root } = fixture();
+  const file = path.join(root, 'package.json');
+  rmSync(file);
+  mkdirSync(file);
+
+  assert.throws(() => syncPin(root), { message: 'Bun manifest must be a regular file.' });
+  assert.deepEqual(readdirSync(root).sort(), ['.bun-version', 'package.json']);
+  assert.deepEqual(readdirSync(file), [], 'the rejected manifest directory remains untouched');
+});
+
+test('sync closes its staged descriptor and removes the stage when fsync fails', () => {
+  const { root } = fixture();
+  const manifestPath = path.join(root, 'package.json');
+  const originalManifest = readFileSync(manifestPath, 'utf8');
+  writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
+  const failure = new Error('injected fsync failure');
+  let descriptor: number | undefined;
+  const sync = spyOn(fs, 'fsyncSync').mockImplementation((openedDescriptor) => {
+    descriptor = openedDescriptor;
+    assert.equal(fs.fstatSync(openedDescriptor).isFile(), true, 'the real staged descriptor is open');
+    const stagedName = readdirSync(root).find((name) => name.startsWith('.bun-pin-'));
+    assert.ok(stagedName, 'the staged manifest exists while its descriptor is open');
+    const stagedPath = path.join(root, stagedName);
+    assert.equal(
+      (JSON.parse(readFileSync(stagedPath, 'utf8')) as PackageManifest).packageManager,
+      'bun@9.8.7',
+      'the real staged bytes contain the intended pin before fsync fails',
+    );
+    throw failure;
+  });
+
+  try {
+    assert.throws(
+      () => syncPin(root),
+      (error) => error === failure,
+    );
+  } finally {
+    sync.mockRestore();
+  }
+
+  assert.equal(readFileSync(manifestPath, 'utf8'), originalManifest, 'the published manifest remains unchanged');
+  assert.deepEqual(readdirSync(root).sort(), ['.bun-version', 'package.json'], 'the stage was removed');
+  const closedDescriptor = descriptor;
+  assert.ok(closedDescriptor !== undefined, 'syncPin acquired the real stage descriptor');
+  assert.throws(() => fs.fstatSync(closedDescriptor), { code: 'EBADF' }, 'finally closed the staged descriptor');
+});
+
+test('sync rejects a changed manifest identity after staging and removes the stage', () => {
+  const { root } = fixture();
+  const manifestPath = path.join(root, 'package.json');
+  const originalManifest = readFileSync(manifestPath, 'utf8');
+  writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
+  const originalLstat = fs.lstatSync;
+  let manifestStats = 0;
+  const stat = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+    const observed = originalLstat(...args);
+    if (observed === undefined) return observed;
+    if (String(args[0]) !== manifestPath || ++manifestStats !== 2) return observed;
+
+    const stagedName = readdirSync(root).find((name) => name.startsWith('.bun-pin-'));
+    assert.ok(stagedName, 'the real staged file exists at final identity revalidation');
+    assert.equal(
+      (JSON.parse(readFileSync(path.join(root, stagedName), 'utf8')) as PackageManifest).packageManager,
+      'bun@9.8.7',
+    );
+    const changedIdentity = Object.create(observed) as typeof observed;
+    const changedInode = typeof observed.ino === 'bigint' ? observed.ino + 1n : observed.ino + 1;
+    Reflect.set(changedIdentity, 'ino', changedInode);
+    return changedIdentity;
+  }) as typeof fs.lstatSync);
+
+  try {
+    assert.throws(() => syncPin(root), {
+      message: 'Bun pin or manifest changed during synchronization; retry against the current files.',
+    });
+  } finally {
+    stat.mockRestore();
+  }
+
+  assert.equal(manifestStats, 2, 'the changed identity was injected only at final revalidation');
+  assert.equal(readFileSync(manifestPath, 'utf8'), originalManifest, 'syncPin did not replace the manifest');
+  assert.deepEqual(readdirSync(root).sort(), ['.bun-version', 'package.json'], 'the staged file was removed');
+});
+
+test('sync rejects a symlink manifest without changing its target', () => {
+  if (process.platform !== 'linux') return;
+  const { root, pin } = fixture();
+  const manifest = path.join(root, 'package.json');
+  const target = path.join(root, 'retained-manifest.json');
+  const original = readFileSync(manifest, 'utf8');
+  writeFileSync(target, original);
+  rmSync(manifest);
+  symlinkSync(target, manifest, 'file');
+
+  assert.throws(() => syncPin(root), /Bun manifest must be a regular file/);
+  assert.equal(readPin(root), pin);
+  assert.equal(readFileSync(target, 'utf8'), original);
+  assert.deepEqual(readdirSync(root).sort(), ['.bun-version', 'package.json', 'retained-manifest.json']);
 });
 
 test('Linux sync rejects a package root reached through a real directory symlink', () => {
@@ -422,6 +578,76 @@ test('default Bun host qualifies its actual executable before PATH and rejects a
     [[process.execPath, ['--version']]],
   );
   assertVersionProbe(calls[0], root, { PATH: '' });
+});
+
+test('Windows PATH resolution filters PATHEXT to supported executable suffixes', () => {
+  const { root, pin } = fixture();
+  const directory = path.join(root, 'windows-path');
+  const missing = path.join(root, 'missing-windows-path');
+  mkdirSync(directory);
+  mkdirSync(path.join(directory, 'bun.COM'));
+  writeFileSync(path.join(root, 'bun.COM'), 'empty-path decoy');
+  writeFileSync(path.join(directory, 'bun.CMD'), 'unsupported shell command');
+  const executable = path.join(directory, 'bun.EXE');
+  writeFileSync(executable, 'fixture Windows Bun');
+  const pathValue = `${missing}${path.delimiter}${path.delimiter}"${directory}"`;
+
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  assert.ok(platform?.configurable, 'the platform override must be restorable');
+  Object.defineProperty(process, 'platform', { ...platform, value: 'win32' });
+  try {
+    const calls: LauncherCall[] = [];
+    const resolved = resolvePinnedBun({
+      root,
+      env: { Path: pathValue, PATHEXT: '.cmd;.COM;.EXE' },
+      node: '/fixture-node',
+      spawn(command, argv, options) {
+        calls.push({ command, argv, options });
+        return success(pin);
+      },
+    });
+
+    assert.equal(resolved, realpathSync(executable));
+    assert.equal(calls.length, 1, 'a matching PATHEXT executable should avoid npm resolution');
+    assertVersionProbe(calls[0], root, { Path: pathValue, PATHEXT: '.cmd;.COM;.EXE' });
+
+    const defaultExtensionCalls: LauncherCall[] = [];
+    assert.equal(
+      resolvePinnedBun({
+        root,
+        env: { Path: pathValue },
+        node: '/fixture-node',
+        spawn(command, argv, options) {
+          defaultExtensionCalls.push({ command, argv, options });
+          return success(pin);
+        },
+      }),
+      realpathSync(executable),
+    );
+    assert.equal(defaultExtensionCalls.length, 1, 'the default PATHEXT should find the packaged executable');
+    assertVersionProbe(defaultExtensionCalls[0], root, { Path: pathValue });
+
+    const fallbackCalls: LauncherCall[] = [];
+    assert.equal(
+      resolvePinnedBun({
+        root,
+        env: {},
+        node: '/fixture-node',
+        npmCli: '/fixture-npm-cli.js',
+        spawn(command, argv, options) {
+          fallbackCalls.push({ command, argv, options });
+          return fallbackCalls.length === 1 ? success('/fixture/resolved-bun') : success(pin);
+        },
+      }),
+      '/fixture/resolved-bun',
+    );
+    assert.equal(fallbackCalls.length, 2, 'a missing PATH should use npm and verify its exact Bun version');
+    assert.equal(fallbackCalls[0]!.command, '/fixture-node');
+    assert.equal(fallbackCalls[0]!.argv[0], '/fixture-npm-cli.js');
+    assertVersionProbe(fallbackCalls[1], root, {});
+  } finally {
+    Object.defineProperty(process, 'platform', platform);
+  }
 });
 
 test.each([
@@ -946,6 +1172,25 @@ test('malformed optional command durations reject before any spawn or version pr
   }
 });
 
+test('an expired inherited deadline rejects before invoking the child launcher', () => {
+  let launched = false;
+  assert.throws(
+    () =>
+      boundedSpawnSync(
+        () => {
+          launched = true;
+          return { status: 0 };
+        },
+        'fixture',
+        [],
+        { env: { VIDA_PINNED_COMMAND_DEADLINE_MS: String(Date.now() - 1_000) } },
+        'expired inherited deadline',
+      ),
+    /Execution budget exhausted before child launch/,
+  );
+  assert.equal(launched, false);
+});
+
 test('custom child environment cannot erase an inherited finite or expired host deadline', () => {
   const moduleUrl = new URL('../bin/bun.ts', import.meta.url).href;
   for (const spent of [false, true]) {
@@ -1014,6 +1259,90 @@ test('timeout cleanup preserves successful, failed and unknown command observati
   assert.equal(thrown.cleanupAttempted, true);
   assert.equal(thrown.cleanupOutcome, 'failed');
   assert.equal(thrown.cleanupErrorCode, 'EACCES');
+
+  const missingPid = boundedSpawnSync(
+    () => ({ status: null, error: systemError('ETIMEDOUT') }),
+    'fixture',
+    [],
+    { env: {} },
+    'timeout without a PID',
+  );
+  assert.equal(missingPid.timedOut, true);
+  assert.equal(missingPid.cleanupAttempted, false);
+  assert.equal(missingPid.cleanupOutcome, 'unknown');
+  assert.equal(commandOutcomeUnknown(missingPid), true);
+});
+
+test('default POSIX timeout cleanup signals its ready detached fixture but remains unobserved', async () => {
+  if (process.platform !== 'linux') return;
+  const child = spawn(process.execPath, ['-e', "process.stdout.write('ready\\n'); setInterval(() => {}, 1000);"], {
+    detached: true,
+    stdio: ['ignore', 'pipe', 'ignore'],
+  });
+  assert.ok(child.pid);
+  assert.ok(child.stdout);
+  const pid = child.pid;
+  const exit = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve) => {
+    child.once('exit', (code, signal) => resolve({ code, signal }));
+  });
+  const ready = new Promise<string>((resolve, reject) => {
+    child.stdout!.once('data', (chunk: Buffer | string) => resolve(Buffer.isBuffer(chunk) ? chunk.toString() : chunk));
+    child.once('error', reject);
+    child.once('exit', (code, signal) => reject(new Error(`fixture exited before readiness: ${code}/${signal}`)));
+  });
+
+  try {
+    assert.equal(await ready, 'ready\n');
+    const result = boundedSpawnSync(
+      () => ({ status: null, pid, error: systemError('ETIMEDOUT') }),
+      'fixture',
+      [],
+      { env: {}, timeout: 100 },
+      'default POSIX cleanup',
+    );
+    assert.equal(result.cleanupAttempted, true);
+    assert.equal(result.cleanupOutcome, 'unknown', 'a sent SIGKILL is not terminal cleanup evidence');
+    assert.equal(commandOutcomeUnknown(result), true);
+    assert.deepEqual(await exit, { code: null, signal: 'SIGKILL' });
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      try {
+        process.kill(-pid, 'SIGKILL');
+      } catch {
+        /* The fixture may have exited while the failure path was running. */
+      }
+      await exit;
+    }
+  }
+}, 5_000);
+
+test('default Windows timeout cleanup retains taskkill spawn failure without targeting a process', () => {
+  if (process.platform !== 'linux') return;
+  const { root } = fixture();
+  const emptyPath = path.join(root, 'empty-command-path');
+  mkdirSync(emptyPath);
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  assert.ok(platform?.configurable);
+  const previousPath = process.env.PATH;
+  Object.defineProperty(process, 'platform', { ...platform, value: 'win32' });
+  process.env.PATH = emptyPath;
+  try {
+    const result = boundedSpawnSync(
+      () => ({ status: null, pid: 2_147_483_647, error: systemError('ETIMEDOUT') }),
+      'fixture',
+      [],
+      { env: {}, timeout: 100 },
+      'default Windows cleanup',
+    );
+    assert.equal(result.cleanupAttempted, true);
+    assert.equal(result.cleanupOutcome, 'failed');
+    assert.equal(result.cleanupErrorCode, 'ENOENT');
+    assert.equal(commandOutcomeUnknown(result), true);
+  } finally {
+    if (previousPath === undefined) delete process.env.PATH;
+    else process.env.PATH = previousPath;
+    Object.defineProperty(process, 'platform', platform);
+  }
 });
 
 test('cleanup keeps the report half of a case reserve and skips a spent allowance', () => {

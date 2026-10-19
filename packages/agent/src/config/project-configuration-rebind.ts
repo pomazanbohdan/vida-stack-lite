@@ -6,7 +6,7 @@ import type { AgentRuntimeConfig } from './runtime-config.js';
 import { projectConfigurationInputDigest } from './project-configuration.js';
 import { projectConfigurationRebindPath } from './project-paths.js';
 import type { ProjectInitializationReceipt } from './project-initialization-record.js';
-import type { SafeRepositoryAccess } from './safe-repository-access.js';
+import type { SafeRepositoryAccess, SafeRepositoryObservation } from './safe-repository-access.js';
 import { projectInitializationIdentityDigest } from './project-activation.js';
 
 const AjvConstructor = Ajv2020 as unknown as new (options: Record<string, unknown>) => {
@@ -67,7 +67,7 @@ function validateInputSet(value: ProjectConfigurationInputSet): void {
 }
 
 function readOperation(
-  access: SafeRepositoryAccess,
+  access: SafeRepositoryAccess | SafeRepositoryObservation,
   config: AgentRuntimeConfig,
   operationId: string,
 ): ConfigRebindOperation {
@@ -112,7 +112,7 @@ function valueWorkspaceId(value: string): string {
 
 /** Require either the initial activation image or the exact completed current-v1 config rebind. */
 export function assertCurrentProjectConfigurationBinding(
-  access: SafeRepositoryAccess,
+  access: SafeRepositoryAccess | SafeRepositoryObservation,
   config: AgentRuntimeConfig,
   inputDigest: string,
   receipt: ProjectInitializationReceipt,

@@ -6,7 +6,8 @@ import { Database } from 'bun:sqlite';
 import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import type { WorkItemSelection } from '../../src/config/runtime-config.ts';
-import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
+import { HostStateStore, openHostStateDatabase, type WorkIdentity } from '../../src/host-state.ts';
+import { loadProjectContext } from '../../src/config/project-context.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
@@ -35,6 +36,7 @@ import { validateActivationUse } from '../../src/research-decision.ts';
 import type { ObservedActivationUseWritePlan } from '../../src/research-decision.ts';
 import {
   MastraSessionLedger,
+  mastraLedgerStatus,
   PersistentSessionHandoffStore,
   openConfiguredMastraSessionLedger,
   openConfiguredSessionHandoffStore,
@@ -451,6 +453,38 @@ describe('persistent advisory session handoff', () => {
     expect(reopened.resume(context.work_id, context.attempt)).toEqual(snapshot);
   });
 
+  test('persists a complete failed wave as blocked across restart', async () => {
+    scratch = await mkdtemp(path.join(tmpdir(), 'session-failed-wave-'));
+    const active = store();
+    const prepared = active.prepare(selection('research', 'information_research'), context);
+    const issued = active.issueWave(context.work_id, context.attempt, prepared.version);
+    expect(issued.issuances.length).toBeGreaterThan(1);
+
+    let snapshot = issued.snapshot;
+    for (const [index, issuance] of issued.issuances.entries()) {
+      const action = snapshot.state.handoff.actions.find((entry) => entry.action_id === issuance.action_id);
+      if (!action) throw new Error(`issued action ${issuance.action_id} is missing from the current handoff`);
+      const complete = observed(snapshot, action, issuance.issue_id);
+      const failureSummary = 'The researcher reported a failed session outcome';
+      const outcome =
+        index === 0
+          ? {
+              ...complete,
+              status: 'reported_failed' as const,
+              summary: failureSummary,
+              session_result: { ...complete.session_result, output_digest: canonicalJsonDigest(failureSummary) },
+            }
+          : complete;
+      snapshot = active.report(context.work_id, context.attempt, snapshot.version, outcome);
+      if (index < issued.issuances.length - 1) expect(snapshot.resume_status).toBe('issued_outcome_uncertain');
+    }
+
+    expect(snapshot.resume_status).toBe('blocked');
+    expect(snapshot.state.handoff.status).toBe('blocked');
+    expect(snapshot.state.handoff.actions).toEqual([]);
+    expect(store().resume(context.work_id, context.attempt)).toEqual(snapshot);
+  });
+
   test.each(flows)('atomically issues each complete ready wave for %s', async (workflow, kind, intent) => {
     scratch = await mkdtemp(path.join(tmpdir(), 'session-state-'));
     const first = store();
@@ -657,6 +691,88 @@ describe('persistent advisory session handoff', () => {
 });
 
 describe('durable Mastra research exposure and invocation identity', () => {
+  test('absent optional Mastra receipts remain absent under read-only inspection', async () => {
+    scratch = await mkdtemp(path.join(tmpdir(), 'mastra-optional-reads-'));
+    const { database, instance, workId } = mastraLedger('missing-optional-receipts');
+    const binding = instance.sessionProducerBinding();
+    expect(binding).toMatchObject({
+      database,
+      host: instance.hostState,
+      repositoryRoot: root,
+      config,
+      workspaceId,
+    });
+    const project = loadProjectContext(root, config, config.repository.repository_id, config.projects[0]!.project_id);
+    const identity: WorkIdentity = {
+      repository_id: project.repository_id,
+      project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest,
+      work_id: workId,
+    };
+    expect(instance.readInitialSourceContinuationReceipt(identity, 1)).toBeNull();
+    expect(() => instance.readInitialSourceContinuationReceipt(identity, 0)).toThrow(
+      'initial-source receipt ProjectContext or attempt differs',
+    );
+
+    const actionId = 'a'.repeat(64);
+    const request = bridgeRequest({
+      actionId,
+      workflowId: 'information_research_light',
+      stageId: 'research_parallel',
+      assignmentIndex: 0,
+    });
+    const observation = mastraObservation(request, '77777777-7777-4777-8777-777777777777', 'missing-ref');
+    expect(instance.resume(workId, 1)).toBeNull();
+    expect(instance.currentSnapshot(workId)).toBeNull();
+    expect(() => instance.currentSnapshot('../foreign-work')).toThrow('session work ID is invalid');
+    expect(instance.preparedReadOnlyReplacement(workId, 1, actionId)).toBeNull();
+    expect(instance.replacementDispatch(workId, 1, actionId)).toBeNull();
+    expect(instance.replacementNativeHandle(workId, 1, actionId)).toBeNull();
+    expect(instance.synthesisCorrection(workId, 1, actionId)).toBeNull();
+    expect(instance.retrieveReportedObservation(workId, 1, observation)).toBeNull();
+
+    const tables = database
+      .query<{ name: string }, []>("SELECT name FROM sqlite_master WHERE type='table'")
+      .all()
+      .map((row) => row.name);
+    expect(tables).not.toContain('agent_host_readonly_dispatch_repair');
+    expect(tables).not.toContain('agent_host_readonly_dispatch_activation');
+    expect(tables).not.toContain('agent_host_synthesis_observation_correction');
+  });
+
+  test('Mastra resume status distinguishes blocked, uncertain, completed-failed and ready outcomes', () => {
+    const request = bridgeRequest({
+      actionId: 'e'.repeat(64),
+      workflowId: 'information_research_light',
+      stageId: 'research_parallel',
+      assignmentIndex: 0,
+    });
+    const issueId = '66666666-6666-4666-8666-666666666666';
+    const open = mastraState('resume-status-work', [request]);
+    expect(mastraLedgerStatus(open)).toBe('ready');
+    expect(mastraLedgerStatus({ ...open, step_id: null })).toBe('blocked');
+    expect(
+      mastraLedgerStatus({
+        ...open,
+        items: [{ request, issue_id: issueId, observation: null }],
+      }),
+    ).toBe('issued_outcome_uncertain');
+
+    const complete = mastraObservation(request, issueId, 'resume-status-invocation');
+    expect(
+      mastraLedgerStatus({
+        ...open,
+        items: [{ request, issue_id: issueId, observation: complete }],
+      }),
+    ).toBe('ready_to_resume');
+    expect(
+      mastraLedgerStatus({
+        ...open,
+        items: [{ request, issue_id: issueId, observation: { ...complete, status: 'reported_failed' } }],
+      }),
+    ).toBe('blocked');
+  });
+
   test('keeps research preparation resumable until the one-way exposure barrier', async () => {
     scratch = await mkdtemp(path.join(tmpdir(), 'mastra-preparation-'));
     const { database, instance, workId } = mastraLedger('research-wave');

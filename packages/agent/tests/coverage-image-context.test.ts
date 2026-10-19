@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'bun:test';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {
@@ -71,4 +71,22 @@ test('image context selection rejects unbound roots, incomplete inputs and conte
   const binding = coverageImageTestContext(root, runId, false, captured, environment);
   captured.input_bytes[`${repositoryTestContextInputPrefix}/AGENTS.md`] = Buffer.from('drift');
   await expectRejection(prepareCoverageImageTestContext(binding, captured), /input changed/u);
+});
+
+test('image context accounts for known empty test-output directories and rejects files within them', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'coverage-image-context-fixture-output-'));
+  roots.push(root);
+  const captured = inputs();
+  const binding = coverageImageTestContext(root, runId, false, captured, environment);
+  await prepareCoverageImageTestContext(binding, captured);
+  if (binding === null) throw new Error('missing context');
+
+  await mkdir(path.join(binding.root, '.planning/agent-flow'), { recursive: true });
+  await mkdir(path.join(binding.root, 'docs/agent-instructions/research/records'), { recursive: true });
+  await assertCoverageImageTestContext(binding, captured);
+
+  const unexpected = path.join(binding.root, 'docs/agent-instructions/research/records/unexpected.json');
+  await writeFile(unexpected, '{"unexpected":true}\n');
+  await expectRejection(assertCoverageImageTestContext(binding, captured), /layout changed/u);
+  expect(await readFile(unexpected, 'utf8')).toBe('{"unexpected":true}\n');
 });

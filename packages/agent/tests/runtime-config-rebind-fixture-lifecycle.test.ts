@@ -196,12 +196,13 @@ test('continuation helper import defers repository configuration loading until i
   ).href;
   const configUrl = pathToFileURL(path.resolve(import.meta.dirname, '../src/config/runtime-config.ts')).href;
   const historicalUrl = pathToFileURL(path.resolve(import.meta.dirname, 'helpers/historical-research-fixture.ts')).href;
+  const frontierUrl = pathToFileURL(path.resolve(import.meta.dirname, 'helpers/configured-frontier-fixture.ts')).href;
   const contextUrl = pathToFileURL(path.resolve(import.meta.dirname, 'configured-context.ts')).href;
   writeFileSync(
     path.join(root, 'import.test.ts'),
     `
       import { expect, spyOn, test } from 'bun:test';
-      import { existsSync, readFileSync, rmSync } from 'node:fs';
+      import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
       import path from 'node:path';
       const config = await import(${JSON.stringify(configUrl)});
       const sentinel = Error('repository configuration must be explicitly requested');
@@ -214,6 +215,7 @@ test('continuation helper import defers repository configuration loading until i
       });
       const helper = await import(${JSON.stringify(helperUrl)});
       const historical = await import(${JSON.stringify(historicalUrl)});
+      const frontier = await import(${JSON.stringify(frontierUrl)});
       const context = await import(${JSON.stringify(contextUrl)});
       test('import has no repository configuration effect', () => {
         let fixtureRoot;
@@ -221,16 +223,22 @@ test('continuation helper import defers repository configuration loading until i
           expect(loads).toBe(0);
           expect(() => helper.continuationFixtureConfig()).toThrow(sentinel);
           expect(loads).toBe(1);
+          const continuationRoot = lastRoot;
           const sourceRoot = context.configuredTestRepositoryRoot();
           expect(loads).toBe(1);
           expect(() => historical.createHistoricalResearchFixture()).toThrow(sentinel);
           expect(loads).toBe(2);
-          expect(lastRoot).not.toBe(sourceRoot);
-          expect(existsSync(path.join(lastRoot, 'AGENTS.md'))).toBe(true);
-          expect(readFileSync(path.join(lastRoot, 'agent-runtime.config.v1.yaml'))).toEqual(
+          expect(continuationRoot).not.toBe(sourceRoot);
+          expect(existsSync(path.join(continuationRoot, 'AGENTS.md'))).toBe(true);
+          expect(readFileSync(path.join(continuationRoot, 'agent-runtime.config.v1.yaml'))).toEqual(
             readFileSync(path.join(sourceRoot, 'agent-runtime.config.v1.yaml')),
           );
-          fixtureRoot = lastRoot;
+          fixtureRoot = continuationRoot;
+          loader.mockRestore();
+          expect(helper.continuationFixtureConfig().repository.repository_id).toBe('vida-agent');
+          expect(frontier.configuredFrontierRepairFixture(true).prewriterBinding.repositoryRoot).toBe(fixtureRoot);
+          writeFileSync(path.join(fixtureRoot, '.writable-fixture-probe'), 'writable');
+          rmSync(path.join(fixtureRoot, '.writable-fixture-probe'));
         } finally {
           loader.mockRestore();
           if (fixtureRoot) rmSync(fixtureRoot, { recursive: true });

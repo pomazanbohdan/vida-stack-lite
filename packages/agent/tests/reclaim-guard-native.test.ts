@@ -190,14 +190,13 @@ linuxTest(
   },
 );
 
-const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const workspaceTemp = path.join(workspaceRoot, '.tmp');
+const packageTemp = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.tmp');
 
 linuxTest(
-  'reclaims a stale native Linux lock on the workspace filesystem only with valid stale dead-owner guard evidence',
+  'reclaims a stale native Linux lock in writable package scratch only with valid stale dead-owner guard evidence',
   () => {
-    mkdirSync(workspaceTemp, { recursive: true });
-    exerciseNativeReclaimGuard(workspaceTemp, 'vida-reclaim-guard-native-');
+    mkdirSync(packageTemp, { recursive: true });
+    exerciseNativeReclaimGuard(packageTemp, 'vida-reclaim-guard-native-');
   },
 );
 

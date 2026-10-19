@@ -9,7 +9,10 @@ import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.
 
 type SafeAccessSimulationModule = Pick<
   typeof import('../src/config/safe-repository-access.ts'),
-  'requireSafeRepositoryAccess' | 'detectSafeRepositoryAccess' | 'safeRepositoryProviderAvailable'
+  | 'requireSafeRepositoryAccess'
+  | 'detectSafeRepositoryAccess'
+  | 'safeRepositoryProviderAvailable'
+  | 'SafeRepositoryLockContentionError'
 >;
 
 type NativeSimulationBinding = {
@@ -48,7 +51,9 @@ function isSafeAccessSimulationModule(value: unknown): value is SafeAccessSimula
     'detectSafeRepositoryAccess' in value &&
     typeof value.detectSafeRepositoryAccess === 'function' &&
     'safeRepositoryProviderAvailable' in value &&
-    typeof value.safeRepositoryProviderAvailable === 'boolean'
+    typeof value.safeRepositoryProviderAvailable === 'boolean' &&
+    'SafeRepositoryLockContentionError' in value &&
+    typeof value.SafeRepositoryLockContentionError === 'function'
   );
 }
 
@@ -962,7 +967,8 @@ if (!isolated && !underStryker) {
         removeRaceActive = false;
       }
       expect(removeRaceAttempted).toBe(true);
-      expect(removeRaceError).toMatchObject({ code: 'EEXIST' });
+      expect(removeRaceError).toBeInstanceOf(linuxSafe.SafeRepositoryLockContentionError);
+      expect(removeRaceError).toMatchObject({ code: 'SAFE_REPOSITORY_LOCK_CONTENTION' });
       expect(access.fileExists('data/race.txt', 'race file')).toBe(false);
 
       expect(access.withExclusiveLock('data/sync.lock', 'sync lock', () => 'sync-result')).toBe('sync-result');

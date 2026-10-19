@@ -92,10 +92,12 @@ test('staged witness inspects actual completed persistence without producing or 
     });
     let engine: SessionBridgeSnapshot = await bridge.start(sourceScope);
     await expectRejected(createStagedRuntimeWitness(input), /identity|checksum|successful/);
+    const fixtureEvidenceRefs: string[] = ['local://fixture/witness'];
     while (engine.status === 'suspended') {
       let journal = ledger.resume('work', 1);
       if (!journal) throw new Error('Expected the issued fixture journal');
       journal = ledger.issueWave('work', 1, journal.version);
+      if (!journal) throw new Error('Expected the issued fixture wave');
       const taskWorkflow = config.workflows.task_execution;
       if (!taskWorkflow) throw new Error('Expected the configured task workflow');
       for (const item of journal.state.items) {
@@ -110,16 +112,16 @@ test('staged witness inspects actual completed persistence without producing or 
                 schema: 'VidaValidatorVerdict/v1',
                 verdict: 'pass',
                 findings: [],
-                evidence_refs: ['local://fixture/witness'],
+                evidence_refs: fixtureEvidenceRefs,
               })
             : stage.kind === 'test'
               ? JSON.stringify({
                   schema: 'VidaTesterVerdict/v1',
                   status: 'pass',
-                  evidence_refs: ['local://fixture/witness'],
+                  evidence_refs: fixtureEvidenceRefs,
                 })
               : 'Actual fixture observation';
-        journal = ledger.report('work', 1, journal.version, {
+        const observation = {
           schema: 'VidaSessionObservation/v1',
           action_id: item.request.action_id,
           issue_id: item.issue_id,
@@ -128,8 +130,19 @@ test('staged witness inspects actual completed persistence without producing or 
           status: 'reported_complete',
           summary,
           output_digest: canonicalJsonDigest(summary),
-          evidence_refs: ['local://fixture/witness'],
-        });
+          evidence_refs: fixtureEvidenceRefs,
+        } as const;
+        const currentJournal = journal;
+        if (!currentJournal) throw new Error('Expected the issued fixture wave');
+        const sourceScopeDigest = sourceScope.digest;
+        expect(() => ledger!.report('work', 1, currentJournal.version, observation)).toThrow(
+          'read-only observation cannot rebase changed source',
+        );
+        expect(ledger.resume('work', 1)).toEqual(currentJournal);
+        expect(sourceScope.digest).toBe(sourceScopeDigest);
+        journal = ledger.report('work', 1, journal.version, observation, sourceScope);
+        if (!journal) throw new Error('Expected the reported fixture journal');
+        expect(sourceScope.digest).toBe(sourceScopeDigest);
       }
       if (!engine.step_id) throw new Error('Expected the suspended fixture step');
       const observations = journal.state.items.map((item) => {

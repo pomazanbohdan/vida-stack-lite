@@ -1952,8 +1952,15 @@ The generated contour JSON/Markdown is the single progress projection. Do not ad
 a manual percentage ledger or combine diagnostic kills into a passing score.
 For data-only Source, retain the producer's exact zero function/branch counters
 and represent absent function complexity/entry CRAP as null with an inventory N/A
-label. This observation is not a reviewed scoped CRAP exemption and does not
-satisfy the unchanged positive-denominator maximum or complete-triple gates.
+label. Coverage-first suppresses repeat selection only for the pinned
+`bun-fs-safe-attestation` source hash when an accepted report binds the full test
+selection, includes `tests/fs-safe-attestation.test.ts`'s zero-function/branch
+instrumentation regression, and records positive exact line/statement coverage.
+That N/A is selection evidence, never a numeric maximum or complete-triple
+closure; the contour remains open for its separate applicability and mutation
+evidence. All other zero denominators stay open. This is not a reviewed scoped
+CRAP exemption and does not satisfy the unchanged positive-denominator numeric
+maximum or complete-triple gates.
 Build/install run no test suites. Per-case5s defaults and the existing independent
 coverage/mutation envelopes remain unchanged.
 
@@ -1982,10 +1989,11 @@ During coverage first, use `bun run test:contours --unclosed --coverage-only`,
 or `--all --coverage-only` for an explicitly requested complete coverage pass.
 Add `--plan` to inspect selection without launching tests. The coverage-only route
 executes no frozen or mutation lane and reads no frozen budget lineage. Its
-`--unclosed` skips only accepted, selection-complete, report-bound exact numeric
-coverage recorded at the same commit. Partial, unbound, failed or historical
-observations cannot suppress a contour. Zero-denominator data stays separate N/A
-and cannot silently become an exact numeric milestone.
+`--unclosed` skips accepted, selection-complete, report-bound exact numeric
+coverage recorded at the same commit. The one reviewed data-only Source scope
+uses the separate N/A rules above; it is never promoted to an exact numeric
+milestone. Partial, unbound, failed or historical observations cannot suppress
+a contour.
 
 The existing commands without `--coverage-only` retain the full three-lane
 sequence and same-commit complete-triple `--unclosed` selection. They are reserved

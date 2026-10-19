@@ -4,7 +4,12 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, statSync, statfsSyn
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
-import { contourAttemptMaximum, mergeContourProgress, selectContourCampaign } from './contour-progress.ts';
+import {
+  contourAttemptMaximum,
+  contourCoverageSatisfied,
+  mergeContourProgress,
+  selectContourCampaign,
+} from './contour-progress.ts';
 import { readContourArtifact, runContourProgressWithNative } from './contour-progress-cli.ts';
 import { fsSafeApplicabilityReview, latestScopedCrapBudgetRef } from './crap-gate.ts';
 import { executeMutationCommand, mutationToolInputs, type MutationProcessResult } from './mutation-evidence.ts';
@@ -672,7 +677,8 @@ async function main(): Promise<void> {
               row.contour === partition.name &&
               (applicabilityNA
                 ? row.lane === 'crap-applicability' && row.accepted
-                : row.lane === (lane === 'mutation' ? 'native-mutation' : lane) && contourAttemptMaximum(row)),
+                : row.lane === (lane === 'mutation' ? 'native-mutation' : lane) &&
+                  (lane === 'coverage' ? contourCoverageSatisfied(row) : contourAttemptMaximum(row))),
           );
           if (state === 'completed' && !stageSatisfied) return { state: 'failed', detail: stageDirectory, report };
           return { state, detail: stageDirectory, report };
