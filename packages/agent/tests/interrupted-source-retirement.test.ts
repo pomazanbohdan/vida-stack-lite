@@ -1536,30 +1536,36 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
   const f = await fixture({ deadline, inProcessPreparation: true });
   let database: Database | undefined;
   const repair = (mode: 'inspect' | 'plan' | 'apply' | 'resume' | 'restore', actor?: string) =>
-    runWorkStateRepair([
-      '--kind',
-      'work-state',
-      '--authority',
-      'correction-generation',
-      '--mode',
-      mode,
-      '--project-root',
-      f.root,
-      '--repair-id',
-      'interrupted-source-defaults',
-      ...(actor ? ['--actor', actor] : []),
-    ]);
+    traceFixtureValue(traceFixturePhases, `repair-${mode}`, () =>
+      runWorkStateRepair([
+        '--kind',
+        'work-state',
+        '--authority',
+        'correction-generation',
+        '--mode',
+        mode,
+        '--project-root',
+        f.root,
+        '--repair-id',
+        'interrupted-source-defaults',
+        ...(actor ? ['--actor', actor] : []),
+      ]),
+    );
   try {
-    database = openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace);
-    f.admission('readonly-independent', 'AGENTS.md', 'synthetic-readonly-owner');
-    for (const id of ['unknown-readonly-a', 'unknown-readonly-b']) {
-      const pending = await f.laterWriter(id, id + '.txt', { readonly: true });
-      const pendingJournal = requireValue(pending.journal, 'readonly pending journal'),
-        pendingItem = requireValue(pendingJournal.state.items[0], 'readonly pending action');
-      expect(pendingItem.issue_id).toBeTruthy();
-      expect(pendingItem.observation).toBeNull();
-      expect(pendingItem.host_reservation).toBeUndefined();
-    }
+    database = traceFixtureValue(traceFixturePhases, 'repair-host-database-open', () =>
+      openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace),
+    );
+    traceFixtureValue(traceFixturePhases, 'repair-readonly-admission', () =>
+      f.admission('readonly-independent', 'AGENTS.md', 'synthetic-readonly-owner'),
+    );
+    const pending = await traceFixtureOperation(traceFixturePhases, 'repair-unknown-readonly-fixture', () =>
+      f.laterWriter('unknown-readonly-a', 'unknown-readonly-a.txt', { readonly: true }),
+    );
+    const pendingJournal = requireValue(pending.journal, 'readonly pending journal'),
+      pendingItem = requireValue(pendingJournal.state.items[0], 'readonly pending action');
+    expect(pendingItem.issue_id).toBeTruthy();
+    expect(pendingItem.observation).toBeNull();
+    expect(pendingItem.host_reservation).toBeUndefined();
     const db = requireValue(database, 'Host database');
     const hostBefore = f.store.readHostStateSnapshot(f.identity),
       currentWork = requireValue(hostBefore.work, 'owner Work state'),
@@ -1740,9 +1746,8 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
       afterRestoreReservation = requireValue(afterRestoreItem.host_reservation, 'restored reservation'),
       afterRestoreAuthorization = requireValue(afterRestoreReservation.authorization, 'restored authorization');
 
-    const retirement = await retireInterruptedSourceOwnerForSession(
-      requireValue(f.executionCapability, 'execution capability'),
-      {
+    const retirement = await traceFixtureOperation(traceFixturePhases, 'repair-public-retirement', () =>
+      retireInterruptedSourceOwnerForSession(requireValue(f.executionCapability, 'execution capability'), {
         identity: f.identity,
         attempt: 1,
         actionId: afterRestoreItem.request.action_id,
@@ -1762,7 +1767,7 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
           list_agents_ref: 'synthetic:list-agents:no-source-writers',
           active_source_writer_ids: [],
         },
-      },
+      }),
     );
     expect(retirement.attempt_receipt.attempt.status).toBe('uncertain');
     expect(retirement.attempt_receipt.attempt.result).toBeNull();

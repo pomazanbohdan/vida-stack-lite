@@ -11,7 +11,7 @@ auto = "disable"
 [test]
 root = "./tests"
 randomize = true
-seed = 20260817
+seed = 93
 coverage = false
 coverageReporter = ["text", "lcov"]
 coverageDir = "./coverage"

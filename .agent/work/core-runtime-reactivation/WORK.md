@@ -1754,3 +1754,52 @@ tooling project now uses the repository root as `rootDir`, matching its actual
 import closure; the same command passes with zero diagnostics across 198 files.
 Formatting and `git diff --check` also pass. This repairs the check's project
 boundary; it does not change the runtime contour result or establish coverage.
+
+### Current main-runtime-core retry preparation — 2026-10-19
+
+The latest exact stage before this correction is `contour-stage-oFGsLM`, run
+`7cdeb343-bf37-4f9f-b800-cbd22ef99f73`, on commit `f7056f9d94bda85404fbb7f93f3823e7d9aa9850`.
+It closed in 242.125 seconds with complete output capture, process-group closure,
+and an unchanged immutable image at
+`/workspace/.vida-quality-inputs/0765ea81816bbf8d262410a9cc91248372ef4373/repository`.
+Shard 1 passed 227 tests and 1,106 assertions in 170.847 seconds. Shard 2 ran
+13 cases and 223 assertions but failed the existing 60-second repair case at
+61.271 seconds and 30-second protected-session case at 31.901 seconds. The stage
+published no attributable coverage report; none of its partial output is F/L/S/B
+evidence. Preserve the receipts under `/workspace/contour-stage-oFGsLM` and its
+projection output under `/workspace/contour-stage-FbeQaw`.
+
+The 60-second repair test made two equivalent independent read-only journals.
+Only the first was used by the corruption/CAS scenario; the second repeated the
+same issue-id, null-observation and unreserved assertions. I removed that second
+fixture while retaining the unrelated-row before/after equality, journal
+contamination rejection, Host/ledger CAS checks, original unknown attempt and
+approval assertions, repair/resume/restore, and public retirement checks. The
+remaining independent fixture took 5.80–5.92 seconds in focused Bun traces. The
+updated repair test passed 1/1 with 45 assertions in 28.20 seconds under Bun's
+coverage flag. The protected-session case passed separately under that flag in
+23.11 seconds with 27 assertions. These are diagnostics, not merged coverage;
+the earlier full stage shows both can slow under the other shard's load.
+
+The existing two-shard assignment is retained. Its last exact run is faster than
+the one-run budget, while the prior serial estimate is about 405 seconds against
+the unchanged 330-second stage budget. To reduce overlap without filtering tests
+or increasing concurrency, I compared deterministic in-file order. A one-file
+Bun 1.4.3 run with the existing seed `20260817` passed 12 tests and 181
+assertions in 145.03 seconds. Bun CLI `--seed` does not override a seed loaded
+from `bunfig.toml`; a separate equivalent temporary config was therefore used
+to validate seed `93`. With that seed all 12 tests and 181 assertions passed in
+140.39 seconds, with the two timeout-sensitive cases ordered last (repair at
+position 11, protected-session at position 12). This is a single-order
+diagnostic, not proof of exact-stage timing. The tracked Bun seed is now `93` so
+the next immutable capture will use the measured order. Test selection,
+assertions, the 5-second default, explicit 60/30-second case limits, two-worker
+ceiling and shared producer budget are unchanged.
+
+The focused shard-eligibility test now passes 49/49 with 256 assertions after
+refreshing the selected test's pinned SHA-256. The tooling typecheck passes for
+198 files; Oxfmt and `git diff --check` pass. This Source is ready for a normal
+hooked commit/push. Then run exactly one new `main-runtime-core` coverage stage;
+accept only its complete, validated merged report. Historical exact coverage
+remains 16/45, while this active contour remains open until that report reaches
+F/L/S/B100. Do not launch CRAP, mutation or another contour in this cycle.
