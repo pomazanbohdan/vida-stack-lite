@@ -31,7 +31,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-exports | unknown | unknown | unknown | not imported | N/A: static exports | unknown | open / unknown |
 | bun-fs-safe-attestation | 0/0 · 4/4 · 4/4 · 0/0 | N/A: no callable functions (coverage inventory) | 7/7 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-service-operation-custody | 59/59 · 236/236 · 243/243 · 121/121 | 9 / 9 | 681/681 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
-| bun-host-state | unknown | unknown | unknown | coverage/failed/unknown-or-partial | open / unknown | unknown | open / unknown |
+| bun-host-state | 610/1128 · 2346/4967 · 2507/5297 · 2167/5640 | 279 / 15252 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-session-handoff | 198/277 · 533/877 · 593/959 · 408/791 | 29 / 870 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-runtime-facade | 23/23 · 89/89 · 103/103 · 96/96 | 9 / 9 | 311/311 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
 | bun-lifecycle-state | 29/29 · 184/184 · 193/193 · 129/129 | 21 / 21 | 521/877 (fail; raw runner Killed; unqualified) | BLOCKED | open / unknown | 21 / 21 | open / unknown |
@@ -682,6 +682,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | stage-outcome | contour-stage-2vD5np | 949be503433a13dd5237ac327f08a546b641ffb6 | 2026-10-19T21:52:21.194Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-2vD5np/publication-error.json |
 | stage-outcome | contour-stage-XVIwPe | 35445c4b17ca480361b047c6c9da16d0d8a09b23 | 2026-10-19T22:21:46.601Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-XVIwPe/publication-error.json |
 | stage-outcome | contour-stage-gK0sYn | b2f7c98efe6f155d612ee4e1739f4fcb2f43c2c3 | 2026-10-19T22:36:38.866Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-gK0sYn/publication-error.json |
+| coverage-outcome | 98cccdb6-c2c5-46d6-aa4b-fafa40e603cc | 4ae4a36e06038a36da923fa108dc0877af6a1047 | 2026-10-19T22:45:09.647Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/.vida-quality-inputs/047faa897251d32b0792e434d01e830f3935c5bc/repository/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/98cccdb6-c2c5-46d6-aa4b-fafa40e603cc.json |
+| coverage | 98cccdb6-c2c5-46d6-aa4b-fafa40e603cc | 4ae4a36e06038a36da923fa108dc0877af6a1047 | 2026-10-19T22:45:09.647Z | focused-diagnostic; owner accepted locally; selection bound | 610/1128 · 2346/4967 · 2507/5297 · 2167/5640 | /workspace/.vida-quality-inputs/047faa897251d32b0792e434d01e830f3935c5bc/repository/packages/agent/coverage/bun-unified/diagnostics/98cccdb6-c2c5-46d6-aa4b-fafa40e603cc.focused-coverage.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

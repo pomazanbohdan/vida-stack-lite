@@ -78,6 +78,43 @@ No cleanup, runtime/loader/DB cutover or consumer effect was performed.
 
 ### Latest host-state stage and measured presence-guard repair
 
+On4ae4a36, /workspace/contour-stage-F04pyx completes in201042.948ms, publishes
+the complete focused diagnostic and closes every native child. Both serial-file
+children pass: Host254tests/1802assertions in130.39s and stopped-source16tests/
+206assertions in194.29s,270tests total. Controller preparation/qualification now
+passes31006.491ms, complete/suspended chain cases7023.81/4172.49ms, under their
+unchanged60s/30s bounds. Source-only targeted timing is not substituted for these
+native coverage observations. The normal pre-publication hook passed formatting,
+strict521files and lint; the packet is on origin/main.
+
+Run98cccdb6-c2c5-46d6-aa4b-fafa40e603cc binds image
+/workspace/.vida-quality-inputs/047faa897251d32b0792e434d01e830f3935c5bc/repository,
+manifest SHAd92388a1f812acd3786e41611fd9b3cae11b69424e436e2b571d45eddfa21f96.
+SDK CI39336663887 attempt1/artifact12226952525 passed; ZIP SHA
+c63eba762657f2ba9afd7b8b0a3f96496048cf5feca7a1aaa8d6e4390955feab matches transport.
+Capture/group/boot/image checks pass. The paired coverage operation independently
+remains BLOCKED: complete counters are F610/1128,L2346/4967,S2507/5297,B2167/5640,
+not exact100. The generated projection records this complete result; historical
+exact closure remains16/45. Frozen/CRAP and mutation gates remain deferred,
+unchanged and unqualified; a completed stage is not contour closure.
+
+Next work is the uncovered behavior in this same contour. The existing report's
+function inventory yields518unexecuted functions/closures in135outer owners.
+The retained derivative host-uncovered-plan.json binds that report and its source/
+test fingerprints without another AST/scan/hash pass. Largest missing groups are
+authority repair39, stored-work history32, completed-source-report recovery23,
+corrective execution20 and delivered continuation17. First reconcile existing
+maintained tests/helpers with these groups; avoid copying their scenarios or
+adding an unreviewed broad selection. Preserve the complete three-Source scope,
+resource review, deadlines and exact denominators. No unchanged full run is needed
+before a causal test patch. Completed blind analysis
+/tmp/vida-host-uncovered-reuse.md maps six groups to maintained cases/helpers.
+Most continuation/rebind/correction scenarios are outside this contour's executed
+two-file selection; one Initial Source wrapper alone permits190s. Do not add a
+duplicate full lifecycle or silently widen the pinned selection. Reuse the bounded
+Host fixture/assertion seam for each concrete gap, with fresh resource review if
+selection changes. The analysis supplies no Source/Git/numeric authority.
+
 The b2f7c98 exact stage /workspace/contour-stage-gK0sYn completed in249984.901ms
 with closed group, complete output, unchanged boot/image, but failed publication
 because stopped-source setup remained UNKNOWN. Run998c725e-6a03-429b-9fc2-3652e24042b5
