@@ -228,7 +228,11 @@ function writeRecord(directory: string, file: string, record: unknown): void {
   writeFileSync(path.join(directory, file), JSON.stringify(record, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
 }
 
-async function campaignImage(partition: MutationPartition): Promise<QualityExecutionImage> {
+async function campaignImage(
+  partition: MutationPartition,
+  prepareSdkInputs: () => Promise<void>,
+): Promise<QualityExecutionImage> {
+  await prepareSdkInputs();
   return prepareQualityExecutionImage({
     sourcePackageRoot: packageRoot,
     storeRoot: path.join(path.dirname(repositoryRoot), '.vida-quality-inputs'),
@@ -388,6 +392,18 @@ async function main(): Promise<void> {
         : latestScopedCrapBudgetRef(partition.name, partition.sources!, lineage),
     };
   });
+  let sdkInputsReady: Promise<void> | undefined;
+  const prepareCampaignSdkInputs = (): Promise<void> => {
+    sdkInputsReady ??= (async () => {
+      const { ensureSdkCoverageInputsForTests } = await import('../../../tooling/agent/sdk-coverage-readiness.ts');
+      await ensureSdkCoverageInputsForTests({
+        root: packageRoot,
+        tests: [...new Set(partitions.flatMap((partition) => partition.tests ?? []))],
+        archivePath: process.env.VIDA_SDK_TEST_INPUT_ARCHIVE,
+      });
+    })();
+    return sdkInputsReady;
+  };
   const plan = {
     schema: 'VidaContourCampaignPlan/v1',
     run_id: randomUUID(),
@@ -498,7 +514,7 @@ async function main(): Promise<void> {
         let image = images.get(partition.name);
         try {
           if (!image) {
-            image = await campaignImage(partition);
+            image = await campaignImage(partition, prepareCampaignSdkInputs);
             if (image.source_repository !== repositoryRoot || image.source_commit !== commit)
               throw new Error('Execution image does not bind the campaign Source commit.');
             images.set(partition.name, image);

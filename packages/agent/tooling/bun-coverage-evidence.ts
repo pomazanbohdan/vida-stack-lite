@@ -140,6 +140,7 @@ export const coverageToolInputs: string[] = [
   'tooling/function-inventory.ts',
   'tooling/istanbul-public-api.d.ts',
   'tooling/maintained-source-inventory.ts',
+  'tooling/ts-only-source-gate.ts',
   'tooling/run-bun-coverage.ts',
   'tooling/coverage-run-outcome.ts',
   'tooling/sdk-artifact-capture.ts',

@@ -4,6 +4,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { sdkBuildReceiptIdentity } from '../tooling/build-package.ts';
 import { captureSelectedSdkJavascriptOutputs } from '../tooling/sdk-artifact-capture.ts';
+import {
+  ensureSdkCoverageInputsForTests,
+  sdkCoverageWorkflowRunAdmitted,
+} from '../../../tooling/agent/sdk-coverage-readiness.ts';
 import { assertSdkDeliveryReceipt, packSdkCompatibility, verifySdkPackage } from '../tooling/pack-sdk.ts';
 import { expectedJavascriptFiles } from '../tooling/maintained-source-inventory.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
@@ -129,4 +133,45 @@ test('public SDK delivery APIs reject test inputs before Bun resolution or desti
 test('public SDK delivery rejects a product-labeled receipt carrying test purpose', () => {
   const root = deliveryFixture({ schema: 'CandidatePackageBuild/v1', purpose: 'development-tests' });
   expect(() => assertSdkDeliveryReceipt(root)).toThrow('SDK test inputs cannot be used for product delivery');
+});
+
+test('SDK readiness skips non-SDK selections and admits only matching workflow runs', async () => {
+  expect(
+    await ensureSdkCoverageInputsForTests({
+      root: path.join(os.tmpdir(), 'not-the-agent-package'),
+      tests: ['tests/configured-workflow.test.ts'],
+    }),
+  ).toBeUndefined();
+  await expectRejection(
+    ensureSdkCoverageInputsForTests({
+      root: path.join(os.tmpdir(), 'not-the-agent-package'),
+      tests: ['tests/sdk-package-compatibility.test.ts'],
+    }),
+    /bound to the VIDA agent package root/u,
+  );
+
+  const head = 'a'.repeat(40);
+  const workflowRun = {
+    path: '.github/workflows/agent-sdk-coverage.yml@refs/heads/work',
+    head_sha: head,
+    head_branch: 'work',
+    event: 'workflow_dispatch',
+    repository: { full_name: 'pomazanbohdan/vida-stack-lite', id: 1340911900 },
+  };
+  expect(sdkCoverageWorkflowRunAdmitted(workflowRun, head)).toBe(true);
+  expect(sdkCoverageWorkflowRunAdmitted(workflowRun, 'b'.repeat(40))).toBe(false);
+  expect(sdkCoverageWorkflowRunAdmitted({ ...workflowRun, path: '.github/workflows/other.yml' }, head)).toBe(false);
+  expect(sdkCoverageWorkflowRunAdmitted({ ...workflowRun, head_branch: 'main' }, head)).toBe(false);
+  expect(sdkCoverageWorkflowRunAdmitted({ ...workflowRun, event: 'push' }, head)).toBe(false);
+  expect(
+    sdkCoverageWorkflowRunAdmitted(
+      {
+        ...workflowRun,
+        path: '.github/workflows/agent-sdk-coverage.yml@refs/heads/main',
+        head_branch: 'main',
+        event: 'push',
+      },
+      head,
+    ),
+  ).toBe(true);
 });

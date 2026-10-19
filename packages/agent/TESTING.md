@@ -408,6 +408,10 @@ captured Bun pin must match the selected runtime before staging. Instrumentation
 snapshot files and manifest identities use those same captured bytes. Final
 report admission still compares current inputs and validates snapshot custody;
 the single capture does not waive Source drift checks.
+Keep direct runtime dependencies of the coverage evidence module in
+`coverageToolInputs`: the captured child imports them from its sealed snapshot.
+For example, `bun-coverage-evidence.ts` imports `ts-only-source-gate.ts`, so
+omitting that module makes coverage children fail at load.
 
 Mutation partition descriptors bind the exact sorted Source subset and its
 original captured digests to the parent Source fingerprint. Stryker rewrites
@@ -456,6 +460,10 @@ dist, retaining previous outputs and failed staging. Unavailable or failed CI
 remains an actionable preflight GAP; generated staging and prior dist custody
 live under `coverage/sdk-test-inputs`, outside maintained handwritten Source.
 There is no local compilation fallback.
+Artifact lookup admits a push run on `main` or an explicit workflow dispatch on
+its selected branch only when repository, workflow path, full Source commit,
+successful job, artifact name and API digest all agree. A branch name alone is
+never a freshness proof.
 It performs no second Source inventory/hash pass: coverage derives freshness
 from the one existing capture below. Cache reuse verifies actual output bytes.
 If Cloud denies the CLI's artifact-storage redirect, the selected GitHub connector
@@ -475,6 +483,17 @@ the receipt before staging or producer launch. A copied quality object or a
 mutated exposed buffer cannot inherit the owner's private SDK projection.
 Captured-byte validation hashes actual bytes, never caller-supplied digests.
 Missing/stale artifacts block the run; form them separately without suites.
+
+`runBunCoverage` remains the single F/L/S/B collector for full and focused
+diagnostics. The full adapter prepares SDK inputs through the same readiness
+owner before typecheck and capture. A contour campaign prepares the union of its
+selected tests once before forming any immutable image; a single-stage command
+does the same before forming a new image. A focused non-SDK selection skips SDK
+preparation. Reusing a verified immutable image keeps its original Source and
+SDK capture binding; its result is attributed to that image commit. The coverage
+child still checks captured artifact bytes before forming its own test snapshot.
+Direct current coverage CLI entry points route through the full adapter, while
+the explicitly published `b549951` path remains historical evidence.
 
 Review preparation reuses `coverageReviewInputPaths(anchor, changes, current)`
 with typed Git A/M/D/R changes and the current owner's complete inventories.
@@ -2806,6 +2825,9 @@ through the pinned bootstrap, with one300000ms outer wall allowance beginning
 before package checks and runtime resolution. Stricter caller limits remain
 ceilings; supplied budgets cannot bypass malformed-duration validation before
 version probes. Other developer commands retain their existing default budgets.
+The launcher recognizes only these exact supported entries after resolving
+relative and absolute path aliases; path spelling cannot bypass the coverage
+wall cap. Do not broaden this to arbitrary suffix matches.
 The runner reuses the inherited monotonic allowance, reserves30000ms for
 terminal/report work, prepares selected CI SDK inputs and runs one current
 typecheck under its acquired lock before one capture/preparation. SDK retrieval,

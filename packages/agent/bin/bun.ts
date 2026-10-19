@@ -621,13 +621,28 @@ export function resolvePinnedBun(options: BunOptions = {}): string {
   return resolveSelectedBunExecutable(options, resolution, pin);
 }
 
-const coverageEntryPaths = new Set<string | undefined>([
-  'tooling/run-bun-coverage.ts',
-  '../../tooling/agent/run-coverage.ts',
-]);
+function normalizedEntryPath(base: string, entry: string): string {
+  const resolved = path.resolve(base, entry);
+  try {
+    return realpathSync(resolved);
+  } catch {
+    return resolved;
+  }
+}
 
-function coverageInvocationMode(args: readonly string[]): 'current' | 'published' | undefined {
-  if (!coverageEntryPaths.has(args[0])) return undefined;
+function coverageInvocationMode(
+  args: readonly string[],
+  root: string,
+  cwd: string,
+): 'current' | 'published' | undefined {
+  const entry = args[0];
+  if (!entry) return undefined;
+  const selectedEntry = normalizedEntryPath(cwd, entry);
+  const supportedEntries = [
+    normalizedEntryPath(root, 'tooling/run-bun-coverage.ts'),
+    normalizedEntryPath(root, '../../tooling/agent/run-coverage.ts'),
+  ];
+  if (!supportedEntries.includes(selectedEntry)) return undefined;
   if (args.length === 1) return 'current';
   if (args.length === 2 && args[1] === '--published-baseline=b549951') return 'published';
   return undefined;
@@ -648,7 +663,7 @@ function coverageIterationBudget(
   args: readonly string[],
   options: BunOptions,
 ): { maximum: number; budget: ExecutionBudget | undefined; reviewPolicy?: CoverageReviewClockPolicy | undefined } {
-  const mode = coverageInvocationMode(args);
+  const mode = coverageInvocationMode(args, options.root ?? bundleRoot, options.cwd ?? process.cwd());
   const isCoverageEntry = mode !== undefined;
   const requestedMaximum = options.timeoutMs === undefined ? Infinity : options.timeoutMs;
   const maximum = isCoverageEntry ? Math.min(requestedMaximum, 300_000) : requestedMaximum;

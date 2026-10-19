@@ -485,6 +485,24 @@ test('wrong-version PATH Bun falls back to npm exact pin and npm mismatch remain
   }
 });
 
+test('absolute coverage entry aliases retain the bounded launcher profile', () => {
+  const { root, pin } = fixture();
+  const calls: LauncherCall[] = [];
+  const entry = path.resolve(root, 'tooling/run-bun-coverage.ts');
+  runPinnedBun([entry], {
+    root,
+    cwd: root,
+    executable: path.join(root, 'coverage-bun'),
+    spawn(command, argv, options) {
+      calls.push({ command, argv, options });
+      return calls.length === 1 ? success(pin) : success('');
+    },
+  });
+  const launch = calls[1];
+  assert.ok(launch);
+  assert.ok(typeof launch.options.timeout === 'number' && launch.options.timeout <= 300_000);
+});
+
 test('manifest mismatch fails before matching PATH Bun can be probed', () => {
   const { root, pin } = fixture();
   const directory = path.join(root, 'PATH Bun');
@@ -598,9 +616,13 @@ test('pinned command preserves the payload spawn error as its cause', () => {
 
 test.each([
   { entry: 'tooling/run-bun-coverage.ts', baseline: false },
+  { entry: './tooling/run-bun-coverage.ts', baseline: false },
   { entry: '../../tooling/agent/run-coverage.ts', baseline: false },
+  { entry: './../../tooling/agent/run-coverage.ts', baseline: false },
   { entry: 'tooling/run-bun-coverage.ts', baseline: true },
+  { entry: './tooling/run-bun-coverage.ts', baseline: true },
   { entry: '../../tooling/agent/run-coverage.ts', baseline: true },
+  { entry: './../../tooling/agent/run-coverage.ts', baseline: true },
 ])('coverage iteration defaults to one propagated five-minute launcher deadline: %j', ({ entry, baseline }) => {
   const { root, pin } = fixture();
   const executable = path.join(root, 'coverage-bun');
@@ -609,6 +631,7 @@ test.each([
   const args = baseline ? [entry, '--published-baseline=b549951'] : [entry];
   const status = runPinnedBun(args, {
     root,
+    cwd: root,
     executable,
     spawn(command, argv, options) {
       calls.push({ command, argv, options });
@@ -640,6 +663,7 @@ test.each([
   const calls: LauncherCall[] = [];
   runPinnedBun(args, {
     root,
+    cwd: root,
     executable: path.join(root, 'coverage-bun'),
     timeoutMs: 400_000,
     spawn(command, argv, options) {
@@ -663,6 +687,7 @@ test.each(['tooling/run-bun-coverage.ts', '../../tooling/agent/run-coverage.ts']
     const callerExpiry = String(Date.now() + 300000);
     runPinnedBun([entry], {
       root,
+      cwd: root,
       executable: path.join(root, 'coverage-bun'),
       env: {
         VIDA_COVERAGE_REVIEW_CLOCK_POLICY: 'ambient-forged-claim',

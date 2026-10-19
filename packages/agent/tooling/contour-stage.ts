@@ -54,21 +54,29 @@ async function stageExecutionImage(
   const image =
     manifest !== undefined && digest !== undefined
       ? await readQualityExecutionImageDescriptor(manifest, digest)
-      : await prepareQualityExecutionImage({
-          sourcePackageRoot: packageRoot,
-          storeRoot: values['image-store'] ?? path.join(path.dirname(repository), '.vida-quality-inputs'),
-          selection: {
-            mode: 'focused-diagnostic',
-            contour: partition.name,
-            sources: partition.sources ?? [],
+      : await (async () => {
+          const { ensureSdkCoverageInputsForTests } = await import('../../../tooling/agent/sdk-coverage-readiness.ts');
+          await ensureSdkCoverageInputsForTests({
+            root: packageRoot,
             tests: partition.tests ?? [],
-          },
-          additionalToolInputs: [
-            ...mutationToolInputs,
-            'tooling/contour-stage.ts',
-            'tooling/quality-execution-image.ts',
-          ],
-        });
+            archivePath: process.env.VIDA_SDK_TEST_INPUT_ARCHIVE,
+          });
+          return prepareQualityExecutionImage({
+            sourcePackageRoot: packageRoot,
+            storeRoot: values['image-store'] ?? path.join(path.dirname(repository), '.vida-quality-inputs'),
+            selection: {
+              mode: 'focused-diagnostic',
+              contour: partition.name,
+              sources: partition.sources ?? [],
+              tests: partition.tests ?? [],
+            },
+            additionalToolInputs: [
+              ...mutationToolInputs,
+              'tooling/contour-stage.ts',
+              'tooling/quality-execution-image.ts',
+            ],
+          });
+        })();
   if (image.source_repository !== repository)
     throw new Error('Execution image belongs to a different Source repository.');
   await assertStageImageSelection(image, partition);

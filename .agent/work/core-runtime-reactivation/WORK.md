@@ -1101,3 +1101,84 @@ Retained original section: `8e572c5:.agent/work/core-runtime-reactivation/WORK.m
 ## Current correction packet
 
 Retained original section: `8e572c5:.agent/work/core-runtime-reactivation/WORK.md`.
+
+### Shared coverage readiness and snapshot repair — 2026-10-19
+
+Root completed five bounded, blind Poteto read-only audits of coverage entrypoints,
+campaign/image ordering, input evidence, launcher deadlines and SDK readiness. One
+additional requested Luna lane did not start because the selected model was at
+capacity. Root remained the only Source writer; no worker edited the checkout or
+ran suites.
+
+The audits confirmed that `runBunCoverage()` remains the single F/L/S/B producer,
+but full, focused, campaign and stage paths did not all prepare SDK inputs before
+capturing a new immutable image. The campaign now prepares the deduplicated union
+of selected tests once before its first image; a stage prepares before creating a
+new image, while reuse remains bound to its existing immutable Source and SDK
+capture. Full and focused calls share selection-aware SDK readiness, and a
+non-SDK focus skips that work. Explicit dispatch runs may supply the exact current
+Source branch/SHA; the main push path and repository, workflow, successful-run,
+artifact and digest checks remain required. Historical `b549951` remains on its
+published-baseline path.
+
+The launcher audit found that aliases such as `./tooling/run-bun-coverage.ts`
+could bypass the five-minute coverage wall cap. The launcher now resolves only
+the two exact supported entries before classification, retaining strict argument
+validation. The targeted end-to-end tests exposed a separate snapshot dependency
+gap: `bun-coverage-evidence.ts` imports `tooling/ts-only-source-gate.ts`, but the
+coverage input inventory omitted that module. The capture inventory now includes
+it, so focused coverage children receive the captured dependency instead of
+failing at module load.
+
+Validation: the three relevant Bun test files passed 94 tests and 168 assertions
+in 9.04 seconds; pinned Source typecheck passed for 101 files in 0.56 seconds;
+OxFmt and OxLint passed on the ten changed TypeScript files; `git diff --check`
+passed. The first targeted attempt correctly failed closed
+on the missing captured module; the fix was added to the shared inventory and the
+complete targeted rerun passed. TIMEOUT/UNKNOWN test fixtures retained their
+owned evidence.
+
+The ordinary pre-commit hook also caught four issues and was not bypassed:
+strict Knip found the now-internal low-level preparation function was still
+exported; full TypeScript checking required omitting the optional `tests` key
+for full selection instead of passing `undefined`; OxLint rejected an `any`
+dynamic-import call; and it flagged awaiting Bun's synchronous expectation
+matcher. Each was corrected with the same public behavior preserved. The focused
+suite and scoped static checks passed again.
+
+No full F/L/S/B, frozen CRAP or mutation run was started: the local SDK receipt is
+bound to the older `6f1564d` Source, not this checkout's `7e6c131` HEAD, so a new
+numeric run cannot establish current-artifact readiness. No artifact was fetched,
+no build/install or broad suite was run, and no coverage/CRAP/Killed value is
+inferred. The current worktree is dirty by these changes, which also prevents an
+exact current-commit artifact from being selected until normal commit/publication
+and a matching artifact are available.
+
+The available operation evidence does not provide a complete event log for the
+entire requested three-hour window. The report therefore compares source-level
+execution paths and current bounded checks; it makes no claim about historical
+tool-call/token totals or unmeasured latency savings. The one observed workspace
+filesystem check showed 19 GiB available on a 32 GiB overlay; no cleanup was
+performed, and that reading is retained as the single disk-space observation for
+this cycle.
+
+#### Check order and concurrency comparison
+
+Measured here: five independent read-only Poteto audits completed and one lane
+dropped at model capacity; the three-file targeted Bun run took 8.67 seconds;
+the pinned 101-file source typecheck took 0.97 seconds. No comparable before/after
+latency series, full-session tool-call counter or token counter was available.
+The campaign implementation remains serial by contour and orders exact coverage
+before frozen CRAP and mutation; that is a source fact, not a new timing result.
+
+The preferred order is static/type/selection checks, focused launcher/readiness
+tests, then one current numeric producer after the exact commit artifact is
+ready. This puts measured sub-second static checks and an 8.67-second targeted
+suite ahead of the resource-heavy producer; reduced wasted numeric work is a
+reasonable expectation, but savings were not measured. Running the five
+independent reviews concurrently with a Source writer would risk mixed revisions,
+so keep reviews read-only and apply fixes only after their findings are joined.
+Concurrent contour or full-suite producers could lower wall time in theory, but
+their shared resource and aggregate evidence costs are not qualified here; do
+not enable them as part of this repair. No additional broad scan/hash or second
+full suite was used.

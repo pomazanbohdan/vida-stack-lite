@@ -9,7 +9,11 @@ import { decodeSdkFormationReceipt } from '../../packages/agent/tooling/sdk-arti
 import { expectedJavascriptFiles } from '../../packages/agent/tooling/maintained-source-inventory.ts';
 import { ownedDirectoryIdentity, removeOwnedDirectoryOrThrow } from '../../packages/agent/tooling/owned-staging.ts';
 import { resourceDirectory } from '../../packages/agent/bin/standalone-resources.ts';
-import { readQualityInputs } from '../../packages/agent/tooling/bun-coverage-evidence.ts';
+import { executionBudget } from '../../packages/agent/bin/bun.ts';
+import {
+  readQualityInputs,
+  selectedTestsRequireSdkArtifacts,
+} from '../../packages/agent/tooling/bun-coverage-evidence.ts';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const packageRoot = path.join(repositoryRoot, 'packages/agent');
@@ -24,6 +28,21 @@ const receiptLimit = 8 * 1024 * 1024;
 const expansionLimit = 128 * 1024 * 1024;
 const outputCountLimit = 20_000;
 const zipMemberLimit = 20_010;
+
+export function sdkCoverageWorkflowRunAdmitted(value: unknown, head: string): boolean {
+  if (!isRecord(value) || typeof value.head_branch !== 'string' || !value.head_branch) return false;
+  const branch = value.head_branch;
+  const pathMatches = value.path === workflowPath || value.path === `${workflowPath}@refs/heads/${branch}`;
+  const eventMatches = value.event === 'workflow_dispatch' || (value.event === 'push' && branch === 'main');
+  return (
+    pathMatches &&
+    value.head_sha === head &&
+    eventMatches &&
+    isRecord(value.repository) &&
+    value.repository.full_name === repository &&
+    value.repository.id === repositoryId
+  );
+}
 
 type OutputRow = { path: string; bytes: number; sha256: string };
 type JsonRecord = Record<string, unknown>;
@@ -437,16 +456,8 @@ async function fetchCurrentArtifact(
     runResponse.workflow_runs.length > 100
   )
     throw new Error('GitHub workflow-run response is incomplete or invalid.');
-  const runs: JsonRecord[] = runResponse.workflow_runs.filter(
-    (entry: unknown): entry is JsonRecord =>
-      isRecord(entry) &&
-      (entry.path === workflowPath || entry.path === `${workflowPath}@refs/heads/main`) &&
-      entry.head_sha === head &&
-      entry.head_branch === 'main' &&
-      ['push', 'workflow_dispatch'].includes(String(entry.event)) &&
-      isRecord(entry.repository) &&
-      entry.repository.full_name === repository &&
-      entry.repository.id === repositoryId,
+  const runs: JsonRecord[] = runResponse.workflow_runs.filter((entry: unknown): entry is JsonRecord =>
+    sdkCoverageWorkflowRunAdmitted(entry, head),
   );
   const run = runs[0];
   if (!run || !positiveId(run.id) || !positiveId(run.run_attempt))
@@ -711,7 +722,7 @@ export function assertSdkArtifactDigest(archive: Buffer, expected: string): void
     throw new Error('The downloaded SDK test-input ZIP differs from the API artifact digest.');
 }
 
-export async function ensureSdkCoverageInputs(input: {
+async function ensureSdkCoverageInputs(input: {
   root: string;
   remainingMs: () => number;
   archivePath?: string | undefined;
@@ -736,4 +747,20 @@ export async function ensureSdkCoverageInputs(input: {
     },
     input.remainingMs,
   );
+}
+
+/** Prepare only SDK-dependent selections; undefined means the complete current set. */
+export async function ensureSdkCoverageInputsForTests(input: {
+  root: string;
+  tests?: readonly string[];
+  remainingMs?: (() => number) | undefined;
+  archivePath?: string | undefined;
+}): Promise<void> {
+  if (input.tests !== undefined && !selectedTestsRequireSdkArtifacts(input.tests)) return;
+  const budget = input.remainingMs ? undefined : executionBudget(300_000, 30_000);
+  await ensureSdkCoverageInputs({
+    root: input.root,
+    remainingMs: input.remainingMs ?? (() => budget!.remaining()),
+    archivePath: input.archivePath,
+  });
 }

@@ -167,28 +167,28 @@ console.log(${JSON.stringify(completion)});\n`,
   }
 });
 
-test.each(['sdk', 'launcher-sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy: %s', async (mode) => {
-  const root = await createRunnerCandidate();
-  let passed = false;
-  try {
-    const prepared = path.join(root, 'sdk-preparation.json');
-    const capture = path.join(root, 'coverage-capture-probe.json');
-    const typecheck = path.join(root, 'typecheck.marker');
-    write(root, 'tests/sdk-package-compatibility.test.ts', 'export const inert = true;\n');
-    write(root, 'tests/paused-replacement-entrypoint.test.ts', 'export const launcher = true;\n');
-    write(root, 'tests/configured-workflow.test.ts', 'export const sourceOnly = true;\n');
-    const preload = writeCaptureProbe(
-      root,
-      `
-      if (!existsSync(${JSON.stringify(prepared)})) throw new Error('capture ran before SDK preparation');
-      throw new Error('focused SDK capture stop');
-    `,
-    );
-    const entrypoint = 'tooling/focused-sdk-options-probe.ts';
-    write(
-      root,
-      entrypoint,
-      `
+test.each(['sdk', 'launcher-sdk', 'no-sdk', 'review'] as const)(
+  'focused SDK preparation follows test selection: %s',
+  async (mode) => {
+    const root = await createRunnerCandidate();
+    let passed = false;
+    try {
+      const prepared = path.join(root, 'sdk-preparation.json');
+      const capture = path.join(root, 'coverage-capture-probe.json');
+      const typecheck = path.join(root, 'typecheck.marker');
+      write(root, 'tests/sdk-package-compatibility.test.ts', 'export const inert = true;\n');
+      write(root, 'tests/paused-replacement-entrypoint.test.ts', 'export const launcher = true;\n');
+      write(root, 'tests/configured-workflow.test.ts', 'export const sourceOnly = true;\n');
+      const captureSdkGuard =
+        mode === 'no-sdk'
+          ? ''
+          : `if (!existsSync(${JSON.stringify(prepared)})) throw new Error('capture ran before SDK preparation');`;
+      const preload = writeCaptureProbe(root, `${captureSdkGuard}\nthrow new Error('focused SDK capture stop');\n`);
+      const entrypoint = 'tooling/focused-sdk-options-probe.ts';
+      write(
+        root,
+        entrypoint,
+        `
       import { existsSync, writeFileSync } from 'node:fs';
       import { runBunCoverage } from './run-bun-coverage.ts';
       await runBunCoverage({
@@ -206,35 +206,40 @@ test.each(['sdk', 'launcher-sdk', 'no-sdk', 'review'] as const)('focused SDK pre
         ${mode === 'review' ? 'reviewCurrentInputs: async () => { throw new Error("review must not run"); },' : ''}
       });
     `,
-    );
-    const result = launchRunner(root, preload, {}, [], { entrypoint, timeoutMs: 4_000 });
-    expect(result.error).toBeUndefined();
-    expect(result.signal).toBeNull();
-    expect(result.status).toBe(1);
-    if (mode === 'sdk' || mode === 'launcher-sdk') {
-      expect(result.stderr).toContain('focused SDK capture stop');
-      const preparation: unknown = JSON.parse(readFileSync(prepared, 'utf8'));
-      expect(preparation).toEqual({ root, typecheck_seen: false, capture_seen: false });
-      expect(existsSync(typecheck)).toBe(true);
-      const captured: unknown = JSON.parse(readFileSync(capture, 'utf8'));
-      expect(captured).toMatchObject({ calls: 1 });
-    } else {
-      expect(result.stderr).toContain(
-        mode === 'review'
-          ? 'Focused coverage diagnostics cannot use historical selection or input review callbacks.'
-          : 'Focused SDK preparation requires a selected SDK-dependent test.',
       );
-      expect(existsSync(prepared)).toBe(false);
-      expect(existsSync(typecheck)).toBe(false);
-      expect(existsSync(capture)).toBe(false);
+      const result = launchRunner(root, preload, {}, [], { entrypoint, timeoutMs: 4_000 });
+      expect(result.error).toBeUndefined();
+      expect(result.signal).toBeNull();
+      expect(result.status).toBe(1);
+      if (mode === 'sdk' || mode === 'launcher-sdk') {
+        expect(result.stderr).toContain('focused SDK capture stop');
+        const preparation: unknown = JSON.parse(readFileSync(prepared, 'utf8'));
+        expect(preparation).toEqual({ root, typecheck_seen: false, capture_seen: false });
+        expect(existsSync(typecheck)).toBe(true);
+        const captured: unknown = JSON.parse(readFileSync(capture, 'utf8'));
+        expect(captured).toMatchObject({ calls: 1 });
+      } else if (mode === 'no-sdk') {
+        expect(result.stderr).toContain('focused SDK capture stop');
+        expect(existsSync(prepared)).toBe(false);
+        expect(existsSync(typecheck)).toBe(true);
+        const captured: unknown = JSON.parse(readFileSync(capture, 'utf8'));
+        expect(captured).toMatchObject({ calls: 1 });
+      } else {
+        expect(result.stderr).toContain(
+          'Focused coverage diagnostics cannot use historical selection or input review callbacks.',
+        );
+        expect(existsSync(prepared)).toBe(false);
+        expect(existsSync(typecheck)).toBe(false);
+        expect(existsSync(capture)).toBe(false);
+      }
+      expect(existsSync(path.join(root, 'coverage/bun-unified/coverage-final.json'))).toBe(false);
+      passed = true;
+    } finally {
+      if (passed) rmSync(root, { recursive: true, force: true });
+      else console.error(`Retained failed focused SDK preparation fixture: ${root}`);
     }
-    expect(existsSync(path.join(root, 'coverage/bun-unified/coverage-final.json'))).toBe(false);
-    passed = true;
-  } finally {
-    if (passed) rmSync(root, { recursive: true, force: true });
-    else console.error(`Retained failed focused SDK preparation fixture: ${root}`);
-  }
-});
+  },
+);
 
 test('real Bun coverage runner preserves a foreign lock and artifacts before staging a run', async () => {
   const root = await createRunnerCandidate();

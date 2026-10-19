@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer';
 import {
   chmodSync,
   closeSync,
+  existsSync,
   mkdirSync,
   openSync,
   readFileSync,
@@ -98,7 +99,7 @@ export type RunBunCoverageOptions = {
   args?: string[];
   focusedDiagnostic?: FocusedDiagnosticSelection;
   reviewCurrentInputs?: CurrentCoverageReviewCallback;
-  prepareSdkInputs?: (input: { root: string; remainingMs: () => number }) => Promise<void>;
+  prepareSdkInputs?: (input: { root: string; tests?: readonly string[]; remainingMs: () => number }) => Promise<void>;
 };
 
 function freezeCopiedReviewValue(value: unknown): unknown {
@@ -903,8 +904,6 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
   const focused = options.focusedDiagnostic;
   if (focused && (args.length || options.reviewCurrentInputs))
     throw new Error('Focused coverage diagnostics cannot use historical selection or input review callbacks.');
-  if (focused && options.prepareSdkInputs && !selectedTestsRequireSdkArtifacts(focused.tests))
-    throw new Error('Focused SDK preparation requires a selected SDK-dependent test.');
   const runOutputRoot = focused ? path.join(outputRoot, 'diagnostics') : outputRoot;
   if ((options.reviewCurrentInputs || options.prepareSdkInputs) && selectionMode !== 'current')
     throw new Error('Current input review callbacks are unsupported for historical coverage.');
@@ -1232,7 +1231,12 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     // only current production runs the current Source typecheck.
     if (selectionMode === 'current') {
       if ((process.env.BUN_OPTIONS ?? '').trim()) throw new Error('Ambient BUN_OPTIONS are unsupported for coverage.');
-      await options.prepareSdkInputs?.({ root, remainingMs: () => commandBudget.remaining() });
+      if (!focused || selectedTestsRequireSdkArtifacts(focused.tests))
+        await options.prepareSdkInputs?.({
+          root,
+          ...(focused ? { tests: focused.tests } : {}),
+          remainingMs: () => commandBudget.remaining(),
+        });
       commandBudget.remaining();
       const typecheckAllowance = commandBudget.remaining();
       const typecheck = spawnSync(process.execPath, ['run', 'typecheck:pinned'], {
@@ -1866,4 +1870,21 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
   if (cleanupFailed) throw cleanupError;
 }
 
-if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) await runBunCoverage();
+function isCoverageAdapter(value: unknown): value is { runCoverage: () => unknown } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof Reflect.get(value, 'runCoverage') === 'function'
+  );
+}
+
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+  if (process.argv.slice(2).includes('--published-baseline=b549951')) await runBunCoverage();
+  else if (existsSync(path.resolve(root, '../../tooling/agent/run-coverage.ts'))) {
+    const adapter = path.resolve(root, '../../tooling/agent/run-coverage.ts');
+    const adapterModule = (await import(pathToFileURL(adapter).href)) as unknown;
+    if (!isCoverageAdapter(adapterModule)) throw new Error('Current coverage adapter entrypoint is missing.');
+    await adapterModule.runCoverage();
+  } else await runBunCoverage();
+}
