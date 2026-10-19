@@ -1849,3 +1849,41 @@ one redundant helper doc comment. The changed-document check passes3 documents
 and42 local links. The ordinary hook remains pending before publication.
 Then run one new exact stage on the published correction with matching SDK
 formation. Do not edit or replay the old blocked report into successful evidence.
+
+### Current main-runtime-core resource-order correction — 2026-10-19
+
+The ordinary hook passed and `eefc8e3b4c0d9607480a8ccacd274291d843b63c`
+was pushed to main. Its matching SDK formation run39305477369 succeeded;
+artifact12214425376 ZIP SHA-256 is
+`aea7fcc4061feb762443e472f054957f8049cc9022e0b05cbec3af7f9e4bbe9d`.
+Stage `/workspace/contour-stage-hWrGiN`, coverage run
+`74c149d7-bc9d-40b9-b1c6-3c674d6cb764`, closed in220.878 seconds with
+complete capture, closed group, unchanged boot/image inputs and exit1.
+Retain its immutable image at
+`/workspace/.vida-quality-inputs/5312aaf0c0e2a2236e206bccf59ba8c289280d5b/repository`.
+Shard1 passed227 tests/1098 assertions in156.21 seconds. Shard2 passed12
+and failed1 test, with220 assertions in216.54 seconds. The public protected
+abort/replay test exceeded its unchanged30000ms limit at34.672 seconds.
+Both previously targeted repair and protected-session cases passed. No report
+location was emitted because the group was unsuccessful, so focused publication
+has not yet been qualified on a complete real stage. Exact coverage remains open.
+
+The abort/replay case passed its required isolated native-coverage check in
+22.572 seconds with19 assertions. Phase trace at
+`/tmp/vida-protected-abort-isolated.log` measured bridge open3.300s/start2.595s,
+controlled preparation5.472s and the real public issue9.777s. These are single
+diagnostic observations, not a controlled speed comparison. A new blind Luna
+review confirmed no safe fixture operation to delete while preserving public
+entry, real bridge state, abort, approval, CAS and replay assertions.
+
+Seed93 put this30-second case early, while the other shard was active. Root
+compared three routes: serial selection exceeds the existing stage budget;
+the current two-shard order has a measured case timeout; placing both30-second
+cases last is an unqualified scheduling candidate with unchanged work/limits.
+An inert native registration probe at `/tmp/vida-probe-focused-order.ts` first
+reproduced the actual12-body seed93 order exactly, then selected seed113, which
+places abort/replay and protected-session at positions11/12. Unlike a filtered
+no-body probe, all12 inert bodies ran. This proves ordering mechanics only,
+not behavioral success, timing improvement or coverage. The maintained seed is
+now113; test selection, assertions, fixtures, worker ceiling and budgets stay
+unchanged. Check/publish this bounded correction before one new exact stage.
