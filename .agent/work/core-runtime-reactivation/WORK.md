@@ -138,6 +138,63 @@ Blind reviews at /tmp/vida-host-terminal-repair-review.md and
 /tmp/vida-host-terminal-journal-repair-review.md report no blocking defect and
 confirm both fixture-only preimages and unchanged shard resource ownership.
 
+### Terminal-repair stage failure and current correction packet
+
+The stage on039523c at /workspace/contour-stage-glrAis fails after270944.448ms.
+Its terminal execution/capture/group/boot/image facts are retained, including
+execution.json and publication-error.json; projection1028records the failed
+attempt. Host reports256PASS/2FAIL and1934assertions in221.84s: the corrective
+authorization and terminal Journal repair cases take23354.61ms/23718.56ms against
+their unchanged20s limits. Stopped-source has partial reporter rows without a
+terminal file summary. The runner then exhausts its300s command budget minus30s
+reserve before another child launch, emits no complete attributable diagnostic,
+and the stage refuses numeric publication. Its outer process is failed with
+timed_out=false; that does not convert the inner case timeouts or incomplete child
+into PASS. The latest complete counters above remain current evidence.
+
+Run c9d38066-f59e-43be-b490-38f45180d655 uses image
+/workspace/.vida-quality-inputs/4d37e672581561f56946029aa1989d87a3e3ecc2/repository,
+manifest SHAae64926c06d4a4e624420a6d4c1f06335446130ef30b35df66b62003f67371ac.
+SDK CI39340834521 attempt1/artifact12229295446 passed; ZIP SHA
+6ca57dcd247ea03d9491e2e6e399eaddecd8d819e9c3d5058a95cee662705c3c matches transport.
+Admission records9515393024free bytes against2147483648required. Keep the failed
+image, receipts and logs intact; no unchanged rerun or archived operation replay.
+
+A separate native fault regression confirms a product defect in
+withHostStateExclusiveTransaction: its finally close replaced both an original
+Error and thrown undefined. The red cases each retain only the close error.
+The correction reuses withWorkspaceDatabaseClose around the unchanged immediate
+transaction and paired admission-close owner. The checked green control covers
+work-plus-close, undefined-plus-close, close-only and successful retry; together
+with the private task-source projection case,4tests/47assertions pass in2.81s.
+The projection checks a genuine admitted owner with no binding and rejects five
+actual malformed index definitions without authorizing Source effects. Blind
+reviews are retained at /tmp/vida-host-exclusive-close-final-review.md and
+/tmp/vida-host-exclusive-projection-cases-review.md.
+
+The exact corrective-case JSC profile contains12459samples,3836in fsyncSync;
+loadRuntimeConfigForSelectedSource appears in4850inclusive samples. These counts
+overlap and establish a diagnostic, not a wall-time speedup. Keep locked byte
+readers and freshness barriers. Shared fixture preparation now extracts/reuses
+the existing in-process prewriter leg while preserving synthesis, TRACE CAS,
+plannedHost, actual public writer issue/report and final verdicts. Its two Host
+cases pass81assertions in27.19s; the existing final-assurance-public TRACE/PLAN/CAS
+regressions pass2cases/125assertions in27.33s. The final cleanup callback is
+evaluated by the existing fixture owner after the paired DB close and before root
+deletion. It requires both successful completion and the same monotonic20s bound
+used by Bun; a late preparation cannot start another Host phase. No timeout,
+global reserve, exact gate or ownership/authorization semantics is relaxed.
+Blind /tmp/vida-host-prewriter-reuse-final-review.md reports no blocking finding.
+The next complete changed-input stage must qualify the timing and numeric result.
+Final stable Source checks pass strict169files and scoped type-aware lint. All
+8new Host cases pass179assertions in28.78s; the two heavy cases take14181.56ms/
+10710.25ms under the same20s bounds. These Source-only samples do not establish
+coverage-mode throughput. The checked Host test/resource pin is
+cd81a6fd3d8aae5ac473e885bed0ff7c247052260ec73c645c435d52d01d59ea; native method spies
+are exact-filename/process-local and restored before paired close retries. Both
+new fixture flows stay under their child's unique TMPDIR. Sources and test-file
+selection, explicit namespace rows and serial fallback are unchanged.
+
 ### Prior complete presence-guard baseline
 
 On4ae4a36, /workspace/contour-stage-F04pyx completes in201042.948ms, publishes

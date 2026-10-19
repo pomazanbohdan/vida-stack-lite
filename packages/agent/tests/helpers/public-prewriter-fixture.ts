@@ -29,6 +29,13 @@ interface PublicPrewriterInput {
   readonly work: WorkState;
 }
 
+interface InProcessPreparationProducer {
+  readonly ledger: MastraSessionLedger;
+  readonly bridge: MastraSessionBridge;
+  readonly source: ScopedSourceSnapshot;
+}
+type PreparationPhaseObserver = <T>(label: string, operation: () => T | Promise<T>) => Promise<Awaited<T>>;
+
 type PreparationRecord = ReturnType<typeof lifecyclePreparationObservationSchema.parse>;
 type PreparationKind = PreparationRecord['kind'];
 
@@ -274,12 +281,8 @@ export async function runTaskSynthesisPublicActions(input: PublicPrewriterInput)
 
 export async function runPreparationFixtureInProcess(
   input: PublicPrewriterInput,
-  producer: {
-    readonly ledger: MastraSessionLedger;
-    readonly bridge: MastraSessionBridge;
-    readonly source: ScopedSourceSnapshot;
-  },
-  tracePhase?: <T>(label: string, operation: () => T | Promise<T>) => Promise<Awaited<T>>,
+  producer: InProcessPreparationProducer,
+  tracePhase?: PreparationPhaseObserver,
 ): Promise<MastraSessionLedgerSnapshot> {
   const current = currentSnapshot(input),
     synthIssue = tracePhase
@@ -315,6 +318,14 @@ export async function runPreparationFixtureInProcess(
     );
   else await producer.bridge.resume(synthStep, [synthesisObservation], producer.source);
 
+  return runPrewriterFixtureInProcess(input, producer, tracePhase);
+}
+
+export async function runPrewriterFixtureInProcess(
+  input: PublicPrewriterInput,
+  producer: InProcessPreparationProducer,
+  tracePhase?: PreparationPhaseObserver,
+): Promise<MastraSessionLedgerSnapshot> {
   const prewriter = currentSnapshot(input),
     prewriterIssue = tracePhase
       ? await tracePhase('prewriter-issue-wave', () =>

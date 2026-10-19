@@ -69,7 +69,14 @@ to F652/1128,L2502/4967,S2680/5297,B2315/5640. Its paired operation is still BLO
 exact historical closure remains16/45. The next checked Source packet directly
 tests terminal correction-generation repair, including real Work/Journal receipt
 normalization, native rollback and exact retries through existing shared fixtures.
-Its55focused assertions pass; its numeric gain needs the next changed-input stage.
+Its55focused assertions pass. The039523c stage subsequently fails: two20s cases
+overrun and the runner exhausts its unchanged budget before publishing complete
+counters. Preserve its complete terminal outcome and partial evidence. The next
+packet fixes a native exclusive-transaction primary-error loss, adds genuine
+task-source projection controls, and reuses the maintained Source prewriter leg
+for fixture setup. Deadline-aware cleanup retains late roots after the paired
+DB closes. Targeted existing public TRACE/PLAN regressions pass; full coverage
+and timing qualification remain with the next single changed-input stage.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
 import { createAutomaticWorkAdmissionFixture } from './automatic-work-admission-fixture.js';
 import { fixtureInitializationTemplates } from './runtime-initialization-fixture.js';
-import { runSourcePrewriterPublicActions } from './public-prewriter-fixture.js';
+import { runPrewriterFixtureInProcess } from './public-prewriter-fixture.js';
 import { runWithInitialSourceTiming } from './initial-source-run-timing-diagnostic.js';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../../src/orchestration/local-work-admission.js';
 import { runtimeConfigDigest } from '../../src/config/runtime-config.js';
@@ -51,7 +51,7 @@ export interface FailedFinalCorrectionFixture {
   readonly tracedHost: HostStateSnapshot | null;
   readonly plannedHost: HostStateSnapshot | null;
   readonly preparationPath: string;
-  close(completed: boolean): void;
+  close(completed: boolean | (() => boolean)): void;
 }
 
 /** Write current, work-bound documentation and lifecycle inputs for a terminal failed-work correction. */
@@ -188,9 +188,9 @@ export async function createFailedFinalCorrectionFixture(
     testerPasses = outcome === 'passing';
   let bridge: MastraSessionBridge | undefined;
   let fixtureClosed = false;
-  const close = (completed: boolean) => {
+  const close = (completed: boolean | (() => boolean)) => {
     if (fixtureClosed) return;
-    fixture.close({ retainRoot: !completed });
+    fixture.close({ retainRoot: typeof completed === 'function' ? () => !completed() : !completed });
     fixtureClosed = true;
   };
   try {
@@ -371,15 +371,18 @@ export async function createFailedFinalCorrectionFixture(
         nextLedger: { ...intake.ledger, revision: intake.ledger.revision + 1 },
       });
     }
-    journal = await runSourcePrewriterPublicActions({
-      args,
-      publicRun,
-      sync,
-      repositoryRoot: fixture.root,
-      workId: id,
-      attempt: 1,
-      work,
-    });
+    journal = await runPrewriterFixtureInProcess(
+      {
+        args,
+        publicRun,
+        sync,
+        repositoryRoot: fixture.root,
+        workId: id,
+        attempt: 1,
+        work,
+      },
+      { ledger, bridge, source },
+    );
     const plannedHost = !testerPasses ? host.readHostStateSnapshot(identity) : null;
 
     const issuedWriter = requireRecord(

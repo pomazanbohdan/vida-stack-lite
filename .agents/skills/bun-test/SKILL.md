@@ -163,6 +163,9 @@ its running aggregate before retaining another bounded read. Do not add a
 separate scan or global documentation list. Writer setup may reuse the existing
 in-process preparation helper while retaining actual public operations under
 test; readonly setup must stay at its earlier synthesis-only boundary.
+When synthesis and the TRACE CAS already belong to a fixture, reuse the maintained
+`runPrewriterFixtureInProcess` leg instead of repeating synthesis or CLI bootstrap.
+Keep the actual writer issue/report and the fixture's TRACE/PLAN observations.
 For constructor failure, register handles as acquired and verify reverse cleanup,
 all causes and thrown undefined with real native handles. Distinguish that unit
 proof from bridge faults and persisted recovery. Separate independent state

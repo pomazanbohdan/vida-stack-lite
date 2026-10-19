@@ -43,6 +43,7 @@ import {
   openAdmittedWorkspaceDatabase,
   openDatabaseWithStorageAdmission,
 } from './config/storage-read-admission.js';
+import { withWorkspaceDatabaseClose } from './config/workspace-database-raw.js';
 import type {
   SynthesisObservationCorrectionPlan,
   MastraSessionLedgerState,
@@ -4995,11 +4996,12 @@ export function withHostStateExclusiveTransaction<T>(
   operation: () => T,
 ): T {
   const database = openHostStateDatabase(input.repositoryRoot, input.databaseRelativePath, input.workspaceId);
-  try {
-    return database.transaction(operation).immediate();
-  } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-  }
+  return withWorkspaceDatabaseClose(
+    database,
+    () => database.transaction(operation).immediate(),
+    closeWorkspaceDatabaseWithAdmission,
+    'Host exclusive transaction and close failed',
+  );
 }
 
 /** Package-owned consumer migration permission: local state consistency, never lifecycle acceptance. */

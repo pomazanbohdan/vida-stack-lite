@@ -52,7 +52,10 @@ import {
   openHostStateDatabase,
   inspectHostWorkspaceDatabase,
   workMigrationId,
+  withHostStateExclusiveTransaction,
+  initializeTaskSourceBindingWorkProjectionSchema,
 } from '../../src/host-state.ts';
+import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
 import * as trustedHostSurface from '../../src/trusted-host.ts';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
@@ -102,6 +105,7 @@ import * as persistedRows from '../../src/config/host-persisted-row.ts';
 import { configuredTestContext } from '../configured-context.ts';
 
 const workspace = 'a'.repeat(64);
+const failedFinalHostCaseTimeoutMs = 20_000;
 // Keep a stable export snapshot because Bun updates live builtin namespaces when
 // a scoped module mock is registered.
 const originalFsExports = { ...nodeFs };
@@ -417,6 +421,63 @@ test.skipIf(process.platform !== 'linux')(
   },
 );
 
+test.each(['error', 'undefined', 'return'] as const)(
+  'exclusive Host transaction retains operation and native close failures (%s)',
+  async (outcome) => {
+    const primary = outcome === 'error' ? new Error('controlled exclusive operation failure') : undefined;
+    const input = {
+      repositoryRoot: root,
+      databaseRelativePath: 'exclusive-transaction.sqlite',
+      workspaceId: workspace,
+    };
+    const target = path.join(root, input.databaseRelativePath);
+    const nativeClose: unknown = Reflect.get(Database.prototype, 'close');
+    if (typeof nativeClose !== 'function') throw new Error('Native SQLite close method is missing.');
+    const closeFailure = new Error('controlled exclusive native close failure');
+    let closeCalls = 0;
+    let restore = () => {};
+    let failure: unknown;
+    try {
+      failure = await rejectionReason(
+        Promise.resolve().then(() =>
+          withHostStateExclusiveTransaction(input, () => {
+            const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+              this: Database,
+              ...args: Parameters<Database['close']>
+            ) {
+              if (this.filename === target) {
+                closeCalls++;
+                throw closeFailure;
+              }
+              Reflect.apply(nativeClose, this, args);
+            });
+            restore = () => closeSpy.mockRestore();
+            if (outcome !== 'return') throw primary;
+            return 'observed but unclosed result';
+          }),
+        ),
+      );
+    } finally {
+      restore();
+      retryPendingWorkspaceDatabaseCloses();
+    }
+    expect(closeCalls).toBe(1);
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError)) throw new Error('Exclusive transaction did not aggregate failures.');
+    if (outcome === 'return') {
+      expect(failure.errors).toEqual([closeFailure]);
+    } else {
+      expect(failure.errors).toHaveLength(2);
+      expect(failure.errors[0]).toBe(primary);
+      const cleanup: unknown = failure.errors[1];
+      expect(cleanup).toBeInstanceOf(AggregateError);
+      if (!(cleanup instanceof AggregateError)) throw new Error('Paired close failure was not retained.');
+      expect(cleanup.errors).toEqual([closeFailure]);
+    }
+    expect(withHostStateExclusiveTransaction(input, () => 'observed result')).toBe('observed result');
+  },
+);
+
 test('trusted host source entrypoint exposes host state without a test issuer', () => {
   expect(trustedHostSurface.HostStateStore).toBe(HostStateStore);
   expect(trustedHostSurface.openHostStateDatabase).toBe(openHostStateDatabase);
@@ -425,113 +486,120 @@ test('trusted host source entrypoint exposes host state without a test issuer', 
 });
 
 // Real admission, writer completion and focused verdicts prepare the authorization boundary.
-test('Host corrective authorization preserves all three CAS boundaries and only authorizes the failed closure', async () => {
-  const f = await createFailedFinalCorrectionFixture();
-  let completed = false;
-  let primaryFailure: { error: unknown } | undefined;
-  try {
-    const prepared = prepareLifecycleForCorrection({
-      root: f.root,
-      config: f.config,
-      store: f.store,
-      identity: f.identity,
-      journal: f.journal,
-      preparationPath: f.preparationPath,
-    });
-    const before = f.store.readHostStateSnapshot(f.identity);
-    const journal = f.store.readWorkSessionJournal(f.identity);
-    if (!prepared.workVersion || !prepared.ledgerVersion || !before.work?.execution.run_id || !journal)
-      throw new Error('Prepared corrective Host fixture is incomplete.');
-    const request = {
-      identity: f.identity,
-      attempt: 1,
-      expectedWork: prepared.workVersion,
-      expectedLedger: prepared.ledgerVersion,
-      expectedJournal: journal.version,
-      stageIds: ['develop_task', 'validate_focused', 'test_task'],
-      userInstructionRef: 'fixture:host-corrective-owner',
-      config: f.config,
-    };
-    const denied: readonly [Partial<typeof request>, string][] = [
-      [{ userInstructionRef: ' ' }, 'attributable corrective authorization missing'],
-      [
-        { expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 } },
-        'state compare-and-swap conflict',
-      ],
-      [
-        { expectedLedger: { ...request.expectedLedger, revision: request.expectedLedger.revision + 1 } },
-        'state compare-and-swap conflict',
-      ],
-      [
-        { expectedJournal: { ...request.expectedJournal, revision: request.expectedJournal.revision + 1 } },
-        'corrective journal CAS conflict',
-      ],
-      [{ stageIds: [] }, 'corrective stage selection differs'],
-      [{ stageIds: ['develop_task', 'validate_focused', 'validate_focused'] }, 'corrective stage selection differs'],
-      [{ stageIds: ['develop_task', 'validate_focused', 'foreign-stage'] }, 'corrective stage selection differs'],
-      [
-        {
-          config: {
-            ...f.config,
-            repository: { ...f.config.repository, repository_id: f.config.repository.repository_id + '-foreign' },
+test(
+  'Host corrective authorization preserves all three CAS boundaries and only authorizes the failed closure',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    const f = await createFailedFinalCorrectionFixture();
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      if (performance.now() >= deadline)
+        throw new Error('Host failed-final fixture preparation exceeded the case deadline.');
+      const prepared = prepareLifecycleForCorrection({
+        root: f.root,
+        config: f.config,
+        store: f.store,
+        identity: f.identity,
+        journal: f.journal,
+        preparationPath: f.preparationPath,
+      });
+      const before = f.store.readHostStateSnapshot(f.identity);
+      const journal = f.store.readWorkSessionJournal(f.identity);
+      if (!prepared.workVersion || !prepared.ledgerVersion || !before.work?.execution.run_id || !journal)
+        throw new Error('Prepared corrective Host fixture is incomplete.');
+      const request = {
+        identity: f.identity,
+        attempt: 1,
+        expectedWork: prepared.workVersion,
+        expectedLedger: prepared.ledgerVersion,
+        expectedJournal: journal.version,
+        stageIds: ['develop_task', 'validate_focused', 'test_task'],
+        userInstructionRef: 'fixture:host-corrective-owner',
+        config: f.config,
+      };
+      const denied: readonly [Partial<typeof request>, string][] = [
+        [{ userInstructionRef: ' ' }, 'attributable corrective authorization missing'],
+        [
+          { expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 } },
+          'state compare-and-swap conflict',
+        ],
+        [
+          { expectedLedger: { ...request.expectedLedger, revision: request.expectedLedger.revision + 1 } },
+          'state compare-and-swap conflict',
+        ],
+        [
+          { expectedJournal: { ...request.expectedJournal, revision: request.expectedJournal.revision + 1 } },
+          'corrective journal CAS conflict',
+        ],
+        [{ stageIds: [] }, 'corrective stage selection differs'],
+        [{ stageIds: ['develop_task', 'validate_focused', 'validate_focused'] }, 'corrective stage selection differs'],
+        [{ stageIds: ['develop_task', 'validate_focused', 'foreign-stage'] }, 'corrective stage selection differs'],
+        [
+          {
+            config: {
+              ...f.config,
+              repository: { ...f.config.repository, repository_id: f.config.repository.repository_id + '-foreign' },
+            },
           },
-        },
-        'corrective workflow configuration differs',
-      ],
-    ];
-    const authorityPath = path.join(f.root, '.agent/work', f.identity.work_id, 'correction-1-authorization.json');
-    for (const [change, message] of denied) {
-      expect(() => f.store.authorizeCorrectiveExecution({ ...request, ...change })).toThrow(message);
-      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
-      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
-      expect(existsSync(authorityPath)).toBe(false);
+          'corrective workflow configuration differs',
+        ],
+      ];
+      const authorityPath = path.join(f.root, '.agent/work', f.identity.work_id, 'correction-1-authorization.json');
+      for (const [change, message] of denied) {
+        expect(() => f.store.authorizeCorrectiveExecution({ ...request, ...change })).toThrow(message);
+        expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+        expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+        expect(existsSync(authorityPath)).toBe(false);
+      }
+      const issued = f.store.authorizeCorrectiveExecution(request);
+      const after = f.store.readHostStateSnapshot(f.identity);
+      const corrected = f.store.readWorkSessionJournal(f.identity);
+      if (!after.work || !corrected) throw new Error('Corrective authorization lost its persisted state.');
+      expect(after.work.lifecycle.phase).toBe('EXECUTE');
+      expect(after.work.lifecycle.assurance.correction_count).toBe(1);
+      expect(after.work.lease).toEqual(before.work.lease);
+      expect(after.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
+      expect(corrected.state.corrective_execution).toEqual(issued);
+      expect(corrected.state.items).toEqual([]);
+      expect(corrected.state.completed).toEqual([]);
+      expect(corrected.state.run_id).toBe(issued.engine_run_id);
+      expect(issued.base_run_id).toBe(before.work.execution.run_id);
+      expect(issued.stage_ids).toEqual(request.stageIds);
+      const authorityBytes = readFileSync(authorityPath);
+      const authority = correctiveAssignmentAuthorizationSchema.parse(
+        JSON.parse(authorityBytes.toString('utf8')) as unknown,
+      );
+      expect(authority.user_instruction_ref).toBe(request.userInstructionRef);
+      expect(authority.stage_ids).toEqual(request.stageIds);
+      expect(authority.allowed_paths).toEqual([...before.work.lifecycle.scope.allowed_paths]);
+      expect(authority.failed_action_ids).toEqual(
+        [...journal.state.completed.flatMap((wave) => wave.items), ...journal.state.items]
+          .filter((item) => item.observation?.status === 'reported_failed')
+          .map((item) => item.request.action_id),
+      );
+      expect(createHash('sha256').update(authorityBytes).digest('hex')).toBe(issued.authorization.sha256);
+      expect(() => f.store.authorizeCorrectiveExecution(request)).toThrow('state compare-and-swap conflict');
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(corrected);
+      expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            f.close(() => completed && performance.now() < deadline);
+          },
+        ],
+        primaryFailure,
+      );
     }
-    const issued = f.store.authorizeCorrectiveExecution(request);
-    const after = f.store.readHostStateSnapshot(f.identity);
-    const corrected = f.store.readWorkSessionJournal(f.identity);
-    if (!after.work || !corrected) throw new Error('Corrective authorization lost its persisted state.');
-    expect(after.work.lifecycle.phase).toBe('EXECUTE');
-    expect(after.work.lifecycle.assurance.correction_count).toBe(1);
-    expect(after.work.lease).toEqual(before.work.lease);
-    expect(after.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
-    expect(corrected.state.corrective_execution).toEqual(issued);
-    expect(corrected.state.items).toEqual([]);
-    expect(corrected.state.completed).toEqual([]);
-    expect(corrected.state.run_id).toBe(issued.engine_run_id);
-    expect(issued.base_run_id).toBe(before.work.execution.run_id);
-    expect(issued.stage_ids).toEqual(request.stageIds);
-    const authorityBytes = readFileSync(authorityPath);
-    const authority = correctiveAssignmentAuthorizationSchema.parse(
-      JSON.parse(authorityBytes.toString('utf8')) as unknown,
-    );
-    expect(authority.user_instruction_ref).toBe(request.userInstructionRef);
-    expect(authority.stage_ids).toEqual(request.stageIds);
-    expect(authority.allowed_paths).toEqual([...before.work.lifecycle.scope.allowed_paths]);
-    expect(authority.failed_action_ids).toEqual(
-      [...journal.state.completed.flatMap((wave) => wave.items), ...journal.state.items]
-        .filter((item) => item.observation?.status === 'reported_failed')
-        .map((item) => item.request.action_id),
-    );
-    expect(createHash('sha256').update(authorityBytes).digest('hex')).toBe(issued.authorization.sha256);
-    expect(() => f.store.authorizeCorrectiveExecution(request)).toThrow('state compare-and-swap conflict');
-    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
-    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(corrected);
-    expect(readFileSync(authorityPath)).toEqual(authorityBytes);
-    completed = true;
-  } catch (error) {
-    primaryFailure = { error };
-    throw error;
-  } finally {
-    completeOwnedCleanup(
-      [
-        () => {
-          f.close(completed);
-        },
-      ],
-      primaryFailure,
-    );
-  }
-}, 20000);
+  },
+  failedFinalHostCaseTimeoutMs,
+);
 
 test('Host unprepared release rolls back both rows and retries the retained request without new rights', () => {
   const f = createAutomaticWorkAdmissionFixture(false, true);
@@ -618,6 +686,87 @@ test('Host unprepared release rolls back both rows and retries the retained requ
     expect(f.store.readHostStateSnapshot(identity)).toEqual(released);
     expect(f.store.readWorkSessionJournal(identity)).toBeNull();
     expect(() => f.store.inspectUnpreparedWorkRecovery(context)).toThrow('unprepared recovery owner missing');
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close({ retainRoot: !completed });
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test('fresh task-source projection preserves the admitted owner and rejects noncanonical indexes', () => {
+  const f = createAutomaticWorkAdmissionFixture(false, true);
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const input = f.prepare('host-empty-task-source', 'fixture:task-source-owner');
+    const admitted = f.admit(input);
+    if (!admitted.host.work?.lease) throw new Error('Task-source fixture has no active owner.');
+    const binding = admitted.host.work.binding;
+    const workIdentity: WorkIdentity = {
+      repository_id: binding.repository_id,
+      project_ids: binding.project_ids,
+      integrations_digest: binding.integrations_digest,
+      work_id: input.context.work_id,
+    };
+    const read = () => f.store.readCurrentTaskSourceBinding(workIdentity, input.nativeSessionHandle, 1);
+    const before = f.store.readHostStateSnapshot(workIdentity);
+    expect(read()).toBeNull();
+    initializeTaskSourceBindingWorkProjectionSchema(f.database);
+    initializeTaskSourceBindingWorkProjectionSchema(f.database);
+    expect(read()).toBeNull();
+    expect(f.store.readHostStateSnapshot(workIdentity)).toEqual(before);
+    expect(
+      f.database
+        .query<SqliteNameRow, []>("SELECT name FROM sqlite_master WHERE name='agent_host_task_source_binding_action'")
+        .get(),
+    ).toBeNull();
+    expect(
+      f.database
+        .query<{ name: string; notnull: number }, []>('PRAGMA table_info(agent_host_task_source_binding_operation)')
+        .all()
+        .find((column) => column.name === 'work_id')?.notnull,
+    ).toBe(1);
+    expect(() => f.store.readCurrentTaskSourceBinding(workIdentity, 'foreign-owner', 1)).toThrow(
+      'no matching current Host owner',
+    );
+    expect(() => f.store.readCurrentTaskSourceBinding(workIdentity, input.nativeSessionHandle, 0)).toThrow(
+      'read context is invalid',
+    );
+    expect(() => f.database.transaction(() => read()).deferred()).toThrow('nested task source binding read forbidden');
+    expect(() =>
+      f.database.transaction(() => initializeTaskSourceBindingWorkProjectionSchema(f.database)).immediate(),
+    ).toThrow('task source schema requires an unshared database');
+    const index = 'agent_host_task_source_binding_operation_work';
+    for (const definition of [
+      `CREATE INDEX ${index} ON agent_host_task_source_binding_operation(workspace_id,operation_id,work_id)`,
+      `CREATE INDEX ${index} ON agent_host_task_source_binding_operation(workspace_id,work_id,operation_id DESC)`,
+      `CREATE UNIQUE INDEX ${index} ON agent_host_task_source_binding_operation(workspace_id,work_id,operation_id)`,
+      `CREATE INDEX ${index} ON agent_host_task_source_binding_operation(workspace_id,work_id COLLATE NOCASE,operation_id)`,
+      `CREATE INDEX ${index} ON agent_host_task_source_binding_operation(workspace_id,work_id,operation_id) WHERE revision > 0`,
+    ]) {
+      f.database.exec(`DROP INDEX ${index}`);
+      f.database.exec(definition);
+      expect(() => initializeTaskSourceBindingWorkProjectionSchema(f.database)).toThrow(
+        'task source work projection index differs',
+      );
+      expect(
+        f.database.query<SqliteMasterRow, [string]>('SELECT name,sql FROM sqlite_master WHERE name=?').get(index)?.sql,
+      ).toBe(definition);
+      expect(f.store.readHostStateSnapshot(workIdentity)).toEqual(before);
+    }
+    f.database.exec(`DROP INDEX ${index}`);
+    initializeTaskSourceBindingWorkProjectionSchema(f.database);
+    expect(read()).toBeNull();
+    expect(f.store.readHostStateSnapshot(workIdentity)).toEqual(before);
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -1149,129 +1298,138 @@ test('correction-generation repair preserves terminal results and a quiescent jo
 });
 
 // Real writer/report preparation supplies terminal reservation receipts for both persisted rows.
-test('correction-generation repair atomically normalizes genuine terminal Host and Journal receipts', async () => {
-  const f = await createFailedFinalCorrectionFixture();
-  let completed = false;
-  let primaryFailure: { error: unknown } | undefined;
-  try {
-    const before = readPresentSnapshot(f.store, f.identity);
-    const journal = f.store.readWorkSessionJournal(f.identity);
-    if (!journal) throw new Error('Terminal repair journal is missing.');
-    expect(before.work.execution.assignment_attempts.length).toBeGreaterThan(0);
-    expect(
-      before.work.execution.assignment_attempts.every((attempt) => ['completed', 'no_effect'].includes(attempt.status)),
-    ).toBe(true);
-    const legacyWork = parseJsonRecord(canonicalJson(before.work));
-    const legacyJournal = parseJsonRecord(canonicalJson(journal.state));
-    const stripAuthority = (value: unknown) => {
-      if (!isPlainRecord(value)) throw new Error('Terminal authority preimage is not a record.');
-      expect(Object.hasOwn(value, 'correction_generation')).toBe(true);
-      expect(Object.hasOwn(value, 'correction_authorization')).toBe(true);
-      Reflect.deleteProperty(value, 'correction_generation');
-      Reflect.deleteProperty(value, 'correction_authorization');
-    };
-    const execution = recordAt(legacyWork, 'execution');
-    for (const attempt of arrayAt(execution, 'assignment_attempts')) stripAuthority(attempt);
-    legacyWork.lease = null;
-    execution.status = 'suspended';
-    const releasedLedger: CoordinationLedger = {
-      ...before.ledger,
-      claims: before.ledger.claims.map((claim) => ({ ...claim, status: 'released' })),
-      tickets: before.ledger.tickets.map((ticket) => ({
-        ...ticket,
-        status: 'released',
-        active_resources: [],
-        blocked_resources: [],
-        expires_at: null,
-      })),
-    };
-    const items = [...arrayAt(legacyJournal, 'items')];
-    for (const wave of arrayAt(legacyJournal, 'completed')) {
-      if (!isPlainRecord(wave)) throw new Error('Terminal repair wave is not a record.');
-      items.push(...arrayAt(wave, 'items'));
-    }
-    let reservations = 0;
-    for (const item of items) {
-      if (!isPlainRecord(item)) throw new Error('Terminal repair item is not a record.');
-      if (!item.host_reservation) continue;
-      const reservation = recordAt(item, 'host_reservation');
-      stripAuthority(recordAt(reservation, 'receipt').attempt);
-      if (reservation.authorization)
-        stripAuthority(recordAt(recordAt(reservation, 'authorization'), 'receipt').attempt);
-      reservations++;
-    }
-    expect(reservations).toBeGreaterThan(0);
-    f.database
-      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'")
-      .run(canonicalJson(legacyWork), canonicalJsonDigest(legacyWork));
-    f.database
-      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
-      .run(canonicalJson(releasedLedger), canonicalJsonDigest(releasedLedger));
-    f.database
-      .query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE work_id=?')
-      .run(canonicalJson(legacyJournal), canonicalJsonDigest(legacyJournal), f.identity.work_id);
-    const rows = () => f.database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all();
-    const journals = () =>
-      f.database
-        .query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id,attempt')
-        .all();
-    const retainedRows = rows(),
-      retainedJournals = journals();
-    const request = { operationId: 'terminal-journal-generation-repair' };
-    const inspection = f.store.repairCorrectionGeneration({ ...request, mode: 'inspect' });
-    expect(inspection.changed_work).toHaveLength(1);
-    expect(inspection.changed_journals).toBe(1);
-    expect(rows()).toEqual(retainedRows);
-    expect(journals()).toEqual(retainedJournals);
-    const planned = f.store.repairCorrectionGeneration({
-      ...request,
-      mode: 'plan',
-      actor: 'fixture:terminal-journal-repair-owner',
-    });
-    expect(planned.status).toBe('planned');
-    f.database.exec(
-      "CREATE TEMP TRIGGER deny_generation_journal BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT, 'controlled generation journal failure'); END",
-    );
+test(
+  'correction-generation repair atomically normalizes genuine terminal Host and Journal receipts',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    const f = await createFailedFinalCorrectionFixture();
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
     try {
-      expect(() => f.store.repairCorrectionGeneration({ ...request, mode: 'apply' })).toThrow(
-        'controlled generation journal failure',
-      );
+      if (performance.now() >= deadline)
+        throw new Error('Host failed-final fixture preparation exceeded the case deadline.');
+      const before = readPresentSnapshot(f.store, f.identity);
+      const journal = f.store.readWorkSessionJournal(f.identity);
+      if (!journal) throw new Error('Terminal repair journal is missing.');
+      expect(before.work.execution.assignment_attempts.length).toBeGreaterThan(0);
+      expect(
+        before.work.execution.assignment_attempts.every((attempt) =>
+          ['completed', 'no_effect'].includes(attempt.status),
+        ),
+      ).toBe(true);
+      const legacyWork = parseJsonRecord(canonicalJson(before.work));
+      const legacyJournal = parseJsonRecord(canonicalJson(journal.state));
+      const stripAuthority = (value: unknown) => {
+        if (!isPlainRecord(value)) throw new Error('Terminal authority preimage is not a record.');
+        expect(Object.hasOwn(value, 'correction_generation')).toBe(true);
+        expect(Object.hasOwn(value, 'correction_authorization')).toBe(true);
+        Reflect.deleteProperty(value, 'correction_generation');
+        Reflect.deleteProperty(value, 'correction_authorization');
+      };
+      const execution = recordAt(legacyWork, 'execution');
+      for (const attempt of arrayAt(execution, 'assignment_attempts')) stripAuthority(attempt);
+      legacyWork.lease = null;
+      execution.status = 'suspended';
+      const releasedLedger: CoordinationLedger = {
+        ...before.ledger,
+        claims: before.ledger.claims.map((claim) => ({ ...claim, status: 'released' })),
+        tickets: before.ledger.tickets.map((ticket) => ({
+          ...ticket,
+          status: 'released',
+          active_resources: [],
+          blocked_resources: [],
+          expires_at: null,
+        })),
+      };
+      const items = [...arrayAt(legacyJournal, 'items')];
+      for (const wave of arrayAt(legacyJournal, 'completed')) {
+        if (!isPlainRecord(wave)) throw new Error('Terminal repair wave is not a record.');
+        items.push(...arrayAt(wave, 'items'));
+      }
+      let reservations = 0;
+      for (const item of items) {
+        if (!isPlainRecord(item)) throw new Error('Terminal repair item is not a record.');
+        if (!item.host_reservation) continue;
+        const reservation = recordAt(item, 'host_reservation');
+        stripAuthority(recordAt(reservation, 'receipt').attempt);
+        if (reservation.authorization)
+          stripAuthority(recordAt(recordAt(reservation, 'authorization'), 'receipt').attempt);
+        reservations++;
+      }
+      expect(reservations).toBeGreaterThan(0);
+      f.database
+        .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'")
+        .run(canonicalJson(legacyWork), canonicalJsonDigest(legacyWork));
+      f.database
+        .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+        .run(canonicalJson(releasedLedger), canonicalJsonDigest(releasedLedger));
+      f.database
+        .query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE work_id=?')
+        .run(canonicalJson(legacyJournal), canonicalJsonDigest(legacyJournal), f.identity.work_id);
+      const rows = () => f.database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all();
+      const journals = () =>
+        f.database
+          .query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id,attempt')
+          .all();
+      const retainedRows = rows(),
+        retainedJournals = journals();
+      const request = { operationId: 'terminal-journal-generation-repair' };
+      const inspection = f.store.repairCorrectionGeneration({ ...request, mode: 'inspect' });
+      expect(inspection.changed_work).toHaveLength(1);
+      expect(inspection.changed_journals).toBe(1);
       expect(rows()).toEqual(retainedRows);
       expect(journals()).toEqual(retainedJournals);
+      const planned = f.store.repairCorrectionGeneration({
+        ...request,
+        mode: 'plan',
+        actor: 'fixture:terminal-journal-repair-owner',
+      });
+      expect(planned.status).toBe('planned');
+      f.database.exec(
+        "CREATE TEMP TRIGGER deny_generation_journal BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT, 'controlled generation journal failure'); END",
+      );
+      try {
+        expect(() => f.store.repairCorrectionGeneration({ ...request, mode: 'apply' })).toThrow(
+          'controlled generation journal failure',
+        );
+        expect(rows()).toEqual(retainedRows);
+        expect(journals()).toEqual(retainedJournals);
+      } finally {
+        f.database.exec('DROP TRIGGER deny_generation_journal');
+      }
+      const applied = f.store.repairCorrectionGeneration({ ...request, mode: 'apply' });
+      expect(applied.status).toBe('applied');
+      const after = readPresentSnapshot(f.store, f.identity);
+      expect(after.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
+      expect(after.work.execution.status).toBe('suspended');
+      expect(after.work.lease).toBeNull();
+      expect(after.ledger).toEqual(releasedLedger);
+      expect(f.store.readWorkSessionJournal(f.identity)?.state).toEqual(journal.state);
+      expect(f.store.readWorkSessionJournal(f.identity)?.version.revision).toBe(journal.version.revision + 1);
+      expect(f.store.repairCorrectionGeneration({ ...request, mode: 'resume' })).toEqual(applied);
+      const restored = f.store.repairCorrectionGeneration({ ...request, mode: 'restore' });
+      expect(restored.status).toBe('restored');
+      expect(readPresentSnapshot(f.store, f.identity).work.execution).toEqual(after.work.execution);
+      expect(f.store.readWorkSessionJournal(f.identity)?.state).toEqual(journal.state);
+      expect(f.store.readWorkSessionJournal(f.identity)?.version.revision).toBe(journal.version.revision + 2);
+      expect(f.store.repairCorrectionGeneration({ ...request, mode: 'restore' })).toEqual(restored);
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
     } finally {
-      f.database.exec('DROP TRIGGER deny_generation_journal');
+      completeOwnedCleanup(
+        [
+          () => {
+            f.close(() => completed && performance.now() < deadline);
+          },
+        ],
+        primaryFailure,
+      );
     }
-    const applied = f.store.repairCorrectionGeneration({ ...request, mode: 'apply' });
-    expect(applied.status).toBe('applied');
-    const after = readPresentSnapshot(f.store, f.identity);
-    expect(after.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
-    expect(after.work.execution.status).toBe('suspended');
-    expect(after.work.lease).toBeNull();
-    expect(after.ledger).toEqual(releasedLedger);
-    expect(f.store.readWorkSessionJournal(f.identity)?.state).toEqual(journal.state);
-    expect(f.store.readWorkSessionJournal(f.identity)?.version.revision).toBe(journal.version.revision + 1);
-    expect(f.store.repairCorrectionGeneration({ ...request, mode: 'resume' })).toEqual(applied);
-    const restored = f.store.repairCorrectionGeneration({ ...request, mode: 'restore' });
-    expect(restored.status).toBe('restored');
-    expect(readPresentSnapshot(f.store, f.identity).work.execution).toEqual(after.work.execution);
-    expect(f.store.readWorkSessionJournal(f.identity)?.state).toEqual(journal.state);
-    expect(f.store.readWorkSessionJournal(f.identity)?.version.revision).toBe(journal.version.revision + 2);
-    expect(f.store.repairCorrectionGeneration({ ...request, mode: 'restore' })).toEqual(restored);
-    completed = true;
-  } catch (error) {
-    primaryFailure = { error };
-    throw error;
-  } finally {
-    completeOwnedCleanup(
-      [
-        () => {
-          f.close(completed);
-        },
-      ],
-      primaryFailure,
-    );
-  }
-}, 20000);
+  },
+  failedFinalHostCaseTimeoutMs,
+);
 
 test('stored repair decoder rejects malformed changes, foreign identity and extra fields without Host mutation', () => {
   const original = commitHostState(fixture());
