@@ -35,6 +35,7 @@ import { run } from '../bin/run.ts';
 import { bindControlledRuntimeInitialization } from './helpers/controlled-runtime-initialization-fixture.ts';
 import {
   runPreparationFixtureInProcess,
+  runSynthesisFixtureInProcess,
   runTaskSynthesisPublicActions,
   runSourcePrewriterPublicActions,
 } from './helpers/public-prewriter-fixture.ts';
@@ -510,7 +511,7 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
   markPhase?.('fixture:task-synthesis');
   let journal = writer
     ? await runPreparationFixtureInProcess(publicFixture, { ledger, bridge, source })
-    : await runTaskSynthesisPublicActions(publicFixture);
+    : await runSynthesisFixtureInProcess(publicFixture, { ledger, bridge, source });
   const readonlyObservation = required(
     at(journal.state.completed, 0, 'Completed readonly wave').items[0]?.observation,
     'Completed readonly observation',

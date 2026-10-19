@@ -1302,7 +1302,7 @@ test(
   'correction-generation repair atomically normalizes genuine terminal Host and Journal receipts',
   async () => {
     const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
-    const f = await createFailedFinalCorrectionFixture();
+    const f = await createFailedFinalCorrectionFixture('failed', { preparationInputs: false });
     let completed = false;
     let primaryFailure: { error: unknown } | undefined;
     try {

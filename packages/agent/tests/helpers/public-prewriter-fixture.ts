@@ -284,6 +284,15 @@ export async function runPreparationFixtureInProcess(
   producer: InProcessPreparationProducer,
   tracePhase?: PreparationPhaseObserver,
 ): Promise<MastraSessionLedgerSnapshot> {
+  await runSynthesisFixtureInProcess(input, producer, tracePhase);
+  return runPrewriterFixtureInProcess(input, producer, tracePhase);
+}
+
+export async function runSynthesisFixtureInProcess(
+  input: PublicPrewriterInput,
+  producer: InProcessPreparationProducer,
+  tracePhase?: PreparationPhaseObserver,
+): Promise<MastraSessionLedgerSnapshot> {
   const current = currentSnapshot(input),
     synthIssue = tracePhase
       ? await tracePhase('synthesis-issue-wave', () =>
@@ -291,7 +300,12 @@ export async function runPreparationFixtureInProcess(
         )
       : producer.ledger.issueWave(input.workId, input.attempt, current.version),
     synthItem = synthIssue.state.items[0];
-  if (!synthItem?.issue_id || synthItem.request.stage_id !== 'synthesize_task')
+  if (
+    synthIssue.state.items.length !== 1 ||
+    !synthItem?.issue_id ||
+    synthItem.request.stage_id !== 'synthesize_task' ||
+    synthItem.request.workflow_id !== 'task_execution'
+  )
     throw new Error('In-process preparation fixture omitted task synthesis');
   const synthesisSummary = 'The accepted task and scope are ready for current Source planning.';
   const synthesisObservation: SessionBridgeObservation = {
@@ -318,7 +332,9 @@ export async function runPreparationFixtureInProcess(
     );
   else await producer.bridge.resume(synthStep, [synthesisObservation], producer.source);
 
-  return runPrewriterFixtureInProcess(input, producer, tracePhase);
+  const completed = currentSnapshot(input);
+  assertReported(completed, synthesisObservation);
+  return completed;
 }
 
 export async function runPrewriterFixtureInProcess(

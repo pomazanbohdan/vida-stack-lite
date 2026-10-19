@@ -166,6 +166,12 @@ test; readonly setup must stay at its earlier synthesis-only boundary.
 When synthesis and the TRACE CAS already belong to a fixture, reuse the maintained
 `runPrewriterFixtureInProcess` leg instead of repeating synthesis or CLI bootstrap.
 Keep the actual writer issue/report and the fixture's TRACE/PLAN observations.
+Readonly preparation may use `runSynthesisFixtureInProcess` with the same existing
+ledger/bridge/source. Require exactly one synthesis action, its configured workflow
+and exact persisted observation; stop before prewriter issuance. Leave actual
+public capture/release/controller operations as the test subject. A terminal
+repair fixture may explicitly omit final-assurance inputs it never consumes;
+its return type must omit the path, while ordinary callers still form real inputs.
 For constructor failure, register handles as acquired and verify reverse cleanup,
 all causes and thrown undefined with real native handles. Distinguish that unit
 proof from bridge faults and persisted recovery. Separate independent state

@@ -180,9 +180,17 @@ export async function reportFailedFinalValidatorWave(input: {
 }
 
 /** Build a real failed final-validation state through admission, Host CAS and persisted Journal report APIs. */
+export function createFailedFinalCorrectionFixture(
+  outcome: FinalCorrectionOutcome,
+  options: { readonly preparationInputs: false },
+): Promise<Omit<FailedFinalCorrectionFixture, 'preparationPath'>>;
+export function createFailedFinalCorrectionFixture(
+  outcome?: FinalCorrectionOutcome,
+): Promise<FailedFinalCorrectionFixture>;
 export async function createFailedFinalCorrectionFixture(
   outcome: FinalCorrectionOutcome = 'failed',
-): Promise<FailedFinalCorrectionFixture> {
+  options?: { readonly preparationInputs: false },
+): Promise<Omit<FailedFinalCorrectionFixture, 'preparationPath'> | FailedFinalCorrectionFixture> {
   const fixture = createAutomaticWorkAdmissionFixture(true, true);
   const validatorsPass = outcome !== 'failed',
     testerPasses = outcome === 'passing';
@@ -535,8 +543,7 @@ export async function createFailedFinalCorrectionFixture(
     await bridge.close();
     bridge = undefined;
 
-    const { preparationPath } = await writeFailedFinalPreparationInputs({ root: fixture.root, work, attempt: 1 });
-    return {
+    const result = {
       root: fixture.root,
       config: fixture.config,
       store: host,
@@ -545,9 +552,11 @@ export async function createFailedFinalCorrectionFixture(
       journal,
       tracedHost,
       plannedHost,
-      preparationPath,
       close,
     };
+    if (options?.preparationInputs === false) return result;
+    const { preparationPath } = await writeFailedFinalPreparationInputs({ root: fixture.root, work, attempt: 1 });
+    return { ...result, preparationPath };
   } catch (error) {
     const cleanupErrors: unknown[] = [];
     try {

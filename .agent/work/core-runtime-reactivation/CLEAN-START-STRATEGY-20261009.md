@@ -77,6 +77,13 @@ task-source projection controls, and reuses the maintained Source prewriter leg
 for fixture setup. Deadline-aware cleanup retains late roots after the paired
 DB closes. Targeted existing public TRACE/PLAN regressions pass; full coverage
 and timing qualification remain with the next single changed-input stage.
+The073180a stage closes all processes in235.101s, but one20s terminal repair case
+still fails at20.159s; no new counters are published. Its late root is retained
+and observed on durable scratch. The next checked patch skips only unused final
+preparation inputs for that repair and reuses synthesis-only Source setup for
+readonly cases. Targeted terminal repair, readonly public release and writer
+capture/rollback/retry pass; both test-byte resource pins are refreshed. Keep the
+same contour active and measure the changed inputs once after publication.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

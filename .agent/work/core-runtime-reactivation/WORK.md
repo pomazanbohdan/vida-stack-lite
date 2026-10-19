@@ -195,6 +195,47 @@ are exact-filename/process-local and restored before paired close retries. Both
 new fixture flows stay under their child's unique TMPDIR. Sources and test-file
 selection, explicit namespace rows and serial fallback are unchanged.
 
+### Latest failed stage and bounded setup correction
+
+The073180a stage /workspace/contour-stage-tg2Awa fails in235101.141ms, exit1,
+with complete capture, closed group and unchanged boot/image. Host261PASS/1FAIL,
+1981assertions in187.02s; stopped-source16PASS/206assertions in228.58s. Only the
+terminal Journal repair case overruns its20s bound, at20158.62ms. The shard
+validator refuses numeric publication for that failed case; this is no report
+loss or PASS. Projection1029retains the failed attempt. Latest complete counters
+remain the ee67fa0 observation above,16/45historical exact coverage closures.
+
+Run6027a487-76e8-4d7f-883d-9b0ad6d84c28 binds image
+/workspace/.vida-quality-inputs/bb00069cbd250735e548ff0e2b6c8a0c4b79ebfd/repository,
+manifest SHA16764b5c2486c4d43fc37fdf0e0460897372a8b42ad433262ce05c87829c4c68.
+SDK CI39342527347 attempt1/artifact12228623696 passed, ZIP SHA
+ed6df0ebb533917ac1a34926aff7517efc5fe5022c40cf671f9ecd25fd634793.
+Admission reports8822603776free bytes, above2147483648required. The over-deadline
+case logs retained fixture vida-absorption-vEoE2u; its directory is independently
+observed present and non-symlink under the stage's actual scratch binding. Keep
+that failed image, root and original evidence; no cleanup or replay is authorized.
+
+The checked next packet omits only unused final-assurance input formation from
+the terminal repair fixture, retaining the complete real failed-final flow. Its
+explicit typed overload has no preparationPath; ordinary callers still create
+the actual inputs. This case passes30assertions in12367.49ms; no speedup is inferred
+from that Source-only sample. Readonly stopped-source setup now reuses the existing
+in-process synthesis leg, with exact one-action/workflow/observation guards, and
+stops before Source prewriters. Actual public capture/release/controller calls
+remain subjects. The readonly public-release case passes8assertions in9218.19ms
+(37.51s command); the affected full writer capture/rollback/retry case passes
+25assertions in16554.07ms (43.98s command). These are targeted behavior checks.
+Strict169files and scoped type-aware lint pass. Blind reviews at
+/tmp/vida-host-readonly-synthesis-reuse-final-review.md and
+/tmp/vida-host-final-preparation-scope-review.md find no blocking defect.
+
+Root refreshes both direct test-byte pins after formatting: Host
+b2f0c9d45163ea4cc7e1b84e799e56238382a7e92ddfe398f28c02806c630301 and stopped-source
+4690a1e78e82fb6a711feb513be6119ae1854d7d8a7015b93468e1c2780a207a. Resource ownership,
+explicit namespace rows and the complete Source/test selection are unchanged.
+No allowance, timeout, integrity or authorization gate is relaxed. Require the
+next single complete changed-input stage before any numeric gain or closure claim.
+
 ### Prior complete presence-guard baseline
 
 On4ae4a36, /workspace/contour-stage-F04pyx completes in201042.948ms, publishes

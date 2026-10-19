@@ -687,6 +687,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | 60c6224a-e1a8-45c6-813f-b13e7da2e738 | ee67fa0583213715bc83283ea0f910fa3bb80f69 | 2026-10-19T23:14:49.104Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/.vida-quality-inputs/61403442d2f945a45947729bd66c00e08c101ca4/repository/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/60c6224a-e1a8-45c6-813f-b13e7da2e738.json |
 | coverage | 60c6224a-e1a8-45c6-813f-b13e7da2e738 | ee67fa0583213715bc83283ea0f910fa3bb80f69 | 2026-10-19T23:14:49.104Z | focused-diagnostic; owner accepted locally; selection bound | 652/1128 · 2502/4967 · 2680/5297 · 2315/5640 | /workspace/.vida-quality-inputs/61403442d2f945a45947729bd66c00e08c101ca4/repository/packages/agent/coverage/bun-unified/diagnostics/60c6224a-e1a8-45c6-813f-b13e7da2e738.focused-coverage.json |
 | stage-outcome | contour-stage-glrAis | 039523cb24fee860441c3ddcc42e5eec41d49453 | 2026-10-19T23:24:41.848Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-glrAis/publication-error.json |
+| stage-outcome | contour-stage-tg2Awa | 073180a87eb2636fd938a11be4bab1a6535dd301 | 2026-10-19T23:40:24.522Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-tg2Awa/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
