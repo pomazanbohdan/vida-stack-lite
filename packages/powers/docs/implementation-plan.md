@@ -191,17 +191,17 @@ S-документи, які створює Stage 1.
 | D-10 | Decision Provider «Jeff/Jev» (§4.8) | У коді відсутній | Рішення D5 |
 | D-11 | Wiki/work layout, ID, relations (§9) | У конфігу є `wiki_root`, `wiki_output_root`, `task_prefix`; продуктових Wiki-сторінок немає | Stage 6 |
 | D-12 | Standalone + marketplace (§1, §3) | Публічна доставка агента — native executable; npm = лише SDK; marketplace відсутній | Stage 5/8 + D4; Stage 9 |
-| D-13 | Розташування продукту | `packages/plugin` — порожній «Codex plugin product workspace» (лише `package.json`); `packages/powers` не зареєстрований; у конфігу лише `agent` і `plugin` | Рішення D1 |
+| D-13 | Розташування продукту | `packages/plugin` = «Vida Codex» — Codex-прослойка між хостом Codex і агентом (`README.md:14`; `openai-execution-backends.md:34-36`); `packages/powers` — третій продукт, ще не зареєстрований; у конфігу лише `agent` і `plugin` | D1 вирішено: `packages/powers`; реєстрація — Stage 0 |
 | D-14 | `changelog_ref` у research | Файлу немає | Stage 0 (D6) |
 | D-15 | Актуальність research | Snapshot `bb4345e` — предок HEAD; відстань вимірюється командою `git rev-list --count bb4345e..HEAD` (стан змінюється щодня) | Оновлення research за §7.1 після Stage 1 |
 
 ---
 
-## 3. Відкриті рішення (owner)
+## 3. Рішення (owner)
 
 | ID | Рішення | Варіанти | Рекомендація | Блокує |
 |---|---|---|---|---|
-| D1 | Розташування продукту | (a) VP = `packages/plugin`; (b) `packages/powers` як третій продукт; (c) окремий репозиторій/пакет | **(c)**, якщо VP лишається host-portable: research визначає VP як автономний плагін для різних хостів, а `packages/plugin` — Codex-специфічний workspace. **(b)** — лише як owner-approved amendment sidecar («exactly two products») і system-spec. **(a)** — лише за готовності VP бути Codex-only, з явним ризиком для portable-claim | 0, 1, 2 |
+| D1 | Розташування продукту | (a) VP = `packages/plugin`; (b) `packages/powers` як третій продукт; (c) окремий репозиторій/пакет | **ВИРІШЕНО 2026-10-19**: (b) — VP живе в `packages/powers` як третій продукт; `packages/plugin` лишається Codex-прослойкою. Decision: `docs/decisions/D1-product-placement.md` | вирішено |
 | D2 | Власник і реєстрація | призначений product owner; рядки в sidecar, `projects`, `code_selectors`, `delivery_group`, `docs/products.map.md`, doc-policy, root `package.json` | Призначити product owner; реєстрація — Stage 0 | 0, 1 |
 | D3 | Формат інструкції та каталогу | (a) розширити `InstructionRegistry/v1`; (b) `VPCatalog/v1` + обмежена проекція в `InstructionRegistry/v1` | **(b)**: `maxItems: 64` не протримає корпус, а вбудований реєстр прив'язаний до research/synthesis-стадій. Проекція — reuse існуючого activation-шляху, не друга активація | 2, 3 |
 | D4 | Канал доставки | Codex plugin marketplace / власний пакет / обидва | Обидва: мінімальний локальний/git-пакунок (блокує Stage 8) + marketplace як окреме рішення Stage 9 | 5, 8 |
@@ -229,16 +229,25 @@ S-документи, які створює Stage 1.
 **Role:** product owner + Root (shared-файли). **Оцінка:** S. **Work item:** VP-0.
 
 Роботи:
-- Decision-записи (окремий артефакт, research §7.2) за D1, D2, D3, D4, D5, D6, D7, D8.
-  D3, D4 і D8 — до Stage 1, бо Stage 1 фіксує S-контракти, а Stage 4 потребує
-  визначеного місця схеми профілю.
-- Реєстрація продукту: рядок ownership map у `AGENT.sidecar.md`; `projects` у
-  `agent-runtime.config.v1.yaml` з повним набором полів (schema вимагає
-  `project_id`, `title`, `wiki_root`, `wiki_path`, `wiki_output_root`,
-  `internal_root`, `ledger_root`, `task_prefix`, `code_selectors`, `delivery_group`,
-  `project_root`); `packages/powers` у `workspaces` root `package.json`; рядок у
-  `docs/products.map.md`; `packages/powers/docs` у `canonical_roots` і
-  changelog-події в `docs/agent-instructions/documentation-policy.v1.json`.
+- Decision-записи (окремий артефакт, research §7.2) за D1, D2, D3, D4, D5, D6, D7, D8;
+  зберігаються в `packages/powers/docs/decisions/` як OKF-концепції типу `Decision`.
+  D1 — **зафіксовано** (`docs/decisions/D1-product-placement.md`). D3, D4 і D8 — до
+  Stage 1, бо Stage 1 фіксує S-контракти, а Stage 4 потребує визначеного місця
+  схеми профілю.
+- Реєстрація продукту (перелік із D1-рішення, власник — repository owner):
+  1) `AGENT.sidecar.md` — «exactly two products», «two product roots»,
+     «Repository projects are …» + рядок у ownership map; 2)
+     `packages/agent/docs/system-specification.md` — «approved target keeps product
+     Source in packages/agent and packages/plugin» і рядок проєктів; 3)
+     `agent-runtime.config.v1.yaml` — `projects` із 11 обов'язковими полями схеми,
+     `repository.code_selectors`, `delivery_group`; 4) `packages/agent/knip.config.ts` —
+     workspace-блок `packages/powers`; 5)
+     `docs/agent-instructions/documentation-policy.v1.json` — `packages/powers/docs` у
+     `canonical_roots`; 6) `docs/products.map.md` — рядок VP; 7) `README.md` — рядок
+     «Vida Powers» у таблиці продуктів; 8) root `package.json` — `workspaces` +=
+     `packages/powers`, плюс `packages/powers/package.json` і `.bun-version`.
+- `packages/plugin` лишається Codex-прослойкою і не входить у реєстрацію VP; його
+  canonical documents заповнює Plugin owner.
 - Product KEY (для `<KEY>-W<NNNN>` / `<KEY>-<N>`) і правило алокації ID.
 - Changelog research-документа: bundle-журнал `packages/powers/docs/log.md`
   (OKF §9) ведеться при кожній зміні концепції; посилання `vida.changelog_ref`
@@ -249,7 +258,8 @@ AC:
 - `bun tooling/agent/check-documentation.ts <усі змінені .md>` → `failures: []`.
 - `bun --cwd packages/agent run test:pinned` → exit 0 (doc-policy тест проходить
   після розширення `canonical_roots`).
-- Кожне з D1–D7 має Decision-запис із owner, датою, варіантами та причиною.
+- `bun packages/powers/tooling/check-okf.ts` → exit 0 (bundle відповідає OKF v0.2).
+- Кожне з D1–D8 має Decision-запис із owner, датою, варіантами та причиною.
 - `git ls-files packages/powers` показує зареєстровані файли; `packages/powers/docs`
   присутня в `canonical_roots`.
 
