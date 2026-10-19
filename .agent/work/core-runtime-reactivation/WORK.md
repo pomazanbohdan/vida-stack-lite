@@ -1605,3 +1605,47 @@ artifact listing included artifact `12198074668` with digest
 workflow had no successful terminal result, so the artifact was not consumed.
 This documentation correction changes the commit. The next coverage stage must
 wait for a successful SDK-input artifact bound to the new commit.
+
+### F/L/S/B main-runtime-core counter-path candidate — 2026-10-19
+
+Stage `contour-stage-QpwRSv` measured immutable commit
+`c619c0fc63515a1fc32cc18e76c44a960e2761b6` with matching SDK input from
+successful GitHub run `39280563088` (artifact `12200995452`, archive digest
+`0a500f53d27792095da6f479e21c70443eafcc0250ae971acd4d7ac787022f84`). It closed
+in 234.221 seconds with complete capture, closed process group and unchanged
+image inputs, but no accepted F/L/S/B report. Shard 1 passed 227 tests and 1,098
+assertions in 170.847 seconds. Shard 2 passed 12 tests and 229 assertions; the
+protected-session test failed its existing 30-second per-test timeout at
+31.234 seconds. JUnit records the timeout as primary; the later missing-report
+error is secondary. The projection preserves this unqualified outcome and its
+original evidence at `/workspace/contour-stage-QpwRSv`.
+
+A focused built-in Bun coverage diagnostic passed that test in 21.888 seconds.
+It uses a different instrumentation path, so it does not measure the custom
+Istanbul stage or explain the timeout. Inspection of the pinned Istanbul
+implementation showed that its generated accessor replaces itself after the
+bootstrap call with a closure returning the memoized coverage object. The
+current candidate removes only that small function call from each `s`, `f` and
+`b` counter hit. Its generated-code rewrite adds work during transformation;
+no end-to-end gain is established.
+
+Three blind Luna design reviews compared the textual rewrite, a Babel AST
+rewrite in the existing transform and unchanged instrumentation. The cross-judge
+preferred unchanged instrumentation absent comparable evidence, and found the
+AST option more complex than the text rewrite. Root keeps the small textual
+candidate for one exact active-contour attempt because the protected test is
+slightly over its unchanged deadline; this is a falsifiable coverage repair, not
+a speedup claim. The new focused test executes both branch outcomes and checks
+runtime statement, function and branch counters against Istanbul's maps. It does
+not pin the generated alias text.
+
+The focused Bun run passed 12 tests with no failures across
+`private-method-coverage.test.ts` and `coverage-counters.test.ts`. Bun 1.4.3
+typechecked the changed tooling file and the changed test plus imports. Both
+files were formatted and `git diff --check` passed. No full suite, second
+contour, timeout change, CRAP run or mutation run was made. The automatic
+`CONTOUR-STATUS` projection remains authoritative for the failed stage. Next,
+publish these checked bytes, wait for the matching successful SDK-input
+artifact, and run one new exact `main-runtime-core` F/L/S/B stage. Keep the
+candidate only if the exact gate completes; otherwise preserve the failure and
+repair the same contour without changing any budget.

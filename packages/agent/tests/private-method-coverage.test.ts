@@ -19,6 +19,38 @@ test('instrumentation exposes original function identities before counter insert
   assert.equal(Object.keys(result.fileCoverage.fnMap).length, expected.length);
 });
 
+test('instrumentation preserves statement, function and branch counters at runtime', async () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'vida-coverage-counter-target-'));
+  const file = path.join(root, 'counter.ts');
+  const source = 'export function choose(flag: boolean) { if (flag) return 1; return 0; }';
+  const result = instrumentSource(file, source);
+  assert.equal(Object.keys(result.fileCoverage.s).length, Object.keys(result.fileCoverage.statementMap).length);
+  assert.equal(Object.keys(result.fileCoverage.f).length, Object.keys(result.fileCoverage.fnMap).length);
+  assert.equal(Object.keys(result.fileCoverage.b).length, Object.keys(result.fileCoverage.branchMap).length);
+  const coverage = globalThis as unknown as Record<string, Record<string, typeof result.fileCoverage>>;
+  try {
+    writeFileSync(file, result.code);
+    const loaded = (await import(pathToFileURL(file).href)) as { choose(flag: boolean): number };
+    assert.equal(loaded.choose(true), 1);
+    assert.equal(loaded.choose(false), 0);
+    const executed = coverage.__vidaAgentCoverage__?.[file];
+    assert.ok(executed);
+    assert.deepEqual(Object.keys(executed.s), Object.keys(result.fileCoverage.s));
+    assert.ok(Object.values(executed.s).every((count) => count > 0));
+    assert.deepEqual(Object.keys(executed.f), Object.keys(result.fileCoverage.f));
+    assert.deepEqual(Object.values(executed.f), [2]);
+    assert.deepEqual(Object.keys(executed.b), Object.keys(result.fileCoverage.b));
+    assert.ok(
+      Object.values(executed.b)
+        .flat()
+        .every((count) => count > 0),
+    );
+  } finally {
+    if (coverage.__vidaAgentCoverage__) delete coverage.__vidaAgentCoverage__[file];
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('instrumentation rejects invalid syntax and previously instrumented Source without weakening subsequent maps', () => {
   const file = path.resolve('/tmp/vida-private-method-invalid.ts');
   assert.throws(() => instrumentSource(file, 'class C { #hidden( { }'));
