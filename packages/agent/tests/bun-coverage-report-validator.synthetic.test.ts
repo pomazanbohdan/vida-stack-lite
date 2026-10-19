@@ -5,6 +5,7 @@
  * provenance, executed coverage, or numeric coverage qualification.
  */
 import { expect, test } from 'bun:test';
+import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { sha256 } from '../tooling/bun-coverage-evidence.ts';
 import path from 'node:path';
@@ -277,6 +278,16 @@ test('projects focused v3 shard receipts through the serial diagnostic contract 
     const coverage = validateCapturedFocusedShardCounters(fixture.root, fixture.report, fixture.inputs, sourceMaps);
     expect(coverage[hitFile]?.s[statement]).toBe(2);
     expect(sourceMaps[hitFile]?.s[statement]).toBe(0);
+    assert.throws(
+      () =>
+        validateCapturedFocusedShardCounters(
+          fixture.root,
+          { ...fixture.report, runtime_executable_sha256: '0'.repeat(64) },
+          fixture.inputs,
+          sourceMaps,
+        ),
+      /runtime binding/u,
+    );
     expect(() =>
       validateCapturedFocusedShardCounters(
         fixture.root,

@@ -1139,6 +1139,8 @@ export function validateCapturedFocusedShardCounters(
   const manifest = readCoverageManifest(root, report);
   if (manifest.schema !== 'VidaBunCoverageRun/v3')
     throw new Error('Captured focused shard counters require a v3 manifest.');
+  if (report.runtime_executable_sha256 !== manifest.runtime_executable_sha256)
+    throw new Error('Captured focused shard runtime binding differs from the manifest.');
   verifyInputBindings(report, manifest, inputs);
   if (
     JSON.stringify(manifest.source_maps) !== JSON.stringify(sourceMaps) ||

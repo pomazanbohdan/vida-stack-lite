@@ -1887,3 +1887,12 @@ no-body probe, all12 inert bodies ran. This proves ordering mechanics only,
 not behavioral success, timing improvement or coverage. The maintained seed is
 now113; test selection, assertions, fixtures, worker ceiling and budgets stay
 unchanged. Check/publish this bounded correction before one new exact stage.
+
+Before that stage, Root added one more focused helper boundary control: an
+otherwise valid raw receipt with a foreign runtime digest was accepted. Its
+failing regression confirms the missing report/manifest runtime join. The
+helper now checks those digests before merging, without rehashing the already
+captured executable. The corrected regression passes with19 Bun assertions
+plus the native thrown-error check. This does not replace the full validator's
+independent package-pinned runtime validation. A native assertion bounds the
+large-map missing-throw diagnostic. No numeric producer ran for this correction.
