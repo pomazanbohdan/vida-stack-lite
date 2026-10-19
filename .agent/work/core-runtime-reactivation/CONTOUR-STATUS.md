@@ -679,6 +679,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | e2234d28-76a8-49ab-905d-906ae38a3bfa | not-captured | 2026-10-16T11:11:00.180Z | UNKNOWN; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/e2234d28-76a8-49ab-905d-906ae38a3bfa.json |
 | coverage-outcome | 417dc56a-4649-4037-9d99-9fda9e0aea1b | e8134861baa69a6b6cc27865e2245a99bcd89d44 | 2026-10-17T06:49:11.689Z | UNKNOWN; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/417dc56a-4649-4037-9d99-9fda9e0aea1b.json |
 | stage-outcome | contour-stage-xSDEeu | 34e1020544b3d384d67151cb703c1723440edfc1 | 2026-10-19T20:37:24.281Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-xSDEeu/publication-error.json |
+| stage-outcome | contour-stage-2vD5np | 949be503433a13dd5237ac327f08a546b641ffb6 | 2026-10-19T21:52:21.194Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-2vD5np/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

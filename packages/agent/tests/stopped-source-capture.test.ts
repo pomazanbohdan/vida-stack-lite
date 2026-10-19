@@ -1,8 +1,9 @@
 import { expectRejection } from './helpers/expect-rejection.ts';
-import { test as bunTest, expect, afterAll, beforeAll, describe } from 'bun:test';
+import { test as bunTest, expect, afterAll, beforeAll, describe, spyOn } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { cpSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -39,6 +40,7 @@ import {
 } from './helpers/public-prewriter-fixture.ts';
 import { createPublicCliFixturePhaseMarker } from './helpers/public-cli-fixture-runner.ts';
 import { containedControllerFixture, type ContainedControllerFixture } from './contained-controller-fixture.ts';
+import * as bunCommands from '../bin/bun.ts';
 import { snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';
 
 type ExecutionBudget = ReturnType<ContainedControllerFixture['caseBudget']>;
@@ -144,6 +146,8 @@ async function publicRun(args: string[], runner: typeof run = run): Promise<Json
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let containedPackage: ContainedControllerFixture | undefined;
+let containedPreparationFailed = false;
+let containedPreparationFailure: unknown;
 let candidateBinding: string | undefined;
 const cleanupHookOptions: { timeout: number } = { timeout: 15000 };
 let caseBudget: ExecutionBudget | undefined;
@@ -158,10 +162,17 @@ function candidateBindingValue(): string {
   if (!candidateBinding) throw new Error('Contained controller binding is unavailable.');
   return candidateBinding;
 }
-function ensureContainedPackage(): ContainedControllerFixture {
+function ensureContainedPackage(prepare = containedControllerFixture): ContainedControllerFixture {
+  if (containedPreparationFailed) throw containedPreparationFailure;
   if (!containedPackage) {
-    containedPackage = containedControllerFixture(bundle);
-    candidateBinding = containedPackage.binding;
+    try {
+      containedPackage = prepare(bundle);
+      candidateBinding = containedPackage.binding;
+    } catch (error) {
+      containedPreparationFailed = true;
+      containedPreparationFailure = error;
+      throw error;
+    }
   }
   return containedPackage;
 }
@@ -172,6 +183,7 @@ function test(
   { sourceOnly = false }: { sourceOnly?: boolean } = {},
 ): void {
   const ownedBody = async () => {
+    if (containedPreparationFailed) throw containedPreparationFailure;
     containedCasesInFlight += 1;
     const priorDeferCleanup = deferFixtureCleanup,
       priorActiveRoots = activeConsumerRoots,
@@ -1047,6 +1059,105 @@ test(
       }
     }
     expect(performance.now()).toBeLessThan(deadlineAt);
+  },
+  5000,
+  { sourceOnly: true },
+);
+
+test(
+  'contained controller setup fences every later attempt after failure including thrown undefined',
+  async () => {
+    const previousPackage = containedPackage;
+    const previousBinding = candidateBinding;
+    const deadlineAt = performance.now() + 5000;
+    try {
+      for (const failure of [new Error('controlled controller setup failure'), undefined]) {
+        containedPackage = undefined;
+        candidateBinding = undefined;
+        containedPreparationFailed = false;
+        containedPreparationFailure = undefined;
+        let attempts = 0;
+        const prepare = () => {
+          attempts++;
+          throw failure;
+        };
+        for (let index = 0; index < 3; index++) {
+          let caught = false;
+          let observed: unknown;
+          try {
+            ensureContainedPackage(prepare);
+          } catch (error) {
+            caught = true;
+            observed = error;
+          }
+          expect(caught).toBe(true);
+          expect(observed).toBe(failure);
+        }
+        expect(attempts).toBe(1);
+      }
+      expect(performance.now()).toBeLessThan(deadlineAt);
+    } finally {
+      containedPackage = previousPackage;
+      candidateBinding = previousBinding;
+      containedPreparationFailed = false;
+      containedPreparationFailure = undefined;
+    }
+  },
+  5000,
+  { sourceOnly: true },
+);
+
+test(
+  'contained controller retains exact stdout and stderr when its native command is uncertain',
+  async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-stopped-source-output-control-'));
+    const repository = path.join(root, 'repository');
+    const packageRoot = path.join(repository, 'packages/agent');
+    mkdirSync(path.join(repository, 'docs'), { recursive: true });
+    mkdirSync(path.join(packageRoot, 'docs'), { recursive: true });
+    for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'])
+      writeFileSync(path.join(repository, file), 'Inert command output control\n');
+    for (const file of ['.bun-version', 'bunfig.toml'])
+      writeFileSync(path.join(packageRoot, file), readFileSync(path.join(bundle, file)));
+    const stdout = 'inert stdout π\n';
+    const stderr = 'inert stderr π\n';
+    const result = bunCommands.boundedSpawnSync(
+      spawnSync,
+      process.execPath,
+      [
+        '--no-env-file',
+        '--no-install',
+        '-e',
+        `import {writeSync} from 'node:fs'; writeSync(1, ${JSON.stringify(stdout)}); writeSync(2, ${JSON.stringify(stderr)}); process.kill(process.pid, 'SIGTERM');`,
+      ],
+      { cwd: root, encoding: 'utf8', timeout: 1000, maxBuffer: 2048 },
+      'inert output retention control',
+    );
+    if (
+      result.error ||
+      result.timedOut ||
+      result.signal !== 'SIGTERM' ||
+      result.stdout !== stdout ||
+      result.stderr !== stderr
+    )
+      throw new Error('Inert native control did not reach self-termination with complete output.');
+    let ownedRoot: string | undefined;
+    const command = spyOn(bunCommands, 'boundedSpawnSync').mockImplementation((_spawn, _executable, args) => {
+      const driver = args.at(-1);
+      if (!driver?.endsWith('prepare.mjs')) throw new Error('Unexpected inert fixture command.');
+      ownedRoot = path.dirname(driver);
+      return result;
+    });
+    try {
+      expect(() => containedControllerFixture(packageRoot)).toThrow('uncertain command outcome');
+      expect(command).toHaveBeenCalledTimes(1);
+      if (!ownedRoot) throw new Error('Controlled command did not enter the fixture owner.');
+      expect(readFileSync(path.join(ownedRoot, 'failed-command-1.stdout.log'))).toEqual(Buffer.from(stdout));
+      expect(readFileSync(path.join(ownedRoot, 'failed-command-1.stderr.log'))).toEqual(Buffer.from(stderr));
+    } finally {
+      command.mockRestore();
+      console.warn('Inert output control retained: ' + root + '; command owner: ' + (ownedRoot ?? 'not entered'));
+    }
   },
   5000,
   { sourceOnly: true },

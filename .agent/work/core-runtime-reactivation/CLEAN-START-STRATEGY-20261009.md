@@ -44,8 +44,11 @@ maximum. Keep a blocked contour active and record its exact GAP until resolved.
 The cycle has recorded10executable exact observations and1separate data-only
 observation, each bound to its own Source/image; WORK owns their retained stages
 and the independent BLOCKED operation status. The active contour is
-`bun-host-state`. Repair its captured documentation, fixture custody and measured
-completed-wave-chain timeout before its next complete exact stage. Reuse current
+`bun-host-state`. The captured documentation, setup custody and split wave-chain
+cases are repaired. The latest two-file stage still ended UNKNOWN after270.757s,
+with repeated60s contained-controller setup failures and no complete counters.
+Finish the first-failure fence, raw output and qualifier phase retention packet;
+then run one changed-input exact stage. Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
 Host-state selection on the reviewed Linux provider. Complete stage qualification

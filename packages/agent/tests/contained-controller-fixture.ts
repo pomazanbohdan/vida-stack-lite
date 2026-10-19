@@ -89,6 +89,7 @@ console.log(JSON.stringify(await verifyDevelopmentController(${JSON.stringify({ 
   );
 
   let retained = false;
+  let invocation = 0;
   const execute = (
     executable: string,
     packageRoot: string,
@@ -97,6 +98,7 @@ console.log(JSON.stringify(await verifyDevelopmentController(${JSON.stringify({ 
     childBudget: ExecutionBudget,
     label: string,
   ): TerminalCommand => {
+    invocation++;
     const pinnedSpawn: Parameters<typeof boundedSpawnSync>[0] = spawnSync;
     const result = boundedSpawnSync(
       pinnedSpawn,
@@ -118,7 +120,28 @@ console.log(JSON.stringify(await verifyDevelopmentController(${JSON.stringify({ 
       label,
     );
     if (commandOutcomeUnknown(result)) retained = true;
-    requireTerminalCommand(result, label);
+    try {
+      requireTerminalCommand(result, label);
+    } catch (error) {
+      retained = true;
+      const failures: unknown[] = [error];
+      for (const [stream, bytes] of [
+        ['stdout', result.stdout],
+        ['stderr', result.stderr],
+      ] as const) {
+        try {
+          if (bytes !== null && bytes !== undefined)
+            writeFileSync(path.join(root, `failed-command-${invocation}.${stream}.log`), bytes, {
+              flag: 'wx',
+              mode: 0o600,
+            });
+        } catch (failure) {
+          failures.push(failure);
+        }
+      }
+      if (failures.length > 1) throw new AggregateError(failures, 'Contained command and diagnostic retention failed.');
+      throw error;
+    }
     assert.ok(
       typeof result.stdout === 'string' && typeof result.stderr === 'string',
       'Contained command must return UTF-8 diagnostic streams.',

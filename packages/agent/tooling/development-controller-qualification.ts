@@ -15,6 +15,7 @@ import { openConfiguredMastraSessionLedger } from '../src/orchestration/persiste
 import { lifecyclePreparationObservationSchema } from '../src/orchestration/final-assurance.ts';
 import { readPin } from '../bin/bun.ts';
 import packageMetadata from '../package.json' with { type: 'json' };
+import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const diagnosticsEnabled = process.env.VIDA_CONTROLLER_DIAGNOSTICS === 'true';
@@ -23,7 +24,9 @@ let diagnosticCount = 0;
 function diagnosticRecord(value: Record<string, string | number>): void {
   if (!diagnosticsEnabled || diagnosticCount >= diagnosticLimit) return;
   diagnosticCount += 1;
-  process.stderr.write(JSON.stringify({ schema: 'DevelopmentControllerQualificationTiming/v1', ...value }) + '\n');
+  const record = JSON.stringify({ schema: 'DevelopmentControllerQualificationTiming/v1', ...value }) + '\n';
+  writeFileSync(diagnosticFile, record, { flag: 'a', mode: 0o600 });
+  process.stderr.write(record);
 }
 function diagnosticStart(phase: string): bigint {
   const started = process.hrtime.bigint();
@@ -36,10 +39,21 @@ function diagnosticEnd(phase: string, started: bigint): void {
 }
 async function timed<T>(phase: string, operation: () => Promise<T>): Promise<T> {
   const started = diagnosticStart(phase);
+  let primaryFailure: { error: unknown } | undefined;
   try {
     return await operation();
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
   } finally {
-    diagnosticEnd(phase, started);
+    completeOwnedCleanup(
+      [
+        () => {
+          diagnosticEnd(phase, started);
+        },
+      ],
+      primaryFailure,
+    );
   }
 }
 let publicRunCount = 0;
@@ -59,6 +73,7 @@ const parent = path.dirname(packageRoot),
 if (typeof before !== 'string' || !/^[a-f0-9]{64}$/.test(before))
   throw new Error('Parent qualification binding is missing.');
 const scratch = mkdtempSync(path.join(parent, 'qualification-'));
+const diagnosticFile = path.join(scratch, 'qualification-timing.jsonl');
 const save = (file: string, value: unknown): void => {
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, JSON.stringify(value) + '\n');
@@ -123,6 +138,7 @@ function childErrorMessage(stderr: Buffer | Uint8Array | string | null): string 
   return typeof stderr === 'string' ? stderr : Buffer.from(stderr).toString('utf8');
 }
 let ledger: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined;
+let qualificationFailure: { error: unknown } | undefined;
 try {
   assert.equal(Bun.version, readPin(packageRoot));
   // Actual external-package initializer has its supported portable logical bundle.
@@ -573,7 +589,23 @@ try {
       fixture_root: scratch,
     }),
   );
+} catch (error) {
+  qualificationFailure = { error };
+  throw error;
 } finally {
-  ledger?.close();
+  let ledgerClosed = false;
+  completeOwnedCleanup(
+    [
+      () => {
+        ledger?.close();
+        ledgerClosed = true;
+      },
+      () => {
+        diagnosticRecord({ event: ledgerClosed ? 'settled' : 'failed', phase: 'ledger-close' });
+      },
+    ],
+    qualificationFailure,
+  );
   // The parent removes this owned fixture after this process releases SQLite/native handles.
 }
+diagnosticRecord({ event: 'settled', phase: 'qualification-body' });

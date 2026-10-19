@@ -118,8 +118,11 @@ relying on index coverage. Commands run from a package directory otherwise selec
 a different index. Check unsupported paths, missing files and embeddings separately.
 An incremental update freezes clusters and may set clusters_stale=true even when
 symbol bodies are current; do not rebuild the full index solely for that flag.
-Every delegated Vex command supplies the absolute repository `--path`; a package
-working directory must not create another index. Observe the query's terminal
+Anchor every Vex command to the absolute repository root. Use `--path` for
+commands that support it, such as `status`. The pinned CLI's `show` and `search`
+reject that flag; run those commands with the repository root as their explicit
+working directory. Do not retry from a package directory or bootstrap a second
+index. Observe the query's terminal
 process before handoff and report any still-running child to Root. Root checks
 for these children before a runtime measurement, even after a reader reports done.
 Semantic results and reference edges remain candidates, never exhaustive type or

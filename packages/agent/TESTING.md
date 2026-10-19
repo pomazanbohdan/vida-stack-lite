@@ -652,6 +652,13 @@ roots even when no contained package was prepared; file cleanup retains fixtures
 while a body remains in flight. If one consumer cleanup fails, report that root
 and every remaining unattempted root.
 A parent timeout does not prove that an asynchronous body has stopped.
+Latch the first contained-controller preparation failure for the file, including
+thrown undefined; later hooks and bodies must fail without another preparation
+attempt. Preserve every available raw stdout/stderr stream before propagating an
+uncertain command result. Qualification phase diagnostics append within the
+qualifier's owned scratch before buffered child output returns; they are bounded
+diagnostics, not completion or Runtime evidence. Preserve operation, diagnostic
+and ledger-close failures through the existing owned-cleanup completion helper.
 
 Use current generated SDK outputs only when their inputs match. Missing or stale output is a GAP. Do not start a local build to make a test command pass.
 

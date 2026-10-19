@@ -657,6 +657,12 @@ When a Bun PASS row exceeds its declared case bound, follow TESTING's monotonic
 setup/cleanup deadline rule. Check whether preparation throws before the body's
 finally exists. Establish owned close handling before opening resources, preserve
 setup and cleanup causes, and do not launch another phase after expiry.
+When a shared controller constructor throws, fence later hooks and bodies with
+the original failure instead of recreating it per describe block. An explicit
+failure envelope preserves thrown undefined. Retain both raw child streams at
+the uncertain-command boundary and bounded phase records inside owned scratch;
+buffered stderr cannot explain a child killed before it returns. Use the existing
+owned-cleanup helper to retain primary and diagnostic/close failures together.
 
 Separate case timeout from protocol age thresholds. Compare identical complete
 scopes under the same resource conditions. Record whole-command timing and
