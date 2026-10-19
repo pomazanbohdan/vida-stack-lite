@@ -1404,3 +1404,60 @@ assertions in 6.33 seconds total; the full graph mismatch test itself took
 fresh full F/L/S/B stage remain pending. The next exact stage must use a new
 commit and its matching successful SDK test-input artifact; this failed stage
 is retained and will not be replayed.
+
+### F/L/S/B main-runtime-core serial-fallback timeout — 2026-10-19
+
+The fresh stage `contour-stage-k9nPCu` used immutable commit
+`6c8cbc4bc9433df465d65a1686da1975d272b6d9` and its matching SDK input. It
+closed after 271.488 seconds without an outer-stage timeout, with unchanged image
+inputs and complete log capture. The focused run `c8e9cef1-5403-4706-9a1f-03f0ade9ec5c`
+recorded `serial-fallback / eligibility-envelope-malformed`: the reviewed
+shard callback pinned `configured-workflow.test.ts` at
+`63eaab576a6d0f697ff0cca9c275a88f84beb197de51f9dce6060fda236848b0`, but the
+committed file digest was `2a0932d088a54afa6557cb4b3ba97c6e4371d366be25f7a2a60a1456316adaa6`.
+The callback correctly refused to parallelize changed test inputs. The single
+serial Bun producer later ended in supervisor-observed `SIGKILL` with
+`timeout_observed=true` and `resourceSafeToAdvance=false`; its outcome is
+UNKNOWN. The F/L/S/B counters were not accepted. The complete run manifest,
+supervisor receipt, stdout/stderr, execution image and publication error remain
+retained under `/workspace/contour-stage-k9nPCu` and the associated immutable
+image. This stage will not be replayed.
+
+Root re-reviewed the exact focused selection for its resource boundary and
+updated the digest-pinned review. All five files use per-test temporary roots or
+read-only/memory fixtures; the interrupted-source clone and coverage outputs
+have unique per-run paths. The reviewed two-shard assignment has no duplicate
+test file or shared writable resource:
+
+| Shard | Tests |
+| --- | --- |
+| 1 | `configured-workflow.test.ts`, `runtime-kernel-boundary.test.ts`, `smoke.test.ts` |
+| 2 | `interrupted-source-retirement.test.ts`, `runtime-kernel-composition.test.ts` |
+
+The current `configured-workflow.test.ts` digest is
+`9c8312294817f74dbcf3f1b07310b7378a04c3c7a18a68489303e8b9f717c3da`; the
+coverage review callback now pins this exact test input. Its reviewer reference
+is this section's `#main-runtime-core-focused-shard-resource-review` anchor.
+The latest focused mismatch test still dispatches the real graph and now also
+checks predecessor input and downstream developer receipt. The duplicate
+high-risk full graph run was merged into it; the per-risk plan assertions remain
+in the existing table-driven tests. Focused tests passed: 2 tests, 11
+assertions, 5.55 seconds total; the graph mismatch case took 4.16 seconds. This
+resource review only enables the exact F/L/S/B diagnostic shard plan; it does
+not publish coverage or close the contour. Typecheck, staged hooks, and a fresh
+exact coverage stage on the next matching Source/SDK artifact remain pending.
+
+### main-runtime-core-focused-shard-resource-review
+
+For this exact diagnostic selection, `configured-workflow.test.ts` creates
+unique `configured-workflow-unit-*` roots; `runtime-kernel-boundary.test.ts`
+and `runtime-kernel-composition.test.ts` use per-test `mkdtemp` roots and clean
+their fixtures; `interrupted-source-retirement.test.ts` uses unique
+`vida-stopped-source-*` and `interrupted-recovery-*` roots; `smoke.test.ts`
+uses the sealed, read-only configured test context and memory-backed smoke
+storage. Each shard gets its own coverage, JUnit, log and temporary output
+paths. The files have no shared writable resource, so this exact two-worker
+plan is eligible. Source/test/config/tool fingerprints still bind every
+execution; a changed input falls back to serial mode until its digest is
+reviewed. This review is scoped to the five listed tests and the
+`main-runtime-core` focused diagnostic only.

@@ -2418,43 +2418,6 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
     expect(riskFlags).toEqual([]);
   });
 
-  test('runs the configured read-only prewriter for high-risk Source work', async () => {
-    workItem = {
-      ...workItem,
-      provider: 'azure',
-      provider_type: 'Feature',
-      canonical_kind: 'feature',
-      intent: 'implementation_new',
-      risk_flags: ['high'],
-    };
-    for (const risk of ['security', 'data_loss', 'migration', 'high']) {
-      const compiled = compileDevelopmentWorkflow(config, 'default-development', 'implementation_new', [risk]);
-      expect(
-        compiled.waves
-          .flat()
-          .find((stage) => stage.id === 'review_source_prewrite')
-          ?.assignments.map((assignment) => assignment.role),
-      ).toEqual(['source-planner', 'security-prewriter']);
-    }
-
-    await configuredGraph(await compose()).dispatch(workItem.id);
-    const prewriterCalls = calls.filter((call) => call.stage.id === 'review_source_prewrite');
-    expect(prewriterCalls.map((call) => call.assignment.role)).toEqual(['source-planner', 'security-prewriter']);
-    expect(prewriterCalls[0]?.assignment).toMatchObject({ role: 'source-planner', profile: 'architect' });
-    expect(prewriterCalls[1]?.assignment).toMatchObject({ role: 'security-prewriter', profile: 'reviewer-security' });
-    expect(
-      prewriterCalls.every(
-        (call) => readRecordField(readRecordField(call.input, 'stage_outputs'), 'synthesize_task') !== undefined,
-      ),
-    ).toBe(true);
-    const developer = calls.find((call) => call.stage.kind === 'develop');
-    expect(
-      arrayValues(readRecordField(readRecordField(developer?.input, 'stage_outputs'), 'review_source_prewrite')).map(
-        (value) => readRecordField(value, 'role'),
-      ),
-    ).toEqual(['source-planner', 'security-prewriter']);
-  });
-
   test('rejects a foreign prewrite stage for low and high-risk Source workflows', async () => {
     const fixture = mutableFixtureConfig();
     const workflow = requireFixtureValue(fixture.workflows.implementation_new);
@@ -2797,13 +2760,37 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       risk_flags: [],
       labels: [],
     });
-    await graph.dispatch(workItem.id);
+    const result = await graph.dispatch(workItem.id);
+    expect(result.failedAssignments).toEqual([]);
+    const expectedRoles = ['security-prewriter', 'source-planner'];
     expect(
-      calls
-        .filter((call) => call.stage.id === 'review_source_prewrite')
-        .map((call) => call.assignment.role)
-        .sort(),
-    ).toEqual(['security-prewriter', 'source-planner']);
+      requireFixtureValue(result.stageOutputs.review_source_prewrite)
+        .map((value) => value.role)
+        .sort((left, right) => left.localeCompare(right)),
+    ).toEqual(expectedRoles);
+    const prewriterCalls = calls.filter((call) => call.stage.id === 'review_source_prewrite');
+    expect(prewriterCalls.map((call) => call.assignment.role).sort((left, right) => left.localeCompare(right))).toEqual(
+      expectedRoles,
+    );
+    expect(prewriterCalls.find((call) => call.assignment.role === 'source-planner')?.assignment).toMatchObject({
+      role: 'source-planner',
+      profile: 'architect',
+    });
+    expect(prewriterCalls.find((call) => call.assignment.role === 'security-prewriter')?.assignment).toMatchObject({
+      role: 'security-prewriter',
+      profile: 'reviewer-security',
+    });
+    expect(
+      prewriterCalls.every(
+        (call) => readRecordField(readRecordField(call.input, 'stage_outputs'), 'synthesize_task') !== undefined,
+      ),
+    ).toBe(true);
+    const developer = calls.find((call) => call.stage.kind === 'develop');
+    expect(
+      arrayValues(readRecordField(readRecordField(developer?.input, 'stage_outputs'), 'review_source_prewrite'))
+        .map((value) => readRecordField(value, 'role'))
+        .sort((left, right) => String(left).localeCompare(String(right))),
+    ).toEqual(expectedRoles);
   });
 
   test('pins the authoritative work item and rejects drift before assignment', async () => {
