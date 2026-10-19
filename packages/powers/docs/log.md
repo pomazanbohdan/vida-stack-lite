@@ -1,6 +1,7 @@
 # Directory Update Log
 
 ## 2026-10-19
+* **Creation**: [Рішення D4b — marketplace-власник і хости](decisions/D4b-marketplace-and-hosts.md) зафіксовано: `packages/powers` сам є marketplace-власником (per-host `marketplace.json` із `source: "./"`, публікація як Git-репозиторій через наявний патерн дзеркала Source); Codex — перевірений перший хост, решта хостів — заявлена підтримка з позначеним обмеженням. Уточнює D4, не скасовує його.
 * **Creation**: [Рішення D4 — канали доставки VP](decisions/D4-delivery-channels.md) зафіксовано: у scope входять три канали — окремий плагін VP, збірка в пакет поставки агента і публічний marketplace-канал; поверхня скілів — `vp-mode` (основний скіл оркестрації) та `vp-setup` (допоміжний налаштування).
 * **Update**: [Research-документ](research/vida-powers-product-research.md) уточнено: основна робоча точка входу названа `vp-mode` (скіл оркестрації), `vp-setup` — допоміжний скіл налаштування. Зміст концепції не змінювався.
 * **Update**: [План впровадження](implementation-plan.md) — Stage 5 перейменовано на «`vp-mode`, `vp-setup`, пакунок і канали доставки», додано вимоги до трьох каналів (per-host plugin manifests, збірка з provenance, marketplace-визначення); marketplace переведено зі Stage 9 у scope.
