@@ -41,6 +41,13 @@ Preserve complete Source/test selections, deadlines, report custody and UNKNOWN
 semantics. Do not exclude paths, trim assertions or weaken gates to create a
 maximum. Keep a blocked contour active and record its exact GAP until resolved.
 
+The active contour is main-config after fresh core/timing exact observations.
+Its activated-reader case now has focused proof within the unchanged10s bound
+after fresh no-write upgrade observations and an exact-YAML parsing memo.
+WORK owns the diagnostic, review and regression results. Publish the correction
+with ordinary hooks, then run its single current exact coverage stage before
+selecting another contour. No focused result supplies frozen/mutation closure.
+
 For each contour, use the existing one-contour stage route:
 
 ```sh

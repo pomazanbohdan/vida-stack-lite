@@ -6,7 +6,11 @@ import { LibSQLStore } from '@mastra/libsql';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 import { initializeHostDatabaseSchema, initializeTaskSourceBindingWorkProjectionSchema } from '../host-state.js';
 import { createInMemoryBunSqliteClient } from '../orchestration/bun-sqlite-client.js';
-import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './safe-repository-access.js';
+import {
+  repositoryReadOnlyObservation,
+  requireSafeRepositoryAccess,
+  type SafeRepositoryAccess,
+} from './safe-repository-access.js';
 import { assertWorkspaceDatabaseRelativePath } from './workspace-database.js';
 import { withWorkspaceDatabaseClose } from './workspace-database-raw.js';
 import { openAdmittedWorkspaceDatabase, closeWorkspaceDatabaseWithAdmission } from './storage-read-admission.js';
@@ -230,8 +234,9 @@ export function inspectInitialWorkspaceDatabaseImage(
 }
 
 function assertNoSidecars(access: SafeRepositoryAccess, relative: string): void {
+  const observation = repositoryReadOnlyObservation(access);
   for (const suffix of ['-wal', '-shm', '-journal'])
-    requireStorage(!access.fileExists(relative + suffix, label), 'database sidecar remains: ' + suffix);
+    requireStorage(!observation.fileExists(relative + suffix, label), 'database sidecar remains: ' + suffix);
 }
 
 function physicalImage(repositoryRoot: string, relative: string) {

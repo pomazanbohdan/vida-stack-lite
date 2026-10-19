@@ -207,6 +207,19 @@ writes atomic. Readers cannot admit partially applied state.
 Existing-storage merge stays blocked while the legacy storage overlap exclusion
 is unproven. This intent repair does not unblock existing consumers.
 
+Upgrade text images are fresh, bounded, no-follow observations on every call.
+Absence is checked twice; present bytes use verified capture and strict UTF-8.
+Linux observations deny active CAS, reclaim, quarantine and unresolved backup
+state without creating reader sidecars. They grant neither a multi-file snapshot
+nor write authority. The operation lock, maintenance fence and actual writer CAS
+remain required; capture errors preserve the existing failure/UNKNOWN handling.
+The Windows provider retains its declared best-effort capture profile.
+Only the frozen parsing/validation result for one exact original YAML string may
+be reused. Each decoded operation still validates its complete plan and progress;
+live dependencies, bundle, output and ownership checks are never memoized.
+SQLite sidecar absence checks also use fresh read-only observations, preserving
+their before/after checks and the real admission transactions and native locks.
+
 The closed-image merge validates each SQL row under the ordinary canonical JSON
 limits before hashing its deterministic table/row aggregate. That internal
 aggregate is not one public ingress document: use the existing bounded canonical

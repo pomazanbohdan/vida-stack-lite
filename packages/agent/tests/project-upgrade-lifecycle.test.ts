@@ -2891,9 +2891,60 @@ test('upgrade artifact closure reuse is bounded to the last verified plan and pr
       expect(calls).toBe(2); // Actual capture plus its independent derived-closure validation.
       const clones = Array.from({ length: 3 }, (): unknown => JSON.parse(canonicalJson(first)));
       calls = 0;
-      for (const clone of clones)
-        expect(canonicalJson(upgrade.validateProjectUpgradeOperation(clone))).toBe(canonicalJson(first));
-      expect(calls).toBe(0);
+      const parseConfig = runtimeConfig.parseRuntimeConfigDocument;
+      const originalYaml = first.plan.dependencies.find(
+        (entry) => entry.path === 'agent-runtime.config.v1.yaml',
+      )?.bytes;
+      if (typeof originalYaml !== 'string') throw new Error('Expected the frozen original configuration.');
+      const changedYaml = originalYaml + '\n# changed bytes\n';
+      const invalidYaml = 'invalid: [';
+      const configInputs = new Set([originalYaml, changedYaml, invalidYaml]);
+      let parses = 0;
+      const parser = spyOn(runtimeConfig, 'parseRuntimeConfigDocument').mockImplementation((raw) => {
+        if (configInputs.has(raw)) parses++;
+        return parseConfig(raw);
+      });
+      try {
+        for (const clone of clones)
+          expect(canonicalJson(upgrade.validateProjectUpgradeOperation(clone))).toBe(canonicalJson(first));
+        expect(parses).toBe(0);
+        expect(calls).toBe(0);
+        const changedConfigPlan = {
+          ...first.plan,
+          dependencies: first.plan.dependencies.map((entry) =>
+            entry.path === 'agent-runtime.config.v1.yaml' ? { ...entry, bytes: changedYaml } : entry,
+          ),
+        };
+        expect(() =>
+          upgrade.validateProjectUpgradeOperation({
+            ...first,
+            plan: changedConfigPlan,
+            plan_digest: canonicalJsonDigest(changedConfigPlan),
+          }),
+        ).toThrow('prepared output differs from the bundle converter');
+        expect(parses).toBe(1);
+        upgrade.validateProjectUpgradeOperation(JSON.parse(canonicalJson(first)));
+        expect(parses).toBe(2);
+        const invalidConfigPlan = {
+          ...changedConfigPlan,
+          dependencies: changedConfigPlan.dependencies.map((entry) =>
+            entry.path === 'agent-runtime.config.v1.yaml' ? { ...entry, bytes: invalidYaml } : entry,
+          ),
+        };
+        expect(() =>
+          upgrade.validateProjectUpgradeOperation({
+            ...first,
+            plan: invalidConfigPlan,
+            plan_digest: canonicalJsonDigest(invalidConfigPlan),
+          }),
+        ).toThrow();
+        expect(parses).toBe(3);
+        upgrade.validateProjectUpgradeOperation(JSON.parse(canonicalJson(first)));
+        expect(parses).toBe(3);
+      } finally {
+        parser.mockRestore();
+      }
+      calls = 0;
 
       const second = upgrade.inspectProjectUpgrade(root, {
         operation_id: 'lifecycle-pure-closure-002',
@@ -2977,6 +3028,8 @@ test('fresh upgrade planning reuses the validated plan configuration during depe
       expect(configsPrepared).toHaveLength(2);
       expect(checkedDependencies).toBeDefined();
       expect(configsPrepared[1]).toBeDefined();
+      expect(Object.isFrozen(configsPrepared[1])).toBe(true);
+      expect(Object.isFrozen(configsPrepared[1]?.repository)).toBe(true);
       expect(checkedDependencies === configsPrepared[1]).toBe(true);
 
       expect(planned).toMatchObject({
@@ -3005,6 +3058,75 @@ test('fresh upgrade planning reuses the validated plan configuration during depe
       dependencySpy.mockRestore();
       if (!qualified)
         console.error(`Retained failed fresh config-reuse fixture: ${custody.root ?? 'creation pending'}`);
+      settleCase(custody);
+    }
+  });
+});
+
+test('upgrade live images use fresh verified bytes and preserve absence and reader failures', async () => {
+  const custody = beginCase();
+  await bundleReadContext.run(custody, async () => {
+    const root = await makeFreshRepository('upgrade-live-observation-', { includeLocalInstructions: false });
+    addRoot(root, custody);
+    const requireAccess = actualAccess.requireSafeRepositoryAccess;
+    const captured: string[] = [];
+    let mode: 'ordinary' | 'invalid' | 'failure' | 'appeared' = 'ordinary';
+    let existenceChecks = 0;
+    const failure = new Error('owned verified upgrade reader failure');
+    const accessSpy = spyOn(actualAccess, 'requireSafeRepositoryAccess').mockImplementation((repositoryRoot) => {
+      const access = requireAccess(repositoryRoot);
+      if (repositoryRoot !== root) return access;
+      return {
+        ...access,
+        readStableBytes(target: string, label: string): Buffer | null {
+          if (label === 'VIDA project upgrade') throw new Error('Upgrade image must not create a CAS lock.');
+          if (!access.readStableBytes) throw new Error('Fixture stable reader is unavailable.');
+          return access.readStableBytes(target, label);
+        },
+        observeFileExists(target: string, label: string): boolean {
+          if (mode === 'appeared' && target === PROJECT_CONFIGURATION_PATHS.project) return ++existenceChecks === 2;
+          if (!access.observeFileExists) throw new Error('Fixture observation is unavailable.');
+          return access.observeFileExists(target, label);
+        },
+        readVerifiedCaptureBytes(target: string, label: string, limit?: number): Buffer {
+          if (label === 'VIDA project upgrade') {
+            captured.push(target);
+            if (mode === 'failure') throw failure;
+            if (mode === 'invalid') return Buffer.from([0xff]);
+          }
+          if (!access.readVerifiedCaptureBytes) throw new Error('Fixture verified reader is unavailable.');
+          return access.readVerifiedCaptureBytes(target, label, limit);
+        },
+      };
+    });
+    const inspect = () =>
+      upgrade.inspectProjectUpgrade(root, {
+        operation_id: 'live-observation-001',
+        actor: 'test-owner',
+        instruction_ref: 'fresh upgrade observation contract',
+      });
+    try {
+      const firstBytes = '\ufeff# exact original entry\n';
+      writeFileSync(path.join(root, 'AGENTS.md'), firstBytes);
+      const first = inspect();
+      expect(first.plan.files.find((file) => file.path === 'AGENTS.md')?.before).toBe(firstBytes);
+      expect(first.plan.files.find((file) => file.path === PROJECT_CONFIGURATION_PATHS.project)?.before).toBeNull();
+      expect(captured).toContain('AGENTS.md');
+      const secondBytes = firstBytes + 'changed since the preceding call\n';
+      writeFileSync(path.join(root, 'AGENTS.md'), secondBytes);
+      expect(inspect().plan.files.find((file) => file.path === 'AGENTS.md')?.before).toBe(secondBytes);
+      mode = 'invalid';
+      expect(inspect).toThrow();
+      mode = 'failure';
+      expect(inspect).toThrow(failure);
+      mode = 'appeared';
+      expect(inspect).toThrow('target appeared during observation');
+      expect(existenceChecks).toBe(2);
+      expect(existsSync(path.join(root, PROJECT_UPGRADE_OPERATION_PATH))).toBe(false);
+      expect(readFileSync(path.join(root, 'AGENTS.md'), 'utf8')).toBe(secondBytes);
+      completeRoot(root);
+    } finally {
+      accessSpy.mockRestore();
       settleCase(custody);
     }
   });

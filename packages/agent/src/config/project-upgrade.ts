@@ -63,7 +63,7 @@ import {
   assertProjectConfigurationBundleCapability,
 } from './runtime-config.js';
 import {
-  readRepositoryTextImage,
+  repositoryReadOnlyObservation,
   requireSafeRepositoryAccess,
   SafeRepositoryMoveError,
   type SafeRepositoryAccess,
@@ -179,7 +179,7 @@ export interface ProjectUpgradeBootstrapVerifier {
 }
 const validatedOperations = new WeakSet<object>();
 const bootstrapVerifiers = new WeakSet<object>();
-const originalConfigurations = new WeakMap<ProjectUpgradePlan, ReturnType<typeof validateRuntimeConfig>>();
+let originalConfiguration: { bytes: string; config: ReturnType<typeof validateRuntimeConfig> } | undefined;
 // One process-local marker for a pure closure; no files, live ownership or authority are cached.
 let verifiedArtifactPlanDigest: string | null = null;
 
@@ -188,7 +188,12 @@ function requireUpgrade(condition: unknown, message: string): asserts condition 
 }
 
 function image(access: SafeRepositoryAccess, file: string): string | null {
-  return readRepositoryTextImage(access, file, label);
+  const observation = repositoryReadOnlyObservation(access);
+  if (!observation.fileExists(file, label)) {
+    requireUpgrade(!observation.fileExists(file, label), 'target appeared during observation');
+    return null;
+  }
+  return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(observation.readBytes(file, label));
 }
 
 function bundleDigest(): string {
@@ -205,13 +210,12 @@ function bundleDigest(): string {
 }
 
 function originalConfig(plan: ProjectUpgradePlan) {
-  const cached = originalConfigurations.get(plan);
-  if (cached !== undefined) return cached;
   const source = plan.dependencies.find((entry) => entry.path === LEGACY_RUNTIME_CONFIGURATION_PATH);
   requireUpgrade(source?.bytes !== null && source?.bytes !== undefined, 'original configuration is missing');
-  const config = validateRuntimeConfig(parseRuntimeConfigDocument(source.bytes));
-  // Only the immutable plan's original bytes are cached; filesystem/bundle/Host proofs stay live.
-  if (Object.isFrozen(plan)) originalConfigurations.set(plan, config);
+  if (originalConfiguration?.bytes === source.bytes) return originalConfiguration.config;
+  // Only exact original YAML data is memoized; filesystem, bundle and Host proofs stay live.
+  const config = freezeJsonValue(validateRuntimeConfig(parseRuntimeConfigDocument(source.bytes)));
+  originalConfiguration = { bytes: source.bytes, config };
   return config;
 }
 
@@ -325,7 +329,6 @@ export function validateProjectUpgradeOperation(value: unknown): ProjectUpgradeO
   assertStorageProgress(operation);
   assertActivationProgress(operation);
   const frozen = freezeJsonValue(operation);
-  originalConfigurations.set(frozen.plan, config);
   validatedOperations.add(frozen);
   return frozen;
 }

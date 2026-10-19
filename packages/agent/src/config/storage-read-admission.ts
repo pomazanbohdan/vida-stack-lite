@@ -2,7 +2,7 @@
 import { Database } from 'bun:sqlite';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
-import { requireSafeRepositoryAccess } from './safe-repository-access.js';
+import { repositoryReadOnlyObservation, requireSafeRepositoryAccess } from './safe-repository-access.js';
 import { STORAGE_ADMISSION_GATE_FILE } from './project-paths.js';
 import {
   assertWorkspaceDatabaseRelativePath,
@@ -38,8 +38,9 @@ function requireAdmission(value: unknown, message: string): asserts value {
 }
 
 function assertNoGateSidecars(access: ReturnType<typeof requireSafeRepositoryAccess>): void {
+  const observation = repositoryReadOnlyObservation(access);
   for (const suffix of ['-wal', '-shm', '-journal'])
-    requireAdmission(!access.fileExists(gateRelative + suffix, gateLabel), 'gate sidecar is present: ' + suffix);
+    requireAdmission(!observation.fileExists(gateRelative + suffix, gateLabel), 'gate sidecar is present: ' + suffix);
 }
 
 function gateIdentity(

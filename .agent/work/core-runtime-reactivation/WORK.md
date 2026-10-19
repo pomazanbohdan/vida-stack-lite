@@ -7,8 +7,9 @@ Status date: 2026-10-19. Current execution/evidence only. This document does not
 
 The latest owner instruction supersedes the earlier three-contour pool and the
 all-contour coverage run: work on one contour only, finish exact F/L/S/B100,
-then select the next. The active contour is `main-runtime-core`; no other contour
-is being repaired or measured in this cycle. CRAP, complexity qualification and
+then select the next. The active contour is `main-config`, after the current
+core/timing exact milestones recorded below; no other contour is being repaired
+or measured in this cycle. CRAP, complexity qualification and
 mutation are deferred. Root remains the sole Source integrator, Git owner and
 numeric producer.
 
@@ -1959,3 +1960,58 @@ logs/fixtures and all stage FAIL/BLOCKED evidence remain untouched. No unchanged
 full main-config retry is authorized by the small copy reduction. The remaining
 cost GAP is real fresh plan/resume versus the unchanged10-second case bound.
 Resolve that same contour with evidence before another exact stage or contour.
+
+## Main-config live-observation correction
+
+Root profiled the actual plan/resume APIs in an owned diagnostic, retaining the
+fresh root and native CPU-profile outputs under the diagnostic directory above.
+The profile attributes fsync samples to locked reads and sidecar existence
+checks; it is not an uninstrumented elapsed-time benchmark. Blind Luna found no
+safe fixture deletion. Separate boundary reviews distinguished fresh verified
+observations from cached images; the implemented helper captures anew on every
+call, checks absence twice and retains fatal UTF-8/BOM semantics. Linux CAS,
+reclaim, quarantine, backup and path-change denial stay in the existing provider.
+Actual writer CAS, operation ownership, live bundle/dependency/output checks,
+Host fences and UNKNOWN state transitions remain unchanged. Windows retains
+its declared best-effort profile; no new Windows runtime proof is claimed.
+
+SQLite gate and closed-image sidecar checks now use the existing no-write view.
+Original configuration parsing uses one exact-YAML entry with a deeply frozen
+validated value, replacing the frozen-plan-identity WeakMap. Re-decoded journals
+still validate their schema, complete plan, progress and independent artifacts;
+no live proof or authorization is memoized. Blind implementation review found
+no concrete defect in these changes. Reviews are static evidence only, retained
+at `/tmp/vida-blind-upgrade-observation-boundary.md`,
+`/tmp/vida-blind-live-image-equivalence.md` and
+`/tmp/vida-blind-upgrade-patch-review.md`.
+
+The new live-image regression failed on the original locked-read path and now
+passes10 assertions. The original-YAML clone control first exposed three
+repeated parses; its final bounded-cache, changed/invalid input and artifact
+controls pass26 assertions. Fresh planning retains its existing identity checks
+and now verifies nested config freezing. The complete storage admission file
+passes18 tests/301 assertions, including no sidecar CAS creation, all SQLite
+suffixes, active CAS/reclaim/quarantine retention and a journal appearing during
+the actual closed-image read. Eight selected real lifecycle cases pass365
+assertions in52.87s, covering completion and same-ID initial-intent, publication,
+activation, release and retirement failures/reconciliation without replay.
+
+The activated reader still failed at12.712s after the sidecar-only correction
+and12.096s after fresh image reads. After the exact-YAML memo, the same case
+passes17 assertions in7.900s under its original10s bound. This is one focused
+sample, not a controlled speedup or exact contour closure. Its actual plan,
+resume, activation, warmed-cache output drift and receipt identity checks all
+remain. Logs are `main-config-sidecar-isolated.log`,
+`main-config-live-observation.log`, `main-config-observation-cache.log`,
+`storage-sidecar-suite.log`, `upgrade-live-recovery-controls.log` and
+`upgrade-config-cache-targeted-final.log` in the retained diagnostic directory.
+Strict targeted Bun compilation passes125 files with0 diagnostics.
+
+One blind reader accidentally started Vex from packages/agent and returned
+while its indexer remained alive. Root observed PID182108 using313% CPU, sent
+SIGTERM and observed its absence before the next isolated check. Preserve the
+competing-load19.850s failure separately; it is not a performance comparison.
+The Cloud reference now requires absolute `--path` on delegated Vex calls and
+terminal child observation before handoff. No active numeric image was changed.
+Normal hooked publication and one fresh exact main-config stage are next;
+historical exact counts remain16/45 until the existing projection imports proof.

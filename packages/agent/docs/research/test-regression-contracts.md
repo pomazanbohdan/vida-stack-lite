@@ -79,6 +79,17 @@ native controls must observe actual CAS/reclaim/quarantine/backup denial and
 retained identities. Scope zero-write/fsync claims to verified byte capture,
 not package identity, inventory, authorization or the complete admission flow.
 
+Upgrade image controls require exact BOM-preserving text, twice-observed absence,
+changed bytes on the next call, strict invalid-UTF-8 denial and propagation of
+verified-reader failures without a guarded-reader fallback. Original-YAML memo
+controls use fresh JSON reparses, exact changed bytes, invalid YAML, single-entry
+eviction and frozen nested data. Keep operation schema, plan/progress and
+independent artifact validation controls. SQLite sidecar controls distinguish
+read-only CAS-name probes from O_CREAT, test all three suffixes, preserve active
+CAS/reclaim/quarantine evidence and reject a journal created during image capture.
+Then run the existing actual same-ID publication, activation, release and
+retirement reconciliation controls. Focused passes do not close a contour.
+
 Keep root help, per-command help and parsing declarations in parity. The CLI
 contract gate must detect an unlisted public command, alias or option, and a
 documented option that its parser cannot accept. Cover argument types, required

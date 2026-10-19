@@ -672,6 +672,9 @@ behavior even when they share a path. A common parent directory alone does not
 prove a conflict. Review transitive reads, writes, mocks, clocks, environment
 and module order before changing resource tags. UUID leaves do not establish
 whole-run independence.
+For no-sidecar-creation controls, count `O_CREAT`, not every open of a CAS name;
+verified observations probe retained lock names read-only. Qualify the observer
+with an actual guarded-read positive control and keep native contention proofs.
 
 Parallel coverage remains subject to the serial fallback and activation gates
 in TESTING.md. A scheduler or native fixture pilot proves mechanics only. Do not

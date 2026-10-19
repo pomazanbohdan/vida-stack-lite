@@ -1,5 +1,6 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
+import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -24,9 +25,136 @@ import {
   retryPendingWorkspaceDatabaseCloses,
 } from '../src/config/workspace-database-raw.js';
 import { inspectProjectUpgrade } from '../src/config/project-upgrade.js';
+import { inspectClosedWorkspaceDatabaseImage } from '../src/config/project-upgrade-storage.js';
+import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.js';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.js';
 import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
+
+test('storage sidecar observations avoid CAS writes and preserve retained contention evidence', () => {
+  const deadlineAt = performance.now() + 5000;
+  const fixture = openRepositoryFixture('storage-sidecar-observation-');
+  let passed = false;
+  try {
+    const lease = acquireStorageReadAdmission(fixture.root, fixture.workspaceId, '.vida/unused.sqlite');
+    lease.close();
+    const relative = '.vida/closed.sqlite';
+    const database = new Database(path.join(fixture.root, relative), { create: true });
+    try {
+      database.exec("CREATE TABLE retained(value TEXT); INSERT INTO retained VALUES('preserve me')");
+    } finally {
+      database.close(true);
+    }
+    const access = requireSafeRepositoryAccess(fixture.root);
+    const inspectors = [
+      {
+        target: '.vida/storage-admission.v1.sqlite',
+        inspect: () => {
+          const admission = acquireStorageReadAdmission(fixture.root, fixture.workspaceId, relative);
+          admission.close();
+        },
+      },
+      { target: relative, inspect: () => inspectClosedWorkspaceDatabaseImage(fixture.root, relative) },
+    ];
+    for (const { target, inspect } of inspectors) {
+      const bytes = readFileSync(path.join(fixture.root, target));
+      let sidecarCasCreates = 0;
+      const originalOpen = fs.openSync;
+      const open = spyOn(fs, 'openSync').mockImplementation((file, flags, mode) => {
+        if (
+          typeof file === 'string' &&
+          /\.sqlite-(?:wal|shm|journal)\.cas\.lock$/u.test(file) &&
+          typeof flags === 'number' &&
+          (flags & fs.constants.O_CREAT) !== 0
+        )
+          sidecarCasCreates++;
+        return originalOpen(file, flags, mode);
+      });
+      try {
+        if (access.provider === 'linux-proc-fd') {
+          expect(access.fileExists(target + '-wal', 'CAS creation positive control')).toBe(false);
+          expect(sidecarCasCreates).toBeGreaterThan(0);
+          sidecarCasCreates = 0;
+        }
+        inspect();
+        expect(sidecarCasCreates).toBe(0);
+        for (const suffix of ['-wal', '-shm', '-journal']) {
+          const sidecar = path.join(fixture.root, target + suffix);
+          writeFileSync(sidecar, 'retained SQLite sidecar', { flag: 'wx' });
+          expect(inspect).toThrow(/sidecar (?:is present|remains)/u);
+          expect(readFileSync(sidecar, 'utf8')).toBe('retained SQLite sidecar');
+          expect(readFileSync(path.join(fixture.root, target))).toEqual(bytes);
+          rmSync(sidecar);
+        }
+        expect(sidecarCasCreates).toBe(0);
+      } finally {
+        open.mockRestore();
+      }
+      if (access.provider === 'linux-proc-fd') {
+        const sidecar = target + '-wal';
+        const resource = path.posix.join(path.posix.dirname(sidecar), '.' + path.posix.basename(sidecar) + '.cas');
+        access.withExclusiveLock(resource, 'retained sidecar writer', () => {
+          const lock = path.join(fixture.root, resource + '.lock');
+          const before = readFileSync(lock);
+          expect(inspect).toThrow('active CAS writer');
+          expect(readFileSync(lock)).toEqual(before);
+        });
+        const reclaim = path.join(fixture.root, resource + '.lock.reclaim');
+        mkdirSync(reclaim);
+        const owner = path.join(reclaim, 'owner.json');
+        writeFileSync(owner, 'retained reclaim owner');
+        expect(inspect).toThrow('CAS reclaim is active');
+        expect(readFileSync(owner, 'utf8')).toBe('retained reclaim owner');
+        rmSync(reclaim, { recursive: true });
+        const quarantine = path.join(
+          fixture.root,
+          path.posix.dirname(resource),
+          '.' + path.posix.basename(resource) + '.lock.' + randomUUID() + '.reclaimed',
+        );
+        writeFileSync(quarantine, 'retained sidecar quarantine');
+        expect(inspect).toThrow('quarantine');
+        expect(readFileSync(quarantine, 'utf8')).toBe('retained sidecar quarantine');
+        rmSync(quarantine);
+      }
+      if (target === relative) {
+        const sidecar = path.join(fixture.root, relative + '-journal');
+        const identity = fs.lstatSync(path.join(fixture.root, relative), { bigint: true });
+        const originalRead = fs.readSync;
+        let injected = false;
+        const read = spyOn(fs, 'readSync').mockImplementation(
+          new Proxy(originalRead, {
+            apply(nativeRead, receiver, args: unknown[]) {
+              const fd = args[0];
+              if (typeof fd !== 'number') throw new Error('Expected a native file descriptor.');
+              const actual = fs.fstatSync(fd, { bigint: true });
+              if (!injected && actual.dev === identity.dev && actual.ino === identity.ino) {
+                writeFileSync(sidecar, 'journal appeared during database read', { flag: 'wx' });
+                injected = true;
+              }
+              const count: unknown = Reflect.apply(nativeRead, receiver, args);
+              if (typeof count !== 'number') throw new Error('Native read did not return its byte count.');
+              return count;
+            },
+          }),
+        );
+        try {
+          expect(inspect).toThrow('database sidecar remains');
+          expect(injected).toBe(true);
+          expect(readFileSync(sidecar, 'utf8')).toBe('journal appeared during database read');
+        } finally {
+          read.mockRestore();
+        }
+        rmSync(sidecar);
+      }
+      expect(readFileSync(path.join(fixture.root, target))).toEqual(bytes);
+    }
+    expect(performance.now()).toBeLessThan(deadlineAt);
+    passed = true;
+  } finally {
+    if (passed && performance.now() < deadlineAt) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('Retained failed or expired sidecar observation fixture: ' + fixture.root);
+  }
+});
 
 test('upgrade inspection accepts only a verified admission gate without publishing product state', async () => {
   const started = process.hrtime.bigint();
