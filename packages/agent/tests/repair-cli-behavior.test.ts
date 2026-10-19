@@ -1582,6 +1582,64 @@ test('synthesis observation dispatcher plans the real provenance collision and p
   const sessionRowsBefore = database
     .query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger')
     .all();
+  const replaceWork = (work: WorkState): void => {
+    database
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work' AND id=?")
+      .run(canonicalJson(work), canonicalJsonDigest(work), stored.identityKey);
+  };
+  for (const status of ['started', 'uncertain'] as const) {
+    const lease = { ticket_id: 'ticket-test', thread_id: 'thread-test', generation: 1 };
+    const assignment_id = canonicalJsonDigest({
+      binding: stored.work.binding,
+      run_id: stored.work.execution.run_id,
+      input_digest: stored.work.execution.input_digest,
+      stage_id: stored.item.request.stage_id,
+      assignment_index: stored.item.request.assignment_index,
+    });
+    const request_digest = canonicalJsonDigest(stored.item.request);
+    const attempt: WorkState['execution']['assignment_attempts'][number] = {
+      assignment_id,
+      attempt_id: canonicalJsonDigest({ assignment_id, request_digest, lease, previous_attempt_id: null }),
+      previous_attempt_id: null,
+      request_digest,
+      stage_id: stored.item.request.stage_id,
+      assignment_index: stored.item.request.assignment_index,
+      correction_generation: 0,
+      correction_authorization: null,
+      lease,
+      status,
+      result: null,
+      result_digest: null,
+      reconciliation: null,
+    };
+    replaceWork({
+      ...stored.work,
+      execution: { ...stored.work.execution, assignment_attempts: [attempt] },
+    });
+    const hostBefore = database
+      .query('SELECT kind,id,revision,payload,digest FROM agent_host_state ORDER BY kind,id')
+      .all();
+    const sessionBefore = database
+      .query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger')
+      .all();
+    await Promise.resolve(
+      expect(runReconcileArtifacts(args('inspect'))).rejects.toThrow(
+        'owner, wave, result or native effect differs from correction scope',
+      ),
+    );
+    expect(
+      database.query('SELECT kind,id,revision,payload,digest FROM agent_host_state ORDER BY kind,id').all(),
+    ).toEqual(hostBefore);
+    expect(
+      database.query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger').all(),
+    ).toEqual(sessionBefore);
+    expect(() =>
+      readFileSync(
+        path.join(context.root, '.agent/work/correction-test/synthesis-observation-correction-plan.v1.json'),
+      ),
+    ).toThrow();
+  }
+  replaceWork(stored.work);
   for (const projectIds of ['agent,agent', 'plugin,agent']) {
     const invalidProjects = args('inspect');
     invalidProjects[invalidProjects.indexOf('--projects') + 1] = projectIds;

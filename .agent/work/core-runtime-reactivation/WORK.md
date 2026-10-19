@@ -41,6 +41,36 @@ checked commit and ordinary push; no further numeric producer starts before paus
 Controller observation remains queued with its retained deficit locator below.
 Workers use ordinary patch directories; no new worktree or numeric owner is added.
 
+After the requested pause, the owner resumed manual coverage work on 2026-10-19.
+Campaign `f3d33494-8474-4007-aaea-b9a1bb1b4ff2` is terminal on `6f1564d`:
+13/45 executable contours have exact positive-denominator F/L/S/B coverage; 32
+remain open. Nineteen did not launch because the captured SDK formation receipt
+was stale, nine produced completed test runs with only partial focused coverage,
+and four remain GAP. This is execution-complete, not global acceptance. CRAP and
+mutation remain deferred under the coverage-first order.
+
+The selected-commit SDK artifact is run `39212092611`, attempt `1`, artifact
+`12168410702`, SHA-256 `94d99af792f8fe5cf6a7511662bc14b32cdb0e53631aa16f066ad4ff8c0c2a26`.
+Its downloaded ZIP is retained at
+packages/agent/coverage/sdk-test-inputs/vida-sdk-test-inputs-6f1564d7c01302082c3692958fe93d13b5824abf-39212092611-1.zip;
+the supported SDK adapter validated the API digest, receipt, output inventory
+and emitted bytes before publishing test inputs. A later Source commit still
+requires its own commit-bound CI artifact.
+
+Root applies three focused test-only corrections from the retained stage
+evidence: captured service-custody tests resolve the product repository from
+the coverage package root, the upgrade async-context test reads immutable
+captured package bytes without trying to create CAS locks in the read-only
+image, and the specialized-repair test exercises both started and uncertain
+assignment attempts while asserting Host/session rows remain unchanged. The
+service denial test passes 1/1 (6 assertions; 0.82s process time); the upgrade
+context test passes 1/1 (14 assertions; 1.40s process time); the repair
+dispatcher test passes 1/1 (32 assertions; 4.95s including startup). Bun strict
+check reports no errors in 101 files and oxfmt check passes on all three changed
+tests. These focused
+checks do not qualify contour coverage. The measured main-config resume deadline
+failure remains open; no timeout or coverage budget was increased.
+
 #### Coverage-first adoption
 
 The owner directs exact F/L/S/B100 across all contours before frozen CRAP or

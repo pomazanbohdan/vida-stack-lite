@@ -3169,9 +3169,9 @@ test('legacy reserve and direct claim reject before launch and preserve the oper
   try {
     mkdirSync(path.dirname(journal), { recursive: true });
     writeFileSync(journal, before, { flag: 'wx' });
-    const repositoryRoot =
-      process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
-      path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+    const repositoryRoot = process.env.VIDA_BUN_COVERAGE_ROOT
+      ? path.resolve(process.env.VIDA_BUN_COVERAGE_ROOT, '../..')
+      : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
     const adapterFile = path.join(repositoryRoot, 'tooling/agent/release-local.ts');
     const loaded: unknown = createRequire(import.meta.url)(adapterFile);
     if (!isLegacyReleaseAdapter(loaded)) throw new Error('Release adapter does not expose the legacy worker APIs.');

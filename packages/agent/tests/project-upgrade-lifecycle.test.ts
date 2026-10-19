@@ -940,7 +940,7 @@ test('upgrade bundle reads follow call-time async case context after its deadlin
     const otherCase = createFixtureCustody();
     const packageTarget = 'src/config/project-upgrade.ts';
     const packageExpected = readFileSync(packageSource(packageTarget));
-    const packageRead = observeBundleRead(packageRoot, originalRequireSafeRepositoryAccess(packageRoot).readBytes);
+    const packageRead = observeBundleRead(packageRoot, (target) => readFileSync(packageSource(target)));
     const fixtureRead = observeBundleRead(retainedRoot, originalRequireSafeRepositoryAccess(retainedRoot).readBytes);
 
     let releasePackageRead!: () => void;
