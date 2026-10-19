@@ -1978,8 +1978,12 @@ function assertProjectOutputClosure(
 
 /** Cooperative read barrier shared by configuration and direct storage readers. */
 export function assertProjectUpgradeInactive(access: SafeRepositoryAccess | SafeRepositoryObservation): void {
+  const exists =
+    'observeFileExists' in access && access.observeFileExists !== undefined
+      ? access.observeFileExists(PROJECT_UPGRADE_OPERATION_PATH, 'active project upgrade')
+      : access.fileExists(PROJECT_UPGRADE_OPERATION_PATH, 'active project upgrade');
   assertCondition(
-    !access.fileExists(PROJECT_UPGRADE_OPERATION_PATH, 'active project upgrade'),
+    !exists,
     'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',
   );
 }

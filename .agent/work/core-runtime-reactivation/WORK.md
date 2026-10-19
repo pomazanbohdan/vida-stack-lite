@@ -76,6 +76,66 @@ The one filesystem observation reports13612404736bytes free on the common
 checkout/scratch/evidence overlay, above the unchanged2GiB admission threshold.
 No cleanup, runtime/loader/DB cutover or consumer effect was performed.
 
+### Latest host-state stage and measured presence-guard repair
+
+The35445c4 packet passed the ordinary hook (format514, strict521, lint) and was
+pushed to main. Matching SDK CI39333758751 attempt1/artifact12225088504 passed;
+ZIP SHA256 is3fd8a7ffc090d3c83f031e46a2a7ac83148288b78e8d62298f8310f836794924.
+The new stage /workspace/contour-stage-XVIwPe ended UNKNOWN after270838.852ms,
+without a complete report. Run a4241d92-12a4-4177-b883-2043873ffbab used immutable
+image /workspace/.vida-quality-inputs/41cbf0bae7987725923cb937cf200aaf0ab5b380/repository,
+manifest SHA71dea8660d4e5b8b93b45833b1af436c55a4ad11083e7d51e5a9fedf47a7414a.
+Capture/group closure/boot/image checks passed; complete numeric publication did
+not. Historical exact counts remain16/45. No partial counter is promoted.
+
+The preparation fence works: one60.064s constructor attempt, later hooks/bodies
+deny immediately, stopped-source file95.37s with1pass/15fail. Those failures are
+one original setup error propagated, not15independent defects. Complete wave-chain
+still failed its30s deadline at32.302s. Preserve both original child logs. The
+failed controller root under this stage's scratch retains qualification-c9LuQF
+and its qualification-timing.jsonl. Public phases include intake8761.339ms,
+reports11124.035/10382.036/12514.572ms and issue-wave14979.556ms. All phases later
+settled, but the parent was already interrupted: this does not establish ready
+controller state or resolve UNKNOWN. Root observed no remaining native producer.
+
+Blind review /tmp/vida-public-snapshot-cost-review.md found no safe reusable
+snapshot across these freshness boundaries. Do not remove them speculatively.
+A single current Source complete-wave-chain probe passed20assertions in21.198s.
+CLI --cpu-prof produced no artifact despite a passing test. The subsequent actual
+bun:jsc hook profile passed20assertions in22.550s/25.95s command and retained
+16877samples:10969fsyncSync,4164with assertProjectUpgradeInactive in the stack.
+Raw files host-chain-jsc-functions.txt and host-chain-jsc-stacks.json remain in
+the current diagnostic directory above. Samples identify a hotspot, not wall-time
+savings. The temporary preload profiles just this selected test, without changing
+case deadlines, build/install, canonical evidence or a maintained suite.
+
+The presence-only guard called ordinary fileExists, publishing/syncing/removing
+reader CAS sidecars repeatedly through BunSqliteClient.#assertOpen. It now uses
+the existing fresh observeFileExists capability when present and falls back only
+when absent. Observation rejection propagates; no writer CAS, operation lock,
+before/after check, admission, snapshot or fsync durability was removed. Native
+Linux controls verify no writes/syncs, unchanged directory entries, present-marker
+denial, active actual CAS-owner denial with unchanged owner/payload, fresh absence
+and old-provider fallback. The first control wrongly assumed the DB fixture's
+.vida directory was empty; its retained FAIL log led to comparison with actual
+before-entries. Blind architecture review is
+/tmp/vida-upgrade-guard-observation-review.md. The wave-chain cases now reuse
+withProducerFixtureCustody so a failure retains their producer roots.
+
+After this guard change, both wave-chain cases pass45assertions in34.16s command
+(complete21.020s, suspended11.561s). The real candidate-snapshot case passes the
+same16assertions: setup40.671s, body18.290s, command61.15s, with completed cleanup.
+Different cache/resource conditions prevent attributing all timing differences
+to the correction. These focused probes are not full-contour qualification.
+Latest scoped strict check covers165files without errors; lint is clean.
+The reviewed Host test pin advances for the native control/custody wrapper;
+the existing two-file resources and stale-selection serial fallback stay intact.
+
+The stage's own admission observation reports11415240704bytes available on its
+disk-backed scratch filesystem, above2147483648by9267757056bytes. This reuses
+the admission receipt, without a second df/du/hash scan. All failure artifacts,
+images, SDK archives and Source changes remain protected; no cache cleanup needed.
+
 ### Three-hour audit, 19:14–22:14 UTC on 2026-10-19
 
 Git records five published packets in this window, from b04a76e through949be50.

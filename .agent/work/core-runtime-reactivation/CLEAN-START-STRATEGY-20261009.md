@@ -47,8 +47,13 @@ and the independent BLOCKED operation status. The active contour is
 `bun-host-state`. The captured documentation, setup custody and split wave-chain
 cases are repaired. The latest two-file stage still ended UNKNOWN after270.757s,
 with repeated60s contained-controller setup failures and no complete counters.
-Finish the first-failure fence, raw output and qualifier phase retention packet;
-then run one changed-input exact stage. Reuse current
+The first-failure fence, raw output and qualifier phase retention are published
+in35445c4. Its next stage still ended UNKNOWN after270.839s, with one60s setup
+attempt rather than four and no complete counters. The retained CPU profile
+identifies repeated writer-CAS sidecars for a presence-only upgrade guard.
+Publish the reviewed no-write observation correction with native denial controls
+and retained failed wave-chain fixtures, then run one changed-input exact stage.
+Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
 Host-state selection on the reviewed Linux provider. Complete stage qualification
