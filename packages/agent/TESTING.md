@@ -1654,6 +1654,16 @@ digest drift falls back to serial execution. This pilot qualifies neither other
 contours nor frozen complexity/CRAP or mutation. Its exact F/L/S/B result remains
 pending until the complete stage and all receipts validate.
 
+Focused shard outputs share the manifest's `diagnostics/runs/<run-id>`
+namespace. The validator owns their single checked merge using the producer's
+captured inputs and canonical maps. Both serial and sharded focused paths then
+use one diagnostic projection with the existing function inventory. They emit
+`VidaBunFocusedCoverageDiagnostic/v1`, including actual merged counters and
+metrics. A raw aggregate-free report/v2 is not that diagnostic. Later consumers
+must compare a focused v3 aggregate against the validated shard merge too.
+Preserve the paired operation's BLOCKED/FAIL/UNKNOWN and resource disposition;
+diagnostic publication does not establish frozen quality or resource quiescence.
+
 A focused SDK package compatibility selection retains the full maintained SDK Source
 inventory privately in that same capture. Omitted SDK Source is bound as tool
 input, with no added coverage claim. Formation projection and freshness use

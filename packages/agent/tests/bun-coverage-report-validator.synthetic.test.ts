@@ -8,7 +8,16 @@ import { expect, test } from 'bun:test';
 import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { sha256 } from '../tooling/bun-coverage-evidence.ts';
 import path from 'node:path';
-import { validateCoverageReport, validateFocusedCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
+import {
+  validateCoverageReport,
+  validateFocusedCoverageReport,
+  validateCapturedFocusedShardCounters,
+  validateFocusedCoverageCounters,
+} from '../tooling/bun-coverage-report-validator.ts';
+import { focusedCoverageDiagnosticReport } from '../tooling/run-bun-coverage.ts';
+import { functionInventory } from '../tooling/function-inventory.ts';
+import { expectRejection } from './helpers/expect-rejection.ts';
+import type { FileCoverageData } from 'istanbul-lib-instrument';
 import {
   capturedModuleAbsolutePath,
   canonicalCapturedModulePath,
@@ -242,6 +251,98 @@ test('accepts an UNTRUSTED v3 run with two exact v2 shard receipts and one spars
     expect(result.coverage).not.toBe(fixture.report.source_maps);
     expect(JSON.stringify(result.canonical_source_maps)).toBe(JSON.stringify(fixture.report.source_maps));
   });
+});
+
+test('projects focused v3 shard receipts through the serial diagnostic contract without trusting zero templates', async () => {
+  const fixture = await createSyntheticCoverageFixture({ focused: true, versionedShards: true });
+  let passed = false;
+  try {
+    fixture.report.schema = 'VidaBunCoverageReport/v2';
+    for (const key of [
+      'qualification_scope',
+      'full_qualification',
+      'frozen_budget_qualification',
+      'function_coverage_kind',
+      'metrics',
+    ])
+      delete fixture.report[key];
+    const sourceMaps = fixture.manifest.source_maps as Record<string, FileCoverageData>;
+    const hitFile = Object.keys(record(fixture.child.coverage, 'focused shard counters'))[0]!;
+    const hit = record(record(fixture.child.coverage, 'focused shard counters')[hitFile], 'focused Source');
+    const statement = Object.keys(record(hit.s, 'statement counters'))[0]!;
+    fixture.rewriteChildAndReceiptHash(() => {
+      record(hit.s, 'statement counters')[statement] = 2;
+      for (const key of Object.keys(record(hit.f, 'function counters'))) record(hit.f, 'function counters')[key] = 1;
+    });
+    const coverage = validateCapturedFocusedShardCounters(fixture.root, fixture.report, fixture.inputs, sourceMaps);
+    expect(coverage[hitFile]?.s[statement]).toBe(2);
+    expect(sourceMaps[hitFile]?.s[statement]).toBe(0);
+    expect(() =>
+      validateCapturedFocusedShardCounters(
+        fixture.root,
+        { ...fixture.report, source_fingerprint: '0'.repeat(64) },
+        fixture.inputs,
+        sourceMaps,
+      ),
+    ).toThrow(/Coverage input changed/u);
+    const terminals = fixture.report.shards as Array<Record<string, unknown>>;
+    for (const shards of [
+      [],
+      terminals.map((terminal, index) => (index === 0 ? { ...terminal, status: 1 } : terminal)),
+      terminals.map((terminal, index) => (index === 0 ? { ...terminal, run_id: '0'.repeat(36) } : terminal)),
+      terminals.map((terminal, index) => (index === 0 ? { ...terminal, pid: 999999 } : terminal)),
+    ]) {
+      expect(() =>
+        validateCapturedFocusedShardCounters(fixture.root, { ...fixture.report, shards }, fixture.inputs, sourceMaps),
+      ).toThrow();
+    }
+    const functions = new Map(
+      fixture.inputs.sources.map(({ path: file }) => [
+        file,
+        functionInventory(fixture.inputs.input_bytes[file]!.toString('utf8'), file),
+      ]),
+    );
+    const diagnostic = focusedCoverageDiagnosticReport({
+      root: fixture.root,
+      report: fixture.report,
+      coverage,
+      inputs: fixture.inputs,
+      sourceMaps,
+      functions,
+    });
+    expect(diagnostic.schema).toBe('VidaBunFocusedCoverageDiagnostic/v1');
+    expect(diagnostic.full_qualification).toBe(false);
+    expect(
+      diagnostic.metrics.find(({ file }) => path.resolve(fixture.root, file) === hitFile)?.coverage.functions.covered,
+    ).toBe(1);
+    expect(diagnostic.metrics.reduce((sum, row) => sum + row.coverage.functions.total, 0)).toBe(6);
+    writeFileSync(fixture.reportPath, JSON.stringify(diagnostic));
+    const selection = fixture.inputs.test_selection;
+    if (selection.mode !== 'focused-diagnostic') throw new Error('Expected focused fixture.');
+    const checked = await validateFocusedCoverageCounters(fixture.reportPath, fixture.root, selection);
+    expect(checked.numeric_coverage_admission).toBe(false);
+    expect(checked.processes).toBe(2);
+    expect(checked.coverage[hitFile]?.s[statement]).toBe(2);
+    await expectRejection(
+      validateFocusedCoverageReport(fixture.reportPath, fixture.root, selection),
+      /Coverage is not exact 100%/u,
+    );
+    diagnostic.coverage[hitFile]!.s[statement] = 0;
+    writeFileSync(fixture.reportPath, JSON.stringify(diagnostic));
+    await expectRejection(
+      validateFocusedCoverageCounters(fixture.reportPath, fixture.root, selection),
+      /checked global shard merge/u,
+    );
+    const processReceipt = record((fixture.report.processes as unknown[])[0], 'process receipt');
+    processReceipt.sha256 = '0'.repeat(64);
+    expect(() =>
+      validateCapturedFocusedShardCounters(fixture.root, fixture.report, fixture.inputs, sourceMaps),
+    ).toThrow(/process receipt fingerprint mismatch/u);
+    passed = true;
+  } finally {
+    if (passed) fixture.remove();
+    else console.error(`Preserved failed focused shard fixture at ${fixture.root}`);
+  }
 });
 
 test.each(['VidaBunCoverageReport/v2', 'VidaBunCoverageReport/v1'] as const)(

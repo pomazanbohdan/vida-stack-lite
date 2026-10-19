@@ -41,8 +41,16 @@ export function coverageShardOutputPaths(
   runId: string,
   shardId: string,
   temporaryRoot?: string,
+  selectionMode: 'full-current-test-set' | 'focused-diagnostic' = 'full-current-test-set',
 ): CoverageShardInvocation['output_paths'] {
-  const runDirectory = path.join(root, 'coverage', 'bun-unified', 'runs', runId);
+  const runDirectory = path.join(
+    root,
+    'coverage',
+    'bun-unified',
+    ...(selectionMode === 'focused-diagnostic' ? ['diagnostics'] : []),
+    'runs',
+    runId,
+  );
   const shardRoot = path.join(runDirectory, 'shards', shardId);
   return {
     coverage_directory: path.join(shardRoot, 'coverage'),
@@ -606,10 +614,12 @@ export function validateCoverageShardOutputLayout(
   )
     failClaim('Coverage shard temporary root must be canonical and outside the editable package.');
   for (const invocation of run.shard_invocations) {
+    const focusedSnapshot = path.join(root, 'coverage', 'bun-unified', 'diagnostics', 'runs', run.run_id, 'snapshot');
+    const selectionMode = run.snapshot_directory === focusedSnapshot ? 'focused-diagnostic' : 'full-current-test-set';
     if (
       invocation.cwd !== root ||
       JSON.stringify(invocation.output_paths) !==
-        JSON.stringify(coverageShardOutputPaths(root, run.run_id, invocation.shard_id, temporaryRoot))
+        JSON.stringify(coverageShardOutputPaths(root, run.run_id, invocation.shard_id, temporaryRoot, selectionMode))
     )
       failClaim('Coverage shard launch paths differ from their canonical run layout.');
     for (const required of temporaryRoot === undefined

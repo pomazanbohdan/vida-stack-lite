@@ -717,6 +717,17 @@ describe('prepareCurrentCoverageShardLaunches', () => {
       const snapshotDirectory = path.join(runDirectory, 'snapshot');
       expect(prepared.binding.snapshot_directory).toBe(snapshotDirectory);
       expect(existsSync(runDirectory)).toBe(false);
+      for (const invocation of prepared.binding.shard_invocations) {
+        expect(invocation.output_paths.receipt_directory).toBe(
+          path.join(runDirectory, 'processes', invocation.shard_id),
+        );
+        expect(invocation.output_paths.log_file).toBe(
+          path.join(runDirectory, 'shards', invocation.shard_id, 'child.log'),
+        );
+        expect(invocation.output_paths.junit_file).toBe(
+          path.join(runDirectory, 'shards', invocation.shard_id, 'suite.junit.xml'),
+        );
+      }
       for (const launch of prepared.launches) {
         expect(launch.args).toContain(`--config=${path.join(snapshotDirectory, 'bunfig.toml')}`);
         const preloadIndex = launch.args.indexOf('--preload');

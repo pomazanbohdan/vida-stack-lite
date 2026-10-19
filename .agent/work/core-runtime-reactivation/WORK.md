@@ -1803,3 +1803,49 @@ hooked commit/push. Then run exactly one new `main-runtime-core` coverage stage;
 accept only its complete, validated merged report. Historical exact coverage
 remains 16/45, while this active contour remains open until that report reaches
 F/L/S/B100. Do not launch CRAP, mutation or another contour in this cycle.
+
+### Current focused shard publication repair — 2026-10-19
+
+The exact `8af4648` stage at `/workspace/contour-stage-SiOqcH`, run
+`3aa630d9-70eb-4fdf-9bef-e8efe6d61d83`, completed its direct execution in
+199.958 seconds with exit0, complete output, closed process group and unchanged
+image inputs. Both shards passed. Publication failed with
+`Unsupported contour producer schema.` The immutable image is
+`/workspace/.vida-quality-inputs/75ae95c0ef096a939028aafe6a968ba2982e5e7c/repository`.
+The original focused filename contains raw `VidaBunCoverageReport/v2` receipts,
+not diagnostic metrics or a checked aggregate. Its operation remains BLOCKED,
+with report validation and resource advancement unproven. This closes no contour.
+
+Two blind read-only Luna reviews checked the producer and publication boundaries.
+Root verified their findings against the retained JSON. The report selection is
+actually `focused-diagnostic`; the operation's outer mode is `current`. A review
+conflated these fields. Root rejected that selection-mismatch hypothesis.
+The confirmed defects are the missing focused projection after the shard path
+and inconsistent namespaces: its manifest/snapshot use `diagnostics/runs`, but
+its output-path owner used `runs`. The new focused v3 regression first failed
+on that canonical-layout denial, then passed after the shared path correction.
+
+The producer now reuses the validator's checked shard merge with its existing
+capture and canonical maps. It performs no new inventory, Source hash or AST
+pass. Serial and parallel focused results share one diagnostic projection and
+the already captured function inventory. Normal full-current raw report/v2 and
+historical serial paths retain their contracts. The v3 consumer also rejects a
+focused aggregate that differs from the checked process merge; it previously
+compared only ordinary report/v1 aggregates. Receipt decoding still rejects
+unknown fields, foreign/PID/sibling claims and unsafe counters. Deterministic
+validation denial retains its report-rejected classification.
+
+The tooling typecheck passes for198 files. The focused protocol batch passes
+120 tests and443 assertions across eligibility, shard evidence and synthetic
+validator files. The native serial implicit-else runner control passes1 test
+with4 assertions. Synthetic acceptance establishes structural behavior only.
+The fresh blind Luna implementation review found no concrete correctness defect.
+Its focused-path negative-control gap is addressed: stale input binding and
+missing, failed, foreign-run and wrong-PID terminals all deny in the new helper.
+That updated regression passes with19 assertions. The ordinary hook caught two
+new awaited Bun rejection matchers; they now use the maintained expectRejection
+owner so the underlying Promise settles before fixture disposal. The comment review removed
+one redundant helper doc comment. The changed-document check passes3 documents
+and42 local links. The ordinary hook remains pending before publication.
+Then run one new exact stage on the published correction with matching SDK
+formation. Do not edit or replay the old blocked report into successful evidence.

@@ -9,7 +9,13 @@ import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { coverageToolInputs, coverageInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
+import {
+  coverageToolInputs,
+  coverageInputs,
+  instrumentSource,
+  sha256,
+  type CoverageInputs,
+} from '../tooling/bun-coverage-evidence.ts';
 import { planCoverageShards } from '../tooling/coverage-shard-plan.ts';
 import { coverageAssignmentPlanSha256, coverageOutputPathsSha256 } from '../tooling/coverage-shard-evidence.ts';
 
@@ -44,6 +50,7 @@ const activeArgv = ['bun', 'test', syntheticFixtureTestPath];
 
 export type SyntheticFixture = {
   readonly root: string;
+  readonly inputs: CoverageInputs;
   readonly reportPath: string;
   readonly report: JsonRecord;
   readonly manifest: JsonRecord;
@@ -111,7 +118,9 @@ export async function createSyntheticCoverageFixture(
             mode: 'focused-diagnostic',
             contour: 'synthetic-validator-contour',
             sources: [...sourcePaths, 'bin/cli-metadata.ts'].sort(),
-            tests: [syntheticFixtureTestPath],
+            tests: options.versionedShards
+              ? [syntheticFixtureTestPath, 'tests/fixture-extra.spec.ts']
+              : [syntheticFixtureTestPath],
           }
         : 'current',
     );
@@ -370,6 +379,7 @@ export async function createSyntheticCoverageFixture(
     succeeded = true;
     return {
       root,
+      inputs,
       reportPath,
       report,
       manifest,

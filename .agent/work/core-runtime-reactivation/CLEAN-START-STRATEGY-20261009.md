@@ -393,6 +393,13 @@ mutation stay outside this cycle. A prospective-cap or correspondence GAP stays
 open; it cannot inherit another function's original allowance or become a
 closure from a partial score.
 
+The completed `8af4648` pilot exposed a focused publication defect after both
+shards passed. Repair the common diagnostic projection and canonical output
+namespace, check their regression controls, then publish Source before one
+new stage. Preserve the original `contour-stage-SiOqcH` receipts and failed
+publication. Do not relabel its raw report or overwrite its BLOCKED operation.
+WORK owns the resulting checked commit and fresh stage outcome.
+
 The internal max-two inert worker mechanics now have scoped controls under
 [TESTING's existing native/parallel contract](../../../packages/agent/TESTING.md#completion-commands);
 WORK owns their actual receipts. The next bounded native speed qualification

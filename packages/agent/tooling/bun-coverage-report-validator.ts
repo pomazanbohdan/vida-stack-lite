@@ -259,7 +259,15 @@ function isRunManifest(value: unknown): value is DecodedManifest {
 
 function readCoverageReport(reportPath: string, reportBytes?: Uint8Array, allowFocused = false) {
   const bytes = reportBytes ?? readFileSync(reportPath);
-  const report = record(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)), 'coverage report');
+  const { report, coverage } = decodeCoverageReport(
+    JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)),
+    allowFocused,
+  );
+  return { report, coverage, reportSha256: sha256(bytes) };
+}
+
+function decodeCoverageReport(value: unknown, allowFocused = false) {
+  const report = record(value, 'coverage report');
   const focused = report.schema === 'VidaBunFocusedCoverageDiagnostic/v1';
   if (allowFocused && !focused) throw new Error('Expected the focused diagnostic schema.');
   if (
@@ -283,7 +291,7 @@ function readCoverageReport(reportPath: string, reportBytes?: Uint8Array, allowF
     if (Object.keys(report).sort().join(',') !== v2ReportKeys)
       throw new Error('Coverage report v2 contains unknown or missing fields.');
   }
-  return { report: report as DecodedReport, coverage, reportSha256: sha256(bytes) };
+  return { report: report as DecodedReport, coverage };
 }
 
 function coverageRunPath(report: Pick<DecodedReport, 'schema' | 'run_id'>, ...parts: string[]): string {
@@ -491,6 +499,12 @@ function validatedCoverageSummary(
   )
     throw new Error('Coverage initialization maps do not match pinned Istanbul output.');
   const merged = mergeProcessCoverage(root, run.report, run.manifest, current, sourceMaps, run.runtimeExecutableSha256);
+  if (
+    run.manifest.schema === 'VidaBunCoverageRun/v3' &&
+    run.report.schema !== 'VidaBunCoverageReport/v2' &&
+    JSON.stringify(merged.toJSON()) !== JSON.stringify(run.report.coverage)
+  )
+    throw new Error('Final counters do not equal the checked global shard merge.');
   const summary = merged.getCoverageSummary().toJSON();
   const perFile: Record<string, CoverageSummaryData> = {};
   for (const source of current.sources)
@@ -958,8 +972,6 @@ function mergeProcessCoverage(
     validateCoverageShardEvidence({ run: binding, plan, processes, terminals });
     const sparseMaps = processes.map((entry) => record(entry.coverage, `coverage shard ${entry.shard_id} counters`));
     const mergedMaps = mergeCoverageShardCounters(expectedSourceMaps, sparseMaps);
-    if (report.schema === 'VidaBunCoverageReport/v1' && JSON.stringify(mergedMaps) !== JSON.stringify(report.coverage))
-      throw new Error('Final counters do not equal the checked global shard merge.');
     return createCoverageMap(mergedMaps);
   }
   if (report.schema === 'VidaBunCoverageReport/v2')
@@ -1112,6 +1124,28 @@ async function validateCoverageReportInternal(
 
 export async function validateCoverageReport(reportPath: string, root: string, options: CoverageOptions = {}) {
   return validateCoverageReportInternal(reportPath, root, options);
+}
+
+export function validateCapturedFocusedShardCounters(
+  root: string,
+  value: unknown,
+  inputs: CoverageInputs,
+  sourceMaps: Record<string, FileCoverageData>,
+): Record<string, FileCoverageData> {
+  const { report: raw } = decodeCoverageReport(value);
+  if (raw.schema !== 'VidaBunCoverageReport/v2' || inputs.test_selection.mode !== 'focused-diagnostic')
+    throw new Error('Captured focused shard counters require a focused v2 receipt report.');
+  const report: DecodedReport = { ...raw, schema: 'VidaBunFocusedCoverageDiagnostic/v1' };
+  const manifest = readCoverageManifest(root, report);
+  if (manifest.schema !== 'VidaBunCoverageRun/v3')
+    throw new Error('Captured focused shard counters require a v3 manifest.');
+  verifyInputBindings(report, manifest, inputs);
+  if (
+    JSON.stringify(manifest.source_maps) !== JSON.stringify(sourceMaps) ||
+    JSON.stringify(report.source_maps) !== JSON.stringify(sourceMaps)
+  )
+    throw new Error('Captured focused shard maps differ from the producer maps.');
+  return mergeProcessCoverage(root, report, manifest, inputs, sourceMaps, manifest.runtime_executable_sha256).toJSON();
 }
 
 function validateFocusedReportQualifiers(report: DecodedReport, selection: FocusedDiagnosticSelection): void {

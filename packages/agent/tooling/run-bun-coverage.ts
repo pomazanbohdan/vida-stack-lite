@@ -21,7 +21,7 @@ import { spawn as spawnChild, spawnSync, type ChildProcess, type SpawnSyncReturn
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { assertCoverageSnapshotBytes } from './bun-coverage-report-validator.js';
+import { assertCoverageSnapshotBytes, validateCapturedFocusedShardCounters } from './bun-coverage-report-validator.js';
 import { executionBudget } from '../bin/bun.ts';
 import { assertPublishedFixtureChildren, assertPublishedFixtureProcess } from './published-coverage-inputs.js';
 import {
@@ -422,6 +422,48 @@ export function collectCoverageShardReport(input: {
   };
 }
 
+export function focusedCoverageDiagnosticReport(input: {
+  root: string;
+  report: Record<string, unknown>;
+  coverage: Record<string, FileCoverageData>;
+  inputs: CoverageInputs;
+  sourceMaps: Record<string, FileCoverageData>;
+  functions: ReadonlyMap<string, FunctionRow[]>;
+}) {
+  const { root, report, coverage, inputs, sourceMaps, functions } = input;
+  if (inputs.test_selection.mode !== 'focused-diagnostic')
+    throw new Error('Focused coverage projection requires a focused selection.');
+  return {
+    ...report,
+    schema: 'VidaBunFocusedCoverageDiagnostic/v1' as const,
+    qualification_scope: 'focused-diagnostic',
+    full_qualification: false,
+    frozen_budget_qualification: 'pending',
+    function_coverage_kind: 'function-entry-binary',
+    metrics: inputs.sources.map((entry) => {
+      const absolute = path.resolve(root, entry.path);
+      const fileCoverage = coverage[absolute];
+      const sourceMap = sourceMaps[absolute];
+      if (!fileCoverage || !sourceMap) throw new Error('Focused diagnostic source counters are missing: ' + entry.path);
+      validateCoverageLocations(
+        entry.path,
+        inputs.input_bytes[entry.path]!.toString('utf8'),
+        fileCoverage,
+        sourceMap.branchMap,
+      );
+      return {
+        file: entry.path,
+        coverage: coverageApi
+          .createCoverageMap({ [absolute]: fileCoverage })
+          .getCoverageSummary()
+          .toJSON(),
+        functions: baselineFunctionEvidenceForSource(entry.path, functions.get(entry.path) ?? [], fileCoverage),
+      };
+    }),
+    coverage,
+  };
+}
+
 function successfulCoverageShardTerminal(
   manifest: ShardReportManifest,
   outcome: CoverageProducerOutcome,
@@ -533,7 +575,13 @@ export function prepareCoverageShardLaunches(input: {
   const invocations: CoverageShardInvocation[] = [];
   const launches: PreparedCoverageProducer[] = [];
   for (const assignment of eligibility.plan.waves[0]!.assignments) {
-    const outputs = coverageShardOutputPaths(input.root, input.run_id, assignment.shard_id, input.temporary_root);
+    const outputs = coverageShardOutputPaths(
+      input.root,
+      input.run_id,
+      assignment.shard_id,
+      input.temporary_root,
+      selectionMode,
+    );
     const args = [
       'test',
       '--timeout',
@@ -1637,7 +1685,8 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     let historicalInventory: { process_file: string; pid: number; child_id: number } | undefined;
     if (publishedFixture) assertCoverageSnapshotBytes(snapshotDirectory, inputBytes);
 
-    let finalReport: unknown;
+    let finalReport: Record<string, unknown>;
+    let focusedCounters: Record<string, FileCoverageData> | undefined;
     let publishedReference: ReturnType<typeof parseHistoricalReference> | undefined;
     if (preparedShards) {
       if (!shardGroup) throw new Error('Coverage shard group disappeared before report assembly.');
@@ -1647,6 +1696,13 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
         manifest: manifest as ShardReportManifest,
         group: shardGroup,
       });
+      if (focused) {
+        try {
+          focusedCounters = validateCapturedFocusedShardCounters(root, finalReport, lockedInputs, manifest.source_maps);
+        } catch (error) {
+          rejectPureReportValidator(error);
+        }
+      }
     } else {
       if (!outcome) throw new Error('Serial coverage producer has no terminal outcome.');
       const reportFiles = readdirSync(reportDirectory)
@@ -1748,38 +1804,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       }
       finalReport = {
         ...(publishedReference ? { published_reference: publishedReference } : {}),
-        schema: focused ? 'VidaBunFocusedCoverageDiagnostic/v1' : 'VidaBunCoverageReport/v1',
-        ...(focused
-          ? {
-              qualification_scope: 'focused-diagnostic',
-              full_qualification: false,
-              frozen_budget_qualification: 'pending',
-              function_coverage_kind: 'function-entry-binary',
-              metrics: evidence.sources.map((entry) => {
-                const absolute = path.resolve(root, entry.path);
-                const fileCoverage = mergedCoverage[absolute];
-                if (!fileCoverage) throw new Error('Focused diagnostic source counters are missing: ' + entry.path);
-                validateCoverageLocations(
-                  entry.path,
-                  inputBytes[entry.path]!.toString('utf8'),
-                  fileCoverage,
-                  manifest.source_maps[absolute]!.branchMap,
-                );
-                return {
-                  file: entry.path,
-                  coverage: coverageApi
-                    .createCoverageMap({ [absolute]: fileCoverage })
-                    .getCoverageSummary()
-                    .toJSON(),
-                  functions: baselineFunctionEvidenceForSource(
-                    entry.path,
-                    focusedFunctions.get(entry.path) ?? [],
-                    fileCoverage,
-                  ),
-                };
-              }),
-            }
-          : {}),
+        schema: 'VidaBunCoverageReport/v1',
         run_id: runId,
         manifest_path: path.relative(root, manifestPath).replaceAll('\\', '/'),
         manifest_sha256: manifestDigest,
@@ -1800,6 +1825,18 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
         processes: processReceipts,
         coverage: mergedCoverage,
       };
+      if (focused) focusedCounters = mergedCoverage;
+    }
+    if (focused) {
+      if (!focusedCounters) throw new Error('Focused coverage counters are missing.');
+      finalReport = focusedCoverageDiagnosticReport({
+        root,
+        report: finalReport,
+        coverage: focusedCounters,
+        inputs: lockedInputs,
+        sourceMaps: manifest.source_maps,
+        functions: focusedFunctions,
+      });
     }
     const finalPath = focused
       ? path.join(runOutputRoot, runId + '.focused-coverage.json')
