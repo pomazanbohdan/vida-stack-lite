@@ -681,6 +681,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | stage-outcome | contour-stage-xSDEeu | 34e1020544b3d384d67151cb703c1723440edfc1 | 2026-10-19T20:37:24.281Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-xSDEeu/publication-error.json |
 | stage-outcome | contour-stage-2vD5np | 949be503433a13dd5237ac327f08a546b641ffb6 | 2026-10-19T21:52:21.194Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-2vD5np/publication-error.json |
 | stage-outcome | contour-stage-XVIwPe | 35445c4b17ca480361b047c6c9da16d0d8a09b23 | 2026-10-19T22:21:46.601Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-XVIwPe/publication-error.json |
+| stage-outcome | contour-stage-gK0sYn | b2f7c98efe6f155d612ee4e1739f4fcb2f43c2c3 | 2026-10-19T22:36:38.866Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-gK0sYn/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

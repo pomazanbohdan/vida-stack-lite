@@ -673,7 +673,7 @@ Verify the profiler artifact exists before attributing cost. The qualified Bun
 test probe accepted --cpu-prof but emitted no profile. A bounded bun:jsc profile
 started from a non-awaiting beforeAll and settled by afterAll captured the native
 test stack; retain its raw stack data and distinguish sampled CPU from elapsed
-time. Upgrade-presence probes use the existing observer without memoizing live
+time. Upgrade/activation/output presence probes use the existing observer without memoizing live
 state; native controls must retain active-CAS denial and the unsupported-provider
 fallback. Never replace writer CAS or durability with this read-path optimization.
 

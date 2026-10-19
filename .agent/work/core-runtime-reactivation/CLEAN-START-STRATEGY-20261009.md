@@ -51,8 +51,12 @@ The first-failure fence, raw output and qualifier phase retention are published
 in35445c4. Its next stage still ended UNKNOWN after270.839s, with one60s setup
 attempt rather than four and no complete counters. The retained CPU profile
 identifies repeated writer-CAS sidecars for a presence-only upgrade guard.
-Publish the reviewed no-write observation correction with native denial controls
-and retained failed wave-chain fixtures, then run one changed-input exact stage.
+The guard correction is published in b2f7c98. Its stage completes all254Host
+tests under the original bounds but still lacks complete contour evidence because
+controller setup is interrupted. Publish the reviewed extension to presence-only
+activation/output probes; keep configuration byte readers locked and all fresh
+barriers intact. Its targeted controller setup/candidate case now passes within
+the original deadlines. Then run one changed-input exact stage.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

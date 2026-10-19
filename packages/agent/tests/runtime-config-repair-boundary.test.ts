@@ -230,9 +230,9 @@ describe('current-v1 exact-byte config repair boundary', () => {
       if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
       return {
         ...access,
-        fileExists(target: string, label: string): boolean {
+        observeFileExists(target: string, label: string): boolean {
           if (target === '.vida') vidaExistenceChecks++;
-          return access.fileExists(target, label);
+          return (access.observeFileExists ?? access.fileExists)(target, label);
         },
         listFiles(target: string, label: string): readonly string[] {
           if (target === '.vida') vidaListings++;
@@ -273,11 +273,11 @@ describe('current-v1 exact-byte config repair boundary', () => {
       if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
       return {
         ...access,
-        fileExists(target: string, label: string): boolean {
+        observeFileExists(target: string, label: string): boolean {
           if (target === '.vida') vidaExistenceChecks++;
           if (target === '.vida/layout.v1.json' && label === 'project upgrade output evidence')
             sawGuardedLayoutProbe = true;
-          return access.fileExists(target, label);
+          return (access.observeFileExists ?? access.fileExists)(target, label);
         },
       };
     });

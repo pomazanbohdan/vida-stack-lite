@@ -219,10 +219,12 @@ be reused. Each decoded operation still validates its complete plan and progress
 live dependencies, bundle, output and ownership checks are never memoized.
 SQLite sidecar absence checks also use fresh read-only observations, preserving
 their before/after checks and the real admission transactions and native locks.
-The cooperative upgrade-marker presence guard uses that same no-write observation
-when the provider exposes it; providers without it retain their existing existence
-check. Observation failures propagate without a fallback retry. This guard grants
-no write authority and does not replace storage admission or effect-time CAS.
+Upgrade-marker and activation/output presence probes use that same no-write
+observation when the provider exposes it; providers without it retain their
+existing existence check. Observation failures propagate without a fallback retry.
+Actual configuration/activation/history byte reads retain their original locked
+readers, validation and before/after rechecks. These presence probes grant no
+write authority and do not replace storage admission or effect-time CAS.
 
 The closed-image merge validates each SQL row under the ordinary canonical JSON
 limits before hashing its deterministic table/row aggregate. That internal

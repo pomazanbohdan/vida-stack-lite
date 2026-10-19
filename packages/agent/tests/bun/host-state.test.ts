@@ -50,6 +50,7 @@ import * as trustedHostSurface from '../../src/trusted-host.ts';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import {
+  activeRuntimeConfigurationSource,
   assertProjectUpgradeInactive,
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -365,6 +366,7 @@ test.skipIf(process.platform !== 'linux')(
       const syncs = spyOn(nodeFs, 'fsyncSync');
       try {
         expect(() => assertProjectUpgradeInactive(access)).not.toThrow();
+        expect(activeRuntimeConfigurationSource(access)).toBe('agent-runtime.config.v1.yaml');
         expect(writes).not.toHaveBeenCalled();
         expect(syncs).not.toHaveBeenCalled();
         expect(nodeFs.readdirSync(path.dirname(target))).toEqual(entries);
@@ -384,6 +386,12 @@ test.skipIf(process.platform !== 'linux')(
       });
       nodeFs.unlinkSync(target);
       expect(() => assertProjectUpgradeInactive(access)).not.toThrow();
+      access.withExclusiveLock('.vida/.activation.v1.json.cas', 'activation presence CAS owner', () => {
+        const ownerPath = path.join(root, '.vida/.activation.v1.json.cas.lock');
+        const owner = readFileSync(ownerPath);
+        expect(() => activeRuntimeConfigurationSource(access)).toThrow(/active CAS writer/);
+        expect(readFileSync(ownerPath)).toEqual(owner);
+      });
       let legacyReads = 0;
       const legacy = {
         ...access,

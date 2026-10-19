@@ -1799,29 +1799,39 @@ function isProjectUpgradeDatabaseStagingName(name: string): boolean {
   return name.startsWith('.upgrade-') && name.endsWith('.sqlite');
 }
 
+function observedProjectPathExists(
+  access: SafeRepositoryAccess | SafeRepositoryObservation,
+  target: string,
+  label: string,
+): boolean {
+  return 'observeFileExists' in access && access.observeFileExists !== undefined
+    ? access.observeFileExists(target, label)
+    : access.fileExists(target, label);
+}
+
 function hasProjectUpgradeStagingEvidence(access: SafeRepositoryAccess | SafeRepositoryObservation): boolean {
   const projectStaging =
-    access.fileExists('.vida', 'project upgrade staging directory') &&
+    observedProjectPathExists(access, '.vida', 'project upgrade staging directory') &&
     access.listFiles('.vida', 'project upgrade staging directory').some(isProjectUpgradeStagingName);
   const workRoot = INITIALIZED_PROJECT_PATHS.work;
   const databaseStaging =
-    access.fileExists(workRoot, 'project upgrade database staging directory') &&
+    observedProjectPathExists(access, workRoot, 'project upgrade database staging directory') &&
     access.listFiles(workRoot, 'project upgrade database staging directory').some(isProjectUpgradeDatabaseStagingName);
   return projectStaging || databaseStaging;
 }
 
 function hasProjectUpgradeOutputEvidence(access: SafeRepositoryAccess | SafeRepositoryObservation): boolean {
-  if (!access.fileExists('.vida', 'project upgrade output directory')) return false;
+  if (!observedProjectPathExists(access, '.vida', 'project upgrade output directory')) return false;
   const entries = access.listFiles('.vida', 'project upgrade output directory');
   // A lone admission gate is legacy reader control. Any other entry keeps the guarded probes.
   if (entries.length === 1 && entries[0] === STORAGE_ADMISSION_GATE_FILE) return false;
   const fixedOutputExists = PROJECT_UPGRADE_OUTPUT_EVIDENCE_PATHS.some((file) =>
-    access.fileExists(file, 'project upgrade output evidence'),
+    observedProjectPathExists(access, file, 'project upgrade output evidence'),
   );
   if (fixedOutputExists) return true;
   const instructionDirectory = INITIALIZED_PROJECT_PATHS.instructions;
   const publishedInstructions =
-    access.fileExists(instructionDirectory, 'project upgrade instruction output') &&
+    observedProjectPathExists(access, instructionDirectory, 'project upgrade instruction output') &&
     access.listFiles(instructionDirectory, 'project upgrade instruction output').length > 0;
   return publishedInstructions || hasProjectUpgradeStagingEvidence(access);
 }
@@ -1829,7 +1839,7 @@ function hasProjectUpgradeOutputEvidence(access: SafeRepositoryAccess | SafeRepo
 function selectRuntimeConfigurationSource(
   access: SafeRepositoryAccess | SafeRepositoryObservation,
 ): RuntimeConfigurationSelection {
-  if (!access.fileExists(PROJECT_ACTIVATION_PATH, 'project activation')) {
+  if (!observedProjectPathExists(access, PROJECT_ACTIVATION_PATH, 'project activation')) {
     assertCondition(
       !hasProjectUpgradeOutputEvidence(access),
       'Project activation is missing while current .vida outputs remain; recover the existing upgrade before configuration access.',
@@ -1867,7 +1877,8 @@ function recheckRuntimeConfigurationSelection(
 ): boolean {
   if (selection.source === CONFIG_FILE)
     return (
-      !access.fileExists(PROJECT_ACTIVATION_PATH, 'project activation') && !hasProjectUpgradeOutputEvidence(access)
+      !observedProjectPathExists(access, PROJECT_ACTIVATION_PATH, 'project activation') &&
+      !hasProjectUpgradeOutputEvidence(access)
     );
   return (
     access.readText(PROJECT_ACTIVATION_PATH, 'project activation') === selection.activation_bytes &&
@@ -1978,12 +1989,8 @@ function assertProjectOutputClosure(
 
 /** Cooperative read barrier shared by configuration and direct storage readers. */
 export function assertProjectUpgradeInactive(access: SafeRepositoryAccess | SafeRepositoryObservation): void {
-  const exists =
-    'observeFileExists' in access && access.observeFileExists !== undefined
-      ? access.observeFileExists(PROJECT_UPGRADE_OPERATION_PATH, 'active project upgrade')
-      : access.fileExists(PROJECT_UPGRADE_OPERATION_PATH, 'active project upgrade');
   assertCondition(
-    !exists,
+    !observedProjectPathExists(access, PROJECT_UPGRADE_OPERATION_PATH, 'active project upgrade'),
     'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',
   );
 }

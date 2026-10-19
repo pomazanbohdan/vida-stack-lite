@@ -78,6 +78,38 @@ No cleanup, runtime/loader/DB cutover or consumer effect was performed.
 
 ### Latest host-state stage and measured presence-guard repair
 
+The b2f7c98 exact stage /workspace/contour-stage-gK0sYn completed in249984.901ms
+with closed group, complete output, unchanged boot/image, but failed publication
+because stopped-source setup remained UNKNOWN. Run998c725e-6a03-429b-9fc2-3652e24042b5
+uses image /workspace/.vida-quality-inputs/dae1f40b1896946c054bdd8a8b27b45712006afc/repository;
+manifest SHA271631194eef86deaafe26cb5b2f6abb0fd1e62fc814c5e898ebff51fd2cea41.
+Matching SDK run39335599012 attempt1/artifact12226448030 passed, ZIP SHA
+b517a3986363561e67a73accc15f5e04e5b57c82126ac90a9a02085f6b823c85.
+The Host child completes254/254tests,1799assertions in243.10s. Its complete/suspended
+chain cases pass24.769s/13.941s under the unchanged30s bounds. Stopped-source
+still has one60s setup failure,1pass/15fail in86.08s; its first Source case passes
+24.105s. None of these partial file observations establishes contour F/L/S/B100.
+
+The existing CPU profile also attributes2476fsync samples to configuration source
+selection and2484to its recheck. The2530output-evidence samples overlap these,
+so do not add them. Presence probes in those paths still acquired writer CAS.
+One private observedProjectPathExists now shares the already-reviewed capability
+selection across upgrade/activation/output presence checks. It changes neither
+listings nor readText/readBytes, exact input/output validation or fresh rechecks.
+No active loader/schema/DB cutover occurs. Blind Source review
+/tmp/vida-activation-presence-review.md found no architecture blocker.
+
+The native Host control now passes14assertions, including no writes/sync for
+legacy-source selection and denial of an actual activation CAS owner without
+changing its bytes. Six targeted configuration regressions pass23assertions in
+1.65s, preserving gate-only/unknown-data behavior and late marker/activation/staging
+denial. Their spies follow the selected observer without trimming the barriers.
+Scoped strict compilation passes133files and scoped lint is clean. The real
+candidate-snapshot control passes16assertions with setup22.371s, body6.839s,
+command31.13s and completed cleanup. Compare prior focused40.671s/18.290s/61.15s
+only as single observations with differing cache/resource conditions; full-contour
+acceptance is still pending. No case/global budget or frozen gate was increased.
+
 The35445c4 packet passed the ordinary hook (format514, strict521, lint) and was
 pushed to main. Matching SDK CI39333758751 attempt1/artifact12225088504 passed;
 ZIP SHA256 is3fd8a7ffc090d3c83f031e46a2a7ac83148288b78e8d62298f8310f836794924.
