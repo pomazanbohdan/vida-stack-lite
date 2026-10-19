@@ -11,6 +11,7 @@ Bundle документації продукту Vida Powers у форматі O
 
 # Концепції
 
+* [Vida Powers — наступні дії в межах packages/powers](next-actions.md) - Поточний обсяг робіт у каталозі продукту: harness і скелет, канонічні документи, каталог зі скриптами, вертикальний зріз корпусу, скіли й маніфести, Work Items і findings, runtime-запити.
 * [Vida Powers — план впровадження](implementation-plan.md) - Порядок етапів, ворота й приймальні критерії реалізації: від реєстрації продукту й канонічних документів до конвертації корпусу, Router, матеріалізації, Runtime-інтеграції та Standalone-режиму.
 * [Vida Powers — продуктова концепція та архітектурний baseline](research/vida-powers-product-research.md) - Фіналізована концепція: межі VP і VIDA Runtime, канонічний instruction corpus із двома вимірами тегів, методологічна політика, artifact-first матеріалізація, Findings, wiki/work layout і режими Configured/Dynamic.
 
@@ -28,6 +29,7 @@ Bundle документації продукту Vida Powers у форматі O
 * [D5 — Decision Provider і роутінг у VP: provider-нейтральний інтерфейс, LLM-вибір і формування агентів](decisions/D5-decision-provider.md) - Контракт `decision.evaluate` з двома реалізаціями та обов'язковим Agent Fallback; роутінг = вибір LLM, формування агентів і рівень флоу.
 * [D7 — Ініціалізація VP за середовищем: три носія конфігурації](decisions/D7-consumer-initialization.md) - `vp-setup` пише у проєктний instruction-файл, конфіг-файл агентного runtime або конфіг-файл проєкту від хост-прослойки.
 * [D8 — Методологічний профіль: одна схема VP, носій за середовищем](decisions/D8-methodology-profile.md) - `VPMethodologyProfile/v1` — VP-owned схема; носій залежить від середовища.
+* [D9 — Робочий scope: лише packages/powers, реєстрація в root-файлах відкладена](decisions/D9-scoped-to-powers.md) - Обсяг робіт обмежено каталогом продукту; реєстрація в спільних root-файлах репозиторію — зовнішня залежність.
 
 # Поза межами bundle
 
