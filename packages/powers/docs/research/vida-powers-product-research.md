@@ -16,7 +16,7 @@ vida:
   product: vida-powers
   parent_project: vida-agent-system
   kind: product-research
-  revision: 2
+  revision: 3
   research_status: finalized
   implementation_status: not-started
   updated_at: '2026-10-19T14:01:10Z'

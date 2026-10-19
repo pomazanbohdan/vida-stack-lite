@@ -29,10 +29,10 @@ generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:01:10Z' 
 verified:
 - { by: deepseek/deepseek-flash, at: '2026-10-19T13:36:34Z' }
 - { by: opencode/glm-5.3-flash-free, at: '2026-10-19T13:59:31Z' }
-revision: '2.1'
+revision: '3'
 ---
 
-# Vida Powers — план впровадження (rev 2.1)
+# Vida Powers — план впровадження
 
 Owner: продуктовий власник Vida Powers. Class: **derived execution roadmap** —
 порядок робіт і ворота, не нормативна специфікація і не дозвіл на мутації.

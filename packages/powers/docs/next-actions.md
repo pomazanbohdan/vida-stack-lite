@@ -24,7 +24,7 @@ sources:
   title: Vida Agent package — конвенції Bun-пакета
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '1'
+revision: '2'
 ---
 
 # Мета і межі

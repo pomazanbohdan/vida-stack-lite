@@ -133,6 +133,10 @@ packages/powers/
 - Інструкція: `instructions/<instruction_id>.md`; `instruction_id` — kebab-case,
   стабільний, не перевикористовується; `instruction_id` у frontmatter дорівнює
   імені файлу (валідатор перевіряє). Ім'я файлу без дат, статусів і `final-v2`.
+- **Версія контенту — лише в метаданих:** `revision` у frontmatter; історія змін — у
+  bundle-журналі `docs/log.md`. У назві файлу версії, дат і статусів немає.
+  Виняток — імена схем (`config/*.v1.schema.json`): там версія формату в самій
+  назві, за конвенцією репозиторію.
 - Скрипти скіла — у `skills/<skill>/scripts/`; тулінг підтримки продукту — у
   `scripts/` у корені пакета (як `scripts/` у superpowers).
 - Пер-хостові маніфести (`.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`) —

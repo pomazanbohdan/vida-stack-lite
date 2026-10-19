@@ -16,7 +16,7 @@ sources:
   resource: /decisions/index.md
   title: Ухвалені рішення D1–D9
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '1'
+revision: '2'
 ---
 
 # 1. Призначення

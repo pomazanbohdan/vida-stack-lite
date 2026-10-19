@@ -25,7 +25,7 @@ sources:
   resource: /catalog-design.md
   title: Vida Powers — дизайн каталогу інструкцій
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '1'
+revision: '2'
 ---
 
 ## Research → BR → SR → AC
