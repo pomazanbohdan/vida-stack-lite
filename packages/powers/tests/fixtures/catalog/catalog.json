@@ -1,0 +1,32 @@
+{
+  "schema": "VPCatalog/v1",
+  "catalog_id": "test-catalog",
+  "revision": 3,
+  "source_revision": "fixture-source",
+  "updated_at": "2026-10-19T00:00:00Z",
+  "tag_dictionary": {
+    "capability": {
+      "acceptance-design": "Define acceptance criteria.",
+      "alternate-workflow": "Use an alternate workflow.",
+      "disabled-capability": "Disabled capability.",
+      "evidence-review": "Review evidence.",
+      "test-design": "Design behavior tests."
+    },
+    "pattern": {
+      "test-after-development": "Test after implementation.",
+      "test-first-development": "Write tests first."
+    }
+  },
+  "tag_aliases": { "tdd": "test-first-development", "test-first": "test-first-development" },
+  "tag_exemptions": [
+    { "instruction_id": "alpha", "dimension": "capability", "reason": "Fixture for exemption coverage." }
+  ],
+  "instructions": [
+    { "instruction_id": "alpha", "path": "instructions/alpha.md", "sha256": "22203384c8512a6e28a2a0d9898f57545a5c86594721522357cfc98981af7796" },
+    { "instruction_id": "beta", "path": "instructions/beta.md", "sha256": "f8a6f0d0c4fec4eba9e5343f0ab95ea4bec4545855b3856d3ff5473bc7b5dc30" },
+    { "instruction_id": "conflict-mode", "path": "instructions/conflict-mode.md", "sha256": "eda5b20efc28fb9cd854218b33f8c9a2195e0fc79395ad126b8f0a0f4effd6ef" },
+    { "instruction_id": "disabled-mode", "path": "instructions/disabled-mode.md", "sha256": "f6c2dc1669880b17222a78fdf03300461374cdc5d24c2d3460ddba0be18f5e32" },
+    { "instruction_id": "gamma", "path": "instructions/gamma.md", "sha256": "7933d6c4bccd9fe233c278c3269131bd0f7a116df6ff48d3564ce7c2dd26226c" },
+    { "instruction_id": "guidance", "path": "instructions/guidance.md", "sha256": "bf4dbf807e8d0a3c8d8c65949ab30d10160476184f9cf70581a970beaa2eb779" }
+  ]
+}

@@ -158,30 +158,46 @@ test `tests/schema.test.ts`.
 **Files:** create `skills/vp-mode/scripts/catalog.ts`; test `tests/catalog.test.ts`.
 
 **Interfaces:**
-- `loadCatalog(catalogPath: string): Promise<Catalog>`
-- `loadInstructions(catalog: Catalog): Promise<Map<string, Instruction>>` — читає
-  `instructions/<path>`, рахує `sha256` і **звіряє з маніфестом**; розбіжність →
-  `CatalogError` з `code: 'CATALOG_DIGEST_MISMATCH'`.
-- `Instruction` — точні поля інструкції (дизайн §5, узгоджено зі схемою
-  `vpinstruction.v1`): `instruction_id`, `title`, `summary`, `capability_tags[]`,
-  `pattern_tags[]`, `conditions{applies_when[],does_not_apply_when[]}`,
+- `loadCatalog(catalogPath: string): Promise<Catalog>` — читає маніфест,
+  валідує його за `config/vpcatalog.v1.schema.json` (схема — поруч із
+  маніфестом), парсить `provenance` і `tag_aliases`.
+- `loadInstructions(catalog: Catalog): Promise<Map<string, Instruction>>` — для
+  кожного запису маніфесту читає `path` відносно каталогу, рахує `sha256` і
+  **звіряє з маніфестом**; розбіжність → `CatalogError` з
+  `code: 'CATALOG_DIGEST_MISMATCH'`. Frontmatter валідується за
+  `config/vpinstruction.v1.schema.json` → `CATALOG_INVALID`; тег поза словником →
+  `CATALOG_TAG_UNKNOWN` (з урахуванням `tag_exemptions`).
+- `Instruction` — точні поля: `instruction_id`, `title`, `summary`,
+  `capability_tags[]`, `pattern_tags[]`, `roles[]`, `products[]`,
+  `conditions{applies_when,does_not_apply_when}` (скаляри, як у frontmatter),
   `artifact_contract{output_type,required_data[],verified_by}`,
   `compatibility{excludes[],requires[]}`,
-  `provenance{donor,license,revision,path}`, `status`, `revision`, `content`.
-- `catalogTags(catalog): { capability: TagEntry[]; pattern: TagEntry[] }`
+  `provenance[{donor,license,revision,path}]` (масив — джерела після злиття),
+  `status`, `revision`, `content` (тіло файлу).
+- `catalogTags(catalog): { capability: TagEntry[]; pattern: TagEntry[] }` —
+  `TagEntry = { tag, description, aliases[] }`; стабільний порядок, без текстів
+  інструкцій (SR-09).
 - `catalogSearch(catalog, instructions, query): InstructionMetadata[]` —
-  фільтри: `capability_tags`, `pattern_tags`, `instruction_ids`, `role`, `product`,
-  `conditions`; результат **без** `content`.
-- `catalogGet(catalog, instructions, id): Instruction`
+  фільтри: `capability_tags[]`, `pattern_tags[]`, `instruction_ids[]`, `roles[]`,
+  `products[]`, `conditions[]`; результат **без** `content` (AC-05); семантика —
+  дизайн §7 («хоча б один» у вимірі, «і» між вимірами, аліаси → канонічні,
+  disabled не потрапляє, `roles`/`products` — порожній список = будь-який,
+  `conditions` — токени є в `applies_when` і немає в `does_not_apply_when`).
+- `catalogGet(catalog, instructions, id): Instruction` — невідомий ID →
+  `CATALOG_ID_UNKNOWN`, вимкнений → `CATALOG_INSTRUCTION_DISABLED`.
 - `catalogCompose(catalog, instructions, query): ComposedBundle` — required +
-  збіги + транзитивні `compatibility.requires`; конфлікт `excludes` → `CatalogError`.
+  збіги + транзитивні `compatibility.requires`; конфлікт `excludes` →
+  `CatalogError`.
   `ComposedBundle` містить: `catalog_id`, `catalog_revision`, `tag_dictionary`,
   `instructions[]` (кожна — `instruction_id`, `title`, `summary`, `content`,
   `capability_tags`, `pattern_tags`, `artifact_contract`, `provenance`,
   `selection_reason`) і **контекст виконання** (SR-23): `role`, `task_contract`,
   `effective_methodology`, `work_scope`, `materialization_requirements`,
   `artifact_references` — усі з `query` або з порожнім значенням.
-- `CatalogError` має поле `code`.
+- `CatalogError` має поле `code` (набір: `CATALOG_INVALID`, `CATALOG_TAG_UNKNOWN`,
+  `CATALOG_DIGEST_MISMATCH`, `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED`,
+  `CATALOG_REQUIRED_CONFLICT`, `CATALOG_PROFILE_CONFLICT`,
+  `CATALOG_DEPENDENCY_MISSING`, `CATALOG_DEPENDENCY_DISABLED`).
 
 **Кроки:**
 1. Тести `tests/catalog.test.ts` на фікстурах `tests/fixtures/valid/`:
@@ -288,7 +304,7 @@ test `tests/schema.test.ts`.
 |---|---|---|
 | 1. Схеми VP + міні-валідатор | **закрито** | `config/vpcatalog.v1.schema.json`, `config/vpinstruction.v1.schema.json`, `config/vpeffectiveprofile.v1.schema.json`, `skills/vp-mode/scripts/schema.ts`, `tests/schema.test.ts` — 32 тести, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 4 незалежні рев'ю-раунди, фінальний вердикт ACCEPT |
 | 2. Парсер frontmatter | **закрито** | `skills/vp-mode/scripts/frontmatter.ts`, `tests/frontmatter.test.ts` — 47 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 рев'ю-раунди, фінальний вердикт ACCEPT |
-| 3. Модель каталогу + `catalog.*` | у черзі | — |
+| 3. Модель каталогу + `catalog.*` | **закрито** | `skills/vp-mode/scripts/catalog.ts`, `tests/catalog.test.ts`, `tests/fixtures/catalog/` — 96 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 рев'ю-раунди, фінальний вердикт ACCEPT |
 | 4. `decision.evaluate` + CLI | у черзі | — |
 | 5. Seed-корпус + манифести + валідатор | у черзі | — |
 | 6. `convert.ts` (єдиний writer) | у черзі | — |

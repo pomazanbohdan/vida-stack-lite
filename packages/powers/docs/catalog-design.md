@@ -215,6 +215,7 @@ revision: 1
 | `artifact_contract.output_type` / `.required_data` / `.verified_by` | `artifact_contract_output_type` / `_required_data` / `_verified_by` |
 | `compatibility.excludes` / `.requires` | `compatibility_excludes` / `compatibility_requires` |
 | `provenance` (джерело: donor, license, source_revision, source_path) | `provenance[]` — список рядків `donor=…; license=…; revision=…; path=…` |
+| `roles` / `products` (необов'язкові; фільтри пошуку, SR-10/SR-70) | `roles` / `products` |
 | `status`, `revision` | `status`, `revision` |
 
 **Правила валідації**
@@ -230,6 +231,7 @@ revision: 1
 | `compatibility_excludes`/`_requires` — відомі `instruction_id`; `requires` не містить себе | `CATALOG_DEPENDENCY_MISSING` / `CATALOG_INVALID` |
 | `provenance` — список із щонайменше одного джерела; кожне — рядок `donor=…; license=…; revision=…; path=…`: `donor` ∈ `donors.yaml`, `license` збігається з маніфестом, `revision` **дорівнює** `donors.yaml[donor].head_sha`; те саме джерело двічі — не приймається | `CATALOG_INVALID` |
 | `status` ∈ `active` \| `disabled`; `revision` — ціле ≥1 | `CATALOG_INVALID` |
+| `roles`, `products` — необов'язкові; кожен — kebab-case; відсутність або порожній список = «застосовно до будь-якої ролі/продукту» | `CATALOG_INVALID` |
 | Виняток із правила тегів — лише через `catalog.json` → `tag_exemptions[]` (`instruction_id`, `dimension`, `reason`) | `CATALOG_INVALID` |
 
 Тіло інструкції — нормативний текст; без дублювання research (research — концепція,
@@ -357,17 +359,32 @@ LLM, хости й репозиторій; каталог знаходить **�
 | Операція | Вхід | Вихід | Помилки |
 |---|---|---|---|
 | `catalog.tags` | — | `{capability:[{tag,description,aliases[]}], pattern:[…]}` | `CATALOG_INVALID` |
-| `catalog.search` | `capability[]`, `pattern[]`, `instruction_ids[]` | `{results:[{instruction_id,title,summary,capability_tags,pattern_tags,revision}]}` — **без `content`** | `CATALOG_INVALID` |
+| `catalog.search` | `capability[]`, `pattern[]`, `instruction_ids[]`, `roles[]`, `products[]`, `conditions[]` | `{results:[{instruction_id,title,summary,capability_tags,pattern_tags,revision}]}` — **без `content`** | `CATALOG_INVALID` |
 | `catalog.get` | `instruction_id` | `{instruction:{…усі поля…}}` | `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED` |
-| `catalog.compose` | `capability[]`, `pattern[]`, `required_ids[]`, `profile` | `{instructions:[{instruction_id,title,summary,content,artifact_contract,selection_reason}]}` | `CATALOG_ID_UNKNOWN`, `CATALOG_REQUIRED_CONFLICT`, `CATALOG_PROFILE_CONFLICT`, `CATALOG_DEPENDENCY_MISSING`, `CATALOG_DEPENDENCY_DISABLED` |
+| `catalog.compose` | `capability[]`, `pattern[]`, `instruction_ids[]`, `roles[]`, `products[]`, `conditions[]`, `required_ids[]`, `profile` | `{instructions:[{instruction_id,title,summary,content,artifact_contract,selection_reason}]}` + контекст виконання (SR-23) | `CATALOG_INVALID`, `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED`, `CATALOG_REQUIRED_CONFLICT`, `CATALOG_PROFILE_CONFLICT`, `CATALOG_DEPENDENCY_MISSING`, `CATALOG_DEPENDENCY_DISABLED` |
 
-**Семантика пошуку** (SR-10)
+**Семантика пошуку** (SR-10, SR-70)
 
 - У межах одного виміру — «хоча б один» збіг; між вимірами — «і».
 - Задано лише один вимір — інший не застосовується.
 - Аліаси зводяться до канонічних тегів **до** збігу.
 - `status: disabled` не потрапляє в результат.
 - `tag_exemptions` не впливають на пошук (це валідаційні винятки).
+- `instruction_ids` — кон'юнкція: результат обмежено цими ID.
+- `roles` / `products` — інструкція збігається, якщо її список порожній (або ключа
+  немає — тоді інструкція застосовна до будь-якої ролі/продукту) або містить хоча б
+  один збіг із запитом.
+- `conditions` — кон'юнкція токенів: кожен токен запиту має бути присутній у
+  `conditions_applies_when` і **відсутній** у `conditions_does_not_apply_when`
+  (збіг без урахування регістру, Unicode-межі слова; токен збігається буквально,
+  разом із кінцевою пунктуацією). Порожній токен — помилка валідації запиту.
+- Вимір вважається **заданим**, лише якщо його масив присутній і непорожній;
+  порожній масив = вимір не застосовується. Запит без жодного виміру повертає
+  весь активний корпус (`catalog.search` — операція огляду); `catalog.compose`
+  без вимірів корпус не тягне (див. правила `compose`).
+- Вивід — **лише метадані** (AC-05): `instruction_id`, `title`, `summary`,
+  `capability_tags`, `pattern_tags`, `revision`; без `content`. Порядок стабільний
+  (за `instruction_id`).
 
 **Ефективний профіль** — JSON, який передає host:
 
@@ -388,15 +405,25 @@ LLM, хости й репозиторій; каталог знаходить **�
 **Правила `compose`**
 
 1. `required_ids` входять **завжди**, навіть якщо не збігаються з тегами (SR-13).
-2. Збіги за тегами → `selection_reason: "matched"`.
+2. Збіги за тегами → `selection_reason: "matched"`. Фаза збігу виконується **лише**
+   коли запит містить хоча б один непорожній вимір відбору (`capability_tags`,
+   `pattern_tags`, `instruction_ids`, `roles`, `products`, `conditions`); запит без
+   вимірів не тягне весь корпус (compose з одним лише `required_ids` повертає
+  required-інструкції та їхні залежності).
 3. Транзитивні `compatibility_requires` → `"dependency"`; невідома або вимкнена
-   залежність → помилка.
+   залежність → помилка. Залежність **ніколи не зникає мовчки**: якщо профіль
+   відкидає залежність — помилка (п. 4г).
 4. **Групи вирішує профіль:** якщо група має активну альтернативу, інструкції з
    іншими `pattern_tags` цієї групи до bundle не потрапляють. Помилка лише коли:
-   (а) сам профіль суперечний (дві активні альтернативи в одній групі);
+   (а) сам профіль суперечний (активна альтернатива не входить у перелік
+   альтернатив групи);
    (б) `required_ids` суперечить активній альтернативі;
    (в) дві інструкції з різних груп мають пряме `compatibility_excludes` один на
-   одного.
+   одного;
+   (г) **залежність**, яку вимагає в bundle інструкція, суперечить активній
+   альтернативі профілю — залежність не відкидається мовчки.
+   Порядок застосування: required → збіги → фільтр профілю (лише для збігів) →
+   замикання залежностей → перевірка `excludes`.
 5. Без профілю: будь-яка пара з `compatibility_excludes` → помилка (SR-14).
 6. Порядок виводу — стабільний (за `instruction_id`).
 
