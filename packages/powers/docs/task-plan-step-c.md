@@ -287,7 +287,7 @@ test `tests/schema.test.ts`.
 | Task | Статус | Доказ |
 |---|---|---|
 | 1. Схеми VP + міні-валідатор | **закрито** | `config/vpcatalog.v1.schema.json`, `config/vpinstruction.v1.schema.json`, `config/vpeffectiveprofile.v1.schema.json`, `skills/vp-mode/scripts/schema.ts`, `tests/schema.test.ts` — 32 тести, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 4 незалежні рев'ю-раунди, фінальний вердикт ACCEPT |
-| 2. Парсер frontmatter | у черзі | — |
+| 2. Парсер frontmatter | **закрито** | `skills/vp-mode/scripts/frontmatter.ts`, `tests/frontmatter.test.ts` — 47 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 рев'ю-раунди, фінальний вердикт ACCEPT |
 | 3. Модель каталогу + `catalog.*` | у черзі | — |
 | 4. `decision.evaluate` + CLI | у черзі | — |
 | 5. Seed-корпус + манифести + валідатор | у черзі | — |
