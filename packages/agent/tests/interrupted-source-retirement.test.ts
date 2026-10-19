@@ -1221,43 +1221,6 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
   }
 }, 60000);
 
-test('an interrupted Source owner keeps a later FIFO contender queued', async () => {
-  const deadline = performance.now() + 60000;
-  const f = await fixture({ deadline, inProcessPreparation: true });
-  let completed = false,
-    bodyFailed = false,
-    bodyError: unknown;
-  try {
-    await expectRejection(
-      f.laterWriter('fifo-contender', 'AGENT.sidecar.md', { ownershipOnly: true }),
-      'source writer ownership is queued behind an earlier exclusive resource',
-    );
-    const after = f.store.readHostStateSnapshot(f.identity),
-      afterLedger = requireValue(after.ledger, 'Host ledger'),
-      afterWork = requireValue(after.work, 'Host work'),
-      afterLease = requireValue(afterWork.lease, 'owner lease'),
-      owner = requireValue(
-        afterLedger.tickets.find((ticket) => ticket.ticket_id === afterLease.ticket_id),
-        'owner ticket',
-      ),
-      contender = requireValue(
-        afterLedger.tickets.find((ticket) => ticket.work_id === 'fifo-contender' && ticket.status === 'queued'),
-        'queued contender',
-      );
-    expect(owner.status).toBe('active');
-    expect(contender.sequence).toBeGreaterThan(owner.sequence);
-    expect(contender.active_resources).toEqual([]);
-    expect(contender.blocked_resources).toContain('file:AGENT.sidecar.md');
-    completed = true;
-  } catch (error) {
-    bodyFailed = true;
-    bodyError = error;
-    throw error;
-  } finally {
-    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError });
-  }
-}, 60000);
-
 test('public owner retirement restarts after lease expiry and package drift without an execution capability', async () => {
   const deadline = performance.now() + 60000;
   let completed = false,
@@ -1374,14 +1337,30 @@ test('public owner retirement restarts after lease expiry and package drift with
   }
 }, 60000);
 
-test('interrupted Source retirement rejects missing, running, foreign, and stale evidence without mutation', async () => {
+test('interrupted Source retirement preserves FIFO state across invalid evidence and failed release', async () => {
   const deadline = performance.now() + 60000;
   let completed = false,
     bodyFailed = false,
     bodyError: unknown;
   const f = await fixture({ deadline, inProcessPreparation: true });
+  let database: Database | undefined;
   try {
+    await expectRejection(
+      f.laterWriter('fifo-contender', 'AGENT.sidecar.md', { ownershipOnly: true }),
+      'source writer ownership is queued behind an earlier exclusive resource',
+    );
     const before = f.store.readHostStateSnapshot(f.identity),
+      beforeLedger = requireValue(before.ledger, 'Host ledger'),
+      beforeWork = requireValue(before.work, 'Host work'),
+      beforeLease = requireValue(beforeWork.lease, 'owner lease'),
+      owner = requireValue(
+        beforeLedger.tickets.find((ticket) => ticket.ticket_id === beforeLease.ticket_id),
+        'owner ticket',
+      ),
+      contender = requireValue(
+        beforeLedger.tickets.find((ticket) => ticket.work_id === 'fifo-contender' && ticket.status === 'queued'),
+        'queued contender',
+      ),
       beforeWorkVersion = requireValue(before.workVersion, 'work version'),
       beforeLedgerVersion = requireValue(before.ledgerVersion, 'ledger version'),
       journal = f.readJournal('stopped', 1),
@@ -1407,6 +1386,10 @@ test('interrupted Source retirement rejects missing, running, foreign, and stale
           active_source_writer_ids: [],
         },
       };
+    expect(owner.status).toBe('active');
+    expect(contender.sequence).toBeGreaterThan(owner.sequence);
+    expect(contender.active_resources).toEqual([]);
+    expect(contender.blocked_resources).toContain('file:AGENT.sidecar.md');
     expect(() =>
       f.store.retireInterruptedSourceOwner({ ...request, evidence: { ...request.evidence, read_thread_ref: '' } }),
     ).toThrow('evidence');
@@ -1461,58 +1444,20 @@ test('interrupted Source retirement rejects missing, running, foreign, and stale
     expect(requireValue(f.store.readWorkSessionJournal(f.identity), 'retirement journal').version).toEqual(
       journal.version,
     );
-    completed = true;
-  } catch (error) {
-    bodyFailed = true;
-    bodyError = error;
-    throw error;
-  } finally {
-    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError });
-  }
-}, 60000);
-
-test('interrupted Source retirement transaction rolls back the attempt downgrade when release fails', async () => {
-  const deadline = performance.now() + 60000;
-  let completed = false,
-    bodyFailed = false,
-    bodyError: unknown;
-  const f = await fixture({ deadline, inProcessPreparation: true });
-  try {
-    const before = f.store.readHostStateSnapshot(f.identity),
-      beforeWorkVersion = requireValue(before.workVersion, 'work version'),
-      beforeLedgerVersion = requireValue(before.ledgerVersion, 'ledger version'),
-      journal = f.readJournal('stopped', 1),
-      item = requireValue(journal.state.items[0], 'retirement action'),
-      request: InterruptedSourceRetirementRequest = {
-        identity: f.identity,
-        attempt: 1,
-        actionId: item.request.action_id,
-        issueId: requireValue(item.issue_id, 'retirement issue ID'),
-        expectedWork: beforeWorkVersion,
-        expectedLedger: beforeLedgerVersion,
-        expectedJournal: journal.version,
-        expectedMaintenanceGeneration: before.maintenanceGeneration,
-        authorization: requireValue(f.reservation.authorization, 'attempt authorization'),
-        operatorHandle: f.input.nativeSessionHandle,
-        decisionPointer: 'synthetic:approved-interrupted-source-retirement',
-        evidence: {
-          schema: 'InterruptedSourceRetirementEvidence/v1',
-          source_thread_id: 'synthetic-interrupted-child',
-          source_thread_status: 'interrupted',
-          read_thread_ref: 'synthetic:read-thread:interrupted',
-          list_agents_ref: 'synthetic:list-agents:no-source-writers',
-          active_source_writer_ids: [],
-        },
-      },
-      db = openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace);
+    database = openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace);
+    const db = database;
     db.exec(
       "CREATE TRIGGER fail_retirement_ledger BEFORE UPDATE ON agent_host_state WHEN OLD.kind='ledger' BEGIN SELECT RAISE(ABORT, 'synthetic retirement fault'); END;",
     );
     try {
       expect(() => f.store.retireInterruptedSourceOwner(request)).toThrow('synthetic retirement fault');
     } finally {
-      db.exec('DROP TRIGGER fail_retirement_ledger');
-      closeWorkspaceDatabaseWithAdmission(db);
+      try {
+        db.exec('DROP TRIGGER fail_retirement_ledger');
+      } finally {
+        closeWorkspaceDatabaseWithAdmission(db);
+        database = undefined;
+      }
     }
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(requireValue(f.store.readWorkSessionJournal(f.identity), 'retirement journal').version).toEqual(
@@ -1524,7 +1469,9 @@ test('interrupted Source retirement transaction rolls back the attempt downgrade
     bodyError = error;
     throw error;
   } finally {
-    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError });
+    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError }, () => {
+      if (database !== undefined) closeWorkspaceDatabaseWithAdmission(database);
+    });
   }
 }, 60000);
 

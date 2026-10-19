@@ -20,13 +20,21 @@ the protected issue-abort and admitted-completion cases exceeded their 30-second
 deadlines at 38.335 and 36.862 seconds. These are historical failures, not a
 current exact result.
 
-The latest exact stage on `a5e6974` ended UNKNOWN, not PASS: its test child
-received SIGKILL after 270,769 ms with timeout observed; no complete coverage
-report was emitted. The runner uses a 300,000 ms command budget with a 30,000 ms
-cleanup reserve, and the Bun child receives the remaining budget. The outer
-stage's 330,000 ms limit is not a per-test allowance. No assertion failure or
-coverage number is inferred from this partial run; preserve its original
-evidence at `/workspace/contour-stage-0EeN3h` and the immutable image.
+The exact stage on `a5e6974` ended UNKNOWN, not PASS: its test child received
+SIGKILL after 270,769 ms with timeout observed; no complete coverage report was
+emitted. The runner uses a 300,000 ms command budget with a 30,000 ms cleanup
+reserve, and the Bun child receives the remaining budget. The outer stage's
+330,000 ms limit is not a per-test allowance. No assertion failure or coverage
+number is inferred from this partial run; preserve its original evidence at
+`/workspace/contour-stage-0EeN3h` and the immutable image.
+
+The next exact stage on `723818a` also ended UNKNOWN after SIGKILL at 270,740 ms;
+its capture and image were complete and unchanged, but no report was published.
+The retained log records 162 passing tests before cutoff: 14 interrupted-Source
+cases took 192.6 seconds, 7 smoke cases took 0.2 seconds, and 141
+configured-workflow cases took 70.4 seconds. The two runtime-kernel test files
+had not started. This is partial execution, not F/L/S/B evidence; preserve the
+stage under `/workspace/contour-stage-1zr3jD` and its image.
 
 The confirmed cost was repeated public synthesis/prewriter work used only to
 prepare fixtures in direct Host-state cases. Those cases now use the existing
@@ -37,11 +45,15 @@ in 23.62 seconds (22.392 seconds reported for the test, 6 assertions). Measured
 fixture phases were 6.717 seconds for admission/bridge start, 6.186 seconds for
 preparation, and 8.186 seconds for writer issue/execution open. This is a single
 before/after sample, not a suite-wide speed claim. The public-retirement case
-also passes with the optimized fixture in 22.92 seconds, 17 expectations. The
-strict targeted Bun typecheck reports no errors in 126 files, and the changed
-TypeScript files pass the pinned formatter check. These focused and static
-results do not close F/L/S/B. A fresh immutable single-contour coverage stage
-remains pending.
+also passes with the optimized fixture in 22.92 seconds, 17 expectations.
+
+The second UNKNOWN showed that the exact contour still exceeded the single-run
+budget. I combined FIFO queueing, invalid-evidence denials and rollback-on-release
+failure in one fixture; all assertions remain, and the focused combined test
+passes with 19 expectations in 20.37 seconds. The strict targeted Bun typecheck
+reports no errors in 126 files, and the changed TypeScript files pass the pinned
+formatter check. These focused and static results do not close F/L/S/B. The next
+action is another exact coverage stage on the updated commit.
 Other contour Source/test changes are retained in Git stash
 `e14e88d648dd1e09abc0f9ed8794cfd47468d41c` and are not in this packet. Keep the
 generated projection and its bound historical receipts; the active stage updates
