@@ -45,12 +45,29 @@ corpus, єдиним скілом оркестрації `vp-mode`, допомі
 
 ## 3. Інструментальний ланцюг
 
-- **Bun 1.4.3 — єдиний ланцюг.** `node`/`npm`/`npx` не використовуються.
+- **Bun 1.4.3 — рантайм проєкту.** `node`/`npm`/`npx` не використовуються.
   На цій машині Bun **не в PATH**; повний шлях:
   `C:\Users\pomaz\AppData\Local\Microsoft\WinGet\Packages\Oven-sh.Bun_Microsoft.Winget.Source_8wekyb3d8bbwe\bun-windows-x64\bun.exe`
-- **Без зовнішніх залежностей.** `node_modules` у репозиторії відсутній, тож VP
-  використовує лише вбудовані засоби Bun: `bun:test`, `Bun.YAML`, `Bun.file`,
-  `Bun.spawn`. Нова залежність — тільки з погодженням власника.
+- **Жодної власної інфраструктури в плагіні.** Немає власного рантайму,
+  бандлера, пакетного менеджера, CLI-фреймворку чи тестового раннера: усе
+  запозичується з проєкту.
+- **Код плагіна — runtime-агностичний.** Модулі VP мають працювати в будь-якому
+  середовищі (Bun, Node, Deno) без зовнішніх залежностей: лише стандартні
+  `node:` модулі (`fs`, `path`, `process`, `child_process`). Bun-специфічні API
+  (`Bun.YAML`, `Bun.file`, `Bun.spawn`, `import.meta.dir`) — тільки в dev-інструментах,
+  з fallback; у runtime-частині їх немає.
+- **Машинні формати — JSON.** Канонічні дані, які читає код (корпус, профілі,
+  реєстр інструкцій) зберігаються в JSON: `JSON.parse` доступний у будь-якому
+  середовищі. YAML — лише для людських маніфестів (`donors.yaml`), де розбір
+  виконує інструмент проєкту.
+- **Скрипти, що постачаються в скілах** (налаштування, пошук інструкцій), —
+  звичайний TS **без збірки**: виконуються під Bun, Node або Deno. Обмеження:
+  лише `node:` модулі, `import type` для типів, без `enum`/`namespace`/
+  parameter properties (щоб проходило type-stripping), шляхи виводяться з
+  `import.meta.url` через `node:url` (а не з `import.meta.dir`), YAML не
+  парситься.
+- **Тести — під рантаймом проєкту** (`bun test`); це тестовий раннер репозиторію,
+  а не власна інфраструктура плагіна.
 - **Пін версії Bun** — `packages/powers/.bun-version` (значення `1.4.3`, як у
   `packages/agent/.bun-version`).
 - **Конвенції пакета** дзеркалять `packages/agent`: `tsconfig.json` зі
@@ -99,7 +116,7 @@ bun run --cwd packages/powers format:check
 | `docs/requests/` | Runtime-запити до agent maintainer | G |
 | `config/` | Схеми VP: `VPCatalog/v1`, `VPMethodologyProfile/v1` | C |
 | `corpus/` | Канонічний корпус інструкцій (дані, не код) | D |
-| `skills/vp-mode/`, `skills/vp-setup/` | Поверхня скілів (launch skill і setup) | E |
+| `skills/vp-mode/`, `skills/vp-setup/` | Поверхня скілів (оркестрація, налаштування) + їхні `scripts/` — постачаються в плагіні | E |
 | `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | Per-host plugin і marketplace manifests | E |
 | `tooling/` | Скрипти: `catalog.ts`, `convert.ts`, `check-corpus.ts`, `check-okf.ts` | C, D |
 | `tests/` | Тести harness'у VP | A–F |
@@ -135,6 +152,9 @@ bun run --cwd packages/powers format:check
     змінюється без попереднього погодження з власником. Заплановані кроки — це
     пропозиція, а не дозвіл на виконання; виконання кроку починається лише після
     явного «так».
+12. **Немає власної інфраструктури.** Плагін не вводить рантайм, бандлер,
+    пакетний менеджер, CLI-фреймворк чи тестовий раннер: усе береться з проєкту.
+    Код плагіна має бути runtime-агностичним і працювати без зовнішніх залежностей.
 
 ## 7. Ухвалені рішення (коротко; деталі — у `docs/decisions/`)
 

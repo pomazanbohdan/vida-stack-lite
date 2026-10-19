@@ -35,6 +35,15 @@ revision: '1'
 Мета цієї черги: **доводима конвеєр з корпусом і скілами**, придатний для
 Standalone-середовища, з перевірками, що виконнюються, а не декларуються.
 
+**Обмеження інфраструктури (рішення власника, 2026-10-19):** плагін **не має
+власної інфраструктури**. Проєктний рантайм — Bun 1.4.3; плагін не вводить
+власного рантайму, бандлера, пакетного менеджера, CLI-фреймворку чи тестового
+раннера. Код плагіна **runtime-агностичний**: лише стандартні `node:` модулі,
+без зовнішніх залежностей і без Bun-специфічних API у runtime-частині.
+**Скрипти, що постачаються в скілах** (налаштування, пошук інструкцій), —
+звичайний TS без збірки: працюють під Bun, Node або Deno. Машинні дані, які
+читає код, — **JSON**; YAML лишається для людських маніфестів (`donors.yaml`).
+
 # Порядок і ворота
 
 ```
@@ -58,7 +67,7 @@ A0 (gate) ──► A harness+скелет ──► B канонічні док
 | **B** | Канонічні документи продукту: `business-requirements.md`, `system-specification.md`, `acceptance.md`, матриця research § → SR § → AC id | Матриця повна; `check-okf.ts` → exit 0; doc-check → `failures: []` | M |
 | **C** | Схеми `VPCatalog/v1` і `VPMethodologyProfile/v1` у `config/`; операції `catalog.tags/search/get/compose` у `tooling/`; `decision.evaluate` з fallback (D5) | Тести операцій: лише ID/опис у пошуку, обов'язкові + залежності в compose, конфлікт груп → помилка, кожен trigger fallback → fallback з причиною | L |
 | **D** | Вертикальний зріз корпусу на superpowers: інвентар → атомарні інструкції → теги → dedup → provenance; конвертер `tooling/convert.ts` як тестований інструмент | Інвентар 100% tracked-файлів-носіїв; кожна інструкція: ≥2 змістовні компоненти в кожному тегу, provenance, ліцензія; dedup-рішення зафіксовані; тести конвертера + `check-corpus.ts` → exit 0 | L |
-| **E** | Скіли `vp-mode` (оркестрація) і `vp-setup` (налаштування) у `skills/`; per-host `plugin.json` і `marketplace.json`; `vp-setup` writers (Standalone → керований YAML-блок у `AGENTS.md`/`CLAUDE.md`) | Повторний запуск setup → порожній diff; setup не змінює встановлений пакет агента; маніфести валідні схемою | M |
+| **E** | Скіли `vp-mode` (оркестрація) і `vp-setup` (налаштування) у `skills/`, разом із **постачаваними скриптами** `skills/*/scripts/` (налаштування, пошук інструкцій) — plain TS без збірки; per-host `plugin.json` і `marketplace.json`; `vp-setup` writers (Standalone → керований YAML-блок у `AGENTS.md`/`CLAUDE.md`) | Повторний запуск setup → порожній diff; setup не змінює встановлений пакет агента; маніфести валідні схемою; постачавані скрипти виконуються без Bun-специфічних API (перевірка запуском під `node`) | M |
 | **F** | Work Items VP у `docs/work/` (OKF-концепції зі стабільними ID, AC, evidence); findings JSONL (Standalone, append-only); `artifact_contract` | Work Item має ID/AC/evidence і зв'язки; findings: повторна доставка не створює подію; dedup-випадки зафіксовані | M |
 | **G** | Runtime-запити як документи в `docs/requests/`: один запит на D3+D8 (розширений instruction registry + читання профілю) | Запит має власника, перелік файлів, вимірюваний результат | S |
 

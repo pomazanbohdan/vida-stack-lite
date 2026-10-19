@@ -1,6 +1,7 @@
 # Directory Update Log
 
 ## 2026-10-19
+* **Update**: Зафіксовано обмеження інфраструктури плагіна (рішення власника): VP не має власного рантайму, бандлера, пакетного менеджера, CLI-фреймворку чи тестового раннера; код плагіна runtime-агностичний (лише `node:`-модулі, без зовнішніх залежностей); **скрипти, що постачаються в скілах** (налаштування, пошук інструкцій), — звичайний TS без збірки (Bun/Node/Deno); машинні формати — JSON, YAML лише для людських маніфестів. Оновлено `AGENTS.md` (розділ 3 + інваріант 12), `next-actions.md` (кроки C, E) та `implementation-plan.md` (Global Constraints).
 * **Update**: knip налаштовано на плагін VP — у `packages/agent/knip.config.ts` додано workspace `packages/powers` (entry: `tooling/*.ts` + тести, project: кодові файли, ignore: `.tmp/**`), у `packages/powers/` створено `package.json` (knip трактує workspace лише як каталог із `package.json`) і перший реальний тест `tests/donors-manifest.test.ts` (13 перевірок, 13 pass). Виняток для зміни в `packages/agent` зафіксовано в D9 (rev 2).
 * **Creation**: [Наступні дії в межах packages/powers](next-actions.md) — план черги A0 → A → B → C → D → E → F → G з воротами, перевірками, переліком файлів і відкладеними залежностями.
 * **Creation**: [Рішення D9 — робочий scope](decisions/D9-scoped-to-powers.md) зафіксовано: поточний обсяг обмежено каталогом `packages/powers`; реєстрація в спільних root-файлах репозиторію та зміни в `packages/agent` — відкладені; runtime-запити оформлюються документами в `docs/requests/`.
