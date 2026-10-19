@@ -5,7 +5,7 @@
     "allowImportingTsExtensions": true,
     "checkJs": true,
     "noEmit": true,
-    "rootDir": ".."
+    "rootDir": "../../.."
   },
   "include": ["**/*.mjs", "**/*.ts"],
   "exclude": []

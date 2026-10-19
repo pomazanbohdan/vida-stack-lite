@@ -1713,3 +1713,44 @@ work that can be shared without weakening freshness, ownership or
 authorization, make only a measured change, then publish and run one exact
 `main-runtime-core` F/L/S/B stage. Do not rerun a full suite or start another
 contour for this diagnosis.
+
+### F/L/S/B main-runtime-core serial fallback — 2026-10-19
+
+Stage `contour-stage-ToGo7J` used immutable commit
+`b7d1f9e6e310d5c01652747f19a79456a7096eea` and its matching SDK test inputs.
+The outer stage closed after 270.765 seconds with complete capture, a closed
+process group and unchanged execution-image inputs. The internal coverage
+manifest used selection `focused-diagnostic` for the existing five tests and
+reported `serial-fallback / eligibility-envelope-malformed`; only one Bun
+producer launched. Its supervisor observed `SIGKILL` at the existing 270-second
+producer budget, recorded `timeout_observed=true`, and marked the result
+`UNKNOWN` with `resourceSafeToAdvance=false`. No attributable report was
+published, so no F/L/S/B counters are accepted. Preserve the run, logs and
+publication error at `/workspace/contour-stage-ToGo7J` and the immutable image
+at `/workspace/.vida-quality-inputs/881d6dd2971787e32b1f631773014080f8e5a727/repository`.
+
+The fallback cause is confirmed: the built-in review's pinned digest for
+`tests/interrupted-source-retirement.test.ts` was stale after the opt-in phase
+tracing commit. The captured manifest records
+`9abfdb0e9486cea21a4221ae3ca766bf6c7bca8e3b2e0c8ddc0479e9f81a4cec`, while the
+pin was
+`9bbe8820228ec38908fa0b7b321719491a38edd580c0b2b8658a862f420465de`; the other
+four selected test digests still match. Review of the intervening test/helper
+diff confirms only opt-in timing wrappers were added: with
+`VIDA_TEST_FIXTURE_PHASES` unset, the same synchronous fixture operations and
+resource ownership remain. The phase helpers add no shared writes or new
+external resources. Root updated the single stale digest pin; this restores
+the already-reviewed two-worker plan but does not qualify coverage. Run the
+focused shard-eligibility test and static checks, publish the checked commit,
+then run one new exact `main-runtime-core` stage with that commit's SDK artifact.
+Keep the existing per-test and producer budgets unchanged; this serial UNKNOWN
+is not replayed.
+
+The focused eligibility test passed 49/49 tests with 256 assertions. Its scoped
+tooling typecheck exposed a separate checked-project defect: `tooling/tsconfig.json`
+set `rootDir` to `packages/agent` while the campaign imports two maintained
+helpers from repository-root `tooling/agent/`, producing TS6059. The no-emit
+tooling project now uses the repository root as `rootDir`, matching its actual
+import closure; the same command passes with zero diagnostics across 198 files.
+Formatting and `git diff --check` also pass. This repairs the check's project
+boundary; it does not change the runtime contour result or establish coverage.

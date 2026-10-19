@@ -125,7 +125,7 @@ const mainRuntimeCoreShardTests: readonly InputDigest[] = [
   },
   {
     path: 'tests/interrupted-source-retirement.test.ts',
-    sha256: '9bbe8820228ec38908fa0b7b321719491a38edd580c0b2b8658a862f420465de',
+    sha256: '9abfdb0e9486cea21a4221ae3ca766bf6c7bca8e3b2e0c8ddc0479e9f81a4cec',
   },
   {
     path: 'tests/runtime-kernel-boundary.test.ts',

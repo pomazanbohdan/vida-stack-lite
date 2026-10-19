@@ -833,6 +833,9 @@ The focused `tests/tsconfig.json` permits `.ts` imports with `noEmit:true` and
 uses the repository root for `rootDir`, because maintained tests import declared
 repository tooling. Its selection and inherited strict options stay unchanged.
 This does not change the package Source project's extension or emission policy.
+The focused tooling check also uses the repository root for `rootDir`, because
+coverage orchestration imports maintained helpers from root `tooling/agent/`.
+Keep this check no-emit and retain those shared helpers in its type graph.
 
 Scenario matrices may reuse explicitly reviewed contract applicability profiles
 and scenario definitions, while retaining exact function IDs and unique named
