@@ -28,7 +28,7 @@ sources:
   title: VIDA repository ignore rules
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '1'
+revision: '3'
 ---
 
 # Рішення
@@ -80,6 +80,14 @@ release-цикл.
 - Research §6/§7.3 вимагають Work Item як **продуктовий артефакт** зі стабільним
   ID, AC і evidence: споживач читає його, а не покладається на пам'ять агента.
   Тому Work Item ≠ execution-стан репозиторію.
+
+> **Носій ролі (2026-10-19).** Роль «Vida Powers owner» виконує repository owner.
+> Одиницею реєстрації є **роль**, а не особа: передача ролі не потребує переписування
+> ownership map, лише рішення власника.
+
+> **Носій ролі (2026-10-19).** Роль «Vida Powers owner» виконує repository owner.
+> Одиницею реєстрації є **роль**, а не особа: передача ролі не потребує переписування
+> ownership map, лише рішення власника.
 
 # Розглянуті варіанти
 

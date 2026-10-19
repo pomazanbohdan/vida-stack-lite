@@ -26,7 +26,7 @@ sources:
   resource: /next-actions.md
   title: Vida Powers — наступні дії в межах packages/powers
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '5'
+revision: '6'
 ---
 
 # 1. Навіщо і для кого
@@ -301,12 +301,17 @@ MVP = superpowers + ponytail: ≈ 125 файлів-кандидатів → ор
   "tag_aliases": { "tdd": "test-first-development" },
   "tag_exemptions": [
     { "instruction_id": "…", "dimension": "capability", "reason": "…" }
+  ],
+  "instructions": [
+    { "instruction_id": "test-first-development", "path": "instructions/test-first-development.md", "sha256": "…" }
+  ]
+    { "instruction_id": "…", "dimension": "capability", "reason": "…" }
   ]
 }
 ```
 
-- `catalog.json` — єдиний машинний файл каталогу: ідентичність + словник тегів +
-  аліаси + винятки. Список інструкцій не дублюється — його дає скан теки.
+- `catalog.json` — єдиний машинний файл каталогу: ідентичність + словник тегів + аліаси + винятки + **перелік корпусу з digest'ами** (`instructions[]`: `instruction_id`, `path`, `sha256`). Маніфест єдиним переліком корпусу: файл у `instructions/`, якого немає в маніфесті, → помилка; файл у маніфесті, якого немає на диску, → помилка; digest розбіжний → помилка.
+  (канонічний перелік; скан теки потрібен лише для виявлення файлів поза маніфестом).
 - Опис тегу обов'язковий: тег без опису → помилка (SR-05).
 - `tag_aliases` — напрям **«аліас → канонічний»** (`{ "tdd": "test-first-development" }`); пошук зводить аліас до канонічного тегу, `catalog.tags` показує канонічні теги й їхні аліаси.
   тегу, `catalog.tags` показує канонічні й аліаси.
@@ -450,6 +455,11 @@ bun run --cwd packages/agent lint:knip:pinned                   # репозит
 
 # 12. Ухвалені рішення (з кого)
 
+**Writer-дисципліна.** `convert.ts` — **єдиний** writer для `instructions/`, `catalog.json` і
+`corpus-map.json`; runtime-скрипти лише читають. `catalog.json` тримає перелік
+корпусу з `sha256` кожної інструкції (CAT-D3); валідатор перевіряє мапу, диск і
+digest.
+
 | Рішення | Хто | Альтернативи, які відкинуто |
 |---|---|---|
 | Інструкція = `.md` + метадані, плоска тека | **власник** | JSON-файли; директорії за донорами |
@@ -479,7 +489,7 @@ bun run --cwd packages/agent lint:knip:pinned                   # репозит
 |---|---|---|
 | CAT-D1 | Проєктний шар інструкцій (overlay) | Відкладено: v1 канонічний |
 | CAT-D2 | Семантичний `decision.evaluate` у VP | Відкладено: v1 детерміновано; протокол D5 готовий |
-| CAT-D3 | Digest-зв'язка інструкцій | Відкладено до етапу E (збірка) |
+| CAT-D3 | Digest-зв'язка інструкцій | **Вирішено 2026-10-19:** digest у `catalog.json` (перелік корпусу), генерує `convert.ts` |
 | CAT-D4 | Мова інструкцій | v1 — мова продукту |
 | CAT-D5 | Ієрархія каталогу (підкаталоги) | v1 — плоско |
 | CAT-D6 | CRAP/mutation-гейт для VP | Відкладено: потрібна нова залежність (Stryker) — потребує згоди власника |

@@ -25,7 +25,7 @@ sources:
   resource: /catalog-design.md
   title: Vida Powers — дизайн каталогу інструкцій
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '2'
+revision: '3'
 ---
 
 ## Research → BR → SR → AC
@@ -38,7 +38,7 @@ revision: '2'
 | §2.2 рекурсивні підзадачі, делегування | BR-07 | SR-44, SR-48, SR-74 | AC-22, AC-40 |
 | §2.3 Selective Join, Lifecycle Scope | BR-16 | SR-48, SR-49, SR-50, SR-51 | AC-22 |
 | §3 установлення, bootstrap, hooks | BR-20 | SR-56, SR-57, SR-59, SR-60, SR-61, SR-75 | AC-25, AC-26, AC-27, AC-41 |
-| §4.1 канонізація донорів | BR-02 | SR-06, SR-07, SR-34, SR-35, SR-66 | AC-01, AC-30, AC-30b, AC-31, AC-32 |
+| §4.1 канонізація донорів | BR-02 | SR-06, SR-07, SR-34, SR-35, SR-66, SR-76 | AC-01, AC-30, AC-30b, AC-31, AC-32, AC-42 |
 | §4.2 два виміри тегів | BR-01 | SR-02, SR-03, SR-04, SR-05 | AC-02, AC-03, AC-04 |
 | §4.3 методологія як політика | BR-13 | SR-25, SR-26, SR-69 | AC-15, AC-35 |
 | §4.4 успадкування, override | BR-14, BR-15 | SR-27, SR-28, SR-29 | AC-15, AC-16 |
@@ -87,7 +87,7 @@ revision: '2'
 |---|---|---|---|
 | CAT-D1 | Проєктний шар інструкцій | v1 канонічний | — |
 | CAT-D2 | Семантичний `decision.evaluate` | v1 детерміновано | SR-16…SR-21, AC-10…AC-12 |
-| CAT-D3 | Digest-зв'язка інструкцій | етап E | SR-34, SR-35 |
+| CAT-D3 | Digest-зв'язка інструкцій | вирішено: digest у `catalog.json` | SR-76, AC-42 |
 | CAT-D4 | Мова інструкцій | v1 — мова продукту | — |
 | CAT-D5 | Ієрархія каталогу | v1 — плоско | — |
 | CAT-D6 | CRAP/mutation-гейт для VP | відкладено (нова залежність) | — |
