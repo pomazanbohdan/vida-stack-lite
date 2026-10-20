@@ -90,6 +90,10 @@ existing cleanup owner. A repeated live check is not automatically duplicate wor
 For repeated CAS denial oracles, typed exact native row beforeimages can avoid
 repeated API decoding. Keep real API validation before/after the batch and after
 success; preserve receipt, file-effect and unchanged-state checks for every denial.
+Before comparing snapshots across Host, Ledger resume and recovery artifacts,
+read their declared shapes. Compare exact version/state fields and assert each
+API's own metadata separately: Host attempt and Ledger resume_status are different
+wrapper fields, and the recovery artifact stores neither wrapper.
 
 For YAML/configured-root fixtures, follow [TESTING's fixture contract](../../../packages/agent/TESTING.md#new-and-modified-files).
 Use the bound config's registered and allowed projects; verify targeted negative

@@ -265,6 +265,15 @@ passes43. Blind Luna plan/final review finds no remaining blocker. Scope approva
 CAS/lease/UNKNOWN guards, runtime-proof retirement and historical receipts stay
 intact. Finish normal publication and the one changed-input stage; no Runtime
 cutover, consumer effect or exact-contour closure is claimed from targeted tests.
+The199041d stage now completes295PASS/0FAIL,2668assertions in156.759s:
+F924/1129,L3941/4966,S4189/5296,B4222/5642, still BLOCKED/nonexact.
+Report-only inventory falls to205missing functions/78owners. Complete custody
+checks and verified durable scratch archive are recorded in WORK. The three-hour
+audit keeps static→related targets→review/publication→one matching-SDK stage;
+two snapshot-wrapper oracle mistakes are fixed and the Bun skill records their
+exact-shape check. More children/writers and repeated full stages have no
+qualified benefit here. Continue native retired-Source capture/recovery from the
+current inventory, without restarting the cycle or widening the selection.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

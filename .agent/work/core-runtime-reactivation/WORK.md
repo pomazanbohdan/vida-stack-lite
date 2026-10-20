@@ -849,6 +849,87 @@ external effect, shared write root or clock/global-state mutation. The same
 budget remain. Finish pin/control and normal publication, then one matching-SDK
 stage; current complete counters remain bcbfbd6 until a new complete report exists.
 
+### Complete focused-rebind observation and three-hour audit — 2026-10-20
+
+Source199041d2350b30f6438f3fad01d4addb96231c54 was published normally after
+precommit formatting516files and strict523files passed, with all hooks enabled.
+CI39380765412 succeeded; artifact12244694975 has exact matching Source, ZIP SHA
+2e1ac14f199d8bbbd2a316ffd0cedfce56b7dabac3ec747a2b9e17f339e93cbd.
+Stage /workspace/contour-stage-tRqskn completes in156758.805ms, exit0,
+capture_complete/group_closed/boot_unchanged/image_inputs_unchanged alltrue.
+Run474c9b83-b212-418a-aec9-2fe5a72205d5 publishes projection1058:
+F924/1129,L3941/4966,S4189/5296,B4222/5642. Covered deltas are30/134/144/164;
+the two new branches reflect the reviewed product predicate, not scope removal.
+Host279PASS/0FAIL,2453assertions,148.62s; stopped16PASS/0FAIL,215assertions,
+138.29s:295PASS,2668assertions total. The native rebind case passes10.530s
+under coverage. Operation remains BLOCKED/nonexact; historical exact16/45.
+Diagnostic maxCC279/entryCRAP2162 is not frozen/CRAP qualification; mutation is
+still deferred. Report-only inventory reused this complete report, without an
+AST/scan/hash pass:205missing functions under78owners, down30functions/7owners.
+
+Execution image /workspace/.vida-quality-inputs/bf14591dc536f7343b6abab07610d3da11e38470/repository
+binds Source tree40a261387b1a99b5d8f7a64139aa9f5047dbeda5, input fingerprint
+4350d07add6996207c1d46201d6983d65a08e4012c9fabe1740cdde82d5246d7,
+manifest SHA04d0819f7e8ccc596c2216b32641bb187f1f52368f8ea0d372ecbe73467ab977.
+The image and original logs/reports/SDK archive remain unchanged on durable
+storage. New owned functional scratch /dev/shm/vida-quality-retained-d8bxQ7
+(scratch-cuNy3I;179327602apparent bytes) was archived only after observed terminal
+producer/group closure. Durable /workspace/vida-functional-retention-tRqskn-yHqaQh/scratch.tar
+is206448640bytes, SHA862de354041820d851c81df22bae28bae666d477cb9f658865dce637804a0e36.
+GNU tar compare succeeds against the unchanged original, including all modes and
+link targets; archive.log/scratch.sha256 and original scratch are retained.
+This is functional/process-recovery evidence, not power-loss durability.
+
+Audit scope is the observed03:40–06:35UTC Git/receipt interval, not an invented
+complete tool-call trace. Reused current owners, the existing inventory and
+receipts for98bce8b,dcaa148,a2d4b7b,2a82e24,de8a330,2711562,bcbfbd6,199041d.
+Script findings: exact denied-state rows already replace repeated full API decoding;
+profile batches already share checked config; stage owns one capture/image,
+same-input SDK formation and progress import. No new defect in timeout/output/
+report publication is demonstrated by the current complete receipt. Keep its
+nonexact BLOCKED status separate from test PASS. The failed frontier stage stays
+UNKNOWN and is neither replayed nor relabelled after the new functional route.
+No duplicate full suite, AST inventory, full hash scan or index refresh was run.
+
+Authoring findings: two new cross-API snapshot-oracle mistakes caused avoidable
+failed targeted invocations13.10s and15.62s. They are fixed at exact wrapper
+boundaries, not through looser matching. The Bun skill now requires checking the
+declared Host/Ledger/recovery shape before comparison. The real product defect
+was found by the native preservation/read oracle and repaired at its producer;
+ordinary reader and authorization guards remain strict. Reuse the same genuine
+fixture for related CAS/restart/correction assertions; do not add a helper layer
+or one fresh kernel per assertion. Missing-root probes were navigation errors;
+handoffs use the canonical absolute inventory path before declaring a GAP.
+
+Compared execution choices:
+1. Selected: static checks, one related focused batch and affected public caller,
+   review/publication, matching SDK, one complete two-file stage. This actually
+   completed295tests in156.759s; previous complete same-contour stages were
+   118.026–145.177s on different Source inputs. No causal speedup is claimed.
+2. A full selected stage after every assertion edit would repeat capture/setup
+   and consume another whole run per edit. Its cost is an inference from the
+   retained complete runs; no duplicate experiment was launched.
+3. One serial child could reduce contention but has no same-input measurement;
+   adding a third child cannot partition this two-file pin without a new resource
+   review and qualification. Keep the accepted two workers and serial per-file
+   cases, with one Root writer and bounded independent Luna plan/final review.
+4. More writer agents on this same shared file would add integration/conflict
+   work. Keep read-only blind review scoped to the actual uncertainty, not one
+   agent per helper. No latency/token saving is asserted without measurements.
+
+Disk audit reuses one prelaunch observation: checkout, disk-backed scratch and
+retained evidence share overlay with4099092480bytes free; selected functional
+tmpfs has8573132800free. Both exceed unchanged2147483648admission floor.
+After terminal closure, the exact owned scratch size plus4035510272overlay-free
+bytes admitted the durable archive. After archive,3829047296bytes remain free.
+No cleanup candidate with confirmed obsolete ownership/dependency status was
+identified in the reused inventory; no protected/unknown directory was deleted,
+no broad du/scan/hash was launched, and no current resource GAP exists.
+
+Continue the same active contour from this inventory. Next bounded family is
+native retired-Source capture/recovery under genuine existing owner history;
+prepare/review before another stage, preserve UNKNOWN and avoid duplicate setup.
+
 The earlier plan below led to genuine completed-Source-report recovery and its
 persisted Work history; it is retained context, not a duplicate next task.
 Blind bounded plan
