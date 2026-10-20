@@ -89,6 +89,7 @@ export interface InitialWorkFixture {
   sourceAuthorizationPath: string;
   intakePath: string;
   rawIntakePath: string;
+  preparePeerAdmission: (id: string, paths: readonly string[]) => LocalWorkAdmissionInput;
   close: () => Promise<void>;
 }
 type InitialWorkResources = Pick<
@@ -321,6 +322,53 @@ export async function createInitialSourceWorkFixture({
       sourceAuthorizationPath,
       intakePath,
       rawIntakePath,
+      preparePeerAdmission(peerId, paths) {
+        const peerSource = snapshotDeclaredSources(requireSafeRepositoryAccess(root), paths);
+        const peerRoot = '.agent/work/' + peerId;
+        const peerThread = 'fixture-peer:' + peerId;
+        const peerScope = {
+          ...scope,
+          scope_id: 'scope-' + peerId,
+          work_id: peerId,
+          source_revision: peerSource.digest,
+          allowed_paths: paths,
+          implementation_paths: paths,
+          documentation_paths: paths,
+          attribution: { thread_id: peerThread, pointer: 'fixture:peer-admission' },
+        };
+        mkdirSync(path.join(root, peerRoot), { recursive: true });
+        writeFileSync(path.join(root, peerRoot, 'scope.json'), record(peerScope));
+        writeFileSync(
+          path.join(root, peerRoot, 'acceptance.json'),
+          record({
+            ...acceptance,
+            id: 'acceptance-' + peerId,
+            scope: peerScope.scope_id,
+            source_revision: peerSource.digest,
+            source: paths[0],
+          }),
+        );
+        writeFileSync(
+          path.join(root, peerRoot, 'source-authorization.json'),
+          record({
+            ...authorization,
+            work_id: peerId,
+            scope_digest: peerSource.digest,
+            implementation_paths: paths,
+            native_session_handle: peerThread,
+          }),
+        );
+        const { intakePath: _intakePath, ...peerBase } = input;
+        return {
+          ...peerBase,
+          context: { ...input.context, work_id: peerId, scope_digest: peerSource.digest },
+          nativeSessionHandle: peerThread,
+          workItem: { ...workItem, id: peerId },
+          scopePath: peerRoot + '/scope.json',
+          acceptancePath: peerRoot + '/acceptance.json',
+          sourceAuthorizationPath: peerRoot + '/source-authorization.json',
+        };
+      },
       async close() {
         await closeInitialWorkResources(fixture);
       },

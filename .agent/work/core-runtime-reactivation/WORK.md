@@ -32,8 +32,10 @@ times do not establish a controlled speedup.
 Line and statement denominators each increase by2 in the changed Source; no
 counter domain or gate is narrowed. The report-only refresh now has34missing
 functions under16owners, down from46/21. All34 have retained map-validated body
-coordinates. The three final-assurance owners, archive lookup and prior-ticket
-selection have no missing functions; this is not branch or whole-contour closure.
+coordinates. The three final-assurance owners, archive lookup and `checkedWork`
+have no missing functions; this is not branch or whole-contour closure. The
+prior-ticket comparator remains uncovered in this run: merely constructing two
+released predecessors did not execute that later request-reconstruction path.
 529 uncovered branch arms are now listed from the same
 report, with exact deficit agreement and explicitly labeled implicit-if ranges.
 Reuse `host-uncovered-plan-current.json` in focused diagnostics.
@@ -74,6 +76,35 @@ for this same private root and shared ledger scope; its exact pin control passes
 No numeric gain or product defect is claimed from the focused PASS.
 
 ### Whole remaining-contour packet in progress
+
+The v1111 packet corrects the prior-ticket execution assumption through the
+exported policy-context factory after real TaskSource issue. It reuses the
+original verified operation and prepared CAS, requires the current reserved
+lease and unchanged Host, and performs no second policy authorization or effect.
+Initial-source continuation and readonly frontier rebind share typed peer
+admission from the existing fixture: one genuine active disjoint owner and one
+queued waiter, with exact nonempty ticket/claim agreement and unchanged peer
+Work versions, tickets and file bytes after target success/retry. No peer engine
+or issued effect is created. The stopped-source case now retries the exact
+original retirement request and checks equal receipt, unchanged native Host and
+Journal, and retained uncertain/null result. Recomputed post-retirement CAS is
+not an exact retry. The later-waiter proposal for earlier-than-target FIFO
+callbacks is rejected by actual predicate order and remains an explicit GAP.
+
+After the shared extraction, strict152-file TypeScript and configured type-aware
+lint pass. Three serial affected Host cases pass143assertions in14.18s; their
+body times are3.324s,7.387s and0.486s under the unchanged individual limits.
+The affected stopped-source case passes42assertions in7.471s under its existing
+60s exception. An initial exact-optional-property TypeScript error is retained
+and corrected by omitting the peer intake field, rather than passing undefined.
+Blind Luna review requests an independent complete policy-request oracle and
+stale Work/Journal retirement refusals. Both are added: the expected public
+policy contract includes exact argv and a hash of independently expected fields;
+each stale retirement preserves native Host and Journal beforeimages. Strict
+and configured lint pass again, and these two affected cases pass91assertions
+in11.82s. Final readonly review closes both findings. Its original note is retained
+as `vida-peer-retirement-v1111-review.md` in focused diagnostics.
+These are focused checks only; no new exact counters or contour closure yet.
 
 The current strategy applies Superpowers planning and Pstack domain modeling to
 one remaining-contour packet rather than a new complete stage for each callable.

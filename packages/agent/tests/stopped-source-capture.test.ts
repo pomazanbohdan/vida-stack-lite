@@ -802,11 +802,11 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
         ]),
     };
   }
-  function retireOwner() {
+  function retirementRequest(): Parameters<typeof store.retireInterruptedSourceOwner>[0] {
     const host = completeHost(store.readHostStateSnapshot(identity)),
       journal = currentJournal(ledger, 'stopped', 1),
       item = at(journal.state.items, 0, 'Retired-source action');
-    return store.retireInterruptedSourceOwner({
+    return {
       identity,
       attempt: 1,
       actionId: item.request.action_id,
@@ -826,7 +826,10 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
         list_agents_ref: 'synthetic:no-active-source-writers',
         active_source_writer_ids: [],
       },
-    });
+    };
+  }
+  function retireOwner(request = retirementRequest()) {
+    return store.retireInterruptedSourceOwner(request);
   }
   function retiredCaptureInput(
     retirement: ReturnType<typeof retireOwner>,
@@ -1058,6 +1061,7 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
     ddl,
     close,
     captureInput,
+    retirementRequest,
     retireOwner,
     retiredCaptureInput,
     admission,
@@ -1219,7 +1223,40 @@ test(
   async () => {
     const f = await fixture();
     try {
-      const retirement = f.retireOwner();
+      const request = f.retirementRequest();
+      const originalHost = f.inspect();
+      const originalJournal = currentJournal(f.ledger, 'stopped', 1);
+      for (const { denied, error } of [
+        {
+          denied: {
+            ...request,
+            expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 },
+          },
+          error: 'state compare-and-swap conflict',
+        },
+        {
+          denied: {
+            ...request,
+            expectedJournal: { ...request.expectedJournal, revision: request.expectedJournal.revision + 1 },
+          },
+          error: 'interrupted Source retirement journal CAS changed',
+        },
+      ]) {
+        expect(() => f.retireOwner(denied)).toThrow(error);
+        expect(f.inspect()).toEqual(originalHost);
+        expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(originalJournal);
+      }
+      const retirement = f.retireOwner(request);
+      const retiredState = f.inspect();
+      const retiredJournal = currentJournal(f.ledger, 'stopped', 1);
+      expect(f.retireOwner(request)).toEqual(retirement);
+      expect(f.inspect()).toEqual(retiredState);
+      expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(retiredJournal);
+      expect(retirement.attempt_receipt.attempt).toMatchObject({
+        status: 'uncertain',
+        result: null,
+        result_digest: null,
+      });
       const historicalRead = {
         identity: f.identity,
         threadId: f.input.nativeSessionHandle,

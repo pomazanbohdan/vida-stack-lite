@@ -121,6 +121,7 @@ import {
   workMigrationId,
   withHostStateExclusiveTransaction,
   initializeTaskSourceBindingWorkProjectionSchema,
+  createTaskSourceMutationPolicyRequest,
 } from '../../src/host-state.ts';
 import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
 import * as trustedHostSurface from '../../src/trusted-host.ts';
@@ -1969,6 +1970,33 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
       'task source action outcome remains unknown; Source root resolution is blocked',
     );
     const reserved = f.store.readHostStateSnapshot(f.identity);
+    const verifiedInput = requiredValue(policy.mock.calls[0]?.[0], 'Original TaskSource policy input');
+    const retainedPolicy = createTaskSourceMutationPolicyRequest({
+      repositoryRoot: root,
+      operation: verifiedInput.operation,
+      preparedStateVersion: verifiedInput.stateVersion,
+      hostSnapshot: reserved,
+    });
+    const expectedPolicy = {
+      schema: 'TaskSourceMutationPolicyRequest/v1' as const,
+      action: 'source.write' as const,
+      operation_id: f.request.operation_id,
+      request_id: f.request.request_id,
+      work_id: f.request.work_id,
+      thread_id: f.request.thread_id,
+      scope_digest: requiredValue(f.initial.work, 'Original TaskSource Work').binding.work_source_revision,
+      config_digest: f.request.config_digest,
+      lease: requiredValue(reserved.work?.lease, 'Current TaskSource lease'),
+      branch_ref: 'refs/heads/codex/task-source',
+      source_root: sourceRoot,
+      proposed_argv: ['git', '-C', root, 'worktree', 'add', '--branch', 'codex/task-source', sourceRoot],
+      prepared_record_cas: { operation_id: f.request.operation_id, state_version: verifiedInput.stateVersion },
+    };
+    expect(retainedPolicy).toEqual({ ...expectedPolicy, operation_hash: canonicalJsonDigest(expectedPolicy) });
+    expect(retainedPolicy.operation_hash).not.toBe(verifiedInput.request.operation_hash);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
+    expect(policy).toHaveBeenCalledTimes(1);
+    expect(existsSync(sourceRoot)).toBe(false);
     const ticketId = `task-source-ticket:${f.request.work_id}:${f.request.attempt}:${f.request.operation_id}`;
     expect(reserved.work?.lease?.ticket_id).toBe(ticketId);
     expect(reserved.ledger?.tickets.find((ticket) => ticket.ticket_id === ticketId)).toMatchObject({
@@ -3443,6 +3471,61 @@ test('Host failed prewriter transition atomically retains failed reports and ori
   preserveHostFixtureRoot = false;
 });
 
+function admitDisjointInitialSourcePeers(current: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>) {
+  const store = initialSourceHostStore(current);
+  const peerPath = 'docs/PEER.md';
+  writeFileSync(path.join(current.root, peerPath), 'Disjoint peer source\n');
+  const peers = ['initial-peer-owner', 'initial-peer-waiter'].map((id) => {
+    const peerInput = current.preparePeerAdmission(id, [peerPath]);
+    const peerAdmission = presentSnapshot(admitLocalSessionWork(peerInput).host);
+    const peerIdentity = { ...current.identity, work_id: id };
+    const acquire = () =>
+      acquireLocalSourceWriterLease({
+        repositoryRoot: current.root,
+        config: current.config,
+        store,
+        identity: peerIdentity,
+        nativeSessionHandle: peerInput.nativeSessionHandle,
+        stageId: 'develop_task',
+        assignmentIndex: 0,
+        expectedWork: peerAdmission.workVersion,
+        expectedLedger: peerAdmission.ledgerVersion,
+      });
+    if (id === 'initial-peer-owner') acquire();
+    else expect(acquire).toThrow('queued behind an earlier exclusive resource');
+    const peer = presentSnapshot(store.readHostStateSnapshot(peerIdentity));
+    return { identity: peerIdentity, work: peer.work, version: peer.workVersion };
+  });
+  const peerLedger = presentSnapshot(store.readHostStateSnapshot(current.identity)).ledger;
+  const activePeer = requiredValue(
+    peerLedger.tickets.find((ticket) => ticket.work_id === 'initial-peer-owner' && ticket.status === 'active'),
+    'Disjoint active initial-source peer',
+  );
+  const queuedPeer = requiredValue(
+    peerLedger.tickets.find((ticket) => ticket.work_id === 'initial-peer-waiter' && ticket.status === 'queued'),
+    'Disjoint queued initial-source peer',
+  );
+  expect(activePeer.active_resources).toContain('file:' + peerPath);
+  expect(queuedPeer.exclusive_resources).toContain('file:' + peerPath);
+  expect(activePeer.exclusive_resources.length).toBeGreaterThan(0);
+  expect(
+    peerLedger.claims.find((claim) => claim.ticket_id === activePeer.ticket_id && claim.status === 'active')?.resources,
+  ).toEqual(activePeer.active_resources);
+  return {
+    verifyUnchanged() {
+      for (const peer of peers) {
+        const persistedPeer = store.readHostStateSnapshot(peer.identity);
+        expect(persistedPeer.work).toEqual(peer.work);
+        expect(persistedPeer.workVersion).toEqual(peer.version);
+      }
+      const retainedLedger = presentSnapshot(store.readHostStateSnapshot(current.identity)).ledger;
+      expect(retainedLedger.tickets.find((ticket) => ticket.ticket_id === activePeer.ticket_id)).toEqual(activePeer);
+      expect(retainedLedger.tickets.find((ticket) => ticket.ticket_id === queuedPeer.ticket_id)).toEqual(queuedPeer);
+      expect(readFileSync(path.join(current.root, peerPath), 'utf8')).toBe('Disjoint peer source\n');
+    },
+  };
+}
+
 test('initial Source Host continuation uses genuine unissued engine state and persists one exact receipt', async () => {
   const started = performance.now();
   const deadline = started + 5_000;
@@ -3464,6 +3547,7 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
       expect(current.originalEngine?.step_id).toBe('wave-0');
       expect(current.originalEngine?.requests).toHaveLength(1);
       expect(current.originalEngine?.observations).toEqual([]);
+      const peers = admitDisjointInitialSourcePeers(current);
       const source = changeOneAcceptedDocument(current);
       const request = initialSourceRequest(current);
       const before = presentSnapshot(store.readHostStateSnapshot(current.identity));
@@ -3590,6 +3674,7 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
         expect(store.readHostStateSnapshot(current.identity)).toEqual(after);
         expect(initialSourceJournal(current)).toEqual(journalAfter);
         expect(source).toEqual(snapshotDeclaredSources(requireSafeRepositoryAccess(current.root), current.documents));
+        peers.verifyUnchanged();
       });
       console.info(
         JSON.stringify({
@@ -3841,6 +3926,7 @@ test(
           issue_id: null,
           observation: null,
         });
+        const peers = admitDisjointInitialSourcePeers(f);
         const host = initialSourceHostStore(f);
         const db = initialSourceHostDatabase(f);
         const before = initialSourceState(f);
@@ -3909,6 +3995,7 @@ test(
         ).toThrow('frontier rebind retry differs from the committed request');
         expect(verifierCalls).toBe(2);
         expect(initialSourceState(f)).toEqual(after);
+        peers.verifyUnchanged();
         console.info(
           JSON.stringify({ fixture: 'readonly-frontier-native-host', elapsed_ms: performance.now() - started }),
         );

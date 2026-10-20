@@ -343,7 +343,29 @@ its successor through paired public Host CAS with release history and fresh
 request versions. The operation then releases that successor, leaving two
 matching predecessors. Check both released ticket/claim pairs, exact replacement
 resources, unchanged retry and no Source effect. A disjoint peer or one-element
-sort does not exercise this choice. Default fixture callers remain unchanged.
+sort does not exercise this choice. After real issue, reconstruct the policy
+request through `createTaskSourceMutationPolicyRequest` using the original
+verified operation/prepared version and current reserved Host snapshot. Check
+the original prepared CAS, current reservation lease, unchanged Host and single
+policy authorization. Ordinary inspect/retry short-circuits before that
+reconstruction; it alone does not prove comparator execution. Default fixture
+callers remain unchanged.
+
+Initial-source continuation and readonly frontier rebind share one disjoint-peer
+control. Prepare each peer's separate scope, acceptance and authorization from
+the admitted fixture, then use public admission and writer-lease acquisition.
+Require one active peer and one actually queued behind it, nonempty resources
+and exact active ticket/claim agreement. Refresh the target's CAS only after
+admission. Preserve both peers' Work versions, tickets and Source bytes through
+target success and exact retry. Do not start an extra peer engine or issue a peer
+effect. These later disjoint peers reach the guards that compare against
+`ledger.next_sequence`; they do not exercise an earlier-than-target FIFO guard.
+
+Interrupted-source retirement retries reuse the exact original typed request,
+including its original CAS. Rebuilding the request from the retired Host would
+produce a different operation ID. Require an equal receipt and unchanged native
+Host/Journal, with the retained attempt still uncertain and null result/digest.
+This retry disposes no UNKNOWN effect and issues no new Source action.
 
 The configured continuation lookup case keeps its stored-row issue/report and
 corruption/restoration controls, then issues the native reviewer wave and reports

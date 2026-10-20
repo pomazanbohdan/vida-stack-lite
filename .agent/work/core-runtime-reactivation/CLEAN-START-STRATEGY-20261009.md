@@ -87,8 +87,11 @@ Implement in dependency order, using the following checkable contracts:
    native review or Runtime acceptance. Keep the existing20s composite fixture
    bound; a timeout remains a failure requiring diagnosis.
 3. Reach `taskSourcePriorTicket`'s comparator by rotating the genuine active
-   predecessor through paired public Host CAS, then issuing/retrieving the actual
-   TaskSource operation. Refresh request versions from each returned snapshot.
+   predecessor through paired public Host CAS, then issuing the actual TaskSource
+   operation and reconstructing its policy context through the exported factory
+   with the original verified input and current reserved snapshot. Ordinary
+   inspect/retry short-circuits before that reconstruction. Refresh request
+   versions from each returned snapshot.
    Require two released predecessors, matching ticket/claim resources, the newest
    predecessor's exact retry binding and no Source effect. Extend the maintained
    TaskSource fixture and existing selected case; keep default callers unchanged.
@@ -111,6 +114,15 @@ focused cases pass382assertions under their existing limits. One duplicated
 config/context/intake binding read is removed; later suffix revalidation remains.
 Native security attachment and engine suffix advancement still require their
 separate prerequisites; this intermediate milestone does not close them.
+
+The next checked packet pairs initial-source continuation and readonly frontier
+rebind with one shared genuine disjoint active/queued peer control. Capture
+target CAS after peer admission and preserve peer Work versions, tickets and
+Source bytes through success/retry. Interrupted-source retirement retries retain
+the exact original request and uncertain outcome; a fresh post-retirement CAS
+would name another operation. Earlier-than-target FIFO callbacks remain separate
+dependencies: a later waiter cannot reach them. Numeric gains remain pending
+the matching complete stage.
 
 For subsequent TypeScript edits, follow TESTING's static-first, fail-fast sequence
 before the serial affected-case group. The three-hour audit uses existing receipts
