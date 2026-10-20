@@ -167,7 +167,7 @@ export function focusedCoverageShardReview(
         },
         {
           path: 'tests/stopped-source-capture.test.ts',
-          sha256: '88c2abd9572db080a96875b47d9792a8bc3d67a2c073d8a5e4985de20678a4b3',
+          sha256: '0c6cd50f2aa09755d7cec6ae832817b7fe0fd2969db0d672fde49eafdb132695',
         },
       ]
     : mainRuntimeCoreShardTests;

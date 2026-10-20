@@ -930,6 +930,43 @@ Continue the same active contour from this inventory. Next bounded family is
 native retired-Source capture/recovery under genuine existing owner history;
 prepare/review before another stage, preserve UNKNOWN and avoid duplicate setup.
 
+### Released later-Source grant coverage packet — 2026-10-20
+
+Continue the same active contour from the205function inventory. The existing
+retired-Source active-overlap denial now completes, reports and releases that
+same later writer through native Host/Journal/suspend APIs. Its later_grants
+entry comes from the actual reservation, completed observation and released
+claim. The original interrupted Source observation/attribution remains distinct
+from the later writer's current candidate bytes. The fresh capture helper's
+explicit preserveCandidate option avoids overwriting those witnessed later bytes.
+
+The existing stopped-capture retry case already owned that exact completion→
+report→suspend sequence. One private fixture helper now serves both callers;
+its original Host/Journal, active-denial, candidate-freshness and released-rights
+assertions remain. No new fixture/root/kernel/admission/bridge or configured
+assignment is added. Five altered later-grant requests (omitted grant, foreign
+claim/actor/attempt/evidence) deny without changing inspected state, original
+Journal or DDL; exact capture and exact retry settle only the original failed
+issue, preserving original scope and later coordination rights.
+
+Both selected regressions pass65assertions in77.73s command: stopped retry
+34.591s, extended retired-Source case16.846s. The same60s per-case allowances
+remain; contained setup23.456s is separately reported. No full-suite timing
+or speedup is inferred from that command. Strict181files and scoped lint pass;
+an initial strict check caught optional observation narrowing before execution.
+Luna plan /tmp/vida-retired-later-grant-plan.md and independent final review
+/tmp/vida-retired-later-grant-review.md find no remaining blocker. The plan's
+Pstack discovery limitation was a checked-path issue, not plugin absence; Root
+uses the installed /run/codex-environment path and provided it explicitly to the
+final reviewer. No worker performed Source/Git/check mutations.
+
+Root resource review retains the two existing private child namespaces: shared
+helper state is fixture-local, with no global clock, process pool or shared
+writable root introduced. Host test pinb20d6548 remains; stopped-source final SHA
+0c6cd50f2aa09755d7cec6ae832817b7fe0fd2969db0d672fde49eafdb132695.
+Finish eligibility/docs/normal hooks and publication, then exactly one matching
+SDK complete stage. Latest complete numbers remain199041d until that observation.
+
 The earlier plan below led to genuine completed-Source-report recovery and its
 persisted Work history; it is retained context, not a duplicate next task.
 Blind bounded plan

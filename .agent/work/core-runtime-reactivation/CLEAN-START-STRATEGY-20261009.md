@@ -274,6 +274,13 @@ two snapshot-wrapper oracle mistakes are fixed and the Bun skill records their
 exact-shape check. More children/writers and repeated full stages have no
 qualified benefit here. Continue native retired-Source capture/recovery from the
 current inventory, without restarting the cycle or widening the selection.
+The next packet reuses the same active-overlap fixture for actual later writer
+completion/report/release and exact later-grant capture. A shared fixture helper
+also serves the existing stopped retry case, preserving its original assertions.
+Five altered witnesses deny unchanged state; exact capture/retry settles only the
+original failed issue. Both targets pass65assertions, strict181/scoped lint pass,
+and blind Luna final review finds no blocker. No new fixture or budget is added.
+Finish pin/control/publication, then one matching-SDK stage before counting gains.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

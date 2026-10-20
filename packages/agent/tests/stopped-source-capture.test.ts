@@ -639,6 +639,48 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
     markPhase?.('later-writer:' + id + ':end');
     return { ...next, journal: nextJournal };
   }
+  function completeAndReleaseOverlappingWriter(next: Awaited<ReturnType<typeof laterWriter>>) {
+    const pendingJournal = currentJournal(ledger, next.identity.work_id, 1),
+      pendingItem = at(pendingJournal.state.items, 0, 'Later overlapping writer action'),
+      reservation = required(pendingItem.host_reservation, 'Later overlapping writer Host reservation'),
+      summary = 'Completed the issued overlapping source write';
+    writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Synthetic completed overlapping source write');
+    const updatedScope = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']),
+      observation: SessionObservation = {
+        schema: 'VidaSessionObservation/v1',
+        action_id: pendingItem.request.action_id,
+        issue_id: required(pendingItem.issue_id, 'Later overlapping writer issue'),
+        host_attempt_id: reservation.receipt.attempt.attempt_id,
+        agent_id: 'synthetic-later-overlap-writer',
+        tool_call_ref: 'local:synthetic-later-overlap-writer',
+        status: 'reported_complete',
+        summary,
+        output_digest: canonicalJsonDigest(summary),
+        changed_paths: ['AGENT.sidecar.md'],
+        evidence_refs: ['local:synthetic-later-overlap-writer'],
+      };
+    store.completeWorkflowAttempt(reservation.receipt, observation);
+    const completedJournal = ledger.report(next.identity.work_id, 1, pendingJournal.version, observation, updatedScope),
+      host = completeHost(store.readHostStateSnapshot(next.identity));
+    suspendLocalWork({
+      store,
+      identity: next.identity,
+      journal: completedJournal,
+      expectedWork: host.workVersion,
+      expectedLedger: host.ledgerVersion,
+      nativeSessionHandle: next.input.nativeSessionHandle,
+      userRequestPointer: 'synthetic-release-overlap',
+      requestIntent: 'linked_correction',
+      documentationContext: {
+        repository_root: root,
+        repository_id: next.identity.repository_id,
+        project_id: 'sample',
+        work_id: next.identity.work_id,
+      },
+      config,
+    });
+    return { completedJournal, host, observation, reservation, updatedScope };
+  }
   function captureInput({ containedReviews = true }: { containedReviews?: boolean } = {}) {
     markPhase?.('capture-input:start');
     const host = completeHost(store.readHostStateSnapshot(identity)),
@@ -782,8 +824,11 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
       },
     });
   }
-  function retiredCaptureInput(retirement: ReturnType<typeof retireOwner>) {
-    writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Synthetic partial candidate bytes');
+  function retiredCaptureInput(
+    retirement: ReturnType<typeof retireOwner>,
+    { preserveCandidate = false }: { preserveCandidate?: boolean } = {},
+  ) {
+    if (!preserveCandidate) writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Synthetic partial candidate bytes');
     const candidate = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']),
       host = completeHost(store.readHostStateSnapshot(identity)),
       journal = currentJournal(ledger, 'stopped', 1),
@@ -1013,6 +1058,7 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
     retiredCaptureInput,
     admission,
     laterWriter,
+    completeAndReleaseOverlappingWriter,
   };
 }
 
@@ -1368,7 +1414,7 @@ test(
         }
       }
       expect(f.inspect()).toEqual(before);
-      await f.laterWriter('later-overlap', 'AGENT.sidecar.md');
+      const overlap = await f.laterWriter('later-overlap', 'AGENT.sidecar.md');
       const current = completeHost(f.store.readHostStateSnapshot(f.identity)),
         overlapping = f.retiredCaptureInput(retirement);
       expect(() =>
@@ -1379,6 +1425,84 @@ test(
           verifyCurrent: overlapping.verifyCurrent,
         }),
       ).toThrow('active Source ownership');
+      const completed = f.completeAndReleaseOverlappingWriter(overlap),
+        released = completeHost(f.store.readHostStateSnapshot(f.identity)),
+        ticketId = completed.reservation.receipt.attempt.lease.ticket_id,
+        claim = required(
+          released.ledger.claims.find((entry) => entry.ticket_id === ticketId),
+          'Released later writer claim',
+        ),
+        fresh = f.retiredCaptureInput(retirement, { preserveCandidate: true }),
+        grant: RetiredSourceCaptureRequest['terminalEvidence']['later_grants'][number] = {
+          work_id: overlap.identity.work_id,
+          ticket_id: ticketId,
+          claim_id: claim.claim_id,
+          actor_id: completed.observation.agent_id,
+          action_id: completed.observation.action_id,
+          issue_id: completed.observation.issue_id,
+          host_attempt_id: completed.reservation.receipt.attempt.attempt_id,
+          changed_paths: required(completed.observation.changed_paths, 'Later writer changed paths'),
+          evidence_ref: at(completed.observation.evidence_refs, 0, 'Later writer evidence'),
+        };
+      expect(claim.status).toBe('released');
+      expect(released.ledger.tickets.find((entry) => entry.ticket_id === ticketId)?.status).toBe('released');
+      expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), ['AGENT.sidecar.md'])).toEqual(
+        completed.updatedScope,
+      );
+      const releasedBefore = f.inspect(),
+        journalBefore = currentJournal(f.ledger, 'stopped', 1),
+        ddlBefore = f.ddl(),
+        originalObservation = required(fresh.operation.observation, 'Original retired observation'),
+        terminalEvidence = { ...fresh.operation.terminalEvidence, later_grants: [grant] },
+        request = { ...fresh.operation, terminalEvidence, verifyCurrent: fresh.verifyCurrent },
+        denials: readonly [typeof terminalEvidence.later_grants, string][] = [
+          [[], 'original writes, later grants or active Source ownership are incomplete'],
+          [
+            [{ ...grant, claim_id: 'foreign-claim' }],
+            'original writes, later grants or active Source ownership are incomplete',
+          ],
+          [
+            [{ ...grant, actor_id: 'foreign-actor' }],
+            'later Source grant lacks its exact terminal Host and Journal evidence',
+          ],
+          [
+            [{ ...grant, host_attempt_id: canonicalJsonDigest('foreign-later-attempt') }],
+            'later Source grant lacks its exact terminal Host and Journal evidence',
+          ],
+          [
+            [{ ...grant, evidence_ref: 'local:foreign-evidence' }],
+            'later Source grant lacks its exact terminal Host and Journal evidence',
+          ],
+        ];
+      for (const [laterGrants, message] of denials) {
+        expect(() =>
+          f.store.captureRetiredSourceObservation({
+            ...request,
+            terminalEvidence: { ...terminalEvidence, later_grants: laterGrants },
+          }),
+        ).toThrow(message);
+        expect(f.inspect()).toEqual(releasedBefore);
+        expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(journalBefore);
+        expect(f.ddl()).toEqual(ddlBefore);
+      }
+      const captured = f.store.captureRetiredSourceObservation(request),
+        after = completeHost(captured.snapshot),
+        capturedJournal = currentJournal(f.ledger, 'stopped', 1);
+      expect(after.work.execution.status).toBe('suspended');
+      expect(after.work.lease).toBeNull();
+      expect(after.ledger.tickets).toEqual(released.ledger.tickets);
+      expect(after.ledger.claims).toEqual(released.ledger.claims);
+      expect(
+        after.work.execution.assignment_attempts.find(
+          (entry) => entry.attempt_id === originalObservation.host_attempt_id,
+        ),
+      ).toMatchObject({ status: 'completed', result: fresh.operation.observation });
+      expect(at(capturedJournal.state.items, 0, 'Captured original retired issue').observation).toEqual(
+        fresh.operation.observation,
+      );
+      expect(capturedJournal.state.source_scope).toEqual(f.source);
+      expect(f.store.captureRetiredSourceObservation(request)).toEqual(captured);
+      expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(capturedJournal);
     } finally {
       await f.close();
     }
@@ -1985,27 +2109,8 @@ test('exact stopped capture retry permits disjoint progress but rejects later ov
       }),
     ).toThrow('source observation is not an authoritative completed host result');
     expect(f.inspect()).toEqual(active);
-    const pendingItem = at(pendingJournal.state.items, 0, 'Later overlapping writer action'),
-      reservation = required(pendingItem.host_reservation, 'Later overlapping writer Host reservation'),
-      summary = 'Completed the issued overlapping source write';
-    writeFileSync(path.join(f.root, 'AGENT.sidecar.md'), 'Synthetic completed overlapping source write');
-    const updatedScope = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), ['AGENT.sidecar.md']),
-      observation: SessionObservation = {
-        schema: 'VidaSessionObservation/v1',
-        action_id: pendingItem.request.action_id,
-        issue_id: required(pendingItem.issue_id, 'Later overlapping writer issue'),
-        host_attempt_id: reservation.receipt.attempt.attempt_id,
-        agent_id: 'synthetic-later-overlap-writer',
-        tool_call_ref: 'local:synthetic-later-overlap-writer',
-        status: 'reported_complete',
-        summary,
-        output_digest: canonicalJsonDigest(summary),
-        changed_paths: ['AGENT.sidecar.md'],
-        evidence_refs: ['local:synthetic-later-overlap-writer'],
-      };
-    f.store.completeWorkflowAttempt(reservation.receipt, observation);
-    const completedJournal = f.ledger.report('overlap', 1, pendingJournal.version, observation, updatedScope),
-      host = completeHost(f.store.readHostStateSnapshot(overlap.identity));
+    const { completedJournal, host, observation, reservation, updatedScope } =
+      f.completeAndReleaseOverlappingWriter(overlap);
     expect(completedJournal.state.items[0]?.observation).toEqual(observation);
     expect(
       host.work.execution.assignment_attempts.find(
@@ -2016,23 +2121,6 @@ test('exact stopped capture retry permits disjoint progress but rejects later ov
       status: 'completed',
       result: observation,
       result_digest: canonicalJsonDigest(observation),
-    });
-    suspendLocalWork({
-      store: f.store,
-      identity: overlap.identity,
-      journal: completedJournal,
-      expectedWork: host.workVersion,
-      expectedLedger: host.ledgerVersion,
-      nativeSessionHandle: overlap.input.nativeSessionHandle,
-      userRequestPointer: 'synthetic-release-overlap',
-      requestIntent: 'linked_correction',
-      documentationContext: {
-        repository_root: f.root,
-        repository_id: overlap.identity.repository_id,
-        project_id: 'sample',
-        work_id: 'overlap',
-      },
-      config: f.config,
     });
     const released = f.inspect();
     const originalCandidate = c.operation.candidateSnapshot.entries,
