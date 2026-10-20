@@ -15,9 +15,46 @@ numeric producer.
 
 ### Sequential coverage observations and active repair
 
-Current correction packet: TaskSource history/report integrity. Root keeps the
-single contour and sole numeric producer. The complete4812447 observation below
-remains the latest numeric evidence until this changed packet is measured.
+The TaskSource history/report packet is measured on e2a01db, run
+7b73f43b-94d9-4ef8-a447-56004a36fa41: F964/1129,L4148/4970,S4408/5300,
+B4562/5642,298PASS/0FAIL,2901assertions,168.026s. It remains nonexact/BLOCKED.
+Delta from4812447 is13F/80L/86S/150B with unchanged denominators. The report-only
+inventory now has165missing functions under70owners. Historical exact contours
+remain16/45. Root keeps the single contour and sole numeric producer.
+
+The complete stage is /workspace/contour-stage-9xNDSN, exec39519 exit0,
+168025.518ms. Capture/group/boot/image closure is true and publication is complete.
+Host reports282PASS/2648assertions/160.78s; stopped-source reports16PASS/
+253assertions/142.72s with contained cleanup completed. No FAIL or timeout occurred.
+MaxCC279/entryCRAP2162 remain unqualified diagnostics; later gates stay deferred.
+The new packet's13F/80L/86S/150B gain is real. The full stage is7.473s slower
+than the prior single sample, so no throughput speedup is claimed. The new fixture
+matrix adds less than a second in focused execution while sharing setup across
+its obligations; that timing is not a controlled end-to-end benchmark.
+
+Image: /workspace/.vida-quality-inputs/e9f05cf086ddc7ce1172b05540769f8569c38ff2/repository;
+Source e2a01dbd45a111a8daa9ed2e06e51ef9c0a871ae,
+tree1691e0b317a3b011c7d4733dc974cdf159d6dd4f,
+input96047ddbbd4f1f167b310bdf2282ed8db539f886919fc7e49f13a0b0e6c168ac,
+manifest SHA f23a0457b29429d14ed9a95e9daccf6547a69a9be76ea9732ba9f243508197cc.
+SDK CI39400488321 attempt1 succeeds; artifact12254912465 is
+vida-sdk-test-inputs-e2a01dbd45a111a8daa9ed2e06e51ef9c0a871ae-39400488321-1,
+ZIP SHA d16a96d294e395c9fd0d6858220fa6b15e4265647b8d7b316e37237f0a492724.
+Stage log: coverage/fixture-diagnostics/20261019-focused-blockers/task-source-batch-stage.log
+under packages/agent. The maintained projection imports the complete run,1068attempts.
+The report-only uncovered planner ran once; no new AST/Source scan/hash pass or
+duplicate suite was added. All original image, SDK, logs and receipts stay intact.
+
+After observed producer/group closure, original scratch
+/dev/shm/vida-quality-retained-8New3Z measures180432240apparent bytes. Its complete
+lossless archive is /workspace/vida-functional-retention-9xNDSN-Qc8jYP/scratch.tar.gz,
+45745132bytes versus207605760bytes in the raw tar stream. Full tar compare passes;
+SHA93e0cb0b053eb8e22620d758b57c8ab3bdec804c378ff92605459834e00be0cb.
+archive.log and scratch.sha256 are retained beside it. Original scratch is unchanged.
+The one post-producer observation before archival is2778877952free bytes on the
+checkout/evidence overlay and7268278272on tmpfs. After archival the overlay has
+2733117440free,585633792above the unchanged2147483648admission floor. No protected
+state, original FAIL/UNKNOWN evidence or prior archive was deleted or replayed.
 
 The execution change groups related success/refusal/retry/restoration obligations
 around one maintained fixture, using the existing report-only inventory. This
@@ -25,8 +62,8 @@ reaches both the historical snapshot path and observed-report reservation checks
 without another fixture per assertion. Comparing alternatives: a full stage per
 small assertion repeatedly pays the observed160.553s stage cost; a cohesive fixture
 matrix pays one setup and one eventual complete stage; parallel contour writers
-conflict with the current sequential scope. The matrix is selected. Expected
-numeric yield and throughput improvement remain hypotheses, not measured wins.
+conflict with the current sequential scope. The matrix is selected. Its observed
+numeric yield is recorded above; no end-to-end throughput improvement is claimed.
 
 The first historical snapshot reproduced a fixture defect: its fixed synthetic
 workspace ID disagreed with the canonical Host root. The shared helper now derives
@@ -38,8 +75,10 @@ setup/body/cleanup. It executes no Git argv: its issued action and cooperative
 observed report are native SQLite unit evidence, not genuine external admission
 or Runtime acceptance.
 
-The final checked packet passes9cases/169assertions in7.21s; the new matrix takes
-657.88ms. It covers canonical versus observed source bytes, prepared fallback,
+Family checks pass9cases/169assertions in7.21s; the new matrix takes657.88ms.
+The later caller-retention followup separately passes39assertions in524.70ms,
+and its final pin control passes10assertions. These overlapping runs are not summed.
+The matrix covers canonical versus observed source bytes, prepared fallback,
 issued refusal, stale report CAS, exact report retry, foreign context/path/attempt
 refusals, corrupt retained action/integrity/report refusal and exact digest-guarded
 restoration. Current reading still refuses bytes outside the durable journal
@@ -67,10 +106,10 @@ configured frontier. Do not duplicate that expensive setup or claim its ten
 missing callbacks from an unrelated historical case. No measured image was edited,
 new disk scan or cleanup performed, or old UNKNOWN replayed.
 
-Latest complete Host-state observation is4812447, run
+The preceding complete Host-state observation is4812447, run
 1742a75f-8f89-4856-b750-83a3fc0ab96f: F951/1129,L4068/4970,S4322/5300,
 B4412/5642,297PASS/0FAIL,2862assertions,160.553s. It remains nonexact/BLOCKED.
-The current report-only inventory has178missing functions under73owners.
+Its report-only inventory had178missing functions under73owners.
 Full bindings and the current three-hour audit are recorded in
 [the native authority-repair result](#complete-native-authority-repair-observation).
 
