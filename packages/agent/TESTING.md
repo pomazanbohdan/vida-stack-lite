@@ -2191,6 +2191,24 @@ is shared with the mutation gate in `tooling/mutation-partitions.ts`; do not
 maintain a second list. The document is a derived view, not acceptance evidence
 or a new planning ledger. WORK remains the decision owner.
 
+The stored `VidaContourProgress/v3` snapshot interns distinct path/SHA256 entries
+once and retains each canonical digest-list identity through checked integer
+references. All attempts, metadata and proof bindings survive expansion to the
+same v1 in-memory model. Readers retain v1/v2 compatibility; publication uses v3.
+Reject malformed, duplicated or unused entries, unresolved references, reordered
+or duplicate-path lists, and mismatched canonical list digests. Keep the existing
+32MiB read/publication limit and JSON-before-Markdown atomic recovery contract.
+Do not use an older controller that cannot read the current stored format.
+
+Root may use `repackContourProgressSnapshot(output)` from the maintained progress
+CLI module for representation-only maintenance of an already admitted snapshot.
+It validates that snapshot and reuses the same publisher without scanning or
+importing observations, producer reports, Source or AST. It admits no new evidence,
+establishes no freshness and cannot replace the normal post-producer refresh.
+Retain the prior published snapshot and verify all expanded attempts and Markdown
+before claiming a lossless repack. Normal publication still imports and checks
+pending observations; malformed inputs deny without replacing the prior projection.
+
 The summary separates historical exact F/L/S/B coverage, coverage plus compatible
 same-run scoped frozen CRAP, and the complete triple including confirmed mutation.
 These counters reuse the imported observations and existing compatibility checks;

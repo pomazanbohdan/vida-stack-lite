@@ -67,6 +67,16 @@ print concise metrics in one step. Do not dump complete instrumented maps just
 to read totals. Preserve the actual BLOCKED/FAIL/UNKNOWN status independently
 of coverage. Reuse `campaignProcessState` in session launchers and separately
 check unchanged boot identity; do not duplicate a weaker custody/log predicate.
+For representation-only snapshot maintenance, use TESTING's existing
+`repackContourProgressSnapshot` owner instead of rescanning/importing observations.
+Keep every attempt and its proof bindings, legacy readers, the32MiB bound and
+atomic publication. Verify complete expanded equality; compaction grants no
+new metric or currentness. Read the compact Markdown view for navigation rather
+than dumping a cumulative JSON snapshot into the agent context.
+After an orchestration transport error, inspect every earlier call's retained
+logs and process state before retry. A later call's launch rejection does not
+prove that an earlier call never started. Partial test rows without a terminal
+summary remain incomplete; preserve their original logs and fixtures.
 During the owner's sequential exact F/L/S/B phase, work on one contour only and
 defer frozen CRAP and mutation producers. Preserve their existing gaps and
 evidence; a coverage milestone is not complete-triple closure. Do not launch CRAP

@@ -224,35 +224,87 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
 const digestFields = ['sources', 'tests', 'tools', 'closure', 'selected_tests'] as const;
 type DigestField = (typeof digestFields)[number];
 export type CompactSnapshot = {
-  schema: 'VidaContourProgress/v2';
-  digest_catalog: Record<string, Digest[]>;
+  schema: 'VidaContourProgress/v3';
+  digest_entries: Digest[];
+  digest_catalog: Record<string, number[]>;
   attempts: (Omit<Attempt, DigestField> & { digest_refs: Record<DigestField, string> })[];
 };
 
-function digestCatalogKey(value: Digest[]): string {
-  return createHash('sha256').update(canonicalJson(value)).digest('hex');
+function digestCatalogKey(encoded: string): string {
+  return createHash('sha256').update(encoded).digest('hex');
 }
 
 /**
- * Persist repeated immutable path/hash lists once while keeping the v1 in-memory projection.
- * The v1 reader remains supported by mergeContourProgress; no attempt fields or evidence are dropped.
+ * Persist repeated immutable entries and lists once while keeping the v1 in-memory projection.
+ * Legacy v1/v2 readers remain supported; no attempt fields or evidence are dropped.
  */
 export function serializeContourProgress(snapshot: Snapshot): CompactSnapshot {
-  const digest_catalog: Record<string, Digest[]> = {};
+  const digest_entries: Digest[] = [];
+  const entryIndices = new Map<string, number>();
+  const digest_catalog: Record<string, number[]> = {};
+  const entryIndex = (entry: Digest): number => {
+    const key = JSON.stringify([entry.path, entry.sha256]);
+    let index = entryIndices.get(key);
+    if (index === undefined) {
+      index = digest_entries.length;
+      entryIndices.set(key, index);
+      digest_entries.push(entry);
+    }
+    return index;
+  };
   const attempts = snapshot.attempts.map((attempt) => {
     const { sources, tests, tools, closure, selected_tests, ...rest } = attempt;
     const lists: Record<DigestField, Digest[]> = { sources, tests, tools, closure, selected_tests };
     const digest_refs = Object.fromEntries(
       digestFields.map((field) => {
         const list = lists[field];
-        const id = digestCatalogKey(list);
-        digest_catalog[id] ??= list;
+        const id = digestCatalogKey(canonicalJson(list));
+        digest_catalog[id] ??= list.map(entryIndex);
         return [field, id];
       }),
     ) as Record<DigestField, string>;
     return { ...rest, digest_refs };
   });
-  return { schema: 'VidaContourProgress/v2', digest_catalog, attempts };
+  return { schema: 'VidaContourProgress/v3', digest_entries, digest_catalog, attempts };
+}
+
+const validatePackedSnapshot = new Ajv().compile<CompactSnapshot>({
+  type: 'object',
+  additionalProperties: false,
+  required: ['schema', 'digest_entries', 'digest_catalog', 'attempts'],
+  properties: {
+    schema: { const: 'VidaContourProgress/v3' },
+    digest_entries: digestSchema,
+    digest_catalog: {
+      type: 'object',
+      additionalProperties: {
+        type: 'array',
+        items: { type: 'integer', minimum: 0, maximum: Number.MAX_SAFE_INTEGER },
+      },
+    },
+    attempts: { type: 'array', items: { type: 'object' } },
+  },
+});
+
+function expandPackedSnapshot(value: unknown): Snapshot {
+  if (!validatePackedSnapshot(value)) throw new Error('Invalid packed contour snapshot.');
+  const entries = value.digest_entries;
+  const pairs = entries.map((entry) => JSON.stringify([entry.path, entry.sha256]));
+  if (new Set(pairs).size !== entries.length) throw new Error('Packed contour digest entries are duplicated.');
+  const referenced = new Set<number>();
+  const digest_catalog = Object.fromEntries(
+    Object.entries(value.digest_catalog).map(([id, indices]) => [
+      id,
+      indices.map((index) => {
+        const entry = entries[index];
+        if (entry === undefined) throw new Error('Packed contour digest index is out of range.');
+        referenced.add(index);
+        return entry;
+      }),
+    ]),
+  );
+  if (referenced.size !== entries.length) throw new Error('Packed contour snapshot has unreferenced entries.');
+  return expandCompactSnapshot({ schema: 'VidaContourProgress/v2', digest_catalog, attempts: value.attempts });
 }
 
 function expandCompactSnapshot(value: unknown): Snapshot {
@@ -269,7 +321,8 @@ function expandCompactSnapshot(value: unknown): Snapshot {
   for (const [id, raw] of Object.entries(value.digest_catalog)) {
     if (!/^[a-f0-9]{64}$/u.test(id) || !Array.isArray(raw)) throw new Error('Invalid contour digest catalog entry.');
     const list = digests(raw);
-    if (digestCatalogKey(list) !== id || canonicalJson(list) !== canonicalJson(raw))
+    const encoded = canonicalJson(list);
+    if (digestCatalogKey(encoded) !== id || encoded !== canonicalJson(raw))
       throw new Error('Contour digest catalog content does not match its identity.');
     catalog[id] = list;
   }
@@ -295,6 +348,16 @@ function expandCompactSnapshot(value: unknown): Snapshot {
   if (!validateSnapshot(snapshot))
     throw new Error('Invalid expanded contour snapshot: ' + JSON.stringify(validateSnapshot.errors));
   return snapshot;
+}
+
+const compactSnapshotReaders = new Map([
+  ['VidaContourProgress/v2', expandCompactSnapshot],
+  ['VidaContourProgress/v3', expandPackedSnapshot],
+]);
+
+function expandContourSnapshot(value: unknown): unknown {
+  if (!isRecord(value) || typeof value.schema !== 'string') return value;
+  return compactSnapshotReaders.get(value.schema)?.(value) ?? value;
 }
 
 function object(value: unknown): Record<string, unknown> {
@@ -1314,7 +1377,7 @@ function evidence(attempt: Attempt): string {
 
 /** Merge immutable observations; preserve historical closures rather than inventing a union of maxima. */
 export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Snapshot {
-  if (isRecord(previous) && previous.schema === 'VidaContourProgress/v2') previous = expandCompactSnapshot(previous);
+  previous = expandContourSnapshot(previous);
   if (!validateSnapshot(previous))
     throw new Error('Invalid contour snapshot: ' + JSON.stringify(validateSnapshot.errors));
   const candidate = { schema: 'VidaContourProgress/v1', attempts: incoming };

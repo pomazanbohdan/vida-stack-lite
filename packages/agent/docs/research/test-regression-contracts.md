@@ -178,6 +178,15 @@ Direct stores on the owned null-prototype image must not weaken input descriptor
 Proxy/getter/hook checks or change traversal order. Micro timing is diagnostic;
 native recovery, deadlines and current-input coverage remain separate checks.
 
+Contour progress v3 preserves every v1 attempt and evidence field while interning
+distinct path/SHA256 pairs and retaining the existing canonical list identities.
+Check complete v1/v2/v3 round trips, many near-equal lists, changed hashes for the
+same path, malformed indices/entries/references, duplicate or unused entries,
+reordered/duplicate-path lists and conflicting metadata. Keep the32MiB cap and
+both prior files unchanged on over-limit publication. Snapshot-only repack does
+not scan or admit observation files; the normal publisher still rejects an invalid
+pending observation. Verify byte-idempotence and unchanged rendered Markdown.
+
 Timestamp controls include trailing LF, CR, CRLF and Unicode line separators.
 Check whole-input rejection separately from native parser failure. A scoped
 Date.parse fault proves fail-closed handling of NaN for an otherwise valid

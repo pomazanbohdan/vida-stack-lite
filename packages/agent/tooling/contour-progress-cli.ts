@@ -49,6 +49,23 @@ function load(file: string, withDigest = false): unknown {
   const value: unknown = JSON.parse(bytes.toString('utf8'));
   return withDigest ? { value, sha256: createHash('sha256').update(bytes).digest('hex') } : value;
 }
+
+function publishSnapshot(output: string, snapshot: ReturnType<typeof mergeContourProgress>): string {
+  const document = renderContourProgress(snapshot);
+  mkdirSync(output, { recursive: true });
+  atomic(path.join(output, 'CONTOUR-STATUS.json'), JSON.stringify(serializeContourProgress(snapshot)) + '\n');
+  const report = path.join(output, 'CONTOUR-STATUS.md');
+  // JSON remains recoverable if the disposable Markdown publication is interrupted.
+  atomic(report, document);
+  return report;
+}
+
+/** Repack already admitted observations without scanning or importing producer artifacts. */
+export function repackContourProgressSnapshot(output: string): { attempts: number; report: string } {
+  const snapshot = mergeContourProgress(load(path.join(output, 'CONTOUR-STATUS.json')), []);
+  return { attempts: snapshot.attempts.length, report: publishSnapshot(output, snapshot) };
+}
+
 function outputRoot(root: string): string {
   return path.join(root, 'coverage/bun-unified/contours');
 }
@@ -332,16 +349,12 @@ export function runContourProgress(
     }
   }
   snapshot = mergeContourProgress(snapshot, incoming);
-  const document = renderContourProgress(snapshot);
-  mkdirSync(output, { recursive: true });
-  atomic(target, JSON.stringify(serializeContourProgress(snapshot)) + '\n');
-  // JSON is the recoverable machine snapshot; Markdown is disposable and regenerated if publication was interrupted.
-  atomic(path.join(output, 'CONTOUR-STATUS.md'), document);
+  const report = publishSnapshot(output, snapshot);
   process.stdout.write(
     JSON.stringify({
       schema: snapshot.schema,
       attempts: snapshot.attempts.length,
-      report: path.join(output, 'CONTOUR-STATUS.md'),
+      report,
       ...(coverageRuns.length ? { coverage_runs: coverageRuns } : {}),
     }) + '\n',
   );

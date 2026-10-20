@@ -19,10 +19,12 @@ import {
   runContourProgress,
   runContourProgressWithNative,
   readContourArtifact,
+  repackContourProgressSnapshot,
 } from '../tooling/contour-progress-cli.ts';
 import { campaignReportArguments } from '../tooling/contour-campaign.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
+import { canonicalJsonDigest } from '../src/contracts/canonical-json-core.ts';
 import { crapApplicabilityReceiptFixture } from './helpers/crap-applicability-fixture.ts';
 
 const activeCount = mutationPartitions().filter((row) => row.environment !== 'static').length;
@@ -1746,7 +1748,7 @@ test('bounded publisher normalizes repeated immutable digests and reloads every 
     const publishedBytes = readContourArtifact(publishedFile);
     expect(publishedBytes.byteLength).toBeLessThanOrEqual(32 * 1024 * 1024);
     const persisted: unknown = JSON.parse(publishedBytes.toString('utf8'));
-    expect(persisted).toMatchObject({ schema: 'VidaContourProgress/v2' });
+    expect(persisted).toMatchObject({ schema: 'VidaContourProgress/v3' });
     const reloaded = mergeContourProgress(persisted, []);
     expect(reloaded.attempts).toHaveLength(attempts.length);
     expect(reloaded.attempts[0]!.tools).toEqual(sharedDigests);
@@ -1769,7 +1771,7 @@ test('compact contour snapshots reject modified catalog content and missing refe
   expect(compact.digest_catalog[catalogId]!.length).toBeGreaterThan(0);
 
   const changedContent = structuredClone(compact);
-  changedContent.digest_catalog[catalogId]![0]!.sha256 = 'f'.repeat(64);
+  changedContent.digest_entries[changedContent.digest_catalog[catalogId]![0]!]!.sha256 = 'f'.repeat(64);
   expect(() => mergeContourProgress(changedContent, [])).toThrow(
     'Contour digest catalog content does not match its identity.',
   );
@@ -1779,6 +1781,139 @@ test('compact contour snapshots reject modified catalog content and missing refe
   expect(() => mergeContourProgress(missingReference, [])).toThrow(
     'Compact contour attempt has unresolved digest references.',
   );
+});
+
+test('compact contour snapshots intern near-equal lists and preserve all attempts across v1/v2/v3', () => {
+  const base = contourAttempts(coverage(), receipt)[0]!;
+  const shared = Array.from({ length: 64 }, (_, index) => digest(`shared-${String(index).padStart(3, '0')}.ts`));
+  const attempts = Array.from({ length: 96 }, (_, index) => ({
+    ...base,
+    run_id: `near-${String(index).padStart(3, '0')}`,
+    tools: [...shared, { path: 'variant.ts', sha256: index.toString(16).padStart(64, '0') }],
+    closure: [...shared, { path: 'variant.ts', sha256: index.toString(16).padStart(64, '0') }],
+  }));
+  const expected = mergeContourProgress(empty, attempts);
+  const packed = serializeContourProgress(expected);
+  const legacy = {
+    schema: 'VidaContourProgress/v2',
+    digest_catalog: Object.fromEntries(
+      Object.entries(packed.digest_catalog).map(([id, indices]) => [
+        id,
+        indices.map((index) => packed.digest_entries[index]!),
+      ]),
+    ),
+    attempts: packed.attempts,
+  };
+  expect(packed.digest_entries.filter((entry) => entry.path.startsWith('shared-'))).toEqual(shared);
+  expect(packed.digest_entries.filter((entry) => entry.path === 'variant.ts')).toHaveLength(attempts.length);
+  expect(mergeContourProgress(packed, [])).toEqual(expected);
+  expect(mergeContourProgress(legacy, [])).toEqual(expected);
+  expect(serializeContourProgress(mergeContourProgress(legacy, []))).toEqual(packed);
+  expect(serializeContourProgress(mergeContourProgress(expected, []))).toEqual(packed);
+});
+
+test('compact snapshot repacking preserves admitted attempts without rescanning observation artifacts', () => {
+  const deadline = performance.now() + 5_000;
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-snapshot-repack-'));
+  let passed = false;
+  try {
+    const output = path.join(root, 'coverage/bun-unified/contours');
+    const observations = path.join(output, 'observations');
+    mkdirSync(observations, { recursive: true });
+    writeFileSync(path.join(observations, 'unadmitted.json'), 'not an admitted observation');
+    const expected = mergeContourProgress(empty, contourAttempts(coverage(), receipt));
+    const target = path.join(output, 'CONTOUR-STATUS.json');
+    writeFileSync(target, JSON.stringify(expected));
+    expect(repackContourProgressSnapshot(output)).toEqual({
+      attempts: expected.attempts.length,
+      report: path.join(output, 'CONTOUR-STATUS.md'),
+    });
+    const encoded: unknown = JSON.parse(readFileSync(target, 'utf8'));
+    expect(encoded).toMatchObject({ schema: 'VidaContourProgress/v3' });
+    expect(mergeContourProgress(encoded, [])).toEqual(expected);
+    const beforeJson = readFileSync(target);
+    const beforeMarkdown = readFileSync(path.join(output, 'CONTOUR-STATUS.md'));
+    repackContourProgressSnapshot(output);
+    expect(readFileSync(target)).toEqual(beforeJson);
+    expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'))).toEqual(beforeMarkdown);
+    expect(() => runContourProgress([], root)).toThrow();
+    expect(readFileSync(target)).toEqual(beforeJson);
+    expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'))).toEqual(beforeMarkdown);
+    passed = true;
+  } finally {
+    if (passed && performance.now() < deadline) rmSync(root, { recursive: true });
+    else console.error('Retained contour snapshot repack fixture: ' + root);
+  }
+});
+
+test('compact contour v3 rejects malformed indices, entries, references and noncanonical lists', () => {
+  const packed = serializeContourProgress(mergeContourProgress(empty, contourAttempts(coverage(), receipt)));
+  const catalogId = Object.keys(packed.digest_catalog).find((id) => packed.digest_catalog[id]!.length > 1)!;
+  const firstIndex = packed.digest_catalog[catalogId]![0]!;
+  for (const invalid of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1, packed.digest_entries.length]) {
+    const changed = structuredClone(packed);
+    changed.digest_catalog[catalogId]![0] = invalid;
+    expect(() => mergeContourProgress(changed, [])).toThrow();
+  }
+  const duplicateIndex = structuredClone(packed);
+  duplicateIndex.digest_catalog[catalogId]!.push(firstIndex);
+  expect(() => mergeContourProgress(duplicateIndex, [])).toThrow('Duplicate contour input.');
+  const unsorted = structuredClone(packed);
+  unsorted.digest_catalog[catalogId]!.reverse();
+  expect(() => mergeContourProgress(unsorted, [])).toThrow(
+    'Contour digest catalog content does not match its identity.',
+  );
+  const extraEntry = structuredClone(packed);
+  extraEntry.digest_entries.push(digest('unreferenced.ts'));
+  expect(() => mergeContourProgress(extraEntry, [])).toThrow('Packed contour snapshot has unreferenced entries.');
+  const duplicateEntry = structuredClone(packed);
+  duplicateEntry.digest_entries.push({ ...duplicateEntry.digest_entries[firstIndex]! });
+  expect(() => mergeContourProgress(duplicateEntry, [])).toThrow('Packed contour digest entries are duplicated.');
+  const malformedEntry = structuredClone(packed);
+  Object.assign(malformedEntry.digest_entries[firstIndex]!, { extra: true });
+  expect(() => mergeContourProgress(malformedEntry, [])).toThrow('Invalid packed contour snapshot.');
+  const invalidHash = structuredClone(packed);
+  invalidHash.digest_entries[firstIndex]!.sha256 = 'not-a-digest';
+  expect(() => mergeContourProgress(invalidHash, [])).toThrow('Invalid packed contour snapshot.');
+  const missingField = structuredClone(packed);
+  Reflect.deleteProperty(missingField.attempts[0]!.digest_refs, 'tools');
+  expect(() => mergeContourProgress(missingField, [])).toThrow(
+    'Compact contour attempt has unresolved digest references.',
+  );
+  const extraField = structuredClone(packed);
+  Object.assign(extraField.attempts[0]!.digest_refs, { extra: catalogId });
+  expect(() => mergeContourProgress(extraField, [])).toThrow(
+    'Compact contour attempt has unresolved digest references.',
+  );
+  const extraCatalog = structuredClone(packed);
+  extraCatalog.digest_catalog[canonicalJsonDigest([])] = [];
+  expect(() => mergeContourProgress(extraCatalog, [])).toThrow('Compact contour snapshot has unreferenced evidence.');
+});
+
+test('compact contour publication preserves both prior files when packed output exceeds the byte bound', () => {
+  const deadline = performance.now() + 5_000;
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-packed-publication-bound-'));
+  let passed = false;
+  try {
+    const attempt = contourAttempts(coverage(), receipt)[0]!;
+    runContourProgress([], root, [attempt]);
+    const output = path.join(root, 'coverage/bun-unified/contours');
+    const json = path.join(output, 'CONTOUR-STATUS.json');
+    const markdown = path.join(output, 'CONTOUR-STATUS.md');
+    const beforeJson = readFileSync(json);
+    const beforeMarkdown = readFileSync(markdown);
+    const oversized = { ...attempt, run_id: 'over-limit', artifact: '/retained/' + 'x'.repeat(32 * 1024 * 1024) };
+    expect(() => runContourProgress([], root, [oversized])).toThrow('Contour publication exceeds byte bound.');
+    expect(readFileSync(json)).toEqual(beforeJson);
+    expect(readFileSync(markdown)).toEqual(beforeMarkdown);
+    expect(mergeContourProgress(JSON.parse(beforeJson.toString('utf8')), [])).toEqual(
+      mergeContourProgress(empty, [attempt]),
+    );
+    passed = true;
+  } finally {
+    if (passed && performance.now() < deadline) rmSync(root, { recursive: true });
+    else console.error('Retained packed contour publication fixture: ' + root);
+  }
 });
 
 test('legacy mutation summary needs its captured descriptor and rejects a foreign descriptor without losing the snapshot', () => {

@@ -308,7 +308,7 @@ without larger deadlines or a synthetic accepted suffix. The persisted public
 final-assurance90s case is outside this selection; a smaller genuine fixture
 remains a dependency, not permission to claim those callbacks from another suite.
 
-Select the next causal path from the current56-function/28-owner/654-arm retained
+Select the next causal path from the current49-function/22-owner/607-arm retained
 map, keeping success/refusal/retry/restoration together before one stage. Source
 authorization, exact CAS, live verifier freshness and UNKNOWN semantics remain
 unchanged. No prior failed fixture or archived operation is replayed.
@@ -376,18 +376,58 @@ focused diagnostics. This compaction changes no executable policy or result.
 
 ## Owners and acceptance boundaries
 
-The refreshed12:43:08–15:43:08UTC audit on2026-10-20 reuses the prior bounded
-inventory and three explicitly known later logs, without a directory scan. It
-contains six complete published Source-bound observations and one failed stage
-with unknown-or-partial publication. Accepted observations move from
-F1030/L4544/S4815/B4854 toF1059/L4693/S4970/B4957:
-+29F/+149L/+155S/+103B. None closes the contour. Accepted elapsed ranges136.029
-to184.010seconds under different inputs, not a speedup measurement. The retained
-three-hour-receipts-20261020-continued.json states the log-mtime basis; it is not
-complete session/tool-call/token telemetry. One current filesystem check finds
-5538447360durable and9392209920tmpfs free bytes. The unchanged2147483648durable
-floor leaves3390963712headroom. No resource GAP, safe new deletion candidate,
-duplicate scan or cleanup is established.
+The15:41:41–18:41:41UTC audit on2026-10-20 reuses retained receipts, projection
+and eight explicitly selected logs. It contains five complete published stages
+and one failed unknown-or-partial publication. First-to-last accepted coverage
+moves fromF1062/L4696/S4973/B4963 toF1080/L4741/S5022/B5035:
++18F/+45L/+49S/+72B. None closes the contour. Complete-stage elapsed ranges
+142819.811492–152800.622509ms, mean146635.6649278ms, under different Source
+inputs. This is not a speedup, same-input serial comparison or full session/tool/
+token telemetry. The complete inventory is three-hour-receipts-20261020-v1105-complete.json
+in focused diagnostics. The earlier seven-log subset remains retained separately;
+the missing50494ed stage was located by one scoped log search and added explicitly.
+The preceding audit and its receipts remain in the published df08986 WORK history.
+
+One filesystem observation finds5028831232durable and9375576064tmpfs free bytes;
+the unchanged2147483648durable floor leaves2881347584headroom. No resource GAP
+or newly qualified stale-cache deletion is established. Prior exact cache
+retirement manifests, original scratch/archives and shared dependency inventories
+are reused. No broad du/scan/hash, worktree or dependency consolidation is run.
+
+The confirmed reporting-capacity risk is30673679bytes against the unchanged
+33554432-byte snapshot bound. Its1441 lists contain231911 entries but only1736
+distinct path/SHA pairs. Pstack Model the Domain selects v3 entry interning with
+the same list digests and v1 in-memory attempts. The prototype compares plain JSON,
+gzip and list deltas; gzip adds a decoding boundary and deltas add parent relations.
+The selected plain JSON representation retains all1104attempts in2577874bytes.
+The decoder keeps legacy v1/v2 readers and strict list/entry/reference validation;
+v2 hashing and content checks reuse one locally encoded list, with no live Source cache.
+The snapshot-only repack owner reads the admitted snapshot once and reuses the
+existing atomic publisher without re-importing observations. Normal refresh and
+all evidence gates are unchanged. No new ledger, Runtime/DB cutover or numeric
+requalification is introduced.
+
+Focused persistence checks initially pass5tests/32assertions. Before the final
+maintenance extraction, the whole affected file passes158tests/483assertions,
+strict200-file TypeScript and configured lint. A later multi-call command partly
+executes before exec-server transport disconnects: its new test log contains
+partial PASS rows without a summary; static logs and the later contract are absent.
+Cloud reports running/offline at spec3199. These are not completed tests or proof
+that the first command never launched. Original partial logs/fixtures are retained.
+Access returns connected at spec3202 with the same boot89093463-dd07-4789-abcd-d15842df2ba2,
+the three Source edits intact and no active test/coverage/compiler owner.
+Fresh verification now passes159tests/491assertions, strict200-file TypeScript and
+configured lint. Blind Luna reviews find no blocker, including the final snapshot-
+only path; exact notes remain in focused diagnostics.
+
+Root checks the canonical JSON unchanged against published df08986, then applies
+the maintained snapshot-only repack. All1104expanded attempts exactly equal the
+retained prototype and Markdown bytes remain identical. The32MiB bound and original
+numeric statuses/bindings are unchanged. Actual durable free before/after is
+5028618240/5056712704bytes; the file-size reduction is28095805bytes and the observed
+filesystem gain is28094464bytes. This is representation maintenance, not deletion
+of historical evidence or a new measurement. The proof is projection-packing-apply-v1106.json;
+the predecessor full snapshot remains in Git and original producer artifacts stay intact.
 
 The selected order is Root's causal fixture packet, focused/static checks and one
 complete SDK/image/contour stage. Bounded read-only Luna review may overlap

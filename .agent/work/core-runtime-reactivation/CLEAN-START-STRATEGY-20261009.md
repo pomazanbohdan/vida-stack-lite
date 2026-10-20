@@ -138,6 +138,17 @@ real nonempty prepared Pstack instructions, not a silent cli.ts exit0.
 
 ### 4. Keep later gates intact
 
+The cumulative progress snapshot now uses lossless v3 entry interning rather than
+repeating near-equal path/hash lists. All1104attempts and rendered Markdown are
+preserved; the stored JSON drops from30673679 to2577874bytes under the unchanged
+32MiB bound. Legacy v1/v2 readers, canonical list identities and every proof field
+remain. The maintained snapshot-only repack admits no new observations and never
+replaces normal post-producer refresh. Focused159tests/491assertions and strict
+200-file checks pass; WORK records exact proof, current capacity and the retained
+partial run from the transport interruption. No unchanged numeric stage is needed
+for this representation-only packet. Continue the same bun-host-state contour
+from49missing functions/607branch arms; the last numeric Source remains a1f4049.
+
 Exact coverage is the current phase. Frozen complexity, CRAP and mutation remain deferred; their gates and missing evidence remain open. After coverage, reuse the same immutable gitless image and bound inputs for compatible lanes. Require independent, exhaustive, one-to-one function correspondence and preserve every original frozen CC/CRAP ceiling. Budget each new callable at no more than CC/CRAP 10/10; do not transfer an allowance. Accept Killed100 only from assertion-confirmed mutation evidence. A focused PASS, historical maximum or coverage milestone does not establish those gates. Timeouts, compile/runtime errors, missing coverage and UNKNOWN remain separate outcomes, never kills.
 
 ## Priority boundary
