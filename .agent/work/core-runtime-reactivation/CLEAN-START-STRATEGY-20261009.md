@@ -40,10 +40,10 @@ its lookup case into the active Host selection, with exact-CAS Journal
 mutation/restore and acquired-root custody. Local recovery-review guards and
 reservation transitions are now measured through existing native SQLite fixtures.
 Qualified-code Host consistency, freshness, rollback and exact history-bound retry
-are now measured, with shared test-only endpoint mappings. Failed-owner recovery and rollback are now measured. Next inspect the existing
-expired-local-lease recovery fixture and its remaining closures; do not fabricate
-accepted Source or producer evidence. WORK retains exact measured bindings, checks
-and the limits of synthetic fixture proof.
+are now measured, with shared test-only endpoint mappings. Failed-owner recovery and rollback are now measured. The existing expired-local-lease case is strengthened and focused/static checked;
+complete independent review, ordinary Source publication, matching SDK and one
+complete same-contour stage. Do not fabricate accepted Source/producer evidence.
+WORK retains measured bindings and the pending packet's checks and limits.
 Qualified closed-producer cache retirement has resolved the prior capacity
 forecast: the comprehensive batch reclaims3791466496durable bytes and leaves
 6242443264free,4094959616above the unchanged admission floor. Its81 exact cache

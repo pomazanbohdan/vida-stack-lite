@@ -12266,47 +12266,258 @@ test('expired recovery keeps runtime identity coupled across verified bundle cha
   seed.nextWork.binding.runtime_source_revision = digestA;
   seed.nextWork.binding.runtime_code_digest = digestA;
   seed.nextWork.lifecycle.config_binding.runtime_code_digest = digestA;
+  const peer = writerAcquire(commitHostState((await writerFixture('recovery-peer')).seed));
+  const waiterSeed = (await writerFixture('recovery-waiter')).seed;
+  includeExistingLedger(waiterSeed, peer.ledger);
+  waiterSeed.expectedLedger = peer.ledgerVersion;
+  const admittedWaiter = commitHostState(waiterSeed);
+  expect(() => writerAcquire(admittedWaiter)).toThrow('queued');
+  const waiter = readPresentSnapshot(store, { ...identity, work_id: 'recovery-waiter' });
+  includeExistingLedger(seed, waiter.ledger);
+  seed.expectedLedger = waiter.ledgerVersion;
   const initial = commitHostState(seed);
   const journal = completedRecoveryJournal(
     identity.work_id,
     requiredValue(initial.work.execution.run_id, 'recovery run id'),
     prepared.source,
   );
+  const ownerTicket = requiredValue(
+    initial.ledger.tickets.find((ticket) => ticket.ticket_id === requiredLease(initial.work).ticket_id),
+    'recovery owner ticket',
+  );
+  const peerTicket = requiredValue(
+    initial.ledger.tickets.find((ticket) => ticket.ticket_id === requiredLease(peer.work).ticket_id),
+    'peer writer ticket',
+  );
+  const peerClaim = requiredValue(
+    initial.ledger.claims.find((claim) => claim.ticket_id === peerTicket.ticket_id && claim.status === 'active'),
+    'peer writer claim',
+  );
+  const waiterTicket = requiredValue(
+    initial.ledger.tickets.find((ticket) => ticket.work_id === 'recovery-waiter' && ticket.status === 'queued'),
+    'persisted FIFO waiter',
+  );
+  expect(peerTicket).toMatchObject({
+    status: 'active',
+    active_resources: ['execution:recovery-peer', 'file:src/task.ts'],
+  });
+  expect(peerClaim.resources).toEqual(['execution:recovery-peer', 'file:src/task.ts']);
+  expect(waiterTicket).toMatchObject({
+    status: 'queued',
+    exclusive_resources: ['execution:recovery-waiter', 'file:src/task.ts'],
+    active_resources: [],
+    blocked_resources: ['execution:recovery-waiter', 'file:src/task.ts'],
+  });
+  expect(ownerTicket.exclusive_resources).toEqual(['execution:work']);
+  expect(ownerTicket.active_resources).toEqual(['execution:work']);
+  expect(peerClaim.resources).not.toContain('execution:work');
+  expect(waiterTicket.exclusive_resources).not.toContain('execution:work');
   const journalBytes = canonicalJson(journal.state);
   const journalDigest = journal.version.digest;
+  const rows = readFixtureHostRows(database);
+  const request = {
+    identity,
+    attempt: 1,
+    nativeSessionHandle: 'thread',
+    generation: 1,
+    expectedWork: initial.workVersion,
+    expectedLedger: initial.ledgerVersion,
+    expectedJournal: journal.version,
+    expectedMaintenanceGeneration: initial.maintenanceGeneration,
+    verifyCurrent: () => ({ runtimeCodeDigest: digestB, authorityPointer: 'user:verified-current-bundle' }),
+  } satisfies Parameters<typeof store.recoverExpiredLocalLease>[0];
+  const unchanged = () => {
+    expect(readFixtureHostRows(database)).toEqual(rows);
+  };
+  expect(() => store.recoverExpiredLocalLease(request)).toThrow(
+    'expired lease recovery owner, fencing identity or live expiry differs',
+  );
+  unchanged();
   const now = Date.now;
   let recovered!: PresentHostSnapshot;
   try {
-    Date.now = () => Date.parse(requiredValue(firstTicket(initial.ledger).expires_at, 'recovery ticket expiry')) + 1;
-    recovered = presentSnapshot(
-      store.recoverExpiredLocalLease({
-        identity,
-        attempt: 1,
-        nativeSessionHandle: 'thread',
-        generation: 1,
-        expectedWork: initial.workVersion,
-        expectedLedger: initial.ledgerVersion,
-        expectedJournal: journal.version,
-        expectedMaintenanceGeneration: initial.maintenanceGeneration,
-        verifyCurrent: () => ({ runtimeCodeDigest: digestB, authorityPointer: 'user:verified-current-bundle' }),
-      }),
+    Date.now = () => Date.parse(requiredValue(ownerTicket.expires_at, 'recovery ticket expiry')) + 1;
+    for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal'] as const) {
+      expect(() =>
+        store.recoverExpiredLocalLease({
+          ...request,
+          [key]: { ...request[key], revision: request[key].revision + 1 },
+        }),
+      ).toThrow(
+        key === 'expectedJournal' ? 'expired lease recovery journal CAS changed' : 'state compare-and-swap conflict',
+      );
+      unchanged();
+    }
+    expect(() => store.recoverExpiredLocalLease({ ...request, nativeSessionHandle: 'foreign-thread' })).toThrow(
+      'expired lease recovery owner, fencing identity or live expiry differs',
     );
+    unchanged();
+    expect(() => store.recoverExpiredLocalLease({ ...request, generation: 2 })).toThrow(
+      'expired lease recovery owner, fencing identity or live expiry differs',
+    );
+    unchanged();
+    expect(() =>
+      store.recoverExpiredLocalLease({ ...request, expectedMaintenanceGeneration: initial.maintenanceGeneration + 1 }),
+    ).toThrow('maintenance generation is stale or missing');
+    unchanged();
+    const proofError = new Error('controlled expired recovery proof');
+    let observed: unknown;
+    try {
+      store.recoverExpiredLocalLease({
+        ...request,
+        verifyCurrent: () => {
+          throw proofError;
+        },
+      });
+    } catch (error) {
+      observed = error;
+    }
+    expect(observed).toBe(proofError);
+    unchanged();
+    for (const authorityPointer of ['', 'bad\u0000authority', 'x'.repeat(513)]) {
+      expect(() =>
+        store.recoverExpiredLocalLease({
+          ...request,
+          verifyCurrent: () => ({ runtimeCodeDigest: digestB, authorityPointer }),
+        }),
+      ).toThrow('expired recovery authority reference invalid');
+      unchanged();
+    }
+    expect(() =>
+      store.recoverExpiredLocalLease({
+        ...request,
+        verifyCurrent: () => ({ runtimeCodeDigest: 'invalid', authorityPointer: 'user:verified-current-bundle' }),
+      }),
+    ).toThrow('expired recovery current bundle binding invalid');
+    unchanged();
+    expect(() => {
+      Reflect.apply(store.recoverExpiredLocalLease.bind(store), undefined, [
+        {
+          ...request,
+          verifyCurrent: () =>
+            Promise.resolve({ runtimeCodeDigest: digestB, authorityPointer: 'user:verified-current-bundle' }),
+        },
+      ]);
+    }).toThrow('expired recovery current proof must finish synchronously');
+    unchanged();
+    expect(store.readHostStateSnapshot(identity)).toEqual(initial);
+    database.exec(
+      "CREATE TRIGGER reject_expired_recovery_journal BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'controlled expired recovery Journal write'); END",
+    );
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      expect(() => store.recoverExpiredLocalLease(request)).toThrow('controlled expired recovery Journal write');
+      unchanged();
+      expect(store.readHostStateSnapshot(identity)).toEqual(initial);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            database.exec('DROP TRIGGER reject_expired_recovery_journal');
+          },
+        ],
+        primaryFailure,
+      );
+    }
+    recovered = presentSnapshot(store.recoverExpiredLocalLease(request));
+    expect(recovered.workVersion).toEqual({
+      revision: initial.workVersion.revision + 1,
+      digest: canonicalJsonDigest(recovered.work),
+    });
+    expect(recovered.ledgerVersion).toEqual({
+      revision: initial.ledgerVersion.revision + 1,
+      digest: canonicalJsonDigest(recovered.ledger),
+    });
+    expect(recovered.maintenanceGeneration).toBe(initial.maintenanceGeneration);
+    expect(recovered.ledger.open_generation).toBe(initial.ledger.open_generation);
+    expect(recovered.work.execution).toEqual(initial.work.execution);
+    expect(recovered.work.contracts).toEqual(initial.work.contracts);
+    expect(recovered.work.binding).toEqual({
+      ...initial.work.binding,
+      runtime_source_revision: digestB,
+      runtime_code_digest: digestB,
+    });
+    expect(recovered.work.lifecycle).toEqual({
+      ...initial.work.lifecycle,
+      revision: initial.work.lifecycle.revision + 1,
+      config_binding: { ...initial.work.lifecycle.config_binding, runtime_code_digest: digestB },
+    });
+    expect(requiredLease(recovered.work).ticket_id).not.toBe(requiredLease(initial.work).ticket_id);
+    const retired = requiredValue(
+      recovered.ledger.tickets.find((ticket) => ticket.ticket_id === ownerTicket.ticket_id),
+      'retired owner ticket',
+    );
+    expect(retired).toEqual({
+      ...ownerTicket,
+      status: 'read_only',
+      active_resources: [],
+      blocked_resources: [],
+      expires_at: null,
+    });
+    const oldClaim = requiredValue(
+      initial.ledger.claims.find((claim) => claim.ticket_id === ownerTicket.ticket_id),
+      'previous owner claim',
+    );
+    expect(recovered.ledger.claims.find((claim) => claim.claim_id === oldClaim.claim_id)).toEqual({
+      ...oldClaim,
+      status: 'recovered',
+    });
+    const successor = requiredValue(
+      recovered.ledger.tickets.find((ticket) => ticket.ticket_id === requiredLease(recovered.work).ticket_id),
+      'recovered owner ticket',
+    );
+    const claim = requiredValue(
+      recovered.ledger.claims.find((value) => value.ticket_id === successor.ticket_id && value.status === 'active'),
+      'recovered owner claim',
+    );
+    expect(successor.active_resources).toEqual(ownerTicket.active_resources);
+    expect(successor.exclusive_resources).toEqual(ownerTicket.exclusive_resources);
+    expect(claim.resources).toEqual(oldClaim.resources);
+    expect(successor.claim_ids).toEqual([claim.claim_id]);
+    expect(claim.lease_expires_at).toBe(requiredValue(successor.expires_at, 'successor expiry'));
+    expect(Date.parse(requiredValue(successor.expires_at, 'successor expiry'))).toBeGreaterThan(Date.now());
+    for (const workId of ['recovery-peer', 'recovery-waiter']) {
+      expect(recovered.ledger.tickets.filter((ticket) => ticket.work_id === workId)).toEqual(
+        initial.ledger.tickets.filter((ticket) => ticket.work_id === workId),
+      );
+      expect(recovered.ledger.claims.filter((claim) => claim.work_id === workId)).toEqual(
+        initial.ledger.claims.filter((claim) => claim.work_id === workId),
+      );
+    }
+    expect(recovered.ledger.rebinds.at(-1)).toMatchObject({
+      previous_ticket_id: ownerTicket.ticket_id,
+      ticket_id: successor.ticket_id,
+      retired_claim_ids: [oldClaim.claim_id],
+      decision_pointer: 'user:verified-current-bundle',
+      resources: oldClaim.resources,
+      claimed_resources: oldClaim.resources,
+      from_ledger_revision: initial.ledger.revision,
+      to_ledger_revision: recovered.ledger.revision,
+    });
+    const stored = requiredValue(
+      database
+        .query<RevisionPayloadDigestSqlRow, []>('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger')
+        .get(),
+      'recovered session ledger row',
+    );
+    expect(stored.payload).toBe(journalBytes);
+    expect(stored.digest).toBe(journalDigest);
+    expect(stored.revision).toBe(journal.version.revision + 1);
+    const recoveredRows = readFixtureHostRows(database);
+    expect(() => store.recoverExpiredLocalLease(request)).toThrow('state compare-and-swap conflict');
+    expect(() =>
+      store.recoverExpiredLocalLease({
+        ...request,
+        expectedWork: recovered.workVersion,
+        expectedLedger: recovered.ledgerVersion,
+        expectedJournal: { revision: stored.revision, digest: stored.digest },
+      }),
+    ).toThrow('expired lease recovery owner, fencing identity or live expiry differs');
+    expect(readFixtureHostRows(database)).toEqual(recoveredRows);
   } finally {
     Date.now = now;
   }
-  expect(recovered.work.binding.runtime_source_revision).toBe(digestB);
-  expect(recovered.work.binding.runtime_code_digest).toBe(digestB);
-  expect(recovered.work.lifecycle.config_binding.runtime_code_digest).toBe(digestB);
-  expect(recovered.work.execution.assignment_attempts).toEqual([]);
-  expect(requiredLease(recovered.work).ticket_id).not.toBe(requiredLease(initial.work).ticket_id);
-  expect(firstTicket(recovered.ledger).status).toBe('read_only');
-  const stored = requiredValue(
-    database
-      .query<RevisionPayloadDigestSqlRow, []>('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger')
-      .get(),
-    'recovered session ledger row',
-  );
-  expect(stored.payload).toBe(journalBytes);
-  expect(stored.digest).toBe(journalDigest);
-  expect(stored.revision).toBe(journal.version.revision + 1);
 });

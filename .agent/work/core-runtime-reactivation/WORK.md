@@ -144,13 +144,37 @@ and strict525-file checks. Source is pushed through ordinary hooks. Logs, origin
 case and review remain in the focused diagnostics. The full stage above now
 measures this exact packet. No production defect is inferred from missing tests.
 
-Next inspect recoverExpiredLocalLease's remaining five closures using its existing
-Host case and completedRecoveryJournal fixture, after confirming exact prerequisites.
-The bounded blind candidate note is `vida-host-next-gap-d6e3162.md`; its fixture
-compatibility was unverified and is not acceptance evidence. Batch related success,
-refusal and rollback assertions around the maintained fixture, statically verify,
-run affected checks, publish once and form one matching-input stage. Continue the
-same contour; keep per-file cases serial and all existing budgets unchanged.
+## Pending expired-local-lease packet
+
+The existing runtime-identity recovery case now uses the maintained writer fixture
+and real public Host admission/acquisition to retain a disjoint file writer and
+FIFO waiter. The execution-only recovering owner cannot change their tickets or
+claims. No synthetic competing owner, archived state or new writer authority is
+injected. Original bundle/history assertions remain, strengthened with exact
+Work/Ledger/Journal versions and digests, unchanged maintenance/generation,
+retired owner disposition, matching successor resources/expiry and authority
+rebind. Stale CAS/maintenance, foreign handle/generation, early recovery,
+throwing/thenable proof, invalid authority/digest and repeated takeover deny with
+unchanged native rows. A native Journal trigger proves the preceding Host writes
+roll back before the healthy retry; body/cleanup errors retain their common owner.
+The existing temporary Date.now override restores in finally.
+
+Final focused case passes66 assertions in519.99ms (2.04s command); strict149-file
+TypeScript and scoped lint pass. The reviewed eligibility pin control passes10
+assertions in3.96ms. Logs begin `expired-lease-` in focused diagnostics; the
+original case remains `expired-lease-original-case.txt`. Blind review found that unchanged-peer checks needed explicit positive setup
+oracles. The final case now asserts the actual active peer/file claim, persisted
+queued waiter with exact blocked resources, and nonempty disjoint owner rights.
+Final blind review finds no blocking issue; its cleanup note preserves the
+maintained distinction between an expected asserted SQL exception and an actual
+failed test body. The final note is retained as vida-expired-lease-review.md. These are static/focused results, not new full F/L/S/B numbers.
+
+Pending Host SHA256:
+`7f0068fc111c7faf36648ff39d814a258cbda7a661f1807aa0ddc82f546f76e3`.
+All writes remain in the existing Host child's unique fixture root; cases stay
+serial and no new producer/resource namespace is introduced. Complete review,
+normal Source publication and matching SDK before one complete same-contour stage.
+Do not repeat unchanged focused cases or start another contour.
 
 ### Bun-host-state focused shard resource review
 
