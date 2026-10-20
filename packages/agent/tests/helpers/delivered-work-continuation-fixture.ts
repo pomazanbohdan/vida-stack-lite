@@ -34,6 +34,7 @@ type DigestOptions = {
 type ContinuationFixtureOptions = {
   queued?: boolean;
   uncertain?: boolean;
+  completedAttempt?: boolean;
   root?: string;
   config?: AgentRuntimeConfig;
   identity?: WorkIdentity;
@@ -458,6 +459,22 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
       retirements: [],
     },
   });
+  if (options.completedAttempt) {
+    const active = store.readHostStateSnapshot(identity);
+    if (!active.work?.lease || !active.workVersion || !active.ledgerVersion)
+      throw Error('Active continuation attempt fixture state missing');
+    const claimed = store.claimWorkflowAttempt({
+      identity,
+      expectedWork: active.workVersion,
+      expectedLedger: active.ledgerVersion,
+      expectedMaintenanceGeneration: active.maintenanceGeneration,
+      stageId: 'implementation',
+      assignmentIndex: 0,
+      requestDigest: '4'.repeat(64),
+      lease: active.work.lease,
+    });
+    store.completeWorkflowAttempt(claimed, { summary: 'Retained original implementation result.' });
+  }
   let journalItem = historicalJournalItem(originalSource, runId, workflowId);
   if (uncertain) journalItem = { ...journalItem, observation: null };
   else

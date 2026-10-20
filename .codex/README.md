@@ -164,6 +164,11 @@ with parent/provider codex, native route and the assigned access mode. Read its
 prepared instructions into the worker brief. The legacy contract is prompt-only;
 it does not restrict inherited tools or qualify hard isolation. Keep each result
 in its assigned artifact path and independently review it before Source joins.
+Invoke the installed `scripts/worker-contract/pstack-worker-contract` executable
+with Bun. Its adjacent `cli.ts` exports the implementation; executing that module
+alone can exit0 without preparing anything. Require a nonempty parsed result
+with `kind: prepared` and nonempty `instructions` before dispatch. Exit0 alone
+does not establish contract preparation.
 
 cloud-pstack-setup.ts --install installs/enables pstack@open-pstack and
 superpowers@superpowers-dev through the native Codex Git marketplaces. It discovers

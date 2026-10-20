@@ -332,17 +332,46 @@ The existing two-child namespace/case-serial resource contract stays unchanged.
 
 ## Owners and acceptance boundaries
 
-The bounded audit refreshed to10:20–13:20UTC on2026-10-20 reuses the prior
-receipt inventory and the one subsequent known completed stage, without another
-directory scan. Its six complete Source-bound observations move from
-F993/L4266/S4530/B4681 toF1030/L4544/S4815/B4854, a measured delta of
-+37F/+278L/+285S/+173B. They remain nonexact, with no newly closed contour.
-The retained `three-hour-receipts-20261020-1320.json` states its log-mtime basis;
-it is not complete session/tool/token telemetry. Prior execution-order and
-two-child comparisons still apply; different inputs do not establish a speedup.
-The stopped-source body/file residual remains unattributed. This update reuses
-the original receipts and capacity inventory rather than rerunning suites,
-scans, hashes or cleanup merely to refresh a status.
+The refreshed11:38:43–14:38:43UTC audit on2026-10-20 reuses the prior bounded
+inventory and three known later stage logs, without a directory scan. Its six
+complete Source-bound observations move fromF1019/L4446/S4715/B4798 to
+F1051/L4647/S4921/B4948: +32F/+201L/+206S/+150B between the first and last
+in-window observations. None closes the contour. The retained
+`three-hour-receipts-20261020-1440.json` states its log-mtime basis; it is not
+complete session/tool/token telemetry. Current free bytes observed once at14:32
+are5767102464durable and9401090048tmpfs; the unchanged2147483648durable floor
+has3619618816headroom. No new resource GAP or deletion candidate is established.
+
+The selected order is Root's causal fixture packet, focused/static checks and one
+complete SDK/image/contour stage. Bounded read-only Luna review may overlap
+development; no wider numeric pool is qualified. A same-input serial-file
+comparator was not measured; different-input two-child elapsed times cannot prove
+a speedup. The stopped-source body/file residual remains unattributed. Script
+review confirms cached stage stdout and one bounded progress-report read; it
+found no supported runner defect. Combining two in-memory summary parsers is
+rejected without measured benefit. The note is retained as
+`three-hour-runner-review-1438.md` in focused diagnostics.
+
+The checked historical-terminal packet uses genuine public Host claim/complete
+before the fixture's existing suspension/capture. Its focused case passes52
+assertions under the unchanged5s default; it preserves actual completed results
+through stale CAS denial, continuation, lookup and exact retry. Strict165-file
+typecheck and configured lint pass. The unchanged-default public caller passes
+41assertions; the exact two-file resource-pin control passes10. An initial
+development name filter matched zero cases and is retained as such, not PASS.
+Independent Luna review finds no blocker. Numeric coverage is pending publication.
+The proposed configured-frontier suffix helper timed out twice in fresh roots;
+the traced attempt reached beginSessionProducer. Neither attempt is success or
+a mutation kill. Original roots/logs and `frontier-suffix-unvalidated.patch`
+remain retained; only the proven historical packet is integrated. No failed root
+is reused. The exploratory helper also had two TypeScript diagnostics; its
+unvalidated extraction is deferred with the patch rather than shipped.
+
+The Pstack preparation probe exposed a command-use trap: direct cli.ts execution
+exits0 with empty output; its installed executable wrapper returns the real
+prepared contract. Cloud bootstrap now names that entry and requires parsed
+kind/instructions before delegation. The initial empty artifact is retained;
+Luna revalidated its same bounded review under the corrected prepared contract.
 
 [Sidecar](../../../AGENT.sidecar.md) owns Source and delegation policy;
 [TESTING](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle) owns

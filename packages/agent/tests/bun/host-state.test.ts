@@ -1964,11 +1964,17 @@ test('trusted Host continuation atomically retains historical evidence and never
   try {
     // Maintained trusted-caller fixture; this does not establish external approval or Runtime acceptance.
     configRoot = continuationFixtureRepositoryRoot();
-    const current = await continuationFixture({ root: fixtureRoot });
+    const current = await continuationFixture({ root: fixtureRoot, completedAttempt: true });
     f = current;
     if (performance.now() >= deadline) throw new Error('Host continuation fixture exhausted its case deadline.');
     const request = continuationRequestFor(f);
     const before = presentSnapshot(current.store.readHostStateSnapshot(current.identity));
+    expect(before.work.execution.assignment_attempts).toHaveLength(1);
+    expect(before.work.execution.assignment_attempts[0]).toMatchObject({
+      status: 'completed',
+      stage_id: 'implementation',
+      result: { summary: 'Retained original implementation result.' },
+    });
     const journalBefore = current.store.readWorkSessionJournal(current.identity);
     if (!journalBefore || journalBefore.state.step_id === null)
       throw new Error('Expected the fixture historical Journal step.');
@@ -2045,6 +2051,7 @@ test('trusted Host continuation atomically retains historical evidence and never
       schema_digest: request.targetSchemaDigest,
     });
     expect(after.work.execution.status).toBe('active');
+    expect(after.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
     expect(after.work.lease?.thread_id).toBe(current.threadId);
     expect(result.receipt).toMatchObject({
       prior_work: before.work,

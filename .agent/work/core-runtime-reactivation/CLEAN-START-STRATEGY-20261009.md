@@ -62,6 +62,13 @@ from actual missing function/branch locations, not guard/assertion counts.
 Reuse native counters/maps once; implicit-if arms keep labeled containing-if
 ranges and unavailable diagnostics stay unknown. No additional AST pass is needed.
 Retain Root-only integration, one active contour and default5s case/300s coverage limits.
+The next checked packet adds real public claim/complete history to the existing
+historical-terminal continuation fixture, with unchanged defaults and exact CAS,
+lookup and retry assertions. Numeric delta remains pending. A proposed actual
+engine/Journal suffix fixture timed out under5s and remains an unvalidated retained
+patch, not shipped Source. Resolve that path's producer setup cost before admitting
+it; keep the existing deadline and original failure custody. Batch reachable
+causal paths before one full stage, rather than forming an SDK for each new guard.
 The three-hour audit fixes the local qualifier namespace-overwrite hazard; WORK
 retains its unchanged-manifest proof and measured-versus-planned comparisons.
 Qualified closed-producer cache retirement has resolved the prior capacity

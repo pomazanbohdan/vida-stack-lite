@@ -4,6 +4,23 @@ This reference holds detailed, scenario-specific regression contracts that are t
 
 ## Required agent regressions
 
+### Historical continuation retains actual completed Host attempts
+
+The existing Host historical-terminal continuation case opts into
+`continuationFixture({ completedAttempt: true })`. Setup claims and completes an
+implementation attempt through the public Host APIs before the original fixture
+releases ownership and captures its historical terminal body. Ordinary callers
+keep the empty-history default. The case checks the completed result, unchanged
+Host/Journal after stale CAS denial, exact history retention after continuation,
+persisted lookup and an idempotent retry with one receipt and no reissued action.
+This is fresh fixture evidence, not replay or Runtime acceptance.
+
+The separate configured-frontier suffix case remains unqualified. Its first
+bounded child timed out inside the existing default5s case; a fresh traced run
+reached `beginSessionProducer` before its deadline. Both original roots and logs
+remain retained. Do not add a larger timeout, synthetic accepted suffix or
+public-only test outside the active Host selection to claim its coverage.
+
 ### Public CLI and diagnostics
 
 `tests/documentation-clear.test.ts` executes the package Source TS CLI with the
