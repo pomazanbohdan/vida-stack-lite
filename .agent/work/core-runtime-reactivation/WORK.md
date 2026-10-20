@@ -10,38 +10,38 @@ exact F/L/S/B100 before selecting another. Root is the sole Source integrator,
 Git owner and numeric producer. Frozen complexity/CRAP qualification and mutation
 remain deferred; their budgets and acceptance rules are unchanged.
 
-Latest complete measurement binds Source `eae12fea2be6832801ad787c4afae9b3ed6ffd31` and run
-`d2dc563f-6171-4237-b041-84b3cfa5fdc6`, not later HEAD.
+Latest complete measurement binds Source `483c7e72cc6dcd06ef4b6b5a9911e40b69267996` and run
+`ae8a6516-522c-4cff-ac38-fe2c8324e449`, not later HEAD.
 
-| Counter | Covered / total | Covered delta from7138df5 |
+| Counter | Covered / total | Covered delta fromeae12fe |
 | --- | --- | --- |
-| Functions | 1115 / 1129 | +8 |
-| Lines | 4900 / 4972 | +17 |
-| Statements | 5190 / 5302 | +18 |
-| Branches | 5226 / 5642 | +45 |
+| Functions | 1124 / 1128 | +9 |
+| Lines | 4926 / 4973 | +26 |
+| Statements | 5217 / 5304 | +27 |
+| Branches | 5279 / 5641 | +53 |
 
-308PASS/0FAIL,4162assertions,175228.167295ms elapsed.
-Host child:292PASS/3891assertions/167.05s. Stopped-source child:
-16PASS/271assertions/127.03s, contained cleanup complete. Exit0,
+308PASS/0FAIL,4232assertions,161205.725504ms elapsed.
+Host child:292PASS/3936assertions/152.74s. Stopped-source child:
+16PASS/296assertions/117.56s, contained cleanup complete. Exit0,
 full capture, closed group, unchanged boot/image and published report hold.
 Operation remains **BLOCKED/nonexact**. Diagnostic maxCC279/entryCRAP279 is
 unqualified. Historical exact16/45, local triples9/45 and separate data-only1
 remain distinct measures, not a current global PASS. Different-input elapsed
 times do not establish a controlled speedup.
 
-All four denominators remain unchanged; no counter domain or gate is narrowed.
-The report-only refresh now has14missing functions under8owners, down from22/12.
-All14 have retained map-validated body coordinates. Live continuation lookup,
-producer initialization/resume, unprepared-owner FIFO and live TaskSource owner
-now have no missing functions. This does not imply branch or whole-contour
-closure. All four stored-history callbacks remain uncovered: fresh recovery
-reopen is meaningful persistence evidence but did not reach those callbacks.
-416 uncovered branch arms are now listed from the same
+The genuine product repair and redundant lookup removal change denominators by
+-1F/+1L/+2S/-1B; no counter domain, exclusion or gate is narrowed.
+The report-only refresh now has4missing functions under3owners, down from14/8.
+All4 have retained map-validated body coordinates: two runtime-rebind callbacks,
+one historical lifecycle-reference map and one stored recovery-prior lookup.
+The changed-runtime recovery reconstruction and terminal frontier binding paths
+now execute. This does not imply branch or whole-contour closure.
+362 uncovered branch arms are now listed from the same
 report, with exact deficit agreement and explicitly labeled implicit-if ranges.
 Reuse `host-uncovered-plan-current.json` in focused diagnostics.
 No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
-attempt1116. Failed attempts1091 and1100 remain separately classified.
+attempt1118. Failed attempts1091 and1100 remain separately classified.
 
 The measured packet extends the existing TaskSource fixture with optional
 already allowed non-file resources; default callers still use the original file-only
@@ -75,7 +75,7 @@ for this same private root and shared ledger scope; its exact pin control passes
 10assertions and the complete4b8a387 stage above qualifies that selection.
 No numeric gain or product defect is claimed from the focused PASS.
 
-### Whole remaining-contour packet in progress
+### Whole remaining-contour packet
 
 The v1117/v1118 packet reproduces a product defect: readonly frontier code
 adoption rejects a genuine completed Host preparation with `attempt assignment
@@ -100,7 +100,7 @@ equality; the completed-status, exact completed-attempt and full-array transitio
 checks remain. Prior report key179, body3376:27–3376:71, identifies the removed
 `src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#1`.
 Its budget is retired, never transferred. Removing that boolean and adding one
-history-registration loop is expected to retain rootCC279; current qualification
+history-registration loop retains diagnostic rootCC279; current qualification
 and full function correspondence remain deferred to the existing owner.
 
 Historical peer setup initially violates file-authority/lifecycle equality;
@@ -120,7 +120,7 @@ then fresh-connection lookup and exact retry preserve them. Focused31assertions
 pass18.482s under20s; no native endpoint formation, installation or Runtime
 acceptance is claimed. The unchanged-binding reopen from the previous packet
 did not exercise those callbacks and is not represented as having done so.
-Numeric evidence remains the published eae12fe stage until this packet's run.
+The matching483c7e7 stage above supplies this packet's numeric evidence.
 
 The Source repair passes strict148-file TypeScript, configured type-aware lint
 and5affected Host cases/252assertions in44.88s. Logs remain under
@@ -144,7 +144,8 @@ TypeScript/lint and2cases/126assertions pass32.60s (10.154s/21.303s) within thei
 original60s bounds in`retired-fifo-v1118-Orll0C`. The initial workspace-versus-Host
 wrapper static errors remain in`retired-fifo-v1118-zdrCF9`; no runtime followed
 that static failure. Blind final review agrees. Both changed resource pins are
-refreshed once after the packet stabilizes; full numeric gains remain pending.
+refreshed once after the packet stabilizes. Matching full measurement records
+the gains above; frozen correspondence and mutation remain unqualified.
 
 The v1115 packet extends the already native low-risk legacy continuation with a
 target-config bridge over its original Host/DB, actual Source-planner issue/report
@@ -410,27 +411,27 @@ The next actual producer still performs its maintained admission check.
 
 ## Latest measurement custody
 
-- Stage:`/workspace/contour-stage-wzxfKf`; exec67329, observed exit0.
-- Image:`/workspace/.vida-quality-inputs/1907f9b5fec0ae4828abf94867b0e12cb80e3864/repository`.
-- Tree:`dc56eb632bf1a650c48c6c0f06a192e07c89df59`.
-- Input:`a7eb38c4ba9bbb50a0e0df7863ec86c50b600920b9d2da26db842d5586cbbf7c`.
-- Image manifest SHA256:`a9f6c3cb05742fdbee43250f1e35864d30320fcd1af4ca8727fd497fbb81bb4e`.
-- SDK CI39513244106, successful attempt1, artifact12307405126.
-- SDK name:`vida-sdk-test-inputs-eae12fea2be6832801ad787c4afae9b3ed6ffd31-39513244106-1`.
-- ZIP SHA256:`d1abd5815ac6fdb8221e70697b0144dbc3a45a8f44e0a7a0ed6a8ab450a56d17`.
-- `remainder-v1115-stage.log` in focused diagnostics retains the complete outcome.
-- Original scratch:`/dev/shm/vida-quality-retained-coP4P6`. After observed closure,
+- Stage:`/workspace/contour-stage-VHJB8v`; exec17641, observed exit0.
+- Image:`/workspace/.vida-quality-inputs/ed8da0a3cf20da532798acdb9e6156c8487ab305/repository`.
+- Tree:`666a6249db8878f401c12ff82133f8c1e8fc6158`.
+- Input:`765723331690419259c6beed17449d2f6ac38b0b75bffe6b3c88f41f2ed6ba79`.
+- Image manifest SHA256:`878b95f821a3d81aa2bea3139cf601d7935ddc74c8f084abd0dcd22b24445ec4`.
+- SDK CI39517279344, successful attempt1, artifact12308034013.
+- SDK name:`vida-sdk-test-inputs-483c7e72cc6dcd06ef4b6b5a9911e40b69267996-39517279344-1`.
+- ZIP SHA256:`6602a90ccafa8867fd3f36b71607544f1b4ee1a97cc7a3d86fbd68318ec1988b`.
+- `remainder-v1119-stage.log` in focused diagnostics retains the complete outcome.
+- Original scratch:`/dev/shm/vida-quality-retained-RSBsFK`. After observed closure,
   only its qualified private regenerable Bun cache is retired; all other original
   scratch, fixtures, DBs and evidence remain.
-- Whole remaining scratch archive:`/workspace/vida-functional-retention-wzxfKf-5vwE6M/scratch.tar.gz`,
-  227318bytes, full tar compare PASS; SHA256`bb895952e9e3ca7152719b65620494b0d7d09f69adb6d92d9490dc86c17f0387`.
+- Whole remaining scratch archive:`/workspace/vida-functional-retention-VHJB8v-n7SIDn/scratch.tar.gz`,
+  227299bytes, full tar compare PASS; SHA256`9246675f05db1ef1229e84ed7245f9e26a7db8fda05fc03f42564a63e7f389c4`.
   Original create/compare logs and archive.json remain beside it; the original
   scratch remains intact apart from its separately retired regenerable cache.
-- Durable free before/after archive:4582772736/4582543360bytes;
-  unchanged2147483648floor leaves2435059712bytes headroom. No resource GAP.
+- Durable free before/after archive:4509995008/4509765632bytes;
+  unchanged2147483648floor leaves2362281984bytes headroom. No resource GAP.
 
 Cache retirement is receipted in
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1115-cache-retirement-wzxfKf`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1119-cache-retirement-VHJB8v`.
 One exact private cache,178155793regular bytes,215846912tmpfs bytes reclaimed;
 4096bytes of durable metadata growth is not counted as reclamation. Closed
 custody, namespace, original Source, boot/image, no active owner and dependency
@@ -440,7 +441,7 @@ No original outcome, archive, sibling scratch, SDK or measured image is modified
 The reused qualifier/retirer keep their declared retained-tmpfs namespace,
 receipt, mount, identity, live-owner and dependency checks. Original predecessor
 scripts remain unchanged. Previous custody is retained in the published
-[63cbebd WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/63cbebd/.agent/work/core-runtime-reactivation/WORK.md).
+[3b7e114 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/3b7e114/.agent/work/core-runtime-reactivation/WORK.md).
 The preceding packet's direct tmpfs path and transport
 recovery proof remain in4b8a387 WORK. During SDK transport, one mixed download/
 process-inspection command echoed its own temporary artifact URL via parent argv.

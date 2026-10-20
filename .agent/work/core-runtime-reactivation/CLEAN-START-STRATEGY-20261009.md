@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `eae12fea2be6832801ad787c4afae9b3ed6ffd31`, run `d2dc563f-6171-4237-b041-84b3cfa5fdc6`: F1115/1129, L4900/4972, S5190/5302 and B5226/5642. It records308PASS/0FAIL,4162assertions in175.228seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is14missing functions under8owners, all with exact retained map coordinates, plus416 exact zero-count branch arms. The packet adds8F/17L/18S/45B with unchanged denominators and no exclusions. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `483c7e72cc6dcd06ef4b6b5a9911e40b69267996`, run `ae8a6516-522c-4cff-ac38-fe2c8324e449`: F1124/1128, L4926/4973, S5217/5304 and B5279/5641. It records308PASS/0FAIL,4232assertions in161.206seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is4missing functions under3owners, all with exact retained map coordinates, plus362 exact zero-count branch arms. The packet adds9F/26L/27S/53B; the genuine repair and duplicate lookup removal change denominators by-1F/+1L/+2S/-1B without exclusions or budget changes. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -30,7 +30,7 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 The owner's current instruction replaces one-function measurement packets with
 one coordinated pass, initially46missing functions and606branch arms. The first
-complete packet stages now leave14functions and416arms; continue the same contour
+complete packet stages now leave4functions and362arms; continue the same contour
 from its refreshed retained map, not the superseded starting counters. Superpowers
 `writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
 guide this plan. Keep this existing strategy as the plan owner; do not create a
@@ -166,6 +166,13 @@ recovery; retain its exact completed-attempt and full-array checks. Do not raise
 the frozen279 complexity budget or transfer the removed closure's budget. Root
 checks the whole affected group, records the deleted callback correspondence,
 then publishes and measures once under unchanged deadlines.
+
+The matching483c7e7 stage confirms the repaired terminal binding and changed-runtime
+recovery reconstruction while retaining diagnosticCC279. Continue from its four
+remaining callbacks and362arms. First add an actual backed implementation-scope
+reference to the historical continuation fixture, then resolve genuine synthesis
+correction/current approval and joined recovery-history prerequisites. A fixture
+proposal or failed prerequisite does not establish coverage or a product defect.
 
 For each group, the exact named Bun case must reach its intended public operation
 and assert its success, refusal and replay behavior before strict TypeScript/lint
