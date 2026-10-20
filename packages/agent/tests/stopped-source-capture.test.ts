@@ -1429,7 +1429,17 @@ test(
           verifyCurrent: overlapping.verifyCurrent,
         }),
       ).toThrow('active Source ownership');
-      const completed = f.completeAndReleaseOverlappingWriter(overlap),
+      const completed = f.completeAndReleaseOverlappingWriter(overlap);
+      writeFileSync(path.join(f.root, 'disjoint.ts'), 'Synthetic independently admitted peer source');
+      const peer = f.admission('disjoint-peer', 'disjoint.ts', 'synthetic-disjoint-peer'),
+        peerBefore = completeHost(f.store.readHostStateSnapshot(peer.identity)),
+        peerTicket = required(
+          peerBefore.ledger.tickets.find((entry) => entry.ticket_id === peerBefore.work.lease?.ticket_id),
+          'Active disjoint peer ticket',
+        ),
+        peerClaims = peerBefore.ledger.claims.filter(
+          (entry) => entry.ticket_id === peerTicket.ticket_id && entry.status === 'active',
+        ),
         released = completeHost(f.store.readHostStateSnapshot(f.identity)),
         ticketId = completed.reservation.receipt.attempt.lease.ticket_id,
         claim = required(
@@ -1449,6 +1459,12 @@ test(
           evidence_ref: at(completed.observation.evidence_refs, 0, 'Later writer evidence'),
         };
       expect(claim.status).toBe('released');
+      expect(peerTicket.status).toBe('active');
+      expect(peerClaims).toHaveLength(1);
+      expect(peerTicket.exclusive_resources.length).toBeGreaterThan(0);
+      expect(peerTicket.exclusive_resources).not.toContain('file:AGENT.sidecar.md');
+      expect(peerTicket.active_resources).toEqual(peerTicket.exclusive_resources);
+      expect(peerClaims[0]?.resources).toEqual(peerTicket.exclusive_resources);
       expect(released.ledger.tickets.find((entry) => entry.ticket_id === ticketId)?.status).toBe('released');
       expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), ['AGENT.sidecar.md'])).toEqual(
         completed.updatedScope,
@@ -1507,6 +1523,10 @@ test(
       expect(capturedJournal.state.source_scope).toEqual(f.source);
       expect(f.store.captureRetiredSourceObservation(request)).toEqual(captured);
       expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(capturedJournal);
+      expect(f.store.readHostStateSnapshot(peer.identity).work).toEqual(peerBefore.work);
+      expect(readFileSync(path.join(f.root, 'disjoint.ts'), 'utf8')).toBe(
+        'Synthetic independently admitted peer source',
+      );
     } finally {
       await f.close();
     }

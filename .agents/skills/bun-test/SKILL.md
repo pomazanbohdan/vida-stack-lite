@@ -102,6 +102,13 @@ failure evidence and all other retained scratch. Reuse the latest inventory.
 
 ## Design a regression
 
+Pair overlapping-owner refusal with an active disjoint-owner control through
+the fixture's existing public admission. Require nonempty ticket resources and
+exact agreement with its active claim. Keep current
+CAS after admission and exact peer Work/file preservation through success and
+retry. An unstarted disjoint peer needs no extra bridge, synthesis or issued
+workflow. Coverage of the visited predicates still needs the matching report.
+
 When repeated verifier reads protect a precommit freshness boundary, retain them.
 Reuse the genuine fixture and change one owned input between the initial proof
 and final recheck; assert the intended denial, exact restoration and unchanged

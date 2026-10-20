@@ -306,6 +306,14 @@ every producer fence, current-version check and deterministic rebuild fresh.
 
 ### Coordination history and expired recovery
 
+The retired-source capture case pairs the active overlapping-writer denial
+with a genuine active disjoint peer admitted through the same fixture's public
+admission. Require a nonempty active claim outside the captured file resource.
+Build fresh Work/ledger CAS after that admission; preserve the original retirement,
+later-grant denials and successful exact retry. The peer's Work and Source bytes
+remain unchanged. Do not start another bridge/producer for the unissued peer or
+extend the existing case budget to create this control.
+
 The maintained TaskSource preparation case initializes the current projection
 schema while its operation table is still absent, then prepares and inspects
 one exact retry-stable operation with the projected Work ID. Preserve no-action

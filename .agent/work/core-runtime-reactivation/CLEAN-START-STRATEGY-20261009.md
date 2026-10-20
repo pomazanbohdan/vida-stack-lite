@@ -37,6 +37,15 @@ queued retries and issued/UNKNOWN ownership transfer; the empty fixture default
 remains. Final blind review, exact resource-pin control, ordinary commit/hooks/push
 and one matching SDK/image/coverage stage pass. The accepted delta is1F/1L/1S/0B.
 Continue from the new map; preserve earlier numbers under their original test bytes.
+
+Next, the existing retired-source case admits an active disjoint peer through
+its own public fixture admission. Preserve overlap refusal and exact capture/retry,
+then verify peer state/file preservation without another workflow setup. The
+focused case passes53assertions with strict128-file TypeScript and lint under
+its unchanged60s limit after strengthening ticket/claim agreement per blind review.
+Complete the refreshed resource-pin control before
+one published-input SDK/image/coverage stage. Projected predicate coverage is
+not accepted numeric evidence until that stage closes.
 Root is the sole writer; bounded read-only Luna research/review may overlap only
 development. Preserve the existing inventory and avoid unrelated setup or
 unchanged numeric reruns. Count native visited operands, not added assertions.

@@ -58,6 +58,18 @@ blocked-resource check. Multi-predecessor sorting remains an explicit uncovered
 dependency; a one-element sort does not execute its comparator. The prepared
 review and final scope review remain in the focused diagnostics.
 
+The next retired-source packet adds an active disjoint peer through the existing
+fixture admission after the overlapping writer's real completion/release. It
+requires a nonempty active claim, current CAS, preserved peer Work/file bytes and
+the unchanged original capture/retry and later-grant denial checks. No second
+engine, Journal or issued peer effect is created. Initial focused1PASS51assertions
+in18.519s uses the original60s case bound. Blind review requests explicit peer
+ticket/claim resource agreement; the strengthened case passes53assertions in
+17.777s, with strict128-file TypeScript and configured lint. These different-input
+timings are not a measured speedup. The stopped-file resource digest is refreshed
+for this same private root and shared ledger scope, pending a matching stage.
+No numeric gain or product defect is claimed from the focused PASS.
+
 ## Latest measurement custody
 
 - Stage:`/workspace/contour-stage-Xhmdu4`; exec37138, observed exit0.
@@ -359,8 +371,8 @@ The parent fences installs, Git changes, indexing and additional producers.
 
 The current reviewed Host file digest is
 `7fb26389afb1c9ab79824046059fcba7fc6884f9a9cb66fc5d4e26f6ba7d2863`;
-stopped-source remains
-`a414b790fea1381ffb425552a1f1b9ae29ad00f2998491a44bb8b7d6d45e9037`.
+stopped-source is now
+`3b7dcdb0bdfb815149d2a5903858e4b4297afecbef4408179bb50e3d91f1974a`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
 ownership. The expired-lease case's peer/waiter use that same unique root and shared
 fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
@@ -374,6 +386,10 @@ The retained-resource packet changes only fixture-local Work/ticket/claim data
 and assertions. It adds no resource root, shared write, clock or parallel body.
 Its updated pin is qualified by the matching8ac1d9e stage above; a1f4049's
 measurement retains the preceding pin and is not reattributed to newer test bytes.
+The next disjoint-owner control stays inside the stopped child's existing
+private consumer root. It adds no cross-child shared state, producer or clock
+mutation. Its stopped-file digest is pending the next matching stage; the
+8ac1d9e measurement retains its original a414b790 stopped-file digest.
 The complete report remains nonexact. The300s
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.
