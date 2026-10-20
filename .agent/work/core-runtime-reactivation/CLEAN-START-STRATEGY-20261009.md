@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `4b8a3871c66cc4ea660f3a3d67d27db9919edf30`, run `b88d585c-1d8d-48d8-a17f-d1b9893f3cd5`: F1083/1129, L4743/4970, S5025/5300 and B5036/5642. It records305PASS/0FAIL,3824assertions in143.079seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is46missing functions under21owners, all with exact retained map coordinates, plus606 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `c9ace65a9860419978e98c71cd0d6dd297effeb3`, run `0cdcc9aa-b0b7-449a-ac46-1e0f44fc264e`: F1095/1129, L4834/4972, S5122/5302 and B5113/5642. It records306PASS/0FAIL,3966assertions in160.493seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is34missing functions under16owners, all with exact retained map coordinates, plus529 exact zero-count branch arms. The packet adds12F/91L/97S/77B; line/statement denominators each increase by2, without exclusions. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -29,7 +29,9 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 #### Whole remaining-contour packet
 
 The owner's current instruction replaces one-function measurement packets with
-one coordinated pass over all46missing functions and606branch arms. Superpowers
+one coordinated pass, initially46missing functions and606branch arms. The first
+complete packet stage now leaves34functions and529arms; continue the same contour
+from its refreshed retained map, not the superseded starting counters. Superpowers
 `writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
 guide this plan. Keep this existing strategy as the plan owner; do not create a
 second plan/ledger or adopt plugin worktree/model defaults. Root implements the
