@@ -215,6 +215,15 @@ expected inflight root without replay. Strict181files and scoped lint pass.
 Finish the final bounded review/pin control and normal publication, then one
 changed-input stage with matching SDK and verified durable scratch retention;
 do not count targeted passes as exact coverage.
+Its de8a330 changed-input stage-BZK3xP now completes291PASS/0FAIL,
+2522assertions in136.719s, with complete capture/group/boot/image checks and
+published F886/1129,L3769/4966,S4007/5296,B4019/5640. Gains are9/86/92/51;
+all nine missing wrapper functions/closures now execute, not all branches.
+Current inventory243functions/88owners; exact16/45 stays unchanged. Entire new
+tmpfs scratch is durably archived/compared with originals retained; WORK owns
+bindings/custody. Next batch uses small native maintenance/storage-identity API
+cases without repeating kernel setup. A60s full-contour target is unqualified:
+measure dominant retained-log costs first, preserve300s and all exact gates.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

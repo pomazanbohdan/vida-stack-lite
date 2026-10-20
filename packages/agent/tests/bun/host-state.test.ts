@@ -5171,6 +5171,146 @@ test('consumer migration rejects foreign canonical rows appearing after its base
 });
 
 describe('host-owned durable maintenance fence', () => {
+  test('planning authority validates project scope and releases its failed read scope without acquiring a fence', () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const binding = maintenanceBinding();
+    const failure = new Error('fixture planning authority changed');
+    let fail = false;
+    let calls = 0;
+    const checked = new HostStateStore(database, workspace, undefined, undefined, undefined, {
+      ...maintenanceVerifier,
+      verifyAcquisition: (observed, prior) => {
+        calls++;
+        expect(database.inTransaction).toBe(true);
+        expect(observed).toEqual(binding);
+        expect(prior).toBeNull();
+        if (fail) throw failure;
+      },
+    });
+    expect(checked.assertMaintenancePlanningAuthority(binding)).toBeUndefined();
+    expect(calls).toBe(1);
+    expect(checked.readMaintenanceFence()).toBeNull();
+    expect(() => checked.assertMaintenancePlanningAuthority({ ...binding, project_ids: ['foreign'] })).toThrow(
+      'maintenance project authority mismatch',
+    );
+    expect(() => database.transaction(() => checked.assertMaintenancePlanningAuthority(binding)).deferred()).toThrow(
+      'nested host state transaction forbidden',
+    );
+    expect(calls).toBe(1);
+    fail = true;
+    expect(() => checked.assertMaintenancePlanningAuthority(binding)).toThrow(failure);
+    expect(calls).toBe(2);
+    expect(database.inTransaction).toBe(false);
+    expect(checked.readMaintenanceFence()).toBeNull();
+    fail = false;
+    expect(checked.assertMaintenancePlanningAuthority(binding)).toBeUndefined();
+    expect(calls).toBe(3);
+    expect(checked.readMaintenanceFence()).toBeNull();
+    expect(database.query<ScalarCountRow, []>('SELECT count(*) AS count FROM agent_host_governance').get()?.count).toBe(
+      0,
+    );
+    preserveHostFixtureRoot = false;
+  });
+
+  test('released-fence proof accepts only its exact native receipt without reacquiring or releasing state', async () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const checked = maintenanceStore();
+    const receipt = checked.acquireMaintenanceFence(maintenanceBinding());
+    expect(() => checked.assertReleasedMaintenanceFence(receipt)).toThrow('released fence receipt stale or forged');
+    expect(checked.readMaintenanceFence()).toEqual(receipt.fence);
+    const released = await checked.releaseMaintenanceFence(receipt);
+    const proof = { ...receipt, fence: released };
+    const observed = checked.assertReleasedMaintenanceFence(proof);
+    expect(observed).toEqual(released);
+    expect(observed).not.toBe(released);
+    expect(() => checked.assertReleasedMaintenanceFence(receipt)).toThrow('released fence receipt stale or forged');
+    expect(() => checked.assertReleasedMaintenanceFence({ ...proof, token: randomUUID() })).toThrow(
+      'released fence receipt stale or forged',
+    );
+    expect(() => checked.assertReleasedMaintenanceFence({ ...proof, token: 'invalid' })).toThrow(
+      'release receipt invalid',
+    );
+    expect(() => database.transaction(() => checked.assertReleasedMaintenanceFence(proof)).deferred()).toThrow(
+      'nested host state transaction forbidden',
+    );
+    const foreign = new HostStateStore(database, 'f'.repeat(64), undefined, undefined, undefined, maintenanceVerifier);
+    expect(() => foreign.assertReleasedMaintenanceFence(proof)).toThrow('released fence receipt stale or forged');
+    expect(checked.readMaintenanceFence()).toEqual(released);
+    const next = checked.acquireMaintenanceFence(maintenanceBinding());
+    expect(next.fence.generation).toBe(released.generation + 1);
+    expect(() => checked.assertReleasedMaintenanceFence(proof)).toThrow('released fence receipt stale or forged');
+    expect(checked.readMaintenanceFence()).toEqual(next.fence);
+    preserveHostFixtureRoot = false;
+  });
+
+  test('configured database identity binds the actual root, workspace and canonical native file without granting a fence', async () => {
+    const deadline = performance.now() + 5_000;
+    let ownedRoot: string | undefined;
+    let handle: Database | undefined;
+    let completed = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const configuredRoot = await makeFreshRepository('vida-configured-host-', {
+          includeLocalInstructions: false,
+          onRoot: (created) => {
+            ownedRoot = created;
+            console.info('Configured Host database fixture root: ' + created);
+          },
+        });
+        const config = loadRuntimeConfig(configuredRoot);
+        const relative = config.control.work_root + '/session-handoff.v1.sqlite';
+        mkdirSync(path.join(configuredRoot, config.control.work_root), { recursive: true });
+        const configuredWorkspace = deriveWorkspaceId(config.repository.repository_id, configuredRoot);
+        const opened = openHostStateDatabase(configuredRoot, relative, configuredWorkspace);
+        handle = opened;
+        const checked = new HostStateStore(
+          opened,
+          configuredWorkspace,
+          undefined,
+          undefined,
+          undefined,
+          maintenanceVerifier,
+          configuredRoot,
+        );
+        const rows = opened.query<HostStateSqlRow, []>(
+          'SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state ORDER BY workspace_id,kind,id',
+        );
+        const before = rows.all();
+        expect(checked.assertConfiguredDatabase(config)).toBeUndefined();
+        const foreignConfig = {
+          ...config,
+          repository: { ...config.repository, repository_id: 'foreign-configured-repository' },
+        };
+        expect(() => checked.assertConfiguredDatabase(foreignConfig)).toThrow('configured Host workspace differs');
+        const rootless = new HostStateStore(opened, configuredWorkspace);
+        expect(() => rootless.assertConfiguredDatabase(config)).toThrow('configured Host repository required');
+        const foreignFile = path.join(configuredRoot, 'session-handoff.v1.sqlite');
+        const foreignBytes = Buffer.from('fixture physical-path substitution');
+        writeFileSync(foreignFile, foreignBytes, { flag: 'wx' });
+        expect(() =>
+          checked.assertConfiguredDatabase({ ...config, control: { ...config.control, work_root: '.' } }),
+        ).toThrow('configured Host database or parent differs');
+        expect(readFileSync(foreignFile)).toEqual(foreignBytes);
+        expect(rows.all()).toEqual(before);
+        expect(checked.readMaintenanceFence()).toBeNull();
+        if (performance.now() >= deadline) throw new Error('Configured Host identity fixture exhausted its deadline');
+        completed = true;
+      },
+      async () => {
+        if (handle) closeWorkspaceDatabaseWithAdmission(handle);
+        if (ownedRoot) {
+          if (completed && performance.now() < deadline) await rm(ownedRoot, { recursive: true, force: true });
+          else {
+            console.error('Retained configured Host database fixture: ' + ownedRoot);
+            if (performance.now() >= deadline)
+              throw new Error('Configured Host identity cleanup exhausted its deadline');
+          }
+        }
+      },
+      'Configured Host identity fixture',
+    );
+  });
+
   test('trusted acquisition verifier runs under the same immediate lock and rejection writes no fence', () => {
     const competing = new Database(databasePath, { strict: true });
     handles.push(competing);

@@ -101,6 +101,43 @@ targeted passes, owns the measured numeric increase.
 
 ### Latest complete host-state coverage and Initial Source packet
 
+The de8a330 stage /workspace/contour-stage-BZK3xP completes in136718.713ms,
+exit0, with complete capture, closed group, unchanged boot/image and published
+report. Host275PASS/2316assertions in126.86s plus stopped-source16PASS/
+206assertions in127.14s give291PASS/0FAIL and2522assertions. Run
+c7a60207-3e17-4ac0-a143-43d7e18cd68b records
+F886/1129,L3769/4966,S4007/5296,B4019/5640: gains9/86/92/51 over2a82e24.
+All nine previously uncovered migration-wrapper functions/closures execute;
+this does not establish complete wrapper branches or exact contour coverage.
+The reused report-only inventory has243uncovered functions under88owners.
+Operation stays BLOCKED/nonexact and historical exact16/45; frozen/CRAP/mutation
+remain deferred/unqualified. Projection1052 retains the terminal observation.
+
+The immutable image is
+/workspace/.vida-quality-inputs/aa4bca71c324617a96a800358af37a21ed5bf25b/repository,
+manifest SHA4ffc42778580c618fab40c7fbd20a0d221bfaa71882ed1a974bd628c3dcc8f0c,
+input44ec21173cd232e146691e7bfed65080f0ea9dbdab9b3caa9b3a9af36f42321e,
+Source tree c87c74fee4777177584b0a581de93d121aee9293. Matching SDK
+CI39375166816/artifact12243615041 succeeds and downloaded ZIP SHA
+68b9b483c4747bfce58ce0cd9904aee43d226481d64ce01ff103d5c56e2339e8 matches.
+Normal hooks before publication pass516format/523strict files, lint and Knip.
+No unchanged retry, extra AST/inventory scan or new budget is introduced.
+
+Admission observes4948750336overlay and9224409088tmpfs free bytes against
+unchanged2147483648floor; max memory17179869184, OOM/OOM-kill0. Selected scratch
+is /dev/shm/vida-quality-retained-821O8X/scratch-A2epoB. After observed exec40315
+exit0/group closure, the one bounded owned-scratch inventory is179327602bytes;
+overlay before retention4885225472bytes. All new scratch, including the expected
+inflight root, is preserved at
+/workspace/vida-functional-retention-BZK3xP-trjVH8/scratch.tar. GNU tar compare
+against the unchanged original succeeds. Archive206448640bytes, SHA
+93cfce23cd352bb7f97278270e3fb6908753c6b86dc38f1d54385d48f4db9752;
+scratch.sha256 and archive.log remain beside it. Original scratch is retained;
+overlay after preservation4678762496bytes remains above the floor. No state
+replay, cleanup, real consumer effect or power-loss durability claim follows.
+
+### Prior2a82e24 complete host-state observation
+
 The2a82e24 retained-host-tmpfs stage /workspace/contour-stage-jFAIDI completes
 in142585.557ms, exit0, complete capture/group closure, unchanged boot/image
 inputs and published report. Host272PASS/2235assertions in135.05s plus
@@ -541,6 +578,42 @@ scoped lint, documentation links and diff checks pass. Publish through normal
 hooks, select matching CI SDK, then run one changed-input
 stage. Its actual report alone may establish numeric gains; retain all new
 tmpfs scratch durably after terminal/group closure under the rule above.
+
+### Native maintenance and storage-identity packet
+
+The next three default5s cases cover real planning-authority transactions,
+native released-fence proof and configured root/workspace/file identity. They
+reuse the existing controlled maintenance verifier unit contract; no installed
+approval, Source authority or native consumer effect is claimed. Planning proves
+scope/nesting denials occur before the verifier, callback failure clears its
+read scope, and neither success nor rejection writes a fence/governance record.
+Release proof uses actual acquire/release results, rejecting held, old, foreign,
+forged-token, malformed-token and nested requests without changing native state.
+Configured storage uses its own fresh root/workspace and admitted canonical DB,
+denies a different repository, absent root and inert alternate physical file,
+and checks unchanged Host rows/file bytes and no maintenance fence.
+
+Initial preparation correctly rejects opening a differently derived workspace
+under the global unit fixture's already-bound storage gate. That failed root
+host-state-wk16CL stays retained. The configured case now uses its own recorded
+root before async setup; its first independent-root attempt revealed that the
+generic Host+Journal snapshot helper required an uninitialized Journal table.
+That failure/root vida-configured-host-ddciDx is retained. The case now reads
+only actual native Host rows, without seeding a fake Journal. Both roots are
+under /home/agent/.cache/vida-cloud-tooling/tmp; no product defect or replay is
+inferred. A zero-match initial name filter remains an unsuccessful selection,
+not test evidence. Corrected targeted execution passes3tests/43assertions in
+4.19s, individual477.52/331.66/221.51ms. Strict181files and scoped lint pass.
+
+Independent bounded review /tmp/vida-host-maintenance-identity-review.md finds
+no blocking source/diff issue. Root owns the subsequent fixture corrections and
+actual test results. Root rechecks resources: new state stays in the same Host
+child's fresh unique TMPDIR roots, with no new process/shared writable root or
+worker. Failed cases retain roots; the configured handle closes before deletion.
+Host pin ab5c2cff24bf93cb20a632babc7e2670f86ae4e0479e04d25dff5d43a4ce7aeb
+binds final formatted bytes; all other eligibility/provider/caller predicates
+stay unchanged. Final pin control, ordinary hooks, publication and one changed
+input stage remain required before accepting new F/L/S/B gains.
 
 Next prioritize genuine completed-Source-report recovery and its persisted Work
 history within this same contour. Blind bounded plan
