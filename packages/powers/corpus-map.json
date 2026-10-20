@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 1306,
-  "updated_at": "2026-10-20T14:50:34.626Z",
+  "revision": 1331,
+  "updated_at": "2026-10-20T15:25:56.321Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -2997,11 +2997,11 @@
           "status": "split",
           "instruction_ids": [
             "discover-the-repositorys-test-tooling",
-            "place-tests-by-level-and-cost",
             "keep-tests-self-contained",
             "write-one-test-one-behaviour",
             "let-another-agent-write-the-reproduction-test",
-            "do-not-rerun-checks-without-a-change"
+            "do-not-rerun-checks-without-a-change",
+            "choose-the-test-level"
           ]
         },
         "skills/spec-driven-development/SKILL.md": {

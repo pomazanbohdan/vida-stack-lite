@@ -3,7 +3,7 @@ instruction_id: capture-the-query-plan-before-the-fix
 title: Capture the query plan before the fix
 summary: "The query plan is captured before the change as the baseline and re-checked afterwards, and an index that did not change the plan is reverted."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - query-plan-discipline
 conditions_applies_when: A slow query is about to be fixed with an index or a query change.
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Capture the query plan before the fix

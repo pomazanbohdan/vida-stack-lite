@@ -3,7 +3,7 @@ instruction_id: ship-few-fonts-in-one-format
 title: Ship few fonts in one format
 summary: "A small number of font families and weights ship in one modern format, self-hosted where possible, with the fallback metrics adjusted."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - delivery-budget
 conditions_applies_when: A page uses custom fonts.
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Ship few fonts in one format

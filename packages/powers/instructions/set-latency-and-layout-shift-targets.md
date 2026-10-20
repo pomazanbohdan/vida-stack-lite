@@ -3,7 +3,7 @@ instruction_id: set-latency-and-layout-shift-targets
 title: Set latency and layout-shift targets
 summary: "The interface is judged against written targets for paint, interaction and layout shift, and the API against a written response-time target."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: Performance is being judged for a release.
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Set latency and layout-shift targets

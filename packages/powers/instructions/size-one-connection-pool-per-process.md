@@ -3,7 +3,7 @@ instruction_id: size-one-connection-pool-per-process
 title: Size one connection pool per process
 summary: "There is one pool per process, its size stays under the server limit, exhaustion fails fast, and the holder of the connections is found before the pool is resized."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - resource-bounds
 conditions_applies_when: A process talks to a database over more than one connection.
@@ -21,7 +21,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Size one connection pool per process

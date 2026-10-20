@@ -3,7 +3,7 @@ instruction_id: hoist-render-allocations-and-memoize-what-the-profile-shows
 title: Hoist render allocations and memoize what the profile shows
 summary: "An object or function created in render is a new reference every time and re-renders every child that receives it, and memoization is reserved for work the profile shows is expensive."
 capability_tags:
-  - improve-runtime-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: A component tree re-renders children it did not need to.
@@ -20,7 +20,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/references/optimization-patterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Hoist render allocations and memoize what the profile shows

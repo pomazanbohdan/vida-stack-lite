@@ -3,7 +3,7 @@ instruction_id: keep-the-main-thread-free
 title: Keep the main thread free
 summary: "Long tasks are broken up and yielded to the browser, non-urgent work waits for an idle moment, and rendering never forces a synchronous layout."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - delivery-budget
 conditions_applies_when: An interaction feels slow or the main thread is busy in the browser.
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep the main thread free

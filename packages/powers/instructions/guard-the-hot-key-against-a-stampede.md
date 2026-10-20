@@ -3,7 +3,7 @@ instruction_id: guard-the-hot-key-against-a-stampede
 title: Guard the hot key against a stampede
 summary: "Serve stale while one request recomputes, or coalesce the concurrent misses behind a single in-flight promise."
 capability_tags:
-  - improve-runtime-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: A hot cache key can expire while many requests wait for it.
@@ -19,7 +19,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/references/optimization-patterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Guard the hot key against a stampede

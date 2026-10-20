@@ -3,7 +3,7 @@ instruction_id: key-the-cache-on-every-input-that-changes-the-response
 title: Key the cache on every input that changes the response
 summary: "Tenant, locale, permissions and feature flags belong in the key, because a key that omits the viewer serves one user's data to another."
 capability_tags:
-  - improve-runtime-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: You put a cache in front of something that varies per caller.
@@ -19,7 +19,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/references/optimization-patterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Key the cache on every input that changes the response

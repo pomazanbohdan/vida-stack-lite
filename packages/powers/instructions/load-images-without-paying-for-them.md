@@ -3,7 +3,7 @@ instruction_id: load-images-without-paying-for-them
 title: Load images without paying for them
 summary: "Images are served in a modern format, sized responsively, given their dimensions, and only loaded eagerly when they are the largest thing on the page."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - delivery-budget
 conditions_applies_when: A page ships images.
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Load images without paying for them

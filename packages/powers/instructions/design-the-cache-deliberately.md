@@ -3,7 +3,7 @@ instruction_id: design-the-cache-deliberately
 title: Design the cache deliberately
 summary: "A cache is only added for a call measured as expensive, keyed on every input the response varies on, invalidated by one written strategy and bounded in size and staleness."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - cache-design
 conditions_applies_when: A cache is added or changed.
@@ -22,7 +22,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Design the cache deliberately

@@ -6,6 +6,7 @@ capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
+  - progressive-disclosure
 conditions_applies_when: The guidance or its reference material is getting long.
 conditions_does_not_apply_when: The guidance is short and fits on one screen.
 artifact_contract_output_type: structured-guidance
@@ -22,7 +23,7 @@ provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/anthropic-best-practices.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/writing-for-agents/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Keep guidance short and navigable

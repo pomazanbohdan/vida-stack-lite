@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - requirements-clarification
   - approval-policy
+  - approval-policy-gate
 conditions_applies_when: "The need could be a quick task, a small change, or a project with a design."
 conditions_does_not_apply_when: The owner has already approved the size and the full description of the result.
 artifact_contract_output_type: work-size-decision
@@ -21,7 +22,7 @@ compatibility_requires:
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Size and gate the work

@@ -3,7 +3,7 @@ instruction_id: put-static-content-near-the-user
 title: Put static content near the user
 summary: "Static assets are served from a CDN, the server sits close to the people who use it, and the deployment scales out with a health check."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - delivery-budget
 conditions_applies_when: A service is deployed or its placement is changed.
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Put static content near the user

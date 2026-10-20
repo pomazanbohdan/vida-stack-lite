@@ -3,7 +3,7 @@ instruction_id: design-the-index-for-the-query-shape
 title: Design the index for the query shape
 summary: "An index is built for the filter and the sort of one query, its write cost is measured, and the indexes nothing reads are dropped."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - query-plan-discipline
 conditions_applies_when: An index is added to a table.
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Design the index for the query shape

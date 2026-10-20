@@ -3,7 +3,7 @@ instruction_id: fetch-the-relation-in-the-same-query
 title: Fetch the relation in the same query
 summary: "One query per row is the most common backend bottleneck, so fetch the relation in the same query instead of in the loop."
 capability_tags:
-  - improve-runtime-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: Code loads a collection and then loads a related record for each item.
@@ -19,7 +19,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/references/optimization-patterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Fetch the relation in the same query

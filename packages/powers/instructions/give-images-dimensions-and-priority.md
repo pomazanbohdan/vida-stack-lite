@@ -3,7 +3,7 @@ instruction_id: give-images-dimensions-and-priority
 title: Give images dimensions and priority
 summary: "Every image declares its dimensions, the largest-contentful-paint image is high priority with modern formats and responsive sizes, and the images below the fold load lazily."
 capability_tags:
-  - improve-runtime-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: A page ships images.
@@ -21,7 +21,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/references/optimization-patterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Give images dimensions and priority

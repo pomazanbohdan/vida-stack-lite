@@ -3,7 +3,7 @@ instruction_id: serve-assets-over-a-cached-fast-path
 title: Serve assets over a cached fast path
 summary: "Static assets are cached with a long lifetime and a content hash, the protocol is the fast one, and the known origins are preconnected."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - delivery-budget
 conditions_applies_when: Assets are served to a client over the network.
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Serve assets over a cached fast path

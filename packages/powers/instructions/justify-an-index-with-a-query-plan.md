@@ -3,7 +3,7 @@ instruction_id: justify-an-index-with-a-query-plan
 title: Justify an index with a query plan
 summary: "Adding an index is the guess and the query plan is the measurement, and an index that did not change the plan is a revert."
 capability_tags:
-  - improve-runtime-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: A query is slow and an index is proposed.
@@ -20,7 +20,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/references/optimization-patterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Justify an index with a query plan

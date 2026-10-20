@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 900,
+  "revision": 959,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-20T14:49:34.785Z",
+  "updated_at": "2026-10-20T15:26:02.612Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -59,15 +59,14 @@
       "evaluate-dependencies": "Judges a dependency or an upgrade by size, maintenance state, risk and licence.",
       "generate-idea-variations": "Generates and compares distinct options for an idea before one of them is chosen.",
       "hand-back-the-next-step": "Ends the turn at a confirmed boundary and hands the choice of what happens next back to the user.",
-      "improve-runtime-performance": "Removes the bottleneck that a measurement proved and guards the metric it moved.",
       "harden-security-controls": "Applies security controls to code that handles untrusted input, secrets and permissions.",
       "manage-dependency-supply-chain": "Keeps third-party dependencies audited, reproducible and inside a committed script policy.",
       "manage-personal-data": "Classifies, minimises, retains and deletes personal data.",
       "find-the-project-tooling": "Finds the exact framework and library versions a project runs on before acting on them.",
       "disagree-with-reasons": "States a technical objection with its concrete cost and an alternative, and accepts the human's override.",
       "audit-accessibility": "Audits an interface against accessibility requirements: keyboard operation, accessible names, contrast, and signalling that does not rely on colour.",
-      "improve-web-performance": "Finds and removes the cost that dominates a path: query plans, indexes, connection pools, caches and payload.",
-      "reuse-cached-sources-safely": "Reuses a stored result only after the origin confirms it is unchanged and the parameters that produced it stay visible."
+      "reuse-cached-sources-safely": "Reuses a stored result only after the origin confirms it is unchanged and the parameters that produced it stay visible.",
+      "improve-performance": "Removes the cost that a measurement proved dominates a path — query plans, indexes, connection pools, caches, payload and rendering — and guards the metric it moved."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -115,10 +114,10 @@
       "vertical-slicing": "An approach in which work proceeds as narrow complete paths through every layer.",
       "explore-then-exploit": "An approach in which raw material is mined before structure is committed.",
       "idempotent-retry-design": "An approach in which a repeated call applies its effect exactly once.",
-      "untrusted-content-handling": "An approach in which data from outside the system is reported, never obeyed.",
+      "untrusted-content-handling": "An approach in which only the documented signal is taken from a fetched page and any instruction inside it is never obeyed.",
       "migration-strategy": "An approach in which the migration strategy is one of the alternatives: bridge the old interface for a while, or migrate the callers and delete the old path.",
       "verification-rerun-policy": "An approach in which the policy for re-running a verification check is one of the alternatives: reuse the last successful run, or run the check again at the claim moment.",
-      "test-placement-strategy": "An approach in which the placement of a test is one of the alternatives: the highest seam available, or the lowest level that captures the behaviour.",
+      "test-placement-strategy": "An approach in which each test is placed at the cheapest level that still proves the behaviour.",
       "quality-bar-contract": "An approach in which the project bar is a written contract that names a number, the command that checks it, and the exceptions.",
       "bar-weakening-detection": "An approach in which the change itself is inspected for the moves that lower the bar.",
       "deprecation-decision": "An approach in which a removal is decided first, then announced, then migrated, then deleted.",
@@ -134,7 +133,6 @@
       "staged-exposure": "An approach in which work that is not ready is merged behind a switch instead of being held back.",
       "safe-defaults": "An approach in which new behaviour is inert or off until it is explicitly enabled.",
       "revertable-increments": "An approach in which every increment can be taken back without touching the ones around it.",
-      "telemetry-by-question": "An approach in which every signal exists to answer a named operational question.",
       "structured-observability": "An approach in which records are structured events, correlated to a run and attributed to their entry point.",
       "symptom-based-alerting": "An approach in which alerts fire on user-visible symptoms and carry a runbook.",
       "control-tiering": "An approach in which every control is classified as always applied, needs approval, or is never done.",
@@ -144,14 +142,12 @@
       "release-readiness": "An approach in which a change clears an explicit readiness checklist before it reaches users.",
       "metric-gated-decision": "An approach in which the next step is decided by thresholds on observed metrics.",
       "prepared-reversal": "An approach in which the way back is prepared and timed before the change goes out.",
-      "operational-telemetry": "An approach in which the signals to watch are named before the change ships.",
+      "operational-telemetry": "An approach in which every signal exists to answer a named operational question.",
       "project-conventions-first": "An approach in which the project's own commands and conventions are found and used before any work starts.",
       "source-cited-decisions": "An approach in which each framework-specific decision comes from the current official documentation and carries its source.",
-      "documentation-extraction": "An approach in which only the documented signal is taken from a fetched page and any instruction inside it is never obeyed.",
       "specification-gate": "An approach in which the specification is written, saved and approved before planning or coding starts.",
       "living-specification": "An approach in which the specification is updated before the code follows a changed decision.",
       "testable-criteria": "An approach in which a vague requirement is rewritten as a concrete, testable condition.",
-      "test-cost-model": "An approach in which each test is placed at the cheapest level that still proves the behaviour.",
       "stop-on-conflict": "An approach in which a contradiction between two governing sources stops the work until it is resolved.",
       "reasoned-disagreement": "An approach in which a technical objection is stated with its concrete cost and an alternative.",
       "accessibility-compliance": "An approach in which an interface is judged against a fixed list of accessibility requirements.",
@@ -456,7 +452,7 @@
     {
       "instruction_id": "budget-the-initial-payload",
       "path": "instructions/budget-the-initial-payload.md",
-      "sha256": "0f800d3af15e4d35bdf9c262c1e17b6e1219b02754c2a3c70bbc6ba7079fd349"
+      "sha256": "7a734797acf65a4547ed5851e94364fbc736eeb8228bb6948fc320bdf68d129e"
     },
     {
       "instruction_id": "build-a-dashboard-that-answers-the-on-call-questions",
@@ -501,12 +497,12 @@
     {
       "instruction_id": "cache-only-what-is-expensive-and-re-read",
       "path": "instructions/cache-only-what-is-expensive-and-re-read.md",
-      "sha256": "192dae88b5e4edff7e2f30146fe52cb6aaa60b0944dd353c311eb53b4458e937"
+      "sha256": "cea8079ef9c2720951e0e277fca903362bac350bff0cfda92afe00a454628b28"
     },
     {
       "instruction_id": "cache-the-misses-and-protect-the-hot-key",
       "path": "instructions/cache-the-misses-and-protect-the-hot-key.md",
-      "sha256": "dd591a2b718d40d1af95dc21431db0e855a3e393b5f43497b74e4d005dace4f4"
+      "sha256": "19af48b8f5f45a0352316943a3c396f2980cbaca06adf01c86f1d5038a5926ea"
     },
     {
       "instruction_id": "cap-and-scope-what-a-model-run-may-do",
@@ -521,7 +517,7 @@
     {
       "instruction_id": "capture-the-query-plan-before-the-fix",
       "path": "instructions/capture-the-query-plan-before-the-fix.md",
-      "sha256": "34a633f4551f1652ee96eeeb93f558e046fb756e123eb6af9f7480cab65d0b33"
+      "sha256": "dc1a81e49664dc835f7c2bfda9b73b3f3f896d4c0ab29861497ffc2dfb05ed5f"
     },
     {
       "instruction_id": "challenge-assumptions-from-first-principles",
@@ -596,12 +592,12 @@
     {
       "instruction_id": "choose-the-signal-that-answers-the-question",
       "path": "instructions/choose-the-signal-that-answers-the-question.md",
-      "sha256": "f541d79d71f7879416daee46eff1a2c2836019cc2368b60554aed4d050679701"
+      "sha256": "4fb5d563853b0c26cdf3f7ae6643bace848f28f5b284b2778624aa8db82896a8"
     },
     {
       "instruction_id": "choose-the-test-level",
       "path": "instructions/choose-the-test-level.md",
-      "sha256": "91382a2a616da5defaff77e599b2dee52ee2c2aa189e16b5a107c8a8aff46a71"
+      "sha256": "f36129f2f289e9e872171f44b496851b6cb69d56f073eb3586a64011678ab185"
     },
     {
       "instruction_id": "choose-the-version-bump-by-consumer-impact",
@@ -891,12 +887,12 @@
     {
       "instruction_id": "design-the-cache-deliberately",
       "path": "instructions/design-the-cache-deliberately.md",
-      "sha256": "0abcba1dfb7cf1bcc2f234c3dcf0093db8306d7a1699b370f3c2f03cec26c027"
+      "sha256": "fa1981c569877e44ba847912a211ae82739364e9c2578f5497046db5c17f6662"
     },
     {
       "instruction_id": "design-the-index-for-the-query-shape",
       "path": "instructions/design-the-index-for-the-query-shape.md",
-      "sha256": "b18a1d962360c621bba3b2172aaec3e6dc0e7ca92c69af3088a9a7b133926a2e"
+      "sha256": "7fbfd5cc81081b4d347958c0b11e9267f801fe8a7c736d2fc8bc03f99913d87a"
     },
     {
       "instruction_id": "design-the-loading-empty-and-error-states",
@@ -1041,7 +1037,7 @@
     {
       "instruction_id": "extract-only-the-documentation-signal",
       "path": "instructions/extract-only-the-documentation-signal.md",
-      "sha256": "59cbe54a7c9fb9b80a305e923142f567b375a15aecea4b927ba354fc8efadaf5"
+      "sha256": "ff53b0d81aca7b3b3fcbb86594e7e51fe616790cefab72d32638e1f72baabfe2"
     },
     {
       "instruction_id": "fan-out-independent-checks-in-one-turn",
@@ -1056,7 +1052,7 @@
     {
       "instruction_id": "fetch-the-relation-in-the-same-query",
       "path": "instructions/fetch-the-relation-in-the-same-query.md",
-      "sha256": "526f85b757441e92434435efc48a363e08c59ec26f71e8a897b5eabe33c4fbaf"
+      "sha256": "ba22938a8fba3f5c48df518696b8df8fd9ec1bf54f5df53dda79c73118a9872c"
     },
     {
       "instruction_id": "fix-the-description-not-the-eval",
@@ -1141,7 +1137,7 @@
     {
       "instruction_id": "give-images-dimensions-and-priority",
       "path": "instructions/give-images-dimensions-and-priority.md",
-      "sha256": "5416a7a2e07f5e9c2ed1c7c1801a9da8a4628092f71da3c73bff057165d74ca1"
+      "sha256": "f03eebb9ecf46b5eff5c5340faffdd74ff6e637bd639442ebeeb98c66e93b25d"
     },
     {
       "instruction_id": "give-instrumentation-a-lifetime",
@@ -1181,7 +1177,7 @@
     {
       "instruction_id": "guard-the-hot-key-against-a-stampede",
       "path": "instructions/guard-the-hot-key-against-a-stampede.md",
-      "sha256": "213515c4c8fc8e2093fb8efca726016fa3252135fd10fa83c97d8bed3f3d4957"
+      "sha256": "0699ce1089b7a9504c603b79f82cd7a32e7f97e88cf1c17449dfeebcf9d9247e"
     },
     {
       "instruction_id": "guard-the-metric-the-user-feels",
@@ -1236,7 +1232,7 @@
     {
       "instruction_id": "hoist-render-allocations-and-memoize-what-the-profile-shows",
       "path": "instructions/hoist-render-allocations-and-memoize-what-the-profile-shows.md",
-      "sha256": "ff8e145fb94e60567e84492eb7b133b2c71a4e7fb1248527b6f17f37d1e6839c"
+      "sha256": "c9795b4aeaeaf109b45590476cd124e41489a95f2a6ed908bc5f457d7627d415"
     },
     {
       "instruction_id": "hold-the-measured-baseline",
@@ -1356,7 +1352,7 @@
     {
       "instruction_id": "justify-an-index-with-a-query-plan",
       "path": "instructions/justify-an-index-with-a-query-plan.md",
-      "sha256": "214d6e5c162896c134ac307704139a860773effa7669dff5ced68f5381a45e3f"
+      "sha256": "313f45a5ca97dc41efa982734bb0f30396569a25db7a4e973bb0785539114078"
     },
     {
       "instruction_id": "keep-a-component-focused-on-one-job",
@@ -1466,7 +1462,7 @@
     {
       "instruction_id": "keep-the-main-thread-free",
       "path": "instructions/keep-the-main-thread-free.md",
-      "sha256": "f820dace48b1b8efc91fbbbbf955c60e6f00fecae6397f70f4087a7c90d68dac"
+      "sha256": "900b7fd202d81dd1d8b0eef91f05eef1991460fddc22cb02f004cc0df61a9d3f"
     },
     {
       "instruction_id": "keep-the-map-an-index",
@@ -1491,7 +1487,7 @@
     {
       "instruction_id": "keep-the-request-path-light",
       "path": "instructions/keep-the-request-path-light.md",
-      "sha256": "148fc61dceda6439d6ecc89ac44f5a1bc3af47e97ad8a671b42997c18e06a460"
+      "sha256": "dbb69b9c18f6e141107069cafc9d6ba629583439d36e6876900b504a8cef5a73"
     },
     {
       "instruction_id": "keep-the-spec-current",
@@ -1511,7 +1507,7 @@
     {
       "instruction_id": "key-the-cache-on-every-input-that-changes-the-response",
       "path": "instructions/key-the-cache-on-every-input-that-changes-the-response.md",
-      "sha256": "09dae2555f7548f76957984082d697060a828bfd0933e4c03744ae9535138dbc"
+      "sha256": "51aff2383c9e1ffd95ae8e0ac4f740263fc8e676d3ceef0424f45b1840536f4c"
     },
     {
       "instruction_id": "label-and-order-findings-by-leverage",
@@ -1546,7 +1542,7 @@
     {
       "instruction_id": "load-images-without-paying-for-them",
       "path": "instructions/load-images-without-paying-for-them.md",
-      "sha256": "360133cd5d8313de15cd914a066148e17243f9cec58a4e93512f9a3df08a5461"
+      "sha256": "f669c6027fa1f93715514bc68d7f32c1cd78f760d77050879820db8544dd2db9"
     },
     {
       "instruction_id": "load-the-files-and-patterns-before-you-edit",
@@ -1776,7 +1772,7 @@
     {
       "instruction_id": "name-the-questions-before-instrumenting",
       "path": "instructions/name-the-questions-before-instrumenting.md",
-      "sha256": "9409253976eaa81e89ccbb32ec6ba866fa88e88257fdf3b30699ce0cffec5e4d"
+      "sha256": "a9fed19dabdf74954c89f09669c7af5df753ae066de2a2e06375448590542852"
     },
     {
       "instruction_id": "name-the-skill-after-its-directory",
@@ -1904,11 +1900,6 @@
       "sha256": "4eccc841aa1c86ef142ca00d32d7869588d42cb6ab74574ec24189b0a6a3b81b"
     },
     {
-      "instruction_id": "place-tests-by-level-and-cost",
-      "path": "instructions/place-tests-by-level-and-cost.md",
-      "sha256": "0e5011a44f7d6b860efbb58106773c8eeba3f9a0d907c8c4fa2fb1d8779814e0"
-    },
-    {
       "instruction_id": "play-back-understanding-in-chunks",
       "path": "instructions/play-back-understanding-in-chunks.md",
       "sha256": "babb1dcbd05d638e28e1f7abdd9aee87708d99953cf28774b40c081aaa6f9946"
@@ -1951,7 +1942,7 @@
     {
       "instruction_id": "proceed-without-waiting-for-confirmation",
       "path": "instructions/proceed-without-waiting-for-confirmation.md",
-      "sha256": "5713cbe34124a66a4b014af133a772740f0c45cc1282aa58f477632500939499"
+      "sha256": "3a2d17e68bee1b2de81410973534c1215a10e18dfa35f693d7c3108f40397844"
     },
     {
       "instruction_id": "profile-to-find-the-real-bottleneck",
@@ -2031,7 +2022,7 @@
     {
       "instruction_id": "put-static-content-near-the-user",
       "path": "instructions/put-static-content-near-the-user.md",
-      "sha256": "b8b05bed51b5422f6a3a2c3804659b457c501a93c59f20a3bf9a8bc1afef9831"
+      "sha256": "e397d673f9376b26a1791fe9a89d8ea24d33aeb57fb86c77e426fe2cfc009e51"
     },
     {
       "instruction_id": "put-task-critical-context-last",
@@ -2476,7 +2467,7 @@
     {
       "instruction_id": "serve-assets-over-a-cached-fast-path",
       "path": "instructions/serve-assets-over-a-cached-fast-path.md",
-      "sha256": "8a95467ecc7a29edd4476d2401fa99f2f47537ed6356c0ee0fc859c26f9742e2"
+      "sha256": "fa301c253e6871992c97b5affad0129394b90aeb17fa2a8857c1eca0ab2b922b"
     },
     {
       "instruction_id": "set-and-enforce-performance-budgets",
@@ -2491,7 +2482,7 @@
     {
       "instruction_id": "set-latency-and-layout-shift-targets",
       "path": "instructions/set-latency-and-layout-shift-targets.md",
-      "sha256": "beba1971c16bb5800da84504abef81b12f101009d5a86299aebb7c32fe3de6a8"
+      "sha256": "12775166a6f14c4bf5ff13c56b6e1430682e6802e20a83336fe709728aaf187b"
     },
     {
       "instruction_id": "set-security-headers-on-every-response",
@@ -2516,7 +2507,7 @@
     {
       "instruction_id": "ship-few-fonts-in-one-format",
       "path": "instructions/ship-few-fonts-in-one-format.md",
-      "sha256": "c75a6889abe73d01db1180393c9389eaa0ee8d7d83dd51e3d659b2bd26f0d1d2"
+      "sha256": "97cccbf3667aab73ab9ae5f594885dcb2604f14930314f52f9de247a4a736fae"
     },
     {
       "instruction_id": "ship-in-small-batches",
@@ -2551,17 +2542,17 @@
     {
       "instruction_id": "size-and-gate-the-work",
       "path": "instructions/size-and-gate-the-work.md",
-      "sha256": "82a4726a9c2dbb507b18d5894aee67ec4131539704a8138eb33641cd64a738ad"
+      "sha256": "fdf6fcc2ff1ea7d6ffcd1367a883abf2a849a2fa77553170e9da86b3c5aa7ebc"
     },
     {
       "instruction_id": "size-one-connection-pool-per-process",
       "path": "instructions/size-one-connection-pool-per-process.md",
-      "sha256": "733731dc63344f3b4aca5e100d218eb1bd5bef1a68fb63b447757c3c06379396"
+      "sha256": "42178ff06d19a09552e8c2d60529267994c306e32646474cd15e69cb1d8bfe6a"
     },
     {
       "instruction_id": "size-the-connection-pool-under-the-ceiling",
       "path": "instructions/size-the-connection-pool-under-the-ceiling.md",
-      "sha256": "1e9c636e8304d14f5f915f282096f9164f6225ed6bd21575587d2d08f6cdd663"
+      "sha256": "a3020c2c4897a86c59ac20b89ec54129092a866f146e47a49d7a6f6cbfb10862"
     },
     {
       "instruction_id": "slice-contract-first-for-parallel-work",
@@ -2591,12 +2582,12 @@
     {
       "instruction_id": "split-response-time-into-stages",
       "path": "instructions/split-response-time-into-stages.md",
-      "sha256": "eddcb9b3049bed50a7ceab31347ef69247756846e4e2b41612c21e857a956971"
+      "sha256": "3c96769d4edeff05aaa47d5802a206ade70ed87f96053fd2def6efd7144662b5"
     },
     {
       "instruction_id": "split-the-bundle-and-lazy-load-heavy-features",
       "path": "instructions/split-the-bundle-and-lazy-load-heavy-features.md",
-      "sha256": "805ab119c94329bc2f5342a793030e65060b435e67aae3301b381b745491afa6"
+      "sha256": "7a981ef9cae98edc658758c7fdb9b884cba24951227ddca66140178607aaefff"
     },
     {
       "instruction_id": "stamp-the-entry-point-on-the-run",
@@ -2636,7 +2627,7 @@
     {
       "instruction_id": "state-one-invalidation-strategy-and-the-staleness-window",
       "path": "instructions/state-one-invalidation-strategy-and-the-staleness-window.md",
-      "sha256": "a0092c8d585eb2382c55bbe6704166ea3bd6d3c86b71b9a8384a92b2776195f9"
+      "sha256": "3968bf8914151158c72c46464c147e8ed7d2be82bc80f2978a2823373b7e9477"
     },
     {
       "instruction_id": "state-that-the-skill-applies-even-when-the-work-is-pasted-inline",
@@ -2686,7 +2677,7 @@
     {
       "instruction_id": "structure-and-compress-guidance",
       "path": "instructions/structure-and-compress-guidance.md",
-      "sha256": "9327e3a8c0f514f3c141b0633a4e831ec268a962abd16fbe1850526a641c8ac5"
+      "sha256": "71ccfe9d1e44b77dbe12a4a2ee7e94e6491f9ff91ac80a6d7912d1fcb992cba7"
     },
     {
       "instruction_id": "structure-each-test-as-arrange-act-assert",

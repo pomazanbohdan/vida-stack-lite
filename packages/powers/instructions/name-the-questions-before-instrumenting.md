@@ -5,7 +5,7 @@ summary: "Write down the questions an on-call engineer will ask about the featur
 capability_tags:
   - instrument-production-code
 pattern_tags:
-  - telemetry-by-question
+  - operational-telemetry
 conditions_applies_when: "A feature, service, endpoint, job or integration is about to be built or changed and it will run in production."
 conditions_does_not_apply_when: The work is a local script or a one-off analysis that no on-call engineer will ever look at.
 artifact_contract_output_type: on-call-question-set
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/observability-and-instrumentation/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Name the questions before you instrument

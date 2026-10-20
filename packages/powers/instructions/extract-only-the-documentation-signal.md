@@ -5,7 +5,7 @@ summary: "Take the API, the examples and the deprecation notes from a fetched pa
 capability_tags:
   - treat-runtime-content-as-untrusted
 pattern_tags:
-  - documentation-extraction
+  - untrusted-content-handling
 conditions_applies_when: A documentation page or another external document has been fetched.
 conditions_does_not_apply_when: "The content comes from the project's own trusted configuration."
 artifact_contract_output_type: extracted-documentation

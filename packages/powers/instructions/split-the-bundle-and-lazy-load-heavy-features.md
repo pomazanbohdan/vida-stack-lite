@@ -3,7 +3,7 @@ instruction_id: split-the-bundle-and-lazy-load-heavy-features
 title: Split the bundle and lazy-load heavy features
 summary: "Route-level code splitting and lazy loading are the real gains, because modern bundlers already tree-shake named ESM imports."
 capability_tags:
-  - improve-runtime-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: The initial bundle carries code the first page does not need.
@@ -19,7 +19,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/references/optimization-patterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Split the bundle and lazy-load heavy features

@@ -5,7 +5,7 @@ summary: "Match the signal to the question: a structured log for what happened, 
 capability_tags:
   - instrument-production-code
 pattern_tags:
-  - telemetry-by-question
+  - operational-telemetry
 conditions_applies_when: A question has been named and the kind of signal still has to be chosen.
 conditions_does_not_apply_when: The platform fixes the signal type for the question.
 artifact_contract_output_type: signal-choice
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/observability-and-instrumentation/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Choose the signal that answers the question

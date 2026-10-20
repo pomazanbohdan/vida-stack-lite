@@ -3,7 +3,7 @@ instruction_id: state-one-invalidation-strategy-and-the-staleness-window
 title: State one invalidation strategy and the staleness window
 summary: "Choose TTL, event-based or versioned keys, and state the acceptable staleness window explicitly."
 capability_tags:
-  - improve-runtime-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: A cached value exists and has to be allowed to go stale.
@@ -19,7 +19,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/references/optimization-patterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # State one invalidation strategy and the staleness window

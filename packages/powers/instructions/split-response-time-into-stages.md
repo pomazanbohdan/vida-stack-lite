@@ -3,7 +3,7 @@ instruction_id: split-response-time-into-stages
 title: Split the response time into stages
 summary: "A slow first byte is attributed to name resolution, the connection handshake or server processing before anything is changed."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - performance-measurement
 conditions_applies_when: The time to the first byte is slower than the target.
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Split the response time into stages

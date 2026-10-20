@@ -3,7 +3,7 @@ instruction_id: budget-the-initial-payload
 title: Budget the initial payload
 summary: "The initial download stays inside a written budget, the heavy parts are split out, and nothing blocks the first render."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - delivery-budget
 conditions_applies_when: A client application is shipped or its dependencies change.
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Budget the initial payload

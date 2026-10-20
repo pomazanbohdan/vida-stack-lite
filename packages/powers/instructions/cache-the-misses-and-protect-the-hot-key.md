@@ -3,7 +3,7 @@ instruction_id: cache-the-misses-and-protect-the-hot-key
 title: Cache the misses and protect the hot key
 summary: "A repeated miss is cached for a shorter time than a hit, an origin error is never cached, and a hot key is protected from a stampede."
 capability_tags:
-  - improve-web-performance
+  - improve-performance
 pattern_tags:
   - cache-design
 conditions_applies_when: "A cache serves a key that is looked up often and misses often, or that expires under load."
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Cache the misses and protect the hot key
