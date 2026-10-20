@@ -101,6 +101,41 @@ targeted passes, owns the measured numeric increase.
 
 ### Latest complete host-state coverage and Initial Source packet
 
+The2711562 stage /workspace/contour-stage-o2A0tZ completes in118025.774ms,
+exit0, complete capture/group closure, unchanged boot/image and published report.
+Host278PASS/2359assertions in111.21s plus stopped-source16PASS/206assertions
+in109.11s give294PASS/0FAIL and2565assertions. Run
+c963a41d-a53f-4b76-8d7f-b0f38b44cdea records
+F890/1129,L3786/4966,S4024/5296,B4026/5640, gains4/17/17/7 overde8a330.
+The three new native cases pass36.40/90.35/54.91ms under unchanged default5s.
+The refreshed pin control passes10assertions in4.95ms; final strict181files,
+scoped lint, documentation/diff checks and ordinary hooks pass
+(516format/523strict files, lint and Knip). Report-only inventory now has
+239uncovered functions under85owners. Operation stays BLOCKED/nonexact;
+historical exact16/45 and deferred frozen/CRAP/mutation remain unchanged.
+Projection1054 retains the terminal result. This is not all-contour closure.
+
+Source commit27115624513dc083c664159cc53ebd23ee6e3d8b forms matching SDK via
+CI39376227856/artifact12243348384; downloaded ZIP SHA
+0e4885be44ea7bada8e3eecfd18860e9234504280da153778a55fb03da2c0bc2 matches.
+Image /workspace/.vida-quality-inputs/5e488477961ee42fb15c30a98780bf2b24df2612/repository,
+manifest SHA23cdae71f39ffb690e399b62313bcf0264244ce471fccbf96eb8dcc25fd18c7c,
+input45ba89b0c29939591aa471151d82daf1cc66328e97a2c81074e04f8bb5e9bbdf,
+Source tree e20737d9f69f1416129a72f8c40e4696419862dc. Admission records
+9007316992free tmpfs bytes against unchanged2147483648floor; all existing
+worker/memory/deadline caps remain. No cleanup, install/cutover or consumer effect.
+
+After observed exec63008 exit0/group closure, Root inventories only the new
+owned /dev/shm/vida-quality-retained-XqDGTC (179327602apparent bytes); selected
+scratch is scratch-VjJ5uD. Overlay before retention4604100608free bytes. Entire
+scratch, including expected UNKNOWN, is archived and GNU tar compare succeeds at
+/workspace/vida-functional-retention-o2A0tZ-2TiN4G/scratch.tar,206448640bytes,
+SHA386805c5cbcaa0b22cb6e2ac90a2153cbf2fa835ad0a9079c3609ec8e8832161.
+Originals, scratch.sha256 and archive.log remain; overlay after4397637632bytes
+is above the unchanged floor. This retention grants no replay or power-loss proof.
+
+### Prior de8a330 complete host-state observation
+
 The de8a330 stage /workspace/contour-stage-BZK3xP completes in136718.713ms,
 exit0, with complete capture, closed group, unchanged boot/image and published
 report. Host275PASS/2316assertions in126.86s plus stopped-source16PASS/
@@ -614,6 +649,32 @@ Host pin ab5c2cff24bf93cb20a632babc7e2670f86ae4e0479e04d25dff5d43a4ce7aeb
 binds final formatted bytes; all other eligibility/provider/caller predicates
 stay unchanged. Final pin control, ordinary hooks, publication and one changed
 input stage remain required before accepting new F/L/S/B gains.
+
+That single2711562 stage is now complete as recorded above. No unchanged retry
+is justified. Continue using the239-function existing inventory in the same open
+contour; the next dependency-ready native history/recovery packet must preserve
+genuine receipt producers rather than seed state to reach a callback.
+
+### Complete-run60-second target assessment
+
+The owner asks whether complete testing can reach60s. This is a desired target,
+not an instruction to truncate tests or lower the existing300s producer limit.
+Bounded blind Luna review /tmp/vida-host-under-minute-cost-plan.md reuses only
+the de8a330 receipts and two retained child logs. Both serial-file children take
+about127s while running concurrently, so launch reordering alone cannot reach
+60s. Dominant stopped-source cases take24.23s (disjoint and overlapping rights),
+12.08s (public rollback/retry) and9.07s (readonly egress). Native recovery commit/
+rollback take15.41/12.30s; their real setup totals20.78s (11.00+9.78), with distinct
+fresh roots and actual writer history. Deleting transitions or sharing those
+states would remove independent evidence. No safe measured one-step change is
+identified; this review does not qualify more workers or a new runner.
+
+The later changed-test2711562 stage observes118.026s with children111.21/109.11s.
+No throughput code changed, so its lower elapsed time is run variance, not a
+causal speedup claim or a60s guarantee. Reuse the logs to investigate actual
+setup/public-child cost; only a demonstrated behavior-preserving reduction or
+separately qualified partition/merge can support the target. Preserve all
+assertions, fresh Host/Journal/ownership, exact counts and current final budgets.
 
 Next prioritize genuine completed-Source-report recovery and its persisted Work
 history within this same contour. Blind bounded plan

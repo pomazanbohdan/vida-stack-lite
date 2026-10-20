@@ -224,6 +224,16 @@ tmpfs scratch is durably archived/compared with originals retained; WORK owns
 bindings/custody. Next batch uses small native maintenance/storage-identity API
 cases without repeating kernel setup. A60s full-contour target is unqualified:
 measure dominant retained-log costs first, preserve300s and all exact gates.
+The next2711562 native maintenance/storage packet completes stage-o2A0tZ in
+118.026s,294PASS/0FAIL,2565assertions, complete terminal/input guarantees.
+F890/1129,L3786/4966,S4024/5296,B4026/5640 gains4/17/17/7; remaining inventory
+239functions/85owners, historical exact16/45. WORK owns matching SDK, image and
+verified full scratch archive. No throughput code changed: lower elapsed time
+is not a causal speedup claim. Bounded cost review found both prior children
+around127s and no safe single change supporting60s. Keep current300s and one
+contour; investigate genuine setup/public-child costs without dropping states
+or activating unqualified parallelism. Continue native history/recovery cases
+from the current report-only inventory, with actual receipt producers.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
