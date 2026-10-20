@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-plans/SKILL.md
 status: active
-revision: 4
+revision: 5
 ---
 
 # Write the plan for an engineer who has not seen the codebase
@@ -44,4 +44,7 @@ Make every step one action with a checkable result: write the failing test, run 
 
 Review the finished plan yourself against the spec, with fresh eyes: check that every requirement of the spec has a task and list the gaps; scan the steps so that each one lets the implementer write exactly one reasonable thing and no step carries more, since a line that decides nothing is a gap and a function body the signature and tests already determine is a transcript; check that the types, method signatures and property names used later match the ones defined earlier; check that every input class of the review focus has a task whose tests exercise it; and compare the length of the plan with the length of the spec, because a plan several times longer than the spec is a transcript of the program rather than a plan. Fix what you find inline.
 
-When the plan is complete, hand it over: if no execution method has been supplied, ask the reader to review the plan and choose the execution approach; if one has been supplied, use it.
+When the plan is complete, save it at the path the plan states and hand it over.
+If the reader has already supplied an execution method, use it.
+If no execution method has been supplied, report that the plan is complete and saved at its path, ask the reader to review the plan, and ask which execution approach they prefer before anything is implemented.
+Never start the implementation before the review of the plan has happened.

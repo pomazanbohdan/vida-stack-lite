@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 431,
+  "revision": 432,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-20T11:48:13.214Z",
+  "updated_at": "2026-10-20T11:52:24.267Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -858,7 +858,7 @@
     {
       "instruction_id": "write-implementation-plan",
       "path": "instructions/write-implementation-plan.md",
-      "sha256": "7edb1b6b5ba1772eb655f20ff84b9e5daa0f2208407701d9a6942f385e1b6c51"
+      "sha256": "ea106aa99e4d3bd987660dab027a0a861a1decd37404583a3b26f9928ac37765"
     },
     {
       "instruction_id": "write-minimal-agent-guidance",
