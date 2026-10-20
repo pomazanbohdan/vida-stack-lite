@@ -101,6 +101,34 @@ targeted passes, owns the measured numeric increase.
 
 ### Latest complete host-state coverage and Initial Source packet
 
+The2a82e24 retained-host-tmpfs stage /workspace/contour-stage-jFAIDI completes
+in142585.557ms, exit0, complete capture/group closure, unchanged boot/image
+inputs and published report. Host272PASS/2235assertions in135.05s plus
+stopped-source16PASS/206assertions in129.32s produce288PASS/0FAIL and
+2441assertions. Run19468e5f-6169-413c-86c3-e9ca35f4d8a6 records
+F877/1129,L3683/4966,S3915/5296,B3968/5640. Relative to the prior complete
+dcaa148 observation, gains are13functions,98lines,101statements and148branches;
+relative to98bce8b at this pickup, gains are48/263/272/412. Exact coverage is
+still open, operation BLOCKED and historical exact16/45. Raw maxCC279 and
+entryCRAP3782 remain diagnostic, with frozen/CRAP/mutation deferred/unqualified.
+No causal speedup percentage is inferred from different Source/tests/backing/load.
+
+The new readonly-frontier case passes8878.27ms, recovery rollback17128.26ms
+and commit17599.25ms under unchanged20s allowances. Source, configured approval,
+preflight, actual native APIs/fsync/CAS, selected tests and all gates remain.
+The image is
+/workspace/.vida-quality-inputs/65aba410d8b14b3c24bbe7a29b21c7fe339ac440/repository,
+manifest SHAe4d91197a143a3ec53624ebab37921c41117eaa5edc77f25e5955b36e2f51891,
+input27e291857296bf9af6a19168821e5d8dce495ed9d21eea55db865b3dfc79edfc,
+Source tree e2cd74a51916770b104e8fff40cc2809526da8ae. Matching SDK
+CI39373339257/artifact12241814296 succeeds; ZIP SHA
+179ff2391461de5a52af69b026e602243d7c195c8efe73ab27df9dd029c4b8da matches.
+Projection1050 imports the terminal result. The existing report-only derivative
+now identifies252uncovered functions/closures under89owners, including16stored
+Work-history closures. No new Source/AST/scan/hash inventory pass was run.
+
+### Prior dcaa148 complete observation
+
 The dcaa148 changed-input stage /workspace/contour-stage-Nka1td completes in
 194500.503ms, exit0, with complete capture, closed group, unchanged boot/image
 inputs and published report. Host271PASS/2214assertions in188.24s and
@@ -425,6 +453,55 @@ Do not raise20s/300s bounds, seed receipts, disable production freshness guards
 or repeat unchanged input. The separate migration-wrapper plan is deferred;
 its suggested workflow rewrite is unnecessary: legacy database layout depends
 on runtime configuration source in project-paths.ts, not workflow stage shape.
+
+### Retained functional tmpfs qualification and durable custody
+
+The direct Host shortcut review at
+/tmp/vida-native-host-reservation-boundary-review.md rejects bypassing configured
+reservation production: its real verifier still opens admitted execution and
+requires the configured assignment/preflight checks. No approval callback,
+opaque capability, reservation receipt or production boundary is substituted.
+
+The existing TESTING retained-host-tmpfs mechanism is selected explicitly only
+for new functional/process-recovery scratch. No old DB/FAIL/TIMEOUT/UNKNOWN root
+is moved or deleted; Source/image/SDK/stage/logs/reports remain on overlay. The
+single new-filesystem observation finds9441337344free tmpfs bytes and
+5229633536free overlay bytes, both above the unchanged2147483648floor. This
+does not bypass admission or qualify power-loss durability. Cgroup max remains
+17179869184, with a supplied current15075717120 largely file cache
+(anon406908928,file12884267008,shmem2392064,inactive_file2412572672), no OOM or
+OOM kills; reclaimable cache is not extra guaranteed tmpfs capacity. Worker cap
+stays2. No mounts, global cache eviction, install or system policy changes occur.
+
+The fresh uninstrumented narrow tmpfs check passes both recovery cases with
+33assertions in22.39s; individual11223.46/9698.75ms. This establishes an observed
+functional alternative, not a causal benchmark. Blind resource review at
+/tmp/vida-retained-tmpfs-resource-review.md permits the existing isolation model
+conditional on durable custody after group closure. Its proposed pin discrepancy
+compares older historical WORK packets: current pin5611a2ed matches the final
+Root-owned hash and10-assertion eligibility control for a2d4b7b, unchanged by
+docs-only2a82e24. No pin/selection check is relaxed. The launch records tmpfs
+type16914836 and9441337344available bytes at
+/dev/shm/vida-quality-retained-3OQkCo/scratch-Mqz4Br.
+
+After observed terminal exec96200 exit0 and complete group closure, Root reads
+one bounded inventory of this new owned scratch only:179172120apparent bytes.
+Overlay has5166116864free bytes before preservation. All of the selected new
+scratch, including expected-UNKNOWN roots/DB triplets, is archived to
+/workspace/vida-functional-retention-jFAIDI-HfI3V1/scratch.tar. GNU tar1.35
+preserves files, modes, links and metadata; its compare against the unchanged
+original succeeds (exit0). Archive size206274560bytes, SHA
+b49ad6af8cde903712d6f17459cda2baf65b98f6cb1c970f88596e36e4b24a29.
+The checksum and archive.log remain beside it; originals remain on host tmpfs.
+Overlay free space after preservation is4959830016bytes, still above the floor.
+This archive is analysis/retention evidence only and authorizes no state replay.
+The prior stage-hwbTyf failure remains protected and is not reattested.
+
+The current preparation blocker is resolved for this complete functional run;
+continue the same open contour using its current252-function inventory. Next
+consider the maintained migration-wrapper unit fixture, retaining its actual
+fence, native DB and harmless in-memory callbacks. Do not alter workflows merely
+to choose legacy layout or claim every wrapper closure before measurement.
 
 Next prioritize genuine completed-Source-report recovery and its persisted Work
 history within this same contour. Blind bounded plan

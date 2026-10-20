@@ -196,6 +196,18 @@ same contour. Review a supported genuine approved Host producer for this Host
 unit subject; retain configured approval/preflight/CAS/ownership or reject that
 route. No budget increase or unchanged retry is permitted. Latest complete
 F/L/S/B remains dcaa148, not these partial PASS rows.
+The supported explicit retained-host-tmpfs alternative now completes on2a82e24:
+stage-jFAIDI288PASS/0FAIL,2441assertions in142.586s, complete capture/group/boot/
+image closure. F877/1129,L3683/4966,S3915/5296,B3968/5640 gain13/98/101/148
+covered items over dcaa148. Both recovery cases pass17.128/17.599s; readonly
+frontier8.878s. Operation stays BLOCKED/nonexact, historical exact16/45.
+All actual fsync/CAS/approval boundaries and budgets remain; no power-loss
+durability claim is made. Root retains the entire new scratch in a verified
+overlay tar and keeps originals; WORK owns its SHA, Source/SDK and resource
+bindings. Previous failure remains separate. Current report-only inventory has
+252uncovered functions/89owners. Resume new native unit cases in this same
+contour; the migration wrapper may use a fresh configured root and harmless
+callbacks, with no real consumer effects or legacy-workflow rewrite.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

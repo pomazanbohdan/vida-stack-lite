@@ -393,6 +393,17 @@ use an ephemeral namespace-only tmpfs that loses them on exit. This does not
 qualify power-loss durability or activate parallel coverage. Recheck the same
 selected cases without filesystem timing spies before attributing an improvement.
 
+For a selected retained host tmpfs, keep Source, execution images, SDK inputs,
+stage records, raw logs and numeric reports on durable storage. After observing
+terminal producers and group closure, preserve the entire new owned scratch in
+a durable archive and verify its files, modes and link targets against the
+unchanged original. Retain both original and verified archive, including every
+failed or expected-UNKNOWN DB/sidecar; record Source/run identity, archive digest,
+paths, capacity and verification result in WORK. Do not place the only retained
+evidence on a filesystem lost on host reboot. This retention copy does not
+reattest an earlier run or authorize replay. Keep the same admission floors and
+memory/worker caps; a faster functional run does not prove power-loss durability.
+
 Parallel writers use disjoint files. The lead schedules runtime measurements
 sequentially and holds edits to observed package inputs during each run. Save
 the command, terminal exit, raw log and exec session ID before yielding. Compare
