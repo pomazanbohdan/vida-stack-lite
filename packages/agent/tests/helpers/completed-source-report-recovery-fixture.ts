@@ -15,7 +15,6 @@ import {
   parseSessionBridgeObservation,
   type SessionBridgeObservation,
 } from '../../src/orchestration/mastra-session-bridge.js';
-import type { MastraSessionLedgerSnapshot } from '../../src/orchestration/persistent-session-handoff.js';
 import {
   compareScopedSourceSnapshots,
   snapshotDeclaredSources,
@@ -31,7 +30,6 @@ export interface RecoveryReportFixtureContext {
   readonly config: AgentRuntimeConfig;
   readonly hostStore: HostStateStore;
   readonly continuationState: () => InitialSourceContinuationState;
-  readonly currentJournal: () => MastraSessionLedgerSnapshot;
 }
 
 export interface RecoveryWriterAction {
@@ -79,7 +77,7 @@ export function createCompletedSourceReportRecoveryFixture(
 ): CompletedSourceReportRecoveryFixture {
   const before = f.continuationState(),
     initialReceipt = f.hostStore.readInitialSourceContinuationReceipt(f.identity, 1),
-    journalBefore = f.currentJournal(),
+    journalBefore = { state: before.journal, version: before.journalVersion },
     pending = journalBefore.state.items.find((item) => item.request.action_id === writer.request.action_id),
     workDirectory = '.agent/work/' + f.identity.work_id,
     sourceSnapshotRef = workDirectory + '/completed-source-snapshot.fixture.json',

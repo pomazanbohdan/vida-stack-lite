@@ -126,6 +126,38 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
+### Failed custody stage and recovery-case balance
+
+Source ca2d456c777aab5197b33a350cc1631418448612 ran once in
+/workspace/contour-stage-qf28UM (exec64360), run166693b2-a8dc-4d65-8b91-2d29537bcb90.
+Elapsed167242.689113ms, exit1, complete capture/group closure, unchanged boot/image;
+publication unknown-or-partial and no attributable numeric report. Projection
+attempt1091 records failure; it is not a new coverage maximum or mutation kill.
+Host288PASS/1FAIL/3433assertions/160.19s; stopped16PASS/253assertions/133.88s,
+contained cleanup complete. The sole failure is the existing completed Source
+report rollback case: setup14639.090451ms + body5413.730406ms exhaust20s.
+Both new custody scenarios pass in that child. Original logs remain in the
+be3679a8f613d8ef2e170ad5b710f9aa157c575f image's coverage outputs; the failed
+fixture remains in the original scratch namespace below.
+
+All original scratch remains at /dev/shm/vida-quality-retained-a511iU, except its
+qualified private Bun cache. Retirement manifest is custody-history-cache-retirement-qf28UM
+in focused diagnostics, reclaiming215846912tmpfs bytes; durable metadata grows4096.
+Archive /workspace/vida-functional-retention-qf28UM-TebJ94/scratch.tar.gz has355957bytes,
+full tar comparePASS, SHA2562bac4e0bd8e0e2780bc53a11f83fe30c014d7ce64953b8712f2514307b26b60c.
+Original archive metadata/logs remain beside it. Durable free before/after archive
+5625556992/5625196544 exceeds the unchanged2147483648floor. No resource GAP.
+
+The correction rebalances the same two recovery fixtures: stale CAS/live-owner
+denials move to commit before expiry; rollback retains native fault, complete row
+beforeimage, cleanup and successful retry. No assertion/case/budget is removed.
+The builder reuses the Journal/version in its existing continuationState; its
+unused currentJournal callback is removed from both callers. A work-version-only
+assertion reads Host directly. All live verifier freshness reads remain intact.
+Focused2PASS/33assertions, rollback15782.28ms and commit13658.25ms; strict168-file
+TypeScript and configured lint pass. Different focused/full inputs are not a
+controlled speedup. Repeated full coverage awaits this checked Source packet.
+
 The next custody/history packet extends those same maintained fixtures. Returning
 the exact owned captureInput avoids reconstructing its request. Historical receipt
 read checks success, absence, nested/changed-body denial and refusal after a

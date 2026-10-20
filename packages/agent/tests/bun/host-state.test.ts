@@ -3192,7 +3192,6 @@ test.each(['rollback', 'commit'] as const)(
             config: f.config,
             hostStore: host,
             continuationState: () => initialSourceState(f),
-            currentJournal: () => initialSourceJournal(f),
           },
           issued.writer,
           issued.hostAttemptId,
@@ -3204,23 +3203,6 @@ test.each(['rollback', 'commit'] as const)(
         );
         if (mode === 'rollback') {
           const persistedBefore = readFixtureHostRows(db);
-          expect(() =>
-            host.commitCompletedSourceReportRecovery(
-              {
-                ...recovery.request,
-                expectedWork: {
-                  ...recovery.request.expectedWork,
-                  revision: recovery.request.expectedWork.revision + 1,
-                },
-              },
-              recovery.verifyCurrent,
-            ),
-          ).toThrow('state compare-and-swap conflict');
-          expect(readFixtureHostRows(db)).toEqual(persistedBefore);
-          expect(() => host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toThrow(
-            'completed Source report recovery original Source ticket or claim differs',
-          );
-          expect(readFixtureHostRows(db)).toEqual(persistedBefore);
           setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
           db.exec(
             "CREATE TRIGGER fixture_recovery_journal_fault BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'fixture recovery Journal fault'); END",
@@ -3249,8 +3231,26 @@ test.each(['rollback', 'commit'] as const)(
           const retried = host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent);
           expect(retried.status).toBe('completed_report_recovered');
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
-          expect(initialSourceState(f).workVersion).toEqual(retried.work_version);
+          expect(host.readHostStateSnapshot(f.identity).workVersion).toEqual(retried.work_version);
         } else {
+          const persistedBefore = readFixtureHostRows(db);
+          expect(() =>
+            host.commitCompletedSourceReportRecovery(
+              {
+                ...recovery.request,
+                expectedWork: {
+                  ...recovery.request.expectedWork,
+                  revision: recovery.request.expectedWork.revision + 1,
+                },
+              },
+              recovery.verifyCurrent,
+            ),
+          ).toThrow('state compare-and-swap conflict');
+          expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+          expect(() => host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toThrow(
+            'completed Source report recovery original Source ticket or claim differs',
+          );
+          expect(readFixtureHostRows(db)).toEqual(persistedBefore);
           setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
           const receipt = host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent);
           const after = initialSourceState(f);

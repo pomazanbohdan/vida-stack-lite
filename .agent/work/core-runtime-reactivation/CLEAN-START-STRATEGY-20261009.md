@@ -49,6 +49,11 @@ resources; review and refresh only the exact Host test pin before one stage.
 The public final-assurance end-to-end case is outside this selection and has90s
 budget; its passing history cannot close these callbacks. A smaller supported
 fixture is a later same-contour dependency, not an expanded test selection.
+The first packet stage failed at the existing completed Source rollback20s case;
+its complete-capture failure stays attempt1091 with no numeric promotion.
+Before repeating, rebalance its same two cases and remove only redundant fixture
+Journal reads. Focused2PASS33assertions and strict168-file checks now pass; retain
+the same assertions, native rollback, live freshness, private roots and20s bounds.
 
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer

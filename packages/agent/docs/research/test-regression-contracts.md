@@ -29,6 +29,14 @@ closed transaction and unchanged Journal, drop the trigger through owned cleanup
 then perform healthy admission. The cooperative report grants no provider or
 Runtime acceptance. All cases keep the default5s deadline and private root.
 
+Completed Source report recovery keeps its two existing20s cases and fixture
+count. Commit checks stale CAS and live-owner refusal before expiry, then healthy
+commit and exact retry; rollback checks the native Journal abort, exact preserved
+rows, cleanup and healthy same-fixture retry. This balances their independent
+obligations without removing an assertion or increasing a deadline. The builder
+uses the Journal/version already returned in continuationState; both callers use
+that one owner. Live verifyCurrent Source/package rereads stay unchanged.
+
 The separate configured-frontier suffix case remains unqualified. Its first
 bounded child timed out inside the existing default5s case; a fresh traced run
 reached `beginSessionProducer` before its deadline. Both original roots and logs

@@ -1039,7 +1039,6 @@ function completedSourceRecoveryCase(refreshOnly: 'none' | 'guards' | 'crash-bef
             config: f.config,
             hostStore: hostStore(f),
             continuationState: () => continuationState(f),
-            currentJournal: () => currentJournal(f),
           },
           writer,
           writerAttemptId,
