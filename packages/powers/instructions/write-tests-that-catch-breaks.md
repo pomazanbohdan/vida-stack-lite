@@ -28,8 +28,9 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-test-behavior-not-implementation/SKILL.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/tdd/SKILL.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/tdd/tests.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/test-driven-development/SKILL.md
 status: active
-revision: 5
+revision: 6
 ---
 
 # Write tests that catch a specific break
@@ -54,3 +55,5 @@ A mutation nothing catches marks the behavior as unprotected, or the test as tau
 Tests ship with the implementation. Trivial code and human prose earn none.
 Tests verify behavior through public interfaces, not implementation details. Code can change entirely; tests shouldn't. A good test reads like a specification: "user can checkout with valid cart" tells you exactly what capability exists, and it survives refactors because it doesn't care about internal structure.
 **Implementation-coupled** tests mock internal collaborators, test private methods, or verify through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed.
+
+Use snapshots sparingly and review every change.

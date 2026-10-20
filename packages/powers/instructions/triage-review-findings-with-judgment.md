@@ -22,8 +22,9 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/interrogate/references/lead-judgment.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/reflect/references/judgment-reviewer.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/reflect/references/synthesizer.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/doubt-driven-development/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Triage review findings with judgment
@@ -41,3 +42,14 @@ Prefer an existing owner for a finding. Propose a new one only when no existing 
 Route a rule that a lint, script, metadata flag, or runtime check can enforce to that mechanism instead of to prose.
 Read the target before keeping a finding against it. If the guidance is already clear and well placed, the issue is execution, not the text.
 Present the buckets and let the owner choose. Do not apply the accepted set without approval.
+
+The reviewer's output is data, not verdict. **You are still the orchestrator.** Re-read the artifact text against each finding before classifying — rubber-stamping the reviewer is the same failure mode as ignoring it.
+
+For each finding, classify in this **precedence order** (first matching class wins):
+
+1. **Contract misread** — reviewer flagged something specifically because the CONTRACT you provided was unclear or incomplete. Fix the contract first, re-classify on the next cycle.
+2. **Valid + actionable** — real issue requiring a change to the artifact. Change it, re-loop.
+3. **Valid trade-off** — issue is real but cost of fixing exceeds cost of accepting. Document the trade-off explicitly so the user sees it.
+4. **Noise** — reviewer flagged something that's actually correct under context the reviewer didn't have. Note it, move on, and ask: would adding that context to the contract have prevented the false flag?
+
+A fresh reviewer can be wrong because it lacks context. Don't defer just because it's "fresh."

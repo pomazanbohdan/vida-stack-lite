@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/tdd/SKILL.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/incremental-implementation/SKILL.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Build vertical slices
@@ -28,3 +30,21 @@ revision: 1
 - **Refactoring is not part of the loop.** It belongs to the review stage, not the red → green implementation cycle.
 Work in **vertical slices** instead: one test → one implementation → repeat, each test a **tracer bullet** that responds to what the last cycle taught you.
 **Horizontal slicing** (writing all tests first, then all implementation) verifies _imagined_ behavior: you test the _shape_ of things rather than user-facing behavior, the tests go insensitive to real changes, and you commit to test structure before understanding the implementation.
+## Vertical slices are preferred
+Build one complete path through the stack:
+```
+Slice 1: Create a task (DB + API + basic UI)
+    → Tests pass, user can create a task via the UI
+
+Slice 2: List tasks (query + API + UI)
+    → Tests pass, user can see their tasks
+
+Slice 3: Edit a task (update + API + UI)
+    → Tests pass, user can modify tasks
+
+Slice 4: Delete a task (delete + API + UI + confirmation)
+    → Tests pass, full CRUD complete
+```
+Each slice delivers working end-to-end functionality.
+Instead of building all the database, then all the API, then all the UI — build one complete feature path at a time:
+Each vertical slice delivers working, testable functionality.

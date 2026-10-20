@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-sequence-verifiable-units/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/feature.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/incremental-implementation/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Sequence work into verifiable units
@@ -39,3 +40,20 @@ Other story orders are a subtraction before the reshape, a baseline capture befo
 Each commit lands on its own and the sequence reads as an argument.
 Sequencing those same units into a delivery a reviewer can replay turns "trust me" into "watch it go red, then green."
 It complements keeping each check real and making the per-unit check cheap.
+## The increment cycle
+For each slice:
+1. **Implement** the smallest complete piece of functionality
+2. **Test** — run the test suite (or write a test if none exists)
+3. **Verify** — confirm the slice works as expected (tests pass, build succeeds, manual check)
+4. **Commit** — save your progress with a descriptive message
+5. **Move to the next slice** — carry forward, don't restart
+Any time you're tempted to write more than ~100 lines before testing, test now.
+## The increment checklist
+After each increment, verify with the repository's own commands:
+- [ ] The change does one thing and does it completely
+- [ ] All existing tests still pass (the repository's test command)
+- [ ] The build succeeds (the repository's build command)
+- [ ] Type checking passes, where the stack has one
+- [ ] Linting passes (the repository's lint command)
+- [ ] The new functionality works as expected
+- [ ] The change is committed with a descriptive message

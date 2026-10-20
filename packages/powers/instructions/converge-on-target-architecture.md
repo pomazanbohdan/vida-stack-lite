@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/refactoring.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=docs/adoption-guide.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Converge on the target architecture
@@ -46,3 +47,9 @@ For larger reshapes, run an equivalence check: a script that diffs old-vs-new ou
 Confirm the change is worth keeping: the success measure is reduced reader load.
 If the diff does not lower reader load somewhere, revert it.
 Rebase into small ordered commits: a subtraction commit, then the reshape, then any follow-on cleanup.
+Don't aim for global coverage; aim for coverage _where change is planned_. For untested legacy behavior, write characterization tests, tests that pin down what the code currently does, right or wrong, before any modification. The Beyonce Rule applies: if the agent liked a behavior enough to depend on it, it should have put a test on it.
+Goal: every area the agent will touch gets a safety net first.
+No characterization tests, no refactor. This is the single most expensive shortcut in brownfield adoption.
+Chesterton's Fence is the operative principle: the skill forces the agent to understand _why_ code exists before removing it.
+Behavior-preserving simplification plus characterization tests is the lowest-risk way to make legacy code changeable.
+Treating the legacy system's behavior as wrong by default. Chesterton's Fence: the weird retry loop may be load-bearing. Understand, then change.

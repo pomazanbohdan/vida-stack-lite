@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/architect/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=docs/guide/04-design.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=docs/adoption-guide.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Derive the interface from the caller's usage
@@ -39,3 +40,4 @@ Establish why the current shape exists when the design moves ownership or layers
 Write the plan after the design settles, not before.
 If implementation shows types that only compile with forced casts, treat that as proof the design is wrong.
 Fill in code against the chosen sketch.
+When new code must talk to old code, design the boundary contract-first. Hyrum's Law is not theoretical in a years-old codebase, someone depends on every observable behavior, including the bugs.

@@ -1,0 +1,29 @@
+---
+instruction_id: gate-the-review-fan-out-on-blast-radius
+title: Gate the review fan-out on blast radius
+summary: "The parallel review is skipped only when the change touches two files or fewer, stays under fifty lines and touches no auth, payments, data access or configuration; otherwise the fan-out is the default."
+capability_tags:
+  - review-code
+pattern_tags:
+  - code-review
+conditions_applies_when: A pre-ship review can either fan out to specialists or run in a single pass.
+conditions_does_not_apply_when: The change is production-bound and its blast radius is non-trivial.
+artifact_contract_output_type: fan-out-decision
+artifact_contract_required_data:
+  - the files touched
+  - the size of the diff
+  - the sensitive areas touched
+  - the decision
+artifact_contract_verified_by: the fan-out was skipped only when all three conditions hold
+compatibility_excludes: []
+compatibility_requires: []
+provenance:
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=.claude/commands/ship.md
+status: active
+revision: 1
+---
+
+# Gate the review fan-out on blast radius
+5. **Skip the fan-out only if all of the following are true:** the change touches 2 files or fewer, the diff is under 50 lines, and it does not touch auth, payments, data access, or config/env. Otherwise, default to fan-out.
+The fan-out
+is designed for production-bound changes — when the blast radius is non-trivial, run the parallel review even if the diff looks small.

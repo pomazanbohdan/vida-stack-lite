@@ -20,8 +20,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=docs/adoption-guide.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write a design another builder can plan from
@@ -40,3 +41,4 @@ Do not hand over the document until the builder check is back.
 Without a subagent tool, read the document as that builder yourself.
 Update the document with their answers.
 Hand it over with a short list of the calls you made so they can check those while reading.
+The spec's boundaries section is where you declare what legacy surface the feature may and may not touch.

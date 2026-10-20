@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 769,
-  "updated_at": "2026-10-20T13:30:13.689Z",
+  "revision": 1306,
+  "updated_at": "2026-10-20T14:50:34.626Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -1794,21 +1794,15 @@
           ]
         },
         "skills/principle-laziness-protocol/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "pstack:skills/principle-laziness-protocol/SKILL.md"
           ]
         },
         "skills/principle-subtract-before-you-add/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "pstack:skills/principle-subtract-before-you-add/SKILL.md"
           ]
         },
         "skills/recall/SKILL.md": {
@@ -1839,12 +1833,9 @@
           ]
         },
         "skills/principle-prove-it-works/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "verify-before-completion"
-          ],
-          "contributed_sources": [
-            "pstack:skills/principle-prove-it-works/SKILL.md"
           ]
         },
         "skills/principle-test-behavior-not-implementation/SKILL.md": {
@@ -2174,12 +2165,9 @@
           "reason": "A router over the donor's own skills; the norms live in the routed skills."
         },
         "skills/engineering/implement/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "execute-plan-in-order"
-          ],
-          "contributed_sources": [
-            "matt-skills:skills/engineering/implement/SKILL.md"
           ]
         },
         "skills/engineering/implement-spec/SKILL.md": {
@@ -2224,12 +2212,9 @@
           "reason": "Setup of the donor's own configuration for a specific host; no generalizable norm."
         },
         "skills/engineering/tdd/tests.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "write-tests-that-catch-breaks"
-          ],
-          "contributed_sources": [
-            "matt-skills:skills/engineering/tdd/tests.md"
           ]
         },
         "skills/in-progress/claude-handoff/SKILL.md": {
@@ -2555,6 +2540,958 @@
           "instruction_ids": [
             "teach-with-a-stateful-workspace"
           ]
+        }
+      }
+    },
+    "addy-skills": {
+      "source_revision": "aeac41d4d005999432bb7312f7ff06383a91d59d",
+      "files": {
+        "skills/api-and-interface-design/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "avoid-verbs-in-resource-urls",
+            "decide-the-in-flight-duplicate",
+            "define-the-contract-before-the-code",
+            "design-for-one-version",
+            "honour-an-idempotency-key",
+            "paginate-every-list-endpoint",
+            "prefer-additive-changes",
+            "separate-input-and-output-types",
+            "treat-observable-behaviour-as-a-commitment",
+            "use-one-error-format-per-interface",
+            "validate-at-system-boundaries",
+            "make-illegal-states-unrepresentable"
+          ]
+        },
+        "skills/browser-testing-with-devtools/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "constrain-script-execution-in-a-live-system",
+            "isolate-the-test-profile-from-personal-sessions",
+            "treat-runtime-content-as-untrusted-data"
+          ]
+        },
+        "skills/ci-cd-and-automation/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "enforce-a-quality-gate-pipeline",
+            "feed-ci-failures-back-into-the-work-loop",
+            "give-feature-flags-a-cleanup-date",
+            "shift-checks-left",
+            "ship-in-small-batches"
+          ]
+        },
+        "skills/performance-optimization/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "cache-only-what-is-expensive-and-re-read",
+            "fetch-the-relation-in-the-same-query",
+            "give-images-dimensions-and-priority",
+            "guard-the-hot-key-against-a-stampede",
+            "guard-the-metric-the-user-feels",
+            "hoist-render-allocations-and-memoize-what-the-profile-shows",
+            "judge-web-vitals-against-the-good-thresholds",
+            "justify-an-index-with-a-query-plan",
+            "key-the-cache-on-every-input-that-changes-the-response",
+            "paginate-every-list-endpoint",
+            "profile-to-find-the-real-bottleneck",
+            "set-and-enforce-performance-budgets",
+            "size-the-connection-pool-under-the-ceiling",
+            "split-the-bundle-and-lazy-load-heavy-features",
+            "start-from-the-symptom-to-choose-the-measurement",
+            "state-one-invalidation-strategy-and-the-staleness-window"
+          ]
+        },
+        "skills/deprecation-and-migration/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "decide-whether-to-deprecate",
+            "require-a-proven-replacement",
+            "default-to-advisory-deprecation",
+            "announce-the-deprecation-with-a-migration-guide",
+            "migrate-consumers-one-at-a-time",
+            "adapt-the-old-interface-to-the-new-implementation",
+            "remove-the-old-system-only-after-zero-usage",
+            "give-zombie-code-an-owner-or-a-removal",
+            "migrate-a-schema-in-phases",
+            "design-for-removability"
+          ]
+        },
+        "skills/doubt-driven-development/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "cross-examine-a-non-trivial-decision",
+            "hand-the-reviewer-only-artifact-and-contract",
+            "bound-the-doubt-loop",
+            "offer-a-cross-model-second-opinion",
+            "never-interpolate-content-into-a-shell-command"
+          ]
+        },
+        "skills/debugging-and-error-recovery/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "stop-the-line-on-an-unexpected-failure",
+            "classify-a-non-reproducible-failure",
+            "triage-the-failure-by-kind",
+            "treat-error-output-as-untrusted",
+            "degrade-gracefully-under-failure",
+            "give-instrumentation-a-lifetime"
+          ]
+        },
+        "skills/documentation-and-adrs/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "match-the-existing-convention-before-writing-an-adr",
+            "document-public-api-contracts",
+            "review-the-prose-without-changing-the-facts",
+            "write-a-readme-a-newcomer-can-follow",
+            "record-shipped-changes-in-a-changelog",
+            "keep-the-agent-facing-docs-current"
+          ]
+        },
+        "skills/constraint-driven-development/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-the-project-quality-bar",
+            "name-the-check-behind-every-threshold",
+            "scope-the-check-to-the-change",
+            "place-slow-checks-outside-the-edit-loop",
+            "watch-for-the-moves-that-lower-the-bar",
+            "judge-a-check-for-circularity",
+            "hold-the-measured-baseline",
+            "give-every-question-a-default"
+          ]
+        },
+        "skills/constraint-driven-development/references/floor-guard.md": {
+          "status": "split",
+          "instruction_ids": [
+            "watch-for-the-moves-that-lower-the-bar",
+            "give-the-guard-a-contract"
+          ]
+        },
+        "skills/code-review-and-quality/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "approve-an-improving-change",
+            "check-the-five-quality-axes",
+            "propose-the-structural-move",
+            "count-the-concepts-a-refactor-leaves-behind",
+            "treat-structural-drift-as-a-presumptive-blocker",
+            "size-a-change-and-split-it",
+            "separate-refactoring-from-feature-work",
+            "label-and-order-findings-by-leverage",
+            "mutate-the-change-to-test-the-test",
+            "name-dead-code-before-removing-it",
+            "resolve-review-disputes-by-a-fixed-order",
+            "do-not-accept-deferred-cleanup",
+            "review-without-rubber-stamping-or-softening",
+            "evaluate-a-dependency-before-adding-it",
+            "review-a-dependency-upgrade",
+            "check-the-authors-verification-story"
+          ]
+        },
+        "skills/context-engineering/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "load-context-by-persistence-level",
+            "include-only-what-the-task-needs",
+            "grade-context-by-trust-level",
+            "load-the-files-and-patterns-before-you-edit",
+            "write-a-rules-file-that-covers-the-basics",
+            "trim-context-before-the-window-is-full",
+            "compress-context-before-you-drop-it",
+            "put-task-critical-context-last",
+            "surface-a-conflict-instead-of-picking-one",
+            "ask-when-there-is-no-precedent"
+          ]
+        },
+        "skills/code-simplification/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "preserve-behaviour-exactly-when-you-simplify",
+            "match-the-codebase-conventions-not-your-preferences",
+            "prefer-explicit-code-over-clever-code",
+            "avoid-over-simplification",
+            "scope-a-simplification-pass-to-what-changed",
+            "understand-why-the-code-exists-before-simplifying",
+            "simplify-structure-by-pattern",
+            "rename-for-content-and-keep-the-why-comments",
+            "remove-duplication-and-dead-weight",
+            "automate-a-large-mechanical-refactor",
+            "verify-the-simplification-is-an-improvement",
+            "separate-refactoring-from-feature-work"
+          ]
+        },
+        "skills/frontend-ui-engineering/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "prefer-composition-over-configuration",
+            "keep-a-component-focused-on-one-job",
+            "colocate-a-component-with-its-parts",
+            "separate-data-fetching-from-presentation",
+            "place-state-in-the-narrowest-scope-that-works",
+            "derive-a-design-contract-from-references",
+            "avoid-the-generic-ai-look",
+            "use-the-design-systems-values",
+            "make-every-interactive-element-keyboard-accessible",
+            "design-the-loading-empty-and-error-states",
+            "design-mobile-first-and-check-the-breakpoints"
+          ]
+        },
+        "skills/git-workflow-and-versioning/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-branches-short-lived",
+            "commit-each-verified-increment",
+            "keep-each-commit-one-concern",
+            "size-a-change-and-split-it",
+            "separate-refactoring-from-feature-work",
+            "report-the-change-and-what-you-left-alone",
+            "run-the-pre-commit-checks",
+            "ignore-generated-and-secret-files",
+            "use-version-history-to-find-the-regression",
+            "choose-the-version-bump-by-consumer-impact",
+            "derive-the-version-from-the-release-tag",
+            "write-a-changelog-for-consumers"
+          ]
+        },
+        "skills/interview-me/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "state-a-read-with-a-confidence-number",
+            "ask-one-question-with-a-guess",
+            "distinguish-what-they-want-from-what-they-should-want",
+            "write-back-the-statement-of-intent",
+            "require-an-explicit-yes-to-confirm-the-intent",
+            "stop-when-you-can-predict-the-reaction",
+            "stop-the-turn-after-the-intent-is-confirmed",
+            "flag-an-unanswerable-ask-as-a-blocker"
+          ]
+        },
+        "skills/idea-refine/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "restate-the-problem-as-how-might-we",
+            "ask-sharpening-questions-before-expanding",
+            "generate-a-bounded-set-of-variations",
+            "ground-ideation-in-the-existing-codebase",
+            "cluster-ideas-into-distinct-directions",
+            "push-back-on-a-weak-idea",
+            "write-the-idea-one-pager",
+            "write-a-not-doing-list",
+            "audit-the-assumptions-behind-a-direction",
+            "pick-the-lens-that-fits"
+          ]
+        },
+        "skills/idea-refine/examples.md": {
+          "status": "split",
+          "instruction_ids": [
+            "restate-the-problem-as-how-might-we",
+            "ask-sharpening-questions-before-expanding",
+            "generate-a-bounded-set-of-variations",
+            "ground-ideation-in-the-existing-codebase",
+            "push-back-on-a-weak-idea",
+            "write-the-idea-one-pager",
+            "write-a-not-doing-list"
+          ]
+        },
+        "skills/idea-refine/refinement-criteria.md": {
+          "status": "split",
+          "instruction_ids": [
+            "separate-a-painkiller-from-a-vitamin",
+            "test-technical-and-resource-feasibility",
+            "test-for-durable-differentiation",
+            "audit-the-assumptions-behind-a-direction",
+            "rank-directions-by-value-and-feasibility",
+            "scope-an-mvp-to-one-job-and-its-riskiest-assumption",
+            "write-a-not-doing-list"
+          ]
+        },
+        "skills/idea-refine/frameworks.md": {
+          "status": "split",
+          "instruction_ids": [
+            "restate-the-problem-as-how-might-we",
+            "pick-the-lens-that-fits",
+            "transform-an-idea-with-seven-operations",
+            "challenge-assumptions-from-first-principles",
+            "name-the-job-the-user-is-hiring-it-for",
+            "impose-a-constraint-to-force-solutions",
+            "run-a-pre-mortem-on-the-idea",
+            "look-for-structural-analogies"
+          ]
+        },
+        "skills/incremental-implementation/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "change-one-thing-per-increment",
+            "keep-the-project-buildable-between-increments",
+            "gate-incomplete-work-behind-a-flag",
+            "default-new-code-to-safe-behaviour",
+            "keep-each-increment-revertable",
+            "run-each-check-only-when-the-code-changed",
+            "slice-the-riskiest-piece-first",
+            "slice-contract-first-for-parallel-work",
+            "sequence-verifiable-units",
+            "build-vertical-slices",
+            "minimize-code-surface"
+          ]
+        },
+        "skills/observability-and-instrumentation/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "alert-on-symptoms-not-causes",
+            "attach-a-correlation-id-to-every-record",
+            "bound-the-cardinality-of-metric-labels",
+            "choose-the-signal-that-answers-the-question",
+            "instrument-red-metrics-on-every-endpoint",
+            "keep-runbooks-current",
+            "keep-secrets-out-of-telemetry",
+            "log-structured-events-not-prose",
+            "make-every-alert-actionable",
+            "name-the-questions-before-instrumenting",
+            "propagate-trace-context-across-every-async-boundary",
+            "report-percentiles-not-averages",
+            "stamp-the-entry-point-on-the-run",
+            "use-log-levels-by-their-meaning",
+            "verify-the-telemetry-you-added",
+            "write-a-minimum-viable-runbook"
+          ]
+        },
+        "skills/security-and-hardening/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "allowlist-server-side-fetch-targets",
+            "apply-the-three-tier-security-boundary",
+            "back-rate-limits-with-a-shared-store",
+            "block-dependency-scripts-before-first-execution",
+            "cap-and-scope-what-a-model-run-may-do",
+            "check-authorization-on-every-request",
+            "classify-personal-data-as-you-add-it",
+            "collect-personal-data-only-against-a-stated-purpose",
+            "encode-output-through-the-framework",
+            "enforce-permissions-in-code-not-in-the-prompt",
+            "establish-one-dependency-installation-boundary",
+            "gate-third-party-sharing-on-consent",
+            "guard-destructive-operations-on-derived-paths",
+            "harden-the-session-cookie",
+            "hash-passwords-with-a-slow-hash",
+            "keep-secrets-and-other-tenants-data-out-of-the-context-window",
+            "keep-secrets-in-the-environment",
+            "make-personal-data-deletable",
+            "name-the-trust-boundaries-before-hardening",
+            "parameterize-every-query",
+            "restrict-cors-to-an-explicit-origin-list",
+            "restrict-uploads-by-type-size-and-content",
+            "review-new-dependencies-beyond-the-audit",
+            "rotate-a-leaked-secret-before-purging-history",
+            "run-stride-over-each-trust-boundary",
+            "set-security-headers-on-every-response",
+            "strip-sensitive-fields-from-responses",
+            "treat-model-output-as-untrusted-input",
+            "triage-audit-findings-by-reachability",
+            "validate-with-a-schema-at-the-boundary",
+            "write-the-abuse-case-next-to-the-use-case"
+          ]
+        },
+        "skills/security-and-hardening/references/hardening-patterns.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "allowlist-server-side-fetch-targets",
+            "back-rate-limits-with-a-shared-store",
+            "check-authorization-on-every-request",
+            "classify-personal-data-as-you-add-it",
+            "encode-output-through-the-framework",
+            "guard-destructive-operations-on-derived-paths",
+            "harden-the-session-cookie",
+            "hash-passwords-with-a-slow-hash",
+            "keep-secrets-in-the-environment",
+            "parameterize-every-query",
+            "restrict-cors-to-an-explicit-origin-list",
+            "restrict-uploads-by-type-size-and-content",
+            "rotate-a-leaked-secret-before-purging-history",
+            "set-security-headers-on-every-response",
+            "strip-sensitive-fields-from-responses",
+            "treat-model-output-as-untrusted-input",
+            "triage-audit-findings-by-reachability",
+            "validate-with-a-schema-at-the-boundary"
+          ],
+          "contributed_sources": [
+            "skills/security-and-hardening/references/hardening-patterns.md"
+          ]
+        },
+        "skills/planning-and-task-breakdown/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "break-down-tasks-that-are-too-large",
+            "build-vertical-slices",
+            "classify-the-work-before-parallelizing",
+            "explore-in-read-only-before-planning",
+            "give-every-task-acceptance-criteria-and-a-check",
+            "keep-the-plan-document-separate-from-the-task-list",
+            "never-overwrite-an-incomplete-plan",
+            "order-the-tasks-by-the-dependency-graph",
+            "place-checkpoints-and-front-load-the-risky-work",
+            "record-risks-and-open-questions-in-the-plan",
+            "record-tasks-in-the-designated-task-target"
+          ]
+        },
+        "skills/performance-optimization/references/optimization-patterns.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "cache-only-what-is-expensive-and-re-read",
+            "fetch-the-relation-in-the-same-query",
+            "give-images-dimensions-and-priority",
+            "guard-the-hot-key-against-a-stampede",
+            "hoist-render-allocations-and-memoize-what-the-profile-shows",
+            "justify-an-index-with-a-query-plan",
+            "key-the-cache-on-every-input-that-changes-the-response",
+            "size-the-connection-pool-under-the-ceiling",
+            "split-the-bundle-and-lazy-load-heavy-features",
+            "state-one-invalidation-strategy-and-the-staleness-window"
+          ],
+          "contributed_sources": [
+            "skills/performance-optimization/references/optimization-patterns.md"
+          ]
+        },
+        ".claude/commands/plan.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "never-overwrite-an-incomplete-plan"
+          ]
+        },
+        "skills/using-agent-skills/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "surface-your-assumptions-before-building",
+            "name-the-confusion-before-continuing",
+            "push-back-with-quantified-reasons",
+            "stay-inside-the-requested-scope",
+            "apply-the-definition-of-done-to-every-change"
+          ]
+        },
+        "skills/source-driven-development/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "identify-the-exact-stack-and-versions",
+            "verify-against-official-documentation",
+            "implement-what-the-docs-show",
+            "cite-the-source-for-every-framework-decision",
+            "extract-only-the-documentation-signal"
+          ]
+        },
+        "skills/shipping-and-launch/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "clear-the-pre-launch-checklist",
+            "roll-out-in-staged-gates",
+            "gate-the-rollout-on-metric-thresholds",
+            "roll-back-immediately-on-these-signals",
+            "write-the-rollback-plan-before-deploying",
+            "gate-the-release-on-the-error-budget",
+            "watch-the-signals-that-matter",
+            "verify-the-launch-in-the-first-hour",
+            "keep-feature-flags-flat-and-tested"
+          ]
+        },
+        "skills/test-driven-development/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "discover-the-repositorys-test-tooling",
+            "place-tests-by-level-and-cost",
+            "keep-tests-self-contained",
+            "write-one-test-one-behaviour",
+            "let-another-agent-write-the-reproduction-test",
+            "do-not-rerun-checks-without-a-change"
+          ]
+        },
+        "skills/spec-driven-development/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "map-capabilities-before-specifying",
+            "surface-your-assumptions-before-building",
+            "write-the-spec-with-the-core-areas",
+            "reframe-vague-requirements-as-success-criteria",
+            "stop-after-saving-the-spec",
+            "keep-the-spec-current"
+          ]
+        },
+        "references/definition-of-done.md": {
+          "status": "split",
+          "instruction_ids": [
+            "separate-acceptance-criteria-from-the-standing-bar",
+            "apply-the-standing-checklist-as-the-work-grows",
+            "verify-behaviour-at-runtime-not-only-at-compile",
+            "account-for-migrations-config-and-flags",
+            "document-the-current-state-not-the-change-history",
+            "review-security-observability-and-rollback-before-ship"
+          ]
+        },
+        "references/orchestration-patterns.md": {
+          "status": "split",
+          "instruction_ids": [
+            "pick-the-cheapest-orchestration-that-fits",
+            "validate-a-parallel-fan-out-before-adopting-it",
+            "keep-the-human-as-the-orchestrator",
+            "keep-orchestration-depth-at-one-level",
+            "isolate-wide-research-in-a-digest-returning-subagent",
+            "issue-parallel-dispatches-in-one-turn",
+            "check-for-a-built-in-capability-before-defining-your-own",
+            "add-a-pattern-only-after-two-real-uses",
+            "make-independent-investigators-challenge-each-other"
+          ]
+        },
+        "references/observability-checklist.md": {
+          "status": "split",
+          "instruction_ids": [
+            "start-from-the-on-call-questions",
+            "write-structured-logs-with-a-correlation-id",
+            "bound-metric-labels-and-series",
+            "propagate-trace-context-across-every-boundary",
+            "alert-on-symptoms-with-a-runbook",
+            "verify-the-telemetry-before-you-trust-it",
+            "gate-the-launch-on-working-telemetry",
+            "build-a-dashboard-that-answers-the-on-call-questions"
+          ]
+        },
+        "references/security-checklist.md": {
+          "status": "split",
+          "instruction_ids": [
+            "model-threats-before-adding-controls",
+            "harden-credential-handling",
+            "check-authorization-on-every-resource-access",
+            "keep-untrusted-values-out-of-code-and-queries",
+            "allowlist-outbound-fetches-and-redirect-targets",
+            "contain-destructive-path-operations",
+            "keep-secrets-out-of-code-and-logs",
+            "minimise-and-expire-personal-data",
+            "locate-the-installation-boundary",
+            "block-dependency-scripts-until-reviewed",
+            "vet-dependencies-for-advisories-and-provenance",
+            "harden-the-http-response-boundary",
+            "return-generic-errors-in-production",
+            "enforce-permissions-outside-the-prompt",
+            "bound-model-consumption"
+          ]
+        },
+        "references/accessibility-checklist.md": {
+          "status": "split",
+          "instruction_ids": [
+            "make-every-control-keyboard-operable",
+            "name-every-control-for-assistive-technology",
+            "declare-the-page-structure-and-content",
+            "never-use-colour-as-the-only-signal",
+            "meet-the-visual-and-touch-minimums",
+            "label-every-field-and-attach-its-error",
+            "announce-dynamic-changes-to-assistive-technology",
+            "verify-accessibility-with-an-audit-and-a-keyboard-pass"
+          ]
+        },
+        "references/testing-patterns.md": {
+          "status": "split",
+          "instruction_ids": [
+            "structure-each-test-as-arrange-act-assert",
+            "name-tests-by-unit-behaviour-and-condition",
+            "query-elements-by-role-not-test-id",
+            "assert-specific-values-instead-of-snapshots",
+            "never-skip-or-silence-a-failing-test"
+          ]
+        },
+        "references/performance-checklist.md": {
+          "status": "split",
+          "instruction_ids": [
+            "split-response-time-into-stages",
+            "capture-the-query-plan-before-the-fix",
+            "design-the-index-for-the-query-shape",
+            "size-one-connection-pool-per-process",
+            "design-the-cache-deliberately",
+            "cache-the-misses-and-protect-the-hot-key",
+            "measure-field-data-before-optimizing",
+            "budget-the-initial-payload",
+            "keep-the-main-thread-free",
+            "serve-assets-over-a-cached-fast-path",
+            "keep-the-request-path-light",
+            "put-static-content-near-the-user",
+            "load-images-without-paying-for-them",
+            "ship-few-fonts-in-one-format",
+            "set-latency-and-layout-shift-targets"
+          ]
+        },
+        "agents/security-auditor.md": {
+          "status": "split",
+          "instruction_ids": [
+            "inspect-security-surface",
+            "audit-authentication-and-authorization",
+            "check-outbound-and-third-party-trust",
+            "secure-ai-features",
+            "map-trust-boundaries-before-finding",
+            "rate-security-findings-by-exploitability",
+            "audit-dependency-supply-chain",
+            "check-data-protection-and-runtime-hardening"
+          ]
+        },
+        "agents/web-performance-auditor.md": {
+          "status": "split",
+          "instruction_ids": [
+            "never-present-an-unmeasured-metric",
+            "match-the-check-to-the-stack",
+            "audit-core-web-vitals-and-loading",
+            "audit-rendering-and-network",
+            "rate-performance-findings-by-impact"
+          ]
+        },
+        "agents/test-engineer.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-test-level",
+            "name-tests-as-specifications",
+            "cover-the-scenario-classes",
+            "keep-tests-independent",
+            "avoid-unreviewed-snapshot-tests",
+            "rank-recommended-tests-by-risk"
+          ]
+        },
+        "docs/advanced-per-agent-configuration.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-vendor-settings-out-of-the-shared-file",
+            "generate-repetitive-configuration",
+            "validate-semantics-not-just-shape"
+          ]
+        },
+        "docs/skill-anatomy.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-the-procedure-not-the-workaround",
+            "lay-out-a-skill-directory",
+            "name-the-skill-after-its-directory",
+            "keep-vendor-settings-out-of-the-shared-file"
+          ]
+        },
+        "agents/code-reviewer.md": {
+          "status": "split",
+          "instruction_ids": [
+            "review-on-fixed-dimensions",
+            "read-the-spec-and-tests-first",
+            "label-code-review-findings"
+          ]
+        },
+        "hooks/SDD-CACHE.md": {
+          "status": "split",
+          "instruction_ids": [
+            "revalidate-a-cache-before-serving-it",
+            "show-the-parameters-behind-a-cached-result"
+          ]
+        },
+        "docs/adoption-guide.md": {
+          "status": "split",
+          "instruction_ids": [
+            "adopt-a-methodology-in-sequenced-phases",
+            "review-along-five-fixed-quality-axes",
+            "keep-the-quality-bar-as-a-rising-floor",
+            "converge-on-target-architecture",
+            "design-from-caller-usage",
+            "write-design-document",
+            "open-a-reviewable-change",
+            "write-minimal-agent-guidance"
+          ]
+        },
+        ".claude/commands/constraints.md": {
+          "status": "split",
+          "instruction_ids": [
+            "detect-the-project-before-asking",
+            "write-the-quality-bar-as-a-floor-with-exceptions",
+            "put-a-tool-behind-every-number",
+            "place-checks-by-cost",
+            "keep-the-quality-bar-as-a-rising-floor"
+          ]
+        },
+        ".claude/commands/spec.md": {
+          "status": "split",
+          "instruction_ids": [
+            "elicit-the-goal-users-and-boundaries-before-writing-the-spec",
+            "write-the-spec-over-six-areas",
+            "map-the-capabilities-before-specing-modules"
+          ]
+        },
+        "evals/README.md": {
+          "status": "split",
+          "instruction_ids": [
+            "pair-each-negative-trigger-with-the-sibling-that-owns-it",
+            "write-trigger-prompts-as-user-paraphrases",
+            "fix-the-description-not-the-eval",
+            "state-that-the-skill-applies-even-when-the-work-is-pasted-inline",
+            "watch-the-rank-1-rate-and-never-lower-the-floor",
+            "keep-sibling-descriptions-from-colliding",
+            "pin-the-model-and-the-tool-version-when-you-report-numbers",
+            "every-skill-ships-with-its-own-case-file",
+            "evaluate-skill-changes-blind"
+          ]
+        },
+        ".claude/commands/ship.md": {
+          "status": "split",
+          "instruction_ids": [
+            "fan-out-independent-checks-in-one-turn",
+            "gate-the-review-fan-out-on-blast-radius",
+            "state-the-ship-decision-with-a-rollback-plan",
+            "verify-the-areas-the-fan-out-does-not-cover"
+          ]
+        },
+        ".claude/commands/build.md": {
+          "status": "split",
+          "instruction_ids": [
+            "require-a-written-spec-before-building",
+            "gate-the-whole-plan-on-one-approval",
+            "keep-per-task-commits-clean-and-reversible",
+            "execute-plan-in-order"
+          ]
+        },
+        ".claude/commands/review.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "review-along-five-fixed-quality-axes"
+          ]
+        },
+        ".claude/commands/code-simplify.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "simplify-one-change-at-a-time"
+          ]
+        },
+        ".claude/commands/test.md": {
+          "status": "rejected",
+          "reason": "The wrapper adds no rule of its own: the feature loop and the bug-fix loop it repeats are owned by test-first-development, build-vertical-slices, reproduce-defect-before-fixing and prove-regression-test-detects-bug, and the last line only names the donor's own browser-testing skill and its MCP server."
+        },
+        ".claude/commands/webperf.md": {
+          "status": "rejected",
+          "reason": "The wrapper is wiring for the donor's own persona and its measurement tooling (Lighthouse, PageSpeed Insights, CrUX, DevTools, the MCP server); the transferable part is already owned by separate-evidence-from-inference and present-impact-without-invented-baseline."
+        },
+        ".claude/rules/skills-contributing.md": {
+          "status": "rejected",
+          "reason": "the donor repository rule for adding skills, bound to its own pre-flight checks; the transferable anti-duplication rule is already in the corpus as check-redundancy-and-prior-rejections"
+        },
+        "AGENTS.md": {
+          "status": "rejected",
+          "reason": "agent instructions for working inside the donor repository; the file states that it is not to be copied into another project"
+        },
+        "CLAUDE.md": {
+          "status": "rejected",
+          "reason": "host agent instructions scoped to the donor repository, describing its own directory layout"
+        },
+        "CONTRIBUTING.md": {
+          "status": "rejected",
+          "reason": "the contribution rulebook of the donor repository, with its pull-request and release procedure"
+        },
+        "README.md": {
+          "status": "rejected",
+          "reason": "the donor pack readme: a catalogue and promotion of the donor repository itself, not a transferable engineering norm"
+        },
+        "docs/agents.md": {
+          "status": "rejected",
+          "reason": "catalogue of the donor personas and how they relate to its commands"
+        },
+        "docs/antigravity-setup.md": {
+          "status": "rejected",
+          "reason": "installation and invocation instructions for one host product"
+        },
+        "docs/codex-setup.md": {
+          "status": "rejected",
+          "reason": "installation and invocation instructions for one host product"
+        },
+        "docs/commandcode-setup.md": {
+          "status": "rejected",
+          "reason": "installation and invocation instructions for one host product"
+        },
+        "docs/comparison.md": {
+          "status": "rejected",
+          "reason": "a comparison of the donor pack with two other packs, written for evaluators of the donor product"
+        },
+        "docs/copilot-cli-setup.md": {
+          "status": "rejected",
+          "reason": "installation and invocation instructions for one host product"
+        },
+        "docs/copilot-setup.md": {
+          "status": "rejected",
+          "reason": "installation and invocation instructions for one host product, including its alias table"
+        },
+        "docs/cursor-setup.md": {
+          "status": "rejected",
+          "reason": "installation and invocation instructions for one host product"
+        },
+        "docs/developer-onboarding.md": {
+          "status": "rejected",
+          "reason": "guided tour of the donor repository for its own contributors"
+        },
+        "docs/gemini-cli-setup.md": {
+          "status": "rejected",
+          "reason": "installation and invocation instructions for one host product"
+        },
+        "docs/getting-started.md": {
+          "status": "rejected",
+          "reason": "installation and usage guide for the donor pack on a host, with host commands rather than engineering norms"
+        },
+        "docs/opencode-setup.md": {
+          "status": "rejected",
+          "reason": "installation and invocation instructions for one host product"
+        },
+        "docs/other-hosts.md": {
+          "status": "rejected",
+          "reason": "a list of host installation commands for the donor pack"
+        },
+        "docs/windsurf-setup.md": {
+          "status": "rejected",
+          "reason": "installation and invocation instructions for one host product"
+        },
+        "evals/fixtures/api-and-interface-design/service-brief.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/browser-testing-with-devtools/README.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/context-engineering/context-audit.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/debugging-and-error-recovery/time-pressure.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/deprecation-and-migration/api-inventory.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/documentation-and-adrs/decision-context.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/documentation-and-adrs/prose-review/README.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/doubt-driven-development/migration-plan.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/frontend-ui-engineering/design-system.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/incremental-implementation-pressure/scenario.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/incremental-implementation/tasks/plan.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/observability-and-instrumentation/operations.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/planning-and-task-breakdown/notifications-spec.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/shipping-and-launch/authority-pressure.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/shipping-and-launch/launch-status.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/source-driven-development/framework-task.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/spec-driven-development-decomposition/portal-brief.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/spec-driven-development/billing-brief.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/test-driven-development-ecosystem/README.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/test-driven-development/BUG.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/test-driven-development/README.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/fixtures/using-agent-skills/incident.md": {
+          "status": "rejected",
+          "reason": "a scenario fixture of the donor evaluation harness: it describes a situation to exercise a skill, not a rule an agent should follow"
+        },
+        "evals/plugin/code-review-fires/graders/off-by-one.md": {
+          "status": "rejected",
+          "reason": "a grader that expects an off-by-one to be filed as a must-fix rather than a nit; the corpus already requires concrete problems over preferences in classify-and-state-review-verdict and triage-review-findings-with-judgment"
+        },
+        "evals/plugin/code-review-fires/graders/severity-labels.md": {
+          "status": "rejected",
+          "reason": "the severity label vocabulary of the donor grader; the corpus already owns the severity grouping in format-quality-findings and the rule that a nit is not a critical in classify-and-state-review-verdict, and a second label set would be a parallel vocabulary"
+        },
+        "evals/plugin/code-review-fires/graders/skill-fired.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/code-review-fires/prompt.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/code-review-stays-quiet-on-commit-message/graders/not-fired.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/code-review-stays-quiet-on-commit-message/prompt.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/code-review-stays-quiet/graders/not-fired.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/code-review-stays-quiet/graders/tdd-fired.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/code-review-stays-quiet/prompt.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/tdd-fires-on-pasted-bug/graders/failing-test-first.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/tdd-fires-on-pasted-bug/graders/skill-fired.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/tdd-fires-on-pasted-bug/prompt.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/tdd-stays-quiet-on-debug/graders/not-fired.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/plugin/tdd-stays-quiet-on-debug/prompt.md": {
+          "status": "rejected",
+          "reason": "a grader or prompt of the donor evaluation harness that decides whether a skill fired; it encodes the harness mechanics, not a reusable norm"
+        },
+        "evals/skill-impact.md": {
+          "status": "rejected",
+          "reason": "the ledger template of the donor evaluations; the norm it encodes - record a rejected change so later proposals can be checked against it - is already in the corpus as record-rejected-requests-in-a-kb"
+        },
+        "hooks/SIMPLIFY-IGNORE.md": {
+          "status": "rejected",
+          "reason": "description of a session hook for one host, including its block annotation syntax"
         }
       }
     }

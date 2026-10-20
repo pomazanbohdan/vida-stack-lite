@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/no-comments/SKILL.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/documentation-and-adrs/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write few meaningful comments
@@ -48,3 +49,37 @@ Offer the cheapest in-scope type, runtime, test, or CI lint; wait for approval.
 If approved, encode the constraint then delete the comment.
 Otherwise delete it, report the constraint open, and sketch out-of-scope work.
 Report the deletion count, restored comments, reruns, sketch, fixes, encoding offers, encodings, unenforced constraints, and other open work.
+
+Don't document obvious code. Don't add comments that restate what the code already says. Don't write docs for throwaway prototypes.
+
+Comments on *why* are stable. Comments on *what* get outdated — that's why you only write the former.
+
+### When NOT to Comment
+
+```typescript
+// Don't comment self-explanatory code
+function calculateTotal(items: CartItem[]): number {
+  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+}
+
+// Don't leave TODO comments for things you should just do now
+// TODO: add error handling  ← Just add it
+
+// Don't leave commented-out code
+// const oldImplementation = () => { ... }  ← Delete it, git has history
+```
+
+### Document Known Gotchas
+
+```typescript
+/**
+ * IMPORTANT: This function must be called before the first render.
+ * If called after hydration, it causes a flash of unstyled content
+ * because the theme context isn't available during SSR.
+ *
+ * See ADR-003 for the full design rationale.
+ */
+export function initializeTheme(theme: Theme): void {
+  // ...
+}
+```

@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/domain-modeling/SKILL.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/domain-modeling/ADR-FORMAT.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/documentation-and-adrs/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Record decisions as ADRs
@@ -39,3 +40,16 @@ What qualifies:
 - **Deliberate deviations from the obvious path.** "We're using manual SQL instead of an ORM because X." Anything where a reasonable reader would assume the opposite. These stop the next engineer from "fixing" something that was deliberate.
 - **Constraints not visible in the code.** "We can't use AWS because of compliance requirements." "Response times must be under 200ms because of the partner API contract."
 - **Rejected alternatives when the rejection is non-obvious.** If you considered GraphQL and picked REST for subtle reasons, record it; otherwise someone will suggest GraphQL again in six months.
+
+Document decisions, not just code. The most valuable documentation captures the *why* — the context, constraints, and trade-offs that led to a decision. Code shows *what* was built; documentation explains *why it was built this way* and *what alternatives were considered*. This context is essential for future humans and agents working in the codebase.
+
+### ADR Lifecycle
+
+```
+PROPOSED → ACCEPTED → (SUPERSEDED or DEPRECATED)
+```
+
+- **Don't delete old ADRs.** They capture historical context.
+- When a decision changes, write a new ADR that references and supersedes the old one.
+
+A 10-minute ADR prevents a 2-hour debate about the same decision six months later.

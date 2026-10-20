@@ -6,6 +6,7 @@ capability_tags:
   - plan-implementation
 pattern_tags:
   - implementation-planning
+  - test-placement-strategy
 conditions_applies_when: A spec or plan decides where tests will go.
 conditions_does_not_apply_when: The seam is already fixed.
 artifact_contract_output_type: seam-choice
@@ -14,12 +15,13 @@ artifact_contract_required_data:
   - why highest
   - count
 artifact_contract_verified_by: the seams were checked with the user and existing seams were preferred
-compatibility_excludes: []
+compatibility_excludes:
+  - choose-the-test-level
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/to-spec/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Choose the highest test seam

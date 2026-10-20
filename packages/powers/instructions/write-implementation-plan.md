@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-plans/SKILL.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/spec-driven-development/SKILL.md
 status: active
-revision: 5
+revision: 6
 ---
 
 # Write the plan for an engineer who has not seen the codebase
@@ -48,3 +49,10 @@ When the plan is complete, save it at the path the plan states and hand it over.
 If the reader has already supplied an execution method, use it.
 If no execution method has been supplied, report that the plan is complete and saved at its path, ask the reader to review the plan, and ask which execution approach they prefer before anything is implemented.
 Never start the implementation before the review of the plan has happened.
+
+Each task should be completable in a single focused session.
+Each task has explicit acceptance criteria.
+Each task includes a verification step (test, build, manual check).
+Tasks are ordered by dependency, not by perceived importance.
+No task should require changing more than ~5 files.
+The plan should be reviewable: the human should be able to read it and say "yes, that's the right approach" or "no, change X."

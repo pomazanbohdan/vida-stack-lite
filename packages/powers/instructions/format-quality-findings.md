@@ -26,16 +26,16 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-audit/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Present findings by impact in a fixed shape
 Order of importance: correct, safe, holds under load, tested, fast, lean.
 Lean still matters: every extra line must be read, tested and fixed later.
 Then the findings in three groups, most important first, skip empty groups.
-Must fix: bug, security, data loss, breaks at the expected load.
-Should fix: risky code without a test, real slowness, duplication, a function that mixes jobs, code that should not exist.
-Nice to have: small speed-ups, shorter forms.
+Critical: bug, security, data loss, breaks at the expected load.
+Important: risky code without a test, real slowness, duplication, a function that mixes jobs, code that should not exist.
+Minor: small speed-ups, shorter forms.
 Number findings across all groups, so the user can say "fix 2 and 5".
 At most 20 findings; if you left smaller ones out, say how many.
 Every finding has all four parts.

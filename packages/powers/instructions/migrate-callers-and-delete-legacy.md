@@ -6,6 +6,7 @@ capability_tags:
   - manage-technical-debt
 pattern_tags:
   - technical-debt
+  - migration-strategy
 conditions_applies_when: "You replace a function, format, or interface that already has callers."
 conditions_does_not_apply_when: The old interface remains a public contract for external consumers.
 artifact_contract_output_type: migration
@@ -15,12 +16,13 @@ artifact_contract_required_data:
   - deleted interface
   - external consumers
 artifact_contract_verified_by: "the project's checks passing after the old interface is removed"
-compatibility_excludes: []
+compatibility_excludes:
+  - adapt-the-old-interface-to-the-new-implementation
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Migrate callers and delete legacy APIs

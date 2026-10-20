@@ -23,10 +23,22 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.opencode/command/ponytail-review.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-audit/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=agents/security-auditor.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Check the security surface
 Look for security holes: injection, weak randomness, secrets in code, missing checks on input from users.
+
 Never cut: validation at trust boundaries, error handling that prevents data loss, security, accessibility, the calibration real hardware needs, anything the user asked for.
+
+Is all user input validated at system boundaries?
+
+Are there injection vectors (SQL, NoSQL, OS command, LDAP)?
+
+Is HTML output encoded to prevent XSS?
+
+Are file uploads restricted by type, size, and content?
+
+Are URL redirects validated against an allowlist?

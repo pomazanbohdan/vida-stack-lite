@@ -6,6 +6,7 @@ capability_tags:
   - verify-work-results
 pattern_tags:
   - verification-before-completion
+  - verification-rerun-policy
 conditions_applies_when: "You are about to call work complete, fixed, or verified."
 conditions_does_not_apply_when: You only describe a future check and make no claim about its result.
 artifact_contract_output_type: verification-report
@@ -14,13 +15,14 @@ artifact_contract_required_data:
   - check performed
   - actual result
 artifact_contract_verified_by: the named check runs on the current state and its output supports the claim
-compatibility_excludes: []
+compatibility_excludes:
+  - run-each-check-only-when-the-code-changed
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/verification-before-completion/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-prove-it-works/SKILL.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Verify before completion

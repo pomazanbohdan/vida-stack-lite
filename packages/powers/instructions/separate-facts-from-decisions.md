@@ -17,9 +17,23 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/grilling/SKILL.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/constraint-driven-development/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Separate facts from decisions
 Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment (filesystem, tools, etc.), dispatch a sub-agent to find it; don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now. The _decisions_ are the user's: put each to them and wait.
+
+Never ask what you can read. Before the first question, gather:
+
+| What | Where to look |
+|------|---------------|
+| Language and stack | `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml` |
+| Test runner | dev dependencies, `test` script, existing test files |
+| Existing linters | `eslint.config.*`, `biome.json`, `.ruff.toml` |
+| Coverage today | `coverage/` output, or run the suite once |
+| CI | `.github/workflows/`, `.gitlab-ci.yml` |
+| Agent harness | `.claude/`, `.codex/`, `AGENTS.md` |
+
+Report what you found in two lines, then ask only what's left.

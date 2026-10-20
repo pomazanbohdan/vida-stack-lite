@@ -1,7 +1,7 @@
 ---
 instruction_id: mock-only-system-boundaries
 title: Mock only system boundaries
-summary: "Mock only at system boundaries such as external APIs, databases, time and randomness; never mock your own code."
+summary: "Mock at system boundaries such as external APIs, HTTP requests, databases, the file system, time and randomness; never mock your own logic, transformations or validation."
 capability_tags:
   - write-tests-first
 pattern_tags:
@@ -18,17 +18,24 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/tdd/mocking.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/testing-patterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Mock only system boundaries
 Mock at **system boundaries** only:
 - External APIs (payment, email, etc.)
+- HTTP requests
 - Databases (sometimes - prefer test DB)
 - Time/randomness
-- File system (sometimes)
+- File system operations (sometimes)
 Don't mock:
 - Your own classes/modules
 - Internal collaborators
+- Internal utility functions
+- Business logic
+- Data transformations
+- Validation functions
+- Pure functions
 - Anything you control

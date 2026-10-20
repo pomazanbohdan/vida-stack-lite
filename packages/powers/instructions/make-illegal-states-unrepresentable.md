@@ -21,8 +21,9 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-type-system-discipline/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/typescript-best-practices/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/typescript-best-practices/references/patterns.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/api-and-interface-design/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Make illegal states unrepresentable
@@ -35,6 +36,7 @@ Validate once at creation, trust the type downstream.
 If two arguments share a primitive type but mean different things, brand them.
 Model variants with a literal discriminant so impossible combinations cannot be represented.
 No optional-field bags.
+Consumer gets type narrowing.
 Build the shape so the illegal value cannot be constructed: a non-empty tuple for non-empty, pairs for even length, start plus duration for a range.
 Not a runtime guard, not a wish for refinement types.
 Keep a plain array while every operation on it stays total.

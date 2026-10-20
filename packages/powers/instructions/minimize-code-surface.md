@@ -36,8 +36,9 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=AGENTS.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-laziness-protocol/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-subtract-before-you-add/SKILL.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/incremental-implementation/SKILL.md
 status: active
-revision: 6
+revision: 7
 ---
 
 # Minimize the code surface
@@ -59,3 +60,12 @@ Lazy code without its check is unfinished: new non-trivial logic leaves one smal
 A shortcut with a known limit gets a comment in the form shortcut: the limit, when to upgrade.
 Never cut validation at trust boundaries, error handling that prevents data loss, security, accessibility, the calibration real hardware needs, or anything the user asked for.
 Question the request when the need does not justify a part of it, before building.
+## Scope discipline
+Touch only what the task requires.
+Do NOT:
+- "Clean up" code adjacent to your change
+- Refactor imports in files you're not modifying
+- Remove comments you don't fully understand
+- Add features not in the spec because they "seem useful"
+- Modernize syntax in files you're only reading
+If you notice something worth improving outside your task scope, note it — don't fix it.

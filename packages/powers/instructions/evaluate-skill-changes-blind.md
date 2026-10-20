@@ -20,8 +20,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/eval.md
+  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=evals/README.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Evaluate skill changes blind
@@ -47,3 +48,5 @@ Grade chain-following from the files actually read plus the shape of the code, n
 Read every candidate output yourself end to end and compare it to the judge's verdict.
 Disagreement means a model is biased or the rubric is ambiguous.
 Synthesize and recommend whether to promote the variant.
+Expectations are verifiable statements a grader checks against the relevant artifact — behaviors, not phrasings.
+a `tool_used: Skill` grader only says whether the skill fired; in a two-arm run it is excluded from the score, so pair it with a grader on the reply itself.
