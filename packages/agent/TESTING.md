@@ -139,6 +139,13 @@ budgets or admission. Historical reports without them remain unchanged; missing
 coordinates are a navigation GAP, not permission to guess from names or order.
 Before using a retained location, match its key and geometry to that report's
 bound Source map. Never combine locations and counters from different inputs.
+For branch repair planning, reuse that same report's native arm counters and
+bound branch map. Require the listed zero-count arms to equal the summary
+deficit. An implicit-if arm may have empty endpoints; label its containing-if
+range explicitly instead of inventing an else location. Unavailable branch
+diagnostics are unknown, not zero. These lists guide cases and confer no
+numeric admission. Passing negative cases need not increase Istanbul coverage
+when its existing operand counters were already reached.
 
 Give each inventoried callback or projection its own disposition. A parent row
 does not account for its nested callable. When a new callable extracts original

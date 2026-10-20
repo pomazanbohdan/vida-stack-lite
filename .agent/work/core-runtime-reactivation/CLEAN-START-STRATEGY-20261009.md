@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `7f299ccc9eec049ae0dd6c33f855c2c2e4aa1433`, run `ac810a04-989e-47ca-88a3-a5a2f5ea1da3`: F1050/1129, L4646/4970, S4920/5300 and B4946/5642. It records305PASS/0FAIL,3425assertions in153.530seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is79missing functions under39owners, all with exact retained map coordinates. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `5801089b080283b1d68614cb7fd31ad57d8dfb40`, run `d41b40d4-3b08-4f2b-8604-6c9768f92cfc`: F1051/1129, L4647/4970, S4921/5300 and B4948/5642. It records305PASS/0FAIL,3663assertions in184.010seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is78missing functions under38owners, all with exact retained map coordinates, plus694 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -56,8 +56,11 @@ missing locations stay GAP and all numeric gates remain unchanged. Next use
 the current location-bound inventory for the remaining repair FIFO/ownership
 predicate and other reachable Host paths; keep one contour and producer.
 The FIFO intent matrix and26 malformed continuation-plan controls are now
-checked and independently reviewed. Publish and measure this stable packet
-once, then select the next same-contour obligation from the refreshed report.
+measured. The repair owner has no missing functions, but neither that owner's
+branches nor the whole contour are closed. Select the next same-contour packet
+from actual missing function/branch locations, not guard/assertion counts.
+Reuse native counters/maps once; implicit-if arms keep labeled containing-if
+ranges and unavailable diagnostics stay unknown. No additional AST pass is needed.
 Retain Root-only integration, one active contour and default5s case/300s coverage limits.
 The three-hour audit fixes the local qualifier namespace-overwrite hazard; WORK
 retains its unchanged-manifest proof and measured-versus-planned comparisons.

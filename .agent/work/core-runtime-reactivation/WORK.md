@@ -10,54 +10,57 @@ exact F/L/S/B100 before selecting another. Root is the sole Source integrator,
 Git owner and numeric producer. Frozen complexity/CRAP qualification and mutation
 remain deferred; their budgets and acceptance rules are unchanged.
 
-Latest complete measurement binds Source `7f299ccc9eec049ae0dd6c33f855c2c2e4aa1433` and run
-`ac810a04-989e-47ca-88a3-a5a2f5ea1da3`, not later HEAD.
+Latest complete measurement binds Source `5801089b080283b1d68614cb7fd31ad57d8dfb40` and run
+`d41b40d4-3b08-4f2b-8604-6c9768f92cfc`, not later HEAD.
 
-| Counter | Covered / total | Delta from3f208d3 |
+| Counter | Covered / total | Delta from7f299cc |
 | --- | --- | --- |
-| Functions | 1050 / 1129 | +17 |
-| Lines | 4646 / 4970 | +99 |
-| Statements | 4920 / 5300 | +102 |
-| Branches | 4946 / 5642 | +92 |
+| Functions | 1051 / 1129 | +1 |
+| Lines | 4647 / 4970 | +1 |
+| Statements | 4921 / 5300 | +1 |
+| Branches | 4948 / 5642 | +2 |
 
-305PASS/0FAIL,3425assertions,153529.553258ms elapsed.
-Host child:289PASS/3172assertions/147.49s. Stopped-source child:
-16PASS/253assertions/126.85s, contained cleanup complete. Exit0,
+305PASS/0FAIL,3663assertions,184010.285786ms elapsed.
+Host child:289PASS/3410assertions/175.30s. Stopped-source child:
+16PASS/253assertions/139.99s, contained cleanup complete. Exit0,
 full capture, closed group, unchanged boot/image and published report hold.
 Operation remains **BLOCKED/nonexact**. Diagnostic maxCC279/entryCRAP279 is
 unqualified. Historical exact16/45, local triples9/45 and separate data-only1
 remain distinct measures, not a current global PASS. Different-input elapsed
 times do not establish a controlled speedup.
 
-The report-only refresh now has79missing functions under39owners,
-down from96/46. All79 now have retained map-validated body coordinates.
+The report-only refresh now has78missing functions under38owners,
+down from79/39. All78 have retained map-validated body coordinates. The
+`repairWorkAuthority` owner has no missing functions; this is not branch or
+whole-contour closure.694 uncovered branch arms are now listed from the same
+report, with exact deficit agreement and explicitly labeled implicit-if ranges.
 Reuse `host-uncovered-plan-current.json` in focused diagnostics.
 No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
-attempt1086.
+attempt1088.
 
 ## Latest measurement custody
 
-- Stage:`/workspace/contour-stage-YeW82p`; exec12156, observed exit0.
-- Image:`/workspace/.vida-quality-inputs/aeb9c0090338d953ee8e976ac48567af4ba33da2/repository`.
-- Tree:`26a14b5494b4d049d3af4fb2599f38749692aba6`.
-- Input:`392bb0620f9275d2ef1055046b5e0b50c3ebdef8646e5c59a1b997d5eb2e654b`.
-- Image manifest SHA256:`67150700d395dac5419dd9971836e2997033732b6e1330f07211eec6de3196f1`.
-- SDK CI39432857096, successful attempt1, artifact12268632539.
-- SDK name:`vida-sdk-test-inputs-7f299ccc9eec049ae0dd6c33f855c2c2e4aa1433-39432857096-1`.
-- ZIP SHA256:`3a4b4cb392f1caf66c406abc117d1c7f64d8163395265ca171af0696b7306b0c`.
-- `continuation-digest-stage.log` in focused diagnostics retains the complete outcome.
-- Original scratch:`/dev/shm/vida-quality-retained-UVtnmf`. After observed closure,
+- Stage:`/workspace/contour-stage-O47lCM`; exec73038, observed exit0.
+- Image:`/workspace/.vida-quality-inputs/acf1f202fbbabc157ac0e863acde6d9db57e97f7/repository`.
+- Tree:`a1952cde79ab83570075df85c7e8eea2f14ead4b`.
+- Input:`5f45389b8a137ed58f4be263309e6208aa96043e58ecd069d1b3c5209e3a4de7`.
+- Image manifest SHA256:`8ffd1d2bc32cad902cc313a53cfb805a8a7b52cbac2c40e6a960e742b1d02c73`.
+- SDK CI39437332153, successful attempt1, artifact12272301757.
+- SDK name:`vida-sdk-test-inputs-5801089b080283b1d68614cb7fd31ad57d8dfb40-39437332153-1`.
+- ZIP SHA256:`ed6794702ff268af16b9ed38b9e7ec24ccabbbb6115b4d6d3ce4747d3086c71e`.
+- `fifo-plan-stage.log` in focused diagnostics retains the complete outcome.
+- Original scratch:`/dev/shm/vida-quality-retained-2crWO8`. After observed closure,
   only its qualified private regenerable Bun cache is retired; all other original
   scratch, fixtures, DBs and evidence remain.
-- Whole remaining scratch archive:`/workspace/vida-functional-retention-YeW82p-JtTof2/scratch.tar.gz`,
-  248777bytes, full tar compare PASS; SHA256`bb4b2e31971edfdb954851b8660c79759f91e7539ff116ebd701f2a7c1d9a3ab`.
+- Whole remaining scratch archive:`/workspace/vida-functional-retention-O47lCM-7EIry3/scratch.tar.gz`,
+  248425bytes, full tar compare PASS; SHA256`94fc7359c16e86e70f5a3b0e13295d5c991a9c630707a28c1328de7d5c512d07`.
   Original archive.log, scratch.sha256 and archive.json remain beside it.
-- Durable free before/after archive:5855129600/5854875648bytes;
-  unchanged2147483648floor leaves3707392000bytes headroom. No resource GAP.
+- Durable free before/after archive:5777338368/5777084416bytes;
+  unchanged2147483648floor leaves3629600768bytes headroom. No resource GAP.
 
 Cache retirement is receipted in
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/continuation-digest-cache-retirement-YeW82p`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/fifo-plan-cache-retirement-O47lCM`.
 One exact private cache,178155793regular bytes,215846912tmpfs bytes reclaimed;
 4096bytes of durable metadata growth is not counted as reclamation. Closed
 custody, namespace, original Source, boot/image, no active owner and dependency
@@ -166,13 +169,15 @@ reviewed test pin; stopped-source bytes and the resource topology are unchanged.
 Keep one contour and one producer. Batch causal success/denial/retry assertions,
 run affected checks, review and publish once before another matching-input stage.
 The preceding packet details and original numeric custody remain in immutable
-49f1ac7/7f858d1/8ae6f2c/bac80b6 WORK versions. Next resolve the remaining
-`repairWorkAuthority` closure at host-state.ts10454 using its retained exact map
-binding, plus the related current FIFO/ownership refusal contract. Do not infer
-an earlier queued owner or manufacture an accepted authorization. Keep the
-remaining79-function/39-owner inventory and one active contour.
+49f1ac7/7f858d1/8ae6f2c/bac80b6/e5f94a0 WORK versions. The FIFO callable at
+host-state.ts10454 is now reached; do not repeat that closed function packet.
+Next inspect configured-continuation post-prewriter engine/Journal suffix
+reader obligations at13946–13975 using the existing original-engine fixture.
+Require genuine matching current suffix evidence, not fabricated approval or
+native admission. Keep the78-function/38-owner and694-arm current inventory,
+one active contour and one producer.
 
-The next checked packet extends the existing genuine issued-UNKNOWN case with
+The measured packet extends the existing genuine issued-UNKNOWN case with
 three synthetic, validator-accepted current Ledger preimages. Earlier disjoint
 and later overlapping exclusive intent permit inspect; earlier overlapping
 intent denies at the exact FIFO guard. Existing ticket relative order and all
@@ -191,8 +196,21 @@ TypeScript and scoped lint pass. Plan review is retained in
 `vida-repair-fifo-plan-review.md`; final code/resource review is retained as
 `vida-fifo-plan-code-review.md` and finds no blocker. Root refreshes only the
 exact Host test pin; private namespaces, per-file serial execution and existing
-budgets are unchanged. Complete numeric measurement remains pending. No
-unchanged full stage has been rerun.
+budgets are unchanged. The complete5801089 stage above measures this stable
+packet. No unchanged full stage has been rerun.26 malformed plans strengthen
+denial assertions but yield almost no new coverage; do not plan later packets
+from assertion count or speculative guard count alone.
+
+The retained report-only planner now lists694 zero-count native branch arms
+in the same read as78 missing functions. It checks exact summary-deficit
+agreement and Source-map geometry, with no new AST/inventory/Source scan/hash.
+Six existing location controls and six branch controls pass; the native empty
+`{start:{},end:{}}` implicit-if shape initially failed the new diagnostic,
+retained in `fifo-plan-uncovered.log`. The corrected explicit implicit-if
+mapping passes the same native report without a test rerun; final output is
+`fifo-plan-uncovered-final.log`. It labels the containing-if range and never
+relabels an unavailable diagnostic as zero. Prior planner bytes and private
+control outputs remain retained. This ignored local planner is not Git Source.
 
 One exec transport read failed after the producer's observed exit0. The next
 managed-status probe was current/running/connected and the native read succeeded.

@@ -18,6 +18,10 @@ and `body_location` when present and matched to its bound Source map. The
 existing exact-geometry join owns them. Do not reconstruct IDs from map order,
 function names or a fresh index. Historical reports may lack this optional
 navigation data; preserve that GAP and their original bytes.
+Reuse exact zero-count branch-arm lists as well as missing function IDs. Check
+their count against the same report's branch deficit and preserve explicit
+implicit-if range labels. Select causal cases from actual gaps; additional
+denial assertions alone need not increase Istanbul's visited-operand counts.
 
 ## Load the current owners
 
