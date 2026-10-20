@@ -6,7 +6,8 @@ import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-r
 import { createInitializationBundle } from '../helpers/init-bundle.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
-import { createTaskSourceHostFixture } from '../helpers/task-source-host-fixture.ts';
+import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
+import { type TaskSourceBindingReport } from '../../src/orchestration/task-source-binding.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import {
   prepareLifecycleForCorrection,
@@ -972,6 +973,196 @@ test('task-source trusted-verifier and CAS denials roll back native preparation 
     expect(f.prepare()).toEqual(prepared);
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(completed);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test('task-source issued and UNKNOWN actions retain reservations without exposing replay argv', async () => {
+  const policy = mock(
+    async ({ request }: Parameters<NonNullable<ConstructorParameters<typeof HostStateStore>[8]>['verify']>[0]) =>
+      trustedTaskSourcePolicyDecision(request),
+  );
+  const f = createTaskSourceHostFixture({ policyVerifier: policy });
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const input = { request: f.request, identity: f.identity };
+    const observation = { ...input, verifyCurrent: f.trustedVerifyCurrent };
+    expect(f.store.inspectTaskSourceBindingAction(observation).status).toBe('not_found');
+    f.prepare();
+    expect(f.store.inspectTaskSourceBindingAction(observation)).toMatchObject({
+      status: 'prepared',
+      action: null,
+      state_version: null,
+      command_argv: null,
+    });
+    const issued = await f.store.issueTaskSourceBindingOperation(input);
+    const version = f.database
+      .query<StateVersion, [string]>(
+        'SELECT revision,digest FROM agent_host_task_source_binding_action WHERE operation_id=?',
+      )
+      .get(f.request.operation_id);
+    if (!version) throw new Error('Expected one native issued Task-source action.');
+    expect(issued).toMatchObject({
+      schema: 'TaskSourceBindingActionResult/v1',
+      status: 'issued',
+      operation_id: f.request.operation_id,
+      request_id: f.request.request_id,
+      state_version: version,
+      action: { status: 'issued', report: null, revision: 1 },
+    });
+    expect(issued.command_argv).toEqual([
+      ['-C', f.root, 'worktree', 'add', '--branch', 'codex/task-source', f.request.source_root],
+    ]);
+    expect(policy).toHaveBeenCalledTimes(1);
+    const reserved = f.store.readHostStateSnapshot(f.identity);
+    const ticketId = `task-source-ticket:${f.request.work_id}:${f.request.attempt}:${f.request.operation_id}`;
+    expect(reserved.work?.lease?.ticket_id).toBe(ticketId);
+    expect(reserved.ledger?.tickets.find((ticket) => ticket.ticket_id === ticketId)).toMatchObject({
+      status: 'active',
+      work_id: f.request.work_id,
+      thread_id: f.request.thread_id,
+    });
+    expect(await f.store.issueTaskSourceBindingOperation(input)).toEqual({
+      ...issued,
+      status: 'already_issued',
+      command_argv: null,
+    });
+    expect(f.store.inspectTaskSourceBindingAction(observation)).toEqual({ ...issued, command_argv: null });
+    expect(policy).toHaveBeenCalledTimes(1);
+    const unknown: TaskSourceBindingReport = {
+      schema: 'TaskSourceBindingReport/v1',
+      operation: f.request.operation,
+      operation_id: f.request.operation_id,
+      request_id: f.request.request_id,
+      report_id: 'native-unit-unknown',
+      expected_host: f.request.expected_host,
+      status: 'unknown',
+      binding: null,
+      reason: 'controlled cooperative report, no command executed',
+    };
+    expect(() =>
+      f.store.reportTaskSourceBindingOperation({
+        ...input,
+        expectedActionStateVersion: { ...version, revision: version.revision + 1 },
+        report: unknown,
+      }),
+    ).toThrow('task source report action CAS is stale');
+    expect(f.store.inspectTaskSourceBindingAction(observation)).toEqual({ ...issued, command_argv: null });
+    const uncertain = f.store.reportTaskSourceBindingOperation({
+      ...input,
+      expectedActionStateVersion: version,
+      report: unknown,
+    });
+    const uncertainVersion = { revision: version.revision + 1, digest: canonicalJsonDigest(uncertain.action) };
+    expect(uncertain).toMatchObject({
+      status: 'unknown',
+      command_argv: null,
+      state_version: uncertainVersion,
+      action: { status: 'unknown', report: unknown, recovery_report: null, revision: 2 },
+    });
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
+    expect(f.store.inspectTaskSourceBindingAction(observation)).toEqual(uncertain);
+    expect(await f.store.issueTaskSourceBindingOperation(input)).toEqual({ ...uncertain, status: 'already_issued' });
+    expect(policy).toHaveBeenCalledTimes(1);
+    expect(() =>
+      f.store.reportTaskSourceBindingOperation({
+        ...input,
+        expectedActionStateVersion: uncertainVersion,
+        report: unknown,
+      }),
+    ).toThrow('uncertain task source action accepts only one later observed recovery report');
+    if (!reserved.workVersion || !reserved.ledgerVersion) throw new Error('Expected native reservation CAS.');
+    const second = {
+      ...f.request,
+      operation_id: 'blocked-second-operation',
+      request_id: 'blocked-second-request',
+      expected_host: { ...f.request.expected_host, work: reserved.workVersion, ledger: reserved.ledgerVersion },
+    };
+    f.store.prepareTaskSourceBindingOperation({
+      request: second,
+      identity: f.identity,
+      verifyCurrent: f.trustedVerifyCurrent,
+    });
+    await Promise.resolve(
+      expect(f.store.issueTaskSourceBindingOperation({ request: second, identity: f.identity })).rejects.toThrow(
+        'TaskSource resources are already claimed',
+      ),
+    );
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
+    expect(
+      f.database
+        .query<{ count: number }, []>('SELECT count(*) AS count FROM agent_host_task_source_binding_action')
+        .get()?.count,
+    ).toBe(1);
+    expect(f.store.inspectTaskSourceBindingAction(observation)).toEqual(uncertain);
+    expect(f.store.readWorkSessionJournal(f.identity)?.version).toEqual(f.request.expected_host.journal.version);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(false, completed ? 'expected UNKNOWN' : 'failed');
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test('task-source mutation policy rejection leaves native preparation and ownership unchanged', async () => {
+  const denial = new Error('fixture trusted policy denied');
+  let mode: 'throw' | 'deny' | 'invalid' = 'throw';
+  const policy = mock(
+    async ({ request }: Parameters<NonNullable<ConstructorParameters<typeof HostStateStore>[8]>['verify']>[0]) => {
+      if (mode === 'throw') throw denial;
+      const allowed = trustedTaskSourcePolicyDecision(request);
+      return mode === 'deny'
+        ? { ...allowed, authorization: { decision: 'deny' as const, diagnostics: [] } }
+        : { ...allowed, source_authorization_sha256: 'd'.repeat(64) };
+    },
+  );
+  const f = createTaskSourceHostFixture({ policyVerifier: policy });
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const prepared = f.prepare();
+    const before = f.store.readHostStateSnapshot(f.identity);
+    const journalBefore = f.store.readWorkSessionJournal(f.identity);
+    for (const value of ['throw', 'deny', 'invalid'] as const) {
+      mode = value;
+      await Promise.resolve(
+        expect(f.store.issueTaskSourceBindingOperation({ request: f.request, identity: f.identity })).rejects.toThrow(
+          value === 'throw' ? denial : 'task source mutation policy evidence is invalid or denied',
+        ),
+      );
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+      expect(f.prepare()).toEqual(prepared);
+      expect(
+        f.database
+          .query(
+            "SELECT name FROM sqlite_master WHERE name IN ('agent_host_task_source_binding_action','agent_host_task_source_binding_claim')",
+          )
+          .all(),
+      ).toEqual([]);
+    }
+    expect(policy).toHaveBeenCalledTimes(3);
     completed = true;
   } catch (error) {
     primaryFailure = { error };

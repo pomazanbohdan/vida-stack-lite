@@ -93,8 +93,16 @@ tests. Its3cases/53assertions and the preserved2async issue cases/26assertions
 pass. The trusted callback is explicitly a unit seam, not external authorization.
 Post-open setup failure now preserves primary/close errors and its private root;
 the reviewed Host test resource pin is refreshed without selection/budget drift.
-Measure this checked changed-input packet once and continue repairing remaining
-owners from the already-built inventory in this same contour.
+Its43f2d0b stage completes in209.639s and publishes
+F724/1129,L2773/4966,S2969/5296,B2661/5640, still nonexact/BLOCKED. The next
+packet reuses the existing trusted policy mock for native issue, no-replay retry,
+action-CAS rejection, UNKNOWN retention and competing-operation fencing, plus
+three policy denial variants. Two new cases pass39assertions; the two existing
+async issue regressions pass26assertions after extraction. No argv is executed
+or observed binding synthesized; the expected-UNKNOWN fixture remains retained.
+The configured-root resolver remains a separate gap. The reviewed Host pin is
+refreshed without any selection/budget/ownership change. Measure this checked
+changed-input packet once and continue remaining owners in this same contour.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

@@ -14,13 +14,16 @@ import {
   type WorkState,
 } from '../../src/host-state.ts';
 import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
+import type { LifecycleArtifactReference } from '../../src/lifecycle/lifecycle-state.ts';
 import type { CoordinationClaim } from '../../src/contracts/envelopes.ts';
 import type { TaskSourceBindingRequest } from '../../src/orchestration/task-source-binding.ts';
 import type {
   MastraSessionLedgerSnapshot,
   MastraSessionLedgerState,
 } from '../../src/orchestration/persistent-session-handoff.ts';
-type TaskSourceMutationCheck = NonNullable<ConstructorParameters<typeof HostStateStore>[8]>['verify'];
+type TaskSourceMutationVerifier = NonNullable<ConstructorParameters<typeof HostStateStore>[8]>;
+type TaskSourceMutationCheck = TaskSourceMutationVerifier['verify'];
+type TaskSourcePolicyRequest = Parameters<TaskSourceMutationCheck>[0]['request'];
 type CurrentVerifier = Parameters<HostStateStore['prepareTaskSourceBindingOperation']>[0]['verifyCurrent'];
 const workspaceId: string = 'a'.repeat(64);
 const identity: WorkIdentity = {
@@ -408,8 +411,8 @@ export function createTaskSourceHostFixture({
           host: peerHost,
         };
       },
-      close(removeRoot: boolean) {
-        if (!removeRoot) console.error(`Retained failed TaskSource fixture: ${root}`);
+      close(removeRoot: boolean, retentionReason = 'failed') {
+        if (!removeRoot) console.error(`Retained ${retentionReason} TaskSource fixture: ${root}`);
         closeWorkspaceDatabaseWithAdmission(database);
         if (removeRoot) rmSync(root, { recursive: true, force: true });
       },
@@ -440,3 +443,45 @@ function requireHostState(snapshot: HostStateSnapshot): asserts snapshot is Host
 }
 
 export { identity as taskSourceHostIdentity, requireHostState };
+
+/** This injected verifier is a trusted test mock, not proof of runtime authorization. */
+export function trustedTaskSourcePolicyDecision(
+  request: TaskSourcePolicyRequest,
+): Awaited<ReturnType<TaskSourceMutationCheck>> {
+  const sourceAuthorizationReference: LifecycleArtifactReference = {
+    schema: 'LifecycleArtifactReference/v1',
+    kind: 'execution_approval',
+    artifact_schema: 'LocalSourceWriteAuthorization/v1',
+    record_id: 'source-auth',
+    path: '.agent/source-authorization.json',
+    sha256: 'c'.repeat(64),
+    source_revision: '7'.repeat(64),
+    scope_id: 'scope-task-source-expiry',
+    ac_ids: ['AC-1'],
+    generation: null,
+    implementation_fingerprint: null,
+    delivery_cycle_id: null,
+    principal: 'task-source-fixture',
+    decision: 'approved',
+    disposition: 'current',
+  };
+  return {
+    operation_id: request.operation_id,
+    request_id: request.request_id,
+    operation_hash: request.operation_hash,
+    prepared_record_cas: request.prepared_record_cas,
+    authorization: { decision: 'allow', diagnostics: [] },
+    edictum_operation: { operation_hash: request.operation_hash, tenant: 'tenant', project: 'agent' },
+    edictum_evaluation: {
+      action: 'pending_approval',
+      reason: 'TaskSource fixture policy evaluation',
+      stageId: 'source_write',
+      events: [],
+      records: [],
+      audit: null,
+    },
+    source_authorization_reference: sourceAuthorizationReference,
+    source_authorization_sha256: 'c'.repeat(64),
+    preflight_evidence_digest: 'd'.repeat(64),
+  };
+}

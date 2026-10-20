@@ -1,11 +1,11 @@
 import { expect, test } from 'bun:test';
 import type { HostStateStore } from '../../src/host-state.ts';
-import type { LifecycleArtifactReference } from '../../src/lifecycle/lifecycle-state.ts';
 import { suspendLocalWork } from '../../src/orchestration/suspend-local-work.ts';
 import {
   createTaskSourceHostFixture as createFixture,
   taskSourceHostIdentity as identity,
   requireHostState,
+  trustedTaskSourcePolicyDecision as allowedPolicyDecision,
 } from '../helpers/task-source-host-fixture.ts';
 
 function deferred<T>(): { readonly promise: Promise<T>; readonly resolve: (value: T) => void } {
@@ -16,50 +16,6 @@ function deferred<T>(): { readonly promise: Promise<T>; readonly resolve: (value
     resolve = done;
   });
   return { promise, resolve };
-}
-
-type TaskSourceMutationVerifier = NonNullable<ConstructorParameters<typeof HostStateStore>[8]>;
-type TaskSourceMutationCheck = TaskSourceMutationVerifier['verify'];
-type TaskSourcePolicyRequest = Parameters<TaskSourceMutationCheck>[0]['request'];
-
-/** This injected verifier is a trusted test mock, not proof of runtime authorization. */
-function allowedPolicyDecision(request: TaskSourcePolicyRequest): Awaited<ReturnType<TaskSourceMutationCheck>> {
-  const sourceAuthorizationReference: LifecycleArtifactReference = {
-    schema: 'LifecycleArtifactReference/v1',
-    kind: 'execution_approval',
-    artifact_schema: 'LocalSourceWriteAuthorization/v1',
-    record_id: 'source-auth',
-    path: '.agent/source-authorization.json',
-    sha256: 'c'.repeat(64),
-    source_revision: '7'.repeat(64),
-    scope_id: 'scope-task-source-expiry',
-    ac_ids: ['AC-1'],
-    generation: null,
-    implementation_fingerprint: null,
-    delivery_cycle_id: null,
-    principal: 'task-source-fixture',
-    decision: 'approved',
-    disposition: 'current',
-  };
-  return {
-    operation_id: request.operation_id,
-    request_id: request.request_id,
-    operation_hash: request.operation_hash,
-    prepared_record_cas: request.prepared_record_cas,
-    authorization: { decision: 'allow', diagnostics: [] },
-    edictum_operation: { operation_hash: request.operation_hash, tenant: 'tenant', project: 'agent' },
-    edictum_evaluation: {
-      action: 'pending_approval',
-      reason: 'TaskSource fixture policy evaluation',
-      stageId: 'source_write',
-      events: [],
-      records: [],
-      audit: null,
-    },
-    source_authorization_reference: sourceAuthorizationReference,
-    source_authorization_sha256: 'c'.repeat(64),
-    preflight_evidence_digest: 'd'.repeat(64),
-  };
 }
 
 function requireActionResult(value: Readonly<Record<string, unknown>>): asserts value is Readonly<

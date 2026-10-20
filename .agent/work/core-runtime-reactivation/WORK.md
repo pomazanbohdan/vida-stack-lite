@@ -1,6 +1,6 @@
 # Core runtime reactivation work
 
-Status date: 2026-10-19. Current execution/evidence only. This document does not
+Status date: 2026-10-20. Current execution/evidence only. This document does not
  authorize old operations, state replay, runtime cutover or global acceptance.
 
 ## Current sequential F/L/S/B cycle
@@ -99,7 +99,53 @@ explicitly proves missing-engine inspection creates no engine file. No remaining
 blocking finding was reported. The complete observation below, rather than these
 targeted passes, owns the measured numeric increase.
 
-### Latest complete host-state coverage and Task-source unit packet
+### Latest complete host-state coverage and issued/UNKNOWN packet
+
+The43f2d0b stage at /workspace/contour-stage-5HTkfG completes in209638.592ms,
+exit0, capture complete, group closed and boot/image inputs unchanged. Published
+run9514c2ed-3302-4845-a0ae-e6f7259a2a7e records
+F724/1129,L2773/4966,S2969/5296,B2661/5640: +22functions,+120lines,
++127statements,+147branches against ea86777 with unchanged denominators.
+The operation remains BLOCKED and historical exact closure16/45. No frozen/CRAP
+or mutation qualification is claimed. The image is
+/workspace/.vida-quality-inputs/fba281194a43917efc70b6867d98abf2e42157fb/repository,
+manifest SHAb188bab17f6e4508f2e037cef37f27913bb4e93f2508683ddfde83ccb5137bce,
+input fingerprinte4ea4e78c9eb298a494b8ecd3701c7e4a20063905f71fb2fc2f9261c64a5f967.
+SDK CI39344803457/artifact12230521923 succeeds; matching transport ZIP SHA
+762d380067ba3e49ac2019600e1b61a083574ce3157477052e3bc729d1c29b41.
+The stage admits8235220992free bytes against2147483648required; reuse that
+observation. Generated projection1033imports its complete terminal result.
+
+The next Source packet extracts the existing typed trusted mutation-policy
+builder into the same fixture helper, leaving both old async issue cases intact.
+Two Host cases exercise a native issue/reservation, exact issue retry and
+read-only inspection with no replay argv, stale report CAS, persisted UNKNOWN,
+second-UNKNOWN rejection and another operation's issue fence while the first
+reservation remains held. The second case checks thrown policy failure,
+explicit denial and a well-formed mismatched authorization digest, preserving
+preparation, Host/journal snapshots and absence of action/claim tables.
+No returned command is executed; no observed report is manufactured. This
+packet claims Host unit behavior only, with no resolver/public-policy/Runtime
+proof. The resolver's configured-root UNKNOWN control remains a separate gap.
+The expected-UNKNOWN fixture remains retained even when the unit case passes:
+/home/agent/.cache/vida-cloud-tooling/tmp/vida-task-source-coordination-UCp5Rz.
+Its root is not eligible for cleanup or archived action replay.
+
+The two new cases pass39assertions in2.00s; preserved coordination cases pass
+26assertions in2.02s. Strict171files and scoped type-aware lint pass. The source
+lint initially catches awaited assertions whose Bun declaration is void; the
+maintained Promise.resolve wrapper observes the real completion without a lint
+exception. The exact eligibility control passes10assertions in0.272s.
+Logs are host-task-source-issue-report.log,
+task-source-policy-shared-regression.log and host-issue-report-shard-eligibility.log
+under the retained20261019-focused-blockers diagnostic directory. Blind review
+/tmp/vida-host-task-source-issue-report-final-review.md reports no blocker and
+confirms the unchanged private resource boundary. The Host selected-test pin is
+b77148aa32411b5c50729f9128db9eb6abf56fcf1bc0d96bfc053f6f6562fd57;
+stopped-source selection/pin, worker ownership and all budgets are unchanged.
+Require the next single checked changed-input stage before any numeric claim.
+
+### Prior complete setup-scope coverage and Task-source unit packet
 
 The ea86777 stage at /workspace/contour-stage-41AWBl completes in200664.533ms,
 exit0, with complete capture, closed group, unchanged boot/image inputs and
