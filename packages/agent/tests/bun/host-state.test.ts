@@ -3237,6 +3237,8 @@ test('fresh terminal ownership inspection does not create a journal or infer mis
 });
 
 test('same live writer heartbeat preserves its fence and unknown outcome while revocation and expiry deny renewal', () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const deadline = performance.now() + 5_000;
   let state = commitHostState(currentConfigHostFixture());
   const stateLease = state.work.lease;
   if (!stateLease) throw new Error('live Host fixture lease is missing');
@@ -3251,6 +3253,8 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
   });
   state = readPresentSnapshot(store, identity);
   const journal = issuedCurrentWorkflowJournal().journal;
+  const journalBefore = store.readWorkSessionJournal(identity);
+  const verifyCurrent = mock(() => {});
   const request: Parameters<HostStateStore['renewActiveLocalLease']>[0] = {
     identity,
     attempt: 1,
@@ -3260,7 +3264,7 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
     expectedLedger: state.ledgerVersion,
     expectedJournal: journal.version,
     expectedMaintenanceGeneration: state.maintenanceGeneration,
-    verifyCurrent() {},
+    verifyCurrent,
   };
   expect(() =>
     store.renewActiveLocalLease({
@@ -3271,7 +3275,10 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
     }),
   ).toThrow(/revoked/);
   expect(store.readHostStateSnapshot(identity)).toEqual(state);
+  expect(store.readWorkSessionJournal(identity)).toEqual(journalBefore);
+  expect(verifyCurrent).not.toHaveBeenCalled();
   const renewed = presentSnapshot(store.renewActiveLocalLease(request));
+  expect(verifyCurrent).toHaveBeenCalledTimes(1);
   expect(renewed.work.lease).toEqual(state.work.lease);
   expect(renewed.work.execution.assignment_attempts).toEqual(state.work.execution.assignment_attempts);
   expect(firstOf(renewed.work.execution.assignment_attempts, 'renewed assignment attempt').status).toBe('started');
@@ -3287,7 +3294,22 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
   expect(row.revision).toBe(journal.version.revision + 1);
   expect(row.payload).toBe(canonicalJson(journal.state));
   expect(row.digest).toBe(journal.version.digest);
-  expect(() => store.renewActiveLocalLease({ ...request, nativeSessionHandle: 'foreign' })).toThrow();
+  const renewedJournal = store.readWorkSessionJournal(identity);
+  const currentRequest = {
+    ...request,
+    expectedWork: renewed.workVersion,
+    expectedLedger: renewed.ledgerVersion,
+    expectedJournal: { revision: row.revision, digest: journal.version.digest },
+  };
+  expect(() => store.renewActiveLocalLease(request)).toThrow('state compare-and-swap conflict');
+  for (const change of [{ nativeSessionHandle: 'foreign' }, { generation: request.generation + 1 }]) {
+    expect(() => store.renewActiveLocalLease({ ...currentRequest, ...change })).toThrow(
+      'lease renewal owner, fencing identity or live expiry differs',
+    );
+    expect(store.readHostStateSnapshot(identity)).toEqual(renewed);
+    expect(store.readWorkSessionJournal(identity)).toEqual(renewedJournal);
+    expect(verifyCurrent).toHaveBeenCalledTimes(1);
+  }
   const readClock = Date.now;
   const renewedLease = renewed.work.lease;
   if (!renewedLease) throw new Error('renewed Host fixture lease is missing');
@@ -3296,18 +3318,15 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
   const expiredClock = Date.parse(renewedTicket.expires_at) + 1;
   try {
     Date.now = () => expiredClock;
-    expect(() =>
-      store.renewActiveLocalLease({
-        ...request,
-        expectedWork: renewed.workVersion,
-        expectedLedger: renewed.ledgerVersion,
-        expectedJournal: { revision: row.revision, digest: journal.version.digest },
-      }),
-    ).toThrow(/live expiry differs/);
+    expect(() => store.renewActiveLocalLease(currentRequest)).toThrow(/live expiry differs/);
     expect(store.readHostStateSnapshot(identity)).toEqual(renewed);
+    expect(store.readWorkSessionJournal(identity)).toEqual(renewedJournal);
+    expect(verifyCurrent).toHaveBeenCalledTimes(1);
   } finally {
     Date.now = readClock;
   }
+  if (performance.now() >= deadline) throw new Error('Host heartbeat fixture exceeded its case deadline');
+  preserveHostFixtureRoot = false;
 });
 function quiesceImportedState(
   states: DeepMutable<WorkState>[],
