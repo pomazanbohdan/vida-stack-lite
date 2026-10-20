@@ -10,57 +10,57 @@ exact F/L/S/B100 before selecting another. Root is the sole Source integrator,
 Git owner and numeric producer. Frozen complexity/CRAP qualification and mutation
 remain deferred; their budgets and acceptance rules are unchanged.
 
-Latest complete measurement binds Source `5801089b080283b1d68614cb7fd31ad57d8dfb40` and run
-`d41b40d4-3b08-4f2b-8604-6c9768f92cfc`, not later HEAD.
+Latest complete measurement binds Source `cec9eee15553c86b79419e6e627aee2c6a611aa9` and run
+`0314f1f9-7436-4e6f-a1eb-bf5a18051fc0`, not later HEAD.
 
-| Counter | Covered / total | Delta from7f299cc |
+| Counter | Covered / total | Delta from5801089 |
 | --- | --- | --- |
-| Functions | 1051 / 1129 | +1 |
-| Lines | 4647 / 4970 | +1 |
-| Statements | 4921 / 5300 | +1 |
-| Branches | 4948 / 5642 | +2 |
+| Functions | 1054 / 1129 | +3 |
+| Lines | 4653 / 4970 | +6 |
+| Statements | 4927 / 5300 | +6 |
+| Branches | 4952 / 5642 | +4 |
 
-305PASS/0FAIL,3663assertions,184010.285786ms elapsed.
-Host child:289PASS/3410assertions/175.30s. Stopped-source child:
-16PASS/253assertions/139.99s, contained cleanup complete. Exit0,
+305PASS/0FAIL,3666assertions,151988.266140ms elapsed.
+Host child:289PASS/3413assertions/144.96s. Stopped-source child:
+16PASS/253assertions/118.09s, contained cleanup complete. Exit0,
 full capture, closed group, unchanged boot/image and published report hold.
 Operation remains **BLOCKED/nonexact**. Diagnostic maxCC279/entryCRAP279 is
 unqualified. Historical exact16/45, local triples9/45 and separate data-only1
 remain distinct measures, not a current global PASS. Different-input elapsed
 times do not establish a controlled speedup.
 
-The report-only refresh now has78missing functions under38owners,
-down from79/39. All78 have retained map-validated body coordinates. The
+The report-only refresh now has75missing functions under38owners,
+down from78/38. All75 have retained map-validated body coordinates. The
 `repairWorkAuthority` owner has no missing functions; this is not branch or
-whole-contour closure.694 uncovered branch arms are now listed from the same
+whole-contour closure.690 uncovered branch arms are now listed from the same
 report, with exact deficit agreement and explicitly labeled implicit-if ranges.
 Reuse `host-uncovered-plan-current.json` in focused diagnostics.
 No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
-attempt1088.
+attempt1090.
 
 ## Latest measurement custody
 
-- Stage:`/workspace/contour-stage-O47lCM`; exec73038, observed exit0.
-- Image:`/workspace/.vida-quality-inputs/acf1f202fbbabc157ac0e863acde6d9db57e97f7/repository`.
-- Tree:`a1952cde79ab83570075df85c7e8eea2f14ead4b`.
-- Input:`5f45389b8a137ed58f4be263309e6208aa96043e58ecd069d1b3c5209e3a4de7`.
-- Image manifest SHA256:`8ffd1d2bc32cad902cc313a53cfb805a8a7b52cbac2c40e6a960e742b1d02c73`.
-- SDK CI39437332153, successful attempt1, artifact12272301757.
-- SDK name:`vida-sdk-test-inputs-5801089b080283b1d68614cb7fd31ad57d8dfb40-39437332153-1`.
-- ZIP SHA256:`ed6794702ff268af16b9ed38b9e7ec24ccabbbb6115b4d6d3ce4747d3086c71e`.
-- `fifo-plan-stage.log` in focused diagnostics retains the complete outcome.
-- Original scratch:`/dev/shm/vida-quality-retained-2crWO8`. After observed closure,
+- Stage:`/workspace/contour-stage-SB1d8o`; exec47499, observed exit0.
+- Image:`/workspace/.vida-quality-inputs/8598e092ade36bf1a532776ad4c00c0b9729d418/repository`.
+- Tree:`4b8abdbb488e00604726260628a6aef8ebbaba62`.
+- Input:`fb23144eff10f7932761195f246b3f162ff0e3ddcc852052bc9399b1e650c45f`.
+- Image manifest SHA256:`1daab66748c35730513d6cf61b97096de8e914817d5288a06fe7799a2ad20a9a`.
+- SDK CI39441510236, successful attempt1, artifact12274942045.
+- SDK name:`vida-sdk-test-inputs-cec9eee15553c86b79419e6e627aee2c6a611aa9-39441510236-1`.
+- ZIP SHA256:`17f38095d5a8b8d7c372b558baeb7b6e6bf1823895a4841a61e46fcf7d493222`.
+- `terminal-history-stage.log` in focused diagnostics retains the complete outcome.
+- Original scratch:`/dev/shm/vida-quality-retained-Gd7nON`. After observed closure,
   only its qualified private regenerable Bun cache is retired; all other original
   scratch, fixtures, DBs and evidence remain.
-- Whole remaining scratch archive:`/workspace/vida-functional-retention-O47lCM-7EIry3/scratch.tar.gz`,
-  248425bytes, full tar compare PASS; SHA256`94fc7359c16e86e70f5a3b0e13295d5c991a9c630707a28c1328de7d5c512d07`.
+- Whole remaining scratch archive:`/workspace/vida-functional-retention-SB1d8o-N5zfue/scratch.tar.gz`,
+  248688bytes, full tar compare PASS; SHA256`163b99a505c71c5cb4aad6c44106b6e8aa537c7a54052197b5d4a762ed0f4fbc`.
   Original archive.log, scratch.sha256 and archive.json remain beside it.
-- Durable free before/after archive:5777338368/5777084416bytes;
-  unchanged2147483648floor leaves3629600768bytes headroom. No resource GAP.
+- Durable free before/after archive:5697024000/5696770048bytes;
+  unchanged2147483648floor leaves3549286400bytes headroom. No resource GAP.
 
 Cache retirement is receipted in
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/fifo-plan-cache-retirement-O47lCM`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/terminal-history-cache-retirement-SB1d8o`.
 One exact private cache,178155793regular bytes,215846912tmpfs bytes reclaimed;
 4096bytes of durable metadata growth is not counted as reclamation. Closed
 custody, namespace, original Source, boot/image, no active owner and dependency
@@ -126,96 +126,31 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
-Previous engine/failed-wave and authority-Journal packets remain measured under
-their original inputs and are documented in the immutable
-[bac80b6 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bac80b6/.agent/work/core-runtime-reactivation/WORK.md).
-The pinned child keeps original public60s and Host5s deadline ownership; no
-in-process engine lifetime is qualified. Immutable YAML reuse keeps every
-mutable consumer root independent. Its speed benefit and the earlier file/body
-residual remain unmeasured. Unit endpoint seams grant no Runtime acceptance.
+The current packet adds genuine completed Host attempt history to the existing
+historical-terminal continuation test, through public claim/complete APIs before
+quiescence. It preserves completed results across stale CAS refusal, successful
+continuation, persisted lookup and exact retry. Default fixtures are unchanged.
+Focused52 assertions, the unchanged-default caller's41 assertions, strict165-file
+TypeScript, configured lint, the10-assertion resource-pin control and independent
+Luna review pass. The complete cec9eee run above measures +3F/+6L/+6S/+4B.
 
-The measured packet covers configured-frontier digest repair with the
-existing private-root fixture and two actual mechanical producer acquisitions.
-It checks pending-producer denial, exact reserved/UNKNOWN retries, native SQL
-digest-write rollback, preserved linked state, healthy apply, completed retry
-and later Journal-drift denial. The initial fixture assumed a producer could
-settle while another Work's continuation checksum was corrupt; the strict
-history reader correctly denied it. That failed run and unresolved fixture root
-remain retained in `continuation-digest-focused-1.log`. The corrected case proves
-that denial, restores only its own synthetic corruption before settlement,
-then applies the same captured stale repair plan. It passes46assertions in
-1212.42ms focused and779.66ms in the complete image under the default5s case
-limit; no production guard is changed. These differing inputs/timings are not
-a controlled speedup measurement.
+Prior digest repair, FIFO intent, malformed-plan and exact-geometry mapping
+packets retain their original tests, inputs and custody in immutable
+[5fb2453 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/5fb2453/.agent/work/core-runtime-reactivation/WORK.md).
+Their local planner controls, failed fixture roots, reports and review notes
+remain at the focused diagnostics owner. Retained key/body coordinates and
+branch-arm locations come from the same report's native maps, without another
+AST/inventory/hash pass. Legacy missing locations remain GAP. The planner is
+ignored diagnostic tooling, not Git-published Source or numeric authority.
 
-The existing function-evidence geometry join now retains its already-known
-Istanbul key/body coordinates. Optional fields preserve old reports, counters,
-IDs and CC/CRAP math, with no new parser/inventory/scan/hash. Reordered and actual
-Babel/Istanbul controls pass with the existing mapping-denial cases:17tests,
-0FAIL. Strict165-file TypeScript and scoped lint pass. The retained report-only
-planner validates geometry against the same report map and preserves legacy
-missing locations; six private diagnostic controls pass, including four exact
-rejections with no output publication. Its prior script bytes and failed
-control oracle are retained; the local planner is not maintained Git Source.
-The mapping research note is `vida-existing-map-gap-locations.md`; it cannot
-retrofit locations into old reports. The complete7f299cc stage above now measures
-the stable packet; its79missing functions all have exact retained coordinates.
-Independent blind Source/resource review finds no blocker; retained note is
-`vida-continuation-digest-review.md`. It did not resolve the ignored planner path,
-so that local tool's six controls and geometry validation are Root's evidence.
-The Host test stays serial in its existing child-private roots; actual fixture
-producers share only that child's owned database. Root refreshed its exact
-reviewed test pin; stopped-source bytes and the resource topology are unchanged.
-Keep one contour and one producer. Batch causal success/denial/retry assertions,
-run affected checks, review and publish once before another matching-input stage.
-The preceding packet details and original numeric custody remain in immutable
-49f1ac7/7f858d1/8ae6f2c/bac80b6/e5f94a0 WORK versions. The FIFO callable at
-host-state.ts10454 is now reached; do not repeat that closed function packet.
-Next inspect configured-continuation post-prewriter engine/Journal suffix
-reader obligations at13946–13975 using the existing original-engine fixture.
-Require genuine matching current suffix evidence, not fabricated approval or
-native admission. Keep the78-function/38-owner and694-arm current inventory,
-one active contour and one producer.
-
-The measured packet extends the existing genuine issued-UNKNOWN case with
-three synthetic, validator-accepted current Ledger preimages. Earlier disjoint
-and later overlapping exclusive intent permit inspect; earlier overlapping
-intent denies at the exact FIFO guard. Existing ticket relative order and all
-claims/leases/approvals remain unchanged, and complete-owned cleanup restores
-the exact native row after every inspect. The synthetic ticket has no active
-or blocked resources and proves no admission. The existing complete repair,
-reopen and UNKNOWN-retention assertions remain. Focused result:90assertions,
-14667.79ms under its existing justified per-case exception.
-
-The same packet adds26 malformed continuation repair plans, each checked at
-reserve and apply with exact error and Host/Journal/governance/receipt
-beforeimages. Body digests are recomputed except for the explicit checksum
-controls; denial cannot hide behind the pending producer gate. Its affected
-case passes254assertions in1076.43ms, default5s unchanged. Strict165-file
-TypeScript and scoped lint pass. Plan review is retained in
-`vida-repair-fifo-plan-review.md`; final code/resource review is retained as
-`vida-fifo-plan-code-review.md` and finds no blocker. Root refreshes only the
-exact Host test pin; private namespaces, per-file serial execution and existing
-budgets are unchanged. The complete5801089 stage above measures this stable
-packet. No unchanged full stage has been rerun.26 malformed plans strengthen
-denial assertions but yield almost no new coverage; do not plan later packets
-from assertion count or speculative guard count alone.
-
-The retained report-only planner now lists694 zero-count native branch arms
-in the same read as78 missing functions. It checks exact summary-deficit
-agreement and Source-map geometry, with no new AST/inventory/Source scan/hash.
-Six existing location controls and six branch controls pass; the native empty
-`{start:{},end:{}}` implicit-if shape initially failed the new diagnostic,
-retained in `fifo-plan-uncovered.log`. The corrected explicit implicit-if
-mapping passes the same native report without a test rerun; final output is
-`fifo-plan-uncovered-final.log`. It labels the containing-if range and never
-relabels an unavailable diagnostic as zero. Prior planner bytes and private
-control outputs remain retained. This ignored local planner is not Git Source.
-
-One exec transport read failed after the producer's observed exit0. The next
-managed-status probe was current/running/connected and the native read succeeded.
-Boot identity remained89093463-dd07-4789-abcd-d15842df2ba2; this is not evidence
-of a host reboot or lost Source. Original terminal receipts remain authoritative.
+The actual engine/Journal suffix proposal remains OPEN: two fresh fixtures hit
+the unchanged5s deadline; tracing reached beginSessionProducer. Original logs,
+roots and unvalidated patch remain retained, with no replay or timeout increase.
+Resolve that setup cost before admitting its reader success path. Meanwhile
+select another reachable gap within this same contour from the75-function,
+38-owner and690-arm inventory. Do not repeat measured packets or add a test
+outside the selected Host files to claim current coverage. Batch causal
+success/refusal/retry/restoration assertions before one final stage.
 
 ### Bun-host-state focused shard resource review
 
@@ -245,9 +180,9 @@ stay read-only; package `.tmp` and coverage remain their already permitted outpu
 The parent fences installs, Git changes, indexing and additional producers.
 
 The measured reviewed Host file digest is
-`e080afa444ddc9a13f388367d51557d7d73850a6eb808a8ab542862f58bce41c`;
+`149d4f5b74990b85c8fbbd4c4a71f3d4eba9a071dd54716374c9c8dbe4117a75`;
 stopped-source remains
-`0c6cd50f2aa09755d7cec6ae832817b7fe0fd2969db0d672fde49eafdb132695`.
+`a414b790fea1381ffb425552a1f1b9ae29ad00f2998491a44bb8b7d6d45e9037`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
 ownership. The expired-lease case's peer/waiter use that same unique root and shared
 fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
@@ -257,78 +192,22 @@ closure and attributable merged counters for these exact bytes. It remains nonex
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.
 
-## Three-hour audit and pending transition packet
-
-Window09:40:44–12:40:44UTC on2026-10-20. Reused retained receipts, report-only
-inventory and projection; a bounded read of immediate stage logs produces
-`three-hour-receipts-20261020-1240.json` in focused diagnostics. Its six completed
-receipts preserve original Source/status/capture/group/image bindings, all
-BLOCKED/nonexact. First-to-last measured counters move984→1021functions,
-4219→4448lines,4482→4717statements,4603→4803branches with unchanged denominators:
-+37F/+229L/+235S/+200B. This comparison spans different correction packets, not
-current-HEAD or global closure. No new contour is closed. Full stage times in
-that sample are133.898–164.837seconds; no controlled speed benchmark is claimed.
-
-The bounded blind harness review finds a confirmed evidence-overwrite hazard in
-local diagnostic comprehensive-cache-cleanup.ts: requalification reused its fixed
-completed output namespace. Root adds an early existing-namespace refusal. The
-actual script used for the original retirement is preserved as
-`comprehensive-cleanup-20261020/qualification-source-used.ts`, original SHA256
-`4a59c5df02cd9b9b3f932e1595e4428f6b66233259f5a2f9f10ffdade59dc1f9`.
-The guarded rerun exits1 before any scan/write. Before/after completed-manifest
-bytes and SHA256 are identical:
-`c99d743c323ac0fdb79037849b69d977ffe9415a1ac86e78b2a894be03d2bff1`.
-`comprehensive-qualification-rerun-guard.json` retains this focused control.
-The original retirement outcome/events are unchanged. TESTING persists the
-exclusive-output rule; diagnostic source/proof stays at its retained owner.
-No new product defect is established by this bounded audit.
+## Execution combinations
 
 | Combination | Evidence and decision |
 | --- | --- |
-| Static, affected focused cases, independent review, one stable SDK/image/stage | Keep. Each current-input full run has a distinct published Source. Review fixed missing positive peer/FIFO setup assertions before publication. |
-| Full stage after each partial test edit | Reject. Another full run would spend roughly the observed134–165seconds plus formation, an estimate rather than a measured alternative. It would not replace prerequisite review. |
-| Root writer with one bounded read-only review; independent harness audit beside Source work | Keep. Shared files retain one writer. Freeze packet bytes for final review to avoid repeated focused runs caused by late assertion edits. |
-| Two resource-reviewed serial-file children | Keep. Latest child times133.38/114.92seconds; actual stage141.096seconds. Full capture and group closure hold. |
-| Fully serial files | Safe fallback. Child sum248.30seconds is a planning comparator, not an actual serial measurement or promised wall time. |
-| More than two numeric workers, parallel full suites, analysis/cleanup during numeric | Unqualified and not launched. Preserve current caps and sole Root producer. |
+| Root causal packet, focused/static checks, independent review, one final SDK/image/stage | Selected. Current completed run is151.988s; prior Source-bound runs retain distinct inputs. |
+| Full stage after each partial assertion edit | Reject. Latest malformed-plan packet added only1F/1L/1S/2B despite many assertions; plan from actual missing map locations. No extra unchanged stage is needed. |
+| Root writer plus bounded read-only Luna review/research | Selected during development only. Shared files retain one writer; workers close before numeric freeze. |
+| Two reviewed serial-file children | Keep current qualification and pins. Current child times144.96s and118.09s; full capture/group closure hold. |
+| Fully serial files | Supported fallback. Their263.05s sum is only a planning comparator, not a measured serial wall time. |
+| Wider numeric pool or concurrent suites/cleanup/indexing | Unqualified and not selected. Existing caps, one producer and freeze remain unchanged. |
 
-The expired-lease packet had several focused revisions as assertions were added;
-its final66-assertion case took519.99ms/2.04s command. The difference includes
-unattributed module/setup/teardown cost, not measured pure startup. Prefer batching
-the related setup/denial/rollback/retry oracles before one final focused pass.
-No complete session token/tool-call telemetry is available; counts are not invented.
-
-Archive/capacity observations above are reused, with no new du/whole scan/hash or
-cleanup competing with a producer. Latest durable free6099996672bytes exceeds the
-unchanged2147483648floor by3952513024; scratch/retained filesystems and original
-archive proof remain bound above. No resource GAP is observed. Two new archives
-are248810/249150bytes after qualified cache retirement; the older0858651 archive
-is45756900bytes and contains registry payloads. Inputs differ, so this illustrates
-avoided retained payload, not a compression benchmark. Old archives remain intact.
-
-The next transitionFailedPrewriter case now shares the existing actual suspended
-engine child, contract-reference constructor and failed-journal constructor with
-public tests. Public engine setup keeps its original60s child/default behavior;
-the new Host caller supplies the remaining default5s case deadline and500ms
-reserve through the existing budget owner. No deadline is raised. All writes stay
-in unique fixture roots; child error/signal/nonzero results retain the root.
-In-process Mastra setup is not adopted without teardown qualification.
-
-Initial affected cases pass153assertions, then the complete pre-review packet
-passes168assertions across three cases in6.34s. Individual cases are981.67ms,
-1203.33ms and1922.30ms; each remains below5seconds. Strict TypeScript passes150
-files and scoped lint has0diagnostics. Logs begin `failed-transition-` in focused
-diagnostics. Original extraction correspondence is retained in
-`failed-transition-original-extracts.json`; the reuse/audit notes remain there.
-Independent final code/resource review finds no blocker. Its nonblocking archived-report
-assertion gap is fixed by checking every failed item; the final changed case
-passes68assertions in2023.16ms (3.70s command), with strict150-file TypeScript,
-zero scoped lint diagnostics and the10-assertion pin control passing. Unchanged
-related focused results are reused, not rerun. The final review is retained as
-vida-failed-transition-review.md. The complete Source7f858d1 stage above now measures the stable reviewed packet.
-Earlier focused observations remain separately bound evidence. Measured Host digest is
-`e080afa444ddc9a13f388367d51557d7d73850a6eb808a8ab542862f58bce41c`.
-The existing two-child namespace/case-serial resource contract stays unchanged.
+The earlier three-hour audit's local qualifier namespace-overwrite correction,
+unchanged-manifest negative control and transition-engine extraction remain in
+[cec9eee WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/cec9eee15553c86b79419e6e627aee2c6a611aa9/.agent/work/core-runtime-reactivation/WORK.md).
+Original script/proof SHA bindings and failed evidence remain there and in the
+focused diagnostics. This compaction changes no executable policy or result.
 
 ## Owners and acceptance boundaries
 
@@ -359,7 +238,8 @@ through stale CAS denial, continuation, lookup and exact retry. Strict165-file
 typecheck and configured lint pass. The unchanged-default public caller passes
 41assertions; the exact two-file resource-pin control passes10. An initial
 development name filter matched zero cases and is retained as such, not PASS.
-Independent Luna review finds no blocker. Numeric coverage is pending publication.
+Independent Luna review finds no blocker. The complete cec9eee stage above now
+measures this packet; the generated projection imports attempt1090.
 The proposed configured-frontier suffix helper timed out twice in fresh roots;
 the traced attempt reached beginSessionProducer. Neither attempt is success or
 a mutation kill. Original roots/logs and `frontier-suffix-unvalidated.patch`

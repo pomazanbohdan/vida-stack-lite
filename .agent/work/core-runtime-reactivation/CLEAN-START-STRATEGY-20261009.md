@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `5801089b080283b1d68614cb7fd31ad57d8dfb40`, run `d41b40d4-3b08-4f2b-8604-6c9768f92cfc`: F1051/1129, L4647/4970, S4921/5300 and B4948/5642. It records305PASS/0FAIL,3663assertions in184.010seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is78missing functions under38owners, all with exact retained map coordinates, plus694 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `cec9eee15553c86b79419e6e627aee2c6a611aa9`, run `0314f1f9-7436-4e6f-a1eb-bf5a18051fc0`: F1054/1129, L4653/4970, S4927/5300 and B4952/5642. It records305PASS/0FAIL,3666assertions in151.988seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is75missing functions under38owners, all with exact retained map coordinates, plus690 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -26,67 +26,41 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 ### 3. Close each correction packet
 
-Prioritize report gaps by a reachable shared fixture and causal transitions, rather
-than missing-function count alone. Check related success/refusal/retry obligations
-together before one SDK/image formation and complete contour stage. Root implements;
-bounded read-only Luna review and next-path research can overlap that work. Reuse
-existing inventory and avoid unrelated setup or unchanged numeric reruns. TaskSource
-historical-root/report integrity is measured. Next, select the remaining reachable
-Host path from the updated inventory; a genuine configured-frontier lookup requires
-its own compatible fixture, not a fabricated historical-terminal receipt.
+Select the next reachable causal path from current missing-function and branch
+locations. Keep one coherent success/refusal/retry/restoration packet per fixture
+before focused/static checks, independent review and one matching SDK/image/stage.
+Root is the sole writer; bounded read-only Luna research/review may overlap only
+development. Preserve the existing inventory and avoid unrelated setup or
+unchanged numeric reruns. Count native visited operands, not added assertions.
 
-The measured configured-frontier packet shares its existing fixture and moves
-its lookup case into the active Host selection, with exact-CAS Journal
-mutation/restore and acquired-root custody. Local recovery-review guards and
-reservation transitions are now measured through existing native SQLite fixtures.
-Qualified-code Host consistency, freshness, rollback and exact history-bound retry
-are now measured, with shared test-only endpoint mappings. Failed-owner recovery and rollback are now measured. Expired-local-lease CAS/proof fences, native rollback, recovery and peer/FIFO
-preservation are now measured. The transitionFailedPrewriter packet now measures its actual bounded child engine
-and shared contract/journal fixtures. Next inspect continuation/recovery-view
-reader obligations using the same compatible fixture and refreshed inventory.
-The measured authority-repair packet checks exact Journal dependency drift,
-fresh plan retry and completed-history retention in the existing cases. Keep
-focused PASS distinct from complete coverage; one owner closure remains missing.
-Stopped-source setup reuses only immutable template bytes; mutable consumer
-state remains per fixture. No controlled speedup is established.
-The configured-frontier digest repair/producer-fence packet is now measured.
-Its existing report join retains exact map-key/body-location associations,
-reducing repeated navigation without a new AST/inventory pass. Historical
-missing locations stay GAP and all numeric gates remain unchanged. Next use
-the current location-bound inventory for the remaining repair FIFO/ownership
-predicate and other reachable Host paths; keep one contour and producer.
-The FIFO intent matrix and26 malformed continuation-plan controls are now
-measured. The repair owner has no missing functions, but neither that owner's
-branches nor the whole contour are closed. Select the next same-contour packet
-from actual missing function/branch locations, not guard/assertion counts.
-Reuse native counters/maps once; implicit-if arms keep labeled containing-if
-ranges and unavailable diagnostics stay unknown. No additional AST pass is needed.
-Retain Root-only integration, one active contour and default5s case/300s coverage limits.
-The next checked packet adds real public claim/complete history to the existing
-historical-terminal continuation fixture, with unchanged defaults and exact CAS,
-lookup and retry assertions. Numeric delta remains pending. A proposed actual
-engine/Journal suffix fixture timed out under5s and remains an unvalidated retained
-patch, not shipped Source. Resolve that path's producer setup cost before admitting
-it; keep the existing deadline and original failure custody. Batch reachable
-causal paths before one full stage, rather than forming an SDK for each new guard.
-The three-hour audit fixes the local qualifier namespace-overwrite hazard; WORK
-retains its unchanged-manifest proof and measured-versus-planned comparisons.
-Qualified closed-producer cache retirement has resolved the prior capacity
-forecast: the comprehensive batch reclaims3791466496durable bytes and leaves
-6242443264free,4094959616above the unchanged admission floor. Its81 exact cache
-roots, original custody, dependency checks and before/after values remain in
-WORK's retained manifest. Reuse that observation until admission needs a fresh
-check. Preserve all original outcomes, images, SDKs, sibling scratch and archives;
-uncertain backup/provision/proposal roots remain excluded from deletion.
-Unit endpoint/observation seams
-do not establish genuine producer admission, native qualification or dispatch.
-Review all acquired roots and public-reader
-preconditions before Source publication, so a late fixture-only correction does
-not form another avoidable SDK artifact before measurement.
+The completed-history packet is measured: public claim/complete precedes the
+existing historical capture and proves exact retained attempt history through
+stale CAS denial, continuation, lookup and retry. Default fixtures remain
+unchanged. Prior packets and their exact acceptance/evidence bindings stay in
+[cec9eee WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/cec9eee15553c86b79419e6e627aee2c6a611aa9/.agent/work/core-runtime-reactivation/WORK.md)
+and the maintained regression contracts. Do not repeat those closed function
+packets; they do not establish whole-owner or contour closure.
 
-Inspect the current report and genuine producer prerequisites. Make the causal correction with maintained fixtures and preserve authorization, CAS, exact assertion identities, freshness checks and UNKNOWN handling. Run static checks and affected cases. Complete review and normal Source publication. Form matching SDK inputs only when selected tests require them. Then form one immutable image and run one complete coverage stage. Observe process, group, capture and input closure. Preserve scratch and let the maintained projection import the attributable report. Reuse unchanged evidence only under its original bindings.
+The actual post-prewriter engine/Journal suffix remains OPEN under its original
+5s deadline. Two fresh fixture attempts timed out; the trace reached producer
+setup. Keep original roots/logs and the unvalidated patch. Resolve the setup cost
+before admitting this reader route; do not use a synthetic accepted suffix,
+public-only case outside the current selection or a larger timeout. Continue
+other reachable gaps in the same contour while preserving this dependency.
 
-Run focused checks for changed behavior and callers. Do not repeat an unchanged full suite. Do not run suites during package formation or installation. Do not replay archived databases, attempts, leases, issued effects or UNKNOWN operations. Preserve stopped-source custody and every original FAIL, TIMEOUT and UNKNOWN outcome. A correction creates new evidence and cannot upgrade an old result. Native Runtime qualification is deferred; this cycle performs no loader/database cutover or consumer effect.
+Reuse map-validated keys/body coordinates and explicit zero-count branch arms
+from the same retained report. Implicit-if arms retain their containing-if label;
+unavailable metadata stays GAP. No fresh AST/inventory/hash pass is needed.
+The local report-only planner is retained diagnostic tooling, not published Source.
+
+After observed native process/group/capture closure, retire only the exact
+qualified private regenerable cache. Reuse shared dependency inventory under
+the no-install fence and preserve every other scratch/evidence byte. The latest
+archive and retirement manifest in WORK leave3549286400bytes above the unchanged
+2GiB durable floor. Earlier comprehensive cleanup and qualifier namespace-guard
+proof remain in Git and retained diagnostics; do not repeat broad scans/cleanup.
+Unknown backup/provision/proposal roots remain excluded. Bootstrap now requires
+real nonempty prepared Pstack instructions, not a silent cli.ts exit0.
 
 ### 4. Keep later gates intact
 
