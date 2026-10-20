@@ -94,6 +94,11 @@ Before comparing snapshots across Host, Ledger resume and recovery artifacts,
 read their declared shapes. Compare exact version/state fields and assert each
 API's own metadata separately: Host attempt and Ledger resume_status are different
 wrapper fields, and the recovery artifact stores neither wrapper.
+For rollback failures, use distinct body/artifact/SQL sentinels, including thrown
+undefined. Assert exact ordered error identities and original cause, persisted
+rows/files, transaction state and later admissible entry. Keep an instance-local
+driver spy distinct from native disk-failure proof; restore it and settle the
+fixture-owned transaction before closing or deleting its root.
 
 For YAML/configured-root fixtures, follow [TESTING's fixture contract](../../../packages/agent/TESTING.md#new-and-modified-files).
 Use the bound config's registered and allowed projects; verify targeted negative

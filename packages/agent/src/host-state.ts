@@ -7446,13 +7446,13 @@ export class HostStateStore {
     requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
     let entered = false;
     let restored = false;
-    const restore = (): void => {
+    const restore = (primary: unknown): void => {
       if (!entered || restored) return;
       restored = true;
       try {
         rollback();
-      } catch {
-        throw new HostStateError('working mutation rollback failed after transaction failure');
+      } catch (rollbackError) {
+        throw new AggregateError([primary, rollbackError], 'working mutation and rollback failed', { cause: primary });
       }
     };
     try {
@@ -7470,12 +7470,12 @@ export class HostStateStore {
           );
           return result;
         } catch (error) {
-          restore();
+          restore(error);
           throw error;
         }
       }).immediate();
     } catch (error) {
-      restore();
+      restore(error);
       throw error;
     }
   }
@@ -7561,16 +7561,10 @@ export class HostStateStore {
     requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
     this.#historicalNormalizationMutationActive = true;
     let entered = false;
-    let restored = false;
     let transactionOpen = false;
     const restore = async (): Promise<void> => {
-      if (!entered || restored) return;
-      restored = true;
-      try {
-        await rollback();
-      } catch {
-        throw new HostStateError('historical normalization rollback failed after transaction failure');
-      }
+      if (!entered) return;
+      await rollback();
     };
     try {
       this.#database.exec('BEGIN IMMEDIATE');
@@ -7608,14 +7602,22 @@ export class HostStateStore {
       transactionOpen = false;
       return result;
     } catch (error) {
+      const errors: unknown[] = [error];
       try {
         await restore();
-      } finally {
-        if (transactionOpen || this.#database.inTransaction) {
+      } catch (restoreError) {
+        errors.push(restoreError);
+      }
+      if (transactionOpen || this.#database.inTransaction) {
+        try {
           this.#database.exec('ROLLBACK');
           transactionOpen = false;
+        } catch (rollbackError) {
+          errors.push(rollbackError);
         }
       }
+      if (errors.length > 1)
+        throw new AggregateError(errors, 'historical normalization mutation and rollback failed', { cause: error });
       throw error;
     } finally {
       this.#historicalNormalizationMutationActive = false;

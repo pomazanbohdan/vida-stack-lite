@@ -1017,6 +1017,69 @@ timing concern for the next changed-input observation rather than replaying thes
 unchanged inputs. Total gains since bcbfbd6 are41functions,154lines,166statements,
 202branches; no new exact contour is closed.
 
+### Artifact mutation failure preservation — 2026-10-20
+
+Goal continuation keeps the same bun-host-state exact-F/L/S/B-first phase.
+Observed same checkout at5836bc5, no local/staged changes or live numeric/compiler/
+build writer. Cloud Environment runtime observations are current, running and
+connected with enforced unrestricted HTTP; no host/selector/runtime change is
+performed. Reuse the latest receipts/inventory and existing disk observation.
+
+Blind Luna /tmp/vida-failed-prewriter-host-plan.md identifies a prerequisite:
+old delivered-work failed-prewriter tests directly seed a configured-frontier
+receipt and failed Journal. Those cannot be copied as genuine new Host lineage.
+A supported fresh configured-frontier continuation producer and actual readonly
+failure reports are still needed for that family. Keep that gap open, not a
+fabricated receipt or a closed task. This does not block independent native
+boundaries in this same contour.
+
+Inspection finds a confirmed product error-loss family in both
+withHistoricalNormalizationMutation/#withGuardedArtifactMutation and
+withWorkingMutation. Artifact rollback failure previously replaced the primary
+and actual rollback reasons with a generic HostStateError; explicit SQL rollback
+failure could replace both again. The new native case reproduces each path:
+guarded-mutation-red.log663.19ms and working-mutation-red.log644.78ms fail at the
+intended aggregate oracle. Their original fixtures remain at
+/home/agent/.cache/vida-cloud-tooling/tmp/vida-absorption-z4MsoW and
+/home/agent/.cache/vida-cloud-tooling/tmp/vida-absorption-qrnhWz, respectively.
+
+Both boundaries now preserve the exact primary value on successful cleanup,
+or an ordered AggregateError with primary cause after restoration/SQL failure.
+Async code attempts SQLite rollback even if artifact restoration throws. Its
+single-caller restore loses an unused restored flag/arm; the sync two-caller
+restore keeps its duplicate-restoration guard. No function identity is removed,
+authority/CAS/maintenance/UNKNOWN gate changed or budget raised. The system
+specification owns the error contract; Bun skill records the regression method.
+
+One actual-admission fixture serves committed file+SQLite effects, three stale
+CAS denials, reentrant writer denial with no admission row, six shared async/sync
+failure variants including undefined, exact SQL/file restoration and later entry.
+The Journal is the helper's explicit empty unit fixture, not an engine/run proof.
+A local Bun spyOn(database.exec) faults the explicit async SQL rollback while
+forwarding other native operations. It proves all three reason identities and an
+open native transaction; Root's test restores the spy and explicitly rolls back
+that owned fixture before cleanup. It does not establish native I/O-failure
+qualification or closed transaction custody after a failed product rollback.
+The synchronous Bun transaction driver's internal rollback-failure path remains
+unfaulted; no contrary assertion is made.
+
+Final focused9cases pass104assertions in3.83s; the new80assertion case is824.77ms
+under default5s. All10existing historical-normalization caller cases pass6.07s
+command; those native assert-based cases do not report Bun expect counters.
+Strict181files and scoped type-aware lint pass. Independent native blind Luna
+plan/final review /tmp/vida-guarded-mutation-failure-plan.md and
+/tmp/vida-guarded-mutation-final-review.md report no blocker, including final
+single-caller simplification and sibling sync review. No worker mutates Source,
+Git or executes tests. Root keeps one writer and sole final numeric ownership.
+
+Fresh two-file resource review keeps the new fixture/table/file and local driver
+spy entirely in the Host child's owned namespace; all DB fault scopes restore
+before teardown and no global clock, shared process or writable root is added.
+Host pinccc4c8bc20937904eb82f50afae5686897f693c2ea4b34aa38d28dcd408ecdd2;
+stopped-source0c6cd50f, provider/caller/selection and two-worker budgets stay.
+Finish eligibility/docs/hooks and normal publication, then one matching-SDK
+stage. Complete coverage remains68655b6 until its changed-input report closes.
+
 The earlier plan below led to genuine completed-Source-report recovery and its
 persisted Work history; it is retained context, not a duplicate next task.
 Blind bounded plan

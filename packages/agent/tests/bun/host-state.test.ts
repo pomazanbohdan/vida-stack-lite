@@ -997,6 +997,185 @@ test(
   failedFinalHostCaseTimeoutMs,
 );
 
+test('Host artifact mutation preserves primary and rollback failures with native transaction custody', async () => {
+  const f = createAutomaticWorkAdmissionFixture(false, true);
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const admission = f.prepare('host-guarded-mutation', 'fixture:guarded-owner');
+    const admitted = f.admit(admission);
+    if (!admitted.host.work) throw new Error('Guarded mutation fixture has no admitted Work');
+    const binding = admitted.host.work.binding;
+    const identity: WorkIdentity = {
+      repository_id: binding.repository_id,
+      project_ids: binding.project_ids,
+      integrations_digest: binding.integrations_digest,
+      work_id: admission.context.work_id,
+    };
+    const before = presentSnapshot(f.store.readHostStateSnapshot(identity));
+    const journal = f.store.readWorkSessionJournal(identity);
+    if (!journal) throw new Error('Guarded mutation fixture has no current Journal');
+    const guard = {
+      repositoryRoot: f.root,
+      identity,
+      attempt: 1,
+      expectedWork: before.workVersion,
+      expectedLedger: before.ledgerVersion,
+      expectedJournal: journal.version,
+      expectedMaintenanceGeneration: before.maintenanceGeneration,
+    };
+    const artifact = path.join(f.root, '.agent/work', identity.work_id, 'guarded-artifact.json');
+    writeFileSync(artifact, 'before');
+    f.database.exec('CREATE TABLE fixture_guarded_mutation (value TEXT NOT NULL)');
+    const values = () => f.database.query<{ value: string }, []>('SELECT value FROM fixture_guarded_mutation').all();
+    const rows = readFixtureHostRows(f.database);
+    let entered = 0;
+    let restored = 0;
+    for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal'] as const) {
+      const denied = await rejectionReason(
+        f.store.withHistoricalNormalizationMutation({
+          ...guard,
+          [key]: { ...guard[key], revision: guard[key].revision + 1 },
+          action: () => {
+            entered += 1;
+          },
+          rollback: () => {
+            restored += 1;
+          },
+        }),
+      );
+      expect(() => {
+        throw denied;
+      }).toThrow(
+        key === 'expectedJournal' ? 'historical normalization Journal CAS conflict' : 'state compare-and-swap conflict',
+      );
+      expect(readFixtureHostRows(f.database)).toEqual(rows);
+    }
+    expect(entered).toBe(0);
+    expect(restored).toBe(0);
+    const published = await f.store.withHistoricalNormalizationMutation({
+      ...guard,
+      action: async () => {
+        expect(() => f.store.recordAdmissionAttempt('guarded-reentrant-writer', 1, {})).toThrow();
+        f.database.query('INSERT INTO fixture_guarded_mutation VALUES (?)').run('committed');
+        writeFileSync(artifact, 'published');
+        return { value: readFileSync(artifact, 'utf8') };
+      },
+      rollback: () => {
+        restored += 1;
+      },
+    });
+    expect(published).toEqual({ value: 'published' });
+    expect(values()).toEqual([{ value: 'committed' }]);
+    expect(
+      f.database
+        .query<{ count: number }, [string]>(
+          'SELECT COUNT(*) AS count FROM agent_host_admission_attempt WHERE work_id=?',
+        )
+        .get('guarded-reentrant-writer')?.count,
+    ).toBe(0);
+    expect(restored).toBe(0);
+    const primary = new Error('fixture guarded body failure');
+    const rollback = new Error('fixture guarded restoration failure');
+    const failures = [
+      { primary, rollback: undefined },
+      { primary, rollback: { error: rollback } },
+      { primary: undefined, rollback: { error: undefined } },
+    ];
+    for (const mode of ['historical', 'working'] as const)
+      for (const failure of failures) {
+        const action = () => {
+          writeFileSync(artifact, 'unverified');
+          f.database.query('INSERT INTO fixture_guarded_mutation VALUES (?)').run('rolled-back');
+          throw failure.primary;
+        };
+        const restore = () => {
+          restored += 1;
+          writeFileSync(artifact, 'published');
+          if (failure.rollback) throw failure.rollback.error;
+        };
+        const reason = await rejectionReason(
+          Promise.resolve().then(() =>
+            mode === 'historical'
+              ? f.store.withHistoricalNormalizationMutation({ ...guard, action, rollback: restore })
+              : f.store.withWorkingMutation(f.root, guard.expectedMaintenanceGeneration, action, restore),
+          ),
+        );
+        if (failure.rollback) {
+          expect(reason).toBeInstanceOf(AggregateError);
+          if (!(reason instanceof AggregateError))
+            throw new Error('Both guarded mutation failures must remain inspectable');
+          expect(reason.errors).toEqual([failure.primary, failure.rollback.error]);
+          expect(Object.hasOwn(reason, 'cause')).toBe(true);
+          expect(reason.cause).toBe(failure.primary);
+        } else expect(reason).toBe(failure.primary);
+        expect(values()).toEqual([{ value: 'committed' }]);
+        expect(readFileSync(artifact, 'utf8')).toBe('published');
+        expect(f.database.inTransaction).toBe(false);
+        expect(readFixtureHostRows(f.database)).toEqual(rows);
+        expect(
+          await (mode === 'historical'
+            ? f.store.withHistoricalNormalizationMutation({
+                ...guard,
+                action: () => 'ready',
+                rollback: () => undefined,
+              })
+            : f.store.withWorkingMutation(
+                f.root,
+                guard.expectedMaintenanceGeneration,
+                () => 'ready',
+                () => undefined,
+              )),
+        ).toBe('ready');
+      }
+    expect(restored).toBe(6);
+    const sqlRollback = new Error('fixture SQL rollback failure');
+    const nativeExec = f.database.exec.bind(f.database);
+    const exec = spyOn(f.database, 'exec').mockImplementation((sql) => {
+      if (sql === 'ROLLBACK') throw sqlRollback;
+      return nativeExec(sql);
+    });
+    try {
+      const reason = await rejectionReason(
+        f.store.withHistoricalNormalizationMutation({
+          ...guard,
+          action: () => {
+            throw primary;
+          },
+          rollback: () => {
+            throw rollback;
+          },
+        }),
+      );
+      expect(reason).toBeInstanceOf(AggregateError);
+      if (!(reason instanceof AggregateError)) throw new Error('All guarded mutation failures must remain inspectable');
+      expect(reason.errors).toEqual([primary, rollback, sqlRollback]);
+      expect(reason.cause).toBe(primary);
+      expect(f.database.inTransaction).toBe(true);
+    } finally {
+      exec.mockRestore();
+      if (f.database.inTransaction) f.database.exec('ROLLBACK');
+    }
+    expect(f.database.inTransaction).toBe(false);
+    expect(readFixtureHostRows(f.database)).toEqual(rows);
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(identity)).toEqual(journal);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close({ retainRoot: !completed });
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
 test('Host unprepared release rolls back both rows and retries the retained request without new rights', () => {
   const f = createAutomaticWorkAdmissionFixture(false, true);
   let completed = false;

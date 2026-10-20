@@ -2760,6 +2760,15 @@ Host/Journal/maintenance versions remain fixed. No schema or repair is replaced.
 
 Apply and refresh hold one shared plan-owner lock. Refresh uses the existing
 Host artifact mutation transaction and SQLite writer fence through publication.
+The guarded mutation preserves the original body/commit error when rollback
+succeeds. If artifact restoration or SQLite rollback also fails, it retains the
+ordered original and cleanup failures in one AggregateError with the original
+cause. SQLite rollback is still attempted after artifact restoration fails;
+the connection remains reserved until settlement, and a failed SQL rollback does
+not establish closed transaction custody or authorize another writer.
+The synchronous working-artifact boundary preserves primary and restoration
+failures with the same ordered aggregate and original cause; successful cleanup
+rethrows the original value unchanged, including a thrown undefined.
 It checks current versions, quiescence, the sole same-owner execution-only claim
 and absence of an adopted successor. It retains the exact prior UTF-8 plan
 bytes in request-ID history before the atomic active-plan replacement. Check

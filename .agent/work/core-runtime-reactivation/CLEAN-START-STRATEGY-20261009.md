@@ -289,6 +289,16 @@ The longer single sample is not a qualified causal performance result: retained
 log comparison shows broad slowing in unchanged Host cases too. Keep deadlines,
 one numeric producer and two reviewed children; do not repeat an unchanged suite
 to manufacture a speedup. Continue the same contour from this inventory.
+The next causal packet repairs error loss in async historical and sync working
+artifact mutation: primary/restoration/explicit SQL rollback reasons remain
+inspectable with original cause. It removes only the async single-caller restore's
+unused duplicate-call flag; the sync two-caller guard remains. One admitted
+fixture covers the shared failure matrix:9focused cases/104assertions and10
+existing historical callers pass, strict181/scoped lint pass, blind Luna review
+reports no blocker. Preserve its explicit local-driver fault-seam limit and
+original red evidence. Publish normally, then one matching-SDK stage. Genuine
+configured-frontier failed-prewriter producer lineage remains an open prerequisite;
+do not replace it with seeded receipts from older unit tests.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
