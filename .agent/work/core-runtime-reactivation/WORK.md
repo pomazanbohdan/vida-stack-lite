@@ -101,6 +101,39 @@ targeted passes, owns the measured numeric increase.
 
 ### Latest complete host-state coverage and Initial Source packet
 
+The dcaa148 changed-input stage /workspace/contour-stage-Nka1td completes in
+194500.503ms, exit0, with complete capture, closed group, unchanged boot/image
+inputs and published report. Host271PASS/2214assertions in188.24s and
+stopped-source16PASS/206assertions in186.87s produce287PASS/0FAIL and
+2420assertions. Runec058933-d649-4ed7-9346-e6bb3789c007 records
+F864/1129,L3585/4966,S3814/5296,B3820/5640. Against the prior complete98bce8b
+observation, gains are35functions,165lines,171statements and264branches.
+Operation remains BLOCKED/nonexact; historical exact stays16/45. Raw maxCC279
+and entryCRAP3782 are diagnostic only, with frozen/CRAP/mutation deferred and
+unqualified. Different Source/tests/load conditions prohibit a causal speedup
+claim from the lower complete elapsed time.
+
+Both new cases pass under coverage without raising their20s allowance:
+commit17382.23ms and rollback-plus-retained-request-retry19491.01ms. The image is
+/workspace/.vida-quality-inputs/213a333d4d82c89008a6d142479e312c0b2c24e0/repository,
+manifest SHA22896efa26d973da38cb7f9582ee369df75ac0b5006dbdc5ff4bbe112ff24a98,
+input011525790950255e3465c1105c3feb66913b7bb1c2003b51edd65bcd8d105061,
+Source tree aaaa9cefe086013c41da537d100269d40f61bc54.
+SDK CI39371571678/artifact12242120431 succeeds; transport ZIP SHA
+5863cb0efb77f6b47115674f032cede8a20fa676e50a89bd8b8534e70146c5dd matches.
+Admission observes5792698368free bytes against unchanged2147483648minimum.
+Projection1047 imports the terminal result. The existing derivative consumes
+only this completed report, without another Source/AST/scan/hash pass:
+265uncovered functions/closures under89owners remain. Stored-Work history drops
+from28to19missing closures; the23-function completed-report recovery group is
+no longer in the uncovered inventory. Prior snapshots/images remain retained.
+Source dcaa148 is published after ordinary hooks pass516format/523strict TS
+files, lint and Knip. Updated shard eligibility passes10assertions in4.13ms.
+Continue the same open contour with its genuine readonly-frontier receipt and
+historical Work validation; do not rerun these unchanged complete inputs.
+
+### Prior98bce8b complete observation
+
 The98bce8b stage at /workspace/contour-stage-C84ORv completes in222758.581ms,
 exit0, capture complete, group closed and boot/image inputs unchanged. Host269
 PASS/2181assertions in184.97s and stopped-source16PASS/206assertions in215.40s

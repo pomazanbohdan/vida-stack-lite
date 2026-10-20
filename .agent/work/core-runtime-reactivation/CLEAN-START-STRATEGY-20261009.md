@@ -172,6 +172,16 @@ Split rollback and successful recovery/history into separate fresh cases under
 unchanged20s bounds. Measure total work honestly; the split adds setup and is
 not a throughput improvement. Refresh the final pin after targeted checks, then
 publish and run one matching changed-input stage. Retain all earlier failures.
+The dcaa148 stage-Nka1td completes287PASS/0FAIL,2420assertions in194.501s.
+F864/1129,L3585/4966,S3814/5296,B3820/5640 gain35/165/171/264covered items
+against the prior complete98bce8b run. Recovery commit/rollback cases pass
+17.382/19.491s under unchanged20s bounds. Operation stays BLOCKED/nonexact,
+historical exact16/45, frozen/CRAP/mutation deferred. Reused report inventory
+now has265uncovered functions under89owners; stored-Work history falls28to19.
+Next prepare genuine unissued readonly frontier/history through the existing
+Initial Source and synthesis helpers, preserving actual receipt and owner
+lineage. Do not chain blindly from completed-report recovery, fabricate receipts
+or repeat these unchanged complete inputs. WORK owns exact Source/SDK bindings.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
