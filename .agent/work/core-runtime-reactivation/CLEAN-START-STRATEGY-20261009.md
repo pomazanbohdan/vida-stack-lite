@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation is Source commit `95e7ff079761794166f159e6f0f69abed6ecee9e`, run `28a9fba7-09de-4550-903a-57922af87509`: F938/1129, L4008/4968, S4259/5298 and B4281/5642. The run records 296PASS/0FAIL and 2799 assertions in 141.587 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 191 missing functions under 76 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
+The active contour is `bun-host-state`. Its latest complete observation is Source commit `4812447d4ef4a462a6e48b24522d6a0057e398ed`, run `1742a75f-8f89-4856-b750-83a3fc0ab96f`: F951/1129, L4068/4970, S4322/5300 and B4412/5642. The run records 297PASS/0FAIL and 2862 assertions in 160.553 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 178 missing functions under 73 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 

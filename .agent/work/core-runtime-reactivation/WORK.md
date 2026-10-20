@@ -15,12 +15,12 @@ numeric producer.
 
 ### Sequential coverage observations and active repair
 
-Latest complete Host-state observation is95e7ff0, run
-28a9fba7-09de-4550-903a-57922af87509: F938/1129,L4008/4968,S4259/5298,
-B4281/5642,296PASS/0FAIL,2799assertions,141.587s. It remains nonexact/BLOCKED.
-The current report-only inventory has191missing functions under76owners.
+Latest complete Host-state observation is4812447, run
+1742a75f-8f89-4856-b750-83a3fc0ab96f: F951/1129,L4068/4970,S4322/5300,
+B4412/5642,297PASS/0FAIL,2862assertions,160.553s. It remains nonexact/BLOCKED.
+The current report-only inventory has178missing functions under73owners.
 Full bindings and the current three-hour audit are recorded in
-[the heartbeat-oracle result](#complete-heartbeat-oracle-observation).
+[the native authority-repair result](#complete-native-authority-repair-observation).
 
 The cycle recorded the following complete F/L/S/B observations. These keep
 their own Source/input bindings; they are not a same-HEAD global qualification.
@@ -1430,8 +1430,62 @@ scope is restored before handoff; no shared directory, background process or
 additional child is introduced. Host pin
 a9bb558e460bb944bf30dab5cbcd3d8ab524fe3cc17b55922a58ad1dd0dd588f;
 stopped-source pin, caller namespace, Linux provider, selection and two-worker
-review remain unchanged. Complete numbers still belong to95e7ff0 until one
-checked, normally published changed-input stage closes with matching SDK.
+review remain unchanged. Source4812447 is normally published after hooks pass;
+its matching-SDK stage closes as recorded below. The pin control passes10assertions.
+
+### Complete native authority-repair observation
+
+Source4812447d4ef4a462a6e48b24522d6a0057e398ed is published with normal hooks:
+516formatted/523strict files, lint and Knip pass. Matching SDK CI39396582261
+succeeds; artifact12251409500 downloaded ZIP SHA
+6dcaad4067a551d919b6e8c4c895b026f750692f61ea5229a67f3f9725d87dac matches.
+Stage /workspace/contour-stage-4Zpud5 completes in160552.926ms, exit0, complete
+capture, closed group and unchanged boot/image inputs. Run
+1742a75f-8f89-4856-b750-83a3fc0ab96f publishes projection1066:
+F951/1129,L4068/4970,S4322/5300,B4412/5642. Covered gains over95e7ff0 are
+13functions,60lines,63statements and131branches. The two additional line/statement
+denominators come from the repaired structural/history validation, with unchanged
+Source selection and no exclusions. Host281PASS/2609assertions,151.86s and
+stopped16PASS/253assertions,131.33s give297PASS/0FAIL,2862assertions total.
+The new genuine UNKNOWN case passes10.933s under coverage. This confirms the
+changed packet through the complete selected contour, not just its filtered case.
+Operation stays BLOCKED/nonexact; historical exact16/45 and local triples9/45
+remain distinct. Diagnostic maxCC279/entryCRAP2162 is unqualified, with frozen/
+CRAP/mutation deferred. No new exact contour closes. The report-only inventory
+is178missing functions under73owners; #repairWorkAuthority still has4missing
+closures, so do not claim complete coverage of that method or all repair guards.
+
+Image /workspace/.vida-quality-inputs/76ed949620ace5cb96ccf095fb79dd3b357e0d08/repository
+binds Source treee623b7ba396a8159f67b4370e4770c194a5ef940, input
+103b0b99d655559b682b384c9dd8a629ab70096214fc4f93c2ab25b1e0a751d4,
+manifest SHA7d4ffb2767732a8db53283efdba0c7dd7a7c08b1fe5f3208c26426c58c0a1b34.
+Original image, raw logs/reports/SDK and every FAIL/UNKNOWN remain unchanged.
+Root observes exec95520 terminal and group closure before archival. New owned
+functional scratch /dev/shm/vida-quality-retained-8gHUR9 has180432240apparent
+bytes. Its complete durable archive is
+/workspace/vida-functional-retention-4Zpud5-S3sicH/scratch.tar.gz,
+45743414bytes, SHA
+0a3bfad4030c87e53bb0f19fa5e3c1abff3be7870acd8303c340e2eca92ef1fe.
+GNU tar gzip compare passes against the unchanged original, including all files,
+modes, link targets and expected-UNKNOWN DBs/sidecars. Archive.log and
+scratch.sha256 remain beside it. No original scratch or older archive is removed.
+
+Lossless compression reduces this new archive's recorded207605760-byte tar
+stream to45743414bytes, saving161862346bytes without dropping evidence. These
+are two representations of the same observed stream, not a test-speed benchmark.
+Compression/comparison run only after producer closure; Source/SDK/logs/reports
+remain on durable storage, and no power-loss qualification is inferred. Overlay
+free2902216704before archival and2856456192after stays708972544above the
+unchanged2147483648admission floor. No resource GAP or evidence deletion occurs.
+Reuse this disk observation and the existing inventories; do not add broad scans.
+
+The next blind bounded TaskSource plan is retained as
+vida-native-task-source-history-plan.md in the existing diagnostic directory,
+with its /tmp original. It proposes the existing helper's native prepare/issue/
+controlled observed-report path to historical Source-root selection. This is a
+trusted unit seam proposal, not a real Git/worktree/consumer effect or measured
+coverage. Continue only the same active contour from the current inventory,
+reviewing the exact report contract before implementing; no unchanged stage retry.
 
 ### Prior complete setup-scope coverage and Task-source unit packet
 
@@ -1962,7 +2016,7 @@ be substituted.
 
 Root owns canonical Source, shared-file integration, Git, final checks and numeric results. The sidecar owns delegation and documentation policy. `packages/agent/TESTING.md` owns verification gates. `CLEAN-START-STRATEGY-20261009.md` owns execution order. WORK records current execution and evidence. The existing backlog owns stable task IDs and P0/P1/P2 boundaries, and `CONTOUR-STATUS.md` plus its JSON sibling remain the sole measurement projection.
 
-The current active contour is `bun-host-state`. Its latest complete result is recorded in [the heartbeat-oracle observation](#complete-heartbeat-oracle-observation). That result is bound to its published Source and is not current-HEAD qualification. The operation remains BLOCKED and nonexact. Historical exact coverage is 16/45 contours, not a current global pass. Frozen complexity and CRAP qualification, mutation, bundle repair, lifetime exclusion, and native Runtime qualification remain open. No loader, database or consumer cutover has occurred.
+The current active contour is `bun-host-state`. Its latest complete result is recorded in [the native authority-repair observation](#complete-native-authority-repair-observation). That result is bound to its published Source and is not current-HEAD qualification. The operation remains BLOCKED and nonexact. Historical exact coverage is 16/45 contours, not a current global pass. Frozen complexity and CRAP qualification, mutation, bundle repair, lifetime exclusion, and native Runtime qualification remain open. No loader, database or consumer cutover has occurred.
 
 The projection separately records 9/45 historical local triples and one reviewed
 data-only closure. Those measure different combinations from the16/45 exact
