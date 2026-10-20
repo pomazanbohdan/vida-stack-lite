@@ -124,6 +124,18 @@ would name another operation. Earlier-than-target FIFO callbacks remain separate
 dependencies: a later waiter cannot reach them. The matching17b0f77 stage records
 seven newly executed functions; the same contour remains open with27 missing.
 
+Continue with the checked v1113 native readonly-dispatch and legacy-frontier
+consumer packet. Legacy eligibility requires a prewriter-free task config before
+fresh admission and actual synthesis, followed by exact file-resource acquisition,
+same-owner live suspension and current template restoration. An already-planned
+current developer does not satisfy this protocol's reviewer/index/prefix contract;
+do not widen phase guards to accept that invalid setup. Keep synthetic external
+verifier input distinct from genuine Host/Journal/engine history. For earlier-FIFO
+recovery, admit the disjoint waiter before initial continuation creates the later
+target ticket. Preserve all peer rows/tickets/claims and Source bytes with the
+existing bounded native beforeimage owner. Root owns the single matching final
+SDK/image/coverage stage; other contour, CRAP and mutation producers stay deferred.
+
 For subsequent TypeScript edits, follow TESTING's static-first, fail-fast sequence
 before the serial affected-case group. The three-hour audit uses existing receipts
 and two independent readonly reviews; it found no new producer-script defect.

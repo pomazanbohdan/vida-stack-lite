@@ -1919,8 +1919,16 @@ reachable causal path over isolated helpers ranked only by missing-function coun
 After TypeScript edits, run the scoped strict check and configured lint before
 starting the affected runtime cases. Use the declared test/tooling tsconfig for
 the changed entrypoints; chain checks with fail-fast shell behavior so a later
-successful command cannot hide a typecheck failure. Once those pass, group the
-affected named cases in one serial Bun invocation where their existing resource
+successful command cannot hide a typecheck failure.
+
+Reserve a distinct log namespace for every diagnostic attempt. Use exclusive
+creation or shell `noclobber`; never truncate a prior compiler/lint/runtime
+failure with a later successful retry. Preserve transport failures separately
+when no log was created. A corrected invocation gets a new path, not a rewritten
+original. This rule applies to manual focused checks as well as producer logs.
+
+Once the static checks pass, group affected named cases in one serial Bun
+invocation where their existing resource
 and timeout contracts permit it. A pure input/schema check should precede an
 expensive fixture when it can resolve the same uncertainty. Reuse current results
 until another change or failure invalidates them.
@@ -2565,6 +2573,17 @@ argv or archived attempt. Keep the fresh root even on PASS. This explicit case
 allowance changes no existing timeout, default5s, product2s target or300s/330s
 coverage/stage envelope. It establishes functional repair, not outcome settlement
 or power-loss durability.
+
+The native legacy-frontier Host continuation case uses the same20s composite
+cap for fresh admission, actual Mastra synthesis, exact Source-resource owner
+release, a current configuration transition and Host/Journal persistence/retry.
+It generates a task-only prewriter-free configuration before admission, then
+restores the exact current template. Host, Journal and physical engine history
+are genuine; only the external transition-verifier input is synthetic. It proves
+the Host consumer, not endpoint formation/installation or Runtime acceptance.
+An already-planned current wave is not a substitute for this legacy frontier:
+the replacement requires the exact reviewer/developer index and completed-prefix
+signatures. Keep existing phase, Source, lease/FIFO and CAS guards intact.
 
 Initialization replacement-effect contention reuses the existing fresh-module
 fixture for both injected errors and the real CAS reclaim guard. The real mode

@@ -79,6 +79,63 @@ No numeric gain or product defect is claimed from the focused PASS.
 
 ### Whole remaining-contour packet in progress
 
+The next v1113 packet adds genuine Host consumer scenarios without changing
+product guards. The readonly-dispatch case configures no-egress before actual
+admission, issues one native Mastra action and cooperatively pauses its owner.
+The supported session reader supplies the plan. Stale Work/Ledger/Journal and
+maintenance, deterministic mismatch and nested-transaction denials retain empty
+repair rows and exact native beforeimages. Native commit/retry preserves one
+generation and exact payload/digest; conflicting text and BLOB values in both
+columns are denied and restored with primary/cleanup error retention. Original
+UNKNOWN remains pending and its fresh root remains retained. This is Host
+persistence/CAS evidence, not active-caller authentication or replacement execution.
+
+The new configured-frontier consumer uses a freshly generated legacy task graph
+before admission, actual synthesis, exact implementation-resource acquisition
+and same-owner live suspension. Restoring current template bytes gives the
+required old developer wave1/current reviewer wave1 mapping. Only the external
+transition-verifier proof is synthetic; Host, Journal and physical engine history
+are native, and Host creates its own receipt. Stale Work and null authorization
+deny before effects; success, exact retry and lookup preserve the real synthesis
+prefix and disjoint peers. It uses the existing20s composite cap. Native issued
+writer effects, endpoint formation/installation and Runtime acceptance are not
+claimed.
+
+Earlier composition attempts were invalid test prerequisites, not reproduced
+product defects. Initial-source continuation retains an older engine input Source
+digest; ordinary current prepared PLAN has developer wave2 while the replacement
+requires target reviewer wave1 and matching prefix signatures. Static phase-guard
+extension advice is therefore retracted; no producer/repair phase guard changes.
+The first legacy attempt omitted actual file-resource acquisition and a subsequent
+oracle expected the wrong verifier call count/signature. Original runtime failure
+logs and fixture roots remain retained in the named v1113 diagnostics. The final
+route verifies one `(request, paused Host)` call for each new authorization attempt;
+exact retry skips it.
+
+The completed-report rollback case admits its disjoint owner/waiter before the
+initial continuation creates its successor. It proves the queued sequence is
+earlier than the target and resources remain disjoint. One cold attempt exceeds
+the unchanged20s limit; the first timing probe uses an invalid output parent and
+fails before writer issue. The corrected bounded probe records9 runtime-current
+checks,9 nested runtime snapshots and4.537s in reservation; overlapping inclusive
+phase totals are not additive. Their freshness boundaries remain intact. Two
+unchanged peer Host decodes are replaced with one exact native Work-row query,
+preserving prior public validation and current target API, all peer tickets/claims
+and file bytes. The corrected four-case check passes163assertions in32.54s;
+rollback takes16.597s within20s. Different invocations do not prove a controlled
+speedup. The unchanged readonly-dispatch case retains its58-assertion PASS under5s.
+Strict148-file TypeScript and configured lint pass. Blind peer and native-frontier
+reviews find no remaining blocker in these changes. Numeric gains remain pending.
+
+Some initial manual compiler/lint retries reused log names; their tool outputs
+remain in the chat, but no original standalone-file retention is claimed for
+overwritten logs. TESTING and the Bun-test skill now require distinct exclusive
+attempt logs. Final checks use fresh mkdtemp namespaces and shell noclobber;
+numeric and original runtime FAIL/TIMEOUT/UNKNOWN evidence are unchanged. A
+transient exec-server disconnect is followed by connected spec3227 and the same
+boot89093463-dd07-4789-abcd-d15842df2ba2; earlier logs/process outcomes were inspected
+before further work. No duplicate full stage, dependency install or state replay.
+
 The v1111 packet corrects the prior-ticket execution assumption through the
 exported policy-context factory after real TaskSource issue. It reuses the
 original verified operation and prepared CAS, requires the current reserved

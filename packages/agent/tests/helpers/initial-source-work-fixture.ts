@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, lstatSync, realpat
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import { stringify as stringifyYaml } from 'yaml';
 import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import {
   loadRuntimeConfig,
@@ -75,6 +76,7 @@ const record = (value: unknown) => JSON.stringify(value) + '\n';
 export interface InitialWorkFixture {
   root: string;
   config: AgentRuntimeConfig;
+  currentConfigBytes: string;
   database: BunDatabase | null;
   store: HostStateStore | null;
   ledger: MastraSessionLedgerType | null;
@@ -138,7 +140,14 @@ export function assertOwnedFixtureParent(root: string) {
 export async function createInitialSourceWorkFixture({
   parentRoot,
   onRoot,
-}: { readonly parentRoot?: string; readonly onRoot?: (root: string) => void } = {}): Promise<InitialWorkFixture> {
+  cooperativeSynthesis = false,
+  legacyTaskFrontier = false,
+}: {
+  readonly parentRoot?: string;
+  readonly onRoot?: (root: string) => void;
+  readonly cooperativeSynthesis?: boolean;
+  readonly legacyTaskFrontier?: boolean;
+} = {}): Promise<InitialWorkFixture> {
   const fixtureBase = parentRoot === undefined ? tmpdir() : assertOwnedFixtureParent(parentRoot);
   const root = mkdtempSync(path.join(fixtureBase, parentRoot === undefined ? 'vida-initial-source-' : 'case-'));
   onRoot?.(root);
@@ -156,13 +165,47 @@ export async function createInitialSourceWorkFixture({
       path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'),
       readFileSync(path.resolve(bundle, '../../docs/agent-instructions/documentation-policy.v1.json')),
     );
-    writeFileSync(
-      path.join(root, 'agent-runtime.config.v1.yaml'),
-      readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
-        .replaceAll('{{REPOSITORY}}', 'initial-source-repository')
-        .replaceAll('{{PROJECT}}', 'sample')
-        .replaceAll('{{BUNDLE}}', 'vida-agent'),
-    );
+    let configBytes = readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
+      .replaceAll('{{REPOSITORY}}', 'initial-source-repository')
+      .replaceAll('{{PROJECT}}', 'sample')
+      .replaceAll('{{BUNDLE}}', 'vida-agent');
+    if (cooperativeSynthesis) {
+      const profile = configBytes.match(/^    researcher:\n(?:      [^\n]*\n)+/mu)?.[0];
+      if (!profile || !profile.includes('      egress_policy: official_docs\n'))
+        throw new Error('Cooperative synthesis fixture profile is unavailable');
+      configBytes = configBytes.replace(
+        profile,
+        profile.replace('egress_policy: official_docs', 'egress_policy: none'),
+      );
+    }
+    writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
+    if (legacyTaskFrontier) {
+      const currentConfig = loadRuntimeConfig(root);
+      const task = currentConfig.workflows.task_execution;
+      if (!task?.stages.some((stage) => stage.id === 'review_source_prewrite'))
+        throw new Error('Legacy task fixture requires the current prewriter stage');
+      const legacyConfig: AgentRuntimeConfig = {
+        ...currentConfig,
+        workflows: {
+          ...currentConfig.workflows,
+          task_execution: {
+            ...task,
+            stages: task.stages
+              .filter((stage) => stage.id !== 'review_source_prewrite')
+              .map((stage) => ({
+                ...stage,
+                required_after: stage.required_after.map((id) =>
+                  id === 'review_source_prewrite' ? 'synthesize_task' : id,
+                ),
+              })),
+            edges: task.edges
+              .filter(([from]) => from !== 'review_source_prewrite')
+              .map(([from, to]) => [from, to === 'review_source_prewrite' ? 'develop_task' : to] as const),
+          },
+        },
+      };
+      writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), stringifyYaml(legacyConfig));
+    }
     const config = loadRuntimeConfig(root);
     mkdirSync(path.join(root, config.control.work_root), { recursive: true });
     const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
@@ -303,6 +346,7 @@ export async function createInitialSourceWorkFixture({
     fixture = {
       root,
       config,
+      currentConfigBytes: configBytes,
       database,
       store,
       ledger,

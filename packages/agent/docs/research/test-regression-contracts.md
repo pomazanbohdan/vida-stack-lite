@@ -367,6 +367,37 @@ produce a different operation ID. Require an equal receipt and unchanged native
 Host/Journal, with the retained attempt still uncertain and null result/digest.
 This retry disposes no UNKNOWN effect and issues no new Source action.
 
+The native readonly-dispatch Host case sets the fixture synthesis profile to
+no-egress before real admission, issues one actual unobserved Mastra action and
+cooperatively suspends its same owner. Build the repair plan from the supported
+Host session reader. Check all four CAS/generation boundaries, deterministic
+rebuild, nested transaction denial, empty repair rows before refusal, exact
+generation/payload/digest persistence and replay, and text/BLOB conflicts in both
+receipt columns. Restore exact original rows with primary/cleanup error retention.
+The original issue remains uncertain and unchanged; retain its fresh fixture
+even on PASS. This tests Host intent persistence, not active-caller authentication
+or replacement dispatch/execution.
+
+The configured-frontier Host consumer case creates a task-only legacy graph
+before fresh admission, runs actual synthesis and acquires its implementation
+resources before same-owner suspension. Restore the current template, project
+the real retained developer wave1 into current reviewer wave1 and keep the
+completed synthesis prefix. Only the external transition-verifier input is a
+synthetic dependency seam. Host creates the receipt itself. Check stale CAS and
+null authorization before effects, native successor/receipt/lookup, exact retry
+without another verifier invocation and untouched disjoint peers. Never seed
+successful Host, Journal or physical engine history. A current already-planned
+wave2 fails this legacy action's index/prefix contract; that is not proof its
+INTAKE producer phase guard is defective.
+
+For completed Source recovery's earlier-FIFO control, admit disjoint owner/waiter
+before the initial-source continuation creates its successor ticket. Require the
+waiter sequence to be lower than that target and exact resource disjointness;
+a later waiter cannot execute the same predicate. Shared peer oracles compare
+exact native Work bytes/revisions/digests already validated at admission, then
+the current target's supported API and all peer tickets/claims/file bytes after
+success. Avoid decoding each unchanged peer through the full Host reader again.
+
 The configured continuation lookup case keeps its stored-row issue/report and
 corruption/restoration controls, then issues the native reviewer wave and reports
 one Source planner through `MastraSessionLedger.report`. Reuse the maintained

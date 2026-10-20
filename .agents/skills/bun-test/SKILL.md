@@ -73,6 +73,8 @@ Keep every attempt and its proof bindings, legacy readers, the32MiB bound and
 atomic publication. Verify complete expanded equality; compaction grants no
 new metric or currentness. Read the compact Markdown view for navigation rather
 than dumping a cumulative JSON snapshot into the agent context.
+Reserve a fresh exclusive diagnostic log for each attempt under TESTING's
+retention rule; a successful retry must not overwrite a prior failure.
 After an orchestration transport error, inspect every earlier call's retained
 logs and process state before retry. A later call's launch rejection does not
 prove that an earlier call never started. Partial test rows without a terminal
