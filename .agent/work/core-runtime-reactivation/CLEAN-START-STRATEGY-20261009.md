@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `3f208d3bb9cbce1008e4f5fc7e4dbb60d16ecf13`, run `845c74fa-4379-4137-81cb-f6531b33ff00`: F1033/1129, L4547/4970, S4818/5300 and B4854/5642. It records304PASS/0FAIL,3379assertions in161.318seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is96missing functions under46owners. WORK retains exact image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `7f299ccc9eec049ae0dd6c33f855c2c2e4aa1433`, run `ac810a04-989e-47ca-88a3-a5a2f5ea1da3`: F1050/1129, L4646/4970, S4920/5300 and B4946/5642. It records305PASS/0FAIL,3425assertions in153.530seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is79missing functions under39owners, all with exact retained map coordinates. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -49,10 +49,12 @@ fresh plan retry and completed-history retention in the existing cases. Keep
 focused PASS distinct from complete coverage; one owner closure remains missing.
 Stopped-source setup reuses only immutable template bytes; mutable consumer
 state remains per fixture. No controlled speedup is established.
-Next measure the checked configured-frontier digest repair/producer-fence
-packet once after review and matching SDK. Retain exact map-key/body-location
-associations from the existing report join to reduce repeated navigation;
-historical missing locations stay GAP and all numeric gates remain unchanged.
+The configured-frontier digest repair/producer-fence packet is now measured.
+Its existing report join retains exact map-key/body-location associations,
+reducing repeated navigation without a new AST/inventory pass. Historical
+missing locations stay GAP and all numeric gates remain unchanged. Next use
+the current location-bound inventory for the remaining repair FIFO/ownership
+predicate and other reachable Host paths; keep one contour and producer.
 Retain Root-only integration, one active contour and default5s case/300s coverage limits.
 The three-hour audit fixes the local qualifier namespace-overwrite hazard; WORK
 retains its unchanged-manifest proof and measured-versus-planned comparisons.
