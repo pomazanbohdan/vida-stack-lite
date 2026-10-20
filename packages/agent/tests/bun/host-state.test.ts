@@ -16,6 +16,16 @@ import {
   retainContinuationFixtureRoot,
 } from '../helpers/delivered-work-continuation-fixture.ts';
 import { hasUnresolvedFixtureOperations } from '../helpers/unresolved-governance-fixture.ts';
+import {
+  createInitialSourceWorkFixture,
+  withInitialSourceCleanup,
+  hostStore as initialSourceHostStore,
+  currentJournal as initialSourceJournal,
+  changeOneAcceptedDocument,
+  currentProof as initialSourceProof,
+  initialRequest as initialSourceRequest,
+  withExpiredOwner as withExpiredInitialSourceOwner,
+} from '../helpers/initial-source-work-fixture.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import {
   prepareLifecycleForCorrection,
@@ -1371,6 +1381,93 @@ test('trusted Host continuation atomically retains historical evidence and never
       primaryFailure,
     );
   }
+});
+
+test('initial Source Host continuation uses genuine unissued engine state and persists one exact receipt', async () => {
+  const started = performance.now();
+  const deadline = started + 5_000;
+  let ownedRoot: string | undefined;
+  let f: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+  let completed = false;
+  await withInitialSourceCleanup(
+    async () => {
+      const current = await createInitialSourceWorkFixture({
+        onRoot: (created) => {
+          ownedRoot = created;
+          console.info('Initial Source Host fixture root: ' + created);
+        },
+      });
+      f = current;
+      const preparedAt = performance.now();
+      if (preparedAt >= deadline) throw new Error('Initial Source fixture exhausted its case deadline.');
+      const store = initialSourceHostStore(current);
+      expect(current.originalEngine?.step_id).toBe('wave-0');
+      expect(current.originalEngine?.requests).toHaveLength(1);
+      expect(current.originalEngine?.observations).toEqual([]);
+      const source = changeOneAcceptedDocument(current);
+      const request = initialSourceRequest(current);
+      const before = presentSnapshot(store.readHostStateSnapshot(current.identity));
+      const journalBefore = initialSourceJournal(current);
+      expect(request.authorizedSourceChanges.map((change) => change.path)).toEqual([current.documents[1]]);
+      expect(request.currentSourceScope).toEqual(source);
+      expect(request.currentInitialRequest.stage_id).toBe('synthesize_task');
+      expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
+      withExpiredInitialSourceOwner(current, () => {
+        const verifyCurrent: Parameters<HostStateStore['continueInitialSource']>[1] = (state) =>
+          initialSourceProof(current, state);
+        expect(() =>
+          store.continueInitialSource(
+            { ...request, expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 } },
+            verifyCurrent,
+          ),
+        ).toThrow('state compare-and-swap conflict');
+        expect(store.readHostStateSnapshot(current.identity)).toEqual(before);
+        expect(initialSourceJournal(current)).toEqual(journalBefore);
+        const receipt = store.continueInitialSource(request, verifyCurrent);
+        const after = presentSnapshot(store.readHostStateSnapshot(current.identity));
+        const journalAfter = initialSourceJournal(current);
+        expect(receipt).toMatchObject({
+          status: 'initial_request_ready',
+          rights_granted: false,
+          accepted_result: false,
+          runtime_acceptance: false,
+        });
+        expect(after.work.binding.lifecycle_work_id).toBe(before.work.binding.lifecycle_work_id);
+        expect(after.work.binding.work_source_revision).toBe(request.currentSourceScope.digest);
+        expect(after.work.binding.runtime_code_digest).toBe(request.currentRuntimeCodeDigest);
+        expect(after.work.contracts).toEqual(before.work.contracts);
+        expect(after.work.lease?.thread_id).toBe(request.nativeSessionHandle);
+        expect(after.workVersion.revision).toBe(before.workVersion.revision + 1);
+        expect(after.ledgerVersion.revision).toBe(before.ledgerVersion.revision + 1);
+        expect(journalAfter.version.revision).toBe(journalBefore.version.revision + 1);
+        expect(journalAfter.state.items).toEqual([
+          { request: request.currentInitialRequest, issue_id: null, observation: null },
+        ]);
+        expect(journalAfter.state.completed).toEqual(journalBefore.state.completed);
+        expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toEqual(receipt);
+        expect(store.continueInitialSource(request, verifyCurrent)).toEqual(receipt);
+        expect(store.readHostStateSnapshot(current.identity)).toEqual(after);
+        expect(initialSourceJournal(current)).toEqual(journalAfter);
+        expect(source).toEqual(snapshotDeclaredSources(requireSafeRepositoryAccess(current.root), current.documents));
+      });
+      console.info(
+        JSON.stringify({
+          fixture: 'initial-source-native-host',
+          setup_ms: preparedAt - started,
+          body_ms: performance.now() - preparedAt,
+        }),
+      );
+      completed = true;
+    },
+    async () => {
+      if (f) await f.close();
+      if (ownedRoot) {
+        if (completed && performance.now() < deadline) await rm(ownedRoot, { recursive: true, force: true });
+        else console.error('Retained Initial Source fixture: ' + ownedRoot);
+      }
+    },
+    'Initial Source Host fixture',
+  );
 });
 
 test('recovery namespace denies generic issuance, settlement and copied handles', () => {

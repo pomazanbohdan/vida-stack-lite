@@ -99,56 +99,65 @@ explicitly proves missing-engine inspection creates no engine file. No remaining
 blocking finding was reported. The complete observation below, rather than these
 targeted passes, owns the measured numeric increase.
 
-### Latest complete host-state coverage and lookup batch
+### Latest complete host-state coverage and Initial Source packet
 
-The0f1dc92 stage at /workspace/contour-stage-rYJHRp completes in204972.279ms,
+The a4bbe80 stage at /workspace/contour-stage-JoPANH completes in221942.129ms,
 exit0, capture complete, group closed and boot/image inputs unchanged. Host268
-PASS/2106assertions and stopped-source16PASS/206assertions give284PASS/0FAIL
-and2312assertions. Published runfc6439ba-f2ad-464c-8936-315c8be508f8 records
-F799/1129,L3266/4966,S3484/5296,B3421/5640: +41functions,+263lines,
-+275statements,+476branches against b8e5a3f with unchanged denominators.
+PASS/2124assertions in180.14s and stopped-source16PASS/206assertions in215.73s
+produce284PASS/0FAIL and2330assertions. Published run
+c1be1e33-d32d-440f-99e3-672d6f5b760b records
+F813/1129,L3296/4966,S3517/5296,B3446/5640: +14functions,+30lines,
++33statements,+25branches against0f1dc92 with unchanged denominators.
 The operation remains BLOCKED; historical exact closure16/45. Frozen/CRAP and
 mutation are deferred and unqualified. Its unchanged image is
-/workspace/.vida-quality-inputs/8b5d4891c992a34fb5c484b37d80d4ff73ea822c/repository,
-manifest SHA42d8db4612b30f69eae3428fa0091d5f6fb2b405a1523c936b82077a3fa52e78,
-input fingerprint07d4764a81c97fcce8d200303226da47cb39c2213f08e382d6c545ca0901b1d3.
-SDK CI39346592981/artifact12230794550 succeeds; transport ZIP SHA
-36efd261b07e8a6e0a0e45e394c1b8b3621379484d934601fa439a19208a39a8 matches.
-Admission observes7639740416free bytes against2147483648required. Projection1037
-imports its terminal result; reuse this disk observation without another scan.
-The same completed inventory now identifies330uncovered functions/closures under
-98outer owners. Prior b8e5a3f stage /workspace/contour-stage-eqbwzT,
-run0112b1eb-c8db-41bc-805b-90b1cefcf6c4 and all prior packet/retention details
-remain in this WORK path at published0f1dc92. Original failure and expected-UNKNOWN
-roots referenced there stay protected; a later passing run does not authorize
-removal or effect replay.
+/workspace/.vida-quality-inputs/51b3a1fb87281e153ea78b651643035d1fa601d8/repository,
+manifest SHAaa6290529ee5272be453ea9a7acb4500db6f2b53c2bf8fdc5bb76d9ec9694a3a,
+input fingerprint583a24bd7e4d567df8fba5b1af4f064b8a632c399a1bac0e647b1f71bd5a1a38.
+SDK CI39347384197/artifact12231467584 succeeds; transport ZIP SHA
+6d9c8d941bf2ca20adc13bb6aedbd8dc383e049a2b1ee54fb97297753cc41a38 matches.
+Admission observes7342858240free bytes against2147483648required. Projection1039
+imports its terminal result. Reused completed inventory identifies316uncovered
+functions/closures under92outer owners without another AST/scan/hash pass.
+Prior complete0f1dc92 stage /workspace/contour-stage-rYJHRp and its bindings,
+lookup assertions and expected-UNKNOWN retention details remain in published
+a4bbe80 at this WORK path. Original failure/UNKNOWN roots stay protected.
 
-The next checked packet adds18lookup assertions inside the existing continuation
-case, reusing its actual native DB and released-owner state. It checks exact-fence
-terminal snapshot plus drift/nested denial; missing failed-prewriter, completed-
-report and initial-Source receipts; missing original recovery lineage; empty
-qualified code history; and absence of a recovery archive for the real current
-Journal item. Maintenance planning is denied because the fixture lacks its
-acquisition verifier; this is no success/authorization claim. After genuine Host
-continuation, terminal-only inspection rejects the newly active owner and missing
-recovery receipts remain absent. Current Host/Journal are unchanged by the reads.
-No recovery receipt, external approval or observed Source effect is manufactured.
-The existing private fixture, unresolved-operation check, paired close and
-post-close monotonic5s deadline remain the cleanup owners; no new setup or DB
-handle is created. A const body handle makes callback narrowing explicit while
-the optional outer handle remains responsible for partial-setup cleanup.
+The next checked packet extracts the maintained genuine Initial Source fixture
+into tests/helpers/initial-source-work-fixture.ts. Both existing public tests
+and the new Host case reuse real admission, native DB/Journal and bridge open/
+start. No continuation receipt or observed effect is seeded. Existing CLI
+preconditions remain assertions and close the fixture if a precondition fails.
+The request builder now uses one current state/proof rather than resnapshotting
+Source/runtime and rebuilding the initial action twice; the production
+projectCurrentInitialSourceRequest owns that projection. Each Host verifier
+still collects fresh proof from its supplied current state. Authorization-file
+hash comparison and tamper rejection remain independent of the request.
 
-The changed case passes49assertions in0.580s (command2.61s), strict173files and
-scoped type-aware lint pass. The exact shard control passes10assertions in0.391s.
-Logs are host-continuation-lookup-batch.log and native-lookups-shard-eligibility.log
+The native Host case covers stale CAS with unchanged beforeimages, actual
+continuation, exact Source/runtime binding updates, retained Work/contracts,
+Work/Ledger/Journal single revision advances, unissued successor action, persisted
+receipt lookup and idempotent retry. All rights/acceptance flags remain false.
+It passes26assertions in2563.44ms (command4.03s; setup1782.427ms/body627.170ms).
+An earlier same-case probe was4539.81ms with24assertions; cache/resource conditions
+and assertions differ, so this is not a measured speedup. The default5s case
+limit is unchanged. Owned roots enroll before async setup; closure precedes the
+monotonic deadline/retention decision. Primary and cleanup errors remain paired.
+The root path is logged at enrollment, so setup/close failure cannot hide its
+retained location. The final exact shard control passes10assertions in0.275s;
+initial-source-shard-eligibility-final.log retains that result.
+The original producer snapshot regression passes86assertions in13333.53ms
+(child14.82s, outer16.34s), preserving its existing public route and allowance.
+Targeted strict180files and scoped lint pass. Blind review
+/tmp/vida-host-initial-source-fixture-final-review.md reports no blocker; its two
+binding-assertion suggestions are implemented. Its alleged duplicate lease guard
+is absent in current bytes and required no change. Logs are
+host-initial-source-native-final.log and initial-source-shared-fixture-regression.log
 under packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
-Blind review /tmp/vida-host-small-lookups-final-review.md confirms these limited
-absence/denial claims and unchanged resource ownership. The Host pin is
-643828897017fc5e6eddca2beafa793f6f94bce80eac3aaefb36acc15fabbd0b;
-stopped-source selection/pin, worker ownership and all budgets remain unchanged.
-Require one checked changed-input stage before claiming numeric gain. Use the
-current remaining-owner inventory to batch the next genuine native cases; never
-add another full fixture or selected test file merely to reach a wrapper.
+The reviewed Host pin becomes
+30cb3ae9363a0984a772d841834959b2e3eb98d8917e1c5d39aba27b445b8ebc;
+stopped-source pin, selected files, worker ceiling and budgets stay unchanged.
+Run one changed-input stage after ordinary checked publication. These focused
+passes do not change the completed counters above or qualify runtime acceptance.
 
 ### Prior complete setup-scope coverage and Task-source unit packet
 
@@ -470,69 +479,63 @@ disk-backed scratch filesystem, above2147483648by9267757056bytes. This reuses
 the admission receipt, without a second df/du/hash scan. All failure artifacts,
 images, SDK archives and Source changes remain protected; no cache cleanup needed.
 
-### Three-hour audit, 19:14–22:14 UTC on 2026-10-19
+### Three-hour audit, 21:40–00:40 UTC on 2026-10-19/20
 
-Git records five published packets in this window, from b04a76e through949be50.
-The earlier audit remains in949be50 at this path. Reuse its capture/inventory and
-fixture evidence above. Complete tool-call/token telemetry is unavailable;
-no cost-reduction percentage or new contour closure is claimed.
+Git records13published packets from949be50 througha4bbe80 in this window.
+Original prior audit details remain in a4bbe80 at this path. Reuse the existing
+receipts, inventory and projection. Tool-call/token telemetry is incomplete;
+no token/cost percentage is claimed.
 
-The changed-input two-file stage on949be50 ended UNKNOWN after270757.326ms.
-Retain /workspace/contour-stage-2vD5np and its immutable image
-/workspace/.vida-quality-inputs/0b9fb533be3d19c837e2ce84d51ddbf8f8313a16/repository.
-Run cbe07f36-8dd3-4506-8956-502a6ae6041d has complete capture, closed process
-group, unchanged boot and image, but no complete numeric report. SDK CI
-39330134651 attempt1/artifact12223962964 supplies the verified matching archive;
-its SHA256 is7675a217ef2e9619e5e82f6a88ed4d11f5561ce1b58499c5110bc94c13fdb405.
-Both children launched. Four stopped-source beforeAll hooks each spent about60s
-retrying a failed/uncertain constructor; their terminal SIGTERM remains UNKNOWN.
-The projection preserves this attempt independently of historical16/45.
+**Testing scripts.** The retained first-failure fence stops repeated uncertain
+controller qualification; raw streams and phase diagnostics survive failure.
+The earlier blind cleanup-masking finding is already corrected by the current
+completeOwnedCleanup calls in timed() and the qualification finalizer; do not
+implement it twice. Published073180a fixes actual native transaction cleanup
+masking the primary body error, including thrown undefined. Presence-only config
+checks use the existing no-writer-CAS observer while fresh locked byte readers
+remain unchanged. No evidence supports caching their snapshots across operation
+boundaries. The current packet eliminates duplicate fixture request snapshots
+within one invocation and reuses the production action projection. This is a
+confirmed operation-count reduction, without a causal wall-time speedup claim.
 
-Script corrections latch the first preparation failure, including undefined,
-and deny every later hook/body without retry. The uncertain-command boundary
-retains stdout and stderr independently, aggregating retention failures with
-the original cause. The qualifier appends bounded phase records in its own
-scratch before nested buffered output returns. Blind Luna found finally could
-erase the operation cause; qualification now reuses completeOwnedCleanup for
-operation/diagnostic/ledger-close failures. No new whole scan/hash/AST or ledger
-was added. The reviewed stopped-source test pin advances for these controls;
-resource ownership and stale-selection serial fallback stay unchanged.
+Existing changed-input stage times after setup corrections are200.665s,
+209.639s,236.172s,204.972s and221.942s: five complete reports, all below the
+unchanged300s coverage budget including its30s reserve. Different inputs prevent
+an A/B throughput claim. Coverage moves fromF702/L2653/S2842/B2514 to
+F813/L3296/S3517/B3446 with the same1129/4966/5296/5640denominators.
+Two earlier failures remain failures:039523c overruns two20s cases and lacks a
+complete child/report;073180a retains a20.159s timeout despite terminal group
+closure. Neither partial result, cleanup completion nor exit classification is
+promoted to coverage PASS or a mutation kill.
 
-Two focused fence/raw-stream controls pass19assertions in1.281s; the real native
-self-SIGTERM stream control is injected only at the fixture boundary. It is not
-controller qualification. The shared cleanup suite passes3tests/12assertions,
-including undefined plus two cleanup failures. Scoped strict compilation covers
-167files without errors; scoped lint is clean. A real qualifier control with a
-missing target exits1 as expected, retaining3phase records/346bytes. Its terminal
-fixture moved atomically from packages/qualification-8CPhOA to
-packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/qualification-phase-control-retained;
-the diagnostic manifest preserves both locations and raw streams. No failed
-evidence was deleted. Blind review is /tmp/vida-contained-failure-review.md.
-
-Authoring/execution observations: the first isolated real candidate-snapshot
-probe still failed setup at60.297s; its raw streams are retained. The subsequent
-probe passes16assertions, with setup54.212s, body29.664s and command86.56s.
-Cache/resource conditions differ, so this does not identify the original cause
-or establish a parallel speedup. Successful qualifier scratch is removed by its
-existing owner; its parent returns stdout only. Failed roots remain protected.
+**Test writing and execution.** Reuse actual typed native fixtures before adding
+another full public CLI lifecycle. Preserve separate public-route regressions.
+Batch independent denial/lookup assertions into a genuine existing fixture when
+beforeimages and ownership stay exact: a4bbe80 adds18assertions without another
+setup. The Initial Source extraction removes the separate local action builder
+and shares the same real admission/bridge fixture across both callers. Its native
+case has26assertions; the original public producer control retains86assertions.
+Read exact report/manifest paths and registered test names before launching tools;
+earlier guessed paths, zero-match filters and short-SHA CI queries are avoidable
+workflow errors, not successful checks. Use full40-character HEAD for CI queries.
+Read scalar receipts and manifest-owned child-log tails; do not dump function maps.
 
 | Order / parallelism | Evidence and decision |
 | --- | --- |
-| Full selection after every helper edit | Reject: repeats known expensive setup before a causal fix. |
-| Batch repair, scoped static/negative controls, one changed-input stage | Selected. Verify failure fencing cheaply before native qualification. |
-| Two reviewed serial-file children in the same contour | Preserve bounded pilot. Both launched, but the270.757s attempt produced no complete report; full qualification remains pending. |
-| Three or more producers, build or index concurrent with numeric | Unqualified under four CPU equivalents/16GiB; not enabled. |
+| Full selection after each assertion/helper edit | Reject: repeats known setup and CI/image formation before settling a causal patch. |
+| Batch one contour, scoped strict/lint, focused changed behavior plus direct caller, reviewed publication, one coverage stage | Selected and exercised by the five complete stages above. Reuse each report/inventory. |
+| Two reviewed serial-file children within this contour | Preserve: both native children complete in each of those stages. Latest file times180.14s/215.73s; one stage221.942s. This is not an equal-input serial speedup measurement. |
+| Fully serial files | Existing safe fallback for stale/unsupported review. Latest file-time sum395.87s is only a planning estimate, not a measured serial run. No duplicate experiment is needed. |
+| Three to five numeric workers or build/index alongside numeric | Reject for now: only two files are resource-reviewed; four CPU equivalents/16GiB provide no evidence of benefit or safety for more producers. One bounded read-only Luna review is sufficient for this extraction. |
 
-Vex1.27.4 rejects --path on show/search although status accepts it. An accidental
-package-cwd query started a second cold index; Root terminated its own process
-and observed terminal exit before static checks. Root-cwd no-stale-check lookup
-then worked; freshness stays unverified. The Cloud reference now binds commands
-using their supported flag or explicit repository cwd. No cold rebuild is needed.
-
-Disk reuses the single observation above:13612404736bytes free, unchanged
-2147483648byte admission,11464921088bytes headroom. No broad du/scan/hash,
-dependency deduplication or environment-cache cleanup was needed. No runtime,
-loader, DB cutover, consumer effect, timeout increase or numeric gate change.
+One df observation covers checkout, retained /workspace/contour-stage-JoPANH,
+/workspace/.vida-quality-inputs and disk-backed tooling scratch on the same
+overlay: total33770192896bytes, available7079100416bytes, used24956329984bytes.
+The unchanged2147483648byte floor leaves4931616768bytes headroom. Reuse it;
+no du/scan/hash, dependency deduplication, deletion or resource GAP is justified.
+No paths were removed, so before/after deletion accounting is N/A. Source, Git,
+SDKs, DBs, leases, failure logs and UNKNOWN roots remain intact. No runtime,
+loader/DB cutover, consumer effect, budget increase or gate relaxation occurs.
 
 ### Bun-host-state focused shard resource review
 

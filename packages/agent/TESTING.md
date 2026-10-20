@@ -421,6 +421,14 @@ then retain the existing final projection checks. Reuse initialization-bundle
 helpers instead of maintaining another copy list. Qualify equivalent fixture
 trees with exact paths, bytes and modes; never repair a sealed image in place.
 
+Initial Source Host unit cases and public continuation regressions share
+`tests/helpers/initial-source-work-fixture.ts`. Keep its real admission, native
+Journal and bridge-start state; let the Host operation create its own receipt.
+Build a request from one current state/proof within that invocation. The Host
+verification callback must still obtain fresh proof at the effect boundary;
+never reuse the request's proof as authorization. Preserve each caller's assertion
+preconditions, owned-root cleanup and primary-plus-cleanup error contract.
+
 Mutation partition descriptors bind the exact sorted Source subset and its
 original captured digests to the parent Source fingerprint. Stryker rewrites
 the sandbox subject, so those original digests are metadata bindings, not

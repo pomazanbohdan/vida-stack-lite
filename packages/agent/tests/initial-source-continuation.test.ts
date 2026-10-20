@@ -1,9 +1,30 @@
+import {
+  createInitialSourceWorkFixture,
+  withInitialSourceCleanup as withCleanup,
+  assertOwnedFixtureParent,
+  hostStore,
+  hostLedger,
+  hostBridge,
+  hostDatabase,
+  admittedInput,
+  originalEngine,
+  workLease,
+  workRunId,
+  completeHostState,
+  currentJournal,
+  continuationState,
+  changeOneAcceptedDocument,
+  currentProof,
+  initialRequest,
+  withExpiredOwner,
+  type InitialWorkFixture,
+} from './helpers/initial-source-work-fixture.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { test, expect, setSystemTime, spyOn } from 'bun:test';
 import { runBoundedSubprocess, subprocessFailure } from './helpers/bounded-subprocess.ts';
 import { pinnedEnvironment } from '../bin/bun.ts';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, lstatSync, realpathSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,7 +44,7 @@ import {
   compareScopedSourceSnapshots,
 } from '../src/orchestration/scoped-source-snapshot.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
+import { HostStateStore } from '../src/host-state.ts';
 import { createCompletedSourceReportRecoveryFixture } from './helpers/completed-source-report-recovery-fixture.ts';
 import { expectHistorySnapshotAfterOwner } from './helpers/ledger-cache-observer.ts';
 import { captureInitialSourceEngineDiagnostic } from './helpers/initial-source-engine-diagnostic.ts';
@@ -40,22 +61,14 @@ import {
   validateCompletedSourceReportRecoveryCurrentWorkJoin,
   validateCompletedSourceReportRecoveryReceipt,
 } from '../src/orchestration/completed-source-report-recovery.ts';
-import { admitLocalSessionWork } from '../src/orchestration/local-work-admission.ts';
-import {
-  MastraSessionBridge,
-  buildSessionBridgeRequest,
-  configuredContextForStage,
-  parseSessionBridgeRequest,
-} from '../src/orchestration/mastra-session-bridge.ts';
+
+import { MastraSessionBridge, parseSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge.ts';
 import {
   MastraSessionLedger,
   openConfiguredMastraSessionLedger,
 } from '../src/orchestration/persistent-session-handoff.ts';
-import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
-import {
-  readSessionEngineSnapshot,
-  readInitialSourceContinuationSessionEngineSnapshot,
-} from '../src/orchestration/session-engine-snapshot.ts';
+
+import { readInitialSourceContinuationSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
 import { bindControlledRuntimeInitialization } from './helpers/controlled-runtime-initialization-fixture.ts';
 import { lifecyclePreparationObservationSchema } from '../src/orchestration/final-assurance.ts';
 import { run } from '../bin/run.ts';
@@ -65,60 +78,21 @@ import {
   validateInitialSourceContinuationRequest,
 } from '../src/orchestration/initial-source-continuation.ts';
 
-import type { Database as BunDatabase } from 'bun:sqlite';
-import type { AgentRuntimeConfig, WorkItemSelection } from '../src/config/runtime-config.ts';
 import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import type { LifecycleArtifactReference } from '../src/lifecycle/lifecycle-state.ts';
 import type { CoordinationLedger } from '../src/contracts/envelopes.ts';
-import type { HostStateSnapshot, StateVersion, WorkIdentity, WorkState } from '../src/host-state.ts';
-import type {
-  InitialSourceContinuationRequest,
-  InitialSourceContinuationState,
-  InitialSourceContinuationVerifiedCurrent,
-} from '../src/orchestration/initial-source-continuation.ts';
+import type { StateVersion, WorkState } from '../src/host-state.ts';
+import type { InitialSourceContinuationRequest } from '../src/orchestration/initial-source-continuation.ts';
 import type {
   InitialSourceFrontierCodeRebindRequest,
   InitialSourceFrontierCodeRebindVerifiedCurrent,
   InitialSourceFrontierCodeRebindVerifyCurrent,
 } from '../src/orchestration/initial-source-frontier-code-rebind.ts';
 import type { CompletedSourceReportRecoveryVerifyCurrent } from '../src/orchestration/completed-source-report-recovery.ts';
-import type { LocalWorkAdmissionInput } from '../src/orchestration/local-work-admission.ts';
-import type {
-  MastraSessionBridge as MastraSessionBridgeType,
-  SessionBridgeObservation,
-  SessionBridgeRequest,
-  SessionBridgeSnapshot,
-} from '../src/orchestration/mastra-session-bridge.ts';
-import type {
-  MastraSessionLedger as MastraSessionLedgerType,
-  MastraSessionLedgerSnapshot,
-} from '../src/orchestration/persistent-session-handoff.ts';
-import type { ScopedSourceSnapshot } from '../src/orchestration/scoped-source-snapshot.ts';
-import type { SessionHandoffContext } from '../src/orchestration/session-handoff.ts';
 
-interface InitialWorkFixture {
-  root: string;
-  config: AgentRuntimeConfig;
-  database: BunDatabase | null;
-  store: HostStateStore | null;
-  ledger: MastraSessionLedgerType | null;
-  bridge: MastraSessionBridgeType | null;
-  identity: WorkIdentity;
-  input: LocalWorkAdmissionInput | null;
-  documents: readonly [string, string, string];
-  originalSource: ScopedSourceSnapshot;
-  originalEngine: SessionBridgeSnapshot | null;
-  scopePath: string;
-  acceptancePath: string;
-  sourceAuthorizationPath: string;
-  intakePath: string;
-  rawIntakePath: string;
-  close: () => Promise<void>;
-}
-type InitialWorkResources = Pick<
-  InitialWorkFixture,
-  'bridge' | 'ledger' | 'database' | 'store' | 'input' | 'originalEngine'
->;
+import type { SessionBridgeObservation } from '../src/orchestration/mastra-session-bridge.ts';
+import type { MastraSessionLedger as MastraSessionLedgerType } from '../src/orchestration/persistent-session-handoff.ts';
+
 type InitialSourceCommandResult = {
   status: 'initial_source_continuation_applied' | 'initial_source_continuation_already_ready';
   continuation_id: string;
@@ -132,7 +106,6 @@ type InitialSourceCommandResult = {
 };
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const documents: readonly [string, string, string] = ['docs/PRODUCT.md', 'docs/SYSTEM.md', 'docs/OPERATIONS.md'];
 
 const sha256 = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 
@@ -221,68 +194,9 @@ if (!fixtureChild) {
   });
 }
 
-async function closeInitialWorkResources(f: InitialWorkResources) {
-  const errors: unknown[] = [];
-  const bridge = f.bridge;
-  const ledger = f.ledger;
-  const database = f.database;
-  f.bridge = f.ledger = f.database = f.store = f.input = f.originalEngine = null;
-  try {
-    if (bridge) await bridge.close();
-  } catch (error) {
-    errors.push(error);
-  }
-  try {
-    if (ledger) ledger.close();
-  } catch (error) {
-    errors.push(error);
-  }
-  try {
-    if (database) database.close(true);
-  } catch (error) {
-    errors.push(error);
-  }
-  if (errors.length === 1) throw errors[0];
-  if (errors.length > 1) throw new AggregateError(errors, 'Initial Source fixture resource close failed');
-}
-
-function assertOwnedFixtureParent(root: string) {
-  const resolved = path.resolve(root);
-  const stat = lstatSync(resolved);
-  const real = realpathSync(resolved);
-  if (
-    !stat.isDirectory() ||
-    stat.isSymbolicLink() ||
-    path.dirname(real) !== realpathSync(tmpdir()) ||
-    !path.basename(real).startsWith('vida-initial-source-owned-')
-  )
-    throw new Error('unsafe initial-source subprocess fixture root');
-  return real;
-}
-
 function removeOwnedFixtureParent(root: string) {
   const owned = assertOwnedFixtureParent(root);
   rmSync(owned, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
-}
-
-async function withCleanup<T>(action: () => T | Promise<T>, cleanup: () => void | Promise<void>, description: string) {
-  let outcome: { ok: true; value: T } | { ok: false; error: unknown };
-  try {
-    outcome = { ok: true, value: await action() };
-  } catch (error) {
-    outcome = { ok: false, error };
-  }
-  try {
-    await cleanup();
-  } catch (cleanupError) {
-    if (!outcome.ok)
-      throw new AggregateError([outcome.error, cleanupError], description + ' and cleanup failed', {
-        cause: outcome.error,
-      });
-    throw cleanupError;
-  }
-  if (!outcome.ok) throw outcome.error;
-  return outcome.value;
 }
 
 async function withInitialWork<T>(callback: (fixture: InitialWorkFixture) => T | Promise<T>) {
@@ -320,420 +234,20 @@ async function withInitialWork<T>(callback: (fixture: InitialWorkFixture) => T |
 }
 
 async function makeInitialWork(): Promise<InitialWorkFixture> {
-  const fixtureBase = fixtureChild
-    ? assertOwnedFixtureParent(requireString(fixtureParentRoot, 'initial-source subprocess fixture root'))
-    : tmpdir();
-  const root = mkdtempSync(path.join(fixtureBase, fixtureChild ? 'case-' : 'vida-initial-source-'));
-  let database: BunDatabase | null = null;
-  let ledger: MastraSessionLedgerType | null = null;
-  let bridge: MastraSessionBridgeType | null = null;
-  mkdirSync(path.join(root, 'docs'), { recursive: true });
-  writeFileSync(path.join(root, 'AGENTS.md'), '# Test instructions\n');
-  writeFileSync(path.join(root, 'AGENT.sidecar.md'), '# Test source map\n');
-  try {
-    for (const [index, relative] of documents.entries())
-      writeFileSync(path.join(root, relative), 'accepted document ' + index + '\n');
-    mkdirSync(path.join(root, 'docs/agent-instructions'), { recursive: true });
-    writeFileSync(
-      path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'),
-      readFileSync(path.resolve(bundle, '../../docs/agent-instructions/documentation-policy.v1.json')),
-    );
-    writeFileSync(
-      path.join(root, 'agent-runtime.config.v1.yaml'),
-      readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
-        .replaceAll('{{REPOSITORY}}', 'initial-source-repository')
-        .replaceAll('{{PROJECT}}', 'sample')
-        .replaceAll('{{BUNDLE}}', 'vida-agent'),
-    );
-    const config = loadRuntimeConfig(root);
-    mkdirSync(path.join(root, config.control.work_root), { recursive: true });
-    const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
-    database = openHostStateDatabase(
-      root,
-      path.posix.join(config.control.work_root, 'session-handoff.v1.sqlite'),
-      workspaceId,
-    );
-    const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root);
-    const id = 'initial-' + randomUUID();
-    const nativeSessionHandle = 'initial-thread-' + randomUUID();
-    const scopePath = '.agent/work/' + id + '/scope.json';
-    const acceptancePath = '.agent/work/' + id + '/acceptance.json';
-    const sourceAuthorizationPath = '.agent/work/' + id + '/source-authorization.json';
-    const rawIntakePath = '.agent/work/' + id + '/local-session-intake.json';
-    const intakePath = '.agent/work/' + id + '/local-session-intake.v1.json';
-    mkdirSync(path.dirname(path.join(root, intakePath)), { recursive: true });
-    const originalSource = snapshotDeclaredSources(requireSafeRepositoryAccess(root), documents);
-    const selection: WorkItemSelection = {
-      team: 'default-development',
-      kind: 'task',
-      intent: 'task_execution',
-      project: 'sample',
-      risk_flags: [],
-      labels: [],
-    };
-    const workItem: LocalWorkAdmissionInput['workItem'] = {
-      schema: 'WorkItem/v1',
-      id,
-      canonical_kind: selection.kind,
-      intent: selection.intent,
-      project_id: selection.project,
-      title: 'Continue an expired initial-source work item',
-      description: 'Retain the accepted task and resume its unissued read-only first action.',
-      risk_flags: [],
-      labels: [],
-      provider: 'local',
-      provider_type: 'Task',
-    };
-    const scope = {
-      schema: 'ImplementationScope/v1',
-      scope_id: 'scope-' + id,
-      work_id: id,
-      source_revision: originalSource.digest,
-      ac_ids: ['AC-INITIAL-SOURCE'],
-      allowed_paths: documents,
-      implementation_paths: documents,
-      documentation_paths: documents,
-      changed_symbols: [],
-      non_goals: ['No acceptance, configuration, intake, or approval changes'],
-      acceptance_trace: ['AC-INITIAL-SOURCE'],
-      behavior_trace: ['SR-INITIAL-SOURCE'],
-      test_trace: ['initial-source-continuation.test.ts'],
-      diagnostic_trace: ['fixture'],
-      attribution: { thread_id: nativeSessionHandle, pointer: 'user:initial-source-regression' },
-      owner: 'fixture',
-      created_at: new Date().toISOString(),
-    };
-    const acceptance = {
-      schema: 'AcceptanceManifest/v1',
-      id: 'acceptance-' + id,
-      version: 1,
-      ac_ids: scope.ac_ids,
-      source: documents[0],
-      scope: scope.scope_id,
-      source_revision: originalSource.digest,
-      contracts: [
-        {
-          id: 'AC-INITIAL-SOURCE',
-          definition: 'Continue only the same admitted work and preserve its acceptance contract.',
-          sr: 'SR-INITIAL-SOURCE',
-          evidence: ['accepted three-document fixture'],
-        },
-      ],
-    };
-    const runtimeCodePaths = runtimePackageCodePaths(config.runtime.bundle);
-    const context: SessionHandoffContext = { work_id: id, attempt: 1, scope_digest: originalSource.digest };
-    const authorization = {
-      schema: 'LocalSourceWriteAuthorization/v1',
-      action: 'source.write',
-      user_instruction_ref: 'fixture:source-authorization',
-      work_id: id,
-      attempt: 1,
-      scope_digest: originalSource.digest,
-      config_digest: runtimeConfigDigest(config),
-      workflow_id: 'task_execution',
-      stage_ids: ['develop_task'],
-      implementation_paths: documents,
-      native_session_handle: nativeSessionHandle,
-    };
-    writeFileSync(path.join(root, scopePath), record(scope));
-    writeFileSync(path.join(root, acceptancePath), record(acceptance));
-    writeFileSync(path.join(root, sourceAuthorizationPath), record(authorization));
-    writeFileSync(
-      path.join(root, rawIntakePath),
-      record({
-        schema: 'VidaLocalSessionIntake/v1',
-        work_item: workItem,
-        native_session_handle: nativeSessionHandle,
-        scope_path: scopePath,
-        acceptance_path: acceptancePath,
-        source_authorization_path: sourceAuthorizationPath,
-        runtime_code_paths: runtimeCodePaths,
-        route: 'R2',
-        risk: 'low',
-        change_kind: 'documentation',
-      }),
-    );
-    const input: LocalWorkAdmissionInput = {
-      repositoryRoot: root,
-      config,
-      store,
-      selection,
-      context,
-      nativeSessionHandle,
-      workItem,
-      scopePath,
-      acceptancePath,
-      intakePath: rawIntakePath,
-      sourceAuthorizationPath,
-      runtimeCodePaths,
-      route: 'R2',
-      risk: 'low',
-      changeKind: 'documentation',
-    };
-    const admitted = admitLocalSessionWork(input);
-    ledger = new MastraSessionLedger(database, workspaceId, config, root, store);
-    bridge = await MastraSessionBridge.open({
-      repositoryRoot: root,
-      config,
-      ledger,
-      projectIds: ['sample'],
-      selection,
-      context,
-      workflowId: 'task_execution',
-      workspaceId,
-    });
-    const engine = await bridge.start(admitted.source);
-    const admittedWork = admitted.host.work;
-    if (!admittedWork) throw new Error('Initial Source admission did not create Host Work');
-    expect(engine.step_id).toBe('wave-0');
-    expect(engine.requests).toHaveLength(1);
-    let fixture: InitialWorkFixture;
-    fixture = {
-      root,
-      config,
-      database,
-      store,
-      ledger,
-      bridge,
-      identity: {
-        repository_id: admittedWork.binding.repository_id,
-        project_ids: admittedWork.binding.project_ids,
-        integrations_digest: admittedWork.binding.integrations_digest,
-        work_id: id,
-      },
-      input,
-      documents,
-      originalSource: admitted.source,
-      originalEngine: engine,
-      scopePath,
-      acceptancePath,
-      sourceAuthorizationPath,
-      intakePath,
-      rawIntakePath,
-      async close() {
-        await closeInitialWorkResources(fixture);
-      },
-    };
-    return fixture;
-  } catch (error) {
-    const partial = { bridge, ledger, database, store: null, input: null, originalEngine: null };
-    bridge = null;
-    ledger = null;
-    database = null;
-    try {
-      await closeInitialWorkResources(partial);
-    } catch (cleanupError) {
-      throw new AggregateError([error, cleanupError], 'Initial Source fixture setup and cleanup failed', {
-        cause: error,
-      });
-    }
-    throw error;
-  }
-}
-
-function hostStore(f: InitialWorkFixture): HostStateStore {
-  if (!f.store) throw new Error('Initial Source fixture Host store is closed');
-  return f.store;
-}
-
-function hostLedger(f: InitialWorkFixture): MastraSessionLedgerType {
-  if (!f.ledger) throw new Error('Initial Source fixture session ledger is closed');
-  return f.ledger;
-}
-
-function hostBridge(f: InitialWorkFixture): MastraSessionBridgeType {
-  if (!f.bridge) throw new Error('Initial Source fixture session bridge is closed');
-  return f.bridge;
-}
-
-function hostDatabase(f: InitialWorkFixture): BunDatabase {
-  if (!f.database) throw new Error('Initial Source fixture database is closed');
-  return f.database;
-}
-
-function admittedInput(f: InitialWorkFixture): LocalWorkAdmissionInput {
-  if (!f.input) throw new Error('Initial Source fixture admission input is released');
-  return f.input;
-}
-
-function originalEngine(f: InitialWorkFixture): SessionBridgeSnapshot {
-  if (!f.originalEngine) throw new Error('Initial Source fixture engine snapshot is released');
-  return f.originalEngine;
-}
-
-function workLease(work: WorkState) {
-  if (!work.lease) throw new Error('Initial Source fixture Work lease is unavailable');
-  return work.lease;
-}
-
-function workRunId(work: WorkState) {
-  const runId = work.execution.run_id;
-  if (!runId) throw new Error('Initial Source fixture execution run id is unavailable');
-  return runId;
-}
-
-function completeHostState(snapshot: HostStateSnapshot): HostStateSnapshot & {
-  work: WorkState;
-  ledger: CoordinationLedger;
-  workVersion: StateVersion;
-  ledgerVersion: StateVersion;
-} {
-  const { work, ledger, workVersion, ledgerVersion } = snapshot;
-  if (!work || !ledger || !workVersion || !ledgerVersion)
-    throw new Error('Initial Source fixture Host state is incomplete');
-  return { ...snapshot, work, ledger, workVersion, ledgerVersion };
-}
-
-function currentJournal(f: InitialWorkFixture): MastraSessionLedgerSnapshot {
-  const journal = hostLedger(f).resume(f.identity.work_id, 1);
-  if (!journal) throw new Error('Initial Source fixture Journal is unavailable');
-  return journal;
-}
-
-function continuationState(f: InitialWorkFixture): InitialSourceContinuationState {
-  const host = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
-  const journal = currentJournal(f);
-  return {
-    work: host.work,
-    ledger: host.ledger,
-    journal: journal.state,
-    workVersion: host.workVersion,
-    ledgerVersion: host.ledgerVersion,
-    journalVersion: journal.version,
-    maintenanceGeneration: host.maintenanceGeneration,
-  };
-}
-
-function changeOneAcceptedDocument(f: InitialWorkFixture): ScopedSourceSnapshot {
-  const relative = f.documents[1];
-  writeFileSync(path.join(f.root, relative), readFileSync(path.join(f.root, relative), 'utf8') + 'authorized update\n');
-  return snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
-}
-
-function currentInitialRequest(
-  f: InitialWorkFixture,
-  work: WorkState,
-  sourceScope: ScopedSourceSnapshot,
-): SessionBridgeRequest {
-  const input = admittedInput(f);
-  const context = { ...input.context, scope_digest: sourceScope.digest };
-  const action = sessionActionsForWave(f.config, input.selection, context, 'task_execution', 0, [])[0];
-  if (!action) throw new Error('Initial Source fixture has no readonly first action');
-  return buildSessionBridgeRequest({
-    runId: workRunId(work),
-    workflowId: 'task_execution',
-    configDigest: runtimeConfigDigest(f.config),
-    context,
-    waveIndex: 0,
-    action,
-    configuredContext: configuredContextForStage(f.root, f.config, 'task_execution', action.stage_id, context),
-    priorResults: [],
-  });
-}
-
-function currentProof(
-  f: InitialWorkFixture,
-  state: InitialSourceContinuationState,
-): InitialSourceContinuationVerifiedCurrent {
-  const work = state.work;
-  const input = admittedInput(f);
-  const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
-  const runtimeScope = snapshotRuntimePackageSources(
-    runtimePackageAccess(),
-    f.config.runtime.bundle,
-    runtimePackageCodePaths(f.config.runtime.bundle),
+  const f = await createInitialSourceWorkFixture(
+    fixtureChild ? { parentRoot: requireString(fixtureParentRoot, 'initial-source subprocess fixture root') } : {},
   );
-  const reference = work.lifecycle.references.find(
-    (entry) =>
-      entry.kind === 'execution_approval' &&
-      entry.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
-      entry.decision === 'approved' &&
-      entry.disposition === 'current',
+  let verified = false;
+  return withCleanup(
+    () => {
+      expect(originalEngine(f).step_id).toBe('wave-0');
+      expect(originalEngine(f).requests).toHaveLength(1);
+      verified = true;
+      return f;
+    },
+    () => (verified ? undefined : f.close()),
+    'Initial Source fixture preconditions',
   );
-  const intakeReference = work.artifacts.find(
-    (entry) => entry.artifact_id === 'local-session-intake' && entry.schema === 'VidaLocalSessionIntake/v1',
-  );
-  if (!reference || !intakeReference)
-    throw new Error('Initial Source fixture retained approval or intake reference is unavailable');
-  const engine = readSessionEngineSnapshot({
-    repositoryRoot: f.root,
-    config: f.config,
-    selection: input.selection,
-    context: input.context,
-    workflowId: 'task_execution',
-    runId: workRunId(work),
-  });
-  if (!engine) throw new Error('Initial Source fixture engine snapshot is unavailable');
-  return {
-    configDigest: runtimeConfigDigest(f.config),
-    currentRuntimeCodeDigest: runtimeScope.digest,
-    currentSourceScope: sourceScope,
-    sourceAuthorizationReference: reference,
-    sourceAuthorizationSha256: sha256(readFileSync(path.join(f.root, reference.path))),
-    intakeReference,
-    intakeSha256: sha256(readFileSync(path.join(f.root, intakeReference.path))),
-    priorEngineSnapshot: engine,
-    currentInitialRequest: currentInitialRequest(f, work, sourceScope),
-  };
-}
-
-function initialRequest(f: InitialWorkFixture): InitialSourceContinuationRequest {
-  const current = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
-  const journal = currentJournal(f);
-  const work = current.work;
-  const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
-  const authorizationReference = work.lifecycle.references.find(
-    (entry) =>
-      entry.kind === 'execution_approval' &&
-      entry.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
-      entry.decision === 'approved' &&
-      entry.disposition === 'current',
-  );
-  if (!authorizationReference)
-    throw new Error('Initial Source fixture retained source-write authorization is unavailable');
-  const currentRuntimeCodeDigest = snapshotRuntimePackageSources(
-    runtimePackageAccess(),
-    f.config.runtime.bundle,
-    runtimePackageCodePaths(f.config.runtime.bundle),
-  ).digest;
-  return {
-    schema: 'InitialSourceContinuationRequest/v1',
-    identity: f.identity,
-    attempt: 1,
-    nativeSessionHandle: admittedInput(f).nativeSessionHandle,
-    expectedWork: current.workVersion,
-    expectedLedger: current.ledgerVersion,
-    expectedJournal: journal.version,
-    expectedMaintenanceGeneration: current.maintenanceGeneration,
-    configDigest: runtimeConfigDigest(f.config),
-    priorRuntimeCodeDigest: work.binding.runtime_code_digest,
-    currentRuntimeCodeDigest,
-    currentSourceScope: sourceScope,
-    authorizedSourceChanges: compareScopedSourceSnapshots(f.originalSource, sourceScope),
-    sourceAuthorizationReference: authorizationReference,
-    sourceAuthorizationSha256: authorizationReference.sha256,
-    priorEngineSnapshot: currentProof(f, continuationState(f)).priorEngineSnapshot,
-    currentInitialRequest: currentInitialRequest(f, work, sourceScope),
-  };
-}
-
-function withExpiredOwner<T>(f: InitialWorkFixture, callback: () => T) {
-  const before = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
-  const owner = before.ledger.tickets.find((ticket) => ticket.ticket_id === workLease(before.work).ticket_id);
-  if (!owner || typeof owner.expires_at !== 'string')
-    throw new Error('Initial Source fixture owner lease is unavailable');
-  const expiresAt = owner.expires_at;
-  const originalNow = Date.now;
-  Date.now = () => Date.parse(expiresAt) + 1;
-  let outcome: { ok: true; value: T } | { ok: false; error: unknown };
-  try {
-    outcome = { ok: true, value: callback() };
-  } catch (error) {
-    outcome = { ok: false, error };
-  }
-  Date.now = originalNow;
-  if (!outcome.ok) throw outcome.error;
-  return outcome.value;
 }
 
 function holdExpiredOwnerClockForFixture(f: InitialWorkFixture) {
@@ -1866,7 +1380,7 @@ function completedSourceRecoveryCase(refreshOnly: 'none' | 'guards' | 'crash-bef
           for (const phase of [refreshOnly === 'crash-before' ? 'before-replacement' : 'after-replacement']) {
             writeFileSync(path.join(f.root, planPath), oldPlanBytes);
             const childCode = `
-            import {Database} from 'bun:sqlite';
+            import { Database } from 'bun:sqlite';
             import {HostStateStore} from ${JSON.stringify(new URL('../src/host-state.ts', import.meta.url).href)};
             import {deriveWorkspaceId} from ${JSON.stringify(new URL('../src/workspace-identity.ts', import.meta.url).href)};
             import {requireSafeRepositoryAccess} from ${JSON.stringify(new URL('../src/config/safe-repository-access.ts', import.meta.url).href)};

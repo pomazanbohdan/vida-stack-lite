@@ -114,8 +114,16 @@ inventory shows330uncovered functions/closures under98outer owners. The next
 checked batch reuses that same continuation case for18additional terminal,
 absence, missing-lineage and missing-verifier denial assertions;49assertions pass
 in0.580s with no extra fixture, DB or selected file. The reviewed Host pin is
-refreshed, preserving selection/budget/ownership. Measure once after publication,
-then batch the next genuine native cases from the current inventory.
+refreshed, preserving selection/budget/ownership. Its a4bbe80 stage now completes
+in221.942s:284PASS/0FAIL,2330assertions, F813/1129,L3296/4966,S3517/5296,
+B3446/5640, still nonexact/BLOCKED. Reused inventory identifies316uncovered
+functions/closures under92outer owners. The next packet extracts the genuine
+Initial Source admission/bridge fixture for the native Host case and existing
+public regressions. One current request proof replaces duplicated snapshots;
+Host verification remains fresh. Native26assertions and original public producer
+86assertions pass; strict180files and scoped lint pass. Blind resource review
+confirms unchanged private roots, selection and budgets. Measure this causal
+packet once after ordinary checked publication; continue this same contour.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
