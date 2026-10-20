@@ -56,6 +56,12 @@ test('actual Babel inventory and Istanbul instrumentation map named, arrow, and 
     inventory.map((row) => row.identity),
   );
   assert.ok(evidence.every((row) => row.coverage === 0));
+  for (const row of evidence) {
+    assert.notEqual(row.istanbul_key, undefined);
+    const mapped = instrumented.fileCoverage.fnMap[row.istanbul_key!];
+    assert.ok(mapped && typeof mapped === 'object' && 'loc' in mapped);
+    assert.deepEqual(row.body_location, mapped.loc);
+  }
 });
 
 test('one indexed pass maps nested same-line declarations and unrelated inventory rows', () => {
@@ -79,10 +85,31 @@ test('one indexed pass maps nested same-line declarations and unrelated inventor
     },
     f: { 0: 0, 1: 4, 9: 1 },
   };
-  assert.deepEqual(baselineFunctionEvidenceForSource('src/nested.ts', [outer, nested, unrelated], coverage), [
-    { identity: outer.identity, complexity: 2, coverage: 0, crap: 6 },
-    { identity: nested.identity, complexity: 3, coverage: 1, crap: 3 },
-    { identity: unrelated.identity, complexity: 1, coverage: 1, crap: 1 },
+  assert.deepEqual(baselineFunctionEvidenceForSource('src/nested.ts', [nested, unrelated, outer], coverage), [
+    {
+      identity: nested.identity,
+      complexity: 3,
+      coverage: 1,
+      crap: 3,
+      istanbul_key: '1',
+      body_location: { start: { line: 1, column: 20 }, end: { line: 1, column: 24 } },
+    },
+    {
+      identity: unrelated.identity,
+      complexity: 1,
+      coverage: 1,
+      crap: 1,
+      istanbul_key: '9',
+      body_location: { start: { line: 4, column: 14 }, end: { line: 4, column: 22 } },
+    },
+    {
+      identity: outer.identity,
+      complexity: 2,
+      coverage: 0,
+      crap: 6,
+      istanbul_key: '0',
+      body_location: { start: { line: 1, column: 16 }, end: { line: 1, column: 29 } },
+    },
   ]);
 });
 

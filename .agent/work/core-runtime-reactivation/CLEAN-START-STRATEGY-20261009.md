@@ -49,6 +49,10 @@ fresh plan retry and completed-history retention in the existing cases. Keep
 focused PASS distinct from complete coverage; one owner closure remains missing.
 Stopped-source setup reuses only immutable template bytes; mutable consumer
 state remains per fixture. No controlled speedup is established.
+Next measure the checked configured-frontier digest repair/producer-fence
+packet once after review and matching SDK. Retain exact map-key/body-location
+associations from the existing report join to reduce repeated navigation;
+historical missing locations stay GAP and all numeric gates remain unchanged.
 Retain Root-only integration, one active contour and default5s case/300s coverage limits.
 The three-hour audit fixes the local qualifier namespace-overwrite hazard; WORK
 retains its unchanged-manifest proof and measured-versus-planned comparisons.

@@ -13,6 +13,12 @@ owns commands, timeouts, evidence gates and accepted policy. Its
 owns detailed scenario-specific requirements. Read both before changing an
 affected owner.
 
+For uncovered-function navigation, reuse the report's retained `istanbul_key`
+and `body_location` when present and matched to its bound Source map. The
+existing exact-geometry join owns them. Do not reconstruct IDs from map order,
+function names or a fresh index. Historical reports may lack this optional
+navigation data; preserve that GAP and their original bytes.
+
 ## Load the current owners
 
 Resolve the repository root. Read `AGENTS.md` and `AGENT.sidecar.md`, then the

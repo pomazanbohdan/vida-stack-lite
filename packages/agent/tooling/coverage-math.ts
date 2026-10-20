@@ -46,6 +46,11 @@ export interface BaselineFunctionEvidence {
   readonly complexity: number;
   readonly coverage: number;
   readonly crap: number;
+  readonly istanbul_key?: string;
+  readonly body_location?: {
+    readonly start: CoveragePosition;
+    readonly end: CoveragePosition;
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -101,7 +106,17 @@ export function baselineFunctionEvidenceForSource(
       throw new Error(`Published baseline function counter is invalid: ${row.identity}`);
     const fraction = counter > 0 ? 1 : 0;
     const crap = row.complexity ** 2 * (1 - fraction) ** 3 + row.complexity;
-    functions.push({ identity: row.identity, complexity: row.complexity, coverage: fraction, crap });
+    functions.push({
+      identity: row.identity,
+      complexity: row.complexity,
+      coverage: fraction,
+      crap,
+      istanbul_key: id,
+      body_location: {
+        start: { line: row.bodyLine, column: row.bodyColumn },
+        end: { line: row.bodyEndLine, column: row.bodyEndColumn },
+      },
+    });
   }
   return functions;
 }

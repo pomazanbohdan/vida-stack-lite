@@ -132,6 +132,14 @@ one-to-one and exhaustive. Unpaired current functions require new-function
 budgets, and unpaired published functions require removal dispositions. Do not
 infer correspondence from matching ordinals or body hashes.
 
+Function evidence retains the exact Istanbul key and body coordinates from that
+same geometry join for navigation. It adds no AST, inventory, scan or hash pass.
+These optional diagnostic fields do not change IDs, counters, correspondence,
+budgets or admission. Historical reports without them remain unchanged; missing
+coordinates are a navigation GAP, not permission to guess from names or order.
+Before using a retained location, match its key and geometry to that report's
+bound Source map. Never combine locations and counters from different inputs.
+
 Give each inventoried callback or projection its own disposition. A parent row
 does not account for its nested callable. When a new callable extracts original
 inline logic that had no callable identity, review it under the existing

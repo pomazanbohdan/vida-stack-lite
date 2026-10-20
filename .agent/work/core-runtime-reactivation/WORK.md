@@ -169,6 +169,35 @@ cleanup or second producer was needed; the latest retained capacity observation
 above remains the reuse basis until fresh admission.
 
 Next use the96-function inventory to inspect remaining reachable Host obligations.
+The next checked packet covers configured-frontier digest repair with the
+existing private-root fixture and two actual mechanical producer acquisitions.
+It checks pending-producer denial, exact reserved/UNKNOWN retries, native SQL
+digest-write rollback, preserved linked state, healthy apply, completed retry
+and later Journal-drift denial. The initial fixture assumed a producer could
+settle while another Work's continuation checksum was corrupt; the strict
+history reader correctly denied it. That failed run and unresolved fixture root
+remain retained in `continuation-digest-focused-1.log`. The corrected case proves
+that denial, restores only its own synthetic corruption before settlement,
+then applies the same captured stale repair plan. It passes46assertions in
+1212.42ms under the default5s case limit; no production guard is changed.
+
+The existing function-evidence geometry join now retains its already-known
+Istanbul key/body coordinates. Optional fields preserve old reports, counters,
+IDs and CC/CRAP math, with no new parser/inventory/scan/hash. Reordered and actual
+Babel/Istanbul controls pass with the existing mapping-denial cases:17tests,
+0FAIL. Strict165-file TypeScript and scoped lint pass. The retained report-only
+planner validates geometry against the same report map and preserves legacy
+missing locations; six private diagnostic controls pass, including four exact
+rejections with no output publication. Its prior script bytes and failed
+control oracle are retained; the local planner is not maintained Git Source.
+The mapping research note is `vida-existing-map-gap-locations.md`; it cannot
+retrofit locations into old reports. Complete numeric measurement is pending.
+Independent blind Source/resource review finds no blocker; retained note is
+`vida-continuation-digest-review.md`. It did not resolve the ignored planner path,
+so that local tool's six controls and geometry validation are Root's evidence.
+The Host test stays serial in its existing child-private roots; actual fixture
+producers share only that child's owned database. Root refreshed its exact
+reviewed test pin; stopped-source bytes and the resource topology are unchanged.
 Keep one contour and one producer. Batch causal success/denial/retry assertions,
 run affected checks, review and publish once before another matching-input stage.
 The preceding packet details and original numeric custody remain in immutable

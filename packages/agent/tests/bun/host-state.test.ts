@@ -2247,6 +2247,188 @@ test('configured continuation lookup exposes the complete prewriter wave and eac
   preserveHostFixtureRoot = false;
 });
 
+test('configured continuation digest repair preserves linked state, fences native producers and resumes exact UNKNOWN', async () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  await withConfiguredFrontierHostFixture((f, { workspaceId, input }) => {
+    seedFrontierHostFixture(f, input);
+    const before = readPresentSnapshot(f.store, f.identity);
+    const beforeRows = readFixtureHostRows(f.db);
+    const row = () =>
+      requiredValue(
+        f.db
+          .query<{ payload: string; digest: string }, [string, string]>(
+            'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
+          )
+          .get(workspaceId, f.identity.work_id),
+        'continuation digest row',
+      );
+    const governance = () =>
+      f.db
+        .query<GovernanceSqlRow, []>(
+          'SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key',
+        )
+        .all();
+    const originalRow = row();
+    const ledger = new MastraSessionLedger(f.db, workspaceId, f.config, f.root, f.store);
+    const context = { work_id: 'repair-producer-control', attempt: 1, scope_digest: 'c'.repeat(64) };
+    const producerInput = {
+      repositoryRoot: f.root,
+      config: f.config,
+      projectIds: f.identity.project_ids,
+      selection: {
+        team: 'default-development',
+        kind: 'task',
+        intent: 'task_execution',
+        project: firstOf(f.identity.project_ids, 'repair project'),
+        risk_flags: [],
+        labels: [],
+      },
+      context,
+      workflowId: 'task_execution',
+      phase: 'initialize',
+      runId: sessionBridgeRunId(workspaceId, context, 'task_execution'),
+      expectedWork: null,
+      expectedLedger: before.ledgerVersion,
+      expectedJournal: null,
+      maintenanceGeneration: before.maintenanceGeneration,
+    } satisfies ProducerInput;
+    const producer = f.store.beginSessionProducer(ledger, producerInput);
+    expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+    expect(
+      f.db
+        .query(
+          'UPDATE agent_host_delivered_work_continuation SET digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
+        )
+        .run('0'.repeat(64), workspaceId, f.identity.work_id).changes,
+    ).toBe(1);
+    const staleRow = row();
+    const actionId = input.receipt.request.action.request.action_id;
+    const inspection = f.store.inspectDeliveredWorkContinuationRepair(f.identity, 1, actionId);
+    expect(inspection.row).toEqual({
+      payload: originalRow.payload,
+      before_digest: staleRow.digest,
+      after_digest: originalRow.digest,
+    });
+    const body = {
+      schema: 'DeliveredWorkContinuationIntegrityRepairPlan/v1',
+      branch: 'configured_frontier',
+      repair_id: 'host-frontier-digest-repair',
+      actor: 'fixture:repair-owner',
+      timestamp: new Date().toISOString(),
+      inspection,
+    };
+    const plan = { ...body, digest: canonicalJsonDigest(body) };
+    const pending = governance();
+    expect(() => f.store.reserveDeliveredWorkContinuationRepair(plan)).toThrow(
+      'session producer is pending or unknown',
+    );
+    expect(governance()).toEqual(pending);
+    expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+    expect(row()).toEqual(staleRow);
+    expect(() => f.store.settleSessionProducer(producer, null)).toThrow(
+      'delivered-work continuation history receipt checksum or identity differs',
+    );
+    expect(governance()).toEqual(pending);
+    expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+    expect(row()).toEqual(staleRow);
+    expect(
+      f.db
+        .query(
+          'UPDATE agent_host_delivered_work_continuation SET digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND digest=?',
+        )
+        .run(originalRow.digest, workspaceId, f.identity.work_id, staleRow.digest).changes,
+    ).toBe(1);
+    f.store.settleSessionProducer(producer, null);
+    expect(
+      f.db
+        .query(
+          'UPDATE agent_host_delivered_work_continuation SET digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND digest=?',
+        )
+        .run(staleRow.digest, workspaceId, f.identity.work_id, originalRow.digest).changes,
+    ).toBe(1);
+    const settled = governance();
+    expect(() => f.store.applyDeliveredWorkContinuationRepair(plan)).toThrow(
+      'delivered-work continuation repair reservation is missing',
+    );
+    expect(governance()).toEqual(settled);
+    const reserved = f.store.reserveDeliveredWorkContinuationRepair(plan);
+    expect(reserved.status).toBe('reserved');
+    expect(f.store.reserveDeliveredWorkContinuationRepair(plan)).toEqual(reserved);
+    expect(() => f.store.readDeliveredWorkContinuation(f.identity, 1)).toThrow(
+      'delivered-work continuation repair is pending or unknown',
+    );
+    expect(() => f.store.assertSessionProducerWriteAllowed()).toThrow(
+      'delivered-work continuation repair is pending or unknown',
+    );
+    f.db.exec(
+      "CREATE TEMP TRIGGER interrupt_host_continuation_repair BEFORE UPDATE OF digest ON agent_host_delivered_work_continuation BEGIN SELECT RAISE(ABORT, 'controlled continuation digest failure'); END",
+    );
+    try {
+      expect(() => f.store.applyDeliveredWorkContinuationRepair(plan)).toThrow(
+        'controlled continuation digest failure',
+      );
+      expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+      expect(row()).toEqual(staleRow);
+      const unknown = f.store.reserveDeliveredWorkContinuationRepair(plan);
+      expect(unknown).toEqual({ ...reserved, status: 'commit_unknown', terminal_revision: 2 });
+      expect(() => f.store.assertSessionProducerWriteAllowed()).toThrow(
+        'delivered-work continuation repair is pending or unknown',
+      );
+      expect(() => f.store.beginSessionProducer(ledger, producerInput)).toThrow(
+        'delivered-work continuation repair is pending or unknown',
+      );
+      expect(f.store.reserveDeliveredWorkContinuationRepair(plan)).toEqual(unknown);
+    } finally {
+      f.db.exec('DROP TRIGGER interrupt_host_continuation_repair');
+    }
+    expect(f.store.applyDeliveredWorkContinuationRepair(plan)).toEqual({
+      status: 'applied',
+      digest: originalRow.digest,
+    });
+    expect(row()).toEqual(originalRow);
+    expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)?.receipt).toEqual(input.receipt);
+    expect(f.store.reserveDeliveredWorkContinuationRepair(plan)).toMatchObject({
+      status: 'applied',
+      operation_key: reserved.operation_key,
+      fencing_token: reserved.fencing_token,
+    });
+    expect(f.store.applyDeliveredWorkContinuationRepair(plan)).toEqual({
+      status: 'already_applied',
+      digest: originalRow.digest,
+    });
+    const laterProducer = f.store.beginSessionProducer(ledger, producerInput);
+    const later = governance();
+    for (const operation of [
+      () => f.store.reserveDeliveredWorkContinuationRepair(plan),
+      () => f.store.applyDeliveredWorkContinuationRepair(plan),
+    ]) {
+      expect(operation).toThrow('session producer is pending or unknown');
+      expect(governance()).toEqual(later);
+      expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+      expect(row()).toEqual(originalRow);
+    }
+    f.store.settleSessionProducer(laterProducer, null);
+    expect(
+      f.db
+        .query(
+          'UPDATE agent_host_mastra_session_ledger SET revision=revision+1 WHERE workspace_id=? AND work_id=? AND attempt=1',
+        )
+        .run(workspaceId, f.identity.work_id).changes,
+    ).toBe(1);
+    const concurrent = readFixtureHostRows(f.db);
+    const settledAfter = governance();
+    expect(() => f.store.applyDeliveredWorkContinuationRepair(plan)).toThrow(
+      'applied delivered-work continuation repair afterimage differs',
+    );
+    expect(readFixtureHostRows(f.db)).toEqual(concurrent);
+    expect(governance()).toEqual(settledAfter);
+    expect(row()).toEqual(originalRow);
+  });
+  preserveHostFixtureRoot = false;
+});
+
 test('failed prewriter owner recovery atomically reacquires full resources without changing reports, bindings or the original receipt', async () => {
   preserveHostFixtureRoot = 'case failed or timed out';
   await withConfiguredFrontierHostFixture((f, { workspaceId, input }) => {
