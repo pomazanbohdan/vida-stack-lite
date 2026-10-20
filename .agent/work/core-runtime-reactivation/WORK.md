@@ -967,6 +967,56 @@ writable root introduced. Host test pinb20d6548 remains; stopped-source final SH
 Finish eligibility/docs/normal hooks and publication, then exactly one matching
 SDK complete stage. Latest complete numbers remain199041d until that observation.
 
+### Complete later-grant observation — 2026-10-20
+
+Source68655b6549426b6ee0f6405e92da82d6c3566a5b is normally committed/pushed;
+hooks check516formatted files and523strict TypeScript files successfully.
+Matching SDK CI39382254680 succeeds, artifact12246275432 ZIP SHA
+5560d0a5f198132a2db31db67aa7494122126fd269f14fbf7608082e2c53f0cd.
+Stage /workspace/contour-stage-jkuaKl completes in213500.705ms, exit0,
+capture/group/boot/input closure alltrue, unchanged330s stage/300s coverage
+envelopes. Run aea1b451-4139-44ef-89bc-73ce70b7c435 publishes projection1060:
+F935/1129,L3961/4966,S4211/5296,B4260/5642. Gains over199041d are11/20/22/38.
+Host279PASS,2453assertions,202.18s; stopped16PASS,253assertions,185.18s:
+295PASS/0FAIL,2706assertions. Report-only inventory is194missing functions under
+78owners; retired-Source capture falls14to3missing closures. Operation remains
+BLOCKED/nonexact and historical exact16/45. No frozen/CRAP/mutation qualification
+is inferred from diagnostic maxCC279/entryCRAP2162.
+
+Image /workspace/.vida-quality-inputs/1abac945a82fa92597b0ad4291ecfc3037462d19/repository
+binds Source tree8f75da9f06151e10e2519d72fb2fde11af225a2e,
+input15e4585920dc2ca290edff88e3c3ff271d2b6b530b619d7689f9119905c6f802,
+manifest SHA4b7f428bbf52c3c098b0fd5248490af48da31031a9566a1fda51d2fbbadd6a77.
+After observed terminal process/group closure, entire new functional scratch
+/dev/shm/vida-quality-retained-U9oPEU (scratch-E4OhuK;179327602apparent bytes)
+is copied to durable /workspace/vida-functional-retention-jkuaKl-woWwCt/scratch.tar,
+206448640bytes, SHA5ea0cddd64e835fbf0eca39d167cc19b13b26bc5f872ca74d146f192250b19ab.
+GNU tar comparison against unchanged original succeeds; original, archive and
+archive.log/scratch.sha256 remain. Overlay free bytes3755974656before archival,
+3549511680after; unchanged2147483648floor is met. Reuse these observations;
+no broad cleanup/scan/hash, original evidence deletion or resource GAP is needed.
+Bounded Luna plan/final reviews are additionally retained under the existing
+coverage/fixture-diagnostics/20261019-focused-blockers directory, preserving
+their original /tmp copies.
+
+Performance cause is INCONCLUSIVE. These single changed-input samples rise
+156.759→213.501s, not a demonstrated causal code regression or improvement.
+An owned report-only TS diagnostic reads each of the two existing Host child logs
+once, validates279actual unique passing case identities and joins them exactly;
+no tests, AST, hashes or profiler are rerun. Among27cases previously at least1s,
+15are at least25% slower, median ratio1.3154. The largest delta is the unchanged
+corrective-authority case8.014→13.437s; readonly frontier4.969→9.031s and unrelated
+process/governance cases also grow. Host Source/test bytes are unchanged across
+the two packets. That dispersal prevents assigning the whole difference to the
+new later-grant assertions; actual contention/host-load cause is not isolated.
+The comparison is retained as retired-later-grant-host-timing-comparison.json.
+Pstack Benchmark Checklist keeps this descriptive/inconclusive; no duplicate
+full-suite benchmarking, deadline increase or concurrency change is justified.
+Continue the same contour with reviewed causal assertion patches; retain this
+timing concern for the next changed-input observation rather than replaying these
+unchanged inputs. Total gains since bcbfbd6 are41functions,154lines,166statements,
+202branches; no new exact contour is closed.
+
 The earlier plan below led to genuine completed-Source-report recovery and its
 persisted Work history; it is retained context, not a duplicate next task.
 Blind bounded plan

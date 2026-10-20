@@ -281,6 +281,14 @@ Five altered witnesses deny unchanged state; exact capture/retry settles only th
 original failed issue. Both targets pass65assertions, strict181/scoped lint pass,
 and blind Luna final review finds no blocker. No new fixture or budget is added.
 Finish pin/control/publication, then one matching-SDK stage before counting gains.
+The68655b6 stage now completes295PASS/0FAIL,2706assertions in213.501s:
+F935/1129,L3961/4966,S4211/5296,B4260/5642. Inventory falls194missing functions
+under78owners; retired capture falls14to3missing closures. Custody/image checks
+and durable scratch comparison pass; WORK owns exact bindings and disk facts.
+The longer single sample is not a qualified causal performance result: retained
+log comparison shows broad slowing in unchanged Host cases too. Keep deadlines,
+one numeric producer and two reviewed children; do not repeat an unchanged suite
+to manufacture a speedup. Continue the same contour from this inventory.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
