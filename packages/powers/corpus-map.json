@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 599,
-  "updated_at": "2026-10-20T11:48:13.199Z",
+  "revision": 769,
+  "updated_at": "2026-10-20T13:30:13.689Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -1848,12 +1848,9 @@
           ]
         },
         "skills/principle-test-behavior-not-implementation/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "write-tests-that-catch-breaks"
-          ],
-          "contributed_sources": [
-            "pstack:skills/principle-test-behavior-not-implementation/SKILL.md"
           ]
         },
         "automations/benny/README.md": {
@@ -1883,6 +1880,681 @@
         "skills/setup-pstack/SKILL.md": {
           "status": "rejected",
           "reason": "Setup of a specific package in a specific host: file copying and configuration edits without a generalizable norm."
+        }
+      }
+    },
+    "matt-skills": {
+      "source_revision": "49dd158d1076134a641b33efb035946536778336",
+      "files": {
+        "skills/engineering/tdd/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "agree-test-seams-first",
+            "build-vertical-slices",
+            "write-tests-that-catch-breaks"
+          ]
+        },
+        "skills/engineering/code-review/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "apply-a-smell-baseline-as-heuristics",
+            "review-along-separate-axes"
+          ]
+        },
+        ".agents/adr/0001-explicit-setup-pointer-only-for-hard-dependencies.md": {
+          "status": "rejected",
+          "reason": "The donor repository's own docs about itself: packaging, invocation, install and documentation conventions, not a generalizable norm."
+        },
+        ".agents/adr/0002-ship-as-a-claude-code-plugin.md": {
+          "status": "rejected",
+          "reason": "The donor repository's own docs about itself: packaging, invocation, install and documentation conventions, not a generalizable norm."
+        },
+        ".agents/install-block.md": {
+          "status": "rejected",
+          "reason": "The donor repository's own docs about itself: packaging, invocation, install and documentation conventions, not a generalizable norm."
+        },
+        ".agents/invocation.md": {
+          "status": "rejected",
+          "reason": "The donor repository's own docs about itself: packaging, invocation, install and documentation conventions, not a generalizable norm."
+        },
+        ".agents/writing-docs.md": {
+          "status": "rejected",
+          "reason": "The donor repository's own docs about itself: packaging, invocation, install and documentation conventions, not a generalizable norm."
+        },
+        ".changeset/ask-matt-read-skill-first.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/code-review-standards-and-subagents.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/diagnosing-bugs-prove-mutation.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/github-tracker-external-pr-list.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/grilling-yes-accepts-recommendation.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/handoff-temp-dir.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/implement-skill-tool-wording.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/implement-ticket-reference.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/README.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/setup-tracker-fixes.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/tdd-seam-tradeoffs.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/teach-quiz-answer-position.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/teach-workspace-root.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/to-tickets-sub-issues.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/wayfinder-labels-refs-research-prs.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/wizard-template-fixes.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".changeset/wizard-template-fixes-2.md": {
+          "status": "rejected",
+          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
+        },
+        ".out-of-scope/frozen-misc-skills.md": {
+          "status": "rejected",
+          "reason": "A recorded rejection from the donor's own history; it argues about the donor's product, not a generalizable norm."
+        },
+        ".out-of-scope/harness-name-collisions.md": {
+          "status": "rejected",
+          "reason": "A recorded rejection from the donor's own history; it argues about the donor's product, not a generalizable norm."
+        },
+        ".out-of-scope/lazy-load-writing-for-agents.md": {
+          "status": "rejected",
+          "reason": "A recorded rejection from the donor's own history; it argues about the donor's product, not a generalizable norm."
+        },
+        ".out-of-scope/mainstream-issue-trackers-only.md": {
+          "status": "rejected",
+          "reason": "A recorded rejection from the donor's own history; it argues about the donor's product, not a generalizable norm."
+        },
+        ".out-of-scope/native-question-tool.md": {
+          "status": "rejected",
+          "reason": "A recorded rejection from the donor's own history; it argues about the donor's product, not a generalizable norm."
+        },
+        ".out-of-scope/new-skills.md": {
+          "status": "rejected",
+          "reason": "A recorded rejection from the donor's own history; it argues about the donor's product, not a generalizable norm."
+        },
+        ".out-of-scope/question-limits.md": {
+          "status": "rejected",
+          "reason": "A recorded rejection from the donor's own history; it argues about the donor's product, not a generalizable norm."
+        },
+        ".out-of-scope/setup-skill-verify-mode.md": {
+          "status": "rejected",
+          "reason": "A recorded rejection from the donor's own history; it argues about the donor's product, not a generalizable norm."
+        },
+        ".out-of-scope/subagent-recursion.md": {
+          "status": "rejected",
+          "reason": "A recorded rejection from the donor's own history; it argues about the donor's product, not a generalizable norm."
+        },
+        "AGENTS.md": {
+          "status": "rejected",
+          "reason": "The donor's own house rules and history (README, CHANGELOG, GLOSSARY, SCOPE, AGENTS, CLAUDE); no generalizable norm."
+        },
+        "CHANGELOG.md": {
+          "status": "rejected",
+          "reason": "The donor's own house rules and history (README, CHANGELOG, GLOSSARY, SCOPE, AGENTS, CLAUDE); no generalizable norm."
+        },
+        "CLAUDE.md": {
+          "status": "rejected",
+          "reason": "The donor's own house rules and history (README, CHANGELOG, GLOSSARY, SCOPE, AGENTS, CLAUDE); no generalizable norm."
+        },
+        "docs/agents/triage-labels.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/ask-matt.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/codebase-design.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/code-review.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/diagnosing-bugs.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/domain-modeling.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/grill-with-docs.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/implement.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/implement-spec.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/improve-codebase-architecture.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/pr.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/prototype.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/research.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/resolving-merge-conflicts.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/retro.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/setup-matt-pocock-skills.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/tdd.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/to-spec.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/to-tickets.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/triage.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/wayfinder.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/engineering/wizard.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/productivity/grilling.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/productivity/grill-me.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/productivity/handoff.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/productivity/teach.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/productivity/to-questionnaire.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/productivity/wait-what.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "docs/productivity/writing-for-agents.md": {
+          "status": "rejected",
+          "reason": "The donor's own human-facing documentation about its skills; the repository's docs about itself, not a generalizable norm."
+        },
+        "GLOSSARY.md": {
+          "status": "rejected",
+          "reason": "The donor's own house rules and history (README, CHANGELOG, GLOSSARY, SCOPE, AGENTS, CLAUDE); no generalizable norm."
+        },
+        "README.md": {
+          "status": "rejected",
+          "reason": "The donor's own house rules and history (README, CHANGELOG, GLOSSARY, SCOPE, AGENTS, CLAUDE); no generalizable norm."
+        },
+        "SCOPE.md": {
+          "status": "rejected",
+          "reason": "The donor's own house rules and history (README, CHANGELOG, GLOSSARY, SCOPE, AGENTS, CLAUDE); no generalizable norm."
+        },
+        "skills/deprecated/README.md": {
+          "status": "rejected",
+          "reason": "An index of the donor's skills; the norms live in the indexed skills."
+        },
+        "skills/engineering/ask-matt/SKILL.md": {
+          "status": "rejected",
+          "reason": "A router over the donor's own skills; the norms live in the routed skills."
+        },
+        "skills/engineering/implement/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "execute-plan-in-order"
+          ],
+          "contributed_sources": [
+            "matt-skills:skills/engineering/implement/SKILL.md"
+          ]
+        },
+        "skills/engineering/implement-spec/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "coordinate-a-program-of-delegated-work"
+          ],
+          "contributed_sources": [
+            "matt-skills:skills/engineering/implement-spec/SKILL.md"
+          ]
+        },
+        "skills/engineering/pr/CREDITS.md": {
+          "status": "rejected",
+          "reason": "Attribution for copied content; no norm of its own."
+        },
+        "skills/engineering/README.md": {
+          "status": "rejected",
+          "reason": "An index of the donor's skills; the norms live in the indexed skills."
+        },
+        "skills/engineering/setup-matt-pocock-skills/domain.md": {
+          "status": "rejected",
+          "reason": "Setup of the donor's own configuration for a specific host; no generalizable norm."
+        },
+        "skills/engineering/setup-matt-pocock-skills/issue-tracker-github.md": {
+          "status": "rejected",
+          "reason": "Setup of the donor's own configuration for a specific host; no generalizable norm."
+        },
+        "skills/engineering/setup-matt-pocock-skills/issue-tracker-gitlab.md": {
+          "status": "rejected",
+          "reason": "Setup of the donor's own configuration for a specific host; no generalizable norm."
+        },
+        "skills/engineering/setup-matt-pocock-skills/issue-tracker-local.md": {
+          "status": "rejected",
+          "reason": "Setup of the donor's own configuration for a specific host; no generalizable norm."
+        },
+        "skills/engineering/setup-matt-pocock-skills/SKILL.md": {
+          "status": "rejected",
+          "reason": "Setup of the donor's own configuration for a specific host; no generalizable norm."
+        },
+        "skills/engineering/setup-matt-pocock-skills/triage-labels.md": {
+          "status": "rejected",
+          "reason": "Setup of the donor's own configuration for a specific host; no generalizable norm."
+        },
+        "skills/engineering/tdd/tests.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "write-tests-that-catch-breaks"
+          ],
+          "contributed_sources": [
+            "matt-skills:skills/engineering/tdd/tests.md"
+          ]
+        },
+        "skills/in-progress/claude-handoff/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "pause-work-with-a-handoff"
+          ],
+          "contributed_sources": [
+            "matt-skills:skills/in-progress/claude-handoff/SKILL.md"
+          ]
+        },
+        "skills/in-progress/README.md": {
+          "status": "rejected",
+          "reason": "An index of the donor's skills; the norms live in the indexed skills."
+        },
+        "skills/misc/README.md": {
+          "status": "rejected",
+          "reason": "An index of the donor's skills; the norms live in the indexed skills."
+        },
+        "skills/misc/scaffold-exercises/SKILL.md": {
+          "status": "rejected",
+          "reason": "Setup of a specific toolchain or one product's scaffolding; no generalizable norm."
+        },
+        "skills/misc/setup-pre-commit/SKILL.md": {
+          "status": "rejected",
+          "reason": "Setup of a specific toolchain or one product's scaffolding; no generalizable norm."
+        },
+        "skills/productivity/handoff/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "pause-work-with-a-handoff"
+          ],
+          "contributed_sources": [
+            "matt-skills:skills/productivity/handoff/SKILL.md"
+          ]
+        },
+        "skills/productivity/README.md": {
+          "status": "rejected",
+          "reason": "An index of the donor's skills; the norms live in the indexed skills."
+        },
+        "skills/engineering/wizard/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "author-a-human-wizard"
+          ]
+        },
+        "skills/misc/migrate-to-shoehorn/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "avoid-type-assertions-in-test-data"
+          ]
+        },
+        "skills/misc/git-guardrails-claude-code/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "block-destructive-commands-with-a-hook"
+          ]
+        },
+        "skills/engineering/prototype/LOGIC.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "build-a-shareable-logic-demo"
+          ]
+        },
+        "skills/engineering/diagnosing-bugs/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "build-a-tight-feedback-loop",
+            "instrument-one-variable-at-a-time",
+            "minimise-the-reproduction",
+            "rank-falsifiable-hypotheses"
+          ]
+        },
+        "skills/productivity/teach/GLOSSARY-FORMAT.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "build-the-glossary-as-compressed-knowledge"
+          ]
+        },
+        "skills/engineering/prototype/UI.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "build-toggleable-ui-variants"
+          ]
+        },
+        "skills/engineering/prototype/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "capture-the-prototype-as-primary-source",
+            "prototype-to-answer-a-question"
+          ]
+        },
+        "skills/engineering/wayfinder/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "chart-decisions-not-deliverables",
+            "distinguish-fog-from-ticket",
+            "keep-the-map-an-index"
+          ]
+        },
+        "skills/engineering/triage/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "check-redundancy-and-prior-rejections",
+            "triage-into-a-state-machine",
+            "verify-the-claim-before-triage"
+          ]
+        },
+        "skills/productivity/writing-for-agents/SKILL-MECHANICS.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "choose-invocation-mode"
+          ]
+        },
+        "skills/engineering/to-spec/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-highest-test-seam",
+            "write-a-spec-from-synthesis"
+          ]
+        },
+        "skills/engineering/pr/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "classify-merge-reversibility",
+            "write-pr-body-with-visual-evidence"
+          ]
+        },
+        "skills/productivity/teach/RESOURCES-FORMAT.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "curate-trusted-resources"
+          ]
+        },
+        "skills/engineering/ask-matt/PHASE-BOUNDARIES.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "decide-at-phase-boundaries"
+          ]
+        },
+        "skills/engineering/codebase-design/DEEPENING.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "deepen-by-dependency-category"
+          ]
+        },
+        "skills/engineering/codebase-design/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "design-deep-modules",
+            "design-testable-interfaces"
+          ]
+        },
+        "skills/engineering/tdd/mocking.md": {
+          "status": "split",
+          "instruction_ids": [
+            "design-for-mockability",
+            "mock-only-system-boundaries"
+          ]
+        },
+        "skills/engineering/codebase-design/DESIGN-IT-TWICE.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "design-it-twice-in-parallel"
+          ]
+        },
+        "skills/productivity/teach/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "design-lessons-for-retention",
+            "teach-with-a-stateful-workspace"
+          ]
+        },
+        "skills/in-progress/setup-ts-deep-modules/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "enforce-package-boundaries-with-a-check"
+          ]
+        },
+        "skills/productivity/grilling/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "grill-in-rounds",
+            "separate-facts-from-decisions"
+          ]
+        },
+        "skills/productivity/grill-me/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "grill-in-rounds"
+          ]
+        },
+        "skills/engineering/grill-with-docs/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "grill-in-rounds"
+          ]
+        },
+        "skills/in-progress/chief-of-staff/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "keep-a-long-running-goal-in-subagents"
+          ]
+        },
+        "skills/in-progress/writing-fragments/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "mine-fragments-before-structuring"
+          ]
+        },
+        "skills/engineering/domain-modeling/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "record-decisions-as-adrs",
+            "sharpen-domain-language"
+          ]
+        },
+        "skills/engineering/domain-modeling/ADR-FORMAT.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "record-decisions-as-adrs"
+          ]
+        },
+        "skills/productivity/teach/LEARNING-RECORD-FORMAT.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "record-learning-when-understanding-is-shown"
+          ]
+        },
+        "skills/engineering/triage/OUT-OF-SCOPE.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "record-rejected-requests-in-a-kb"
+          ]
+        },
+        "skills/productivity/wait-what/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "re-pitch-in-plain-words"
+          ]
+        },
+        "skills/engineering/research/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "research-from-primary-sources"
+          ]
+        },
+        "skills/engineering/retro/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "retro-the-agent-environment",
+            "automate-enforceable-rules"
+          ]
+        },
+        "skills/engineering/to-tickets/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "sequence-wide-refactors-expand-contract",
+            "write-tracer-bullet-tickets"
+          ]
+        },
+        "skills/in-progress/writing-shape/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "shape-paragraphs-around-grounded-concepts"
+          ]
+        },
+        "skills/in-progress/loop-me/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "spec-a-workflow-with-push-right"
+          ]
+        },
+        "skills/engineering/improve-codebase-architecture/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "surface-deepening-opportunities"
+          ]
+        },
+        "skills/engineering/improve-codebase-architecture/HTML-REPORT.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "surface-deepening-opportunities"
+          ]
+        },
+        "skills/productivity/writing-for-agents/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "use-a-leading-word",
+            "write-steps-with-completion-criteria",
+            "optimize-guidance-triggers",
+            "structure-and-compress-guidance",
+            "write-directive-rules",
+            "write-minimal-agent-guidance"
+          ]
+        },
+        "skills/productivity/to-questionnaire/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-discovery-questionnaire"
+          ]
+        },
+        "skills/engineering/triage/AGENT-BRIEF.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-durable-agent-brief"
+          ]
+        },
+        "skills/in-progress/writing-beats/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-one-beat-at-a-time"
+          ]
+        },
+        "skills/engineering/domain-modeling/GLOSSARY-FORMAT.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-tight-glossary-entries"
+          ]
+        },
+        "skills/productivity/teach/MISSION-FORMAT.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "teach-with-a-stateful-workspace"
+          ]
         }
       }
     }

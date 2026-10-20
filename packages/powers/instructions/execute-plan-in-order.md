@@ -20,8 +20,9 @@ compatibility_requires:
   - write-implementation-plan
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/executing-plans/SKILL.md
+  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/implement/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Execute the plan task by task in order
@@ -41,3 +42,5 @@ Do not pause to check in with your human partner between tasks.
 Execute all tasks from the plan without stopping.
 Four things stop you, and only these: an irreversible or destructive operation; a security-sensitive action; a side effect outside this worktree that norms say you ask about first; and a plan so broken that every path forward is a guess.
 For those, stop and ask.
+If the user passes a ticket reference, fetch it from the issue tracker and state its title before starting. If the reference is ambiguous, ask.
+Call the test-driven loop where possible, at pre-agreed seams. Run typechecking regularly, single test files regularly, and the full test suite once at the end. Once done, run the code review to review the work. Commit your work to the current branch.

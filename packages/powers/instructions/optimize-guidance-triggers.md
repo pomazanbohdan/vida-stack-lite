@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/anthropic-best-practices.md
+  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/writing-for-agents/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Describe triggering conditions in the guidance
@@ -40,3 +41,4 @@ Include error messages, symptoms, synonyms, and tool names.
 Keep the description under 500 characters if possible.
 Agents use the description to choose the right guidance from potentially 100+ available items.
 The description must provide enough detail for an agent to know when to select this guidance.
+A **context pointer** is a reference held in the agent's context that names some out-of-context material and encodes the condition for reaching it. A skill's description is one; a line naming a doc is the same object. The pointer's _wording_, not its target, decides when the agent reaches the material, and how reliably. A must-have target behind a weakly worded pointer is a variance bug: sharpen the wording first, and inline the material only if sharpening fails. A pointer does two jobs: state what the material is, and list the **branches** that should trigger reaching it (a branch is a distinct case the document handles, so different runs take different paths through it). Every word of an always-loaded pointer costs on every turn, so it earns even harder pruning than the body: front-load the leading word, use one trigger per branch, cut identity the body already carries.

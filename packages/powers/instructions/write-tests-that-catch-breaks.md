@@ -26,8 +26,10 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-audit/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-test-behavior-not-implementation/SKILL.md
+  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/tdd/SKILL.md
+  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/tdd/tests.md
 status: active
-revision: 4
+revision: 5
 ---
 
 # Write tests that catch a specific break
@@ -50,3 +52,5 @@ When mock setup outgrows the test logic, or tests break when the mock changes, s
 Before finishing, mentally mutate the production code. At least one test should fail for each realistic mutation: a wrong constant or argument, a wrong branch handler, a missing state change, an empty return, or missing validation for zero, empty, nil, unauthorized, or malformed input.
 A mutation nothing catches marks the behavior as unprotected, or the test as tautological.
 Tests ship with the implementation. Trivial code and human prose earn none.
+Tests verify behavior through public interfaces, not implementation details. Code can change entirely; tests shouldn't. A good test reads like a specification: "user can checkout with valid cart" tells you exactly what capability exists, and it survives refactors because it doesn't care about internal structure.
+**Implementation-coupled** tests mock internal collaborators, test private methods, or verify through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed.

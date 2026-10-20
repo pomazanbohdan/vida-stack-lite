@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 433,
+  "revision": 503,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-20T11:52:59.279Z",
+  "updated_at": "2026-10-20T13:30:12.243Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -39,7 +39,11 @@
       "build-verification-harness": "Ability to build and maintain scenarios that prove the product's observable behavior.",
       "triage-reports": "Ability to classify incoming reports and findings and route each by class.",
       "coordinate-program": "Ability to split large work into parts with an owner, dependencies and merge points.",
-      "keep-decision-trail": "Ability to record a decision with its options, grounds and review condition."
+      "keep-decision-trail": "Ability to record a decision with its options, grounds and review condition.",
+      "research-primary-sources": "Investigate a question against the sources that own it and record cited findings.",
+      "model-domain-language": "Sharpen the project's shared terminology and record the decisions about it.",
+      "teach-with-workspace": "Teach a concept over sessions using a stateful workspace.",
+      "author-setup-scripts": "Generate an interactive script that walks a human through a manual procedure."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -77,7 +81,15 @@
       "report-triage": "An approach in which incoming reports are classified and routed by one rule.",
       "program-orchestration": "An approach in which large work proceeds in parts with explicit owners and dependencies.",
       "decision-trail": "An approach in which decisions are recorded together with their grounds and review condition.",
-      "approval-policy": "An approach in which the approval policy is chosen by user configuration while both opposite policies are stated explicitly."
+      "approval-policy": "An approach in which the approval policy is chosen by user configuration while both opposite policies are stated explicitly.",
+      "domain-language": "An approach in which the project's shared terms are sharpened and used consistently.",
+      "teaching-workspace": "An approach in which learning is grounded in a persistent workspace and the learner's level.",
+      "setup-scripting": "An approach in which a manual procedure is turned into a guided, verifiable script.",
+      "progressive-disclosure": "An approach in which material is placed on a hierarchy so the top stays legible and reference is reached by a pointer.",
+      "completion-criteria": "An approach in which every step ends on a condition that tells the executor the work is done.",
+      "expand-contract": "An approach in which a wide refactor adds the new form, migrates callers in batches, then deletes the old form.",
+      "vertical-slicing": "An approach in which work proceeds as narrow complete paths through every layer.",
+      "explore-then-exploit": "An approach in which raw material is mined before structure is committed."
     }
   },
   "tag_aliases": {
@@ -85,6 +97,11 @@
   },
   "tag_exemptions": [],
   "instructions": [
+    {
+      "instruction_id": "agree-test-seams-first",
+      "path": "instructions/agree-test-seams-first.md",
+      "sha256": "a878730c899b8d9c5b981bd9900e37c23716aa1748e57577e3e822a532e05560"
+    },
     {
       "instruction_id": "analyze-cost-and-time",
       "path": "instructions/analyze-cost-and-time.md",
@@ -126,6 +143,11 @@
       "sha256": "6aec51b56725afdc462f7df77f110593e711e35ee42608ee78082925304f73e0"
     },
     {
+      "instruction_id": "apply-a-smell-baseline-as-heuristics",
+      "path": "instructions/apply-a-smell-baseline-as-heuristics.md",
+      "sha256": "eb78b189c9e2ffaa576d45f15d02db459b722c4c4181501df8ff3d4cff0a1867"
+    },
+    {
       "instruction_id": "apply-code-review",
       "path": "instructions/apply-code-review.md",
       "sha256": "b6fc6d05bafed2a4c90a8deb4c7867b6a68ccf75c335b197e3bea45b6067aebc"
@@ -141,6 +163,11 @@
       "sha256": "28a86800c536d8961edb2d3d59459b15c6256bee28da37c91fd26a68f7c58717"
     },
     {
+      "instruction_id": "author-a-human-wizard",
+      "path": "instructions/author-a-human-wizard.md",
+      "sha256": "7b2a1adc3da2b8efff13c3e6485aa6b989f9839d4420a23558165e1124bc31ac"
+    },
+    {
       "instruction_id": "author-an-agent-skill",
       "path": "instructions/author-an-agent-skill.md",
       "sha256": "46e2454bccab6456c9435840c633bfcc65661a4fc5398ee244ebb1613711992b"
@@ -148,7 +175,7 @@
     {
       "instruction_id": "automate-enforceable-rules",
       "path": "instructions/automate-enforceable-rules.md",
-      "sha256": "3c86194bcabc4996da258d79c61dad717adec964e179163dd32e036dea89f36d"
+      "sha256": "c287ec0f0134ecbf3bf5e7928daf438bafe0cf85a369227c77a97f9492c8020d"
     },
     {
       "instruction_id": "avoid-performative-review-agreement",
@@ -156,9 +183,19 @@
       "sha256": "935dafeab3dfd3ffc834e61f279686878579b5efb0a8eeb4943eac8b7b4fd3ff"
     },
     {
+      "instruction_id": "avoid-type-assertions-in-test-data",
+      "path": "instructions/avoid-type-assertions-in-test-data.md",
+      "sha256": "a9031cf0a8fb773a7e2b0607c1d2e729604bcfbd11fce6d843e3abc7e49be42c"
+    },
+    {
       "instruction_id": "batch-same-shape-tasks",
       "path": "instructions/batch-same-shape-tasks.md",
       "sha256": "996be0d9fb2a03c3ef50e5ef7b4401d48f35458acc2086b2c622acf39779dfe7"
+    },
+    {
+      "instruction_id": "block-destructive-commands-with-a-hook",
+      "path": "instructions/block-destructive-commands-with-a-hook.md",
+      "sha256": "9ca67594ec03ada1524821dfb2ab8c265238477f22b6dd09efbe3a52fefc9ab7"
     },
     {
       "instruction_id": "build-a-project-verification-harness",
@@ -171,9 +208,59 @@
       "sha256": "2283a451cbc9145621bb507ff195bd7b10dcc9f31b0ac58d66a9a707f0615b79"
     },
     {
+      "instruction_id": "build-a-shareable-logic-demo",
+      "path": "instructions/build-a-shareable-logic-demo.md",
+      "sha256": "7cc83119df4f3e73d108ff5c533ee0487fbc7bca8d7c1fa7106412b1a25183a5"
+    },
+    {
+      "instruction_id": "build-a-tight-feedback-loop",
+      "path": "instructions/build-a-tight-feedback-loop.md",
+      "sha256": "adfd274d52c70a74946cbdd92708e728cea66a87abd587b37413c6e4c3345c36"
+    },
+    {
+      "instruction_id": "build-the-glossary-as-compressed-knowledge",
+      "path": "instructions/build-the-glossary-as-compressed-knowledge.md",
+      "sha256": "1eca1da4a4f43087c25a9177cc42c4c1999c20d23c2c06179081bd0466100e96"
+    },
+    {
+      "instruction_id": "build-toggleable-ui-variants",
+      "path": "instructions/build-toggleable-ui-variants.md",
+      "sha256": "7ad86b282e4b519f722d574c0c16ecd71137ee3b94313306807ed3c7d50475f7"
+    },
+    {
+      "instruction_id": "build-vertical-slices",
+      "path": "instructions/build-vertical-slices.md",
+      "sha256": "4a65a77cb369d128b3282fe4d3c8efeaa592b689d43b8bbfe12595b03a90d9f5"
+    },
+    {
+      "instruction_id": "capture-the-prototype-as-primary-source",
+      "path": "instructions/capture-the-prototype-as-primary-source.md",
+      "sha256": "9abf7d754d71e038f75adf54ac2b09b7658d7d26ade8623d4b85a798d79d71bd"
+    },
+    {
+      "instruction_id": "chart-decisions-not-deliverables",
+      "path": "instructions/chart-decisions-not-deliverables.md",
+      "sha256": "b8d846801e396160d0d708a3a82baba0bacafef931190746a34e4476cba61bc2"
+    },
+    {
+      "instruction_id": "check-redundancy-and-prior-rejections",
+      "path": "instructions/check-redundancy-and-prior-rejections.md",
+      "sha256": "df46c81b02210cdddf5d8def1c43eb87cf6120d5db93adf1f860e94ac216e7fd"
+    },
+    {
       "instruction_id": "check-requested-feature-usage",
       "path": "instructions/check-requested-feature-usage.md",
       "sha256": "0f8e699d34333691cbe036f0644a499498a913ebcde7b5f6164b9116b3df6639"
+    },
+    {
+      "instruction_id": "choose-invocation-mode",
+      "path": "instructions/choose-invocation-mode.md",
+      "sha256": "63cff5166bdff4ed82936fe693367555f43ed7ca7df6cf14a8c7f6b8e4f4a5c8"
+    },
+    {
+      "instruction_id": "choose-the-highest-test-seam",
+      "path": "instructions/choose-the-highest-test-seam.md",
+      "sha256": "8ad1b7bc0ce75f14c8d724affefbf8d1d5ac32dfc138e168aa241f6ad44b9608"
     },
     {
       "instruction_id": "choose-user-experience-over-implementation",
@@ -199,6 +286,11 @@
       "instruction_id": "classify-and-state-review-verdict",
       "path": "instructions/classify-and-state-review-verdict.md",
       "sha256": "527bfe2fac121bdf7dd570ef4dc00b9ab9cd880be55e5d28a089e87aef617084"
+    },
+    {
+      "instruction_id": "classify-merge-reversibility",
+      "path": "instructions/classify-merge-reversibility.md",
+      "sha256": "a545bddfd7db5b364062adaaab9be9fcfc7ceeeb30b6f0be4d7af0d1aeca4bcb"
     },
     {
       "instruction_id": "clean-up-integration-workspace",
@@ -228,7 +320,12 @@
     {
       "instruction_id": "coordinate-a-program-of-delegated-work",
       "path": "instructions/coordinate-a-program-of-delegated-work.md",
-      "sha256": "0f863ded9f574d134c4b878ae4b2c191f1a66fe8cc390ffb554015e1b0495632"
+      "sha256": "a92e5e5188834b389f05e1fc47c8cf7e8d549b8170527fa5ed2d6a7c7e124788"
+    },
+    {
+      "instruction_id": "curate-trusted-resources",
+      "path": "instructions/curate-trusted-resources.md",
+      "sha256": "2e7a4367158044dcffe7627a6d768301c5224e6ce0417c45d27b7cdb7f43aac8"
     },
     {
       "instruction_id": "debug-systematically",
@@ -236,9 +333,19 @@
       "sha256": "a513e246809870cc3cdbd9bc6fd49edc63e4da5b26e1d811f2f6d1eaa5a2cd3b"
     },
     {
+      "instruction_id": "decide-at-phase-boundaries",
+      "path": "instructions/decide-at-phase-boundaries.md",
+      "sha256": "67cc10dd62e8d4a24d73fc8730ab6fc3d8738c6893636507b87e92fc863b62e0"
+    },
+    {
       "instruction_id": "decide-whether-to-write-guidance",
       "path": "instructions/decide-whether-to-write-guidance.md",
       "sha256": "6efc58986bf41964c559f80d6a9d0c0f617f7dc18f0c188e0614725d75d18e59"
+    },
+    {
+      "instruction_id": "deepen-by-dependency-category",
+      "path": "instructions/deepen-by-dependency-category.md",
+      "sha256": "aae3b7fc0a86785adff53f71cfe83283c8208bf0d7e63260ef64f0569ed59821"
     },
     {
       "instruction_id": "delegate-subagent-work",
@@ -271,9 +378,34 @@
       "sha256": "cb0f77ff27404ab867da3fc312c06f0a6a675942a559530495180688fd469bed"
     },
     {
+      "instruction_id": "design-deep-modules",
+      "path": "instructions/design-deep-modules.md",
+      "sha256": "b530c063ea792193903d1cf49e7a54890e220ccd47560801a827febbb83dfc38"
+    },
+    {
+      "instruction_id": "design-for-mockability",
+      "path": "instructions/design-for-mockability.md",
+      "sha256": "3076f5eec441681b4514fddce220e2a082c9dfbfb877f15ea01046007ed08344"
+    },
+    {
       "instruction_id": "design-from-caller-usage",
       "path": "instructions/design-from-caller-usage.md",
       "sha256": "f1833d5879eb717616460a48b3fec78e05eb5b6ca1ec8d88fb2fba76975dcbb7"
+    },
+    {
+      "instruction_id": "design-it-twice-in-parallel",
+      "path": "instructions/design-it-twice-in-parallel.md",
+      "sha256": "08835280ebabacc427e256f4249e420a073528e40530ad26be606072efadca76"
+    },
+    {
+      "instruction_id": "design-lessons-for-retention",
+      "path": "instructions/design-lessons-for-retention.md",
+      "sha256": "6c58106150b49f72f3d7b9301cf90d9d36b3b17d4b09eaf09bb7b5276a9940d7"
+    },
+    {
+      "instruction_id": "design-testable-interfaces",
+      "path": "instructions/design-testable-interfaces.md",
+      "sha256": "56e42ff5d7d353989a9e480ba0ba6dd02ab2f4b1249ca5b397fe1db7e696ef84"
     },
     {
       "instruction_id": "diagnose-from-runtime-evidence",
@@ -284,6 +416,16 @@
       "instruction_id": "disclose-affected-environment",
       "path": "instructions/disclose-affected-environment.md",
       "sha256": "e88d9b99d9f950c8687c93995ac4e365225214684ee3383276e6e6be845e2687"
+    },
+    {
+      "instruction_id": "distinguish-fog-from-ticket",
+      "path": "instructions/distinguish-fog-from-ticket.md",
+      "sha256": "f28ae87ece07d8bed13b81546b677d0d7e34d9fdf01de226bdcb2da8ac1f840c"
+    },
+    {
+      "instruction_id": "enforce-package-boundaries-with-a-check",
+      "path": "instructions/enforce-package-boundaries-with-a-check.md",
+      "sha256": "34cc7615d9bceece621912241d5b140ac46da49b8b2584fad41cf5c0ec2d86dc"
     },
     {
       "instruction_id": "enforce-plan-completion-contract",
@@ -308,7 +450,7 @@
     {
       "instruction_id": "execute-plan-in-order",
       "path": "instructions/execute-plan-in-order.md",
-      "sha256": "eadc997eb747d71600663c8d5fcdf45ed222c4095832b2cbea4f3e847c297d06"
+      "sha256": "48fe18d529105fe7cb89ac9343b7ff286d83a2590ad405271c224b1c2119d995"
     },
     {
       "instruction_id": "explain-a-subsystem",
@@ -329,6 +471,11 @@
       "instruction_id": "format-quality-findings",
       "path": "instructions/format-quality-findings.md",
       "sha256": "8288c8ddcf6f6e6491250ce88d03fca7a666f6d4264aa65aedc8735f294c1ab6"
+    },
+    {
+      "instruction_id": "grill-in-rounds",
+      "path": "instructions/grill-in-rounds.md",
+      "sha256": "f8aa87be36b3837c95982a9fbeb3b0e1dab0febb6a5836f6002cc06fd9b27956"
     },
     {
       "instruction_id": "handle-environmental-cause",
@@ -376,6 +523,11 @@
       "sha256": "e95cb381d43f5d8f0fb3598ed8e4eddb40c1c4e685ee4151d7a55461a1c2580f"
     },
     {
+      "instruction_id": "instrument-one-variable-at-a-time",
+      "path": "instructions/instrument-one-variable-at-a-time.md",
+      "sha256": "e535fd3a6126d8fc8b8c631a41732d2179432fec9a0704fc471f9a812ec0b2f6"
+    },
+    {
       "instruction_id": "integrate-completed-work",
       "path": "instructions/integrate-completed-work.md",
       "sha256": "f9f3a45eaf6409b9adb80a4f22c015d394202080c07c9583f527431fbcf61197"
@@ -401,6 +553,11 @@
       "sha256": "ce8889e7a02d5d453b11a06bf67f4ccc150c3048f066855034c0d3fecb6cd3a3"
     },
     {
+      "instruction_id": "keep-a-long-running-goal-in-subagents",
+      "path": "instructions/keep-a-long-running-goal-in-subagents.md",
+      "sha256": "c720379f3eb623ba34c2dcfd22a272677de8e291017ca5aab57782b8b47673c4"
+    },
+    {
       "instruction_id": "keep-one-writer-per-branch",
       "path": "instructions/keep-one-writer-per-branch.md",
       "sha256": "41ac6c9d0c52cf803d0076498b3ff9fc341d80331e0d61952193775cb9f828c1"
@@ -409,6 +566,11 @@
       "instruction_id": "keep-review-read-only",
       "path": "instructions/keep-review-read-only.md",
       "sha256": "9560c05dca213987121bb3d41442f6ff444381df241187a4552fb0bbca5e928c"
+    },
+    {
+      "instruction_id": "keep-the-map-an-index",
+      "path": "instructions/keep-the-map-an-index.md",
+      "sha256": "725321d669d717aa14c07b632acb185c398c6dd7c7a4d16ea96925434ed52ea0"
     },
     {
       "instruction_id": "locate-verified-artifact",
@@ -461,6 +623,16 @@
       "sha256": "47e5f22aac450b47ebeeef08e262e4b92e8ec99f61bc7c882fd614edbf166438"
     },
     {
+      "instruction_id": "mine-fragments-before-structuring",
+      "path": "instructions/mine-fragments-before-structuring.md",
+      "sha256": "128d3f66971889107e44f7cd6740fdc25e8cf2773c850c1bc332d04ba46ec9c8"
+    },
+    {
+      "instruction_id": "minimise-the-reproduction",
+      "path": "instructions/minimise-the-reproduction.md",
+      "sha256": "619ecc5c61341789d258e4b31b743ec0a513fd45189741d62227e7c9910ad9da"
+    },
+    {
       "instruction_id": "minimize-code-surface",
       "path": "instructions/minimize-code-surface.md",
       "sha256": "417834433420b0abc7e12a859eae255b59cb8542f362c43cbf521281aa8671fe"
@@ -469,6 +641,11 @@
       "instruction_id": "minimize-reader-load",
       "path": "instructions/minimize-reader-load.md",
       "sha256": "886c796a38991a5eaf1ad5e34ae44ffdd77e67c13dfa3b00feaa840822c43005"
+    },
+    {
+      "instruction_id": "mock-only-system-boundaries",
+      "path": "instructions/mock-only-system-boundaries.md",
+      "sha256": "8659b3d73059385b4cb891c3e029c838a27f838f4513a8c563269c5296feda30"
     },
     {
       "instruction_id": "model-domain-in-structure",
@@ -493,7 +670,7 @@
     {
       "instruction_id": "optimize-guidance-triggers",
       "path": "instructions/optimize-guidance-triggers.md",
-      "sha256": "b6071a30f6eaf1067c0e9716bd0ca578c63f523d15c72b2897aa4dbeb676438c"
+      "sha256": "6c7ad03dbfdea345573e64d6b8126415842c551b393ded803bedc8cdba1d98ab"
     },
     {
       "instruction_id": "parallelize-independent-tasks",
@@ -503,7 +680,7 @@
     {
       "instruction_id": "pause-work-with-a-handoff",
       "path": "instructions/pause-work-with-a-handoff.md",
-      "sha256": "97fb159645638893c0d9bdcfc3c544c781501d0c4f5921d6711f2a8ea0b37d8c"
+      "sha256": "e4cfe88fc54edf36dad21773ffa57979e9fe234d9d35b743405c33603e9b59e3"
     },
     {
       "instruction_id": "play-back-understanding-in-chunks",
@@ -541,6 +718,11 @@
       "sha256": "b4a7ecdda63ddd38a6df5a3864328a910930b39407f4636833d58818f03608cf"
     },
     {
+      "instruction_id": "prototype-to-answer-a-question",
+      "path": "instructions/prototype-to-answer-a-question.md",
+      "sha256": "1942faeb41a4567db49cd86a24ce3cbe79daad81fb6ac170107587039ca3101a"
+    },
+    {
       "instruction_id": "prove-behavior-around-a-change",
       "path": "instructions/prove-behavior-around-a-change.md",
       "sha256": "d58921f1c83430d3bc85f206f512151927cf52960a3e8876e44dee7407971547"
@@ -566,6 +748,16 @@
       "sha256": "affed01991e0a9882f4708266733d22146f35b2f036030ab7d979f5d2b3caf52"
     },
     {
+      "instruction_id": "rank-falsifiable-hypotheses",
+      "path": "instructions/rank-falsifiable-hypotheses.md",
+      "sha256": "5bce28e87663bb53acf04157d3ccc30147382a028caf8f5b2fd98a734cdf821e"
+    },
+    {
+      "instruction_id": "re-pitch-in-plain-words",
+      "path": "instructions/re-pitch-in-plain-words.md",
+      "sha256": "6627a0467190869995aef9963329e91cb6f0fc3ceae5ec0ed224bbf12b8fcb2b"
+    },
+    {
       "instruction_id": "read-artifacts-without-overflow",
       "path": "instructions/read-artifacts-without-overflow.md",
       "sha256": "997e090b65da7b3e311b13e6b206f875cce72da888996946c785948fcf2d52b4"
@@ -576,9 +768,24 @@
       "sha256": "95eaa21234307f89dd56aff25f2e02460dfffe73040f0bd8da6abd750624debc"
     },
     {
+      "instruction_id": "record-decisions-as-adrs",
+      "path": "instructions/record-decisions-as-adrs.md",
+      "sha256": "0b18dc5f3432f535afa0fcb3558598a6c33a00aac61b0c63717778458739cab1"
+    },
+    {
       "instruction_id": "record-execution-rulings",
       "path": "instructions/record-execution-rulings.md",
       "sha256": "c042008c7d0ed7328a253948a5b78411eb88453a7ca4866bde1b3ff0c9cab7c7"
+    },
+    {
+      "instruction_id": "record-learning-when-understanding-is-shown",
+      "path": "instructions/record-learning-when-understanding-is-shown.md",
+      "sha256": "bffe1e5c9be2e432da35bdcc7bbb769e5dba97614fd9c61766b6b04751a04dd6"
+    },
+    {
+      "instruction_id": "record-rejected-requests-in-a-kb",
+      "path": "instructions/record-rejected-requests-in-a-kb.md",
+      "sha256": "2fd5f1c8eac0c81f6811d718b16bc24fa5741bf7a0280cc65deb555bb5d436bb"
     },
     {
       "instruction_id": "record-skipped-steps-with-reason",
@@ -626,14 +833,29 @@
       "sha256": "5c960a0ea16fa7eccad3003174472f65693db80f0b5002e31b5d79bce9d522f5"
     },
     {
+      "instruction_id": "research-from-primary-sources",
+      "path": "instructions/research-from-primary-sources.md",
+      "sha256": "ee1fa274e75f8a5712a8bdd2451996d43404fc86f2d214b9eaa3102c79b510cd"
+    },
+    {
       "instruction_id": "resume-plan-from-record",
       "path": "instructions/resume-plan-from-record.md",
       "sha256": "993a9e0d4c33fc34c697a6523382704b607b0ad5374a52c0697cd5d44286390a"
     },
     {
+      "instruction_id": "retro-the-agent-environment",
+      "path": "instructions/retro-the-agent-environment.md",
+      "sha256": "0a0c5bb43f28991ec2df560fa37d735a0a7ed2bc462f4b4d03c4d81e39fe9fdc"
+    },
+    {
       "instruction_id": "review-adversarially",
       "path": "instructions/review-adversarially.md",
       "sha256": "2760d52b108853b00dd1a199c0f9fe0af00398bd6e241047945a7de4b11ee64a"
+    },
+    {
+      "instruction_id": "review-along-separate-axes",
+      "path": "instructions/review-along-separate-axes.md",
+      "sha256": "35fdbb74a61805e5dc590c928fa5350aac4cd4a638e426bd6a015b2d4f007dd3"
     },
     {
       "instruction_id": "review-change-against-requirements",
@@ -706,6 +928,11 @@
       "sha256": "dd6efa9593233eff6b82cef68b2c8598323e45356893782e0404ba32d718575b"
     },
     {
+      "instruction_id": "separate-facts-from-decisions",
+      "path": "instructions/separate-facts-from-decisions.md",
+      "sha256": "fad6fecaed24b61a6c730a53087be662b6b639450dce67e7e53816e306f2cdec"
+    },
+    {
       "instruction_id": "separate-shared-state-before-serializing",
       "path": "instructions/separate-shared-state-before-serializing.md",
       "sha256": "3eecd5ad4855c5c3373ff23ce21565d9d874973a4cd95e7d13ce250f39b966c6"
@@ -716,9 +943,24 @@
       "sha256": "dd99e5d461a259543e036dcfad9cff8e458f75e7f8e9d3f181509de48027b283"
     },
     {
+      "instruction_id": "sequence-wide-refactors-expand-contract",
+      "path": "instructions/sequence-wide-refactors-expand-contract.md",
+      "sha256": "aa9e32c6a9c1ac430e4a67e1e33c4716e2e34b97e5fb88745da59a48843ce171"
+    },
+    {
       "instruction_id": "set-guidance-specificity",
       "path": "instructions/set-guidance-specificity.md",
       "sha256": "1b7a151d83f07e93fe5a5622193a80911a3a15fdddc0395e373da02a673cca64"
+    },
+    {
+      "instruction_id": "shape-paragraphs-around-grounded-concepts",
+      "path": "instructions/shape-paragraphs-around-grounded-concepts.md",
+      "sha256": "5488e23085e7010260f57e9d269d71e0e3a41b2601aa96192782cb0fb644d569"
+    },
+    {
+      "instruction_id": "sharpen-domain-language",
+      "path": "instructions/sharpen-domain-language.md",
+      "sha256": "d89e7401687f40c7d484a2a59414d6f2ef06b957074ad30098cb65a2aff115c3"
     },
     {
       "instruction_id": "simplify-design-when-tests-are-hard",
@@ -729,6 +971,11 @@
       "instruction_id": "size-and-gate-the-work",
       "path": "instructions/size-and-gate-the-work.md",
       "sha256": "82a4726a9c2dbb507b18d5894aee67ec4131539704a8138eb33641cd64a738ad"
+    },
+    {
+      "instruction_id": "spec-a-workflow-with-push-right",
+      "path": "instructions/spec-a-workflow-with-push-right.md",
+      "sha256": "a54be6a58d8ad255014fc58ae0644261b666e94cdf0e38050f838816c3a09572"
     },
     {
       "instruction_id": "specify-output-format",
@@ -763,12 +1010,22 @@
     {
       "instruction_id": "structure-and-compress-guidance",
       "path": "instructions/structure-and-compress-guidance.md",
-      "sha256": "6c08e61ee6e5cabfdc207fcd7d4081c202bafc8a318e92a1f692abb1db498479"
+      "sha256": "9327e3a8c0f514f3c141b0633a4e831ec268a962abd16fbe1850526a641c8ac5"
+    },
+    {
+      "instruction_id": "surface-deepening-opportunities",
+      "path": "instructions/surface-deepening-opportunities.md",
+      "sha256": "876b50088ce4bab929afb14fad5d1e61ab0831cd463d49b51c5b3a73a461fbad"
     },
     {
       "instruction_id": "take-over-in-flight-work",
       "path": "instructions/take-over-in-flight-work.md",
       "sha256": "38b9380bd219273a9c1dc30c5f80af17676c18e81c3940fab8997ed362bb6010"
+    },
+    {
+      "instruction_id": "teach-with-a-stateful-workspace",
+      "path": "instructions/teach-with-a-stateful-workspace.md",
+      "sha256": "34325c84ad02854ca28c68623c0aeca0942833064319dc4f59002a2dee985542"
     },
     {
       "instruction_id": "test-first-development",
@@ -796,9 +1053,19 @@
       "sha256": "ea41a08f1013c07fd96af7ca25c22b51ea50d0f49bb6d3e27e49c26309e4d7c2"
     },
     {
+      "instruction_id": "triage-into-a-state-machine",
+      "path": "instructions/triage-into-a-state-machine.md",
+      "sha256": "6819416dfcb878bc9b954758112196d2900c43da345bb4b41b1cb4b933a38b08"
+    },
+    {
       "instruction_id": "triage-review-findings-with-judgment",
       "path": "instructions/triage-review-findings-with-judgment.md",
       "sha256": "6a3a660c402609ba033187911911602cd5a1e02ccc35ae806f111ea5fb588430"
+    },
+    {
+      "instruction_id": "use-a-leading-word",
+      "path": "instructions/use-a-leading-word.md",
+      "sha256": "e4966af44f85abb2fa5685f5b2cfadddce378d3acb7027e563048c7012fa5ff3"
     },
     {
       "instruction_id": "validate-at-every-boundary",
@@ -814,6 +1081,11 @@
       "instruction_id": "verify-exported-evidence",
       "path": "instructions/verify-exported-evidence.md",
       "sha256": "50fbbc2e8d6cfdec0779c0143f1f4f17ff80ced7238a7eec897a04685a95518a"
+    },
+    {
+      "instruction_id": "verify-the-claim-before-triage",
+      "path": "instructions/verify-the-claim-before-triage.md",
+      "sha256": "398139f68469cced064bb51cb8de44ddfb1b2e354bcffbd03ba23e907f3237b2"
     },
     {
       "instruction_id": "verify-with-independent-lanes",
@@ -836,6 +1108,21 @@
       "sha256": "76e4bd15b0e68419e0f8ffe73ff09e7e68542f657315c3955c0758a2303b6144"
     },
     {
+      "instruction_id": "write-a-discovery-questionnaire",
+      "path": "instructions/write-a-discovery-questionnaire.md",
+      "sha256": "72f0358144971c0efe8e6a36c85415074e56786076ba08c9938c63962329925c"
+    },
+    {
+      "instruction_id": "write-a-durable-agent-brief",
+      "path": "instructions/write-a-durable-agent-brief.md",
+      "sha256": "f6131c210801f5a4ad78917cb086524ee58b747d844de4127502fa7ff2096f7a"
+    },
+    {
+      "instruction_id": "write-a-spec-from-synthesis",
+      "path": "instructions/write-a-spec-from-synthesis.md",
+      "sha256": "d57591bfc812f6bc821e2ef038d216b7cffa4d9f53bc4f24f4dd31294adea5f1"
+    },
+    {
       "instruction_id": "write-design-document",
       "path": "instructions/write-design-document.md",
       "sha256": "24f3abc6577646336d4eb7156b926e0b99479b5024a548ff46fb60831294f835"
@@ -843,7 +1130,7 @@
     {
       "instruction_id": "write-directive-rules",
       "path": "instructions/write-directive-rules.md",
-      "sha256": "3e65cce7d438b383c5bdf9ba08fd2637685b088dd5bea0516801688f1638e4ea"
+      "sha256": "29491d3a866a4aed21e65a36de1f544ea49ce8fb0f6bf5e3c21b6768898b6cf2"
     },
     {
       "instruction_id": "write-evidence-gated-program-plan",
@@ -863,7 +1150,12 @@
     {
       "instruction_id": "write-minimal-agent-guidance",
       "path": "instructions/write-minimal-agent-guidance.md",
-      "sha256": "cbb6af610a2f7b0979a4d4b74fda4054aef75f57ef541b8b73b2fec87e9a2752"
+      "sha256": "18c9443ef5cf8fd32631efaa7d55f8cb2803de4959b63f099280dc2a2a2f0af2"
+    },
+    {
+      "instruction_id": "write-one-beat-at-a-time",
+      "path": "instructions/write-one-beat-at-a-time.md",
+      "sha256": "0cfede4b6143dab267a2182559f863de1abba2b1b3fbdacfeeac6a716e5c31d1"
     },
     {
       "instruction_id": "write-plan-header-and-constraints",
@@ -871,9 +1163,19 @@
       "sha256": "8312fad5173e92e3c90267db8914494ace4f542f9172f679f3aa43525841e5b8"
     },
     {
+      "instruction_id": "write-pr-body-with-visual-evidence",
+      "path": "instructions/write-pr-body-with-visual-evidence.md",
+      "sha256": "453b7ba3c8ec2c860277a4a5a9d5fe655624664f5a5d754530e7d07dcbd1be28"
+    },
+    {
       "instruction_id": "write-report-in-plain-language",
       "path": "instructions/write-report-in-plain-language.md",
       "sha256": "39b238279856a6e9b8e2890631836c9743f73fc41a6862f27a45daf1c95391be"
+    },
+    {
+      "instruction_id": "write-steps-with-completion-criteria",
+      "path": "instructions/write-steps-with-completion-criteria.md",
+      "sha256": "ef2614a2220902ae516af341620bd7d83f9cfe927c1ee38f146a32f6efefa46d"
     },
     {
       "instruction_id": "write-technical-prose-to-a-standard",
@@ -883,7 +1185,17 @@
     {
       "instruction_id": "write-tests-that-catch-breaks",
       "path": "instructions/write-tests-that-catch-breaks.md",
-      "sha256": "7b0cb21a73d62ad1a3ad7fd7d7fba1cab0e2989bd37344210e66204c355b83d2"
+      "sha256": "dcaa8bb49220f9cd2d1dfa22ae9a2dd341b76506881e20e1d265d8d3d15f9f49"
+    },
+    {
+      "instruction_id": "write-tight-glossary-entries",
+      "path": "instructions/write-tight-glossary-entries.md",
+      "sha256": "ea7816e43ff5d0f219d4530e3eb67f88d76d0e613448a22b245dc46c9134af6d"
+    },
+    {
+      "instruction_id": "write-tracer-bullet-tickets",
+      "path": "instructions/write-tracer-bullet-tickets.md",
+      "sha256": "2e3b4051fbd87978b82b753c8b0435b5f65a7a26f4d49775bcabfd9dfaf1ee1c"
     }
   ]
 }

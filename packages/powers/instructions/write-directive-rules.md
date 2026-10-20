@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/persuasion-principles.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
+  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/writing-for-agents/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write mandatory rules as directives
@@ -40,3 +41,4 @@ Avoid liking for compliance: it conflicts with honest feedback culture and creat
 Use reciprocity sparingly; it can feel manipulative.
 Do not use all seven principles at once.
 The test: would this technique serve the user's genuine interests if they fully understood it?
+**Negation** is the failure mode beside this lever: steering by prohibition drags the forbidden behaviour into context and makes it _more_ available, not less. _Don't think of an elephant_, and the elephant is all there is; the negation is a weak modifier the strongly-activated concept overruns, so the ban half-reads as an instruction to do the thing. Prompt the **positive**: state the target behaviour so the banned one is never spoken. A prohibition earns its place only as a hard guardrail you cannot phrase positively; even then, pair it with the positive target so attention lands on what to do.

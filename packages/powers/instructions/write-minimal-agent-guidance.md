@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
+  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/writing-for-agents/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write the smallest guidance for the observed failure
@@ -38,3 +39,4 @@ Revise and re-test.
 Address the specific baseline failures identified in the test.
 Don't write contrived examples.
 Don't create fill-in-the-blank templates.
+Keep each meaning in a **single source of truth**: one authoritative place, so changing the behaviour is a one-place edit. **Duplication** costs maintenance and tokens, and inflates a meaning's prominence on the ladder past its real rank. The **environment** is a source of truth too (`package.json` scripts, config files, the directory layout, `--help` output), and a document that restates it is a **cache**: a copy of a lookup, earning its load only when the lookup is expensive. Cache what the agent cannot find by looking: the unwritten convention, the reason behind a choice, the gotcha no config confesses. Check every line for **relevance**: does it still bear on what the document does? Hunt **no-ops** sentence by sentence: an instruction the model already obeys by default pays load to say nothing. When a sentence fails, delete the whole sentence rather than trim words from it.

@@ -22,8 +22,9 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/orchestrate.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/autopilot-full.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/swarm/SKILL.md
+  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/implement-spec/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Coordinate a program of delegated work
@@ -57,3 +58,4 @@ Fan work across independent slices when parallelism buys coverage: each worker g
 Each worker reports PASS, ISSUES, or BLOCKED, and the parent returns one compact report with any gaps or dropouts.
 Close: reconcile every spawned agent to a terminal row, confirm the predicate on the real artifact, and confirm every landed PR has a verdict for its current head SHA.
 Encode recurring corrections into the standing orders or the brief template.
+The tickets are not a list of steps. They are a **task graph** with blocking relationships between them. This means there is always a **frontier** of tickets which are ready to be grabbed. Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the spec, tickets, research notes, and previous commits. Don't duplicate information already available via pointers. Implementer subagents should be run in the background where possible for maximum concurrency. Once an implementer subagent completes, merge its work with a merger subagent. If this changes the frontier of available tickets, kick off more implementer subagents to work on the new tickets. This allows for maximum concurrency.

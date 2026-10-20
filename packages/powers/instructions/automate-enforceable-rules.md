@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/anthropic-best-practices.md
+  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/retro/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Encode the rules that can be checked mechanically
@@ -41,3 +42,4 @@ Test the guidance before you deploy it, with no exceptions. The usual excuses â€
 Match the test to the kind of guidance: for a discipline-enforcing skill, ask academic questions about the rules, apply pressure scenarios, combine several pressures such as time, sunk cost and exhaustion, and identify the rationalizations to answer with explicit counters; the success criterion is that the rule is followed under maximum pressure. For a technique skill, test application scenarios, variation scenarios and missing information; the criterion is that the technique is applied to a new scenario. For a pattern skill, test recognition, application and counter-examples; the criterion is that the pattern is applied at the right moment and not applied when it does not fit. For a reference skill, test retrieval, application and gap coverage; the criterion is that the right information is found and applied.
 
 When an agent finds a new rationalization, add an explicit counter and re-test until the guidance holds.
+Classify the violation first: a **mechanical** one (a fixed syntactic pattern, a banned API, an import shape, a file-location rule) gets a deterministic check, full stop: a custom rule in the repo's own linter, a new pre-commit hook, or a new CI job, whichever the repo's language and existing guardrail make cheapest. Default to building the check over writing the rule. Reserve the coding standards file for genuine **judgement calls** (cross-file consistency, "matches the surrounding style," anything no guardrail could ever substitute for).

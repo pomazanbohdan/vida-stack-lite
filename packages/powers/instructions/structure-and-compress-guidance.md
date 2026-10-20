@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/anthropic-best-practices.md
+  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/writing-for-agents/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep guidance short and navigable
@@ -46,3 +47,4 @@ Challenge each piece: does the agent really need this explanation?
 Getting-started workflows aim for under 150 words each.
 Frequently loaded guidance aims for under 200 words total.
 Other guidance aims for under 500 words.
+A document is built from two content types: **steps** (the ordered actions the agent performs) and **reference** (definitions, rules, facts consulted on demand). The core decision is where each piece sits on the **information hierarchy**, a ladder ranked by how immediately the agent needs the material: in-file step, in-file reference, disclosed reference. Push too little down and the top bloats; push too much and you hide material the agent actually needs. **Progressive disclosure** is the move down the ladder so the top stays legible. Branching is the cleanest disclosure test: inline what every branch needs, and push behind a pointer what only some branches reach. **Co-location** is the within-file companion: keep a concept's definition, rules, and caveats under one heading rather than scattered. **Sprawl** is the failure mode: a document simply too long, even when every line is live and unique. The cure is the ladder: disclose reference behind pointers, and split by branch or sequence so each path carries only what it needs.
