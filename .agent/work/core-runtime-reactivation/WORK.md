@@ -1361,6 +1361,78 @@ Continue causal repairs in this same contour using the current inventory and
 genuine producer prerequisites. No unchanged full-suite retry or another contour
 is selected by this successful but nonexact run.
 
+### Native interrupted authority repair with admission history
+
+Continuation keeps the same active bun-host-state contour, with no other writer
+or numeric producer. The existing report-only inventory identifies the native
+interrupted branch of #repairWorkAuthority as uncovered. Blind Luna plan
+vida-native-unknown-authority-repair-plan.md selects the maintained Initial Source
+fixture: actual admission, supported Source continuation, native prewriter prefix,
+opaque protected writer reservation and issued Journal. No writer argv executes.
+The resulting started/null attempt and commit_unknown approval remain actual
+retained UNKNOWN; no archived state or synthetic original receipt is replayed.
+
+One new case exposes a product defect. After a legitimate Source continuation,
+repair's decodeWorkPreimage calls standalone checkedWork without retained
+admission history, so lifecycle validation rejects its valid historical artifact
+bindings. The first native failure at11.740s is in unknown-authority-native-first.log;
+its root /home/agent/.cache/vida-cloud-tooling/tmp/vida-initial-source-tODHeT remains.
+The fix checks the normalized WorkState shape first, then uses the same
+history-aware instance validator as ordinary Host reads. This is the only
+standalone-validation anomaly in that repair family; the other instance reads
+and postimages already use the canonical owner. No history is fabricated and
+ordinary readers still deny missing current authority. Preserve all existing
+exact issue/reservation/governance/owner/FIFO/CAS and UNKNOWN guards.
+
+The fresh private fixture strips only the paired authority fields from the exact
+native Work attempt, reservation receipt and authorization receipt. Both owned
+row changes bind their original revision/digest and require exactly one change.
+The persisted approval equals the native returned approval. Request-transition
+cannot perform that normalization. Missing history and semantically altered
+history with a recomputed valid checksum both deny without changing Host/Journal/
+governance or creating a repair operation; original history is restored exactly.
+A local SQLite trigger aborts the Journal update after the Work update attempt;
+the whole transaction and planned operation remain unchanged. Exact retry applies.
+A real close and configured-ledger connection reopen verifies resume, then
+semantic restore and retry. Execution, lease, ledger, issue/null observation,
+approval, governance and original Source history remain unchanged throughout.
+Every expected-UNKNOWN root remains, even on PASS; handles close and the test
+clock restores through the existing error-preserving cleanup owner.
+
+The shared stripFixtureAssignmentAuthority helper also serves the existing
+terminal-reservation test, preserving its assertions. The decoder adds a
+binding:null preimage control with the exact schema error before history access.
+Native related7cases pass156assertions in28.00s. The final narrower native case,
+after adding exact fixture-row CAS controls, passes60assertions in14.058s
+(15.55s command). Its root
+/home/agent/.cache/vida-cloud-tooling/tmp/vida-initial-source-qNcniV remains, along
+with earlier passing UNKNOWN roots X9yW6d and MYJk65 under the same tmp parent.
+Two existing public correction-generation callers pass60assertions in5.43s.
+Do not sum those overlapping target runs into a fabricated suite count.
+Strict142files, scoped type-aware lint and formatting pass. Initial static
+checks caught nullable-item, mutable-database and interface/record matcher
+mistakes before their corrected target runs; no hook is bypassed.
+
+Independent blind Luna plan/fix/final reviews are
+vida-native-unknown-authority-repair-plan.md,
+vida-authority-history-fix-plan-review.md and
+vida-authority-history-final-review.md in the maintained diagnostic directory.
+The final review finds no blocker. Root's final test-only CAS narrowing adds
+two exact affected-row assertions; product scope and ownership stay unchanged.
+The specification owns contextual history validation. TESTING explicitly records
+the genuine composite case's existing20s family bound, including setup/cleanup;
+default5s, product2s, coverage300s/stage330s, all other limits and budgets stay.
+No new product callable, schema, rights or allowance transfer is introduced.
+
+Fresh resource review keeps the new actual DB/engine/files and retained UNKNOWN
+entirely in the Host child's private root. The existing serial per-file clock
+scope is restored before handoff; no shared directory, background process or
+additional child is introduced. Host pin
+a9bb558e460bb944bf30dab5cbcd3d8ab524fe3cc17b55922a58ad1dd0dd588f;
+stopped-source pin, caller namespace, Linux provider, selection and two-worker
+review remain unchanged. Complete numbers still belong to95e7ff0 until one
+checked, normally published changed-input stage closes with matching SDK.
+
 ### Prior complete setup-scope coverage and Task-source unit packet
 
 The ea86777 stage at /workspace/contour-stage-41AWBl completes in200664.533ms,

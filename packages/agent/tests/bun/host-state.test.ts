@@ -2948,6 +2948,225 @@ test('correction-generation repair preserves terminal results and a quiescent jo
   expect(store.repairCorrectionGeneration({ ...request, mode: 'restore' })).toEqual(restored);
 });
 
+function stripFixtureAssignmentAuthority(value: unknown): void {
+  if (!isPlainRecord(value)) throw new Error('Assignment authority preimage is not a record.');
+  expect(Object.hasOwn(value, 'correction_generation')).toBe(true);
+  expect(Object.hasOwn(value, 'correction_authorization')).toBe(true);
+  Reflect.deleteProperty(value, 'correction_generation');
+  Reflect.deleteProperty(value, 'correction_authorization');
+}
+
+test(
+  'correction-generation repair preserves a genuinely issued unknown writer and its approval custody',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let clockHeld = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const f = await createInitialSourceWorkFixture({
+          onRoot: (created) => console.info('Unknown authority repair fixture root: ' + created),
+        });
+        fixture = f;
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        clockHeld = true;
+        await prepareInitialSourceFrontier(f, 'writer');
+        if (performance.now() >= deadline) throw new Error('Unknown repair preparation exceeded its case deadline');
+        const issued = await issueInitialSourceFixtureWriter(f);
+        if (performance.now() >= deadline) throw new Error('Unknown repair reservation exceeded its case deadline');
+        const host = initialSourceHostStore(f);
+        let db = initialSourceHostDatabase(f);
+        const before = readPresentSnapshot(host, f.identity);
+        const journal = host.readWorkSessionJournal(f.identity);
+        if (!journal) throw new Error('Unknown repair native Journal is missing');
+        const item = journal.state.items[0];
+        const reservation = item?.host_reservation;
+        if (!item || !reservation?.authorization)
+          throw new Error('Unknown repair protected native reservation is missing');
+        expect(journal.state.items).toHaveLength(1);
+        expect(item.issue_id).toBe(issued.writer.issue_id);
+        expect(item.observation).toBeNull();
+        expect(reservation.approvalAction).toBe('source.write');
+        expect(reservation.authorization.approval?.status).toBe('commit_unknown');
+        const approval = reservation.authorization.approval;
+        if (!approval) throw new Error('Unknown repair native approval is missing');
+        const approvalRow = db
+          .query<PayloadSqlRow, [string, string, string]>(
+            "SELECT payload FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind='approval' AND record_key=?",
+          )
+          .get(host.workspaceId, approval.store_id, canonicalJsonDigest(approval.binding));
+        if (!approvalRow) throw new Error('Unknown repair persisted approval is missing');
+        expect(canonicalJson(parseJsonRecord(approvalRow.payload))).toBe(canonicalJson(approval));
+        expect(reservation.receipt.attempt.attempt_id).toBe(issued.hostAttemptId);
+        expect(reservation.receipt.attempt).toMatchObject({
+          status: 'started',
+          result: null,
+          result_digest: null,
+          reconciliation: null,
+        });
+        expect(reservation.authorization.receipt.attempt).toEqual(reservation.receipt.attempt);
+        expect(
+          before.work.execution.assignment_attempts.find((attempt) => attempt.attempt_id === issued.hostAttemptId),
+        ).toEqual(reservation.receipt.attempt);
+        const legacyWork = parseJsonRecord(canonicalJson(before.work));
+        const legacyJournal = parseJsonRecord(canonicalJson(journal.state));
+        const legacyAttempts = arrayAt(recordAt(legacyWork, 'execution'), 'assignment_attempts').filter(
+          (attempt) => isPlainRecord(attempt) && attempt.attempt_id === issued.hostAttemptId,
+        );
+        expect(legacyAttempts).toHaveLength(1);
+        stripFixtureAssignmentAuthority(firstOf(legacyAttempts, 'unknown repair assignment'));
+        const rawItem = firstOf(arrayAt(legacyJournal, 'items'), 'unknown repair Journal item');
+        if (!isPlainRecord(rawItem)) throw new Error('Unknown repair Journal item is not a record');
+        const rawReservation = recordAt(rawItem, 'host_reservation');
+        stripFixtureAssignmentAuthority(recordAt(rawReservation, 'receipt').attempt);
+        stripFixtureAssignmentAuthority(recordAt(recordAt(rawReservation, 'authorization'), 'receipt').attempt);
+        expect(
+          db
+            .query(
+              "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND revision=? AND digest=?",
+            )
+            .run(
+              canonicalJson(legacyWork),
+              canonicalJsonDigest(legacyWork),
+              host.workspaceId,
+              before.workVersion.revision,
+              before.workVersion.digest,
+            ).changes,
+        ).toBe(1);
+        expect(
+          db
+            .query(
+              'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND revision=? AND digest=?',
+            )
+            .run(
+              canonicalJson(legacyJournal),
+              canonicalJsonDigest(legacyJournal),
+              host.workspaceId,
+              f.identity.work_id,
+              journal.version.revision,
+              journal.version.digest,
+            ).changes,
+        ).toBe(1);
+        const retained = readFixtureHostRows(db);
+        const governance = () =>
+          db.query('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key').all();
+        const retainedGovernance = governance();
+        expect(retainedGovernance.length).toBeGreaterThan(0);
+        expect(() => host.readHostStateSnapshot(f.identity)).toThrow('work record must match current WorkState/v1');
+        const request = { operationId: 'native-unknown-authority-repair' };
+        expect(() => host.repairRequestTransitionFields({ ...request, mode: 'inspect' })).toThrow(
+          'request transition cannot repair assignment authority',
+        );
+        const history = () =>
+          db
+            .query<{ payload: string; digest: string }, [string, string]>(
+              'SELECT payload,digest FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
+            )
+            .get(host.workspaceId, f.identity.work_id);
+        const retainedHistory = history();
+        if (!retainedHistory) throw new Error('Unknown repair native initial Source history is missing');
+        for (const kind of ['missing', 'changed'] as const) {
+          if (kind === 'missing')
+            db.query(
+              'DELETE FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
+            ).run(host.workspaceId, f.identity.work_id);
+          else {
+            const changed = parseJsonRecord(retainedHistory.payload);
+            recordAt(recordAt(changed, 'successor_work'), 'binding').work_source_revision = 'f'.repeat(64);
+            db.query(
+              'UPDATE agent_host_initial_source_continuation SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
+            ).run(canonicalJson(changed), canonicalJsonDigest(changed), host.workspaceId, f.identity.work_id);
+          }
+          try {
+            expect(() => host.repairCorrectionGeneration({ ...request, mode: 'inspect' })).toThrow();
+            expect(readFixtureHostRows(db)).toEqual(retained);
+            expect(governance()).toEqual(retainedGovernance);
+            expect(
+              db.query("SELECT name FROM sqlite_master WHERE name='agent_host_work_state_repair'").get(),
+            ).toBeNull();
+          } finally {
+            db.query(
+              'INSERT OR REPLACE INTO agent_host_initial_source_continuation (workspace_id,work_id,attempt,payload,digest) VALUES(?,?,1,?,?)',
+            ).run(host.workspaceId, f.identity.work_id, retainedHistory.payload, retainedHistory.digest);
+          }
+          expect(history()).toEqual(retainedHistory);
+        }
+        const inspected = host.repairCorrectionGeneration({ ...request, mode: 'inspect' });
+        expect(inspected.changed_work).toHaveLength(1);
+        expect(inspected.changed_journals).toBe(1);
+        expect(readFixtureHostRows(db)).toEqual(retained);
+        expect(governance()).toEqual(retainedGovernance);
+        const planned = host.repairCorrectionGeneration({ ...request, mode: 'plan', actor: 'fixture:unknown-repair' });
+        expect(planned.status).toBe('planned');
+        expect(readFixtureHostRows(db)).toEqual(retained);
+        const repairRows = () =>
+          db
+            .query('SELECT * FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?')
+            .all(host.workspaceId, request.operationId);
+        const retainedRepair = repairRows();
+        db.exec(
+          "CREATE TEMP TRIGGER deny_unknown_repair_journal BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT, 'controlled unknown repair journal failure'); END",
+        );
+        try {
+          expect(() => host.repairCorrectionGeneration({ ...request, mode: 'apply' })).toThrow(
+            'controlled unknown repair journal failure',
+          );
+          expect(readFixtureHostRows(db)).toEqual(retained);
+          expect(governance()).toEqual(retainedGovernance);
+          expect(history()).toEqual(retainedHistory);
+          expect(repairRows()).toEqual(retainedRepair);
+        } finally {
+          db.exec('DROP TRIGGER deny_unknown_repair_journal');
+        }
+        const applied = host.repairCorrectionGeneration({ ...request, mode: 'apply' });
+        expect(applied.status).toBe('applied');
+        const after = readPresentSnapshot(host, f.identity);
+        expect(after.work.execution).toEqual(before.work.execution);
+        expect(after.work.lease).toEqual(before.work.lease);
+        expect(after.ledger).toEqual(before.ledger);
+        expect(after.workVersion.revision).toBe(before.workVersion.revision + 1);
+        expect(host.readWorkSessionJournal(f.identity)?.state).toEqual(journal.state);
+        expect(governance()).toEqual(retainedGovernance);
+        await f.close();
+        f.ledger = openConfiguredMastraSessionLedger(f.root);
+        f.database = f.ledger.sessionProducerBinding().database;
+        f.store = f.ledger.hostState;
+        db = initialSourceHostDatabase(f);
+        const reopened = initialSourceHostStore(f);
+        expect(reopened.readHostStateSnapshot(f.identity)).toEqual(after);
+        expect(reopened.repairCorrectionGeneration({ ...request, mode: 'resume' })).toEqual(applied);
+        const restored = reopened.repairCorrectionGeneration({ ...request, mode: 'restore' });
+        expect(restored.status).toBe('restored');
+        const final = readPresentSnapshot(reopened, f.identity);
+        expect(final.work.execution).toEqual(before.work.execution);
+        expect(final.work.lease).toEqual(before.work.lease);
+        expect(final.ledger).toEqual(before.ledger);
+        expect(reopened.readWorkSessionJournal(f.identity)?.state).toEqual(journal.state);
+        expect(governance()).toEqual(retainedGovernance);
+        expect(history()).toEqual(retainedHistory);
+        expect(reopened.repairCorrectionGeneration({ ...request, mode: 'restore' })).toEqual(restored);
+        if (performance.now() >= deadline) throw new Error('Unknown repair body exceeded its case deadline');
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (fixture) await fixture.close();
+          },
+          () => {
+            if (clockHeld) setSystemTime();
+          },
+          'Unknown authority repair clock restoration',
+        );
+        if (fixture) console.error('Expected UNKNOWN authority repair fixture retained: ' + fixture.root);
+        if (performance.now() >= deadline) throw new Error('Unknown repair cleanup exceeded its case deadline');
+      },
+      'Unknown authority repair fixture',
+    );
+  },
+  // Real admission, native prewriter prefix and protected reservation precede the bounded repair.
+  failedFinalHostCaseTimeoutMs,
+);
+
 // Real writer/report preparation supplies terminal reservation receipts for both persisted rows.
 test(
   'correction-generation repair atomically normalizes genuine terminal Host and Journal receipts',
@@ -2970,15 +3189,8 @@ test(
       ).toBe(true);
       const legacyWork = parseJsonRecord(canonicalJson(before.work));
       const legacyJournal = parseJsonRecord(canonicalJson(journal.state));
-      const stripAuthority = (value: unknown) => {
-        if (!isPlainRecord(value)) throw new Error('Terminal authority preimage is not a record.');
-        expect(Object.hasOwn(value, 'correction_generation')).toBe(true);
-        expect(Object.hasOwn(value, 'correction_authorization')).toBe(true);
-        Reflect.deleteProperty(value, 'correction_generation');
-        Reflect.deleteProperty(value, 'correction_authorization');
-      };
       const execution = recordAt(legacyWork, 'execution');
-      for (const attempt of arrayAt(execution, 'assignment_attempts')) stripAuthority(attempt);
+      for (const attempt of arrayAt(execution, 'assignment_attempts')) stripFixtureAssignmentAuthority(attempt);
       legacyWork.lease = null;
       execution.status = 'suspended';
       const releasedLedger: CoordinationLedger = {
@@ -3002,9 +3214,9 @@ test(
         if (!isPlainRecord(item)) throw new Error('Terminal repair item is not a record.');
         if (!item.host_reservation) continue;
         const reservation = recordAt(item, 'host_reservation');
-        stripAuthority(recordAt(reservation, 'receipt').attempt);
+        stripFixtureAssignmentAuthority(recordAt(reservation, 'receipt').attempt);
         if (reservation.authorization)
-          stripAuthority(recordAt(recordAt(reservation, 'authorization'), 'receipt').attempt);
+          stripFixtureAssignmentAuthority(recordAt(recordAt(reservation, 'authorization'), 'receipt').attempt);
         reservations++;
       }
       expect(reservations).toBeGreaterThan(0);
@@ -3095,6 +3307,10 @@ test('stored repair decoder rejects malformed changes, foreign identity and extr
   const changes: readonly unknown[] = body.changes;
   const first = changes[0];
   if (!isPlainRecord(first)) throw Error('Frozen repair change missing');
+  const malformedBinding = {
+    ...body,
+    changes: [{ ...first, before: { ...recordAt(first, 'before'), binding: null } }],
+  };
   const variants = [
     null,
     { ...body, changes: {} },
@@ -3102,6 +3318,7 @@ test('stored repair decoder rejects malformed changes, foreign identity and extr
     { ...body, extra: true },
     { ...body, changes: [{ ...first, before: null }] },
     { ...body, changes: [{ ...first, identity: { ...identity, work_id: 'foreign' } }] },
+    malformedBinding,
   ];
   for (const candidate of variants) {
     const payload = JSON.stringify(candidate);
@@ -3111,7 +3328,9 @@ test('stored repair decoder rejects malformed changes, foreign identity and extr
         'UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=?',
       )
       .run(payload, digest, workspace, 'decoder-regression');
-    expect(() => store.repairRequestTransitionFields({ mode: 'apply', operationId: 'decoder-regression' })).toThrow();
+    expect(() => store.repairRequestTransitionFields({ mode: 'apply', operationId: 'decoder-regression' })).toThrow(
+      candidate === malformedBinding ? 'work record must match current WorkState/v1' : undefined,
+    );
     expect(store.readHostStateSnapshot(identity)).toEqual(original);
     expect(query.get(workspace, 'decoder-regression')).toEqual({ payload, digest });
   }

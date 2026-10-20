@@ -10194,7 +10194,9 @@ export class HostStateStore {
           );
           return hasGeneration ? attempt : { ...attempt, correction_generation: 0, correction_authorization: null };
         });
-        checkedWork({ ...candidate, execution: { ...candidate.execution, assignment_attempts: normalized } });
+        const current = { ...candidate, execution: { ...candidate.execution, assignment_attempts: normalized } };
+        requireState(validateWork(current), 'work record must match current WorkState/v1');
+        this.#checkedWork(current);
         return candidate as WorkRepairPreimage;
       };
       const journalItems = (state: JournalRepairPreimage) => [

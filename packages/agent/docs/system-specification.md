@@ -2355,8 +2355,13 @@ Repair readers decode stored JSON as bounded records. Work and journal
 beforeimages have a repair-only representation; they are not current execution
 state. Validate a separate normalized copy, and retain the exact raw beforeimage.
 Only correction-generation repair can supply missing paired assignment authority.
-Request-transition repair cannot change that authority. Validate the exact frozen
-transformation before plan retry, applied resume or restore can return. Check
+Request-transition repair cannot change that authority. Check the WorkState
+shape before looking up persisted admission history, then validate the
+normalized copy through the same history-aware owner as ordinary Host reads.
+Accepted lifecycle artifacts may retain their verified prior Source binding;
+missing or altered continuation history still denies repair without writes.
+Validate the exact frozen transformation before plan retry, applied resume or
+restore can return. Check
 operation/change/row identity, scalar fields, status-dependent fields and the
 existing dependency CAS. At matching planned dependencies, the frozen Work and
 journal change sets must equal the complete derived correction set. Applied

@@ -2488,6 +2488,17 @@ Typed passing reports are synthetic
 caller-report inputs and do not establish native test execution or Runtime
 acceptance. The separate public CLI preparation case remains intact.
 
+The Host correction-generation started-UNKNOWN integration case uses the existing
+20s composite bound. It includes real admission, Initial Source continuation,
+native prewriter preparation, protected writer reservation/issue, history denials,
+atomic rollback, apply, connection reopen, resume, restore and cleanup. Its fresh
+setup/inspect failure measured11.740s and the final corrected case14.058s.
+Retain the real issued action, approval and unobserved outcome; execute no writer
+argv or archived attempt. Keep the fresh root even on PASS. This explicit case
+allowance changes no existing timeout, default5s, product2s target or300s/330s
+coverage/stage envelope. It establishes functional repair, not outcome settlement
+or power-loss durability.
+
 Initialization replacement-effect contention reuses the existing fresh-module
 fixture for both injected errors and the real CAS reclaim guard. The real mode
 delegates the original typed arguments to `replaceAtomicAsync`, checks one call,
