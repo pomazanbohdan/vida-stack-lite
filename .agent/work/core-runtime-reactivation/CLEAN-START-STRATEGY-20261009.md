@@ -56,6 +56,14 @@ Focused2PASS33assertions, strict168-file checks and the complete52c5b2b stage pa
 retain the same assertions, native rollback, live freshness, private roots and20s
 bounds. Continue from the refreshed70-function/685-arm same-contour inventory.
 
+The next checked packet extends the same heartbeat and held-maintenance cases:
+native peer admission with the shared Ledger CAS, explicit FIFO guard preimages
+with exact restoration, and terminal snapshot reads under the real held fence.
+Focused2PASS63assertions and strict168-file checks pass; independent blind Luna
+review finds no blocker. Keep the same two serial children, private roots and5s
+case limits. Its complete matching SDK/image/stage remains pending; do not claim
+numeric gains from the focused checks. Failed fixture logs/roots remain retained.
+
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
 setup. Keep original roots/logs and the unvalidated patch. Resolve the setup cost

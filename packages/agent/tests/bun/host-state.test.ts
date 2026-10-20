@@ -82,7 +82,11 @@ import type {
 } from '../../src/host-state.ts';
 import type { MastraSessionLedgerSnapshot } from '../../src/orchestration/persistent-session-handoff.ts';
 import { validateHostOperationReservation } from '../../src/governance/edictum-boundary.ts';
-import { validateCoordinationLedgerV1 } from '../../src/contracts/envelopes.ts';
+import {
+  coordinationLedgerJson,
+  coordinationLedgerDigest,
+  validateCoordinationLedgerV1,
+} from '../../src/contracts/envelopes.ts';
 import { validateLifecycleAggregate } from '../../src/lifecycle/lifecycle-state.ts';
 import type {
   RuntimeCodeRebindRequest,
@@ -5118,6 +5122,11 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
     lease: clone(stateLease),
   });
   state = readPresentSnapshot(store, identity);
+  const peerIdentity = { ...identity, work_id: 'heartbeat-peer' };
+  const peerSeed = includeExistingLedger(currentConfigHostFixture('heartbeat-peer', 'file:src/peer.ts'), state.ledger);
+  peerSeed.expectedLedger = state.ledgerVersion;
+  const peer = commitHostState(peerSeed);
+  state = readPresentSnapshot(store, identity);
   const journal = issuedCurrentWorkflowJournal().journal;
   const journalBefore = store.readWorkSessionJournal(identity);
   const verifyCurrent = mock(() => {});
@@ -5132,6 +5141,97 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
     expectedMaintenanceGeneration: state.maintenanceGeneration,
     verifyCurrent,
   };
+  const ledgerRow = requiredValue(
+    database
+      .query<RevisionPayloadDigestSqlRow, [string]>(
+        "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='ledger' AND id='shared'",
+      )
+      .get(workspace),
+    'heartbeat ledger beforeimage',
+  );
+  const replaceLedger = database.query(
+    "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND id='shared' AND revision=? AND payload=? AND digest=?",
+  );
+  for (const [name, earlier, resource, reachesAuthority] of [
+    ['earlier disjoint', true, 'file:src/other.ts', true],
+    ['later overlap', false, 'file:src/task.ts', true],
+    ['earlier overlap', true, 'file:src/task.ts', false],
+  ] as const) {
+    const controlled = mutableCoordinationLedger(state.ledger);
+    controlled.revision = ledgerRow.revision + 1;
+    controlled.next_sequence += 2;
+    for (const ticket of controlled.tickets) ticket.sequence++;
+    const sourceTicket = firstTicket(controlled);
+    controlled.tickets.push({
+      ...sourceTicket,
+      ticket_id: 'heartbeat-queued',
+      work_id: 'queued-heartbeat',
+      thread_id: 'queued-thread',
+      sequence: earlier ? 1 : state.ledger.next_sequence + 1,
+      status: 'queued',
+      exclusive_resources: [resource],
+      active_resources: [],
+      blocked_resources: [],
+      claim_ids: [],
+      expires_at: null,
+    });
+    expect(validateCoordinationLedgerV1(controlled).ok).toBe(true);
+    const payload = coordinationLedgerJson(controlled),
+      digest = coordinationLedgerDigest(controlled);
+    expect(
+      replaceLedger.run(
+        controlled.revision,
+        payload,
+        digest,
+        workspace,
+        ledgerRow.revision,
+        ledgerRow.payload,
+        ledgerRow.digest,
+      ).changes,
+    ).toBe(1);
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      const before = readFixtureHostRows(database);
+      const authorityDenial = new Error('fixture heartbeat current authority reached: ' + name);
+      const verify = mock(() => {
+        throw authorityDenial;
+      });
+      expect(() =>
+        store.renewActiveLocalLease({
+          ...request,
+          expectedLedger: { revision: controlled.revision, digest },
+          verifyCurrent: verify,
+        }),
+      ).toThrow(reachesAuthority ? authorityDenial : 'lease renewal conflicts with earlier FIFO ticket');
+      expect(verify).toHaveBeenCalledTimes(reachesAuthority ? 1 : 0);
+      expect(readFixtureHostRows(database)).toEqual(before);
+      expect(store.readWorkSessionJournal(identity)).toEqual(journalBefore);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            if (
+              replaceLedger.run(
+                ledgerRow.revision,
+                ledgerRow.payload,
+                ledgerRow.digest,
+                workspace,
+                controlled.revision,
+                payload,
+                digest,
+              ).changes !== 1
+            )
+              throw new Error('Heartbeat ledger fixture exact restoration changed.');
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  }
+  expect(store.readHostStateSnapshot(identity)).toEqual(state);
   expect(() =>
     store.renewActiveLocalLease({
       ...request,
@@ -5147,6 +5247,15 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
   expect(verifyCurrent).toHaveBeenCalledTimes(1);
   expect(renewed.work.lease).toEqual(state.work.lease);
   expect(renewed.work.execution.assignment_attempts).toEqual(state.work.execution.assignment_attempts);
+  const peerAfter = store.readHostStateSnapshot(peerIdentity);
+  expect(peerAfter.work).toEqual(peer.work);
+  expect(peerAfter.workVersion).toEqual(peer.workVersion);
+  expect(renewed.ledger.tickets.find((ticket) => ticket.work_id === peerIdentity.work_id)).toEqual(
+    peer.ledger?.tickets.find((ticket) => ticket.work_id === peerIdentity.work_id),
+  );
+  expect(renewed.ledger.claims.find((claim) => claim.work_id === peerIdentity.work_id)).toEqual(
+    peer.ledger?.claims.find((claim) => claim.work_id === peerIdentity.work_id),
+  );
   expect(firstOf(renewed.work.execution.assignment_attempts, 'renewed assignment attempt').status).toBe('started');
   expect(firstOf(renewed.work.execution.assignment_attempts, 'renewed assignment attempt').attempt_id).toBe(
     started.attempt.attempt_id,
@@ -8002,6 +8111,8 @@ describe('host-owned durable maintenance fence', () => {
     expect(receipt.fence.status).toBe('held');
   });
   test('held-fence inspection reads with the exact receipt and keeps nested Host mutations denied', async () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const deadline = performance.now() + 5_000;
     const checked = maintenanceStore();
     const seed = fixture();
     quiesceImportedState([seed.nextWork], seed.nextLedger);
@@ -8020,10 +8131,39 @@ describe('host-owned durable maintenance fence', () => {
     });
 
     expect(observed).toEqual(saved.workVersion);
+    const terminal = { ...saved, maintenanceGeneration: receipt.fence.generation };
+    const hostRows = database.query<HostStateSqlRow, []>(
+      'SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state ORDER BY workspace_id,kind,id',
+    );
+    const retainedRows = hostRows.all();
+    expect(checked.readTerminalHostStateSnapshot(identity, receipt.fence)).toEqual(terminal);
+    expect(() => checked.readHostStateSnapshot(identity)).toThrow('working access blocked by maintenance fence');
+    expect(() =>
+      checked.readTerminalHostStateSnapshot(identity, { ...receipt.fence, generation: receipt.fence.generation + 1 }),
+    ).toThrow('terminal maintenance snapshot drift');
+    const denial = new Error('fixture held inspection failed');
+    expect(() =>
+      checked.withMaintenanceInspection(receipt, () => {
+        throw denial;
+      }),
+    ).toThrow(denial);
+    database
+      .transaction(() => {
+        expect(() => checked.readHostStateSnapshot(identity)).toThrow('nested host state transaction forbidden');
+      })
+      .deferred();
+    expect(checked.readTerminalHostStateSnapshot(identity, receipt.fence)).toEqual(terminal);
+    expect(hostRows.all()).toEqual(retainedRows);
     expect(database.query<ScalarCountRow, []>('SELECT count(*) AS count FROM agent_host_governance').get()?.count).toBe(
       0,
     );
     await checked.releaseMaintenanceFence(receipt);
+    expect(() => checked.readTerminalHostStateSnapshot(identity, receipt.fence)).toThrow(
+      'terminal maintenance snapshot drift',
+    );
+    expect(checked.readTerminalHostStateSnapshot(identity, checked.readMaintenanceFence())).toEqual(terminal);
+    if (performance.now() >= deadline) throw new Error('Host terminal snapshot fixture exceeded its case deadline');
+    preserveHostFixtureRoot = false;
   });
   test('held-fence inspection rejects foreign or stale receipts and always clears a failed scope', async () => {
     const checked = maintenanceStore();

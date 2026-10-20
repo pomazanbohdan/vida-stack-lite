@@ -290,6 +290,22 @@ every producer fence, current-version check and deterministic rebuild fresh.
 
 ### Failed prewriter recovery
 
+The live-heartbeat case admits an independent active peer with the actual shared
+ledger CAS version and proves its Work, ticket and claim survive renewal. Its
+validator-accepted queued ledger controls distinguish earlier disjoint, later
+overlapping and earlier overlapping intents: the first two reach current-authority
+verification, the last denies before it. Exact row beforeimages and exact-CAS
+restoration retain Host/Journal state on every denial. These injected preimages
+prove guard behavior, not native queue admission. Keep the same private root and5s
+case bound, with retention armed before setup and cleared only after success.
+
+The held-maintenance inspection case checks terminal snapshot reads outside the
+inspection transaction, under the exact held receipt and suspended closed ownership.
+Ordinary reads and nested transactions remain denied. Compare actual Host rows
+without assuming a Journal table exists; preserve wrong-generation, thrown-scope
+and released-receipt denials and the supported post-release read. Keep the5s
+monotonic deadline and failed-root retention.
+
 Use the Host cases in `tests/bun/host-state.test.ts` for owner recovery and
 atomic failed-wave correction, with public CLI/reader cases in
 `tests/delivered-work-continuation.test.ts`. These are development behavior checks. They do not

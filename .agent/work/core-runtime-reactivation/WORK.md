@@ -126,6 +126,36 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
+### Checked heartbeat and held-fence packet; numeric stage pending
+
+The same existing heartbeat case now admits a genuine independent active peer
+with the current shared Ledger CAS, then checks exact peer Work, ticket and claim
+preservation. Three validator-accepted synthetic queued ledger preimages test
+earlier-disjoint, later-overlapping and earlier-overlapping FIFO ordering. The
+first two reach a throwing current-authority verifier; the third denies before
+it. Each preserves exact Host/Journal rows and restores revision/payload/digest
+with one exact CAS in owned cleanup. This is renewal guard proof, not native
+queue admission or Source authorization. No new fixture or test case is added.
+
+The existing held-fence inspection case reads the terminal suspended snapshot
+outside its inspection transaction with the exact maintenance receipt. Wrong
+generation, ordinary read, failed inspection scope and released-receipt controls
+remain denied; a supported released-fence read succeeds. One prepared Host-row
+query supplies before/after equality without requiring a nonexistent Journal
+table. Both cases arm failed-root retention at entry and clear it only after
+complete success within their unchanged5s monotonic deadlines.
+
+Initial development failures were invalid fixture prerequisites, not product
+defects: missing expectedLedger for peer admission and an oracle assuming a
+Journal table. The strict compiler also caught two missing canonical Ledger
+imports. Original heartbeat-terminal-focused-1.log and typecheck-1.log remain
+in focused diagnostics, with retained failed roots host-state-zhu4ON and
+host-state-Rz1pxR under the host tooling tmp directory. They are never replayed.
+Corrected focused2PASS63assertions, strict168-file TypeScript and configured lint
+pass. Blind Luna finds no actionable blocker; heartbeat-terminal-review.md is
+retained. Exact Host test pin is refreshed after formatting; full numeric gains,
+matching SDK/image custody and contour closure remain pending.
+
 ### Failed custody stage and recovery-case balance
 
 Source ca2d456c777aab5197b33a350cc1631418448612 ran once in
@@ -248,8 +278,8 @@ are isolated by the separate serial children. Image tracked inputs/dependencies
 stay read-only; package `.tmp` and coverage remain their already permitted outputs.
 The parent fences installs, Git changes, indexing and additional producers.
 
-The measured reviewed Host file digest is
-`e3549de57902d9227d223e863201e2d7dd8c2bfd08be99ad8ef0bd3a0fbfd191`;
+The current reviewed Host file digest is
+`6d106f2cc7c0fd29228d6b6ac13c4bb1847ac2b24b21d3deedc20116503f18a9`;
 stopped-source remains
 `a414b790fea1381ffb425552a1f1b9ae29ad00f2998491a44bb8b7d6d45e9037`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
@@ -257,7 +287,8 @@ ownership. The expired-lease case's peer/waiter use that same unique root and sh
 fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
 namespace or shared-config write is admitted. The focused pin control passes
 10assertions. The complete matching-image stage above establishes capture, process/group
-closure and attributable merged counters for these exact bytes. It remains nonexact. The300s
+closure and attributable merged counters for52c5b2b; the new reviewed test pin
+still needs its matching stage. Both remain distinct from exact closure. The300s
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.
 
@@ -280,15 +311,18 @@ focused diagnostics. This compaction changes no executable policy or result.
 
 ## Owners and acceptance boundaries
 
-The refreshed11:38:43–14:38:43UTC audit on2026-10-20 reuses the prior bounded
-inventory and three known later stage logs, without a directory scan. Its six
-complete Source-bound observations move fromF1019/L4446/S4715/B4798 to
-F1051/L4647/S4921/B4948: +32F/+201L/+206S/+150B between the first and last
-in-window observations. None closes the contour. The retained
-`three-hour-receipts-20261020-1440.json` states its log-mtime basis; it is not
-complete session/tool/token telemetry. Current free bytes observed once at14:32
-are5767102464durable and9401090048tmpfs; the unchanged2147483648durable floor
-has3619618816headroom. No new resource GAP or deletion candidate is established.
+The refreshed12:43:08–15:43:08UTC audit on2026-10-20 reuses the prior bounded
+inventory and three explicitly known later logs, without a directory scan. It
+contains six complete published Source-bound observations and one failed stage
+with unknown-or-partial publication. Accepted observations move from
+F1030/L4544/S4815/B4854 toF1059/L4693/S4970/B4957:
++29F/+149L/+155S/+103B. None closes the contour. Accepted elapsed ranges136.029
+to184.010seconds under different inputs, not a speedup measurement. The retained
+three-hour-receipts-20261020-continued.json states the log-mtime basis; it is not
+complete session/tool-call/token telemetry. One current filesystem check finds
+5538447360durable and9392209920tmpfs free bytes. The unchanged2147483648durable
+floor leaves3390963712headroom. No resource GAP, safe new deletion candidate,
+duplicate scan or cleanup is established.
 
 The selected order is Root's causal fixture packet, focused/static checks and one
 complete SDK/image/contour stage. Bounded read-only Luna review may overlap
