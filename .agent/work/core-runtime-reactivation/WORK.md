@@ -47,7 +47,11 @@ scope. Related FIFO/async-owner-expiry callers and shard eligibility pass in the
 same command. Strict142files and scoped type-aware lint pass. These are focused
 behavioral observations, not new F/L/S/B qualification or a controlled speed test.
 The reviewed Host file pin is
-a989798bee7820a437a7b61f3682a32c82de5db3a2ca28f7112f45af26fea8b9.
+f12c6e9df4f0cd8a8760f546c45059f917d08761c130b7119bdc379644fdad0f.
+Final custody inspection additionally keeps the separate canonical caller root
+until successful fixture cleanup, instead of retaining only its private SQLite
+root on failure. The original red log and owned SQLite root are retained;
+the earlier ordinary caller cleanup is not reclassified as complete retention.
 The resource review retains two process-isolated children, serial cases, the same
 caller namespace and private owned SQLite/source roots. No new worker, background
 process, external effect, clock mutation or shared mutable dependency is added.

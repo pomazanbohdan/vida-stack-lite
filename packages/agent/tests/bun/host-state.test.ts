@@ -1711,6 +1711,7 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
 
 test('historical task-source snapshots select observed roots and fence corrupted retained evidence', async () => {
   const deadline = performance.now() + 5_000;
+  preserveHostFixtureRoot = 'case failed or timed out';
   const f = createTaskSourceHostFixture({
     configuredHost: { repositoryRoot: root, identity: { ...identity } },
     policyVerifier: async ({ request }) => trustedTaskSourcePolicyDecision(request),
@@ -1869,6 +1870,7 @@ test('historical task-source snapshots select observed roots and fence corrupted
       ],
       primaryFailure,
     );
+    if (completed) preserveHostFixtureRoot = false;
   }
 });
 
