@@ -82,6 +82,12 @@ failure evidence and all other retained scratch. Reuse the latest inventory.
 
 ## Design a regression
 
+When repeated verifier reads protect a precommit freshness boundary, retain them.
+Reuse the genuine fixture and change one owned input between the initial proof
+and final recheck; assert the intended denial, exact restoration and unchanged
+Host/Journal/receipt state. Preserve primary and restoration failures through the
+existing cleanup owner. A repeated live check is not automatically duplicate work.
+
 For YAML/configured-root fixtures, follow [TESTING's fixture contract](../../../packages/agent/TESTING.md#new-and-modified-files).
 Use the bound config's registered and allowed projects; verify targeted negative
 mutations actually occurred before testing rejection. Keep portable-template

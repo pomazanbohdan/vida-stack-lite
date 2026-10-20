@@ -130,6 +130,11 @@ coverage in3.253s against the unchanged5s limit. Operation status remains BLOCKE
 contour with genuine completed-Source-report recovery and retained Work-history
 lineage through existing helpers. Do not fabricate receipts, widen selection or
 raise a budget to reach the remaining branches.
+Before the dense recovery setup, the next bounded packet reuses the same genuine
+Initial Source case for all four CAS fences, verifier-error rollback, actual late
+Source drift and immutable retry denial. It passes53assertions in3.049s under the
+unchanged5s limit. Preserve both fresh verifier calls and exact document restoration;
+review/refresh the existing pin, publish, then measure the changed input once.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

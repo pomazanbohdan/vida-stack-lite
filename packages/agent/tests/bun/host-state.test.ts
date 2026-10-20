@@ -1413,16 +1413,85 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
       expect(request.currentInitialRequest.stage_id).toBe('synthesize_task');
       expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
       withExpiredInitialSourceOwner(current, () => {
-        const verifyCurrent: Parameters<HostStateStore['continueInitialSource']>[1] = (state) =>
-          initialSourceProof(current, state);
+        let verifications = 0;
+        const verifyCurrent: Parameters<HostStateStore['continueInitialSource']>[1] = (state) => {
+          verifications += 1;
+          return initialSourceProof(current, state);
+        };
+        const staleRequests = [
+          {
+            request: {
+              ...request,
+              expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 },
+            },
+            error: 'state compare-and-swap conflict',
+          },
+          {
+            request: {
+              ...request,
+              expectedLedger: { ...request.expectedLedger, revision: request.expectedLedger.revision + 1 },
+            },
+            error: 'state compare-and-swap conflict',
+          },
+          {
+            request: {
+              ...request,
+              expectedJournal: { ...request.expectedJournal, revision: request.expectedJournal.revision + 1 },
+            },
+            error: 'initial Source continuation Journal CAS or checksum changed',
+          },
+          {
+            request: { ...request, expectedMaintenanceGeneration: request.expectedMaintenanceGeneration + 1 },
+            error: 'maintenance generation is stale or missing',
+          },
+        ];
+        for (const denied of staleRequests) {
+          expect(() => store.continueInitialSource(denied.request, verifyCurrent)).toThrow(denied.error);
+          expect(store.readHostStateSnapshot(current.identity)).toEqual(before);
+          expect(initialSourceJournal(current)).toEqual(journalBefore);
+          expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
+        }
+        expect(verifications).toBe(0);
         expect(() =>
-          store.continueInitialSource(
-            { ...request, expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 } },
-            verifyCurrent,
-          ),
-        ).toThrow('state compare-and-swap conflict');
+          store.continueInitialSource(request, () => {
+            throw new Error('fixture current-proof failure');
+          }),
+        ).toThrow('fixture current-proof failure');
         expect(store.readHostStateSnapshot(current.identity)).toEqual(before);
         expect(initialSourceJournal(current)).toEqual(journalBefore);
+        expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
+        const changedDocument = path.join(current.root, current.documents[1]);
+        const beforeDocument = readFileSync(changedDocument);
+        let freshnessChecks = 0;
+        let freshnessFailure: { error: unknown } | undefined;
+        try {
+          expect(() =>
+            store.continueInitialSource(request, (state) => {
+              freshnessChecks += 1;
+              if (freshnessChecks === 2)
+                writeFileSync(changedDocument, Buffer.concat([beforeDocument, Buffer.from('late fixture change\n')]));
+              return initialSourceProof(current, state);
+            }),
+          ).toThrow('Source, runtime package, permission or initial engine proof changed during Host CAS');
+          expect(freshnessChecks).toBe(2);
+        } catch (error) {
+          freshnessFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                writeFileSync(changedDocument, beforeDocument);
+                return undefined;
+              },
+            ],
+            freshnessFailure,
+          );
+        }
+        expect(readFileSync(changedDocument)).toEqual(beforeDocument);
+        expect(store.readHostStateSnapshot(current.identity)).toEqual(before);
+        expect(initialSourceJournal(current)).toEqual(journalBefore);
+        expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
         const receipt = store.continueInitialSource(request, verifyCurrent);
         const after = presentSnapshot(store.readHostStateSnapshot(current.identity));
         const journalAfter = initialSourceJournal(current);
@@ -1445,7 +1514,15 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
         ]);
         expect(journalAfter.state.completed).toEqual(journalBefore.state.completed);
         expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toEqual(receipt);
+        expect(verifications).toBe(2);
         expect(store.continueInitialSource(request, verifyCurrent)).toEqual(receipt);
+        expect(verifications).toBe(2);
+        expect(() =>
+          store.continueInitialSource(
+            { ...request, nativeSessionHandle: request.nativeSessionHandle + '-foreign' },
+            verifyCurrent,
+          ),
+        ).toThrow('initial Source continuation retry differs from its immutable receipt');
         expect(store.readHostStateSnapshot(current.identity)).toEqual(after);
         expect(initialSourceJournal(current)).toEqual(journalAfter);
         expect(source).toEqual(snapshotDeclaredSources(requireSafeRepositoryAccess(current.root), current.documents));
