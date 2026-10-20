@@ -1,19 +1,19 @@
 ---
 instruction_id: prove-blast-radius-by-running-code
-title: Доведи радіус ураження запуском коду
-summary: "Перевір наслідки зміни фактичним запуском усіх шляхів, які вона зачіпає."
+title: Prove blast radius by running code
+summary: "Find what a change breaks beyond the diff, then prove the one fact the safety claim depends on by running the real code."
 capability_tags:
   - verify-work-results
 pattern_tags:
   - verification-before-completion
-conditions_applies_when: "Ти змінюєш спільну функцію, формат даних або поведінку, яку викликають з кількох місць."
-conditions_does_not_apply_when: Зміна ізольована й не має викликів поза власним тестом.
+conditions_applies_when: "You change shared code, a data format, or behavior that other places call."
+conditions_does_not_apply_when: The change is isolated and has no caller outside its own test.
 artifact_contract_output_type: impact-report
 artifact_contract_required_data:
-  - перелік викликів
-  - запущені сценарії
-  - фактичні результати
-  - неперевірене
+  - callers
+  - scenarios run
+  - actual results
+  - what was not checked
 artifact_contract_verified_by: commands actually executed with captured output
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,19 +23,20 @@ status: active
 revision: 1
 ---
 
-# Доведи радіус ураження запуском коду
-Назви поведінку, яку ти змінюєш, і місця, де вона спостерігається.
-Склади список викликів, залежних від зміненої функції.
-Не вір твердженню «це ніде не використовується», поки не перевірив пошуком.
-Запусти сценарій, який проходить через змінений шлях.
-Порівняй спостережуваний результат до і після зміни.
-Перевір суміжні сценарії, що ділять той самий стан або файл.
-Запусти повний набір перевірок, а не лише цільовий тест.
-Окремо перевір помилки: що станеться з некоректними вхідними даними.
-Перевір межу продуктивності, якщо зміна додає роботу в гарячий шлях.
-Запиши команду, яку виконав, і її результат.
-Познач, що саме не вдалося перевірити й чому.
-Не заміняй запуск читанням коду.
-Відкинь зміну, якщо наслідок неможливо обмежити.
-Повтори перевірку після кожного виправлення.
-Віддай список перевірених шляхів із фактичними результатами.
+# Prove blast radius by running code
+Find what a change breaks somewhere else, before it ships. Listing the callers is not the job. The job is the breakage a search will not show you.
+A writeup that sounds right is worthless. It reads as convincing whether or not it is true. Do not hand back only the writeup.
+Find the one or two facts the whole safety claim depends on and prove them by running code.
+For each fact, get it as far down this list as is cheap, and say where it stopped: you said so, you pointed at the line, you showed the bad case cannot happen, you ran it, or you reproduced it in the running app.
+A real file and line, or the library's own source, beats an assertion. Walking the failure step by step and showing it does not reach beats a pointed line.
+Running it means a script or test that calls the real code and fails loudly if you are wrong. Step four is usually one small script that imports the same library the app ships and calls the exact function you are worried about.
+Read the change: the diff, the symbols it adds, changes, and deletes, and what it now does differently, including the part the diff does not spell out.
+Find the one fact it is safe because of. Most changes that look risky are safe because of a single fact. If it holds, most risky cases clear at once. Spend your time here, not on a long list of maybes.
+Look where a search stops: read the source of the library you call, and check its pinned version and any local patch.
+Work out when things run: microtasks, unmount and teardown, and the ordering the runtime imposes.
+Follow what a symbol search misses: the data an API returns, a storage column, a wire format, another language reading the same bytes, a feature flag, or code three hops downstream.
+Be honest about each risk. Give it a real chance of happening and a real cost if it does.
+Keep the risks you confirmed and list the ones you checked and cleared separately. Cite a real location. A search that finds nothing is still an answer. Never make up a caller or an API.
+Prove the one fact. Write a script or test that runs the real code, run it, and paste what happened.
+For a big or wide change, ask more than one model the same question and merge the answers. Different models catch different real bugs.
+Hand back what it does, the one fact it is safe because of with its proof or an explicit unproven mark, the risks with how each breaks and how likely it is, what you cleared, and the cheapest check that would catch the real bug.

@@ -1,7 +1,7 @@
 ---
 type: Product Research
-title: Vida Powers — продуктова концепція та архітектурний baseline
-description: Актуальна узгоджена концепція портативного агентного плагіна Vida Powers та його взаємодії з VIDA Agent Runtime.
+title: Vida Powers — product concept and architectural baseline
+description: The current agreed concept of the Vida Powers portable agent plugin and its interaction with the VIDA Agent Runtime.
 status: stable
 stale_after: '2027-01-19T00:00:00Z'
 tags:
@@ -22,7 +22,7 @@ vida:
   updated_at: '2026-10-19T14:01:10Z'
   runtime_source_commit: bb4345e107f9aee30db1c856075ac9556a7aa8a1
   validation_scope: conversation-consistency
-  verification_scope: звірка тверджень research із поточним Source під час двох незалежних раундів рев'ю; не є runtime acceptance
+  verification_scope: reconciliation of the research statements with the current Source during two independent review rounds; this is not runtime acceptance
   changelog_ref: /log.md
   authority: current-conversation-user-decisions-and-unsuperseded-provisions
 sources:
@@ -86,351 +86,345 @@ verified:
 - { by: opencode/glm-5.3-flash-free, at: '2026-10-19T13:59:31Z' }
 ---
 
-# Vida Powers — продуктова концепція та архітектурний baseline
+# Vida Powers — product concept and architectural baseline
 
-## 1. Призначення та рамки
+## 1. Purpose and scope
 
-**Vida Powers (VP)** — портативний агентний плагін із канонічним каталогом атомарних методологічних інструкцій, семантичною селекцією потрібних знань, динамічною спеціалізацією агентів і правилами матеріалізації результатів. Плагін повинен працювати самостійно у сумісних AI-хостах і за наявності VIDA Agent Runtime інтегруватися з його наявним керуванням виконанням.
+**Vida Powers (VP)** is a portable agent plugin with a canonical catalog of atomic methodological instructions, semantic selection of the needed knowledge, dynamic specialization of agents and rules for materializing results. The plugin must work standalone in compatible AI hosts and, when the VIDA Agent Runtime is present, integrate with its existing execution management.
 
-Початкове методологічне покриття — повний життєвий цикл роботи, з поглибленими джерелами для розробки ПЗ, досліджень, постановки задач і прийняття рішень. Архітектура не повинна обмежуватися розробкою: дослідження, прийняття рішень, робота з бізнес-процесами, маркетингом, документацією та іншими доменами додаються окремими пакетами інструкцій.
+The initial methodological coverage is the full work lifecycle, with in-depth sources for software development, research, task definition and decision-making. The architecture must not be limited to development: research, decision-making, work with business processes, marketing, documentation and other domains are added as separate instruction packages.
 
-Робота починається з будь-якого стану: нечіткої ідеї, питання, research-запиту, прийнятого рішення, документа, дефекту, готової задачі, фрагмента реалізації або запиту на перевірку. **Завершення дослідження не означає початку реалізації.** Не виконується автоматичний перехід до нового обсягу роботи без відповідних повноважень.
+Work starts from any state: a vague idea, a question, a research request, an accepted decision, a document, a defect, a ready task, a fragment of an implementation or a request for verification. **Finishing research does not mean starting implementation.** No automatic transition to a new scope of work happens without the corresponding authority.
 
-**Статус документа:** фіналізоване поточне дослідження та узгоджена концепція. Це не доказ готовності коду, не затверджена низькорівнева схема та не дозвіл на зміни у вихідному репозиторії.
+**Document status:** finalized current research and agreed concept. This is not proof of code readiness, not an approved low-level schema and not permission for changes in the source repository.
 
-VP є автономним встановлюваним плагіном: для звичайного використання не потрібне встановлення VIDA Agent Runtime. Спільна канонічна база придатна і для Standalone, і для використання агентною системою. Пакування та розповсюдження через marketplace залишаються цільовою можливістю; конкретні канали й перевірена підтримка хостів належать етапу реалізації.
+VP is an autonomous installable plugin: ordinary use does not require installing the VIDA Agent Runtime. The shared canonical base is suitable both for Standalone and for use by the agent system. Packaging and distribution through a marketplace remain a target capability; the specific channels and the verified host support belong to the implementation stage.
 
-**Одна основна робоча точка входу — скіл оркестрації `vp-mode`; `vp-setup` — окремий допоміжний skill налаштування.** Донорські skills стають підключуваними інструкціями, а не сотнями окремих точок входу користувача. Користувач описує бажаний результат звичайною мовою; він не зобов'язаний вручну запускати research, постановку задачі, TDD, тестувальника, review та verification.
+**One main working entry point — the orchestration skill `vp-mode`; `vp-setup` — a separate auxiliary setup skill.** Donor skills become pluggable instructions rather than hundreds of separate user entry points. The user describes the desired outcome in ordinary language; they are not obliged to manually launch research, task definition, TDD, a tester, review and verification.
 
-## 2. Розмежування Vida Powers і VIDA Runtime
+## 2. Separation of Vida Powers and VIDA Runtime
 
-| Зона | Vida Powers Standalone | VIDA Runtime |
+| Area | Vida Powers Standalone | VIDA Runtime |
 |---|---|---|
-| Методологічні знання | Власник канонічного instruction corpus | Використовує ті самі інструкції |
-| Семантичний пошук | `capability_tags`, `pattern_tags`, метадані, вибір необхідних текстів | Викликає спільний resolver |
-| Маршрутизація | Головний LLM-агент та native host tools; адаптивне перепланування | VIDA Core відповідає за кероване виконання |
-| Виконавці | Динамічна рольова композиція, host-native subagents | Агенти через host adapters / Mastra |
-| Формальний workflow/DAG | **Не має власного engine, scheduler або сховища стану DAG** | Власник конфігурованого й динамічного workflow |
-| Авторизація/контроль прав | Дотримується політик та нативних обмежень хоста | Наявні HostState, scope/lease/CAS/permissions |
-| Materialization | Змістовні файли + прості локальні записи, без дублювання Runtime | Чинні файлові контракти та persistence через Runtime |
-| Findings | Локальний product-scoped JSONL | Product-scoped SQLite через єдиний persistence owner |
-| UI | Не входить до складу VP | Майбутній окремий інтерфейс поверх VIDA API |
+| Methodological knowledge | Owner of the canonical instruction corpus | Uses the same instructions |
+| Semantic search | `capability_tags`, `pattern_tags`, metadata, selection of the needed texts | Calls the shared resolver |
+| Routing | Main LLM agent and native host tools; adaptive replanning | VIDA Core is responsible for governed execution |
+| Executors | Dynamic role composition, host-native subagents | Agents through host adapters / Mastra |
+| Formal workflow/DAG | **Has no own engine, scheduler or DAG state store** | Owner of the configured and dynamic workflow |
+| Authorization/permission control | Follows the policies and native constraints of the host | Existing HostState, scope/lease/CAS/permissions |
+| Materialization | Meaningful files + simple local records, without duplicating the Runtime | Existing file contracts and persistence through the Runtime |
+| Findings | Local product-scoped JSONL | Product-scoped SQLite through the single persistence owner |
+| UI | Not part of VP | Future separate interface on top of the VIDA API |
 
-У VIDA Runtime зберігаються **два верхньорівневі режими**:
+VIDA Runtime retains **two top-level modes**:
 
-- **Dynamic:** повністю адаптивна декомпозиція та вибір наступних кроків; власник формального виконання — VIDA Core/Mastra. Це вимога до цільової поведінки, не твердження про готовність усіх dynamic-функцій у поточному коді.
-- **Configured:** незмінний основний граф із `.vida/flows.yaml`; динамічні вкладені роботи дозволені в межах чинного вузла/етапу, без вставлення нових етапів у головний граф.
+- **Dynamic:** fully adaptive decomposition and selection of the next steps; the owner of formal execution is VIDA Core/Mastra. This is a requirement for the target behavior, not a statement that all dynamic functions are ready in the current code.
+- **Configured:** an immutable main graph from `.vida/flows.yaml`; dynamic nested work is allowed within the current node/stage, without inserting new stages into the main graph.
 
-Будь-який агент може **запросити** вкладене делегування для задачі в наданому scope; фактичний запуск, дозволи й облік виконання контролює відповідний власник: master agent/native host у Standalone або VIDA Core у Runtime. Заборонено дублювати scheduler, ledger, authorization чи state store Runtime усередині VP.
+Any agent can **request** nested delegation for a task within the granted scope; the actual launch, permissions and execution accounting are controlled by the responsible owner: the master agent/native host in Standalone or VIDA Core in Runtime. Duplicating the Runtime's scheduler, ledger, authorization or state store inside VP is forbidden.
 
-### 2.1 Гібридні агенти та рольові контракти
+### 2.1 Hybrid agents and role contracts
 
-Гібридна модель поєднує **стабільний каталог базових ролей** із **динамічно спеціалізованими екземплярами під задачу**. Роль визначає відповідальність; Task Contract — конкретну мету; вибрані атомарні інструкції — методики виконання. Це не довільне переозначення ролі під час роботи й не механічне перетворення кожного skill на окремого агента.
+The hybrid model combines a **stable catalog of base roles** with **dynamically specialized instances for the task**. The role defines responsibility; the Task Contract — the concrete goal; the selected atomic instructions — the execution techniques. This is not an arbitrary redefinition of a role during work and not a mechanical transformation of every skill into a separate agent.
 
-Агент отримує роль, задачу від користувача або батьківського агента/Runtime, дозволений scope, ефективну методологію продукту, релевантні інструкції, посилання на вхідні артефакти, очікувані результати та спосіб їх перевірки. Дочірня задача має власну ідентичність та ізольований контекст; повна історія головного треду не передається автоматично. Батько приймає й перевіряє результат, а не просто переказує самозвіт дитини.
+An agent receives a role, a task from the user or a parent agent/Runtime, the allowed scope, the effective methodology of the product, the relevant instructions, references to input artifacts, the expected results and the way to verify them. A child task has its own identity and an isolated context; the full history of the main thread is not passed automatically. The parent accepts and verifies the result rather than merely relaying the child's self-report.
 
-У Standalone маршрут повністю динамічний: головний тред є оркестратором і використовує нативних субагентів хоста. Тимчасовий план і локальні записи роботи допустимі; власний формальний DAG compiler та scheduler не створюються. У Runtime окремі рольові задачі виконуються через Core та відповідний host adapter. Підтримка субагентів є вимогою до цільових хостів; відсутня або неперевірена можливість позначається як обмеження, а не як еквівалентна незалежна перевірка.
+In Standalone the route is fully dynamic: the main thread is the orchestrator and uses the host's native subagents. A temporary plan and local work records are acceptable; no own formal DAG compiler and scheduler are created. In Runtime separate role tasks are executed through Core and the corresponding host adapter. Subagent support is a requirement for the target hosts; a missing or unverified capability is marked as a limitation, not as equivalent independent verification.
 
-### 2.2 Рекурсивні підзадачі без подвійної оркестрації
+### 2.2 Recursive subtasks without double orchestration
 
-Будь-який агент може залучати інших агентів для власних підзадач, зокрема для дослідження, пошуку документації, аналізу Wiki, підготовки інструкції, тестування чи review. Подальше вкладене делегування також дозволене. Конкретний dispatch проходить через власника виконання відповідного середовища; право запросити спеціаліста не дорівнює праву надати йому нові повноваження.
+Any agent can engage other agents for its own subtasks, in particular for research, documentation search, Wiki analysis, instruction preparation, testing or review. Further nested delegation is also allowed. The concrete dispatch goes through the execution owner of the corresponding environment; the right to invite a specialist is not equal to the right to grant them new authority.
 
-**Workflow graph і дерево делегування — різні структури.** У Configured-режимі допоміжні дослідження та інші роботи залишаються всередині вузла нормативного YAML-графа. Дочірній результат агрегується у результат цього вузла; агент не додає зовнішніх етапів, не змінює обов'язкові переходи й не обходить gates. У Dynamic-режимі маршрут адаптується в межах затвердженої мети та scope.
+**The workflow graph and the delegation tree are different structures.** In Configured mode, auxiliary research and other work stay inside the node of the normative YAML graph. The child result is aggregated into the result of that node; the agent does not add external stages, does not change mandatory transitions and does not bypass gates. In Dynamic mode the route adapts within the approved goal and scope.
 
-Незалежні підзадачі можуть працювати паралельно; спільні зміни узгоджуються відповідно до правил власника запису. Глибина, concurrency та ресурсні межі контролюються засобами хоста або Runtime, без запровадження у VP власного scheduler та без фіксації універсальних числових лімітів у цьому дослідженні.
+Independent subtasks can work in parallel; shared changes are coordinated according to the rules of the write owner. Depth, concurrency and resource limits are controlled by host or Runtime means, without introducing an own scheduler in VP and without fixing universal numeric limits in this research.
 
-### 2.3 Selective Join та життєвий цикл
+### 2.3 Selective Join and lifecycle
 
-| Властивість | Контракт |
+| Property | Contract |
 |---|---|
-| `blocking` | Батьківський етап очікує необхідний результат підзадачі та його прийняття |
-| `non-blocking` | Допоміжна підзадача не затримує завершення батьківського етапу |
-| Обов'язкові перевірки | Потрібний для AC або gate результат не можна оголосити необов'язковим через `non-blocking` |
-| Помилки | Помилки й незавершені результати фіксуються та повертаються відповідальному власнику |
-| Пізній результат | Не переписує вже прийнятий результат батька; має окремий запис і належне опрацювання |
+| `blocking` | The parent stage waits for the required subtask result and its acceptance |
+| `non-blocking` | An auxiliary subtask does not delay the completion of the parent stage |
+| Mandatory checks | A result required for an AC or gate cannot be declared optional through `non-blocking` |
+| Errors | Errors and incomplete results are recorded and returned to the responsible owner |
+| Late result | Does not overwrite an already accepted result of the parent; it has a separate record and proper handling |
 
-**Join Policy не визначає Lifecycle Scope.** Концептуально розрізняються `parent` — робота в межах батьківської задачі, `workflow` — робота, що може пережити етап, але належить загальному workflow, та `independent` — окрема керована задача, яка може пережити його завершення. Спосіб підтримки цих трьох областей, поведінка закриття батька та можливість незалежного виконання належать перевірюваному portability contract хоста/Runtime.
+**Join Policy does not define Lifecycle Scope.** Conceptually a distinction is made between `parent` — work within the parent task, `workflow` — work that can outlive the stage but belongs to the overall workflow, and `independent` — a separate governed task that can outlive its completion. The way these three areas are supported, the behavior when the parent closes and the possibility of independent execution belong to the verifiable portability contract of the host/Runtime.
 
-`non-blocking` сам по собі не перетворює підзадачу на незалежну. Для довшого життя потрібні визначений власник, ідентичність, місце збереження результату, спостережуваний стан і підтримуваний механізм завершення/скасування. Підтвердження старту відрізняється від завершення; запит скасування не є доказом фактичної зупинки. Наявність збереженого контексту також не доводить, що виконання триває після завершення сесії.
+`non-blocking` by itself does not turn a subtask into an independent one. A longer life requires a defined owner, identity, a place to store the result, an observable state and a supported completion/cancellation mechanism. Confirmation of a start differs from completion; a cancellation request is not proof of an actual stop. The presence of a stored context also does not prove that execution continues after the session ends.
 
-**Work Scope** визначає дозволений обсяг і дії, **Lifecycle Scope** — тривалість життя та відповідальність. Жодна lifecycle-модель не розширює Work Scope. У Standalone ці правила не створюють власної durable execution інфраструктури; у Runtime використовуються його наявні механізми керування.
+**Work Scope** defines the allowed extent and actions, **Lifecycle Scope** — the lifetime and responsibility. No lifecycle model extends the Work Scope. In Standalone these rules do not create an own durable execution infrastructure; in Runtime its existing management mechanisms are used.
+## 3. Installation, bootstrap, compatibility
 
-## 3. Установлення, bootstrap, сумісність
+**`vp-mode`** — the main Vida Powers orchestration skill: it accepts a request in ordinary language, selects the needed instructions, forms a bundle (role, task contract, effective methodology, scope, materialization requirements, references to artifacts) and launches execution or delegation. This is the single main working entry point; donor skills do not become separate entry points.
 
-**`vp-mode`** — основний скіл оркестрації Vida Powers: приймає запит звичайною мовою, вибирає потрібні інструкції, формує bundle (роль, task contract, ефективна методологія, scope, вимоги матеріалізації, посилання на артефакти) і запускає виконання або делегування. Це єдина основна робоча точка входу; донорські skills не стають окремими точками входу.
+**`vp-setup`** — an auxiliary skill for the initial setup of a project for Vida Powers. `vp` is the Vida Powers prefix. `vp-setup` is not the main orchestration skill and must not run on every request.
 
-**`vp-setup`** — допоміжний skill первинного налаштування проєкту під Vida Powers. `vp` — префікс Vida Powers. `vp-setup` не є головним скілом оркестрації і не повинен запускатися при кожному запиті.
+Its job: detect the projects and the current instructions; safely add/update the integration rules in `AGENTS.md` and in files supported by the host; configure the available session/compaction hooks; map the locations of documents and local work; ensure idempotent re-setup and verify activation.
 
-Його завдання: виявити проєкти та чинні інструкції; безпечно додати/оновити інтеграційні правила в `AGENTS.md` та підтримуваних хостом файлах; налаштувати доступні session/compaction hooks; зіставити місця розташування документів і локального work; забезпечити ідемпотентне повторне налаштування та перевірити activation.
+Session start events and context compaction **restore the context of `vp-mode`**, but do not restart completed work and do not create new workflows without a task. Hook capabilities differ between hosts; a host-specific adapter is needed without invented guarantees. The detailed portability contract and the platform support matrix are deferred to implementation and tests in the IDE.
 
-Події початку сесії і context compaction **відновлюють контекст `vp-mode`**, але не перезапускають завершену роботу й не створюють нові workflow без задачі. У різних хостах можливості хуків різняться; потрібен host-specific адаптер без вигаданих гарантій. Детальний portability contract та матриця підтримки платформ відкладаються до реалізації й тестів у IDE.
+During setup, third-party instructions and the current source map are preserved. Only the part of the integration that belongs to VP is updated; an existing Runtime-owned file does not become a second owner of policies. Re-setup does not create duplicates of managed blocks, hooks, product records or canonical documents.
 
-Під час setup зберігаються сторонні інструкції та чинна карта джерел. Оновлюється лише належна VP частина інтеграції; наявний Runtime-owned файл не перетворюється на другого власника політик. Повторне налаштування не створює дублікатів керованих блоків, hooks, продуктових записів або канонічних документів.
+Bootstrap passes the minimal `vp-mode` rules, the product identity, references to the methodology and the current artifacts. It does not load the whole instruction corpus into every session. Activation verification covers the session start, restoration after compaction and the necessary context of a delegated agent; the exact event and configuration names are determined by the adapter of the corresponding host.
 
-Bootstrap передає мінімальні правила `vp-mode`, ідентичність продукту, посилання на методологію та актуальні артефакти. Він не завантажує весь instruction corpus у кожну сесію. Перевірка активації охоплює початок сесії, відновлення після compaction та необхідний контекст делегованого агента; точні назви подій і конфігурацій визначає адаптер відповідного хоста.
+## 4. Canonical instruction corpus, tags and methodologies
 
-## 4. Канонічний instruction corpus, теги та методології
+### 4.1 Canonicalization of donor techniques
 
-### 4.1 Канонізація донорських методик
+The catalog is formed from seven donor projects: **Superpowers, BMAD Method, Matt Pocock Skills, Addy Osmani Agent Skills, pstack, GSD Core, Ponytail**. This is VP's own canonical base, not a wrapper that launches all source skills or copies their monolithic prompts one by one.
 
-Каталог формується з семи донорських проєктів: **Superpowers, BMAD Method, Matt Pocock Skills, Addy Osmani Agent Skills, pstack, GSD Core, Ponytail**. Це власна канонічна база VP, а не обгортка, що запускає всі вихідні skills або копіює їхні монолітні prompts один за одним.
+Processing covers not only the implementation of ready tasks but also research, clarification, decisions, work definition, acceptance criteria, test design, manual and automated checks and materialization. During the transformation, atomic instructions are extracted at the same time, tags are assigned, sources are preserved, and semantic duplicates, dependencies and conflicts are identified. What is transferred is the methodological content, not other people's execution engines, tracker integrations or competing state journals.
 
-Опрацювання охоплює не лише реалізацію готових задач, а й дослідження, уточнення, рішення, постановку роботи, критерії прийняття, test design, ручні й автоматизовані перевірки та матеріалізацію. Під час перетворення одночасно виділяються атомарні інструкції, призначаються теги, зберігаються джерела, виявляються семантичні дублікати, залежності та конфлікти. Переноситься методологічний зміст, а не чужі execution engines, tracker integrations чи конкуруючі журнали стану.
+An **atomic instruction** describes one meaningful norm or technique with a stable ID, application conditions, a semantic contract, provenance and compatibility rules. One instruction can be applicable to several operations, roles and domains; it does not need to be copied for each tag.
 
-**Атомарна інструкція** описує одну осмислену норму або техніку зі стабільним ID, умовами застосування, семантичним контрактом, provenance і правилами сумісності. Одна інструкція може бути застосовною до кількох операцій, ролей і доменів; її не потрібно копіювати для кожного тегу.
+### 4.2 Two dimensions of tagging
 
-### 4.2 Два виміри тегування
-
-| Метадані | Значення | Приклади |
+| Metadata | Meaning | Examples |
 |---|---|---|
-| `capability_tags` | Що потрібно зробити | `prepare-pr`, `research-domain`, `define-acceptance-criteria`, `design-test-cases`, `implement-feature`, `run-automated-tests`, `perform-manual-testing`, `review-code` |
-| `pattern_tags` | За якою методикою | `evidence-based-research`, `test-first-development`, `risk-based-testing`, `goal-backward-verification`, `scope-first-execution`, `minimal-complete-change` |
+| `capability_tags` | What needs to be done | `prepare-pr`, `research-domain`, `define-acceptance-criteria`, `design-test-cases`, `implement-feature`, `run-automated-tests`, `perform-manual-testing`, `review-code` |
+| `pattern_tags` | By which methodology | `evidence-based-research`, `test-first-development`, `risk-based-testing`, `goal-backward-verification`, `scope-first-execution`, `minimal-complete-change` |
 
-Кожен тег має **щонайменше два змістовні компоненти**, записані у kebab-case. Скорочення на зразок TDD можуть залишатися поясненнями/аліасами; канонічний тег — `test-first-development`. У пошуку доступні назва, опис та семантика тегів, а не лише перелік непрозорих кодів.
+Each tag has **at least two meaningful components** written in kebab-case. Abbreviations such as TDD may remain as explanations/aliases; the canonical tag is `test-first-development`. Search provides the name, description and semantics of tags, not just a list of opaque codes.
 
-Тег **не є** агентом, skill, workflow-вузлом, порядком кроків або дозволом. Теги інструкцій не тотожні тематичним `tags` Wiki чи `labels` задач. Умови застосування, обов'язковість, залежності, несумісність і пріоритети мають окремі метадані, а не ховаються в імені тегу.
+A tag **is not** an agent, a skill, a workflow node, an order of steps or a permission. Instruction tags are not identical to the thematic `tags` of the Wiki or the `labels` of tasks. Application conditions, obligation, dependencies, incompatibility and priorities have separate metadata and are not hidden in the tag name.
 
-Різні теги самі по собі не доводять несумісність. Групи на зразок `testing-sequence` і `review-strategy` дозволяють розділяти незалежні методологічні вибори. Наприклад, `test-first-development` і `test-after-development` є альтернативами в групі послідовності тестування; `risk-based-testing` може доповнювати test-first. Реєстр сумісності розрізняє взаємовиключні групи, сумісні доповнення та умовні залежності.
+Different tags by themselves do not prove incompatibility. Groups such as `testing-sequence` and `review-strategy` allow independent methodological choices to be separated. For example, `test-first-development` and `test-after-development` are alternatives in the testing sequence group; `risk-based-testing` can complement test-first. The compatibility registry distinguishes mutually exclusive groups, compatible supplements and conditional dependencies.
 
-### 4.3 Методологія як політика продукту
+### 4.3 Methodology as product policy
 
-Методологію визначає **продуктова політика**, а не ситуативний вибір агента. Окремі групи можуть задавати тестування, review, архітектуру, delivery та інші напрями незалежно одна від одної.
+The methodology is defined by **product policy**, not by the situational choice of an agent. Separate groups can define testing, review, architecture, delivery and other directions independently of each other.
 
-У Standalone погоджені методики фіксуються керованим блоком у `AGENTS.md` або явно вказаному ним авторитетному проєктному джерелі. У Runtime їхнім власником є конфігурація продукту та чинна карта джерел. Перед вибором маршруту й формуванням instruction bundle визначається **Effective Methodology Profile** для конкретного продукту та задачі.
+In Standalone the agreed techniques are fixed by a managed block in `AGENTS.md` or in an authoritative project source explicitly named by it. In Runtime their owner is the product configuration and the current source map. Before selecting a route and forming an instruction bundle, the **Effective Methodology Profile** is determined for the specific product and task.
 
-Якщо існує реальна методологічна варіативність, а вибору ще немає, Router зобов'язаний отримати вибір користувача і зафіксувати його. Не можна самовільно вибрати TDD або альтернативу лише тому, що певний донорський skill її рекомендує. За наявності зафіксованої політики вибір повторно не запитується; відомі з контексту або авторитетних документів відповіді не перетворюються на нове інтерв'ю.
+If real methodological variability exists and there is no choice yet, the Router is obliged to obtain the user's choice and record it. It is not allowed to arbitrarily choose TDD or an alternative merely because a certain donor skill recommends it. When a recorded policy exists, the choice is not requested again; answers known from the context or authoritative documents are not turned into a new interview.
 
-Один репозиторій може містити **кілька продуктів** із різними методологіями й порядками роботи. Продукт має стабільний ID, незалежний від шляху. Спільний код та міжпродуктова задача не зводяться автоматично до методології найближчої директорії: для кожного охопленого продукту враховуються його політика, scope і джерела.
+One repository can contain **several products** with different methodologies and work orders. A product has a stable ID independent of the path. Shared code and a cross-product task are not automatically reduced to the methodology of the nearest directory: for each covered product its policy, scope and sources are taken into account.
+### 4.4 Explicit selective inheritance and exceptions
 
-### 4.4 Явне вибіркове успадкування та винятки
+Products are independent by default. They can **explicitly selectively inherit** the shared profile, individual pattern groups or defined techniques of another product. Implicit full inheritance merely because of being located in the same repository is not applied.
 
-Продукти незалежні за замовчуванням. Вони можуть **явно вибірково успадковувати** спільний профіль, окремі групи патернів або визначені методики іншого продукту. Не застосовується неявне повне успадкування лише через розташування в одному репозиторії.
+An explicit local override of the corresponding group takes priority over the inherited rule without repeated confirmation. Two conflicting inherited options without a local decision are a conflict for the user, not a "last loaded wins" rule. The resolution is stored in the product settings. A change to another product must not imperceptibly substitute the chosen methodological behavior.
 
-Явне локальне перевизначення відповідної групи має пріоритет над успадкованим правилом без повторного підтвердження. Два суперечливі успадковані варіанти без локального рішення — це конфлікт для користувача, а не правило «останній завантажений перемагає». Розв'язання зберігається в налаштуваннях продукту. Зміна іншого продукту не повинна непомітно підміняти обрану методологічну поведінку.
+A **Task-scoped methodology override** is a separately agreed temporary exception for a specific task and product. The Router requests it once, records the decision in the context/artifact of the task and passes it to child agents. The exception does not change the permanent profile, other products, permissions, security gates or the boundaries of the allowed scope.
 
-**Task-scoped methodology override** — окремо погоджений тимчасовий виняток для конкретної задачі та продукту. Router запитує його один раз, фіксує рішення у контексті/артефакті задачі та передає його дочірнім агентам. Виняток не змінює постійний профіль, інші продукти, permissions, security gates або межі дозволеного scope.
+### 4.5 Live Inheritance and semantic stability
 
-### 4.5 Live Inheritance та стабільність семантики
+**Live Inheritance:** products reference stable IDs of instructions and profiles, **without version pinning**. After a new available revision of the canonical base appears, the current compatible instructions are used; this does not mean mandatory network auto-update of every host.
 
-**Live Inheritance:** продукти посилаються на стабільні ID інструкцій і профілів, **без version pinning**. Після появи нової доступної редакції канонічної бази використовуються актуальні сумісні інструкції; це не означає обов'язкове мережеве автооновлення кожного хоста.
+An update improves accuracy, clarity, completeness of execution and efficiency, but does not change the purpose, authority, application conditions or mandatory methodological sequence. A change of behavior is issued as a **new pattern ID**, not by replacing the old technique under the same tag. A product's transition to another behavior requires an explicit decision. Library revisions, source digests and change history are kept for tracing and rollback, although the product does not fix them manually.
 
-Оновлення поліпшує точність, ясність, повноту виконання та ефективність, але не змінює призначення, повноваження, умови застосування чи обов'язкову методологічну послідовність. Зміна поведінки оформлюється **новим pattern ID**, а не заміною старої методики під тим самим тегом. Перехід продукту на іншу поведінку потребує явного рішення. Ревізії бібліотеки, source digests та історія змін зберігаються для трасування й відкату, хоча продукт їх не фіксує вручну.
-
-У межах уже активної задачі використовується узгоджений знімок застосованих інструкцій. Це стабільність конкретного запуску, не pinning продукту. Наступні задачі можуть отримати актуальну сумісну редакцію. Сумісність оцінюється за контрактом та перевірками, не за дослівною однаковістю відповідей LLM.
+Within an already active task, the agreed snapshot of the applied instructions is used. This is the stability of a specific run, not product pinning. Subsequent tasks can receive the current compatible revision. Compatibility is assessed by the contract and by checks, not by the literal identity of LLM answers.
 
 ### 4.6 Risk-Adaptive Instruction Updates
 
-| Клас зміни | Перевірка та прийняття |
+| Change class | Verification and acceptance |
 |---|---|
-| Низький ризик | Уточнення й скорочення без зміни контракту; автоматичні перевірки та автоприйняття |
-| Середній ризик | Поліпшення виконання тієї самої методики; semantic compatibility, regression eval та незалежний review; прийняття після успішних перевірок |
-| Високий ризик або невизначена сумісність | Розширені перевірки та підтвердження людиною |
-| Несумісна методологічна поведінка | Новий патерн; не оновлювати стару поведінку на місці навіть за зелених тестів |
+| Low risk | Clarification and shortening without a contract change; automated checks and auto-acceptance |
+| Medium risk | Improvement of the execution of the same technique; semantic compatibility, regression eval and independent review; acceptance after successful checks |
+| High risk or undefined compatibility | Extended checks and human confirmation |
+| Incompatible methodological behavior | New pattern; do not update the old behavior in place even with green tests |
 
-Для прийнятої редакції фіксуються походження, авторство, перевірки й окремий запис змін. Якість оновлення та його право змінити продуктову методику — різні питання.
+For an accepted revision, the origin, authorship, checks and a separate change record are fixed. The quality of an update and its right to change the product methodology are different questions.
 
-### 4.7 Metadata-first пошук і компонування
+### 4.7 Metadata-first search and composition
 
-Спільні детерміновані скрипти/бібліотека доступні Standalone та Runtime. TS або Python — реалізаційний вибір, узгоджуваний із відповідним codebase; дубльовані незалежні правила пошуку не потрібні.
+Shared deterministic scripts/library are available to Standalone and Runtime. TS or Python is an implementation choice agreed with the corresponding codebase; duplicated independent search rules are not needed.
 
-| Логічна операція | Результат |
+| Logical operation | Result |
 |---|---|
-| `catalog.tags` | Доступні capability/pattern tags та їхні описи |
-| `catalog.search` | Відібрані за тегами, роллю, продуктом і умовами ID, назви та короткі descriptions, без повних текстів |
-| `catalog.get` | Текст точно вказаної інструкції |
-| `catalog.compose` | Вибрані тексти, обов'язкові інструкції та залежності після перевірки сумісності й усунення дублювання |
+| `catalog.tags` | Available capability/pattern tags and their descriptions |
+| `catalog.search` | IDs, names and short descriptions selected by tags, role, product and conditions, without full texts |
+| `catalog.get` | The text of the exactly specified instruction |
+| `catalog.compose` | The selected texts, mandatory instructions and dependencies after compatibility checking and deduplication |
 
-Назви — логічний контракт операцій, не готовий CLI/API. Master Agent спочатку бачить каталог і metadata candidates, обирає релевантні ID, а потім отримує тільки потрібні тексти для конкретного агента. До bundle додаються роль, task contract, ефективна методологія, scope, матеріалізаційні вимоги й посилання на артефакти.
+The names are the logical contract of the operations, not a ready CLI/API. The Master Agent first sees the catalog and the metadata candidates, selects the relevant IDs, and only then receives just the needed texts for a specific agent. The role, task contract, effective methodology, scope, materialization requirements and references to artifacts are added to the bundle.
 
-### 4.8 Два селектори та опціональний Decision Provider
+### 4.8 Two selectors and an optional Decision Provider
 
-**Instruction Selection** обирає множину атомарних інструкцій. **Workflow Routing** обирає LLM для виконання, формує з нього агентів за фіксованим довідником (каталогом інструкцій) і встановлює рівень флоу — `Full`, `Medium`, `Light` чи інший визначений профілем. Вони можуть використовувати спільний Decision Provider, але мають різні контракти результату; рішення про маршрут не є instruction bundle.
+**Instruction Selection** selects the set of atomic instructions. **Workflow Routing** selects the LLM for execution, forms agents from it according to a fixed reference (the instruction catalog) and sets the flow level — `Full`, `Medium`, `Light` or another defined by the profile. They can use a shared Decision Provider but have different result contracts; a routing decision is not an instruction bundle.
 
-У звичайному Standalone вибір виконує master LLM. Через host-конфігурацію можна підключити зовнішню decision-модель або інший сумісний provider; VP не прив'язується до конкретного vendor API. Тоді скрипт/host adapter чи Runtime передає контекст задачі, продукт, операцію, теги та вже допустимих кандидатів на оцінювання. За валідного достатньо впевненого результату такий вибір відбувається без додаткової участі головного LLM-агента. Це прискорення селекції, не передача моделі повноважень scheduler. Логічна операція `workflow.options` надає опис допустимих варіантів від власника маршруту, а `decision.evaluate` оцінює переданих кандидатів; ці операції не компілюють у VP власний граф виконання.
+In ordinary Standalone the selection is performed by the master LLM. Through the host configuration an external decision model or another compatible provider can be connected; VP is not tied to a specific vendor API. Then a script/host adapter or the Runtime passes the task context, product, operation, tags and already allowed candidates for evaluation. With a valid, sufficiently confident result, such a selection happens without additional involvement of the main LLM agent. This is an acceleration of selection, not a transfer of scheduler authority to the model. The logical operation `workflow.options` provides a description of the allowed options from the route owner, and `decision.evaluate` evaluates the passed candidates; these operations do not compile an own execution graph in VP.
 
-Обов'язкові інструкції продукту й залежності не зникають через низький relevance score. Приклад порога **0.90** не є універсально затвердженим значенням: поріг та інтерпретація score перевіряються для конкретного типу рішення. Висока оцінка не дорівнює доказу правильності, дозволу чи завершення. Визначений правилами перехід не потребує model call; у Configured-режимі будь-який вибір обмежений YAML-графом.
+Mandatory product instructions and dependencies do not disappear because of a low relevance score. The example threshold **0.90** is not a universally approved value: the threshold and the interpretation of the score are verified for a specific decision type. A high score does not equal proof of correctness, permission or completion. A transition defined by rules does not need a model call; in Configured mode any choice is limited by the YAML graph.
 
-**Agent Fallback** застосовується при недоступності provider, timeout, помилці API, некоректному форматі, невідомому candidate ID або недостатній впевненості. Вибір передається головному агенту; ті самі scope, policy та validation правила залишаються чинними. Де потрібен саме вибір/дозвіл користувача, fallback не замінює його. Матеріалізуються джерело рішення, вибрані ID і причина fallback.
+**Agent Fallback** applies on provider unavailability, timeout, API error, incorrect format, unknown candidate ID or insufficient confidence. The choice is passed to the main agent; the same scope, policy and validation rules remain in force. Where a user choice/permission is required, fallback does not replace it. The source of the decision, the selected IDs and the reason for the fallback are materialized.
 
-### 4.9 OKF та походження знань
+### 4.9 OKF and the provenance of knowledge
 
-OKF v0.2 задає представлення знань і provenance: Markdown із frontmatter, `type`, `title`, `description`, `tags`, `sources`, `generated`, `verified`, `status`, `stale_after`, а також навігацію через `index.md` і окрему історію. Власні поля VP — ID інструкцій, дві групи тегів, контракти матеріалізації, source revision/digest та потрібні ліцензійні атрибути — є явно визначеними розширеннями, а не новим execution standard.
+OKF v0.2 defines the representation of knowledge and provenance: Markdown with frontmatter, `type`, `title`, `description`, `tags`, `sources`, `generated`, `verified`, `status`, `stale_after`, as well as navigation through `index.md` and a separate history. VP's own fields — instruction IDs, two groups of tags, materialization contracts, source revision/digest and the required license attributes — are explicitly defined extensions, not a new execution standard.
 
-Source update, зміна канонічного тексту, повторна перевірка й людське погодження — різні події. Advisory `verified` не замінює authorization; відсутність або наявність OKF-метаданих сама по собі не доводить готовність Runtime. Статуси операцій, Task, Test Run та людського прийняття зберігають власні контракти.
+A source update, a change of the canonical text, re-verification and human approval are different events. Advisory `verified` does not replace authorization; the absence or presence of OKF metadata by itself does not prove Runtime readiness. The statuses of operations, Task, Test Run and human acceptance retain their own contracts.
+## 5. Universal lifecycle — a coverage map, not a rigid route
 
-## 5. Універсальний життєвий цикл — карта покриття, а не жорсткий маршрут
+VP knows the techniques and artifacts of the following areas: intake/clarification; discovery; research; assessment of alternatives and decision-making; brief/PRD/requirements; acceptance criteria; UX/solution design; test design and test cases; planning; execution; automated tests; manual/exploratory tests; review; UAT/acceptance; delivery; retrospective/outcome evaluation.
 
-VP знає методики й артефакти таких сфер: intake/clarification; discovery; research; оцінювання альтернатив і рішення; brief/PRD/requirements; acceptance criteria; UX/solution design; test design та test cases; планування; виконання; automated tests; manual/exploratory tests; review; UAT/acceptance; delivery; retrospective/outcome evaluation.
+This is a **reference capability coverage map**, not 12 mandatory directories or execution nodes. A request can start at any stage and end at it if the goal has been achieved.
 
-Це **довідкова карта capability coverage**, а не 12 обов'язкових директорій чи вузлів виконання. Запит може починатися з будь-якого етапу та завершуватися на ньому, якщо мету досягнуто.
+The relevant roles are formed automatically: Researcher, Analyst, Decision Reviewer, Requirements Specialist, Test Designer, Implementer, Automation Tester, Manual/UI Tester, Independent Reviewer, Verifier and others. Responsibilities can be combined when this is safe; real independent checks are not substituted by the author's self-check.
 
-Релевантні ролі формуються автоматично: Researcher, Analyst, Decision Reviewer, Requirements Specialist, Test Designer, Implementer, Automation Tester, Manual/UI Tester, Independent Reviewer, Verifier та інші. Обов'язки можуть поєднуватися, коли це безпечно; реальні незалежні перевірки не підміняються самоперевіркою автора.
+- **Light:** minimally sufficient instructions, artifacts and specialists.
+- **Medium:** full relevant requirements, test scenarios, targeted verification, specialists as needed.
+- **Full:** in-depth research, alternatives, tracing, independent verification lanes and detailed evidence — only where appropriate.
 
-- **Light:** мінімально достатні інструкції, артефакти та спеціалісти.
-- **Medium:** повні релевантні вимоги, тестові сценарії, цільова перевірка, спеціалісти за потреби.
-- **Full:** поглиблене дослідження, альтернативи, трасування, незалежні напрями перевірок та детальні докази — лише де доречно.
+These profiles **do not create separate workflow engines and do not cancel mandatory gates**. The number of agents, checks and tokens is optimized without losing the necessary quality.
 
-Ці профілі **не створюють окремих workflow engines та не скасовують mandatory gates**. Кількість агентів, перевірок і токенів оптимізується без втрати необхідної якості.
+The completeness of the map covers ordinary research as a standalone result, verification of evidence, formation of alternatives and decisions, description of a task and its clarification, business/functional/non-functional requirements, user stories/use cases, scope/non-goals, acceptance criteria, test strategy, test cases, test data, test automation, automated runs, manual and exploratory checks, UAT, documentation and assessment of the effect.
 
-Повнота карти охоплює звичайний research як самостійний результат, перевірку доказів, формування альтернатив і рішень, опис задачі та її уточнення, business/functional/non-functional requirements, user stories/use cases, scope/non-goals, acceptance criteria, test strategy, test cases, test data, автоматизацію тестів, автоматичний запуск, ручні та exploratory-перевірки, UAT, документацію і оцінку ефекту.
+Content verification is not reduced to executing code. Research is verified by questions, sources and gaps; a Decision — by alternatives, rationale and authority; a Task/Spec — by completeness, consistency and testability; a Deliverable — by AC and actual evidence. Standard rules are obtained from the canonicalized techniques, not re-agreed with the user for every task.
 
-Перевірка змісту не зводиться до виконання коду. Research перевіряється за питаннями, джерелами та прогалинами; Decision — за альтернативами, rationale й authority; Task/Spec — за повнотою, узгодженістю й тестованістю; Deliverable — за AC та фактичними доказами. Стандартні правила отримуються з канонізованих методик, а не заново узгоджуються з користувачем для кожної задачі.
+**Test Designer** prepares scenarios and their link to AC; **Automation Tester** creates/executes automated checks; **Reviewer** independently evaluates the result; **Verifier** reconciles evidence with the goal; **Manual/UAT participant** records their own observations. A UI agent can execute a scenario through a browser, but this is not human acceptance: without the required human answer it remains `awaiting-human-verification`, not PASS.
 
-**Test Designer** готує сценарії й зв'язок із AC; **Automation Tester** створює/виконує автоматизовані перевірки; **Reviewer** незалежно оцінює результат; **Verifier** зіставляє докази з метою; **Manual/UAT participant** фіксує власні спостереження. UI-агент може виконати сценарій через браузер, але це не людське прийняття: без потрібної відповіді людини лишається `awaiting-human-verification`, не PASS.
+Light/Medium/Full change the depth of research, the detail of artifacts, the useful separation of roles and the costs. The applicability of an operation, its obligation (`required`, `conditional`, `optional`) and its depth are separate properties. Full does not mean executing all known stages; Light does not allow skipping the required AC, materialization or mandatory gates.
 
-Light/Medium/Full змінюють глибину дослідження, деталізацію артефактів, корисне розділення ролей і витрати. Застосовність операції, її обов'язковість (`required`, `conditional`, `optional`) та глибина — окремі властивості. Full не означає виконати всі відомі етапи; Light не дозволяє пропустити потрібні AC, матеріалізацію чи mandatory gates.
+## 6. Artifact-first: materialization of meaningful work
 
-## 6. Artifact-first: матеріалізація значущої роботи
+After a meaningful operation there must remain a **readable and verifiable result** or an explicitly recorded update of an existing one. One file can contain several small related entities; a separate Wiki document for every tool call is not needed.
 
-Після змістовної операції повинен залишатися **читабельний і перевірюваний результат** або явно зафіксоване оновлення існуючого. Один файл може містити кілька невеликих пов'язаних сутностей; окремий Wiki-документ на кожен tool call не потрібен.
-
-| Робота | Канонічний результат |
+| Work | Canonical result |
 |---|---|
-| Новий запит / ідея | Intent із метою та обмеженнями або посилання на відповідне джерело вимог |
-| Уточнення | Зафіксоване питання, відповідь і відповідне оновлення intent/вимог |
-| Оцінка альтернатив | Options assessment із критеріями порівняння та аргументами |
-| Дослідження | Тематичний Research document |
-| Вибір альтернативи | Окремий Decision record |
-| Формування продуктового задуму | Brief / PRD / Spec за потреби |
-| Постановка роботи | Новий Work Item / Task |
-| Критерії прийняття | Acceptance criteria зі стабільними ідентичностями або посиланням на авторитетне джерело |
-| Дизайн тестів | Test cases / test plan, пов'язані з AC |
-| Код або інший deliverable | Реальна зміна Source / документ / створений результат |
-| Автотестування | Тести в Source + окреме execution evidence з фактичним запуском |
-| Ручне тестування / UAT | Спостереження людини/уповноваженого тестувальника з кроками та verdict |
-| Review | Перевірені findings, disposition та докази |
-| Завершення | Evidence, acceptance verdict, фактичний deliverable і явні GAPs |
-| Передача / впровадження | Delivery/handoff record та результат передбачених перевірок |
-| Оцінка ефекту й висновки | Outcome/KPI report, retrospective або окремо зафіксовані нові питання й задачі |
+| New request / idea | Intent with the goal and constraints or a reference to the corresponding requirements source |
+| Clarification | The recorded question, answer and the corresponding update of the intent/requirements |
+| Assessment of alternatives | Options assessment with comparison criteria and arguments |
+| Research | Thematic Research document |
+| Choice of an alternative | Separate Decision record |
+| Formation of the product concept | Brief / PRD / Spec as needed |
+| Work definition | New Work Item / Task |
+| Acceptance criteria | Acceptance criteria with stable identities or a reference to an authoritative source |
+| Test design | Test cases / test plan linked to AC |
+| Code or another deliverable | A real change of the Source / document / created result |
+| Automated testing | Tests in the Source + separate execution evidence with an actual run |
+| Manual testing / UAT | Observation of a human/authorized tester with steps and a verdict |
+| Review | Verified findings, disposition and evidence |
+| Completion | Evidence, acceptance verdict, the actual deliverable and explicit GAPs |
+| Handoff / rollout | Delivery/handoff record and the result of the foreseen checks |
+| Assessment of the effect and conclusions | Outcome/KPI report, retrospective or separately recorded new questions and tasks |
 
-**Критерій передачі:** агент не може звітувати про збережений результат, якщо файл/запис не існує, не читається або не відповідає required materialization contract. Persistence verification та semantic verification — різні перевірки. Статус `passed` без запуску перевірки або реального спостереження заборонений.
+**Handoff criterion:** an agent cannot report a saved result if the file/record does not exist, is not readable or does not conform to the required materialization contract. Persistence verification and semantic verification are different checks. The status `passed` without running a check or without real observation is forbidden.
 
-Модель пов'язаних даних: `Research → Decision → Requirement → Work Item → Test Case → Evidence`. Це **типізовані відношення**, а не вимога створити всі елементи для кожної задачі.
+The model of related data: `Research → Decision → Requirement → Work Item → Test Case → Evidence`. These are **typed relations**, not a requirement to create all elements for every task.
 
-### 6.1 Три частини матеріалізації
+### 6.1 Three parts of materialization
 
-**Content Artifact** — сам документ, код, тест, таблиця або інший результат. **Artifact Reference** — його стабільний ID, тип, продукт, scope/work binding, locator, ревізія/digest та relations. **Action/Event Record** — хто, коли й що створив, змінив, перевірив, погодив або не зміг виконати. Зміст, посилання та подія не підміняють одне одного й не утворюють другий workflow engine.
+**Content Artifact** — the document itself, code, a test, a table or another result. **Artifact Reference** — its stable ID, type, product, scope/work binding, locator, revision/digest and relations. **Action/Event Record** — who, when and what created, changed, checked, approved or failed to execute. The content, the reference and the event do not substitute for each other and do not form a second workflow engine.
 
-Матеріалізація відбувається в міру появи значущих результатів, не лише у фінальній відповіді. Проміжний висновок або частковий report зберігається з правдивим статусом. Споживач отримує durable reference на точний результат, а не залежить від пам'яті іншого агента. Один стислий документ може містити кілька логічних сутностей зі стабільними локальними ID; для великого результату дозволені окремі артефакти.
+Materialization happens as meaningful results appear, not only in the final answer. An intermediate conclusion or a partial report is stored with a truthful status. The consumer receives a durable reference to the exact result instead of depending on the memory of another agent. One concise document can contain several logical entities with stable local IDs; for a large result separate artifacts are allowed.
 
-### 6.2 Контракт виходу в інструкціях
+### 6.2 Exit contract in instructions
 
-Інструкції, що продукують результат, визначають **`artifact_contract`**: який тип виходу потрібен, які дані й посилання він містить, де матеріалізується за картою проєкту та як перевіряється. Для research це, зокрема, питання, джерела, висновки й невизначеність; для Task — мета, scope та AC; для Test Case — передумови, кроки, дані й очікування; для Test Run — фактичний запуск і спостереження.
+Instructions that produce a result define an **`artifact_contract`**: which type of output is needed, which data and references it contains, where it is materialized according to the project map and how it is verified. For research this is, in particular, questions, sources, conclusions and uncertainty; for a Task — the goal, scope and AC; for a Test Case — preconditions, steps, data and expectations; for a Test Run — the actual run and observation.
 
-`artifact_contract` — концептуальне VP-розширення, не затверджена низькорівнева схема. Воно **не** робить кожну атомарну норму окремим файлом або workflow-вузлом. Матеріалізаційні правила компонуються разом із релевантними інструкціями; загальні норми на зразок мінімальності зміни застосовуються всередині роботи.
+`artifact_contract` is a conceptual VP extension, not an approved low-level schema. It does **not** make every atomic norm a separate file or workflow node. Materialization rules are composed together with the relevant instructions; general norms such as minimality of the change apply inside the work.
 
-Handoff підтверджується лише після перевірки доступності обов'язкового виходу та його відповідності контракту. Перевірка наявності/формату/digest і змістовна перевірка результату відокремлені. Доказ має бути прив'язаний до саме тієї редакції вимог, реалізації та артефактів, яку перевіряли; нова редакція не успадковує старий PASS автоматично.
+A handoff is confirmed only after checking the availability of the mandatory output and its conformance to the contract. The check of presence/format/digest and the substantive check of the result are separated. Evidence must be bound to exactly the revision of the requirements, implementation and artifacts that was checked; a new revision does not inherit the old PASS automatically.
+## 7. Document lifecycle: current content, history separately
 
-## 7. Життєвий цикл документів: поточний зміст, історія окремо
+### 7.1 Thematic Research
 
-### 7.1 Тематичний Research
+**One topic = one canonical living research document.** New research on the same topic updates **this same** document, replacing outdated facts with current verified conclusions. No series of `research-final-v2-2026...` is created for the same subject.
 
-**Одна тематика = один канонічний living research document.** Нове дослідження з тієї ж теми оновлює **цей самий** документ, замінюючи застарілі факти поточними перевіреними висновками. Не створюється серія `research-final-v2-2026...` для того самого предмета.
+The main document keeps **only the current finalized content**. The body contains no chronology, no notes about previous versions, no "previously it was ..." formulations, no "what changed" comments and no execution transcripts.
 
-Основний документ зберігає **лише актуальний фіналізований зміст**. У тілі немає хронології, нотаток про попередні версії, формулювань «раніше було ...», коментарів «що змінено» чи стенограм виконання.
+The metadata holds the identity, `updated_at`, sources, the required currency attributes and, when needed, revision/provenance. A **separate linked change log / audit artifact** records the content change, the date, the executor and the reason; this log is not mixed with the thematic research.
 
-У метаданих — ідентичність, `updated_at`, джерела, необхідні атрибути актуальності та за потреби revision/provenance. **Окремий пов'язаний журнал змін / audit artifact** записує зміну вмісту, дату, виконавця і причину; цей журнал не змішується з тематичним research.
+If the research opens a fundamentally **new separate topic**, a new research document is created. If it leads to a decision, a **separate Decision artifact** is issued.
 
-Якщо дослідження відкриває принципово **нову окрему тему**, створюється новий research document. Якщо воно призводить до рішення, оформлюється **окремий Decision artifact**.
+### 7.2 Decisions
 
-### 7.2 Рішення
+An accepted decision is a separate artifact with rationale, alternative options, evidence and attribution/authority. A new decision that changes an old one **does not erase** the accepted historical act: a new Decision is created with `supersedes`/relations. The existing runtime `DecisionRecord/v1` has the corresponding fields and must be reused.
 
-Прийняте рішення — окремий артефакт з rationale, alternative options, evidence та attribution/authority. Нове рішення, що змінює старе, **не стирає** прийнятий історичний акт: створюється новий Decision із `supersedes`/relations. Існуючий runtime `DecisionRecord/v1` має відповідні поля і повинен повторно використовуватися.
+Updated research may require evaluating the current decision; it **does not grant** the right to automatically revoke it or change downstream scope.
 
-Оновлене дослідження може вимагати оцінити чинне рішення; **не надає** права автоматично відкликати його або змінити downstream scope.
+### 7.3 Tasks / Work Items
 
-### 7.3 Задачі / Work Items
+- **Draft, not yet executed task:** its current content can be clarified and updated in place according to the owner's rights.
+- **After acceptance and during execution:** act within the frozen/agreed scope and the rules of the corresponding environment; changes require a proper controlled review.
+- **Completed task:** remains a fact of the work performed; it is not rewritten for a new request or a new implementation. For changes, a **new Work Item** is created, linked to the previous one (`changes`, `extends`, `follows-up`, `fixes`), with its own AC and evidence.
 
-- **Draft, ще не виконана задача:** її актуальний зміст можна уточнювати й оновлювати на місці відповідно до прав власника.
-- **Після прийняття та під час виконання:** діяти в межах замороженого/узгодженого scope та правил відповідного середовища; зміни вимагають належного контрольованого перегляду.
-- **Завершена задача:** залишається фактом виконаної роботи; її не переписують для нового запиту або нової реалізації. Для змін створюється **новий Work Item**, пов'язаний з попереднім (`changes`, `extends`, `follows-up`, `fixes`), зі своїми AC й evidence.
+Source requirements and specification documents can be living documents within their owner, but their change **does not automatically rewrite completed Work Items or their results**.
 
-Вихідні документи вимог і специфікацій можуть бути living documents у межах їхнього власника, але їхня зміна **не переписує автоматично завершені Work Items або їхні результати**.
+### 7.4 Acceptance, test cases and evidence
 
-### 7.4 Acceptance, тест-кейси та evidence
+Acceptance Criteria and Test Cases have stable IDs and references to requirements or a Work Item. Unfinished drafts can be clarified; agreed and applied criteria must not change imperceptibly in a way that makes old `passed` mean new behavior.
 
-Acceptance Criteria і Test Cases мають стабільні ID та посилання на вимоги або Work Item. Незавершені чернетки можна уточнювати; погоджені й застосовані критерії не повинні непомітно змінюватися так, щоб старі `passed` почали означати нову поведінку.
+Each actual Test Run, Manual Test Session, UAT verdict or review execution is separate evidence with its own identity. Old results are not rewritten to present a new run as already successful.
 
-Кожен фактичний Test Run, Manual Test Session, UAT verdict або review execution — окреме evidence із власною ідентичністю. Старі результати не переписуються для зображення нового запуску як уже успішного.
+### 7.5 Journals of actions
 
-### 7.5 Журнали дій
+The history includes **meaningful changes and results**: creation/update of research, a decision, a task transition, a check, an acceptance, an error, a new revision, materialized evidence. Not every tool call is obliged to create a separate document. The change log is not added to the body of the final research.
 
-В історію потрапляють **значущі зміни й результати**: створення/оновлення research, рішення, task transition, перевірка, прийняття, помилка, нова ревізія, materialized evidence. Кожен tool call не зобов'язаний створювати окремий документ. Журнал змін не додається до тіла фінального research.
+### 7.6 Consistency of current knowledge
 
-### 7.6 Узгодженість актуального знання
+Documents are updated, verified, approved and become stale according to their type and owner. Content lifecycle, verification status and approval/authority are independent dimensions: a technically verified specification may still await business approval, and an outdated source does not automatically revoke an accepted decision.
 
-Документи оновлюються, перевіряються, погоджуються і застарівають відповідно до свого типу та власника. Content lifecycle, verification status і approval/authority — незалежні виміри: технічно перевірена специфікація може ще чекати бізнесового погодження, а застарілий source не автоматично скасовує прийняте рішення.
+A source update triggers an assessment of the impact on the related decisions, requirements, tasks and checks. The need for a re-review is marked explicitly; dependent artifacts are not rewritten without permission and without establishing the relevance of the change. History belongs to separate linked change records/evidence, while the living normative document describes the current state without historical comments.
 
-Оновлення джерела запускає оцінку впливу на пов'язані рішення, вимоги, задачі й перевірки. Потреба повторного review позначається явно; залежні артефакти не переписуються без дозволу й без встановлення релевантності зміни. Історія належить окремим linked change records/evidence, тоді як живий нормативний документ описує актуальний стан без історичних коментарів.
+The rule "one topic — one research" applies within a defined product and a meaningful contour. The same name in two products does not force mixing different sources and scopes. Shared research can have one owner and references from several products instead of copies.
+## 8. Scope, write authority and Findings
 
-Правило «одна тема — один research» застосовується в межах визначеного продукту та змістовного контуру. Однакова назва у двох продуктів не змушує змішувати різні джерела й scope. Спільне дослідження може мати одного власника та посилання від кількох продуктів замість копій.
+### 8.1 Write owners
 
-## 8. Scope, право на запис і Findings
+**VIDA Runtime:** its existing reservation, lease, CAS, single-writer, guarded filesystem and lifecycle/authorization mechanisms apply. Rights for the duration of a task are acquired, can be delegated in an allowed way and are released by the Runtime itself. VP does not duplicate them, does not grant rights and does not create a second owner of state. The target single database is `.vida/work/workspace.v1.sqlite` after a qualified transition; the existing v1 contracts remain in force until migration.
 
-### 8.1 Власники запису
+**Vida Powers Standalone:** transparent editing without an own system of leases, distributed locks, a reservation service or a scheduler. The owner of the last write and the responsible author of a specific change is the agent that made it; this is recorded in the metadata and the log. This is transparent attribution, not a VP rights-capture system. It does not transfer to it the right to change the product intent or to make decisions instead of the user. The Master Agent resolves conflicting writes with the practical means of the host; hidden overwriting of other people's changes is not allowed. A simple repeated read/reconcile does not turn into a mandatory Runtime dependency. Local Git/host capabilities and verification of the actual content help recovery but do not promise the transactional guarantees of the Runtime.
 
-**VIDA Runtime:** діють його наявні reservation, lease, CAS, single-writer, guarded filesystem та lifecycle/authorization mechanisms. Права на час задачі набуваються, можуть делегуватися у дозволений спосіб і звільняються самим Runtime. VP їх не дублює, не видає прав і не створює другого власника стану. Цільова єдина БД — `.vida/work/workspace.v1.sqlite` після кваліфікованого переходу; наявні v1-контракти залишаються чинними до міграції.
-
-**Vida Powers Standalone:** прозоре редагування без власної системи leases, distributed locks, reservation service або scheduler. Власником останнього запису і відповідальним автором конкретної зміни є агент, який її зробив; він фіксується в метаданих і журналі. Це прозора атрибуція, не система захоплення прав VP. Це не передає йому право змінювати продуктовий намір або приймати рішення замість користувача. Master Agent розводить конфліктні записи практичними засобами хоста; не допускається прихований перезапис чужих змін. Простий повторний read/reconcile не перетворюється на обов'язкову Runtime-залежність. Локальні Git/host можливості та перевірка фактичного вмісту допомагають відновленню, але не обіцяють транзакційних гарантій Runtime.
-
-Правило централізованого запису **Findings** є окремим контрактом і не означає, що Orchestrator має особисто редагувати кожний research, Task чи Wiki-документ.
+The rule of centralized writing of **Findings** is a separate contract and does not mean that the Orchestrator must personally edit every research, Task or Wiki document.
 
 ### 8.2 Scope-First Execution
 
-Кожен агент, його інструкції, dynamic routing і вкладені задачі обмежені **дозволеним Work Scope**. Методологія, міркування про coverage/security, relevance score чи статус незалежного агента не дозволяють його розширювати. Scope визначається метою, причинним зв'язком, AC та явними дозволами, не лише тим, у якому файлі знайдено проблему.
+Every agent, its instructions, dynamic routing and nested tasks are limited to the **allowed Work Scope**. Methodology, reasoning about coverage/security, a relevance score or the status of an independent agent do not allow it to be extended. Scope is defined by the goal, the causal link, the AC and explicit permissions, not only by which file the problem was found in.
 
-| Знахідка | Дія |
+| Finding | Action |
 |---|---|
-| Баг, спричинений поточною роботою, у дозволеному scope | Виправити й перевірити в межах поточної задачі |
-| Проблема, що блокує AC, але потребує виходу за надані повноваження | Зафіксувати blocker і запросити дозвіл до зміни; не обіцяти завершення без нього |
-| Реальний сторонній баг, що не блокує основну роботу | Окремий Finding; продовжити основну задачу без стороннього виправлення |
-| Додаткове поліпшення, оптимізація або стороння security-знахідка | Окремо зафіксувати; не перетворювати на несанкціонований обсяг робіт |
-| Є попередньо погоджена auto-fix policy для такого класу сторонніх багів | Все одно створити окрему задачу, з власними scope, AC і доказами |
+| A bug caused by the current work, within the allowed scope | Fix and verify within the current task |
+| A problem that blocks an AC but requires going beyond the granted authority | Record a blocker and request permission before the change; do not promise completion without it |
+| A real third-party bug that does not block the main work | Separate Finding; continue the main task without the third-party fix |
+| An additional improvement, optimization or third-party security finding | Record separately; do not turn into unauthorized scope of work |
+| A previously agreed auto-fix policy exists for such a class of third-party bugs | Still create a separate task, with its own scope, AC and evidence |
 
-Без standing permission пропозиція виправлення сторонніх проблем — **optional human loop після завершення основної роботи**. За auto-fix policy стороння робота також не підміняє основну: виконується окремо після неї. Реальне блокування чи відсутній дозвіл можуть потребувати питання раніше; non-blocking знахідки не повинні затримувати основний результат.
+Without standing permission, a proposal to fix third-party problems is an **optional human loop after the main work is completed**. Under an auto-fix policy, third-party work also does not substitute the main work: it is performed separately after it. A real blockage or a missing permission may require a question earlier; non-blocking findings must not delay the main result.
 
-### 8.3 Finding не тотожний Work Item
+### 8.3 A Finding is not identical to a Work Item
 
-Finding фіксує проблему, докази, джерело виявлення, продукт, зв'язок із work/scope та блокувальний вплив. Сам факт його створення **не є авторизацією виправлення**. Після явного рішення користувача або застосування його зафіксованої політики формується окремий Bug Work Item і зв'язок із Finding. Виконання задачі й докази її виправлення не стають другим станом у реєстрі Findings.
+A Finding records the problem, the evidence, the discovery source, the product, the link to work/scope and the blocking impact. The very fact of its creation **is not authorization to fix**. After an explicit user decision or the application of their recorded policy, a separate Bug Work Item and a link to the Finding are formed. The execution of the task and the evidence of its fix do not become a second state in the Findings registry.
 
-**Standalone:** окремий append-only JSONL Findings для кожного продукту. **Runtime:** логічна продуктова ізоляція в чинній SQLite/HostState, не нова БД на кожний продукт і не другий JSONL-власник того самого стану. Конкретний файловий шлях визначає продуктова карта. Зовнішні issue trackers і синхронізація не реалізуються в поточному scope.
+**Standalone:** a separate append-only JSONL Findings per product. **Runtime:** logical product isolation within the existing SQLite/HostState, not a new database per product and not a second JSONL owner of the same state. The specific file path is determined by the product map. External issue trackers and synchronization are not implemented in the current scope.
 
-### 8.4 Централізований запис та Hybrid Deduplication
+### 8.4 Centralized writing and Hybrid Deduplication
 
-Субагенти повертають структуровані повідомлення про Findings. **Orchestrator** централізовано відповідає за перевірку, класифікацію, дедуплікацію та запис через один належний writer/persistence API. Субагенти не дописують канонічний Findings-журнал напряму. У Runtime запис проходить через його наявного власника стану.
+Subagents return structured messages about Findings. The **Orchestrator** is centrally responsible for verification, classification, deduplication and writing through one proper writer/persistence API. Subagents do not append to the canonical Findings journal directly. In Runtime the record goes through its existing state owner.
 
-| Крок | Правило |
+| Step | Rule |
 |---|---|
-| Ідентичність повідомлення | Повторна доставка того самого report/event не створює повторної події |
-| Детермінований пошук | Перевірка ID, fingerprint, контексту та provenance |
-| Semantic candidate matching | Decision Provider (D5) знаходить можливі дублікати серед решти кандидатів |
-| Перевірка еквівалентності | Відтворення, контекст і докази мають підтвердити тотожність дефекту; однакове місце або високий score недостатні |
-| Підтверджений дублікат | Пов'язати з канонічним `finding_id`, зберігши нове незалежне evidence |
-| Неоднозначність | Залишити окремі Findings із можливим зв'язком; не об'єднувати силоміць |
+| Message identity | Re-delivery of the same report/event does not create a repeated event |
+| Deterministic lookup | Check of ID, fingerprint, context and provenance |
+| Semantic candidate matching | The Decision Provider (D5) finds possible duplicates among the remaining candidates |
+| Equivalence check | Reproduction, context and evidence must confirm the identity of the defect; the same location or a high score is not sufficient |
+| Confirmed duplicate | Link to the canonical `finding_id`, preserving the new independent evidence |
+| Ambiguity | Keep separate Findings with a possible link; do not merge by force |
 
-Історія є append-only: первинні спостереження не видаляються; об'єднання/перенаправлення — окрема подія, а не стирання record. Повторна доставка одного доказу і нове незалежне спостереження — різні випадки. Усі прийняті disposition та проблеми запису мають правдивий стан, а не фіктивне завершення.
+The history is append-only: primary observations are not deleted; merging/redirecting is a separate event, not erasing a record. Re-delivery of one piece of evidence and a new independent observation are different cases. All accepted dispositions and writing problems have a truthful state, not a fictitious completion.
 
-`findings` у ResearchResult означають твердження дослідження; це не автоматично записи реєстру дефектів. Їх можна пов'язувати, але не змішувати їхню семантику й життєві цикли.
+`findings` in a ResearchResult mean the statements of the research; they are not automatically defect registry records. They can be linked, but their semantics and lifecycles must not be mixed.
+## 9. Wiki, Work Items and navigation (Jira/Confluence-like)
 
-## 9. Wiki, Work Items і навігація (Jira/Confluence-like)
+**Physical storage is shallow; the logical hierarchy lives in metadata and typed relations.** This gives stable references, search and future interfaces without moving files when the Wiki tree changes.
 
-**Фізичне зберігання — неглибоке; логічна ієрархія — у метаданих та типізованих relations.** Це дає стабільні посилання, пошук і майбутні інтерфейси без переміщення файлів при зміні дерева Wiki.
+- Wiki pages: a document with `id`, `title`, `type`, `tags`, `space`, `parent_id`, `order`, `updated_at`, sources/links. Pages lie side by side, for example `docs/wiki/<KEY>-W0042-oauth-strategy.md`.
+- Tasks: separate Work Items with an ID such as `<KEY>-142`. In Standalone a local file `work/<KEY>-142.md` is possible; in Runtime the authoritative task state already belongs to the database.
+- Evidence: outside the main Wiki pages, with a link to the Work Item/AC; in Runtime — through the existing artifact/evidence contracts.
+- Files have stable IDs and short kebab-case slugs, **without** `done`, `draft`, dates and `final-v2` suffixes in a long-lived name.
+- Types `research`, `decision`, `requirements`, `test-plan` are mostly Wiki metadata/filters, not separate physical directory trees.
+- Relations are typed: `derived-from`, `informs`, `implements`, `tests`, `blocks`, `supersedes`, `changes`, `found-during`.
+- Indexes/navigation/UI are **derived** from the authoritative documents and Work State. Future Wiki/Task UI — a separate product on top of the VIDA API, **not a VP function**.
 
-- Wiki pages: документ із `id`, `title`, `type`, `tags`, `space`, `parent_id`, `order`, `updated_at`, sources/links. Сторінки лежать поруч, наприклад `docs/wiki/<KEY>-W0042-oauth-strategy.md`.
-- Tasks: окремі Work Items із ID на кшталт `<KEY>-142`. У Standalone можливий локальний файл `work/<KEY>-142.md`; у Runtime авторитетний task state уже належить БД.
-- Evidence: поза основними Wiki pages, зі зв'язком до Work Item/AC; у Runtime — через існуючі artifact/evidence contracts.
-- Файли мають стабільні ID та короткі kebab-case slugs, **без** `done`, `draft`, дат і суфіксів `final-v2` у довготривалому імені.
-- Типи `research`, `decision`, `requirements`, `test-plan` — переважно метадані/фільтри Wiki, а не окремі фізичні дерева директорій.
-- Зв'язки типізовані: `derived-from`, `informs`, `implements`, `tests`, `blocks`, `supersedes`, `changes`, `found-during`.
-- Індекси/навігація/UI — **похідні** від авторитетних документів і Work State. Future Wiki/Task UI — окремий продукт поверх VIDA API, **не функція VP**.
+The specific paths for a new consumer project are finally determined by `vp-setup` according to the existing ownership. In an already existing repository the normative file stays in its place; no automatic duplication/migration of documents during setup. This is especially important for the current `packages/agent` and `packages/plugin`.
 
-Конкретні шляхи для нового consumer-проєкту остаточно визначаються `vp-setup` відповідно до наявного ownership. У вже наявному репозиторії нормативний файл залишається на своєму місці; ніякого автоматичного дублювання/міграції документів під час setup. Це особливо важливо для поточних `packages/agent` та `packages/plugin`.
+**Note:** file schemas such as `VPWikiPage/v1` or `VPWorkItem/v1`, mentioned as conceptual examples, are not implemented contracts. They must be reconciled with the existing `ResearchResult/v1`, `DecisionRecord/v1`, `AcceptanceManifest/v1`, `WorkItem/v1`, `WorkState/v1` before approving the formats.
 
-**Примітка:** схеми файлів типу `VPWikiPage/v1` або `VPWorkItem/v1`, згадані як концептуальні приклади, не є реалізованими контрактами. Їх потрібно звірити з чинними `ResearchResult/v1`, `DecisionRecord/v1`, `AcceptanceManifest/v1`, `WorkItem/v1`, `WorkState/v1`, перш ніж затверджувати формати.
+### 9.1 Shallow typical layout
 
-### 9.1 Неглибокий типовий layout
-
-Для нового продукту схема може мати такий вигляд; наявні нормативні шляхи зберігаються й лише відображаються в карті:
+For a new product the scheme may look like this; the existing normative paths are preserved and only reflected in the map:
 
 ```text
 <product-root>/
@@ -441,7 +435,7 @@ Finding фіксує проблему, докази, джерело виявле
       AGT-W0042-oauth-strategy.md
       assets/
         AGT-W0042-sequence.svg
-  work/                          # локальні дані VP Standalone
+  work/                          # local data of VP Standalone
     AGT-142.md
     findings.jsonl
     activity.jsonl
@@ -449,101 +443,107 @@ Finding фіксує проблему, докази, джерело виявле
       AGT-142-test-run-<run-id>.json
 ```
 
-`index.md` — похідна навігація, `activity.jsonl` — локальний запис значущих дій; журнал змін канонічного документа є окремим пов'язаним артефактом. Evidence і результати test runs не засмічують основну Wiki. Test plans і повторно використовувані test cases можуть бути Wiki-контентом; невеликі task-specific AC/кейси — ідентифікованими розділами задачі.
+`index.md` is derived navigation, `activity.jsonl` is a local record of meaningful actions; the change log of a canonical document is a separate linked artifact. Evidence and test run results do not clutter the main Wiki. Test plans and reusable test cases can be Wiki content; small task-specific ACs/cases — identified sections of the task.
 
-У Runtime операційні дані належать БД. Markdown Work Item може бути експортом/проєкцією, але не другим авторитетним task state. Кореневий `AGENTS.md`, `.vida/project.yaml`, `.vida/agents.yaml`, `.vida/flows.yaml`, `.vida/AGENT.sidecar.md` та `.vida/work/workspace.v1.sqlite` зберігають свої конфігураційні й операційні ролі. Продуктові документи не переносяться туди автоматично.
+In Runtime the operational data belongs to the database. A Markdown Work Item can be an export/projection but not a second authoritative task state. The root `AGENTS.md`, `.vida/project.yaml`, `.vida/agents.yaml`, `.vida/flows.yaml`, `.vida/AGENT.sidecar.md` and `.vida/work/workspace.v1.sqlite` keep their configuration and operational roles. Product documents are not moved there automatically.
 
-### 9.2 Стабільні імена та логічні зв'язки
+### 9.2 Stable names and logical relations
 
-| Об'єкт | Формат імені |
+| Object | Name format |
 |---|---|
-| Wiki page, включно з research/decision/spec | `<KEY>-W<NNNN>-<slug>.md` |
+| Wiki page, including research/decision/spec | `<KEY>-W<NNNN>-<slug>.md` |
 | Standalone Task | `<KEY>-<N>.md` |
 | Attachment | `<PAGE-ID>-<slug>.<ext>` |
-| Evidence конкретного запуску | `<TASK-ID>-<run-id>.<ext>` або уточнений тип запуску в назві |
-| AC усередині задачі | Стабільна локальна адреса на зразок `AGT-142:AC-01`; це ID, не вимога такого імені файлу |
+| Evidence of a specific run | `<TASK-ID>-<run-id>.<ext>` or a refined run type in the name |
+| AC inside a task | A stable local address such as `AGT-142:AC-01`; it is an ID, not a requirement of such a file name |
 
-Ключ продукту на зразок `AGT` реєструється окремо від внутрішнього `project_id`. ID не залежить від назви, статусу чи шляху, не повторно використовується після вилучення запису. Видача ID контролюється належним власником/простим allocator у Standalone та Runtime-механізмом у режимі БД, без вигаданих гарантій міжпроцесної координації VP.
+The product key such as `AGT` is registered separately from the internal `project_id`. An ID does not depend on the name, status or path and is not reused after a record is removed. ID issuance is controlled by the proper owner/a simple allocator in Standalone and by a Runtime mechanism in database mode, without invented guarantees of cross-process coordination in VP.
 
-Slug короткий, латинкою, lowercase kebab-case, орієнтовно до 50 символів; він фіксується при створенні й не перейменовується автоматично після зміни `title`. Видима назва документа може бути українською. Дати, ревізії, draft/done/approved зберігаються в метаданих, не в іменах живих довготривалих сторінок. Незмінні evidence-записи відрізняються власним run ID.
+The slug is short, in Latin script, lowercase kebab-case, roughly up to 50 characters; it is fixed at creation and is not automatically renamed after the `title` changes. The visible document title can be Ukrainian. Dates, revisions, draft/done/approved are stored in the metadata, not in the names of living long-lived pages. Immutable evidence records are distinguished by their own run ID.
 
-Wiki-дерево утворюють `space`, `parent_id` і `order`; ієрархію задач — `parent`, залежності й типізовані relations. Переміщення в дереві не вимагає переміщення файлу. Зв'язки перевіряються на невідомі ID, цикли та некоректний продуктовий контекст. Один нормативний документ може обслуговувати кілька задач; його зміст не копіюється в кожну з них.
+The Wiki tree is formed by `space`, `parent_id` and `order`; the task hierarchy — by `parent`, dependencies and typed relations. Moving in the tree does not require moving the file. Relations are checked for unknown IDs, cycles and an incorrect product context. One normative document can serve several tasks; its content is not copied into each of them.
 
-### 9.3 Пошук і майбутні інтерфейси
+### 9.3 Search and future interfaces
 
-Спільна логічна ієрархія придатна для Wiki tree, Task Board, task details, історії, backlinks і наскрізного перегляду Research → Decision → Requirements → AC → Tests → Evidence. Вона не означає, що VP постачає UI.
+The shared logical hierarchy is suitable for the Wiki tree, Task Board, task details, history, backlinks and an end-to-end view Research → Decision → Requirements → AC → Tests → Evidence. It does not mean that VP ships a UI.
 
-Первинний пошук охоплює ID, filename, title, body, тип, продукт, tags/labels і relations. Розширений full-text index за потреби відновлюваний і похідний; у Runtime використовується його наявне сховище, а не друга БД істини. Чужий нормативний документ поза `wiki_root` індексується за посиланням, не дублюється заради структури Wiki.
+Primary search covers ID, filename, title, body, type, product, tags/labels and relations. An extended full-text index is recoverable and derived when needed; in Runtime its existing store is used, not a second database of truth. Someone else's normative document outside `wiki_root` is indexed by reference, not duplicated for the sake of the Wiki structure.
+## 10. Models of result storage
 
-## 10. Моделі збереження результатів
+For VIDA Runtime the existing owners and resources are used:
 
-Для VIDA Runtime використовуються наявні власники та ресурси:
-
-- `ResearchResult/v1`, `ResearchSynthesis/v1` — питання, джерела, findings, невизначеність, recommendations.
-- `DecisionRecord/v1` — рішення, authority, alternatives, relations/supersedes.
+- `ResearchResult/v1`, `ResearchSynthesis/v1` — questions, sources, findings, uncertainty, recommendations.
+- `DecisionRecord/v1` — decision, authority, alternatives, relations/supersedes.
 - `ImplementationScope/v1`, `AcceptanceManifest/v1` — scope, allowed paths, acceptance IDs.
-- `WorkItem/v1`, `WorkState/v1` — work identity, binding, виконання, артефакти, evidence.
-- `HostState` — єдиний власник transactional Work, Ledger і journal CAS; файлова матеріалізація під чинним fs-safe/repair contract.
+- `WorkItem/v1`, `WorkState/v1` — work identity, binding, execution, artifacts, evidence.
+- `HostState` — the single owner of transactional Work, Ledger and journal CAS; file materialization under the current fs-safe/repair contract.
 
-Не можна вважати загальну атомарність запису в SQLite і звичайного файлу доведеною лише через SQLite transaction. Активний status cutover, міграції та допустимі file owners мають перевірятися при реалізації; архітектурні описи не є доказом readiness.
+The general atomicity of writing to SQLite and to an ordinary file cannot be considered proven merely through a SQLite transaction. The active status cutover, migrations and allowed file owners must be verified during implementation; architectural descriptions are not proof of readiness.
 
-У VP Standalone достатньо власника локального файлу, його метаданих, джерел/relations, простого журналу значущих подій та валідації результату; жодної паралельної Runtime database.
+In VP Standalone an owner of the local file, its metadata, sources/relations, a simple journal of meaningful events and validation of the result is sufficient; no parallel Runtime database.
 
-Наскрізний нормативний зв'язок VIDA — **BR → SR → AC → evidence/GAP**. Business intent, спостережувана поведінка, умова прийняття й доказ мають різні ролі. Decision, Code, Static, Runtime та GAP не підміняють один одного: статичний аналіз або наявність коду не закривають вимогу спостережуваного runtime evidence.
+The end-to-end normative link of VIDA is **BR → SR → AC → evidence/GAP**. Business intent, observable behavior, the acceptance condition and evidence have different roles. Decision, Code, Static, Runtime and GAP do not substitute for each other: static analysis or the presence of code does not close a requirement for observable runtime evidence.
 
-Артефакти зберігають ID, source/scope/work binding, ревізію або digest та посилання на передумови. Схема формату, редакція змісту й версія пакета — різні величини. Під час міграцій не вигадується історія попередніх ревізій. Наявність JSON-файлів Research/Decision у чинному codebase не дозволяє переносити до них власність над операційним станом, що належить БД; так само БД не змушує копіювати до неї нормативні документи.
+Artifacts keep the ID, source/scope/work binding, revision or digest and references to preconditions. The format schema, the content edition and the package version are different quantities. During migrations no history of previous revisions is invented. The presence of Research/Decision JSON files in the current codebase does not allow transferring to them ownership of the operational state that belongs to the database; likewise the database does not force normative documents to be copied into it.
 
-## 11. Домени та пакети інструкцій
+## 11. Domains and instruction packages
 
-Майбутні доменні розширення (`software-engineering`, `marketing`, `business-operations`, `research` тощо) — **domain packs**, які додають і уточнюють атомарні інструкції, теги, ролі й materialization guidance. Вони **не** встановлюють новий workflow engine, scheduler, source-of-truth чи власну універсальну Task систему.
+Future domain extensions (`software-engineering`, `marketing`, `business-operations`, `research` etc.) are **domain packs** that add and refine atomic instructions, tags, roles and materialization guidance. They do **not** introduce a new workflow engine, scheduler, source-of-truth or their own universal Task system.
 
-Універсальні операції — Research, Decision, Define, Execute, Verify — отримують доменні спеціалізації. Наприклад, software QA → unit/API/E2E/manual; marketing QA → фактологічна перевірка, відповідність брифу й аналітичні мітки; business QA → сценарії процесу й KPI. Необхідні докази визначаються властивостями кінцевого результату.
+Universal operations — Research, Decision, Define, Execute, Verify — receive domain specializations. For example, software QA → unit/API/E2E/manual; marketing QA → fact-checking, compliance with the brief and analytical labels; business QA → process scenarios and KPIs. The necessary evidence is determined by the properties of the final result.
 
-Доменний pack додає нові інструкції та спеціалізації до тієї самої семантичної бази й того самого механізму тегового пошуку. Сумісні доповнення не потребують переписування Router; несумісний патерн має нову ідентичність та проходить вибір методології продукту. Сам факт встановлення pack не змінює scope, повноваження чи завершені задачі.
+A domain pack adds new instructions and specializations to the same semantic base and the same tag-based search mechanism. Compatible supplements do not require rewriting the Router; an incompatible pattern has a new identity and passes the product methodology selection. The very fact of installing a pack does not change the scope, authority or completed tasks.
 
-## 12. Межі автономності, безпеки та ефективності
+## 12. Limits of autonomy, safety and efficiency
 
-- Agent і Decision Provider обирають інструкції, LLM, агентів і наступні дії **лише в межах уже визначеного Effective Methodology Profile**. Вони не змінюють вибір методології продукту, не надають permissions і не скасовують обов'язкові gates.
-- Суттєва неоднозначність із зовнішнім/незворотним ефектом, безпекою, scope або продуктовою політикою потребує належної людської авторизації.
-- Тести й code review — evidence, але не тотожні business approval чи human UAT; немає фіктивного PASS.
-- Фіксувати фактичні failures, limitations, незавершені GAPs; не створювати псевдодокументи чи перевірки лише заради церемонії.
-- Мінімізувати дубльований research, повторні завдання, контекст, agent turns і tokens; зберігати незалежність перевірки там, де її вимагає ризик та методологія.
-- Після context compaction відновлювати pointers/state, а не повторно виконувати вже завершені змістовні дії.
+- The Agent and the Decision Provider choose instructions, the LLM, agents and next actions **only within the already defined Effective Methodology Profile**. They do not change the product methodology choice, do not grant permissions and do not cancel mandatory gates.
+- Significant ambiguity with an external/irreversible effect, with safety, scope or product policy requires proper human authorization.
+- Tests and code review are evidence, but not identical to business approval or human UAT; there is no fictitious PASS.
+- Record the actual failures, limitations, unfinished GAPs; do not create pseudo-documents or checks merely for ceremony.
+- Minimize duplicated research, repeated tasks, context, agent turns and tokens; preserve the independence of verification where risk and methodology require it.
+- After context compaction, restore pointers/state rather than re-performing already completed meaningful actions.
 
-У результаті review причину розрізняють: локальний дефект реалізації → scoped correction; дефект плану → корекція дозволеної решти роботи; прогалина наміру/відсутній дозвіл → human loop; стороння проблема → Finding. Перепланування не повторює завершені side effects і не переписує прийняте evidence. Повторюються лише дії, для яких визначена потреба, межі та безпечний спосіб повторного виконання.
+As a result of a review, the cause is distinguished: a local implementation defect → scoped correction; a plan defect → correction of the allowed remainder of the work; an intent gap/missing permission → human loop; a third-party problem → Finding. Replanning does not repeat completed side effects and does not rewrite accepted evidence. Only actions for which a need, boundaries and a safe way of re-execution are defined are repeated.
+## 13. Limits of the current research and the next work in the IDE
 
-## 13. Межі поточного дослідження і наступна робота в IDE
+**Conceptual foundation:** an autonomous VP plugin, one main orchestration skill `vp-mode` and an auxiliary `vp-setup`; canonical atomic instructions and two dimensions of tags; product methodologies, selective inheritance and task-scoped overrides; Live Inheritance and Risk-Adaptive Updates; metadata-first selection and a Decision Provider with Agent Fallback; hybrid roles, recursive subtasks and Selective Join; Scope-First, centralized Findings and Hybrid Deduplication; the full lifecycle of arbitrary work, Light/Medium/Full, artifact-first; living research, separate decisions and new tasks for new changes; a flat Wiki, different storage/ownership boundaries of Standalone and Runtime; the absence of an own VP workflow engine.
 
-**Концептуальна основа:** автономний VP-плагін, один основний скіл оркестрації `vp-mode` і допоміжний `vp-setup`; канонічні атомарні інструкції та два виміри тегів; продуктові методології, вибіркове успадкування й task-scoped overrides; Live Inheritance і Risk-Adaptive Updates; metadata-first селекція й Decision Provider з Agent Fallback; гібридні ролі, рекурсивні підзадачі та Selective Join; Scope-First, централізовані Findings і Hybrid Deduplication; повний життєвий цикл довільної роботи, Light/Medium/Full, artifact-first; living research, окремі рішення й нові задачі для нових змін; плоска Wiki, різні storage/ownership межі Standalone та Runtime; відсутність власного VP workflow engine.
+**Technically open until the implementation phase:** detailed low-level VP schemas, a verified host compatibility matrix, the exact adapter APIs, migrations of the current contracts, the correctness of concurrent writing in specific hosts, validation of the chosen runtime integration points, MVP sequencing/evaluation. These questions **do not block the completion of the product research**.
 
-**Технічно відкрито до фази реалізації:** деталізовані низькорівневі схеми VP, перевірена host compatibility matrix, точні API адаптерів, міграції поточних контрактів, коректність конкурентного запису в конкретних хостах, валідація обраних runtime integration points, MVP sequencing/evaluation. Ці питання **не блокують завершення дослідження продукту**.
+In the IDE: first review the **current** tree/code and the normative VIDA documents, compare this concept with the Source, document the differences and have the specification approved by the owner of the corresponding product; then separately compose an implementation plan and implement incrementally. Do not change code, state or project instructions merely because this research document exists.
 
-У IDE: спершу оглянути **актуальне** дерево/код і нормативні документи VIDA, порівняти цю концепцію із Source, оформити відмінності й затвердити специфікацію власником відповідного продукту; потім окремо скласти implementation plan і впроваджувати інкрементально. Не змінювати код, стан чи проєктні інструкції лише від факту наявності цього research-документа.
+Development happens incrementally in a working IDE, not as a simultaneous implementation of all subsystems in cloud research. Donor conversion is a separate meaningful cycle: inventory of the material, extraction of instructions, tagging, matching of identical techniques, accounting for conflicts, binding of materialization contracts, provenance and verification of the resulting corpus. This is the content of subsequent work, not the launch of conversion by this document.
 
-Розробка відбувається інкрементально в робочому IDE, не як одночасна реалізація всіх підсистем у хмарному дослідженні. Конвертація донорів — окремий змістовний цикл: інвентаризація матеріалу, виділення інструкцій, тегування, зіставлення однакових методик, облік конфліктів, прив'язка materialization contracts, provenance та перевірка отриманого корпусу. Це зміст подальшої роботи, не запуск конвертації цим документом.
+The future UI on top of the VIDA API, integration implementation, marketplace distribution and domain packs are not considered already created. External synchronization is deferred; detailed portability guarantees remain open until verification on hosts. The specific low-level schemas, APIs and migrations do not need to be re-agreed as fundamental principles — they are worked out in practice within the recorded concept.
 
-Майбутній UI поверх VIDA API, інтеграційна реалізація, marketplace distribution та domain packs не вважаються вже створеними. Зовнішня синхронізація відкладена; детальні portability гарантії залишаються відкритими до перевірки на хостах. Конкретні низькорівневі схеми, API та міграції не потрібно погоджувати заново як фундаментальні принципи — їх опрацьовують на практиці в межах зафіксованої концепції.
+## 14. Sources and principles of use
 
-## 14. Джерела та принципи використання
-
-- [VIDA Agent Runtime](https://github.com/pomazanbohdan/vida-stack-lite) — авторитетні проєктні джерела для Core, HostState, setup та збереження; зафіксований у дослідженні source commit зазначено в метаданих.
+- [VIDA Agent Runtime](https://github.com/pomazanbohdan/vida-stack-lite) — authoritative project sources for Core, HostState, setup and persistence; the source commit recorded in the research is specified in the metadata.
 - [Superpowers](https://github.com/obra/superpowers) — brainstorming, planning, TDD, independent review, verification, subagent dispatch.
 - [BMAD Method](https://github.com/bmad-code-org/BMAD-METHOD) — research/decision, PRD/Spec, Build, QA, triage, deferred work.
-- [Matt Pocock Skills](https://github.com/mattpocock/skills) — research/spec/tickets, test-first, task frontier, review відносно специфікації.
+- [Matt Pocock Skills](https://github.com/mattpocock/skills) — research/spec/tickets, test-first, task frontier, review relative to the specification.
 - [Addy Osmani Agent Skills](https://github.com/addyosmani/agent-skills) — specialist roles, test engineer, code reviewer, security, constraints.
 - [Cursor pstack](https://github.com/cursor/plugins/tree/main/pstack) — selective playbooks, agents, verification, bounded programs.
 - [GSD Core](https://github.com/open-gsd/gsd-core) — requirements, planning artifacts, wave execution, verification, UAT.
 - [Ponytail](https://github.com/DietrichGebert/ponytail) — minimal complete change, removal of avoidable complexity without skipping risk controls.
 - [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) — structure, metadata and provenance of knowledge concepts, not execution semantics.
 
-**Актуальна концепція зафіксована. Подальші дослідження цієї самої теми мають оновлювати цей документ на місці та залишати історію в окремому пов'язаному журналі змін, не в основному тексті.**
+**The current concept is recorded. Further research on this same topic must update this document in place and leave the history in a separate linked change log, not in the main text.**
 
-Донорські та framework-референси є джерелами методик, не правом змінювати рішення продукту. Для подальшої кваліфікації використовується семантичне розділення: artifact services (Google ADK), checkpoints і довготривале сховище (LangGraph), executor state/checkpoints (Microsoft Agent Framework), history/replay та child lifecycle (Temporal), workflow outputs і persistence (Mastra), результати агентів (OpenAI Agents SDK), task/artifact identity (A2A/MCP), provenance relations (W3C PROV). Це дослідницькі орієнтири; їхні конкретні API й версії перевіряються перед інтеграцією, жодна інтеграція не є залежністю VP Standalone.
+Donor and framework references are sources of techniques, not a right to change product decisions. For further qualification, semantic separation is used: artifact services (Google ADK), checkpoints and long-term storage (LangGraph), executor state/checkpoints (Microsoft Agent Framework), history/replay and child lifecycle (Temporal), workflow outputs and persistence (Mastra), agent results (OpenAI Agents SDK), task/artifact identity (A2A/MCP), provenance relations (W3C PROV). These are research reference points; their specific APIs and versions are verified before integration, and no integration is a dependency of VP Standalone.
 
-## Актуальність і верифікація
+## Currency and verification
 
-Останнє значне зміна: 2026-10-19 — документ переведено на frontmatter Open Knowledge Format v0.2; зміст концепції не змінювався. Правило актуальності: `stale_after` = 2027-01-19, після цієї дати документ вважається застарілим і потребує перегляду; research-джерело змінює лише тієї джерела, до якої прив'язаний доказ.
+Last significant change: 2026-10-19 — the document was converted to Open Knowledge Format v0.2 frontmatter; the content of the concept did not change. Currency rule: `stale_after` = 2027-01-19, after this date the document is considered stale and needs review; a research source changes only the part of the source to which the evidence is bound.
 
-Перевірено: узгодженість тверджень із поточним Source двома незалежними рев'ю-агентами 2026-10-19 (раунд 1 — `deepseek/deepseek-flash`, раунд 2 — `opencode/glm-5.3-flash-free`). Перевірка охопила звірку концепції з Source, покриття §1–14 і узгодженість із власними §7.1/§7.5. Це підтвердження узгодженості, а не runtime acceptance.
+Verified: consistency of the statements with the current Source by two independent review agents on 2026-10-19 (round 1 — `deepseek/deepseek-flash`, round 2 — `opencode/glm-5.3-flash-free`). The verification covered reconciliation of the concept with the Source, the coverage of §1–14 and consistency with its own §7.1/§7.5. This is confirmation of consistency, not runtime acceptance.
 
-Не перевірено: кваліфікація на реальних хостах, runtime acceptance, юридичний review ліцензій донорів, місткість реєстру інструкцій понад 64 записи. Ці пункти лишаються GAP і закриваються на етапах 2, 3 і 8 плану впровадження.
+Not verified: qualification on real hosts, runtime acceptance, legal review of donor licenses, the capacity of the instruction registry beyond 64 records. These points remain GAPs and are closed at stages 2, 3 and 8 of the implementation plan.
+
+
+
+
+
+
+
+

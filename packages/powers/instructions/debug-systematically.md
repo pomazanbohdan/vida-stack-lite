@@ -1,18 +1,18 @@
 ---
 instruction_id: debug-systematically
-title: Знаходь першопричину збою
-summary: Відтворюй збій і простежуй його причину до джерела перед вибором виправлення.
+title: Debug systematically
+summary: "Reproduce the failure and trace it to its source before choosing a fix, and question the architecture when repeated fixes keep revealing new problems."
 capability_tags:
   - debug-root-cause
 pattern_tags:
   - systematic-debugging
-conditions_applies_when: "Тест, збірка або робоча система поводиться неочікувано."
-conditions_does_not_apply_when: Жодного збою чи відхилення від очікуваної поведінки не виявлено.
+conditions_applies_when: "A test, build, or running system behaves unexpectedly."
+conditions_does_not_apply_when: No failure or deviation from expected behavior has been found.
 artifact_contract_output_type: root-cause-report
 artifact_contract_required_data:
-  - кроки відтворення
-  - доказ першопричини
-  - перевірка виправлення
+  - reproduction steps
+  - root-cause evidence
+  - fix verification
 artifact_contract_verified_by: failure reproduction test
 compatibility_excludes: []
 compatibility_requires: []
@@ -24,34 +24,20 @@ status: active
 revision: 5
 ---
 
-# Знаходь першопричину збою
-Прочитай повідомлення про помилку повністю.
-Зафіксуй точні вхідні дані та кроки відтворення.
-Відтвори збій повторно до зміни коду.
-Перевір недавні зміни, налаштування й умови запуску.
-Почни з місця, де збій проявився, і рухайся назад ланцюгом викликів.
-На кожному кроці з'ясуй, яке значення прийшло і хто його передав.
-Продовжуй, доки не знайдеш місце появи некоректного значення.
-Не зупиняйся на першому місці, де помилка стала видимою.
-Визнач конкретний компонент, у якому виникає відхилення.
-Якщо ланцюг не простежується, додай діагностичний запис перед небезпечною дією.
-Записуй значення, робочу теку, середовище й повний стек викликів.
-Записуй до дії, а не після її збою.
-Звузь коло пошуку поділом навпіл: половина тестів або половина вхідних даних.
-Сформулюй одну перевірну гіпотезу про причину.
-Збери мінімальний доказ, який підтверджує або спростовує її.
-Не змінюй кілька умов одночасно.
-Не виправляй симптом, доки джерело причини не встановлене.
-Закріпи підтверджену причину відтворюваною перевіркою.
-Зміни лише код, що усуває встановлену причину.
-Перевір виправлення на початковому сценарії збою.
-Запусти суміжні перевірки, щоб виявити регресію.
-Повернися до збору доказів, якщо гіпотеза не підтвердилась.
-Після трьох невдалих спроб обговори зміну підходу до архітектури.
-Спитай, чи стан, що спричинив симптом, узагалі законний.
-Якщо система може бути в цьому стані, виправляй код, який на ньому зламався.
-Якщо такого стану бути не має, перевірка в місці прояву лише приховає помилку: знайди, що створило цей стан.
-Пам'ятай, що захисні перевірки, повторні спроби, проковтнуті помилки та обрізані значення ховають справжню причину.
-Шукай не окремий випадок, а весь клас однакових помилок, і виправ усі.
-Коли щось ламається лише після перезапуску, підозрюй збережений стан першим.
-Повідом про середовище, яке не вдалося перевірити.
+# Debug systematically
+Find root cause before attempting fixes. Symptom fixes are failure.
+Violating the letter of this process is violating the spirit of debugging.
+No fixes without root cause investigation first. If you have not completed the investigation phase, you cannot propose fixes.
+Use this for any technical issue: a test failure, a bug in production, unexpected behavior, a performance problem, a build failure, an integration issue.
+Use it especially under time pressure, when one quick fix seems obvious, when you have already tried multiple fixes, when the previous fix did not work, and when you do not fully understand the issue.
+Do not skip it when the issue seems simple, when you are in a hurry, or when someone wants it fixed now. Systematic is faster than thrashing.
+Phase one, root cause investigation: read errors and warnings carefully, reproduce consistently, check recent changes, gather evidence at each component boundary in a multi-component system, and trace the data flow back to where the bad value originated.
+Phase two, pattern analysis: find working examples, compare against a complete reference, identify every difference however small, and understand the dependencies.
+Phase three, hypothesis and testing: state one hypothesis and why, test it with the smallest possible change, one variable at a time, and verify before continuing. A failed test means a new hypothesis, not more fixes on top.
+When you do not know, say so. Do not pretend to know. Ask for help or research more.
+Phase four, implementation: create the simplest failing test case before fixing, implement one fix for the identified cause, and verify that the original symptom is resolved and no other test broke.
+Do not bundle refactoring or while I am here improvements into the fix.
+If a fix does not work, count the attempts. With fewer than three, return to investigation with the new information.
+With three or more failed fixes, stop and question the architecture. Each fix revealing a new problem in a different place, or requiring massive refactoring, indicates a wrong architecture, not a failed hypothesis.
+When the deciding fact took a deep dig to find, propose the cheap, always-on signal that would have shown it at first look.
+If investigation shows the issue is truly environmental, timing-dependent, or external, document what you investigated, implement appropriate handling, and add monitoring for the future. Most no-root-cause cases are incomplete investigation.

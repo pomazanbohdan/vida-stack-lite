@@ -1,20 +1,20 @@
 ---
 instruction_id: state-assumed-load
-title: "Назви очікуване навантаження, за яким оцінюєш"
-summary: "Визнач, на скільки користувачів і процесів розрахована система, і оцінюй масштаб лише за цим припущенням."
+title: State the load you assumed
+summary: "Find the expected load in the repository and judge scale against it, not against an imagined peak."
 capability_tags:
   - review-code
   - audit-codebase
 pattern_tags:
   - code-review
   - code-audit
-conditions_applies_when: "Оцінка стосується швидкодії, пам'яті, конкурентності або спільного стану."
-conditions_does_not_apply_when: Зміна не залежить від кількості користувачів чи процесів.
+conditions_applies_when: A review or an audit judges whether the code holds under load.
+conditions_does_not_apply_when: The change does not depend on how many users or processes run it.
 artifact_contract_output_type: load-assumption
 artifact_contract_required_data:
-  - очікуване навантаження
-  - джерело припущення
-  - "знахідки, що від нього залежать"
+  - expected load
+  - source of the assumption
+  - findings that depend on it
 artifact_contract_verified_by: the assumed load is stated before any scale finding
 compatibility_excludes: []
 compatibility_requires: []
@@ -29,19 +29,9 @@ status: active
 revision: 2
 ---
 
-# Назви очікуване навантаження, за яким оцінюєш
-Знайди очікуване навантаження в описі проєкту, конфігурації розгортання й обсязі даних.
-Визнач, це одна людина, що запускає скрипт, чи багато користувачів і процесів одночасно.
-Візьми навантаження з документів або конфігурації, а не з власної уяви.
-Запиши, звідки взялося припущення.
-Запиши припущення одним рядком до першої знахідки про масштаб.
-Оцінюй масштаб лише проти цього припущення.
-Вважай дефектом те, що ламається на очікуваному навантаженні.
-Не підвищуй до дефекту те, що витримує очікуване навантаження.
-Познач знахідку, яка стане проблемою лише за більшого навантаження, як залежну від припущення.
-Познач, які знахідки зникнуть, якщо навантаження виявиться іншим.
-Якщо навантаження не вдалося встановити, назви припущення й познач знахідки, що від нього залежать.
-Не порівнюй систему з уявним піковим навантаженням без доказу.
-Не вимагай рішення для навантаження, якого проєкт не обіцяє.
-Не оцінюй швидкодію без названого припущення.
-Заверши, коли припущення назване, а кожна знахідка про масштаб прив'язана до нього.
+# State the load you assumed
+Find the expected load in the repo (README, deploy config): one person running a script, or many users and processes at once.
+For an audit, find the expected load the same way: one person running a script, or many users and processes at once.
+Judge scale against that, and say which load you assumed.
+Start the report with the load you assumed.
+A break at the expected load is a must fix.

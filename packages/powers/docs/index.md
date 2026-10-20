@@ -2,43 +2,43 @@
 okf_version: "0.2"
 ---
 
-# Vida Powers — продуктова документація
+# Vida Powers — product documentation
 
-Bundle документації продукту Vida Powers у форматі Open Knowledge Format v0.2.
-Концепції — research і план впровадження; історія змін — у журналі bundle.
-Формат, довіра, життєвий цикл і provenance зафіксовані в frontmatter кожної
-концепції.
+Documentation bundle for the Vida Powers product in Open Knowledge Format v0.2.
+Concepts — research and the implementation plan; change history — in the bundle
+log. Format, trust, lifecycle and provenance are recorded in the frontmatter of
+each concept.
 
-# Концепції
+# Concepts
 
-* [Vida Powers — task-level план кроку C: каталог, операції, seed-корпус](task-plan-step-c.md) - Побітова реалізація: схеми, парсер frontmatter, операції catalog.*, детермінований decision.evaluate, seed-корпус, конвертер і валідатор.
-* [Vida Powers — task-level план кроку D: вертикальний зріз корпусу](task-plan-step-d.md) - Обробка донорів пофазно: інвентаризація, відбір, сегментація на атомарні інструкції, злиття дублікатів, пакетне затвердження тегів, матеріалізація конвертером і валідація.
-* [Vida Powers — наступні дії в межах packages/powers](next-actions.md) - Поточний обсяг робіт у каталозі продукту: harness і скелет, канонічні документи, каталог зі скриптами, вертикальний зріз корпусу, скіли й маніфести, Work Items і findings, runtime-запити.
-* [Vida Powers — дизайн каталогу інструкцій](catalog-design.md) - Структура пакета, формат інструкції, операції каталогу, взаємодія з методологічним профілем, валідація, тести й packaging.
-* [Vida Powers — бізнес-вимоги](business-requirements.md) - B-рівень: цілі, межі відповідальності, обмеження автономності, методологічна політика, доставка, нефункціональні вимоги.
-* [Vida Powers — системна специфікація](system-specification.md) - S-рівень: модель інструкції, операції каталогу, Decision Provider, роутінг, методологічний профіль, матеріалізація, findings, операційні правила.
-* [Vida Powers — критерії прийняття](acceptance.md) - Перевірювані умови з прив'язкою до SR, видом доказу, типом і станом; окремо — що не доводимо.
-* [Vida Powers — матриця простеження](traceability.md) - Зв'язок research § → BR → SR → AC та рішень D1–D9 із нормативними пунктами.
-* [Vida Powers — план впровадження](implementation-plan.md) - Порядок етапів, ворота й приймальні критерії реалізації: від реєстрації продукту й канонічних документів до конвертації корпусу, Router, матеріалізації, Runtime-інтеграції та Standalone-режиму.
-* [Vida Powers — продуктова концепція та архітектурний baseline](research/vida-powers-product-research.md) - Фіналізована концепція: межі VP і VIDA Runtime, канонічний instruction corpus із двома вимірами тегів, методологічна політика, artifact-first матеріалізація, Findings, wiki/work layout і режими Configured/Dynamic.
+* [Vida Powers — task-level plan for step C: catalog, operations, seed corpus](task-plan-step-c.md) - Step-by-step implementation: schemas, frontmatter parser, `catalog.*` operations, deterministic `decision.evaluate`, seed corpus, converter and validator.
+* [Vida Powers — task-level plan for step D: vertical slice of the corpus](task-plan-step-d.md) - Donor processing in phases: inventory, selection, segmentation into atomic instructions, deduplication of duplicates, batch approval of tags, materialization by the converter, and validation.
+* [Vida Powers — next actions within packages/powers](next-actions.md) - Current scope of work in the product catalog: harness and skeleton, canonical documents, catalog with scripts, vertical slice of the corpus, skills and manifests, Work Items and findings, runtime requests.
+* [Vida Powers — instruction catalog design](catalog-design.md) - Package structure, instruction format, catalog operations, interaction with the methodology profile, validation, tests and packaging.
+* [Vida Powers — business requirements](business-requirements.md) - B-level: goals, boundaries of responsibility, autonomy constraints, methodology policy, delivery, non-functional requirements.
+* [Vida Powers — system specification](system-specification.md) - S-level: instruction model, catalog operations, Decision Provider, routing, methodology profile, materialization, findings, operational rules.
+* [Vida Powers — acceptance criteria](acceptance.md) - Verifiable conditions bound to SR, with the kind of evidence, type and state; separately — what we do not prove.
+* [Vida Powers — traceability matrix](traceability.md) - The link research § → BR → SR → AC and of decisions D1–D11 to normative clauses.
+* [Vida Powers — implementation plan](implementation-plan.md) - Order of stages, gates and acceptance criteria of the implementation: from product registration and canonical documents to corpus conversion, Router, materialization, Runtime integration and Standalone mode.
+* [Vida Powers — product concept and architectural baseline](research/vida-powers-product-research.md) - The finalized concept: the boundaries of VP and VIDA Runtime, the canonical instruction corpus with two tag dimensions, methodology policy, artifact-first materialization, Findings, wiki/work layout and Configured/Dynamic modes.
 
-# Журнал
+# Log
 
-* [Оновлення bundle](log.md) - Хронологія змін концепцій документації: дата, вид зміни, що саме змінилося.
+* [Bundle updates](log.md) - Chronology of documentation concept changes: date, kind of change, what exactly changed.
 
-# Рішення
+# Decisions
 
-* [D1 — Розташування продукту Vida Powers](decisions/D1-product-placement.md) - VP живе в `packages/powers` як третій продукт репозиторію; `packages/plugin` лишається Codex-прослойкою між хостом Codex і агентом.
-* [D2 — Модель власності й робочого простору VP у монорепозиторії](decisions/D2-ownership-and-work-space.md) - Монорепозиторій продуктів: кожен плагін має власного owner'а, документацію, набір задач і простір роботи; Work Items VP — у продукті, координація — у репозиторії.
-* [D3 — Каталог інструкцій VP: самостійний плагін і розширений реєстр у пакеті агента](decisions/D3-instruction-catalog-and-registry.md) - VP зберігає власний каталог і власні скрипти пошуку та використання інструкцій; у режимі збирання в пакет поставки агента пакет агента мусить мати свій розширений instruction registry.
-* [D4 — Канали доставки VP: окремий плагін, збірка в пакет агента, marketplace](decisions/D4-delivery-channels.md) - Три канали доставки в scope; поверхня скілів VP: `vp-mode` (основний скіл оркестрації) і `vp-setup` (допоміжний налаштування).
-* [D4b — Marketplace-власник VP і набір хостів першого релізу](decisions/D4b-marketplace-and-hosts.md) - `packages/powers` сам є marketplace-власником; Codex — перевірений перший хост, решта — заявлена підтримка.
-* [D5 — Decision Provider і роутінг у VP: provider-нейтральний інтерфейс, LLM-вибір і формування агентів](decisions/D5-decision-provider.md) - Контракт `decision.evaluate` з двома реалізаціями та обов'язковим Agent Fallback; роутінг = вибір LLM, формування агентів і рівень флоу.
-* [D6 — Журнал змін продукту: bundle-лог за Open Knowledge Format](decisions/D6-bundle-change-log.md) - Історія змін концепцій VP ведеться в `docs/log.md` за OKF §9.
-* [D7 — Ініціалізація VP за середовищем: три носія конфігурації](decisions/D7-consumer-initialization.md) - `vp-setup` пише у проєктний instruction-файл, конфіг-файл агентного runtime або конфіг-файл проєкту від хост-прослойки.
-* [D8 — Методологічний профіль: одна схема VP, носій за середовищем](decisions/D8-methodology-profile.md) - `VPMethodologyProfile/v1` — VP-owned схема; носій залежить від середовища.
-* [D9 — Робочий scope: лише packages/powers, реєстрація в root-файлах відкладена](decisions/D9-scoped-to-powers.md) - Обсяг робіт обмежено каталогом продукту; реєстрація в спільних root-файлах репозиторію — зовнішня залежність.
+* [D1 — Placement of the Vida Powers product](decisions/D1-product-placement.md) - VP lives in `packages/powers` as the third product of the repository; `packages/plugin` remains the Codex layer between the Codex host and the agent.
+* [D2 — Ownership and workspace model of VP in the monorepo](decisions/D2-ownership-and-work-space.md) - Monorepo of products: each plugin has its own owner, documentation, task set and workspace; VP Work Items — in the product, coordination — in the repository.
+* [D3 — VP instruction catalog: a standalone plugin and an extended registry in the agent package](decisions/D3-instruction-catalog-and-registry.md) - VP keeps its own catalog and its own scripts for finding and using instructions; in the mode of building into the agent delivery package, the agent package must have its own extended instruction registry.
+* [D4 — VP delivery channels: separate plugin, build into the agent package, marketplace](decisions/D4-delivery-channels.md) - Three delivery channels in scope; the VP skill surface: `vp-mode` (the main orchestration skill) and `vp-setup` (the auxiliary setup one).
+* [D4b — VP marketplace owner and the host set of the first release](decisions/D4b-marketplace-and-hosts.md) - `packages/powers` is itself the marketplace owner; Codex — the verified first host, the rest — declared support.
+* [D5 — Decision Provider and routing in VP: provider-neutral interface, LLM selection and agent formation](decisions/D5-decision-provider.md) - The `decision.evaluate` contract with two implementations and a mandatory Agent Fallback; routing = LLM selection, agent formation and the flow level.
+* [D6 — Product change log: a bundle log per Open Knowledge Format](decisions/D6-bundle-change-log.md) - The change history of VP concepts is kept in `docs/log.md` per OKF §9.
+* [D7 — Environment-driven VP initialization: three configuration carriers](decisions/D7-consumer-initialization.md) - `vp-setup` writes into the project instruction file, the config file of the agent runtime, or the project config file of the host layer.
+* [D8 — Methodology profile: one VP schema, carrier per environment](decisions/D8-methodology-profile.md) - `VPMethodologyProfile/v1` — a VP-owned schema; the carrier depends on the environment.
+* [D9 — Work scope: only packages/powers, registration in root files deferred](decisions/D9-scoped-to-powers.md) - The scope of work is limited to the product catalog; registration in the shared root files of the repository — an external dependency.
 
-# Поза межами bundle
+# Outside the bundle
 
-* [Маніфест донорських джерел](../donors.yaml) - Точні ревізії восьми донорських репозиторіїв (7 методологічних + Open Knowledge Format), ліцензії та лічильники файлів. Не є OKF-концепцією: це машинний маніфест джерел для конвертації корпусу.
+* [Donor sources manifest](../donors.yaml) - Exact revisions of the eight donor repositories (7 methodological + Open Knowledge Format), licenses and file counters. Not an OKF concept: it is a machine manifest of sources for corpus conversion.

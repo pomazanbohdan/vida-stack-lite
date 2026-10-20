@@ -1,20 +1,20 @@
 ---
 instruction_id: report-diagnosis-without-prescribing
-title: "Звітуй про докази, не призначай виправлення"
-summary: "Описуй, що сталося, з посиланнями й упевненістю; рішення про зміни ухвалює той, хто відповідає за продукт."
+title: Report the evidence without prescribing a fix
+summary: "State what happened with citations and confidence, name what could not be verified, and leave the change decision to the triager."
 capability_tags:
   - diagnose-agent-behavior
 pattern_tags:
   - evidence-analysis
-conditions_applies_when: Аналіз завершено і треба передати його результати.
-conditions_does_not_apply_when: Звіт ще не має підкріплених знахідок.
+conditions_applies_when: The analysis is complete and its results must be delivered.
+conditions_does_not_apply_when: The report does not yet have supported findings.
 artifact_contract_output_type: diagnosis-report
 artifact_contract_required_data:
-  - твердження
-  - середовище
-  - хронологія
-  - знахідки
-  - обмеження
+  - statement
+  - environment
+  - timeline
+  - findings
+  - limitations
 artifact_contract_verified_by: every claim cites evidence and confidence
 compatibility_excludes: []
 compatibility_requires: []
@@ -24,19 +24,18 @@ status: active
 revision: 2
 ---
 
-# Звітуй про докази, не призначай виправлення
-Почни звіт із погодженого твердження про проблему.
-Опиши середовище й перевірені артефакти.
-Додай хронологію значущих подій.
-Подай знахідки за вимірами.
-Для кожної знахідки вкажи доказ і впевненість.
-Назви, що не вдалося перевірити.
-Назви, які частини артефакту не прочитано.
-Назви, що підвищило б упевненість у висновку.
-Не називай дефект настанови чи продукту.
-Не пропонуй конкретне виправлення.
-Не приписуй намір виконавцю.
-Не приховуй суперечливі знахідки.
-Відділяй факт від інтерпретації.
-Познач рівень упевненості для кожної заяви.
-Залиш звіт придатним для передачі.
+# Report the evidence without prescribing a fix
+You report; you do not diagnose the product.
+Whoever triages the bundle or the issue decides whether the product changes.
+Fill every section of the report template in order.
+Write it to the workspace, show it, and give the path.
+Check what cited content actually proves and preserve the supporting case.
+A symlink alias is not a redundant copy.
+Report §7 states involvement and stops.
+Never name a defect in a skill or propose a change.
+Your partner pressing for a fix does not waive this.
+Point at the issue step and mention that a bundle is available on request.
+No advice to your partner either.
+Numbers you did not compute from the transcript are invented. Cite or drop.
+Approval gates: no issue or comment before they approve the exact text.
+Do not attribute intent to the implementer.

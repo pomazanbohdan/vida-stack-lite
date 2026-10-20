@@ -1,20 +1,20 @@
 ---
 instruction_id: proceed-without-waiting-for-confirmation
-title: Продовжуй без очікування підтвердження
-summary: "Виконуй уже погоджену роботу, обираючи найбезпечнішу оборотну інтерпретацію, і зупиняйся лише на незворотному."
+title: Proceed without waiting for confirmation
+summary: "Do the already agreed work, choose the safest reversible interpretation of an ambiguity, and stop only at something irreversible or genuinely the owner's call."
 capability_tags:
   - execute-plan
 pattern_tags:
   - plan-execution
   - approval-policy
-conditions_applies_when: "Напрям уже погоджений, а неоднозначність стосується деталі виконання."
-conditions_does_not_apply_when: "Рішення продуктове, незворотне або вимагає дозволу власника."
+conditions_applies_when: The direction is agreed and the ambiguity concerns a detail of execution.
+conditions_does_not_apply_when: "The decision is a product call, irreversible, or needs the owner's permission."
 artifact_contract_output_type: decision-record
 artifact_contract_required_data:
-  - неоднозначність
-  - обрана інтерпретація
-  - підстава
-  - межа зупинки
+  - ambiguity
+  - chosen interpretation
+  - basis
+  - stop boundary
 artifact_contract_verified_by: "the chosen interpretation still passes the project's checks"
 compatibility_excludes: []
 compatibility_requires:
@@ -25,18 +25,18 @@ status: active
 revision: 2
 ---
 
-# Продовжуй без очікування підтвердження
-Налаштування користувача вирішує, яка з двох політик погодження активна: ця чи `size-and-gate-the-work`.
-Якщо активною обрано `size-and-gate-the-work`, виконуй її замість цієї інструкції й не вигадуй третьої поведінки.
-Відрізняй рішення, яке належить власнику, від виконання вже погодженого.
-Продовжуй роботу, не питаючи дозволу на кожен дрібний крок.
-Обирай найбезпечнішу оборотну інтерпретацію неоднозначності.
-Запиши, яку інтерпретацію обрав і чому.
-Дай людині шанс зупинити роботу, якщо інтерпретація хибна.
-Не використовуй автономність як привід обійти перевірки.
-Повідом про зупинку одразу, а не після довгого циклу.
-Зупиняйся лише там, де наслідки незворотні або рішення продуктове.
-Формулюй питання разом із варіантами й наслідками.
-Не вигадуй дозвіл, якого ніхто не давав.
-Повідом про прийняте рішення, коли воно вже діє.
-Віддай результат разом зі списком власних рішень.
+# Proceed without waiting for confirmation
+The human supervises asynchronously. Agents must stay unblocked.
+Make reasonable decisions, proceed, and let the human course-correct after the fact. Since code changes are reversible and reviewable, a wrong decision usually costs less than blocking.
+Proceed, then present. Do the work and show the result. Do not ask should I do X. Do X and explain why.
+Make the system self-healing. When you notice a problem, log it and fix it in the next round.
+Irreversible actions such as force-pushing, deleting production data, or sending external messages still require confirmation.
+Reversible actions such as writing code, editing notes, or splitting tasks should proceed without blocking.
+Product direction comes from the human. Execution should not block.
+When ambiguity remains, choose the safest reversible interpretation, record it, and continue.
+State the chosen interpretation, the basis for it, and the boundary where you would stop.
+Do not ask the user to choose a routine workflow or confirm a plan command.
+Pause only when materially different outcomes remain possible, authoritative sources conflict without resolution, a required permission is missing, an approval gate applies, or continuing would invent a source of truth.
+A mutation is not the moment to seek permission for work that is already agreed.
+When the chosen interpretation still passes the project's checks, proceed and report the decision.
+If a decision proves wrong, correct it in the next round rather than stalling the current one.

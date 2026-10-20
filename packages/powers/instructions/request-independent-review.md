@@ -1,20 +1,20 @@
 ---
 instruction_id: request-independent-review
-title: Проси незалежний перегляд
-summary: Передавай важливі зміни незалежному рецензенту з точними вимогами й межами перевірки.
+title: Request an independent review
+summary: "Dispatch a reviewer with a crafted brief, the git range, and the requirements, then fix Critical findings at once and Important ones before proceeding."
 capability_tags:
   - review-code
 pattern_tags:
   - code-review
-conditions_applies_when: Завершено значну зміну або роботу готують до приєднання.
-conditions_does_not_apply_when: "Зміна не має коду чи тверджень, які можна незалежно перевірити."
+conditions_applies_when: "A significant change is complete, or the work is being prepared for integration."
+conditions_does_not_apply_when: The change has no code or claims that can be verified independently.
 artifact_contract_output_type: review-request
 artifact_contract_required_data:
-  - мета зміни
-  - вимоги
-  - межі перегляду
-  - база порівняння
-artifact_contract_verified_by: independent review receipt
+  - change purpose
+  - requirements
+  - review range
+  - comparison base
+artifact_contract_verified_by: an independent review report is on record
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -23,22 +23,20 @@ status: active
 revision: 2
 ---
 
-# Проси незалежний перегляд
-Визнач, які зміни потребують окремої перевірки.
-Зафіксуй точну базу та межі матеріалу для перегляду.
-Надай короткий опис мети зміни.
-Передай нормативні вимоги й критерії приймання.
-Назви компоненти та інтерфейси, на які впливає зміна.
-Надай фактичні результати виконаних перевірок.
-Поясни відкриті питання, які потребують рішення.
-Попроси перевірити відповідність вимогам і якість рішення.
-Залучи рецензента, який не створював цю зміну.
-Не підмінюй незалежний перегляд власною самоперевіркою.
-Не вимагай повтору перевірок без причини, пов'язаної з новим входом.
-Не приховуй невдалі або пропущені перевірки.
-Не проси рецензента прийняти неперевірені припущення.
-Збережи отриманий висновок разом із точним обсягом перегляду.
-Розділи висновки про вимоги й якість, якщо обидва важливі.
-Передай зауваження власнику зміни для технічної оцінки.
-Не приєднуй зміну, поки обов'язковий перегляд має відкриті блокери.
-Зазнач, якщо незалежного рецензента залучити не вдалося.
+# Request an independent review
+Review early, review often.
+Dispatch a code reviewer subagent to catch issues before they cascade.
+The reviewer gets precisely crafted context for evaluation — never your session's history.
+Review is mandatory after each task in subagent-driven development, after completing a major feature, and before merge to main.
+It is optional but valuable when stuck, before refactoring, and after fixing a complex bug.
+Get the git SHAs for the base and head of the range.
+Dispatch a general-purpose subagent, filling the reviewer template.
+Give it a brief summary of what you built, what it should do, the starting commit, and the ending commit.
+This keeps the reviewer on the work product, not your thought process.
+Act on feedback: fix Critical issues immediately, fix Important issues before proceeding, and note Minor issues for later.
+Push back if the reviewer is wrong, with reasoning.
+Never skip review because "it's simple".
+Never ignore Critical issues.
+Never proceed with unfixed Important issues.
+Never argue with valid technical feedback.
+Do not review the diff inline instead of dispatching a reviewer; that burns the context window you need to keep driving the work.

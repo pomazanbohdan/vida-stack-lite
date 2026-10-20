@@ -10,6 +10,7 @@ function readSchema(name: string): Schema {
 const catalogSchema = readSchema('vpcatalog.v1.schema.json');
 const instructionSchema = readSchema('vpinstruction.v1.schema.json');
 const profileSchema = readSchema('vpeffectiveprofile.v1.schema.json');
+const sourceProfileSchema = readSchema('vpmethodologyprofile.v1.schema.json');
 const corpusMapSchema = readSchema('vpcorpusmap.v1.schema.json');
 
 const catalog = {
@@ -50,6 +51,31 @@ describe('production VP schemas', () => {
     expect(validateAgainstSchema(catalog, catalogSchema)).toEqual([]);
     expect(validateAgainstSchema(instruction, instructionSchema)).toEqual([]);
     expect(validateAgainstSchema(profile, profileSchema)).toEqual([]);
+  });
+
+  test('validates optional flow and verification profile fields without breaking the groups-only profile', () => {
+    const complete = {
+      ...profile,
+      flow_level: 'medium',
+      verification: {
+        available_models: [{ provider: 'provider', model: 'model', family: 'family', roles: ['main', 'agent'], available: true }],
+        lane_assignment: [{ lane: 'review', provider: 'provider', model: 'model', blind: true }],
+        lane_policy: 'blind-same-model', limitations: 'One model is available.',
+      },
+    };
+    expect(validateAgainstSchema(complete, profileSchema)).toEqual([]);
+    expect(validateAgainstSchema({ ...profile, flow_level: 'unknown' }, profileSchema)).toEqual([
+      'flow_level: must be one of enum values',
+    ]);
+    expect(validateAgainstSchema(profile, profileSchema)).toEqual([]);
+  });
+
+  test('validates the source methodology profile schema and rejects extra object properties', () => {
+    const source = { schema: 'VPMethodologyProfile/v1', groups: [{ id: 'policy', title: 'Policy', description: 'Choice.', user_decision: false, default: 'test-first-development', alternatives: [
+      { id: 'test-first-development', title: 'Test first', description: 'Test before implementation.', instruction_ids: [] },
+    ] }] };
+    expect(validateAgainstSchema(source, sourceProfileSchema)).toEqual([]);
+    expect(validateAgainstSchema({ ...source, extra: true }, sourceProfileSchema)).toEqual(['extra: additional property']);
   });
 
   test('enforces corpus map status conditions', () => {

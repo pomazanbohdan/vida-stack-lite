@@ -1,19 +1,19 @@
 ---
 instruction_id: check-requested-feature-usage
-title: Перевіряй потребу в запропонованій функції
-summary: "Перед реалізацією правильної функції перевір, чи її справді викликають, і відкидай невикористане."
+title: Check that a proposed feature is actually needed
+summary: "Verify before implementing: find the actual usage of the proposed feature, and remove it if nothing calls it."
 capability_tags:
   - apply-review-feedback
 pattern_tags:
   - code-review
-conditions_applies_when: Зауваження або запит пропонує реалізувати нову функцію.
-conditions_does_not_apply_when: Функція вже має підтверджених споживачів у коді.
+conditions_applies_when: A reviewer or a request proposes implementing a feature properly.
+conditions_does_not_apply_when: The feature already has confirmed callers in the code.
 artifact_contract_output_type: usage-check
 artifact_contract_required_data:
-  - функція
-  - місця виклику
-  - рішення
-artifact_contract_verified_by: code search for actual callers
+  - feature
+  - call sites
+  - decision
+artifact_contract_verified_by: code search finds the actual callers
 compatibility_excludes: []
 compatibility_requires:
   - minimize-code-surface
@@ -29,23 +29,20 @@ status: active
 revision: 4
 ---
 
-# Перевіряй потребу в запропонованій функції
-Визнач, яку функцію просять реалізувати.
-Знайди всі місця, де вона має викликатися.
-Перевір фактичне використання в коді.
-Якщо викликів немає, запропонуй видалити функцію.
-Якщо виклики є, реалізуй її повністю.
-Перед тим як назвати код невикористаним, шукай його по всьому дереву.
-Шукай у тестах, фікстурах, конфігурації, рядкових і динамічних посиланнях.
-Не називай код мертвим лише за відсутністю викликів у дифі.
-Не додавай функцію лише тому, що вона виглядає професійно.
-Не розширюй обсяг без підтвердженого використання.
-Зафіксуй доказ використання або його відсутності.
-Повідом власнику про невикористану функцію.
-Не залишай мертвий код як заготовку.
-Перевір, що видалення не ламає наявні виклики.
-Не вважай згадку в зауваженні доказом використання.
-Не вигадуй майбутніх споживачів.
-Звіряй межу зміни з minimize-code-surface.
-Не додавай прапорець для невикористаної можливості.
-Заверши лише після рішення про долю функції.
+# Check that a proposed feature is actually needed
+Verify before implementing.
+Ask before assuming.
+If a reviewer suggests implementing something properly, search the codebase for actual usage.
+If it is unused, say the code is not called and ask whether to remove it.
+If it is used, then implement it properly.
+If we do not need this feature, do not add it.
+If the suggestion seems wrong, push back with technical reasoning.
+Does it need to exist?
+Before calling code unused, search the whole tree for it, including tests, fixtures, config, and string or dynamic references.
+Delete dead code, unused options, speculative features.
+Reuse the helper the repo already has, and name the path.
+Use the standard library or the platform feature instead of a new dependency.
+Drop the abstraction with one implementation and the config nobody sets.
+Propose the smallest fix that works.
+Prefer fixes that delete code.
+Never add layers, frameworks or config the problem does not need.

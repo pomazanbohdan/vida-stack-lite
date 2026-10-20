@@ -1,19 +1,19 @@
 ---
 instruction_id: keep-review-read-only
-title: "Виконуй перегляд і звіт, не змінюючи середовище"
-summary: "Під час перегляду або одноразового звіту не змінюй робоче дерево, індекс, гілку, режим роботи чи збережений стан."
+title: Run the review and the report without changing the environment
+summary: "Review the checkout read-only, do the review yourself, and keep one-shot reports from changing the mode or the stored state."
 capability_tags:
   - review-code
 pattern_tags:
   - code-review
-conditions_applies_when: Ти переглядаєш зміну або готуєш одноразовий звіт у чужому чи спільному середовищі.
-conditions_does_not_apply_when: "Ти є автором зміни й працюєш над нею, а не переглядаєш."
+conditions_applies_when: You review a change or produce a one-shot report in a checkout you do not own.
+conditions_does_not_apply_when: You are the author working on the change.
 artifact_contract_output_type: read-only-review
 artifact_contract_required_data:
-  - межі перегляду
-  - стан до
-  - стан після
-artifact_contract_verified_by: working tree unchanged after review
+  - review scope
+  - state before
+  - state after
+artifact_contract_verified_by: the working tree is unchanged after the review
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -37,22 +37,19 @@ status: active
 revision: 3
 ---
 
-# Виконуй перегляд і звіт, не змінюючи середовище
-Визнач межі перегляду або звіту.
-Не змінюй робоче дерево.
-Не змінюй індекс.
-Не перемикай гілку.
-Не змінюй базову ревізію.
-Для іншої ревізії створи окрему копію.
-Не доручай перегляд іншому виконавцю.
-Не запускай дубль перегляду.
-Не виправляй знахідки під час перегляду.
-Не змінюй тести під час перегляду.
-Звіт про спрощення, показники чи довідку нічого не змінює.
-Не перемикай режим роботи під час звіту й не зберігай стан.
-Зберігай перелік у файл лише на явний запит власника.
-Збережи зміну в тому стані, у якому її отримав.
-Перевір, що стан не змінився після перегляду.
-Повідом про потребу в іншій копії.
-Запиши межу перегляду.
-Заверши перегляд без побічних змін.
+# Run the review and the report without changing the environment
+Your review is read-only on this checkout.
+Do not mutate the working tree, the index, HEAD, or branch state in any way.
+Inspect history without changing it.
+If you need a working copy of a different revision, check it out into a separate temporary directory.
+Never move HEAD on this checkout.
+Do all of this review yourself.
+Never spawn a subagent to review part of the diff, and never spawn another reviewer for a second opinion.
+This process already provides every review seat the work gets; a reviewer you spawn duplicates one of them at full cost, and its verdict counts for nothing.
+If the diff feels too large for one pass, review it in passes yourself and say so in your report.
+Lists findings, changes no code.
+One-shot report, changes no code.
+Reads and reports only, changes nothing.
+To persist it, ask and it writes the ledger to a file.
+One-shot: do not change mode, write flag files, or persist anything.
+One-shot display: edits nothing, changes no mode.

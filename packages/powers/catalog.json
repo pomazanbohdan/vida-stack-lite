@@ -1,81 +1,83 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 249,
+  "revision": 427,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-20T08:34:26.804Z",
+  "updated_at": "2026-10-20T11:42:07.162Z",
   "tag_dictionary": {
     "capability": {
-      "write-tests-first": "Починає зміну поведінки з перевірки очікуваного результату.",
-      "verify-work-results": "Підтверджує результат виконаними перевірками.",
-      "plan-implementation": "Розкладає вимогу на послідовні виконувані задачі.",
-      "debug-root-cause": "Встановлює початкову причину збою.",
-      "clarify-requirements": "Уточнює мету, межі та критерії приймання.",
-      "review-code": "Залучає незалежну перевірку визначеної зміни.",
-      "apply-review-feedback": "Виправляє підтверджені зауваження й перевіряє наслідки.",
-      "isolate-workspace": "Відокремлює нову зміну від іншої роботи.",
-      "integrate-branch": "Приєднує завершену зміну до погодженої гілки.",
-      "parallelize-tasks": "Виконує незалежні задачі одночасно.",
-      "delegate-subagent-tasks": "Передає чітко обмежені задачі іншим виконавцям.",
-      "minimize-code-surface": "Обмежує реалізацію найменшим повним набором змін.",
-      "execute-plan": "Виконує погоджений план задача за задачею з доказами перевірок.",
-      "author-agent-instructions": "Пише й перевіряє інструкції, що керують поведінкою агентів.",
-      "harden-validation": "Додає перевірки на кожній межі даних після усунення причини.",
-      "read-large-artifacts": "Читає великі артефакти частинами, не переповнюючи контекст.",
-      "redact-sensitive-data": "Замінює чутливі значення плейсхолдерами перед поширенням.",
-      "diagnose-agent-behavior": "Встановлює з доказами, що сталося під час виконання роботи.",
-      "consult-guidance": "Перевіряє застосовні настанови до початку дії.",
-      "automate-rule-enforcement": "Переносить механічно перевірні правила в автоматику.",
-      "communicate-concisely": "Подає результат стисло й по суті.",
-      "define-output-format": "Задає точні розділи, порядок і поля результату.",
-      "audit-codebase": "Оцінює ціле сховище за впливом знахідок, а не окрему зміну.",
-      "manage-technical-debt": "Обліковує відкладені спрощення разом із їхніми умовами перегляду.",
-      "design-structure": "Здатність обирати форму даних, межі модулів і структуру взаємодії до написання коду.",
-      "make-states-unrepresentable": "Здатність переносити правила допустимих станів у тип і конструктор, щоб незаконний стан не можна було створити.",
-      "measure-performance": "Здатність вимірювати показник відтворювано й пояснювати число разом із базою та розкидом.",
-      "design-experiments": "Здатність порівнювати варіанти рішення або інструкції на однакових задачах і однаковому критерії.",
-      "write-technical-prose": "Здатність писати технічний текст, який дає відповідь у першому абзаці й не містить шаблонного шуму.",
-      "explain-subsystem": "Здатність пояснювати частину системи через її мету, межу й основний шлях виконання.",
-      "build-verification-harness": "Здатність збирати й підтримувати сценарії, що доводять спостережувану поведінку продукту.",
-      "triage-reports": "Здатність класифікувати вхідні звіти й зауваження та призначати їм маршрут за класом.",
-      "coordinate-program": "Здатність розбивати велику роботу на частини з власником, залежностями й точками зведення.",
-      "keep-decision-trail": "Здатність фіксувати рішення з варіантами, підставою й умовою перегляду."
+      "write-tests-first": "Starts a behaviour change by verifying the expected result.",
+      "verify-work-results": "Confirms the result with checks that were actually run.",
+      "plan-implementation": "Breaks a requirement into sequential, executable tasks.",
+      "debug-root-cause": "Establishes the original cause of a failure.",
+      "clarify-requirements": "Clarifies the goal, the boundaries and the acceptance criteria.",
+      "review-code": "Brings in an independent review of a defined change.",
+      "apply-review-feedback": "Fixes confirmed review findings and checks the consequences.",
+      "isolate-workspace": "Separates a new change from other work.",
+      "integrate-branch": "Integrates a finished change into the agreed branch.",
+      "parallelize-tasks": "Runs independent tasks at the same time.",
+      "delegate-subagent-tasks": "Hands clearly bounded tasks to other executors.",
+      "minimize-code-surface": "Keeps the implementation to the smallest complete set of changes.",
+      "execute-plan": "Executes the agreed plan task by task, with check evidence.",
+      "author-agent-instructions": "Writes and verifies the instructions that steer an agent behaviour.",
+      "harden-validation": "Adds checks at every data boundary after the cause is removed.",
+      "read-large-artifacts": "Reads large artifacts in parts without overflowing the context.",
+      "redact-sensitive-data": "Replaces sensitive values with placeholders before sharing.",
+      "diagnose-agent-behavior": "Establishes from evidence what happened during the work.",
+      "consult-guidance": "Checks for applicable guidance before acting.",
+      "automate-rule-enforcement": "Moves mechanically checkable rules into automation.",
+      "communicate-concisely": "Delivers the result concisely and on the point.",
+      "define-output-format": "Fixes the exact sections, order and fields of the result.",
+      "audit-codebase": "Rates the whole repository by the impact of the findings, not by one change.",
+      "manage-technical-debt": "Keeps deferred shortcuts in a ledger with their review conditions.",
+      "design-structure": "Ability to choose the data shape, module boundaries and interaction structure before writing code.",
+      "make-states-unrepresentable": "Ability to move the rules for valid states into a type and constructor so an illegal state cannot be created.",
+      "measure-performance": "Ability to measure a metric reproducibly and explain the number together with the baseline and variance.",
+      "design-experiments": "Ability to compare design or instruction variants on the same tasks and the same criterion.",
+      "write-technical-prose": "Ability to write technical prose that answers in the first paragraph and carries no template noise.",
+      "explain-subsystem": "Ability to explain part of a system through its purpose, its boundary and its main execution path.",
+      "build-verification-harness": "Ability to build and maintain scenarios that prove the product's observable behavior.",
+      "triage-reports": "Ability to classify incoming reports and findings and route each by class.",
+      "coordinate-program": "Ability to split large work into parts with an owner, dependencies and merge points.",
+      "keep-decision-trail": "Ability to record a decision with its options, grounds and review condition."
     },
     "pattern": {
-      "test-first-development": "Спершу перевіряє очікувану поведінку, потім додає реалізацію.",
-      "verification-before-completion": "Підтверджує твердження свіжими результатами перевірок.",
-      "implementation-planning": "Організовує залежні кроки в перевірний план.",
-      "systematic-debugging": "Знаходить і підтверджує першопричину до виправлення.",
-      "requirements-clarification": "З'ясовує потребу й узгоджує напрям до проєктування.",
-      "code-review": "Незалежно оцінює зміну та її відповідність вимогам.",
-      "worktree-isolation": "Відокремлює розробку в окремому робочому дереві.",
-      "branch-integration": "Перевіряє завершену роботу перед узгодженим приєднанням.",
-      "parallel-execution": "Виконує незалежну роботу одночасно без спільного стану.",
-      "subagent-delegation": "Передає обмежену задачу й перевіряє її результат.",
-      "code-minimization": "Задовольняє вимогу найменшою повною зміною.",
-      "plan-execution": "Виконує план послідовно, з журналом рішень і перевіркою кожної задачі.",
-      "instruction-authoring": "Створює інструкції для агентів через базову перевірку й ітерації.",
-      "defense-in-depth": "Робить помилку неможливою перевірками на кількох рівнях.",
-      "bounded-artifact-reading": "Обмежує читання й вивід за розміром артефакту.",
-      "evidence-redaction": "Зберігає доказовість артефакту без чутливих значень.",
-      "evidence-analysis": "Аналізує артефакти виконання за доказами, без здогадів.",
-      "guidance-selection": "Обирає застосовні настанови до початку роботи.",
-      "automated-enforcement": "Замінює ручне нагадування перевіркою.",
-      "concise-communication": "Подає результат без вступу й повторень.",
-      "output-formatting": "Фіксує форму результату до його створення.",
-      "code-audit": "Переглядає все сховище в сталому порядку впливу.",
-      "technical-debt": "Робить відкладені рішення видимими й відслідковуваними.",
-      "structural-design": "Підхід, у якому структура даних і межі модулів визначають форму коду.",
-      "state-modeling": "Підхід, у якому допустимі стани описуються типом, а не набором перевірок.",
-      "performance-measurement": "Підхід, у якому зміна оцінюється вимірюванням із базою та розкидом.",
-      "experiment-design": "Підхід, у якому варіанти порівнюються на однакових задачах і однаковому критерії.",
-      "technical-writing": "Підхід, у якому технічний текст будується навколо тези, прикладу й читацького питання.",
-      "subsystem-explanation": "Підхід, у якому підсистема пояснюється від мети до основного шляху.",
-      "verification-harness": "Підхід, у якому поведінка продукту доводиться відтворюваним набором сценаріїв.",
-      "report-triage": "Підхід, у якому вхідні звіти класифікуються й маршрутизуються за єдиним правилом.",
-      "program-orchestration": "Підхід, у якому велика робота ведеться частинами з явними власниками й залежностями.",
-      "decision-trail": "Підхід, у якому рішення фіксуються разом із підставою та умовою перегляду.",
-      "approval-policy": "Підхід, у якому політика погодження обирається налаштуванням користувача, а обидві протилежні політики описані явно."
+      "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
+      "approval-policy-gate": "Approval policy: size the work first, then ask for approval.",
+      "test-first-development": "Verifies the expected behaviour first, then adds the implementation.",
+      "verification-before-completion": "Backs every claim with fresh check results.",
+      "implementation-planning": "Organises dependent steps into a verifiable plan.",
+      "systematic-debugging": "Finds and confirms the root cause before fixing anything.",
+      "requirements-clarification": "Establishes the need and agrees the direction before design.",
+      "code-review": "Rates a change independently against the requirements.",
+      "worktree-isolation": "Separates development in its own worktree.",
+      "branch-integration": "Checks finished work before the agreed integration.",
+      "parallel-execution": "Runs independent work at the same time without shared state.",
+      "subagent-delegation": "Hands a bounded task over and checks its result.",
+      "code-minimization": "Satisfies the requirement with the smallest complete change.",
+      "plan-execution": "Runs the plan in order, with a decision log and a check per task.",
+      "instruction-authoring": "Creates agent instructions through a basic check and iteration.",
+      "defense-in-depth": "Makes the failure impossible with checks on several levels.",
+      "bounded-artifact-reading": "Bounds reading and output by the size of the artifact.",
+      "evidence-redaction": "Keeps the artifact evidential without its sensitive values.",
+      "evidence-analysis": "Analyzes execution artifacts from evidence, not from guesses.",
+      "guidance-selection": "Selects applicable guidance before work begins.",
+      "automated-enforcement": "Replaces manual reminders with a check.",
+      "concise-communication": "Delivers the result without preamble or repetition.",
+      "output-formatting": "Fixes the shape of the result before it exists.",
+      "code-audit": "Reviews the whole repository in a stable order of impact.",
+      "technical-debt": "Makes deferred decisions visible and traceable.",
+      "structural-design": "An approach in which the data structure and module boundaries determine the shape of the code.",
+      "state-modeling": "An approach in which valid states are described by a type rather than by a set of checks.",
+      "performance-measurement": "An approach in which a change is judged by measurement with a baseline and variance.",
+      "experiment-design": "An approach in which variants are compared on the same tasks and the same criterion.",
+      "technical-writing": "An approach in which technical prose is built around the thesis, an example and the reader's question.",
+      "subsystem-explanation": "An approach in which a subsystem is explained from its purpose to its main path.",
+      "verification-harness": "An approach in which product behavior is proven by a reproducible set of scenarios.",
+      "report-triage": "An approach in which incoming reports are classified and routed by one rule.",
+      "program-orchestration": "An approach in which large work proceeds in parts with explicit owners and dependencies.",
+      "decision-trail": "An approach in which decisions are recorded together with their grounds and review condition.",
+      "approval-policy": "An approach in which the approval policy is chosen by user configuration while both opposite policies are stated explicitly."
     }
   },
   "tag_aliases": {
@@ -86,802 +88,802 @@
     {
       "instruction_id": "analyze-cost-and-time",
       "path": "instructions/analyze-cost-and-time.md",
-      "sha256": "6d08e915b90efc80e7abc8ad75e3d7ad00fdecdf8f7f904766ed87226b9ba60c"
+      "sha256": "2751f35e79979c7f23ac47a68d821b8702f0f9ebba1af88a279bb1a8d0140f72"
     },
     {
       "instruction_id": "analyze-guidance-timeline",
       "path": "instructions/analyze-guidance-timeline.md",
-      "sha256": "b0730f7ba22e93c0f455dd5635e0491c8f451bb19221b59d2419be6e8ee3ee2c"
+      "sha256": "014f33a69c8f3766c05c7b94b951c5bf733051343fa886fdbbf877415fd8fecd"
     },
     {
       "instruction_id": "analyze-plan-adherence",
       "path": "instructions/analyze-plan-adherence.md",
-      "sha256": "03c698e605b8964901ebf93e0345953bb4a2f96fd0439c3abf2543672b4696cc"
+      "sha256": "7863c52ccd1c5b43ba1aed991a7db6f7c23f2e71dc644f682673079319e9889e"
     },
     {
       "instruction_id": "analyze-quality-claims",
       "path": "instructions/analyze-quality-claims.md",
-      "sha256": "73cd9a88ac05fe560fa70433e6acbd61fb628878d1a5ea197c75d5b8c0b6aff4"
+      "sha256": "c861c6f05c872fb93d6c3b97fb9842838a3675c1f0dbce92333cd5996934a0ae"
     },
     {
       "instruction_id": "analyze-repeated-work",
       "path": "instructions/analyze-repeated-work.md",
-      "sha256": "fa0efdda98899b0a0a5c41da9ac1b064b916cf0de126c322a472d4be085c0ef4"
+      "sha256": "6fd01a2b3fa94cedc5c3e8c93273a4b5f22df94e48a3b48d77046fa515bfdc46"
     },
     {
       "instruction_id": "analyze-request-conflicts",
       "path": "instructions/analyze-request-conflicts.md",
-      "sha256": "08e100490a648b4eb63aa798aa29369cd5e68a7edba9bab798cc9ca2b4390989"
+      "sha256": "e768d4b32954d918d61011f8cccdfd6e556e42ec288822e965439cff5f60eab9"
     },
     {
       "instruction_id": "analyze-stumbles",
       "path": "instructions/analyze-stumbles.md",
-      "sha256": "0a1e1cefb258c149d1db350137612813ccc33e2b6d6d144d92eebb17d3fad736"
+      "sha256": "141c77ad035535225d3b193ca733c1db2f237c701dec4737fea5ee7d919d3a9e"
     },
     {
       "instruction_id": "analyze-working-reference",
       "path": "instructions/analyze-working-reference.md",
-      "sha256": "abe145543b36bae59d1b5cb533c6ab4066ec62485a8168f3bd58c595a307113c"
+      "sha256": "6aec51b56725afdc462f7df77f110593e711e35ee42608ee78082925304f73e0"
     },
     {
       "instruction_id": "apply-code-review",
       "path": "instructions/apply-code-review.md",
-      "sha256": "a7a8122009e48ee96610a21bc358569d3a03525ae9fe71651b6ebdbadc514d5e"
+      "sha256": "82eeba4a95771e94ddc17212e8271dbbb14df9e6b4c2b344972cfad43cd619f7"
     },
     {
       "instruction_id": "ask-one-open-question",
       "path": "instructions/ask-one-open-question.md",
-      "sha256": "ccd566e2165558350417fe64eeb695eeecba1d726b05806219b7bc565b0fad72"
+      "sha256": "27dbeef4204ea952c3d79063aa7cdf13b0d5c67fe62365ac5c720bf80f7e307f"
     },
     {
       "instruction_id": "attack-the-shared-premise",
       "path": "instructions/attack-the-shared-premise.md",
-      "sha256": "348729f62022f86e731d2f7711f31d0c3b719c260306518236d4d1a179677b81"
+      "sha256": "28a86800c536d8961edb2d3d59459b15c6256bee28da37c91fd26a68f7c58717"
     },
     {
       "instruction_id": "author-an-agent-skill",
       "path": "instructions/author-an-agent-skill.md",
-      "sha256": "d63ce85a3af821a0b0c8ac744e35bb05bae0e9feb24b1d86386291786b93d49a"
+      "sha256": "46e2454bccab6456c9435840c633bfcc65661a4fc5398ee244ebb1613711992b"
     },
     {
       "instruction_id": "automate-enforceable-rules",
       "path": "instructions/automate-enforceable-rules.md",
-      "sha256": "07b4c76535df5d1d88b85a33211c976655074ac089524c78d05d8eb01120acce"
+      "sha256": "b8293b8f45b7a63e31303a67a654fe16375e2af0623e1eeafc10412aa41f3d48"
     },
     {
       "instruction_id": "avoid-performative-review-agreement",
       "path": "instructions/avoid-performative-review-agreement.md",
-      "sha256": "0e05b258421bcf4121b13b28d39278c8e3109cf82cd66967491f0bab1703db59"
+      "sha256": "935dafeab3dfd3ffc834e61f279686878579b5efb0a8eeb4943eac8b7b4fd3ff"
     },
     {
       "instruction_id": "batch-same-shape-tasks",
       "path": "instructions/batch-same-shape-tasks.md",
-      "sha256": "d78dc57e9afb84a64ac7d30c82f556c9be34e72ea3faa148c3034b501f40b373"
+      "sha256": "996be0d9fb2a03c3ef50e5ef7b4401d48f35458acc2086b2c622acf39779dfe7"
     },
     {
       "instruction_id": "build-a-project-verification-harness",
       "path": "instructions/build-a-project-verification-harness.md",
-      "sha256": "d98398513fab115d731a5ad59db5b029490d84593183dc74a6b1499cb6d13026"
+      "sha256": "2572f7c437cf8dfaaac986717bf5f23698f39a814b5f27ab136f4e9029c02b3d"
     },
     {
       "instruction_id": "build-a-rerunnable-tool",
       "path": "instructions/build-a-rerunnable-tool.md",
-      "sha256": "dee7b833dc686b005c86bcc358d8567eb12ed90e404054c1fac16c96a3505a86"
+      "sha256": "2283a451cbc9145621bb507ff195bd7b10dcc9f31b0ac58d66a9a707f0615b79"
     },
     {
       "instruction_id": "check-requested-feature-usage",
       "path": "instructions/check-requested-feature-usage.md",
-      "sha256": "9824daa258df8a274eb26f6ae8295a63f357055a84b95bec4f607684eb570a61"
+      "sha256": "0f8e699d34333691cbe036f0644a499498a913ebcde7b5f6164b9116b3df6639"
     },
     {
       "instruction_id": "choose-user-experience-over-implementation",
       "path": "instructions/choose-user-experience-over-implementation.md",
-      "sha256": "f1ba8684f18981d16810a9c0072a95de4330896b77ff9b93f180b60dc22d043a"
+      "sha256": "a51a2ac5d62f610e792f0a9e451bd06b8dd86c87bce3eabd6a54a0021e4acf2a"
     },
     {
       "instruction_id": "choose-visual-or-textual-explanation",
       "path": "instructions/choose-visual-or-textual-explanation.md",
-      "sha256": "0670a8f4a1160bff71ddfa95f70001f97ffd2e1f8a5df1fcd454b86fe4112adb"
+      "sha256": "8306a7a71bcd526c1872e0103b1322c4f919b8aad30962509c8c58d75ede8af8"
     },
     {
       "instruction_id": "cite-evidence-lines",
       "path": "instructions/cite-evidence-lines.md",
-      "sha256": "09b11342031c45c04fe2c51c4a3868d9e2a37207ee23cf00a41dcfc3462aa440"
+      "sha256": "7f6a69d02368b16586c05c0da6b803a770062876bcfd75090853c648e6f89271"
     },
     {
       "instruction_id": "clarify-before-design",
       "path": "instructions/clarify-before-design.md",
-      "sha256": "6783e55b97b219791781c103ffbd7234329236f0d501b4e84420b7242a268431"
+      "sha256": "616773d578dad6d9c554297084642f8322c2d728fcd7fecae4b1b8c861be5372"
     },
     {
       "instruction_id": "classify-and-state-review-verdict",
       "path": "instructions/classify-and-state-review-verdict.md",
-      "sha256": "ea69c11b67610072d52a7454300dfc2a8603bd0d4013b994e194aff0f94a97ef"
+      "sha256": "527bfe2fac121bdf7dd570ef4dc00b9ab9cd880be55e5d28a089e87aef617084"
     },
     {
       "instruction_id": "clean-up-integration-workspace",
       "path": "instructions/clean-up-integration-workspace.md",
-      "sha256": "81b3cdc30f6703cce77fa5d3fe057be4291a17a2214807bf7a2a899dbd7d1662"
+      "sha256": "78dc3b5513f9d9b37b605efad7abc77dd0a7e25caa15917495a15b752548c615"
     },
     {
       "instruction_id": "close-guidance-loopholes",
       "path": "instructions/close-guidance-loopholes.md",
-      "sha256": "fa809af203ebf12d8062cfd559e0a972b7d8cfc7b0698c8a610bfaea588e243a"
+      "sha256": "4f730303b008131f8bea2ae3f1714a5911bd58ca7f2e5ab352aa217b40b4e1c5"
     },
     {
       "instruction_id": "compare-similar-cases",
       "path": "instructions/compare-similar-cases.md",
-      "sha256": "5b7addddf710a7486717e411e50828a2969497c59548ccab3b8d765ab4663d29"
+      "sha256": "a4a27b5313fc24e7fe44ca1e33618d7e425936dc4fe650c2bfc7057d3ce3932b"
     },
     {
       "instruction_id": "consult-guidance-before-acting",
       "path": "instructions/consult-guidance-before-acting.md",
-      "sha256": "e32cbb194d7256767466abb047a4113127eb93d860d8d65017f37fb485ae288f"
+      "sha256": "f50f2be61214deec62a751ba62be752135eea5e1d06222527a7d44025f03509f"
     },
     {
       "instruction_id": "converge-on-target-architecture",
       "path": "instructions/converge-on-target-architecture.md",
-      "sha256": "c9afbdb965679800d293da0756bc963c0b7f864b0b141c1e1800d06077e1ec60"
+      "sha256": "469e123279f4c126204fdaef379c2839124426df764e0b6ce57c109c5fa13d26"
     },
     {
       "instruction_id": "coordinate-a-program-of-delegated-work",
       "path": "instructions/coordinate-a-program-of-delegated-work.md",
-      "sha256": "d5f2e0ffcfa2e893352facf439ad0db6d23e8d7046f506ab1f35d9e1f20f3612"
+      "sha256": "0f863ded9f574d134c4b878ae4b2c191f1a66fe8cc390ffb554015e1b0495632"
     },
     {
       "instruction_id": "debug-systematically",
       "path": "instructions/debug-systematically.md",
-      "sha256": "d0b1c7c6b2898487964919bb8d3ac6ca92fd5c1fddf416e8b85144557d3d94c3"
+      "sha256": "b361378a3b125d28ef56ccce020f521a94bdd988cfd6a8066091d84be0e5d1c5"
     },
     {
       "instruction_id": "decide-whether-to-write-guidance",
       "path": "instructions/decide-whether-to-write-guidance.md",
-      "sha256": "0f0c62203ba9b208b52f68610ecfe8af34a61015200d0a38baf6a935f9162311"
+      "sha256": "6efc58986bf41964c559f80d6a9d0c0f617f7dc18f0c188e0614725d75d18e59"
     },
     {
       "instruction_id": "delegate-subagent-work",
       "path": "instructions/delegate-subagent-work.md",
-      "sha256": "0f71113faeed19f4c1ba50194b3e61f74453a28d54a2ebf12bc7320525e1d240"
+      "sha256": "979175c98d11d498408b311f9a8c14099b0947d2efa0200865218a7bcd133bb7"
     },
     {
       "instruction_id": "delete-code-written-before-test",
       "path": "instructions/delete-code-written-before-test.md",
-      "sha256": "56a9e7264c1217388f90d60db2cd295c998a0b513235b61e9d19f5e20b639f4b"
+      "sha256": "4e4977667d2030fa3705d6d186aabadf6261ada3d33ed8be91df3b5579a7c2fe"
     },
     {
       "instruction_id": "derive-a-workflow-from-history",
       "path": "instructions/derive-a-workflow-from-history.md",
-      "sha256": "ff5f900547f829bc9748615b60993a2738390b2647b46e926f7b03fc21843fa0"
+      "sha256": "6080222cfebce318e3218d028b8b844bde958d4d6ec15857c52e20c2a66579ed"
     },
     {
       "instruction_id": "design-a-bespoke-workflow",
       "path": "instructions/design-a-bespoke-workflow.md",
-      "sha256": "9b76dd9139b7cb2ba2ae44b7e9a752784969d2f76e38f9a22d314e3c52b75d81"
+      "sha256": "98ecaebebb2cc1bf6574fa34e77bcfe05ef4a312473a6570cdde9218a9a48112"
     },
     {
       "instruction_id": "design-an-agent-facing-control-interface",
       "path": "instructions/design-an-agent-facing-control-interface.md",
-      "sha256": "9ee27e9133bd73ceec62a147bab4bb4667067ba9955a19e5a1a4765b2c251e2a"
+      "sha256": "4faeebab651a2970e9d4672fdce9a9d4207565728786239c4f1c55782f918513"
     },
     {
       "instruction_id": "design-data-structures-first",
       "path": "instructions/design-data-structures-first.md",
-      "sha256": "1bb896fdaefc6a3c2c5344891d7b493a7aeb15e5d77c0d76073b3841e052ffc5"
+      "sha256": "cb0f77ff27404ab867da3fc312c06f0a6a675942a559530495180688fd469bed"
     },
     {
       "instruction_id": "design-from-caller-usage",
       "path": "instructions/design-from-caller-usage.md",
-      "sha256": "5c88cfb704ab3440b05cba065942f0524ee6c7cbadd04f64d10a57b796605771"
+      "sha256": "f1833d5879eb717616460a48b3fec78e05eb5b6ca1ec8d88fb2fba76975dcbb7"
     },
     {
       "instruction_id": "diagnose-from-runtime-evidence",
       "path": "instructions/diagnose-from-runtime-evidence.md",
-      "sha256": "5a1f36f55d5478a1df39168f3693ff54dd3110836d9a9cdeceeaa3a328de400a"
+      "sha256": "c41bc04daa259d88fc8e5211ec89195e40d8cbe3bd29bf033efb2533e3c2db65"
     },
     {
       "instruction_id": "disclose-affected-environment",
       "path": "instructions/disclose-affected-environment.md",
-      "sha256": "a9baa2f783284a3a24dbf74dd72961e3328483eec8c07afa7bd5203609d4c257"
+      "sha256": "e88d9b99d9f950c8687c93995ac4e365225214684ee3383276e6e6be845e2687"
     },
     {
       "instruction_id": "enforce-plan-completion-contract",
       "path": "instructions/enforce-plan-completion-contract.md",
-      "sha256": "315a751fa07993d14a332bac23221700324222513ccdf81a5922f7c3780a3526"
+      "sha256": "51984990bb7eb48d675a56d5f590ff5f313b639dbc9603ebf28a3b39a14c3415"
     },
     {
       "instruction_id": "escalate-blocked-work",
       "path": "instructions/escalate-blocked-work.md",
-      "sha256": "bd4d08081882b472b24bcd76a25217bcb9b5f72c37d0600f8da871c61d1c84b7"
+      "sha256": "f059c72dcc6243af3775dfbe45e1a0bf5a95d30daf5af3a239e4c384bbd0d463"
     },
     {
       "instruction_id": "establish-review-scope",
       "path": "instructions/establish-review-scope.md",
-      "sha256": "98fe26c9b525faedc5d0c28501bfb26cc76336c29551da38850a33fefe0d6557"
+      "sha256": "09c6234ba0215609b4d4fef6e4c9da80d02e26a49cd85c708cc7d38e98be7594"
     },
     {
       "instruction_id": "evaluate-skill-changes-blind",
       "path": "instructions/evaluate-skill-changes-blind.md",
-      "sha256": "8a534772e09cd21929607fd058c9967efde21f642ab22bdf27a8af8dd89977e2"
+      "sha256": "211b361ea2c997b22432ea6b05d5bd7e97eff9468550c3cece8d0b366ed8aa5c"
     },
     {
       "instruction_id": "execute-plan-in-order",
       "path": "instructions/execute-plan-in-order.md",
-      "sha256": "76e7e142383c6fb9b65b4c90c365aaadc96dcc41a9eb25ca5cf71cc0dc18c1fb"
+      "sha256": "eadc997eb747d71600663c8d5fcdf45ed222c4095832b2cbea4f3e847c297d06"
     },
     {
       "instruction_id": "explain-a-subsystem",
       "path": "instructions/explain-a-subsystem.md",
-      "sha256": "434abe24013695ebee2dcc53dfd103381a6afb1b00eaed200021df55d14ff580"
+      "sha256": "fe67c0a57ff159c9c7c078253b5b90b9121f0c9cb7f52cc8d0a13da17f07a76a"
     },
     {
       "instruction_id": "explain-the-measured-number",
       "path": "instructions/explain-the-measured-number.md",
-      "sha256": "4b987c86c81f61b61a591a5485d13bc1a73e4ac04874e3102aedad6631e51f13"
+      "sha256": "cf3d5d7ff4e4ba4997185cc3f11873d6f4bf1de55a70a13c5e43ed5ff70279d0"
     },
     {
       "instruction_id": "format-diagnosis-report",
       "path": "instructions/format-diagnosis-report.md",
-      "sha256": "bf050534de89701af62be4a58ac1b09c1afdb64589538bcba244ab193f7b4857"
+      "sha256": "acc1ef0977d29d2c56237f8c05d65b621c4d4ec14c31c8fd7f8e2a1b437fec57"
     },
     {
       "instruction_id": "format-quality-findings",
       "path": "instructions/format-quality-findings.md",
-      "sha256": "195faa93f8a1dca3ca04cf4efaae6efc7a9b7b67eacfba8fc9c72733ac4b40cd"
+      "sha256": "8288c8ddcf6f6e6491250ce88d03fca7a666f6d4264aa65aedc8735f294c1ab6"
     },
     {
       "instruction_id": "handle-environmental-cause",
       "path": "instructions/handle-environmental-cause.md",
-      "sha256": "21f9a07b33bce4fca569a5ec25958323baf53eae4f6f389d735ccb11935cdf79"
+      "sha256": "35c54f6d2536efa56b96f1da0f64a6ae55e904514f3703ae0501b296bbd0469e"
     },
     {
       "instruction_id": "handle-implementer-report",
       "path": "instructions/handle-implementer-report.md",
-      "sha256": "717ff55b0597a6cc08fb5f8efb32f2857e0a603268a1cf9a56261065fb724385"
+      "sha256": "ebeea162556763be449a4f2703859eee2fc51af4afc3f3efe31e28bdd30a09f9"
     },
     {
       "instruction_id": "harvest-shortcut-debt-ledger",
       "path": "instructions/harvest-shortcut-debt-ledger.md",
-      "sha256": "694b5439295b2d4306495c88c0b21e97f78987e08be6815d0df5731fa88093d0"
+      "sha256": "aec53fcdbbf453498bac142d5997cdc7c187d4e885eb7e97fd15f9711cdfe4c8"
     },
     {
       "instruction_id": "hillclimb-one-metric",
       "path": "instructions/hillclimb-one-metric.md",
-      "sha256": "c878a76e81a7e75c26003ec9808371179344c304dda53370fe00644bb720de19"
+      "sha256": "3c2133eac490eeaae5126222b3783d081f34277febf136114816be590d8d7e4c"
     },
     {
       "instruction_id": "inspect-data-integrity",
       "path": "instructions/inspect-data-integrity.md",
-      "sha256": "e6bf34a4797f4b2656123fe32bd8d99604d20751a354588d05444680736db38c"
+      "sha256": "512a03c7854e23431d65d6b5582e0823fbb4e6f8ce4f6d92352afb5354d8ad72"
     },
     {
       "instruction_id": "inspect-edge-case-classes",
       "path": "instructions/inspect-edge-case-classes.md",
-      "sha256": "43a5c779a13f5a8b9debbf7b292def5edc99f2764a1e888c2eef8ff92e3ca395"
+      "sha256": "5d89b046be45c65f73184d43c327f323e79944a1ebcf7615e73040939356d67e"
     },
     {
       "instruction_id": "inspect-scalability-hazards",
       "path": "instructions/inspect-scalability-hazards.md",
-      "sha256": "a345cdb56e8e7f5886ed9d9090bc3fe9967fabfad1b7716ebe235bfcb8e580bb"
+      "sha256": "e204a987a89b1c6a7a39828dbe89e48d7ca2af051d14bf4103f0a8653a20683d"
     },
     {
       "instruction_id": "inspect-security-surface",
       "path": "instructions/inspect-security-surface.md",
-      "sha256": "5f9bbb6862398100d2208d25fd649deda02073218def8baf226a6d22cba1c672"
+      "sha256": "15374589bf39b9f022c398e6ce106310f6c0dafa620af437a6441b4699764116"
     },
     {
       "instruction_id": "instrument-component-boundaries",
       "path": "instructions/instrument-component-boundaries.md",
-      "sha256": "b6add0df6d09bf37c1387ff19d5b6c49ef3254babceb7fc01743e47709660009"
+      "sha256": "e95cb381d43f5d8f0fb3598ed8e4eddb40c1c4e685ee4151d7a55461a1c2580f"
     },
     {
       "instruction_id": "integrate-completed-work",
       "path": "instructions/integrate-completed-work.md",
-      "sha256": "739f2f01db4cbd6d9e233261f8170aacaee46bfba93877766bdc38c3c58d97cb"
+      "sha256": "f9f3a45eaf6409b9adb80a4f22c015d394202080c07c9583f527431fbcf61197"
     },
     {
       "instruction_id": "investigate-history-across-sources",
       "path": "instructions/investigate-history-across-sources.md",
-      "sha256": "c16a32ceeb9c2416e033a00e550c9b875e8dc80ad26bd277654e83b25df8e66e"
+      "sha256": "5970c507f9449171a9396ba4447d7dc9bc9ef69be80807a0743d5e96de16e681"
     },
     {
       "instruction_id": "investigate-read-only",
       "path": "instructions/investigate-read-only.md",
-      "sha256": "088ce7c91ca3ebf94ec3f3dd20e0e739a97247a07aff63a2eb830899ab827a3e"
+      "sha256": "9000b37b0b95bf14673ee9f8f28f0f745bd890cf6d9b5c1c3e8c4d6d70165098"
     },
     {
       "instruction_id": "isolate-work-in-worktree",
       "path": "instructions/isolate-work-in-worktree.md",
-      "sha256": "e3280c4f6d99c171acbf9ec9a18fca4094fa0ac800047753069f719f5763da0b"
+      "sha256": "905972c7723247fab26c49aa6942b38369c583d75ecb02d9f16a598d6d3395aa"
     },
     {
       "instruction_id": "keep-a-decision-trail",
       "path": "instructions/keep-a-decision-trail.md",
-      "sha256": "245d4eb4e6829d188d8271292904688d4e9a5094528be406588bc9a62fc66f64"
+      "sha256": "ce8889e7a02d5d453b11a06bf67f4ccc150c3048f066855034c0d3fecb6cd3a3"
     },
     {
       "instruction_id": "keep-one-writer-per-branch",
       "path": "instructions/keep-one-writer-per-branch.md",
-      "sha256": "58ba46a7b36cf3ad1ca26c3ba5d2e1060dfee20c31f57415cffb4c9deae37c68"
+      "sha256": "41ac6c9d0c52cf803d0076498b3ff9fc341d80331e0d61952193775cb9f828c1"
     },
     {
       "instruction_id": "keep-review-read-only",
       "path": "instructions/keep-review-read-only.md",
-      "sha256": "d0ac325468baa62139bf56365809f6ce19ceb9a1866867a1e96f80e4faa0237f"
+      "sha256": "9560c05dca213987121bb3d41442f6ff444381df241187a4552fb0bbca5e928c"
     },
     {
       "instruction_id": "locate-verified-artifact",
       "path": "instructions/locate-verified-artifact.md",
-      "sha256": "d4be22f426585a3784a4333808e71ef91a96aed4d388427c5fe5da4272a50110"
+      "sha256": "3e5a1543210698cad74195b2f4e8e7189d6fae9181da408b0ea426cc6ceacec2"
     },
     {
       "instruction_id": "maintain-diagnosis-case-file",
       "path": "instructions/maintain-diagnosis-case-file.md",
-      "sha256": "bffe90928439c2f02de5643be42505d45e1928d233a1c1fe69aacb510fee7371"
+      "sha256": "2a561220b063d90394a96e57fdf660b39c6929c03caadab28cb1089a38bf3f07"
     },
     {
       "instruction_id": "maintain-plan-ledger",
       "path": "instructions/maintain-plan-ledger.md",
-      "sha256": "9012fb72ca07619df4a3b5d3154dfd14c2713795ca808c954761cf76563eb882"
+      "sha256": "1eef586e7dabf8080f04569cc4b5d9ca83be9ec5357efdca4d2acd3b4ea853ec"
     },
     {
       "instruction_id": "maintain-verification-harness-against-drift",
       "path": "instructions/maintain-verification-harness-against-drift.md",
-      "sha256": "b63812ea6af0f83a342b16120031c6555074820bff5b18596a7a784c81622193"
+      "sha256": "711d159cacfc8d4fc98341b3884320ec276de1ab5fba4e26c1f420b8360bcd0c"
     },
     {
       "instruction_id": "make-illegal-states-unrepresentable",
       "path": "instructions/make-illegal-states-unrepresentable.md",
-      "sha256": "e9878fafa55e63297f5e0fa0a625b0670de783df8532979742718f9054723ced"
+      "sha256": "f947573005f81ed5c83a251d8e172d06580b96c4a36c53a7015c540b7c7cf3af"
     },
     {
       "instruction_id": "make-operations-idempotent",
       "path": "instructions/make-operations-idempotent.md",
-      "sha256": "c25b4bb3a63fc6340fcec5c4262679213aa14d5b3c2249c10cdb9f071dc8f0b9"
+      "sha256": "614b24c31cf831344b8c203e3be505998763f13b9f83fc52d8f1169fb390afc8"
     },
     {
       "instruction_id": "map-file-structure-before-tasks",
       "path": "instructions/map-file-structure-before-tasks.md",
-      "sha256": "f13cbccb6a03032a7cd83e46e10cafb2cb5bfd2fef50b884add704866af090a2"
+      "sha256": "85a32161716b37499853478e1562907d1ce70fadaecb395d086b65f35d2aae1a"
     },
     {
       "instruction_id": "match-guidance-form-to-failure",
       "path": "instructions/match-guidance-form-to-failure.md",
-      "sha256": "c5a49fa719e5c94335df2185b02795978678a0eecf664351c63a36471587eec7"
+      "sha256": "33ce46872cee8fce52ed298295341c66c0ffa6dd9717f477c1941f14f9e6c2ce"
     },
     {
       "instruction_id": "merge-copied-tree-with-local-edits",
       "path": "instructions/merge-copied-tree-with-local-edits.md",
-      "sha256": "b5c763232282e173db8df6bd22fd4bbddf38b6130e845cc83845263227cc2883"
+      "sha256": "30e47f09d0d0b8ff49fcc711b1f8fdb22df3df8618033e9c6c0007d378c5fc9a"
     },
     {
       "instruction_id": "migrate-callers-and-delete-legacy",
       "path": "instructions/migrate-callers-and-delete-legacy.md",
-      "sha256": "1e6fe565056b938739c98e4df789d3addadbae087849c360d8741ff99855bb7a"
+      "sha256": "47e5f22aac450b47ebeeef08e262e4b92e8ec99f61bc7c882fd614edbf166438"
     },
     {
       "instruction_id": "minimize-code-surface",
       "path": "instructions/minimize-code-surface.md",
-      "sha256": "1b25eb591f19bc60a18eefc90fe600e1a7a781fc0b145f06de8de0dd5cd2b2dc"
+      "sha256": "417834433420b0abc7e12a859eae255b59cb8542f362c43cbf521281aa8671fe"
     },
     {
       "instruction_id": "minimize-reader-load",
       "path": "instructions/minimize-reader-load.md",
-      "sha256": "b7b6fc184d5b845c173be45f808d2247f00e854023115953f497ed25a2675cd7"
+      "sha256": "886c796a38991a5eaf1ad5e34ae44ffdd77e67c13dfa3b00feaa840822c43005"
     },
     {
       "instruction_id": "model-domain-in-structure",
       "path": "instructions/model-domain-in-structure.md",
-      "sha256": "87dcfd37dafd34ce8392cdcc4710fe2bcc03229938b126d42e57397b44f8886b"
+      "sha256": "ab3f7436726c3dd9556708483f9c199dfc465b69141b3cbb6dffac170b502a7b"
     },
     {
       "instruction_id": "offer-context-recon",
       "path": "instructions/offer-context-recon.md",
-      "sha256": "1f76b49713ee7ef8c3a13e85dfb9cea957b8539b5de3eec7df13d8ef222e0941"
+      "sha256": "d43b7b0e2f224cd5ec7984e768e1a1bd1bb780c790da1be72f295954b1df33dd"
     },
     {
       "instruction_id": "offer-plan-execution-methods",
       "path": "instructions/offer-plan-execution-methods.md",
-      "sha256": "69475154dc8a2f9083352ae334d5a33518fdecd719e62e6aa2418000d5218f19"
+      "sha256": "1d77633a4378639fd8f2a170cba24ec5eefcc674f4e6665f9033a8e19d66632f"
     },
     {
       "instruction_id": "open-a-reviewable-change",
       "path": "instructions/open-a-reviewable-change.md",
-      "sha256": "1bb0c9cb20aa3871d39a5f1f8939c178dd6e6ab51f6761d3f91b9af3a0b83951"
+      "sha256": "c7d563fba8ec99fd66ffbf8931042e6c7f410e53d92d8b04438ebfeb782d39af"
     },
     {
       "instruction_id": "optimize-guidance-triggers",
       "path": "instructions/optimize-guidance-triggers.md",
-      "sha256": "596f0cb1a42607613d5c43b876fd3b94bdaceab83841009d43923ae4864d5aef"
+      "sha256": "b6071a30f6eaf1067c0e9716bd0ca578c63f523d15c72b2897aa4dbeb676438c"
     },
     {
       "instruction_id": "parallelize-independent-tasks",
       "path": "instructions/parallelize-independent-tasks.md",
-      "sha256": "9428af616d6fae795ca8a2272acc5eb0e0797c3f1260351637dd0a191a923dc9"
+      "sha256": "5cb0be8f0cf33349873c41cd3166947774c2a2049658846171bc4f4acdb30d7d"
     },
     {
       "instruction_id": "pause-work-with-a-handoff",
       "path": "instructions/pause-work-with-a-handoff.md",
-      "sha256": "f33840c72c8387865c0b7276de3215fe8182a2a86685434139b34ca84ac2bd1a"
+      "sha256": "97fb159645638893c0d9bdcfc3c544c781501d0c4f5921d6711f2a8ea0b37d8c"
     },
     {
       "instruction_id": "play-back-understanding-in-chunks",
       "path": "instructions/play-back-understanding-in-chunks.md",
-      "sha256": "e16f7801e1d991fe5365e77bfa0ad04239ded42adbf8e7acbb7e8e42dcbac767"
+      "sha256": "babb1dcbd05d638e28e1f7abdd9aee87708d99953cf28774b40c081aaa6f9946"
     },
     {
       "instruction_id": "present-impact-without-invented-baseline",
       "path": "instructions/present-impact-without-invented-baseline.md",
-      "sha256": "6085258cf73b537d2312af0eeefa3849259bfcb6756a7985a89c613d80b3b8ac"
+      "sha256": "c39d0e65d647348fc33c4c404d2025ed1cfbff16f530eea81c01eca6f06e6a14"
     },
     {
       "instruction_id": "present-integration-options",
       "path": "instructions/present-integration-options.md",
-      "sha256": "f51f3831bdc10c1dbd02d70f7c7ae8185c6bd2706bef09d40ef4514e03c2ca9f"
+      "sha256": "f2622b2a89ba173d64f0649b0b1d2ee1b30b8217c4f24b9966735116c21dd817"
     },
     {
       "instruction_id": "pressure-test-guidance",
       "path": "instructions/pressure-test-guidance.md",
-      "sha256": "fca84147c54d414bc9a3d2a990c4c80d80bc66b7c697a44f0b5df6b1ad5007be"
+      "sha256": "1710959fdba5724ef5c42ac1831d2382b58b17cf2f04b94c49f9a85246c46974"
     },
     {
       "instruction_id": "proceed-without-waiting-for-confirmation",
       "path": "instructions/proceed-without-waiting-for-confirmation.md",
-      "sha256": "1427b6c75ae392cd1e45773021f6498b1136dc75604dea1a530d7780e49e89dc"
+      "sha256": "5713cbe34124a66a4b014af133a772740f0c45cc1282aa58f477632500939499"
     },
     {
       "instruction_id": "protect-sensitive-artifacts",
       "path": "instructions/protect-sensitive-artifacts.md",
-      "sha256": "244563559543749218fe174f5dee298674ffd3a6b51ed145791e9331afb157aa"
+      "sha256": "63dcfe170f59322bf2ae49ff242a9cabed5f89cac10985bda6ee1a1f7187b6b7"
     },
     {
       "instruction_id": "prototype-competing-designs",
       "path": "instructions/prototype-competing-designs.md",
-      "sha256": "82c48e4516fde44013b59a6854b4af027338ac33fefb555ab5c4755268becc79"
+      "sha256": "b4a7ecdda63ddd38a6df5a3864328a910930b39407f4636833d58818f03608cf"
     },
     {
       "instruction_id": "prove-behavior-around-a-change",
       "path": "instructions/prove-behavior-around-a-change.md",
-      "sha256": "c0d80529ca5453336bd7517652fc1ac05e4396ed08793d1a575b42a3c40cbc0f"
+      "sha256": "d58921f1c83430d3bc85f206f512151927cf52960a3e8876e44dee7407971547"
     },
     {
       "instruction_id": "prove-blast-radius-by-running-code",
       "path": "instructions/prove-blast-radius-by-running-code.md",
-      "sha256": "4ba3a80861506b88325c4a9b203da24265cb6631d1135962a23812d4607ce0c8"
+      "sha256": "27c10968935d69d6fcad70613c7303f28af028e602c23028407db7ca4dc54959"
     },
     {
       "instruction_id": "prove-regression-test-detects-bug",
       "path": "instructions/prove-regression-test-detects-bug.md",
-      "sha256": "6c044a2112273f20bb73efdaaa21abb447a9cb3863a08bec69094a112b085159"
+      "sha256": "f614eaf72bb1f98d4f3d0730411cef888e96763394c888b0293d6e8d4ad90a3f"
     },
     {
       "instruction_id": "prove-visual-parity-with-image-diff",
       "path": "instructions/prove-visual-parity-with-image-diff.md",
-      "sha256": "41ebfa94c3e65b06d7af842e9f951599a50d3e65084e5d65559131247fd3352a"
+      "sha256": "66040683f18d46b092458fd09dc1efc54bd2962aa1d11b52d1a9b58f4ac40f19"
     },
     {
       "instruction_id": "prune-worktrees-with-safety-gates",
       "path": "instructions/prune-worktrees-with-safety-gates.md",
-      "sha256": "fd56607f7f44ccc4021e137182a2cf30352106efa1bf208a2e030acbe2ac8c49"
+      "sha256": "affed01991e0a9882f4708266733d22146f35b2f036030ab7d979f5d2b3caf52"
     },
     {
       "instruction_id": "read-artifacts-without-overflow",
       "path": "instructions/read-artifacts-without-overflow.md",
-      "sha256": "2f119a3365860c8006e61059ff5a3af693153931b7bbe719d28e2f89a3e1cc6a"
+      "sha256": "997e090b65da7b3e311b13e6b206f875cce72da888996946c785948fcf2d52b4"
     },
     {
       "instruction_id": "record-available-executor-models",
       "path": "instructions/record-available-executor-models.md",
-      "sha256": "31f769520d57c26d6463245f99181810bb8190e7f085df382273061e62a8761c"
+      "sha256": "137b636628032ca8f8fc2ba592e192dd598fa45c0f905ea43a7cc43ab89f9971"
     },
     {
       "instruction_id": "record-execution-rulings",
       "path": "instructions/record-execution-rulings.md",
-      "sha256": "60aaa5bde24ef0bb20b386da6ab84285cfe333c514a25c09b8dcfa8a55300116"
+      "sha256": "c042008c7d0ed7328a253948a5b78411eb88453a7ca4866bde1b3ff0c9cab7c7"
     },
     {
       "instruction_id": "record-skipped-steps-with-reason",
       "path": "instructions/record-skipped-steps-with-reason.md",
-      "sha256": "c9548d50e356f72029c935269fa6b1810ad476470a9cfd2e9fbea49ff0bfd2fc"
+      "sha256": "dbfd17240ef4df8e0ef5caf834e1c56c7658a4f72e98fbaa789d477a51e1df82"
     },
     {
       "instruction_id": "redesign-as-if-foundational",
       "path": "instructions/redesign-as-if-foundational.md",
-      "sha256": "dde9fd6e9edbc3eec371a553cc2110b68d5bb5d1cc0278342d270ef9121b2f69"
+      "sha256": "bb87ef366b6000cd7aab8f3ee983ef79c797320ed00505a843703b7aac1c688a"
     },
     {
       "instruction_id": "report-diagnosis-without-prescribing",
       "path": "instructions/report-diagnosis-without-prescribing.md",
-      "sha256": "7bf5b2c2d024aa6f93aa3ed5a3785e881fcdb7e9671ce8368d9d52a2b7c420a9"
+      "sha256": "38d9a4527d6bef818d5505feea03430ee7632044af952374f54743e51cf8fc8e"
     },
     {
       "instruction_id": "report-what-changed-since-last-update",
       "path": "instructions/report-what-changed-since-last-update.md",
-      "sha256": "378ff7696987f737a1c56391891654478158964babecb851f8cc5d9e194843c8"
+      "sha256": "e9d892067ed13081fd862662afd58081bedf38849e5c7cc5204996ab1db52209"
     },
     {
       "instruction_id": "reproduce-defect-before-fixing",
       "path": "instructions/reproduce-defect-before-fixing.md",
-      "sha256": "485d9f7f2b2b63ea9d653dfc412dd6ba3edfae446637089f6c98a27387eb38c6"
+      "sha256": "d88e8137b8f4f6715fcf49a70633d3d48d0780d5f319fba82c6262f47778b176"
     },
     {
       "instruction_id": "request-independent-review",
       "path": "instructions/request-independent-review.md",
-      "sha256": "f73655a235ecf6acb55b4c0a8777eda7dbfcf72b558e6a7e48128fb444230b0a"
+      "sha256": "a0ba073033a70b1bddd9f32680753cbc52f2b1405587ce08fb3732e0753c0888"
     },
     {
       "instruction_id": "require-concrete-failure-case",
       "path": "instructions/require-concrete-failure-case.md",
-      "sha256": "ce0314a693b8672ccadef11fac8d9c07188240ce0c90b51278466d55c961870c"
+      "sha256": "90d9f5f08541e76790bc76a8021bba93f51bf8be8fbc7f8519339b0079d1d5d3"
     },
     {
       "instruction_id": "require-explicit-discard-confirmation",
       "path": "instructions/require-explicit-discard-confirmation.md",
-      "sha256": "3ed3edb604569ad8afb2f7c0ffd83783af91b99e405516c39289efd05daf6ba7"
+      "sha256": "8054f093aea5e9f17dd966c489475997a7c443834530b8478f9bdde4e6df2316"
     },
     {
       "instruction_id": "require-verifiable-intermediate-outputs",
       "path": "instructions/require-verifiable-intermediate-outputs.md",
-      "sha256": "f119550ccb92fdc6ea1c85201cfe15eb8367f58ed353ffa163ca195a86dbe4ef"
+      "sha256": "5c960a0ea16fa7eccad3003174472f65693db80f0b5002e31b5d79bce9d522f5"
     },
     {
       "instruction_id": "resume-plan-from-record",
       "path": "instructions/resume-plan-from-record.md",
-      "sha256": "225ce10a3bd9532b2a7d9558a2879729dc7ed59f632c75ba55c363d0f6211274"
+      "sha256": "993a9e0d4c33fc34c697a6523382704b607b0ad5374a52c0697cd5d44286390a"
     },
     {
       "instruction_id": "review-adversarially",
       "path": "instructions/review-adversarially.md",
-      "sha256": "9135703f0044a44fab768218e7696b1f116926dcbc914421285bc4840f11b531"
+      "sha256": "2760d52b108853b00dd1a199c0f9fe0af00398bd6e241047945a7de4b11ee64a"
     },
     {
       "instruction_id": "review-change-against-requirements",
       "path": "instructions/review-change-against-requirements.md",
-      "sha256": "cd659932cf88590ab0bd7d28ab64010d2e4a52c026850f755b3ac08027aea6b8"
+      "sha256": "67885589b93d2a290a50312a160242e1f4e6f2fff1dbb10fd47fccf7e53ab742"
     },
     {
       "instruction_id": "review-code-quality-and-tests",
       "path": "instructions/review-code-quality-and-tests.md",
-      "sha256": "48bca3beddbb8884e1d265d925b7606a08ff8f59affb4e5dffd1bb5c89a406ac"
+      "sha256": "7f240f6fe6d2e9b54c8ae4140c8f77640a4ca0e7e330365861b9b45f1c73f759"
     },
     {
       "instruction_id": "review-task-both-verdicts",
       "path": "instructions/review-task-both-verdicts.md",
-      "sha256": "268debebacc1aa2c86ca736060782932eb4945b63a8ec8743b7ca73f3a14edfc"
+      "sha256": "d33f986ec82b3a1e418a370bbbfdf30b83b48fda0d79a4b815d43fe3c11d7f21"
     },
     {
       "instruction_id": "run-bounded-fix-loop",
       "path": "instructions/run-bounded-fix-loop.md",
-      "sha256": "b6af90004065ab4176b5ae6ef774ce06ce7b7e0df1e5ccdbd77ea7ea0ea69265"
+      "sha256": "a843b3a1191b20b08b365ab78134763a2e9460fa235ca5f0de687cafa0a58cc1"
     },
     {
       "instruction_id": "run-final-change-review",
       "path": "instructions/run-final-change-review.md",
-      "sha256": "b1aeb0dca2b5b6c188846b871bd9bdc917fa640fe24f22230e28b9160fdeb4d4"
+      "sha256": "b7975cf5621d1e79fb419109edd89633d59914f10e6a4085e27baa429330a119"
     },
     {
       "instruction_id": "run-until-a-done-predicate",
       "path": "instructions/run-until-a-done-predicate.md",
-      "sha256": "54cb19f79cfe6a56226a9d6aede2abf44b4789a0d8d334c521eee0d7b94a49eb"
+      "sha256": "598dbf2cefa48a90968c8405a857c80eff1abd658ad14e53b69f9fadacdc6cd8"
     },
     {
       "instruction_id": "scan-plan-for-conflicts",
       "path": "instructions/scan-plan-for-conflicts.md",
-      "sha256": "a87031718bd25ccee1889b73f43e81094c4ce8e1f0396e2c3b5f14a1c23dc8ec"
+      "sha256": "80fb6ccc62e494111223839ed650c15d2faeb0611578d95a921167beb0e1e23f"
     },
     {
       "instruction_id": "screen-design-for-structural-red-flags",
       "path": "instructions/screen-design-for-structural-red-flags.md",
-      "sha256": "c61d2fafdd776a4d23faffb29dda4104ccc121faaaa74748825a0fdf4c39188c"
+      "sha256": "a53b0acdf590a965c56fb51ae2d116d1707222e67a18e1e9f0a5d76102612ed7"
     },
     {
       "instruction_id": "scrub-and-gate-artifact-sharing",
       "path": "instructions/scrub-and-gate-artifact-sharing.md",
-      "sha256": "903408b77df69ac71bc737ae3418164217e64fa76d8404405999c9b28dd8c7f1"
+      "sha256": "01a2000ee039bf95d75970bfa5f6608da09005e7cdaf7d57dd50cba3ab1fd485"
     },
     {
       "instruction_id": "search-existing-reports-before-filing",
       "path": "instructions/search-existing-reports-before-filing.md",
-      "sha256": "1643c846b848d6fa1891b52ed99dbf631b2e47216b36e18b7f23abd4399188eb"
+      "sha256": "7d43f6ba9a84eae6a919dfd46504516e13d452e11ff2eb83fd8f6b7518cd928a"
     },
     {
       "instruction_id": "select-model-per-task",
       "path": "instructions/select-model-per-task.md",
-      "sha256": "3c5e6bb193348d88e32630bf4936e8948ed26e2fee7449c3e608a27bb988eca2"
+      "sha256": "a12fd344f62ff8e3ee98b0d58cd09a6d813c7ca4c97723f201406fc5d085733e"
     },
     {
       "instruction_id": "self-review-plan-against-spec",
       "path": "instructions/self-review-plan-against-spec.md",
-      "sha256": "a8b341168a418fc87b0dd11ee3d18a12606bbd8a8a2b358e698e5fb84340ba12"
+      "sha256": "abf03bb8c9709dce7d70bb28e54517d8268f77ab122667e5b666c91c23aefca9"
     },
     {
       "instruction_id": "separate-blocking-slowdowns",
       "path": "instructions/separate-blocking-slowdowns.md",
-      "sha256": "3a66bbf657a4666a2fbf19a01d254b5623c9f9becb446d1ac603eedbbe66df23"
+      "sha256": "b97f97c9b039789ae2023744478ea7d802b711d706220364d4102d6ed17b90b7"
     },
     {
       "instruction_id": "separate-evidence-from-inference",
       "path": "instructions/separate-evidence-from-inference.md",
-      "sha256": "54f98005c500a89d87c7c4b96e3e96bf79017d3f26a700964eab182ac01387d3"
+      "sha256": "dd6efa9593233eff6b82cef68b2c8598323e45356893782e0404ba32d718575b"
     },
     {
       "instruction_id": "separate-shared-state-before-serializing",
       "path": "instructions/separate-shared-state-before-serializing.md",
-      "sha256": "435309124801b8ae815f6294723f1c21ea093bb884dbfcc5e20e63e71876a52f"
+      "sha256": "3eecd5ad4855c5c3373ff23ce21565d9d874973a4cd95e7d13ce250f39b966c6"
     },
     {
       "instruction_id": "sequence-verifiable-units",
       "path": "instructions/sequence-verifiable-units.md",
-      "sha256": "fb0894cced1daa37d5a56054d12cb48d88b9f87ba33428b9fe73fe29d1e18abb"
+      "sha256": "dd99e5d461a259543e036dcfad9cff8e458f75e7f8e9d3f181509de48027b283"
     },
     {
       "instruction_id": "set-guidance-specificity",
       "path": "instructions/set-guidance-specificity.md",
-      "sha256": "142b9773515d97c4f396dba4620cc9cd5fee155c9db5bf32ac04e3b14822dfe7"
+      "sha256": "1b7a151d83f07e93fe5a5622193a80911a3a15fdddc0395e373da02a673cca64"
     },
     {
       "instruction_id": "simplify-design-when-tests-are-hard",
       "path": "instructions/simplify-design-when-tests-are-hard.md",
-      "sha256": "6604630f71eae068b3be0aae62a1e93b2ee38e77324ab3d109c084d5b1a04312"
+      "sha256": "3fa2ecbc0f307f1282f4ec1e130e2d4e542bef79021e547d1fe3890d0b171c24"
     },
     {
       "instruction_id": "size-and-gate-the-work",
       "path": "instructions/size-and-gate-the-work.md",
-      "sha256": "845309766298426b64be7f773fa7e8177a0e8d873b26497213c852c4b3865887"
+      "sha256": "82a4726a9c2dbb507b18d5894aee67ec4131539704a8138eb33641cd64a738ad"
     },
     {
       "instruction_id": "specify-output-format",
       "path": "instructions/specify-output-format.md",
-      "sha256": "6a1a2113250a63f97f935690344a6a1c8cd7a807aa7b86fa102b3d8fbe3fcccb"
+      "sha256": "edb165c624ded98d6ff7c4b81691fa98632a5cf422e909555da7adcba9398bde"
     },
     {
       "instruction_id": "spike-throwaway-to-learn",
       "path": "instructions/spike-throwaway-to-learn.md",
-      "sha256": "b4f9a83d3680ad6b8d088a09b7d3bb9ffa6829431312912b71634777b20078b8"
+      "sha256": "6f57f0d9191e95a0a3bce8b37489fedab4758a690682a9b6a77fd6aee4fd1619"
     },
     {
       "instruction_id": "state-assumed-load",
       "path": "instructions/state-assumed-load.md",
-      "sha256": "b5f01a3941fb04a7e23a4ea3f1876f580cffc236cbe702245e32ca05423cb83f"
+      "sha256": "5b01acebb6b28f0f4aae63183513b801d977ac128a2010d7923a414015c0999b"
     },
     {
       "instruction_id": "state-diagnosis-problem",
       "path": "instructions/state-diagnosis-problem.md",
-      "sha256": "65b4af5cdfd215bf8bca907cf96bdb31ba0b663b3ed20c0d3dcbc4e1018b4f5a"
+      "sha256": "ed86e7cabe5678558444b4a0c948bc251e427d8c2f3691ed1ab101639eeb814a"
     },
     {
       "instruction_id": "state-goal-check-and-proof",
       "path": "instructions/state-goal-check-and-proof.md",
-      "sha256": "be750d955830ce483459a1dbd600207442d8629b2bf2e43efafb04374a75fafd"
+      "sha256": "0965be5b06e927df6fdc2bfc5a69635844e1df28fde9c820ac5c58b9dc002b60"
     },
     {
       "instruction_id": "strip-ai-writing-tells",
       "path": "instructions/strip-ai-writing-tells.md",
-      "sha256": "9e29e22baae6849a78c03ea98ef0d45097eee02bcc28affc028a4d7575d92688"
+      "sha256": "b25f1b2206b81e5aa15ba9b275ae11330bd3e493a0883f4720ede780ec966931"
     },
     {
       "instruction_id": "structure-and-compress-guidance",
       "path": "instructions/structure-and-compress-guidance.md",
-      "sha256": "ef8c9be6aa98ca24c0b9c4f22e7f6c4ef274b093c4e3b9d06725d297ca65cd84"
+      "sha256": "6c08e61ee6e5cabfdc207fcd7d4081c202bafc8a318e92a1f692abb1db498479"
     },
     {
       "instruction_id": "take-over-in-flight-work",
       "path": "instructions/take-over-in-flight-work.md",
-      "sha256": "f861353702c66caf81290dabd6b3e5800741b3aec641b89e76411093e0bdf996"
+      "sha256": "38b9380bd219273a9c1dc30c5f80af17676c18e81c3940fab8997ed362bb6010"
     },
     {
       "instruction_id": "test-first-development",
       "path": "instructions/test-first-development.md",
-      "sha256": "4cf71ba03e7038990597ee2c0848827f4f434901f0a940f00b8ba5cbc2672fc3"
+      "sha256": "fa7ea6f6cd16f31aa4901b56c8e8398aab117a63d10b5f19124a739ee5e0f98e"
     },
     {
       "instruction_id": "test-guidance-against-baseline",
       "path": "instructions/test-guidance-against-baseline.md",
-      "sha256": "44c6d368503a4e1ee9ecee3d5ee953696b665d743fc687d8cf1b325114d43a78"
+      "sha256": "916b050d652821c547259a92c7ab815a4118372811b9e033aaa93d11dd12276c"
     },
     {
       "instruction_id": "treat-declared-shortcut-as-decision",
       "path": "instructions/treat-declared-shortcut-as-decision.md",
-      "sha256": "916af7518abc5b68457010523142a2be6f3cf07e176753e0065d62fda831cc6d"
+      "sha256": "bdd474154b92b4bdb37dd29593c09bcd0f146490128537e9ff4df162bd3781ae"
     },
     {
       "instruction_id": "triage-automated-review-findings",
       "path": "instructions/triage-automated-review-findings.md",
-      "sha256": "d2bde52924c219a6290106864f832da7199a0065da3ed23c797add6909be2548"
+      "sha256": "41585858a0130e3a7e929813ee3c65c2f19cfc4c31ff8eb4966c410c5dfb004d"
     },
     {
       "instruction_id": "triage-incoming-reports",
       "path": "instructions/triage-incoming-reports.md",
-      "sha256": "789bb62c105bf936f08c1833d4d769dfd366ef22014fdeaafbe3f77c41a867e7"
+      "sha256": "ea41a08f1013c07fd96af7ca25c22b51ea50d0f49bb6d3e27e49c26309e4d7c2"
     },
     {
       "instruction_id": "triage-review-findings-with-judgment",
       "path": "instructions/triage-review-findings-with-judgment.md",
-      "sha256": "53d1c1ffd4a704a2858a8189f5c169d12b854d3ea8a0b8b5fd153baa72f342c8"
+      "sha256": "6a3a660c402609ba033187911911602cd5a1e02ccc35ae806f111ea5fb588430"
     },
     {
       "instruction_id": "validate-at-every-boundary",
       "path": "instructions/validate-at-every-boundary.md",
-      "sha256": "2267d96ea56d0f72a5116228eaf2434fa5be7612132139ba7c92919befd0bea5"
+      "sha256": "050742df27937245c81926d1854e4f501548e1523dc52f9f1ba78c85b00167aa"
     },
     {
       "instruction_id": "verify-before-completion",
       "path": "instructions/verify-before-completion.md",
-      "sha256": "27e136148259f75c31ae877910d1c95c363c69e51465d1b3a71e2e130db06c65"
+      "sha256": "30a82bc43db584bf796b51e966f6ff76963139c78cd08f4d08a2bd9cb88d84e3"
     },
     {
       "instruction_id": "verify-exported-evidence",
       "path": "instructions/verify-exported-evidence.md",
-      "sha256": "ae4b87f608bf215d6166d7cf77a7299f6a3fe1aad99b66c93d2a435c8d47f878"
+      "sha256": "50fbbc2e8d6cfdec0779c0143f1f4f17ff80ced7238a7eec897a04685a95518a"
     },
     {
       "instruction_id": "verify-with-independent-lanes",
       "path": "instructions/verify-with-independent-lanes.md",
-      "sha256": "e3fec98e5a9a6e9c13e8523abb2df786e95b36bc7589e996b3cf433327e7b7eb"
+      "sha256": "594c10ac1360026a5e04993440850ecd90d884eecb7db51b28288de673d81cd7"
     },
     {
       "instruction_id": "wait-boundedly-for-workers",
       "path": "instructions/wait-boundedly-for-workers.md",
-      "sha256": "af47a5034469e117a32d18b1e5dab13cb17ffb1def3580301518c57c347ddcb3"
+      "sha256": "1b93748bcbec1b9dae65f1baae3c250e29173a5cbe1452bac623cdc21a3f55a2"
     },
     {
       "instruction_id": "wait-for-conditions-not-time",
       "path": "instructions/wait-for-conditions-not-time.md",
-      "sha256": "99385cda8eda958128a21340dfe8b695154c564942669c1c422a4a145b73f781"
+      "sha256": "555343c213f4758b5bffc2021323afd780d01be057b0c53f60b055b49f0d1d18"
     },
     {
       "instruction_id": "write-a-complete-delegation-brief",
       "path": "instructions/write-a-complete-delegation-brief.md",
-      "sha256": "8b665a47b8cf111a9f5813500c4c324f7b4c4b8bcc9f045ebd3f9e97bc7484fd"
+      "sha256": "76e4bd15b0e68419e0f8ffe73ff09e7e68542f657315c3955c0758a2303b6144"
     },
     {
       "instruction_id": "write-design-document",
       "path": "instructions/write-design-document.md",
-      "sha256": "43809a31556fa9da3c9f8729f81a22744bbcac31e6455ad44bb6385be93c1517"
+      "sha256": "24f3abc6577646336d4eb7156b926e0b99479b5024a548ff46fb60831294f835"
     },
     {
       "instruction_id": "write-directive-rules",
       "path": "instructions/write-directive-rules.md",
-      "sha256": "c78aced5f7234bdff78cf59059a49e59b790b97990b84164bfb4c6e37350a0ad"
+      "sha256": "3e65cce7d438b383c5bdf9ba08fd2637685b088dd5bea0516801688f1638e4ea"
     },
     {
       "instruction_id": "write-evidence-gated-program-plan",
       "path": "instructions/write-evidence-gated-program-plan.md",
-      "sha256": "40c7d1689189e914592f258a328153ae0e2c47d60d967dc592ed455daa969d72"
+      "sha256": "dc7a5d772287cefd9bc0f7aa96c4d73fe295caf48098314fcdf0f499ff81c749"
     },
     {
       "instruction_id": "write-few-meaningful-comments",
       "path": "instructions/write-few-meaningful-comments.md",
-      "sha256": "e74ef338bf2138186f43749d3447f969485b899142e12c74745dbb1d7bd08a10"
+      "sha256": "b9a5ddf98d228274c36f6f65fa656c6faae4f973a4f726eee2d3f10d7c16d1c1"
     },
     {
       "instruction_id": "write-implementation-plan",
       "path": "instructions/write-implementation-plan.md",
-      "sha256": "9735804d917216a861d7cbc44a7739e138d638e7d618d67eff5b2679c0d03706"
+      "sha256": "be86c988b18cd93da9c60da42dbfb59c77851cc116f2a03ac8be2a090d8d3222"
     },
     {
       "instruction_id": "write-minimal-agent-guidance",
       "path": "instructions/write-minimal-agent-guidance.md",
-      "sha256": "4de6f63f2ee087253ef3178754bc7e0a06e8b3bf01981ebcdd567c61a4154a74"
+      "sha256": "cbb6af610a2f7b0979a4d4b74fda4054aef75f57ef541b8b73b2fec87e9a2752"
     },
     {
       "instruction_id": "write-plan-header-and-constraints",
       "path": "instructions/write-plan-header-and-constraints.md",
-      "sha256": "5d91c9fd808eb06da5ccf180c282d4d60e503b3a3a24a186c6285fa4d9883fdd"
+      "sha256": "8312fad5173e92e3c90267db8914494ace4f542f9172f679f3aa43525841e5b8"
     },
     {
       "instruction_id": "write-report-in-plain-language",
       "path": "instructions/write-report-in-plain-language.md",
-      "sha256": "204c90660d2d946c87c5a8e86eedb6e363acf647a96dfbc63882dfc2039c811e"
+      "sha256": "39b238279856a6e9b8e2890631836c9743f73fc41a6862f27a45daf1c95391be"
     },
     {
       "instruction_id": "write-technical-prose-to-a-standard",
       "path": "instructions/write-technical-prose-to-a-standard.md",
-      "sha256": "f9c233166ed15758e1d4ec9ad55a338d7b0538d82e0fdbe2409a1bc217c98a16"
+      "sha256": "57918438142fe70c0de39cdaab7255889a845be17fb35d58b9d770b21af95e0d"
     },
     {
       "instruction_id": "write-tests-that-catch-breaks",
       "path": "instructions/write-tests-that-catch-breaks.md",
-      "sha256": "e24ea3f0bb4d2983134f2ca0592c7f6f72e439707de571c40f14ec2456bd2ceb"
+      "sha256": "7b0cb21a73d62ad1a3ad7fd7d7fba1cab0e2989bd37344210e66204c355b83d2"
     }
   ]
 }

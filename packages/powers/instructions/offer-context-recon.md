@@ -1,19 +1,19 @@
 ---
 instruction_id: offer-context-recon
-title: Запропонуй огляд наявних матеріалів
-summary: "Коли огляд допоможе, запропонуй перевірити код, документи або дані й назви, що саме шукатимеш."
+title: Offer context recon
+summary: "When looking would help, offer to check the code, documents, or data and name what you would search for, then reuse the recovered context instead of asking again."
 capability_tags:
   - clarify-requirements
 pattern_tags:
   - requirements-clarification
-conditions_applies_when: "Для рішення бракує фактів, які можна знайти в наявних матеріалах."
-conditions_does_not_apply_when: Потрібні факти вже надані або огляд не змінить рішення.
+conditions_applies_when: The decision lacks facts that the available material can supply.
+conditions_does_not_apply_when: "The facts are already supplied, or looking would not change the decision."
 artifact_contract_output_type: recon-proposal
 artifact_contract_required_data:
-  - брак фактів
-  - що оглянути
-  - що шукати
-  - згода
+  - missing facts
+  - what to inspect
+  - what to look for
+  - consent
 artifact_contract_verified_by: owner approves the recon scope
 compatibility_excludes: []
 compatibility_requires: []
@@ -24,23 +24,20 @@ status: active
 revision: 2
 ---
 
-# Запропонуй огляд наявних матеріалів
-Визнач, яких фактів бракує для рішення.
-Запропонуй оглянути код, документи, дані або зовнішні джерела.
-Назви, що саме шукатимеш.
-Поясни, як результат змінить рішення.
-Дочекайся згоди власника.
-Оглянь лише погоджені матеріали.
-Відділяй знайдене від припущень.
-Не використовуй огляд для розширення обсягу.
-Не змінюй знайдені матеріали.
-Повідом, що знайдено і що не знайдено.
-Повернися до запитань із новими фактами.
-Не вважай відсутність матеріалу доказом відсутності потреби.
-Онови розуміння після огляду.
-Запиши джерела, на які спираєшся.
-Відновлюй стан роботи з двох джерел: власна історія дій і спільний запис про звіти, попередні виправлення та збої.
-Звіряй знайдене зі справжнім станом робочого дерева, гілок і запитів на злиття.
-Звузь коло наперед: проміжок, тему й проєкт; зачитай його вголос і не читай чужі матеріали без потреби.
-Відсутній результат теж є знахідкою: назви його явно.
-Зупини огляд, коли питання закрито.
+# Offer context recon
+Once you have a little grounding and looking would help, offer to go look: the codebase or project, the user's own files and data, or the web.
+Say what you would look for. The user decides whether you go.
+Before acting or resuming work, rebuild the user's recent working context from their own history, live state, and the shared record of reports, fixes, and incidents.
+Read only what the in-scope threads need, then stop.
+Lock the scope before searching: pin the time window, the topic if named, and the workspace. State the scope back.
+Never quietly turn all into recent, and never read another project's history without being asked.
+Search the user's own history for what they did and decided.
+Sweep the shared record whenever the topic names a feature, file, subsystem, area, or bug. The default is to sweep, not a judgment call.
+Hand the shared-record sweep to the history investigators, but steer the question from why this was built this way to what is the current state, what has been tried and did not hold, and what users still report.
+Skip the shared-record sweep only for pure activity recall with no named target, where the user's own history and live state are the entire answer.
+Verify against live state: check the branches, changes, and tickets the search surfaced.
+Lead with a capsule of at most five bullets, then one line per thread with a status tag, then the recurring problems, then the single most useful next move.
+Cite history findings by their identifier and shared-record findings by their source.
+Sanitize private context before any public output.
+An adjacent feature stays out unless it blocks this one.
+When the capsule outgrows a screen, cut detail before cutting threads.

@@ -1,20 +1,20 @@
 ---
 instruction_id: triage-review-findings-with-judgment
-title: "Вирішуй, що зі знахідок справді важливе"
-summary: Перевіряй кожне зауваження на фактах і відділяй блокери від покращень та уподобань.
+title: Triage review findings with judgment
+summary: "Check each finding against the facts and separate blockers from improvements and preferences, instead of executing every comment."
 capability_tags:
   - apply-review-feedback
 pattern_tags:
   - code-review
-conditions_applies_when: "Після огляду є набір зауважень, які треба відсортувати й виконати."
-conditions_does_not_apply_when: Зауваження вже перевірені й мають готовий пріоритет.
+conditions_applies_when: A review produced a set of findings that need sorting and action.
+conditions_does_not_apply_when: The findings are already verified and carry a settled priority.
 artifact_contract_output_type: finding-triage
 artifact_contract_required_data:
-  - усі зауваження
-  - перевірка фактів
-  - рівень
-  - порядок дій
-  - рішення власника
+  - all findings
+  - fact check
+  - severity
+  - action order
+  - owner decision
 artifact_contract_verified_by: each kept finding checked against the code path it names
 compatibility_excludes: []
 compatibility_requires: []
@@ -26,19 +26,18 @@ status: active
 revision: 1
 ---
 
-# Вирішуй, що зі знахідок справді важливе
-Збери всі зауваження без відбору.
-Перевір кожне зауваження на фактах, а не на впевненості автора.
-Відкинь те, що не має конкретного сценарію шкоди.
-Об'єднай дублікати в одну знахідку з кількома прикладами.
-Відділи блокери від покращень і від особистих уподобань.
-Оціни ціну виправлення й ризик залишити як є.
-Перевір, чи знахідка стосується зміни, а не давно наявного коду.
-Познач знахідки, які варто винести в окрему роботу.
-Скажи прямо, якщо зауваження хибне.
-Постав найризикованішу знахідку першою.
-Поясни, чому інші знахідки не блокують.
-Не погоджуйся із зауваженням лише через його впевнений тон.
-Не відкидай зауваження через те, що воно незручне.
-Запиши, які знахідки потребують рішення власника.
-Віддай короткий вердикт і список дій у порядку виконання.
+# Triage review findings with judgment
+You are the lead reviewer, a pragmatic senior engineer, not a neutral aggregator.
+Reviewers, especially adversarial ones, tend to fill their review. If their findings are all nits and style preferences, the code is probably fine. Say so.
+A hypothetical finding counts only when the caller can actually reach it. Trace the call site. If input is validated upstream or the type system prevents it, dismiss the finding.
+Reviewers often suggest extracting functions, adding interfaces, or creating abstractions. Ask whether the code needs to change in a second way. If not, the abstraction is premature.
+I would have done it differently is the most common false positive. A finding that amounts to a preference is not a bug and not actionable unless the reviewer shows a concrete problem. Dismiss it and say why.
+Watch for missing-context signals: changes to code the author did not write, patterns consistent with the rest of the codebase, and recommendations that conflict with known constraints. Dismiss them gracefully.
+Do not dismiss findings because they are uncomfortable. The point of adversarial review is to catch what you would miss.
+Signs a finding deserves attention: multiple models flagged it independently, it names a concrete execution path, it reveals a gap in your mental model, or you read it and think yeah, actually.
+Put every finding in one bucket: act on, consider, noted, or dismissed, with the models that raised it and a one-line rationale.
+Keep findings that are durable: still true in six months, once paths, identifiers, and tool versions have changed. Drop implementation details that drift.
+Prefer an existing owner for a finding. Propose a new one only when no existing skill, check, or document is a real home and the pattern recurs.
+Route a rule that a lint, script, metadata flag, or runtime check can enforce to that mechanism instead of to prose.
+Read the target before keeping a finding against it. If the guidance is already clear and well placed, the issue is execution, not the text.
+Present the buckets and let the owner choose. Do not apply the accepted set without approval.

@@ -1,19 +1,19 @@
 ---
 instruction_id: verify-exported-evidence
-title: "Перевіряй, що експортований доказ підтримує знахідку"
-summary: Після очищення звір кожну знахідку з включеним доказом і окремо познач приватність та повноту підтримки.
+title: Check that exported evidence still supports each finding
+summary: "After scrubbing, resolve every citation inside the bundle, confirm the cited content supports the claim, and report privacy and support separately."
 capability_tags:
   - diagnose-agent-behavior
 pattern_tags:
   - evidence-analysis
-conditions_applies_when: Артефакт готують до передачі або архівування.
-conditions_does_not_apply_when: Артефакт не залишає місце створення.
+conditions_applies_when: An artifact is being prepared for delivery or archiving.
+conditions_does_not_apply_when: The artifact never leaves where it was created.
 artifact_contract_output_type: export-evidence-check
 artifact_contract_required_data:
-  - знахідки
-  - включені докази
-  - обмеження
-  - висновки
+  - findings
+  - included evidence
+  - limitations
+  - outcomes
 artifact_contract_verified_by: each exported finding checked against included evidence
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,19 +23,21 @@ status: active
 revision: 2
 ---
 
-# Перевіряй, що експортований доказ підтримує знахідку
-Визнач матеріали, які входять до передачі.
-Для кожної знахідки знайди включене місце доказу.
-Прочитай цитовану команду, результат або цитату.
-Перевір, чи доказ справді підтримує твердження.
-Не вважай наявність шляху й рядка доказом.
-Познач знахідки з обмеженою підтримкою.
-Запиши причину обмеження.
-Оціни приватність окремо від підтримки.
-Познач приватність як чисту або незавершену.
-Познач підтримку як повну або обмежену.
-Не змішуй ці два висновки.
-Онови перелік після зміни файлів.
-Повтори перевірку для змінених матеріалів.
-Покажи обидва висновки власнику.
-Заверши, коли кожна знахідка має підтверджений або обмежений доказ.
+# Check that exported evidence still supports each finding
+After scrubbing, check every material exported finding using only this bundle.
+Resolve its citation to an included transcript or source marker.
+Read the cited command, result, or quotation.
+Verify that it supports the claim.
+Path and line existence alone are insufficient.
+Record specific limitations when the redaction level or necessary withholding removes support.
+Reconcile the report, case, environment, findings, README, and any local issue draft.
+Refresh the scrub-log counts against final files, excluding the log itself.
+Remove stale export statements; distinguish bundle preparation from archive delivery.
+Retain a mapping from historical anchors to included evidence.
+Record the independent privacy audit separately from evidence usefulness.
+Privacy audit: CLEAN or unresolved misses.
+Evidence support: supported or limited, with affected findings and reasons.
+If content changes after checking, repeat the affected checks.
+Present the final log, file list, and both outcomes for the existing archive approval.
+Archive the reviewed files and verify the delivered archive matches them.
+Record archive delivery outside the reviewed bundle rather than changing its contents after approval.

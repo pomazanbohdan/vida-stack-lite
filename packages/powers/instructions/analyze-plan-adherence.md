@@ -1,19 +1,19 @@
 ---
 instruction_id: analyze-plan-adherence
-title: Порівнюй виконане з погодженим планом
-summary: Віднови погоджений план і зістав кожен крок із фактичною дією.
+title: Compare execution with the agreed plan
+summary: "Recover the plan the session agreed to and map every step to what happened, marking structural events that precede drift."
 capability_tags:
   - diagnose-agent-behavior
 pattern_tags:
   - evidence-analysis
-conditions_applies_when: Скарга стосується відхилення від плану або зайвої роботи.
-conditions_does_not_apply_when: Погодженого плану не існувало.
+conditions_applies_when: The complaint concerns a departure from the plan or unrequested work.
+conditions_does_not_apply_when: No agreed plan existed.
 artifact_contract_output_type: plan-adherence-report
 artifact_contract_required_data:
-  - план
-  - виконані кроки
-  - відхилення
-  - структурні події
+  - plan
+  - executed steps
+  - deviations
+  - structural events
 artifact_contract_verified_by: each plan step mapped to execution evidence
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,20 +23,18 @@ status: active
 revision: 1
 ---
 
-# Порівнюй виконане з погодженим планом
-Знайди погоджений план або опис курсу дій.
-Відрізняй план від переліку команд.
-Зафіксуй кожен крок плану з місцем доказу.
-Познач структурні події між планом і виконанням.
-Для кожного кроку знайди виконання або його відсутність.
-Назви пропущені кроки.
-Назви кроки, виконані не в тому порядку.
-Назви мовчазні зміни кроку.
-Назви роботу, якої план не передбачав.
-Назви відхилення одразу після структурної події.
-Не оцінюй, чи план був правильний.
-Не вигадуй план заднім числом.
-Цитуй крок і виконання окремо.
-Не змішуй відхилення з помилкою.
-Якщо плану немає, скажи це одним висновком.
-Заверши, коли кожен крок плану має доказ виконання або відсутності.
+# Compare execution with the agreed plan
+Recover the plan the session agreed to, then map each plan step to what happened.
+"Plan" here means any agreed course of action, not git commits.
+Find the agreed plan: a design or plan agreed in chat, a spec or plan file written during the session.
+It can also be a todo-list record whose meaning was established in the case file, or any numbered checklist in assistant text.
+Quote each plan step with its `path:line`.
+Mark structural events between the plan and its execution: compaction events identified during discovery, resumes, aborted turns, and associated session dispatches.
+Note their line numbers; plan drift right after one of these is a distinct finding.
+For each plan step, find the tool calls and assistant text that executed it, or establish that none did.
+Report steps skipped and steps executed out of order.
+Report steps silently changed and steps invented.
+A step silently changed is one where execution differs from the plan step in a way the assistant never announced; quote both.
+Report drift immediately after a structural event, citing the event line and the first divergent action.
+If there is no recoverable plan, say so as the only finding, with the lines you checked.
+Do not invent a plan after the fact.

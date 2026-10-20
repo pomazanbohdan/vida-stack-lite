@@ -1,19 +1,19 @@
 ---
 instruction_id: choose-user-experience-over-implementation
-title: Обирай досвід користувача понад зручність реалізації
-summary: "Будуй шлях користувача від його мети й прибирай кроки, що існують лише для зручності коду."
+title: Choose user experience over implementation convenience
+summary: "When implementation convenience conflicts with user delight, choose delight and ship fewer polished features over more rough ones."
 capability_tags:
   - design-structure
 pattern_tags:
   - structural-design
-conditions_applies_when: "Рішення змінює те, як людина взаємодіє з продуктом."
-conditions_does_not_apply_when: Зміна суто внутрішня й не спостерігається користувачем.
+conditions_applies_when: "Product, UX, or feature-scope tradeoffs come up."
+conditions_does_not_apply_when: The change is purely internal and is not observed by a user.
 artifact_contract_output_type: user-path
 artifact_contract_required_data:
-  - мета користувача
-  - кроки
-  - прибрані кроки
-  - компроміси
+  - user goal
+  - steps
+  - steps removed
+  - tradeoffs
 artifact_contract_verified_by: the path walked through in the running product
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,18 +23,18 @@ status: active
 revision: 1
 ---
 
-# Обирай досвід користувача понад зручність реалізації
-Почни з того, що користувач намагається зробити.
-Опиши найкоротший шлях до цього результату.
-Порахуй кроки, які користувач робить вручну.
-Перевір, чи можна об'єднати два кроки в один.
-Познач місце, де користувач може втратити введене.
-Спитай користувача, який крок для нього найважчий.
-Прибери крок, який існує лише для зручності коду.
-Перевір, що повідомлення про помилку допомагає виправити дію.
-Зроби стан системи видимим без окремого запиту.
-Передбач поведінку для повільного й повторного натискання.
-Не змушуй користувача вчити внутрішню модель.
-Перевір сценарій на реальному користувачі або на собі в його ролі.
-Запиши компроміс, якщо реалізація не дозволяє ідеальний досвід.
-Віддай рішення з описом користувацького шляху.
+# Choose user experience over implementation convenience
+When implementation convenience conflicts with user delight, choose delight.
+Every feature, control, and option must be justified.
+Ship less, ship better.
+A polished experience with three features beats a rough one with ten.
+Prototype before committing: design decisions are cheaper in throwaway HTML than in production code.
+Get the details right: transitions, alignment, spacing, feedback, error states.
+Tighten the core loop: every feature should serve the central workflow or get out of the way.
+The user is whoever consumes the work.
+For a UI that is the end user.
+For a library or an internal API it is the colleague who imports it.
+The engineer who maintains the code next is a user too.
+Weigh their experience the same way, and explain impact from their perspective.
+Foundations should serve the experience.
+Foundational thinking governs the sequence of work; this principle governs the target.

@@ -1,19 +1,19 @@
 ---
 instruction_id: redesign-as-if-foundational
-title: "Перепроєктуй так, ніби основа вільна"
-summary: "Спроєктуй рішення без історичних обмежень, порівняй із поточним станом і зроби найменший крок у бік цілі."
+title: Redesign as if the requirement were foundational
+summary: "When integrating a change, redesign as if the new requirement had been a foundational assumption from the start, then deliver the redesign incrementally."
 capability_tags:
   - design-structure
 pattern_tags:
   - structural-design
-conditions_applies_when: "Поточний стан накопичив обмеження, які заважають рухатися далі."
-conditions_does_not_apply_when: Зміна локальна й не потребує перегляду основи.
+conditions_applies_when: A new requirement has to be integrated into an existing design.
+conditions_does_not_apply_when: The change is a local fix that does not alter the design.
 artifact_contract_output_type: target-design
 artifact_contract_required_data:
-  - цільовий стан
-  - історичні обмеження
-  - різниця
-  - перший крок
+  - target design
+  - propagation paths
+  - first step
+  - checks
 artifact_contract_verified_by: "the first step validated against the project's checks"
 compatibility_excludes: []
 compatibility_requires: []
@@ -24,18 +24,22 @@ status: active
 revision: 1
 ---
 
-# Перепроєктуй так, ніби основа вільна
-Відклади наявну реалізацію й опиши задачу з нуля.
-Назви обмеження, які справді походять від продукту.
-Відділи обмеження, що існують лише через історію коду.
-Спроєктуй рішення без цих історичних обмежень.
-Порівняй його з поточним станом.
-Познач, які частини поточного рішення вже відповідають цільовому.
-Оціни, чи можна дійти до цілі без переписування.
-Відкинь цільовий елемент, який не дає користі користувачу.
-Знайди різницю, яка дає найбільшу користь.
-Оціни ціну переходу до нового стану.
-Вибери найменший крок у бік нового проєкту.
-Запиши, що залишиться від старого рішення й чому.
-Не переписуй усе одразу.
-Віддай опис цільового стану й перший крок до нього.
+# Redesign as if the requirement were foundational
+When integrating a change, do not bolt it onto the existing design.
+Redesign as if the requirement had been a foundational assumption from the start.
+Read all affected files and understand the current design.
+Ask: if we were writing this from scratch with this new requirement, what would we build?
+Propagate the change through every reference: types, docs, examples, rationale sections.
+Think about the whole redesign, then deliver it incrementally.
+Structural decisions protect option value; code-level decisions protect simplicity.
+Get the data shape right before writing logic.
+Define core types early, trace every access pattern, and choose structures that match the dominant paths.
+DRY the structure, not every line.
+Three similar statements still beat a premature abstraction.
+Prefer explicit over clever.
+Before sharing state between actors, ask what happens if another actor modifies this concurrently; if not "nothing", isolate.
+If something helps every later phase, do it first.
+Setup before features, tests before fixes, and keep commits small and single-purpose.
+Each increment should land a coherent abstraction or deepen one that exists.
+Do not spread a new capability across callers as special-case coordination.
+Subtraction comes before scaffolding: remove dead code first, then lay foundations.

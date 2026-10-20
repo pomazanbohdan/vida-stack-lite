@@ -1,19 +1,20 @@
 ---
 instruction_id: self-review-plan-against-spec
-title: Перевіряй план проти специфікації
-summary: "Після написання плану звір кожну вимогу, крок, тип і фокус перегляду зі специфікацією."
+title: Self-review the plan against the spec
+summary: "Run the five-point checklist yourself: spec coverage, step scan, type consistency, review focus, and proportion."
 capability_tags:
   - plan-implementation
 pattern_tags:
   - implementation-planning
-conditions_applies_when: План написано і його готують до передавання.
-conditions_does_not_apply_when: План ще не завершений або специфікації немає.
+conditions_applies_when: The plan is written and about to be handed off.
+conditions_does_not_apply_when: "The plan is unfinished, or there is no spec to check."
 artifact_contract_output_type: plan-self-review
 artifact_contract_required_data:
-  - покриття вимог
-  - перевірка кроків
-  - узгодженість типів
-  - прогалини
+  - spec coverage
+  - step scan
+  - type consistency
+  - review focus
+  - proportion
 artifact_contract_verified_by: checklist run against every spec requirement
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,19 +24,18 @@ status: active
 revision: 1
 ---
 
-# Перевіряй план проти специфікації
-Перечитай специфікацію перед самоперевіркою.
-Для кожної вимоги знайди задачу, яка її реалізує.
-Випиши вимоги без задачі.
-Перевір, що кожен крок дає одне однозначне рішення.
-Прибери кроки, які нічого не вирішують.
-Прибери з плану код, який уже визначають підпис і тест.
-Перевір узгодженість типів, підписів і назв між задачами.
-Перевір, що фокус перегляду має тести.
-Порівняй обсяг плану зі специфікацією.
-Виправ знайдені прогалини одразу.
-Не додавай задачу без вимоги.
-Не залишай обробити крайові випадки без конкретики.
-Не передавай план із невизначеними кроками.
-Не вважай самоперевірку незалежним переглядом.
-Заверши після повного проходу чекліста.
+# Self-review the plan against the spec
+After writing the complete plan, look at the spec with fresh eyes and check the plan against it.
+This is a checklist you run yourself — not a subagent dispatch.
+Spec coverage: skim each section or requirement in the spec. Can you point to a task that implements it? List any gaps.
+Step scan: every step must let the implementer write exactly one reasonable thing, and no step may carry more than that.
+A line that decides nothing is a gap; a function body the signature and tests already determine is a transcript. Fix both.
+Type consistency: do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks?
+A function called clearLayers() in Task 3 but clearFullLayers() in Task 7 is a bug.
+Review focus: for each input class or failure mode the spec implies, is there a task whose tests exercise it?
+Proportion: compare the plan's length to the spec's.
+A plan several times longer than the spec it implements is a transcript of the program, not a plan.
+If code blocks are most of the document, replace bodies with signatures, test names and assertions, and check that each step is still unambiguous.
+If you find issues, fix them inline. No need to re-review — just fix and move on.
+If you find a spec requirement with no task, add the task.
+An empty review focus section means you checked and found none, not that you skipped the check.

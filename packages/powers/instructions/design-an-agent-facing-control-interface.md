@@ -1,20 +1,20 @@
 ---
 instruction_id: design-an-agent-facing-control-interface
-title: Проєктуй керуючий інтерфейс для агента
-summary: "Дай агенту команду з режимом перевірки, машинним виводом і достатньою довідкою, щоб не читати код."
+title: Design an agent-facing control interface
+summary: "Give agents one control interface that implements the contract for the target app: real user actions, stable handles, read-only inspection, and explicit capabilities."
 capability_tags:
   - design-structure
 pattern_tags:
   - structural-design
-conditions_applies_when: "Ти створюєш команду, скрипт або адаптер, яким керуватиме агент."
-conditions_does_not_apply_when: Інтерфейс призначений лише для інтерактивної роботи людини.
+conditions_applies_when: An agent needs to start and drive the app to prove behavior.
+conditions_does_not_apply_when: A control interface that already implements the contract is configured.
 artifact_contract_output_type: control-interface
 artifact_contract_required_data:
-  - команди
-  - режим перевірки
-  - форма виводу
-  - довідка
-  - приклад
+  - capabilities
+  - user actions
+  - stable handles
+  - read-only inspection
+  - cleanup
 artifact_contract_verified_by: an agent completing the task from the help text alone
 compatibility_excludes: []
 compatibility_requires: []
@@ -25,18 +25,25 @@ status: active
 revision: 1
 ---
 
-# Проєктуй керуючий інтерфейс для агента
-Опиши дію, яку агент має виконати, як окрему команду.
-Дай команді режим перевірки без змін.
-Зроби довідку достатньою, щоб не читати код.
-Повертай машинно читаний результат разом із кодом виходу.
-Відділи діагностику від даних.
-Зроби небезпечні дії явними й окремими.
-Передбач повторний запуск без побічних ефектів.
-Не змушуй агента розбирати людський текст, щоб зрозуміти стан.
-Дай приклад виклику для кожної команди.
-Дозволь агенту отримати стан без побічних дій.
-Повідом про часткову невдачу окремим статусом.
-Тримай назви команд дієслівними й передбачуваними.
-Перевір інтерфейс на агенті, який не бачив опису.
-Віддай команду, довідку й приклад виводу.
+# Design an agent-facing control interface
+One control skill or adapter implements the contract for the target app.
+If the skill, the feature map, or a required capability is absent, ambiguous, or incomplete, the work must fail closed.
+Start the requested app revision in the requested test environment.
+The adapter must distinguish the target app from a similar window, shell, or production instance.
+Perform real user actions: click, type, press keys, scroll, drag, resize, and navigate through app controls.
+Prefer roles, labels, and stable selectors, and use coordinates only after a fresh screenshot.
+Do not set internal state, call hidden app methods, write directly to storage, or inject DOM changes to create the symptom.
+Use roles, accessible names, ARIA relationships, stable component markers, and purpose-named data attributes.
+Never use generated CSS or StyleX classes, dynamic hashes, child indexes, or brittle DOM position.
+Inspection is read-only; if a query changes state, it belongs in drive and must represent a real user action.
+Report capabilities before the work starts, and report which feature-map sections it can drive and which are blocked.
+Use the same environment inputs for baseline and patched builds.
+Surface startup failures as failures.
+Bound retries.
+Keep secrets out of logs and artifacts.
+Keep captures outside the repository.
+Avoid production changes unless the user explicitly configured a safe test action.
+When agents keep writing throwaway scripts to drive the app, ask for a small control CLI that the skill calls instead.
+A control CLI that agents use well has a few composable commands, each doing real work, rather than many thin ones.
+It has a dry-run option on anything destructive, and error messages that say what to do instead.
+Its subcommands reveal features gradually instead of all at once, its help text is rich, and its output is machine-readable, such as JSON.

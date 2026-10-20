@@ -1,20 +1,20 @@
 ---
 instruction_id: record-available-executor-models
-title: Фіксуй доступні моделі виконавців
-summary: "На етапі налаштування перелічи моделі й постачальників, які реально доступні, і зафіксуй, яка модель обслуговує кожну роль."
+title: Record available executor models
+summary: "During setup, list the providers and models that are actually selectable, and record which model serves each role."
 capability_tags:
   - delegate-subagent-tasks
 pattern_tags:
   - subagent-delegation
-conditions_applies_when: Середовище налаштовується або змінився набір доступних моделей і постачальників.
-conditions_does_not_apply_when: Актуальний перелік уже зафіксований і зміни не торкалися моделей.
+conditions_applies_when: "The environment is being configured, or the set of available models and providers changed."
+conditions_does_not_apply_when: A current inventory exists and nothing changed the models.
 artifact_contract_output_type: executor-inventory
 artifact_contract_required_data:
-  - постачальники
-  - моделі
-  - сімейства
-  - призначення ролей
-  - підтвердження доступності
+  - providers
+  - models
+  - families
+  - role assignments
+  - availability confirmation
 artifact_contract_verified_by: every recorded model is selectable in the environment
 compatibility_excludes: []
 compatibility_requires: []
@@ -25,18 +25,18 @@ status: active
 revision: 1
 ---
 
-# Фіксуй доступні моделі виконавців
-Перелічи постачальників, доступних у середовищі.
-Для кожного постачальника перелічи моделі, які реально можна вибрати.
-Познач сімейство кожної моделі й те, чи це основна модель, чи агентська.
-Вкажи, які інші сімейства того самого постачальника доступні.
-Вкажи, які сімейства доступні в інших постачальників.
-Запиши, яка модель обслуговує кожну роль і кожну смугу перевірки.
-Перевір вибір кожної записаної моделі списком доступних або реальним викликом.
-Не вигадуй назву моделі, якої немає в переліку.
-Не перенось приватне значення за замовчуванням з іншого середовища.
-Познач модель, доступ до якої не підтверджено.
-Познач, які ролі лишилися без явної моделі й працюють за замовчуванням.
-Онови перелік, коли набір моделей або постачальників змінився.
-Збережи перелік там, де його читає налаштування проєкту.
-Віддай перелік разом із призначенням ролей.
+# Record available executor models
+During setup, record which models and providers are actually available, and which model serves each role.
+Use only model identifiers you have confirmed as available in this environment. Never write an identifier you have not confirmed.
+The setup rule applies to new sessions; a changed model choice has no effect in a session that already started.
+Ask for or confirm a model for each working role: verification, review, exploration, implementation, and any role the workflow defines.
+A role set to auto or inherit-parent runs on the session's model. Say so, because that is how Auto users stay on Auto.
+Record the provider and model family alongside each identifier, so the executor ladder can avoid a shared failure point.
+When no model rule exists, every role keeps its default model. Say that explicitly rather than implying a choice was made.
+State the reasoning budget that applies, and note that a shorter panel or a smaller budget runs fewer subagents.
+Confirm each recorded model is selectable in the current environment before relying on it.
+If a recorded model is unavailable, check the family and use the closest valid identifier, then update the record and say what changed.
+Keep the inventory outside the delivered package when it is user-owned, so a refresh cannot overwrite it.
+Prefer committed, secret-free configuration in the target repository when a fresh run must read it.
+Reference the committed path only after confirming it is committed in the repository where the run executes.
+Report the providers, the models, the role assignments, and the confirmation that each model is selectable.

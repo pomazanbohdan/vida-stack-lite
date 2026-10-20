@@ -1,18 +1,18 @@
 ---
 instruction_id: play-back-understanding-in-chunks
-title: Переказуй зрозуміле частинами
-summary: "Повертай власнику стислий переказ кожної зрозумілої частини й питай, що в ньому неправильно."
+title: Play back understanding in chunks
+summary: "Describe each understood part back in about 200-300 words, mark guesses as guesses, and ask what is wrong or missing before moving on."
 capability_tags:
   - clarify-requirements
 pattern_tags:
   - requirements-clarification
-conditions_applies_when: "Потреба складається з кількох частин, які треба підтвердити окремо."
-conditions_does_not_apply_when: Потреба вміщується в одне коротке речення і не має частин.
+conditions_applies_when: The need has several parts that must be confirmed separately.
+conditions_does_not_apply_when: The need fits in one short sentence and has no parts.
 artifact_contract_output_type: understanding-playback
 artifact_contract_required_data:
-  - переказ частини
-  - позначені здогади
-  - корекція власника
+  - chunk playback
+  - marked guesses
+  - owner correction
 artifact_contract_verified_by: owner correction of each playback
 compatibility_excludes: []
 compatibility_requires: []
@@ -22,20 +22,19 @@ status: active
 revision: 1
 ---
 
-# Переказуй зрозуміле частинами
-Визнач частину потреби, яку вже розумієш достатньо для переказу.
-Перед переказом перевір, чи не залишилося прихованих припущень.
-Переказуй одну частину обсягом 200–300 слів.
-Відділяй факти від інтерпретації.
-Чергуй переказ із запитаннями про наступну частину.
-Позначай власні здогади як здогади.
-Передавай лише те, що власник сказав, як його слова.
-Завершуй переказ запитанням, що в ньому неправильно або пропущено.
-Не переказуй усе одразу перед першим запитанням.
-Не змішуй переказ із пропозицією рішення.
-Не використовуй переказ для тиску на рішення.
-Виправ переказ після кожної корекції.
-Оновлюй спільне розуміння, а не тримай його лише в пам'яті.
-Зупини переказ, коли власник підтвердив частину.
-Повертайся до переказу, якщо нова відповідь змінила попередню частину.
-Зафіксуй підтверджені частини в підсумку.
+# Play back understanding in chunks
+Play back as you go.
+As soon as you understand one part well enough to describe it, describe that part back in about 200-300 words.
+Describe what it's for and who it serves, or how one piece behaves.
+Then return to questions about the next part.
+Playback and questions alternate through the whole conversation.
+The last chunk covers whatever is left.
+Mark anything you're guessing as your guess.
+Only what they said goes in as theirs.
+End each chunk by asking what's wrong or missing.
+Before you send a chunk, check it: does it describe something they'll look at?
+If so, and they haven't seen the visual companion offer yet, send the offer instead.
+Hold the chunk for the next message.
+Once they've accepted, put a mockup next to the description.
+People often haven't finished working out what they want.
+Good questions help them think it through.

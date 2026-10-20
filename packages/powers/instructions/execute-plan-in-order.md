@@ -1,18 +1,19 @@
 ---
 instruction_id: execute-plan-in-order
-title: Виконуй план у заданому порядку
-summary: "Рухайся задачами й кроками плану послідовно, звіряючи кожен результат із зафіксованим очікуванням."
+title: Execute the plan task by task in order
+summary: "Execute the plan yourself in this session, prove each step with a test you watched fail and then pass, and stop only for the four named reasons."
 capability_tags:
   - execute-plan
 pattern_tags:
   - plan-execution
-conditions_applies_when: Є затверджений план із послідовними задачами.
-conditions_does_not_apply_when: Плану немає або задачі не мають визначеного порядку.
+conditions_applies_when: "You have an implementation plan with mostly independent tasks, and your human partner chose inline execution or no subagent tool is available."
+conditions_does_not_apply_when: "Your human partner chose subagent-driven development, or the plan's tasks are tightly coupled."
 artifact_contract_output_type: execution-record
 artifact_contract_required_data:
-  - план
-  - виконані кроки
-  - результати перевірок
+  - plan
+  - executed steps
+  - verification results
+  - stop reason
 artifact_contract_verified_by: per-step expected result compared with actual output
 compatibility_excludes: []
 compatibility_requires:
@@ -23,19 +24,20 @@ status: active
 revision: 1
 ---
 
-# Виконуй план у заданому порядку
-Прочитай план і специфікацію повністю до першої задачі.
-Переконайся, що план затверджений і середовище ізольоване.
-Виконуй задачі в порядку плану.
-Для кожної задачі прочитай її точний опис.
-Виконуй кроки в заданому порядку.
-Запускай кожну передбачену перевірку.
-Порівнюй фактичний результат із зафіксованим очікуванням.
-Не пропускай крок, який здається очевидним.
-Не переставляй задачі без записаного рішення.
-Зупиняйся лише перед незворотною дією, чутливою до безпеки операцією, побічним ефектом поза погодженим обсягом або планом, у якому кожен шлях є здогадом.
-Продовжуй виконання без зупинок на підтвердження між задачами.
-Не виконуй дві задачі одночасно, якщо вони змінюють спільний стан.
-Не розширюй задачу понад її опис.
-Переходь до наступної задачі лише після завершення поточної.
-Повідом, якщо план довелося зупинити.
+# Execute the plan task by task in order
+Execute the plan yourself, task by task, in this session: no implementer subagent per task, no reviewer per task.
+The plan already did the thinking.
+Execute it exactly, prove each step with a test you watched fail and then pass, and leave a record that survives your own forgetting.
+Read the plan once, note its context and Global Constraints, and create a todo per task.
+If the plan names a Spec, read that too: the spec is the authority the plan argues from, and conflicts inside the plan resolve against it.
+The plan's steps are already in RED-GREEN order; follow them in that order.
+Run every verification and read every output.
+Every step that runs a command has an `Expected:` line.
+Run the command, read its output, and compare.
+If the code is wrong, use systematic debugging: find the cause; never patch the symptom to make the step's output match.
+If the plan is wrong, rule on the smallest change that satisfies the spec, ledger it, and continue.
+Commit as the plan's commit steps say.
+Do not pause to check in with your human partner between tasks.
+Execute all tasks from the plan without stopping.
+Four things stop you, and only these: an irreversible or destructive operation; a security-sensitive action; a side effect outside this worktree that norms say you ask about first; and a plan so broken that every path forward is a guess.
+For those, stop and ask.

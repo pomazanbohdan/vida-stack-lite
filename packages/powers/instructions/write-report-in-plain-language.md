@@ -1,18 +1,18 @@
 ---
 instruction_id: write-report-in-plain-language
-title: "Пиши звіт так, щоб його зрозумів той, хто не бачив коду"
-summary: "Почни з опису предмета у двох-трьох реченнях і пиши короткими реченнями, пояснюючи терміни при першій згадці."
+title: Write the report so a reader who never saw the code understands it
+summary: "Use short sentences and everyday words, explain a technical term the first time, and open with what the change or the repo does."
 capability_tags:
   - communicate-concisely
 pattern_tags:
   - concise-communication
-conditions_applies_when: "Звіт читатиме людина, яка може не знати цього коду."
-conditions_does_not_apply_when: "Звіт призначений лише для того, хто вже знає код."
+conditions_applies_when: A person who may not know this code will read the report.
+conditions_does_not_apply_when: The report is for a reader who already knows the code.
 artifact_contract_output_type: plain-language-report
 artifact_contract_required_data:
-  - опис предмета
-  - знахідки
-  - пояснення термінів
+  - subject description
+  - findings
+  - explained terms
 artifact_contract_verified_by: a reader who does not know the code understands each finding
 compatibility_excludes: []
 compatibility_requires: []
@@ -27,18 +27,10 @@ status: active
 revision: 3
 ---
 
-# Пиши звіт так, щоб його зрозумів той, хто не бачив коду
-Почни звіт з опису предмета у двох-трьох реченнях.
-Для зміни скажи, що вона робить.
-Для сховища скажи, що воно робить.
-Пиши короткими реченнями.
-Використовуй звичайні слова.
-Уникай жаргону.
-Поясни технічний термін при першій згадці.
-Пиши так, ніби читач не бачив цього коду.
-Назви конкретні дані й результати замість загальних оцінок.
-Переходь до знахідок після опису.
-Не починай звіт зі списку знахідок.
-Не вживай скорочень без розшифрування.
-Тримай одну думку в реченні.
-Заверши, коли кожен абзац зрозумілий без додаткового контексту.
+# Write the report so a reader who never saw the code understands it
+Very simple English: short sentences, everyday words.
+Explain a technical term the first time you use it.
+The reader may never have seen this code.
+This is a report the user asked for, so give it in full.
+Start with `What this change does:` in two or three sentences.
+Start with `What this repo does:` in two or three sentences.

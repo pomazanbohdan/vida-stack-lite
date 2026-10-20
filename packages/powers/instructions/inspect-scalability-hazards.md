@@ -1,19 +1,19 @@
 ---
 instruction_id: inspect-scalability-hazards
-title: "Шукай небезпеки, що виявляються під навантаженням"
-summary: "Перевіряй гонки між перевіркою й записом, повторну роботу кожного процесу, необмежене зростання пам'яті та запит на кожен елемент."
+title: Check the hazards that appear only under load
+summary: "Look for check-then-write races, work repeated by every process, memory that only grows and a query per item."
 capability_tags:
   - review-code
 pattern_tags:
   - code-review
-conditions_applies_when: "Система обслуговує багато користувачів, процесів або великий обсяг даних."
-conditions_does_not_apply_when: Робота виконується один раз для одного користувача.
+conditions_applies_when: "The system serves many users, processes or a large volume of data."
+conditions_does_not_apply_when: The work runs once for a single user.
 artifact_contract_output_type: scalability-review
 artifact_contract_required_data:
-  - небезпека
-  - очікуване навантаження
-  - механізм відмови
-  - виправлення
+  - hazard
+  - expected load
+  - failure mechanism
+  - fix
 artifact_contract_verified_by: each scale finding names the assumed load and the failure mechanism
 compatibility_excludes: []
 compatibility_requires: []
@@ -28,18 +28,11 @@ status: active
 revision: 2
 ---
 
-# Шукай небезпеки, що виявляються під навантаженням
-Перевір послідовності «перевір, потім запиши» на гонку між процесами.
-Знайди роботу, яку виконує кожен процес окремо замість одного разу.
-Знайди пам'ять, черги або списки, що тільки зростають.
-Знайди запит до сховища на кожен елемент замість одного пакетного запиту.
-Знайди квадратичну роботу на великому вході.
-Знайди стан у пам'яті процесу, який має бути спільним.
-Оцінюй кожну знахідку проти названого очікуваного навантаження.
-Назви механізм відмови для кожної знахідки.
-Не вимагай розподіленого рішення для навантаження одного користувача.
-Не вважай повільний, але сталий код небезпекою масштабу.
-Познач знахідку, яка залежить від припущення про навантаження.
-Не змішуй небезпеку масштабу зі звичайним сповільненням.
-Познач шлях, який не вдалося перевірити під навантаженням.
-Заверши, коли кожна знахідка має навантаження й механізм відмови.
+# Check the hazards that appear only under load
+Scale: fine for one user, wrong for many.
+Look for check-then-write races.
+Look for the same work done by every process.
+Look for memory or lists that only grow.
+Look for a query per item.
+Look for O(n^2) on big input.
+Look for per-process state that must be shared.

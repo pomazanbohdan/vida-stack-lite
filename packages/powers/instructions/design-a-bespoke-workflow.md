@@ -1,19 +1,20 @@
 ---
 instruction_id: design-a-bespoke-workflow
-title: Проєктуй робочий процес під конкретний проєкт
-summary: "Будуй процес із реальних команд і меж проєкту, а не з універсальних порад."
+title: Adapt a workflow to the target repository
+summary: "Merge a copied workflow into the target repository without discarding local edits, keep user-owned configuration outside it, and fail setup while a required value stays ambiguous."
 capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
-conditions_applies_when: Треба налаштувати повторювану роботу під конкретний проєкт із його командами й правилами.
-conditions_does_not_apply_when: Процес уже описаний і працює без ручних поправок.
+conditions_applies_when: "A copied workflow, automation pack, or configuration has to run in a specific repository."
+conditions_does_not_apply_when: The workflow is already installed and runs without manual corrections.
 artifact_contract_output_type: project-workflow
 artifact_contract_required_data:
-  - команди проєкту
-  - кроки
-  - режим перевірки
-  - припущення
+  - destination paths
+  - merged files
+  - user-owned configuration
+  - required values
+  - model slugs
 artifact_contract_verified_by: the workflow run on a clean copy of the project
 compatibility_excludes: []
 compatibility_requires: []
@@ -24,18 +25,19 @@ status: active
 revision: 1
 ---
 
-# Проєктуй робочий процес під конкретний проєкт
-З'ясуй, як у проєкті запускають, перевіряють і публікують зміни.
-Запиши реальні команди й шляхи, а не загальні поради.
-Визнач, які кроки проєкт уже автоматизує.
-Додай лише те, чого бракує для повторюваної роботи.
-Зроби процес незалежним від конкретного агента чи хоста.
-Опиши, як процес дізнається про невдачу.
-Додай перевірку, що середовище має потрібні інструменти.
-Опиши, що робити, коли команда проєкту змінилася.
-Збережи приклад успішного запуску як еталон.
-Прибери кроки, які проєкт виконує сам.
-Передбач режим перевірки без змін.
-Перевір процес на чистій копії проєкту.
-Запиши, які припущення про проєкт треба перевірити під час запуску.
-Віддай процес, який працює в цьому проєкті без ручних поправок.
+# Adapt a workflow to the target repository
+Merge the entire source pack into the destination: create the destination when it is absent, and copy every source file to the same relative path.
+Preserve destination-only files, and never delete unrelated files during install or refresh.
+Keep user-owned configuration, feature maps, and routing maps outside the destination, and never overwrite them.
+When an existing source-managed file differs, inspect the diff and merge without discarding local edits.
+If ownership is ambiguous, stop and ask before replacing it.
+Verify that the destination contains every file the workflow reads.
+Do not edit the copied examples; refreshes may update source-managed files after conflict review, but they must never touch the user-owned copies.
+Prefer committed, secret-free files in the target repository when a fresh automation checkout must read them.
+Otherwise paraphrase the required values into the live prompt.
+Use stable repository-relative paths for committed pack and configuration files, and never reference the plugin source directory or a cache path from a live automation.
+Use only model slugs shown as available, and do not guess a slug or carry over a private default.
+The source channel, triage identity, repository, tracker adapter, control skill, and feature map must be explicit, and setup fails if any required value stays ambiguous.
+Start smaller than you think: you don't need many skills on day one.
+Prompt plainly, watch where agents fail, and add a skill or a check when the same failure shows up twice.
+Never put a secret value in plugin files, prompts, or committed configuration.

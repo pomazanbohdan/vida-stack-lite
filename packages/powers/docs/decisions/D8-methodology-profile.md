@@ -1,7 +1,7 @@
 ---
 type: Decision
-title: 'D8 — Методологічний профіль: одна схема VP, носій за середовищем'
-description: 'Схема методологічного профілю — VP-owned (VPMethodologyProfile/v1); Runtime несе розділ у .vida/project.yaml, Standalone — той самий розділ у керованому YAML-блоці проєктного instruction-файлу, хост-прослойка — у конфіг-файлі проєкту.'
+title: 'D8 — Methodology profile: one VP schema, carrier per environment'
+description: 'The methodology profile schema is VP-owned (VPMethodologyProfile/v1); Runtime carries the section in .vida/project.yaml, Standalone — the same section in the managed YAML block of the project instruction file, the host layer — in the project config file.'
 status: stable
 stale_after: '2027-10-19T00:00:00Z'
 tags:
@@ -13,10 +13,10 @@ tags:
 sources:
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція та архітектурний baseline
+  title: Vida Powers — product concept and architectural baseline
 - id: d7
   resource: /decisions/D7-consumer-initialization.md
-  title: D7 — Ініціалізація VP за середовищем
+  title: D7 — Environment-driven VP initialization
 - id: project-config-schema
   resource: /../../agent/schemas/project-configuration.v1.schema.json
   title: VidaProjectConfig/v1 schema
@@ -28,74 +28,74 @@ verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
 revision: '1'
 ---
 
-# Рішення
+# Decision
 
-**Одна схема — різні носії.** Схема методологічного профілю належить **VP**:
-`VPMethodologyProfile/v1` (власна схема `Type/vN`, власний owner). Фізичне місце
-розміщення визначає середовище:
+**One schema — different carriers.** The methodology profile schema belongs to **VP**:
+`VPMethodologyProfile/v1` (its own `Type/vN` schema, its own owner). The physical
+location is determined by the environment:
 
-| Середовище | Носій профілю |
+| Environment | Profile carrier |
 |---|---|
-| Runtime (агентне середовище) | Розділ у `.vida/project.yaml` — цільовий споживацький layout |
-| Standalone (VP без runtime агента) | Той самий розділ у керованому YAML-блоці проєктного instruction-файлу (`AGENTS.md`, або `CLAUDE.md`, якщо `AGENTS.md` відсутній) |
-| Хост-прослойка (напр. Codex) | Той самий розділ у конфіг-файлі проєкту, зібраному з шаблонів прослойки |
+| Runtime (agent environment) | A section in `.vida/project.yaml` — the target consumer layout |
+| Standalone (VP without the agent runtime) | The same section in the managed YAML block of the project instruction file (`AGENTS.md`, or `CLAUDE.md` if `AGENTS.md` is absent) |
+| Host layer (e.g. Codex) | The same section in the project config file assembled from the layer's templates |
 
-Набір полів, семантика успадкування й правила конфлікту — **одні й ті самі** в усіх
-середовищах; відрізняється лише файл-носій.
+The field set, the inheritance semantics and the conflict rules are **the same** in all
+environments; only the carrier file differs.
 
-# Склад профілю
+# Profile composition
 
-- Групи вибору: `testing-sequence`, `review-strategy`, `architecture`, `delivery` —
-  кожна група має взаємовиключні альтернативи, сумісні доповнення й умовні залежності.
-- Явне вибіркове успадкування між продуктами: профіль посилається на стабільні ID
-  іншого продукту; неявне повне успадкування через спільний репозиторій **не**
-  застосовується.
-- Локальне перевизначення групи має пріоритет над успадкованим без повторного
-  підтвердження; два суперечливі успадковані варіанти без локального рішення — це
-  конфлікт для власника, а не «останній завантажений перемагає».
-- Task-scoped override — тимчасовий виняток для конкретної задачі та продукту:
-  запитується один раз, фіксується, передається дочірнім агентам; не змінює
-  постійний профіль, інші продукти, permissions чи security gates.
-- Live Inheritance: посилання на стабільні ID без version pinning; зміна поведінки —
-  новий `pattern ID`, а не підміна тієї самої інструкції.
-- Рівень флоу (`Full` / `Medium` / `Light`) — окрема властивість профілю: глибина,
-  обов'язковість (`required` / `conditional` / `optional`) і застосовність — різні
-  речі.
+- Selection groups: `testing-sequence`, `review-strategy`, `architecture`, `delivery` —
+  each group has mutually exclusive alternatives, compatible additions and conditional dependencies.
+- Explicit selective inheritance between products: the profile references stable IDs
+  of another product; implicit full inheritance through a shared repository is **not**
+  applied.
+- A local override of a group takes priority over the inherited one without repeated
+  confirmation; two contradictory inherited alternatives without a local decision are
+  a conflict for the owner, not "the last loaded wins".
+- Task-scoped override — a temporary exception for a particular task and product:
+  requested once, recorded, passed to child agents; it does not change
+  the permanent profile, other products, permissions or security gates.
+- Live Inheritance: references to stable IDs without version pinning; a change of behavior —
+  a new `pattern ID`, not a substitution of the same instruction.
+- The flow level (`Full` / `Medium` / `Light`) — a separate property of the profile: depth,
+  requirement level (`required` / `conditional` / `optional`) and applicability are different
+  things.
 
-# Наслідки
+# Consequences
 
-1. **Схема — VP-owned**: `packages/powers/config/` + `VPMethodologyProfile/v1`;
-   власний owner; жодного розширення runtime-схем «заради VP-сутності».
-2. **Runtime-валідація розділу** в `.vida/project.yaml` — частина того самого
-   runtime work item, що й розширений instruction registry (D3): runtime має
-   прочитати й передати профіль. Один запит, не два.
-3. **`.vida/project.yaml` лишається цільовим layout**; у чинному стані Runtime
-   використовує `agent-runtime.config.v1.yaml` — розділ профілю з'являється в
-   Runtime-конфізі разом із cutover (D7: три середовища, три носії).
-4. **Standalone не залежить від `.vida`**: там профіль живеє в керованому блоці
-   instruction-файлу, який пише `vp-setup`.
-5. **Research §4.3 вже розводить середовища** саме так («Standalone — керований блок у
-   `AGENTS.md`; Runtime — конфігурація продукту»), тому рішення узгоджується з
-   B-джерелом, а не суперечить йому.
+1. **The schema is VP-owned**: `packages/powers/config/` + `VPMethodologyProfile/v1`;
+   its own owner; no extension of runtime schemas "for the sake of a VP entity".
+2. **Runtime validation of the section** in `.vida/project.yaml` — part of the same
+   runtime work item as the extended instruction registry (D3): the runtime must
+   read and pass the profile. One request, not two.
+3. **`.vida/project.yaml` remains the target layout**; in its current state the Runtime
+   uses `agent-runtime.config.v1.yaml` — the profile section appears in the
+   Runtime config together with the cutover (D7: three environments, three carriers).
+4. **Standalone does not depend on `.vida`**: there the profile lives in the managed block
+   of the instruction file, which `vp-setup` writes.
+5. **Research §4.3 already separates the environments** in exactly this way ("Standalone — a managed block in
+   `AGENTS.md`; Runtime — product configuration"), so the decision is consistent with the
+   B-source rather than contradicting it.
 
-# Розглянуті варіанти
+# Options considered
 
-| Варіант | Суть | Висновок |
+| Option | Essence | Conclusion |
 |---|---|---|
-| (a) VP-owned схема, розділ у runtime-конфізі | Профіль — розширення чужої схеми | Відхилено: VP-сутність у чужому пакеті; runtime-зміна без потреби |
-| (b) VP-owned схема + файл у продукті | Один файл, середовища посилаються | Відхилено: у споживацькому проєкті немає повного профілю без зовнішнього файлу |
-| (c) Одна схема, носій за середовищем | Схема VP; Runtime — `.vida/project.yaml`, Standalone — instruction-файл, shim — конфіг проєкту | **Прийнято** |
-| (d) Лише `.vida/project.yaml` | Runtime-єдиний носій | Відхилено: суперечить research §4.3 для Standalone; залежить від cutover |
-| (e) Лише чинний runtime-конфіг | `agent-runtime.config.v1.yaml` | Відхилено: розбіжність із цільовим layout і окрема міграція |
+| (a) A VP-owned schema, section in the runtime config | The profile — an extension of a foreign schema | Rejected: a VP entity in a foreign package; a runtime change without need |
+| (b) A VP-owned schema + a file in the product | One file, the environments reference it | Rejected: a consumer project has no complete profile without an external file |
+| (c) One schema, carrier per environment | VP schema; Runtime — `.vida/project.yaml`, Standalone — the instruction file, shim — the project config | **Accepted** |
+| (d) `.vida/project.yaml` only | A Runtime-only carrier | Rejected: contradicts research §4.3 for Standalone; depends on the cutover |
+| (e) Only the current runtime config | `agent-runtime.config.v1.yaml` | Rejected: divergence from the target layout and a separate migration |
 
-# Вплив на інші рішення
+# Impact on other decisions
 
-- D7: D8 уточнює носій профілю в кожному з трьох середовищ; D7 не змінюється.
-- D3: runtime work item об'єднує розширений instruction registry **і** читання
-  методологічного профілю.
-- D5: профіль задає рівень флоу, який роутінг (вибір LLM, формування агентів)
-  установлює.
+- D7: D8 refines the profile carrier in each of the three environments; D7 does not change.
+- D3: the runtime work item combines the extended instruction registry **and** reading
+  of the methodology profile.
+- D5: the profile sets the flow level that routing (LLM selection, agent formation)
+  establishes.
 
-# Повноваження
+# Authority
 
-Рішення власника репозиторію від 2026-10-19, зафіксоване в поточній розмові.
+Decision of the repository owner dated 2026-10-19, recorded in the current conversation.

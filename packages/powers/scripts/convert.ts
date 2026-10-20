@@ -442,7 +442,7 @@ export async function removeInstruction(instructionId: string, options: ConvertO
         const ids = file.instruction_ids.filter((id): id is string => typeof id === 'string' && id !== instructionId);
         if (ids.length === 0) {
           delete file.instruction_ids; delete file.contributed_sources;
-          file.status = 'rejected'; file.reason = 'інструкцію замінено на атомарні';
+          file.status = 'rejected'; file.reason = 'the instruction was replaced by atomic ones';
         } else {
           delete file.reason;
           file.instruction_ids = ids; file.status = ids.length > 1 ? 'split' : 'converted';

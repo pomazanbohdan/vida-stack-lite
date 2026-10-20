@@ -1,20 +1,20 @@
 ---
 instruction_id: format-quality-findings
-title: Подавай знахідки за впливом у фіксованій формі
-summary: "Став правильність, безпеку, навантаження, тести, швидкість і ощадність у цьому порядку й описуй кожну знахідку чотирма частинами."
+title: Present findings by impact in a fixed shape
+summary: "Order findings correct, safe, holds under load, tested, fast, lean, group them by severity, and give each one a location and all four parts."
 capability_tags:
   - define-output-format
 pattern_tags:
   - output-formatting
-conditions_applies_when: Ти подаєш знахідки перегляду або аудиту.
-conditions_does_not_apply_when: Знахідок немає.
+conditions_applies_when: You present findings from a review or an audit.
+conditions_does_not_apply_when: There are no findings.
 artifact_contract_output_type: ranked-findings
 artifact_contract_required_data:
-  - групи знахідок
-  - номери
-  - назва з місцем
-  - чотири частини
-  - кількість поза звітом
+  - finding groups
+  - numbers
+  - title with location
+  - four parts
+  - count left out
 artifact_contract_verified_by: "every finding has a location and all four parts, ordered by impact"
 compatibility_excludes: []
 compatibility_requires: []
@@ -29,22 +29,19 @@ status: active
 revision: 3
 ---
 
-# Подавай знахідки за впливом у фіксованій формі
-Оцінюй знахідки в сталому порядку: правильність, безпека, поведінка під навантаженням, тести, швидкість, ощадність.
-До обов'язкових віднеси помилку, дірку в безпеці, втрату даних і збій на очікуваному навантаженні.
-До бажаних віднеси ризикований код без тесту, справжнє сповільнення, дублювання, функцію з кількома роботами й код, якого не має бути.
-До дрібних віднеси невеликі прискорення й коротші форми.
-Подавай найважливіше першим.
-Пропускай порожню групу.
-Нумеруй знахідки наскрізно через усі групи.
-Дай кожній знахідці коротку назву й місце у вигляді файлу та рядків.
-Поясни, що це за код і що він робить.
-Опиши проблему: які вхідні дані або ситуація дають неправильний результат.
-Запропонуй найменше виправлення, яке закриває проблему.
-Назви, що станеться, якщо знахідку пропустити.
-Тримай кожну частину в одному-двох коротких реченнях.
-Для аудиту всього сховища обмеж звіт двадцятьма знахідками й скажи, скільки лишилося поза ним.
-Звіт, який власник попросив, подавай повністю: не скорочуй знахідки.
-Не пиши знахідку без назви й місця.
-Не змішуй у знахідці кілька проблем.
-Заверши, коли кожна знахідка має всі частини й стоїть на своєму місці за впливом.
+# Present findings by impact in a fixed shape
+Order of importance: correct, safe, holds under load, tested, fast, lean.
+Lean still matters: every extra line must be read, tested and fixed later.
+Then the findings in three groups, most important first, skip empty groups.
+Must fix: bug, security, data loss, breaks at the expected load.
+Should fix: risky code without a test, real slowness, duplication, a function that mixes jobs, code that should not exist.
+Nice to have: small speed-ups, shorter forms.
+Number findings across all groups, so the user can say "fix 2 and 5".
+At most 20 findings; if you left smaller ones out, say how many.
+Every finding has all four parts.
+Each part is one or two short sentences.
+Every finding has a bold title with its file and lines.
+What this is: what the code is and what it does.
+Problem: the input or situation that leads to a wrong result.
+Fix: the smallest fix that works.
+If we skip it: what goes wrong when the finding is left.

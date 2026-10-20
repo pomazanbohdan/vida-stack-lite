@@ -1,19 +1,19 @@
 ---
 instruction_id: disclose-affected-environment
-title: Розкривай середовище й уражені версії
-summary: "Кожен звіт про збій називає продукт, версії, середовище й джерело кожного значення."
+title: Disclose the environment and affected versions
+summary: "Every report names the product, harness, models, plugins, OS, and shell, with a provenance label and a supporting location for each."
 capability_tags:
   - diagnose-agent-behavior
 pattern_tags:
   - evidence-analysis
-conditions_applies_when: "Звіт або діагностика описує збій, який залежить від середовища."
-conditions_does_not_apply_when: Збій відтворюється незалежно від середовища й версій.
+conditions_applies_when: A report or a diagnosis describes a failure that depends on the environment.
+conditions_does_not_apply_when: The failure reproduces regardless of environment and versions.
 artifact_contract_output_type: environment-disclosure
 artifact_contract_required_data:
-  - продукт
-  - версія
-  - середовище
-  - джерело значення
+  - product and version
+  - environment
+  - provenance
+  - supporting location
 artifact_contract_verified_by: every environment field has a source
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,19 +23,18 @@ status: active
 revision: 1
 ---
 
-# Розкривай середовище й уражені версії
-Назви продукт і його версію.
-Назви операційну систему й оболонку.
-Назви середовище виконання та його версію.
-Назви використані моделі, якщо вони впливають.
-Переліч встановлені розширення й залежності.
-Познач джерело кожного поля.
-Відрізняй історичне значення від поточного.
-Познач невідомі поля як невідомі.
-Не перетворюй відсутнє значення на нуль.
-Не приховуй версію, на якій відтворено збій.
-Не додавай поля без впливу на відтворення.
-Повтори середовище в описі випадку.
-Онови значення після зміни середовища.
-Покажи перелік перед поданням.
-Познач, що середовище не вдалося підтвердити.
+# Disclose the environment and affected versions
+Every environment field carries a value, a provenance label, and a supporting evidence location.
+Record the product version and whether it is a checkout.
+Record the harness, the harness version, and the model ids seen.
+Record all plugins installed, the OS, and the shell.
+Label each field as historical evidence, unverified snapshot, current observation, or unknown.
+State whether the reporter confirmed the issue does not occur without the product installed.
+The reporter has not tried reproducing without the product installed.
+Evidence for involvement does not establish cause.
+Record the session ids and the redaction level of any delivered archive.
+Attach a bundle only after approval.
+List the model, harness, and harness version in the issue itself.
+List the installed plugins there too.
+Do not hide the environment that produced the contribution.
+Do not claim a reproduction that was not run.

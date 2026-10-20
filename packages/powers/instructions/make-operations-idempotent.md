@@ -1,19 +1,19 @@
 ---
 instruction_id: make-operations-idempotent
-title: Роби операції повторюваними без побічних ефектів
-summary: "Проєктуй дію так, щоб повторний запуск після збою не створював дублікатів і не псував дані."
+title: Make operations idempotent
+summary: Design operations so they converge to the correct state regardless of how many times they run or where the previous run stopped.
 capability_tags:
   - harden-validation
 pattern_tags:
   - state-modeling
-conditions_applies_when: "Операція може бути запущена повторно вручну, після збою або в кількох процесах."
-conditions_does_not_apply_when: Дія гарантовано виконується один раз і не має повторів.
+conditions_applies_when: "The operation can be run again manually, after a crash, or in several processes."
+conditions_does_not_apply_when: The action is guaranteed to run once and has no repeats.
 artifact_contract_output_type: idempotent-operation
 artifact_contract_required_data:
-  - перший запуск
-  - повторний запуск
-  - ключ операції
-  - часткове виконання
+  - first run
+  - repeat run
+  - operation key
+  - partial completion
 artifact_contract_verified_by: two consecutive runs producing the same final state
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,18 +23,19 @@ status: active
 revision: 1
 ---
 
-# Роби операції повторюваними без побічних ефектів
-Опиши, що має статися при першому запуску операції.
-Опиши, що має статися при повторному запуску.
-Зроби повторний запуск безпечним за замовчуванням.
-Познач операцію ключем, щоб відрізнити повтор від нового.
-Збережи ключ разом із результатом, щоб повтор знайшов попередній запуск.
-Опиши, що робити, якщо попередній запуск лишився незавершеним.
-Перевір поведінку, коли два запуски відбуваються одночасно.
-Перевір часткове виконання: що буде після збою посередині.
-Зроби стан перевірюваним перед зміною.
-Не створюй дублікатів, якщо об'єкт уже існує.
-Не видаляй дані, які операція не створювала.
-Запиши, які побічні ефекти залишилися неминучими.
-Перевір операцію двома послідовними запусками.
-Віддай операцію з описом повторної поведінки.
+# Make operations idempotent
+Design operations so they converge to the correct state regardless of how many times they run or where the previous run stopped.
+Commands, lifecycle operations, and processing loops run where crashes, restarts, and retries are normal.
+If partial state changes the next run's outcome, every restart becomes a debugging session.
+Derive each step from the state that exists, not from what the previous run meant to do.
+Read the current state, compare it to the goal, and apply only the difference.
+A step written this way is safe to repeat, because a repeat finds nothing left to do.
+Anything a run leaves behind, such as a lock, a temporary file, a half-written record, or a claimed job, must be recognizable as stale by the next run.
+Judge staleness by evidence that stays true wherever the previous run could have stopped, not only in the common case.
+A marker that the next run cannot judge turns every crash into manual cleanup.
+Write to a temporary path and rename it into place, or compare artifacts by content instead of by creation order.
+The test:
+What happens if this runs twice in a row?
+What happens if the previous run crashed at every possible point?
+Does re-execution converge to the same end state?
+If any answer is "it depends on what state was left behind," the operation needs a reconciliation step.

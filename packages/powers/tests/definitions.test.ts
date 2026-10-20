@@ -30,9 +30,9 @@ describe('normative definitions', () => {
 
   test('does not treat references as definitions', () => {
     const text = [
-      'У матриці рядок: | SR-01, SR-06 | посилання |',
-      'Див. також AC-01 у traceability.',
-      '- **SR-06.** визначення',
+      'In the matrix a row: | SR-01, SR-06 | reference |',
+      'See also AC-01 in traceability.',
+      '- **SR-06.** a definition',
     ].join('\n');
     const definitions = collectDefinitions('fixture.md', text);
     expect(definitions.map((entry) => entry.id)).toEqual(['SR-06']);

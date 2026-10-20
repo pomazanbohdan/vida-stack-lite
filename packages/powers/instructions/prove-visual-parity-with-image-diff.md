@@ -1,19 +1,19 @@
 ---
 instruction_id: prove-visual-parity-with-image-diff
-title: Доведи візуальну відповідність порівнянням зображень
-summary: Порівнюй знімки екрана до і після зміни та оновлюй еталон лише для навмисних відмінностей.
+title: Prove visual parity with image diff
+summary: "Make the baseline the spec: screenshot before the migration, compare each component by image diff, and treat a nonzero diff as a failure."
 capability_tags:
   - verify-work-results
 pattern_tags:
   - verification-before-completion
-conditions_applies_when: Зміна впливає на вигляд інтерфейсу й має зберегти або свідомо змінити візуальний стан.
-conditions_does_not_apply_when: Зміна не торкається візуального подання.
+conditions_applies_when: The change affects how the interface looks and must preserve or deliberately change the visual state.
+conditions_does_not_apply_when: The change does not touch the visual presentation.
 artifact_contract_output_type: image-diff
 artifact_contract_required_data:
-  - еталон
-  - новий знімок
-  - карта різниць
-  - пояснення відмінностей
+  - baseline
+  - new screenshot
+  - diff map
+  - explanation of differences
 artifact_contract_verified_by: pixel comparison at a fixed viewport and pixel density
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,18 +23,20 @@ status: active
 revision: 1
 ---
 
-# Доведи візуальну відповідність порівнянням зображень
-Отримай еталонне зображення стану до зміни.
-Зроби знімок того самого екрана в тому самому розмірі вікна.
-Порівняй зображення попіксельно й отримай карту різниць.
-Відрізняй справжню зміну від шуму рендерингу.
-Перевір, що шрифти й розміри завантажилися до знімка.
-Перевір усі стани: порожній, завантаження, помилка, довгий текст.
-Повтори знімок на іншій щільності пікселів.
-Прибери анімацію й випадкові дані перед знімком.
-Зафіксуй розмір вікна й масштаб у самій перевірці.
-Оціни карту різниць очима, а не лише числом.
-Познач навмисні зміни й онови еталон лише для них.
-Не оновлюй еталон, щоб «позбутися» невдачі.
-Збережи зображення й карту різниць як доказ.
-Віддай пару знімків і пояснення кожної відмінності.
+# Prove visual parity with image diff
+You own pixel-exact equivalence; the baseline is the spec.
+Equivalence is verified by image diff, not by eye.
+Establish the baseline first, before any migration: a visual regression harness that screenshots the current component across its states, plus the target when matching two implementations.
+No baseline, no parity claim.
+A blocking prerequisite, not a follow-up.
+Hold these anti-shortcut clauses: no harness modifications, no baseline tampering, no component restructuring to make a diff pass.
+If the baseline looks wrong, stop and ask; do not edit it.
+Migrate one component at a time.
+Parallelize across worktrees, one owner per component.
+Shared primitives migrate first as a blocking phase.
+Verify each component against its baseline by image diff on the matching surface.
+A nonzero diff is a fail.
+Investigate the pixel delta.
+Loop per component until the diff is zero.
+Compare at a fixed viewport and pixel density.
+Report the components migrated, the diff result for each, the baseline harness location, and what is left.

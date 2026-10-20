@@ -1,7 +1,7 @@
 ---
 type: Decision
-title: 'D5 — Decision Provider і роутінг у VP: provider-нейтральний інтерфейс, LLM-вибір і формування агентів'
-description: 'VP визначає provider-нейтральний контракт decision.evaluate з реалізаціями «master LLM агента» та «зовнішній провайдер за host-конфігом»; Agent Fallback обов’язковий; роутінг = вибір LLM, формування агентів із фіксованого довідника та рівень флоу (Light/Medium/Full).'
+title: 'D5 — Decision Provider and routing in VP: provider-neutral interface, LLM selection and agent formation'
+description: 'VP defines the provider-neutral decision.evaluate contract with the implementations "master LLM of the agent" and "external provider per host config"; Agent Fallback is mandatory; routing = LLM selection, agent formation from a fixed reference, and the flow level (Light/Medium/Full).'
 status: stable
 stale_after: '2027-10-19T00:00:00Z'
 tags:
@@ -13,101 +13,101 @@ tags:
 sources:
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція та архітектурний baseline
+  title: Vida Powers — product concept and architectural baseline
 - id: runtime-instruction-activation
   resource: /../../agent/src/research-decision.ts
-  title: Runtime — детерміноване зіставлення інструкцій і activation-кеш
+  title: Runtime — deterministic instruction matching and activation cache
 - id: adaptive-routing
   resource: /../../agent/docs/system-specification.md
   title: Agent runtime system specification — adaptive routing
 - id: runtime-config
   resource: /../../agent-runtime.config.v1.yaml
-  title: AgentRuntimeConfig/v1 — моделі та профілі вибору
+  title: AgentRuntimeConfig/v1 — models and selection profiles
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
 revision: '2'
 ---
 
-# Рішення
+# Decision
 
-**Decision Provider у VP — provider-нейтральний інтерфейс `decision.evaluate`** із двома
-реалізаціями:
+**The Decision Provider in VP is the provider-neutral `decision.evaluate` interface** with two
+implementations:
 
-| Реалізація | Коли | Джерело рішення |
+| Implementation | When | Source of the decision |
 |---|---|---|
-| Master LLM агента | Типовий Standalone-режим | Головний агент хоста |
-| Зовнішній провайдер | Якщо host-конфіг його задає | Host-конфігурація, не VP |
+| Master LLM of the agent | The typical Standalone mode | The main agent of the host |
+| External provider | If the host config specifies it | Host configuration, not VP |
 
-**Agent Fallback — обов'язкова частина контракту, а не опція.** При недоступності
-провайдера, timeout, помилці API, некоректному форматі, невідомому candidate ID або
-недостатній впевненості вибір переходить до головного агента; ті самі scope, policy
-та validation правила лишаються чинними, а джерело рішення, обрані ID і причина
-fallback матеріалізуються.
+**Agent Fallback is a mandatory part of the contract, not an option.** When the provider is
+unavailable, on timeout, API error, malformed format, unknown candidate ID or
+insufficient confidence, the choice passes to the main agent; the same scope, policy
+and validation rules remain in force, and the source of the decision, the chosen IDs and the reason
+for the fallback are materialized.
 
-**Роутінг — це вибір LLM, формування агентів і рівень флоу.** Роутінг обирає
-LLM для виконання, формує з нього агентів за **фіксованим довідником** (каталогом
-інструкцій) і встановлює рівень флоу — `Full`, `Medium`, `Light` чи інший
-визначений профілем (research §5). VP не компілює власний граф виконання: це
-заборонено навіть тоді, коли сам формує агентів.
+**Routing is LLM selection, agent formation and the flow level.** Routing selects
+the LLM for execution, forms agents from it according to a **fixed reference** (the catalog of
+instructions), and sets the flow level — `Full`, `Medium`, `Light` or another one
+defined by the profile (research §5). VP does not compile its own execution graph: this is
+forbidden even when it forms the agents itself.
 
-Вибір LLM у Runtime-режимі спирається на зареєстровані model/effort-профілі
-(adaptive routing власника Runtime); у Standalone — на можливості хоста. VP не
-володіє цим вибором окремо, але **постачає** його входом: набір інструкцій,
-роль, task contract і рівень флоу. Опис допустимих варіантів дає
-`workflow.options`; власник маршруту вирішує, і VP не підміняє його рішення.
+LLM selection in Runtime mode relies on registered model/effort profiles
+(the adaptive routing of the Runtime owner); in Standalone — on the capabilities of the host. VP does not
+own this choice separately, but **supplies** it as an input: the instruction set,
+the role, the task contract and the flow level. The description of the admissible options is given by
+`workflow.options`; the owner of the route decides, and VP does not substitute its decision.
 
-**Де VP усе ж ухвалює рішення:** семантичний вибір інструкцій (коли теги не дають
-однозначної відповіді), вибір кандидатів-дублікатів у Findings і калібрування
-оцінок. Обидва — через `decision.evaluate`; жоден не є власником графа виконання.
+**Where VP does make decisions:** the semantic selection of instructions (when tags do not give
+an unambiguous answer), the selection of duplicate candidates in Findings and the calibration of
+scores. Both — through `decision.evaluate`; neither is the owner of the execution graph.
 
-# Контракт (концептуально, не затверджена схема)
+# Contract (conceptual, not an approved schema)
 
-- **Вхід:** операція (`instruction-selection`, `finding-dedup`), продукт, контекст
-  задачі, теги, **вже допустимі кандидати** (id, назва, короткий опис), обмеження.
-- **Вихід:** обрані candidate ID, оцінка, коротке обґрунтування, ідентифікація
-  провайдера, прапорець fallback і причина fallback.
-- **Поріг не є універсальним:** приклад `0.90` з research §4.8 — ілюстрація, а не
-  константа. Семантика score і поріг калібруються **per operation**; для
-  некаліброваної операції поріг не застосовується, а результат повертається з
-  явною ознакою некаліброваності. Висока оцінка не є доказом правильності, дозволу чи
-  завершення.
-- **Відмова:** результат поза дозволеними кандидатами, невідомий candidate ID або
-  формальна помилка → fallback, а не «найкращий із невідомого».
+- **Input:** the operation (`instruction-selection`, `finding-dedup`), the product, the task
+  context, tags, the **already admissible candidates** (id, name, short description), constraints.
+- **Output:** the selected candidate IDs, the score, a short justification, the identification of
+  the provider, the fallback flag and the fallback reason.
+- **The threshold is not universal:** the `0.90` example from research §4.8 is an illustration, not
+  a constant. The semantics of the score and the threshold are calibrated **per operation**; for
+  an uncalibrated operation the threshold is not applied, and the result is returned with
+  an explicit indication of being uncalibrated. A high score is not proof of correctness, permission or
+  completion.
+- **Refusal:** a result outside the permitted candidates, an unknown candidate ID or
+  a formal error → fallback, not "the best of the unknown".
 
-# Наслідки
+# Consequences
 
-1. **Research оновлюється на місці**: згадки «Jeff»/«Jev» (§4.8, §8.4, §12) —
-   не існуючий компонент; концепція Decision Provider залишається, але без привʼязки
-   до імені або вендора.
-2. **Stage 2**: `decision.evaluate` + `workflow.options` як операції з контрактом
-   результату, калібруванням і правилами fallback; тест на кожен trigger fallback.
-3. **Stage 5**: `vp-mode` використовує `decision.evaluate` лише там, де теговий пошук
-   неоднозначний; далі — вибір LLM, формування агентів за фіксованим довідником і
-   рівень флоу за методологічним профілем; власник графа виконання лишається
-   недоторканим.
-4. **Stage 6**: dedup-кандидати findings — через `decision.evaluate`; правило
-   research §8.4 діє: **високий score недостатній** — потрібне підтвердження
-   еквівалентності (відтворення, контекст, докази).
-5. **Runtime-власний selection не змінюється:** `resolveInstructionActivation`
-   лишається детермінованим; VP прискорює лише там, де потрібна семантика.
-6. **Жодної прив'язки до vendor API** і жодної оплати з боку VP: зовнішній
-   провайдер — конфігурація хоста.
+1. **Research is updated in place**: the mentions "Jeff"/"Jev" (§4.8, §8.4, §12) —
+   not an existing component; the Decision Provider concept remains, but without a tie
+   to a name or a vendor.
+2. **Stage 2**: `decision.evaluate` + `workflow.options` as operations with a result
+   contract, calibration and fallback rules; a test for each fallback trigger.
+3. **Stage 5**: `vp-mode` uses `decision.evaluate` only where tag search
+   is ambiguous; then — LLM selection, agent formation from the fixed reference and
+   the flow level per the methodology profile; the owner of the execution graph remains
+   untouched.
+4. **Stage 6**: findings dedup candidates — through `decision.evaluate`; the rule of
+   research §8.4 applies: **a high score is insufficient** — confirmation of
+   equivalence is required (reproduction, context, evidence).
+5. **The Runtime's own selection does not change:** `resolveInstructionActivation`
+   remains deterministic; VP speeds things up only where semantics is needed.
+6. **No tie to a vendor API** and no payment on the part of VP: an external
+   provider — host configuration.
 
-# Розглянуті варіанти
+# Options considered
 
-| Варіант | Суть | Висновок |
+| Option | Essence | Conclusion |
 |---|---|---|
-| (a) Provider-нейтральний інтерфейс | Контракт + дві реалізації + обов'язковий fallback | **Прийнято** |
-| (b) Конкретний зовнішній провайдер | Єдиний зовнішній decision-модель | Відхилено: VP стає залежним від зовнішньої доступності й вендора |
-| (c) Обрати конкретного «Jeff» | Прив'язка до імені/вендора | Відхилено: у коді такого компонента немає; research не містить його технічного контракту |
-| (d) VP пропонує наступну дію/виконавця | VP визначає маршрут виконання | Відхилено: роутінг у VP — це вибір LLM, формування агентів і рівень флоу; власник графа виконання лишається VIDA Core/Mastra (Runtime) або хостом (Standalone) |
+| (a) Provider-neutral interface | Contract + two implementations + mandatory fallback | **Accepted** |
+| (b) A specific external provider | A single external decision model | Rejected: VP becomes dependent on external availability and a vendor |
+| (c) Choose a specific "Jeff" | Tie to a name/vendor | Rejected: there is no such component in the code; research contains no technical contract for it |
+| (d) VP proposes the next action/performer | VP determines the execution route | Rejected: routing in VP is LLM selection, agent formation and the flow level; the owner of the execution graph remains VIDA Core/Mastra (Runtime) or the host (Standalone) |
 
-# Вплив на інші рішення
+# Impact on other decisions
 
-- D7, D8 не змінюються.
-- D3: `decision.evaluate` реалізується в VP (скрипти каталогу), у bundled-режимі —
-  тим самим кодом; окремий runtime-запит не потрібен.
+- D7, D8 do not change.
+- D3: `decision.evaluate` is implemented in VP (catalog scripts), in bundled mode —
+  by the same code; no separate runtime request is needed.
 
-# Повноваження
+# Authority
 
-Рішення власника репозиторію від 2026-10-19, зафіксоване в поточній розмові.
+Decision of the repository owner dated 2026-10-19, recorded in the current conversation.

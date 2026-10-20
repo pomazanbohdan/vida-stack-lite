@@ -1,19 +1,19 @@
 ---
 instruction_id: match-guidance-form-to-failure
-title: Обирай форму настанови під тип збою
-summary: "Для свідомого порушення пиши заборону, для неправильної форми результату — точний опис потрібного складу."
+title: Match the form of guidance to the failure
+summary: "Classify the baseline failure first: prohibition for rule violations, a positive recipe for wrong-shaped output, a required slot for omissions, and a conditional for behavior that depends on a condition."
 capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
-conditions_applies_when: "Ти визначаєш, у якій формі сформулювати правило."
-conditions_does_not_apply_when: Тип збою ще не встановлений.
+conditions_applies_when: You are choosing the form in which to state a rule.
+conditions_does_not_apply_when: The failure type has not been established yet.
 artifact_contract_output_type: guidance-form-choice
 artifact_contract_required_data:
-  - тип збою
-  - обрана форма
-  - перевірка
-artifact_contract_verified_by: form matches the observed failure type
+  - baseline failure type
+  - chosen form
+  - wording check
+artifact_contract_verified_by: the chosen form matches the observed failure type
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -22,19 +22,23 @@ status: active
 revision: 1
 ---
 
-# Обирай форму настанови під тип збою
-Визнач тип базового збою.
-Для свідомого порушення правила використовуй заборону й контрприклад.
-Для неправильної форми результату опиши точний склад результату.
-Для пропущеного обов'язкового елемента додай поле або слот у формі.
-Для умовної поведінки сформулюй умову за спостережуваною ознакою.
-Не використовуй заборону для проблеми форми.
-Не використовуй м'яке побажання для свідомого порушення.
-Не додавай застережень коли це важливо.
-Не змішуй кілька типів збоїв в одному правилі.
-Перевір, що форма відповідає спостереженню.
-Порівняй результат до і після зміни форми.
-Запиши, який тип збою закриває кожне правило.
-Не вигадуй виняток, якого не спостерігав.
-Не розширюй форму без нового збою.
-Перевір, що правило не створює нового обходу.
+# Match the form of guidance to the failure
+Before writing guidance, classify the baseline failure.
+The form that bulletproofs one failure type measurably backfires on another.
+If the agent skips or violates a rule under pressure, use a prohibition.
+If the agent skips or violates a rule under pressure, add a rationalization table and red flags.
+If the agent complies but the output has the wrong shape, state what the output is: its parts, in order.
+If the agent omits a required element, make it a required field or slot in the template the agent fills in.
+If behavior should depend on a condition, key it to an observable predicate.
+Do not use soft guidance for a rule violation.
+Do not use a prohibition list for a wrong-shaped output.
+Do not use prose reminders near the template for an omitted required element.
+Do not use an unconditional rule with exemption clauses for conditional behavior.
+Do not write nuance clauses.
+"Don't X unless it matters" reopens the negotiation.
+Express a real exception as its own conditional on an observable predicate.
+Exemption clauses don't scope.
+"This limit doesn't apply to code blocks" still suppresses code blocks.
+If part of the output must be exempt, restructure so the rule can't reach it.
+Micro-test your own case rather than assuming.
+Never reach for the prohibition by default.

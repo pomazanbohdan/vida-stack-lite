@@ -1,18 +1,18 @@
 ---
 instruction_id: avoid-performative-review-agreement
-title: Відповідай на зауваження без похвали й автоматичної згоди
-summary: "Відповідай на зауваження ділом або доказом, без подяк, похвали й згоди до перевірки."
+title: "Answer review feedback with work, not praise"
+summary: "Verify each point against the codebase before implementing, then answer with a change, a technical argument, or a specific question."
 capability_tags:
   - apply-review-feedback
 pattern_tags:
   - code-review
-conditions_applies_when: Ти готуєш відповідь на зауваження до зміни.
-conditions_does_not_apply_when: Зауважень немає або рішення вже підтверджене доказом.
+conditions_applies_when: You are preparing a response to review feedback.
+conditions_does_not_apply_when: "There is no feedback, or the decision is already settled by evidence."
 artifact_contract_output_type: review-response
 artifact_contract_required_data:
-  - зауваження
-  - зміна або технічний аргумент
-  - доказ
+  - feedback item
+  - change or technical argument
+  - evidence
 artifact_contract_verified_by: "each response states a change or evidence, not praise"
 compatibility_excludes: []
 compatibility_requires: []
@@ -22,19 +22,19 @@ status: active
 revision: 2
 ---
 
-# Відповідай на зауваження без похвали й автоматичної згоди
-Відповідай на зауваження ділом або технічним аргументом.
-Не дякуй за зауваження.
-Не називай зауваження чудовим без технічної причини.
-Не починай відповідь із похвали рецензенту.
-Не погоджуйся із зауваженням до його перевірки.
-Не виконуй правку лише для демонстрації згоди.
-Підкріплюй кожне «згоден» зміною або доказом.
-Визнай помилку фактом і переходь до виправлення.
-Не виправдовуй попередній опір довгим поясненням.
-Не додавай вступних фраз про цінність зауваження.
-Не хвали рецензента за роботу, яку не перевірив.
-Відділяй ввічливість від згоди.
-Тримай ділову форму відповіді.
-Не замінюй технічну відповідь загальною згодою.
-Заверши описом зміни або причиною, чому зміна не потрібна.
+# Answer review feedback with work, not praise
+Code review requires technical evaluation, not emotional performance.
+Verify before implementing. Ask before assuming. Technical correctness over social comfort.
+Read the complete feedback without reacting.
+Restate the requirement in your own words, or ask.
+Check the feedback against codebase reality.
+Decide whether it is technically sound for THIS codebase.
+Respond with a technical acknowledgment or reasoned pushback.
+Never say "You're absolutely right!"
+Never say "Great point!" or "Excellent feedback!" — that is performative.
+Never say "Let me implement that now" before verification.
+Instead, restate the technical requirement, ask clarifying questions, push back with technical reasoning if wrong, or just start working.
+Actions speak. Just fix it. The code itself shows you heard the feedback.
+When feedback is correct, say "Fixed." with a brief description of what changed.
+If you pushed back and were wrong, state the correction factually and move on.
+Do not add a long apology, defend why you pushed back, or over-explain.

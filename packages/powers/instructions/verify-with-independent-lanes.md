@@ -1,19 +1,19 @@
 ---
 instruction_id: verify-with-independent-lanes
-title: Перевіряй незалежними шляхами
-summary: "Підтверджуй важливий результат кількома способами, які не поділяють одну точку відмови."
+title: Verify with independent lanes
+summary: "Confirm an important result along several paths that do not share one failure point, and name which rung of the executor ladder each lane used."
 capability_tags:
   - harden-validation
 pattern_tags:
   - defense-in-depth
-conditions_applies_when: Висновок про готовність спирається на один інструмент або один тест.
-conditions_does_not_apply_when: Перевірка тривіальна й ціна другого шляху перевищує ризик.
+conditions_applies_when: A readiness conclusion rests on a single tool or a single test.
+conditions_does_not_apply_when: The check is trivial and a second lane costs more than the risk.
 artifact_contract_output_type: lane-matrix
 artifact_contract_required_data:
-  - твердження
-  - шляхи перевірки
-  - спільні точки відмови
-  - висновки
+  - claim
+  - verification lanes
+  - shared failure points
+  - verdicts
 artifact_contract_verified_by: each lane executed with its own captured output
 compatibility_excludes: []
 compatibility_requires: []
@@ -24,24 +24,21 @@ status: active
 revision: 1
 ---
 
-# Перевіряй незалежними шляхами
-Обери для важливого результату більше ніж один спосіб перевірки.
-Переконайся, що шляхи не поділяють одну й ту саму точку відмови.
-Поєднай запуск коду з переглядом даних або журналів.
-Перевір твердження на різних рівнях: модуль, межа, весь сценарій.
-Не вважай зелений тест доказом, якщо він перевіряє ту саму функцію, що й код.
-Додай перевірку, яка читає результат так, як це робить користувач.
-Перевір шлях на даних, відмінних від тестових.
-Познач, який шлях дає доказ, а який лише підказку.
-Відкинь шлях, що перевіряє реалізацію замість результату.
-Порівняй результати двох шляхів і поясни розбіжність.
-Відкинь шлях, що завжди проходить незалежно від поведінки.
-Запиши, які висновки підтверджені двома шляхами.
-Познач висновки, підтверджені лише одним шляхом.
-Не додавай новий інструмент, якщо наявний дає ту саму інформацію.
-Обирай виконавця смуги за спадною силою: інше сімейство моделей іншого постачальника, інша модель того самого постачальника, сліпий агент на тій самій моделі.
-Кожна смуга отримує власний бриф і власні джерела доказів і не бачить проміжних висновків інших смуг.
-Познач у звіті, який щабель драбини використано і чим слабший щабель обмежує доказ.
-Не зупиняй роботу, якщо доступна лише одна модель: візьми найсильніший доступний щабель і назви обмеження явно.
-Налаштування фіксує доступні моделі й постачальників і модель, призначену для смуг перевірки.
-Віддай таблицю тверджень і шляхів їх перевірки.
+# Verify with independent lanes
+Ask for the proof as an artifact you can inspect yourself: the failing test and then the passing one, a before-and-after video, the trace, the screenshot.
+Match the check to the change.
+A CLI change runs the real command.
+A UI change walks the changed flow in the running app.
+A parser or migration replays a saved input.
+A perf change compares before and after profiles.
+A storage change reads back the written value.
+State the finish condition up front, so the completion claim has checks it can run rather than a mood to satisfy.
+When the reply comes back, it should carry the exact commands and outputs.
+If a check couldn't run, the reply says inconclusive, and a confident reply without evidence is a red flag.
+Verify side effects, such as files written, rows inserted, and messages sent, alongside what's visible.
+Choose the lane's executor down a ladder: another model family from another provider first, then another model from the same provider, then a blind agent on the same model.
+Each lane gets its own brief and its own evidence sources, and does not see the other lanes' interim conclusions.
+Name in the report which rung of the ladder was used and how the weaker rung limits the evidence.
+Do not stop work when only one model is available: take the strongest available rung and name the limitation explicitly.
+The setup records the available models and providers and the model assigned to verification lanes.
+Deliver the matrix of claims and the lanes that verify them.

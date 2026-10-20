@@ -1,20 +1,20 @@
 ---
 instruction_id: present-integration-options
-title: Показуй варіанти завершення роботи власнику
-summary: Після зелених перевірок покажи власнику погоджений набір варіантів інтеграції й дочекайся його вибору.
+title: Show the owner the options for finishing the work
+summary: "Present the exact menu for the detected environment, keep discard out of it, and wait for the owner's decision."
 capability_tags:
   - integrate-branch
 pattern_tags:
   - branch-integration
-conditions_applies_when: Завершена зміна готова до інтеграції або закриття.
-conditions_does_not_apply_when: Робота ще не завершена або інтеграція вже відбулася й перевірена.
+conditions_applies_when: A completed change is ready for integration or closure.
+conditions_does_not_apply_when: "The work is not finished, or integration has already happened and been verified."
 artifact_contract_output_type: integration-options
 artifact_contract_required_data:
-  - результат перевірок
-  - базова гілка
-  - варіанти
-  - вибір власника
-artifact_contract_verified_by: full test suite before and after integration
+  - check result
+  - base branch
+  - options
+  - owner choice
+artifact_contract_verified_by: a full test suite passes before and after integration
 compatibility_excludes: []
 compatibility_requires:
   - integrate-completed-work
@@ -24,19 +24,18 @@ status: active
 revision: 2
 ---
 
-# Показуй варіанти завершення роботи власнику
-Перевірки перед меню бери з integrate-completed-work.
-Зупини завершення, якщо перевірки мають невдачі.
-Визнач, чи робота в звичайному дереві, окремій гілці чи відокремленому стані.
-Встанови базову гілку з плану або історії.
-Уточни базову гілку, якщо її не можна визначити надійно.
-Покажи варіанти: злити локально, опублікувати й створити запит, залишити як є.
-Для відокремленого стану покажи лише доступні варіанти.
-Не додавай варіант видалення роботи до меню.
-Дочекайся вибору варіанта завершення.
-Не припускай бажаний варіант із контексту.
-Виконуй лише обраний варіант.
-Не зливай у непогоджену гілку.
-Не вважай завершення задачі дозволом на злиття.
-Якщо перевірки після злиття падають, зупини очищення.
-Повідом результат обраного варіанта.
+# Show the owner the options for finishing the work
+Check the tests before showing the menu.
+Report the failures and stop: the menu comes after a green suite.
+Detect the environment: normal repo, named-branch worktree, or detached HEAD.
+A normal repo gets the standard three options.
+A named-branch worktree gets the standard three options.
+A detached HEAD gets two options, with no merge.
+Present exactly: merge back locally.
+Present exactly: push and create a pull request.
+Present exactly: keep the branch as-is, to handle later.
+Present the menu exactly as written, concise, with every option coming from the list.
+Discarding the work happens only in response to an explicit request.
+Wait for their answer.
+The integration decision is theirs.
+Integration is your human partner's decision. Present the menu and wait.

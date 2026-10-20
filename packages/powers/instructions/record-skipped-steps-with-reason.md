@@ -1,19 +1,20 @@
 ---
 instruction_id: record-skipped-steps-with-reason
-title: Записуй пропущені кроки з причиною
-summary: "Не приховуй невиконані кроки: назви причину, вплив на впевненість і спосіб закрити прогалину."
+title: Record a skipped step with its reason
+summary: "A step you choose not to do stays visible with a one-line reason, and a skipped entry point is never reported as verified through another path."
 capability_tags:
   - execute-plan
 pattern_tags:
   - plan-execution
-conditions_applies_when: Частину запланованих перевірок або кроків не вдалося виконати.
-conditions_does_not_apply_when: Усі заплановані кроки виконано й підтверджено.
+conditions_applies_when: Part of the planned steps or checks was not carried out.
+conditions_does_not_apply_when: Every planned step ran and its evidence exists.
 artifact_contract_output_type: skip-ledger
 artifact_contract_required_data:
-  - крок
-  - причина
-  - вплив
-  - спосіб закриття
+  - step
+  - reason
+  - attempted command
+  - unmet precondition
+  - effect
 artifact_contract_verified_by: the report lists every skipped step and its effect
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,18 +24,19 @@ status: active
 revision: 1
 ---
 
-# Записуй пропущені кроки з причиною
-Помічай крок, який не вдалося виконати.
-Запиши, чому його пропущено.
-Вкажи, хто або що завадило виконати крок.
-Відділи пропуск через брак даних від пропуску через брак часу.
-Познач, чи можна повторити крок без втрати контексту.
-Додай крок до списку наступної роботи.
-Перевір, що звіт не створює хибного враження завершеності.
-Оціни, чи пропуск змінює впевненість у результаті.
-Познач, що саме залишилося неперевіреним.
-Запропонуй спосіб закрити прогалину пізніше.
-Не подавай частковий результат як повний.
-Не приховуй пропуск у загальному звіті.
-Відділи пропуск через брак доступу від пропуску через рішення.
-Віддай список пропусків разом із їхнім впливом.
+# Record a skipped step with its reason
+A step you choose not to do stays in the list with a one-line skip and its reason.
+The step stays visible, so the reader can see what you chose not to do.
+Every step names the evidence that checks it.
+Check a step only when its evidence exists: a file, a log line, a screenshot, a test run, or a SHA.
+Report an unreachable path with the attempted command and the unmet precondition.
+Do not report a skipped entry point as verified through a different path.
+When a check couldn't run, a good reply says inconclusive.
+Treat a confident reply without evidence as a red flag.
+If it repros on main lets the run stop early when the bug is already gone, and the reproduction result is the reason.
+If there's a cheap test path matters: forcing a test through brittle mocks proves less than running the real command, and the playbook is allowed to say so.
+A build proves it compiles, so ask for the real command, flow, stored value, or profile, and expect the evidence in the reply.
+A vague finish condition gives the loop nothing to check, so give a command or artifact that can pass or fail.
+Name each skip with what it leaves unproven.
+A skip that changes confidence in the result is stated as such.
+The report never reads as complete when a step is skipped.

@@ -392,8 +392,14 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Instr
       if (dependency === undefined) throw new CatalogError('CATALOG_DEPENDENCY_MISSING', `dependency ${dependencyId} required by ${instruction.instruction_id} is missing`, { instruction_id: instruction.instruction_id, dependency_id: dependencyId });
       if (dependency.status === 'disabled') throw new CatalogError('CATALOG_DEPENDENCY_DISABLED', `dependency ${dependencyId} required by ${instruction.instruction_id} is disabled`, { instruction_id: instruction.instruction_id, dependency_id: dependencyId });
       const profileConflict = profileConflictFor(dependency, query.profile);
-      if (profileConflict !== undefined) throw new CatalogError('CATALOG_PROFILE_CONFLICT', `dependency ${dependencyId} required by ${instruction.instruction_id} conflicts with profile ${profileConflict.group}`, { ...profileConflict, dependency_id: dependencyId, requiring_instruction_id: instruction.instruction_id });
-      if (!selected.has(dependencyId)) {
+      if (profileConflict !== undefined) {
+        const active = [...instructions.values()].find((candidate) => candidate.status === 'active' && candidate.pattern_tags.includes(profileConflict.active));
+        if (active === undefined) throw new CatalogError('CATALOG_PROFILE_CONFLICT', `active profile pattern ${profileConflict.active} has no instruction in ${profileConflict.group}`, { ...profileConflict, dependency_id: dependencyId, requiring_instruction_id: instruction.instruction_id });
+        if (!selected.has(active.instruction_id)) {
+          addSelected(selected, active, 'dependency');
+          pending.push(active);
+        }
+      } else if (!selected.has(dependencyId)) {
         addSelected(selected, dependency, 'dependency');
         pending.push(dependency);
       }

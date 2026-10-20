@@ -1,19 +1,19 @@
 ---
 instruction_id: write-tests-that-catch-breaks
-title: "Пиши тести, які ловлять конкретну поломку"
-summary: "Кожен тест має називати поломку, яку ловить, і перевіряти справжню поведінку, а не підміну чи текст джерела."
+title: Write tests that catch a specific break
+summary: "Every test names the break it catches and exercises real behavior, not a mock, a proxy, or the source text."
 capability_tags:
   - write-tests-first
 pattern_tags:
   - test-first-development
-conditions_applies_when: "Ти пишеш, змінюєш або переглядаєш тест чи ризиковану логіку."
-conditions_does_not_apply_when: "Тест уже названий, перевіряє справжню поведінку й пройшов перевірку мутацією."
+conditions_applies_when: "You write, change, or review a test or risky logic."
+conditions_does_not_apply_when: "The test already names its break, checks real behavior, and survives a mutation check."
 artifact_contract_output_type: honest-test
 artifact_contract_required_data:
-  - названа поломка
-  - незалежне очікування
-  - перевірена реальна поведінка
-  - перевірка мутацією
+  - named break
+  - independent expectation
+  - real behavior checked
+  - mutation check
 artifact_contract_verified_by: a realistic mutation of the production code fails at least one test
 compatibility_excludes: []
 compatibility_requires: []
@@ -30,31 +30,23 @@ status: active
 revision: 4
 ---
 
-# Пиши тести, які ловлять конкретну поломку
-Перед тілом тесту назви зміну в робочому коді, яка має його завалити.
-Переконайся, що ця зміна є помилкою, а не навмисним рішенням.
-Виводь очікуване значення незалежно від коду, який перевіряєш.
-Використовуй літерали або вручну перевірені дані.
-Не обчислюй очікування тим самим кодом або його помічниками.
-Не пиши тест, який падає лише від зміни константи, тексту чи приватної структури.
-Перевіряй поведінку, від якої залежить рішення, а не саме рішення.
-Запускай артефакт і перевіряй його вивід, побічний ефект або код завершення.
-Не перевіряй текст джерела замість роботи коду.
-Перевіряй контракт на своїй межі, а не механіку чужої бібліотеки.
-Твердження про підміну не доводить поведінку компонента.
-Підмінюй лише повільну або зовнішню межу й зберігай те, від чого залежить тест.
-Вивчай побічні ефекти справжнього методу перед заміною.
-Відтворюй у підміні повну структуру даних, яку очікує код.
-Тримай у робочому класі лише методи, потрібні самій програмі.
-Винеси допоміжний код, потрібний лише тестам, у тестові утиліти.
-Переходь до інтеграційного тесту, коли підготовка підміни перевищує логіку тесту.
-Покрий типовий шлях і важливу межову умову.
-Перевір подумки кілька реалістичних поломок: кожна має валити хоча б один тест.
-У перегляді вважай знахідкою ризиковану логіку без тесту, який падає від її поломки.
-Ризикованою вважай гілку, розбір, гроші, безпеку, запис даних і виправлення помилки.
-Одного хорошого тесту достатньо; покриття саме по собі не є вимогою.
-Визнай непокриту поведінку замість тесту, який нічого не ловить.
-Уважай реалізацією те, чого користувач не бачить: приватні помічники, порядок викликів, проміжні дані.
-Перевіряй тест двома уявними правками: зламай поведінку — мусить упасти; зміни будову — мусить встояти.
-Тримай у тесті тип помилки, за яким розгалужуються виклики, а не дослівне формулювання повідомлення.
-Заверши, коли кожен тест має названу поломку й перевіряє справжню поведінку.
+# Write tests that catch a specific break
+A test exists to catch a specific break.
+Every test names the break it catches. Every test exercises the real thing.
+Strict test-first development produces both naturally: a test written first and watched failing against real code has already proven it can fail, and only earns a mock when the real dependency proves slow or external.
+Before writing the test body, answer what production change should make this test fail, and whether that change is a bug or a decision.
+A test earns its place by catching a wrong branch, a missing side effect, a wrong argument, a boundary case, or a broken contract.
+Derive expectations independently, with literals and hand-checked fixtures. An expectation computed by the code under test passes no matter what that code does.
+No change detectors. If only intentional decisions can fail a test, it fires on redesign and sleeps through bugs. Test the behavior that depends on the decision.
+Assert behavior, not text. Asserting that a script, instruction, or configuration contains an exact line proves only that the source is the source. Run scripts against controlled inputs and assert outputs, side effects, or exit codes.
+Test your own boundary contract, not the framework's documented mechanics.
+Constructors, getters, constants, and trivial forwarding earn tests only when they validate, normalize, default, derive, enforce, or cause side effects. Otherwise assert the first consumer-visible result that depends on them.
+The mock earns no assertions. A mock assertion passes when the mock is present and fails when it is absent, and says nothing about the component. Assert the real component's behavior.
+Learn every side effect of the real method before replacing it. Mock the slow or external operation and keep what the test depends on real.
+Make doubles specific. When arguments, call counts, or ordering are part of the contract, assert them. A fake that accepts anything verifies nothing.
+Mirror real data completely: all documented fields, not just the ones the test reads. Partial mocks fail silently when downstream code reads an omitted field.
+Cleanup that only tests need lives in test utilities, never as a destroy method on the production class.
+When mock setup outgrows the test logic, or tests break when the mock changes, switch to an integration test with real components.
+Before finishing, mentally mutate the production code. At least one test should fail for each realistic mutation: a wrong constant or argument, a wrong branch handler, a missing state change, an empty return, or missing validation for zero, empty, nil, unauthorized, or malformed input.
+A mutation nothing catches marks the behavior as unprotected, or the test as tautological.
+Tests ship with the implementation. Trivial code and human prose earn none.

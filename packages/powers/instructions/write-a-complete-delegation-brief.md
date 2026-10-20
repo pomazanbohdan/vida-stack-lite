@@ -1,20 +1,20 @@
 ---
 instruction_id: write-a-complete-delegation-brief
-title: Пиши повний бриф для делегованої роботи
-summary: "Дай виконавцю результат, контекст, межі, критерій приймання й формат звіту без потреби щось перепитувати."
+title: Write a complete delegation brief
+summary: "Give the executor the result, context, bounds, acceptance check, and report contract, so the task needs no clarifying question."
 capability_tags:
   - delegate-subagent-tasks
 pattern_tags:
   - subagent-delegation
-conditions_applies_when: "Ти передаєш роботу іншому агенту, людині або окремому запуску."
-conditions_does_not_apply_when: Робота виконується в цій самій розмові без передачі контексту.
+conditions_applies_when: "You hand work to another agent, a person, or a separate run."
+conditions_does_not_apply_when: The work happens in the same conversation and no context has to cross a boundary.
 artifact_contract_output_type: delegation-brief
 artifact_contract_required_data:
-  - результат
-  - контекст
-  - межі
-  - критерій приймання
-  - формат звіту
+  - result
+  - context
+  - bounds
+  - acceptance check
+  - report format
 artifact_contract_verified_by: the delegate completes the task without a clarifying question
 compatibility_excludes: []
 compatibility_requires: []
@@ -32,19 +32,18 @@ status: active
 revision: 1
 ---
 
-# Пиши повний бриф для делегованої роботи
-Сформулюй результат, який має отримати виконавець.
-Додай контекст, якого немає в репозиторії або в поточній розмові.
-Переліч файли й межі, у яких дозволено працювати.
-Опиши, як перевірити результат і що вважається завершенням.
-Дай приклад бажаного формату звіту.
-Назви відомі обмеження й те, що вже пробували.
-Вкажи, які рішення виконавець може ухвалити сам.
-Додай приклад невдалого результату, якого треба уникати.
-Познач, кому повідомити про завершення.
-Вкажи, коли зупинитися й запитати.
-Прибери з брифу все, що виконавець може знайти сам.
-Перевір бриф на двозначності: кожне слово має одне тлумачення.
-Додай посилання на джерела замість переказу.
-Зроби бриф самодостатнім для нового учасника.
-Віддай бриф разом із критерієм приймання.
+# Write a complete delegation brief
+A brief states the goal and the check for done. The workflow supplies the steps, so a few plain sentences beat a specification.
+Say what is wrong or what the user wants. State the done check so it can pass or fail. Make it better and a duration are not checks.
+Ask for the proof to show: the real command output, a recording of the flow, the stored value, or a before and after number.
+Include what the user already knows: a symptom, a reproduction step, a log, or a link, which saves the executor a search.
+State the real constraints: reproduce first, do not change code yet, zero behavior change, or let me review before proceeding. Each changes what the executor does.
+Leave out the how. Say what to achieve and leave room to find a better way.
+Leave out a list of skills or steps. A hand-written order drops or reorders steps the workflow keeps. Name a skill only to override one choice.
+Leave out the user's theory of the cause until the executor has restated the problem. A stated guess narrows the search.
+A dispatch describes one task, not the session's history. Do not paste accumulated prior-task summaries.
+The brief is the single source of requirements. Exact values such as numbers, strings, signatures, and test cases appear only in it.
+Include the interfaces and decisions from earlier work that the brief cannot know, and your resolution of any ambiguity you noticed.
+Name the report contract and where the full report goes. The executor returns status, what changed, a one-line check summary, and concerns.
+The executor never dispatches its own reviewer. Review arrives from the delegating side after the report.
+A brief that needs a clarifying question is incomplete. Close the gap before dispatching.

@@ -1,18 +1,18 @@
 ---
 instruction_id: inspect-edge-case-classes
-title: Перевіряй відомі класи межових випадків
-summary: "Шукай порожнє значення, нуль, останній елемент, округлення, часові зони й неузгодженість між викликом і результатом."
+title: Check the known classes of edge cases
+summary: "Look for a wrong result, a crash and a missed edge case in the known classes: empty, zero, last item, rounding, time zones."
 capability_tags:
   - review-code
 pattern_tags:
   - code-review
-conditions_applies_when: "Код приймає дані, рахує, сортує або перетворює значення."
-conditions_does_not_apply_when: Код не обробляє даних і не ухвалює рішень за значеннями.
+conditions_applies_when: "The reviewed code takes input, computes, sorts or converts values."
+conditions_does_not_apply_when: The code stores no values and makes no decision on them.
 artifact_contract_output_type: edge-case-findings
 artifact_contract_required_data:
-  - клас випадку
-  - вхідні дані
-  - неправильний результат
+  - case class
+  - input
+  - wrong result
 artifact_contract_verified_by: each edge-case finding names a concrete input
 compatibility_excludes: []
 compatibility_requires: []
@@ -27,18 +27,12 @@ status: active
 revision: 2
 ---
 
-# Перевіряй відомі класи межових випадків
-Перевір порожнє значення.
-Перевір нуль і від'ємне число.
-Перевір список з одним елементом і останній елемент.
-Перевір межу діапазону й значення одразу за нею.
-Перевір округлення й точність дробових чисел.
-Перевір часові зони й межу доби.
-Перевір, що час береться з одного джерела в одній зоні.
-Перевір, чи кожен виклик згоден з тим, що функція повертає.
-Знайди правило, яке в двох місцях застосовано по-різному.
-Для кожного випадку назви вхідні дані й неправильний результат.
-Перевіряй клас випадків, а не окремий рядок коду.
-Не вважай типовий шлях доказом правильності на межі.
-Познач клас, який не вдалося перевірити.
-Заверши, коли кожен клас перевірено або обґрунтовано пропущено.
+# Check the known classes of edge cases
+Look for a wrong result.
+Look for a crash.
+Look for a missed edge case: empty, zero, last item, rounding, time zones.
+Look for a caller broken by the change.
+Look for a fix applied in one caller while the shared function stays broken.
+Look for callers that disagree with what a function returns.
+Look for the same rule applied differently in two places.
+Before you report it, re-read the lines and confirm the value can really be empty.

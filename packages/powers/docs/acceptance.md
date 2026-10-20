@@ -1,7 +1,7 @@
 ---
 type: Acceptance Criteria
-title: Vida Powers — критерії прийняття
-description: 'Перевірювані умови прийняття поведінки Vida Powers із привʼязкою до системної специфікації та видом доказу.'
+title: Vida Powers — acceptance criteria
+description: 'Verifiable acceptance conditions for the behavior of Vida Powers with a binding to the system specification and the kind of evidence.'
 status: draft
 stale_after: '2026-11-19T00:00:00Z'
 tags:
@@ -11,101 +11,101 @@ tags:
 sources:
 - id: system-specification
   resource: /system-specification.md
-  title: Vida Powers — системна специфікація
+  title: Vida Powers — system specification
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція та архітектурний baseline
+  title: Vida Powers — product concept and architectural baseline
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 revision: '3'
 ---
 
-Кожен критерій: **ID**, умова, **прив'язка до SR**, **доказ**, **тип**, **стан**.
-Типи: `авто` — виконується командою; `ручн` — потребує спостереження людини або
-прив'язаного агента; `зовн` — доказ поза VP (кваліфікація на хості, marketplace,
+Each criterion: **ID**, condition, **binding to an SR**, **evidence**, **type**, **state**.
+Types: `auto` — executed by a command; `manual` — requires observation by a human or
+an attached agent; `external` — evidence outside VP (host qualification, marketplace,
 runtime acceptance).
 
-**Стани:** `open` — не перевірено; `verified` — доказ є; `gap` — доказ неможливий у
-поточному scope (зафіксовано як GAP, а не як пройдений).
+**States:** `open` — not verified; `verified` — evidence exists; `gap` — evidence is impossible in
+the current scope (recorded as a GAP, not as passed).
 
-## Інструкція та каталог
+## Instruction and catalog
 
-| ID | Умова | SR | Доказ | Тип | Стан |
+| ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-01 | Валідатор відхиляє інструкцію без обов'язкових полів, з `instruction_id`, що не збігається з іменем файлу, з некоректним `revision`, з невідомим тегом у словнику, з невідомим id у `compatibility_requires`/`_excludes`, з порожнім або некоректним списком `provenance` (джерело не в `donors.yaml`, ліцензія не збігається, `revision` не дорівнює `head_sha`, те саме джерело двічі) | SR-01, SR-05, SR-06, SR-07 | тест валідації каталогу | авто | open |
-| AC-02 | Тег без kebab-case або з одним компонентом відхиляється; `tdd` розпізнається як аліас `test-first-development` | SR-03 | тест правил тегів | авто | open |
-| AC-03 | Активна інструкція без capability- або pattern-тегу відхиляється, якщо немає явного винятку з причиною | SR-04 | тест винятків | авто | open |
-| AC-04 | Тег, відсутній у словнику, робить каталог невалідним | SR-05 | тест словника | авто | open |
-| AC-05 | `catalog.search` не повертає жодного поля `content` (перевіряється на всіх інструкціях вибірки) | SR-10 | тест пошуку | авто | open |
-| AC-06 | `catalog.get` на невідомому ID повертає помилку, а не порожній результат | SR-11 | тест помилок | авто | open |
-| AC-07 | `catalog.compose` включає обов'язкові інструкції та транзитивні залежності, навіть коли вони не збігаються з тегами | SR-12, SR-13 | тест компонування | авто | open |
-| AC-08 | `catalog.compose` на взаємовиключній парі повертає помилку з обома ідентифікаторами | SR-14 | тест конфлікту | авто | open |
-| AC-09 | Маніфест каталогу (`catalog.json`) читається стандартним `JSON.parse` без залежностей; інструкції читаються парсером frontmatter із підмножини YAML | SR-15, SR-62 | тест розбору | авто | open |
+| AC-01 | The validator rejects an instruction without mandatory fields, with an `instruction_id` that does not match the file name, with an incorrect `revision`, with an unknown tag in the vocabulary, with an unknown id in `compatibility_requires`/`_excludes`, with an empty or incorrect `provenance` list (source not in `donors.yaml`, license does not match, `revision` not equal to `head_sha`, the same source twice) | SR-01, SR-05, SR-06, SR-07 | catalog validation test | auto | open |
+| AC-02 | A tag that is not kebab-case or has one component is rejected; `tdd` is recognized as the alias `test-first-development` | SR-03 | tag rules test | auto | open |
+| AC-03 | An active instruction without a capability or pattern tag is rejected unless there is an explicit exception with a reason | SR-04 | exceptions test | auto | open |
+| AC-04 | A tag missing from the vocabulary makes the catalog invalid | SR-05 | vocabulary test | auto | open |
+| AC-05 | `catalog.search` returns no `content` field (checked on all instructions of the selection) | SR-10 | search test | auto | open |
+| AC-06 | `catalog.get` on an unknown ID returns an error, not an empty result | SR-11 | error test | auto | open |
+| AC-07 | `catalog.compose` includes mandatory instructions and transitive dependencies even when they do not match the tags | SR-12, SR-13 | composition test | auto | open |
+| AC-08 | `catalog.compose` on a mutually exclusive pair returns an error with both identifiers | SR-14 | conflict test | auto | open |
+| AC-09 | The catalog manifest (`catalog.json`) is read by the standard `JSON.parse` without dependencies; instructions are read by the frontmatter parser from a YAML subset | SR-15, SR-62 | parsing test | auto | open |
 
-## Decision Provider і роутінг
+## Decision Provider and routing
 
-| ID | Умова | SR | Доказ | Тип | Стан |
+| ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-10 | Детермінований `decision.evaluate` повертає shortlist; кожен trigger відмови (немає кандидатів, невідомий candidate ID, кандидат поза допустимими, некоректний формат) повертає причину відмови зі збереженням scope, policy і validation | SR-16, SR-18 | таблиця тестів відмови | авто | open |
-| AC-11 | Результат рішення містить ідентифікацію джерела, обрані ID і причину відмови; причина не порожня | SR-20 | тест матеріалізації рішення | авто | open |
-| AC-12 | Поріг застосовується лише до каліброваної операції; некалібрована операція повертає ознаку некаліброваності; у v1 семантичного оцінювання немає — його виконує скіл | SR-21, D5 | тест калібрування | авто | open |
-| AC-13 | Роутінг повертає вибраний LLM, сформовані агенти з bundle (роль, task contract, методологія, scope, вимоги матеріалізації, артефакти) і рівень флоу | SR-22, SR-23 | тест роутінгу | авто | open |
-| AC-14 | Роутінг не створює власного графа виконання: результат не містить власного плану етапів | SR-24 | тест відсутності графа | авто | open |
+| AC-10 | The deterministic `decision.evaluate` returns a shortlist; each refusal trigger (no candidates, unknown candidate ID, candidate outside the admissible, malformed format) returns the refusal reason while preserving scope, policy and validation | SR-16, SR-18 | refusal test table | auto | open |
+| AC-11 | The decision result contains the identification of the source, the selected IDs and the refusal reason; the reason is not empty | SR-20 | decision materialization test | auto | open |
+| AC-12 | The threshold is applied only to a calibrated operation; an uncalibrated operation returns the uncalibrated marker; v1 has no semantic scoring — it is performed by the skill | SR-21, D5 | calibration test | auto | open |
+| AC-13 | Routing returns the selected LLM, the formed agents from the bundle (role, task contract, methodology, scope, materialization requirements, artifacts) and the flow level | SR-22, SR-23 | routing test | auto | open |
+| AC-14 | Routing creates no execution graph of its own: the result contains no stage plan of its own | SR-24 | absence-of-graph test | auto | open |
 
-## Методологічний профіль
+## Methodology profile
 
-| ID | Умова | SR | Доказ | Тип | Стан |
+| ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-15 | Конфлікт успадкування двох варіантів зупиняє вибір і формулює питання власнику; правило «останній перемагає» не застосовується; групи та альтернативи приходять з профілю | SR-25, SR-28 | тест конфлікту профілю | авто | open |
-| AC-16 | Task-scoped override фіксується, передається дочірнім агентам і не змінює постійний профіль, інші продукти, permissions чи security gates | SR-29 | тест override | авто | open |
-| AC-17 | Семантика інструкції не змінюється під тим самим ID; зміна поведінки вимагає нового pattern ID | SR-30 | тест ідентичності | авто | open |
-| AC-18 | Рівень `Light` не пропускає обов'язкові AC, матеріалізацію й mandatory gates | SR-31 | тест профілів глибини | авто | open |
-| AC-19 | Один і той самий розділ профілю читається з трьох носіїв (`.vida/project.yaml`, керований YAML-блок, конфіг-файлу проєкту) з однаковим результатом | SR-33 | тест носіїв | авто | open |
+| AC-15 | An inheritance conflict between two alternatives stops the choice and formulates a question to the owner; the "last one wins" rule is not applied; groups and alternatives come from the profile | SR-25, SR-28 | profile conflict test | auto | open |
+| AC-16 | A task-scoped override is recorded, passed to child agents and does not change the permanent profile, other products, permissions or security gates | SR-29 | override test | auto | open |
+| AC-17 | The semantics of an instruction does not change under the same ID; a change of behavior requires a new pattern ID | SR-30 | identity test | auto | open |
+| AC-18 | The `Light` level does not skip mandatory AC, materialization and mandatory gates | SR-31 | depth profile test | auto | open |
+| AC-19 | The same profile section is read from three carriers (`.vida/project.yaml`, the managed YAML block, the project config file) with the same result | SR-33 | carrier test | auto | open |
 
-## Матеріалізація, findings, scope
+## Materialization, findings, scope
 
-| ID | Умова | SR | Доказ | Тип | Стан |
+| ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-20 | Кожна змістова операція залишає артефакт за `artifact_contract` або явно зафіксоване оновлення наявного | SR-37, SR-38 | тест матеріалізації | авто | open |
-| AC-21 | Перевірка наявності/формату/digest і семантична перевірка — різні операції; закриття AC вимагає обох | SR-41 | тест перевірок | авто | open |
-| AC-22 | Повторна доставка того самого повідомлення не створює нову подію в реєстрі findings; підтверджений дублікат зв'язується з канонічним `finding_id` зі збереженням нового evidence | SR-45 | таблиця dedup-випадків | авто | open |
-| AC-23 | Знахідка, що виходить за Work Scope, фіксується як блокер із запитом дозволу; scope не розширюється | SR-53, SR-54 | тест scope | авто | open |
-| AC-24 | Створення finding'у не авторизує виправлення | SR-43 | тест пов'язки finding↔work | авто | open |
+| AC-20 | Every content operation leaves an artifact per `artifact_contract` or an explicitly recorded update of an existing one | SR-37, SR-38 | materialization test | auto | open |
+| AC-21 | The presence/format/digest check and the semantic check are different operations; closing an AC requires both | SR-41 | checks test | auto | open |
+| AC-22 | A repeated delivery of the same message creates no new event in the findings register; a confirmed duplicate is linked to the canonical `finding_id` while preserving the new evidence | SR-45 | dedup case table | auto | open |
+| AC-23 | A finding that goes beyond the Work Scope is recorded as a blocker with a permission request; the scope is not expanded | SR-53, SR-54 | scope test | auto | open |
+| AC-24 | Creating a finding does not authorize a fix | SR-43 | finding↔work link test | auto | open |
 
-## Операційні правила та формати
+## Operational rules and formats
 
-| ID | Умова | SR | Доказ | Тип | Стан |
+| ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-25 | Повторний `vp-setup` на незміненому вході дає порожній diff; setup не змінює жодного файлу встановленого пакета агента | SR-56, SR-57 | тест ідемпотентності + read-only перевірка | авто | open |
-| AC-26 | Bootstrap не завантажує весь корпус: bundle обмежений ≤ 20 інструкціями і ≤ 64 КБ сумарного тексту | SR-58 | вимір bundle перед передачею | авто | open |
-| AC-27 | Відсутність host-можливості позначається як обмеження, а не як виконана перевірка | SR-59 | матриця хостів | ручн | open |
-| AC-28 | Один і той самий скрипт, що постачається в скілах, виконується без збірки під `node`, `bun` і `deno`; у ньому немає Bun-специфічних API | SR-63 | запуск під трьома рантаймами + статична перевірка | авто | open |
-| AC-29 | `compose` з ефективним профілем відкидає інструкції з неактивною альтернативою групи; без профілю — помилка на прямій парі `compatibility_excludes` | SR-26, SR-28, SR-14 | тест compose з профілем і без | авто | open |
-| AC-30 | Структурна частина: у корпусі немає двох інструкцій з однаковим `instruction_id`, а інструкція з двома джерелами має їх у `provenance` | SR-07 | тест валідації корпусу | авто | open |
-| AC-30b | Семантична частина: кожна норма присутня в корпусі рівно один раз — дублікати злито, терміни зведені до словника, зміна злиття піднімає `revision` | SR-07 | звіт фази злиття (крок D) + семплінг людської перевірки | ручн | open |
-| AC-31 | Мапа обробки `corpus-map.json` відповідає контракту `VPCorpusMap/v1`: статуси `converted`/`split`/`merged`/`rejected`, `rejected` завжди з причиною, `merged` веде до наявної інструкції | SR-66 | тест схеми мапи | авто | open |
+| AC-25 | A repeated `vp-setup` on unchanged input yields an empty diff; setup changes no file of the installed agent package | SR-56, SR-57 | idempotency test + read-only check | auto | open |
+| AC-26 | Bootstrap does not load the whole corpus: the bundle is limited to ≤ 20 instructions and ≤ 64 KB of total text | SR-58 | bundle measurement before handover | auto | open |
+| AC-27 | The absence of a host capability is marked as a limitation, not as a completed check | SR-59 | host matrix | manual | open |
+| AC-28 | The same script shipped in the skills runs without a build under `node`, `bun` and `deno`; it contains no Bun-specific APIs | SR-63 | run under three runtimes + static check | auto | open |
+| AC-29 | `compose` with an effective profile discards instructions with an inactive group alternative; without a profile — an error on a direct `compatibility_excludes` pair | SR-26, SR-28, SR-14 | compose test with and without a profile | auto | open |
+| AC-30 | Structural part: the corpus contains no two instructions with the same `instruction_id`, and an instruction with two sources has them in `provenance` | SR-07 | corpus validation test | auto | open |
+| AC-30b | Semantic part: each norm is present in the corpus exactly once — duplicates merged, terms reduced to the vocabulary, a change of a merge raises `revision` | SR-07 | merge phase report (step D) + human review sampling | manual | open |
+| AC-31 | The processing map `corpus-map.json` matches the `VPCorpusMap/v1` contract: statuses `converted`/`split`/`merged`/`rejected`, `rejected` always with a reason, `merged` leads to an existing instruction | SR-66 | map schema test | auto | open |
 
-## Додані валідацією раунду 3
+## Added by the round 3 validation
 
-| ID | Умова | SR | Доказ | Тип | Стан |
+| ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-32 | Мапа обробки узгоджена з корпусом: кожна інструкція має запис, кожен запис вказує на наявну інструкцію, кожне `rejected` має причину; повторний прогін на тій самій ревізії донора не змінює мапу | SR-66 | тест узгодженості мапи з корпусом | авто | open |
-| AC-33 | У межах активної задачі застосовується узгоджений знімок інструкцій; наступна задача може мати актуальнішу сумісну редакцію; змінений вхід інвалідує лише прив'язаний доказ | SR-07, SR-67 | тест знімка | авто | open |
-| AC-34 | Зміна інструкції класифікується за ризиком (низький/середній/високий) і має відповідний тип прийняття; зміна семантики вимагає нового pattern ID | SR-30, SR-68 | тест класифікації + review зміни | авто | open |
-| AC-35 | Продукт має стабільний ідентифікатор, незалежний від шляху; за реальної методологічної варіативності вибір користувача запитується один раз і фіксується | SR-69 | тест стабільності ID + запис вибору | ручн | open |
-| AC-36 | `catalog.search` фільтрує за роллю, продуктом і умовами застосування, повертаючи лише метадані | SR-10, SR-70 | тест пошуку | авто | open |
-| AC-37 | Виконання сценарію UI-агентом не є людським прийняттям: без потрібної відповіді людини результат лишається `awaiting-human-verification`, а не PASS | SR-71 | ручна перевірка + запис UAT | ручн | open |
-| AC-38 | У Standalone останній запис прозорий (без lease і reservation), прихований перезапис чужих змін заборонений, Work Scope не розширюється | SR-53, SR-72 | ручна перевірка журналу змін | ручн | open |
-| AC-39 | Похідний повнотекстовий індекс відновлюваний із нормативних джерел, не дублює їх; документ поза `wiki_root` індексується за посиланням | SR-73 | тест індексу | авто | open |
-| AC-40 | Вкладена підзадача не додає зовнішніх етапів і не оминає gates; запит спеціаліста не дає йому нових повноважень | SR-74 | ручна перевірка дерева делегування | ручн | open |
-| AC-41 | `vp-setup` зберігає сторонні інструкції та чинну карту джерел; оновлюється лише керований VP-блок | SR-75 | тест setup на fixture зі стороннім контентом | авто | open |
-| AC-42 | Каталог-маніфест узгоджений із диском: кожен файл у `instructions/` перелічений у `catalog.json` із `sha256`; файл поза маніфестом, запис без файлу й розбіжний digest — помилки | SR-76 | тест узгодженості маніфесту з корпусом | авто | open |
+| AC-32 | The processing map is consistent with the corpus: each instruction has an entry, each entry points to an existing instruction, each `rejected` has a reason; a repeated run on the same donor revision does not change the map | SR-66 | map-to-corpus consistency test | auto | open |
+| AC-33 | Within an active task an agreed snapshot of instructions applies; the next task may have a more current compatible revision; changed input invalidates only the bound evidence | SR-07, SR-67 | snapshot test | auto | open |
+| AC-34 | A change of an instruction is classified by risk (low/medium/high) and has the corresponding acceptance type; a change of semantics requires a new pattern ID | SR-30, SR-68 | classification test + change review | auto | open |
+| AC-35 | The product has a stable identifier independent of the path; under real methodological variability the user's choice is requested once and recorded | SR-69 | ID stability test + choice record | manual | open |
+| AC-36 | `catalog.search` filters by role, product and application conditions, returning only metadata | SR-10, SR-70 | search test | auto | open |
+| AC-37 | Executing a UI scenario by a UI agent is not human acceptance: without the required human answer the result remains `awaiting-human-verification`, not PASS | SR-71 | manual check + UAT record | manual | open |
+| AC-38 | In Standalone the last entry is transparent (no lease and reservation), hidden overwriting of others' changes is forbidden, the Work Scope is not expanded | SR-53, SR-72 | manual check of the change log | manual | open |
+| AC-39 | The derived full-text index is recoverable from the normative sources and does not duplicate them; a document outside `wiki_root` is indexed by reference | SR-73 | index test | auto | open |
+| AC-40 | A nested subtask adds no external stages and does not bypass gates; a specialist request grants it no new authority | SR-74 | manual check of the delegation tree | manual | open |
+| AC-41 | `vp-setup` preserves third-party instructions and the current source map; only the managed VP block is updated | SR-75 | setup test on a fixture with third-party content | auto | open |
+| AC-42 | The catalog manifest is consistent with the disk: each file in `instructions/` is listed in `catalog.json` with a `sha256`; a file outside the manifest, an entry without a file and a mismatching digest are errors | SR-76 | manifest-to-corpus consistency test | auto | open |
 
-## Що не доводимо
+## What we do not prove
 
-| Тема | Чому | Стан |
+| Topic | Why | State |
 |---|---|---|
-| Runtime acceptance VP | потребує реєстрації продукту й runtime-запиту (D3, D8) | gap |
-| Кваліфікація на реальних хостах (крім Codex) | потребує доступу до хостів | gap |
-| Marketplace-інсталяція | потребує публічного Git-репозиторію | gap |
-| Дані реальних користувачів | етичні й юридичні обмеження; поза scope | gap |
-| Правовий висновок про ліцензії донорів | потрібує фахівця; у межах VP — лише атрибуція | gap |
+| VP Runtime acceptance | requires product registration and a runtime request (D3, D8) | gap |
+| Qualification on real hosts (other than Codex) | requires access to the hosts | gap |
+| Marketplace installation | requires a public Git repository | gap |
+| Data of real users | ethical and legal constraints; out of scope | gap |
+| Legal opinion on donor licenses | requires a specialist; within VP — attribution only | gap |

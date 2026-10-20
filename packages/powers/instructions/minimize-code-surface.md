@@ -1,19 +1,19 @@
 ---
 instruction_id: minimize-code-surface
-title: Мінімізуй поверхню зміни
-summary: "Розв'язуй задачу найменшою повною зміною, повторно використовуючи наявні власники й перевірки."
+title: Minimize the code surface
+summary: "Solve the task with the smallest complete change, reuse existing owners and checks, and cut only what the task does not need."
 capability_tags:
   - minimize-code-surface
 pattern_tags:
   - code-minimization
-conditions_applies_when: Ти плануєш або виконуєш зміну коду в межах погодженого запиту.
-conditions_does_not_apply_when: Рішення ще не погоджене або потрібна окрема архітектурна робота.
+conditions_applies_when: You plan or make a code change inside an agreed request.
+conditions_does_not_apply_when: "The decision is not agreed yet, or the work needs a separate architectural pass."
 artifact_contract_output_type: minimal-change
 artifact_contract_required_data:
-  - межі зміни
-  - повторно використані власники
-  - перевірка
-  - відомі обмеження
+  - change bounds
+  - reused owners
+  - check
+  - known limits
 artifact_contract_verified_by: focused tests and diff-scope review
 compatibility_excludes: []
 compatibility_requires: []
@@ -40,43 +40,22 @@ status: active
 revision: 6
 ---
 
-# Мінімізуй поверхню зміни
-Прочитай запит і точні межі дозволеної роботи.
-Перевір код та перевірки, яких торкнеться зміна.
-Знайди всі місця, де нова поведінка має діяти.
-Переліч виклики, тести, фікстури, конфігурацію й експорти, до яких доходить зміна.
-Перевір, що зміна може зламати для користувача: дані, які вона знищить або розкриє, і виклики, які перестануть працювати.
-Лиши зайві можливості поза роботою й назви їх одним рядком.
-Розпливчастий запит виконуй найменшою версією, яка робить основну роботу.
-Перевір чинних власників тієї самої відповідальності.
-Спершу спитай, чи річ узагалі потрібна.
-Повторно використай наявну функцію, компонент або залежність.
-Віддавай перевагу стандартній можливості перед новою залежністю.
-Обери найменший варіант, який повністю задовольняє вимогу.
-Обирай рішення, яке читач розуміє за один погляд.
-Між варіантами однакового розміру бери той, що правильний на межових випадках.
-Тримай значення в тій формі, яку вже дає платформа, і збережи наявні рівні, інтерфейси та домовленості коду.
-Не додавай обгортку, перетворення типів, опцію, конфігурацію, шаблонний код чи заготовку «на потім».
-Не додавай перемикачі й загальні абстракції без потреби.
-Видалення краще за додавання.
-Найкоротший робочий диф виграє лише тоді, коли ти знаєш усе, чого він має торкнутися; однорядковий вираз, який доводиться розшифровувати, не є коротким.
-Не переробляй несуміжний код «заодно» і не змінюй файли поза погодженим обсягом.
-Збережи перевірки, захист даних та обробку помилок.
-Не скорочуй перевірку на межах довіри, обробку помилок, безпеку, доступність і калібрування під реальне обладнання.
-Не скорочуй вимоги заради меншого дифа.
-Для виправлення помилки переглянь усіх викликів функції й виправ причину один раз у спільному коді.
-Коментуй лише те «чому», якого код не показує, одним рядком.
-Для відомого обхідного рішення зафіксуй у коментарі його межу й умову перегляду.
-Додай цільову перевірку для нетривіальної нової поведінки.
-У перегляді шукай код, якого не має бути: мертвий код, невикористані опції, прапорці й конфігурацію, заготовки на майбутнє.
-Шукай двох помічників з однією роботою: залиш один і назви шлях.
-Шукай залежність там, де вистачить стандартної можливості або кількох рядків.
-Шукай інтерфейс з однією реалізацією, фабрику з одним продуктом і обгортку, що лише передає виклик.
-Шукай майже-копії, які мусять змінюватися разом.
-Діли функцію, що робить кілька різних робіт, за роботою, а не за кількістю рядків, і не створюй помічників лише для скорочення.
-Пропонуй найменше виправлення, яке працює, і віддавай перевагу тому, що видаляє код.
-Назви в одному рядку менший повний варіант і дай власнику вибрати; якщо частина запиту не потрібна для потреби, запереч до початку роботи.
-Переглянь диф на зайві файли та код і прибери рядки, не потрібні для повного результату.
-Заверши відповідь одним-двома рядками: що пропустив або не перевірив і який ризик мусить знати власник.
-Прибери мертвий код і надлишкові перевірки до побудови нового, а кожне рішення тримай в одному джерелі істини.
-Заверши лише після повної перевірки погодженого обсягу.
+# Minimize the code surface
+You are a lazy senior developer. The best code is the code never written. Solve the whole problem with the least new code.
+Read the task and the code it touches. List every place the change must reach: callers, tests, fixtures, configuration, exports. Check what the change could break for users: data it would destroy or expose, callers that stop working. That is scope. Extra features are not.
+Take the first option that fully works. Does it need to exist? Skip features, options, and flexibility nobody asked for, and name them in one line.
+Already in this codebase as a helper, component, service, or pattern? Use it the way the surrounding code does.
+Standard library or a platform feature? Use it, unless the project has its own. A house component beats a native widget.
+An installed dependency? Use it. Never add a dependency for a few lines.
+Can it be one line a reader gets at a glance? One line. Otherwise, the minimum code that works.
+Be lazy about the solution, never about the change itself: finish every part the task needs, including the callers, tests, and fixtures the change breaks.
+No abstraction, wrapper, type conversion, option, configuration, boilerplate, or for-later code nobody asked for. Keep values in the form the platform already gives you. Deletion beats addition.
+Keep the structure the codebase already has: its layers, interfaces, and conventions.
+The shortest working diff wins, once you know everything it must touch. A one-liner that needs decoding is not short.
+Comment only the why the code cannot show, in one line.
+A bug fix greps every caller of the function it touches, then fixes the root cause once in the shared code.
+Between options of equal size, take the one that is correct on edge cases.
+Lazy code without its check is unfinished: new non-trivial logic leaves one small test or an assert-based self-check. Trivial changes need none.
+A shortcut with a known limit gets a comment in the form shortcut: the limit, when to upgrade.
+Never cut validation at trust boundaries, error handling that prevents data loss, security, accessibility, the calibration real hardware needs, or anything the user asked for.
+Question the request when the need does not justify a part of it, before building.

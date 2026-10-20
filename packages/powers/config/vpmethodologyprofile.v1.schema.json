@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "groups"],
+  "properties": {
+    "schema": { "const": "VPMethodologyProfile/v1" },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "description", "user_decision", "alternatives"],
+        "allOf": [
+          {
+            "if": { "properties": { "user_decision": { "const": false } }, "required": ["user_decision"] },
+            "then": { "required": ["default"] }
+          },
+          {
+            "if": { "properties": { "user_decision": { "const": true } }, "required": ["user_decision"] },
+            "then": { "not": { "required": ["default"] } }
+          }
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "user_decision": { "type": "boolean" },
+          "default": { "type": "string", "minLength": 1 },
+          "alternatives": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "title", "description", "instruction_ids"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "title": { "type": "string", "minLength": 1 },
+                "description": { "type": "string", "minLength": 1 },
+              "instruction_ids": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

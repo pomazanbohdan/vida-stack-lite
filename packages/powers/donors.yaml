@@ -1,14 +1,14 @@
 # Vida Powers — donor source manifest
 #
-# Канонічний перелік донорських репозиторіїв, знімки яких опрацьовано для
-# формування канонічного instruction corpus (§4.1 research-документа).
+# Canonical list of the donor repositories whose snapshots were processed to
+# form the canonical instruction corpus (research document, section 4.1).
 #
-# Кожен запис фіксує точний commit, з якого взято зміст, разом із ліцензією
-# джерела. Локальні копії живуть у packages/powers/.tmp/donors — цей каталог
-# ігнорується Git і не є нормативним джерелом.
+# Every record pins the exact commit the content was taken from, together with
+# the license of the source. Local copies live in packages/powers/.tmp/donors —
+# that directory is git-ignored and is not a normative source.
 #
-# Оновлення: запис додається або замінюється разом із перезаписом знімка
-# репозиторію. Зміна head_sha без повторного опрацювання змісту заборонена.
+# Updating: a record is added or replaced together with a fresh snapshot of the
+# repository. Changing head_sha without reprocessing the content is forbidden.
 
 schema: vida-powers-donors/v1
 product: vida-powers
@@ -81,8 +81,8 @@ donors:
     content_file_count: 169
     snapshot_source: research-frontmatter
     note: >
-      монорепозиторій; джерелом є каталог pstack (169 tracked-файлів),
-      file_count 947 — розмір всього клону; окремий LICENSE-файл pstack/LICENSE (MIT)
+      a monorepository; the source is the pstack directory (169 tracked files),
+      file_count 947 — the size of the whole clone; the separate license file pstack/LICENSE (MIT)
 
   - id: gsd-core
     role: methodology-donor
@@ -95,7 +95,7 @@ donors:
     license_file: LICENSE
     file_count: 3987
     snapshot_source: research-frontmatter
-    note: знімок узято з гілки next, зафіксованої у research-frontmatter
+    note: the snapshot was taken from the next branch recorded in the research frontmatter
 
   - id: ponytail
     role: methodology-donor
@@ -121,13 +121,13 @@ donors:
     file_count: 132
     snapshot_source: default-branch
     note: >
-      ревізія не була зафіксована в research-frontmatter; записано поточний HEAD
-      гілки main — це moving branch snapshot, не відтворюваний з research
+      the revision was not pinned in the research frontmatter; the current HEAD is recorded
+      of the main branch — a moving branch snapshot, not reproducible from the research
 
 not_cloned:
   - id: vida-runtime
     url: https://github.com/pomazanbohdan/vida-stack-lite
     reason: >
-      поточний робочий репозиторій проекту (origin); окрема копія не потрібна,
-      research-frontmatter фіксує його snapshot як runtime_source_commit
+      the current working repository of the project (origin); no separate copy is needed —
+      the research frontmatter records its snapshot as runtime_source_commit
     research_snapshot_revision: bb4345e107f9aee30db1c856075ac9556a7aa8a1

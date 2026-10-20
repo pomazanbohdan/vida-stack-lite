@@ -1,19 +1,19 @@
 ---
 instruction_id: maintain-plan-ledger
-title: Веди журнал виконання як карту відновлення
-summary: "Тримай для кожного плану окремий журнал із завершеними задачами, рішеннями й поточним раундом."
+title: Keep a per-plan ledger as the recovery map
+summary: "Record the plan's identity, completion lines, fix rounds, and deferred minors in its own ledger so the work can be resumed and audited."
 capability_tags:
   - delegate-subagent-tasks
 pattern_tags:
   - subagent-delegation
-conditions_applies_when: План виконується кількома задачами або може бути перерваний.
-conditions_does_not_apply_when: Робота складається з однієї короткої дії без відновлення.
+conditions_applies_when: A plan runs across several tasks or can be interrupted before the end.
+conditions_does_not_apply_when: The work is one short action with nothing to resume.
 artifact_contract_output_type: plan-ledger
 artifact_contract_required_data:
-  - ідентичність плану
-  - завершені задачі
-  - рішення
-  - поточний раунд
+  - plan identity
+  - completed tasks
+  - rulings
+  - current round
 artifact_contract_verified_by: ledger entries match commits and test results
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,19 +23,19 @@ status: active
 revision: 1
 ---
 
-# Веди журнал виконання як карту відновлення
-Створи окремий журнал для кожного плану.
-Запиши ідентичність плану в першому рядку.
-Позначай кожну завершену задачу окремим рядком.
-Записуй діапазон змін і результат перевірки.
-Записуй поточний раунд виправлення.
-Записуй кожне рішення про відхилення.
-Не використовуй чужий журнал.
-Не змішуй журнали різних планів.
-Не покладайся лише на поточний список задач.
-Відновлюй стан із журналу після втрати контексту.
-Звіряй журнал з історією змін.
-Прибирай журнал лише після завершення роботи.
-Повідом власнику про відновлення з журналу.
-Не видаляй журнал, поки триває перегляд.
-Зберігай журнал разом із матеріалами плану.
+# Keep a per-plan ledger as the recovery map
+Each plan owns a workspace, home to every artifact for THIS plan: ledger, briefs, reports, review packages.
+Create the ledger with its identity as the first line: `# SDD ledger — plan: <plan file path>`.
+Check for this plan's ledger at `<workspace>/progress.md`.
+A ledger whose first line names a different plan file is another plan's progress: leave it in place and start your own, fresh.
+Record BASE (`git rev-parse HEAD`) before dispatching — the review package and fix-round diffs need it.
+Append the completion line to the ledger in the same message as your other bookkeeping: `Task <N>: complete (commits <base7>..<head7>, review clean)`.
+After each round, append to the ledger: `Task <N>: fix round <R>/5 (<X> addressed, <Y> open — <finding one-liners>; commits <a7>..<b7>)`.
+Record Minor findings in the progress ledger as you go: `Task <N>: minor (deferred): <one-liner>`.
+A roll-up nobody reads is a silent discard.
+The ledger is what survives compaction.
+Controllers without one have re-dispatched entire completed task sequences.
+Sibling directories belong to other plans; leave them alone.
+Delete this plan's workspace only when the final review is clean and its fixes are committed — the git history is the record now.
+Before you delete anything, collect every ledger line containing `Ruling:` into your final message.
+A ruling that dies with the workspace was a decision made in secret.

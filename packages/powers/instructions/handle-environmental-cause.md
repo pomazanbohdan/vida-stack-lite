@@ -1,20 +1,20 @@
 ---
 instruction_id: handle-environmental-cause
-title: Відрізняй середовищну причину від неповного розслідування
-summary: "Якщо причина справді зовнішня або часова, зафіксуй дослідження й додай обробку та спостереження."
+title: Tell an environmental cause from an incomplete investigation
+summary: "Only after a complete investigation may a failure be environmental; document what was investigated, add handling, and monitor it."
 capability_tags:
   - debug-root-cause
 pattern_tags:
   - systematic-debugging
-conditions_applies_when: "Розслідування вказує на середовище, час або зовнішню систему."
-conditions_does_not_apply_when: Причина вже встановлена в коді й підтверджена відтворенням.
+conditions_applies_when: "The investigation points to the environment, timing, or an external system."
+conditions_does_not_apply_when: The cause is already established in code and confirmed by reproduction.
 artifact_contract_output_type: environmental-cause-report
 artifact_contract_required_data:
-  - перевірене середовище
-  - межа доказу
-  - обробка
-  - спостереження
-artifact_contract_verified_by: documented investigation and handling test
+  - checked environment
+  - evidence boundary
+  - handling
+  - observation
+artifact_contract_verified_by: the documented investigation and the added handling are both present
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -23,19 +23,18 @@ status: active
 revision: 2
 ---
 
-# Відрізняй середовищну причину від неповного розслідування
-Заверши повне розслідування причини.
-Перевір, чи збій залежить від середовища, часу або зовнішньої системи.
-Запиши, які зовнішні умови перевірено.
-Не називай причину зовнішньою без доказів.
-Не використовуй зовнішню причину для припинення пошуку.
-Додай обробку збою: повтор, межу очікування або зрозумілу помилку.
-Додай спостереження для майбутнього розслідування.
-Перевір, що обробка не приховує справжню помилку.
-Не вважай тайм-аут виправленням причини.
-Залиш тест, який відтворює доступну частину збою.
-Не розширюй обробку на недосліджені випадки.
-Зафіксуй залишкову невизначеність.
-Повідом власнику про межу доказу.
-Переглянь висновок, якщо збій повториться.
-Заверши лише після перевірки обробки.
+# Tell an environmental cause from an incomplete investigation
+If systematic investigation reveals issue is truly environmental, timing-dependent, or external:
+You've completed the process.
+Document what you investigated.
+Implement appropriate handling (retry, timeout, error message).
+Add monitoring/logging for future investigation.
+95% of "no root cause" cases are incomplete investigation.
+Under time pressure (emergencies make guessing tempting).
+"Just one quick fix" seems obvious.
+You've already tried multiple fixes.
+Previous fix didn't work.
+You don't fully understand the issue.
+Simple bugs have root causes too.
+Rushing guarantees rework.
+Systematic is faster than thrashing.

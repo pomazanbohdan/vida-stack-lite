@@ -1,256 +1,256 @@
 # Vida Powers
 
-**Портативний агентний плагін із канонічним instruction corpus, єдиним скілом
-оркестрації та матеріалізацією результатів.**
+**A portable agent plugin with a canonical instruction corpus, a single
+orchestration skill and materialization of results.**
 
-Живе в `packages/powers/` — третій продукт цього репозиторію поруч із
-`packages/agent` (Vida Agent, runtime) і `packages/plugin` (Vida Codex,
-прослойка між хостом Codex і агентом).
+It lives in `packages/powers/` — the third product of this repository next to
+`packages/agent` (Vida Agent, runtime) and `packages/plugin` (Vida Codex,
+the layer between the Codex host and the agent).
 
-| Документ | Про що |
+| Document | What it is about |
 |---|---|
-| [Research — продуктова концепція](docs/research/vida-powers-product-research.md) | B-рівень: навіщо продукт, які межі, які правила поведінки |
-| [План впровадження](docs/implementation-plan.md) | Roadmap етапів 0–9, ворота, ризики |
-| [Наступні дії](docs/next-actions.md) | Поточний обсяг у межах каталогу: A0 → A → B → C → D → E → F → G |
-| [Рішення D1–D9](docs/decisions/index.md) | Ухвалені рішення з підставами та наслідками |
-| [AGENTS.md](AGENTS.md) | Інструкції для агентів, які розробляють VP |
-| [Маніфест донорів](donors.yaml) | Точні ревізії 8 донорських репозиторіїв, ліцензії, лічильники файлів |
+| [Research — product concept](docs/research/vida-powers-product-research.md) | B-level: why the product exists, which boundaries it has, which behavior rules it follows |
+| [Implementation plan](docs/implementation-plan.md) | Roadmap of stages 0–9, gates, risks |
+| [Next actions](docs/next-actions.md) | Current scope within the catalog: A0 → A → B → C → D → E → F → G |
+| [Decisions D1–D9](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
+| [AGENTS.md](AGENTS.md) | Instructions for the agents developing VP |
+| [Donor manifest](donors.yaml) | Exact revisions of 8 donor repositories, licenses, file counters |
 
 ---
 
-## 1. Яку проблему розв'язує
+## 1. Which problem it solves
 
-Агент у сумісному AI-хості має знати **як саме** працювати: який методології
-дотримуватись, які критерії прийняття застосувати, що вважати доказом, який
-артефакт залишити по роботі. Без цього кожен агент вигадує власний процес, а
-результат стає непорівнянним і неперевірюваним.
+An agent in a compatible AI host must know **how exactly** to work: which methodology
+to follow, which acceptance criteria to apply, what to consider evidence, which
+artifact to leave after the work. Without this, every agent invents its own process and
+the result becomes incomparable and unverifiable.
 
-VP дає:
+VP provides:
 
-- **канонічний корпус атомарних інструкцій** — перетворені з перевірених джерел
-  методики, кожна з умовами застосування, семантичним контрактом, тегами,
-  provenance і правилами сумісності;
-- **один вхід** — скіл `vp-mode` (оркестрація): користувач описує бажаний
-  результат звичайною мовою, далі VP сам вибирає потрібні інструкції, формує
-  bundle і запускає виконання або делегування;
-- **продуктову політику методології** — групи вибору (тестування, review,
-  архітектура, delivery), явне успадкування між продуктами, тимчасові винятки;
-- **матеріалізацію** — читабельний і перевірюваний результат замість звіту в
-  чаті, з окремими Work Items, критеріями прийняття та доказами;
-- **порядок і межі** — scope-first, явні блокери замість тихих розширень, чесні
-  GAP-записи.
+- **a canonical corpus of atomic instructions** — techniques converted from verified
+  sources, each with application conditions, a semantic contract, tags,
+  provenance and compatibility rules;
+- **a single entry** — the skill `vp-mode` (orchestration): the user describes the desired
+  outcome in ordinary language, then VP itself selects the needed instructions, forms
+  a bundle and launches execution or delegation;
+- **product methodology policy** — choice groups (testing, review,
+  architecture, delivery), explicit inheritance between products, temporary exceptions;
+- **materialization** — a readable and verifiable result instead of a report in
+  chat, with separate Work Items, acceptance criteria and evidence;
+- **order and boundaries** — scope-first, explicit blockers instead of silent expansions, honest
+  GAP records.
 
-## 2. Архітектура
+## 2. Architecture
 
 ```text
-        джерела (superpowers, BMAD, matt-skills, addy-skills, pstack, GSD, ponytail, OKF)
+        sources (superpowers, BMAD, matt-skills, addy-skills, pstack, GSD, ponytail, OKF)
                               │
-                     конвертація (scripts/convert.ts)
+                     conversion (scripts/convert.ts)
                               ▼
-   канонічний корпус  packages/powers/instructions/   VPCatalog/v1 (instruction .md + frontmatter)
-   (інструкції + capability_tags / pattern_tags + умови + compatibility + provenance)
+   canonical corpus  packages/powers/instructions/   VPCatalog/v1 (instruction .md + frontmatter)
+   (instructions + capability_tags / pattern_tags + conditions + compatibility + provenance)
                               │
-              пошук і добір  skills/vp-mode/scripts/catalog.ts   catalog.tags / search / get / compose
+              search and selection  skills/vp-mode/scripts/catalog.ts   catalog.tags / search / get / compose
                               │                        decision.evaluate (+ Agent Fallback)
                               ▼
-   bundle інструкцій  (роль, task contract, ефективна методологія, scope, AC, артефакти)
+   instruction bundle  (role, task contract, effective methodology, scope, AC, artifacts)
                               │
               ┌───────────────┴────────────────┐
               ▼                                ▼
-   `vp-mode` — оркестрація          матеріалізація
-   (вибір LLM → агенти → рівень      (Work Item, AC, evidence, findings)
-    флоу Full/Medium/Light)
+   `vp-mode` — orchestration        materialization
+   (LLM selection → agents → flow    (Work Item, AC, evidence, findings)
+    level Full/Medium/Light)
               │                                │
               ▼                                ▼
-   виконання / делегування          Work Items у packages/powers/docs/work/
+   execution / delegation           Work Items in packages/powers/docs/work/
 ```
 
-**Межа з VIDA Runtime.** VP не має власного workflow engine, scheduler'а, ledger'а
-або сховища стану. У Runtime виконання належить VIDA Core/Mastra, а VP постачає
-інструкції та методологію. У Standalone VP працює самостійно: власний каталог,
-власні скрипти, власні скіли, жодної залежності від runtime агента.
+**Boundary with VIDA Runtime.** VP has no own workflow engine, scheduler, ledger
+or state store. In Runtime execution belongs to VIDA Core/Mastra, and VP supplies
+instructions and methodology. In Standalone VP works independently: its own catalog,
+its own scripts, its own skills, no dependency on the agent runtime.
 
-## 3. Інструкція та каталог
+## 3. Instruction and catalog
 
-**Модель інструкції** (`VPCatalog/v1`): `instruction_id`, `capability_tags[]`
-(що потрібно зробити), `pattern_tags[]` (за якою методикою), `conditions`
-(коли застосовувати), `artifact_contract` (що має бути на виході), `compatibility`
-(групи, виключення, залежності), `provenance` (донор, ліцензія, ревізія),
+**Instruction model** (`VPCatalog/v1`): `instruction_id`, `capability_tags[]`
+(what needs to be done), `pattern_tags[]` (by which methodology), `conditions`
+(when to apply), `artifact_contract` (what must be the output), `compatibility`
+(groups, exclusions, dependencies), `provenance` (donor, license, revision),
 `revision`, `status`, `content`.
 
-**Правила тегів:** kebab-case; кожен тег має щонайменше два змістовні компоненти
-(`test-first-development`, а не `tdd`); тег не є агентом, skill'ом, кроком чи
-дозволом. Сумісність визначається окремим реєстром: `test-first-development` і
-`test-after-development` — взаємовиключні альтернативи в групі `testing-sequence`,
-`risk-based-testing` — сумісне доповнення.
+**Tag rules:** kebab-case; every tag has at least two meaningful components
+(`test-first-development`, not `tdd`); a tag is not an agent, a skill, a step or
+a permission. Compatibility is defined by a separate registry: `test-first-development` and
+`test-after-development` are mutually exclusive alternatives in the `testing-sequence` group,
+`risk-based-testing` is a compatible supplement.
 
-**Операції каталогу:**
+**Catalog operations:**
 
-| Операція | Результат |
+| Operation | Result |
 |---|---|
-| `catalog.tags` | Доступні capability/pattern теги з описами |
-| `catalog.search` | Відібрані за тегами, роллю, продуктом і умовами ID, назви та короткі описи — без повних текстів |
-| `catalog.get` | Текст точно вказаної інструкції |
-| `catalog.compose` | Вибрані тексти, обов'язкові інструкції та залежності після перевірки сумісності |
+| `catalog.tags` | Available capability/pattern tags with descriptions |
+| `catalog.search` | IDs, names and short descriptions selected by tags, role, product and conditions — without full texts |
+| `catalog.get` | The text of the exactly specified instruction |
+| `catalog.compose` | The selected texts, mandatory instructions and dependencies after compatibility checking |
 
-Обов'язкові інструкції й залежності потрапляють у bundle незалежно від
-relevance-score; обмеження реєстру research-контуру на VP не поширюється.
+Mandatory instructions and dependencies enter the bundle regardless of the
+relevance score; the restriction of the research contour registry does not extend to VP.
 
-**Походження.** Кожна інструкція має donor + ліцензію + ревізію; ревізії
-зафіксовані в `donors.yaml`, копії донорів — у `.tmp/donors` (ігнорується Git).
-Ліцензії донорів: MIT × 7, Apache-2.0 (Open Knowledge Format) — див.
+**Provenance.** Every instruction has a donor + license + revision; the revisions
+are fixed in `donors.yaml`, donor copies — in `.tmp/donors` (ignored by Git).
+Donor licenses: MIT × 7, Apache-2.0 (Open Knowledge Format) — see
 `donors.yaml`.
 
-## 4. Вибір і роутінг
+## 4. Selection and routing
 
-**Instruction Selection** обирає множину інструкцій. **Workflow Routing** обирає
-LLM для виконання, формує з нього агентів за фіксованим довідником (каталогом)
-і встановлює рівень флоу — `Full`, `Medium`, `Light` чи інший визначений
-профілем.
+**Instruction Selection** selects a set of instructions. **Workflow Routing** selects
+the LLM for execution, forms agents from it according to a fixed reference (the catalog)
+and sets the flow level — `Full`, `Medium`, `Light` or another defined
+by the profile.
 
-**Decision Provider** — provider-нейтральний інтерфейс `decision.evaluate`:
-реалізації — master LLM агента (типово) або зовнішній провайдер, якщо його
-задає host-конфіг. VP не прив'язується до вендора й не називає провайдера
-наперед. **Agent Fallback обов'язковий:** недоступність, timeout, помилка API,
-некоректний формат, невідомий candidate ID або недостатня впевненість → вибір
-переходить до головного агента, а джерело рішення, обрані ID і причина fallback
-матеріалізуються. Поріг relevance калібрується **per operation**; приклад
-значення з research не є універсальною константою.
+**Decision Provider** — a provider-neutral `decision.evaluate` interface:
+implementations — the master LLM agent (by default) or an external provider, if it
+is set by the host config. VP is not tied to a vendor and does not name the provider
+in advance. **Agent Fallback is mandatory:** unavailability, timeout, API error,
+incorrect format, unknown candidate ID or insufficient confidence → the choice
+passes to the main agent, and the source of the decision, the selected IDs and the reason for the fallback
+are materialized. The relevance threshold is calibrated **per operation**; the example
+value from the research is not a universal constant.
 
-## 5. Методологічна політика
+## 5. Methodology policy
 
-Методологія — **продуктова політика**, а не ситуативний вибір агента. Профіль
-(`VPMethodologyProfile/v1`) містить групи вибору, правила явного вибіркового
-успадкування між продуктами, локальні перевизначення та task-scoped override
-(тимчасовий виняток для конкретної задачі, який не змінює постійний профіль,
-permissions чи security gates). Конфлікт успадкування — питання власнику, а не
-«останній завантажений перемагає».
+Methodology is **product policy**, not the situational choice of an agent. The profile
+(`VPMethodologyProfile/v1`) contains choice groups, rules of explicit selective
+inheritance between products, local overrides and a task-scoped override
+(a temporary exception for a specific task that does not change the permanent profile,
+permissions or security gates). An inheritance conflict is a question for the owner, not
+"last loaded wins".
 
-**Одна схема, різні носії:** Runtime — розділ у `.vida/project.yaml`; Standalone —
-той самий розділ у керованому YAML-блоці проєктного instruction-файлу; хост-прослойка —
-у конфіг-файлі проєкту.
+**One schema, different carriers:** Runtime — a section in `.vida/project.yaml`; Standalone —
+the same section in a managed YAML block of the project instruction file; the host layer —
+in the project config file.
 
-## 6. Скіли та ініціалізація
+## 6. Skills and initialization
 
-| Скіл | Роль |
+| Skill | Role |
 |---|---|
-| `vp-mode` | **Основний скіл оркестрації.** Єдина робоча точка входу: запит → добір інструкцій → bundle → виконання або делегування |
-| `vp-setup` | **Допоміжний скіл налаштування.** Виявляє проєкти, ідемпотентно пише конфігурацію, налаштовує доступні hooks, перевіряє активацію |
+| `vp-mode` | **The main orchestration skill.** The single working entry point: request → instruction selection → bundle → execution or delegation |
+| `vp-setup` | **Auxiliary setup skill.** Detects projects, idempotently writes the configuration, configures the available hooks, verifies activation |
 
-`vp-setup` ініціалізує за середовищем:
+`vp-setup` initializes by environment:
 
-| Середовище | Куди пише конфігурацію |
+| Environment | Where it writes the configuration |
 |---|---|
-| Standalone (без runtime агента) | Керований YAML-блок у проєктному `AGENTS.md` (або `CLAUDE.md`, якщо `AGENTS.md` відсутній) |
-| Поставка агента без хост-систем | Конфіг-файл агентного runtime |
-| Хост-прослойка (напр. Codex) | Конфіг-файл проєкту, зібраний з шаблонів прослойки |
+| Standalone (without the agent runtime) | A managed YAML block in the project `AGENTS.md` (or `CLAUDE.md`, if `AGENTS.md` is absent) |
+| Agent delivery without host systems | The config file of the agent runtime |
+| Host layer (e.g. Codex) | The project config file assembled from the layer templates |
 
-## 7. Канали доставки
+## 7. Delivery channels
 
-1. **Окремий плагін VP** — per-host manifests (`.codex-plugin/`,
-   `.claude-plugin/`, `.cursor-plugin/`, `.muse-plugin/`, …), скіли, хук, власні
-   скрипти; встановлення через `vp-setup`.
-2. **Збірка в пакет поставки агента** — VP-інструкції їдуть у native-поставку
-   разом із розширеним instruction registry; канонічна копія лишається в VP, у
-   пакет — згенерований артефакт із Source-зв'язком.
-3. **Marketplace** — `packages/powers` сам є marketplace-власником; Codex —
-   перевірений перший хост, решта — заявлена підтримка з позначеним обмеженням.
+1. **A separate VP plugin** — per-host manifests (`.codex-plugin/`,
+   `.claude-plugin/`, `.cursor-plugin/`, `.muse-plugin/`, …), skills, a hook, own
+   scripts; installation through `vp-setup`.
+2. **A build into the agent delivery package** — VP instructions travel into the native delivery
+   together with the extended instruction registry; the canonical copy remains in VP, and
+   in the package — a generated artifact with a Source link.
+3. **Marketplace** — `packages/powers` is itself the marketplace owner; Codex —
+   the verified first host, the rest — declared support with a marked limitation.
 
-## 8. Матеріалізація, Work Items, findings
+## 8. Materialization, Work Items, findings
 
-Матеріалізація перевикористовує наявні runtime-контракти (`WorkItem/v1`,
+Materialization reuses the existing runtime contracts (`WorkItem/v1`,
 `WorkState/v1`, `ResearchResult/v1`, `DecisionRecord/v1`,
 `AcceptanceManifest/v1`, `ImplementationScope/v1`, `LifecycleArtifactReference/v1`)
-і додає лише відсутні частини. `artifact_contract` у кожній інструкції задає тип
-виходу, дані, місце матеріалізації та спосіб перевірки; перевірка
-наявності/формату/digest окремо від семантичної.
+and adds only the missing parts. `artifact_contract` in every instruction defines the output
+type, the data, the place of materialization and the method of verification; the check of
+presence/format/digest is separate from the semantic one.
 
-**Work Items VP** живуть у `packages/powers/docs/work/` як OKF-концепції зі
-стабільним ID, AC, evidence і типізованими зв'язками (`derived-from`, `informs`,
+**VP Work Items** live in `packages/powers/docs/work/` as OKF concepts with a
+stable ID, AC, evidence and typed relations (`derived-from`, `informs`,
 `implements`, `tests`, `blocks`, `supersedes`, `changes`, `found-during`).
 
-**Findings** — продуктово-скоуповий реєстр дефектів: Standalone — append-only
-JSONL; Runtime — продуктова ізоляція в наявній SQLite/HostState. Запис
-централізований (один writer), дедуплікація гібридна: ідентичність →
-fingerprint → семантичні кандидати → перевірка еквівалентності. Створення
-finding'у **не** є авторизацією виправлення.
+**Findings** — a product-scoped defect registry: Standalone — append-only
+JSONL; Runtime — product isolation in the existing SQLite/HostState. Writing is
+centralized (a single writer), deduplication is hybrid: identity →
+fingerprint → semantic candidates → equivalence check. Creating a
+finding **is not** authorization to fix it.
 
-## 9. Структура репозиторію
+## 9. Repository structure
 
 ```text
 packages/powers/
-  AGENTS.md                     інструкції для агентів-розробників
-  README.md                     цей файл
-  donors.yaml                   маніфест донорів (ревізії, ліцензії, лічильники)
-  docs/                         OKF-bundle (index.md, log.md, research/, decisions/, work/, requests/)
-  config/                       схеми VP (VPCatalog/v1, VPInstruction/v1, VPEffectiveProfile/v1, VPCorpusMap/v1)
-  instructions/                 канонічні інструкції: .md + метадані, плоско
-  skills/                       vp-mode, vp-setup (+ їхні scripts/)
-  .codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/   per-host маніфести
-  scripts/                      підтримка продукту: check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts
-  catalog.json                  ідентичність каталогу, словник тегів, аліаси, перелік корпусу з sha256
-  corpus-map.json               мапа обробки: донор + файл → converted/split/merged/rejected
-  tests/                        тести harness'у
-  .tmp/                         scratch: клони донорів (ігнорується Git)
+  AGENTS.md                     instructions for the developing agents
+  README.md                     this file
+  donors.yaml                   donor manifest (revisions, licenses, counters)
+  docs/                         OKF bundle (index.md, log.md, research/, decisions/, work/, requests/)
+  config/                       VP schemas (VPCatalog/v1, VPInstruction/v1, VPEffectiveProfile/v1, VPCorpusMap/v1)
+  instructions/                 canonical instructions: .md + metadata, flat
+  skills/                       vp-mode, vp-setup (+ their scripts/)
+  .codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/   per-host manifests
+  scripts/                      product support: check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts
+  catalog.json                  catalog identity, tag vocabulary, aliases, corpus listing with sha256
+  corpus-map.json               processing map: donor + file → converted/split/merged/rejected
+  tests/                        harness tests
+  .tmp/                         scratch: donor clones (ignored by Git)
 ```
 
-## 10. Як працювати з VP
+## 10. How to work with VP
 
-**Знайти інструкцію** — `catalog.search` за capability/pattern тегами; повний
-текст — лише через `catalog.get`.
+**Find an instruction** — `catalog.search` by capability/pattern tags; the full
+text — only through `catalog.get`.
 
-**Додати інструкцію** — новий атомарний норматив у корпусі з тегами, умовами,
-`artifact_contract`, provenance (донор + ліцензія + ревізія) і `revision`; потім
-оновити звіт покриття.
+**Add an instruction** — a new atomic norm in the corpus with tags, conditions,
+`artifact_contract`, provenance (donor + license + revision) and `revision`; then
+update the coverage report.
 
-**Додати донора** — зафіксувати ревізію в `donors.yaml`, клонувати знімок у
-`.tmp/donors`, прогнати інвентар → інструкції → теги → dedup → конфлікти →
-provenance; зафіксувати рішення про кожен dedup-збіг.
+**Add a donor** — fix the revision in `donors.yaml`, clone the snapshot into
+`.tmp/donors`, run inventory → instructions → tags → dedup → conflicts →
+provenance; record a decision on every dedup match.
 
-**Зібрати bundle** — `catalog.compose` за тегами, роллю та ефективною
-методологією: обов'язкові інструкції та залежності потрапляють у bundle
-незалежно від relevance.
+**Compose a bundle** — `catalog.compose` by tags, role and effective
+methodology: mandatory instructions and dependencies enter the bundle
+regardless of relevance.
 
-**Завести Work Item** — концепція в `docs/work/`: стабільний ID, мета, scope, AC,
-зв'язки з іншими Work Items; докази — окремими записами.
+**Create a Work Item** — a concept in `docs/work/`: stable ID, goal, scope, AC,
+relations to other Work Items; evidence — as separate records.
 
-**Перевірити продукт** — `bun packages/powers/scripts/check-okf.ts`,
-`bun tooling/agent/check-documentation.ts <явний список .md-файлів>` (каталог замість
-списку обирає один документ і робить перевірку порожньою), `bun run --cwd
+**Verify the product** — `bun packages/powers/scripts/check-okf.ts`,
+`bun tooling/agent/check-documentation.ts <explicit list of .md files>` (a directory instead of
+a list selects one document and makes the check empty), `bun run --cwd
 packages/powers test`, `bun run --cwd packages/powers test:coverage`.
 
-## 11. Дорожня карта
+## 11. Roadmap
 
-| Крок | Зміст | Статус |
+| Step | Content | Status |
 |---|---|---|
-| A0 | Перевірка ризику для lint-гейту агента | **закрито** — гейт `{"issues":[]}`, exit 0 |
-| A | Скелет продукту й harness (Bun-пакет, тести) | **закрито** — 13/13 тестів, typecheck exit 0 |
-| B | Канонічні документи продукту (BR/SR/AC + матриця) | **закрито** |
-| C | `VPCatalog/v1`, `VPMethodologyProfile/v1`, операції `catalog.*`, `decision.evaluate` | план |
-| D | Вертикальний зріз корпусу: superpowers → ponytail → решта | план |
-| E | Скіли `vp-mode`/`vp-setup`, per-host маніфести, marketplace | план |
-| F | Work Items, findings (Standalone), `artifact_contract` | план |
-| G | Runtime-запит (D3 + D8) як документ | план |
+| A0 | Risk check for the agent lint gate | **closed** — the gate returns `{"issues":[]}`, exit 0 |
+| A | Product skeleton and harness (Bun package, tests) | **closed** — 13/13 tests, typecheck exit 0 |
+| B | Canonical product documents (BR/SR/AC + matrix) | **closed** |
+| C | `VPCatalog/v1`, `VPMethodologyProfile/v1`, `catalog.*` operations, `decision.evaluate` | plan |
+| D | Vertical slice of the corpus: superpowers → ponytail → the rest | plan |
+| E | `vp-mode`/`vp-setup` skills, per-host manifests, marketplace | plan |
+| F | Work Items, findings (Standalone), `artifact_contract` | plan |
+| G | Runtime request (D3 + D8) as a document | plan |
 
-Детально — у [docs/next-actions.md](docs/next-actions.md).
+In detail — in [docs/next-actions.md](docs/next-actions.md).
 
-## 12. Статус і відкладене
+## 12. Status and deferred items
 
-**Готово:** продуктова концепція (research), roadmap, дизайн каталогу, десять записів
-рішень (D1–D9 і D4b), OKF-bundle з валідатором, маніфест донорів із 8
-зафіксованими знімками (7 методологічних донорів і Open Knowledge Format).
+**Done:** product concept (research), roadmap, catalog design, ten decision
+records (D1–D9 and D4b), an OKF bundle with a validator, a donor manifest with 8
+fixed snapshots (7 methodological donors and Open Knowledge Format).
 
-**Відкладене за межами поточного scope:** реєстрація в спільних root-файлах
-репозиторію; runtime-запит D3+D8; cutover `.vida/*`; публікація marketplace;
-Runtime-режим VP загалом.
+**Deferred outside the current scope:** registration in the shared root files of the
+repository; the D3+D8 runtime request; the `.vida/*` cutover; marketplace publication;
+the Runtime mode of VP in general.
 
-**Статус:** `research_status: finalized`; реалізація: кроки A0, A і B закрито —
-наступний крок C (каталог і скрипти).
+**Status:** `research_status: finalized`; implementation: steps A0, A and B are closed —
+the next step is C (catalog and scripts).
 
-## 13. Ліцензії джерел
+## 13. Source licenses
 
-Корпус VP походить з семи донорських проєктів (Superpowers, BMAD Method, Matt
-Pocock Skills, Addy Osmani Agent Skills, Cursor pstack, GSD Core, Ponytail) і
-Open Knowledge Format v0.2. Ліцензії: MIT × 7, Apache-2.0 (OKF). Точні ревізії
-та ліцензійні атрибути — у `donors.yaml`; NOTICE-текст для Apache-2.0 має бути
-доданий під час конвертації (крок D).
+The VP corpus originates from seven donor projects (Superpowers, BMAD Method, Matt
+Pocock Skills, Addy Osmani Agent Skills, Cursor pstack, GSD Core, Ponytail) and
+Open Knowledge Format v0.2. Licenses: MIT × 7, Apache-2.0 (OKF). Exact revisions
+and license attributes — in `donors.yaml`; the NOTICE text for Apache-2.0 must be
+added during conversion (step D).

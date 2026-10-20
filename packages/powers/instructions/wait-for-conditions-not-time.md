@@ -1,19 +1,19 @@
 ---
 instruction_id: wait-for-conditions-not-time
-title: "Чекай на умову, а не на час"
-summary: "Замінюй довільні паузи очікуванням конкретного стану, події або кількості з межею й зрозумілою помилкою."
+title: "Wait for the condition, not for time"
+summary: "Replace arbitrary sleeps with polling for the condition you care about, keeping fresh state, a bounded timeout, and a clear error."
 capability_tags:
   - write-tests-first
 pattern_tags:
   - systematic-debugging
-conditions_applies_when: "Тест чекає на асинхронний результат, використовує довільну паузу або проходить нестабільно."
-conditions_does_not_apply_when: Тест перевіряє саме тривалість інтервалу й пауза є предметом перевірки.
+conditions_applies_when: "A test waits for an asynchronous result, uses an arbitrary pause, or passes inconsistently."
+conditions_does_not_apply_when: The test checks the duration of an interval and the pause is the subject of the check.
 artifact_contract_output_type: deterministic-wait
 artifact_contract_required_data:
-  - очікувана умова
-  - межа очікування
-  - помилка після межі
-  - обґрунтування паузи
+  - expected condition
+  - wait boundary
+  - error after the boundary
+  - justification for any pause
 artifact_contract_verified_by: repeated runs of the test under load pass consistently
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,20 +23,22 @@ status: active
 revision: 1
 ---
 
-# Чекай на умову, а не на час
-Замінюй довільну паузу очікуванням умови, яку перевіряєш.
-Чекай на конкретний стан, подію, кількість або появу файлу.
-Формулюй умову так, щоб її можна було перевірити в циклі.
-Читай стан у циклі очікування, а не зберігай його до циклу.
-Опитуй стан із невеликою паузою, щоб не витрачати процесор дарма.
-Задай межу очікування для кожної умови.
-Заверши очікування зрозумілою помилкою, яка називає умову й межу.
-Не залишай цикл без межі: умова може не настати ніколи.
-Застосовуй очікування умови й тоді, коли тест падає лише під навантаженням.
-Не підвищуй паузу, щоб «стабілізувати» тест.
-Спершу дочекайся події-тригера, потім перевіряй поведінку, що залежить від часу.
-Спирайся на відомий інтервал, а не на здогад, якщо пауза справді потрібна.
-Поясни в коментарі, чому саме ця пауза потрібна.
-Не маскуй справжню гонку довшим очікуванням.
-Перевір, що тест проходить повторно й під паралельним навантаженням.
-Заверши, коли кожне очікування має умову, межу й зрозумілу помилку.
+# Wait for the condition, not for time
+Wait for the actual condition you care about, not a guess about how long it takes.
+Flaky tests often guess at timing with arbitrary delays.
+Arbitrary delays create race conditions where tests pass on fast machines but fail under load or in CI.
+Replace arbitrary delays with condition polling.
+Wait for an event.
+Wait for state.
+Wait for a count.
+Wait for a file.
+Wait for a complex condition.
+Call the getter inside the loop for fresh data.
+Do not cache state before the loop.
+Poll every 10ms; polling too fast wastes CPU.
+Always include a timeout with a clear error.
+A loop without a timeout runs forever if the condition is never met.
+When an arbitrary timeout is correct, first wait for the triggering condition.
+Base the timeout on known timing, not guessing.
+Explain in a comment why the timeout is needed.
+Tests that check actual timing behavior may keep an interval and must document why.

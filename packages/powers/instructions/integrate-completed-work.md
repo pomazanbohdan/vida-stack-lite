@@ -1,19 +1,19 @@
 ---
 instruction_id: integrate-completed-work
-title: Приєднуй завершену роботу контрольовано
-summary: "Перевіряй завершену зміну, визначай базову гілку й приєднуй лише після зелених перевірок."
+title: Integrate completed work under control
+summary: "Run the full suite on the tree to be integrated, confirm the base branch, and execute only the option the owner chose."
 capability_tags:
   - integrate-branch
 pattern_tags:
   - branch-integration
-conditions_applies_when: Завершена гілка або ізольована зміна очікує на інтеграцію чи закриття.
-conditions_does_not_apply_when: Робота ще не завершена або інтеграція вже відбулася й перевірена.
+conditions_applies_when: A completed branch or isolated change awaits integration or closure.
+conditions_does_not_apply_when: "The work is not finished, or integration has already happened and been verified."
 artifact_contract_output_type: integration-decision
 artifact_contract_required_data:
-  - повний результат перевірок
-  - базова гілка
-  - стан середовища
-artifact_contract_verified_by: full post-integration test suite
+  - full check result
+  - base branch
+  - environment state
+artifact_contract_verified_by: the full test suite passes after integration
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -22,19 +22,21 @@ status: active
 revision: 2
 ---
 
-# Приєднуй завершену роботу контрольовано
-Запусти повний набір перевірок на завершеній зміні.
-Зупини інтеграцію, якщо перевірки мають невдачі.
-Визнач, чи належить середовище до звичайного дерева чи окремої гілки.
-Встанови базову гілку з плану або історії роботи.
-Уточни ціль, якщо базову гілку неможливо визначити надійно.
-Перевір базову гілку перед злиттям.
-Приєднуй зміну лише до погодженої цільової гілки.
-Перевір результат повним набором тестів після злиття.
-Зупини подальші дії, якщо перевірки після злиття не пройшли.
-Залиш гілку та середовище доступними для розслідування.
-Не припускай, що завершення задачі означає дозвіл на злиття.
-Не обирай варіант завершення за власника: вибір має окрему інструкцію.
-Не видаляй середовище: очищення має окрему інструкцію.
-Повідом фактичний стан інтеграції та її перевірок.
-Зазнач, якщо інтеграція лишилася невідомою або незавершеною.
+# Integrate completed work under control
+Verify tests, detect environment, present options, execute the choice, clean up.
+Run the project's full test suite.
+If tests fail, report the failures and stop.
+The menu comes after a green suite.
+Tests passed earlier this session? Run the suite on the tree you are about to integrate.
+A green run only proves the tree it ran on.
+The base branch is whatever this work forked from.
+It is usually named in the plan, the conversation, or the branch's upstream.
+If it is not already known, ask.
+Confirm before merging: merging into the wrong base is expensive to undo.
+The integration decision is your human partner's.
+Do not assume they obviously want it merged.
+Execute only the chosen option.
+If tests fail on the merged result, stop and leave the worktree and branch in place.
+Nothing has been pushed, so the merge is local and recoverable.
+Once the merged result is green, clean up the worktree and delete the branch.
+A failing merged result stops everything.

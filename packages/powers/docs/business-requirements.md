@@ -1,7 +1,7 @@
 ---
 type: Business Requirements
-title: Vida Powers — бізнес-вимоги
-description: 'Цілі, межі відповідальності, обмеження автономності та нефункціональні вимоги портативного агентного плагіна Vida Powers.'
+title: Vida Powers — business requirements
+description: 'Goals, boundaries of responsibility, autonomy constraints and non-functional requirements of the portable Vida Powers agent plugin.'
 status: draft
 stale_after: '2026-11-19T00:00:00Z'
 tags:
@@ -11,154 +11,154 @@ tags:
 sources:
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція та архітектурний baseline
+  title: Vida Powers — product concept and architectural baseline
 - id: decisions
   resource: /decisions/index.md
-  title: Ухвалені рішення D1–D9
+  title: Accepted decisions D1–D11
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 revision: '3'
 ---
 
-# 1. Призначення
+# 1. Purpose
 
-Vida Powers (VP) — портативний агентний плагін, який дає агентам у сумісних
-AI-хостах **канонічний спосіб працювати**: який методології дотримуватись, які
-критерії прийняття застосувати, що вважати доказом, який артефакт залишити по
-роботі.
+Vida Powers (VP) is a portable agent plugin that gives agents in compatible
+AI hosts a **canonical way to work**: which methodology to follow, which
+acceptance criteria to apply, what to consider evidence, which artifact to leave behind
+after the work.
 
-Без VP кожен агент вигадує власний процес, а результат стає непорівнянним і
-неперевірюваним. VP не замінює агента й не керує виконанням — він постачає
-правила, інструкції та межі.
+Without VP every agent invents its own process, and the result becomes incomparable and
+unverifiable. VP does not replace the agent and does not manage execution — it supplies
+rules, instructions and boundaries.
 
-**Споживачі VP:**
+**VP consumers:**
 
-| Споживач | Що отримує |
+| Consumer | What it receives |
 |---|---|
-| Агент (у хості або в агенті VIDA) | Вибрані інструкції, bundle, методологічний профіль, вимоги до матеріалізації |
-| Головний LLM-агент (Master/Router) | Каталог для пошуку й добору, правила вибору, процедуру вибору за відсутності вибору |
-| Розробник у проєкті | Спосіб налаштувати VP у своєму проєкті (`vp-setup`) |
-| Власник продукту | Політику методології, прийнятті рішення, докази виконання |
+| The agent (in a host or in the VIDA agent) | Selected instructions, the bundle, the methodology profile, materialization requirements |
+| The main LLM agent (Master/Router) | A catalog for search and selection, selection rules, the selection procedure when there is no choice |
+| A developer in a project | A way to set up VP in their project (`vp-setup`) |
+| The product owner | The methodology policy, the decisions made, the execution evidence |
 
-# 2. Цілі
+# 2. Goals
 
-- **BR-01.** Агент, який працює з VP, дотримується узгодженої методології, а не
-  власної інтуїції; вибір методології — зафіксований і відстежуваний.
-- **BR-02.** Інструкції VP походять із перевірених джерел (донорських методик),
-  мають точну ревізію джерела та ліцензію, і не містять чужих execution engines,
-  трекерів чи журналів стану.
-- **BR-03.** Результат роботи — читабельний і перевірюваний артефакт із
-  прив'язаними критеріями прийняття та доказами, а не переказ у чаті.
-- **BR-04.** Доказ прив'язаний до конкретної редакції вимог і реалізації; зміна
-  входу не переносить старий доказ.
-- **BR-05.** Один вхід: користувач описує бажаний результат звичайною мовою; йому
-  не потрібно вручну запускати research, постановку задачі, TDD, тестувальника,
-  review чи verification.
-- **BR-06.** Методологія — політика продукту, а не ситуативний вибір агента;
-  справжня варіативність вибору вирішується з користувачем один раз і
-  фіксується.
+- **BR-01.** An agent that works with VP follows an agreed methodology, not
+  its own intuition; the choice of methodology is recorded and traceable.
+- **BR-02.** VP instructions come from verified sources (donor methodologies),
+  have an exact source revision and a license, and contain no foreign execution engines,
+  trackers or state logs.
+- **BR-03.** The result of the work is a readable and verifiable artifact with
+  attached acceptance criteria and evidence, not a retelling in the chat.
+- **BR-04.** Evidence is bound to a specific revision of the requirements and the implementation; a change
+  of input does not carry over the old evidence.
+- **BR-05.** One entry point: the user describes the desired result in ordinary language; they
+  do not need to manually launch research, task formulation, TDD, a tester,
+  review or verification.
+- **BR-06.** Methodology is a product policy, not a situational choice of the agent;
+  genuine variability of choice is resolved with the user once and
+  recorded.
 
-# 3. Межі відповідальності
+# 3. Boundaries of responsibility
 
-| Зона | Vida Powers | VIDA Runtime |
+| Zone | Vida Powers | VIDA Runtime |
 |---|---|---|
-| Методологічні знання | Власний канонічний корпус інструкцій | Використовує ті самі інструкції |
-| Вибір інструкцій | Каталог + семантика добору | Активація інструкцій (системна) |
-| Використання інструкцій | Формує bundle для виконавця | Активація та реєстрація bundle |
-| Вибір наступної дії | Описує допустимі варіанти | Володіє маршрутом виконання |
-| Виконання | Не виконує | VIDA Core / Mastra (Runtime), хост (Standalone) |
-| Стан, ledger, CAS, lease | Не володіє | HostState, ledger, reservation |
-| Матеріалізація | Задає контракт результату | Володіє сховищем і транзакціями |
-| Findings | Задає правила реєстру | Володіє записом у своєму сховищі |
-| Інтерфейс користувача | Не входить до складу VP | Окремий майбутній продукт |
+| Methodological knowledge | Its own canonical corpus of instructions | Uses the same instructions |
+| Selection of instructions | The catalog + selection semantics | Activation of instructions (systemic) |
+| Use of instructions | Forms the bundle for the executor | Activation and registration of the bundle |
+| Choice of the next action | Describes the admissible options | Owns the execution route |
+| Execution | Does not execute | VIDA Core / Mastra (Runtime), the host (Standalone) |
+| State, ledger, CAS, lease | Does not own | HostState, ledger, reservation |
+| Materialization | Sets the result contract | Owns the storage and transactions |
+| Findings | Sets the register rules | Owns the record in its storage |
+| User interface | Not part of VP | A separate future product |
 
-- **BR-07.** VP не має власного workflow engine, scheduler, ledger, CAS, сховища
-  стану чи історії виконання; у Runtime ці зони належать VIDA, у Standalone —
-  хостовому агенту.
+- **BR-07.** VP has no workflow engine, scheduler, ledger, CAS, state store
+  or execution history of its own; in Runtime these zones belong to VIDA, in Standalone —
+  to the host agent.
 
-# 4. Обмеження автономності
+# 4. Autonomy constraints
 
-- **BR-08.** Жодна інструкція VP не розширює Work Scope і не надає прав,
-  яких агент не має; методологія, relevance score, статус незалежного агента не
-  є дозволом.
-- **BR-09.** Суттєва неоднозначність із зовнішнім або незворотним ефектом,
-  безпекою, scope чи політикою продукту вимагає людської авторизації.
-- **BR-10.** Знахідка, що блокує AC, але потребує виходу за видані повноваження,
-  фіксується як блокер із запитом дозволу; завершення без дозволу не
-  обіцяється. Сторонній баг не перетворюється на несанкціонований обсяг робіт.
-- **BR-11.** Створення запису про дефект не є авторизацією його виправлення;
-  виправлення вимагає окремого рішення.
-- **BR-12.** Тест або code review є доказом, але не тотожні business approval чи
-  human UAT; фіктивний PASS неможливий.
+- **BR-08.** No VP instruction expands the Work Scope or grants rights
+  that the agent does not have; methodology, a relevance score, the status of an independent agent are
+  not a permission.
+- **BR-09.** A significant ambiguity with an external or irreversible effect,
+  security, scope or product policy requires human authorization.
+- **BR-10.** A finding that blocks an AC but requires going beyond the issued authority
+  is recorded as a blocker with a permission request; completion without permission is not
+  promised. A third-party bug does not turn into an unauthorized scope of work.
+- **BR-11.** Creating a defect record is not an authorization of its fix;
+  a fix requires a separate decision.
+- **BR-12.** A test or a code review is evidence, but not identical to business approval or
+  human UAT; a fictitious PASS is impossible.
 
-# 5. Методологічна політика
+# 5. Methodology policy
 
-- **BR-13.** Методологія визначається продуктом. Групи вибору (тестування,
-  review, архітектура, delivery) незалежні одна від одної; альтернативи в одній
-  групі взаємовиключні, доповнення — сумісні.
-- **BR-14.** Успадкування профілю — явне і вибіркове: окрема група або окрема
-  методика іншого продукту. Неявне повне успадкування через спільний репозиторій
-  не застосовується. Конфлікт успадкування — питання власнику, а не правило
-  «останній завантажений перемагає».
-- **BR-15.** Task-scoped override — узгоджений тимчасовий виняток для конкретної
-  задачі та продукту: не змінює постійний профіль, інші продукти, permissions
-  чи security gates.
+- **BR-13.** The methodology is determined by the product. The selection groups (testing,
+  review, architecture, delivery) are independent of one another; alternatives in one
+  group are mutually exclusive, additions are compatible.
+- **BR-14.** Profile inheritance is explicit and selective: a separate group or a separate
+  methodology of another product. Implicit full inheritance through a shared repository
+  is not applied. An inheritance conflict — a question to the owner, not the rule
+  "the last loaded wins".
+- **BR-15.** A task-scoped override is an agreed temporary exception for a specific
+  task and product: it does not change the permanent profile, other products, permissions
+  or security gates.
 
-# 6. Матеріалізація й доказ
+# 6. Materialization and evidence
 
-- **BR-16.** Після змістовної операції залишається читабельний результат або
-  явно зафіксоване оновлення наявного; файл/запис має існувати, читатися й
-  відповідати власному contract'у. Перевірка наявності та семантична перевірка —
-  різні перевірки.
-- **BR-17.** Критерії прийняття та докази мають стабільні ідентифікатори;
-  погоджені й застосовані критерії не змінюються непомітно так, щоб старі
-  `passed` почали означати нову поведінку.
-- **BR-18.** Кожен фактичний запуск перевірки, ручна сесія, UAT-вердикт чи
-  review — окремий доказ зі своєю ідентичністю; старі результати не переписуються
-  під новий запуск.
+- **BR-16.** After a content operation a readable result remains, or
+  an explicitly recorded update of an existing one; the file/record must exist, be readable and
+  comply with its own contract. The presence check and the semantic check are
+  different checks.
+- **BR-17.** Acceptance criteria and evidence have stable identifiers;
+  agreed and applied criteria are not changed imperceptibly in such a way that the old
+  `passed` starts to mean new behavior.
+- **BR-18.** Each actual run of a check, manual session, UAT verdict or
+  review is a separate piece of evidence with its own identity; old results are not rewritten
+  for a new run.
 
-# 7. Доставка й споживачі
+# 7. Delivery and consumers
 
-- **BR-19.** VP постачається трьома каналами: окремий плагін, збірка в пакет
-  поставки агента, публічний marketplace-канал.
-- **BR-20.** Ініціалізація VP у проєкті контекстно-залежна: Standalone — керований
-  YAML-блок у проєктному instruction-файлі; поставка агента — конфіг-файл
-  агентного runtime; хост-прослойка — конфіг-файл проєкту з шаблонів.
-- **BR-21.** `packages/powers` є проєктним пакетом і реєструється в спільних
-  root-конфігураціях репозиторію; `packages/plugin` лишається прослойкою до хоста
-  Codex і не входить у реєстрацію VP.
+- **BR-19.** VP is delivered through three channels: a separate plugin, a build into the agent
+  delivery package, a public marketplace channel.
+- **BR-20.** Initialization of VP in a project is context-dependent: Standalone — a managed
+  YAML block in the project instruction file; agent delivery — the config file of the
+  agent runtime; host layer — the project config file built from templates.
+- **BR-21.** `packages/powers` is a project package and is registered in the shared
+  root configurations of the repository; `packages/plugin` remains the layer to the Codex
+  host and is not part of the VP registration.
 
-# 8. Нефункціональні вимоги
+# 8. Non-functional requirements
 
-- **NFR-01.** VP не має власної інфраструктури: рантайм, бандлер, пакетний
-  менеджер, CLI-фреймворк і тестовий раннер беруться з проєкту.
-- **NFR-02.** Код, який постачається в скілах, працює без збірки під Bun, Node
-  або Deno: лише стандартні `node:` модулі, без зовнішніх залежностей.
-- **NFR-03.** Машинні формати, які читає код, — JSON; YAML — лише для людських
-  маніфестів.
-- **NFR-04.** Інструкції, профілі й реєстри мають стабільні ідентифікатори й
-  версії; зміна змісту не змінює ідентифікатор.
-- **NFR-05.** Докази й журнали змін мають прив'язку до конкретної редакції;
-  журнал змін — окремий артефакт, а не частина основного тексту документа.
-- **NFR-06.** Жодна зміна в продукті не вноситься без погодження власника.
+- **NFR-01.** VP has no infrastructure of its own: the runtime, the bundler, the package
+  manager, the CLI framework and the test runner are taken from the project.
+- **NFR-02.** The code shipped in the skills works without a build under Bun, Node
+  or Deno: only standard `node:` modules, no external dependencies.
+- **NFR-03.** The machine formats that the code reads are JSON; YAML — only for human
+  manifests.
+- **NFR-04.** Instructions, profiles and registries have stable identifiers and
+  versions; a change of content does not change the identifier.
+- **NFR-05.** Evidence and change logs are bound to a specific revision;
+  the change log is a separate artifact, not part of the main text of the document.
+- **NFR-06.** No change in the product is introduced without the owner's approval.
 
-# 9. Межі (поза scope)
+# 9. Boundaries (out of scope)
 
-- **BR-22.** У поточний scope не входять: domain packs (§11), майбутній UI над
-  VIDA API (§9.3), зовнішня синхронізація issue-трекерів (§8.3).
-- **BR-23.** Runtime-режим VP потребує реєстрації продукту в репозиторії та
-  runtime-запиту; до їх виконання доводиться Standalone-частина.
+- **BR-22.** The current scope does not include: domain packs (§11), the future UI over the
+  VIDA API (§9.3), external synchronization of issue trackers (§8.3).
+- **BR-23.** VP Runtime mode requires registration of the product in the repository and
+  a runtime request; until they are performed, the Standalone part is proven.
 
-# 10. Відкриті питання
+# 10. Open questions
 
-| ID | Питання | Стан |
+| ID | Question | State |
 |---|---|---|
-| BR-Q1 | Які саме теги й групи утворюють початковий набір профілю? | Залежить від кроку C (каталог) і D (корпус) |
-| BR-Q2 | Який набір інструкцій вважається мінімально достатнім для першої версії? | Залежить від exit criteria кроку D |
-| BR-Q3 | Хто фактично тримає роль «Vida Powers owner»? | **Вирішено 2026-10-19:** роль виконує repository owner; одиницею реєстрації є **роль**, а не особа, тому передача можлива без переписування ownership map (D2). |
+| BR-Q1 | Which exact tags and groups form the initial set of the profile? | Depends on step C (catalog) and D (corpus) |
+| BR-Q2 | Which set of instructions is considered minimally sufficient for the first version? | Depends on the exit criteria of step D |
+| BR-Q3 | Who actually holds the role "Vida Powers owner"? | **Resolved 2026-10-19:** the role is performed by the repository owner; the unit of registration is the **role**, not the person, so a handover is possible without rewriting the ownership map (D2). |
 
 ---
 
-**Синхронізація з research.** Цей документ — B-рівень (навіщо). Поведінка
-зафіксована в `system-specification.md`. Зміна S, що змінює намір, тягне оновлення
-research (§7.1) і оцінку впливу (§7.6); зміна research, що змінює вимогу, тягне
-оновлення S. Дублювання нормативного тексту заборонено.
+**Synchronization with research.** This document is the B-level (why). The behavior
+is recorded in `system-specification.md`. An S change that changes the intent entails an update of
+research (§7.1) and an impact assessment (§7.6); a research change that changes a requirement entails an
+update of S. Duplication of normative text is forbidden.

@@ -1,19 +1,19 @@
 ---
 instruction_id: merge-copied-tree-with-local-edits
-title: Зливай оновлення копії з локальними правками
-summary: Переноси локальні зміни на нову версію джерела файл за файлом і зберігай список відмінностей.
+title: Merge a copied tree with local edits
+summary: "Refresh a copied workflow by mining only the history since its last edit, keeping rules the user has not contradicted and revising the ones with new evidence."
 capability_tags:
   - integrate-branch
 pattern_tags:
   - branch-integration
-conditions_applies_when: Проєкт тримає власну копію зовнішнього дерева й періодично отримує оновлення.
-conditions_does_not_apply_when: Копія не має локальних змін або оновлення не передбачається.
+conditions_applies_when: A copied or generated workflow already carries local edits and has to be refreshed.
+conditions_does_not_apply_when: "No local edits exist yet, so the copy can simply be replaced."
 artifact_contract_output_type: merged-copy
 artifact_contract_required_data:
-  - локальні правки
-  - змінені файли
-  - перенесені правки
-  - відкинуті правки
+  - files to merge
+  - preserved sections
+  - revised sections
+  - new evidence
 artifact_contract_verified_by: "the project's checks passing after each merged file group"
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,18 +23,18 @@ status: active
 revision: 1
 ---
 
-# Зливай оновлення копії з локальними правками
-Зафіксуй локальні зміни окремо від оригіналу.
-Отримай нову версію джерела.
-Порівняй файли, які змінилися з обох боків.
-Познач файли, які джерело перейменувало або видалило.
-Веди список локальних правок із причиною кожної.
-Перевір, чи не з'явилися конфлікти в конфігурації.
-Визнач, які локальні правки ще потрібні.
-Перенеси їх на нову версію по одному файлу.
-Не переписуй файл цілком, якщо змінилося кілька рядків.
-Перевір, що перенесені правки не дублюють нові можливості джерела.
-Запусти перевірки після кожного великого файлу.
-Запиши, які правки відкинуто й чому.
-Збережи список локальних відмінностей для наступного оновлення.
-Віддай оновлену копію й перелік збережених правок.
+# Merge a copied tree with local edits
+Update mode mines only the history since the skill was last edited.
+Edit the existing file in place.
+Preserve sections the user hasn't contradicted.
+Revise the ones with new evidence.
+Add new sections only for genuinely new rules.
+Run the update whenever habits drift, with everything since the last edit as the input.
+Cross-check across slices before elevating a signal.
+Patterns seen in two or more slices are high-confidence, and lone signals are weak and usually get dropped.
+Require multiple instances before codifying a rule.
+Show the draft to the user and take feedback.
+Expect multiple iterations, and cut ruthlessly, because a mode skill is not a manual.
+Keep it operational: restating other skills' contents, inventing metaphors, or writing poetic prose for an agent reader is cost without benefit.
+Work in a worktree off main, commit, and open a PR, never pushing to main directly.
+Test the changed skill blind before you trust it, because the eval catches the drift before it ships.

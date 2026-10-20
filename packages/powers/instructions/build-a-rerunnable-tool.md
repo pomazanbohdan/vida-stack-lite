@@ -1,19 +1,19 @@
 ---
 instruction_id: build-a-rerunnable-tool
-title: "Будуй інструмент, який можна запускати знову"
-summary: "Коли робота нетривіальна, будуй найменший інструмент, який виконує або доводить її, і доведи його на першій одиниці."
+title: Build a rerunnable tool
+summary: "When the work is not trivial, build the smallest tool that does or proves it, and prove the tool on the first unit before scaling it."
 capability_tags:
   - automate-rule-enforcement
 pattern_tags:
   - automated-enforcement
-conditions_applies_when: "Робота нетривіальна, і інструмент зробить її відтворюваною та перевірюваною."
-conditions_does_not_apply_when: "Робота тривіальна: кілька очевидних правок, які видно з першого погляду."
+conditions_applies_when: "The work is not trivial, and a tool would make it reproducible and checkable."
+conditions_does_not_apply_when: "The work is trivial: a couple of obvious edits visible at a glance."
 artifact_contract_output_type: reusable-tool
 artifact_contract_required_data:
-  - рецепт
-  - контракт перевірки
-  - межі
-  - приклад запуску
+  - recipe
+  - verification contract
+  - bounds
+  - example run
 artifact_contract_verified_by: the tool rerun on the first unit and diffed against the hand-done result
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,19 +23,19 @@ status: active
 revision: 2
 ---
 
-# Будуй інструмент, який можна запускати знову
-Коли робота нетривіальна, будуй інструмент, який виконує або доводить її, замість ручної праці.
-Пропускай інструмент лише для тривіальної роботи: кількох очевидних правок.
-Обери найменший скрипт, який робить роботу, а не каркас.
-Виконай першу одиницю вручну, щоб вивчити рецепт.
-Прожени інструмент на цій одиниці й порівняй із ручним результатом.
-Зроби інструмент безпечним для повторного запуску.
-Віддавай перевагу детермінованому інструменту над роздачею роботи виконавцям.
-Для правок будуй кодмод або скрипт, для повторюваних файлів — генератор.
-Для аналізу лиши запит, який можна виконати знову, а для перевірки — повторюваний скрипт.
-Якщо роздаєш роботу, оформи рецепт, контракт перевірки й межі в один інструмент для всіх.
-Тримай цей інструмент поза зоною запису виконавців.
-Залиш у зміні файл інструмента: посилання на принцип без нього не вважається застосуванням.
-Закоміть інструмент, якщо робота переживе сесію.
-Пам'ятай, що інструмент — це артефакт, який переглядач може прочитати й повторити.
-Віддай інструмент із прикладом запуску, який читач може повторити.
+# Build a rerunnable tool
+When the work is not trivial, build the tool that does it instead of doing it by hand.
+A codemod, generator, or script does the work the same way every time and reruns for free. The tool is one artifact a reviewer can read and rerun to check the work.
+Hand-done changes can only be re-verified by redoing them. A deterministic script turns trust me into run this.
+Default to building the lever. Skip it only when the task is trivial, a couple of obvious edits you can see at a glance.
+Do the first unit by hand to learn the recipe, then build the tool.
+Prove it by rerunning it on that unit and diffing against your hand-done version. Make the lever safe to rerun.
+A codemod or script for edits, a generator for repetitive files, a dump to a queryable store for analysis, a rerunnable check for verification.
+A deterministic lever beats fan-out. If the tool can process every unit in one pass, run it yourself. Do not fan out delegates to hand-apply what a script can do.
+When you fan work out to subagents, write the lever as a skill they all read: the recipe, the verification contract, and the do-not-touch fences in one artifact.
+Keep that artifact outside the delegates' write scope so they cannot quietly edit the contract.
+Applying this principle produces a file. If you cited it and there is no codemod, script, generator, or delegate skill in the diff, you did not apply it.
+Commit the lever when the work outlives the session.
+The bar is triviality, not repetition. A one-off still earns a lever when the lever is what makes the work checkable.
+Build the smallest script that does or proves the job, never a framework.
+This is throughput and reviewability on the work in front of you, not a durable guardrail for a recurring instruction.

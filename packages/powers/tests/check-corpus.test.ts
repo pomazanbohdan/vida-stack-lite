@@ -116,6 +116,50 @@ describe('checkCorpus synthetic fixtures', () => {
     expect(codes(corpus.root)).toEqual([]);
   });
 
+  test('validates source methodology profiles against schema, corpus, pattern tags, decisions, and unique ownership', async () => {
+    const corpus = await fixture();
+    await mkdir(join(corpus.root, 'config'), { recursive: true });
+    const schema = readFileSync(join(packageRoot, 'config/vpmethodologyprofile.v1.schema.json'));
+    await writeFile(join(corpus.root, 'config/vpmethodologyprofile.v1.schema.json'), schema);
+    const profilePath = join(corpus.root, 'config/methodology-profile.json');
+    const valid = { schema: 'VPMethodologyProfile/v1', groups: [{ id: 'policy', title: 'Policy', description: 'Policy choice.', user_decision: true, alternatives: [
+      { id: 'test-first-development', title: 'First', description: 'First policy.', instruction_ids: ['alpha-instruction'] },
+      { id: 'test-first-development', title: 'Second', description: 'Second policy.', instruction_ids: [] },
+    ] }, { id: 'testing', title: 'Testing', description: 'Testing policy.', user_decision: false, default: 'test-first-development', alternatives: [
+      { id: 'test-first-development', title: 'First', description: 'First policy.', instruction_ids: [] },
+    ] }] };
+    await writeFile(profilePath, JSON.stringify(valid));
+    expect(codes(corpus.root)).toEqual([]);
+    const invalidSchema = { ...valid, extra: true };
+    await writeFile(profilePath, JSON.stringify(invalidSchema));
+    expect(codes(corpus.root)).toContain('CORPUS_PROFILE_INVALID');
+    const invalid = structuredClone(valid);
+    const group = invalid.groups[0];
+    const firstAlternative = group?.alternatives[0];
+    if (group === undefined || firstAlternative === undefined) throw new Error('profile fixture alternatives missing');
+    firstAlternative.instruction_ids = ['missing'];
+    firstAlternative.id = 'missing-pattern';
+    group.alternatives = [firstAlternative];
+    await writeFile(profilePath, JSON.stringify(invalid));
+    const found = checkCorpus(corpus.root).map((item) => item.code);
+    expect(found).toContain('CORPUS_PROFILE_INSTRUCTION_UNKNOWN');
+    expect(found).toContain('CORPUS_PROFILE_TAG_UNKNOWN');
+    expect(found).toContain('CORPUS_PROFILE_DECISION_INVALID');
+    firstAlternative.instruction_ids = ['alpha-instruction'];
+    group.alternatives.push({ id: 'test-first-development', title: 'Other', description: 'Other.', instruction_ids: ['alpha-instruction'] });
+    await writeFile(profilePath, JSON.stringify(invalid));
+    expect(checkCorpus(corpus.root).map((item) => item.code)).toContain('CORPUS_PROFILE_INSTRUCTION_DUPLICATE');
+    const missingDefault = structuredClone(valid);
+    const missingDefaultGroup = missingDefault.groups[1];
+    if (missingDefaultGroup !== undefined) Reflect.deleteProperty(missingDefaultGroup, 'default');
+    await writeFile(profilePath, JSON.stringify(missingDefault));
+    expect(checkCorpus(corpus.root).map((item) => item.code)).toContain('CORPUS_PROFILE_POLICY_DEFAULT_INVALID');
+    const userDefault = structuredClone(valid);
+    userDefault.groups[0]!.default = 'test-first-development';
+    await writeFile(profilePath, JSON.stringify(userDefault));
+    expect(checkCorpus(corpus.root).map((item) => item.code)).toContain('CORPUS_PROFILE_POLICY_DEFAULT_INVALID');
+  });
+
   test('reports a donor carrier file missing from the corpus map', async () => {
     const corpus = await fixture();
     await writeFile(join(corpus.root, cloneRoot, 'unmapped.md'), 'unprocessed donor source\n');

@@ -1,20 +1,20 @@
 ---
 instruction_id: classify-and-state-review-verdict
-title: Класифікуй знахідки й дай ясний висновок
-summary: "Розділяй знахідки за впливом і завершуй перегляд рішенням: готово, не готово або після виправлень."
+title: Classify the findings and state a clear verdict
+summary: "Categorize findings by actual severity, acknowledge what was done well, and end with a verdict the owner can act on."
 capability_tags:
   - review-code
 pattern_tags:
   - code-review
-conditions_applies_when: Перегляд зібрав знахідки й потребує підсумку.
-conditions_does_not_apply_when: Перегляд ще не завершено.
+conditions_applies_when: The review has collected findings and needs a verdict.
+conditions_does_not_apply_when: The review is not finished.
 artifact_contract_output_type: review-verdict
 artifact_contract_required_data:
-  - знахідки
-  - рівні
-  - сильні сторони
-  - висновок
-artifact_contract_verified_by: verdict follows finding severity
+  - findings
+  - severity
+  - strengths
+  - verdict
+artifact_contract_verified_by: the verdict follows the finding severity
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -29,22 +29,18 @@ status: active
 revision: 4
 ---
 
-# Класифікуй знахідки й дай ясний висновок
-Класифікуй кожну знахідку за фактичним впливом.
-Поясни, що саме неправильно.
-Поясни, чому це важливо.
-Назви сильні сторони зміни конкретно.
-Окремо переліч те, що вирішив не оцінювати.
-Додай до цього переліку те, чого не вдалося запустити або прочитати.
-Дай висновок: готово, не готово або після виправлень.
-Назви номери знахідок, які треба виправити першими, щоб власник міг відповісти номерами.
-Для здорової зміни скажи, що виправляти нічого, і назви, що саме перевірив.
-Коли є знахідки про скорочення, назви пораховану кількість рядків і залежностей, які можна прибрати.
-Підсумуй залишковий ризик.
-Не пиши виглядає добре.
-Не підвищуй дрібницю до блокера.
-Не приховуй знахідку без місця доказу.
-Не давай оцінку без прочитаної зміни.
-Не наводь оцінку скорочення без підрахунку в прочитаному коді.
-Познач незакриті питання.
-Заверши перегляд одним рішенням.
+# Classify the findings and state a clear verdict
+Categorize issues by actual severity. Not everything is critical.
+Acknowledge what was done well before listing issues.
+List every behavior you considered and set aside as outside the plan or spec, one line each, with the reason.
+An empty list means you set nothing aside.
+Explain why each issue matters.
+Give a clear verdict.
+Do not say `looks good` without checking.
+Do not mark nitpicks as critical.
+Do not give feedback on code you did not actually read.
+Verdict: ship, or fix these first.
+Nothing found: say looks good and ship, with one line on what you checked.
+A one- or two-sentence technical assessment supports the verdict.
+When lean findings exist, name the lines and dependencies that could be removed.
+Not checked: the parts you did not read or could not run.

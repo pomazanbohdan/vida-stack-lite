@@ -1,20 +1,20 @@
 ---
 instruction_id: run-bounded-fix-loop
-title: "Обмежуй цикл виправлень п'ятьма раундами"
-summary: "Виправляй знахідки раундами, повертайся до того самого виконавця перші три раунди й замінюй його далі."
+title: Bound the fix loop at five rounds
+summary: "Fix findings round by round, resume the same implementer for the first three rounds, and adjudicate whatever remains at the cap."
 capability_tags:
   - review-code
 pattern_tags:
   - code-review
-conditions_applies_when: "Перегляд повернув підтверджену знахідку, яку треба виправити."
-conditions_does_not_apply_when: Знахідок немає або вони вже закриті доказом.
+conditions_applies_when: A review returned a confirmed finding that must be fixed.
+conditions_does_not_apply_when: "There are no findings, or they are already closed by evidence."
 artifact_contract_output_type: fix-loop
 artifact_contract_required_data:
-  - відкриті знахідки
-  - раунд
-  - повторний перегляд
-  - рішення
-artifact_contract_verified_by: scoped re-review of each fix round
+  - open findings
+  - round
+  - scoped re-review
+  - ruling
+artifact_contract_verified_by: a scoped re-review of each fix round
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -24,19 +24,21 @@ status: active
 revision: 1
 ---
 
-# Обмежуй цикл виправлень п'ятьма раундами
-Почни цикл лише з підтвердженою знахідкою.
-Залишай дрібні знахідки поза циклом і записуй їх.
-Передавай виконавцю відкриті знахідки дослівно.
-У раундах з першого по третій повертайся до того самого виконавця.
-З четвертого раунду залучай нового виконавця з вищим рівнем.
-Кожен раунд завершуй повторним переглядом лише діапазону виправлення.
-Вимагай від виконавця тести, команду й вивід.
-Не приймай виправлення без повторного перегляду.
-Не розширюй повторний перегляд на незмінений код.
-Не виправляй знахідки сам замість виконавця.
-Після п'ятого раунду ухвали рішення щодо кожної відкритої знахідки.
-Записуй кожне рішення в журнал.
-Не відкидай знахідку мовчки.
-Зупини цикл, якщо виправлення вимагає нового рішення про архітектуру.
-Повідом, які знахідки залишилися відкритими.
+# Bound the fix loop at five rounds
+The loop triggers when the review reports spec ❌, any Critical or Important finding, or a ⚠️ item you confirmed as a real gap.
+Minor findings never enter the loop.
+A finding labeled plan-mandated — or any finding that conflicts with what the plan's text requires — is yours to rule on.
+Do not dismiss the finding because the plan mandates it.
+A fix round is one fix dispatch plus one scoped re-review. Five rounds maximum per task.
+Rounds 1-3 — resume the original implementer. Send it the open findings verbatim.
+If your harness cannot send another message to a live subagent, dispatch a fresh implementer carrying the brief path, the report-file path, and the findings.
+Rounds 4-5 — dispatch a fresh implementer on a more capable model, with the brief path, the report-file path, the open findings.
+Every round, the implementer fixes, re-runs the tests covering the amended code, appends its fix report to the same report file, and returns the short contract.
+Before re-dispatching the reviewer, confirm the fix report contains the covering tests, the command run, and the output.
+The re-review is scoped: the re-reviewer verdicts each finding ADDRESSED or NOT ADDRESSED and flags new breakage in the fix diff only.
+Out-of-scope observations go to the ledger as deferred minors — they never extend the loop.
+Never fix findings yourself in the controller session — your context stays clean for coordination, and controller fixes skip review.
+The breaker: when round 5's re-review still leaves findings open, stop dispatching.
+Adjudicate each open finding yourself — you hold the plan and the cross-task context the reviewer lacks.
+Adjudicating earlier to end a loop is pre-judging with a different name.
+Every adjudication is a ledger entry — a silent discard is forbidden.

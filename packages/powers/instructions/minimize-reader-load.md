@@ -1,19 +1,19 @@
 ---
 instruction_id: minimize-reader-load
-title: Зменшуй навантаження на читача
-summary: "Прибирай усе, що змушує читача тримати в голові зайвий контекст, не втрачаючи змісту."
+title: Minimize reader load
+summary: "Maintainability is the work a reader must do to understand code; track layers to trace and state to hold, and cut both."
 capability_tags:
   - communicate-concisely
 pattern_tags:
   - concise-communication
-conditions_applies_when: "Ти пишеш код, текст інтерфейсу, документацію або пояснення для людини."
-conditions_does_not_apply_when: "Машинний формат має фіксовану схему, яку не можна скорочувати."
+conditions_applies_when: "You write code, an interface text, documentation, or an explanation for a person."
+conditions_does_not_apply_when: A machine format has a fixed schema that cannot be shortened.
 artifact_contract_output_type: reader-ready-text
 artifact_contract_required_data:
-  - основна ідея
-  - скорочення
-  - що прибрано
-  - перевірка на новому читачі
+  - main idea
+  - what was cut
+  - what was removed
+  - check with a new reader
 artifact_contract_verified_by: a read-through by someone seeing the material for the first time
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,19 +23,20 @@ status: active
 revision: 1
 ---
 
-# Зменшуй навантаження на читача
-Пиши так, щоб читач розумів матеріал із першого проходу.
-Тримай одну ідею в одному абзаці або функції.
-Прибирай проміжні змінні, які не називають нічого нового.
-Назви змінну так, щоб її роль була зрозуміла без контексту.
-Позбудься вкладеності, яку можна замінити раннім виходом.
-Розбий довгу умову на іменовані частини.
-Зроби порядок рядків таким, як порядок думок читача.
-Прибери шум: зайві перетворення, дублювання, мертві гілки.
-Скороти коментар до того, чого код не показує.
-Винеси технічну деталь із основного сценарію в окрему функцію.
-Перевір, чи можна видалити абстракцію без втрати ясності.
-Дай файлам і модулям назви, що описують їхню роль.
-Залиш у тексті лише те, що допомагає ухвалити рішення.
-Перевір результат на людині, яка бачить матеріал уперше.
-Віддай коротший текст або код із тим самим змістом.
+# Minimize reader load
+Maintainability is the work a reader must do to understand code.
+Track two axes: layers to trace and state to hold.
+Layers to trace are the indirections between the question and the answer.
+State to hold is hidden or mutable context the reader must keep in their head.
+Line count, cyclomatic complexity, and "clean architecture" are proxies; reader load is the thing that matters.
+The two axes are independent: a flat file with fifty globals can be as hard to reason about as a six-layer adapter stack.
+Guard both.
+Collapse layers that cost more than they save: wrappers with one caller, adapters with no second implementation, speculative indirection that was never needed.
+Make adjacent layers change the abstraction; a layer that repeats the same methods and arguments adds reader load without compression.
+Demand interface compression: prefer boundaries that hide meaningful decisions.
+Shrink state scope: prefer pure functions, locals over fields, fields over module state, and module state over globals.
+Derive instead of sync.
+Name the invariant at the boundary, not in every consumer, so the reader learns it once.
+Before adding a layer or a piece of state, ask whether it reduces reader load elsewhere by at least as much.
+Can a new reader answer "where does X come from?" and "what can change X?" in under thirty seconds?
+If not, cut layers or cut state.

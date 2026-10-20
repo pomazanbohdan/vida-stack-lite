@@ -9,18 +9,18 @@ const instructionSchema = JSON.parse(readFileSync(fileURLToPath(new URL('../conf
 const instructionText = `---
 instruction_id: test-first-development
 title: Test-first development
-summary: Написати тест до реалізації, щоб поведінку можна було перевірити до того, як вона з'явиться.
+summary: Write a test before the implementation so that the behavior can be verified before it appears.
 capability_tags:
   - write-tests-first
   - design-test-cases
 pattern_tags:
   - test-first-development
-conditions_applies_when: зміна додає нову або змінює наявну поведінку.
-conditions_does_not_apply_when: зміна торкається лише документації або коментарів.
+conditions_applies_when: the change adds new or changes existing behavior.
+conditions_does_not_apply_when: the change touches only documentation or comments.
 artifact_contract_output_type: test-suite
 artifact_contract_required_data:
-  - тест-кейси
-  - очікувані результати
+  - test cases
+  - expected results
 artifact_contract_verified_by: bun test
 compatibility_excludes:
   - test-after-development
@@ -35,7 +35,7 @@ revision: 1
 
 # Test-first development
 
-<нормативний текст: 20–80 рядків, імператив, самодостатній>
+<normative text: 20–80 lines, imperative, self-contained>
 `;
 
 describe('parseFrontmatter', () => {
@@ -49,7 +49,7 @@ describe('parseFrontmatter', () => {
     ]);
     expect(result.data.capability_tags).toEqual(['write-tests-first', 'design-test-cases']);
     expect(result.data.pattern_tags).toEqual(['test-first-development']);
-    expect(result.data.artifact_contract_required_data).toEqual(['тест-кейси', 'очікувані результати']);
+    expect(result.data.artifact_contract_required_data).toEqual(['test cases', 'expected results']);
     expect(result.data.compatibility_excludes).toEqual(['test-after-development']);
     expect(result.data.compatibility_requires).toEqual(['define-acceptance-criteria']);
     expect(result.data.provenance).toEqual([
@@ -58,7 +58,7 @@ describe('parseFrontmatter', () => {
     ]);
     expect(result.data.revision).toBe(1);
     expect(result.data.status).toBe('active');
-    expect(result.body).toBe('# Test-first development\n\n<нормативний текст: 20–80 рядків, імператив, самодостатній>\n');
+    expect(result.body).toBe('# Test-first development\n\n<normative text: 20–80 lines, imperative, self-contained>\n');
   });
 
   test('keeps equals and semicolons in one list scalar', () => {
@@ -102,7 +102,7 @@ describe('parseFrontmatter', () => {
     expect(validateAgainstSchema(parseFrontmatter(instructionText).data, instructionSchema)).toEqual([]);
     const guidanceText = instructionText
       .replace('artifact_contract_output_type: test-suite', 'artifact_contract_output_type: none')
-      .replace('artifact_contract_required_data:\n  - тест-кейси\n  - очікувані результати', 'artifact_contract_required_data: []')
+      .replace('artifact_contract_required_data:\n  - test cases\n  - expected results', 'artifact_contract_required_data: []')
       .replace('artifact_contract_verified_by: bun test', 'artifact_contract_verified_by:');
     const guidance = parseFrontmatter(guidanceText);
     expect(guidance.data.artifact_contract_required_data).toEqual([]);

@@ -1,19 +1,19 @@
 ---
 instruction_id: analyze-working-reference
-title: Порівнюй зламаний шлях зі справним
-summary: "Знайди робочий аналог, прочитай його повністю й випиши всі відмінності від зламаного."
+title: Compare the broken path with a working one
+summary: "Find a working example of the same behavior, read it completely, and list every difference before changing one thing at a time."
 capability_tags:
   - debug-root-cause
 pattern_tags:
   - systematic-debugging
-conditions_applies_when: "Є схожий робочий шлях або приклад, з яким можна порівняти збій."
-conditions_does_not_apply_when: Аналога немає і збій досліджується ізольовано.
+conditions_applies_when: A similar working path or example exists to compare with the failure.
+conditions_does_not_apply_when: There is no analogue and the failure is investigated in isolation.
 artifact_contract_output_type: comparison-evidence
 artifact_contract_required_data:
-  - робочий приклад
-  - перелік відмінностей
-  - перевірка
-artifact_contract_verified_by: difference list tested one item at a time
+  - working example
+  - difference list
+  - verification
+artifact_contract_verified_by: the difference list is tested one item at a time
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -22,19 +22,19 @@ status: active
 revision: 1
 ---
 
-# Порівнюй зламаний шлях зі справним
-Знайди робочий приклад тієї самої поведінки.
-Прочитай робочий приклад повністю.
-Визнач його залежності, налаштування й припущення.
-Порівняй робочий і зламаний шлях.
-Випиши кожну відмінність.
-Не відкидай відмінність як незначущу без перевірки.
-Не вважай документацію заміною повного читання прикладу.
-Змінюй одну відмінність за раз.
-Перевір, чи відтворюється збій після наближення до робочого прикладу.
-Не копіюй робочий приклад без розуміння.
-Не адаптуй приклад частково, якщо різниця не встановлена.
-Закріпи знайдену відмінність перевіркою.
-Зафіксуй, що саме відрізняється.
-Перевір суміжний шлях після виправлення.
-Повернися до пошуку, якщо різниця не пояснює збій.
+# Compare the broken path with a working one
+Locate similar working code in the same codebase.
+What works that's similar to what's broken?
+If implementing a pattern, read the reference implementation completely.
+Don't skim; read every line.
+Understand the pattern fully before applying it.
+What's different between working and broken?
+List every difference, however small.
+Don't assume "that can't matter".
+What other components does this need?
+What settings, config, environment?
+What assumptions does it make?
+Partial understanding guarantees bugs.
+Read it completely.
+Identify the differences.
+Compare against references.

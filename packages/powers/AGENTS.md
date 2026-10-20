@@ -1,229 +1,229 @@
 # AGENTS.md — Vida Powers
 
 Product-local instructions for agents developing **Vida Powers** in this
-repository. Це інструкції продукту; кореневий `AGENTS.md` репозиторію —
-згенерований discovery-entry, і його правила діють повністю.
+repository. These are the product instructions; the repository root `AGENTS.md`
+is a generated discovery entry, and its rules apply in full.
 
-**Продукт:** Vida Powers — портативний агентний плагін із канонічним instruction
-corpus, єдиним скілом оркестрації `vp-mode`, допоміжним `vp-setup` і
-матеріалізацією результатів у двох режимах (Standalone / Runtime).
+**Product:** Vida Powers — a portable agent plugin with a canonical instruction
+corpus, a single orchestration skill `vp-mode`, an auxiliary `vp-setup` and
+materialization of results in two modes (Standalone / Runtime).
 
 ---
 
-## 1. Bootstrap: що читати і в якому порядку
+## 1. Bootstrap: what to read and in what order
 
-| # | Файл | Навіщо |
+| # | File | Why |
 |---|---|---|
-| 1 | `docs/next-actions.md` | Поточний обсяг, порядок і ворота робіт |
-| 2 | `docs/research/vida-powers-product-research.md` | B-рівень: продуктова концепція (джерело істини) |
-| 3 | `docs/decisions/index.md` | Ухвалені рішення D1–D9 із підставами |
-| 4 | `docs/implementation-plan.md` | Roadmap етапів 0–9 і ворота якості |
-| 5 | `docs/system-specification.md` (після кроку B) | S-рівень: спостережувана поведінка |
-| 6 | `AGENT.sidecar.md` репозиторію | Розміщення, власники, політика, ворота перевірок |
+| 1 | `docs/next-actions.md` | Current scope, order and gates of work |
+| 2 | `docs/research/vida-powers-product-research.md` | B-level: product concept (source of truth) |
+| 3 | `docs/decisions/index.md` | Accepted decisions D1–D9 with grounds |
+| 4 | `docs/implementation-plan.md` | Roadmap of stages 0–9 and quality gates |
+| 5 | `docs/system-specification.md` (after step B) | S-level: observable behavior |
+| 6 | repository `AGENT.sidecar.md` | Placement, owners, policy, verification gates |
 
-Репозиторні правила (ownership, делегування, документаційна політика, Git) —
-у `../../AGENT.sidecar.md`; вони мають пріоритет над цим файлом у спільних питаннях.
+Repository rules (ownership, delegation, documentation policy, Git) are in
+`../../AGENT.sidecar.md`; they take priority over this file in shared matters.
 
-## 2. Жорсткі межі роботи
+## 2. Hard boundaries of work
 
-- **Працюємо лише в `packages/powers/`.** Спільні root-файли репозиторію
-  (`AGENT.sidecar.md`, `agent-runtime.config.v1.yaml`, документаційна політика,
-  `docs/products.map.md`, `README.md`, knip-конфігурація, root `package.json`) і
-  `packages/agent` **не змінюються** без окремо погодженого запиту (D9).
-- **Runtime-запити оформлюються документами** в `docs/requests/`, а не правками в
-  `packages/agent`. Один спільний запит покриває D3 (розширений instruction
-  registry пакета агента) і D8 (читання методологічного профілю).
-- **Кожна зміна в продукті** має власника (D2): `Vida Powers owner`. Агент
-  реалізує роботу, але не ухвалює продуктових рішень замість власника.
-- **Жодна зміна без попереднього погодження з власником.** План, `docs/next-actions.md`
-  і зафіксовані рішення визначають напрям, а не дозвіл на виконання. Кожен крок
-  узгоджується окремо — до того, як створюються чи змінюються файли. Агент обирає
-  лише реалізацію вже погодженого рішення; непогоджена робота не залишається в
-  дереві й не комітиться.
-- **Один writer на файл.** Спільні файли — тільки Root.
-- Git: коміти роботи Root; публікація (push) — лише за окремим вказівним.
+- **We work only in `packages/powers/`.** The shared root files of the repository
+  (`AGENT.sidecar.md`, `agent-runtime.config.v1.yaml`, the documentation policy,
+  `docs/products.map.md`, `README.md`, the knip configuration, the root `package.json`) and
+  `packages/agent` **are not changed** without a separately agreed request (D9).
+- **Runtime requests are issued as documents** in `docs/requests/`, not as edits in
+  `packages/agent`. One shared request covers D3 (the extended instruction
+  registry of the agent package) and D8 (reading the methodology profile).
+- **Every change in the product** has an owner (D2): `Vida Powers owner`. The agent
+  implements the work but does not make product decisions instead of the owner.
+- **No change without prior agreement with the owner.** The plan, `docs/next-actions.md`
+  and the recorded decisions define the direction, not permission to execute. Every step
+  is agreed separately — before files are created or changed. The agent chooses
+  only the implementation of an already agreed decision; unagreed work does not remain in
+  the tree and is not committed.
+- **One writer per file.** Shared files — Root only.
+- Git: commits are done by Root; publication (push) — only on a separate instruction.
 
-## 3. Інструментальний ланцюг
+## 3. Tool chain
 
-- **Bun 1.4.3 — рантайм проєкту.** `node`/`npm`/`npx` не використовуються.
-  На цій машині Bun **не в PATH**; повний шлях:
+- **Bun 1.4.3 — the project runtime.** `node`/`npm`/`npx` are not used.
+  On this machine Bun is **not on PATH**; full path:
   `C:\Users\pomaz\AppData\Local\Microsoft\WinGet\Packages\Oven-sh.Bun_Microsoft.Winget.Source_8wekyb3d8bbwe\bun-windows-x64\bun.exe`
-- **Жодної власної інфраструктури в плагіні.** Немає власного рантайму,
-  бандлера, пакетного менеджера, CLI-фреймворку чи тестового раннера: усе
-  запозичується з проєкту.
-- **Код плагіна — runtime-агностичний.** Модулі VP мають працювати в будь-якому
-  середовищі (Bun, Node, Deno) без зовнішніх залежностей: лише стандартні
-  `node:` модулі (`fs`, `path`, `process`, `child_process`). Bun-специфічні API
-  (`Bun.YAML`, `Bun.file`, `Bun.spawn`, `import.meta.dir`) дозволені **лише в
-  dev-інструментах** (вони працюють під рантаймом проєкту); у коді, що
-  постачається в скілах, їх немає.
-- **Машинні формати — JSON.** Канонічні дані, які читає код (корпус, профілі,
-  реєстр інструкцій) зберігаються в JSON: `JSON.parse` доступний у будь-якому
-  середовищі. YAML — лише для людських маніфестів (`donors.yaml`), де розбір
-  виконує інструмент проєкту.
-- **Скрипти, що постачаються в скілах** (налаштування, пошук інструкцій), —
-  звичайний TS **без збірки**: виконуються під Bun, Node або Deno. Обмеження:
-  лише `node:` модулі, `import type` для типів, без `enum`/`namespace`/
-  parameter properties (щоб проходило type-stripping), шляхи виводяться з
-  `import.meta.url` через `node:url` (а не з `import.meta.dir`), YAML не
-  парситься.
-- **Тести — під рантаймом проєкту** (`bun test`); це тестовий раннер репозиторію,
-  а не власна інфраструктура плагіна.
-- **Пін версії Bun** — `packages/powers/.bun-version` (значення `1.4.3`, як у
+- **No own infrastructure in the plugin.** There is no own runtime,
+  bundler, package manager, CLI framework or test runner: everything is
+  borrowed from the project.
+- **The plugin code is runtime-agnostic.** VP modules must work in any
+  environment (Bun, Node, Deno) without external dependencies: only the standard
+  `node:` modules (`fs`, `path`, `process`, `child_process`). Bun-specific APIs
+  (`Bun.YAML`, `Bun.file`, `Bun.spawn`, `import.meta.dir`) are allowed **only in
+  dev tools** (they run under the project runtime); in the code
+  shipped in the skills they are absent.
+- **Machine formats are JSON.** The canonical data that the code reads (the corpus, profiles,
+  the instruction registry) are stored in JSON: `JSON.parse` is available in any
+  environment. YAML — only for human manifests (`donors.yaml`), where parsing
+  is performed by a project tool.
+- **Scripts shipped in the skills** (setup, instruction search) —
+  plain TS **without a build**: they run under Bun, Node or Deno. Constraints:
+  only `node:` modules, `import type` for types, no `enum`/`namespace`/
+  parameter properties (so that type-stripping works), paths are derived from
+  `import.meta.url` through `node:url` (not from `import.meta.dir`), YAML is not
+  parsed.
+- **Tests — under the project runtime** (`bun test`); this is the repository test runner,
+  not the plugin's own infrastructure.
+- **Bun version pin** — `packages/powers/.bun-version` (the value `1.4.3`, as in
   `packages/agent/.bun-version`).
-- **Конвенції пакета** дзеркалять `packages/agent`: `tsconfig.json` зі
+- **Package conventions** mirror `packages/agent`: `tsconfig.json` with
   `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
-  `verbatimModuleSyntax`, `types: ["node", "bun"]`; `bunfig.toml` з
+  `verbatimModuleSyntax`, `types: ["node", "bun"]`; `bunfig.toml` with
   `[test] root = "./tests"`, `coverageThreshold = { lines: 1.0, functions: 1.0,
-  statements: 1.0 }`, `randomize`, фіксованим seed.
+  statements: 1.0 }`, `randomize`, a fixed seed.
 
-## 4. Команди
+## 4. Commands
 
-Перевірені на поточний момент (виконувати з кореня репозиторію):
+Verified at the current moment (execute from the repository root):
 
 ```sh
-# Сумісність bundle з Open Knowledge Format v0.2
+# Bundle compatibility with Open Knowledge Format v0.2
 bun packages/powers/scripts/check-okf.ts
 
-# Локальна перевірка посилань і заголовків репозиторним інструментом
-bun tooling/agent/check-documentation.ts <явний список .md-файлів bundle>
+# Local check of links and headings with the repository tool
+bun tooling/agent/check-documentation.ts <explicit list of bundle .md files>
 
-# Тести продукту
+# Product tests
 bun run --cwd packages/powers test
 
-# Типізація продукту (bun check; tsconfig з erasableSyntaxOnly)
+# Product type checking (bun check; tsconfig with erasableSyntaxOnly)
 bun run --cwd packages/powers typecheck
 
-# Репозиторний lint-гейт, який охоплює й код VP
+# Repository lint gate that also covers the VP code
 bun run --cwd packages/agent lint:knip:pinned
 
-# Маніфест донорів (scratch-інструмент у .tmp, ігнорується Git)
+# Donor manifest (scratch tool in .tmp, ignored by Git)
 bun packages/powers/scripts/validate-donors.ts
 ```
 
-> Форма виклику: `bun run --cwd <dir> <script>`. Варіант `bun --cwd <dir> run <script>`
-> друкує usage і не виконує скрипт.
+> Invocation form: `bun run --cwd <dir> <script>`. The variant `bun --cwd <dir> run <script>`
+> prints usage and does not execute the script.
 
-**Встановлення залежностей.** VP має власну install-теку (`packages/powers/bun.lock`,
-`packages/powers/node_modules`) — як `packages/agent`; у VP лише dev-типи
-(`@types/bun`, `@types/node`). Команда: `bun install --cwd packages/powers`.
-Для репозиторію: `bun install --frozen-lockfile --cwd packages/agent` (tracked-файл
-`packages/agent/bun.lock` не змінюється).
+**Installing dependencies.** VP has its own install directory (`packages/powers/bun.lock`,
+`packages/powers/node_modules`) — like `packages/agent`; in VP there are only dev types
+(`@types/bun`, `@types/node`). Command: `bun install --cwd packages/powers`.
+For the repository: `bun install --frozen-lockfile --cwd packages/agent` (the tracked file
+`packages/agent/bun.lock` is not changed).
 
-Після кроку **C** — операції каталогу: `catalog.tags`, `catalog.search`,
-`catalog.get`, `catalog.compose`; після кроку **D** — `convert` і
+After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
+`catalog.get`, `catalog.compose`; after step **D** — `convert` and
 `check-corpus`.
 
-## 5. Структура каталогу
+## 5. Catalog structure
 
-| Шлях | Відповідальність | Крок |
+| Path | Responsibility | Step |
 |---|---|---|
-| `docs/` | OKF-bundle продукту: research, канонічні документи, decision-записи, next-actions, Work Items, runtime-запити | B, F, G |
-| `docs/decisions/` | Ухвалені рішення (одне рішення — одна концепція) | D1–D9 |
-| `docs/work/` | Work Items VP: стабільний ID, AC, evidence, зв'язки | F |
-| `docs/requests/` | Runtime-запити до agent maintainer | G |
-| `config/` | Схеми VP: `VPCatalog/v1` (маніфест каталогу), `VPInstruction/v1` (frontmatter інструкції), `VPEffectiveProfile/v1` (резолвнутий профіль для `compose`; джерельний — `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (мапа обробки) | C |
-| `instructions/` | канонічні інструкції: `.md` + метадані, плоско | D |
-| `corpus-map.json` | мапа обробки корпусу: донор + файл → converted/split/merged/rejected | D |
-| `skills/vp-mode/`, `skills/vp-setup/` | Скіли (оркестрація, налаштування) разом із їхніми `scripts/` — тулінг каталогу й setup; постачаються в плагіні | C, D, E |
-| `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | Per-host plugin і marketplace manifests | E |
-| `scripts/` | Скрипти підтримки продукту: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts` | C, D |
-| `skills/*/scripts/` | Тулінг, що постачається в скілах (каталог, setup) | C, D, E |
-| `tests/` | Тести harness'у VP | A–F |
-| `donors.yaml` | Маніфест донорів: точні ревізії, ліцензії, лічильники | наявний |
-| `package.json` | Манifest пакета VP: knip бачить `packages/powers` як workspace лише з `package.json` | A |
-| `.tmp/` | Scratch: клони донорів, одноразові скрипти. **Ігнорується Git** | D |
+| `docs/` | The product OKF bundle: research, canonical documents, decision records, next-actions, Work Items, runtime requests | B, F, G |
+| `docs/decisions/` | Accepted decisions (one decision — one concept) | D1–D9 |
+| `docs/work/` | VP Work Items: stable ID, AC, evidence, relations | F |
+| `docs/requests/` | Runtime requests to the agent maintainer | G |
+| `config/` | VP schemas: `VPCatalog/v1` (catalog manifest), `VPInstruction/v1` (instruction frontmatter), `VPEffectiveProfile/v1` (the resolved profile for `compose`; the source one is `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (processing map) | C |
+| `instructions/` | canonical instructions: `.md` + metadata, flat | D |
+| `corpus-map.json` | corpus processing map: donor + file → converted/split/merged/rejected | D |
+| `skills/vp-mode/`, `skills/vp-setup/` | Skills (orchestration, setup) together with their `scripts/` — catalog and setup tooling; shipped in the plugin | C, D, E |
+| `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | Per-host plugin and marketplace manifests | E |
+| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts` | C, D |
+| `skills/*/scripts/` | Tooling shipped in the skills (catalog, setup) | C, D, E |
+| `tests/` | Tests of the VP harness | A–F |
+| `donors.yaml` | Donor manifest: exact revisions, licenses, counters | existing |
+| `package.json` | VP package manifest: knip sees `packages/powers` as a workspace only with a `package.json` | A |
+| `.tmp/` | Scratch: donor clones, one-off scripts. **Ignored by Git** | D |
 
-## 6. Інваріанти — не порушувати
+## 6. Invariants — do not violate
 
-1. **Один activation engine.** VP не має другого resolver'а, scheduler'а, ledger'а
-   чи сховища стану. У Runtime виконання належить VIDA Core/Mastra (D3).
-2. **Один canonical owner на контракт.** Наявні runtime-контракти перевикористовуються;
-   VP не створює паралельних версій.
-3. **Тег ≠ агент/skill/крок/дозвіл.** Кожен тег — kebab-case і має ≥2 змістовні
-   компоненти; `TDD` — аліас `test-first-development`.
-4. **Обов'язкові інструкції й залежності не зникають через низький relevance.**
-   Висока оцінка не є доказом правильності, дозволу чи завершення.
-5. **Agent Fallback обов'язковий**: недоступність провайдера, timeout, помилка API,
-   некоректний формат, невідомий candidate ID, недостатня впевненість → перехід до
-   головного агента з матеріалізацією причини (D5).
-6. **Доказ попереджає твердження.** `passed` неможливий без фактичного виконання;
-   статичний аналіз або наявність коду не закривають критерій.
-7. **Матеріалізація за Contract.** `artifact_contract` визначає тип виходу, дані,
-   місце і спосіб перевірки; перевірка наявності/формату/digest окремо від
-   семантичної.
-8. **Scope-first.** Знахідка поза виданним scope — блокер із запитом дозволу, а не
-   тихе розширення; сторонній баг — окремий Finding.
-9. **Джерело кожної інструкції — traceable:** донор, ліцензія, ревізія з
+1. **One activation engine.** VP has no second resolver, scheduler, ledger
+   or state store. In Runtime execution belongs to VIDA Core/Mastra (D3).
+2. **One canonical owner per contract.** Existing runtime contracts are reused;
+   VP does not create parallel versions.
+3. **A tag ≠ agent/skill/step/permission.** Every tag is kebab-case and has ≥2 meaningful
+   components; `TDD` — an alias of `test-first-development`.
+4. **Mandatory instructions and dependencies do not disappear because of low relevance.**
+   A high score is not proof of correctness, permission or completion.
+5. **Agent Fallback is mandatory**: provider unavailability, timeout, API error,
+   incorrect format, unknown candidate ID, insufficient confidence → transition to
+   the main agent with materialization of the reason (D5).
+6. **Evidence precedes claims.** `passed` is impossible without actual execution;
+   static analysis or the presence of code does not close the criterion.
+7. **Materialization by Contract.** `artifact_contract` defines the output type, the data,
+   the place and the method of verification; the presence/format/digest check is separate from
+   the semantic one.
+8. **Scope-first.** A finding outside the issued scope is a blocker with a request for permission, not
+   a silent expansion; a third-party bug is a separate Finding.
+9. **The source of every instruction is traceable:** donor, license, revision from
    `donors.yaml`.
-10. **Стільки стану, скільки потрібно.** Змінений вхід інвалідує лише
-    прив'язаний до нього доказ.
-11. **Зміни лише через погодження.** Жоден файл продукту не створюється і не
-    змінюється без попереднього погодження з власником. Заплановані кроки — це
-    пропозиція, а не дозвіл на виконання; виконання кроку починається лише після
-    явного «так».
-12. **Немає власної інфраструктури.** Плагін не вводить рантайм, бандлер,
-    пакетний менеджер, CLI-фреймворк чи тестовий раннер: усе береться з проєкту.
-    Код плагіна має бути runtime-агностичним і працювати без зовнішніх залежностей.
-13. **Версія — лише в метаданих.** Назва файлу не містить версії, дат, статусів
-    (`draft`, `done`, `final-v2`); версія контенту живе у `revision` у frontmatter,
-    а історія змін — у bundle-журналі `docs/log.md`. Виняток — імена **схем**
-    (`*.v1.schema.json`): там версія формату в самій назві, за конвенцією
-    репозиторію (`packages/agent/schemas/…`).
+10. **As much state as needed.** A changed input invalidates only the
+    evidence bound to it.
+11. **Changes only through agreement.** No product file is created or
+    changed without prior agreement with the owner. Planned steps are
+    a proposal, not permission to execute; execution of a step begins only after
+    an explicit "yes".
+12. **No own infrastructure.** The plugin does not introduce a runtime, bundler,
+    package manager, CLI framework or test runner: everything is taken from the project.
+    The plugin code must be runtime-agnostic and work without external dependencies.
+13. **Version — only in metadata.** A file name contains no version, dates, statuses
+    (`draft`, `done`, `final-v2`); the content version lives in `revision` in the frontmatter,
+    and the change history — in the bundle log `docs/log.md`. The exception is the names of **schemas**
+    (`*.v1.schema.json`): there the format version is in the name itself, by the repository
+    convention (`packages/agent/schemas/…`).
 
-## 7. Ухвалені рішення (коротко; деталі — у `docs/decisions/`)
+## 7. Accepted decisions (briefly; details — in `docs/decisions/`)
 
-| ID | Рішення |
+| ID | Decision |
 |---|---|
-| D1 | VP живе в `packages/powers` як третій продукт; `packages/plugin` — Codex-прослойка |
-| D2 | Монорепозиторій продуктів: кожен плагін має owner'а, документацію, задачі, простір роботи; Work Items VP — у продукті |
-| D3 | VP самостійний: власний `VPCatalog/v1` і власні скрипти; у пакеті агента — розширений instruction registry (runtime-запит) |
-| D4 | Три канали доставки; скіли: `vp-mode` (оркестрація) + `vp-setup` (налаштування) |
-| D4b | `packages/powers` сам є marketplace-власником; Codex — перевірений хост, решта — заявлена підтримка |
-| D5 | Provider-нейтральний `decision.evaluate`; роутінг = вибір LLM + формування агентів + рівень флоу |
-| D6 | Журнал змін — bundle-лог `docs/log.md` (OKF §9) |
-| D7 | `vp-setup` — ініціалізація за середовищем: instruction-файл / конфіг runtime / конфіг проєкту |
-| D8 | `VPMethodologyProfile/v1` — схема VP; носій за середовищем |
-| D9 | Поточний scope — лише `packages/powers`; root-реєстрація відкладена |
+| D1 | VP lives in `packages/powers` as the third product; `packages/plugin` — the Codex layer |
+| D2 | Monorepo of products: each plugin has an owner, documentation, tasks, a work space; VP Work Items — in the product |
+| D3 | VP is standalone: its own `VPCatalog/v1` and its own scripts; in the agent package — an extended instruction registry (runtime request) |
+| D4 | Three delivery channels; skills: `vp-mode` (orchestration) + `vp-setup` (setup) |
+| D4b | `packages/powers` is itself the marketplace owner; Codex — the verified host, the rest — declared support |
+| D5 | Provider-neutral `decision.evaluate`; routing = LLM selection + agent formation + flow level |
+| D6 | Change log — the bundle log `docs/log.md` (OKF §9) |
+| D7 | `vp-setup` — environment-driven initialization: instruction file / runtime config / project config |
+| D8 | `VPMethodologyProfile/v1` — a VP schema; the carrier depends on the environment |
+| D9 | Current scope — only `packages/powers`; root registration is deferred |
 
-## 8. Відомі ризики й GAP
+## 8. Known risks and GAPs
 
-- **A0-гейт (до першого TS-файлу):** knip агента сканує репозиторій цілом і не має
-  workspace для `packages/powers` → можливі «unlisted files» і падіння
-  `lint:knip` (`--max-issues 0`). Перевірка: `bun run --cwd packages/agent
-  lint:knip:pinned`. **Статус: закрито** — залежності встановлено
-  (`bun install --frozen-lockfile --cwd packages/agent`), гейт повертає
-  `{"issues":[]}` і exit 0. Workspace `packages/powers` додано до
-  `packages/agent/knip.config.ts` (owner-виняток, D9 rev 2) з
-  `ignoreBinaries: ['check']` (підкоманда Bun `check` — не npm-бінарник);
-  scratch-тека `.tmp` виключена вже самим `.gitignore`, окремий `ignore` не потрібен.
-  На кроці **C** до entry-патернів додано `skills/*/scripts/*.ts` — одразу з
-  появою першого скрипта скіла (`skills/vp-mode/scripts/schema.ts`); без нього
-  knip не бачить `skills/` і дає config hint. Це той самий owner-виняток D9 rev 2.
-- `packages/powers/docs` **не входить** у `canonical_roots` документаційної
-  політики репозиторію: документи продукту ведуться за власною OKF-дисципліною
-  (`check-okf.ts` + журнал).
-- Runtime-режим VP **не доводиться** у поточному scope (немає реєстрації й
-  runtime-запиту); доводиться Standalone-частина.
-- Cutover `.vida/*` — зовнішній runtime-трек.
-- Marketplace-публікація потребує публічного Git-репозиторію — рішення власника.
+- **A0 gate (before the first TS file):** the agent knip scans the repository as a whole and has no
+  workspace for `packages/powers` → possible "unlisted files" and a failure of
+  `lint:knip` (`--max-issues 0`). Check: `bun run --cwd packages/agent
+  lint:knip:pinned`. **Status: closed** — dependencies are installed
+  (`bun install --frozen-lockfile --cwd packages/agent`), the gate returns
+  `{"issues":[]}` and exit 0. The `packages/powers` workspace was added to
+  `packages/agent/knip.config.ts` (owner exception, D9 rev 2) with
+  `ignoreBinaries: ['check']` (the Bun subcommand `check` is not an npm binary);
+  the scratch directory `.tmp` is already excluded by `.gitignore` itself, a separate `ignore` is not needed.
+  At step **C**, `skills/*/scripts/*.ts` was added to the entry patterns — together with
+  the appearance of the first skill script (`skills/vp-mode/scripts/schema.ts`); without it
+  knip does not see `skills/` and gives a config hint. This is the same owner exception D9 rev 2.
+- `packages/powers/docs` is **not included** in `canonical_roots` of the repository documentation
+  policy: product documents are maintained under their own OKF discipline
+  (`check-okf.ts` + the log).
+- The Runtime mode of VP is **not proven** in the current scope (there is no registration and no
+  runtime request); the Standalone part is proven.
+- The `.vida/*` cutover is an external runtime track.
+- Marketplace publication requires a public Git repository — an owner decision.
 
-## 9. Definition of done для зміни в продукті
+## 9. Definition of done for a change in the product
 
-1. Тест або перевірка, яка падає **до** зміни і проходить **після** неї.
+1. A test or check that fails **before** the change and passes **after** it.
 2. `bun run --cwd packages/powers test` → exit 0.
-3. `bun packages/powers/scripts/check-okf.ts` → exit 0, якщо змінено bundle.
-4. `bun tooling/agent/check-documentation.ts <явний список .md-файлів>` → `failures: []`
-   і `selectedDocuments > 0`; передавання каталогу замість списку файлів обирає
-   один документ і перевірку фактично робить порожньою.
-5. Запис у `docs/log.md` (OKF §9): дата, вид зміни, що саме змінилося.
-6. Для продуктових рішень — окрема концепція в `docs/decisions/` з підставами.
+3. `bun packages/powers/scripts/check-okf.ts` → exit 0, if the bundle was changed.
+4. `bun tooling/agent/check-documentation.ts <explicit list of .md files>` → `failures: []`
+   and `selectedDocuments > 0`; passing a directory instead of a file list selects
+   one document and effectively makes the check empty.
+5. A record in `docs/log.md` (OKF §9): the date, the kind of change, what exactly changed.
+6. For product decisions — a separate concept in `docs/decisions/` with grounds.
 
-## 10. Заборонено
+## 10. Forbidden
 
-- Змінювати `packages/agent`, `packages/plugin` і спільні root-файли.
-- Створювати другий scheduler, DAG-компілятор, ledger або сховище стану.
-- Додавати залежність без погодження; використовувати `node`/`npm`/`npx`.
-- Переносити донорські execution engines, tracker integrations або журнали стану.
-- Заявляти `passed` без фактичного запуску перевірки.
-- Створювати паралельний canonical документ там, де owner уже призначений.
+- Changing `packages/agent`, `packages/plugin` and the shared root files.
+- Creating a second scheduler, DAG compiler, ledger or state store.
+- Adding a dependency without agreement; using `node`/`npm`/`npx`.
+- Transferring donor execution engines, tracker integrations or state journals.
+- Claiming `passed` without actually running the check.
+- Creating a parallel canonical document where an owner has already been assigned.

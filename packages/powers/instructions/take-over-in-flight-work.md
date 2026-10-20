@@ -1,19 +1,19 @@
 ---
 instruction_id: take-over-in-flight-work
-title: "Переймай роботу, що вже триває"
-summary: "Звір описаний стан із фактичним і продовжуй із найменшої наступної дії, не переписуючи чужі рішення."
+title: Take over in-flight work
+summary: "Read the prior trail as authoritative, reconstruct the actual state, and resume from the smallest next action without redoing completed work."
 capability_tags:
   - execute-plan
 pattern_tags:
   - plan-execution
-conditions_applies_when: "Ти починаєш із незавершеної роботи, залишеної іншим виконавцем або попереднім запуском."
-conditions_does_not_apply_when: Робота починається з чистого стану.
+conditions_applies_when: You start from unfinished work left by another executor or a previous run.
+conditions_does_not_apply_when: The work starts from a clean state.
 artifact_contract_output_type: takeover-record
 artifact_contract_required_data:
-  - фактичний стан
-  - ухвалені рішення
-  - точка зупинки
-  - наступний крок
+  - actual state
+  - decisions made
+  - stopping point
+  - next step
 artifact_contract_verified_by: existing checks run before any edit
 compatibility_excludes: []
 compatibility_requires: []
@@ -24,18 +24,18 @@ status: active
 revision: 1
 ---
 
-# Переймай роботу, що вже триває
-Прочитай записку про стан і поточні зміни.
-Перевір, що описаний стан збігається з фактичним.
-Запусти наявні перевірки, перш ніж щось змінювати.
-З'ясуй, які рішення вже ухвалені й чому.
-Знайди місце, де робота зупинилася.
-Перевір, чи не залишилося фонових процесів від попереднього запуску.
-Познач обмеження, які діяли для попереднього виконавця.
-Не змінюй формат звіту, який уже використовує команда.
-Зафіксуй, що саме ти перевірив особисто.
-Підтверди наступний крок із тим, хто передав роботу.
-Не переписуй чужі зміни без причини.
-Онови записку, якщо стан розійшовся з описом.
-Продовж із найменшої наступної дії.
-Віддай підтвердження, що роботу прийнято, і план продовження.
+# Take over in-flight work
+You own the resume point: read the prior trail, do not redo it.
+Locate the prior trail in the active workspace's transcript directory, a cloud-agent URL, or a pushed branch.
+Read the metadata overview and last messages first, then scan back for the decision points.
+Parse a long transcript outside the main thread and keep the reduced timeline.
+Reconstruct operational state: the branch and worktree, what already landed, the open todos, and the decisions made.
+The prior trail is authoritative input; resist the bias to re-derive it.
+Diff done against pending: compare what shipped against what was planned and name the resume point.
+Do not re-run the prior reproduction or redo completed work.
+A "let me verify from scratch" pass means you are treating the trail as untrustworthy when it is authoritative.
+Route the remaining work to the matching workflow and pick the verdict: continue the execution, ship a finished recommendation, ratify or override a prior conclusion, or postmortem a failed run.
+Verify the inherited claims against the original goal on the real artifact.
+A passing prior self-report is not the proof.
+Run the existing checks before any edit.
+Report where the prior agent stopped, what you inherited versus redid, the resume point, and the outcome.

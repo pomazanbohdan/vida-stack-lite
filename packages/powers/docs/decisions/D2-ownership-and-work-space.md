@@ -1,7 +1,7 @@
 ---
 type: Decision
-title: D2 — Модель власності й робочого простору VP у монорепозиторії
-description: 'VP реалізується в цьому репозиторії як монорепозиторій продуктів: кожен плагін має власного owner''a, власну документацію, власний набір задач і власний простір роботи; Work Items і докази VP живуть у продукті, координація — у репозиторії.'
+title: D2 — Ownership and workspace model of VP in the monorepo
+description: 'VP is implemented in this repository as a monorepo of products: each plugin has its own owner, its own documentation, its own task set and its own workspace; VP Work Items and evidence live in the product, coordination — in the repository.'
 status: stable
 stale_after: '2027-10-19T00:00:00Z'
 tags:
@@ -13,7 +13,7 @@ tags:
 sources:
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція та архітектурний baseline
+  title: Vida Powers — product concept and architectural baseline
 - id: sidecar
   resource: /../../AGENT.sidecar.md
   title: VIDA agent and plugin source repository — sidecar
@@ -31,101 +31,101 @@ verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
 revision: '3'
 ---
 
-# Рішення
+# Decision
 
-Vida Powers реалізується **в цьому репозиторії як монорепозиторій продуктів**:
-кожен плагін має власного owner'а, власну документацію, власний набір задач
-(Work Items) і власний простір роботи. Спільними лишаються репозиторні
-policy-файли — `AGENT.sidecar.md`, `agent-runtime.config.v1.yaml`, документаційна
-політика, `docs/products.map.md`, root `package.json`, Git.
+Vida Powers is implemented **in this repository as a monorepo of products**:
+each plugin has its own owner, its own documentation, its own task set
+(Work Items) and its own workspace. What remains shared is the repository
+policy files — `AGENT.sidecar.md`, `agent-runtime.config.v1.yaml`, the documentation
+policy, `docs/products.map.md`, the root `package.json`, Git.
 
-Конкретно для VP:
+Specifically for VP:
 
-- **Owner:** окрема роль **«Vida Powers owner»** у ownership map — як «Plugin owner»
-  і «Agent maintainer». Роль тримає canonical документи VP, ухвалює D3–D8,
-  затверджує методологічні зміни, приймає release VP. Спочатку цю роль виконує
-  repository owner; роль існує окремо, тому передача не потребує переписування
-  карти власності.
-- **Робочий простір:** **гібрид** — Work Items і докази VP живуть **у продукті**
-  (`packages/powers/docs/work/`) як версіоновані OKF-концепції; координація,
-  ownership ledger і checkpoints — у репозиторії (`.agent/`), як у репо зараз.
-- **Реєстрація продукту:** VP отримує власний `project_id`, `wiki_root`,
-  `internal_root`, `ledger_root` (продуктний), `code_selectors`, `delivery_group`
-  і окремий `task_prefix`, щоб не ділити префікс `TASK` з іншими продуктами.
+- **Owner:** a separate role **"Vida Powers owner"** in the ownership map — like "Plugin owner"
+  and "Agent maintainer". The role holds the VP canonical documents, accepts D3–D8,
+  approves methodological changes, accepts a VP release. Initially this role is performed by
+  the repository owner; the role exists separately, so a handover needs no rewriting of
+  the ownership map.
+- **Workspace:** a **hybrid** — VP Work Items and evidence live **in the product**
+  (`packages/powers/docs/work/`) as versioned OKF concepts; coordination,
+  the ownership ledger and checkpoints — in the repository (`.agent/`), as in the repo today.
+- **Product registration:** VP receives its own `project_id`, `wiki_root`,
+  `internal_root`, `ledger_root` (product-level), `code_selectors`, `delivery_group`
+  and a separate `task_prefix`, so as not to share the `TASK` prefix with other products.
 
-# Модель монорепозиторію
+# Monorepo model
 
-| Продукт | Корінь | Owner | Документація | Work Items | Лідер |
+| Product | Root | Owner | Documentation | Work Items | Ledger |
 |---|---|---|---|---|---|
 | Vida Agent | `packages/agent` | Agent maintainer | `packages/agent/docs` | `packages/agent/docs/work` | `.agent/work` |
 | Vida Codex | `packages/plugin` | Plugin owner | `packages/plugin/docs` | `packages/plugin/docs/work` | `.agent/work` |
 | Vida Powers | `packages/powers` | Vida Powers owner | `packages/powers/docs` | `packages/powers/docs/work` | `.agent/work` |
-| Наступні плагіни | `packages/<name>` | власна роль | `packages/<name>/docs` | `packages/<name>/docs/work` | `.agent/work` |
+| Subsequent plugins | `packages/<name>` | its own role | `packages/<name>/docs` | `packages/<name>/docs/work` | `.agent/work` |
 
-Спільне для всіх продуктів: репозиторні policy-файли, root tooling, CI, Git.
-Окреме для кожного: owner, canonical документи, bundle, Work Items, докази,
-release-цикл.
+Shared by all products: repository policy files, root tooling, CI, Git.
+Separate for each: owner, canonical documents, bundle, Work Items, evidence,
+release cycle.
 
-# Контекст
+# Context
 
-- Ownership map має колонку Owner: «Agent maintainer», «Plugin owner»
-  (`AGENT.sidecar.md:33-47`). Owner — це роль, а не обов'язково людина: «Plugin
-  canonical documents are filled by the Plugin owner under a fresh scope»
+- The ownership map has an Owner column: "Agent maintainer", "Plugin owner"
+  (`AGENT.sidecar.md:33-47`). An owner is a role, not necessarily a person: "Plugin
+  canonical documents are filled by the Plugin owner under a fresh scope"
   (`AGENT.sidecar.md:49`).
-- Обидва наявні продукти мають `ledger_root: .agent/work` і `task_prefix: TASK`
-  (`agent-runtime.config.v1.yaml:77, 89` та plugin-блок) — це спільний префікс
-  для двох продуктів у спільному ledger'і.
-- `.agent/` — у `.gitignore` (`.gitignore:5`): нові work-записи не версіонуються за
-  замовчуванням, хоча вже tracked-файли лишаються в Git.
-- Research §6/§7.3 вимагають Work Item як **продуктовий артефакт** зі стабільним
-  ID, AC і evidence: споживач читає його, а не покладається на пам'ять агента.
-  Тому Work Item ≠ execution-стан репозиторію.
+- Both existing products have `ledger_root: .agent/work` and `task_prefix: TASK`
+  (`agent-runtime.config.v1.yaml:77, 89` and the plugin block) — a shared prefix
+  for two products in a shared ledger.
+- `.agent/` is in `.gitignore` (`.gitignore:5`): new work records are not versioned by
+  default, although already tracked files remain in Git.
+- Research §6/§7.3 require a Work Item as a **product artifact** with a stable
+  ID, AC and evidence: the consumer reads it instead of relying on the agent's memory.
+  Therefore a Work Item ≠ the execution state of the repository.
 
-> **Носій ролі (2026-10-19).** Роль «Vida Powers owner» виконує repository owner.
-> Одиницею реєстрації є **роль**, а не особа: передача ролі не потребує переписування
-> ownership map, лише рішення власника.
+> **Role holder (2026-10-19).** The role "Vida Powers owner" is performed by the repository owner.
+> The unit of registration is the **role**, not the person: handing over the role requires no rewriting of
+> the ownership map, only a decision of the owner.
 
-> **Носій ролі (2026-10-19).** Роль «Vida Powers owner» виконує repository owner.
-> Одиницею реєстрації є **роль**, а не особа: передача ролі не потребує переписування
-> ownership map, лише рішення власника.
+> **Role holder (2026-10-19).** The role "Vida Powers owner" is performed by the repository owner.
+> The unit of registration is the **role**, not the person: handing over the role requires no rewriting of
+> the ownership map, only a decision of the owner.
 
-# Розглянуті варіанти
+# Options considered
 
-| Варіант | Суть | Висновок |
+| Option | Essence | Conclusion |
 |---|---|---|
-| (a) Окрема роль «Vida Powers owner» | Роль, аналогічна «Plugin owner»; канонічні документи, D-рішення, release | **Прийнято** |
-| (b) Repository owner виконує роль Powers owner | Одна особа й repository owner, і носій ролі | Прийнято як **носія ролі**; одиницею реєстрації лишається роль (D9) |
-| (c) Agent maintainer | VP під Agent maintainer'ом | Відхилено: VP — методологічний продукт, плутанина owner'ів зруйнує межу runtime-запитів |
-| (d) Work Items у `.agent/work` | Як в агенті | Відхилено: робоча історія VP не потрапляє в Git і не переживає клонування репозиторію; Work Item за research — артефакт |
-| (e) Уся історія в продукті | Крім Work Items і координацію теж у продукті | Відхилено: розмиває межу між продуктовим артефактом і репозиторним execution-станом |
+| (a) A separate role "Vida Powers owner" | A role analogous to "Plugin owner"; canonical documents, D-decisions, release | **Accepted** |
+| (b) The repository owner performs the Powers owner role | One person is both the repository owner and the role holder | Accepted as the **role holder**; the unit of registration remains the role (D9) |
+| (c) Agent maintainer | VP under the Agent maintainer | Rejected: VP is a methodological product, mixing up owners would destroy the boundary of runtime requests |
+| (d) Work Items in `.agent/work` | As in the agent | Rejected: VP work history would not reach Git and would not survive repository cloning; per research, a Work Item is an artifact |
+| (e) All history in the product | Besides Work Items, also coordination in the product | Rejected: blurs the boundary between a product artifact and the repository execution state |
 
-# Наслідки
+# Consequences
 
-1. **Owner VP** додається рядком у ownership map `AGENT.sidecar.md`; роль розмежовується
-   з Agent maintainer'ом: зміни в `packages/agent` оформлюються окремим
-   runtime-запитом, owner VP їх не підписує.
-2. **Product-space реєстрація** у `agent-runtime.config.v1.yaml`: `project_id`,
+1. **VP owner** is added as a line in the ownership map of `AGENT.sidecar.md`; the role is
+   distinguished from the Agent maintainer: changes in `packages/agent` are issued as a separate
+   runtime request, which the VP owner does not sign.
+2. **Product-space registration** in `agent-runtime.config.v1.yaml`: `project_id`,
    `title`, `project_root: packages/powers`, `wiki_root`/`internal_root`:
    `packages/powers/docs`, `ledger_root: packages/powers/docs/work`, `task_prefix`:
-   окремий від `TASK`, `code_selectors: packages/powers/**`, `delivery_group`.
-3. **Doc-policy**: `packages/powers/docs` у `canonical_roots`; changelog-події
-   продукту — у bundle-журналі `packages/powers/docs/log.md`.
-4. **Work Items VP** — OKF-концепції типу `Work Item` у `packages/powers/docs/work/`
-   зі стабільними ID, AC і evidence; навігація — через індекс bundle.
-5. **Узагальнення на наступні плагіни:** реєстраційний патерн (owner + docs bundle +
-   product work space + окремий префікс) стає повторюваним, а не разовим для VP.
-6. **Product KEY** (для `<KEY>-W<NNNN>` / `<KEY>-<N>`) і правило алокації ID
-   фіксуються на Stage 0; префікс має бути відмінним від `TASK`, щоб не було
-   колізій у спільному namespace ідентифікаторів.
+   separate from `TASK`, `code_selectors: packages/powers/**`, `delivery_group`.
+3. **Doc-policy**: `packages/powers/docs` in `canonical_roots`; changelog events
+   of the product — in the bundle log `packages/powers/docs/log.md`.
+4. **VP Work Items** — OKF concepts of type `Work Item` in `packages/powers/docs/work/`
+   with stable IDs, AC and evidence; navigation — through the bundle index.
+5. **Generalization to subsequent plugins:** the registration pattern (owner + docs bundle +
+   product work space + separate prefix) becomes repeatable, not one-off for VP.
+6. **Product KEY** (for `<KEY>-W<NNNN>` / `<KEY>-<N>`) and the ID allocation rule
+   are fixed at Stage 0; the prefix must differ from `TASK` to avoid
+   collisions in the shared namespace of identifiers.
 
-# Вплив на інші рішення
+# Impact on other decisions
 
-- D3, D4, D5, D7, D8 — ухвалює «Vida Powers owner» за рекомендацією автора
-  плану; технічні (D3, D5, D8) не потребують бізнес-входження.
-- D4 (канал доставки) залишається бізнес-рішенням owner'а, бо визначає, чи VP
-  доставляється як плагін монорепозиторію, чи окремо.
-- Stage 0 (реєстрація) виконується за патерном, описаним вище.
+- D3, D4, D5, D7, D8 — accepted by the "Vida Powers owner" on the recommendation of the
+  plan author; the technical ones (D3, D5, D8) need no business input.
+- D4 (delivery channel) remains a business decision of the owner, because it determines whether VP
+  is delivered as a monorepo plugin or separately.
+- Stage 0 (registration) is performed according to the pattern described above.
 
-# Повноваження
+# Authority
 
-Рішення власника репозиторію від 2026-10-19, зафіксоване в поточній розмові.
+Decision of the repository owner dated 2026-10-19, recorded in the current conversation.

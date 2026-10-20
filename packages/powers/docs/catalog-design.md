@@ -1,7 +1,7 @@
 ---
 type: Design Document
-title: Vida Powers — дизайн каталогу інструкцій
-description: 'Як влаштований каталог інструкцій Vida Powers: структура пакета, формат інструкції, операції каталогу, взаємодія з методологічним профілем, валідація, тести й packaging.'
+title: Vida Powers — instruction catalog design
+description: 'How the Vida Powers instruction catalog is structured: package structure, instruction format, catalog operations, interaction with the methodology profile, validation, tests and packaging.'
 status: draft
 stale_after: '2026-11-19T00:00:00Z'
 tags:
@@ -12,181 +12,180 @@ tags:
 sources:
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція та архітектурний baseline
+  title: Vida Powers — product concept and architectural baseline
 - id: system-specification
   resource: /system-specification.md
-  title: Vida Powers — системна специфікація
+  title: Vida Powers — system specification
 - id: business-requirements
   resource: /business-requirements.md
-  title: Vida Powers — бізнес-вимоги
+  title: Vida Powers — business requirements
 - id: decisions
   resource: /decisions/index.md
-  title: Ухвалені рішення D1–D9
+  title: Accepted decisions D1–D11
 - id: next-actions
   resource: /next-actions.md
-  title: Vida Powers — наступні дії в межах packages/powers
+  title: Vida Powers — next actions within packages/powers
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 revision: '7'
 ---
 
-# 1. Навіщо і для кого
+# 1. Why and for whom
 
-Каталог — це **єдине місце, де живуть правила роботи** для агентів VP: одна
-інструкція = одна атомарна норма (що і як робити в одному аспекті: тестування,
-прийняття, research, review…). Каталог обслуговує три ролі:
+The catalog is the **single place where the working rules live** for VP agents: one
+instruction = one atomic norm (what and how to do in one aspect: testing,
+acceptance, research, review…). The catalog serves three roles:
 
-- **Скіл `vp-mode`** (LLM) — читає каталог через операції, формує bundle для
-  задачі й сам вибирає серед кандидатів.
-- **Агент** — отримує вже вибрані тексти інструкцій і працює за ними.
-- **Власник продукту** — редагує інструкції, веде словник тегів і аліаси, визначає
-  сумісність і походження.
+- **The `vp-mode` skill** (LLM) — reads the catalog through operations, forms a bundle for
+  the task and selects among the candidates itself.
+- **The agent** — receives the already selected instruction texts and works by them.
+- **The product owner** — edits instructions, maintains the tag vocabulary and aliases, defines
+  compatibility and provenance.
 
-Ціль: **один canonical owner на правило**. Два агента з каталогу діють за однаковими
-правилами; зміна правила в одному місці змінює його для всіх.
+The goal: **one canonical owner per rule**. Two agents act by the same rules
+from the catalog; a change of a rule in one place changes it for everyone.
 
-# 2. Цілі, не-цілі, анти-цілі
+# 2. Goals, non-goals, anti-goals
 
-**Цілі (v1)**
+**Goals (v1)**
 
-- Одна інструкція = один `.md`-файл із метаданими; плоска тека, без директорій за
-  донорами.
-- Пошук і добір — детерміновані: теги + ефективний методологічний профіль.
-- Операції `catalog.tags / search / get / compose` доступні з будь-якого рантайму
-  без залежностей і без збірки.
-- Походження, ліцензія й ревізія — у метаданих інструкції.
-- Метадані читаються тим самим способом, що донорські `SKILL.md` (frontmatter),
-  але розширені вимірами VP.
+- One instruction = one `.md` file with metadata; a flat directory, no directories per
+  donor.
+- Search and selection are deterministic: tags + the effective methodological profile.
+- The operations `catalog.tags / search / get / compose` are available from any runtime
+  without dependencies and without a build.
+- Provenance, license and revision — in the instruction metadata.
+- Metadata are read in the same way as donor `SKILL.md` (frontmatter),
+  but extended with VP dimensions.
 
-**Не-цілі (v1)**
+**Non-goals (v1)**
 
-- Семантичний (LLM) пошук: `catalog.ts` повертає детермінований shortlist, вибір
-  робить скіл. Семантичне оцінювання — пізніше, як протокол `decision.evaluate` (D5).
-- Проєктні перекриття: каталог **строго канонічний**; проєкт лише обирає профіль і
-  обов'язкові ID. Проєктний шар — відкладене рішення (CAT-D1).
-- Похідний пошуковий індекс: скрипт сканує `instructions/` і тримає мапу в
-  пам'яті. Індекс з'явиться лише за вимірюванням.
-- Мультимовність: v1 — мова продукту.
-- Збірка корпусу з донорів (крок D) — окрема робота; цей дизайн визначає лише
-  **формат**, який конвертер має писати.
+- Semantic (LLM) search: `catalog.ts` returns a deterministic shortlist, the choice is
+  made by the skill. Semantic evaluation — later, as the `decision.evaluate` protocol (D5).
+- Project overlays: the catalog is **strictly canonical**; a project only selects a profile and
+  mandatory IDs. The project layer is a deferred decision (CAT-D1).
+- A derived search index: the script scans `instructions/` and keeps the map in
+  memory. An index will appear only on the basis of measurement.
+- Multilingualism: v1 — the product language.
+- Building the corpus from donors (step D) is separate work; this design defines only
+  the **format** that the converter must write.
 
-**Анти-цілі (що зробить продукт непридатним)**
+**Anti-goals (what would make the product unsuitable)**
 
-- Каталог без походження: інструкція без `provenance_*` не приймається.
-- Каталог із власним рантаймом, залежностями або збіркою.
-- Каталог, який сам вирішує конфлікти груп: вибір альтернативи — за профілем, не
-  за пошуком (іначе пошук «testing» завжди падав би).
-- Другий каталог: дублікати заборонені (SR-65).
+- A catalog without provenance: an instruction without `provenance_*` is not accepted.
+- A catalog with its own runtime, dependencies or a build.
+- A catalog that resolves group conflicts itself: the choice of an alternative is made by the profile, not
+  by search (otherwise a search for "testing" would always fail).
+- A second catalog: duplicates are forbidden (SR-65).
 
-# 3. Обмеження
+# 3. Constraints
 
-| Обмеження | Джерело | Наслідок |
+| Constraint | Source | Consequence |
 |---|---|---|
-| Рантайм проєкту — Bun; власної інфраструктури в плагіні немає | NFR-01, D9 | Один `package.json`/`bunfig`/`tsconfig` у пакеті |
-| Постачаваний код — без збірки під Bun/Node/Deno | NFR-02, SR-63 | Лише `node:` модулі; `import type`; без `enum`/`namespace`/parameter properties; шляхи з `import.meta.url` |
-| Машинні формати — JSON | NFR-03, SR-62 | Дані, які читає **постачаваний** код, — JSON. Виняток — формат самої інструкції: `.md` з frontmatter обмеженого YAML-підмножини (власний формат продукту, §5). Dev-інструменти можуть читати YAML-маніфести продукту (`donors.yaml`) — SR-64 |
-| Каталог не має LLM-клієнта | D5, NFR-01 | Скрипт повертає shortlist; вибір робить скіл |
-| Інструкція має дві форми: документ (джерело) + запис реєстру (похідний) | SR-34, SR-35 | У v1 — лише документ; запис реєстру з'являється на етапі E |
-| Межі системного реєстру — не модель VP | SR-36 | Розширення реєстру — runtime-запит, не частина цього дизайну |
-| Конфлікти груп вирішує профіль | SR-25…SR-28 | `compose` приймає ефективний профіль; без нього конфлікт = помилка |
-| Канонічність каталогу | BR-23, D9 | Проєктні інструкції не підтримуються у v1 |
-| Плагин не має власного LLM-користувача | NFR-01 | Зовнішній провайдер — можливість хоста, не обов'язок VP |
+| The project runtime is Bun; there is no own infrastructure in the plugin | NFR-01, D9 | One `package.json`/`bunfig`/`tsconfig` in the package |
+| Shipped code — without a build for Bun/Node/Deno | NFR-02, SR-63 | Only `node:` modules; `import type`; no `enum`/`namespace`/parameter properties; paths from `import.meta.url` |
+| Machine formats — JSON | NFR-03, SR-62 | The data read by **shipped** code — JSON. The exception is the instruction format itself: `.md` with frontmatter of a limited YAML subset (the product's own format, §5). Dev tools may read product YAML manifests (`donors.yaml`) — SR-64 |
+| The catalog has no LLM client | D5, NFR-01 | The script returns a shortlist; the choice is made by the skill |
+| An instruction has two forms: document (source) + registry entry (derived) | SR-34, SR-35 | In v1 — only the document; the registry entry appears at stage E |
+| The boundaries of the system registry are not the VP model | SR-36 | Extending the registry is a runtime request, not part of this design |
+| Group conflicts are resolved by the profile | SR-25…SR-28 | `compose` accepts the effective profile; without it a conflict is an error |
+| Canonicality of the catalog | BR-23, D9 | Project instructions are not supported in v1 |
+| The plugin has no own LLM user | NFR-01 | An external provider is a host capability, not a VP obligation |
 
-# 4. Структура пакета
+# 4. Package structure
 
 ```text
 packages/powers/
   skills/
     vp-mode/
-      SKILL.md                    ← основний скіл оркестрації (host-конвенція)
+      SKILL.md                    ← the main orchestration skill (host convention)
       scripts/
-        schema.ts                 ← валідатор обмеженої підмножини JSON Schema
-        frontmatter.ts            ← парсер обмеженого YAML-підмножини
-        catalog.ts                ← операції tags/search/get/compose (+ CLI)
+        schema.ts                 ← validator of a limited JSON Schema subset
+        frontmatter.ts            ← parser of a limited YAML subset
+        catalog.ts                ← operations tags/search/get/compose (+ CLI)
     vp-setup/
-      SKILL.md                    ← допоміжний скіл налаштування
+      SKILL.md                    ← auxiliary setup skill
       scripts/
         setup.ts
-  instructions/                   ← канонічні інструкції: плоско, .md + метадані
+  instructions/                   ← canonical instructions: flat, .md + metadata
     test-first-development.md
     define-acceptance-criteria.md
     …
-  scripts/                        ← інструменти підтримки продукту (як у донорів)
-    check-okf.ts                  ← уже існує (переноситься з tooling/)
-    check-corpus.ts               ← валідація корпусу
-    validate-donors.ts            ← переноситься з .tmp
-    convert.ts                    ← конвертер донорів (крок D)
+  scripts/                        ← product support tools (as with the donors)
+    check-okf.ts                  ← already exists (moved from tooling/)
+    check-corpus.ts               ← corpus validation
+    validate-donors.ts            ← moved from .tmp
+    convert.ts                    ← donor converter (step D)
   config/
-    vpcatalog.v1.schema.json      ← схема catalog.json
-    vpcorpusmap.v1.schema.json     ← схема мапи обробки (SR-66)
-    vpinstruction.v1.schema.json   ← схема frontmatter інструкції (§5)
-    vpeffectiveprofile.v1.schema.json ← схема ефективного профілю для compose
-  docs/                           ← OKF-bundle (цей дизайн — частина bundle)
+    vpcatalog.v1.schema.json      ← schema of catalog.json
+    vpcorpusmap.v1.schema.json     ← schema of the processing map (SR-66)
+    vpinstruction.v1.schema.json   ← schema of the instruction frontmatter (§5)
+    vpeffectiveprofile.v1.schema.json ← schema of the effective profile for compose
+  docs/                           ← OKF bundle (this design is part of the bundle)
   tests/
     catalog.test.ts  frontmatter.test.ts  check-corpus.test.ts  catalog-cli.test.ts
     fixtures/{valid,invalid-tag,missing-provenance,conflicting}/
-  catalog.json                    ← ідентичність каталогу + словник тегів + аліаси
-  corpus-map.json                 ← мапа обробки: донор + файл → converted/split/merged/rejected
+  catalog.json                    ← catalog identity + tag vocabulary + aliases
+  corpus-map.json                 ← processing map: donor + file → converted/split/merged/rejected
   package.json  bunfig.toml  tsconfig.json  .bun-version
 ```
 
-**Правила**
+**Rules**
 
-- Інструкція: `instructions/<instruction_id>.md`; `instruction_id` — kebab-case,
-  стабільний, не перевикористовується; `instruction_id` у frontmatter дорівнює
-  імені файлу (валідатор перевіряє). Ім'я файлу без дат, статусів і `final-v2`.
-- **Версія контенту — лише в метаданих:** `revision` у frontmatter; історія змін — у
-  bundle-журналі `docs/log.md`. У назві файлу версії, дат і статусів немає.
-  Виняток — імена схем (`config/*.v1.schema.json`): там версія формату в самій
-  назві, за конвенцією репозиторію.
-- Скрипти скіла — у `skills/<skill>/scripts/`; тулінг підтримки продукту — у
-  `scripts/` у корені пакета (як `scripts/` у superpowers).
-- Пер-хостові маніфести (`.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`) —
-  етап E; **корінь плагіна = корінь пакета**, тобто вантаж = `skills/` +
-  `instructions/` + `catalog.json` (+ `config/` для dev-інструментів). Операції
-  знаходять каталог без окремої інсталяції.
-- `tsconfig.json` `include` має покривати `scripts/**/*.ts`, `skills/**/*.ts`,
-  `tests/**/*.ts` — інакше typecheck мовчки перестає перевіряти
-  новий код.
-- У knip-конфіг (`packages/agent/knip.config.ts`, owner-виняток D9 rev 2)
-  entry-патерни workspace `packages/powers`: `scripts/*.ts` і `skills/*/scripts/*.ts`.
-  Другий патерн додано на кроці C — одразу з появою першого скрипта скіла
-  (без нього knip не бачить `skills/` і дає config hint).
+- An instruction: `instructions/<instruction_id>.md`; `instruction_id` — kebab-case,
+  stable, not reused; the `instruction_id` in the frontmatter equals
+  the file name (the validator checks this). The file name has no dates, statuses or `final-v2`.
+- **The content version — only in metadata:** `revision` in the frontmatter; the change history — in the
+  bundle log `docs/log.md`. The file name has no versions, dates or statuses.
+  The exception is schema names (`config/*.v1.schema.json`): there the format version is in the
+  name itself, by the repository convention.
+- Skill scripts — in `skills/<skill>/scripts/`; product support tooling — in
+  `scripts/` at the root of the package (like `scripts/` in superpowers).
+- Per-host manifests (`.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`) —
+  stage E; **the plugin root = the package root**, i.e. the payload = `skills/` +
+  `instructions/` + `catalog.json` (+ `config/` for dev tools). The operations
+  find the catalog without a separate installation.
+- The `include` of `tsconfig.json` must cover `scripts/**/*.ts`, `skills/**/*.ts`,
+  `tests/**/*.ts` — otherwise typecheck silently stops checking
+  new code.
+- In the knip config (`packages/agent/knip.config.ts`, owner exception D9 rev 2)
+  the entry patterns of the `packages/powers` workspace: `scripts/*.ts` and `skills/*/scripts/*.ts`.
+  The second pattern was added at step C — together with the appearance of the first skill script
+  (without it knip does not see `skills/` and gives a config hint).
+# 5. Instruction format
 
-# 5. Формат інструкції
+A `.md` file with frontmatter. Values are **flat scalars** and **YAML blocks** for
+lists; there are no nested maps (a parser without dependencies). The field names are canonical from
+the S-document; every composite field of the S-document has a flat prefix.
 
-`.md`-файл із frontmatter. Значення — **плоскі скаляри** та **YAML-блоки** для
-списків; вкладених map немає (парсер без залежностей). Імена полів — канонічні з
-S-документа; кожне складене поле S-документа має плоский префікс.
+**The YAML subset in the frontmatter.** Boundaries:
 
-**Підмножина YAML у frontmatter.** Межі:
-
-- `key: value` — скаляр, подвійні лапки або порожнє значення (`key:` → `''`);
-- блок-список — рядки `- item` з відступом у два пробіли;
-- **порожній список — лише `key: []`** (єдиний дозволений flow-літерал); інший
-  flow (`[a, b]`, `{...}`) — помилка;
-- значення, що містять `:`, беруться **в подвійні лапки** (неекранована `:` у
-  значенні — помилка);
-- `=`, `;`, `#` у значенні — літерали (коментар — лише рядок, перший
-  не-пробільний символ якого — `#`);
-- не підтримуються (помилка, а не мовчазне трактування): вкладені map, багаторядкові
-  блоки (`|`, `>`), anchors/aliases, YAML-теги, список у списку, дублікат ключа.
+- `key: value` — a scalar, double quotes or an empty value (`key:` → `''`);
+- a block list — lines `- item` with a two-space indent;
+- **an empty list — only `key: []`** (the single allowed flow literal); any other
+  flow (`[a, b]`, `{...}`) is an error;
+- values containing `:` are taken **in double quotes** (an unescaped `:` in a
+  value is an error);
+- `=`, `;`, `#` in a value are literals (a comment is only a line whose first
+  non-space character is `#`);
+- not supported (an error rather than a silent interpretation): nested maps, multiline
+  blocks (`|`, `>`), anchors/aliases, YAML tags, a list within a list, a duplicate key.
 
 ```markdown
 ---
 instruction_id: test-first-development
 title: Test-first development
-summary: Написати тест до реалізації, щоб поведінку можна було перевірити до того, як вона з'явиться.
+summary: Write a test before the implementation so that the behavior can be verified before it appears.
 capability_tags:
   - write-tests-first
   - design-test-cases
 pattern_tags:
   - test-first-development
-conditions_applies_when: зміна додає нову або змінює наявну поведінку.
-conditions_does_not_apply_when: зміна торкається лише документації або коментарів.
+conditions_applies_when: the change adds new or changes existing behavior.
+conditions_does_not_apply_when: the change touches only documentation or comments.
 artifact_contract_output_type: test-suite
 artifact_contract_required_data:
-  - тест-кейси
-  - очікувані результати
+  - test cases
+  - expected results
 artifact_contract_verified_by: bun test
 compatibility_excludes:
   - test-after-development
@@ -201,12 +200,12 @@ revision: 1
 
 # Test-first development
 
-<нормативний текст: 20–80 рядків, імператив, самодостатній>
+<normative text: 20–80 lines, imperative, self-contained>
 ```
 
-**Відповідність полів S-документа**
+**Correspondence of S-document fields**
 
-| Поле S-документа | Ключ у frontmatter |
+| S-document field | Frontmatter key |
 |---|---|
 | `instruction_id` | `instruction_id` |
 | `title`, `summary` | `title`, `summary` |
@@ -214,103 +213,105 @@ revision: 1
 | `conditions.applies_when` / `.does_not_apply_when` | `conditions_applies_when` / `conditions_does_not_apply_when` |
 | `artifact_contract.output_type` / `.required_data` / `.verified_by` | `artifact_contract_output_type` / `_required_data` / `_verified_by` |
 | `compatibility.excludes` / `.requires` | `compatibility_excludes` / `compatibility_requires` |
-| `provenance` (джерело: donor, license, source_revision, source_path) | `provenance[]` — список рядків `donor=…; license=…; revision=…; path=…` |
-| `roles` / `products` (необов'язкові; фільтри пошуку, SR-10/SR-70) | `roles` / `products` |
+| `provenance` (source: donor, license, source_revision, source_path) | `provenance[]` — a list of lines `donor=…; license=…; revision=…; path=…` |
+| `roles` / `products` (optional; search filters, SR-10/SR-70) | `roles` / `products` |
 | `status`, `revision` | `status`, `revision` |
 
-**Правила валідації**
+**Validation rules**
 
-| Правило | Порушення |
+| Rule | Violation |
 |---|---|
-| `instruction_id` = ім'я файлу, kebab-case, унікальний | `CATALOG_INVALID` |
-| `title`, `summary` — непорожні рядки | `CATALOG_INVALID` |
-| `capability_tags` ≥ 1; кожен тег kebab-case із ≥2 змістовними компонентами; є в словнику | `CATALOG_INVALID` / `CATALOG_TAG_UNKNOWN` |
-| `pattern_tags` ≥ 1; ті самі правила | `CATALOG_INVALID` / `CATALOG_TAG_UNKNOWN` |
-| `conditions_*` — непорожні рядки | `CATALOG_INVALID` |
-| `artifact_contract_*` — для інструкцій, що виробляють результат, `output_type` і `verified_by` непорожні; для guidance — `output_type` = `none`, `required_data` порожній | `CATALOG_INVALID` |
-| `compatibility_excludes`/`_requires` — відомі `instruction_id`; `requires` не містить себе | `CATALOG_DEPENDENCY_MISSING` / `CATALOG_INVALID` |
-| `provenance` — список із щонайменше одного джерела; кожне — рядок `donor=…; license=…; revision=…; path=…`: `donor` ∈ `donors.yaml`, `license` збігається з маніфестом, `revision` **дорівнює** `donors.yaml[donor].head_sha`; те саме джерело двічі — не приймається | `CATALOG_INVALID` |
-| `status` ∈ `active` \| `disabled`; `revision` — ціле ≥1 | `CATALOG_INVALID` |
-| `roles`, `products` — необов'язкові; кожен — kebab-case; відсутність або порожній список = «застосовно до будь-якої ролі/продукту» | `CATALOG_INVALID` |
-| Виняток із правила тегів — лише через `catalog.json` → `tag_exemptions[]` (`instruction_id`, `dimension`, `reason`) | `CATALOG_INVALID` |
+| `instruction_id` = file name, kebab-case, unique | `CATALOG_INVALID` |
+| `title`, `summary` — non-empty strings | `CATALOG_INVALID` |
+| `capability_tags` ≥ 1; every tag is kebab-case with ≥2 meaningful components; present in the vocabulary | `CATALOG_INVALID` / `CATALOG_TAG_UNKNOWN` |
+| `pattern_tags` ≥ 1; the same rules | `CATALOG_INVALID` / `CATALOG_TAG_UNKNOWN` |
+| `conditions_*` — non-empty strings | `CATALOG_INVALID` |
+| `artifact_contract_*` — for instructions that produce a result, `output_type` and `verified_by` are non-empty; for guidance — `output_type` = `none`, `required_data` empty | `CATALOG_INVALID` |
+| `compatibility_excludes`/`_requires` — known `instruction_id`s; `requires` does not contain itself | `CATALOG_DEPENDENCY_MISSING` / `CATALOG_INVALID` |
+| `provenance` — a list of at least one source; each — a line `donor=…; license=…; revision=…; path=…`: `donor` ∈ `donors.yaml`, `license` matches the manifest, `revision` **equals** `donors.yaml[donor].head_sha`; the same source twice is not accepted | `CATALOG_INVALID` |
+| `status` ∈ `active` \| `disabled`; `revision` — an integer ≥1 | `CATALOG_INVALID` |
+| `roles`, `products` — optional; each — kebab-case; absence or an empty list = "applicable to any role/product" | `CATALOG_INVALID` |
+| An exception to the tag rule — only through `catalog.json` → `tag_exemptions[]` (`instruction_id`, `dimension`, `reason`) | `CATALOG_INVALID` |
 
-Тіло інструкції — нормативний текст; без дублювання research (research — концепція,
-інструкція — норма).
+The body of an instruction is normative text; without duplicating research (research is the concept,
+the instruction is the norm). It is the **donor's original text** for that norm — not a translation
+and not a paraphrase (D11); only cutting, merging duplicated sentences, neutralising donor names
+and paths, moving the trigger into `conditions_*`, and adding a completion criterion the donor
+itself states are allowed.
 
-## 5a. Формування інструкцій (крок D)
+## 5a. Formation of instructions (step D)
 
-**Принцип: скрипт ніколи не пише нормативний текст.** Семантика (відбір,
-сегментація, теґування, злиття) — робота агента; механіка (інвентаризація,
-рендер, provenance, валідація) — робота скрипта. Конвертер — агент-процедура зі
-скриптовою опорою, а не «магічний скрипт».
+**Principle: the script never writes normative text.** Semantics (selection,
+segmentation, tagging, merging) — the agent's work; mechanics (inventory,
+render, provenance, validation) — the script's work. The converter is an agent procedure with a
+script backbone, not a "magic script".
 
-| Фаза | Хто | Що робить | Артефакт |
+| Phase | Who | What it does | Artifact |
 |---|---|---|---|
-| 1. Інвентаризація | скрипт | обхід клону донора, перелік файлів-носіїв: шлях, розмір, frontmatter, заголовки | `inventory/<donor>.json` |
-| 2. Відбір кандидатів | агент | відсіює те, що не є методологією (changelog, docs, інфраструктура) | `corpus-map.json` (записи `rejected` з причинами) |
-| 3. Сегментація | агент | один donor-skill містить кілька норм — ділить на атомарні інструкції | специфікації інструкцій (JSON) |
-| 4. Рендер + provenance | скрипт `convert.ts` | з специфікації генерує `.md` і **проставляє джерела** (донор, ліцензія, SHA, шлях) | `instructions/<id>.md` |
-| 5. Злиття дублікатів | агент | одна норма = одна інструкція з усіма джерелами | інструкція + `provenance[]` |
-| 6. Валідація й рецензія | скрипт + власник | `check-corpus.ts` → вибірка на рецензію → затвердження словника й груп | звіт покриття |
+| 1. Inventory | script | traverses the donor clone, lists carrier files: path, size, frontmatter, headings | `inventory/<donor>.json` |
+| 2. Candidate selection | agent | filters out what is not methodology (changelog, docs, infrastructure) | `corpus-map.json` (`rejected` entries with reasons) |
+| 3. Segmentation | agent | one donor skill contains several norms — splits it into atomic instructions | instruction specifications (JSON) |
+| 4. Render + provenance | `convert.ts` script | generates `.md` from the specification and **sets the sources** (donor, license, SHA, path) | `instructions/<id>.md` |
+| 5. Merging duplicates | agent | one norm = one instruction with all sources | instruction + `provenance[]` |
+| 6. Validation and review | script + owner | `check-corpus.ts` → sample for review → approval of the vocabulary and groups | coverage report |
 
-**Злиття дублікатів (фаза 5).** Семантично однакові норми з різних донорів не
-лишаються окремими інструкціями:
+**Merging duplicates (phase 5).** Semantically identical norms from different donors do not
+remain as separate instructions:
 
-- Одна норма присутня в корпусі **рівно один раз**; її джерела — в `provenance[]`.
-- Формулювання зливається: береться **краща термінологія** з набору джерел, і
-  терміни зводяться до контрольованого словника (теги, групи профілю, наші імена
-  полів). Donor'івські формулювання зберігаються лише там, де вони несуть зміст, а
-  не лексику.
-- Зміна тексту або додавання джерела піднімає `revision` інструкції; подія
-  записується в журнал bundle.
-- Джерело одного донора може обґрунтувати кілька інструкцій (сегментація) — це
-  нормально; заборонено лише дублювання самої норми.
+- One norm is present in the corpus **exactly once**; its sources are in `provenance[]`.
+- The wording is merged: the **better terminology** is taken from the set of sources, and
+  the terms are reduced to the controlled vocabulary (tags, profile groups, our field
+  names). Donor wordings are preserved only where they carry meaning and
+  not mere vocabulary.
+- A change of the text or the addition of a source raises the instruction's `revision`; the event
+  is recorded in the bundle log.
+- A source of one donor can substantiate several instructions (segmentation) — this is
+  normal; only duplication of the norm itself is forbidden.
 
-**Мапа обробки (артефакт фази 2–5).** `packages/powers/corpus-map.json`
-(`VPCorpusMap/v1`) — міст між донорами та корпусом: для кожного донора (з
-зафіксованою ревізією) і кожного файлу-носія — результат обробки.
+**Processing map (artifact of phases 2–5).** `packages/powers/corpus-map.json`
+(`VPCorpusMap/v1`) — a bridge between the donors and the corpus: for every donor (with a
+pinned revision) and every carrier file — the processing result.
 
-| Статус | Значення |
+| Status | Meaning |
 |---|---|
-| `converted` | файл дав рівно одну інструкцію |
-| `split` | файл розщеплено на кілька атомарних інструкцій |
-| `merged` | норма злита з іншою інструкцією (у `contributed_sources` — джерела внеску) |
-| `rejected` | файл відсіяно як не-методологія, з `reason` |
+| `converted` | the file produced exactly one instruction |
+| `split` | the file was split into several atomic instructions |
+| `merged` | the norm was merged into another instruction (in `contributed_sources` — the contributing sources) |
+| `rejected` | the file was filtered out as non-methodology, with a `reason` |
 
-Властивості мапи: ключ — донор + ревізія + шлях, тому повторний прогін на тій самій
-ревізії нічого не змінює (конвертація ідемпотентна), а зміна ревізії донора
-видимається в мапі; відхилення фіксуються **у мапі**, а не в окремому звіті;
-кожна інструкція корпусу має запис у мапі, і кожен запис мапи вказує на наявну
-інструкцію — інакше помилка валідації. Інвентар (фаза 1) лишається у `.tmp`:
-він детермінований із пін-клону й відтворюваний.
+Map properties: the key is donor + revision + path, so a repeated run on the same
+revision changes nothing (conversion is idempotent), and a change of the donor revision
+is visible in the map; rejections are recorded **in the map**, not in a separate report;
+every instruction of the corpus has an entry in the map, and every map entry points to an existing
+instruction — otherwise a validation error. The inventory (phase 1) stays in `.tmp`:
+it is deterministic from the pinned clone and reproducible.
 
-**Обсяг кандидатів (виміряно у клонах із `donors.yaml`)**
+**Volume of candidates (measured in the clones from `donors.yaml`)**
 
-| Донор | `.md` | SKILL.md | Коментар |
+| Donor | `.md` | SKILL.md | Comment |
 |---|---|---|---|
-| superpowers | 65 | 15 | + 45 доп. `.md` у skill'ах |
-| ponytail | 60 | 12 | MVP-пара |
+| superpowers | 65 | 15 | + 45 additional `.md` in the skills |
+| ponytail | 60 | 12 | MVP pair |
 | BMAD | 327 | — | workflows/agents |
 | matt-skills | 132 | — | |
 | addy-skills | 113 | — | |
-| pstack (у cursor/plugins) | 430 | — | наш донор — лише підкаталог `pstack/` (169 tracked-файлів — це `content_file_count` у `donors.yaml`; 430 — увесь монорепозиторій) |
-| GSD | 1815 | — | переважно docs, не методологія |
+| pstack (in cursor/plugins) | 430 | — | our donor is only the `pstack/` subdirectory (169 tracked files — this is `content_file_count` in `donors.yaml`; 430 — the whole monorepo) |
+| GSD | 1815 | — | mostly docs, not methodology |
 
-MVP = superpowers + ponytail: ≈ 125 файлів-кандидатів → орієнтовно 25–40
-інструкцій; остаточну кількість задає exit criteria кроку D.
+MVP = superpowers + ponytail: ≈ 125 candidate files → roughly 25–40
+instructions; the final number is set by the exit criteria of step D.
 
-**Що не переноситься** (research §4.1): execution engines, tracker integrations,
-журнали стану донорів. Відсіювання — на фазі 2, і кожне відсіювання фіксується з
-причиною у звіті відбору.
-
-# 6. Формат `catalog.json`
+**What is not transferred** (research §4.1): execution engines, tracker integrations,
+donor state journals. Filtering happens at phase 2, and every rejection is recorded with a
+reason in the selection report.
+# 6. Format of `catalog.json`
 
 ```json
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
   "revision": 1,
-  "source_revision": "<git commit корпусу>",
+  "source_revision": "<git commit of the corpus>",
   "updated_at": "2026-10-19T00:00:00Z",
   "tag_dictionary": {
     "capability": { "write-tests-first": "…" },
@@ -326,78 +327,78 @@ MVP = superpowers + ponytail: ≈ 125 файлів-кандидатів → ор
 }
 ```
 
-- `catalog.json` — єдиний машинний файл каталогу: ідентичність + словник тегів +
-  аліаси + винятки + перелік інструкцій із `sha256`.
-- **Хто пише `catalog.json`:** перелік інструкцій (і `sha256`) — **лише**
-  `scripts/convert.ts` (CAT-D3, SR-76); runtime-скрипти лише читають. Ініціалізація
-  файлу — **owner-контент**: агент створює `catalog.json` з ідентичністю та
-  затвердженим словником (порожній словник не приймається конвертером), а далі
-  конвертер веде лише перелік інструкцій і не змінює словник, аліаси та винятки.
-- Опис тегу обов'язковий: тег без опису → помилка (SR-05).
-- `tag_aliases` — напрям **«аліас → канонічний»** (`{ "tdd": "test-first-development" }`); пошук зводить аліас до канонічного тегу, `catalog.tags` показує канонічні теги й їхні аліаси.
-- `tag_exemptions` — єдиний механізм запису відхилень.
+- `catalog.json` is the single machine file of the catalog: identity + tag vocabulary +
+  aliases + exceptions + the list of instructions with `sha256`.
+- **Who writes `catalog.json`:** the list of instructions (and `sha256`) — **only**
+  `scripts/convert.ts` (CAT-D3, SR-76); runtime scripts only read. Initialization of the
+  file is **owner content**: the agent creates `catalog.json` with the identity and the
+  approved vocabulary (an empty vocabulary is not accepted by the converter), and then
+  the converter maintains only the list of instructions and does not change the vocabulary, aliases or exceptions.
+- A tag description is mandatory: a tag without a description → an error (SR-05).
+- `tag_aliases` — the direction **"alias → canonical"** (`{ "tdd": "test-first-development" }`); search reduces an alias to the canonical tag, `catalog.tags` shows the canonical tags and their aliases.
+- `tag_exemptions` — the single mechanism for recording exemptions.
 
-**Як фіксується довідник тегів.** `catalog.json` —
-єдине місце словника: `tag_dictionary` (тег → опис), `tag_aliases`
-(у `tag_aliases` напрям **«аліас → канонічний»**), `tag_exemptions`. Процес пакетний, без перепитувань на
-кожен тег:
+**How the tag vocabulary is fixed.** `catalog.json` is
+the single place of the vocabulary: `tag_dictionary` (tag → description), `tag_aliases`
+(in `tag_aliases` the direction is **"alias → canonical"**), `tag_exemptions`. The process is batched, without re-asking for
+every tag:
 
-1. Під час формування агент збирає потрібні теги, але **не** додає їх у словник.
-2. Наприкінці обробки донора (або всієї фази) агент видає **пропозицію пакета**:
-   новий тег + одне речення опису + де вживається.
-3. Власник затверджує пакет **одним проходом**; теги потрапляють у `catalog.json`.
-4. Далі конвертуються інструкції, які їх використовують; валідатор вимагає, щоб
-   кожен вжитий тег мав опис.
+1. During formation the agent collects the needed tags but does **not** add them to the vocabulary.
+2. At the end of processing a donor (or the whole phase) the agent issues a **package proposal**:
+   a new tag + one sentence of description + where it is used.
+3. The owner approves the package **in a single pass**; the tags enter `catalog.json`.
+4. Then the instructions that use them are converted; the validator requires that
+   every used tag has a description.
 
-**Теги додаються по мірі опрацювання** (рішення власника, 2026-10-20): довідник
-не затверджується разом на весь корпус — пакетне затвердження відбувається на
-завершенні обробки кожного донора або фази. Seed-корпус (superpowers + ponytail):
-12 capability-тегів, 11 pattern-тегів, 1 аліас — затверджено одним проходом
-2026-10-20. Наступні донори дають власні пакети.
+**Tags are added as processing proceeds** (owner decision, 2026-10-20): the vocabulary
+is not approved all at once for the whole corpus — batch approval happens at
+the completion of processing each donor or phase. The seed corpus (superpowers + ponytail):
+12 capability tags, 11 pattern tags, 1 alias — approved in a single pass
+on 2026-10-20. Subsequent donors produce their own packages.
 
-Довідник — також **авторитет термінології для злиття**: терміни зливаної
-інструкції беруться зі словника; новий термін потрапляє в пакетну пропозицію, а не
-«як вийде». Групи й активна альтернатива — не в довіднику, а в методологічному
-профілі (профіль володіє групами; довідник — значеннями тегів).
+The vocabulary is also the **terminology authority for merging**: the terms of a merged
+instruction are taken from the vocabulary; a new term enters the batch proposal rather than
+being introduced "as it comes out". Groups and the active alternative are not in the vocabulary but in the methodological
+profile (the profile owns the groups; the vocabulary owns the tag values).
 
-# 7. Операції
+# 7. Operations
 
-Чисті функції над каталогом + CLI-обгортка. Вивід — **JSON на stdout**; помилка —
-JSON на stderr (`{code, message, details}`) і ненульовий exit-код. Скрипт не знає про
-LLM, хости й репозиторій; каталог знаходить **від власного файлу** (`import.meta.url`),
-з перекриттям `--catalog <path>` (тести, альтернативні розкладки).
+Pure functions over the catalog + a CLI wrapper. Output — **JSON on stdout**; an error —
+JSON on stderr (`{code, message, details}`) and a non-zero exit code. The script knows nothing about
+the LLM, hosts and the repository; it finds the catalog **from its own file** (`import.meta.url`),
+with an override `--catalog <path>` (tests, alternative layouts).
 
-| Операція | Вхід | Вихід | Помилки |
+| Operation | Input | Output | Errors |
 |---|---|---|---|
 | `catalog.tags` | — | `{capability:[{tag,description,aliases[]}], pattern:[…]}` | `CATALOG_INVALID` |
-| `catalog.search` | `capability[]`, `pattern[]`, `instruction_ids[]`, `roles[]`, `products[]`, `conditions[]` | `{results:[{instruction_id,title,summary,capability_tags,pattern_tags,revision}]}` — **без `content`** | `CATALOG_INVALID` |
-| `catalog.get` | `instruction_id` | `{instruction:{…усі поля…}}` | `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED` |
-| `catalog.compose` | `capability[]`, `pattern[]`, `instruction_ids[]`, `roles[]`, `products[]`, `conditions[]`, `required_ids[]`, `profile` | `{instructions:[{instruction_id,title,summary,content,artifact_contract,selection_reason}]}` + контекст виконання (SR-23) | `CATALOG_INVALID`, `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED`, `CATALOG_REQUIRED_CONFLICT`, `CATALOG_PROFILE_CONFLICT`, `CATALOG_DEPENDENCY_MISSING`, `CATALOG_DEPENDENCY_DISABLED` |
+| `catalog.search` | `capability[]`, `pattern[]`, `instruction_ids[]`, `roles[]`, `products[]`, `conditions[]` | `{results:[{instruction_id,title,summary,capability_tags,pattern_tags,revision}]}` — **without `content`** | `CATALOG_INVALID` |
+| `catalog.get` | `instruction_id` | `{instruction:{…all fields…}}` | `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED` |
+| `catalog.compose` | `capability[]`, `pattern[]`, `instruction_ids[]`, `roles[]`, `products[]`, `conditions[]`, `required_ids[]`, `profile` | `{instructions:[{instruction_id,title,summary,content,artifact_contract,selection_reason}]}` + execution context (SR-23) | `CATALOG_INVALID`, `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED`, `CATALOG_REQUIRED_CONFLICT`, `CATALOG_PROFILE_CONFLICT`, `CATALOG_DEPENDENCY_MISSING`, `CATALOG_DEPENDENCY_DISABLED` |
 
-**Семантика пошуку** (SR-10, SR-70)
+**Search semantics** (SR-10, SR-70)
 
-- У межах одного виміру — «хоча б один» збіг; між вимірами — «і».
-- Задано лише один вимір — інший не застосовується.
-- Аліаси зводяться до канонічних тегів **до** збігу.
-- `status: disabled` не потрапляє в результат.
-- `tag_exemptions` не впливають на пошук (це валідаційні винятки).
-- `instruction_ids` — кон'юнкція: результат обмежено цими ID.
-- `roles` / `products` — інструкція збігається, якщо її список порожній (або ключа
-  немає — тоді інструкція застосовна до будь-якої ролі/продукту) або містить хоча б
-  один збіг із запитом.
-- `conditions` — кон'юнкція токенів: кожен токен запиту має бути присутній у
-  `conditions_applies_when` і **відсутній** у `conditions_does_not_apply_when`
-  (збіг без урахування регістру, Unicode-межі слова; токен збігається буквально,
-  разом із кінцевою пунктуацією). Порожній токен — помилка валідації запиту.
-- Вимір вважається **заданим**, лише якщо його масив присутній і непорожній;
-  порожній масив = вимір не застосовується. Запит без жодного виміру повертає
-  весь активний корпус (`catalog.search` — операція огляду); `catalog.compose`
-  без вимірів корпус не тягне (див. правила `compose`).
-- Вивід — **лише метадані** (AC-05): `instruction_id`, `title`, `summary`,
-  `capability_tags`, `pattern_tags`, `revision`; без `content`. Порядок стабільний
-  (за `instruction_id`).
+- Within one dimension — "at least one" match; between dimensions — "and".
+- If only one dimension is set, the other is not applied.
+- Aliases are reduced to canonical tags **before** matching.
+- `status: disabled` does not enter the result.
+- `tag_exemptions` do not affect search (they are validation exceptions).
+- `instruction_ids` — a conjunction: the result is limited to these IDs.
+- `roles` / `products` — an instruction matches if its list is empty (or the key
+  is absent — then the instruction is applicable to any role/product) or contains at least
+  one match with the request.
+- `conditions` — a conjunction of tokens: every request token must be present in
+  `conditions_applies_when` and **absent** from `conditions_does_not_apply_when`
+  (case-insensitive match, Unicode word boundaries; a token matches literally,
+  including trailing punctuation). An empty token is a request validation error.
+- A dimension is considered **set** only if its array is present and non-empty;
+  an empty array = the dimension is not applied. A request without any dimension returns
+  the whole active corpus (`catalog.search` is a browsing operation); `catalog.compose`
+  without dimensions does not pull the corpus (see the `compose` rules).
+- Output — **only metadata** (AC-05): `instruction_id`, `title`, `summary`,
+  `capability_tags`, `pattern_tags`, `revision`; without `content`. The order is stable
+  (by `instruction_id`).
 
-**Ефективний профіль** — JSON, який передає host:
+**Effective profile** — JSON that the host passes:
 
 ```json
 {
@@ -408,205 +409,209 @@ LLM, хости й репозиторій; каталог знаходить **�
 }
 ```
 
-Активна альтернатива — **pattern-тег** (методологія), а не `instruction_id`; так
-групи лишаються про методології (SR-26), а інструкція прив'язується до них своїми
-`pattern_tags`. **Кожна альтернатива має свій pattern-тег**: спільний тег групи
-(напр. `approval-policy`) — маркер для пошуку, а не альтернатива; інакше дві
-альтернативи однієї групи не відрізняються одна від одної. Розв'язання успадкування
-та override — поза `compose` (крок Stage 4);
-`compose` приймає вже розв'язаний ефективний профіль і лишається чистою функцією.
+The active alternative is a **pattern tag** (a methodology), not an `instruction_id`; this way
+groups remain about methodologies (SR-26), and an instruction is bound to them by its own
+`pattern_tags`. **Every alternative has its own pattern tag**: the shared tag of the group
+(e.g. `approval-policy`) is a marker for search, not an alternative; otherwise two
+alternatives of one group would not differ from each other. Groups with product policy
+have an **explicitly declared** active alternative in the source profile
+(`default`); for groups where the user makes the choice, `default` is forbidden (D10). Inheritance resolution
+and override are outside `compose` (Stage 4);
+`compose` accepts an already resolved effective profile and remains a pure function.
 
-**Правила `compose`**
+**`compose` rules**
 
-1. `required_ids` входять **завжди**, навіть якщо не збігаються з тегами (SR-13).
-2. Збіги за тегами → `selection_reason: "matched"`. Фаза збігу виконується **лише**
-   коли запит містить хоча б один непорожній вимір відбору (`capability_tags`,
-   `pattern_tags`, `instruction_ids`, `roles`, `products`, `conditions`); запит без
-   вимірів не тягне весь корпус (compose з одним лише `required_ids` повертає
-  required-інструкції та їхні залежності).
-3. Транзитивні `compatibility_requires` → `"dependency"`; невідома або вимкнена
-   залежність → помилка. Залежність **ніколи не зникає мовчки**: якщо профіль
-   відкидає залежність — помилка (п. 4г).
-4. **Групи вирішує профіль:** якщо група має активну альтернативу, інструкції з
-   іншими `pattern_tags` цієї групи до bundle не потрапляють. Помилка лише коли:
-   (а) сам профіль суперечний (активна альтернатива не входить у перелік
-   альтернатив групи);
-   (б) `required_ids` суперечить активній альтернативі;
-   (в) дві інструкції з різних груп мають пряме `compatibility_excludes` один на
-   одного;
-   (г) **залежність** на неактивну альтернативу групи закривається **активною**
-   альтернативою тієї групи (група — це один вибір); залежність не відкидається
-   мовчки і не повертає неактивну альтернативу в bundle.
-   Порядок застосування: required → збіги → фільтр профілю (лише для збігів) →
-   замикання залежностей → перевірка `excludes`.
-5. Без профілю: будь-яка пара з `compatibility_excludes` → помилка (SR-14).
-6. Порядок виводу — стабільний (за `instruction_id`).
+1. `required_ids` are included **always**, even if they do not match the tags (SR-13).
+2. Tag matches → `selection_reason: "matched"`. The matching phase is performed **only**
+   when the request contains at least one non-empty selection dimension (`capability_tags`,
+   `pattern_tags`, `instruction_ids`, `roles`, `products`, `conditions`); a request without
+   dimensions does not pull the whole corpus (compose with only `required_ids` returns
+   the required instructions and their dependencies).
+3. Transitive `compatibility_requires` → `"dependency"`; an unknown or disabled
+   dependency → an error. A dependency **never disappears silently**: if the profile
+   rejects a dependency — an error (clause 4d).
+4. **Groups are resolved by the profile:** if a group has an active alternative, instructions with
+   other `pattern_tags` of this group do not enter the bundle. An error only when:
+   (a) the profile itself is contradictory (the active alternative is not among the list of
+   alternatives of the group);
+   (b) `required_ids` contradicts the active alternative;
+   (c) two instructions from different groups have a direct `compatibility_excludes` against
+   each other;
+   (d) a **dependency** on an inactive alternative of a group is closed by the **active**
+   alternative of that group (the group is one choice); the dependency is not discarded
+   silently and does not return the inactive alternative to the bundle.
+   Order of application: required → matches → profile filter (only for matches) →
+   dependency closure → `excludes` check.
+5. Without a profile: any pair with `compatibility_excludes` → an error (SR-14).
+6. The output order is stable (by `instruction_id`).
 
-**Семантика `decision.evaluate` (D5).** У v1 операція реалізована **детерміновано**:
-`decision.evaluate` приймає вже допустимі кандидати й повертає shortlist або причину
-відмови (немає кандидатів, невідомий candidate ID, кандидат поза допустимими,
-некоректний формат). Семантичне оцінювання робить скіл `vp-mode`; зовнішній
-провайдер — можливість хоста, а не обов'язок VP. Контракт D5/SR-16…SR-21 зберігає
-усі поля (джерело рішення, обрані ID, причина fallback).
+**Semantics of `decision.evaluate` (D5).** In v1 the operation is implemented **deterministically**:
+`decision.evaluate` accepts already allowed candidates and returns a shortlist or a refusal
+reason (no candidates, unknown candidate ID, candidate outside the allowed ones,
+incorrect format). Semantic evaluation is done by the `vp-mode` skill; an external
+provider is a host capability, not a VP obligation. The D5/SR-16…SR-21 contract preserves
+all fields (the source of the decision, the selected IDs, the reason for the fallback).
 
-Детерміновані правила v1:
+Deterministic rules of v1:
 
-| Умова | Результат |
+| Condition | Result |
 |---|---|
-| некоректний запит (operation, candidates, tags, product, context) | `fallback: true`, `invalid-format`, `provider: 'agent'` |
-| порожній список кандидатів | `fallback: true`, `no-candidates` |
-| кандидат відсутній у каталозі | `fallback: true`, `unknown-candidate` |
-| кандидат вимкнений (не в допустимому наборі) | `fallback: true`, `candidate-not-allowed` |
-| усі кандидати допустимі | shortlist за тегами, `provider: 'catalog'`, `fallback: false` |
+| an invalid request (operation, candidates, tags, product, context) | `fallback: true`, `invalid-format`, `provider: 'agent'` |
+| an empty candidate list | `fallback: true`, `no-candidates` |
+| a candidate absent from the catalog | `fallback: true`, `unknown-candidate` |
+| a candidate disabled (not in the allowed set) | `fallback: true`, `candidate-not-allowed` |
+| all candidates allowed | shortlist by tags, `provider: 'catalog'`, `fallback: false` |
 
-- `tags` — плоский список; тег збігається з кандидатом у ** будь-якому** вимірі
-  (alias → канонічний); кандидат проходить, коли збігся хоча б один запитаний тег.
-- `score` — кількість запитаних тегів, збігених із найкращим кандидатом; шкала
-  **не відкалібрована** (поріг relevance не застосовується — SR-21), і це
-  зафіксовано в `rationale`.
-- Жоден кандидат не збігся — це **не** відмова: `selected: []`, `provider:
+- `tags` — a flat list; a tag matches a candidate in **any** dimension
+  (alias → canonical); a candidate passes when at least one requested tag matched.
+- `score` — the number of requested tags matched against the best candidate; the scale
+  is **not calibrated** (the relevance threshold is not applied — SR-21), and this is
+  recorded in `rationale`.
+- No candidate matched — this is **not** a refusal: `selected: []`, `provider:
   'catalog'`, `fallback: false`, `score: 0`.
-
-# 8. Потік використання
+# 8. Usage flow
 
 ```text
 Standalone:
-  користувач → скіл vp-mode (LLM)
-      → skills/vp-mode/scripts/catalog.ts search/compose → shortlist + тексти
-      → скіл обирає/уточнює → bundle → виконання → матеріалізація
+  user → vp-mode skill (LLM)
+      → skills/vp-mode/scripts/catalog.ts search/compose → shortlist + texts
+      → the skill selects/refines → bundle → execution → materialization
 
-Bundled (етап E):
-  агент → розширений instruction registry пакета агента (похідна проекція)
-      → ті самі інструкції з instructions/
+Bundled (stage E):
+  agent → extended instruction registry of the agent package (derived projection)
+      → the same instructions from instructions/
 ```
 
-Один і той самий набір інструкцій обслуговує обидва режими; різниця — у способі
-доставки інструкцій до виконавця.
+The same set of instructions serves both modes; the difference is in the way
+the instructions are delivered to the executor.
 
-# 9. Валідація та цілісність
+# 9. Validation and integrity
 
-- `check-corpus.ts` (dev-інструмент у `scripts/`): перевіряє всі правила §5, словник
-  і аліаси, унікальність id, `requires`/`excludes` на невідомі id, узгодженість
-  `provenance_license` із `donors.yaml` (YAML читається dev-інструментом — SR-64;
-  JSON-дубля немає, один owner). Вивід — рядки «файл: правило» або JSON, ненульовий
+- `check-corpus.ts` (a dev tool in `scripts/`): checks all rules of §5, the vocabulary
+  and aliases, ID uniqueness, `requires`/`excludes` against unknown IDs, the consistency of
+  `provenance_license` with `donors.yaml` (YAML is read by a dev tool — SR-64;
+  there is no JSON duplicate, one owner). Output — lines "file: rule" or JSON, a non-zero
   exit.
-- Мапа обробки й корпус узгоджені: інструкція без запису в `corpus-map.json` →
-  помилка; запис мапи на неіснуючу інструкцію → помилка; `rejected` без причини →
-  помилка.
-- `source_revision` каталогу vs фактичний стан інструкцій — **не** блокер у v1:
-- **Цілісність корпусу** перевіряється вже у v1: `catalog.json` є єдиним переліком корпусу
-  з `sha256` кожної інструкції (CAT-D3, SR-76, AC-42); файл поза маніфестом, запис без
-  файлу й розбіжний digest — помилки. Digest **пакунка** в агент-пaketі (етап E) — окреме питання.
-- Валідація виконується перед комітом змін у `instructions/` (ручна команда або
-  hook — на розсуд власника).
+- The processing map and the corpus are consistent: an instruction without an entry in `corpus-map.json` →
+  an error; a map entry pointing to a non-existent instruction → an error; `rejected` without a reason →
+  an error.
+- The `source_revision` of the catalog vs the actual state of the instructions is **not** a blocker in v1:
+- **Corpus integrity** is already checked in v1: `catalog.json` is the single corpus listing
+  with the `sha256` of every instruction (CAT-D3, SR-76, AC-42); a file outside the manifest, an entry without a
+  file and a mismatched digest are errors. The digest of the **package** in the agent package (stage E) is a separate question.
+- Validation is performed before committing changes to `instructions/` (a manual command or
+  a hook — at the owner's discretion).
 
-# 10. Тести й ворота
+# 10. Tests and gates
 
-Команди: `bun run --cwd packages/powers test` (швидкий цикл), `test:coverage`
-(`bun test --coverage`, поріг покриття 1.0 з `bunfig.toml`), `typecheck`.
+Commands: `bun run --cwd packages/powers test` (fast cycle), `test:coverage`
+(`bun test --coverage`, coverage threshold 1.0 from `bunfig.toml`), `typecheck`.
 
-| Тест | Що перевіряє |
+| Test | What it checks |
 |---|---|
-| `frontmatter.test.ts` | парсер: скаляри, YAML-блоки, коментарі, порожні значення, не-ASCII, помилки формату |
-| `catalog.test.ts` | правила §5; пошук не повертає `content`; аліас → канонічний тег; `get` на невідомому/вимкненому id; compose: required + залежності + конфлікт без профілю + відкидання неактивної альтернативи профілем + прямий `excludes` + порядок виводу; `disabled` не в пошуку |
-| `check-corpus.test.ts` | `check-corpus` на фікстурах: невідомий тег, відсутнє provenance, невідомий `requires`, дубль id, несумісна ліцензія, інструкція без запису в мапі, запис мапи на відсутню інструкцію |
-| `catalog-cli.test.ts` | CLI: JSON на stdout, код на stderr, ненульовий exit, пошук каталогу відносно файлу |
-| `catalog-manifest.test.ts` | маніфест `catalog.json` ↔ диск: файл поза маніфестом, запис без файлу, розбіжний `sha256` (AC-42) |
+| `frontmatter.test.ts` | the parser: scalars, YAML blocks, comments, empty values, non-ASCII, format errors |
+| `catalog.test.ts` | the rules of §5; search does not return `content`; alias → canonical tag; `get` on an unknown/disabled ID; compose: required + dependencies + a conflict without a profile + rejection of an inactive alternative by the profile + a direct `excludes` + output order; `disabled` is not in search |
+| `check-corpus.test.ts` | `check-corpus` on fixtures: unknown tag, missing provenance, unknown `requires`, duplicate ID, incompatible license, an instruction without a map entry, a map entry pointing to a missing instruction |
+| `catalog-cli.test.ts` | CLI: JSON on stdout, a code on stderr, a non-zero exit, catalog lookup relative to the file |
+| `catalog-manifest.test.ts` | the `catalog.json` manifest ↔ disk: a file outside the manifest, an entry without a file, a mismatched `sha256` (AC-42) |
 
-Фікстури — мінімальні каталоги: `valid/`, `invalid-tag/`, `missing-provenance/`,
+Fixtures — minimal catalogs: `valid/`, `invalid-tag/`, `missing-provenance/`,
 `conflicting/`.
 
-# 11. Команди
+# 11. Commands
 
 ```sh
-bun run --cwd packages/powers test                              # швидкий цикл
-bun run --cwd packages/powers test:coverage                     # покриття (поріг 1.0)
-bun run --cwd packages/powers typecheck                         # типізація
-bun packages/powers/scripts/check-corpus.ts                     # валідація корпусу
-bun packages/powers/scripts/check-okf.ts                        # OKF-сумісність bundle
-bun packages/powers/skills/vp-mode/scripts/catalog.ts tags     # ручна перевірка операцій
-bun run --cwd packages/agent lint:knip:pinned                   # репозиторний lint-гейт
+bun run --cwd packages/powers test                              # fast cycle
+bun run --cwd packages/powers test:coverage                     # coverage (threshold 1.0)
+bun run --cwd packages/powers typecheck                         # type checking
+bun packages/powers/scripts/check-corpus.ts                     # corpus validation
+bun packages/powers/scripts/check-okf.ts                        # OKF compatibility of the bundle
+bun packages/powers/skills/vp-mode/scripts/catalog.ts tags     # manual check of the operations
+bun run --cwd packages/agent lint:knip:pinned                   # repository lint gate
 ```
 
-# 12. Ухвалені рішення (з кого)
+# 12. Accepted decisions (and by whom)
 
-**Writer-дисципліна.** `convert.ts` — **єдиний** writer для `instructions/`, `catalog.json` і
-`corpus-map.json`; runtime-скрипти лише читають. `catalog.json` тримає перелік
-корпусу з `sha256` кожної інструкції (CAT-D3); валідатор перевіряє мапу, диск і
-digest.
+**Writer discipline.** `convert.ts` is the **single** writer for `instructions/`, `catalog.json` and
+`corpus-map.json`; runtime scripts only read. `catalog.json` holds the corpus listing
+with the `sha256` of every instruction (CAT-D3); the validator checks the map, the disk and
+the digest.
 
-| Рішення | Хто | Альтернативи, які відкинуто |
+| Decision | Who | Alternatives rejected |
 |---|---|---|
-| Інструкція = `.md` + метадані, плоска тека | **власник** | JSON-файли; директорії за донорами |
-| Джерела інструкції — список; злиття дублікатів з кращою термінологією | **власник** | «канонічна + відкинута» |
-| Кодування списку джерел — скаляри `donor=…; license=…; revision=…; path=…` | **власник (a)** | список мапів; компактний рядок |
-| Конвеєр формування (фази 1–6) — у дизайні | **власник** | лише в плані кроку D |
-| Мапа обробки `corpus-map.json` (donor+revision+файл → converted/split/merged/rejected) | **власник** | звіт у README без файлу-стану |
-| `catalog.json` — єдиний перелік корпусу з `sha256` (CAT-D3) | **власник** | digest лише на етапі E |
-| Довідник тегів — пакетне затвердження власником | **власник** | поштучне підтвердження; підтвердження не потрібне |
-| Тулінг усередині скіла; підтримка продукту — у `scripts/` | **власник** | усе в `tooling/` |
-| Каталог VP **замінює** модель D3: джерело — `.md`-інструкції, `catalog.json` — ідентичність + словник + аліаси + винятки | **власник** | JSON-каталог з інструкціями всередині |
-| Вантаж плагіна = коренець пакета (`skills/` + `instructions/` + `catalog.json`) | **власник** | окрема інсталяція корпусу |
-| Проєктний шар інструкцій | **власник (c)** — відкладено, v1 канонічний | overlay |
-| Канонічні імена полів — з S-документа; скіли — host-конвенція | автор | власний набір імен у розрізненні |
-| Групи й активна альтернатива — у профілі; `excludes` — попарна виключка інструкцій | автор | `excludes` між тегами |
-| `compose` приймає розв'язаний ефективний профіль | автор | розв'язання успадкування всередині compose |
-| Без похідного індексу в v1 | автор | індекс як артефакт |
-| Без LLM-клієнта: shortlist → вибір робить скіл | автор | семантичний пошук у VP |
-| Аліаси тегів — у `catalog.json` | автор | аліас у метаданих інструкції |
-| Пошук каталогу — відносно файлу скрипта | автор | cwd / env-змінна |
-| Ворота: `test` + `test:coverage` + `typecheck`; CRAP/mutation — відкладено | автор | Stryker-залежність у VP |
-| Dev-інструменти читають YAML-маніфести; постачаваний код — лише JSON | автор | JSON-дубль ліцензій |
-| Дизайн у `packages/powers/docs/` | **власник (a)** | `docs/superpowers/specs/…` |
+| An instruction = `.md` + metadata, a flat directory | **owner** | JSON files; directories per donor |
+| The sources of an instruction — a list; merging duplicates with better terminology | **owner** | "canonical + discarded" |
+| Encoding of the source list — scalars `donor=…; license=…; revision=…; path=…` | **owner (a)** | a list of maps; a compact string |
+| The formation pipeline (phases 1–6) — in the design | **owner** | only in the step D plan |
+| The processing map `corpus-map.json` (donor+revision+file → converted/split/merged/rejected) | **owner** | a report in README without a state file |
+| `catalog.json` — the single corpus listing with `sha256` (CAT-D3) | **owner** | digest only at stage E |
+| The tag vocabulary — batch approval by the owner | **owner** | per-item confirmation; no confirmation needed |
+| Tooling inside the skill; product support — in `scripts/` | **owner** | everything in `tooling/` |
+| The VP catalog **replaces** the D3 model: the source — `.md` instructions, `catalog.json` — identity + vocabulary + aliases + exceptions | **owner** | a JSON catalog with instructions inside |
+| The plugin payload = the package root (`skills/` + `instructions/` + `catalog.json`) | **owner** | a separate installation of the corpus |
+| The project layer of instructions | **owner (c)** — deferred, v1 canonical | overlay |
+| Canonical field names — from the S-document; skills — host convention | author | an own set of names in the distinction |
+| Groups and the active alternative — in the profile; `excludes` — pairwise exclusion of instructions | author | `excludes` between tags |
+| `compose` accepts a resolved effective profile | author | inheritance resolution inside compose |
+| No derived index in v1 | author | an index as an artifact |
+| No LLM client: shortlist → the choice is made by the skill | author | semantic search in VP |
+| Tag aliases — in `catalog.json` | author | an alias in the instruction metadata |
+| Catalog lookup — relative to the script file | author | cwd / an env variable |
+| Gates: `test` + `test:coverage` + `typecheck`; CRAP/mutation — deferred | author | a Stryker dependency in VP |
+| Dev tools read YAML manifests; shipped code — only JSON | author | a JSON duplicate of licenses |
+| The design in `packages/powers/docs/` | **owner (a)** | `docs/superpowers/specs/…` |
 
-# 13. Відкладені рішення
+# 13. Deferred decisions
 
-| ID | Питання | Статус |
+| ID | Question | Status |
 |---|---|---|
-| CAT-D1 | Проєктний шар інструкцій (overlay) | Відкладено: v1 канонічний |
-| CAT-D2 | Семантичний `decision.evaluate` у VP | Відкладено: v1 детерміновано; протокол D5 готовий |
-| CAT-D3 | Digest-зв'язка інструкцій | **Вирішено 2026-10-19:** digest у `catalog.json` (перелік корпусу), генерує `convert.ts` |
-| CAT-D4 | Мова інструкцій | v1 — мова продукту |
-| CAT-D5 | Ієрархія каталогу (підкаталоги) | v1 — плоско |
-| CAT-D6 | CRAP/mutation-гейт для VP | Відкладено: потрібна нова залежність (Stryker) — потребує згоди власника |
-| CAT-D7 | Чи VP має власний `index.md`/навігацію корпусом | Відкладено: bundle-індекс уже є; корпус навігується пошуком |
-| CAT-D8 | Хто затверджує словник тегів і групи | Механізм вирішено: власник, пакетним проходом; конкретні теги — на етапі D |
-| CAT-D9 | Скільки інструкцій вважається достатньою для MVP | Відкладено до кроку D: exit criteria |
-| CAT-D10 | Де зберігається звіт відбору та злиття | Відкладено до кроку D: звіт кроку, не корпус |
+| CAT-D1 | The project layer of instructions (overlay) | Deferred: v1 canonical |
+| CAT-D2 | Semantic `decision.evaluate` in VP | Deferred: v1 deterministic; the D5 protocol is ready |
+| CAT-D3 | The digest link of instructions | **Resolved 2026-10-19:** the digest in `catalog.json` (corpus listing), generated by `convert.ts` |
+| CAT-D4 | Language of the instructions | v1 — the product language |
+| CAT-D5 | Catalog hierarchy (subdirectories) | v1 — flat |
+| CAT-D6 | CRAP/mutation gate for VP | Deferred: a new dependency is needed (Stryker) — requires owner consent |
+| CAT-D7 | Whether VP has its own `index.md`/corpus navigation | Deferred: the bundle index already exists; the corpus is navigated by search |
+| CAT-D8 | Who approves the tag vocabulary and groups | The mechanism is resolved: the owner, in a batch pass; the specific tags — at stage D |
+| CAT-D9 | How many instructions is enough for the MVP | Deferred to step D: exit criteria |
+| CAT-D10 | Where the selection and merging report is stored | Deferred to step D: a step report, not the corpus |
 
-# 14. Синхронізація нормативних документів (у межах цього work item)
+# 14. Synchronization of normative documents (within this work item)
 
-| Документ | Що змінюється |
+| Document | What changes |
 |---|---|
-| `decisions/D3-instruction-catalog-and-registry.md` | rev 2: канонічний каталог = `.md`-інструкції + `catalog.json` (ідентичність, словник, аліаси, винятки); bundled-проєкція без змін |
+| `decisions/D3-instruction-catalog-and-registry.md` | rev 2: the canonical catalog = `.md` instructions + `catalog.json` (identity, vocabulary, aliases, exceptions); the bundled projection is unchanged |
 | `system-specification.md` | SR-01, SR-06, SR-07, SR-15, SR-76, SR-34, SR-62 |
-| `acceptance.md` | AC-01 (валідація інструкції-файлу, список джерел), AC-42 (маніфест ↔ диск), 
-| `traceability.md` | рядок D3; посилання на дизайн каталогу як джерело |
-| `docs/index.md`, `docs/log.md` | дизайн у bundle-індексі; записи про зміни |
+| `acceptance.md` | AC-01 (validation of an instruction file, the list of sources), AC-42 (manifest ↔ disk), 
+| `traceability.md` | the D3 row; a reference to the catalog design as a source |
+| `docs/index.md`, `docs/log.md` | the design in the bundle index; records about the changes |
 
-# 15. Простеження з research
+# 15. Traceability from research
 
-| Research § | Елемент дизайну |
+| Research § | Design element |
 |---|---|
-| §4.1 канонізація донорів | формат інструкції, `provenance[]` (кілька джерел), ліцензійна прив'язка, злиття дублікатів, мапа обробки (§5a) |
-| §4.2 два виміри тегів | `capability_tags`, `pattern_tags`, ≥2 компоненти, словник, аліаси; термінологія зливається за словником |
-| §4.3–4.5 методологія як політика | `compose` + профіль як розв'язувач конфліктів; успадкування/override — Stage 4 |
-| §4.6 risk-adaptive оновлення | `revision` інструкції + журнал змін (OKF) |
-| §4.7 операції каталогу | `tags/search/get/compose` (§7) |
-| §4.8 два селектори | детермінований shortlist від каталогу; вибір — у скілі |
-| §4.9 OKF | `catalog.json` і журнал — у нашому bundle; інструкції — продуктовий формат |
-| §6.2 `artifact_contract` | поля `artifact_contract_*` |
-| §9.2 стабільні імена | `instructions/<id>.md` |
+| §4.1 canonicalization of donors | the instruction format, `provenance[]` (several sources), the license binding, merging of duplicates, the processing map (§5a) |
+| §4.2 two dimensions of tags | `capability_tags`, `pattern_tags`, ≥2 components, vocabulary, aliases; terminology is merged by the vocabulary |
+| §4.3–4.5 methodology as policy | `compose` + the profile as a conflict resolver; inheritance/override — Stage 4 |
+| §4.6 risk-adaptive updates | the instruction `revision` + the change log (OKF) |
+| §4.7 catalog operations | `tags/search/get/compose` (§7) |
+| §4.8 two selectors | a deterministic shortlist from the catalog; the choice — in the skill |
+| §4.9 OKF | `catalog.json` and the log — in our bundle; instructions — the product format |
+| §6.2 `artifact_contract` | the `artifact_contract_*` fields |
+| §9.2 stable names | `instructions/<id>.md` |
 
-# 16. Що залишено будівничному
+# 16. What is left to the builder
 
-- Точний код і порядок парсеру frontmatter (підмножина: скаляри, YAML-блоки,
-  коментарі, порожні значення, не-ASCII).
-- Структура модуля `catalog.ts` (функції, типи, експорти) і точний протокол CLI
-  (прапорці, stdout/stderr, коди виходу).
-- Формат і коди помилок `check-corpus.ts`.
-- Точний набір seed-інструкцій (5–8) із research/SR — щоб перевірити правила, аліаси
-  й конфлікти груп.
-- Структура тестів і фікстур.
-- Чи `frontmatter.ts` лишається окремим файлом (рішення автора: так — він потрібен
-  і `check-corpus.ts`).
+- The exact code and order of the frontmatter parser (the subset: scalars, YAML blocks,
+  comments, empty values, non-ASCII).
+- The module structure of `catalog.ts` (functions, types, exports) and the exact CLI protocol
+  (flags, stdout/stderr, exit codes).
+- The format and error codes of `check-corpus.ts`.
+- The exact set of seed instructions (5–8) from research/SR — to check the rules, aliases
+  and group conflicts.
+- The structure of the tests and fixtures.
+- Whether `frontmatter.ts` remains a separate file (the author's decision: yes — it is needed by
+  `check-corpus.ts` too).
+
+
+

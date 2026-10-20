@@ -1,21 +1,21 @@
 ---
 instruction_id: establish-review-scope
-title: Визнач межі перегляду й простеж головні потоки
-summary: "Перед оцінкою коду визнач, що саме переглядаєш, і прочитай шляхи, де помилка коштує найдорожче."
+title: "Understand first: fix the scope and trace the main flows"
+summary: "Review what the user names, read the code the change touches, and trace the main flows from input to stored result."
 capability_tags:
   - review-code
   - audit-codebase
 pattern_tags:
   - code-review
   - code-audit
-conditions_applies_when: Ти переглядаєш зміну або ціле сховище і ще не визначив межі.
-conditions_does_not_apply_when: "Межі перегляду вже названі, а матеріали прочитані."
+conditions_applies_when: A change or a whole repository is being reviewed and the material to read is not yet fixed.
+conditions_does_not_apply_when: The review scope is already named and its material is fully read.
 artifact_contract_output_type: review-scope-map
 artifact_contract_required_data:
-  - мета перегляду
-  - прочитані джерела
-  - головні потоки
-  - глибина й пропущене
+  - review target
+  - sources read
+  - main flows
+  - parts not read
 artifact_contract_verified_by: every named flow is traced from input to stored result
 compatibility_excludes: []
 compatibility_requires: []
@@ -30,19 +30,19 @@ status: active
 revision: 2
 ---
 
-# Визнач межі перегляду й простеж головні потоки
-Переглядай те, що назвав власник: незакомічені або індексовані зміни, гілку, запит на приєднання чи окремі файли.
-Якщо власник нічого не назвав, візьми незакомічені зміни, а коли їх немає — останній коміт.
-Для аудиту бери названу теку, пакет або все сховище.
-Прочитай опис проєкту, конфігурацію збирання й розгортання, список залежностей, точки входу й тести.
-Простеж головні потоки від появи даних до збереження й виходу.
-Для кожного головного потоку назви, де дані входять, де зберігаються і де виходять.
-Прочитай повністю шляхи, де є ввід користувача, гроші, доступ, записи даних, фонові задачі та спільний між процесами стан.
-У великому сховищі йди глибоко туди, де помилка коштує найдорожче, а не файл за файлом.
-Для зміни читай не лише диф, а й код навколо: виклики змінених функцій, те, що вони викликають, і тести.
-Зміна може зламати код, якого вона не торкалася.
-Запиши, які частини прочитав повністю, а які лише переглянув.
-Запиши, які частини не читав узагалі.
-Не оцінюй те, чого не прочитав.
-Не підмінюй карту перегляду переказом дифа.
-Заверши, коли межі названі, головні потоки простежені, а глибина й пропущене зафіксовані.
+# Understand first: fix the scope and trace the main flows
+Review a change like the senior developer who will be paged when it breaks.
+Audit the whole repo like the senior developer who just inherited it and will be paged when it breaks.
+Review what the user names: uncommitted or staged changes, a branch, a PR link, or files.
+Nothing named: the uncommitted changes, or the last commit if there are none.
+Audit what the user names: a folder, a package, or the whole repo.
+Nothing named: the whole repo.
+Read the diff, then the code it touches: callers of every changed function, the functions it calls, the tests, the README.
+Read the README, the deploy and build config, the dependency list, the entry points (main, routes, handlers, jobs, CLI commands) and the tests.
+Trace the real flow: where data comes in, what is stored, what goes out.
+Trace the main flows end to end: where data comes in, what is stored, what goes out.
+Read those paths fully: input from users, money, auth, data writes, background jobs, anything shared between processes.
+A change can break code it does not touch.
+When a signature, return value or behavior changes, search every caller.
+Big repo: go deep where a mistake costs the most, not file by file.
+Say which parts you did not read.

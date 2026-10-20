@@ -1,20 +1,20 @@
 ---
 instruction_id: scrub-and-gate-artifact-sharing
-title: Очищай артефакт і відкривай доступ лише після згоди
-summary: "Перед передаванням артефакту заміни чутливі значення, перевір очищення окремим проходом і дочекайся явної згоди."
+title: "Scrub the artifact, audit it, then wait for approval"
+summary: "Rewrite a copy with stable placeholders, let a separate auditor report misses, and share only after the log and file list are approved."
 capability_tags:
   - redact-sensitive-data
 pattern_tags:
   - evidence-redaction
-conditions_applies_when: "Артефакт треба передати, опублікувати або показати поза місцем створення."
-conditions_does_not_apply_when: Артефакт не залишає місце створення і не містить чутливих значень.
+conditions_applies_when: "An artifact must be sent, published, or shown outside where it was created."
+conditions_does_not_apply_when: The artifact never leaves its origin and holds no sensitive values.
 artifact_contract_output_type: scrubbed-artifact
 artifact_contract_required_data:
-  - перелік файлів
-  - таблиця замін
-  - журнал очищення
-  - згода
-artifact_contract_verified_by: independent scrub audit returns clean
+  - file list
+  - replacement table
+  - scrub log
+  - approval
+artifact_contract_verified_by: an independent scrub audit returns clean
 compatibility_excludes: []
 compatibility_requires:
   - protect-sensitive-artifacts
@@ -26,19 +26,19 @@ status: active
 revision: 3
 ---
 
-# Очищай артефакт і відкривай доступ лише після згоди
-Визнач, які файли входять до копії.
-Категорії заміни бери з protect-sensitive-artifacts.
-Замінюй чутливі значення під час копіювання.
-Веди єдину таблицю відповідності значень плейсхолдерам.
-Зберігай структуру, потрібну для перевірки знахідок.
-Познач кожну заміну в цитатах.
-Не записуй чутливе значення в журнал очищення.
-Перевір копію окремим проходом.
-Поверни чисто лише за відсутності пропусків.
-Інакше поверни перелік пропусків без чутливих значень.
-Не виправляй пропуски під час перевірки.
-Покажи власнику журнал і перелік файлів.
-Дочекайся явної згоди на передавання.
-Не передавай копію до перевірки.
-Заверши, коли копія пройшла перевірку й отримала згоду.
+# Scrub the artifact, audit it, then wait for approval
+The scrubber rewrites every file under the bundle so it can leave this machine, and writes the scrub log.
+It never touches anything outside the bundle.
+Process every file, including the environment file and the findings.
+Build the replacement map as you go and apply it to every file so a value first seen in the report is also replaced in the transcripts.
+After rewriting, recount occurrences in all final non-log bundle files, excluding the scrub log.
+Write the scrub log as a table of placeholder, category, and count.
+Never write a plaintext replacement map or an original value into the log.
+The auditor finds what the scrubber missed and reports; it does not fix anything.
+Read every file under the bundle in full, in chunks if a file is larger than 200 KB.
+Apply the shared policy to every file, including quoted transcript text, commit messages, git author lines, and encrypted payloads.
+Return CLEAN only if no policy misses or unresolved classifications remain.
+Otherwise return each miss with file, line, category, and a non-sensitive description.
+Never include the original sensitive value.
+CLEAN addresses privacy only; it does not establish that exported findings remain supported.
+No archive before your partner has seen the scrub log and file list.

@@ -1,19 +1,19 @@
 ---
 instruction_id: simplify-design-when-tests-are-hard
-title: "Спрощуй дизайн, коли тест стає складним"
-summary: "Складнощі тестування вказують на проблему дизайну, а не на потребу в складнішому тесті."
+title: Simplify the design when the test becomes hard
+summary: "When a test needs heavy setup or constant mocking, treat that as a design signal: simplify the interface instead of complicating the test."
 capability_tags:
   - write-tests-first
 pattern_tags:
   - test-first-development
-conditions_applies_when: "Тест вимагає багатьох підмін, великої підготовки або не піддається формулюванню."
-conditions_does_not_apply_when: "Складність походить від зовнішнього формату, який не змінюється."
+conditions_applies_when: "The test needs many substitutions, a large setup, or cannot be formulated."
+conditions_does_not_apply_when: The complexity comes from an external format that will not change.
 artifact_contract_output_type: simplified-design
 artifact_contract_required_data:
-  - причина складності
-  - зміна інтерфейсу
-  - перевірка
-artifact_contract_verified_by: test becomes writable without hidden setup
+  - source of complexity
+  - interface change
+  - verification
+artifact_contract_verified_by: the test becomes writable without hidden setup
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -22,19 +22,21 @@ status: active
 revision: 1
 ---
 
-# Спрощуй дизайн, коли тест стає складним
-Визнач, що саме робить тест складним.
-Не вважай складний тест доказом складності вимоги.
-Якщо тест вимагає багатьох підмін, перевір зв'язність компонентів.
-Якщо підготовка даних завелика, винеси її в допоміжні засоби.
-Якщо тест не вдається сформулювати, опиши бажаний інтерфейс.
-Зміни інтерфейс так, щоб поведінку можна було перевірити просто.
-Не ускладнюй тест заради збереження поганого дизайну.
-Не додавай підміни там, де можна перевірити реальний компонент.
-Не приховуй складність тесту в допоміжній функції без межі.
-Перевір, що новий інтерфейс зрозумілий із тесту.
-Запусти тест після спрощення.
-Перевір суміжні виклики.
-Не розширюй рефакторинг поза межами задачі.
-Повернися до вимоги, якщо інтерфейс не стає простішим.
-Запиши, яке рішення дизайну змінилося.
+# Simplify the design when the test becomes hard
+Don't know how to test? Write the wished-for API.
+Write the assertion first.
+Ask your human partner.
+Test too complicated? Design too complicated.
+Simplify the interface.
+Must mock everything? Code too coupled.
+Use dependency injection.
+Test setup huge? Extract helpers.
+Still complex? Simplify design.
+Test hard equals design unclear.
+Listen to the test.
+Hard to test equals hard to use.
+Hard to test? Fix the design, not the test.
+When writing or changing any test, name the production change that would make the test fail before writing it.
+Assert on real behavior, never on mock behavior.
+Keep test-only code in test utilities, out of production classes.
+Understand a dependency's side effects before mocking it.

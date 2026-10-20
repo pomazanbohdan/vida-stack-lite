@@ -1,19 +1,19 @@
 ---
 instruction_id: map-file-structure-before-tasks
-title: Спершу визнач структуру файлів
-summary: "До поділу на задачі виріши, які файли створюються чи змінюються і за що кожен відповідає."
+title: Map the file structure before defining tasks
+summary: Decide which files are created or modified and what each one is responsible for before splitting the plan into tasks.
 capability_tags:
   - plan-implementation
 pattern_tags:
   - implementation-planning
-conditions_applies_when: План охоплює кілька файлів або нових компонентів.
-conditions_does_not_apply_when: Зміна торкається одного невеликого файлу без нових меж.
+conditions_applies_when: The plan covers several files or new components.
+conditions_does_not_apply_when: The change touches one small file and introduces no new boundaries.
 artifact_contract_output_type: file-structure-map
 artifact_contract_required_data:
-  - файли
-  - відповідальність
-  - інтерфейси
-  - ризики
+  - files
+  - responsibilities
+  - interfaces
+  - risks
 artifact_contract_verified_by: every planned file has one responsibility
 compatibility_excludes: []
 compatibility_requires: []
@@ -23,19 +23,18 @@ status: active
 revision: 1
 ---
 
-# Спершу визнач структуру файлів
-Переліч файли, які треба створити або змінити.
-Назви відповідальність кожного файлу.
-Дай кожному файлу одну чітку відповідальність.
-Відділяй межі за відповідальністю, а не за технічним шаром.
-Тримай файли достатньо малими для повного розуміння.
-Дотримуйся наявних домовленостей проєкту.
-Не перебудовуй наявну структуру без причини.
-Познач файл, який уже завеликий, як окремий ризик.
-Визнач інтерфейси між файлами.
-Перевір, що структура підтримує незалежні задачі.
-Не змішуй у файлі кілька відповідальностей.
-Перевір, чи можна перевірити кожен файл окремо.
-Не починай задачі до завершення карти файлів.
-Зафіксуй карту в плані.
-Онови карту, якщо структура змінилася.
+# Map the file structure before defining tasks
+Before defining tasks, map out which files will be created or modified and what each one is responsible for.
+This is where decomposition decisions get locked in.
+Design units with clear boundaries and well-defined interfaces. Each file should have one clear responsibility.
+You reason best about code you can hold in context at once, and your edits are more reliable when files are focused.
+Prefer smaller, focused files over large ones that do too much.
+Files that change together should live together. Split by responsibility, not by technical layer.
+In existing codebases, follow established patterns.
+If the codebase uses large files, don't unilaterally restructure.
+If a file you're modifying has grown unwieldy, including a split in the plan is reasonable.
+This structure informs the task decomposition.
+Each task should produce self-contained changes that make sense independently.
+If the spec covers multiple independent subsystems, suggest breaking this into separate plans — one per subsystem.
+Each plan should produce working, testable software on its own.
+A task is the smallest unit that carries its own test cycle and is worth a fresh reviewer's gate.

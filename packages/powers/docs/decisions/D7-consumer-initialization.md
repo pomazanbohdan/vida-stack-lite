@@ -1,7 +1,7 @@
 ---
 type: Decision
-title: 'D7 — Ініціалізація VP за середовищем: три носія конфігурації'
-description: 'vp-setup визначає середовище ініціалізації та пише конфігурацію у відповідний носій: проєктний instruction-файл (standalone), конфіг-файл агентного runtime (поставка агента без хост-систем) або конфіг-файл проєкту на основі шаблонів (хост-прослойка).'
+title: 'D7 — Environment-driven VP initialization: three configuration carriers'
+description: 'vp-setup determines the initialization environment and writes the configuration into the matching carrier: the project instruction file (standalone), the config file of the agent runtime (agent delivery without host systems), or the template-based project config file (host layer).'
 status: stable
 stale_after: '2027-10-19T00:00:00Z'
 tags:
@@ -13,83 +13,83 @@ tags:
 sources:
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція та архітектурний baseline
+  title: Vida Powers — product concept and architectural baseline
 - id: agent-system-spec
   resource: /../../agent/docs/system-specification.md
   title: Agent runtime system specification — initialized project layout
 - id: agents-template
   resource: /../../agent/templates/AGENTS.template.md
-  title: AGENTS.template.md — генератор кореневого discovery-entry
+  title: AGENTS.template.md — generator of the root discovery entry
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
 revision: '1'
 ---
 
-# Рішення
+# Decision
 
-**`vp-setup` — контекстно-залежна ініціалізація.** Процедура визначає середовище
-й записує конфігурацію в той носій, який цьому середовищу належить. Спільна
-послідовність одна: визначити тип розробки, тип флоу, кількість і ролі агентів,
-іншу необхідну конфігурацію — і записати результат.
+**`vp-setup` — context-dependent initialization.** The procedure determines the environment
+and writes the configuration into the carrier that belongs to that environment. The common
+sequence is the same: determine the type of development, the type of flow, the number and roles of agents,
+other necessary configuration — and write the result.
 
-| Середовище | Носій конфігурації | Що пише |
+| Environment | Configuration carrier | What it writes |
 |---|---|---|
-| VP окремим skill/плагіном, **без** runtime агента (Standalone) | Проєктний instruction-файл: `AGENTS.md`, а якщо `AGENTS.md` відсутній, а `CLAUDE.md` присутній — `CLAUDE.md` | Керований YAML-блок VP: тип розробки, тип флоу, кількість і ролі агентів, ефективна методологія, посилання на артефакти |
-| Поставка агентська, **без** хост-систем | Конфіг-файл агентного runtime | Той самий зміст у визначеному runtime-форматі; `vp-setup` формує конфіг агента |
-| Встановлена хост-прослойка (напр. Codex) | Конфіг-файл проєкту | Прослойка конфігурує власну систему агентів у конфіг-файлі проєкту на основі шаблонів |
+| VP as a separate skill/plugin, **without** the agent runtime (Standalone) | The project instruction file: `AGENTS.md`, or, if `AGENTS.md` is absent and `CLAUDE.md` is present — `CLAUDE.md` | The managed VP YAML block: type of development, type of flow, number and roles of agents, effective methodology, references to artifacts |
+| Agent delivery, **without** host systems | The config file of the agent runtime | The same content in the defined runtime format; `vp-setup` forms the agent config |
+| An installed host layer (e.g. Codex) | The project config file | The layer configures its own agent system in the project config file based on templates |
 
-# Контекст і докази
+# Context and evidence
 
-- Research §3: `vp-setup` виявляє проєкти та чинні інструкції, додає/оновлює
-  інтеграційні правила в `AGENTS.md` та підтримуваних хостом файлах, налаштовує
-  доступні session/compaction hooks, зіставляє місця документів і локального work,
-  забезпечує ідемпотентність і перевіряє активацію.
-- Кореневий `AGENTS.md` у **репозиторії агента** генерується з
+- Research §3: `vp-setup` discovers projects and current instructions, adds/updates
+  integration rules in `AGENTS.md` and in host-supported files, configures
+  available session/compaction hooks, matches document and local work locations,
+  guarantees idempotency and verifies activation.
+- The root `AGENTS.md` in the **agent repository** is generated from
   `packages/agent/templates/AGENTS.template.md` (`project-specific-content:
-  forbidden`, `replace-this-file-wholesale`) — тому VP-блок у нього не пишеться
-  ніколи (D-04).
-- У споживацькому проєкті `AGENTS.md` — **project-owned** файл; `.vida/` — цільовий
-  споживацький layout із локальними інструкціями в `.vida/instructions` і
+  forbidden`, `replace-this-file-wholesale`) — therefore a VP block is never written
+  into it (D-04).
+- In a consumer project, `AGENTS.md` is a **project-owned** file; `.vida/` is the target
+  consumer layout with local instructions in `.vida/instructions` and
   `.vida/AGENT.sidecar.md` (system-spec §132-190).
-- Host-шаблони для власної системи агентів уже є в репозиторії як патерн
-  (`tooling/agent/cloud-pstack-setup.ts` працює з host-шаблонами superpowers/pstack).
+- Host templates for its own agent system already exist in the repository as a pattern
+  (`tooling/agent/cloud-pstack-setup.ts` works with the superpowers/pstack host templates).
 
-# Наслідки
+# Consequences
 
-1. **`vp-setup` має три різні writers**, і кожен визначається за середовищем:
-   проєктний instruction-файл / конфіг runtime / конфіг проєкту від хост-прослойки.
-   Жоден з них не пише в пакет агента.
-2. **Ідемпотентність** (§3) дійсна для кожного writer'а окремо: повторний запуск на
-   незміненому вході не додає дублікатів блоків, хуків і записів.
-3. **У самому репозиторії** VP-блок не пишеться в `AGENTS.md` (генератор); для
-   репозиторію VP-інтеграція живеє в project-owned поверхні (`.vida/` за цільовим
-   layout або в product-owned інструкції) — це окрема конфігурація середовища.
-4. **Формат конфігурації — YAML** (керований блок у instruction-файлі / YAML-конфіг
-   проєкту), узгоджений із принципом «одна семантика, різні носії»: ті самі поля
-   (тип розробки, тип флоу, агенти, методологія, посилання) у різних файлах.
-5. **Перевірка активації** (§3) виконується в кожному середовищі окремо: початок
-   сесії, відновлення після compaction, контекст делегованого агента.
-6. **`.vida` не є передумовою** для Standalone-середовища: він стосується Runtime
-   (D8), де цільовий layout ще не реалізований.
+1. **`vp-setup` has three different writers**, and each is determined by the environment:
+   the project instruction file / the runtime config / the project config of the host layer.
+   None of them writes into the agent package.
+2. **Idempotency** (§3) holds for each writer separately: a repeated run on
+   unchanged input adds no duplicate blocks, hooks or entries.
+3. **In the repository itself** the VP block is not written into `AGENTS.md` (the generator); for
+   the repository, the VP integration lives on a project-owned surface (`.vida/` per the target
+   layout or in the product-owned instructions) — this is a separate environment configuration.
+4. **The configuration format is YAML** (a managed block in the instruction file / the project YAML
+   config), consistent with the principle "one semantics, different carriers": the same fields
+   (type of development, type of flow, agents, methodology, references) in different files.
+5. **Activation verification** (§3) is performed in each environment separately: the start
+   of a session, recovery after compaction, the context of a delegated agent.
+6. **`.vida` is not a prerequisite** for the Standalone environment: it applies to Runtime
+   (D8), where the target layout is not yet implemented.
 
-# Розглянуті варіанти
+# Options considered
 
-| Варіант | Суть | Висновок |
+| Option | Essence | Conclusion |
 |---|---|---|
-| (a) Чинний v1-конфіг, `.vida` окремо | VP цілиться в наявну поверхню | **Частково прийнято**: VP не чекає на `.vida` для Standalone; але рішення не описувало розрізнення середовищ |
-| (b) Цілитися в `.vida` одразу | Один layout для всього | Відхилено: блокує Standalone на чужому cutover-треку |
-| (c) Три носія за середовищем | Standalone / agent-delivery / host-shim | **Прийнято** — розширює (a) реальною моделлю середовищ |
+| (a) The current v1 config, `.vida` separately | VP targets the existing surface | **Partially accepted**: VP does not wait for `.vida` for Standalone; but the decision did not describe the distinction of environments |
+| (b) Target `.vida` right away | One layout for everything | Rejected: blocks Standalone on someone else's cutover track |
+| (c) Three carriers per environment | Standalone / agent-delivery / host-shim | **Accepted** — extends (a) with a real model of environments |
 
-# Вплив на інші рішення
+# Impact on other decisions
 
-- D8: розділ методологічного профілю живе у `.vida/project.yaml` (Runtime) і в
-  керованому YAML-блоці проєктного instruction-файлу (Standalone) — одна схема,
-  різні носії.
-- D4: канал 1 (окремий плагін) ↔ середовище Standalone; канал 2 (збірка в пакет
-  агента) ↔ середовище agent-delivery; канал 3 (marketplace) ↔ середовище
-  host-shim.
-- Stage 5: `vp-setup` реалізує три writers і перевірку активації в кожному.
+- D8: the methodology profile section lives in `.vida/project.yaml` (Runtime) and in
+  the managed YAML block of the project instruction file (Standalone) — one schema,
+  different carriers.
+- D4: channel 1 (separate plugin) ↔ the Standalone environment; channel 2 (build into the agent
+  package) ↔ the agent-delivery environment; channel 3 (marketplace) ↔ the
+  host-shim environment.
+- Stage 5: `vp-setup` implements three writers and activation verification in each.
 
-# Повноваження
+# Authority
 
-Рішення власника репозиторію від 2026-10-19, зафіксоване в поточній розмові.
+Decision of the repository owner dated 2026-10-19, recorded in the current conversation.

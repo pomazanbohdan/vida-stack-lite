@@ -1,22 +1,22 @@
 ---
 instruction_id: format-diagnosis-report
-title: Подавай діагностичний звіт у фіксованій структурі
-summary: "Звіт має містити проблему, висновок, середовище, переглянуті артефакти, хронологію, знахідки за вимірами, обмеження й покриття."
+title: Format the diagnosis report in a fixed structure
+summary: "Fill the report sections in order: problem, verdict, environment, sessions, timeline, findings by dimension, involvement, and coverage."
 capability_tags:
   - diagnose-agent-behavior
 pattern_tags:
   - evidence-analysis
-conditions_applies_when: Треба оформити результати діагностики для передачі.
-conditions_does_not_apply_when: Аналіз ще не має підкріплених знахідок.
+conditions_applies_when: Diagnosis results are being written up for delivery.
+conditions_does_not_apply_when: The analysis does not yet have supported findings.
 artifact_contract_output_type: structured-diagnosis-report
 artifact_contract_required_data:
-  - проблема
-  - висновок
-  - середовище
-  - артефакти
-  - хронологія
-  - знахідки
-  - покриття
+  - problem
+  - verdict
+  - environment
+  - sessions
+  - timeline
+  - findings
+  - coverage
 artifact_contract_verified_by: all required sections present in order
 compatibility_excludes: []
 compatibility_requires:
@@ -27,19 +27,19 @@ status: active
 revision: 3
 ---
 
-# Подавай діагностичний звіт у фіксованій структурі
-Визнач питання, на яке має відповісти звіт.
-Почни з відповіді та рівня впевненості.
-Опиши умови, у яких збирали докази.
-Переліч переглянуті джерела й відкинуті варіанти.
-Подай хронологію значущих подій.
-Подай знахідки за кожним аспектом окремо.
-Для кожної знахідки вкажи місце, цитату й упевненість.
-Познач аспект без знахідок як перевірений.
-Назви обмеження й непрочитані частини.
-Познач, чи проблема ще триває.
-Не додавай розділ із виправленнями.
-Відділяй доказ від припущення за cite-evidence-lines.
-Збережи однаковий порядок розділів.
-Познач непідтверджені твердження.
-Заверши, коли кожен обов'язковий розділ має доказ або позначене обмеження.
+# Format the diagnosis report in a fixed structure
+The report opens with the problem statement, copied from the case file.
+The triage verdict states what the evidence shows happened around the reported problem, in prose, with `path:line` after every claim.
+State confidence: high, medium, or low, and what would raise it.
+The environment section lists the OS, harness and version, models seen, install root, version and git sha, skill files read or injected, other plugins and servers, and instruction files present.
+Label every environment field and skill observation as historical evidence, unverified snapshot, current observation, or unknown, and record its supporting evidence location.
+The sessions section lists each role, session id, absolute path, lines, and bytes, plus rejected candidates.
+The timeline has one row per human-typed prompt; the events column lists skills invoked, subagents dispatched, compaction, errors, resumes, aborts.
+Findings run one subsection per dimension.
+Each finding names one sentence, a `path:line` quote, the turns, and confidence.
+A dimension with nothing to report says `none found — checked: <what was checked>`.
+The involvement section says not indicated, possible, or likely, and states involvement only; it does not name a defect and does not propose a change.
+Coverage notes list what was not read and why, unavailable harness features, whether the session was in progress, and what the partner should double-check.
+Similar sessions are reported only when requested.
+Do not add a section with fixes.
+Keep one order for the sections.

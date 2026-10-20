@@ -1,7 +1,7 @@
 ---
 type: Task Plan
-title: 'Vida Powers — task-level план кроку D: вертикальний зріз корпусу'
-description: 'Розширення канонічного instruction corpus за межами seed-партії: обробка донорів пофазно (інвентаризація → відбір → сегментація → злиття → пакет тегів → конвертація → валідація), з пакетним затвердженням довідника тегів власником на кожного донора.'
+title: 'Vida Powers — task-level plan for step D: vertical slice of the corpus'
+description: 'Extending the canonical instruction corpus beyond the seed batch: processing the donors in phases (inventory → selection → segmentation → merging → tag package → conversion → validation), with batch approval of the tag vocabulary by the owner for each donor.'
 status: draft
 stale_after: '2026-11-19T00:00:00Z'
 tags:
@@ -12,140 +12,149 @@ tags:
 sources:
 - id: design
   resource: /catalog-design.md
-  title: Vida Powers — дизайн каталогу інструкцій
+  title: Vida Powers — instruction catalog design
 - id: step-c-plan
   resource: /task-plan-step-c.md
-  title: Vida Powers — task-level план кроку C
+  title: Vida Powers — task-level plan for step C
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція
+  title: Vida Powers — product concept
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T12:00:00Z' }
 revision: '1'
 ---
 
-**Мета:** розширити канонічний instruction corpus за межами seed-партії кроку C
-(12 інструкцій) — обробити донорів MVP-пари (superpowers, ponytail) за фазами
-дизайну §5a і довести корпус до стану, придатного для кроку E (скіли).
+**Goal:** extend the canonical instruction corpus beyond the seed batch of step C
+(12 instructions) — process the donors of the MVP pair (superpowers, ponytail) by the phases of
+design §5a and bring the corpus to a state suitable for step E (skills).
 
-**Специфікація, з якої цей план випливає:** `docs/catalog-design.md` §5a (фази
-обробки), §6 (довідник тегів і маніфест), `docs/system-specification.md`
-(SR-06…SR-08, SR-15, SR-66, SR-76), `docs/task-plan-step-c.md` (закриті контракти
-кроку C), `docs/research/vida-powers-product-research.md` §4.1 (межі донорів).
+**The specification this plan follows from:** `docs/catalog-design.md` §5a (processing
+phases), §6 (tag vocabulary and manifest), `docs/system-specification.md`
+(SR-06…SR-08, SR-15, SR-66, SR-76), `docs/task-plan-step-c.md` (the closed contracts
+of step C), `docs/research/vida-powers-product-research.md` §4.1 (donor boundaries).
 
 ## Global Constraints
 
-- **Джерело обов'язкове.** Кожна інструкція має щонайменше одне джерело
-  (`donor`, `license`, `revision`, `path`); синтетика без джерела заборонена.
-  `revision` дорівнює `donors.yaml[donor].head_sha`.
-- **Одна норма — одна інструкція.** Дублікати зливаються: інструкція несе всі
-  джерела в `provenance[]`; відкинуті дублікати не існують окремо.
-- **Довідник тегів — owner-контент.** Агент не додає теги до словника; на
-  завершенні обробки донора він подає **пакет** (тег + опис + де вживається), і
-  власник затверджує його одним проходом. Далі теги потрапляють у `catalog.json`.
-- **Єдиний writer.** `scripts/convert.ts` пише `instructions/`, `catalog.json` і
-  `corpus-map.json` (CAT-D3, SR-76). Рантайм-скрипти лише читають.
-- **Мапа покриває кожен файл-носій.** Для кожного файла донора — запис
-  `converted` / `split` / `merged` / `rejected` (з причиною для `rejected`).
-  Відхилення фіксуються в мапі, а не в окремому звіті.
-- **Критерії відхилення (рішення власника, 2026-10-20).** Інструкція — це норма,
-  яка вимагає дії **або** задає поведінку агента (дія, формат, лаконічність, тон,
-  структура відповіді). Відхиляються (з причиною в мапі): історія розвитку донора
-  (плани, специфікації, changelog, журнали створення), правила репозиторію донора
+- **A source is mandatory.** Each instruction has at least one source
+  (`donor`, `license`, `revision`, `path`); synthetics without a source are forbidden.
+  `revision` equals `donors.yaml[donor].head_sha`.
+- **One norm — one instruction.** Duplicates are merged: the instruction carries all
+  sources in `provenance[]`; the discarded duplicates do not exist separately.
+- **The tag vocabulary is owner content.** The agent does not add tags to the vocabulary; at
+  the completion of processing a donor it submits a **package** (tag + description + where it is used), and
+  the owner approves it in a single pass. Then the tags enter `catalog.json`.
+- **The language of instructions is the donor original (D11).** The body of an instruction is the normative
+  text of the donor **in the original language**; an instruction is **not translated** and not
+  rewritten "in our own words". Permitted edits: cutting the irrelevant,
+  merging duplicated sentences, neutralizing donor names, moving the binding
+  to the norm, adding an explicit completion criterion if the donor lacks it. Forbidden:
+  translation, inventing rules, weakening strictness, adding requirements that the
+  donor does not have. The review compares the instruction with the **original** and records every
+  divergence.
+- **The tag vocabulary, schemas, error codes, tool texts — in English** (D11).
+- **A single writer.** `scripts/convert.ts` writes `instructions/`, `catalog.json` and
+  `corpus-map.json` (CAT-D3, SR-76). Runtime scripts only read.
+- **The map covers every carrier file.** For each donor file — an entry
+  `converted` / `split` / `merged` / `rejected` (with a reason for `rejected`).
+  Rejections are recorded in the map, not in a separate report.
+- **Rejection criteria (owner decision, 2026-10-20).** An instruction is a norm
+  that requires an action **or** sets agent behavior (action, format, conciseness, tone,
+  response structure). Rejected (with a reason in the map): the evolution history of the donor
+  (plans, specifications, changelog, creation logs), the donor's repository rules
   (`AGENTS.md`, `GEMINI.md`, `README.md`, `CODE_OF_CONDUCT.md`, `.github/**`),
-  хостова інфраструктура (інсталяція, перенесення, карти інструментів, хуки ОС),
-  матеріали оцінювання донора (його тестові сценарії). Усе інше **розбирається на
-  норми**: з шаблонів і промптів береться правило, а не шаблон; діагностика
-  агентів — методологія ✓.
-- **Сегментація — до атомів.** Один скіл/файл донора розрізається на кілька
-  інструкцій; одна норма = одна інструкція.
-- **Дублікати між донорами — рішення власника.** Якщо той самий паттерн є у
-  кількох донорах із різними формулюваннями, агент не обирає сам: він збирає
-  **конфліктний пакет** (набірки формулювань, джерела, оцінка актуальності) і
-  власник затверджує, який варіант лишається (старі донори можуть відставати;
-  актуальність перевіряється зовнішніми джерелами).
-- **Ліміт — не на корпус, а на bundle.** Корпус не має обмеження розміру: обмежено
-  ≤ 20 інструкцій і ≤ 64 КБ лише те, що **потрапляє в сесію** (SR-58, AC-26:
-  bootstrap вантажить лише bundle, не весь корпус). Рішення власника (2026-10-20):
-  корпус із superpowers має бути **широким** — одна норма = одна атомарна інструкція,
-  повнота покриття норм донора, а не «одна інструкція на файл».
-- **Правила межі.** Runtime-агностичність (`node:`-модулі лише в
-  `skills/*/scripts/`), версія лише в метаданих, машинні формати — JSON.
+  host infrastructure (installation, migration, tool maps, OS hooks),
+  the donor's evaluation materials (its test scenarios). Everything else **is broken down into
+  norms**: from templates and prompts the rule is taken, not the template; agent
+  diagnostics — methodology ✓.
+- **Segmentation — down to atoms.** One skill/file of the donor is cut into several
+  instructions; one norm = one instruction.
+- **Duplicates across donors — an owner decision.** If the same pattern exists in
+  several donors with different wordings, the agent does not choose itself: it assembles
+  a **conflict package** (sets of wordings, sources, currency assessment) and
+  the owner approves which variant remains (old donors may lag behind;
+  currency is verified against external sources).
+- **The limit is not on the corpus but on the bundle.** The corpus has no size limit: limited
+  to ≤ 20 instructions and ≤ 64 KB is only what **enters the session** (SR-58, AC-26:
+  bootstrap loads only the bundle, not the whole corpus). Owner decision (2026-10-20):
+  the corpus from superpowers must be **broad** — one norm = one atomic instruction,
+  full coverage of the donor's norms, not "one instruction per file".
+- **Boundary rules.** Runtime-agnosticism (`node:` modules only in
+  `skills/*/scripts/`), version only in metadata, machine formats — JSON.
 
-## Фази обробки донора (одна ітерація на донора)
+## Phases of donor processing (one iteration per donor)
 
-| Фаза | Хто | Артефакт | Ворота |
+| Phase | Who | Artifact | Gate |
 |---|---|---|---|
-| 1. Інвентаризація | скрипт | `.tmp/inventory/<donor>.json` (шлях, розмір, frontmatter, заголовки) | детерміновано з пін-клону |
-| 2. Відбір | агент | записи `rejected` з причиною для не-методології | кожен файл-носій має запис |
-| 3. Сегментація | агент | специфікації інструкцій (JSON) у `.tmp/` | одна норма = одна специфікація |
-| 4. Злиття | агент | оновлені специфікації (кілька джерел в `provenance[]`) + записи `merged` | дублікат не існує окремо |
-| 5. Пакет тегів | агент → власник | пропозиція пакета (тег + опис + де вживається) | **затвердження власника одним проходом** |
-| 6. Конвертація | `convert.ts` | `instructions/`, `catalog.json`, `corpus-map.json` | ідемпотентність; лише три цілі |
-| 7. Валідація | `check-corpus.ts` | звіт перевірок | `issues: []`, exit 0 |
+| 1. Inventory | script | `.tmp/inventory/<donor>.json` (path, size, frontmatter, headings) | deterministic from the pinned clone |
+| 2. Selection | agent | `rejected` entries with a reason for non-methodology | every carrier file has an entry |
+| 3. Segmentation | agent | instruction specifications (JSON) in `.tmp/` | one norm = one specification |
+| 4. Merging | agent | updated specifications (several sources in `provenance[]`) + `merged` entries | the duplicate does not exist separately |
+| 5. Tag package | agent → owner | package proposal (tag + description + where it is used) | **owner approval in a single pass** |
+| 6. Conversion | `convert.ts` | `instructions/`, `catalog.json`, `corpus-map.json` | idempotency; only three targets |
+| 7. Validation | `check-corpus.ts` | check report | `issues: []`, exit 0 |
 
-## Задачі кроку D
+## Tasks of step D
 
-### Task D1 — Конвертер: записи мапи для відхилень і злиття
+### Task D1 — Converter: map entries for rejections and merges
 
 **Files:** extend `scripts/convert.ts` + `tests/convert.test.ts`.
 
-- Новий вхід: специфікація запису мапи — `{ donor, source_revision, path,
+- New input: a map entry specification — `{ donor, source_revision, path,
   status: 'rejected' | 'merged', reason?, instruction_ids?, contributed_sources? }`.
   `rejected` → `{ status, reason }`; `merged` → `{ status, instruction_ids,
-  contributed_sources }`; запис `rejected` без причини → помилка.
-- Запис пишеться в `corpus-map.json` (єдиний writer), ідемпотентно; `donors[donor].source_revision`
-  оновлюється лише коли це той самий донор (різниця ревізій → помилка, як у
-  поточній реалізації).
-- Тести: запис `rejected` із причиною; `merged` з `instruction_ids` і
-  `contributed_sources`; `rejected` без причини → помилка; повторний запис →
-  байт-у-байт ідемпотентно; мапа лишається валідною за `vpcorpusmap.v1`.
+  contributed_sources }`; a `rejected` entry without a reason → an error.
+- The entry is written to `corpus-map.json` (the single writer), idempotently; `donors[donor].source_revision`
+  is updated only when it is the same donor (a revision difference → an error, as in
+  the current implementation).
+- Tests: a `rejected` entry with a reason; `merged` with `instruction_ids` and
+  `contributed_sources`; `rejected` without a reason → an error; a repeated entry →
+  byte-for-byte idempotent; the map remains valid per `vpcorpusmap.v1`.
 
-### Task D2 — Обробка донора superpowers
+### Task D2 — Processing the superpowers donor
 
-- Фази 1–5 для решти файлів-носіїв superpowers (11 SKILL.md уже в корпусі):
-  відбір не-методології з причинами, сегментація, злиття, чернетка специфікацій
-  і **пакет тегів на затвердження власника**.
-- Вихід фази 5 — чернетки в `.tmp/` + пакет тегів для власника.
+- Phases 1–5 for the remaining carrier files of superpowers (11 SKILL.md are already in the corpus):
+  selection of non-methodology with reasons, segmentation, merging, a draft of specifications
+  and a **tag package for owner approval**.
+- The output of phase 5 — drafts in `.tmp/` + the tag package for the owner.
 
-### Task D3 — Обробка донора ponytail
+### Task D3 — Processing the ponytail donor
 
-- Те саме для ponytail (1 інструкція в корпусі): зокрема родина `gain`/`debt`/
-  `audit`/`review` і злиття дублікатів правила ponytail із різних хостових
-  форматів (.opencode/.clinerules/.kiro/.qoder/.windsurf) в одну інструкцію.
+- The same for ponytail (1 instruction in the corpus): in particular the `gain`/`debt`/
+  `audit`/`review` family and the merging of duplicates of the ponytail rule from different host
+  formats (.opencode/.clinerules/.kiro/.qoder/.windsurf) into one instruction.
 
-### Task D4 — Матеріалізація та валідація
+### Task D4 — Materialization and validation
 
-- Фази 6–7 для оброблених донорів: конвертація, `check-corpus.ts` → `issues: []`,
-  CLI-операції проти реального каталогу, коміт.
-- Після кожного донора — запис у `docs/log.md` (OKF §9).
+- Phases 6–7 for the processed donors: conversion, `check-corpus.ts` → `issues: []`,
+  CLI operations against the real catalog, commit.
+- After each donor — an entry in `docs/log.md` (OKF §9).
 
-## Хід виконання
+## Execution progress
 
-| Task | Статус | Доказ |
+| Task | Status | Evidence |
 |---|---|---|
-| D1. Конвертер: записи мапи, видалення, `split` | **закрито** | `scripts/convert.ts`, `tests/convert.test.ts` — `--map-record` (rejected / merged / split), `--remove`, канонізація аліасів, ідемпотентність; 3 рев'ю-раунди |
-| D2. Донор superpowers | **закрито** | 120 файлів → 73 інструкції, 8 конфліктів знято звуженням, 72 відхилення; рев'ю змісту: 1 blocker (вигадана норма) + 7 major/minor — закрито |
-| D3. Донор ponytail | **закрито** | 60 файлів → 13 інструкцій, 12 злиттів, 36 відхилень; 4 нових теги затверджено |
-| D4. Матеріалізація та валідація | **закрито** | корпус 161 інструкція (superpowers + ponytail + pstack); `check-corpus.ts` → `issues: []`; карта 314 записів (37 split / 149 converted / 14 merged / 114 rejected); 230 тестів, coverage 100 % |
+| D1. Converter: map entries, removal, `split` | **closed** | `scripts/convert.ts`, `tests/convert.test.ts` — `--map-record` (rejected / merged / split), `--remove`, alias canonization, idempotency; 3 review rounds |
+| D2. Superpowers donor | **closed** | 120 files → 73 instructions, 8 conflicts removed by narrowing, 72 rejections; content review: 1 blocker (an invented norm) + 7 major/minor — closed |
+| D3. Ponytail donor | **closed** | 60 files → 13 instructions, 12 merges, 36 rejections; 4 new tags approved |
+| D4. Materialization and validation | **closed** | corpus of 161 instructions (superpowers + ponytail + pstack); `check-corpus.ts` → `issues: []`; the map has 314 entries (37 split / 149 converted / 14 merged / 114 rejected); 230 tests, coverage 100 % |
 
-**Поза планом кроку D (залишилось):** донори поза MVP-парою (BMAD, matt-skills,
-addy-skills, pstack, gsd-core) — окремий крок із рішенням власника щодо межі;
-крок **E** (скіли й маніфести), **F** (Work Items/findings), **G** (runtime-запит).
+**Outside the plan of step D (remaining):** donors outside the MVP pair (BMAD, matt-skills,
+addy-skills, pstack, gsd-core) — a separate step with an owner decision on the boundary;
+step **E** (skills and manifests), **F** (Work Items/findings), **G** (runtime request).
 
-## Поза цим планом
+## Outside this plan
 
-- Крок **E**: `skills/vp-mode/SKILL.md`, `skills/vp-setup/`, пер-хостові маніфести.
-- Крок **F**: Work Items VP і findings; крок **G**: runtime-запит D3+D8.
-- Донори поза MVP-парою (BMAD, matt-skills, addy-skills, pstack, gsd-core) —
-  окремий крок D з власним рішенням власника щодо межі.
+- Step **E**: `skills/vp-mode/SKILL.md`, `skills/vp-setup/`, per-host manifests.
+- Step **F**: VP Work Items and findings; step **G**: the runtime request D3+D8.
+- Donors outside the MVP pair (BMAD, matt-skills, addy-skills, pstack, gsd-core) —
+  a separate step D with its own owner decision on the boundary.
 
-## Визначення завершення кроку D
+## Definition of done for step D
 
 1. `bun packages/powers/scripts/check-corpus.ts` → `issues: []`, exit 0.
-2. `bun run --cwd packages/powers test` → 0 failures; `test:coverage` → поріг 1.0.
-3. `bun run --cwd packages/powers typecheck` → 0 помилок.
+2. `bun run --cwd packages/powers test` → 0 failures; `test:coverage` → threshold 1.0.
+3. `bun run --cwd packages/powers typecheck` → 0 errors.
 4. `bun run --cwd packages/agent lint:knip:pinned` → `{"issues":[]}`, exit 0.
 5. `bun packages/powers/scripts/check-okf.ts` → `failures: []`.
-6. Кожен донор — окремий пакет тегів, затверджений власником; **матеріалізація —
-   атомарним комітом** (маніфест, мапа й корпус не мають часткового стану: частковий
-   маніфест не читається валідator'ом).
+6. Each donor — a separate tag package approved by the owner; **materialization —
+   in an atomic commit** (the manifest, the map and the corpus must not be in a partial state: a partial
+   manifest is not read by the validator).

@@ -1,19 +1,19 @@
 ---
 instruction_id: escalate-blocked-work
-title: "Зупиняйся й повідомляй, коли задача перевищує можливості"
-summary: "Краще зупинитися з точним описом блокування, ніж видати непевну роботу."
+title: Stop and escalate when the task is over your head
+summary: "Stop rather than produce unsure work, and report the status with what you are stuck on, what you tried, and what help you need."
 capability_tags:
   - delegate-subagent-tasks
 pattern_tags:
   - subagent-delegation
-conditions_applies_when: "Задача потребує рішення, контексту або здатності, яких не надано."
-conditions_does_not_apply_when: Задача виконується в межах наданого контексту й повноважень.
+conditions_applies_when: "The task needs a decision, context, or capability that was not provided."
+conditions_does_not_apply_when: The task runs inside the provided context and authority.
 artifact_contract_output_type: blocker-report
 artifact_contract_required_data:
-  - причина блокування
-  - спроби
-  - потрібна допомога
-artifact_contract_verified_by: blocker report names the missing input
+  - blocker
+  - attempts
+  - help needed
+artifact_contract_verified_by: the blocker report names the missing input
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -22,19 +22,20 @@ status: active
 revision: 1
 ---
 
-# Зупиняйся й повідомляй, коли задача перевищує можливості
-Визнач, що саме не вдається зробити.
-Перевір, чи бракує контексту, здатності чи часу.
-Зупини роботу, якщо рішення потребує архітектурного вибору.
-Зупини роботу, якщо потрібен код поза наданим контекстом.
-Зупини роботу, якщо план не передбачає потрібної зміни.
-Опиши, що вже спробував.
-Опиши, що саме потрібно для продовження.
-Повідом стан блокування або браку контексту.
-Не видавай непевну роботу за завершену.
-Не продовжуй навмання.
-Не змінюй задачу без погодження.
-Не приховуй, що задача виявилася завеликою.
-Не передавай задачу далі без дозволу.
-Запиши блокування в звіт.
-Повернися до роботи після отримання відповіді.
+# Stop and escalate when the task is over your head
+It is always OK to stop and say "this is too hard for me."
+Bad work is worse than no work.
+You will not be penalized for escalating.
+STOP and escalate when the task requires architectural decisions with multiple valid approaches.
+STOP and escalate when you need to understand code beyond what was provided and can't find clarity.
+STOP and escalate when you feel uncertain about whether your approach is correct.
+STOP and escalate when the task involves restructuring existing code in ways the plan didn't anticipate.
+STOP and escalate when you've been reading file after file trying to understand the system without progress.
+Report back with status BLOCKED or NEEDS_CONTEXT.
+Describe specifically what you're stuck on, what you've tried, and what kind of help you need.
+The controller can provide more context, re-dispatch with a more capable model, or break the task into smaller pieces.
+If the implementer said it's stuck, something needs to change.
+Use BLOCKED if you cannot complete the task.
+Use NEEDS_CONTEXT if you need information that wasn't provided.
+Use DONE_WITH_CONCERNS if you completed the work but have doubts about correctness.
+Never silently produce work you're unsure about.

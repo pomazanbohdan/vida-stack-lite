@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 447,
-  "updated_at": "2026-10-20T08:34:27.267Z",
+  "revision": 598,
+  "updated_at": "2026-10-20T11:31:02.880Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -165,9 +165,12 @@
           ]
         },
         "skills/systematic-debugging/root-cause-tracing.md": {
-          "status": "converted",
+          "status": "merged",
           "instruction_ids": [
             "debug-systematically"
+          ],
+          "contributed_sources": [
+            "superpowers:skills/systematic-debugging/root-cause-tracing.md"
           ]
         },
         "skills/test-driven-development/writing-good-tests.md": {
@@ -184,239 +187,239 @@
         },
         ".github/ISSUE_TEMPLATE/bug_report.md": {
           "status": "rejected",
-          "reason": "Шаблон форми звернення до репозиторію донора; не методологія."
+          "reason": "Issue form template for the donor repository; not methodology."
         },
         ".github/ISSUE_TEMPLATE/diagnosis_report.md": {
           "status": "rejected",
-          "reason": "Шаблон форми звернення до репозиторію донора; не методологія."
+          "reason": "Issue form template for the donor repository; not methodology."
         },
         ".github/ISSUE_TEMPLATE/feature_request.md": {
           "status": "rejected",
-          "reason": "Шаблон форми звернення до репозиторію донора; не методологія."
+          "reason": "Issue form template for the donor repository; not methodology."
         },
         ".github/ISSUE_TEMPLATE/platform_support.md": {
           "status": "rejected",
-          "reason": "Шаблон форми звернення до репозиторію донора; не методологія."
+          "reason": "Issue form template for the donor repository; not methodology."
         },
         ".github/PULL_REQUEST_TEMPLATE.md": {
           "status": "rejected",
-          "reason": "Шаблон форми звернення до репозиторію донора; не методологія."
+          "reason": "Issue form template for the donor repository; not methodology."
         },
         ".opencode/INSTALL.md": {
           "status": "rejected",
-          "reason": "Хостова інструкція встановлення донора; інфраструктура, не норма."
+          "reason": "Host-specific install instructions for the donor; infrastructure, not a norm."
         },
         "AGENTS.md": {
           "status": "rejected",
-          "reason": "Домашні правила репозиторію донора для контриб'юторів; переносної норми не містить."
+          "reason": "The donor repository's house rules for contributors; carries no transferable norm."
         },
         "CODE_OF_CONDUCT.md": {
           "status": "rejected",
-          "reason": "Кодекс поведінки репозиторію; не методологія."
+          "reason": "Repository code of conduct; not methodology."
         },
         "docs/plans/2025-11-22-opencode-support-design.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/plans/2025-11-22-opencode-support-implementation.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/plans/2025-11-28-skills-improvements-from-user-feedback.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/plans/2026-01-17-visual-brainstorming.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/porting-to-a-new-harness.md": {
           "status": "rejected",
-          "reason": "Інструкція перенесення донора на інший хост; інфраструктура."
+          "reason": "Instructions for moving the donor to another host; infrastructure."
         },
         "docs/README.kimi.md": {
           "status": "rejected",
-          "reason": "Хостова інструкція встановлення донора; інфраструктура."
+          "reason": "Host-specific install instructions for the donor; infrastructure."
         },
         "docs/README.opencode.md": {
           "status": "rejected",
-          "reason": "Хостова інструкція встановлення донора; інфраструктура."
+          "reason": "Host-specific install instructions for the donor; infrastructure."
         },
         "docs/superpowers/plans/2026-01-22-document-review-system.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-02-19-visual-brainstorming-refactor.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-03-11-zero-dep-brainstorm-server.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-03-23-codex-app-compatibility.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-04-06-worktree-rototill.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-05-06-lift-drill-into-evals.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-05-07-pi-extension-and-evals.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-06-09-sdd-task-scoped-review-dispatch.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-06-09-visual-companion-issues.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-06-10-visual-companion-auth-hardening.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-06-11-visual-companion-final-hardening-fixup.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-07-06-sdd-plan-scoped-workspace.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-07-15-sdd-fix-loop-redesign.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-07-30-codex-efficiency-fixes.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-08-06-hermes-version-bump-wiring.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-08-27-diagnosing-superpowers.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/plans/2026-10-06-antigravity-marketplace.md": {
           "status": "rejected",
-          "reason": "План робіт донора з його власним контекстом; не норма."
+          "reason": "The donor's work plan with its own context; not a norm."
         },
         "docs/superpowers/specs/2026-01-22-document-review-system-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-02-19-visual-brainstorming-refactor-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-03-11-zero-dep-brainstorm-server-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-03-23-codex-app-compatibility-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-04-06-worktree-rototill-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-05-05-platform-neutral-config-refs-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-05-05-platform-neutral-prose-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-05-05-platform-neutral-readme-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-05-06-lift-drill-into-evals-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-06-09-sdd-task-scoped-review-dispatch-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-06-10-positive-instruction-redesign-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-06-10-strict-cost-sdd-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-06-10-visual-companion-auth-hardening-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-06-11-visual-companion-final-hardening-fixup-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-07-06-sdd-plan-scoped-workspace.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-07-06-sdd-plan-scoped-workspace-eval-results.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-07-15-sdd-fix-loop-redesign-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-07-30-codex-efficiency-fixes-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-08-05-hermes-version-bump-wiring-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-08-27-diagnosing-superpowers-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-10-05-brainstorming-rebuild-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/superpowers/specs/2026-10-06-antigravity-marketplace-design.md": {
           "status": "rejected",
-          "reason": "Дизайн-специфікація функції донора; не норма."
+          "reason": "Design specification of a donor feature; not a norm."
         },
         "docs/testing.md": {
           "status": "rejected",
-          "reason": "Інструкція запуску тестів донора; інфраструктура репозиторію."
+          "reason": "Instructions for running the donor's tests; repository infrastructure."
         },
         "docs/windows/polyglot-hooks.md": {
           "status": "rejected",
-          "reason": "Хостова реалізація хуків для Windows; інфраструктура."
+          "reason": "Host-specific hook implementation for Windows; infrastructure."
         },
         "GEMINI.md": {
           "status": "rejected",
-          "reason": "Правила внеску в репозиторій донора та вказівки для його агентів; не переносна методологія."
+          "reason": "Contribution rules for the donor repository and guidance for its agents; not transferable methodology."
         },
         "README.md": {
           "status": "rejected",
-          "reason": "Огляд і встановлення репозиторію донора; не норма."
+          "reason": "Overview and installation of the donor repository; not a norm."
         },
         "RELEASE-NOTES.md": {
           "status": "rejected",
-          "reason": "Журнал випусків донора; не норма."
+          "reason": "The donor's release log; not a norm."
         },
         "skills/brainstorming/visual-companion.md": {
           "status": "converted",
@@ -562,51 +565,51 @@
         },
         "skills/systematic-debugging/CREATION-LOG.md": {
           "status": "rejected",
-          "reason": "Журнал створення матеріалу донора; не норма."
+          "reason": "The log of how the donor material was produced; not a norm."
         },
         "skills/systematic-debugging/test-academic.md": {
           "status": "rejected",
-          "reason": "Тестовий матеріал для перевірки інструкцій донора; не норма."
+          "reason": "Test material for exercising the donor's instructions; not a norm."
         },
         "skills/systematic-debugging/test-pressure-1.md": {
           "status": "rejected",
-          "reason": "Тестовий матеріал для перевірки інструкцій донора; не норма."
+          "reason": "Test material for exercising the donor's instructions; not a norm."
         },
         "skills/systematic-debugging/test-pressure-2.md": {
           "status": "rejected",
-          "reason": "Тестовий матеріал для перевірки інструкцій донора; не норма."
+          "reason": "Test material for exercising the donor's instructions; not a norm."
         },
         "skills/systematic-debugging/test-pressure-3.md": {
           "status": "rejected",
-          "reason": "Тестовий матеріал для перевірки інструкцій донора; не норма."
+          "reason": "Test material for exercising the donor's instructions; not a norm."
         },
         "skills/using-superpowers/references/antigravity-tools.md": {
           "status": "rejected",
-          "reason": "Карта інструментів конкретного хоста; не методологія."
+          "reason": "Tool map of a specific host; not methodology."
         },
         "skills/using-superpowers/references/claude-code-tools.md": {
           "status": "rejected",
-          "reason": "Карта інструментів конкретного хоста; не методологія."
+          "reason": "Tool map of a specific host; not methodology."
         },
         "skills/using-superpowers/references/codex-tools.md": {
           "status": "rejected",
-          "reason": "Карта інструментів конкретного хоста; не методологія."
+          "reason": "Tool map of a specific host; not methodology."
         },
         "skills/using-superpowers/references/gemini-tools.md": {
           "status": "rejected",
-          "reason": "Карта інструментів конкретного хоста; не методологія."
+          "reason": "Tool map of a specific host; not methodology."
         },
         "skills/using-superpowers/references/hermes-tools.md": {
           "status": "rejected",
-          "reason": "Карта інструментів конкретного хоста; не методологія."
+          "reason": "Tool map of a specific host; not methodology."
         },
         "skills/using-superpowers/references/muse-tools.md": {
           "status": "rejected",
-          "reason": "Карта інструментів конкретного хоста; не методологія."
+          "reason": "Tool map of a specific host; not methodology."
         },
         "skills/using-superpowers/references/pi-tools.md": {
           "status": "rejected",
-          "reason": "Карта інструментів конкретного хоста; не методологія."
+          "reason": "Tool map of a specific host; not methodology."
         },
         "skills/using-superpowers/SKILL.md": {
           "status": "converted",
@@ -640,7 +643,7 @@
         },
         "tests/claude-code/README.md": {
           "status": "rejected",
-          "reason": "Інструкція тестового середовища донора; інфраструктура."
+          "reason": "Instructions for the donor's test environment; infrastructure."
         }
       }
     },
@@ -777,7 +780,7 @@
         },
         ".github/CONTRIBUTING.md": {
           "status": "rejected",
-          "reason": "Правила приймання змін у репозиторій донора й вимоги до бенчмарків; домашні правила."
+          "reason": "Rules for accepting changes into the donor repository and benchmark requirements; house rules."
         },
         ".opencode/command/ponytail-help.md": {
           "status": "merged",
@@ -790,7 +793,7 @@
         },
         "after-install.md": {
           "status": "rejected",
-          "reason": "Хостові кроки вмикання й обмеження доступу після інсталяції; інфраструктура."
+          "reason": "Host steps for enabling and restricting access after installation; infrastructure."
         },
         "AGENTS.md": {
           "status": "converted",
@@ -800,135 +803,135 @@
         },
         "benchmarks/agentic/README.md": {
           "status": "rejected",
-          "reason": "Інструкція запуску агентного бенчмарку донора; матеріали оцінювання."
+          "reason": "Instructions for running the donor's agentic benchmark; evaluation material."
         },
         "benchmarks/arms/caveman-SKILL.md": {
           "status": "rejected",
-          "reason": "Промпт контрольної групи бенчмарку донора; матеріали оцінювання."
+          "reason": "The prompt of the benchmark control arm; evaluation material."
         },
         "benchmarks/README.md": {
           "status": "rejected",
-          "reason": "Методика вимірювання донора; матеріали оцінювання."
+          "reason": "The donor's measurement method; evaluation material."
         },
         "benchmarks/results/2026-06-12-caveman-vs-ponytail.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "benchmarks/results/2026-06-12-v4-hardening-vs-caveman.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "benchmarks/results/2026-06-15-llama3.2-local.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "benchmarks/results/2026-06-16-correctness-gate-fix.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "benchmarks/results/2026-06-16-robustness-audit.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "benchmarks/results/2026-06-17-agentic-safety.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "benchmarks/results/2026-06-17-cost-verification.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "benchmarks/results/2026-06-18-agentic.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "benchmarks/results/2026-06-22-issue-245-217-comprehension.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "benchmarks/results/2026-10-07-agentic.md": {
           "status": "rejected",
-          "reason": "Результат бенчмарку донора; матеріали оцінювання, не норма."
+          "reason": "A donor benchmark result; evaluation material, not a norm."
         },
         "docs/agent-portability.md": {
           "status": "rejected",
-          "reason": "Документація донора про перенесення між хостами; хостова інфраструктура."
+          "reason": "Donor documentation about moving between hosts; host infrastructure."
         },
         "docs/cursor-hooks.md": {
           "status": "rejected",
-          "reason": "Документація хостових хуків донора; інфраструктура."
+          "reason": "Donor documentation of host hooks; infrastructure."
         },
         "examples/csv-sum.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/debounce.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/deep-clone.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/email-validation.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/group-by.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/infinite-scroll.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/modal-dialog.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/number-formatting.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/rate-limit.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/react-countdown.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "examples/README.md": {
           "status": "rejected",
-          "reason": "Покажчик дослівного виводу бенчмарку; матеріали оцінювання."
+          "reason": "An index of verbatim benchmark output; evaluation material."
         },
         "examples/url-params.md": {
           "status": "rejected",
-          "reason": "Дослівний вивід бенчмарку донора, що ілюструє вже наявну норму мінімізації; нових норм не містить."
+          "reason": "Verbatim benchmark output that illustrates the existing minimization norm; it states no new norm."
         },
         "i18n/README.es.md": {
           "status": "rejected",
-          "reason": "Переклад README донора; історія й опис продукту."
+          "reason": "A translation of the donor README; history and product description."
         },
         "i18n/README.ja.md": {
           "status": "rejected",
-          "reason": "Переклад README донора; історія й опис продукту."
+          "reason": "A translation of the donor README; history and product description."
         },
         "i18n/README.ko.md": {
           "status": "rejected",
-          "reason": "Переклад README донора; історія й опис продукту."
+          "reason": "A translation of the donor README; history and product description."
         },
         "i18n/README.zh-CN.md": {
           "status": "rejected",
-          "reason": "Переклад README донора; історія й опис продукту."
+          "reason": "A translation of the donor README; history and product description."
         },
         "INSTALL.md": {
           "status": "rejected",
-          "reason": "Хостова інсталяція донора (плагін, маркетплейс, оновлення); інфраструктура, не норма."
+          "reason": "Host installation of the donor (plugin, marketplace, updates); infrastructure, not a norm."
         },
         "README.md": {
           "status": "rejected",
-          "reason": "Опис продукту донора, історія версій і маркетингові твердження; не норма поведінки агента."
+          "reason": "Description of the donor product, version history and marketing claims; not a norm of agent behavior."
         },
         "skills/ponytail-help/SKILL.md": {
           "status": "merged",
@@ -1858,31 +1861,31 @@
         },
         "automations/benny/README.md": {
           "status": "rejected",
-          "reason": "Опис конкретної автоматизації та її налаштування в хості; норма вилучена з інших файлів тієї самої автоматизації."
+          "reason": "Description of one specific automation and its setup in a host; the norm was taken from other files of the same automation."
         },
         "docs/guide/01-setup.md": {
           "status": "rejected",
-          "reason": "Інструкція встановлення для конкретного хоста: шляхи, команди й назви продукту не переносяться в універсальну норму."
+          "reason": "Setup instructions for a specific host: paths, commands and product names do not transfer into a universal norm."
         },
         "docs/guide/08-principles.md": {
           "status": "rejected",
-          "reason": "Стислий переказ принципів, кожен з яких має окремий повний файл; переказ не додає нової норми."
+          "reason": "A condensed restatement of principles that each have their own full file; the restatement adds no new norm."
         },
         "docs/guide/README.md": {
           "status": "rejected",
-          "reason": "Покажчик розділів посібника без власного змісту; норма міститься в проіндексованих розділах."
+          "reason": "An index of guide sections without content of its own; the norm lives in the indexed sections."
         },
         "README.md": {
           "status": "rejected",
-          "reason": "Опис продукту, встановлення й перелік скілів для конкретного хоста; не містить узагальнюваної норми роботи агента."
+          "reason": "Product description, installation and the skill list for a specific host; it carries no generalizable norm of agent work."
         },
         "skills/make-bot-ui/SKILL.md": {
           "status": "rejected",
-          "reason": "Продуктовий шаблон інтерфейсу для конкретного застосунку; містить смакові рішення й назви продукту замість норми."
+          "reason": "A product UI template for one application; it contains taste decisions and product names instead of a norm."
         },
         "skills/setup-pstack/SKILL.md": {
           "status": "rejected",
-          "reason": "Налаштування конкретного пакета в конкретному хості: копіювання файлів і правки конфігурації без узагальнюваної норми."
+          "reason": "Setup of a specific package in a specific host: file copying and configuration edits without a generalizable norm."
         }
       }
     }

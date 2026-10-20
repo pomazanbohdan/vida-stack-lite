@@ -1,42 +1,40 @@
 ---
 instruction_id: analyze-guidance-timeline
-title: Будуй хронологію застосованих настанов
-summary: Зістав запити власника з викликами настанов і знайди пропущені або пізні спрацювання.
+title: Build the per-turn timeline of guidance use
+summary: "List human prompts and guidance invocations per turn, compare each request against trigger descriptions, and report missed or late matches."
 capability_tags:
   - diagnose-agent-behavior
 pattern_tags:
   - evidence-analysis
-conditions_applies_when: "Скарга стосується настанови, яка не спрацювала або спрацювала пізно."
-conditions_does_not_apply_when: Артефакт не містить викликів настанов.
+conditions_applies_when: The complaint concerns guidance that did not fire or fired late.
+conditions_does_not_apply_when: The artifact contains no guidance invocations.
 artifact_contract_output_type: guidance-timeline
 artifact_contract_required_data:
-  - запити
-  - виклики
-  - пропуски
-  - сторонні інструменти
+  - requests
+  - invocations
+  - misses
+  - other tools
 artifact_contract_verified_by: each request matched against guidance triggers
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/diagnosing-superpowers/prompts/skill-timeline.md
 status: active
-revision: 2
+revision: 3
 ---
 
-# Будуй хронологію застосованих настанов
-Переліч запити власника з місцем і часом.
-Знайди кожен виклик настанови.
-Запиши назву настанови й крок, у якому її застосовано.
-Переліч інші інструменти й розширення, які використовувалися.
-Порівняй текст запиту з умовами застосування настанов.
-Знайди запит, що відповідає умовам, але не викликав настанову.
-Знайди пізній виклик.
-Познач сторонні інструменти з місцем.
-Не оцінюй, чи пропуск був помилкою.
-Не вигадуй умову застосування заднім числом.
-Не змішуй виклик настанови зі згадкою в тексті.
-Відділяй явний виклик від автоматичного.
-Познач непідтверджені виклики.
-Запиши, які запити й виклики перевірено.
-Не роби висновок про причину пропуску.
-Заверши, коли кожен запит зіставлено з викликом настанови.
+# Build the per-turn timeline of guidance use
+Build the per-human-turn record of skill and plugin use, then look for gaps.
+List the human prompts with line numbers and timestamps.
+Using the skill-invocation and attribution meanings established in the case file, list every explicit invocation.
+Include active-skill attributions and reads of the skill definition file.
+Record the line, the skill name, and the human turn it happened in.
+List every plugin, skill, agent type, MCP server, or hook used that is not part of the product under diagnosis.
+Use only the evidenced tool, attribution, agent-dispatch, MCP, and hook meanings recorded in the case file.
+For each human turn, compare the request text against the trigger descriptions of the installed skills.
+Read the frontmatter description lines; the install root is in the case file.
+Report a skill invoked, with the request that preceded it.
+Report a turn whose request matches a skill's trigger description with no invocation in that turn, quoting the request.
+Report a skill invoked one or more turns after the matching request (late).
+Report each plugin, skill, or tool used that is not part of the product, with where.
+Do not say whether a missed or late trigger was wrong. Report the match and the absence; the reader decides.

@@ -1,19 +1,19 @@
 ---
 instruction_id: set-guidance-specificity
-title: Задавай потрібний рівень свободи настанови
-summary: "Обирай між точним рецептом і загальним принципом за тим, наскільки крихкий результат."
+title: Set the degree of freedom the guidance allows
+summary: "Match specificity to fragility: exact sequences where a single safe path exists, principles where many paths lead to success."
 capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
-conditions_applies_when: "Треба вирішити, наскільки детально описувати дію."
-conditions_does_not_apply_when: Правило вже має єдину допустиму форму.
+conditions_applies_when: You are deciding how detailed an action description should be.
+conditions_does_not_apply_when: The rule already has a single permitted form.
 artifact_contract_output_type: guidance-specificity
 artifact_contract_required_data:
-  - крихкість результату
-  - рівень свободи
-  - межа
-artifact_contract_verified_by: outcome stable within the stated freedom
+  - fragility of the outcome
+  - level of freedom
+  - boundary
+artifact_contract_verified_by: the outcome stays stable within the stated freedom
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -22,19 +22,18 @@ status: active
 revision: 1
 ---
 
-# Задавай потрібний рівень свободи настанови
-Визнач, наскільки крихкий потрібний результат.
-Для крихкої операції дай точну послідовність.
-Для задачі з багатьма допустимими рішеннями дай принцип і межі.
-Для задачі з вибором виконавця дай критерії, а не рецепт.
-Назви, що саме залишаєш на розсуд виконавця.
-Не давай точний рецепт там, де потрібне судження.
-Не давай загальний принцип там, де помилка неприпустима.
-Перевір, що рівень свободи відповідає ціні помилки.
-Перевір, що виконавець може діяти без здогадів.
-Звузь свободу, якщо результат став нестабільним.
-Розшир свободу, якщо рецепт заважає доречному рішенню.
-Не змішуй точність із надмірною деталізацією.
-Не залишай межу свободи неявною.
-Запиши межу свободи в настанові.
-Перевір результат на кількох випадках.
+# Set the degree of freedom the guidance allows
+Match the level of specificity to the task's fragility and variability.
+Use high freedom with text-based instructions when multiple approaches are valid.
+Use high freedom when decisions depend on context.
+Use high freedom when heuristics guide the approach.
+Use medium freedom with pseudocode or scripts with parameters when a preferred pattern exists.
+Use medium freedom when some variation is acceptable.
+Use medium freedom when configuration affects behavior.
+Use low freedom with specific scripts when operations are fragile and error-prone.
+Use low freedom when consistency is critical.
+Use low freedom when a specific sequence must be followed.
+Run exactly the script; do not modify the command or add additional flags.
+Think of the agent as a robot exploring a path.
+A narrow bridge with cliffs on both sides has only one safe way forward: provide specific guardrails and exact instructions.
+An open field with no hazards has many paths to success: give general direction and trust the agent to find the best route.

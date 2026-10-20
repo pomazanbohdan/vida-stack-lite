@@ -1,19 +1,19 @@
 ---
 instruction_id: spike-throwaway-to-learn
-title: Перевіряй невизначеність тимчасовим прототипом
-summary: "Будуй короткий прототип, щоб дізнатися те, чого не покаже обговорення, і не вважай його робочою реалізацією."
+title: "Spike to learn, then throw the spike away"
+summary: "Offer a quick throwaway build when learning by doing is cheapest, keep it untested and unpolished, and bring only the lesson back."
 capability_tags:
   - clarify-requirements
 pattern_tags:
   - requirements-clarification
-conditions_applies_when: "Невизначеність стосується поведінки, здійсненності або вигляду результату."
-conditions_does_not_apply_when: Питання можна закрити обговоренням або наявними матеріалами.
+conditions_applies_when: "Uncertainty concerns behavior, feasibility, or the look of the result."
+conditions_does_not_apply_when: The question can be closed by discussion or existing material.
 artifact_contract_output_type: throwaway-spike
 artifact_contract_required_data:
-  - питання прототипу
-  - межа прототипу
-  - отримане знання
-artifact_contract_verified_by: spike answers the stated question
+  - prototype question
+  - prototype boundary
+  - knowledge gained
+artifact_contract_verified_by: the spike answers the stated question
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -22,19 +22,18 @@ status: active
 revision: 1
 ---
 
-# Перевіряй невизначеність тимчасовим прототипом
-Запропонуй прототип, коли невизначеність стосується поведінки або здійсненності.
-Сформулюй, яке питання прототип має закрити.
-Визнач заздалегідь, що вважатимеш підтвердженням.
-Будуй найменший варіант, який дає відповідь.
-Не додавай тестів і плану, якщо прототип тимчасовий.
-Познач результат як тимчасовий до підтвердження.
-Поверни отримане знання в обговорення потреби.
-Не продовжуй будувати на прототипі без окремого рішення.
-Не зберігай прототип як частину продукту.
-Не витрачай на прототип більше, ніж на відповідь, яку він дає.
-Запиши, що прототип не перевіряв.
-Не використовуй прототип для обходу погодження.
-Зупини прототип, коли питання закрите.
-Запропонуй перейти до повного циклу, якщо прототип підтвердив напрям.
-Повідом, якщо прототип не дав відповіді.
+# Spike to learn, then throw the spike away
+Agentic work is waterfall.
+It is very, very fast.
+A quick throwaway build is often the cheapest way to learn what they want.
+A quick throwaway build is also the cheapest way to learn whether something works.
+Offer one when it would help.
+When they just want to spike, get out of the way.
+Spikes get no tests or minimal ones.
+Spikes aren't bulletproof.
+Spikes skip the plan, implementation, and review process.
+Bring what the spike taught you back into the conversation.
+Two exceptions: a spike they said yes to may be built; it stays labeled throwaway.
+Keeping what it produced is a new request that comes back through this gate.
+Use it for throwaway prototypes they can click.
+If it grows mid-task, stop, say so, and step up a size.

@@ -1,19 +1,19 @@
 ---
 instruction_id: require-concrete-failure-case
-title: Вимагай конкретний випадок для кожної знахідки
-summary: Знахідка без вхідних даних і неправильного результату не потрапляє у звіт.
+title: Require a concrete case for every finding
+summary: A finding without an input or situation that leads to a wrong result does not enter the report.
 capability_tags:
   - review-code
 pattern_tags:
   - code-review
-conditions_applies_when: Ти збираєшся назвати знахідку.
-conditions_does_not_apply_when: Ти лише описуєш метод перевірки.
+conditions_applies_when: You are about to report a finding.
+conditions_does_not_apply_when: You are only describing the review method.
 artifact_contract_output_type: verified-finding
 artifact_contract_required_data:
-  - випадок
-  - місце в коді
-  - підтвердження
-  - відкинуті знахідки
+  - case
+  - location in code
+  - confirmation
+  - rejected findings
 artifact_contract_verified_by: no finding is reported without a concrete failure case
 compatibility_excludes: []
 compatibility_requires: []
@@ -28,18 +28,11 @@ status: active
 revision: 2
 ---
 
-# Вимагай конкретний випадок для кожної знахідки
-Сформулюй випадок: які вхідні дані або ситуація дають неправильний результат.
-Перечитай рядки й підтвердь, що виклик існує.
-Підтвердь, що значення справді може бути порожнім.
-Підтвердь, що код справді не використовується, перш ніж назвати його мертвим.
-Відкинь знахідку, для якої не можеш назвати випадок.
-Не перетворюй стиль на знахідку.
-Не пиши «варто розглянути» без названого наслідку.
-Не пиши загальних побоювань без місця й умови.
-Познач знахідку, яку не вдалося підтвердити, як непідтверджену.
-Підтвердь, що випадок відтворюється саме в цих рядках.
-Відкидай знахідку про код, якого не читав.
-Назви, які частини перевірив, а які ні.
-Не додавай знахідку, яку не можеш підкріпити місцем у коді.
-Заверши, коли кожна знахідка має випадок або відкинута.
+# Require a concrete case for every finding
+Every finding needs a concrete case: "this input or situation leads to this wrong result".
+No case, no finding.
+Re-read the lines and confirm: the caller exists, the value can really be empty, the code really is unused.
+Be specific: a file and line, not a vague area.
+No style taste, no "consider", no vague worries.
+Do not be vague.
+Do not give feedback on code you did not actually read.

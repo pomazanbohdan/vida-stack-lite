@@ -1,20 +1,20 @@
 ---
 instruction_id: prove-regression-test-detects-bug
-title: "Доводь, що регресійний тест ловить помилку"
-summary: "Перевір регресійний тест зворотним експериментом: із виправленням він проходить, без нього падає."
+title: Prove the regression test catches the bug
+summary: "Reproduce the bug with a test, confirm it fails without the fix and passes with it, and restore the fix before reporting."
 capability_tags:
   - verify-work-results
 pattern_tags:
   - verification-before-completion
-conditions_applies_when: "Ти додаєш тест, який має захистити від повторення помилки."
-conditions_does_not_apply_when: Тест перевіряє нову поведінку без попереднього збою.
+conditions_applies_when: You add a test that must protect against the bug returning.
+conditions_does_not_apply_when: The test checks new behavior with no prior failure.
 artifact_contract_output_type: regression-proof
 artifact_contract_required_data:
-  - тест
-  - запуск із виправленням
-  - запуск без виправлення
-  - відновлення
-artifact_contract_verified_by: reverse run fails without the fix and passes with it
+  - test
+  - run with the fix
+  - run without the fix
+  - restoration
+artifact_contract_verified_by: the reverse run fails without the fix and passes with it
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -23,19 +23,18 @@ status: active
 revision: 1
 ---
 
-# Доводь, що регресійний тест ловить помилку
-Напиши тест, який відтворює помилку.
-Запусти тест із виправленням і підтверди проходження.
-Тимчасово прибери виправлення.
-Запусти тест і підтверди очікуване падіння.
-Поверни виправлення.
-Запусти тест знову й підтверди проходження.
-Перевір, що падіння спричинене саме помилкою.
-Не вважай тест, який проходить одразу, доказом.
-Не залишай тест без перевіреного падіння.
-Не змінюй тест під час експерименту.
-Зафіксуй команду й результати обох запусків.
-Не використовуй ручну перевірку замість зворотного запуску.
-Запусти суміжні перевірки після відновлення.
-Залиш тест у наборі.
-Повідом, якщо зворотний запуск неможливий.
+# Prove the regression test catches the bug
+Write a failing test that reproduces the bug.
+Follow the TDD cycle.
+The test proves the fix and prevents regression.
+Never fix bugs without a test.
+Regression test: write, run, and confirm it passes.
+Revert the fix.
+Run the test; it must fail.
+Restore the fix.
+Run the test; it must pass.
+"I've written a regression test" without red-green verification is not proof.
+A test that passes once proves nothing.
+Manual testing is ad-hoc: no record of what you covered, no way to re-run it when the code changes.
+Automated tests run the same way every time.
+Report the actual state of each run.

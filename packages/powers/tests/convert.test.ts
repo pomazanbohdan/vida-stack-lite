@@ -153,7 +153,7 @@ describe('convert', () => {
     expect(result).toMatchObject({ kind: 'removal', instructionId: 'write-release-note', removed: true, manifestUpdated: true, mapUpdated: true, manifestRevision: 3 });
     await expect(readFile(join(root, 'instructions', 'write-release-note.md'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
     expect(JSON.parse(await readFile(join(root, 'catalog.json'), 'utf8')).instructions).toEqual([]);
-    expect(JSON.parse(await readFile(mapPath, 'utf8')).donors).toMatchObject({ 'sample-donor': { files: { 'docs/release.md': { status: 'converted', instruction_ids: ['other-rule'] } } }, extra: { files: { 'docs/only.md': { status: 'rejected', reason: 'інструкцію замінено на атомарні' } } } });
+    expect(JSON.parse(await readFile(mapPath, 'utf8')).donors).toMatchObject({ 'sample-donor': { files: { 'docs/release.md': { status: 'converted', instruction_ids: ['other-rule'] } } }, extra: { files: { 'docs/only.md': { status: 'rejected', reason: 'the instruction was replaced by atomic ones' } } } });
   });
 
   test('unknown removal fails without writing and exposes the missing id', async () => {

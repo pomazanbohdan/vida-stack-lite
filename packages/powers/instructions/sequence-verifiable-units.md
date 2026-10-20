@@ -1,19 +1,19 @@
 ---
 instruction_id: sequence-verifiable-units
-title: Діли роботу на перевірювані одиниці
-summary: Розбий задачу на завершені одиниці з власною перевіркою й не переходь далі до зеленої попередньої.
+title: Sequence work into verifiable units
+summary: "Order work as a sequence of small units, each ending in a state you can check, and do not advance until the current one is green."
 capability_tags:
   - plan-implementation
 pattern_tags:
   - implementation-planning
-conditions_applies_when: Задача більша за одну перевірювану зміну.
-conditions_does_not_apply_when: Задача вкладається в одну зміну з однією перевіркою.
+conditions_applies_when: The work is larger than one verifiable change.
+conditions_does_not_apply_when: The work fits in one change with one check.
 artifact_contract_output_type: unit-sequence
 artifact_contract_required_data:
-  - одиниці
-  - результат одиниці
-  - перевірка
-  - залежності
+  - units
+  - result of each unit
+  - check
+  - dependencies
 artifact_contract_verified_by: each unit checked before the next one starts
 compatibility_excludes: []
 compatibility_requires: []
@@ -24,18 +24,18 @@ status: active
 revision: 1
 ---
 
-# Діли роботу на перевірювані одиниці
-Розбий задачу на одиниці, кожна з яких дає спостережуваний результат.
-Зроби одиницю завершеною сама по собі.
-Перевір кожну одиницю перед переходом до наступної.
-Тримай одиницю достатньо малою для одного огляду.
-Познач одиниці, які залежать від інших.
-Обери порядок, у якому кожна одиниця залишає систему робочою.
-Відклади одиницю, яку не можна перевірити окремо.
-Запиши, які одиниці можна виконати паралельно.
-Онови послідовність, якщо одиниця виявилася залежною від наступної.
-Не змішуй у одній одиниці рефакторинг і нову поведінку.
-Додай для кожної одиниці спосіб перевірки.
-Запиши, що одиниця не робить.
-Оновлюй план, якщо одиниця виявилася більшою за очікувану.
-Віддай послідовність одиниць із критеріями готовності.
+# Sequence work into verifiable units
+Order work as a sequence of small units, each ending in a state you can check.
+Do not advance until the current one is green.
+A break caught at the unit that caused it is cheap to localize.
+A break caught after a batch is buried, and you have already built further on a broken base.
+In a sweep, migration, or any run of similar edits, verify each change before starting the next.
+Each unit is a before/after bracket: known-good state, one change, run the check, then proceed.
+Rebase onto clean trunk first so every check measures against the real baseline.
+When a lever does the edits, the per-unit check is nearly free; run it anyway.
+In delivery, stack commits and pull requests in the order that proves the work.
+The canonical shape is the failing test first, then the fix on top.
+Other story orders are a subtraction before the reshape, a baseline capture before the treatment, the scaffold before the feature.
+Each commit lands on its own and the sequence reads as an argument.
+Sequencing those same units into a delivery a reviewer can replay turns "trust me" into "watch it go red, then green."
+It complements keeping each check real and making the per-unit check cheap.

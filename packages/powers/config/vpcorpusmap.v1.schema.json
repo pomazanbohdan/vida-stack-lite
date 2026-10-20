@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "$id": "https://vida-powers.invalid/schemas/vpcorpusmap.v1.schema.json",
   "title": "VPCorpusMap/v1",
-  "description": "Мапа обробки корпусу: для кожного донора (з зафіксованою ревізією) і кожного файлу-носія — результат обробки (converted | split | merged | rejected).",
+  "description": "Corpus processing map: for every donor (with a pinned revision) and every carrier file, the processing result (converted | split | merged | rejected).",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "revision", "updated_at", "donors"],
@@ -24,7 +24,7 @@
         "source_revision": {
           "type": "string",
           "pattern": "^[0-9a-f]{40}$",
-          "description": "Точна ревізія клона донора, з якої взято файли."
+          "description": "The exact revision of the donor clone the files were taken from."
         },
         "files": {
           "type": "object",
@@ -42,17 +42,17 @@
           "type": "array",
           "minItems": 1,
           "items": { "type": "string", "minLength": 1 },
-          "description": "Інструкції, отримані з цього файлу (converted: одна; split: кілька; merged: ціль злиття)."
+          "description": "The instructions produced from this file (converted: one; split: several; merged: the merge target)."
         },
         "contributed_sources": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
-          "description": "Джерела, що внесли в інструкцію під час злиття, у форматі donor:path."
+          "description": "The sources that contributed to the instruction during a merge, in the format donor:path."
         },
         "reason": {
           "type": "string",
           "minLength": 1,
-          "description": "Обов'язковий для rejected: чому файл не перетворився на інструкцію."
+          "description": "Required for rejected: why the file did not become an instruction."
         }
       },
       "allOf": [

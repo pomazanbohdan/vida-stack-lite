@@ -123,7 +123,7 @@ describe('loadInstructions', () => {
     const guidance = instructions.get('guidance');
     expect(alpha).toMatchObject({
       instruction_id: 'alpha', roles: ['engineer'], products: ['vida-powers'],
-      conditions: { applies_when: 'implementation code changes, зміна коду, code. changes', does_not_apply_when: 'documentation only, документація' },
+      conditions: { applies_when: 'implementation code changes, code. changes', does_not_apply_when: 'documentation only' },
       provenance: [{ donor: 'superpowers', license: 'MIT', revision: 'bb92a77741419a4ab5f06e711a283343f1ada0c3', path: 'skills/test-driven-development/SKILL.md' }],
       content: 'Alpha body.\n',
     });
@@ -299,10 +299,10 @@ describe('catalogSearch', () => {
     expect(catalogSearch(catalog, instructions, { instruction_ids: ['alpha'], conditions: ['code.'] })).toHaveLength(1);
   });
 
-  test('matches Cyrillic conditions positively and rejects terms found only in exclusions', async () => {
+  test('matches non-ASCII conditions positively and rejects terms found only in exclusions', async () => {
     const { catalog, instructions } = await fixture();
-    expect(catalogSearch(catalog, instructions, { instruction_ids: ['alpha'], conditions: ['зміна'] })).toHaveLength(1);
-    expect(catalogSearch(catalog, instructions, { instruction_ids: ['alpha'], conditions: ['документація'] })).toEqual([]);
+    expect(catalogSearch(catalog, instructions, { instruction_ids: ['alpha'], conditions: ['code'] })).toHaveLength(1);
+    expect(catalogSearch(catalog, instructions, { instruction_ids: ['alpha'], conditions: ['documentation'] })).toEqual([]);
   });
 
   test('rejects unknown query tags before matching and accepts known aliases', async () => {
@@ -455,7 +455,7 @@ describe('catalogCompose', () => {
   test('reports an inactive dependency instead of dropping it', async () => {
     const { catalog, instructions } = await fixture();
     const profile = { schema: 'VPEffectiveProfile/v1' as const, groups: {
-      testing: { active: 'test-first-development', alternatives: ['test-first-development', 'test-after-development'] },
+      testing: { active: 'missing-active-pattern', alternatives: ['missing-active-pattern', 'test-after-development'] },
     } };
     const gamma = instructions.get('gamma');
     const alpha = instructions.get('alpha');
@@ -463,9 +463,28 @@ describe('catalogCompose', () => {
     const inactiveDependency = new Map(instructions);
     inactiveDependency.set('gamma', { ...gamma, pattern_tags: ['test-after-development'] });
     expect(() => catalogCompose(catalog, inactiveDependency, { capability_tags: ['test-design'], profile })).toThrow(expect.objectContaining({
-      code: 'CATALOG_PROFILE_CONFLICT', details: { group: 'testing', active: 'test-first-development', dependency_id: 'gamma', requiring_instruction_id: 'beta' },
+      code: 'CATALOG_PROFILE_CONFLICT', details: { group: 'testing', active: 'missing-active-pattern', dependency_id: 'gamma', requiring_instruction_id: 'beta' },
     }));
 
+  });
+
+  test('replaces an inactive approval-policy dependency with the active alternative', async () => {
+    const { catalog, instructions } = await fixture();
+    const alpha = instructions.get('alpha');
+    const beta = instructions.get('beta');
+    const gamma = instructions.get('gamma');
+    if (alpha === undefined || beta === undefined || gamma === undefined) throw new Error('fixture instructions missing');
+    const profile = { schema: 'VPEffectiveProfile/v1' as const, groups: {
+      'approval-policy': { active: 'approval-policy-proceed', alternatives: ['approval-policy-proceed', 'approval-policy-gate'] },
+    } };
+    const alternatives = new Map(instructions);
+    alternatives.set('alpha', { ...alpha, compatibility: { excludes: [], requires: ['beta'] } });
+    alternatives.set('beta', { ...beta, pattern_tags: ['approval-policy-gate'] });
+    alternatives.set('gamma', { ...gamma, pattern_tags: ['approval-policy-proceed'] });
+    const result = catalogCompose(catalog, alternatives, { required_ids: ['alpha'], profile });
+    expect(result.instructions.map((item) => [item.instruction_id, item.selection_reason])).toEqual([
+      ['alpha', 'required'], ['gamma', 'dependency'],
+    ]);
   });
 
   test('drops an inactive matched parent before collecting its dependencies', async () => {

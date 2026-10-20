@@ -1,20 +1,20 @@
 ---
 instruction_id: write-directive-rules
-title: "Формулюй обов'язкові правила прямо"
-summary: "Пиши обов'язкове правило наказом, без пом'якшення, і винось виняток в окрему умову."
+title: Write mandatory rules as directives
+summary: "State mandatory rules imperatively with no negotiation, and reserve persuasion for guidance that must hold under pressure."
 capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
-conditions_applies_when: "Ти формулюєш обов'язкове правило для виконавця."
-conditions_does_not_apply_when: "Ти даєш пораду або описуєш необов'язкову практику."
+conditions_applies_when: You are stating a mandatory rule for an executor.
+conditions_does_not_apply_when: You are giving advice or describing an optional practice.
 artifact_contract_output_type: directive-rule
 artifact_contract_required_data:
-  - "обов'язкова дія"
-  - заборона
-  - виняток
-  - ціна порушення
-artifact_contract_verified_by: rule has one unambiguous reading
+  - required action
+  - prohibition
+  - exception
+  - cost of violation
+artifact_contract_verified_by: the rule has one unambiguous reading
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -24,19 +24,19 @@ status: active
 revision: 1
 ---
 
-# Формулюй обов'язкові правила прямо
-Визнач, чи правило є обов'язковим.
-Для обов'язкового правила використовуй наказ.
-Назви дію, яку треба виконати.
-Назви дію, яку заборонено.
-Прибери пом'якшення на кшталт бажано або варто.
-Прибери застереження, які відкривають торг.
-Виняток винеси в окрему умову.
-Умова має спиратися на спостережувану ознаку.
-Поясни ціну порушення.
-Не використовуй категоричність для поради.
-Не додавай кілька винятків в одне речення.
-Перевір, що правило неможливо прочитати двояко.
-Перевір дію правила на сценарії.
-Онови правило після нового обходу.
-Збережи прямоту без грубості.
+# Write mandatory rules as directives
+Use imperative language: "YOU MUST", "Never", "Always".
+Use non-negotiable framing: "No exceptions".
+Imperative language eliminates decision fatigue and rationalization.
+"YOU MUST" removes decision fatigue.
+Absolute language eliminates "is this an exception?" questions.
+Explicit anti-rationalization counters close specific loopholes.
+Clear triggers plus required actions equal automatic execution.
+"When X, do Y" is more effective than "generally do Y".
+Use authority for discipline-enforcing guidance and safety-critical practices.
+For guidance and technique, use moderate authority and unity.
+For reference material, use clarity only.
+Avoid liking for compliance: it conflicts with honest feedback culture and creates sycophancy.
+Use reciprocity sparingly; it can feel manipulative.
+Do not use all seven principles at once.
+The test: would this technique serve the user's genuine interests if they fully understood it?

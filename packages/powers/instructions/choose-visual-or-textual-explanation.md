@@ -1,19 +1,19 @@
 ---
 instruction_id: choose-visual-or-textual-explanation
-title: Обирай вигляд або текст під характер питання
-summary: "Показуй макети й схеми лише тоді, коли побачити буде зрозуміліше, ніж прочитати."
+title: Choose a visual or textual explanation to fit the question
+summary: "Offer a visual only when seeing answers the question better than reading, and keep requirements, scope, and tradeoffs in text."
 capability_tags:
   - clarify-requirements
 pattern_tags:
   - requirements-clarification
-conditions_applies_when: Питання може бути зрозумілішим у вигляді зображення або схеми.
-conditions_does_not_apply_when: "Питання стосується лише тексту, чисел або понятійного вибору."
+conditions_applies_when: The question may be clearer as an image or a diagram.
+conditions_does_not_apply_when: "The question concerns only text, numbers, or a conceptual choice."
 artifact_contract_output_type: explanation-choice
 artifact_contract_required_data:
-  - характер питання
-  - обраний спосіб
-  - варіанти або текст
-artifact_contract_verified_by: owner selects or confirms the presented option
+  - nature of the question
+  - chosen medium
+  - options or text
+artifact_contract_verified_by: the owner selects or confirms the presented option
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -23,19 +23,20 @@ status: active
 revision: 1
 ---
 
-# Обирай вигляд або текст під характер питання
-Визнач, про що питання: про вигляд, простір чи послідовність або про зміст і межі.
-Показуй макет, схему або розкладку, коли рішення стосується вигляду чи розташування.
-Пояснюй текстом вимоги, межі, компроміси й понятійні варіанти.
-Не вважай питання про інтерфейс автоматично візуальним.
-Запропонуй показати варіант, коли власник вагається між образами.
-Подавай два-чотири варіанти на одному екрані.
-Масштабуй деталізацію до питання: каркас для структури, полірування для вигляду.
-Використовуй реальний вміст, коли він впливає на оцінку.
-Не змішуй візуальний варіант із запитанням про зміст.
-Познач, який варіант рекомендуєш і чому.
-Збережи можливість порівняти варіанти поруч.
-Дошліфовуй поточний варіант, доки власник не підтвердить.
-Не переходь до наступного питання на старому зображенні.
-Запропонуй перехід назад до тексту, коли наступне питання понятійне.
-Не показуй більше варіантів, ніж власник може осмислити за раз.
+# Choose a visual or textual explanation to fit the question
+Offer the visual companion whenever seeing would help more than reading.
+Offer it the first time one of these moments comes up, never upfront.
+The offer is its own message with nothing else in it.
+If they decline, stay in text and don't offer again unless they raise it.
+Per question, ask: would they understand this better by seeing it?
+Mockups, layouts, diagrams, and side-by-side designs go in the browser.
+Requirements, scope, tradeoffs, and conceptual choices stay in text.
+A question about a UI topic isn't automatically a visual question.
+Show mockups for something they'll look at: a screen, a page, a printout, a sign.
+Show a layout or arrangement: of a screen, a room, a schedule.
+Show a flow or a sequence of steps.
+Show options that would look different from each other.
+Show a structure that's easier to see than read: a diagram, a timeline, a map.
+Use it for mockups to react to, side-by-side options, and throwaway prototypes they can click.
+It's a tool, not a mode: accepting it doesn't send every question to the browser.
+"This might be easier if I show you. Want me to open a browser tab with some mockups?"

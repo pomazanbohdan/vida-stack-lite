@@ -229,6 +229,41 @@ function checkDonorCoverage(map: Dict, donors: DonorSet, issues: CorpusIssue[]):
   }
 }
 
+function checkMethodologyProfile(base: string, catalog: Dict, instructionIds: Set<string>, issues: CorpusIssue[]): void {
+  const profilePath = join(base, 'config', 'methodology-profile.json');
+  if (!existsSync(profilePath)) return;
+  let profile: unknown;
+  try { profile = readJson(profilePath); }
+  catch (error) { issue(issues, 'CORPUS_PROFILE_INVALID', `cannot read methodology-profile.json: ${String(error)}`, { path: 'config/methodology-profile.json' }); return; }
+  const schema = readJson(join(packageRoot, 'config', 'vpmethodologyprofile.v1.schema.json')) as Schema;
+  const errors = validateAgainstSchema(profile, schema);
+  if (errors.length > 0) issue(issues, 'CORPUS_PROFILE_INVALID', `methodology profile schema validation failed: ${errors.join('; ')}`, { errors });
+  if (!isRecord(profile) || !Array.isArray(profile.groups)) return;
+  const patterns = isRecord(catalog.tag_dictionary) && isRecord(catalog.tag_dictionary.pattern) ? catalog.tag_dictionary.pattern : {};
+  const owners = new Map<string, string>();
+  for (const group of profile.groups.filter(isRecord)) {
+    const groupId = String(group.id ?? '');
+    const alternatives = Array.isArray(group.alternatives) ? group.alternatives.filter(isRecord) : [];
+    const defaultId = group.default;
+    const hasDefault = Object.prototype.hasOwnProperty.call(group, 'default');
+    if ((group.user_decision === true && hasDefault)
+      || (group.user_decision === false && (!hasDefault || typeof defaultId !== 'string' || !alternatives.some((alternative) => alternative.id === defaultId)))) {
+      issue(issues, 'CORPUS_PROFILE_POLICY_DEFAULT_INVALID', `methodology group ${groupId} must omit default when user_decision is true and declare a valid alternative default when user_decision is false`, { group_id: groupId, user_decision: group.user_decision, default: defaultId });
+    }
+    if (group.user_decision === true && alternatives.length < 2) issue(issues, 'CORPUS_PROFILE_DECISION_INVALID', `user-decision group ${groupId} must have at least two alternatives`, { group_id: groupId });
+    for (const alternative of alternatives) {
+      const alternativeId = String(alternative.id ?? '');
+      if (!Object.prototype.hasOwnProperty.call(patterns, alternativeId)) issue(issues, 'CORPUS_PROFILE_TAG_UNKNOWN', `profile alternative ${alternativeId} is not a pattern tag in catalog.json`, { group_id: groupId, alternative_id: alternativeId });
+      for (const instructionId of stringArray(alternative.instruction_ids)) {
+        if (!instructionIds.has(instructionId)) issue(issues, 'CORPUS_PROFILE_INSTRUCTION_UNKNOWN', `profile alternative ${alternativeId} names unknown instruction ${instructionId}`, { group_id: groupId, alternative_id: alternativeId, instruction_id: instructionId });
+        const owner = owners.get(instructionId);
+        if (owner !== undefined) issue(issues, 'CORPUS_PROFILE_INSTRUCTION_DUPLICATE', `instruction ${instructionId} belongs to alternatives ${owner} and ${alternativeId}`, { instruction_id: instructionId, alternatives: [owner, alternativeId] });
+        else owners.set(instructionId, alternativeId);
+      }
+    }
+  }
+}
+
 function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   const catalog = readCorpusJson(base, 'catalog.json', issues, 'CORPUS_MANIFEST_INVALID');
   const map = readCorpusJson(base, 'corpus-map.json', issues, 'CORPUS_MAP_INCONSISTENT');
@@ -282,6 +317,7 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   }
   checkMap(map, donorSet, instructionIds, issues);
   checkDonorCoverage(map, donorSet, issues);
+  checkMethodologyProfile(base, catalog, instructionIds, issues);
 }
 
 export function checkCorpus(root: string): CorpusIssue[] {

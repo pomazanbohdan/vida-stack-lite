@@ -1,19 +1,19 @@
 ---
 instruction_id: inspect-data-integrity
-title: Перевіряй цілісність даних під час збою
-summary: "Шукай проковтнуті помилки, записи в неправильному порядку й операції без транзакції, що втрачають дані."
+title: Check data integrity under failure
+summary: "Look for swallowed errors, writes in the wrong order and writes with no transaction."
 capability_tags:
   - review-code
 pattern_tags:
   - code-review
-conditions_applies_when: "Код записує, оновлює або видаляє дані."
-conditions_does_not_apply_when: Код не змінює збереженого стану.
+conditions_applies_when: "The reviewed code writes, updates or deletes stored data."
+conditions_does_not_apply_when: The code changes no stored state.
 artifact_contract_output_type: data-integrity-review
 artifact_contract_required_data:
-  - шляхи запису
-  - послідовність збою
-  - втрачені дані
-  - виправлення
+  - write paths
+  - failure sequence
+  - lost data
+  - fix
 artifact_contract_verified_by: each data-loss finding names the failure sequence that loses data
 compatibility_excludes: []
 compatibility_requires: []
@@ -28,18 +28,7 @@ status: active
 revision: 2
 ---
 
-# Перевіряй цілісність даних під час збою
-Переліч усі місця, де код записує, оновлює або видаляє дані.
-Перевір, чи помилка не проковтується перед завершенням запису.
-Перевір порядок записів.
-Перевір, чи проміжний збій не лишає суперечливого стану.
-Перевір, чи кілька пов'язаних змін виконуються в одній транзакції.
-Перевір, чи скасування операції прибирає часткові зміни.
-Перевір шляхи, де дані перезаписуються або видаляються.
-Для кожної знахідки опиши послідовність збою.
-Назви дані, які втрачаються або псуються.
-Не вважай наявність обробника помилки доказом цілісності.
-Не пропонуй транзакцію там, де система вже гарантує атомарність.
-Не підвищуй теоретичну втрату без шляху до неї.
-Познач шлях запису, який не вдалося перевірити.
-Заверши, коли кожен шлях запису перевірено на збій.
+# Check data integrity under failure
+Look for data loss: errors swallowed, writes in the wrong order, no transaction.
+Check what the change could break for users: data it would destroy or expose.
+Code you move or merge keeps its error handling and validation.

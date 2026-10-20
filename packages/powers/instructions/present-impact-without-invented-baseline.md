@@ -1,19 +1,19 @@
 ---
 instruction_id: present-impact-without-invented-baseline
-title: Не вигадуй базис для оцінки виграшу
-summary: "Наводь лише ті числа, які порахував у наявних артефактах, і не рахуй економію від версії, якої ніколи не було."
+title: Do not invent a baseline for an impact figure
+summary: State only figures measured in the present artifacts; never compute a saving against a version that was never written.
 capability_tags:
   - verify-work-results
 pattern_tags:
   - verification-before-completion
-conditions_applies_when: "Ти хочеш назвати економію рядків, часу, вартості або токенів."
-conditions_does_not_apply_when: Твердження не містить чисел виграшу.
+conditions_applies_when: "You are about to state a saving in lines, time, cost or tokens."
+conditions_does_not_apply_when: The statement carries no gain figure.
 artifact_contract_output_type: counted-impact
 artifact_contract_required_data:
-  - число
-  - джерело
-  - базис
-  - спосіб вимірювання
+  - figure
+  - source
+  - baseline
+  - measurement method
 artifact_contract_verified_by: every stated figure is counted in the present artifacts
 compatibility_excludes: []
 compatibility_requires: []
@@ -27,18 +27,10 @@ status: active
 revision: 2
 ---
 
-# Не вигадуй базис для оцінки виграшу
-Наводь число лише тоді, коли порахував його в наявних артефактах.
-Порахуй рядки, які можна прибрати, у прочитаному коді.
-Не рахуй економію проти версії, якої ніколи не писали: базису для віднімання не існує.
-Позначай середні показники як середні, а не як результат цього сховища.
-Не переноси показники іншого проєкту на поточний.
-Для реальної оцінки боргу спирайся на порахований перелік відкладених спрощень.
-Вкажи джерело кожного числа.
-Відділяй виміряне від оціненого.
-Не називай відсоток без базису й способу вимірювання.
-Не виводь оцінку виграшу з кількості рядків, яких ніхто не писав.
-Не підсумовуй показники різних проєктів в один.
-Порівнюй лише те, що виміряно однаковим способом.
-Познач оцінку, яку не вдалося підтвердити.
-Заверши, коли кожне число має джерело й базис.
+# Do not invent a baseline for an impact figure
+These are benchmark averages, not this repo.
+The figures are measured, not computed from the current repo.
+Never print a per-repo savings number: the unbuilt version was never written, so there is no real baseline to subtract from in a live repo.
+The bar length shows the share; the label carries the exact figure.
+The only real per-repo figures come from a counted ledger of deferred shortcuts.
+Point to that ledger instead of inventing a figure.

@@ -1,19 +1,19 @@
 ---
 instruction_id: make-illegal-states-unrepresentable
-title: Зроби незаконні стани невиразними
-summary: "Перенеси правила допустимих значень у тип і конструктор, щоб незаконний стан не можна було створити."
+title: Make illegal states unrepresentable
+summary: "Move the rules for legal values into types and constructors, so the compiler rejects impossible states, mismatched primitives, and unhandled variants."
 capability_tags:
   - make-states-unrepresentable
 pattern_tags:
   - state-modeling
-conditions_applies_when: "Об'єкт має кілька взаємозалежних полів або прапорців, чиї комбінації бувають неможливими."
-conditions_does_not_apply_when: Дані надходять із зовнішнього джерела й перевіряються лише на межі входу.
+conditions_applies_when: An object has several interdependent fields or flags whose combinations can be impossible.
+conditions_does_not_apply_when: Data arrives from an external source and is checked only at the entry boundary.
 artifact_contract_output_type: constrained-type
 artifact_contract_required_data:
-  - перелік законних станів
-  - тип
-  - єдиний конструктор
-  - тест на незаконний стан
+  - list of legal states
+  - type
+  - single constructor
+  - test that an illegal state cannot be built
 artifact_contract_verified_by: "the project's type checks and a test that fails to build an illegal state"
 compatibility_excludes: []
 compatibility_requires: []
@@ -25,20 +25,20 @@ status: active
 revision: 1
 ---
 
-# Зроби незаконні стани невиразними
-Переліч стани, у яких об'єкт може перебувати законно.
-Знайди поля, чиї комбінації описують неможливий стан.
-Заміни набір незалежних полів на тип, що допускає лише законні варіанти.
-Вирази кожен стан окремим варіантом із власними даними.
-Перенеси перевірку з місця використання в місце створення.
-Зроби конструктор єдиним входом у стан, що потребує перевірки.
-Прибери прапорці, які лише дублюють інформацію з варіанта.
-Заборонь значення, що означають «невідомо» й «порожньо» одночасно.
-Використай тип для обмеження діапазону, формату або дозволеного набору.
-Перевір, що код не може створити об'єкт в обхід перевірки.
-Зроби неможливий перехід помилкою компіляції, а не винятком у рантаймі.
-Додай тест, який намагається побудувати незаконний стан і не компілюється або падає.
-Переглянь місця, де тип розширюють через приведення.
-Залиш один спосіб подати кожен факт.
-Перевір, що повідомлення про помилку називає порушене правило.
-Віддай тип, у якому незаконний стан не має представлення.
+# Make illegal states unrepresentable
+Make the compiler reject impossible states, mismatched primitives, and unhandled variants.
+Prefer defining errors and special cases out of existence over proliferating handlers.
+Brand semantic primitives.
+An identifier for a user and an identifier for an order are strings underneath but should not be interchangeable.
+Give each its own type, such as a branded intersection in TypeScript or a newtype elsewhere.
+Validate once at creation, trust the type downstream.
+If two arguments share a primitive type but mean different things, brand them.
+Model variants with a literal discriminant so impossible combinations cannot be represented.
+No optional-field bags.
+Build the shape so the illegal value cannot be constructed: a non-empty tuple for non-empty, pairs for even length, start plus duration for a range.
+Not a runtime guard, not a wish for refinement types.
+Keep a plain array while every operation on it stays total.
+Strengthen to a non-empty type only where the loose type forces a non-null assertion, a cast, or a "should never happen" throw.
+In default arms, assign the discriminant to a never-typed local so the compiler errors when a new variant is added.
+Derive types from authoritative schemas instead of hand-rolling a parallel type.
+Have a parse function at every boundary that turns unstructured input into the typed model.

@@ -1,16 +1,19 @@
 # Decisions
 
-Прийняті рішення з питаннями, що блокували імплементацію. Кожне рішення — окрема
-концепція з обґрунтуванням, розглянутими варіантами, доказами та повноваженнями
-(research §7.2). Актуальний стан — у bundle-журналі `../log.md`.
+Accepted decisions with the questions that blocked the implementation. Each
+decision is a separate concept with the rationale, the options considered, the
+evidence and the authority (research §7.2). The current state is in the bundle
+log `../log.md`.
 
-* [D1 — Розташування продукту Vida Powers](D1-product-placement.md) - Vida Powers живе в `packages/powers` як третій продукт репозиторію; `packages/plugin` лишається Codex-прослойкою між хостом Codex і агентом.
-* [D2 — Модель власності й робочого простору VP у монорепозиторії](D2-ownership-and-work-space.md) - Кожен плагін має власного owner'а, власну документацію, власний набір задач і власний простір роботи; Work Items і докази VP живуть у продукті, координація — у репозиторії.
-* [D3 — Каталог інструкцій VP: самостійний плагін і розширений реєстр у пакеті агента](D3-instruction-catalog-and-registry.md) - VP зберігає власний каталог і власні скрипти пошуку та використання інструкцій; у режимі збирання в пакет поставки агента пакет агента мусить мати свій розширений instruction registry.
-* [D4 — Канали доставки VP: окремий плагін, збірка в пакет агента, marketplace](D4-delivery-channels.md) - Три канали в scope; поверхня скілів: `vp-mode` (основний скіл оркестрації) і `vp-setup` (допоміжний налаштування).
-* [D4b — Marketplace-власник VP і набір хостів першого релізу](D4b-marketplace-and-hosts.md) - `packages/powers` сам є marketplace-власником; Codex — перевірений перший хост, решта — заявлена підтримка з позначеним обмеженням.
-* [D5 — Decision Provider і роутінг у VP: provider-нейтральний інтерфейс, LLM-вибір і формування агентів](D5-decision-provider.md) - Контракт `decision.evaluate` з двома реалізаціями та обов'язковим Agent Fallback; роутінг = вибір LLM, формування агентів із фіксованого довідника та рівень флоу.
-* [D6 — Журнал змін продукту: bundle-лог за Open Knowledge Format](D6-bundle-change-log.md) - Історія змін концепцій VP ведеться в `docs/log.md` за OKF §9; окремий `*changelog.md` не ведеться.
-* [D7 — Ініціалізація VP за середовищем: три носія конфігурації](D7-consumer-initialization.md) - `vp-setup` визначає середовище і пише конфігурацію у проєктний instruction-файл, конфіг-файл агентного runtime або конфіг-файл проєкту від хост-прослойки.
-* [D8 — Методологічний профіль: одна схема VP, носій за середовищем](D8-methodology-profile.md) - Схема `VPMethodologyProfile/v1` належить VP; Runtime — розділ у `.vida/project.yaml`, Standalone — керований YAML-блок, host shim — конфіг-файл проєкту.
-* [D9 — Робочий scope: лише packages/powers, реєстрація в root-файлах відкладена](D9-scoped-to-powers.md) - Обсяг робіт обмежено каталогом продукту; реєстрація в спільних root-файлах репозиторію — зовнішня залежність.
+* [D1 — Placement of the Vida Powers product](D1-product-placement.md) - Vida Powers lives in `packages/powers` as the third product of the repository; `packages/plugin` remains the Codex layer between the Codex host and the agent.
+* [D2 — Ownership and workspace model of VP in the monorepo](D2-ownership-and-work-space.md) - Each plugin has its own owner, its own documentation, its own task set and its own workspace; VP Work Items and evidence live in the product, coordination — in the repository.
+* [D3 — VP instruction catalog: a standalone plugin and an extended registry in the agent package](D3-instruction-catalog-and-registry.md) - VP keeps its own catalog and its own scripts for finding and using instructions; in the mode of building into the agent delivery package, the agent package must have its own extended instruction registry.
+* [D4 — VP delivery channels: separate plugin, build into the agent package, marketplace](D4-delivery-channels.md) - Three channels in scope; the skill surface: `vp-mode` (the main orchestration skill) and `vp-setup` (the auxiliary setup one).
+* [D4b — VP marketplace owner and the host set of the first release](D4b-marketplace-and-hosts.md) - `packages/powers` is itself the marketplace owner; Codex — the verified first host, the rest — declared support with a marked limitation.
+* [D5 — Decision Provider and routing in VP: provider-neutral interface, LLM selection and agent formation](D5-decision-provider.md) - The `decision.evaluate` contract with two implementations and a mandatory Agent Fallback; routing = LLM selection, agent formation from a fixed reference, and the flow level.
+* [D6 — Product change log: a bundle log per Open Knowledge Format](D6-bundle-change-log.md) - The change history of VP concepts is kept in `docs/log.md` per OKF §9; a separate `*changelog.md` is not maintained.
+* [D7 — Environment-driven VP initialization: three configuration carriers](D7-consumer-initialization.md) - `vp-setup` determines the environment and writes the configuration into the project instruction file, the config file of the agent runtime, or the project config file of the host layer.
+* [D8 — Methodology profile: one VP schema, carrier per environment](D8-methodology-profile.md) - The `VPMethodologyProfile/v1` schema belongs to VP; Runtime — a section in `.vida/project.yaml`, Standalone — a managed YAML block, host shim — the project config file.
+* [D9 — Work scope: only packages/powers, registration in root files deferred](D9-scoped-to-powers.md) - The scope of work is limited to the product catalog; registration in the shared root files of the repository — an external dependency.
+* [D10 — Policy choices, executor ladder and the managed block](D10-policy-choices-and-model-inventory.md) - Opposite approval policies live in the corpus as alternatives of one group and the user chooses them at setup; the verification ladder is other provider family → other model of the same provider → blind agent on the same model, with the setup recording the available models; the managed block carries a JSON payload so no YAML parser is needed; the setup hooks are deferred with a condition.
+* [D11 — Product language: documentation in English, instructions from the donor originals](D11-product-language.md) - All product documentation is maintained in English; corpus instructions are not translated but taken from the original donor texts; tags, schemas, error codes and terms are in English.

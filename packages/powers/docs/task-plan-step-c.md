@@ -1,7 +1,7 @@
 ---
 type: Task Plan
-title: 'Vida Powers — task-level план кроку C: каталог, операції, seed-корпус'
-description: 'Побітова реалізація каталогу інструкцій: схеми VP, парсер frontmatter, операції catalog.*, детермінований decision.evaluate, seed-корпус, конвертер і валідатор корпусу — із точними файлами, інтерфейсами та командами.'
+title: 'Vida Powers — task-level plan for step C: catalog, operations, seed corpus'
+description: 'Implementation of the instruction catalog in detail: VP schemas, the frontmatter parser, the catalog.* operations, the deterministic decision.evaluate, the seed corpus, the converter and the corpus validator — with exact files, interfaces and commands.'
 status: draft
 stale_after: '2026-11-19T00:00:00Z'
 tags:
@@ -12,351 +12,351 @@ tags:
 sources:
 - id: design
   resource: /catalog-design.md
-  title: Vida Powers — дизайн каталогу інструкцій
+  title: Vida Powers — instruction catalog design
 - id: system-specification
   resource: /system-specification.md
-  title: Vida Powers — системна специфікація
+  title: Vida Powers — system specification
 - id: acceptance
   resource: /acceptance.md
-  title: Vida Powers — критерії прийняття
+  title: Vida Powers — acceptance criteria
 - id: next-actions
   resource: /next-actions.md
-  title: Vida Powers — наступні дії в межах packages/powers
+  title: Vida Powers — next actions within packages/powers
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 revision: '1'
 ---
 
-**Мета:** довести каталог інструкцій VP до робочого стану: схеми, парсер
-frontmatter, чотири операції `catalog.*`, детермінований `decision.evaluate`,
-seed-корпус із 8–12 інструкцій, конвертер і валідатор корпусу.
+**Goal:** bring the VP instruction catalog to a working state: the schemas, the frontmatter
+parser, the four `catalog.*` operations, the deterministic `decision.evaluate`,
+a seed corpus of 8–12 instructions, the converter and the corpus validator.
 
-**Специфікація, з якої цей план випливає:** `docs/catalog-design.md` (rev 7) +
+**The specification this plan follows from:** `docs/catalog-design.md` (rev 7) +
 `docs/system-specification.md` (SR-01…SR-76) + `docs/acceptance.md` (AC-01…AC-42).
 
-**Технології:** Bun 1.4.3, TypeScript (strict), `bun:test`, JSON Schema
-(підмножина), без зовнішніх залежностей.
+**Technologies:** Bun 1.4.3, TypeScript (strict), `bun:test`, JSON Schema
+(a subset), no external dependencies.
 
-**Специфікація плану:** кожен крок — тест, що падає **до** зміни, й проходить
-**після** неї; кожен крок завершується комітом; кожен файл має одного власника.
+**Plan discipline:** each step — a test that fails **before** the change and passes
+**after** it; each step ends with a commit; each file has one owner.
 
 ## Global Constraints
 
-- **Runtime-агностичність.** Код у `skills/*/scripts/` — лише `node:` модулі, без
-  `Bun.*`, без `import.meta.dir` (шляхи з `import.meta.url`), без залежностей.
-  Dev-інструменти в `scripts/` можуть використовувати Bun.
-- **Один writer.** `scripts/convert.ts` — єдиний writer для `instructions/`,
-  `catalog.json`, `corpus-map.json`. Рантайм-скрипти лише читають.
-- **Машинні формати — JSON.** YAML — лише для людських маніфестів.
-- **Версія — лише в метаданих** (`revision` у frontmatter); у назвах файлів
-  версій, дат і статусів немає.
-- **Точність provenance.** `provenance.revision` має дорівнювати
-  `donors.yaml[donor].head_sha`; `catalog.json` — єдиний перелік корпусу з `sha256`.
-- **Жодного рядка «винахід» поза джерелом.** Інструкція походить із donor-файлу
-  (шлях у `provenance.path`); синтетика без джерела не приймається.
-- **Ворота кроку:** `bun run --cwd packages/powers test` → 0 failures;
-  `bun run --cwd packages/powers test:coverage` → 0 failures, поріг 1.0;
-  `bun run --cwd packages/powers typecheck` → 0 помилок;
+- **Runtime-agnosticism.** The code in `skills/*/scripts/` — only `node:` modules, no
+  `Bun.*`, no `import.meta.dir` (paths from `import.meta.url`), no dependencies.
+  Dev tools in `scripts/` may use Bun.
+- **One writer.** `scripts/convert.ts` — the single writer for `instructions/`,
+  `catalog.json`, `corpus-map.json`. Runtime scripts only read.
+- **Machine formats — JSON.** YAML — only for human manifests.
+- **Version — only in metadata** (`revision` in the frontmatter); file names contain no
+  versions, dates or statuses.
+- **Provenance precision.** `provenance.revision` must equal
+  `donors.yaml[donor].head_sha`; `catalog.json` — the single listing of the corpus with `sha256`.
+- **No line "invented" outside a source.** An instruction comes from a donor file
+  (the path in `provenance.path`); synthetics without a source are not accepted.
+- **Gates of the step:** `bun run --cwd packages/powers test` → 0 failures;
+  `bun run --cwd packages/powers test:coverage` → 0 failures, threshold 1.0;
+  `bun run --cwd packages/powers typecheck` → 0 errors;
   `bun packages/powers/scripts/check-okf.ts` → `failures: []`;
   `bun packages/powers/scripts/check-corpus.ts` → exit 0;
   `bun run --cwd packages/agent lint:knip:pinned` → `{"issues":[]}`, exit 0.
 
 ## Review Focus
 
-1. **Повторний `vp-setup`** не створює дубля керованого блоку (idempotence — на рівні
-   конфігурації, не лише рядків).
-2. **Інструкція з тегом, якого немає в словнику**, не приймається — навіть якщо
-   тег виглядає придатним.
-3. **`compose` із конфліктною групою** повертає помилку з обома ідентифікаторами, а
-   не мовчки відкидає одну альтернативу.
-4. **Файл інструкції, змінений поза `convert.ts`**, ламає зв'язок manifest ↔ диск
-   (digest) — перевірка має це помітити, а не пропустити.
-5. **Пsearch-відповідь не містить повного тексту** — лише метадані.
+1. **A repeated `vp-setup`** does not create a duplicate of the managed block (idempotence — at the level
+   of the configuration, not only of the lines).
+2. **An instruction with a tag that is not in the vocabulary** is not accepted — even if
+   the tag looks suitable.
+3. **`compose` with a conflicting group** returns an error with both identifiers, and does
+   not silently discard one alternative.
+4. **An instruction file changed outside `convert.ts`** breaks the manifest ↔ disk link
+   (digest) — the check must notice this, not miss it.
+5. **The search response contains no full text** — only metadata.
 
-## Структура файлів (усе в `packages/powers/`)
+## File structure (all in `packages/powers/`)
 
-| Файл | Відповідальність | Залежності |
+| File | Responsibility | Dependencies |
 |---|---|---|
-| `config/vpcatalog.v1.schema.json` | контракт маніфесту каталогу | — |
-| `config/vpinstruction.v1.schema.json` | контракт інструкції | — |
-| `config/vpeffectiveprofile.v1.schema.json` | контракт ефективного профілю | — |
-| `skills/vp-mode/SKILL.md` | скіл оркестрації (мінімальний, наповнюється на кроці E) | — |
-| `skills/vp-mode/scripts/frontmatter.ts` | парсер frontmatter (обмежена підмножина YAML) | — |
-| `skills/vp-mode/scripts/schema.ts` | міні-валідатор JSON Schema-підмножини | — |
-| `skills/vp-mode/scripts/catalog.ts` | модель каталогу + `catalog.*` + `decision.evaluate` | frontmatter, schema |
+| `config/vpcatalog.v1.schema.json` | the contract of the catalog manifest | — |
+| `config/vpinstruction.v1.schema.json` | the contract of the instruction | — |
+| `config/vpeffectiveprofile.v1.schema.json` | the contract of the effective profile | — |
+| `skills/vp-mode/SKILL.md` | the orchestration skill (minimal, filled in at step E) | — |
+| `skills/vp-mode/scripts/frontmatter.ts` | frontmatter parser (a limited YAML subset) | — |
+| `skills/vp-mode/scripts/schema.ts` | a mini-validator of the JSON Schema subset | — |
+| `skills/vp-mode/scripts/catalog.ts` | the catalog model + `catalog.*` + `decision.evaluate` | frontmatter, schema |
 | `skills/vp-mode/scripts/catalog-cli.ts` | CLI: `tags`/`search`/`get`/`compose`/`evaluate` | catalog |
-| `scripts/check-corpus.ts` | валідація корпусу: інструкції, manifest ↔ диск, мапа, словник | catalog, schema |
-| `scripts/convert.ts` | конвертер: специфікація → `.md` + manifest + мапа | catalog, frontmatter |
-| `instructions/*.md` | seed-корпус (8–12 інструкцій) | — |
-| `catalog.json` | маніфест каталогу (перелік корпусу з `sha256`) | — |
-| `corpus-map.json` | мапа обробки | — |
-| `tests/*.test.ts` | тести harness'у | усі модулі |
+| `scripts/check-corpus.ts` | corpus validation: instructions, manifest ↔ disk, map, vocabulary | catalog, schema |
+| `scripts/convert.ts` | converter: specification → `.md` + manifest + map | catalog, frontmatter |
+| `instructions/*.md` | the seed corpus (8–12 instructions) | — |
+| `catalog.json` | the catalog manifest (the corpus listing with `sha256`) | — |
+| `corpus-map.json` | the processing map | — |
+| `tests/*.test.ts` | harness tests | all modules |
 
 ---
 
-### Task 1 — Схеми VP і міні-валідатор
+### Task 1 — VP schemas and the mini-validator
 
 **Files:** create `config/vpcatalog.v1.schema.json`, `config/vpinstruction.v1.schema.json`,
 `config/vpeffectiveprofile.v1.schema.json`; create `skills/vp-mode/scripts/schema.ts`;
 test `tests/schema.test.ts`.
 
 **Interfaces:**
-- `validateAgainstSchema(value: unknown, schema: Schema): string[]` — повертає
-  повідомлення про порушення; порожній масив = валідно.
-- `Schema` — тип входу валідатора.
+- `validateAgainstSchema(value: unknown, schema: Schema): string[]` — returns
+  messages about violations; an empty array = valid.
+- `Schema` — the input type of the validator.
 
-**Підмножина схем (межа валідатора):** `type`, `required`, `properties`,
-`additionalProperties` (`false` **або** схема — для динамічних мап), `enum`,
+**Schema subset (the boundary of the validator):** `type`, `required`, `properties`,
+`additionalProperties` (`false` **or** a schema — for dynamic maps), `enum`,
 `const`, `pattern`, `minLength`, `maxLength`, `minimum`, `maximum`, `minItems`,
 `maxItems`, `items`, `$ref` → `#/definitions/*`, `allOf`, `if`/`then`, `not`.
-Анотації `title`/`description` приймаються та **ігноруються** (документація
-схем, без валідаційної семантики); `$schema`/`$id` — також ігноруються. Решта —
-не підтримується і має бути відсутня у схемах VP. Guard-тест: кожен файл
-`config/*.schema.json` має проходити `inspectSchema` без помилок.
+The annotations `title`/`description` are accepted and **ignored** (schema documentation,
+without validation semantics); `$schema`/`$id` — also ignored. The rest —
+is not supported and must be absent from the VP schemas. A guard test: each file
+`config/*.schema.json` must pass `inspectSchema` without errors.
 
-**Кроки:**
-1. Тест `tests/schema.test.ts`: валідний об'єкт → `[]`; відсутній обов'язковий
-   ключ → повідомлення; зайвий ключ → повідомлення; `enum`/`const`/`pattern`/
-   `minItems` → повідомлення; `$ref` у `#/definitions` → розкриття; `if`/`then` →
-   перевірка умовного правила. **Крок:** `bun run --cwd packages/powers test` → тест
-   падає (модуля ще немає).
-2. Створити `skills/vp-mode/scripts/schema.ts` з `validateAgainstSchema` і
-   `SUPPORTED_KEYWORDS` (експортований список — валідатор має відмовити схему з
-   непідтримуваним ключем).
-3. Створити три схеми: `vpcatalog.v1` (manifest: `schema`, `catalog_id`,
+**Steps:**
+1. Test `tests/schema.test.ts`: a valid object → `[]`; a missing mandatory
+   key → a message; an extra key → a message; `enum`/`const`/`pattern`/
+   `minItems` → a message; `$ref` in `#/definitions` → expansion; `if`/`then` →
+   verification of the conditional rule. **Step:** `bun run --cwd packages/powers test` → the test
+   fails (the module does not exist yet).
+2. Create `skills/vp-mode/scripts/schema.ts` with `validateAgainstSchema` and
+   `SUPPORTED_KEYWORDS` (an exported list — the validator must reject a schema with an
+   unsupported key).
+3. Create three schemas: `vpcatalog.v1` (manifest: `schema`, `catalog_id`,
    `revision`, `source_revision`, `updated_at`, `tag_dictionary`, `tag_aliases`,
-   `tag_exemptions`, `instructions[]` з `instruction_id`/`path`/`sha256`),
-   `vpinstruction.v1` (усі поля інструкції за дизайном §5), `vpeffectiveprofile.v1`
+   `tag_exemptions`, `instructions[]` with `instruction_id`/`path`/`sha256`),
+   `vpinstruction.v1` (all instruction fields per design §5), `vpeffectiveprofile.v1`
    (`groups` → `active` + `alternatives`).
-4. `bun run --cwd packages/powers test` → усі тести проходять;
-   `bun run --cwd packages/powers typecheck` → 0 помилок.
-5. Коміт: `build(powers): add VP schemas and a dependency-free schema validator`.
+4. `bun run --cwd packages/powers test` → all tests pass;
+   `bun run --cwd packages/powers typecheck` → 0 errors.
+5. Commit: `build(powers): add VP schemas and a dependency-free schema validator`.
 
-### Task 2 — Парсер frontmatter і модель інструкції
+### Task 2 — Frontmatter parser and the instruction model
 
 **Files:** create `skills/vp-mode/scripts/frontmatter.ts`; test
 `tests/frontmatter.test.ts`.
 
 **Interfaces:**
 - `parseFrontmatter(text: string): { data: Record<string, unknown>; body: string }` —
-  кидає `FrontmatterError` (з `line`), якщо блок відсутній, не парситься або має
-  не підтримувану конструкцію.
-- Підмножина YAML: `key: value` (скаляр, у подвійних лапках або без), блок-список
-  (`- item`), коментарі (`#`), порожн�� значення, числа, `true`/`false`.
-  Вкладені мапи, багаторядкові блоки та anchors — **не підтримуються** і мають
-  бути відхилені явною помилкою, а не розібрані мовчки.
+  throws `FrontmatterError` (with `line`) if the block is absent, cannot be parsed or contains
+  an unsupported construct.
+- The YAML subset: `key: value` (a scalar, in double quotes or without), a block list
+  (`- item`), comments (`#`), empty values, numbers, `true`/`false`.
+  Nested maps, multiline blocks and anchors — are **not supported** and must
+  be rejected by an explicit error, not parsed silently.
 
-**Кроки:**
-1. Тест `tests/frontmatter.test.ts`: розбір `key: value` + блок-список + коментар;
-   відхилення вкладеної мапи; відхилення відсутнього блоку; збереження тіла після
-   frontmatter; значення з `;` і `=` не ламаються. → тест падає.
-2. Створити `frontmatter.ts`.
-3. `bun run --cwd packages/powers test` → проходить; `typecheck` → 0 помилок.
-4. Коміт: `build(powers): add a bounded frontmatter parser`.
+**Steps:**
+1. Test `tests/frontmatter.test.ts`: parsing `key: value` + a block list + a comment;
+   rejection of a nested map; rejection of an absent block; preservation of the body after
+   the frontmatter; values with `;` and `=` are not broken. → the test fails.
+2. Create `frontmatter.ts`.
+3. `bun run --cwd packages/powers test` → passes; `typecheck` → 0 errors.
+4. Commit: `build(powers): add a bounded frontmatter parser`.
 
-### Task 3 — Модель каталогу, операції `catalog.*`, зв'язок manifest ↔ диск
+### Task 3 — The catalog model, the `catalog.*` operations, the manifest ↔ disk link
 
 **Files:** create `skills/vp-mode/scripts/catalog.ts`; test `tests/catalog.test.ts`.
 
 **Interfaces:**
-- `loadCatalog(catalogPath: string): Promise<Catalog>` — читає маніфест,
-  валідує його за `config/vpcatalog.v1.schema.json` (схема — поруч із
-  маніфестом), парсить `provenance` і `tag_aliases`.
-- `loadInstructions(catalog: Catalog): Promise<Map<string, Instruction>>` — для
-  кожного запису маніфесту читає `path` відносно каталогу, рахує `sha256` і
-  **звіряє з маніфестом**; розбіжність → `CatalogError` з
-  `code: 'CATALOG_DIGEST_MISMATCH'`. Frontmatter валідується за
-  `config/vpinstruction.v1.schema.json` → `CATALOG_INVALID`; тег поза словником →
-  `CATALOG_TAG_UNKNOWN` (з урахуванням `tag_exemptions`).
-- `Instruction` — точні поля: `instruction_id`, `title`, `summary`,
+- `loadCatalog(catalogPath: string): Promise<Catalog>` — reads the manifest,
+  validates it against `config/vpcatalog.v1.schema.json` (the schema — next to the
+  manifest), parses `provenance` and `tag_aliases`.
+- `loadInstructions(catalog: Catalog): Promise<Map<string, Instruction>>` — for
+  each manifest entry reads `path` relative to the catalog, computes `sha256` and
+  **compares it with the manifest**; a mismatch → `CatalogError` with
+  `code: 'CATALOG_DIGEST_MISMATCH'`. The frontmatter is validated against
+  `config/vpinstruction.v1.schema.json` → `CATALOG_INVALID`; a tag outside the vocabulary →
+  `CATALOG_TAG_UNKNOWN` (taking `tag_exemptions` into account).
+- `Instruction` — the exact fields: `instruction_id`, `title`, `summary`,
   `capability_tags[]`, `pattern_tags[]`, `roles[]`, `products[]`,
-  `conditions{applies_when,does_not_apply_when}` (скаляри, як у frontmatter),
+  `conditions{applies_when,does_not_apply_when}` (scalars, as in the frontmatter),
   `artifact_contract{output_type,required_data[],verified_by}`,
   `compatibility{excludes[],requires[]}`,
-  `provenance[{donor,license,revision,path}]` (масив — джерела після злиття),
-  `status`, `revision`, `content` (тіло файлу).
+  `provenance[{donor,license,revision,path}]` (an array — the sources after merging),
+  `status`, `revision`, `content` (the body of the file).
 - `catalogTags(catalog): { capability: TagEntry[]; pattern: TagEntry[] }` —
-  `TagEntry = { tag, description, aliases[] }`; стабільний порядок, без текстів
-  інструкцій (SR-09).
+  `TagEntry = { tag, description, aliases[] }`; a stable order, without instruction
+  texts (SR-09).
 - `catalogSearch(catalog, instructions, query): InstructionMetadata[]` —
-  фільтри: `capability_tags[]`, `pattern_tags[]`, `instruction_ids[]`, `roles[]`,
-  `products[]`, `conditions[]`; результат **без** `content` (AC-05); семантика —
-  дизайн §7 («хоча б один» у вимірі, «і» між вимірами, аліаси → канонічні,
-  disabled не потрапляє, `roles`/`products` — порожній список = будь-який,
-  `conditions` — токени є в `applies_when` і немає в `does_not_apply_when`).
-- `catalogGet(catalog, instructions, id): Instruction` — невідомий ID →
-  `CATALOG_ID_UNKNOWN`, вимкнений → `CATALOG_INSTRUCTION_DISABLED`.
+  filters: `capability_tags[]`, `pattern_tags[]`, `instruction_ids[]`, `roles[]`,
+  `products[]`, `conditions[]`; the result **without** `content` (AC-05); the semantics —
+  design §7 ("at least one" within a dimension, "and" between dimensions, aliases → canonical,
+  disabled does not enter, `roles`/`products` — an empty list = any,
+  `conditions` — the tokens are present in `applies_when` and absent in `does_not_apply_when`).
+- `catalogGet(catalog, instructions, id): Instruction` — an unknown ID →
+  `CATALOG_ID_UNKNOWN`, a disabled one → `CATALOG_INSTRUCTION_DISABLED`.
 - `catalogCompose(catalog, instructions, query): ComposedBundle` — required +
-  збіги + транзитивні `compatibility.requires`; конфлікт `excludes` →
+  matches + transitive `compatibility.requires`; an `excludes` conflict →
   `CatalogError`.
-  `ComposedBundle` містить: `catalog_id`, `catalog_revision`, `tag_dictionary`,
-  `instructions[]` (кожна — `instruction_id`, `title`, `summary`, `content`,
+  `ComposedBundle` contains: `catalog_id`, `catalog_revision`, `tag_dictionary`,
+  `instructions[]` (each — `instruction_id`, `title`, `summary`, `content`,
   `capability_tags`, `pattern_tags`, `artifact_contract`, `provenance`,
-  `selection_reason`) і **контекст виконання** (SR-23): `role`, `task_contract`,
+  `selection_reason`) and the **execution context** (SR-23): `role`, `task_contract`,
   `effective_methodology`, `work_scope`, `materialization_requirements`,
-  `artifact_references` — усі з `query` або з порожнім значенням.
-- `CatalogError` має поле `code` (набір: `CATALOG_INVALID`, `CATALOG_TAG_UNKNOWN`,
+  `artifact_references` — all from `query` or with an empty value.
+- `CatalogError` has the field `code` (the set: `CATALOG_INVALID`, `CATALOG_TAG_UNKNOWN`,
   `CATALOG_DIGEST_MISMATCH`, `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED`,
   `CATALOG_REQUIRED_CONFLICT`, `CATALOG_PROFILE_CONFLICT`,
   `CATALOG_DEPENDENCY_MISSING`, `CATALOG_DEPENDENCY_DISABLED`).
 
-**Кроки:**
-1. Тести `tests/catalog.test.ts` на фікстурах `tests/fixtures/valid/`:
-   search не повертає `content`; пошук за роллю/продуктом/умовою; compose включає
-   required і залежності; compose без профілю на конфлікті → помилка; compose з
-   профілем відкидає неактивну альтернативу; compose повертає контекст виконання
-   (роль, task contract, ефективна методологія, scope, вимоги матеріалізації,
-   посилання на артефакти — SR-23); `get` на невідомому/вимкненому id →
-   помилка; інструкція з тегом поза словником → помилка; змінений файл → помилка
-   digest. → тести падають.
-2. Створити `catalog.ts`.
-3. `bun run --cwd packages/powers test` → проходить; `typecheck` → 0 помилок.
-4. Коміт: `build(powers): add catalog model and search/get/compose operations`.
+**Steps:**
+1. Tests `tests/catalog.test.ts` on the fixtures `tests/fixtures/valid/`:
+   search does not return `content`; search by role/product/condition; compose includes
+   required and dependencies; compose without a profile on a conflict → an error; compose with
+   a profile discards the inactive alternative; compose returns the execution context
+   (role, task contract, effective methodology, scope, materialization requirements,
+   references to artifacts — SR-23); `get` on an unknown/disabled id →
+   an error; an instruction with a tag outside the vocabulary → an error; a changed file → a digest
+   error. → the tests fail.
+2. Create `catalog.ts`.
+3. `bun run --cwd packages/powers test` → passes; `typecheck` → 0 errors.
+4. Commit: `build(powers): add catalog model and search/get/compose operations`.
 
-### Task 4 — `decision.evaluate` (детермінована версія) і CLI
+### Task 4 — `decision.evaluate` (the deterministic version) and the CLI
 
-**Files:** extend `skills/vp-mode/scripts/catalog.ts` (операція `decision.evaluate` —
-чиста функція каталогу); create `skills/vp-mode/scripts/catalog-cli.ts`; test
+**Files:** extend `skills/vp-mode/scripts/catalog.ts` (the `decision.evaluate` operation —
+a pure function of the catalog); create `skills/vp-mode/scripts/catalog-cli.ts`; test
 `tests/catalog-cli.test.ts`.
 
 **Interfaces:**
-- `decisionEvaluate(catalog, instructions, request): DecisionResult` — вхід:
-  `{ operation, product?, context?, tags?, candidates[] }`; вихід:
+- `decisionEvaluate(catalog, instructions, request): DecisionResult` — input:
+  `{ operation, product?, context?, tags?, candidates[] }`; output:
   `{ selected: string[], score, rationale, provider: 'catalog' | 'agent', fallback: boolean, fallbackReason: 'no-candidates' | 'unknown-candidate' | 'candidate-not-allowed' | 'invalid-format' | null }`.
-  Детермінована поведінка (SR-16, SR-18, SR-20): некоректний запит →
-  `invalid-format`; порожні кандидати → `no-candidates`; невідомий ID →
-  `unknown-candidate`; вимкнений кандидат → `candidate-not-allowed`; усі
-  кандидати допустимі → shortlist за тегами (alias → канонічний; «хоча б один» у
-  вимірі, «і» між вимірами), `provider: 'catalog'`, `score` = число збігів
-  вимірів у найкращого кандидата (шкала **не** відкалібрована — це видно з
-  rationale), `fallback: false`. Жодного збігу кандидатів — **не** відмова: порожній
-  shortlist із `provider: 'catalog'`.
+  Deterministic behavior (SR-16, SR-18, SR-20): a malformed request →
+  `invalid-format`; empty candidates → `no-candidates`; an unknown ID →
+  `unknown-candidate`; a disabled candidate → `candidate-not-allowed`; all
+  candidates admissible → a shortlist by tags (alias → canonical; "at least one" within
+  a dimension, "and" between dimensions), `provider: 'catalog'`, `score` = the number of matching
+  dimensions of the best candidate (the scale is **not** calibrated — this is visible from
+  the rationale), `fallback: false`. No match of the candidates — **not** a refusal: an empty
+  shortlist with `provider: 'catalog'`.
 - CLI: `bun catalog-cli.ts <tags|search|get|compose|evaluate> [--catalog <path>]
   [--capability a,b] [--pattern c,d] [--id x] [--required a,b] [--role r]
   [--product p] [--condition text] [--profile <path>] [--operation name]
-  [--context text] [--tag t]... [--candidate id]... [--json]`; JSON на stdout,
-  помилки — JSON `{code,message,details}` на stderr + exit 1. Каталог
-  знаходиться **від власного файлу** (`import.meta.url`), перекриття — `--catalog`.
+  [--context text] [--tag t]... [--candidate id]... [--json]`; JSON on stdout,
+  errors — JSON `{code,message,details}` on stderr + exit 1. The catalog
+  is located **relative to its own file** (`import.meta.url`), the override — `--catalog`.
 
-**Кроки:**
-1. Тести `tests/catalog-cli.test.ts`: JSON на stdout; помилка → JSON на stderr і
-   ненульовий exit; `evaluate` без кандидатів → `fallback: true`; пошук каталогу
-   відносно файлу (без cwd). → тести падають.
-2. Створити `catalog-cli.ts` і додати `decisionEvaluate` у `catalog.ts`.
-3. `bun run --cwd packages/powers test` → проходить; `typecheck` → 0 помилок.
-4. Коміт: `build(powers): add deterministic decision evaluation and the catalog CLI`.
+**Steps:**
+1. Tests `tests/catalog-cli.test.ts`: JSON on stdout; an error → JSON on stderr and
+   a non-zero exit; `evaluate` without candidates → `fallback: true`; searching the catalog
+   relative to the file (without cwd). → the tests fail.
+2. Create `catalog-cli.ts` and add `decisionEvaluate` to `catalog.ts`.
+3. `bun run --cwd packages/powers test` → passes; `typecheck` → 0 errors.
+4. Commit: `build(powers): add deterministic decision evaluation and the catalog CLI`.
 
-### Task 5 — Seed-корпус, маніфест, мапа і валідатор корпусу
+### Task 5 — Seed corpus, manifest, map and the corpus validator
 
 **Files:** create `instructions/*.md` (8–12), `catalog.json`, `corpus-map.json`,
 `scripts/check-corpus.ts`; test `tests/check-corpus.test.ts`.
 
-**Кроки:**
-1. Тест `tests/check-corpus.test.ts`: seed-корпус проходить перевірку; фікстура з
-   відсутнім `provenance`, невідомим тегом, невідомим `requires`, дублем id,
-   розбіжним digest, `rejected` без причини → помилка. → тест падає.
-2. Створити 8–12 seed-інструкцій із research/SR (напр. `test-first-development`,
+**Steps:**
+1. Test `tests/check-corpus.test.ts`: the seed corpus passes the check; a fixture with
+   a missing `provenance`, an unknown tag, an unknown `requires`, a duplicate id,
+   a mismatching digest, a `rejected` without a reason → an error. → the test fails.
+2. Create 8–12 seed instructions from research/SR (e.g. `test-first-development`,
    `test-after-development`, `define-acceptance-criteria`, `evidence-based-research`,
    `scope-first-execution`, `independent-review`, `risk-based-testing`,
-   `verify-acceptance`), кожна — з frontmatter за дизайном §5 і provenance на
-   донорів із `donors.yaml`; `provenance.revision` = `head_sha` донора.
-3. Створити `catalog.json` (перелік корпусу з `sha256`) і `corpus-map.json`
-   (записи `rejected`/`merged`/`converted`).
-4. Створити `scripts/check-corpus.ts`: інструкції за схемою, словник, alias-напрям,
-   manifest ↔ диск ↔ digest, мапа ↔ корпус, provenance ↔ `donors.yaml`.
-   Обов'язкові семантичні правила, яких **не виражає** схема (крос-файлові зв'язки,
-   `donors.yaml`, унікальність, зв'язок зі словником) і які перевіряє саме цей
-   валідатор:
+   `verify-acceptance`), each — with frontmatter per design §5 and provenance to
+   donors from `donors.yaml`; `provenance.revision` = the donor's `head_sha`.
+3. Create `catalog.json` (the corpus listing with `sha256`) and `corpus-map.json`
+   (the entries `rejected`/`merged`/`converted`).
+4. Create `scripts/check-corpus.ts`: instructions against the schema, the vocabulary, the alias direction,
+   manifest ↔ disk ↔ digest, map ↔ corpus, provenance ↔ `donors.yaml`.
+   The mandatory semantic rules that the schema does **not express** (cross-file links,
+   `donors.yaml`, uniqueness, the link to the vocabulary) and that exactly this
+   validator checks:
    - `artifact_contract_output_type` ≠ `none` → `artifact_contract_verified_by`
-     непорожній (SR-08); для guidance `output_type` = `none` і `required_data` порожній;
-   - `capability_tags`/`pattern_tags` ≥ 1 — окрім інструкцій із `tag_exemptions`
-     у `catalog.json` (виняток потребує `reason`);
-   - `provenance`: список із щонайменше одного джерела; кожне джерело —
-     `donor` ∈ `donors.yaml`, `license` збігається з маніфестом, `revision` дорівнює
-     `donors.yaml[donor].head_sha`, `path` існує в клоні; те саме джерело двічі — не
-     приймається;
-   - `compatibility_requires`/`_excludes` — відомі `instruction_id`; `requires` не
-     містить себе;
-   - `instruction_id` у frontmatter дорівнює імені файлу; унікальність id у корпусі;
-   - `tag_aliases`: напрям «**аліас → канонічний**»; канонічний тег має бути в
-     `tag_dictionary`; аліас не є канонічним тегом;
-   - мапа обробки (`corpus-map.json`): `status: split` → щонайменше два
-     `instruction_ids` (§5a: «файл розщеплено на кілька атомарних інструкцій»);
-     `status: converted` → рівно один `instruction_id`; `status: rejected` →
-     `reason` обов'язковий, `instruction_ids` відсутній (схема мапи); `merged` →
-     `instruction_ids` і `contributed_sources` присутні.
-5. `bun run --cwd packages/powers test` → проходить; `bun packages/powers/scripts/check-corpus.ts` → exit 0;
-   `typecheck` → 0 помилок.
-6. Коміт: `build(powers): add seed corpus, manifests and the corpus validator`.
+     non-empty (SR-08); for guidance `output_type` = `none` and `required_data` empty;
+   - `capability_tags`/`pattern_tags` ≥ 1 — except instructions with `tag_exemptions`
+     in `catalog.json` (an exception requires a `reason`);
+   - `provenance`: a list of at least one source; each source —
+     `donor` ∈ `donors.yaml`, `license` matches the manifest, `revision` equals
+     `donors.yaml[donor].head_sha`, `path` exists in the clone; the same source twice — is not
+     accepted;
+   - `compatibility_requires`/`_excludes` — known `instruction_id`s; `requires` does not
+     contain itself;
+   - `instruction_id` in the frontmatter equals the file name; uniqueness of ids in the corpus;
+   - `tag_aliases`: the direction "**alias → canonical**"; the canonical tag must be in
+     `tag_dictionary`; an alias is not a canonical tag;
+   - the processing map (`corpus-map.json`): `status: split` → at least two
+     `instruction_ids` (§5a: "the file was split into several atomic instructions");
+     `status: converted` → exactly one `instruction_id`; `status: rejected` →
+     `reason` mandatory, `instruction_ids` absent (the map schema); `merged` →
+     `instruction_ids` and `contributed_sources` present.
+5. `bun run --cwd packages/powers test` → passes; `bun packages/powers/scripts/check-corpus.ts` → exit 0;
+   `typecheck` → 0 errors.
+6. Commit: `build(powers): add seed corpus, manifests and the corpus validator`.
 
-### Task 6 — Конвертер (єдиний writer)
+### Task 6 — The converter (the single writer)
 
-> **Порядок виконання:** ця задача виконується **перед** Task 5 — корпус і маніфест
-> матеріалізуються лише конвертером (CAT-D3, SR-76: маніфест пише лише
+> **Execution order:** this task is performed **before** Task 5 — the corpus and the manifest
+> are materialized only by the converter (CAT-D3, SR-76: the manifest is written only by
 > `convert.ts`).
 
 **Files:** create `scripts/convert.ts`; test `tests/convert.test.ts`.
 
 **Interfaces:**
-- `parseInstructionSpec(value, source): InstructionSpec` — валідація специфікації;
-  невідоме/пропущене поле, не-kebab `instruction_id`, порожні `title`/`summary`/
-  умови, тег не-kebab або з <2 компонентами, `output_type: none` з непорожнім
-  `required_data`, порожня `provenance`, дубльоване джерело, керуючі символи в
-  однорядкових полях → `CatalogError('CATALOG_INVALID')` із назвою поля.
-- `renderInstruction(spec): string` — канонічний `.md` (порядок ключів як §5,
-  блок-списки з відступом 2, порожні списки як `key: []`, `provenance` рядками
-  `donor=…; license=…; revision=…; path=…`, тіло дослівно); результат має
-  проходити `parseFrontmatter` і `vpinstruction.v1` без помилок.
-- `convert(specPath, options): Promise<ConversionResult>` — пише
-  `instructions/<id>.md`, оновлює `catalog.json` (запис із `sha256`; інші поля
-  зберігаються) і `corpus-map.json`; **ідемпотентно**: повторна конвертація тієї
-  ж специфікації не змінює жодного файлу (`written/manifestUpdated/mapUpdated =
-  false`), ревізія маніфесту зростає лише при реальній зміні переліку.
-- `convertMany(specPaths, options): Promise<ConversionResult[]>` — похибка на
-  специфікації зупиняє прогін.
-- Опції: `{ root, catalogPath?, mapPath?, instructionsDir?, sourceRevision?, now? }`.
-- Додаткові правила конвертера: теги звіряються зі словником маніфесту (або з
-  `tag_exemptions`); вимір без жодного тега — лише за винятком; `verified_by`
-  порожній — лише для `output_type: none`; дубльований `instruction_id` у
-  наборі — помилка; мапа обробки **додає** id (один файл донора може дати
-  кілька інструкцій → `status: split`), зміна ревізії донора скидає записи
-  цього донора; усі схеми беруться з кореня пакета.
+- `parseInstructionSpec(value, source): InstructionSpec` — validation of the specification;
+  an unknown/missing field, a non-kebab `instruction_id`, empty `title`/`summary`/
+  conditions, a tag that is non-kebab or has <2 components, `output_type: none` with non-empty
+  `required_data`, empty `provenance`, a duplicated source, control characters in
+  single-line fields → `CatalogError('CATALOG_INVALID')` with the field name.
+- `renderInstruction(spec): string` — the canonical `.md` (key order as in §5,
+  block lists with an indent of 2, empty lists as `key: []`, `provenance` as lines
+  `donor=…; license=…; revision=…; path=…`, the body verbatim); the result must
+  pass `parseFrontmatter` and `vpinstruction.v1` without errors.
+- `convert(specPath, options): Promise<ConversionResult>` — writes
+  `instructions/<id>.md`, updates `catalog.json` (the entry with `sha256`; the other fields
+  are preserved) and `corpus-map.json`; **idempotently**: a repeated conversion of the same
+  specification changes no file (`written/manifestUpdated/mapUpdated =
+  false`), the manifest revision grows only on a real change of the listing.
+- `convertMany(specPaths, options): Promise<ConversionResult[]>` — an error on one
+  specification stops the run.
+- Options: `{ root, catalogPath?, mapPath?, instructionsDir?, sourceRevision?, now? }`.
+- Additional converter rules: the tags are compared with the manifest vocabulary (or with
+  `tag_exemptions`); a dimension without any tag — only by exception; `verified_by`
+  empty — only for `output_type: none`; a duplicated `instruction_id` in the
+  set — an error; the processing map **adds** ids (one donor file may yield
+  several instructions → `status: split`), a change of the donor revision resets the entries
+  of that donor; all schemas are taken from the root of the package.
 
-**Кроки:**
-1. Тест `tests/convert.test.ts`: конвертація специфікації → `.md` із frontmatter і
-   `sha256` у маніфесті; повторна конвертація зміненої специфікації → оновлений
-   digest; конвертація без `provenance` → помилка (синтетика без джерела
-   заборонена); запис у мапі оновлюється; двадцять і більше випадків — нижче.
-2. Створити `scripts/convert.ts`.
-3. `bun run --cwd packages/powers test` → проходить; `typecheck` → 0 помилок.
-4. Коміт: `build(powers): add the corpus converter as the single writer`.
+**Steps:**
+1. Test `tests/convert.test.ts`: conversion of a specification → `.md` with frontmatter and
+   `sha256` in the manifest; a repeated conversion of a changed specification → an updated
+   digest; conversion without `provenance` → an error (synthetics without a source
+   are forbidden); the entry in the map is updated; twenty or more cases — below.
+2. Create `scripts/convert.ts`.
+3. `bun run --cwd packages/powers test` → passes; `typecheck` → 0 errors.
+4. Commit: `build(powers): add the corpus converter as the single writer`.
 
-## Хід виконання
+## Execution progress
 
-| Task | Статус | Доказ |
+| Task | Status | Evidence |
 |---|---|---|
-| 1. Схеми VP + міні-валідатор | **закрито** | `config/vpcatalog.v1.schema.json`, `config/vpinstruction.v1.schema.json`, `config/vpeffectiveprofile.v1.schema.json`, `skills/vp-mode/scripts/schema.ts`, `tests/schema.test.ts` — 32 тести, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 4 незалежні рев'ю-раунди, фінальний вердикт ACCEPT |
-| 2. Парсер frontmatter | **закрито** | `skills/vp-mode/scripts/frontmatter.ts`, `tests/frontmatter.test.ts` — 47 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 рев'ю-раунди, фінальний вердикт ACCEPT |
-| 3. Модель каталогу + `catalog.*` | **закрито** | `skills/vp-mode/scripts/catalog.ts`, `tests/catalog.test.ts`, `tests/fixtures/catalog/` — 96 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 рев'ю-раунди, фінальний вердикт ACCEPT |
-| 4. `decision.evaluate` + CLI | **закрито** | `skills/vp-mode/scripts/catalog.ts` (+`decisionEvaluate`), `skills/vp-mode/scripts/catalog-cli.ts`, `tests/catalog-cli.test.ts` — 126 тестів, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 2 рев'ю-раунди, фінальний вердикт ACCEPT |
-| 5. Seed-корпус + манифести + валідатор | **закрито** | `instructions/` (12 інструкцій), `catalog.json` (12 записів + затверджений словник), `corpus-map.json` (12 записів), `scripts/check-corpus.ts`, `tests/check-corpus.test.ts` — 206 тестів, coverage 100 %, check-corpus → 0 issues / exit 0; 2 рев'ю-раунди, фінальний вердикт ACCEPT |
-| 6. `convert.ts` (єдиний writer) | **закрито** | `scripts/convert.ts`, `tests/convert.test.ts` — конвертер як єдиний writer маніфесту (CAT-D3), ідемпотентний, з `split` для одного файла донора; 3 рев'ю-раунди, усі знахідки закрито |
+| 1. VP schemas + mini-validator | **closed** | `config/vpcatalog.v1.schema.json`, `config/vpinstruction.v1.schema.json`, `config/vpeffectiveprofile.v1.schema.json`, `skills/vp-mode/scripts/schema.ts`, `tests/schema.test.ts` — 32 tests, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 4 independent review rounds, final verdict ACCEPT |
+| 2. Frontmatter parser | **closed** | `skills/vp-mode/scripts/frontmatter.ts`, `tests/frontmatter.test.ts` — 47 tests, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 review rounds, final verdict ACCEPT |
+| 3. Catalog model + `catalog.*` | **closed** | `skills/vp-mode/scripts/catalog.ts`, `tests/catalog.test.ts`, `tests/fixtures/catalog/` — 96 tests, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 3 review rounds, final verdict ACCEPT |
+| 4. `decision.evaluate` + CLI | **closed** | `skills/vp-mode/scripts/catalog.ts` (+`decisionEvaluate`), `skills/vp-mode/scripts/catalog-cli.ts`, `tests/catalog-cli.test.ts` — 126 tests, coverage 100 %, typecheck 0, knip `{"issues":[]}`; 2 review rounds, final verdict ACCEPT |
+| 5. Seed corpus + manifests + validator | **closed** | `instructions/` (12 instructions), `catalog.json` (12 entries + the approved vocabulary), `corpus-map.json` (12 entries), `scripts/check-corpus.ts`, `tests/check-corpus.test.ts` — 206 tests, coverage 100 %, check-corpus → 0 issues / exit 0; 2 review rounds, final verdict ACCEPT |
+| 6. `convert.ts` (the single writer) | **closed** | `scripts/convert.ts`, `tests/convert.test.ts` — the converter as the single writer of the manifest (CAT-D3), idempotent, with `split` for one donor file; 3 review rounds, all findings closed |
 
 ---
 
-## Поза цим планом
+## Outside this plan
 
-- Скіл `vp-mode` у повному вигляді, `vp-setup`, пер-хостові маніфести, marketplace —
-  крок **E**.
-- Конвертація реальних донорів (понад seed) — крок **D**.
-- Runtime-запит D3+D8 — крок **G**.
-- Реєстрація продукту в спільних root-файлах — крок **0** (відкладено за D9).
+- The `vp-mode` skill in its full form, `vp-setup`, per-host manifests, the marketplace —
+  step **E**.
+- Conversion of real donors (beyond the seed) — step **D**.
+- The runtime request D3+D8 — step **G**.
+- Registration of the product in the shared root files — step **0** (deferred per D9).
 
-## Визначення завершення кроку C
+## Definition of done for step C
 
-1. `bun run --cwd packages/powers test` — 0 failures, `test:coverage` — поріг 1.0.
-2. `bun run --cwd packages/powers typecheck` — 0 помилок.
+1. `bun run --cwd packages/powers test` — 0 failures, `test:coverage` — threshold 1.0.
+2. `bun run --cwd packages/powers typecheck` — 0 errors.
 3. `bun packages/powers/scripts/check-okf.ts` — `failures: []`.
 4. `bun packages/powers/scripts/check-corpus.ts` — exit 0.
 5. `bun run --cwd packages/agent lint:knip:pinned` — `{"issues":[]}`, exit 0.
-6. `bun tooling/agent/check-documentation.ts <явний список .md>` — `failures: []`.
-7. Кожен Task — окремий коміт; жодного файла не редагують дві лейни.
+6. `bun tooling/agent/check-documentation.ts <explicit list of .md>` — `failures: []`.
+7. Each Task — a separate commit; no file is edited by two lanes.

@@ -1,7 +1,7 @@
 ---
 type: Decision
-title: 'D4 — Канали доставки VP: окремий плагін, збірка в пакет агента, marketplace'
-description: 'У поточний scope входять три канали доставки VP — окремий плагін, збірка в пакет поставки агента та публічний marketplace-канал; поверхня скілів VP: vp-mode (основний скіл оркестрації) і vp-setup (допоміжний налаштування).'
+title: 'D4 — VP delivery channels: separate plugin, build into the agent package, marketplace'
+description: 'The current scope includes three VP delivery channels — a separate plugin, a build into the agent delivery package, and a public marketplace channel; the VP skill surface: vp-mode (the main orchestration skill) and vp-setup (the auxiliary setup one).'
 status: stable
 stale_after: '2027-10-19T00:00:00Z'
 tags:
@@ -13,51 +13,51 @@ tags:
 sources:
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція та архітектурний baseline
+  title: Vida Powers — product concept and architectural baseline
 - id: superpowers-plugin-manifest
   resource: https://github.com/obra/superpowers/blob/main/.codex-plugin/plugin.json
-  title: Superpowers — plugin manifest для Codex
+  title: Superpowers — plugin manifest for Codex
 - id: superpowers-marketplace
   resource: https://github.com/obra/superpowers/blob/main/.claude-plugin/marketplace.json
   title: Superpowers — marketplace manifest
 - id: cursor-plugins-marketplace
   resource: https://github.com/cursor/plugins/blob/main/.claude-plugin/marketplace.json
-  title: Cursor plugins — marketplace монорепозиторію
+  title: Cursor plugins — monorepo marketplace
 - id: cloud-pstack-setup
   resource: /../../tooling/agent/cloud-pstack-setup.ts
-  title: Cloud Pstack setup — встановлення плагінів через Git marketplace
+  title: Cloud Pstack setup — installing plugins through a Git marketplace
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
 revision: '2'
 ---
 
-# Рішення
+# Decision
 
-**У поточний scope входять три канали доставки VP:**
+**The current scope includes three VP delivery channels:**
 
-1. **Окремий плагін VP** — самостійний плагін зі своїми скілами, хуком і скриптами
-   каталогу; встановлення через `vp-setup`; працює в сумісних хостах без Runtime.
-2. **Збірка в пакет поставки агента** — VP-інструкції їдуть у нативну поставку
-   агента разом із розширеним instruction registry (D3); канонічна копія лишається
-   в VP, у пакет — згенерований артефакт із декларованим Source-зв'язком.
-3. **Marketplace-канал** — публічний розподіл VP як плагіна через Git-маркетплейс
-   хоста; вимагає власного marketplace-визначення, яке в репозиторії ще немає.
+1. **A separate VP plugin** — a standalone plugin with its own skills, hook and catalog
+   scripts; installation through `vp-setup`; works in compatible hosts without Runtime.
+2. **A build into the agent delivery package** — VP instructions travel in the native delivery of
+   the agent together with the extended instruction registry (D3); the canonical copy remains
+   in VP, into the package goes a generated artifact with a declared Source link.
+3. **A marketplace channel** — public distribution of VP as a plugin through a Git marketplace
+   of the host; it requires its own marketplace definition, which the repository does not yet have.
 
-**Поверхня скілів VP:**
+**The VP skill surface:**
 
-- **`vp-mode`** — **основний скіл оркестрації**: запит звичайною мовою → вибір
-  інструкцій → bundle → делегування або виконання. Це та сама «одна робоча точка
-  входу», яку research називає Router Skill.
-- **`vp-setup`** — **допоміжний скіл налаштування**: виявлення проєктів, ідемпотентне
-  керування інтеграційним блоком, налаштування доступних hooks, зіставлення layout,
-  перевірка активації. Не запускається на кожен запит.
+- **`vp-mode`** — the **main orchestration skill**: a request in ordinary language → selection of
+  instructions → bundle → delegation or execution. This is that same "single working entry
+  point" that research calls the Router Skill.
+- **`vp-setup`** — the **auxiliary setup skill**: project discovery, idempotent
+  management of the integration block, setup of available hooks, layout matching,
+  activation verification. It does not run on every request.
 
-# Як влаштована доставка плагінів (доказ із наявних донорів)
+# How plugin delivery works (evidence from existing donors)
 
-**Plugin manifest — по директорії хоста.** Один репозиторій публікує себе в
-багато хостів через окремі каталоги маніфестів:
+**Plugin manifest — per host directory.** One repository publishes itself to
+many hosts through separate manifest directories:
 
-| Хост | Файл |
+| Host | File |
 |---|---|
 | Codex | `.codex-plugin/plugin.json` |
 | Claude Code | `.claude-plugin/plugin.json` |
@@ -67,61 +67,61 @@ revision: '2'
 | Devin | `.devin-plugin/plugin.json` |
 | Kimi | `.kimi-plugin/plugin.json` |
 
-Поля `plugin.json` (за `superpowers`): `name`, `version`, `description`,
+Fields of `plugin.json` (per `superpowers`): `name`, `version`, `description`,
 `author{name,email,url}`, `homepage`, `repository`, `license`, `keywords[]`,
-`skills` (шлях до каталогу скілів), `hooks{}`, а для Codex — `interface{}`
+`skills` (path to the skills directory), `hooks{}`, and for Codex — `interface{}`
 (`displayName`, `shortDescription`, `longDescription`, `developerName`,
-`category`, `capabilities[]`, `defaultPrompt[]`, URL-поля, `brandColor`,
+`category`, `capabilities[]`, `defaultPrompt[]`, URL fields, `brandColor`,
 `composerIcon`, `logo`, `screenshots[]`).
 
-**Marketplace manifest — теж по директоріях хостів:** `.claude-plugin/marketplace.json`,
+**Marketplace manifest — also per host directories:** `.claude-plugin/marketplace.json`,
 `.cursor-plugin/marketplace.json`, `.muse-plugin/marketplace.json`,
-`.agents/plugins/marketplace.json`. Поля: `name`, `description`, `owner{name,email}`,
-`plugins[]{name, description, version, source, author}`. Монорепозиторійний
-патерн (`cursor/plugins`): marketplace у корені репозиторію, кожен плагін — у
-власному каталозі зі своїм маніфестом, а `source` вказує шлях (`./<dir>`).
-`superpowers` — гібрид: сам є і marketplace, і плагіном.
+`.agents/plugins/marketplace.json`. Fields: `name`, `description`, `owner{name,email}`,
+`plugins[]{name, description, version, source, author}`. The monorepo
+pattern (`cursor/plugins`): the marketplace at the repository root, each plugin — in
+its own directory with its own manifest, and `source` points to the path (`./<dir>`).
+`superpowers` — a hybrid: it is itself both a marketplace and a plugin.
 
-**Встановлення в репозиторії вже вміє:** `codex plugin marketplace add <git-url>`
-(`tooling/agent/cloud-pstack-setup.ts:49`) — Git-репозиторій як джерело
-маркетплейсу.
+**Installation in the repository already knows how:** `codex plugin marketplace add <git-url>`
+(`tooling/agent/cloud-pstack-setup.ts:49`) — a Git repository as the source of the
+marketplace.
 
-# Наслідки
+# Consequences
 
-> **Уточнення (D9).** Три канали — у scope. Відкладено не канал, а **публікація**
-> marketplace: для неї потрібен публічний Git-репозиторій, рішення власника ще не
-> прийнято. Канал 1 (окремий плагін) і канал 2 (збірка в пакет агента) від
-> публікації не залежать.
+> **Clarification (D9).** Three channels are in scope. What is deferred is not the channel but the **publication**
+> of the marketplace: it needs a public Git repository, and the owner's decision has not yet been
+> made. Channel 1 (separate plugin) and channel 2 (build into the agent package) do not
+> depend on publication.
 
-1. **Stage 5** постачає: скіли `vp-mode` і `vp-setup`, хук, власні скрипти
-   `catalog.*`, per-host plugin manifests VP і marketplace-визначення.
-2. **Stage 9** більше не містить marketplace як «поза scope»: канал 3 переходить у
-   робочий scope (разом із ним — інфраструктура marketplace, якої в репо немає).
-   Поза scope лишаються domain packs, UI поверх VIDA API та зовнішня синхронізація
-   issue-трекерів.
-3. **Канал 1 не потребує Runtime**; канали 2 і 3 мають різні докази готовності:
-   канал 2 — збірка з provenance у нативний пакет, канал 3 — інстальований
-   marketplace-канал із власною матрицею хостів.
-4. **Публікація** marketplace — публічна поверхня: вона потребує окремого рішення
-   про те, де живе marketplace-визначення і хто споживає (D4b).
+1. **Stage 5** delivers: the skills `vp-mode` and `vp-setup`, the hook, its own `catalog.*`
+   scripts, per-host VP plugin manifests and the marketplace definition.
+2. **Stage 9** no longer contains the marketplace as "out of scope": channel 3 moves into the
+   working scope (together with it — the marketplace infrastructure that the repo lacks).
+   What remains out of scope is domain packs, UI on top of the VIDA API and external synchronization
+   of issue trackers.
+3. **Channel 1 needs no Runtime**; channels 2 and 3 have different readiness evidence:
+   channel 2 — a build with provenance into the native package, channel 3 — an installed
+   marketplace channel with its own host matrix.
+4. **Publication** of the marketplace — a public surface: it requires a separate decision
+   about where the marketplace definition lives and who consumes it (D4b).
 
-# Розглянуті варіанти
+# Options considered
 
-| Варіант | Суть | Висновок |
+| Option | Essence | Conclusion |
 |---|---|---|
-| (a) Канали 1 + 2 | Плагін і збірка в пакет агента | Відхилено: розповсюдження без маркетплейсу не досягає нових хостів; D3 уже передбачає два режими, а marketplace — окремий публічний канал |
-| (b) Лише standalone-плагін | Один канал | Відхилено: VP не доходить до VIDA-контуру як методологічний шар |
-| (c) Канали 1 + 2 + 3 | Плагін, пакет агента, marketplace | **Прийнято** |
+| (a) Channels 1 + 2 | Plugin and build into the agent package | Rejected: distribution without a marketplace does not reach new hosts; D3 already provides for two modes, and the marketplace is a separate public channel |
+| (b) Standalone plugin only | One channel | Rejected: VP does not reach the VIDA contour as a methodological layer |
+| (c) Channels 1 + 2 + 3 | Plugin, agent package, marketplace | **Accepted** |
 
-# Вплив на інші рішення
+# Impact on other decisions
 
-- D7 (цільовий споживацький layout) не змінюється: канали доставки не визначають
-  layout consumer-проєкту.
-- D5 (Decision Provider) не змінюється: provider-нейтральний інтерфейс однаковий
-  для всіх каналів.
-- Наступне уточнення: **D4b** — де живе marketplace-визначення і який набір хостів
-  входить у перший реліз.
+- D7 (target consumer layout) does not change: delivery channels do not determine
+  the layout of the consumer project.
+- D5 (Decision Provider) does not change: the provider-neutral interface is the same
+  for all channels.
+- Next clarification: **D4b** — where the marketplace definition lives and which host set
+  is part of the first release.
 
-# Повноваження
+# Authority
 
-Рішення власника репозиторію від 2026-10-19, зафіксоване в поточній розмові.
+Decision of the repository owner dated 2026-10-19, recorded in the current conversation.

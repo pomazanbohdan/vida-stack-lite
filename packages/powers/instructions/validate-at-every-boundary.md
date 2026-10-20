@@ -1,19 +1,19 @@
 ---
 instruction_id: validate-at-every-boundary
-title: Роби помилку неможливою перевірками на кожній межі
-summary: "Після усунення причини збою додавай перевірки на кожній межі, яку проходять дані, щоб помилка не повторилася іншим шляхом."
+title: Validate at every boundary
+summary: "After removing the cause of a failure, add checks at every layer the data crosses, so the same failure cannot return by another path."
 capability_tags:
   - harden-validation
 pattern_tags:
   - defense-in-depth
-conditions_applies_when: "Збій спричинили некоректні або відсутні дані, які пройшли кілька компонентів."
-conditions_does_not_apply_when: "Причина вже усунена в єдиному місці, і інших шляхів проходження даних немає."
+conditions_applies_when: Invalid or missing data crossed several components and caused the failure.
+conditions_does_not_apply_when: The cause is already removed in one place and no other data path exists.
 artifact_contract_output_type: layered-validation
 artifact_contract_required_data:
-  - шлях даних
-  - перелік меж
-  - перевірки на кожній межі
-  - доказ блокування
+  - data path
+  - list of boundaries
+  - checks at each boundary
+  - blocking evidence
 artifact_contract_verified_by: bypass tests at each layer
 compatibility_excludes: []
 compatibility_requires: []
@@ -24,28 +24,22 @@ status: active
 revision: 2
 ---
 
-# Роби помилку неможливою перевірками на кожній межі
-Відтвори збій і зафіксуй некоректне значення.
-Простеж повний шлях значення від появи до місця збою.
-Випиши кожну межу, яку це значення проходить.
-На кожній межі визнач властивість, яку можна перевірити.
-Перевіряй на вході компонента наявність, тип, форму й діапазон.
-Перевіряй у логіці операції, чи значення придатне саме для неї.
-Додай захисне обмеження для небезпечної дії в чутливому контексті.
-Додай діагностичний запис перед небезпечною дією.
-Кожна перевірка має називати місце й некоректне значення.
-Не покладайся на одну перевірку: інший шлях її обходить.
-Перевір кожну межу сценарієм, який обходить попередню.
-Підтвердь, що після обходу першої межі наступна блокує помилку.
-Не дублюй ту саму перевірку без нової властивості.
-Не підмінюй некоректне значення мовчки.
-Збережи чинні контракти помилок і сумісність викликів.
-Залиш діагностику лише там, де вона потрібна для майбутнього розслідування.
-Запусти повний набір тестів після кожної доданої межі.
-Залиш тест, який відтворює початковий збій.
-Не вважай захист завершеним, доки існує неперевірений шлях.
-Збирай перевірку й розбір даних на системних межах: аргументи запуску, конфігурація, мережа, зовнішні служби.
-Усередині системи довіряй типам і не повторюй перевірку, яку вже зробила межа.
-Винеси бізнес-правила в чисті функції, щоб їх можна було перевірити без обрамлення.
-Показуй назовні доменні поняття, а не приватне подання межі.
-Заверши лише тоді, коли жоден відомий шлях не пропускає некоректне значення.
+# Validate at every boundary
+When you fix a bug caused by invalid data, adding validation in one place feels sufficient. A single check can be bypassed by a different code path, a refactoring, or a mock.
+Validate at every layer the data passes through. Make the bug structurally impossible.
+Single validation says we fixed the bug. Multiple layers say we made the bug impossible.
+Different layers catch different cases: entry validation catches most bugs, business logic catches edge cases, environment guards prevent context-specific dangers, and debug logging helps when other layers fail.
+Entry point validation rejects obviously invalid input at the boundary.
+Business logic validation ensures that data makes sense for this operation.
+Environment guards prevent dangerous operations in specific contexts.
+Debug instrumentation captures context for forensics.
+Trace the data flow: where the bad value originated and where it is used. Map every checkpoint the data passes through. Add validation at each layer. Test each layer by trying to bypass the previous one.
+Place validation, type narrowing, and error handling at system boundaries: command-line arguments, configuration files, external APIs, and network protocols.
+Inside the system, trust the types, propagate errors, and do not re-validate.
+Expose domain concepts across the boundary, not the boundary's private representation.
+Keep general-purpose mechanism inside and special-purpose policy at the edge.
+Parse raw data into domain types at the boundary. Validate configuration at parse time, not inside business logic.
+No redundant nil checks deep in call chains when the boundary already validated.
+Business logic lives in pure functions with no framework dependencies. The shell is thin and mechanical.
+Ask whether the data is crossing a system boundary right now. If not, validation is redundant.
+Ask whether the logic can be a pure function that the shell just calls. If yes, extract it.

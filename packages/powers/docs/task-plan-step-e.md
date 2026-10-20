@@ -1,7 +1,7 @@
 ---
 type: Task Plan
-title: 'Vida Powers — task-level план кроку E: скіли vp-mode і vp-setup, налаштування, маніфести'
-description: 'Джерельний профіль (декларація груп і альтернатив), ефективний профіль із секцією перевірки та рівнем флоу, скіли vp-mode і vp-setup з вибором політик погодження та інвентаризацією моделей, пер-хостові маніфести й marketplace.'
+title: 'Vida Powers — task-level plan for step E: skills vp-mode and vp-setup, setup, manifests'
+description: 'Source profile (declaration of groups and alternatives), effective profile with the verification section and the flow level, skills vp-mode and vp-setup with the choice of approval policies and model inventory, per-host manifests and the marketplace.'
 status: draft
 stale_after: '2026-11-19T00:00:00Z'
 tags:
@@ -13,28 +13,28 @@ tags:
 sources:
 - id: design
   resource: /catalog-design.md
-  title: Vida Powers — дизайн каталогу інструкцій
+  title: Vida Powers — instruction catalog design
 - id: system-specification
   resource: /system-specification.md
-  title: Vida Powers — системна специфікація
+  title: Vida Powers — system specification
 - id: acceptance
   resource: /acceptance.md
-  title: Vida Powers — критерії прийняття
+  title: Vida Powers — acceptance criteria
 - id: step-d-plan
   resource: /task-plan-step-d.md
-  title: Vida Powers — task-level план кроку D
+  title: Vida Powers — task-level plan for step D
 - id: research
   resource: /research/vida-powers-product-research.md
-  title: Vida Powers — продуктова концепція
+  title: Vida Powers — product concept
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T19:30:00Z' }
 revision: '3'
 ---
 
-**Мета:** завершити ядро продукту — декларація політик, налаштування за
-середовищем, оркестраційний скіл і канали доставки. Скрили, які постачаються,
-живуть у `skills/*/scripts/` і залишаються runtime-агностичними.
+**Goal:** complete the core of the product — the declaration of policies, environment-driven
+setup, the orchestration skill and the delivery channels. The shipped scripts
+live in `skills/*/scripts/` and remain runtime-agnostic.
 
-**Специфікація, з якої цей план випливає:** `docs/system-specification.md`
+**The specification this plan follows from:** `docs/system-specification.md`
 (SR-22…SR-29, SR-33, SR-56…SR-62, SR-75), `docs/acceptance.md` (AC-13, AC-14,
 AC-25, AC-28, AC-41), `docs/decisions/D4-delivery-channels.md`,
 `D4b-marketplace-and-hosts.md`, `D7-consumer-initialization.md`,
@@ -42,196 +42,200 @@ AC-25, AC-28, AC-41), `docs/decisions/D4-delivery-channels.md`,
 
 ## Global Constraints
 
-- **Runtime-агностичність.** Код у `skills/*/scripts/` — лише `node:`-модулі, без
-  `Bun.*`, без `import.meta.dir`, без зовнішніх залежностей; **YAML не парситься**
-  (SR-62). Шляхи з `import.meta.url`.
-- **Формат машинних даних — JSON.** YAML лише для людських маніфестів. Профілі,
-  інвентаризація моделей, довідник — JSON.
-- **Керований блок у YAML-файлі містить JSON.** Маркери + блок ```json — його
-  читає `JSON.parse` без парсера YAML (SR-62), і setup порівнює його зміст, а не
-  текст (SR-56).
-- **Ідемпотентність.** Повторний запуск `vp-setup` не створює дубля керованого
-  блоку, не дублює записів, не змінює незмінені поля (AC-25).
-- **Один власник на артефакт.** `catalog.json` — лише `convert.ts`; джерельний
-  профіль і довідник — owner-контент; ефективний профіль — лише `vp-setup`;
-  маніфести — лише збірка пакунка.
-- **Без мовчазних значень за замовчуванням** (SR-19, SR-69): якщо рішення не
-  прийняте — воно лишається невирішеним і позначається як таке.
-- **Версія — лише в метаданих**; у назвах файлів версій, дат і статусів немає.
+- **Runtime-agnosticism.** The code in `skills/*/scripts/` — only `node:` modules, no
+  `Bun.*`, no `import.meta.dir`, no external dependencies; **YAML is not parsed**
+  (SR-62). Paths from `import.meta.url`.
+- **The format of machine data is JSON.** YAML only for human manifests. Profiles,
+  model inventory, vocabulary — JSON.
+- **The managed block in a YAML file contains JSON.** Markers + a ```json block — it is
+  read by `JSON.parse` without a YAML parser (SR-62), and setup compares its content, not
+  the text (SR-56).
+- **Idempotency.** A repeated run of `vp-setup` creates no duplicate of the managed
+  block, does not duplicate entries, and does not change unchanged fields (AC-25).
+- **One owner per artifact.** `catalog.json` — only `convert.ts`; the source
+  profile and the vocabulary — owner content; the effective profile — only `vp-setup`;
+  the manifests — only the package build.
+- **No silent default values** (SR-19, SR-69): if a decision has not been
+  made — it remains unresolved and is marked as such.
+- **Version — only in metadata**; file names contain no versions, dates or statuses.
 
-## Task E1 — Джерельний методологічний профіль: хто, які групи, які альтернативи
+## Task E1 — Source methodology profile: who, which groups, which alternatives
 
 **Files:** create `config/vpmethodologyprofile.v1.schema.json`,
 `config/methodology-profile.json`; test `tests/methodology-profile.test.ts`.
 
-- **Навіщо:** setup має запитувати користувача про **політики погодження**, а для
-  цього потрібна декларація: які групи існують, які з них є рішенням користувача,
-  які альтернативи існують і що кожна означає.
-- **Формат** (`VPMethodologyProfile/v1` — канонічна назва SR-25/D8; ефективний
-  резолвнутий профіль лишається `VPEffectiveProfile/v1`, дизайн §7):
-  - `groups[]`: `{ id, title, description, user_decision: boolean,
+- **Why:** setup must ask the user about **approval policies**, and for this
+  a declaration is needed: which groups exist, which of them are a user decision,
+  which alternatives exist and what each of them means.
+- **Format** (`VPMethodologyProfile/v1` — the canonical name of SR-25/D8; the effective
+  resolved profile remains `VPEffectiveProfile/v1`, design §7):
+  - `groups[]`: `{ id, title, description, user_decision: boolean, default?: string,
     alternatives[]: { id, title, description, instruction_ids[] } }`;
-  - `id` альтернативи — **pattern-тег** (SR-25: альтернатива є методологією, а не
-    ідентифікатором інструкції); `instruction_ids[]` — інструкції корпусу, що
-    реалізують цю альтернативу (для валідації та пошуку; порожній масив = група
-    без інструкцій);
-  - `user_decision: true` — група, де вибір робить користувач; `false` — група
-    визначена політикою продукту.
-- **Власник:** owner-контент (затверджується власником разом із довідником тегів).
-- **Обов'язковий склад:** група `approval-policy` з двома альтернативами —
-  `user_decision: true` (мандат власника). **Прив'язка альтернатив (критично):**
-  кожна альтернатива має **свій pattern-тег**, і саме він є `id` альтернативи, а
-  інструкція альтернативи несе цей тег у своїх `pattern_tags`:
+  - `default` — **mandatory** for groups with a product policy (`user_decision:
+    false`) and **forbidden** for user-decision groups: this is a recorded policy,
+    not a silent default value (D10 §1); a user choice cannot
+    change a group with a product policy;
+  - the alternative `id` — a **pattern tag** (SR-25: an alternative is a methodology, not
+    an instruction identifier); `instruction_ids[]` — the corpus instructions that
+    implement this alternative (for validation and search; an empty array = a group
+    without instructions);
+  - `user_decision: true` — a group where the choice is made by the user; `false` — a group
+    determined by the product policy.
+- **Owner:** owner content (approved by the owner together with the tag vocabulary).
+- **Mandatory composition:** the group `approval-policy` with two alternatives —
+  `user_decision: true` (owner mandate). **Binding of alternatives (critical):**
+  each alternative has **its own pattern tag**, and exactly that is the `id` of the alternative, while
+  the alternative's instruction carries this tag in its `pattern_tags`:
   `proceed-without-waiting-for-confirmation` → `approval-policy-proceed`,
-  `size-and-gate-the-work` → `approval-policy-gate`; спільний тег
-  `approval-policy` лишається маркером групи (пошук і огляд), але **не** є
-  альтернативою ✓. Без окремих тегів compose не відрізнив би неактивну
-  альтернативу (обидві несли б один тег) ✓.
-  Групи `testing-sequence`, `review-strategy`, `architecture`, `delivery` —
-  `user_decision: false` (SR-25); підтверджені групи не мають відповідного набору
-  інструкцій у корпусі — тоді група не оголошується (заборонено оголосити те,
-  чого корпус не має ✓).
-- **Перевірка (валідатор):** кожен `instruction_ids` є в корпусі; кожна
-  альтернатива має опис; `user_decision`-група має щонайменше дві альтернативи;
-  `id` альтернативи — існуючий pattern-тег у словнику ✓.
+  `size-and-gate-the-work` → `approval-policy-gate`; the shared tag
+  `approval-policy` remains a marker of the group (search and overview) but is **not**
+  an alternative ✓. Without separate tags compose would not distinguish an inactive
+  alternative (both would carry one tag) ✓.
+  Groups `testing-sequence`, `review-strategy`, `architecture`, `delivery` —
+  `user_decision: false` (SR-25); confirmed groups that have no corresponding set of
+  instructions in the corpus — then the group is not declared (it is forbidden to declare something
+  the corpus does not have ✓).
+- **Validation (validator):** each `instruction_ids` is present in the corpus; each
+  alternative has a description; a `user_decision` group has at least two alternatives;
+  the alternative `id` — an existing pattern tag in the vocabulary ✓.
 
-## Task E2 — Ефективний профіль: рішення, рівень флоу, смуги перевірки
+## Task E2 — Effective profile: decisions, flow level, verification lanes
 
-**Files:** **update** `config/vpeffectiveprofile.v1.schema.json` (схема існує з кроку C
-і вже використовується `catalog-cli`); test `tests/effective-profile.test.ts`.
+**Files:** **update** `config/vpeffectiveprofile.v1.schema.json` (the schema exists from step C
+and is already used by `catalog-cli`); test `tests/effective-profile.test.ts`.
 
-- **Вміст** (`VPEffectiveProfile/v1`):
+- **Content** (`VPEffectiveProfile/v1`):
   - `groups`: `{ <group id>: { active: <alternative id>, alternatives: [...] } }` —
-    **резолвлені** рішення (активна альтернатива на групу) ✓ (SR-25, SR-26);
-  - `flow_level`: рівень флоу (`full` | `medium` | `light`) ✓ (D8, SR-22);
-  - `verification`: секція перевірки:
+    **resolved** decisions (the active alternative per group) ✓ (SR-25, SR-26);
+  - `flow_level`: the flow level (`full` | `medium` | `light`) ✓ (D8, SR-22);
+  - `verification`: the verification section:
     - `available_models[]`: `{ provider, model, family, roles[]: ('main'|'agent'),
-      available: boolean }` — інвентаризація оточення (мандат власника);
+      available: boolean }` — the inventory of the environment (owner mandate);
     - `lane_assignment`: `{ lane: string, provider, model, blind: boolean }[]` —
-    яка модель обслуговує яку смугу перевірки;
+    which model serves which verification lane;
     - `lane_policy`: `independent-provider` | `independent-model` |
-      `blind-same-model` — **обрана** смуга;
-    - `limitations`: рядок із явною позначкою обмеження середовища.
-- **Хто обчислює `lane_policy`:** не користувач, а детерміноване правило за драбиною
-  з інструкції `verify-with-independent-lanes` (інше сімейство іншого постачальника →
-  інша модель того самого постачальника → сліпий агент на тій самій моделі) і
-  наявністю моделей в інвентаризації; `lane_assignment` — призначення моделей
-  смугам за інструкцією `record-available-executor-models` ✓.
-- **Рівень флоу** — за D8 частина ефективного профілю ✓; визначається з
-  джерельного профілю (політика продукту) або рішенням користувача — розрізняється
-  полем `user_decision` ✓.
-- **Заміна неактивної альтернативи (виправлення compose).** Група профілю — це
-  **один вибір**: якщо залежність (`compatibility_requires`) вказує на неактивну
-  альтернативу, її замінює **активна** альтернатива тієї групи (а не помилка
-  `CATALOG_PROFILE_CONFLICT` і не повернення неактивної в bundle ✓). Правило
-  фіксується в дизайні §7 і реалізується в `catalog.compose` + регресійний тест ✓.
-  Мутажна вимога `compatibility_requires` між двома альтернативами однієї групи
-  **прибирається** з корпусу: альтернативи не вимагають одна одну (перехрес
-  залишається в тексті інструкцій) ✓.
+      `blind-same-model` — the **chosen** lane;
+    - `limitations`: a string with an explicit marker of the environment limitation.
+- **Who computes `lane_policy`:** not the user, but a deterministic rule by the ladder
+  from the `verify-with-independent-lanes` instruction (another family of another vendor →
+  another model of the same vendor → a blind agent on the same model) and
+  by the availability of models in the inventory; `lane_assignment` — the assignment of models
+  to lanes per the `record-available-executor-models` instruction ✓.
+- **The flow level** — per D8 part of the effective profile ✓; determined from the
+  source profile (product policy) or by a user decision — distinguished by the
+  `user_decision` field ✓.
+- **Replacement of an inactive alternative (compose fix).** A profile group is
+  a **single choice**: if a dependency (`compatibility_requires`) points to an inactive
+  alternative, it is replaced by the **active** alternative of that group (and not by a
+  `CATALOG_PROFILE_CONFLICT` error and not by returning the inactive one in the bundle ✓). The rule
+  is fixed in design §7 and implemented in `catalog.compose` + a regression test ✓.
+  The mutual requirement `compatibility_requires` between two alternatives of one group
+  **is removed** from the corpus: the alternatives do not require one another (the cross-reference
+  remains in the instruction text) ✓.
 
-## Task E3 — `vp-setup`: середовище, інвентаризація, вибір, запис
+## Task E3 — `vp-setup`: environment, inventory, choice, write
 
 **Files:** create `skills/vp-setup/SKILL.md`, `skills/vp-setup/scripts/setup.ts`;
 test `tests/setup.test.ts`.
 
-- **Визначення середовища** (D7): Standalone (керований блок у `AGENTS.md` або
-  `CLAUDE.md`; якщо жодного немає — створює `AGENTS.md` з блоком ✓), Runtime
-  (розділ у конфіг-файлі runtime), хост-прослойка (конфіг-файл проєкту).
-  Визначення — за наявністю носіїв; у сторонні файли не пишемо (AC-25).
-- **Інвентаризація моделей:** вхід — **JSON**-контракт, який дає середовище
-  (шлях передається аргументом або змінною оточення):
+- **Determination of the environment** (D7): Standalone (a managed block in `AGENTS.md` or
+  `CLAUDE.md`; if neither exists — it creates `AGENTS.md` with the block ✓), Runtime
+  (a section in the runtime config file), host layer (the project config file).
+  The determination — by the presence of the carriers; we do not write into third-party files (AC-25).
+- **Model inventory:** the input — a **JSON** contract provided by the environment
+  (the path is passed by an argument or an environment variable):
   `{ providers: [{ id, models: [{ id, family, roles: ['main'|'agent'], available }] }] }`.
-  Якщо інвентаризації немає — пишемо порожній список і `limitations` з
-  позначкою; **slug'и не вигадуємо** ✓.
-- **Вибір політик:** для кожної групи з `user_decision: true` setup показує
-  альтернативи (назва + опис) і просить вибір; вибір — рішення користувача
-  (мандат власника); якщо користувач не обрав — група лишається **невирішеною**
-  і позначається в профілі (без мовчазного значення за замовчуванням ✓).
-  **Поведінка невирішеної групи:** `vp-mode` не складає bundle для неї й
-  переносить питання на переговорний запит (-negotiation) — жодна з альтернатив не
-  підставляється мовчки ✓; тест на цю поведінку ✓.
-- **Запис:** ефективний профіль пишеться у визначений носій:
-  - Standalone — керований блок у `AGENTS.md`/`CLAUDE.md`: маркери
-    `<!-- vida-powers:profile:begin -->` / `<!-- vida-powers:profile:end -->` і
-    всередині fenced-блок ```json з профілем ✓ (читання через `JSON.parse` ✓,
-    без YAML-парсера ✓);
-  - Runtime/хост-прослойка — JSON-файл профілю в узгодженому місці носія ✓.
-- **Ідемпотентність (AC-25):** повторний запуск порівнює **розпарсений** профіль
-  (не текст) → немає змін → немає запису; змінився лише блок, який належить VP →
-  сторонні блоки не чіпаємо ✓ (AC-41: третій контент зберігається ✓).
-- **Обов'язкові обов'язки, які НЕ губимо:** активаційна перевірка (SR-59) —
-  чекліст у SKILL.md, що перевіряє наявність скілів і профілю; карта джерел
-  (SR-75) — фіксує походження інструкцій і змін налаштування; захист
-  встановленого пакета агента (SR-57) — setup не змінює файли пакета агента ✓.
-- **Хуки** (D4 Stage 5, SR-60) — **відкладено**: це залежність від runtime; owner
-  і умова відкладення фіксуються в записі рішення (D10).
+  If there is no inventory — we write an empty list and `limitations` with
+  a marker; **we do not invent slugs** ✓.
+- **Choice of policies:** for each group with `user_decision: true` setup shows the
+  alternatives (title + description) and asks for a choice; the choice is the user's decision
+  (owner mandate); if the user has not chosen — the group remains **unresolved**
+  and is marked in the profile (without a silent default value ✓).
+  **Behavior of an unresolved group:** `vp-mode` does not assemble a bundle for it and
+  moves the question into a negotiation request (-negotiation) — none of the alternatives is
+  substituted silently ✓; a test for this behavior ✓.
+- **Write:** the effective profile is written into the determined carrier:
+  - Standalone — the managed block in `AGENTS.md`/`CLAUDE.md`: the markers
+    `<!-- vida-powers:profile:begin -->` / `<!-- vida-powers:profile:end -->` and
+    inside a fenced ```json block with the profile ✓ (reading through `JSON.parse` ✓,
+    without a YAML parser ✓);
+  - Runtime/host layer — a JSON profile file in the agreed place of the carrier ✓.
+- **Idempotency (AC-25):** a repeated run compares the **parsed** profile
+  (not the text) → no changes → no write; only the block that belongs to VP has changed →
+  we do not touch third-party blocks ✓ (AC-41: third-party content is preserved ✓).
+- **Mandatory duties we do NOT lose:** activation verification (SR-59) —
+  a checklist in SKILL.md that verifies the presence of the skills and the profile; the source map
+  (SR-75) — records the origin of the instructions and the changes of the setup; protection of
+  the installed agent package (SR-57) — setup does not change files of the agent package ✓.
+- **Hooks** (D4 Stage 5, SR-60) — **deferred**: this is a dependency on the runtime; the owner
+  and the deferral condition are recorded in the decision record (D10).
 
-## Task E4 — `vp-mode`: оркестрація
+## Task E4 — `vp-mode`: orchestration
 
-**Files:** create `skills/vp-mode/SKILL.md`; тулінг уже є в
+**Files:** create `skills/vp-mode/SKILL.md`; the tooling already exists in
 `skills/vp-mode/scripts/` (`catalog.ts`, `catalog-cli.ts`, `frontmatter.ts`,
 `schema.ts`).
 
-- Єдиний основний вхід (D4): приймає запит звичайною мовою → `catalog.search` →
-  `catalog.compose` → bundle (роль, task contract, ефективна методологія, Work
-  Scope, вимоги матеріалізації, посилання на артефакти) → виконання або
-  делегування ✓ (SR-22, SR-23, AC-13).
-- **Поважає ефективний профіль:** активна альтернатива групи визначає активну
-  політику; bundle не містить неактивну альтернативу ✓ (вже реалізовано в
+- A single main entry (D4): accepts a request in ordinary language → `catalog.search` →
+  `catalog.compose` → bundle (role, task contract, effective methodology, Work
+  Scope, materialization requirements, references to artifacts) → execution or
+  delegation ✓ (SR-22, SR-23, AC-13).
+- **Respects the effective profile:** the active alternative of a group determines the active
+  policy; the bundle does not contain the inactive alternative ✓ (already implemented in
   `catalog.compose` ✓).
-- **Рівень флоу** — з профілю; `workflow.options` описує допустимі варіанти, а
-  `decision.evaluate` оцінює передані кандидати; **VP не компілює граф виконання**
+- **The flow level** — from the profile; `workflow.options` describes the admissible options, and
+  `decision.evaluate` evaluates the submitted candidates; **VP does not compile the execution graph**
   (SR-24, AC-14) ✓.
-- **Agent Fallback обов'язковий** (SR-18): недоступність, timeout, помилка API,
-  некоректний формат, невідомий candidate ID, недостатня впевненість → головний
-  агент; матеріалізація: джерело рішення, обрані ID, причина fallback ✓ (SR-20).
-- **Межі bundle** (SR-58, AC-26): bundle ≤ 20 інструкцій і ≤ 64 КБ тексту —
-  зафіксовано в контракті SKILL.md і перевіряється в тесті ✓.
-- Матеріалізація за `artifact_contract` ✓ (інваріант 7).
+- **Agent Fallback is mandatory** (SR-18): unavailability, timeout, API error,
+  malformed format, unknown candidate ID, insufficient confidence → the main
+  agent; materialization: the source of the decision, the selected IDs, the fallback reason ✓ (SR-20).
+- **Bundle boundaries** (SR-58, AC-26): the bundle ≤ 20 instructions and ≤ 64 KB of text —
+  recorded in the contract of SKILL.md and verified in a test ✓.
+- Materialization per `artifact_contract` ✓ (invariant 7).
 
-## Task E5 — Канали доставки: пер-хостові маніфести й marketplace
+## Task E5 — Delivery channels: per-host manifests and the marketplace
 
 **Files:** `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`,
 `.agents/plugins/`, `marketplace.json`; create the manifest schemas
-`config/vppluginmanifest.v1.schema.json` (пер-ходовий маніфест) and reuse it for
+`config/vppluginmanifest.v1.schema.json` (per-host manifest) and reuse it for
 the marketplace listing.
 
-- `packages/powers` — marketplace-власник (D4b): `marketplace.json` із
-  `source: "./"` ✓; пер-ходові маніфести перелічують постачавані скіли
-  (`vp-mode`, `vp-setup`) і каталог інструкцій ✓.
-- Розкладка: **пер-ходові** `marketplace.json` і `plugin.json` у своїй теці
+- `packages/powers` — the marketplace owner (D4b): `marketplace.json` with
+  `source: "./"` ✓; the per-host manifests list the shipped skills
+  (`vp-mode`, `vp-setup`) and the instruction catalog ✓.
+- Layout: **per-host** `marketplace.json` and `plugin.json` in their own directory
   (`.claude-plugin/`, `.cursor-plugin/`, `.codex-plugin/`, `.agents/plugins/`) —
-  за патерном D4b; опис пакета для marketplace — у корені пакета (`source: "./"`) ✓.
-  Власник маніфестів — **збірка пакунка** (окремий крок пакування, не в цьому
+  per the D4b pattern; the package description for the marketplace — at the root of the package (`source: "./"`) ✓.
+  The owner of the manifests is the **package build** (a separate packaging step, not in this
   scope) ✓.
-- Маніфести валідні схемою ✓; вантаж не дублюється (D4b) ✓.
-- Новий AC: «пер-ходові маніфести та marketplace-опис валідні схемою й не дублюють
-  вантаж» — **пропозиція** (затвердження власника).
+- The manifests are schema-valid ✓; the payload is not duplicated (D4b) ✓.
+- A new AC: "the per-host manifests and the marketplace description are schema-valid and do not duplicate
+  the payload" — a **proposal** (owner approval).
 
-## Поза цим планом
+## Outside this plan
 
-- Крок **F**: Work Items VP у `docs/work/`, findings JSONL, `artifact_contract` на
-  рівні роботи.
-- Крок **G**: runtime-запит D3+D8 — документи, не код; Runtime-режим VP не
-  доводиться в цьому scope.
-- **Хуки** setup (D4 Stage 5, SR-60) — відкладено до runtime-треку; owner і
-  умова — у записі рішення **D10** (`docs/decisions/D10-…`), який створюється в
-  цьому ж кроці разом із правками D7/D8 (керований блок: JSON у YAML-носієві) ✓.
-- **Розширений instruction registry пакета агента** (D3) — runtime-запит (G).
+- Step **F**: VP Work Items in `docs/work/`, findings JSONL, `artifact_contract` at
+  the work level.
+- Step **G**: the runtime request D3+D8 — documents, not code; VP Runtime mode is not
+  proven in this scope.
+- Setup **hooks** (D4 Stage 5, SR-60) — deferred to the runtime track; the owner and
+  the condition — in the decision record **D10** (`docs/decisions/D10-…`), which is created in
+  this same step together with the edits of D7/D8 (managed block: JSON in the YAML carrier) ✓.
+- **The extended instruction registry of the agent package** (D3) — a runtime request (G).
 
-## Визначення завершення кроку E
+## Definition of done for step E
 
-1. `bun run --cwd packages/powers test` → 0 failures; `test:coverage` → поріг 1.0.
-2. `bun run --cwd packages/powers typecheck` → 0 помилок.
+1. `bun run --cwd packages/powers test` → 0 failures; `test:coverage` → threshold 1.0.
+2. `bun run --cwd packages/powers typecheck` → 0 errors.
 3. `bun packages/powers/scripts/check-corpus.ts` → `issues: []`, exit 0.
 4. `bun run --cwd packages/agent lint:knip:pinned` → `{"issues":[]}`, exit 0.
 5. `bun packages/powers/scripts/check-okf.ts` → `failures: []`.
-6. `bun tooling/agent/check-documentation.ts <явний список .md>` → `failures: []`.
-7. Постачавані скрипти виконуються під **bun і node** (AC-28) + статична перевірка
-   відсутності Bun-специфічних API (grep по `skills/*/scripts/`). **deno** на цьому
-   хості не встановлений — це зафіксоване обмеження середовища (GAP, не гейт);
-   коли deno з'явиться, критерій доповнюється ✓.
-8. Повторний запуск `vp-setup` → **порожній diff** (AC-25); сторонній контент у
-   `AGENTS.md`/`CLAUDE.md` збережено (AC-41).
-9. Пер-ходові маніфести й `marketplace.json` валідні схемою.
-10. Запис у `docs/log.md` (OKF §9) про кожну зміну кроку.
+6. `bun tooling/agent/check-documentation.ts <explicit list of .md>` → `failures: []`.
+7. The shipped scripts run under **bun and node** (AC-28) + a static check
+   for the absence of Bun-specific APIs (grep over `skills/*/scripts/`). **deno** is not
+   installed on this host — a recorded environment limitation (GAP, not a gate);
+   when deno appears, the criterion is supplemented ✓.
+8. A repeated run of `vp-setup` → an **empty diff** (AC-25); third-party content in
+   `AGENTS.md`/`CLAUDE.md` is preserved (AC-41).
+9. The per-host manifests and `marketplace.json` are schema-valid.
+10. An entry in `docs/log.md` (OKF §9) about each change of the step.

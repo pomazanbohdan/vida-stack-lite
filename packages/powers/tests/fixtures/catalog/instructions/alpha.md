@@ -10,8 +10,8 @@ roles:
   - engineer
 products:
   - vida-powers
-conditions_applies_when: implementation code changes, зміна коду, code. changes
-conditions_does_not_apply_when: documentation only, документація
+conditions_applies_when: implementation code changes, code. changes
+conditions_does_not_apply_when: documentation only
 artifact_contract_output_type: test-suite
 artifact_contract_required_data:
   - cases

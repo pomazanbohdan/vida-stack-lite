@@ -1,18 +1,18 @@
 ---
 instruction_id: ask-one-open-question
-title: Став одне відкрите запитання за раз
-summary: "Веди уточнення одним відкритим запитанням у повідомленні, доки потреба не стане однозначною."
+title: Ask one open question at a time
+summary: "Open the conversation with an offer to skip, then ask one concrete open question per message and let the owner's own words carry the intent."
 capability_tags:
   - clarify-requirements
 pattern_tags:
   - requirements-clarification
-conditions_applies_when: "Є суттєва невизначеність у тому, що саме потрібно."
-conditions_does_not_apply_when: Запит уже однозначно визначає результат і спосіб його приймання.
+conditions_applies_when: There is substantial uncertainty about what is actually wanted.
+conditions_does_not_apply_when: The request already fixes the result and how it will be accepted.
 artifact_contract_output_type: clarification-question
 artifact_contract_required_data:
-  - відкрите запитання
-  - мета запитання
-  - відповідь власника
+  - open question
+  - purpose of the question
+  - owner answer
 artifact_contract_verified_by: owner answer that resolves the uncertainty
 compatibility_excludes: []
 compatibility_requires: []
@@ -22,19 +22,23 @@ status: active
 revision: 1
 ---
 
-# Став одне відкрите запитання за раз
-Почни з повідомлення, що дозволяє пропустити уточнення.
-Якщо власник обрав пропуск, назви ключові рішення одним реченням і переходь до роботи.
-Став одне запитання в повідомленні.
-Формулюй запитання відкрито, без переліку готових відповідей.
-Прив'язуй запитання до конкретного моменту, випадку або прикладу.
-Використовуй мову власника й пояснюй без процесного жаргону.
-Не пропонуй меню варіантів, доки власник не зайде в глухий кут.
-Коли власник просить вибрати за нього, запропонуй конкретне рішення.
-Уточнюй, які рішення власник бере на себе, а які передає виконавцю.
-Питай про наявні обмеження, попередні спроби й небажані результати.
-Не став кілька незалежних запитань в одному повідомленні.
-Повертайся до наступного запитання лише після відповіді.
-Зупини уточнення, коли відповідь на наступне запитання вже не змінить результат.
-Зафіксуй отримані відповіді перед переходом до дизайну.
-Не вважай мовчання або згоду з ідеєю відповіддю на запитання.
+# Ask one open question at a time
+Your first message lets them know that if they'd rather skip the questions and have you just start, they can say so.
+If they take you up on it, state any significant how-it-gets-made choice in one plain line.
+Then do what they asked through the normal workflow.
+Each message ends with one question: a single sentence with no list of example answers hanging off it.
+Ask about a real moment or a concrete picture.
+"What's the moment you find yourself wishing this existed?"
+"Tell me about the people who'll be in the room."
+Use plain language, pitched just a little above where your human partner is.
+Match their vocabulary; never use process jargon.
+Get them describing.
+Open questions come first.
+Their own words carry intent that your options can't.
+Offer a short menu only when they're stuck.
+When they say "just guess" or "what do you think?", propose something concrete.
+Questions that work anchor in specifics: "Walk me through the last time..."
+"If it could only do one of these well, which?"
+"What would make you wince if I got it wrong?"
+A guess they can correct often beats a question.
+Do not read the territory out as questions.

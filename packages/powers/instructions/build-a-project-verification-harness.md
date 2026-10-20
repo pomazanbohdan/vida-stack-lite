@@ -1,19 +1,20 @@
 ---
 instruction_id: build-a-project-verification-harness
-title: Побудуй перевірку проєкту
-summary: "Збери сценарії, які доводять спостережувану поведінку продукту, в одну відтворювану команду."
+title: Build a project-local verification harness
+summary: "Give the project a scripted way to drive the real app and prove behavior: launch it, exercise a feature the way a user would, and capture evidence."
 capability_tags:
   - build-verification-harness
 pattern_tags:
   - verification-harness
-conditions_applies_when: "Проєкт не має єдиного способу перевірити, що основні сценарії справді працюють."
-conditions_does_not_apply_when: "У проєкті вже є перевірка, яка покриває потрібні сценарії й підтримується."
+conditions_applies_when: "The project has no scripted way to prove UI, CLI, or service behavior."
+conditions_does_not_apply_when: An existing harness can already drive the app; use it first instead of generating a new one.
 artifact_contract_output_type: verification-harness
 artifact_contract_required_data:
-  - сценарії
-  - команда запуску
-  - форма результату
-  - покриття й прогалини
+  - launch command
+  - readiness check
+  - drive recipe
+  - evidence
+  - cleanup
 artifact_contract_verified_by: the harness runs from a clean checkout and fails on a known break
 compatibility_excludes: []
 compatibility_requires: []
@@ -28,19 +29,30 @@ status: active
 revision: 1
 ---
 
-# Побудуй перевірку проєкту
-Визнач, який результат роботи вважається правильним для користувача.
-Опиши три-п'ять сценаріїв, які покривають основні шляхи.
-Для кожного сценарію вкажи вхід, дію й очікуваний спостережуваний ефект.
-Побудуй запуск, який виконує сценарії однією командою.
-Зроби результат машинно читаним: код виходу й короткий підсумок.
-Збережи артефакти, потрібні для розбору невдачі.
-Перевір, що перевірка працює на чистому середовищі.
-Переконайся, що вона падає, коли поведінка зламана.
-Додай перевірку межових даних: порожньо, забагато, некоректно.
-Тримай сценарії незалежними один від одного.
-Не покладайся на ручні кроки, які не записані.
-Задокументуй, як додати новий сценарій.
-Зафіксуй, які шляхи ще не покриті.
-Запусти перевірку перед кожним твердженням про готовність.
-Віддай команду запуску й перелік покритих сценаріїв.
+# Build a project-local verification harness
+Every serious project needs a scripted way to drive the real app and prove behavior: launch it, exercise a feature the way a user would, and capture evidence.
+Write the output for the next agent, not for a human: it will be read cold, mid-task, by an agent that has never seen the app.
+Interview the repo, not the user.
+Answer from the codebase and only ask the user what you cannot observe.
+Establish the surface: what does a user actually touch?
+Establish how the app starts locally, preferring the repo's own documented dev command.
+Establish how an agent can interact with it programmatically: existing harnesses first, and only then a generic recipe.
+Establish what evidence can be captured: screenshots, terminal transcripts, response bodies, logs, exit codes, database state.
+Establish whether two instances can run side by side; refusing to double-drive a shared instance beats corrupting the user's session.
+If the checkout doesn't build or start as-is, fix that first or report it precisely before generating, because a skill written against a broken base teaches wrong steps.
+Generate launch, doctor, drive, evidence, and cleanup sections, each grounded in what the interview actually found, with no placeholders left.
+Launch must reach a usable state from an empty data dir, including any migrations and seed data.
+Ready means usable, not just that a process answers.
+Include one read-only check that answers whether this instance is worth driving.
+Prefer stable handles, such as ARIA labels, data attributes, prompt strings, and route paths, over coordinates and tab order.
+Exercise the real user path, not internal setters or test-only endpoints.
+Capture the action and the resulting state, not just the final screen.
+Verify side effects alongside what's visible.
+Never kill by process name; kill what you started.
+Cleanup removes instances and scratch state, never the evidence: proof artifacts survive the teardown, in a location the skill names.
+Seed a feature map with a README index and one file per feature.
+Each feature file answers, from the user's point of view: what the feature is, how to reach it, how to drive it with the harness, and what observable end state proves it works.
+Never weaken the journey to make it pass.
+Run its own instructions end to end once: launch, doctor, drive one mapped feature, capture evidence, clean up.
+After cleanup, confirm the evidence still exists at the named location, because a cleanup that eats the proof fails this step.
+A generated skill that was never executed is a draft, not a deliverable.
