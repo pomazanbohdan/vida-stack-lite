@@ -99,51 +99,72 @@ explicitly proves missing-engine inspection creates no engine file. No remaining
 blocking finding was reported. The complete observation below, rather than these
 targeted passes, owns the measured numeric increase.
 
-### Latest complete host-state coverage and issued/UNKNOWN packet
+### Latest complete host-state coverage and native continuation packet
 
-The43f2d0b stage at /workspace/contour-stage-5HTkfG completes in209638.592ms,
-exit0, capture complete, group closed and boot/image inputs unchanged. Published
-run9514c2ed-3302-4845-a0ae-e6f7259a2a7e records
-F724/1129,L2773/4966,S2969/5296,B2661/5640: +22functions,+120lines,
-+127statements,+147branches against ea86777 with unchanged denominators.
-The operation remains BLOCKED and historical exact closure16/45. No frozen/CRAP
-or mutation qualification is claimed. The image is
-/workspace/.vida-quality-inputs/fba281194a43917efc70b6867d98abf2e42157fb/repository,
-manifest SHAb188bab17f6e4508f2e037cef37f27913bb4e93f2508683ddfde83ccb5137bce,
-input fingerprinte4ea4e78c9eb298a494b8ecd3701c7e4a20063905f71fb2fc2f9261c64a5f967.
-SDK CI39344803457/artifact12230521923 succeeds; matching transport ZIP SHA
-762d380067ba3e49ac2019600e1b61a083574ce3157477052e3bc729d1c29b41.
-The stage admits8235220992free bytes against2147483648required; reuse that
-observation. Generated projection1033imports its complete terminal result.
+The b8e5a3f stage at /workspace/contour-stage-eqbwzT completes in236171.749ms,
+exit0, capture complete, group closed and boot/image inputs unchanged. Host267
+PASS/2073assertions and stopped-source16PASS/206assertions give283PASS/0FAIL
+and2279assertions. Published run0112b1eb-c8db-41bc-805b-90b1cefcf6c4 records
+F758/1129,L3003/4966,S3209/5296,B2945/5640: +34functions,+230lines,
++240statements,+284branches against43f2d0b with unchanged denominators.
+The operation remains BLOCKED, historical exact closure16/45. Frozen/CRAP and
+mutation remain deferred. The unchanged image is
+/workspace/.vida-quality-inputs/6acb513377f214e6b67f0ede9e7d3b8d0374116e/repository,
+manifest SHA7ba90dd6536905140037a8ebceab4e4ad6e2e9ffe1a924c370f879be3b2049c1,
+input fingerprint a72c32b29192aeb57d2c3674fd7109133ea93442bc9b7c10b0dbea58c8b14b4a.
+SDK CI39345411554/artifact12230467259 succeeds; matching transport ZIP SHA
+202e9cfb3c1ba07145719e2439eb394c7a35e26cab235422c279ed8e4507b1d2.
+Admission observes7938863104free bytes against2147483648required; no disk scan
+or cleanup is needed. Generated projection1035imports its complete terminal result.
+The reused inventory now has371uncovered functions/closures under107outer owners.
+Prior43f2d0b receipt: /workspace/contour-stage-5HTkfG,
+run9514c2ed-3302-4845-a0ae-e6f7259a2a7e; full previous packet/evidence metadata
+remain in this WORK path at published b8e5a3f.
 
-The next Source packet extracts the existing typed trusted mutation-policy
-builder into the same fixture helper, leaving both old async issue cases intact.
-Two Host cases exercise a native issue/reservation, exact issue retry and
-read-only inspection with no replay argv, stale report CAS, persisted UNKNOWN,
-second-UNKNOWN rejection and another operation's issue fence while the first
-reservation remains held. The second case checks thrown policy failure,
-explicit denial and a well-formed mismatched authorization digest, preserving
-preparation, Host/journal snapshots and absence of action/claim tables.
-No returned command is executed; no observed report is manufactured. This
-packet claims Host unit behavior only, with no resolver/public-policy/Runtime
-proof. The resolver's configured-root UNKNOWN control remains a separate gap.
-The expected-UNKNOWN fixture remains retained even when the unit case passes:
-/home/agent/.cache/vida-cloud-tooling/tmp/vida-task-source-coordination-UCp5Rz.
-Its root is not eligible for cleanup or archived action replay.
+The next checked Source packet extends the existing UNKNOWN test to the real
+configured-root resolver guard. The fixture accepts one optional configuredHost,
+uses the maintained runtime/project-context loaders and seeds matching Work and
+request identity/config digests; its DB remains private. Default fixture behavior
+and both old issue regressions are preserved. Issued and UNKNOWN resolution both
+reject before byte snapshots, without returning a Source root or replay argv.
+No observed binding is fabricated. The fixture workspace key remains an explicit
+unit seed, not proof of a deployed root/workspace mapping. Both configured and
+native DB roots are retained on the expected-UNKNOWN path. Final focused roots:
+/home/agent/.cache/vida-cloud-tooling/tmp/vida-task-source-coordination-SPCYik and
+/home/agent/.cache/vida-cloud-tooling/tmp/host-state-oGuObE.
+Earlier expected-UNKNOWN roots UCp5Rz and JnibCY/RhOcYl remain protected under
+the same temporary parent. These are evidence, not deletion/replay candidates.
 
-The two new cases pass39assertions in2.00s; preserved coordination cases pass
-26assertions in2.02s. Strict171files and scoped type-aware lint pass. The source
-lint initially catches awaited assertions whose Bun declaration is void; the
-maintained Promise.resolve wrapper observes the real completion without a lint
-exception. The exact eligibility control passes10assertions in0.272s.
-Logs are host-task-source-issue-report.log,
-task-source-policy-shared-regression.log and host-issue-report-shard-eligibility.log
-under the retained20261019-focused-blockers diagnostic directory. Blind review
-/tmp/vida-host-task-source-issue-report-final-review.md reports no blocker and
-confirms the unchanged private resource boundary. The Host selected-test pin is
-b77148aa32411b5c50729f9128db9eb6abf56fcf1bc0d96bfc053f6f6562fd57;
-stopped-source selection/pin, worker ownership and all budgets are unchanged.
-Require the next single checked changed-input stage before any numeric claim.
+One additional native Host continuation case imports the existing maintained
+continuation fixture directly; no fixture duplication, CLI/engine bootstrap or
+extra selected test file. It checks the stale Work preimage denial, unchanged
+Host/Journal/no receipt table, actual atomic continuation, exact revisions,
+preserved capture/old Journal history, unissued review, persisted lookup and one
+receipt across exact retry with no reissued action. The trusted verifier and test
+capture qualify this Host seam only, not public approval or Runtime acceptance.
+The first assertion expected a later CAS error; the native original-capture guard
+correctly rejects first. The corrected case passes31assertions in0.576s. Preserve
+its initial failure log and root
+/home/agent/.cache/vida-cloud-tooling/tmp/delivered-work-continuation-eQR3XP.
+
+The case enrolls its private root before asynchronous setup. Cleanup preserves
+the existing unresolved-operation detector before the fixture close removes its
+handle from the registry, invokes the single close owner, then checks the same
+monotonic5s deadline before root removal. Body, detector and close failures retain
+both roots and preserve their primary causes through completeOwnedCleanup.
+There is no extra unresolved-state scan of the closed handle. Native controls
+pass6Host cases/125assertions in4.21s; the old coordination cases pass26assertions
+in2.01s. Strict173files, scoped type-aware lint and the exact eligibility control
+(10assertions/0.299s) pass. Logs are host-native-task-source-continuation-final.log,
+host-delivered-continuation-unit.log, host-delivered-continuation-unit-corrected.log,
+task-source-configured-default-regression.log and native-continuation-shard-eligibility.log
+under packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
+Blind reviews /tmp/vida-host-configured-task-source-final-review.md and
+/tmp/vida-host-delivered-unit-final-review.md confirm these unit evidence/resource
+boundaries. The final Host pin is
+00ebefacd96dd3a2c417364a3c8efe2ff7d7f34b7fe7445a3043119e2e2fd709;
+stopped-source selection/pin, worker ownership and all budgets remain unchanged.
+Require one changed-input stage after checked publication before claiming a gain.
 
 ### Prior complete setup-scope coverage and Task-source unit packet
 

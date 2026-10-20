@@ -3,6 +3,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
+import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
+import { loadProjectSetContext } from '../../src/config/project-context.ts';
 import {
   HostStateStore,
   openHostStateDatabase,
@@ -26,7 +28,7 @@ type TaskSourceMutationCheck = TaskSourceMutationVerifier['verify'];
 type TaskSourcePolicyRequest = Parameters<TaskSourceMutationCheck>[0]['request'];
 type CurrentVerifier = Parameters<HostStateStore['prepareTaskSourceBindingOperation']>[0]['verifyCurrent'];
 const workspaceId: string = 'a'.repeat(64);
-const identity: WorkIdentity = {
+const defaultIdentity: WorkIdentity = {
   repository_id: 'vida-agent',
   project_ids: ['agent'],
   integrations_digest: '1'.repeat(64),
@@ -42,7 +44,7 @@ type WorkLedgerSeed = {
   readonly ledger: CoordinationLedger;
 };
 
-function workAndLedger(expiresAt: string): WorkLedgerSeed {
+function workAndLedger(expiresAt: string, identity: WorkIdentity, configDigest: string): WorkLedgerSeed {
   const scopeBody: Omit<ScopedSourceSnapshot, 'digest'> = {
     schema: 'ScopedSourceSnapshot/v1',
     entries: [{ path: 'src/task.ts', exists: true, bytes: 3, sha256: '2'.repeat(64) }],
@@ -97,7 +99,7 @@ function workAndLedger(expiresAt: string): WorkLedgerSeed {
     ac_ids: ['AC-1'],
     implementation_paths: ['src/task.ts'],
     allowed_resources: [resource],
-    config_digest: '6'.repeat(64),
+    config_digest: configDigest,
     runtime_source_revision: '7'.repeat(64),
     schema_digest: '8'.repeat(64),
     runtime_code_digest: '9'.repeat(64),
@@ -186,6 +188,7 @@ function workAndLedger(expiresAt: string): WorkLedgerSeed {
 type FixtureOptions = {
   readonly expiresAt?: string;
   readonly policyVerifier?: TaskSourceMutationCheck;
+  readonly configuredHost?: { readonly repositoryRoot: string; readonly identity: WorkIdentity };
 };
 
 type PeerReservation = {
@@ -198,11 +201,19 @@ type PeerReservation = {
 export function createTaskSourceHostFixture({
   expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(),
   policyVerifier,
+  configuredHost,
 }: FixtureOptions = {}) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-task-source-coordination-'));
   mkdirSync(path.join(root, '.git'));
   const database = openHostStateDatabase(root, 'host.sqlite', workspaceId);
   try {
+    const repositoryRoot = configuredHost?.repositoryRoot ?? root;
+    const identity = configuredHost?.identity ?? defaultIdentity;
+    const config = configuredHost ? loadRuntimeConfig(repositoryRoot) : undefined;
+    const configDigest = config ? runtimeConfigDigest(config) : '6'.repeat(64);
+    const projectContext = config
+      ? loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids)
+      : undefined;
     const store = new HostStateStore(
       database,
       workspaceId,
@@ -210,11 +221,11 @@ export function createTaskSourceHostFixture({
       undefined,
       undefined,
       undefined,
-      root,
+      repositoryRoot,
       undefined,
       policyVerifier ? { verify: policyVerifier } : undefined,
     );
-    const seed = workAndLedger(expiresAt);
+    const seed = workAndLedger(expiresAt, identity, configDigest);
     const initial = store.compareAndSwapHostState({
       expectedWork: null,
       expectedLedger: null,
@@ -256,10 +267,10 @@ export function createTaskSourceHostFixture({
       thread_id: 'thread-task-source-expiry',
       repository_id: identity.repository_id,
       project_ids: identity.project_ids,
-      canonical_host_root: root,
+      canonical_host_root: repositoryRoot,
       source_root: path.join(root, 'task-source'),
-      config_digest: '6'.repeat(64),
-      project_context_digest: 'b'.repeat(64),
+      config_digest: configDigest,
+      project_context_digest: projectContext?.project_context_digest ?? 'b'.repeat(64),
     };
     // Trusted unit seam only: this callback is not evidence of external authorization.
     const trustedVerifyCurrent: CurrentVerifier = ({ journal: current }) => {
@@ -442,7 +453,7 @@ function requireHostState(snapshot: HostStateSnapshot): asserts snapshot is Host
   }
 }
 
-export { identity as taskSourceHostIdentity, requireHostState };
+export { defaultIdentity as taskSourceHostIdentity, requireHostState };
 
 /** This injected verifier is a trusted test mock, not proof of runtime authorization. */
 export function trustedTaskSourcePolicyDecision(

@@ -8,6 +8,14 @@ import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-corr
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
 import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
 import { type TaskSourceBindingReport } from '../../src/orchestration/task-source-binding.ts';
+import {
+  continuationFixture,
+  continuationFixtureRepositoryRoot,
+  continuationRequestFor,
+  cleanupContinuationFixtures,
+  retainContinuationFixtureRoot,
+} from '../helpers/delivered-work-continuation-fixture.ts';
+import { hasUnresolvedFixtureOperations } from '../helpers/unresolved-governance-fixture.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import {
   prepareLifecycleForCorrection,
@@ -143,7 +151,7 @@ let configuredInstructionRoot!: string;
 let databasePath!: string;
 let database!: Database;
 let store!: HostStateStore;
-let preserveHostFixtureRoot = false;
+let preserveHostFixtureRoot: boolean | 'expected UNKNOWN' = false;
 const handles: Database[] = [];
 const admittedHostDatabases = new WeakSet<Database>();
 const children: import('node:child_process').ChildProcess[] = [];
@@ -994,7 +1002,12 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
     async ({ request }: Parameters<NonNullable<ConstructorParameters<typeof HostStateStore>[8]>['verify']>[0]) =>
       trustedTaskSourcePolicyDecision(request),
   );
-  const f = createTaskSourceHostFixture({ policyVerifier: policy });
+  const f = createTaskSourceHostFixture({
+    policyVerifier: policy,
+    configuredHost: { repositoryRoot: root, identity: { ...identity } },
+  });
+  // Keep both the native action DB and its configured Host root for the expected UNKNOWN.
+  preserveHostFixtureRoot = 'expected UNKNOWN';
   let completed = false;
   let primaryFailure: { error: unknown } | undefined;
   try {
@@ -1024,9 +1037,12 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
       action: { status: 'issued', report: null, revision: 1 },
     });
     expect(issued.command_argv).toEqual([
-      ['-C', f.root, 'worktree', 'add', '--branch', 'codex/task-source', f.request.source_root],
+      ['-C', root, 'worktree', 'add', '--branch', 'codex/task-source', f.request.source_root],
     ]);
     expect(policy).toHaveBeenCalledTimes(1);
+    expect(() => f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toThrow(
+      'task source action outcome remains unknown; Source root resolution is blocked',
+    );
     const reserved = f.store.readHostStateSnapshot(f.identity);
     const ticketId = `task-source-ticket:${f.request.work_id}:${f.request.attempt}:${f.request.operation_id}`;
     expect(reserved.work?.lease?.ticket_id).toBe(ticketId);
@@ -1075,6 +1091,9 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
     });
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
     expect(f.store.inspectTaskSourceBindingAction(observation)).toEqual(uncertain);
+    expect(() => f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toThrow(
+      'task source action outcome remains unknown; Source root resolution is blocked',
+    );
     expect(await f.store.issueTaskSourceBindingOperation(input)).toEqual({ ...uncertain, status: 'already_issued' });
     expect(policy).toHaveBeenCalledTimes(1);
     expect(() =>
@@ -1172,6 +1191,133 @@ test('task-source mutation policy rejection leaves native preparation and owners
       [
         () => {
           f.close(completed);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test('trusted Host continuation atomically retains historical evidence and never reissues its review on retry', async () => {
+  const deadline = performance.now() + 5_000;
+  const fixtureRoot = mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-'));
+  let configRoot: string | undefined;
+  let f: Awaited<ReturnType<typeof continuationFixture>> | undefined;
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  const retain = () => {
+    retainContinuationFixtureRoot(fixtureRoot);
+    if (configRoot) retainContinuationFixtureRoot(configRoot);
+  };
+  try {
+    // Maintained trusted-caller fixture; this does not establish external approval or Runtime acceptance.
+    configRoot = continuationFixtureRepositoryRoot();
+    f = await continuationFixture({ root: fixtureRoot });
+    if (performance.now() >= deadline) throw new Error('Host continuation fixture exhausted its case deadline.');
+    const request = continuationRequestFor(f);
+    const before = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    const journalBefore = f.store.readWorkSessionJournal(f.identity);
+    if (!journalBefore || journalBefore.state.step_id === null)
+      throw new Error('Expected the fixture historical Journal step.');
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toBeNull();
+    await Promise.resolve(
+      expect(
+        f.store.continueDeliveredWork({
+          ...request,
+          expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 },
+        }),
+      ).rejects.toThrow('original known-terminal work, captured body, owner or current review action changed'),
+    );
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    expect(
+      f.db.query("SELECT name FROM sqlite_master WHERE name='agent_host_delivered_work_continuation'").get(),
+    ).toBeNull();
+    const result = await f.store.continueDeliveredWork(request);
+    const after = presentSnapshot(result.snapshot);
+    const journalAfter = f.store.readWorkSessionJournal(f.identity);
+    if (!journalAfter) throw new Error('Expected the continued Journal.');
+    expect(result.status).toBe('continued');
+    expect(result.action).toEqual(request.action);
+    expect(after.workVersion.revision).toBe(before.workVersion.revision + 1);
+    expect(after.ledgerVersion.revision).toBe(before.ledgerVersion.revision + 1);
+    expect(journalAfter.version.revision).toBe(journalBefore.version.revision + 1);
+    expect(after.work.binding).toMatchObject({
+      lifecycle_work_id: f.identity.work_id,
+      config_digest: request.targetConfigDigest,
+      work_source_revision: request.currentSourceScope.digest,
+      runtime_code_digest: request.targetRuntimeCodeDigest,
+      runtime_source_revision: request.targetRuntimeCodeDigest,
+      schema_digest: request.targetSchemaDigest,
+    });
+    expect(after.work.execution.status).toBe('active');
+    expect(after.work.lease?.thread_id).toBe(f.threadId);
+    expect(result.receipt).toMatchObject({
+      prior_work: before.work,
+      prior_ledger: before.ledger,
+      prior_journal: journalBefore.state,
+      historical_capture: f.capture,
+      rights_granted: false,
+      accepted_result: false,
+      runtime_acceptance: false,
+    });
+    expect(journalAfter.state.source_scope).toEqual(request.currentSourceScope);
+    expect(journalBefore.state.items).toHaveLength(1);
+    expect(journalAfter.state.completed).toEqual([
+      ...journalBefore.state.completed,
+      { step_id: journalBefore.state.step_id, items: journalBefore.state.items },
+    ]);
+    expect(journalAfter.state.items).toHaveLength(1);
+    expect(journalAfter.state.items[0]).toMatchObject({
+      request: request.action.request,
+      issue_id: null,
+      observation: null,
+    });
+    const lookup = f.store.readDeliveredWorkContinuation(f.identity, 1);
+    if (!lookup) throw new Error('Expected the persisted Host continuation lookup.');
+    expect(lookup.receipt).toEqual(result.receipt);
+    expect(lookup.snapshot).toEqual(after);
+    expect(lookup.journal).toEqual({ state: journalAfter.state, version: journalAfter.version });
+    expect(lookup.action_status).toBe('unissued');
+    expect(lookup.item_statuses).toEqual(['unissued']);
+    expect(lookup.items).toEqual(journalAfter.state.items);
+    expect(Object.isFrozen(lookup)).toBe(true);
+    const retry = await f.store.continueDeliveredWork(request);
+    expect(retry).toEqual({ ...result, status: 'already_continued', action: null });
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(lookup);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalAfter);
+    expect(
+      f.db.query<{ count: number }, []>('SELECT count(*) AS count FROM agent_host_delivered_work_continuation').get()
+        ?.count,
+    ).toBe(1);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          // closeDatabase removes the handle from the shared cleanup registry; keep its admission check here.
+          try {
+            if (f && hasUnresolvedFixtureOperations(f.db)) retain();
+          } catch (error) {
+            retain();
+            throw error;
+          }
+        },
+        () => {
+          try {
+            f?.closeDatabase();
+          } catch (error) {
+            retain();
+            throw error;
+          }
+        },
+        () => {
+          if (!completed || performance.now() >= deadline) retain();
+          cleanupContinuationFixtures();
         },
       ],
       primaryFailure,
@@ -2946,8 +3092,9 @@ afterEach(async () => {
   const relative = path.relative(path.resolve(tmpdir()), path.resolve(root));
   if (!relative.startsWith('host-state-') || relative.includes(path.sep)) throw new Error('unsafe scratch cleanup');
   if (preserveHostFixtureRoot) {
+    const reason = preserveHostFixtureRoot === 'expected UNKNOWN' ? 'expected UNKNOWN' : 'setup failed';
     preserveHostFixtureRoot = false;
-    console.error('Host fixture setup failed; scratch root retained: ' + root);
+    console.error(`Host fixture ${reason}; scratch root retained: ${root}`);
     return;
   }
   await rm(root, { recursive: true, force: true });

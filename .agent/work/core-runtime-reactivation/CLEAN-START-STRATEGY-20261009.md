@@ -100,9 +100,16 @@ action-CAS rejection, UNKNOWN retention and competing-operation fencing, plus
 three policy denial variants. Two new cases pass39assertions; the two existing
 async issue regressions pass26assertions after extraction. No argv is executed
 or observed binding synthesized; the expected-UNKNOWN fixture remains retained.
-The configured-root resolver remains a separate gap. The reviewed Host pin is
-refreshed without any selection/budget/ownership change. Measure this checked
-changed-input packet once and continue remaining owners in this same contour.
+Its b8e5a3f stage completes in236.172s:283PASS/0FAIL,2279assertions,
+F758/1129,L3003/4966,S3209/5296,B2945/5640, still nonexact/BLOCKED. The next
+checked packet adds the configured-root issued/UNKNOWN resolver fence and reuses
+the existing native delivered-work fixture for continuation, exact beforeimages,
+history, lookup and no-reissue retry. Six focused Host cases pass125assertions;
+old coordination cases pass26. The continuation cleanup keeps its existing
+unresolved-state check before close and the unchanged5s deadline after close.
+These remain trusted Host unit seams with protected failure/UNKNOWN evidence.
+Refresh the reviewed Host pin without selection/budget/ownership changes, measure
+this changed-input packet once, then continue remaining owners in this contour.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
