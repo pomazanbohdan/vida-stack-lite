@@ -40,13 +40,17 @@ its lookup case into the active Host selection, with exact-CAS Journal
 mutation/restore and acquired-root custody. Local recovery-review guards and
 reservation transitions are now measured through existing native SQLite fixtures.
 Qualified-code Host consistency, freshness, rollback and exact history-bound retry
-are now measured, with shared test-only endpoint mappings. Next inspect the
-remaining failed-prewriter and recovery gaps from the refreshed inventory. Before
-another numeric producer, retain sufficient capacity. The receipted closed Nka1td
-private Bun cache retirement reclaims223023104bytes, leaving309293056above the
-unchanged floor. This resolves the prior forecast shortfall for the next bounded
-packet. Keep global/shared caches and every original evidence class protected;
-WORK owns the exact retirement manifest, dependency proof and before/after values.
+are now measured, with shared test-only endpoint mappings. The next failed-owner
+packet is implemented and focused/static checked; publish its reviewed bytes,
+obtain matching SDK inputs and run one complete same-contour stage. WORK retains
+the assertions, check results, exact pin and limits of the fixture proof.
+Qualified closed-producer cache retirement has resolved the prior capacity
+forecast: the comprehensive batch reclaims3791466496durable bytes and leaves
+6242443264free,4094959616above the unchanged admission floor. Its81 exact cache
+roots, original custody, dependency checks and before/after values remain in
+WORK's retained manifest. Reuse that observation until admission needs a fresh
+check. Preserve all original outcomes, images, SDKs, sibling scratch and archives;
+uncertain backup/provision/proposal roots remain excluded from deletion.
 Unit endpoint/observation seams
 do not establish genuine producer admission, native qualification or dispatch.
 Review all acquired roots and public-reader
