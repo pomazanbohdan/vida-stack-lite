@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation is Source commit `a3c1e5f8d410565a51bc4ec289bb3216e3666b2b`, run `20dc6c75-e588-4044-9190-606f06071a81`: F1003/1129, L4338/4970, S4603/5300 and B4736/5642. The run records 301PASS/0FAIL and 3139 assertions in 164.837 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 126 missing functions under 52 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
+The active contour is `bun-host-state`. Its latest complete observation is Source commit `08586513691d66f5921518297bf135370d1da8e5`, run `facb5e01-a795-4b96-b075-2d001859b0f9`: F1013/1129, L4394/4970, S4661/5300 and B4768/5642. The run records 302PASS/0FAIL and 3190 assertions in 152.131 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 116 missing functions under 48 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -39,9 +39,12 @@ The measured configured-frontier packet shares its existing fixture and moves
 its lookup case into the active Host selection, with exact-CAS Journal
 mutation/restore and acquired-root custody. Local recovery-review guards and
 reservation transitions are now measured through existing native SQLite fixtures.
-The next packet covers qualified-code Host consistency, freshness, rollback and
-exact history-bound retry, sharing duplicate test-only endpoint mappings. After
-its measurement select the next reachable gap from the refreshed inventory.
+Qualified-code Host consistency, freshness, rollback and exact history-bound retry
+are now measured, with shared test-only endpoint mappings. Next inspect the
+remaining failed-prewriter and recovery gaps from the refreshed inventory. Before
+another numeric producer, establish retained capacity: current durable margin is
+99340288bytes above the unchanged floor, less than the latest packet's observed
+122097664-byte growth. That is a planning forecast, not an observed admission failure.
 Unit endpoint/observation seams
 do not establish genuine producer admission, native qualification or dispatch.
 Review all acquired roots and public-reader

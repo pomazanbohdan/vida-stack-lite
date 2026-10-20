@@ -17,6 +17,41 @@ numeric producer.
 
 #### Local qualified-code consistency packet
 
+Complete measurement on Source08586513691d66f5921518297bf135370d1da8e5,
+runfacb5e01-a795-4b96-b075-2d001859b0f9: F1013/1129,L4394/4970,S4661/5300,
+B4768/5642,302PASS/0FAIL,3190assertions,152.131s. Delta10F/56L/58S/32B;
+denominators unchanged. Report-only inventory116missing functions/48owners.
+Host286PASS/2937assertions/145.38s; stopped16PASS/253assertions/125.93s with
+contained cleanup complete. Stage /workspace/contour-stage-M6jqwT, exec27376,
+exit0, full capture/closed group/unchanged boot/image/published. Operation stays
+BLOCKED/nonexact; historical exact16/45 and unqualified maxCC279/entryCRAP2162
+unchanged. Three packets together add29F/175L/179S/165B,145→116missing functions.
+These are differing-input observations, not a controlled speed benchmark.
+
+Image /workspace/.vida-quality-inputs/9bc8a78d822c0d7b886b0a02410d48dbf599af66/repository
+binds tree2115b55de423eb58a4685aeadcf29efe5f82dd8f,
+input5c681074be660ce2db98a0ca9ea1c667a2158d9d823e3f8a7d5b00288bb998c8,
+manifest SHAc164dc05f2a8325fe380bd838815238a71828f831fef06897007d43cd54367ce.
+SDK CI39409743509 attempt1 succeeds, artifact12258287608,
+vida-sdk-test-inputs-08586513691d66f5921518297bf135370d1da8e5-39409743509-1,
+ZIP SHA070fd17acc986bdbd1d5edbc51ec6e86ed738979e14808f6bf876d96c5aa7831.
+qualified-code-stage.log retains outcome and projection1076automatically imports
+the report. One report-only inventory refresh; no extra AST/hash/scan or suite.
+
+After observed closure, /dev/shm/vida-quality-retained-tQHPqi measures180604532
+apparent bytes; original remains. Full lossless archive
+/workspace/vida-functional-retention-M6jqwT-5jKgd6/scratch.tar.gz is45756900bytes,
+raw tar207790080bytes, full tar compare PASS, SHA
+cce3e3cbaacc59830090b4d58424e3a407d4ef595eb3b4415a1adc596ab1be3d.
+archive.log/scratch.sha256 remain. Durable free bytes before/after archival are
+2292600832/2246823936; unchanged2147483648floor leaves99340288margin. Launch
+tmpfs6613172224free bytes; post-producer6394740736. Nothing protected is deleted.
+No admission failure is observed. Planning estimate only: repeating the latest
+packet's total122097664-byte durable growth would exceed that remaining margin
+by22757376bytes. Before another producer, establish sufficient retained capacity
+or a verified closed-owner regenerable candidate; do not claim the forecast is
+a measured failed admission, lower the floor or delete protected evidence.
+
 One native Host/SQLite case reuses writerFixture's execution-only claim, actual
 root-bound configuration and Source snapshot, and quiescentJournal. It invokes
 commitQualifiedRuntimeCodeContinuation through its public Host API with explicit
@@ -52,8 +87,8 @@ find no blocker and have retained copies there.
 
 Host SHA19e2651cc825fa69a43c29c59c6510b75f290f93f40a094e5e01076d1dbf1cf2
 retains the same reviewed two-child selection, namespaces, serial cases, resources,
-deadlines and unchanged free-space floor. Latest complete coverage remainsa3c1e5f
-below until this packet has its own published Source/SDK/image-bound observation.
+deadlines and unchanged free-space floor. This packet's published
+Source/SDK/image-bound observation is above.
 Root alone owns integration and final numbers; CRAP/frozen/mutation remain deferred.
 
 #### Local recovery-review consistency packet
