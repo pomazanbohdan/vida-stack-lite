@@ -116,6 +116,60 @@ describe('checkCorpus synthetic fixtures', () => {
     expect(codes(corpus.root)).toEqual([]);
   });
 
+  test('reports a donor carrier file missing from the corpus map', async () => {
+    const corpus = await fixture();
+    await writeFile(join(corpus.root, cloneRoot, 'unmapped.md'), 'unprocessed donor source\n');
+    const coverage = checkCorpus(corpus.root).filter((item) => item.code === 'CORPUS_MAP_COVERAGE_MISSING');
+    expect(coverage).toHaveLength(1);
+    expect(coverage[0]).toMatchObject({ details: { donor: donorId, path: 'unmapped.md' } });
+    expect(coverage[0]?.message).toContain('unmapped.md');
+  });
+
+  test('limits donor coverage to donors present in the corpus map', async () => {
+    const corpus = await fixture();
+    await writeFile(join(corpus.root, cloneRoot, 'unmapped.md'), 'unprocessed donor source\n');
+    await writeFile(join(corpus.root, 'donors.yaml'), `schema: vida-powers-donors/v1\nlocal_root: .tmp/donors\ndonors:\n  - id: ${donorId}\n    local_path: synthetic\n    head_sha: '${revision}'\n    license: MIT\n  - id: later-donor\n    local_path: not-processed\n    head_sha: '${revision}'\n    license: MIT\n`);
+    const issues = checkCorpus(corpus.root);
+    expect(issues.filter((item) => item.code === 'CORPUS_MAP_COVERAGE_MISSING')).toMatchObject([
+      { details: { donor: donorId, path: 'unmapped.md' } },
+    ]);
+    expect(issues.some((item) => item.details?.donor === 'later-donor' && ['CORPUS_MAP_COVERAGE_MISSING', 'CORPUS_MAP_COVERAGE_UNKNOWN', 'CORPUS_CLONE_MISSING'].includes(item.code))).toBe(false);
+  });
+
+  test('reports a corpus map record absent from the donor clone', async () => {
+    const corpus = await fixture();
+    corpus.map.donors[donorId].files['not-in-clone.md'] = { status: 'rejected', reason: 'Not a carrier.' };
+    await corpus.save();
+    const coverage = checkCorpus(corpus.root).filter((item) => item.code === 'CORPUS_MAP_COVERAGE_UNKNOWN');
+    expect(coverage).toHaveLength(1);
+    expect(coverage[0]).toMatchObject({ details: { donor: donorId, path: 'not-in-clone.md' } });
+    expect(coverage[0]?.message).toContain('not-in-clone.md');
+  });
+
+  test('accepts map records for every donor carrier file', async () => {
+    const corpus = await fixture();
+    await writeFile(join(corpus.root, cloneRoot, 'second.md'), 'second donor source\n');
+    corpus.map.donors[donorId].files['second.md'] = { status: 'rejected', reason: 'No instruction content.' };
+    await corpus.save();
+    const coverage = checkCorpus(corpus.root).filter((item) => item.code.startsWith('CORPUS_MAP_COVERAGE_'));
+    expect(coverage).toEqual([]);
+  });
+
+  test('reports one clone-missing issue per donor when clone is unavailable', async () => {
+    const corpus = await fixture();
+    await rm(join(corpus.root, cloneRoot), { recursive: true });
+    const coverage = checkCorpus(corpus.root).filter((item) => item.code === 'CORPUS_CLONE_MISSING');
+    expect(coverage).toHaveLength(1);
+    expect(coverage[0]?.details?.donor).toBe(donorId);
+  });
+
+  test('reports a donor clone path that is a file', async () => {
+    const corpus = await fixture();
+    await rm(join(corpus.root, cloneRoot), { recursive: true });
+    await writeFile(join(corpus.root, cloneRoot), 'not a directory');
+    expect(checkCorpus(corpus.root).some((item) => item.code === 'CORPUS_FILESYSTEM_ERROR' && item.details?.donor === donorId)).toBe(true);
+  });
+
   test('allows two instructions to share one donor source recorded as split', async () => {
     const corpus = await fixture({ twoInstructions: true });
     expect(corpus.map.donors[donorId].files[donorFile].status).toBe('split');
@@ -153,13 +207,14 @@ describe('checkCorpus synthetic fixtures', () => {
   test('rejects an unmanifested instruction file', async () => {
     const corpus = await fixture(); await writeFile(join(corpus.root, 'instructions/extra.md'), renderInstruction(defaultInstruction('extra')));
     corpus.map.donors[donorId].files['extra-source.md'] = { status: 'converted', instruction_ids: ['extra'] };
+    await writeFile(join(corpus.root, cloneRoot, 'extra-source.md'), 'mapped extra donor source\n');
     await expectCodes(corpus, ['CORPUS_FILE_UNMANIFESTED']);
   });
 
   test('rejects a manifest path without a file', async () => {
     const corpus = await fixture(); await rm(join(corpus.root, 'instructions/alpha-instruction.md'));
     delete corpus.map.donors[donorId].files[donorFile];
-    await expectCodes(corpus, ['CORPUS_MANIFEST_FILE_MISSING']);
+    await expectCodes(corpus, ['CORPUS_MANIFEST_FILE_MISSING', 'CORPUS_MAP_COVERAGE_MISSING']);
   });
 
   test('rejects manifest path that resolves to a directory', async () => {
@@ -167,7 +222,7 @@ describe('checkCorpus synthetic fixtures', () => {
     await rm(join(corpus.root, 'instructions/alpha-instruction.md'));
     await mkdir(join(corpus.root, 'instructions/alpha-instruction.md'));
     delete corpus.map.donors[donorId].files[donorFile];
-    await expectCodes(corpus, ['CORPUS_PATH_INVALID']);
+    await expectCodes(corpus, ['CORPUS_PATH_INVALID', 'CORPUS_MAP_COVERAGE_MISSING']);
   });
 
   test('rejects a manifest path outside instructions', async () => {
@@ -309,7 +364,7 @@ describe('checkCorpus synthetic fixtures', () => {
 
   test('rejects missing corpus map instruction references', async () => {
     const missing = await fixture(); delete missing.map.donors[donorId].files[donorFile];
-    await expectCodes(missing, ['CORPUS_MAP_INCONSISTENT']);
+    await expectCodes(missing, ['CORPUS_MAP_INCONSISTENT', 'CORPUS_MAP_COVERAGE_MISSING']);
   });
 
   test('rejects unknown corpus map instruction references', async () => {
@@ -359,18 +414,22 @@ describe('real corpus (requires ignored pinned donor clones)', () => {
   const realTest = realClonesAvailable ? test : test.skip;
   const cloneRequirement = 'requires ignored packages/powers/.tmp/donors pinned clones';
   const cloneTests = [
-    `accepts the real corpus (${cloneRequirement})`,
-    `CLI prints JSON and exits zero (${cloneRequirement})`,
+    `the real corpus has complete map coverage (${cloneRequirement})`,
+    `CLI reports no issues for the real corpus (${cloneRequirement})`,
     `CLI uses package root by default (${cloneRequirement})`,
   ] as const;
-  realTest(cloneTests[0], () => { expect(checkCorpus(packageRoot)).toEqual([]); });
+  realTest(cloneTests[0], () => {
+    expect(checkCorpus(packageRoot).some((item) => item.code === 'CORPUS_MAP_COVERAGE_MISSING')).toBe(false);
+  });
   realTest(cloneTests[1], () => {
-    const result = spawnSync(bun, [join(packageRoot, 'scripts/check-corpus.ts'), '--root', packageRoot], { encoding: 'utf8' });
+    const result = spawnSync(bun, [join(packageRoot, 'scripts/check-corpus.ts'), '--root', packageRoot], { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
     expect(result.status).toBe(0); expect(JSON.parse(result.stdout).issues).toEqual([]);
   });
   realTest(cloneTests[2], () => {
-    const result = spawnSync(bun, [join(packageRoot, 'scripts/check-corpus.ts')], { encoding: 'utf8' });
-    expect(result.status).toBe(0); expect(JSON.parse(result.stdout).instructions).toBe(12);
+    const result = spawnSync(bun, [join(packageRoot, 'scripts/check-corpus.ts')], { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
+    const manifest = JSON.parse(readFileSync(join(packageRoot, 'catalog.json'), 'utf8'));
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout).instructions).toBe(manifest.instructions.length);
   });
   test('names all clone-dependent tests with their skip reason', () => {
     expect(cloneTests).toHaveLength(3);

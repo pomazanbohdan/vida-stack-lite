@@ -15,6 +15,7 @@ const stringArray = (value: unknown): string[] => Array.isArray(value) ? value.f
 const readJson = (path: string): unknown => JSON.parse(readFileSync(path, 'utf8')) as unknown;
 
 function issue(issues: CorpusIssue[], code: string, message: string, details?: Record<string, unknown>): void {
+  if (code === 'CORPUS_CLONE_MISSING' && issues.some((item) => item.code === code && item.details?.donor === details?.donor)) return;
   issues.push(details === undefined ? { code, message } : { code, message, details });
 }
 
@@ -177,6 +178,39 @@ function checkMap(map: Dict, donors: DonorSet, instructionIds: Set<string>, issu
   for (const id of instructionIds) if (!mappedIds.has(id)) issue(issues, 'CORPUS_MAP_INCONSISTENT', `instruction ${id} has no corpus map record`, { instruction_id: id });
 }
 
+function checkDonorCoverage(map: Dict, donors: DonorSet, issues: CorpusIssue[]): void {
+  const donorMaps = isRecord(map.donors) ? map.donors : {};
+  for (const [donorId, donor] of donors.donors) {
+    if (!Object.prototype.hasOwnProperty.call(donorMaps, donorId)) continue;
+    const cloneRoot = resolve(donors.localRoot, String(donor.local_path ?? ''));
+    let cloneStat;
+    try { cloneStat = statSync(cloneRoot); }
+    catch (error) {
+      if (isRecord(error) && error.code === 'ENOENT') issue(issues, 'CORPUS_CLONE_MISSING', `pinned clone for donor ${donorId} is unavailable at ${cloneRoot}`, { donor: donorId, path: cloneRoot });
+      else issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect donor clone ${cloneRoot}: ${String(error)}`, { donor: donorId, path: cloneRoot });
+      continue;
+    }
+    if (!cloneStat.isDirectory()) {
+      issue(issues, 'CORPUS_FILESYSTEM_ERROR', `donor clone path ${cloneRoot} for ${donorId} is not a directory`, { donor: donorId, path: cloneRoot });
+      continue;
+    }
+    const carrierPaths = new Set<string>();
+    const visit = (directory: string): void => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const absolute = join(directory, entry.name);
+        if (entry.isDirectory()) visit(absolute);
+        else if (entry.isFile() && entry.name.endsWith('.md')) carrierPaths.add(relative(cloneRoot, absolute).split(sep).join('/'));
+      }
+    };
+    try { visit(cloneRoot); }
+    catch (error) { issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot enumerate donor clone ${cloneRoot}: ${String(error)}`, { donor: donorId, path: cloneRoot }); continue; }
+    const donorMap = isRecord(donorMaps[donorId]) ? donorMaps[donorId] as Dict : {};
+    const records = isRecord(donorMap.files) ? donorMap.files : {};
+    for (const path of carrierPaths) if (!Object.prototype.hasOwnProperty.call(records, path)) issue(issues, 'CORPUS_MAP_COVERAGE_MISSING', `corpus map is missing donor ${donorId} file ${path}; add exactly one record at donors.${donorId}.files[${JSON.stringify(path)}]`, { donor: donorId, path });
+    for (const path of Object.keys(records)) if (!carrierPaths.has(path)) issue(issues, 'CORPUS_MAP_COVERAGE_UNKNOWN', `corpus map record ${donorId}:${path} names a file not found in the pinned clone`, { donor: donorId, path });
+  }
+}
+
 function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   const catalog = readCorpusJson(base, 'catalog.json', issues, 'CORPUS_MANIFEST_INVALID');
   const map = readCorpusJson(base, 'corpus-map.json', issues, 'CORPUS_MAP_INCONSISTENT');
@@ -229,6 +263,7 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
     }
   }
   checkMap(map, donorSet, instructionIds, issues);
+  checkDonorCoverage(map, donorSet, issues);
 }
 
 export function checkCorpus(root: string): CorpusIssue[] {

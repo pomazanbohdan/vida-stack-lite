@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { readFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -20,9 +20,16 @@ export type ConvertOptions = {
   now?: () => string;
 };
 export type ConversionResult = {
+  kind: 'instruction';
   instructionId: string; path: string; sha256: string; written: boolean;
   manifestUpdated: boolean; mapUpdated: boolean; manifestRevision: number;
-};
+} | {
+  kind: 'map-record';
+  instructionId: string; path: string; sha256: string; written: boolean;
+  manifestUpdated: boolean; mapUpdated: boolean; manifestRevision: number;
+} | { kind: 'removal'; instructionId: string; removed: true; manifestUpdated: boolean; mapUpdated: boolean; manifestRevision: number };
+export type RemovalResult = Extract<ConversionResult, { kind: 'removal' }>;
+export type MapRecordSpec = { donor: string; source_revision: string; path: string; status: 'rejected' | 'converted' | 'merged' | 'split'; reason?: string; instruction_ids?: string[]; contributed_sources?: string[] };
 
 const specFields = [
   'instruction_id', 'title', 'summary', 'capability_tags', 'pattern_tags', 'roles', 'products',
@@ -45,6 +52,48 @@ function record(value: unknown): value is Record<string, unknown> {
 function nonEmpty(value: unknown, field: string, source: string): string {
   if (typeof value !== 'string' || value.trim() === '') fail(field, source);
   return value;
+}
+
+function parseMapRecord(value: unknown, source: string): MapRecordSpec {
+  if (!record(value)) fail('$', source, 'map record must be an object');
+  const allowed = ['donor', 'source_revision', 'path', 'status', 'reason', 'instruction_ids', 'contributed_sources'];
+  const extra = Object.keys(value).find((key) => !allowed.includes(key));
+  if (extra !== undefined) fail(extra, source, `unknown map record field: ${extra}`);
+  for (const field of ['donor', 'source_revision', 'path', 'status']) if (!Object.prototype.hasOwnProperty.call(value, field)) fail(field, source, `missing map record field: ${field}`);
+  const mapText = (input: unknown, field: string): string => {
+    if (typeof input !== 'string' || input.trim() === '') throw new CatalogError('CATALOG_INVALID', `invalid map record field: ${field}`, { field, source });
+    return input;
+  };
+  const donor = mapText(value.donor, 'donor'); const source_revision = mapText(value.source_revision, 'source_revision'); const path = mapText(value.path, 'path');
+  if (!/^[0-9a-f]{40}$/.test(source_revision)) fail('source_revision', source);
+  if (value.status === 'rejected') {
+    const reason = mapText(value.reason, 'reason');
+    if (Object.prototype.hasOwnProperty.call(value, 'instruction_ids')) fail('instruction_ids', source);
+    if (Object.prototype.hasOwnProperty.call(value, 'contributed_sources')) fail('contributed_sources', source);
+    return { donor, source_revision, path, status: 'rejected', reason };
+  }
+  if (value.status === 'merged') {
+    const instruction_ids = stringArray(value.instruction_ids, 'instruction_ids', source);
+    const contributed_sources = stringArray(value.contributed_sources, 'contributed_sources', source);
+    if (instruction_ids.length === 0 || !instruction_ids.every((item) => item.trim() !== '')) fail('instruction_ids', source);
+    if (contributed_sources.length === 0 || !contributed_sources.every((item) => item.trim() !== '')) fail('contributed_sources', source);
+    return { donor, source_revision, path, status: 'merged', instruction_ids, contributed_sources };
+  }
+  if (value.status === 'converted') {
+    const instruction_ids = stringArray(value.instruction_ids, 'instruction_ids', source);
+    if (instruction_ids.length !== 1 || !instruction_ids.every((item) => item.trim() !== '')) fail('instruction_ids', source);
+    if (Object.prototype.hasOwnProperty.call(value, 'reason')) fail('reason', source);
+    if (Object.prototype.hasOwnProperty.call(value, 'contributed_sources')) fail('contributed_sources', source);
+    return { donor, source_revision, path, status: 'converted', instruction_ids };
+  }
+  if (value.status === 'split') {
+    const instruction_ids = stringArray(value.instruction_ids, 'instruction_ids', source);
+    if (instruction_ids.length === 0 || !instruction_ids.every((item) => item.trim() !== '')) fail('instruction_ids', source);
+    if (Object.prototype.hasOwnProperty.call(value, 'reason')) fail('reason', source);
+    if (Object.prototype.hasOwnProperty.call(value, 'contributed_sources')) fail('contributed_sources', source);
+    return { donor, source_revision, path, status: 'split', instruction_ids };
+  }
+  fail('status', source);
 }
 
 function stringArray(value: unknown, field: string, source: string): string[] {
@@ -324,7 +373,101 @@ export async function convert(specPath: string, options: ConvertOptions): Promis
   if (!manifestExists || manifestUpdated || written) await writeFile(catalogPath, json(manifest), 'utf8');
   if (mapUpdated) await writeFile(mapPath, json(map), 'utf8');
 
-  return { instructionId: spec.instruction_id, path: relativePath, sha256: digest, written, manifestUpdated, mapUpdated, manifestRevision: manifest.revision };
+  return { kind: 'instruction', instructionId: spec.instruction_id, path: relativePath, sha256: digest, written, manifestUpdated, mapUpdated, manifestRevision: manifest.revision };
+}
+
+export async function convertMapRecord(recordPath: string, options: ConvertOptions): Promise<ConversionResult> {
+  const root = resolve(options.root); const raw = await readJson(recordPath, 'map record');
+  if (raw === undefined) throw new CatalogError('CATALOG_INVALID', 'map record file is missing', { source: recordPath });
+  const spec = parseMapRecord(raw, recordPath); const mapPath = target(root, options.mapPath, join(root, 'corpus-map.json'));
+  const mapValue = await readJson(mapPath, 'corpus map'); let map: Record<string, unknown>;
+  if (mapValue === undefined) map = { schema: 'VPCorpusMap/v1', revision: 1, updated_at: (options.now ?? (() => new Date().toISOString()))(), donors: {} };
+  else {
+    if (!record(mapValue)) throw new CatalogError('CATALOG_INVALID', 'corpus map must be an object', { path: mapPath });
+    map = mapValue;
+  }
+  const oldComparable = mapValue === undefined ? undefined : JSON.parse(JSON.stringify(mapValue)) as Record<string, unknown>;
+  if (oldComparable !== undefined) delete oldComparable.updated_at;
+  const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+  const initialErrors = validateAgainstSchema(map, mapSchema);
+  if (initialErrors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: initialErrors });
+  const donors = map.donors as Record<string, unknown>; const existingDonor = donors[spec.donor];
+  let donor: Record<string, unknown>;
+  if (existingDonor === undefined) donor = { source_revision: spec.source_revision, files: {} };
+  else {
+    if (!record(existingDonor)) throw new CatalogError('CATALOG_INVALID', 'corpus donor must be an object', { donor: spec.donor });
+    if (existingDonor.source_revision !== spec.source_revision) throw new CatalogError('CATALOG_INVALID', `donor ${spec.donor} revision conflict: stored ${String(existingDonor.source_revision)}, requested ${spec.source_revision}`, { donor: spec.donor, stored_revision: existingDonor.source_revision, source_revision: spec.source_revision });
+    donor = existingDonor;
+  }
+  const files = record(donor.files) ? donor.files : {}; donor.files = files;
+  const entry = spec.status === 'rejected' ? { status: 'rejected', reason: spec.reason! } : spec.status === 'converted' ? { status: 'converted', instruction_ids: spec.instruction_ids! } : spec.status === 'split' ? { status: 'split', instruction_ids: spec.instruction_ids! } : { status: 'merged', instruction_ids: spec.instruction_ids!, contributed_sources: spec.contributed_sources! };
+  files[spec.path] = entry; donors[spec.donor] = donor;
+  const comparable = { ...map } as Record<string, unknown>; delete comparable.updated_at;
+  const mapUpdated = oldComparable === undefined || !same(oldComparable, comparable);
+  if (mapValue === undefined) map.updated_at = (options.now ?? (() => new Date().toISOString()))();
+  else if (mapUpdated) { map.revision = Number(map.revision) + 1; map.updated_at = (options.now ?? (() => new Date().toISOString()))(); }
+  const errors = validateAgainstSchema(map, mapSchema);
+  if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: errors });
+  if (mapUpdated) { await mkdir(dirname(mapPath), { recursive: true }); await writeFile(mapPath, json(map), 'utf8'); }
+  return { kind: 'map-record', instructionId: '', path: spec.path, sha256: '', written: false, manifestUpdated: false, mapUpdated, manifestRevision: 0 };
+}
+
+export async function removeInstruction(instructionId: string, options: ConvertOptions): Promise<RemovalResult> {
+  const root = resolve(options.root);
+  const catalogPath = target(root, options.catalogPath, join(root, 'catalog.json'));
+  const mapPath = target(root, options.mapPath, join(root, 'corpus-map.json'));
+  const manifestValue = await readJson(catalogPath, 'catalog manifest');
+  const catalogSchema = await readSchema(packageRoot, 'vpcatalog.v1.schema.json');
+  if (!record(manifestValue)) throw new CatalogError('CATALOG_INVALID', 'catalog manifest must be an object', { path: catalogPath });
+  const catalogErrors = validateAgainstSchema(manifestValue, catalogSchema);
+  if (catalogErrors.length > 0) throw new CatalogError('CATALOG_INVALID', 'catalog schema validation failed', { schemaErrors: catalogErrors });
+  const manifest = manifestValue as unknown as Catalog;
+  const entry = manifest.instructions.find((item) => item.instruction_id === instructionId);
+  if (entry === undefined) throw new CatalogError('CATALOG_INVALID', `instruction ${instructionId} is not in the catalog manifest`, { instruction_id: instructionId });
+  const instructionPath = resolve(dirname(catalogPath), entry.path);
+  const mapValue = await readJson(mapPath, 'corpus map');
+  let map: Record<string, unknown> | undefined;
+  let mapUpdated = false;
+  if (mapValue !== undefined) {
+    if (!record(mapValue)) throw new CatalogError('CATALOG_INVALID', 'corpus map must be an object', { path: mapPath });
+    const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+    const errors = validateAgainstSchema(mapValue, mapSchema);
+    if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: errors });
+    map = mapValue;
+    const donors = record(map.donors) ? map.donors : {};
+    for (const donor of Object.values(donors)) {
+      if (!record(donor) || !record(donor.files)) continue;
+      for (const file of Object.values(donor.files)) {
+        if (!record(file) || !Array.isArray(file.instruction_ids) || !file.instruction_ids.includes(instructionId)) continue;
+        const ids = file.instruction_ids.filter((id): id is string => typeof id === 'string' && id !== instructionId);
+        if (ids.length === 0) {
+          delete file.instruction_ids; delete file.contributed_sources;
+          file.status = 'rejected'; file.reason = 'інструкцію замінено на атомарні';
+        } else {
+          delete file.reason;
+          file.instruction_ids = ids; file.status = ids.length > 1 ? 'split' : 'converted';
+        }
+        mapUpdated = true;
+      }
+    }
+  }
+  manifest.instructions = manifest.instructions.filter((item) => item.instruction_id !== instructionId);
+  manifest.instructions.sort((left, right) => left.instruction_id < right.instruction_id ? -1 : left.instruction_id > right.instruction_id ? 1 : 0);
+  manifest.revision += 1;
+  manifest.updated_at = (options.now ?? (() => new Date().toISOString()))();
+  const catalogErrorsAfter = validateAgainstSchema(manifest, catalogSchema);
+  if (catalogErrorsAfter.length > 0) throw new CatalogError('CATALOG_INVALID', 'catalog schema validation failed', { schemaErrors: catalogErrorsAfter });
+  if (map !== undefined && mapUpdated) {
+    map.revision = Number(map.revision) + 1;
+    map.updated_at = (options.now ?? (() => new Date().toISOString()))();
+    const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+    const errors = validateAgainstSchema(map, mapSchema);
+    if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: errors });
+  }
+  await rm(instructionPath, { force: true });
+  await writeFile(catalogPath, json(manifest), 'utf8');
+  if (map !== undefined && mapUpdated) await writeFile(mapPath, json(map), 'utf8');
+  return { kind: 'removal', instructionId, removed: true, manifestUpdated: true, mapUpdated, manifestRevision: manifest.revision };
 }
 
 export async function convertMany(specPaths: string[], options: ConvertOptions): Promise<ConversionResult[]> {
@@ -347,15 +490,21 @@ function cliError(error: unknown): { code: string; message: string; details: Rec
   return { code: 'CATALOG_INVALID', message: error instanceof Error ? error.message : String(error), details: {} };
 }
 
-function parseArgs(args: string[]): { specs: string[]; options: ConvertOptions } {
+function parseArgs(args: string[]): { inputs: Array<{ kind: 'instruction'; path: string } | { kind: 'map-record'; path: string } | { kind: 'removal'; instructionId: string }>; options: ConvertOptions } {
   const options: ConvertOptions = { root: packageRoot };
-  const specs: string[] = [];
+  const inputs: Array<{ kind: 'instruction'; path: string } | { kind: 'map-record'; path: string } | { kind: 'removal'; instructionId: string }> = [];
   for (let index = 0; index < args.length; index += 1) {
     const flag = args[index];
     const value = args[index + 1];
     if (flag === '--spec') {
       if (value === undefined || value.startsWith('--')) throw new CatalogError('CATALOG_INVALID', '--spec requires a file path', { flag });
-      specs.push(value); index += 1;
+      inputs.push({ kind: 'instruction', path: value }); index += 1;
+    } else if (flag === '--map-record') {
+      if (value === undefined || value.startsWith('--')) throw new CatalogError('CATALOG_INVALID', '--map-record requires a file path', { flag });
+      inputs.push({ kind: 'map-record', path: value }); index += 1;
+    } else if (flag === '--remove') {
+      if (value === undefined || value.startsWith('--')) throw new CatalogError('CATALOG_INVALID', '--remove requires an instruction id', { flag });
+      inputs.push({ kind: 'removal', instructionId: value }); index += 1;
     } else if (flag === '--root' || flag === '--catalog' || flag === '--map') {
       if (value === undefined || value.startsWith('--')) throw new CatalogError('CATALOG_INVALID', `${flag} requires a value`, { flag });
       if (flag === '--root') options.root = value;
@@ -366,16 +515,18 @@ function parseArgs(args: string[]): { specs: string[]; options: ConvertOptions }
       throw new CatalogError('CATALOG_INVALID', `unknown argument: ${String(flag)}`, { flag });
     }
   }
-  if (specs.length === 0) throw new CatalogError('CATALOG_INVALID', 'at least one --spec is required', { field: 'spec' });
-  return { specs, options };
+  if (inputs.length === 0) throw new CatalogError('CATALOG_INVALID', 'at least one --spec, --map-record, or --remove is required', { field: 'spec' });
+  return { inputs, options };
 }
 
 type CliOutput = { stdout: (text: string) => void; stderr: (text: string) => void };
 
 async function main(args: string[], output: CliOutput): Promise<number> {
   try {
-    const { specs, options } = parseArgs(args);
-    output.stdout(json(await convertMany(specs, options)));
+    const { inputs, options } = parseArgs(args);
+    const results: ConversionResult[] = [];
+    for (const input of inputs) results.push(input.kind === 'instruction' ? await convert(input.path, options) : input.kind === 'map-record' ? await convertMapRecord(input.path, options) : await removeInstruction(input.instructionId, options));
+    output.stdout(json(results));
     return 0;
   } catch (error) {
     output.stderr(json(cliError(error)));

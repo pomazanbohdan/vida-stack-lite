@@ -8,7 +8,7 @@ import { loadCatalog, loadInstructions } from '../skills/vp-mode/scripts/catalog
 import { CatalogError } from '../skills/vp-mode/scripts/catalog.ts';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
 import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
-import { convert, convertMany, parseInstructionSpec, renderInstruction, runConvertCli, type InstructionSpec } from '../scripts/convert.ts';
+import { convert, convertMany, convertMapRecord, parseInstructionSpec, renderInstruction, runConvertCli, type InstructionSpec } from '../scripts/convert.ts';
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const temporaryRoots: string[] = [];
@@ -51,6 +51,16 @@ function validSpec(overrides: Partial<InstructionSpec> = {}): InstructionSpec {
     body: '## Steps\n\nKeep this body verbatim.\n',
     ...overrides,
   };
+}
+
+function mapRecord(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return { donor: 'map-donor', source_revision: 'b'.repeat(40), path: 'docs/no-method.md', status: 'rejected', reason: 'not methodology', ...overrides };
+}
+
+async function writeMapRecord(root: string, value: unknown, name = 'record.json'): Promise<string> {
+  const path = join(root, name);
+  await writeFile(path, JSON.stringify(value));
+  return path;
 }
 
 async function writeSpec(root: string, value: unknown): Promise<string> {
@@ -129,6 +139,163 @@ describe('renderInstruction', () => {
 });
 
 describe('convert', () => {
+  test('removes an instruction and recomputes all affected map entries', async () => {
+    const root = await makeRoot();
+    await convert(await writeSpec(root, validSpec()), { root });
+    const mapPath = join(root, 'corpus-map.json');
+    const map = JSON.parse(await readFile(mapPath, 'utf8')) as any;
+    map.donors['sample-donor'].files['docs/release.md'].instruction_ids.push('other-rule');
+    map.donors['sample-donor'].files['docs/release.md'].status = 'split';
+    map.donors.extra = { source_revision: 'c'.repeat(40), files: { 'docs/only.md': { status: 'converted', instruction_ids: ['write-release-note'] } } };
+    await writeFile(mapPath, JSON.stringify(map));
+    const { removeInstruction } = await import('../scripts/convert.ts');
+    const result = await removeInstruction('write-release-note', { root, now: () => 'removed-time' });
+    expect(result).toMatchObject({ kind: 'removal', instructionId: 'write-release-note', removed: true, manifestUpdated: true, mapUpdated: true, manifestRevision: 3 });
+    await expect(readFile(join(root, 'instructions', 'write-release-note.md'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(JSON.parse(await readFile(join(root, 'catalog.json'), 'utf8')).instructions).toEqual([]);
+    expect(JSON.parse(await readFile(mapPath, 'utf8')).donors).toMatchObject({ 'sample-donor': { files: { 'docs/release.md': { status: 'converted', instruction_ids: ['other-rule'] } } }, extra: { files: { 'docs/only.md': { status: 'rejected', reason: 'інструкцію замінено на атомарні' } } } });
+  });
+
+  test('unknown removal fails without writing and exposes the missing id', async () => {
+    const root = await makeRoot();
+    const before = await readFile(join(root, 'catalog.json'), 'utf8');
+    const { removeInstruction } = await import('../scripts/convert.ts');
+    await expect(removeInstruction('missing-rule', { root })).rejects.toMatchObject({ code: 'CATALOG_INVALID', details: { instruction_id: 'missing-rule' } });
+    expect(await readFile(join(root, 'catalog.json'), 'utf8')).toBe(before);
+    expect(await readdir(root)).not.toContain('corpus-map.json');
+  });
+
+  test('a repeated id in one removal run fails on the second removal', async () => {
+    const root = await makeRoot();
+    await convert(await writeSpec(root, validSpec()), { root });
+    const cli = join(packageRoot, 'scripts', 'convert.ts');
+    const result = await runCliInProcess(['--remove', 'write-release-note', '--remove', 'write-release-note', '--root', root], cli);
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stderr)).toMatchObject({ details: { instruction_id: 'write-release-note' } });
+    expect(JSON.parse(await readFile(join(root, 'catalog.json'), 'utf8')).instructions).toEqual([]);
+  });
+
+  test('CLI reports removals and emits JSON error for unknown ids', async () => {
+    const root = await makeRoot();
+    await convert(await writeSpec(root, validSpec()), { root });
+    const cli = join(packageRoot, 'scripts', 'convert.ts');
+    const removed = await runCliInProcess(['--remove', 'write-release-note', '--root', root], cli);
+    expect(removed.exitCode).toBe(0);
+    expect(JSON.parse(removed.stdout)).toMatchObject([{ kind: 'removal', instructionId: 'write-release-note', removed: true }]);
+    const missing = await runCliInProcess(['--remove', 'missing-rule', '--root', root], cli);
+    expect(missing.exitCode).toBe(1);
+    expect(JSON.parse(missing.stderr)).toEqual({ code: 'CATALOG_INVALID', message: 'instruction missing-rule is not in the catalog manifest', details: { instruction_id: 'missing-rule' } });
+  });
+
+  test('removal preserves sorted manifest order and bumps its revision', async () => {
+    const root = await makeRoot();
+    const catalog = JSON.parse(await readFile(join(root, 'catalog.json'), 'utf8'));
+    catalog.instructions = ['a-rule', 'm-rule', 'z-rule'].map((id) => ({ instruction_id: id, path: `instructions/${id}.md`, sha256: '0'.repeat(64) }));
+    await writeFile(join(root, 'catalog.json'), JSON.stringify(catalog));
+    const { removeInstruction } = await import('../scripts/convert.ts');
+    const result = await removeInstruction('m-rule', { root, now: () => 'removed-time' });
+    const updated = JSON.parse(await readFile(join(root, 'catalog.json'), 'utf8'));
+    expect(result.manifestRevision).toBe(2);
+    expect(updated.instructions.map((entry: { instruction_id: string }) => entry.instruction_id)).toEqual(['a-rule', 'z-rule']);
+    expect(updated.updated_at).toBe('removed-time');
+  });
+  test('writes rejected and merged map records without instruction artifacts', async () => {
+    const root = await makeRoot();
+    const rejectedPath = await writeMapRecord(root, mapRecord());
+    const rejected = await convertMapRecord(rejectedPath, { root });
+    expect(rejected).toMatchObject({ kind: 'map-record', mapUpdated: true, manifestUpdated: false, written: false });
+    expect(JSON.parse(await readFile(join(root, 'corpus-map.json'), 'utf8'))).toMatchObject({ donors: { 'map-donor': { files: { 'docs/no-method.md': { status: 'rejected', reason: 'not methodology' } } } } });
+    expect(await readdir(root)).not.toContain('instructions');
+    const mergedPath = await writeMapRecord(root, mapRecord({ path: 'docs/merged.md', status: 'merged', reason: undefined, instruction_ids: ['existing-rule'], contributed_sources: ['other:docs/a.md'] }), 'merged.json');
+    await convertMapRecord(mergedPath, { root });
+    expect(JSON.parse(await readFile(join(root, 'corpus-map.json'), 'utf8'))).toMatchObject({ donors: { 'map-donor': { files: { 'docs/merged.md': { status: 'merged', instruction_ids: ['existing-rule'], contributed_sources: ['other:docs/a.md'] } } } } });
+  });
+
+  test('writes converted map records with exactly one instruction id', async () => {
+    const root = await makeRoot();
+    const converted = mapRecord({ status: 'converted', reason: undefined, instruction_ids: ['single-rule'] });
+    const path = await writeMapRecord(root, converted);
+    await convertMapRecord(path, { root });
+    expect(JSON.parse(await readFile(join(root, 'corpus-map.json'), 'utf8')).donors['map-donor'].files['docs/no-method.md']).toEqual({ status: 'converted', instruction_ids: ['single-rule'] });
+    for (const [name, field, overrides] of [['two.json', 'instruction_ids', { instruction_ids: ['one', 'two'] }], ['missing.json', 'instruction_ids', { instruction_ids: undefined }], ['reason.json', 'reason', { reason: 'unexpected' }]] as const) {
+      const invalidPath = await writeMapRecord(root, { ...converted, ...overrides }, name);
+      await expect(convertMapRecord(invalidPath, { root })).rejects.toMatchObject({ code: 'CATALOG_INVALID', message: `invalid instruction spec field: ${field}`, details: { field, source: invalidPath } });
+    }
+  });
+
+  test('converted map record writes are byte-idempotent', async () => {
+    const root = await makeRoot();
+    const path = await writeMapRecord(root, mapRecord({ status: 'converted', reason: undefined, instruction_ids: ['single-rule'] }));
+    await convertMapRecord(path, { root }); const before = await readFile(join(root, 'corpus-map.json'), 'utf8');
+    const result = await convertMapRecord(path, { root });
+    expect(result.mapUpdated).toBe(false);
+    expect(await readFile(join(root, 'corpus-map.json'), 'utf8')).toBe(before);
+  });
+
+  test('validates map record requirements and donor revisions', async () => {
+    const root = await makeRoot();
+    for (const input of [mapRecord({ reason: '' }), mapRecord({ reason: undefined }), mapRecord({ status: 'rejected', instruction_ids: ['x'] }), mapRecord({ status: 'merged', reason: undefined, contributed_sources: ['d:x'] }), mapRecord({ status: 'merged', reason: undefined, instruction_ids: ['x'] }), mapRecord({ status: 'other' })]) {
+      await expect(convertMapRecord(await writeMapRecord(root, input, `bad-${Math.random()}.json`), { root })).rejects.toMatchObject({ code: 'CATALOG_INVALID' });
+    }
+    await convertMapRecord(await writeMapRecord(root, mapRecord()), { root });
+    const conflict = await writeMapRecord(root, mapRecord({ source_revision: 'c'.repeat(40) }), 'conflict.json');
+    await expect(convertMapRecord(conflict, { root })).rejects.toMatchObject({ message: expect.stringContaining('map-donor'), details: { donor: 'map-donor', stored_revision: 'b'.repeat(40), source_revision: 'c'.repeat(40) } });
+  });
+
+  test('map record writes are byte-idempotent', async () => {
+    const root = await makeRoot(); const path = await writeMapRecord(root, mapRecord());
+    await convertMapRecord(path, { root }); const before = await readFile(join(root, 'corpus-map.json'), 'utf8');
+    const result = await convertMapRecord(path, { root });
+    expect(result).toMatchObject({ kind: 'map-record', mapUpdated: false });
+    expect(await readFile(join(root, 'corpus-map.json'), 'utf8')).toBe(before);
+  });
+
+  test('writes split map records and validates their fields', async () => {
+    const root = await makeRoot();
+    const split = mapRecord({ path: 'docs/split.md', status: 'split', reason: undefined, instruction_ids: ['first', 'second'] });
+    await convertMapRecord(await writeMapRecord(root, split), { root });
+    expect(JSON.parse(await readFile(join(root, 'corpus-map.json'), 'utf8')).donors['map-donor'].files['docs/split.md']).toEqual({ status: 'split', instruction_ids: ['first', 'second'] });
+    const missingPath = await writeMapRecord(root, mapRecord({ path: 'docs/missing.md', status: 'split', reason: undefined }), 'missing-ids.json');
+    await expect(convertMapRecord(missingPath, { root })).rejects.toMatchObject({ code: 'CATALOG_INVALID', message: 'invalid instruction spec field: instruction_ids', details: { field: 'instruction_ids', source: missingPath } });
+    const reasonPath = await writeMapRecord(root, mapRecord({ path: 'docs/reason.md', status: 'split', instruction_ids: ['only'], reason: 'bad' }), 'has-reason.json');
+    await expect(convertMapRecord(reasonPath, { root })).rejects.toMatchObject({ code: 'CATALOG_INVALID', message: 'invalid instruction spec field: reason', details: { field: 'reason', source: reasonPath } });
+  });
+
+  test('split map records are byte-idempotent', async () => {
+    const root = await makeRoot();
+    const path = await writeMapRecord(root, mapRecord({ status: 'split', reason: undefined, instruction_ids: ['one'] }));
+    await convertMapRecord(path, { root }); const before = await readFile(join(root, 'corpus-map.json'), 'utf8');
+    const result = await convertMapRecord(path, { root });
+    expect(result.mapUpdated).toBe(false);
+    expect(await readFile(join(root, 'corpus-map.json'), 'utf8')).toBe(before);
+  });
+
+  test('removal recomputes a one-id split entry to converted', async () => {
+    const root = await makeRoot();
+    await convert(await writeSpec(root, validSpec()), { root });
+    const mapPath = join(root, 'corpus-map.json');
+    const map = JSON.parse(await readFile(mapPath, 'utf8')) as any;
+    map.donors['sample-donor'].files['docs/release.md'].status = 'split';
+    map.donors['sample-donor'].files['docs/release.md'].instruction_ids.push('other-rule');
+    await writeFile(mapPath, JSON.stringify(map));
+    const { removeInstruction } = await import('../scripts/convert.ts');
+    await removeInstruction('write-release-note', { root, now: () => 'removed-time' });
+    expect(JSON.parse(await readFile(mapPath, 'utf8')).donors['sample-donor'].files['docs/release.md']).toEqual({ status: 'converted', instruction_ids: ['other-rule'] });
+  });
+
+  test('mixed CLI input preserves order and reports kind; invalid records emit JSON error', async () => {
+    const root = await makeRoot(); const spec = await writeSpec(root, validSpec()); const rejected = await writeMapRecord(root, mapRecord());
+    const cli = join(packageRoot, 'scripts', 'convert.ts');
+    const result = await runCliInProcess(['--spec', spec, '--map-record', rejected, '--root', root], cli);
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(result.stdout).map((item: { kind: string }) => item.kind)).toEqual(['instruction', 'map-record']);
+    const schema = JSON.parse(await readFile(join(packageRoot, 'config', 'vpcorpusmap.v1.schema.json'), 'utf8')) as Schema;
+    expect(validateAgainstSchema(JSON.parse(await readFile(join(root, 'corpus-map.json'), 'utf8')), schema)).toEqual([]);
+    const invalid = await writeMapRecord(root, mapRecord({ reason: '' }), 'invalid.json');
+    const error = await runCliInProcess(['--map-record', invalid, '--root', root], cli);
+    expect(error.exitCode).toBe(1);
+    expect(JSON.parse(error.stderr)).toEqual({ code: 'CATALOG_INVALID', message: 'invalid map record field: reason', details: { field: 'reason', source: invalid } });
+  });
   test('canonicalizes aliased tags before writing a loadable instruction', async () => {
     const root = await makeRoot();
     const catalogPath = join(root, 'catalog.json');

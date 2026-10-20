@@ -13,13 +13,13 @@ artifact_contract_required_data:
   - перевірене твердження
   - виконана перевірка
   - фактичний результат
-artifact_contract_verified_by: bun run --cwd packages/powers test
+artifact_contract_verified_by: the named check runs on the current state and its output supports the claim
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/verification-before-completion/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Підтверджуй результат до завершення
