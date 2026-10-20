@@ -1,3 +1,4 @@
+import { expectHistorySnapshotAfterOwner } from '../helpers/ledger-cache-observer.ts';
 import { afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test, setSystemTime } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
@@ -10,8 +11,9 @@ import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-a
 import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
 import { qualifiedRuntimeCodeEndpointFixture } from '../helpers/qualified-runtime-code-fixture.ts';
 import {
-  configuredFrontierRepairHostRoot,
   seedFrontierHostFixture,
+  withConfiguredFrontierHostFixture,
+  mutableCoordinationLedger,
   withFrontierJournalFixture,
 } from '../helpers/configured-frontier-host-fixture.ts';
 import {
@@ -71,7 +73,10 @@ import type {
   HostStateSnapshot,
   StateVersion,
 } from '../../src/host-state.ts';
-import type { MastraSessionLedgerSnapshot } from '../../src/orchestration/persistent-session-handoff.ts';
+import type {
+  MastraSessionLedgerSnapshot,
+  MastraSessionLedgerState,
+} from '../../src/orchestration/persistent-session-handoff.ts';
 import { validateHostOperationReservation } from '../../src/governance/edictum-boundary.ts';
 import { validateCoordinationLedgerV1 } from '../../src/contracts/envelopes.ts';
 import { validateLifecycleAggregate } from '../../src/lifecycle/lifecycle-state.ts';
@@ -2114,31 +2119,8 @@ test('trusted Host continuation atomically retains historical evidence and never
 });
 
 test('configured continuation lookup exposes the complete prewriter wave and each retained issue status', async () => {
-  const deadline = performance.now() + 5_000;
   preserveHostFixtureRoot = 'case failed or timed out';
-  let ownedRoot: string | undefined;
-  let fixture: Awaited<ReturnType<typeof continuationFixture>> | undefined;
-  let completed = false;
-  let primaryFailure: { error: unknown } | undefined;
-  const retain = () => {
-    if (ownedRoot) retainContinuationFixtureRoot(ownedRoot);
-  };
-  try {
-    const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot('delivery', false, (created) => {
-      ownedRoot = created;
-    });
-    const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
-    mkdirSync(path.dirname(databasePath), { recursive: true });
-    const f = await continuationFixture({
-      root,
-      config,
-      workspaceId,
-      databasePath,
-      repositoryRoot: root,
-      identity: input.receipt.request.identity,
-    });
-    fixture = f;
-    if (performance.now() >= deadline) throw new Error('Configured frontier setup exhausted its case deadline.');
+  await withConfiguredFrontierHostFixture((f, { workspaceId, input }) => {
     seedFrontierHostFixture(f, input);
     const before = requiredValue(
       f.store.readDeliveredWorkContinuation(f.identity, 1),
@@ -2254,43 +2236,215 @@ test('configured continuation lookup exposes the complete prewriter wave and eac
       withFrontierJournalFixture(f, { ...row, revision: row.revision + 1 }, controlled, () => undefined),
     ).toThrow('Configured frontier Journal fixture beforeimage changed.');
     expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(before);
-    completed = true;
-  } catch (error) {
-    primaryFailure = { error };
-    throw error;
-  } finally {
-    completeOwnedCleanup(
-      [
-        () => {
-          if (!completed || performance.now() >= deadline) retain();
+  });
+  preserveHostFixtureRoot = false;
+});
+
+test('failed prewriter owner recovery atomically reacquires full resources without changing reports, bindings or the original receipt', async () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  await withConfiguredFrontierHostFixture((f, { workspaceId, input }) => {
+    seedFrontierHostFixture(f, input);
+    const ledger = mutableCoordinationLedger(input.receipt.successor_ledger),
+      originalJournal = input.receipt.successor_journal;
+    const expired = new Date(Date.now() - 1000).toISOString();
+    const activeTicket = requiredValue(
+        ledger.tickets.find((item) => item.status === 'active'),
+        'active ticket',
+      ),
+      activeClaim = requiredValue(
+        ledger.claims.find((item) => item.status === 'active'),
+        'active claim',
+      );
+    activeTicket.expires_at = expired;
+    activeClaim.lease_expires_at = expired;
+    const journal: MastraSessionLedgerState = {
+      ...originalJournal,
+      items: originalJournal.items.map((item) => {
+        const issue_id = randomUUID(),
+          summary = 'Fixture known packet gap';
+        return {
+          ...item,
+          issue_id,
+          observation: {
+            schema: 'VidaSessionObservation/v1',
+            action_id: item.request.action_id,
+            issue_id,
+            agent_id: 'fixture:readonly',
+            tool_call_ref: 'fixture:result',
+            status: 'reported_failed',
+            summary,
+            output_digest: canonicalJsonDigest(summary),
+            evidence_refs: ['fixture:gap'],
+          },
+        };
+      }),
+    };
+    f.db
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='ledger'")
+      .run(canonicalJson(ledger), canonicalJsonDigest(ledger), workspaceId);
+    f.db
+      .query(
+        'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
+      )
+      .run(canonicalJson(journal), canonicalJsonDigest(journal), workspaceId, f.identity.work_id);
+    const before = presentSnapshot(f.store.readHostStateSnapshot(f.identity)),
+      beforeJournal = requiredValue(f.store.readWorkSessionJournal(f.identity), 'pre-recovery journal');
+    requiredValue(before.work, 'pre-recovery work');
+    requiredValue(before.work.lease, 'pre-recovery lease');
+    requiredValue(before.workVersion, 'pre-recovery work version');
+    requiredValue(before.ledgerVersion, 'pre-recovery ledger version');
+    const receiptBytes = requiredValue(
+      f.db
+        .query<{ payload: string }, [string]>(
+          'SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?',
+        )
+        .get(workspaceId),
+      'original continuation receipt',
+    ).payload;
+    const request = {
+      identity: f.identity,
+      attempt: 1,
+      nativeSessionHandle: input.receipt.request.nativeSessionHandle,
+      expectedWork: requiredValue(before.workVersion, 'pre-recovery work version'),
+      expectedLedger: requiredValue(before.ledgerVersion, 'pre-recovery ledger version'),
+      expectedJournal: beforeJournal.version,
+      expectedMaintenanceGeneration: before.maintenanceGeneration,
+      verifyCurrent: () => {},
+    } satisfies Parameters<typeof f.store.recoverFailedPrewriterOwner>[0];
+    const versionKeys: readonly ('expectedWork' | 'expectedLedger' | 'expectedJournal')[] = [
+      'expectedWork',
+      'expectedLedger',
+      'expectedJournal',
+    ];
+    const beforeRows = readFixtureHostRows(f.db);
+    for (const key of versionKeys) {
+      expect(() =>
+        f.store.recoverFailedPrewriterOwner({
+          ...request,
+          [key]: { ...request[key], revision: request[key].revision + 1 },
+        }),
+      ).toThrow(
+        key === 'expectedJournal' ? 'failed prewriter recovery Journal CAS changed' : 'state compare-and-swap conflict',
+      );
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+      expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+    }
+    expect(() =>
+      f.store.recoverFailedPrewriterOwner({
+        ...request,
+        verifyCurrent: () => {
+          throw Error('fixture current proof changed');
         },
-        () => {
-          try {
-            if (fixture && hasUnresolvedFixtureOperations(fixture.db)) retain();
-          } catch (error) {
-            retain();
-            throw error;
-          }
-        },
-        () => {
-          try {
-            fixture?.closeDatabase();
-          } catch (error) {
-            retain();
-            throw error;
-          }
-        },
-        () => {
-          if (!completed || performance.now() >= deadline) retain();
-          cleanupContinuationFixtures();
-          if (performance.now() >= deadline)
-            throw new Error('Configured frontier fixture exhausted its case deadline.');
-        },
-      ],
-      primaryFailure,
+      }),
+    ).toThrow('fixture current proof changed');
+    const invalidVerifiers: readonly { verifyCurrent: unknown; message: string }[] = [
+      { verifyCurrent: () => Promise.resolve(), message: 'must finish synchronously' },
+      { verifyCurrent: async () => {}, message: 'failed prewriter owner recovery requires a valid nonnested request' },
+    ];
+    for (const invalid of invalidVerifiers) {
+      expect(() => {
+        Reflect.apply(f.store.recoverFailedPrewriterOwner.bind(f.store), undefined, [
+          { ...request, verifyCurrent: invalid.verifyCurrent },
+        ]);
+      }).toThrow(invalid.message);
+      expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+    }
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+    f.db.exec(
+      "CREATE TRIGGER reject_failed_owner_journal BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'controlled failed owner Journal write'); END",
     );
-    if (completed) preserveHostFixtureRoot = false;
-  }
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      expect(() => f.store.recoverFailedPrewriterOwner(request)).toThrow('controlled failed owner Journal write');
+      expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            f.db.exec('DROP TRIGGER reject_failed_owner_journal');
+          },
+        ],
+        primaryFailure,
+      );
+    }
+    const recovery = f.store.recoverFailedPrewriterOwner(request);
+    const result = presentSnapshot(recovery);
+    expect(recovery.journalVersion).toEqual({
+      revision: beforeJournal.version.revision + 1,
+      digest: beforeJournal.version.digest,
+    });
+    expect(result.workVersion).toEqual({
+      revision: before.workVersion.revision + 1,
+      digest: canonicalJsonDigest(result.work),
+    });
+    expect(result.ledgerVersion).toEqual({
+      revision: before.ledgerVersion.revision + 1,
+      digest: canonicalJsonDigest(result.ledger),
+    });
+    expect(result.maintenanceGeneration).toBe(before.maintenanceGeneration);
+    requiredValue(result.work, 'recovered owner work');
+    requiredValue(result.ledger, 'recovered owner ledger');
+    requiredValue(result.work.lease, 'recovered owner lease');
+    const recoveredOwnerWork = requiredValue(result.work, 'recovered owner work');
+    requiredValue(recoveredOwnerWork.lease, 'recovered owner lease');
+    const recoveredOwnerLease = requiredValue(recoveredOwnerWork.lease, 'recovered owner lease');
+    expect(recoveredOwnerWork.binding).toEqual(requiredValue(before.work, 'before owner work').binding);
+    expect(recoveredOwnerWork.execution).toEqual(requiredValue(before.work, 'before owner work').execution);
+    expect(recoveredOwnerLease.ticket_id).not.toBe(requiredValue(before.work, 'before owner work').lease?.ticket_id);
+    const ticket = requiredValue(
+      result.ledger.tickets.find((item) => item.ticket_id === recoveredOwnerLease.ticket_id),
+      'recovered owner ticket',
+    );
+    const originalActiveTicket = requiredValue(
+      ledger.tickets.find((item) => item.status === 'active'),
+      'original active ticket',
+    );
+    expect(ticket.exclusive_resources).toEqual(originalActiveTicket.exclusive_resources);
+    expect(ticket.active_resources).toEqual(originalActiveTicket.active_resources);
+    expect(ticket.blocked_resources).toEqual([]);
+    const recoveredClaim = requiredValue(
+      result.ledger.claims.find((claim) => claim.ticket_id === ticket.ticket_id && claim.status === 'active'),
+      'recovered owner claim',
+    );
+    expect(recoveredClaim.resources).toEqual(activeClaim.resources);
+    expect(ticket.claim_ids).toEqual([recoveredClaim.claim_id]);
+    expect(recoveredClaim.lease_expires_at).toBe(requiredValue(ticket.expires_at, 'recovered ticket expiry'));
+    expect(result.ledger.tickets.find((value) => value.ticket_id === activeTicket.ticket_id)?.status).toBe('read_only');
+    expect(result.ledger.claims.find((value) => value.claim_id === activeClaim.claim_id)?.status).toBe('recovered');
+    expect(Date.parse(requiredValue(ticket.expires_at, 'recovered ticket expiry'))).toBeGreaterThan(Date.now());
+    expect(requiredValue(f.store.readWorkSessionJournal(f.identity), 'recovered journal').state).toEqual(journal);
+    expect(
+      requiredValue(
+        f.db
+          .query<{ payload: string }, [string]>(
+            'SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?',
+          )
+          .get(workspaceId),
+        'original continuation receipt',
+      ).payload,
+    ).toBe(receiptBytes);
+    expect(
+      requiredValue(f.store.readDeliveredWorkContinuation(f.identity, 1), 'delivered continuation').item_statuses,
+    ).toEqual(['reported', 'reported']);
+    expectHistorySnapshotAfterOwner(f.store, result.work);
+    const current = f.store.readHostStateSnapshot(f.identity),
+      currentJournal = requiredValue(f.store.readWorkSessionJournal(f.identity), 'current journal');
+    expect(() =>
+      f.store.recoverFailedPrewriterOwner({
+        ...request,
+        expectedWork: requiredValue(current.workVersion, 'current work version'),
+        expectedLedger: requiredValue(current.ledgerVersion, 'current ledger version'),
+        expectedJournal: currentJournal.version,
+      }),
+    ).toThrow('exact expired full-resource ticket and claim differ');
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(current);
+  });
+  preserveHostFixtureRoot = false;
 });
 
 test('initial Source Host continuation uses genuine unissued engine state and persists one exact receipt', async () => {

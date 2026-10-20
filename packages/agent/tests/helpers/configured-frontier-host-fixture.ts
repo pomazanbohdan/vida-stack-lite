@@ -22,12 +22,79 @@ import type {
 } from '../../src/orchestration/delivered-work-continuation.ts';
 import type * as continuationProjection from '../../src/orchestration/delivered-work-continuation.ts';
 import { configuredFrontierRepairFixture } from './configured-frontier-fixture.ts';
+import { hasUnresolvedFixtureOperations } from './unresolved-governance-fixture.ts';
 import {
   continuationFixture,
+  cleanupContinuationFixtures,
   runtimeRoot,
   trackContinuationFixtureRoot,
   retainContinuationFixtureRoot,
 } from './delivered-work-continuation-fixture.ts';
+
+/** One serial case owns setup, database closure and retained-root disposition within the default deadline. */
+export async function withConfiguredFrontierHostFixture(
+  action: (
+    fixture: Awaited<ReturnType<typeof continuationFixture>>,
+    setup: ReturnType<typeof configuredFrontierRepairHostRoot>,
+  ) => void | Promise<void>,
+): Promise<void> {
+  const deadline = performance.now() + 5_000;
+  let ownedRoot: string | undefined;
+  let fixture: Awaited<ReturnType<typeof continuationFixture>> | undefined;
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  const retain = () => {
+    if (ownedRoot) retainContinuationFixtureRoot(ownedRoot);
+  };
+  try {
+    const setup = configuredFrontierRepairHostRoot('delivery', false, (created) => {
+      ownedRoot = created;
+    });
+    const databasePath = path.join(setup.root, setup.config.control.work_root, 'session-handoff.v1.sqlite');
+    mkdirSync(path.dirname(databasePath), { recursive: true });
+    fixture = await continuationFixture({
+      root: setup.root,
+      config: setup.config,
+      workspaceId: setup.workspaceId,
+      databasePath,
+      repositoryRoot: setup.root,
+      identity: setup.input.receipt.request.identity,
+    });
+    if (performance.now() >= deadline) throw new Error('Configured frontier setup exhausted its case deadline.');
+    await action(fixture, setup);
+    if (performance.now() >= deadline) throw new Error('Configured frontier body exhausted its case deadline.');
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          if (!completed || performance.now() >= deadline) retain();
+        },
+        () => {
+          if (fixture && hasUnresolvedFixtureOperations(fixture.db)) retain();
+        },
+        () => {
+          try {
+            fixture?.closeDatabase();
+          } catch (error) {
+            retain();
+            throw error;
+          }
+        },
+        () => {
+          if (!completed || performance.now() >= deadline) retain();
+          cleanupContinuationFixtures();
+          if (performance.now() >= deadline)
+            throw new Error('Configured frontier cleanup exhausted its case deadline.');
+        },
+      ],
+      primaryFailure,
+    );
+  }
+}
 
 type MutableCoordinationTicket = {
   -readonly [
