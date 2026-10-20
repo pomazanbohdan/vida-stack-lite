@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation is Source commit `08586513691d66f5921518297bf135370d1da8e5`, run `facb5e01-a795-4b96-b075-2d001859b0f9`: F1013/1129, L4394/4970, S4661/5300 and B4768/5642. The run records 302PASS/0FAIL and 3190 assertions in 152.131 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 116 missing functions under 48 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
+The active contour is `bun-host-state`. Its latest complete observation is Source commit `d6e31629476c2054cf4687103115c6e2152dde4a`, run `95778175-314f-4a39-9b48-c081fe44a1cf`: F1019/1129, L4446/4970, S4715/5300 and B4798/5642. The run records 303PASS/0FAIL and 3243 assertions in 155.805 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 110 missing functions under 47 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -40,10 +40,10 @@ its lookup case into the active Host selection, with exact-CAS Journal
 mutation/restore and acquired-root custody. Local recovery-review guards and
 reservation transitions are now measured through existing native SQLite fixtures.
 Qualified-code Host consistency, freshness, rollback and exact history-bound retry
-are now measured, with shared test-only endpoint mappings. The next failed-owner
-packet is implemented and focused/static checked; publish its reviewed bytes,
-obtain matching SDK inputs and run one complete same-contour stage. WORK retains
-the assertions, check results, exact pin and limits of the fixture proof.
+are now measured, with shared test-only endpoint mappings. Failed-owner recovery and rollback are now measured. Next inspect the existing
+expired-local-lease recovery fixture and its remaining closures; do not fabricate
+accepted Source or producer evidence. WORK retains exact measured bindings, checks
+and the limits of synthetic fixture proof.
 Qualified closed-producer cache retirement has resolved the prior capacity
 forecast: the comprehensive batch reclaims3791466496durable bytes and leaves
 6242443264free,4094959616above the unchanged admission floor. Its81 exact cache
