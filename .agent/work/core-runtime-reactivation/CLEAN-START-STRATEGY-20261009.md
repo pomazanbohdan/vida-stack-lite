@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date: 2026-10-19. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
+Status date: 2026-10-20. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
 
 ## Objective
 
@@ -41,288 +41,56 @@ Preserve complete Source/test selections, deadlines, report custody and UNKNOWN
 semantics. Do not exclude paths, trim assertions or weaken gates to create a
 maximum. Keep a blocked contour active and record its exact GAP until resolved.
 
-The cycle has recorded10executable exact observations and1separate data-only
-observation, each bound to its own Source/image; WORK owns their retained stages
-and the independent BLOCKED operation status. The active contour is
-`bun-host-state`. The captured documentation, setup custody and split wave-chain
-cases are repaired. The latest two-file stage still ended UNKNOWN after270.757s,
-with repeated60s contained-controller setup failures and no complete counters.
-The first-failure fence, raw output and qualifier phase retention are published
-in35445c4. Its next stage still ended UNKNOWN after270.839s, with one60s setup
-attempt rather than four and no complete counters. The retained CPU profile
-identifies repeated writer-CAS sidecars for a presence-only upgrade guard.
-The presence-only observation corrections are published through4ae4a36. Its stage
-completes all270tests in201.043s under the unchanged deadlines and publishes complete
-counters, but F610/1128,L2346/4967,S2507/5297,B2167/5640 still fail exact100.
-Use its existing function inventory to repair uncovered behavior in this same
-contour. Reconcile existing maintained tests/helpers for the135uncovered outer
-owners before authoring duplicates. Preserve locked configuration byte readers,
-fresh barriers, complete Source scope, explicit resource review and denominators.
-Run the next full stage only after a checked causal test patch.
-The first uncovered-behavior packet adds Host-specific corrective authorization
-and unprepared-release contracts through existing shared fixtures:77focused
-assertions pass, including native rollback/idempotence and all three CAS fences.
-Blind Luna's wrong-stage near-miss finding is fixed; the bounded resource review
-and exact Host test pin are refreshed without widening the selection. The next
-single complete stage on ee67fa0 finishes272tests in225.818s and advances counters
-to F652/1128,L2502/4967,S2680/5297,B2315/5640. Its paired operation is still BLOCKED;
-exact historical closure remains16/45. The next checked Source packet directly
-tests terminal correction-generation repair, including real Work/Journal receipt
-normalization, native rollback and exact retries through existing shared fixtures.
-Its55focused assertions pass. The039523c stage subsequently fails: two20s cases
-overrun and the runner exhausts its unchanged budget before publishing complete
-counters. Preserve its complete terminal outcome and partial evidence. The next
-packet fixes a native exclusive-transaction primary-error loss, adds genuine
-task-source projection controls, and reuses the maintained Source prewriter leg
-for fixture setup. Deadline-aware cleanup retains late roots after the paired
-DB closes. Targeted existing public TRACE/PLAN regressions pass; full coverage
-and timing qualification remain with the next single changed-input stage.
-The073180a stage closes all processes in235.101s, but one20s terminal repair case
-still fails at20.159s; no new counters are published. Its late root is retained
-and observed on durable scratch. The next checked patch skips only unused final
-preparation inputs for that repair and reuses synthesis-only Source setup for
-readonly cases. Targeted terminal repair, readonly public release and writer
-capture/rollback/retry pass; both test-byte resource pins are refreshed. Keep the
-same contour active and measure the changed inputs once after publication.
-That ea86777 stage now completes in200.665s and publishes
-F702/1129,L2653/4966,S2842/5296,B2514/5640. It remains nonexact with BLOCKED
-operation status; historical exact closure is16/45. The next checked packet
-reuses the maintained native Task-source coordination fixture for Host
-preparation/inspection, ownership, verifier and four-dimensional CAS rollback
-tests. Its3cases/53assertions and the preserved2async issue cases/26assertions
-pass. The trusted callback is explicitly a unit seam, not external authorization.
-Post-open setup failure now preserves primary/close errors and its private root;
-the reviewed Host test resource pin is refreshed without selection/budget drift.
-Its43f2d0b stage completes in209.639s and publishes
-F724/1129,L2773/4966,S2969/5296,B2661/5640, still nonexact/BLOCKED. The next
-packet reuses the existing trusted policy mock for native issue, no-replay retry,
-action-CAS rejection, UNKNOWN retention and competing-operation fencing, plus
-three policy denial variants. Two new cases pass39assertions; the two existing
-async issue regressions pass26assertions after extraction. No argv is executed
-or observed binding synthesized; the expected-UNKNOWN fixture remains retained.
-Its b8e5a3f stage completes in236.172s:283PASS/0FAIL,2279assertions,
-F758/1129,L3003/4966,S3209/5296,B2945/5640, still nonexact/BLOCKED. The next
-checked packet adds the configured-root issued/UNKNOWN resolver fence and reuses
-the existing native delivered-work fixture for continuation, exact beforeimages,
-history, lookup and no-reissue retry. Six focused Host cases pass125assertions;
-old coordination cases pass26. The continuation cleanup keeps its existing
-unresolved-state check before close and the unchanged5s deadline after close.
-These remain trusted Host unit seams with protected failure/UNKNOWN evidence.
-The0f1dc92 stage is complete in204.972s:284PASS/0FAIL,2312assertions,
-F799/1129,L3266/4966,S3484/5296,B3421/5640, still nonexact/BLOCKED. Reused
-inventory shows330uncovered functions/closures under98outer owners. The next
-checked batch reuses that same continuation case for18additional terminal,
-absence, missing-lineage and missing-verifier denial assertions;49assertions pass
-in0.580s with no extra fixture, DB or selected file. The reviewed Host pin is
-refreshed, preserving selection/budget/ownership. Its a4bbe80 stage now completes
-in221.942s:284PASS/0FAIL,2330assertions, F813/1129,L3296/4966,S3517/5296,
-B3446/5640, still nonexact/BLOCKED. Reused inventory identifies316uncovered
-functions/closures under92outer owners. The next packet extracts the genuine
-Initial Source admission/bridge fixture for the native Host case and existing
-public regressions. One current request proof replaces duplicated snapshots;
-Host verification remains fresh. Native26assertions and original public producer
-86assertions pass; strict180files and scoped lint pass. Blind resource review
-confirms unchanged private roots, selection and budgets. The795ffb2 stage now
-completes285PASS/0FAIL,2356assertions in215.043s and publishes
-F829/1129,L3420/4966,S3643/5296,B3556/5640. The new native case passes under
-coverage in3.253s against the unchanged5s limit. Operation status remains BLOCKED;
-300functions/closures under91outer owners remain uncovered. Continue this same
-contour with genuine completed-Source-report recovery and retained Work-history
-lineage through existing helpers. Do not fabricate receipts, widen selection or
-raise a budget to reach the remaining branches.
-Before the dense recovery setup, the next bounded packet reuses the same genuine
-Initial Source case for all four CAS fences, verifier-error rollback, actual late
-Source drift and immutable retry denial. It passes53assertions in3.049s under the
-unchanged5s limit. Preserve both fresh verifier calls and exact document restoration;
-review/refresh the existing pin, publish, then measure the changed input once.
-The880676f stage fails three deadlines in262.693s with no complete counters.
-Preserve its original failed-stage projection and image;795ffb2 remains the latest
-complete observation. Next replace repeated denial-oracle API decoding with exact
-native beforeimages while keeping real API controls, and use the minimum archive
-node-boundary rows with explicit timeout retention. The three changed cases pass
-115assertions under unchanged limits; full timing qualification, especially the
-corrective constructor, remains pending the next single changed-input stage.
-The98bce8b stage now completes285PASS/0FAIL,2387assertions in222.759s.
-All three prior timeout cases pass under unchanged limits:3.291s/14.523s/1.721s.
-F/L/S/B remain829/1129,3420/4966,3643/5296,3556/5640, still nonexact/BLOCKED.
-This is an assertion/reliability improvement, not a coverage gain. Do not repeat
-the unchanged stage. Continue the dense genuine recovery/history producer path,
-using the retained300-function/91-owner inventory and explicit native lineage.
-The next checked packet adds genuine completed-report recovery through the
-configured ledger, actual admitted capability and real writer reservation.
-Reuse the shared Initial Source fixture and current-owner expiry reader. Keep
-private fixture effects distinct from native/consumer proof and preserve Work
-Source binding while checking evolved Journal scope. Focused recovery passes
-26assertions in18.131s under the existing20s complex-case allowance; explicit
-monotonic phase/cleanup guards now retain exhausted roots. Prior Host/public
-producer regressions pass53/86assertions. Review/refresh the same two-file pin,
-publish through ordinary hooks, obtain matching CI SDK inputs, then measure the
-changed contour once. No other contour or mutation producer may start. WORK
-retains failure roots, review, timing attribution and final numeric bindings.
-That c799bc8 stage fails its new reservation setup at21.278s under the unchanged
-20s ceiling; no complete coverage counters are published. Preserve stage-zseE4d
-and projection1045. Remove the confirmed duplicate Journal resume, attribute
-actual reservation phases with the existing opt-in observer, then repair the
-measured setup bottleneck before the next changed-input stage. Runtime currency,
-approval, CAS and receipt-production checks remain real and uncached.
-Sampled cost identifies repeated nested project-context config loads. Reuse its
-existing private builder inside the outer start/end checked batch;18boundary
-tests/200assertions pass, with blind review of the retained freshness invariant.
-Split rollback and successful recovery/history into separate fresh cases under
-unchanged20s bounds. Measure total work honestly; the split adds setup and is
-not a throughput improvement. Refresh the final pin after targeted checks, then
-publish and run one matching changed-input stage. Retain all earlier failures.
-The dcaa148 stage-Nka1td completes287PASS/0FAIL,2420assertions in194.501s.
-F864/1129,L3585/4966,S3814/5296,B3820/5640 gain35/165/171/264covered items
-against the prior complete98bce8b run. Recovery commit/rollback cases pass
-17.382/19.491s under unchanged20s bounds. Operation stays BLOCKED/nonexact,
-historical exact16/45, frozen/CRAP/mutation deferred. Reused report inventory
-now has265uncovered functions under89owners; stored-Work history falls28to19.
-Next prepare genuine unissued readonly frontier/history through the existing
-Initial Source and synthesis helpers, preserving actual receipt and owner
-lineage. Do not chain blindly from completed-report recovery, fabricate receipts
-or repeat these unchanged complete inputs. WORK owns exact Source/SDK bindings.
-The native readonly-frontier packet is now implemented through actual Initial
-Source continuation and synthesis only. Shared request/proof/verifier helpers
-serve the existing public caller and new Host case. Its21assertions pass8.471s
-under the existing20s allowance; no receipt, engine state or runtime acceptance
-is fabricated. Finish caller regression, independent review and pin/resource
-check, publish, then run exactly one changed-input stage before accepting gains.
-The a2d4b7b stage-hwbTyf fails at270.755s without complete counters. Readonly
-frontier passes10.885s, but a later recovery reservation setup takes38.714s and
-fails its unchanged20s bound. Preserve projection1048/image/failed fixture.
-Defer new cases; first resolve the actual reservation construction/wait in this
-same contour. Review a supported genuine approved Host producer for this Host
-unit subject; retain configured approval/preflight/CAS/ownership or reject that
-route. No budget increase or unchanged retry is permitted. Latest complete
-F/L/S/B remains dcaa148, not these partial PASS rows.
-The supported explicit retained-host-tmpfs alternative now completes on2a82e24:
-stage-jFAIDI288PASS/0FAIL,2441assertions in142.586s, complete capture/group/boot/
-image closure. F877/1129,L3683/4966,S3915/5296,B3968/5640 gain13/98/101/148
-covered items over dcaa148. Both recovery cases pass17.128/17.599s; readonly
-frontier8.878s. Operation stays BLOCKED/nonexact, historical exact16/45.
-All actual fsync/CAS/approval boundaries and budgets remain; no power-loss
-durability claim is made. Root retains the entire new scratch in a verified
-overlay tar and keeps originals; WORK owns its SHA, Source/SDK and resource
-bindings. Previous failure remains separate. Current report-only inventory has
-252uncovered functions/89owners. Resume new native unit cases in this same
-contour; the migration wrapper may use a fresh configured root and harmless
-callbacks, with no real consumer effects or legacy-workflow rewrite.
-That wrapper packet now has three passing default5s cases/81assertions: exact
-baseline/restore retries, known no-effect callback failure and inflight denial.
-The fresh fixture records root ownership before async setup and retains the
-expected inflight root without replay. Strict181files and scoped lint pass.
-Finish the final bounded review/pin control and normal publication, then one
-changed-input stage with matching SDK and verified durable scratch retention;
-do not count targeted passes as exact coverage.
-Its de8a330 changed-input stage-BZK3xP now completes291PASS/0FAIL,
-2522assertions in136.719s, with complete capture/group/boot/image checks and
-published F886/1129,L3769/4966,S4007/5296,B4019/5640. Gains are9/86/92/51;
-all nine missing wrapper functions/closures now execute, not all branches.
-Current inventory243functions/88owners; exact16/45 stays unchanged. Entire new
-tmpfs scratch is durably archived/compared with originals retained; WORK owns
-bindings/custody. Next batch uses small native maintenance/storage-identity API
-cases without repeating kernel setup. A60s full-contour target is unqualified:
-measure dominant retained-log costs first, preserve300s and all exact gates.
-The next2711562 native maintenance/storage packet completes stage-o2A0tZ in
-118.026s,294PASS/0FAIL,2565assertions, complete terminal/input guarantees.
-F890/1129,L3786/4966,S4024/5296,B4026/5640 gains4/17/17/7; remaining inventory
-239functions/85owners, historical exact16/45. WORK owns matching SDK, image and
-verified full scratch archive. No throughput code changed: lower elapsed time
-is not a causal speedup claim. Bounded cost review found both prior children
-around127s and no safe single change supporting60s. Keep current300s and one
-contour; investigate genuine setup/public-child costs without dropping states
-or activating unqualified parallelism. Continue native history/recovery cases
-from the current report-only inventory, with actual receipt producers.
-The next native history read is added to the existing retired-source case after
-real owner retirement, before Source mutation, without another fixture/kernel/
-reservation/CLI. Actual-file oracle plus invalid/missing attempt, owner/root,
-path and nesting denials preserve unchanged Host/Journal; focused38assertions
-pass8.645s under unchanged composite allowance, strict181/scoped lint pass.
-Finish final blind review/pin control, publish, then one changed-input stage;
-numeric counters remain2711562 until a new complete report is accepted.
-The bcbfbd6 stage-8vDqai now completes294PASS/0FAIL,2574assertions in145.177s,
-with complete terminal/input checks and published F894/1129,L3807/4966,
-S4045/5296,B4058/5640. Gains4/21/21/32 leave235functions/85owners uncovered;
-historical Source binding pairs remain a distinct genuine-producer task. Entire
-new scratch is durably archived/compared and original retained; WORK owns all
-bindings. Across three packets gains17/124/130/90, historical exact16/45 stays.
-Observed complete range118–145s does not support a60s timeout or causal speedup.
-Reuse the accepted report, keep one contour and batch related assertions into
-existing fixtures without inventing receipts or external effects.
-The next corrective-authority packet adds18assertions to the existing genuine
-failed-final fixture, reaching retrieval and execution-binding APIs without
-another kernel/root/approval. Corrected focused case passes69assertions in
-12.665s under unchanged20s allowance; strict181/scoped lint pass. The original
-invalid-UUID negative fixture is retained and corrected to reach the actual
-authority comparison. Finish pin/control and normal publication, then one
-matching-SDK stage; latest numeric counters remain bcbfbd6 until completion.
-The same packet's new genuine native rebind case exposes and repairs a P0
-sequencing defect: rebind now preserves VERIFY/source seal/counts until explicit
-corrective authorization owns the single transition and Journal replacement.
-Native targets pass147assertions; the existing public runtime-rebind caller
-passes43. Blind Luna plan/final review finds no remaining blocker. Scope approval,
-CAS/lease/UNKNOWN guards, runtime-proof retirement and historical receipts stay
-intact. Finish normal publication and the one changed-input stage; no Runtime
-cutover, consumer effect or exact-contour closure is claimed from targeted tests.
-The199041d stage now completes295PASS/0FAIL,2668assertions in156.759s:
-F924/1129,L3941/4966,S4189/5296,B4222/5642, still BLOCKED/nonexact.
-Report-only inventory falls to205missing functions/78owners. Complete custody
-checks and verified durable scratch archive are recorded in WORK. The three-hour
-audit keeps static→related targets→review/publication→one matching-SDK stage;
-two snapshot-wrapper oracle mistakes are fixed and the Bun skill records their
-exact-shape check. More children/writers and repeated full stages have no
-qualified benefit here. Continue native retired-Source capture/recovery from the
-current inventory, without restarting the cycle or widening the selection.
-The next packet reuses the same active-overlap fixture for actual later writer
-completion/report/release and exact later-grant capture. A shared fixture helper
-also serves the existing stopped retry case, preserving its original assertions.
-Five altered witnesses deny unchanged state; exact capture/retry settles only the
-original failed issue. Both targets pass65assertions, strict181/scoped lint pass,
-and blind Luna final review finds no blocker. No new fixture or budget is added.
-Finish pin/control/publication, then one matching-SDK stage before counting gains.
-The68655b6 stage now completes295PASS/0FAIL,2706assertions in213.501s:
-F935/1129,L3961/4966,S4211/5296,B4260/5642. Inventory falls194missing functions
-under78owners; retired capture falls14to3missing closures. Custody/image checks
-and durable scratch comparison pass; WORK owns exact bindings and disk facts.
-The longer single sample is not a qualified causal performance result: retained
-log comparison shows broad slowing in unchanged Host cases too. Keep deadlines,
-one numeric producer and two reviewed children; do not repeat an unchanged suite
-to manufacture a speedup. Continue the same contour from this inventory.
-The next causal packet repairs error loss in async historical and sync working
-artifact mutation: primary/restoration/explicit SQL rollback reasons remain
-inspectable with original cause. It removes only the async single-caller restore's
-unused duplicate-call flag; the sync two-caller guard remains. One admitted
-fixture covers the shared failure matrix:9focused cases/104assertions and10
-existing historical callers pass, strict181/scoped lint pass, blind Luna review
-reports no blocker. Preserve its explicit local-driver fault-seam limit and
-original red evidence. Publish normally, then one matching-SDK stage. Genuine
-configured-frontier failed-prewriter producer lineage remains an open prerequisite;
-do not replace it with seeded receipts from older unit tests.
-Reuse current
-focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
-resource review permits the existing two-worker supervisor only for its pinned
-Host-state selection on the reviewed Linux provider. Complete stage qualification
-is pending; all other selections retain their existing serial fallback.
-No coverage milestone supplies
-frozen/mutation closure, and historical exact counts remain16/45.
+The active contour is `bun-host-state`. The latest complete Source-bound
+observation is b2492fb, run67c4b045-5c0e-4ca4-9e64-7f488a3a3d56:
+F938/1129, L4008/4968, S4259/5298 and B4281/5642. All296tests pass with
+2786assertions in153.589s. Coverage is nonexact and operation status remains
+BLOCKED. Historical exact contours remain16/45. Frozen complexity, CRAP and
+mutation remain deferred and unqualified. WORK owns the full input, SDK, image,
+process, archive and resource bindings.
 
-For each contour, use the existing one-contour stage route:
+Continue from the existing report-only inventory, now191missing functions under
+76owners. Resolve uncovered behavior through maintained native fixtures, without
+seeded continuation receipts or fabricated engine history. The proposed fresh
+configured-frontier route still needs a verified developer-frontier producer;
+ordinary initial admission alone does not establish that prerequisite.
+
+For each correction packet:
+
+1. Inspect the current report and genuine producer prerequisites. Keep one
+   Source writer and bounded independent blind Luna research or review.
+2. Make the causal correction and reuse related fixture setup. Preserve exact
+   assertion identities, fresh barriers, CAS, authorization and UNKNOWN semantics.
+3. Run static checks and the affected focused cases/callers. Complete review,
+   ordinary hooks, commit and normal push. Build/install run no suites.
+4. Obtain matching SDK inputs only when selected tests require them. Form one
+   immutable image and run one complete selected-contour stage.
+5. Observe process/group/capture/input closure, preserve the entire new scratch
+   durably, and let the maintained projection import the attributable result.
+   Reuse the report for the next repair; do not repeat unchanged full selections.
+
+Use the existing one-contour stage route:
 
 ```sh
 bun run test:contour:stage --contour <name> --lane coverage --output <absolute-existing-canonical-output-directory>
 ```
 
-Do not use the all-contour campaign's `--all` or `--unclosed` selectors in this sequential phase. Keep
-frozen CRAP, complexity qualification and mutation outside this F/L/S/B cycle.
-The automatic projection remains the sole metric ledger. Reuse retained
-counters and input images only when their complete input bindings still match;
-historical maxima and focused checks do not establish a fresh contour result.
+Do not use the all-contour campaign's `--all` or `--unclosed` selectors in this
+phase. WORK's two-file resource review permits the existing two-worker supervisor
+only for its digest-pinned Host-state selection on the reviewed Linux provider.
+Other selections retain their existing serial fallback. Keep per-file cases serial,
+default5s and justified existing case exceptions,300s coverage/330s stage envelopes,
+worker/memory caps and the2147483648-byte admission floor unchanged.
 
-The historical coverage-only campaign completed all 44 selected stages on 567ab50.
-Its terminal classification and the separate exact governance milestone remain
-in WORK. The remaining notes in this section record that earlier portfolio batch;
-they do not authorize selecting or measuring another contour in the active cycle.
+The automatic projection is the sole metric ledger. Reuse counters/images only
+under their actual complete input bindings. Focused PASS, historical maxima and
+coverage milestones do not establish fresh exact or frozen/mutation acceptance.
+After terminal closure, follow TESTING's durable scratch-retention contract before
+another producer. Preserve all original FAIL/TIMEOUT/UNKNOWN evidence.
+
+Earlier sequential packet history, failed stages and portfolio decisions remain
+in WORK and in [the prior plan at b2492fb](https://github.com/pomazanbohdan/vida-stack-lite/blob/b2492fb2b6b85c9b53ec7d164aa7dec7d9f5921d/.agent/work/core-runtime-reactivation/CLEAN-START-STRATEGY-20261009.md).
+They do not authorize another contour or replace the current order above.
 
 #### Execute captured inputs without measurement worktrees
 

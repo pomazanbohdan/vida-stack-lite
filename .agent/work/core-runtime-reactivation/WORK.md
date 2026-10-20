@@ -15,6 +15,13 @@ numeric producer.
 
 ### Sequential coverage observations and active repair
 
+Latest complete Host-state observation is b2492fb, run
+67c4b045-5c0e-4ca4-9e64-7f488a3a3d56: F938/1129,L4008/4968,S4259/5298,
+B4281/5642,296PASS/0FAIL,2786assertions,153.589s. It remains nonexact/BLOCKED.
+The current report-only inventory has191missing functions under76owners.
+Full bindings and the current three-hour audit are recorded in
+[the artifact-mutation result](#complete-artifact-mutation-observation-and-three-hour-audit).
+
 The cycle recorded the following complete F/L/S/B observations. These keep
 their own Source/input bindings; they are not a same-HEAD global qualification.
 Each retained operation reports BLOCKED independently of its complete counters.
@@ -1077,8 +1084,92 @@ spy entirely in the Host child's owned namespace; all DB fault scopes restore
 before teardown and no global clock, shared process or writable root is added.
 Host pinccc4c8bc20937904eb82f50afae5686897f693c2ea4b34aa38d28dcd408ecdd2;
 stopped-source0c6cd50f, provider/caller/selection and two-worker budgets stay.
-Finish eligibility/docs/hooks and normal publication, then one matching-SDK
-stage. Complete coverage remains68655b6 until its changed-input report closes.
+Eligibility/docs/hooks and normal publication passed. The matching-SDK stage
+has now closed as recorded below;68655b6 remains its prior complete comparison.
+
+### Complete artifact-mutation observation and three-hour audit
+
+Source b2492fb2b6b85c9b53ec7d164aa7dec7d9f5921d is published through ordinary
+hooks,516formatted/523strict files, lint and Knip. SDK CI39387260224 succeeds;
+artifact12248300834 ZIP SHA
+d6b3b6c7b4dcb0846da00d0b1988c9322a1591aea93f1e9775bf8ce925a0b523 matches.
+Stage /workspace/contour-stage-gRtLiI completes in153588.934ms, exit0, complete
+capture, observed group closure and unchanged boot/image inputs. Run
+67c4b045-5c0e-4ca4-9e64-7f488a3a3d56 publishes projection1062 with
+F938/1129,L4008/4968,S4259/5298,B4281/5642. Covered gains over68655b6 are
+3functions,47lines,48statements,21branches. The two additional line/statement
+denominators reflect changed product code, not exclusions or scope reduction.
+Host280PASS/0FAIL,2533assertions,146.29s; stopped16PASS/0FAIL,253assertions,
+139.55s. Total296PASS/0FAIL and2786assertions. Operation remains BLOCKED/nonexact,
+historical exact16/45, diagnostic maxCC279/entryCRAP2162 unqualified, mutation
+deferred. The report-only inventory now has191missing functions under76owners.
+
+Image /workspace/.vida-quality-inputs/758d7c6de3886b14d455096c6c4d809db4f6c17f/repository
+binds Source tree87b1fc0db865539f4e61b4194448b510007d346d, input
+2e2af004c52e39ad63cc9a94ad90dd9f760e7bc2a53fe8ba14e1efe2b29ffdcb,
+manifest SHAc2525aa4036cbb2d43f9859a9d881166c39930a0a18182513f75c06def60d6e7.
+No edits or checks ran against that image during measurement. After observed
+terminal exec2351 and group closure, the new owned functional scratch
+/dev/shm/vida-quality-retained-SvCOO8 (scratch-S5M1Ec;179327602apparent bytes)
+was archived at /workspace/vida-functional-retention-gRtLiI-5HtUPO/scratch.tar,
+206448640bytes, SHAd83a393c2ff917298589fe6e1175698926ed7c873b067520b7af7007415a0376.
+GNU tar compare passes against the unchanged original, including modes/link
+targets. Original scratch, DBs/sidecars, expected UNKNOWN, archive.log and
+scratch.sha256 remain protected. This grants neither replay nor power-loss proof.
+
+Audit window is approximately04:42–07:42UTC on2026-10-20, from actual Git and
+retained stage/target receipts. It is not a complete session/tool-call transcript.
+Script review reuses the existing inventory/projection and captured process
+results. Captured stdout is already cached across routing/diagnostic publication;
+terminal custody, timeout/error classification and exact report routing stay
+with their existing owners. Independent blind Luna found no reproducible defect
+or useful safe simplification in contour-stage, contour-progress-cli and the
+mutation-evidence output/error boundary. Note vida-three-hour-script-audit.md is
+retained in the existing focused diagnostic directory, along with its /tmp original.
+No new runner patch, scan/hash/index pass or duplicate suite is justified by that
+review. BLOCKED numeric status is not turned into PASS by passing tests.
+
+Confirmed fixes during this window include the focused rebind producer's
+stranded correction authority (199041d) and both artifact mutation error masks
+(b2492fb). The shared rollback matrix reuses one real admission/DB/file fixture
+instead of six fresh constructors. Earlier snapshot-wrapper oracle corrections
+and later-grant shared setup are retained in their packets. Repeated verifier
+reads protect freshness and are deliberately kept. Static inspection of the next
+frontier plan also finds an unresolved prerequisite: initial admission starts the
+synthesis frontier, while projectConfiguredPrewriterContinuationRequests requires
+the exact unissued developer frontier and completed prefix. The proposed ordinary
+suspension alone does not prove that route. Retain the Luna route note as design
+evidence, not a qualified producer or fabricated receipt.
+
+Execution choices remain:
+
+1. Selected: static checks, related focused batch plus affected callers, review,
+   normal publication/matching SDK and one complete two-child stage. The latest
+   actual sample is153.589s. Prior changed-input samples are156.759s and213.501s;
+   they do not establish a causal speedup or regression.
+2. Full coverage after every assertion edit repeats capture/SDK/setup. That cost
+   is inferred from retained runs; no extra full experiment was launched.
+3. Serial children might reduce contention, but their same-input timing is
+   unmeasured. A third worker cannot split this two-file reviewed selection
+   without a new resource contract. Keep two children and serial cases per file.
+4. Extra writers on the shared Host file add integration/conflict risk. One Root
+   writer plus bounded read-only Luna review resolves independent uncertainties.
+   No exact tool-call/token saving is claimed without a complete trace.
+
+The current plan duplicated291lines of sequential history, including superseded
+next actions. Replace that timeline with current facts and one executable packet
+order, linking this WORK and its immutable prior Git version. Preserve acceptance,
+task IDs, failed evidence, all-contour restrictions and gitless execution rules.
+This is documentation/read reduction, not a test runtime performance claim.
+
+One filesystem observation after terminal closure shows checkout/stage/evidence
+on overlay with3471351808free bytes, and owned functional tmpfs with7921856512free.
+Both exceed the unchanged2147483648floor. Durable archive leaves3264888832overlay
+bytes,1117405184above that floor. Reuse this observation and existing inventory;
+no broad du/scan/hash or concurrent cleanup was launched. No confirmed obsolete
+unowned cache candidate is available, so nothing is deleted and no resource GAP
+is asserted. Continue the same contour from the current inventory after normal
+documentation checks/commit/push; no unchanged coverage rerun is required.
 
 The earlier plan below led to genuine completed-Source-report recovery and its
 persisted Work history; it is retained context, not a duplicate next task.
