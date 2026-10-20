@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -36,7 +36,9 @@ export async function withConfiguredFrontierHostFixture(
   action: (
     fixture: Awaited<ReturnType<typeof continuationFixture>>,
     setup: ReturnType<typeof configuredFrontierRepairHostRoot>,
+    deadline: number,
   ) => void | Promise<void>,
+  proofKind: 'delivery' | 'normal' = 'delivery',
 ): Promise<void> {
   const deadline = performance.now() + 5_000;
   let ownedRoot: string | undefined;
@@ -47,7 +49,7 @@ export async function withConfiguredFrontierHostFixture(
     if (ownedRoot) retainContinuationFixtureRoot(ownedRoot);
   };
   try {
-    const setup = configuredFrontierRepairHostRoot('delivery', false, (created) => {
+    const setup = configuredFrontierRepairHostRoot(proofKind, false, (created) => {
       ownedRoot = created;
     });
     const databasePath = path.join(setup.root, setup.config.control.work_root, 'session-handoff.v1.sqlite');
@@ -61,7 +63,7 @@ export async function withConfiguredFrontierHostFixture(
       identity: setup.input.receipt.request.identity,
     });
     if (performance.now() >= deadline) throw new Error('Configured frontier setup exhausted its case deadline.');
-    await action(fixture, setup);
+    await action(fixture, setup, deadline);
     if (performance.now() >= deadline) throw new Error('Configured frontier body exhausted its case deadline.');
     completed = true;
   } catch (error) {
@@ -425,4 +427,77 @@ export function configuredFrontierRepairHostRoot(
   input.current = { ...input.current, work: successor, work_version: successorVersion };
   if (proofKind === 'normal') useNormalConfigEndpointProof(input);
   return { root, config, workspaceId, input, intakePath };
+}
+
+export function bindFrontierContractReferences(input: { receipt: ConfiguredFrontierReceipt }): void {
+  const referencePairs: readonly (readonly [
+    'implementation_scope' | 'acceptance_manifest',
+    WorkState['contracts']['scope'],
+  ])[] = [
+    ['implementation_scope', input.receipt.prior_work.contracts.scope],
+    ['acceptance_manifest', input.receipt.prior_work.contracts.acceptance],
+  ];
+  const references: WorkState['lifecycle']['references'] = referencePairs.map(([kind, ref]) => ({
+    schema: 'LifecycleArtifactReference/v1',
+    kind,
+    artifact_schema: ref.schema,
+    record_id: kind,
+    path: ref.path,
+    sha256: ref.sha256,
+    source_revision: input.receipt.prior_work.binding.work_source_revision,
+    scope_id: input.receipt.prior_work.binding.scope_id,
+    ac_ids: input.receipt.prior_work.binding.ac_ids,
+    generation: null,
+    implementation_fingerprint: null,
+    delivery_cycle_id: null,
+    principal: 'fixture-original-owner',
+    decision: 'approved',
+    disposition: 'current',
+  }));
+  const priorWork = { ...input.receipt.prior_work, lifecycle: { ...input.receipt.prior_work.lifecycle, references } };
+  const successorWork = {
+    ...input.receipt.successor_work,
+    lifecycle: { ...input.receipt.successor_work.lifecycle, references },
+  };
+  const priorVersion = { revision: priorWork.revision, digest: canonicalJsonDigest(priorWork) };
+  const originalRequest = { ...input.receipt.request, expectedWork: priorVersion };
+  input.receipt = {
+    ...input.receipt,
+    prior_work: priorWork,
+    prior_work_version: priorVersion,
+    successor_work: successorWork,
+    work_version: { revision: successorWork.revision, digest: canonicalJsonDigest(successorWork) },
+    request: originalRequest,
+    request_digest: canonicalJsonDigest(originalRequest),
+    authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(originalRequest) },
+  };
+}
+
+export function failedFrontierJournalFixture(
+  journal: MastraSessionLedgerState,
+  summary = 'Fixture known packet gap',
+  agentId = 'fixture:readonly',
+  toolCallRef = 'fixture:result',
+): MastraSessionLedgerState {
+  return {
+    ...journal,
+    items: journal.items.map((item) => {
+      const issue_id = randomUUID();
+      return {
+        ...item,
+        issue_id,
+        observation: {
+          schema: 'VidaSessionObservation/v1',
+          action_id: item.request.action_id,
+          issue_id,
+          agent_id: agentId,
+          tool_call_ref: toolCallRef,
+          status: 'reported_failed',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: ['fixture:gap'],
+        },
+      };
+    }),
+  };
 }

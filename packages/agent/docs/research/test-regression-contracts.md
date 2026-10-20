@@ -251,8 +251,9 @@ every producer fence, current-version check and deterministic rebuild fresh.
 
 ### Failed prewriter recovery
 
-Use the cases in `tests/delivered-work-continuation.test.ts` for owner recovery
-and failed-wave correction. These are development behavior checks. They do not
+Use the Host cases in `tests/bun/host-state.test.ts` for owner recovery and
+atomic failed-wave correction, with public CLI/reader cases in
+`tests/delivered-work-continuation.test.ts`. These are development behavior checks. They do not
 form or install a package.
 
 Owner recovery restores only the original expired owner. Check the exact
@@ -275,7 +276,7 @@ asynchronous current-proof callback. The callback sees frozen request data.
 Exercise the public Source handler's recorded-result path for status, inspect
 and exact apply retry; all return the same result without Host or journal writes.
 Changed retry intent must deny.
-Use `tests/helpers/configured-frontier-fixture.mjs` for complete continuation
+Use `tests/helpers/configured-frontier-fixture.ts` for complete continuation
 receipts in engine and packet tests. Keep one constructor. Packet cases retain
 their real accepted contract bytes and every configured completed assignment.
 Derive research results from the filtered workflow wave; raw assignment lists

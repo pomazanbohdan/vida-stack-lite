@@ -1,4 +1,8 @@
+import { pathToFileURL } from 'node:url';
+import { seedOriginalFrontierEngine } from './helpers/original-frontier-engine-fixture.ts';
 import {
+  bindFrontierContractReferences,
+  failedFrontierJournalFixture,
   mutableCoordinationLedger,
   mutableFrontierFixture,
   useNormalConfigEndpointProof,
@@ -11,19 +15,14 @@ import {
 import { prewriterProjectionFixture, configuredFrontierRepairFixture } from './helpers/configured-frontier-fixture.ts';
 import { afterEach, test, expect, spyOn } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { createStep, createWorkflow } from '@mastra/core/workflows';
-import { Mastra } from '@mastra/core/mastra';
-import { LibSQLStore } from '@mastra/libsql';
-import z from 'zod';
-import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { pinnedEnvironment, boundedSpawnSync, executionBudget, readPin } from '../bin/bun.ts';
+import { pinnedEnvironment, boundedSpawnSync, executionBudget } from '../bin/bun.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { runRuntimeCodeRebind, assertCommittedSourceChanges } from '../bin/runtime-code-rebind.ts';
-import type { AgentRuntimeConfig, WorkItemSelection } from '../src/config/runtime-config.ts';
+import type { WorkItemSelection } from '../src/config/runtime-config.ts';
 import type {
   CoordinationLedger,
   ContractReference,
@@ -40,7 +39,6 @@ import type {
 import type { MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
 import type { SessionBridgeObservation, SessionBridgeSnapshot } from '../src/orchestration/mastra-session-bridge.ts';
 import type { SessionHandoffContext } from '../src/orchestration/session-handoff.ts';
-import type { ConfiguredFrontierReceipt } from '../src/orchestration/delivered-work-continuation-repair.ts';
 import type { DeliveredWorkContinuationRequest } from '../src/orchestration/delivered-work-continuation.ts';
 import {
   canonicalJson,
@@ -231,47 +229,7 @@ test.each([0, 12])(
     input.receipt.prior_ledger_version = ledgerBeforeVersion;
     input.receipt.ledger_version = { revision: successorLedger.revision, digest: canonicalJsonDigest(successorLedger) };
     input.receipt.request = { ...input.receipt.request, expectedLedger: ledgerBeforeVersion };
-    const referencePairs: readonly (readonly [
-      'implementation_scope' | 'acceptance_manifest',
-      WorkState['contracts']['scope'],
-    ])[] = [
-      ['implementation_scope', input.receipt.prior_work.contracts.scope],
-      ['acceptance_manifest', input.receipt.prior_work.contracts.acceptance],
-    ];
-    const references: WorkState['lifecycle']['references'] = referencePairs.map(([kind, ref]) => ({
-      schema: 'LifecycleArtifactReference/v1',
-      kind,
-      artifact_schema: ref.schema,
-      record_id: kind,
-      path: ref.path,
-      sha256: ref.sha256,
-      source_revision: input.receipt.prior_work.binding.work_source_revision,
-      scope_id: input.receipt.prior_work.binding.scope_id,
-      ac_ids: input.receipt.prior_work.binding.ac_ids,
-      generation: null,
-      implementation_fingerprint: null,
-      delivery_cycle_id: null,
-      principal: 'fixture-original-owner',
-      decision: 'approved',
-      disposition: 'current',
-    }));
-    const priorWork = { ...input.receipt.prior_work, lifecycle: { ...input.receipt.prior_work.lifecycle, references } };
-    const successorWork = {
-      ...input.receipt.successor_work,
-      lifecycle: { ...input.receipt.successor_work.lifecycle, references },
-    };
-    const priorVersion = { revision: priorWork.revision, digest: canonicalJsonDigest(priorWork) };
-    const originalRequest = { ...input.receipt.request, expectedWork: priorVersion };
-    input.receipt = {
-      ...input.receipt,
-      prior_work: priorWork,
-      prior_work_version: priorVersion,
-      successor_work: successorWork,
-      work_version: { revision: successorWork.revision, digest: canonicalJsonDigest(successorWork) },
-      request: originalRequest,
-      request_digest: canonicalJsonDigest(originalRequest),
-      authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(originalRequest) },
-    };
+    bindFrontierContractReferences(input);
     const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
     mkdirSync(path.dirname(databasePath), { recursive: true });
     const f = await continuationFixture({
@@ -285,29 +243,12 @@ test.each([0, 12])(
     seedFrontierHostFixture(f, input);
     await seedOriginalFrontierEngine(root, config, input);
     const h1 = extraTickets === 0 ? seedQualifiedCodeReaderHop(f, 'H1') : null;
-    const failedBase = input.receipt.successor_journal;
-    const failed: MastraSessionLedgerState = {
-      ...failedBase,
-      items: failedBase.items.map((item) => {
-        const issue_id = randomUUID(),
-          summary = 'Known fixture packet failure';
-        return {
-          ...item,
-          issue_id,
-          observation: {
-            schema: 'VidaSessionObservation/v1',
-            action_id: item.request.action_id,
-            issue_id,
-            agent_id: 'fixture:reviewer',
-            tool_call_ref: 'fixture:failed',
-            status: 'reported_failed',
-            summary,
-            output_digest: canonicalJsonDigest(summary),
-            evidence_refs: ['fixture:gap'],
-          },
-        };
-      }),
-    };
+    const failed = failedFrontierJournalFixture(
+      input.receipt.successor_journal,
+      'Known fixture packet failure',
+      'fixture:reviewer',
+      'fixture:failed',
+    );
     f.db
       .query(
         'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
@@ -2840,125 +2781,6 @@ test('Host reads configured-frontier binding history after later Work progress w
   ).toBe(canonicalJson(input.receipt));
   expect(input.receipt.successor_journal.completed).toEqual(input.receipt.prior_journal.completed);
 });
-
-async function createOriginalFrontierEngine(
-  root: string,
-  config: AgentRuntimeConfig,
-  input: {
-    receipt: ConfiguredFrontierReceipt;
-    prewriterBinding: Parameters<typeof continuationProjection.projectConfiguredPrewriterContinuationRequests>[0];
-  },
-) {
-  const receipt = input.receipt,
-    journal = receipt.prior_journal,
-    selection = input.prewriterBinding.selection;
-  const journalSourceScope = requireFixtureValue(journal.source_scope, 'engine fixture journal source scope');
-  const initial = {
-    work_id: receipt.request.identity.work_id,
-    attempt: 1,
-    workflow_id: receipt.request.action.workflow_id,
-    scope_digest: journalSourceScope.digest,
-    config_digest: receipt.request.priorConfigDigest,
-    selection,
-    observations: [],
-  };
-  const stateSchema = z.object({
-    work_id: z.string(),
-    attempt: z.number().int(),
-    workflow_id: z.string(),
-    scope_digest: z.string(),
-    config_digest: z.string(),
-    selection: z.unknown(),
-    observations: z.array(z.unknown()),
-  });
-  const workflow = createWorkflow({ id: initial.workflow_id, inputSchema: stateSchema, outputSchema: stateSchema });
-  for (const wave of journal.completed) {
-    workflow.then(
-      createStep({
-        id: wave.step_id,
-        inputSchema: stateSchema,
-        outputSchema: stateSchema,
-        suspendSchema: z.object({ requests: z.array(z.unknown()) }),
-        resumeSchema: z.object({ observations: z.array(z.unknown()).min(1) }),
-        execute: async ({ inputData, resumeData, suspend }) => {
-          if (!resumeData) return await suspend({ requests: wave.items.map((item) => item.request) });
-          return { ...inputData, observations: [...inputData.observations, ...resumeData.observations] };
-        },
-      }),
-    );
-  }
-  workflow.then(
-    createStep({
-      id: requireFixtureValue(journal.step_id, 'fixture journal step id'),
-      inputSchema: stateSchema,
-      outputSchema: stateSchema,
-      suspendSchema: z.object({ requests: z.array(z.unknown()) }),
-      resumeSchema: z.object({ observations: z.array(z.unknown()).min(1) }),
-      execute: async ({ suspend }) => await suspend({ requests: journal.items.map((item) => item.request) }),
-    }),
-  );
-  workflow.commit();
-  const file = path.join(root, config.control.work_root, 'mastra-workflows.v1.sqlite');
-  mkdirSync(path.dirname(file), { recursive: true });
-  const storage = new LibSQLStore({ id: 'original-frontier-fixture', url: pathToFileURL(file).href });
-  new Mastra({ workflows: { original: workflow }, storage, logger: false });
-  const run = await workflow.createRun({ runId: journal.run_id });
-  await run.start({ inputData: initial });
-  for (const wave of journal.completed)
-    await run.resume({ step: wave.step_id, resumeData: { observations: wave.items.map((item) => item.observation) } });
-  await storage.close();
-}
-
-async function seedOriginalFrontierEngine(
-  root: string,
-  config: AgentRuntimeConfig,
-  input: {
-    receipt: ConfiguredFrontierReceipt;
-    prewriterBinding: Parameters<typeof continuationProjection.projectConfiguredPrewriterContinuationRequests>[0];
-  },
-) {
-  const payload = path.join(root, 'original-engine-fixture.json');
-  writeFileSync(
-    payload,
-    JSON.stringify({
-      root,
-      workRoot: config.control.work_root,
-      receipt: input.receipt,
-      selection: input.prewriterBinding.selection,
-    }),
-  );
-  const code = `import fs from 'node:fs'; import path from 'node:path'; import {pathToFileURL} from 'node:url'; import {createRequire} from 'node:module';
-const require=createRequire(process.env.VIDA_FRONTIER_PACKAGE); const {createStep,createWorkflow}=require('@mastra/core/workflows'); const {Mastra}=require('@mastra/core/mastra'); const {LibSQLStore}=require('@mastra/libsql'); const {z}=require('zod');
-const {mkdirSync}=fs; const data=JSON.parse(fs.readFileSync(process.env.VIDA_FRONTIER_INPUT,'utf8'));
-${requireFixtureValue.toString()}
-${createOriginalFrontierEngine.toString()}
-await createOriginalFrontierEngine(data.root,{control:{work_root:data.workRoot}},{receipt:data.receipt,prewriterBinding:{selection:data.selection}}); process.exit(0);`;
-  expect(process.versions.bun).toBe(readPin());
-  const executable = process.execPath;
-  const result = boundedSpawnSync(
-    spawnSync,
-    executable,
-    ['-e', code],
-    {
-      cwd: path.join(runtimeRoot, 'packages', 'agent'),
-      windowsHide: true,
-      encoding: 'utf8',
-      env: {
-        ...pinnedEnvironment(executable),
-        VIDA_FRONTIER_PACKAGE: path.join(runtimeRoot, 'packages', 'agent', 'package.json'),
-        VIDA_FRONTIER_INPUT: payload,
-      },
-      budget: executionBudget(60_000),
-    },
-    'fixture original frontier engine',
-  );
-  if (result.error || result.signal || result.status !== 0) retainContinuationFixtureRoot(root);
-  if (result.signal || result.status !== 0)
-    process.stderr.write('Fixture child output: ' + result.stdout + result.stderr + '\n');
-  expect(result.error).toBeUndefined();
-  expect(result.signal).toBeNull();
-  expect(result.status, typeof result.stderr === 'string' ? result.stderr : 'Fixture original frontier failed').toBe(0);
-}
 
 function resumeFrontierBridgeFixture({
   root,

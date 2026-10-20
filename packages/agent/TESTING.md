@@ -50,6 +50,10 @@ payloads as operation evidence. Keep the exact cache inventory and retirement
 events, and preserve original outcomes. For a bounded batch, read shared dependency
 links once and reuse that inventory; recheck cache identity and active ownership
 before deletion. An absent receipt or uncertain dependency excludes the path.
+Qualification must reject an existing output namespace before scanning or writing.
+Create new inventories/events exclusively; a completed retirement manifest cannot
+be overwritten by another qualification. Preserve the original qualifier used by
+past evidence when fixing a retained diagnostic script.
 Reuse the current inventory; do not rescan attachments after every stage. Reuse
 one captured gitless image for compatible coverage/frozen/mutation lanes at the
 same published inputs. Read-only reviews use existing Source, without another worktree.

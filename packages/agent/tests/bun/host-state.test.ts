@@ -1,3 +1,7 @@
+import { readConfiguredContinuationSessionEngineSnapshot } from '../../src/orchestration/session-engine-snapshot.ts';
+import { seedOriginalFrontierEngine } from '../helpers/original-frontier-engine-fixture.ts';
+import { executionBudget } from '../../bin/bun.ts';
+import type { FailedPrewriterTransitionRequest } from '../../src/orchestration/failed-prewriter-transition.ts';
 import { expectHistorySnapshotAfterOwner } from '../helpers/ledger-cache-observer.ts';
 import { afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test, setSystemTime } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
@@ -11,6 +15,8 @@ import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-a
 import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
 import { qualifiedRuntimeCodeEndpointFixture } from '../helpers/qualified-runtime-code-fixture.ts';
 import {
+  bindFrontierContractReferences,
+  failedFrontierJournalFixture,
   seedFrontierHostFixture,
   withConfiguredFrontierHostFixture,
   mutableCoordinationLedger,
@@ -25,6 +31,7 @@ import {
   continuationFixture,
   continuationFixtureRepositoryRoot,
   continuationRequestFor,
+  sourceScope as continuationSourceScope,
   cleanupContinuationFixtures,
   retainContinuationFixtureRoot,
 } from '../helpers/delivered-work-continuation-fixture.ts';
@@ -73,10 +80,7 @@ import type {
   HostStateSnapshot,
   StateVersion,
 } from '../../src/host-state.ts';
-import type {
-  MastraSessionLedgerSnapshot,
-  MastraSessionLedgerState,
-} from '../../src/orchestration/persistent-session-handoff.ts';
+import type { MastraSessionLedgerSnapshot } from '../../src/orchestration/persistent-session-handoff.ts';
 import { validateHostOperationReservation } from '../../src/governance/edictum-boundary.ts';
 import { validateCoordinationLedgerV1 } from '../../src/contracts/envelopes.ts';
 import { validateLifecycleAggregate } from '../../src/lifecycle/lifecycle-state.ts';
@@ -133,7 +137,10 @@ import {
 import { suspendLocalWork, suspendCompletedReadOnlyWork } from '../../src/orchestration/suspend-local-work.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../../src/orchestration/local-work-admission.ts';
 import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-local-work.ts';
-import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.ts';
+import {
+  compareScopedSourceSnapshots,
+  snapshotDeclaredSources,
+} from '../../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
 import {
   createLocalSessionReconciliationVerifier,
@@ -2257,28 +2264,7 @@ test('failed prewriter owner recovery atomically reacquires full resources witho
       );
     activeTicket.expires_at = expired;
     activeClaim.lease_expires_at = expired;
-    const journal: MastraSessionLedgerState = {
-      ...originalJournal,
-      items: originalJournal.items.map((item) => {
-        const issue_id = randomUUID(),
-          summary = 'Fixture known packet gap';
-        return {
-          ...item,
-          issue_id,
-          observation: {
-            schema: 'VidaSessionObservation/v1',
-            action_id: item.request.action_id,
-            issue_id,
-            agent_id: 'fixture:readonly',
-            tool_call_ref: 'fixture:result',
-            status: 'reported_failed',
-            summary,
-            output_digest: canonicalJsonDigest(summary),
-            evidence_refs: ['fixture:gap'],
-          },
-        };
-      }),
-    };
+    const journal = failedFrontierJournalFixture(originalJournal);
     f.db
       .query("UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='ledger'")
       .run(canonicalJson(ledger), canonicalJsonDigest(ledger), workspaceId);
@@ -2444,6 +2430,270 @@ test('failed prewriter owner recovery atomically reacquires full resources witho
     ).toThrow('exact expired full-resource ticket and claim differ');
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(current);
   });
+  preserveHostFixtureRoot = false;
+});
+
+test('Host failed prewriter transition atomically retains failed reports and original receipt while binding fresh requests', async () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  await withConfiguredFrontierHostFixture(async (f, { root, config, workspaceId, input }, deadline) => {
+    bindFrontierContractReferences(input);
+    seedFrontierHostFixture(f, input);
+    await seedOriginalFrontierEngine(root, config, input, executionBudget(5_000, 500, deadline));
+    const failed = failedFrontierJournalFixture(input.receipt.successor_journal);
+    f.db
+      .query(
+        'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
+      )
+      .run(canonicalJson(failed), canonicalJsonDigest(failed), workspaceId, f.identity.work_id);
+    const before = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    const journal = requiredValue(f.store.readWorkSessionJournal(f.identity), 'failed prewriter journal');
+    const source = requiredValue(failed.source_scope, 'failed prewriter source scope');
+    const changed = continuationSourceScope(
+      source.entries.map((entry) => ({
+        ...entry,
+        bytes: requiredValue(entry.bytes, 'failed source entry bytes') + 1,
+        sha256: '9'.repeat(64),
+      })),
+    );
+    const originalProof = input.receipt.request.sourceTransition;
+    if (originalProof.status !== 'closed_config_rebind_proven')
+      throw new Error('Expected fixture configured endpoint proof');
+    const request: FailedPrewriterTransitionRequest = {
+      schema: 'FailedPrewriterTransitionRequest/v1',
+      recovery_id: 'host-fixture-failed-wave',
+      identity: f.identity,
+      attempt: 1,
+      nativeSessionHandle: input.receipt.request.nativeSessionHandle,
+      original_receipt_digest: canonicalJsonDigest(input.receipt),
+      expectedWork: before.workVersion,
+      expectedLedger: before.ledgerVersion,
+      expectedJournal: journal.version,
+      expectedMaintenanceGeneration: before.maintenanceGeneration,
+      currentSourceScope: changed,
+      authorizedSourceChanges: compareScopedSourceSnapshots(source, changed),
+      sourceTransition: originalProof,
+      targetProjectContextDigest: input.receipt.request.targetProjectContextDigest,
+    };
+    const rows = readFixtureHostRows(f.db);
+    const originalBytes = requiredValue(
+      f.db
+        .query<{ payload: string }, [string]>(
+          'SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?',
+        )
+        .get(workspaceId),
+      'original continuation row',
+    ).payload;
+    const receiptTable = () =>
+      f.db
+        .query<SqliteNameRow, [string]>('SELECT name FROM sqlite_master WHERE name=?')
+        .all('agent_host_failed_prewriter_recovery');
+    const beforeTables = receiptTable();
+    expect(beforeTables).toEqual([]);
+    for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal'] as const) {
+      expect(() =>
+        f.store.transitionFailedPrewriter({
+          request: { ...request, [key]: { ...request[key], revision: request[key].revision + 1 } },
+          verifyCurrent: () => {},
+        }),
+      ).toThrow(
+        key === 'expectedJournal'
+          ? 'failed prewriter transition Journal CAS changed'
+          : 'state compare-and-swap conflict',
+      );
+      expect(readFixtureHostRows(f.db)).toEqual(rows);
+    }
+    const proofError = new Error('controlled failed-wave proof');
+    let proofFailure: unknown;
+    try {
+      f.store.transitionFailedPrewriter({
+        request,
+        verifyCurrent: () => {
+          throw proofError;
+        },
+      });
+    } catch (error) {
+      proofFailure = error;
+    }
+    expect(proofFailure).toBe(proofError);
+    expect(readFixtureHostRows(f.db)).toEqual(rows);
+    expect(f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1)).toBeNull();
+    const invalidVerifiers: readonly { verifyCurrent: unknown; message: string }[] = [
+      {
+        verifyCurrent: () => Promise.resolve(),
+        message: 'failed prewriter current endpoint proof must finish synchronously',
+      },
+      { verifyCurrent: async () => {}, message: 'failed prewriter transition requires synchronous current proof' },
+    ];
+    for (const { verifyCurrent, message } of invalidVerifiers) {
+      expect(() => {
+        Reflect.apply(f.store.transitionFailedPrewriter.bind(f.store), undefined, [{ request, verifyCurrent }]);
+      }).toThrow(message);
+      expect(readFixtureHostRows(f.db)).toEqual(rows);
+    }
+    f.db.exec(
+      "CREATE TRIGGER reject_host_failed_wave BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'controlled failed-wave Journal write'); END",
+    );
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      expect(() => f.store.transitionFailedPrewriter({ request, verifyCurrent: () => {} })).toThrow(
+        'controlled failed-wave Journal write',
+      );
+      expect(readFixtureHostRows(f.db)).toEqual(rows);
+      expect(receiptTable()).toEqual(beforeTables);
+      expect(f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1)).toBeNull();
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            f.db.exec('DROP TRIGGER reject_host_failed_wave');
+          },
+        ],
+        primaryFailure,
+      );
+    }
+    const result = presentSnapshot(
+      f.store.transitionFailedPrewriter({
+        request,
+        verifyCurrent: (inspected) => {
+          expect(Object.isFrozen(inspected)).toBe(true);
+          expect(Reflect.set(inspected.sourceTransition.transition, 'target_runtime_code_digest', 'c'.repeat(64))).toBe(
+            false,
+          );
+        },
+      }),
+    );
+    const recovery = requiredValue(
+      f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1),
+      'failed-wave recovery receipt',
+    );
+    expect(recovery.request).toEqual(request);
+    expect(recovery.prior_work).toEqual(before.work);
+    expect(recovery.prior_ledger).toEqual(before.ledger);
+    expect(recovery.prior_journal).toEqual(failed);
+    expect(recovery.successor_work).toEqual(result.work);
+    expect(recovery.successor_ledger).toEqual(result.ledger);
+    expect(recovery.successor_journal.completed).toEqual(failed.completed);
+    expect(recovery.rights_granted).toBe(false);
+    expect(recovery.accepted_result).toBe(false);
+    expect(recovery.runtime_acceptance).toBe(false);
+    expect(result.workVersion).toEqual({
+      revision: before.workVersion.revision + 1,
+      digest: canonicalJsonDigest(result.work),
+    });
+    expect(result.ledgerVersion).toEqual({
+      revision: before.ledgerVersion.revision + 1,
+      digest: canonicalJsonDigest(result.ledger),
+    });
+    expect(result.maintenanceGeneration).toBe(before.maintenanceGeneration);
+    expect(result.ledger.open_generation).toBe(before.ledger.open_generation);
+    const endpoint = originalProof.transition;
+    expect(result.work.binding).toEqual({
+      ...before.work.binding,
+      work_source_revision: changed.digest,
+      config_digest: endpoint.target_config_digest,
+      schema_digest: endpoint.target_schema_digest,
+      runtime_code_digest: endpoint.target_runtime_code_digest,
+      runtime_source_revision: endpoint.target_runtime_code_digest,
+    });
+    expect(result.work.lifecycle).toEqual({
+      ...before.work.lifecycle,
+      revision: before.work.lifecycle.revision + 1,
+      source_revision: changed.digest,
+      config_binding: {
+        config_digest: endpoint.target_config_digest,
+        schema_digest: endpoint.target_schema_digest,
+        runtime_code_digest: endpoint.target_runtime_code_digest,
+      },
+    });
+    expect(result.work.execution).toEqual(before.work.execution);
+    const priorTicket = requiredValue(
+      before.ledger.tickets.find((ticket) => ticket.ticket_id === requiredLease(before.work).ticket_id),
+      'prior failed-wave ticket',
+    );
+    const priorClaim = requiredValue(
+      before.ledger.claims.find((claim) => claim.ticket_id === priorTicket.ticket_id && claim.status === 'active'),
+      'prior failed-wave claim',
+    );
+    const nextTicket = requiredValue(
+      result.ledger.tickets.find((ticket) => ticket.ticket_id === requiredLease(result.work).ticket_id),
+      'successor failed-wave ticket',
+    );
+    const nextClaim = requiredValue(
+      result.ledger.claims.find((claim) => claim.ticket_id === nextTicket.ticket_id && claim.status === 'active'),
+      'successor failed-wave claim',
+    );
+    expect(nextTicket.ticket_id).not.toBe(priorTicket.ticket_id);
+    expect(nextTicket.exclusive_resources).toEqual(priorTicket.exclusive_resources);
+    expect(nextTicket.active_resources).toEqual(priorTicket.active_resources);
+    expect(nextTicket.blocked_resources).toEqual([]);
+    expect(nextTicket.claim_ids).toEqual([nextClaim.claim_id]);
+    expect(nextClaim.resources).toEqual(priorClaim.resources);
+    expect(nextClaim.lease_expires_at).toBe(requiredValue(nextTicket.expires_at, 'successor failed-wave expiry'));
+    expect(result.ledger.tickets.find((ticket) => ticket.ticket_id === priorTicket.ticket_id)).toEqual({
+      ...priorTicket,
+      status: 'read_only',
+      active_resources: [],
+      blocked_resources: [],
+      expires_at: null,
+    });
+    expect(result.ledger.claims.find((claim) => claim.claim_id === priorClaim.claim_id)).toEqual({
+      ...priorClaim,
+      status: 'recovered',
+    });
+    expect(recovery.journal_version).toEqual({
+      revision: journal.version.revision + 1,
+      digest: canonicalJsonDigest(recovery.successor_journal),
+    });
+    expect(requiredValue(f.store.readWorkSessionJournal(f.identity), 'recovered wave').state).toEqual(
+      recovery.successor_journal,
+    );
+    expect(recovery.successor_journal.items.length).toBeGreaterThan(0);
+    for (const item of recovery.successor_journal.items) {
+      expect(item.issue_id).toBeNull();
+      expect(item.observation).toBeNull();
+      expect(failed.items.some((prior) => prior.request.action_id === item.request.action_id)).toBe(false);
+    }
+    const currentEngine = readConfiguredContinuationSessionEngineSnapshot(
+      {
+        ...input.prewriterBinding,
+        context: { ...input.prewriterBinding.context, scope_digest: changed.digest },
+        runId: requiredValue(input.receipt.prior_work.execution.run_id, 'original engine run'),
+      },
+      input.receipt,
+      recovery,
+    );
+    expect(currentEngine.status).toBe('suspended');
+    expect(currentEngine.run_id).toBe(requiredValue(input.receipt.prior_work.execution.run_id, 'original engine run'));
+    expect(currentEngine.requests).toEqual(recovery.successor_journal.items.map((item) => item.request));
+    for (const failedItem of failed.items) {
+      expect(
+        f.store.findArchivedReportedObservation(
+          f.identity.work_id,
+          1,
+          requiredValue(failedItem.observation, 'failed observation'),
+        ),
+      ).toEqual(failedItem);
+    }
+    expect(
+      requiredValue(
+        f.db
+          .query<{ payload: string }, [string]>(
+            'SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?',
+          )
+          .get(workspaceId),
+        'original continuation row',
+      ).payload,
+    ).toBe(originalBytes);
+    const afterRows = readFixtureHostRows(f.db);
+    expect(() => f.store.transitionFailedPrewriter({ request, verifyCurrent: () => {} })).toThrow(
+      'state compare-and-swap conflict',
+    );
+    expect(readFixtureHostRows(f.db)).toEqual(afterRows);
+  }, 'normal');
   preserveHostFixtureRoot = false;
 });
 

@@ -41,9 +41,12 @@ mutation/restore and acquired-root custody. Local recovery-review guards and
 reservation transitions are now measured through existing native SQLite fixtures.
 Qualified-code Host consistency, freshness, rollback and exact history-bound retry
 are now measured, with shared test-only endpoint mappings. Failed-owner recovery and rollback are now measured. Expired-local-lease CAS/proof fences, native rollback, recovery and peer/FIFO
-preservation are now measured. Next cover transitionFailedPrewriter using safe
-reuse of its existing actual suspended-engine builder. Do not fabricate accepted
-Source/producer evidence; WORK retains measured bindings and proof limits.
+preservation are now measured. The transitionFailedPrewriter packet now shares its actual bounded child engine
+and typed contract/journal fixtures; affected focused/static checks pass. Finish
+blind review before ordinary publication and one matching-input stage. Retain
+Root-only integration, one active contour and default5s case/300s coverage limits.
+The three-hour audit fixes the local qualifier namespace-overwrite hazard; WORK
+retains its unchanged-manifest proof and measured-versus-planned comparisons.
 Qualified closed-producer cache retirement has resolved the prior capacity
 forecast: the comprehensive batch reclaims3791466496durable bytes and leaves
 6242443264free,4094959616above the unchanged admission floor. Its81 exact cache

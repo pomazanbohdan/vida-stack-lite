@@ -220,6 +220,80 @@ closure and attributable merged counters for these exact bytes. It remains nonex
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.
 
+## Three-hour audit and pending transition packet
+
+Window09:40:44–12:40:44UTC on2026-10-20. Reused retained receipts, report-only
+inventory and projection; a bounded read of immediate stage logs produces
+`three-hour-receipts-20261020-1240.json` in focused diagnostics. Its six completed
+receipts preserve original Source/status/capture/group/image bindings, all
+BLOCKED/nonexact. First-to-last measured counters move984→1021functions,
+4219→4448lines,4482→4717statements,4603→4803branches with unchanged denominators:
++37F/+229L/+235S/+200B. This comparison spans different correction packets, not
+current-HEAD or global closure. No new contour is closed. Full stage times in
+that sample are133.898–164.837seconds; no controlled speed benchmark is claimed.
+
+The bounded blind harness review finds a confirmed evidence-overwrite hazard in
+local diagnostic comprehensive-cache-cleanup.ts: requalification reused its fixed
+completed output namespace. Root adds an early existing-namespace refusal. The
+actual script used for the original retirement is preserved as
+`comprehensive-cleanup-20261020/qualification-source-used.ts`, original SHA256
+`4a59c5df02cd9b9b3f932e1595e4428f6b66233259f5a2f9f10ffdade59dc1f9`.
+The guarded rerun exits1 before any scan/write. Before/after completed-manifest
+bytes and SHA256 are identical:
+`c99d743c323ac0fdb79037849b69d977ffe9415a1ac86e78b2a894be03d2bff1`.
+`comprehensive-qualification-rerun-guard.json` retains this focused control.
+The original retirement outcome/events are unchanged. TESTING persists the
+exclusive-output rule; diagnostic source/proof stays at its retained owner.
+No new product defect is established by this bounded audit.
+
+| Combination | Evidence and decision |
+| --- | --- |
+| Static, affected focused cases, independent review, one stable SDK/image/stage | Keep. Each current-input full run has a distinct published Source. Review fixed missing positive peer/FIFO setup assertions before publication. |
+| Full stage after each partial test edit | Reject. Another full run would spend roughly the observed134–165seconds plus formation, an estimate rather than a measured alternative. It would not replace prerequisite review. |
+| Root writer with one bounded read-only review; independent harness audit beside Source work | Keep. Shared files retain one writer. Freeze packet bytes for final review to avoid repeated focused runs caused by late assertion edits. |
+| Two resource-reviewed serial-file children | Keep. Latest child times133.38/114.92seconds; actual stage141.096seconds. Full capture and group closure hold. |
+| Fully serial files | Safe fallback. Child sum248.30seconds is a planning comparator, not an actual serial measurement or promised wall time. |
+| More than two numeric workers, parallel full suites, analysis/cleanup during numeric | Unqualified and not launched. Preserve current caps and sole Root producer. |
+
+The expired-lease packet had several focused revisions as assertions were added;
+its final66-assertion case took519.99ms/2.04s command. The difference includes
+unattributed module/setup/teardown cost, not measured pure startup. Prefer batching
+the related setup/denial/rollback/retry oracles before one final focused pass.
+No complete session token/tool-call telemetry is available; counts are not invented.
+
+Archive/capacity observations above are reused, with no new du/whole scan/hash or
+cleanup competing with a producer. Latest durable free6099996672bytes exceeds the
+unchanged2147483648floor by3952513024; scratch/retained filesystems and original
+archive proof remain bound above. No resource GAP is observed. Two new archives
+are248810/249150bytes after qualified cache retirement; the older0858651 archive
+is45756900bytes and contains registry payloads. Inputs differ, so this illustrates
+avoided retained payload, not a compression benchmark. Old archives remain intact.
+
+The next transitionFailedPrewriter case now shares the existing actual suspended
+engine child, contract-reference constructor and failed-journal constructor with
+public tests. Public engine setup keeps its original60s child/default behavior;
+the new Host caller supplies the remaining default5s case deadline and500ms
+reserve through the existing budget owner. No deadline is raised. All writes stay
+in unique fixture roots; child error/signal/nonzero results retain the root.
+In-process Mastra setup is not adopted without teardown qualification.
+
+Initial affected cases pass153assertions, then the complete pre-review packet
+passes168assertions across three cases in6.34s. Individual cases are981.67ms,
+1203.33ms and1922.30ms; each remains below5seconds. Strict TypeScript passes150
+files and scoped lint has0diagnostics. Logs begin `failed-transition-` in focused
+diagnostics. Original extraction correspondence is retained in
+`failed-transition-original-extracts.json`; the reuse/audit notes remain there.
+Independent final code/resource review finds no blocker. Its nonblocking archived-report
+assertion gap is fixed by checking every failed item; the final changed case
+passes68assertions in2023.16ms (3.70s command), with strict150-file TypeScript,
+zero scoped lint diagnostics and the10-assertion pin control passing. Unchanged
+related focused results are reused, not rerun. The final review is retained as
+vida-failed-transition-review.md. These remain focused/static results, not new
+complete F/L/S/B figures. Finish normal commit/push and matching SDK before the
+next single stage. Pending reviewed Host digest is
+`e080afa444ddc9a13f388367d51557d7d73850a6eb808a8ab542862f58bce41c`.
+The existing two-child namespace/case-serial resource contract stays unchanged.
+
 ## Owners and acceptance boundaries
 
 [Sidecar](../../../AGENT.sidecar.md) owns Source and delegation policy;
