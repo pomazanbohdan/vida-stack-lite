@@ -17,6 +17,38 @@ numeric producer.
 
 #### Configured-frontier lookup sharing packet
 
+Complete measurement of Source2fca376cb44b55147f14d3b3e09903efaac74bd1 is
+run7076cd44-8b25-4041-8379-d449bb76daa4: F993/1129,L4266/4970,S4530/5300,
+B4681/5642,300PASS/0FAIL,3004assertions,150.118s. Gain9F/47L/48S/78B;
+denominators unchanged. Report-only inventory now has136missing functions under
+55owners. Host284PASS/2751assertions/143.24s and stopped16PASS/253assertions/
+125.98s both finish. Stage /workspace/contour-stage-FcyVUn, exec27506, exit0,
+full capture/closed group/unchanged boot/image/publication confirmed. The operation
+remains BLOCKED/nonexact; historical exact16/45, diagnostic maxCC279/entryCRAP2162
+and deferred frozen/mutation qualification are unchanged. No causal speedup claimed.
+
+Image /workspace/.vida-quality-inputs/62653096c8103733d54047f23d0d041c48a7dc50/repository
+binds tree4a99e5419f9f99e71fe74324882b80aad1b927fa,
+inputd878a785416dfabd7732d82c20c8d1da616c794b0f0d7a987be63ec9e308c7e6,
+manifest SHAcc42362d40c7d52847922128ecfe450b90ddc070cd95b698bb852de5f5865c94.
+SDK CI39407128843 attempt1 succeeds, artifact12256763225,
+vida-sdk-test-inputs-2fca376cb44b55147f14d3b3e09903efaac74bd1-39407128843-1,
+ZIP SHA6d3d4338e1082c41bbc65f1d9edbc9e06dcfe395b6e029a616dedeece6ead3bb.
+frontier-shared-stage.log retains outcome and maintained projection1072imports
+the report. The report-only planner refreshes once; no AST/Source hash or full-suite
+rerun. Subsequent log inspection uses exact shards/shard-0001/child.log and
+shards/shard-0002/child.log from the known run directory, avoiding snapshot listings.
+
+After observed closure, /dev/shm/vida-quality-retained-lFdYKd measures180604532
+apparent bytes; original remains untouched. Full lossless archive
+/workspace/vida-functional-retention-FcyVUn-Psyjmy/scratch.tar.gz is45764400bytes,
+raw tar207790080bytes, full tar compare PASS, SHA
+0acb4cf0562c377e17f2ddea2076a88217e36c22ec35a0f5bd14c93e21c6a75d.
+Its archive.log/scratch.sha256 remain beside it. Before/after durable free bytes
+are2536075264/2490298368, leaving342814720above unchanged2147483648floor.
+Launch scratch availability7050035200; post-producer tmpfs6831603712. No cleanup
+or protected evidence deletion occurs; no current admission GAP is observed.
+
 Root moves the existing case `configured continuation lookup exposes the complete
 prewriter wave and each retained issue status` from
 packages/agent/tests/delivered-work-continuation.test.ts to
@@ -56,8 +88,8 @@ retains the existing exact two-child selection, serial cases, provider/caller
 namespaces, memory limits, case deadlines and unchanged2147483648admission floor.
 No process, worker, install, global clock or product behavior is added. The prior
 resource inventory and protected originals are reused; no broad scan or cleanup.
-The latest complete numeric result remains4e1be0d below until this packet receives
-its own published Source/SDK/image-bound stage. CRAP/frozen and mutation stay deferred.
+The packet is measured above under its own published Source/SDK/image binding.
+CRAP/frozen and mutation stay deferred.
 
 #### Current three-hour audit and projection-repair packet
 
