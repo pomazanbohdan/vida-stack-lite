@@ -290,6 +290,25 @@ every producer fence, current-version check and deterministic rebuild fresh.
 
 ### Coordination history and expired recovery
 
+The existing no-effect retry case keeps its different-thread predecessor route,
+then creates a second public Host attempt and reconciles it through the existing
+typed unit verifier with a same-thread, newer-generation lease. Before advancing
+the ticket/claim/Work fence, claim must deny without changing state. After the
+exact authorized CAS transition, one retry links to that no-effect predecessor,
+old completion denies and both earlier histories remain unchanged. This unit
+verifier grants no provider attestation or additional Source authority.
+
+The native code-only continuation fixture also checks the direct guarded plan
+refresh API with one owned prepared-plan file. Before adoption, success returns
+the callback value without rollback; a write-then-throw restores exact file bytes,
+retains the primary error and leaves Host/Journal rows unchanged. After adoption,
+the stale original request denies before action/rollback. A request with fresh
+Work CAS and its actual adopted old-code digest may refresh the successor plan
+while retaining the original receipt and all rows. This reaches the receipt
+predicate without fabricating a receipt newer than current Work. Plan endpoint
+formation, installation and accepted Source results remain outside this proof.
+Both existing cases keep5s monotonic deadlines and failed-root retention.
+
 Use the existing real-SQLite notice and retirement cases for positive history
 transitions. A claim disposition cannot resolve a notice; the exact authorized
 notice disposition can. Preserve acknowledged history and check unchanged state

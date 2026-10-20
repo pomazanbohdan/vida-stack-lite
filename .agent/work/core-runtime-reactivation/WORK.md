@@ -126,6 +126,34 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
+### Checked same-thread retry and guarded plan refresh; stage pending
+
+The existing no-effect case keeps its original different-thread retry and adds
+a second public Host claim, exact typed unit-verifier reconciliation and same-
+thread generation advance. Claim before the fence advance denies unchanged state;
+after exact ticket/claim/Work CAS, one retry names its real no-effect predecessor,
+old completion denies and the original two attempts remain byte-equivalent.
+The contract requires a newer same-ticket fence, not a different thread. This
+is cooperative typed-verifier fixture evidence, not external attestation.
+
+The existing native code-only case calls guarded plan refresh on one owned
+prepared-plan file: successful result/no rollback, write-then-throw exact file
+restoration with primary cause, and exact Host/Journal equality. After code
+adoption, the stale original request denies at the outer CAS before either
+callback; a consistent fresh-CAS successor request reaches refresh and retains
+the real receipt. A receipt newer than current guarded Work is not fabricated.
+The separate public prepared-plan suite remains outside this numeric selection.
+Both cases retain their original private root,5s monotonic deadline and failure
+custody. Focused2PASS89assertions, strict168-file TypeScript and configured lint
+pass. The initial readonly matcher type error and await-thenable diagnostics
+are retained in retry-plan-typecheck-1.log and retry-plan-lint-final.log; the
+matcher now compares an owned array and async matchers use the established
+Promise.resolve owner. These are test corrections, not product defects.
+The bounded plan is retained as plan-refresh-gap.md in focused diagnostics.
+Blind Luna review finds no actionable blocker; retry-plan-review.md is retained.
+The exact two-file resource-pin control passes10assertions.
+Matching SDK/image/stage and numeric gains remain pending.
+
 ### Measured coordination-history and expired-recovery packet
 
 Four existing cases are extended without another fixture family. Notice
@@ -152,8 +180,9 @@ above measures+7F/+8L/+10S/+11B, all seven targeted callbacks, with complete
 capture/group closure and unchanged image. Continue from60missing functions and
 668branch arms in the same contour. No product defect, accepted Source result, CRAP,
 mutation kill or Runtime acceptance is claimed. The blind plan is retained as
-progress-gap-plan.md in focused diagnostics. Its separate same-thread no-effect
-authorization precondition remains OPEN; no fabricated authorization is added.
+progress-gap-plan.md in focused diagnostics. The next packet above resolves its
+same-thread precondition through the existing typed fixture verifier and public
+Host transitions; external attestation remains outside this evidence.
 
 ### Measured heartbeat and held-fence packet
 
@@ -310,7 +339,7 @@ stay read-only; package `.tmp` and coverage remain their already permitted outpu
 The parent fences installs, Git changes, indexing and additional producers.
 
 The current reviewed Host file digest is
-`818c84fbf55a71f2f50978ed1710ea64caf3cc2ab612c8773f8962c2aef695ba`;
+`ff49cd84428c4e1d4ed848a355bf11188b35fcfbef742ae03ac28b2c9b8edaa7`;
 stopped-source remains
 `a414b790fea1381ffb425552a1f1b9ae29ad00f2998491a44bb8b7d6d45e9037`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
@@ -318,8 +347,8 @@ ownership. The expired-lease case's peer/waiter use that same unique root and sh
 fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
 namespace or shared-config write is admitted. The focused pin control passes
 10assertions. The complete matching-image stage above establishes capture, process/group
-closure and attributable merged counters for50494ed and the current reviewed
-test pin. The complete report remains nonexact. The300s
+closure and attributable merged counters for50494ed. The new test pin still
+needs its matching stage. The complete report remains nonexact. The300s
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.
 

@@ -3494,6 +3494,43 @@ test('native code-only continuation fences stale proofs and rolls back before ex
   };
   const rows = readFixtureHostRows(database);
   const before = guarded.readHostStateSnapshot(identity);
+  const planPath = path.join(root, '.agent/work/fixture-code/prepared-plan.json');
+  mkdirSync(path.dirname(planPath), { recursive: true });
+  writeFileSync(planPath, 'original prepared plan\n');
+  const restorePlan = mock(() => {
+    writeFileSync(planPath, 'original prepared plan\n');
+  });
+  const refreshValue = await guarded.withQualifiedRuntimeCodePlanRefresh(
+    request,
+    () => {
+      expect(database.inTransaction).toBe(true);
+      writeFileSync(planPath, 'refreshed prepared plan\n');
+      return 'owned plan refreshed';
+    },
+    restorePlan,
+  );
+  expect(refreshValue).toBe('owned plan refreshed');
+  expect(readFileSync(planPath, 'utf8')).toBe('refreshed prepared plan\n');
+  expect(restorePlan).not.toHaveBeenCalled();
+  expect(readFixtureHostRows(database)).toEqual(rows);
+  const refreshFailure = new Error('controlled qualified plan refresh failure');
+  await Promise.resolve(
+    expect(
+      guarded.withQualifiedRuntimeCodePlanRefresh(
+        request,
+        () => {
+          writeFileSync(planPath, 'uncommitted prepared plan\n');
+          throw refreshFailure;
+        },
+        () => {
+          writeFileSync(planPath, 'refreshed prepared plan\n');
+        },
+      ),
+    ).rejects.toBe(refreshFailure),
+  );
+  expect(readFileSync(planPath, 'utf8')).toBe('refreshed prepared plan\n');
+  expect(readFixtureHostRows(database)).toEqual(rows);
+  expect(database.inTransaction).toBe(false);
   const unchanged = (action: () => unknown, message: string) => {
     expect(action).toThrow(message);
     expect(readFixtureHostRows(database)).toEqual(rows);
@@ -3657,6 +3694,40 @@ test('native code-only continuation fences stale proofs and rolls back before ex
   ).toThrow('current CAS or maintenance differs');
   expect(guarded.readHostStateSnapshot(identity)).toEqual(after);
   expect(hasUnresolvedFixtureOperations(database)).toBe(false);
+  const afterRows = readFixtureHostRows(database);
+  const deniedAction = mock(() => 'unreachable stale refresh');
+  const deniedRollback = mock(() => {});
+  await Promise.resolve(
+    expect(guarded.withQualifiedRuntimeCodePlanRefresh(request, deniedAction, deniedRollback)).rejects.toThrow(
+      'state compare-and-swap conflict',
+    ),
+  );
+  expect(deniedAction).not.toHaveBeenCalled();
+  expect(deniedRollback).not.toHaveBeenCalled();
+  expect(readFixtureHostRows(database)).toEqual(afterRows);
+  const nextPlanRequest = {
+    ...request,
+    expectedWork: requiredValue(after.workVersion, 'adopted Work version'),
+    oldRuntimeCodeDigest: request.currentRuntimeCodeDigest,
+    currentRuntimeCodeDigest: canonicalJsonDigest('fixture-third-code'),
+    oldManifestRef: request.currentManifestRef,
+    oldManifestDigest: request.currentManifestDigest,
+    oldInstallRef: request.currentInstallRef,
+  };
+  expect(
+    await guarded.withQualifiedRuntimeCodePlanRefresh(
+      nextPlanRequest,
+      () => {
+        writeFileSync(planPath, 'successor prepared plan\n');
+        return 'successor plan refreshed';
+      },
+      deniedRollback,
+    ),
+  ).toBe('successor plan refreshed');
+  expect(deniedRollback).not.toHaveBeenCalled();
+  expect(readFileSync(planPath, 'utf8')).toBe('successor prepared plan\n');
+  expect(readFixtureHostRows(database)).toEqual(afterRows);
+  expect(guarded.readQualifiedRuntimeCodeContinuations(identity, 1)).toEqual([receipt]);
   if (performance.now() >= deadline) throw new Error('Native code-only continuation exhausted its case deadline');
   preserveHostFixtureRoot = false;
 });
@@ -9780,6 +9851,8 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
   });
 
   test('proven no effect retains predecessor and permits exactly the authorized new fence', async () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const deadline = performance.now() + 5_000;
     const initial = fixture();
     initial.nextWork.contracts.decisions.push(decision);
     commitHostState(initial);
@@ -9807,6 +9880,43 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     expect(
       readPresentSnapshot(store, identity).work.execution.assignment_attempts.map((entry) => entry.status),
     ).toEqual(['no_effect', 'completed']);
+    const prior = readPresentSnapshot(store, identity);
+    const sameThreadStarted = store.claimWorkflowAttempt(attemptRequest(prior, 1));
+    const sameThreadRequest = reconciliationRequest(sameThreadStarted, 'no_effect');
+    const sameThreadLease = requiredValue(sameThreadRequest.retryLease, 'same-thread authorized retry lease');
+    expect(sameThreadLease.thread_id).toBe(sameThreadStarted.attempt.lease.thread_id);
+    expect(sameThreadLease.generation).toBe(sameThreadStarted.attempt.lease.generation + 1);
+    const reconciled = await verified.reconcileWorkflowAttempt(sameThreadRequest);
+    expect(reconciled.attempt.reconciliation?.retry_lease).toEqual(sameThreadLease);
+    const settled = readPresentSnapshot(store, identity);
+    expect(() => store.claimWorkflowAttempt(attemptRequest(settled, 1))).toThrow('retry fence');
+    expect(store.readHostStateSnapshot(identity)).toEqual(settled);
+    const sameThreadRenewal = next(settled);
+    firstTicket(sameThreadRenewal.nextLedger).generation = sameThreadLease.generation;
+    requiredValue(activeClaimFor(sameThreadRenewal.nextLedger), 'same-thread active claim').generation =
+      sameThreadLease.generation;
+    sameThreadRenewal.nextWork.lease = clone(sameThreadLease);
+    const renewed = commitHostState(sameThreadRenewal);
+    expect(renewed.work.execution.assignment_attempts).toEqual(settled.work.execution.assignment_attempts);
+    expect(firstTicket(renewed.ledger).thread_id).toBe(sameThreadStarted.attempt.lease.thread_id);
+    expect(firstTicket(renewed.ledger).generation).toBe(sameThreadLease.generation);
+    const sameThreadRetry = store.claimWorkflowAttempt(attemptRequest(renewed, 1));
+    expect(sameThreadRetry.attempt.previous_attempt_id).toBe(sameThreadStarted.attempt.attempt_id);
+    expect(sameThreadRetry.attempt.lease).toEqual(sameThreadLease);
+    expect(() => store.completeWorkflowAttempt(sameThreadStarted, { late: true })).toThrow('completion binding');
+    store.completeWorkflowAttempt(sameThreadRetry, 'same-thread retry finished');
+    const complete = readPresentSnapshot(store, identity);
+    expect(complete.work.execution.assignment_attempts.slice(0, 2)).toEqual([
+      ...prior.work.execution.assignment_attempts,
+    ]);
+    expect(complete.work.execution.assignment_attempts.map((entry) => entry.status)).toEqual([
+      'no_effect',
+      'completed',
+      'no_effect',
+      'completed',
+    ]);
+    if (performance.now() >= deadline) throw new Error('Host no-effect retry fixture exceeded its case deadline');
+    preserveHostFixtureRoot = false;
   });
 
   test('no-effect reconciliation replay after reopen binds the decision, evidence, lease and versions', async () => {

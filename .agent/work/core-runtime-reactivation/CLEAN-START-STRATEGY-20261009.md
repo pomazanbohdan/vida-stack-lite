@@ -71,8 +71,17 @@ history and rejected async verification. Focused4PASS98assertions and strict168-
 checks pass. Preserve the same5s case bounds, private resources and exact two-file
 pin. Its matching SDK/image/stage measures+7F/+8L/+10S/+11B, all seven targeted
 callbacks; continue from60missing functions and668branch arms. A separate
-same-thread no-effect retry needs genuine contract-qualified authority and is
-not manufactured to reach its remaining callback.
+same-thread no-effect retry is now exercised by the next checked packet through
+the existing exact typed unit verifier and public Host APIs, without external
+attestation claims or fabricated authority.
+
+The next packet extends the same no-effect and native code-only cases: preserve
+different-thread history, authorize a same-thread newer fence, and prove guarded
+prepared-plan success/rollback, stale outer CAS and a consistent fresh-CAS
+successor. Focused2PASS89assertions and strict168-file checks pass; retain5s
+deadlines and the same resource topology. One matching SDK/image/stage remains
+pending. Do not move coverage work into the separate public prepared-plan suite
+or fabricate an inconsistent newer receipt merely to force a predicate denial.
 
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
