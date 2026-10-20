@@ -101,28 +101,30 @@ targeted passes, owns the measured numeric increase.
 
 ### Latest complete host-state coverage and Initial Source packet
 
-The a4bbe80 stage at /workspace/contour-stage-JoPANH completes in221942.129ms,
-exit0, capture complete, group closed and boot/image inputs unchanged. Host268
-PASS/2124assertions in180.14s and stopped-source16PASS/206assertions in215.73s
-produce284PASS/0FAIL and2330assertions. Published run
-c1be1e33-d32d-440f-99e3-672d6f5b760b records
-F813/1129,L3296/4966,S3517/5296,B3446/5640: +14functions,+30lines,
-+33statements,+25branches against0f1dc92 with unchanged denominators.
+The795ffb2 stage at /workspace/contour-stage-m1rXJI completes in215043.171ms,
+exit0, capture complete, group closed and boot/image inputs unchanged. Host269
+PASS/2150assertions in173.15s and stopped-source16PASS/206assertions in208.33s
+produce285PASS/0FAIL and2356assertions. Published run
+8262c06c-2e4e-43f0-9c83-295c7bf234a6 records
+F829/1129,L3420/4966,S3643/5296,B3556/5640: +16functions,+124lines,
++126statements,+110branches againsta4bbe80 with unchanged denominators.
 The operation remains BLOCKED; historical exact closure16/45. Frozen/CRAP and
 mutation are deferred and unqualified. Its unchanged image is
-/workspace/.vida-quality-inputs/51b3a1fb87281e153ea78b651643035d1fa601d8/repository,
-manifest SHAaa6290529ee5272be453ea9a7acb4500db6f2b53c2bf8fdc5bb76d9ec9694a3a,
-input fingerprint583a24bd7e4d567df8fba5b1af4f064b8a632c399a1bac0e647b1f71bd5a1a38.
-SDK CI39347384197/artifact12231467584 succeeds; transport ZIP SHA
-6d9c8d941bf2ca20adc13bb6aedbd8dc383e049a2b1ee54fb97297753cc41a38 matches.
-Admission observes7342858240free bytes against2147483648required. Projection1039
-imports its terminal result. Reused completed inventory identifies316uncovered
-functions/closures under92outer owners without another AST/scan/hash pass.
-Prior complete0f1dc92 stage /workspace/contour-stage-rYJHRp and its bindings,
-lookup assertions and expected-UNKNOWN retention details remain in published
-a4bbe80 at this WORK path. Original failure/UNKNOWN roots stay protected.
+/workspace/.vida-quality-inputs/fbdafad85edd49ac1962d1b0c232ed21b66a09fd/repository,
+image manifest SHA7825251409ee5142b49b3b59066b340271b6a5b5ee36a1350c680bd42b703de6,
+input fingerprint69d6c3be25693052a0c402eb7c65695daeef596d716b4c74b44bf99ba1c3845b.
+SDK CI39349277629/artifact12232038898 succeeds; transport ZIP SHA
+260cd2d5527ca70fbb5cf9f56f74effef91cff20ac0651dfb3d8d3120876c902 matches.
+Admission observes7044210688free bytes against2147483648required. Projection1041
+imports its terminal result. Reused completed inventory identifies300uncovered
+functions/closures under91outer owners without another AST/scan/hash pass.
+Prior a4bbe80 stage /workspace/contour-stage-JoPANH binds run
+c1be1e33-d32d-440f-99e3-672d6f5b760b, image51b3a1fb87281e153ea78b651643035d1fa601d8,
+F813/1129,L3296/4966,S3517/5296,B3446/5640 and221942.129ms. Its full bindings and
+the prior0f1dc92 lookup packet remain at this WORK path in published795ffb2.
+Original failure/expected-UNKNOWN roots stay protected.
 
-The next checked packet extracts the maintained genuine Initial Source fixture
+The checked795ffb2 packet extracts the maintained genuine Initial Source fixture
 into tests/helpers/initial-source-work-fixture.ts. Both existing public tests
 and the new Host case reuse real admission, native DB/Journal and bridge open/
 start. No continuation receipt or observed effect is seeded. Existing CLI
@@ -156,8 +158,23 @@ under packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 The reviewed Host pin becomes
 30cb3ae9363a0984a772d841834959b2e3eb98d8917e1c5d39aba27b445b8ebc;
 stopped-source pin, selected files, worker ceiling and budgets stay unchanged.
-Run one changed-input stage after ordinary checked publication. These focused
-passes do not change the completed counters above or qualify runtime acceptance.
+Ordinary hooks pass formatting516files, strict523files, lint and Knip. The first
+hook rejects two unused helper exports; they become private before the checked
+commit, without bypassing the hook or widening configuration. Retained logs are
+initial-source-commit.log and initial-source-commit-corrected.log. The changed-input
+stage above now passes the native case under coverage in3253.13ms, with
+setup2264.923ms/body835.219ms; the5s case and all stage/shard budgets are unchanged.
+This is coverage evidence for795ffb2, not frozen/CRAP, mutation or Runtime acceptance.
+
+Next prioritize genuine completed-Source-report recovery and its persisted Work
+history within this same contour. Blind bounded plan
+/tmp/vida-host-stored-work-next-batch.md maps the retained nested guards to their
+real receipt producers and existing helper. Initial Source history is now reached;
+its four formerly missing stored-work closures reduce that group from32to28.
+Do not seed fake receipts, import a second test module, copy a complete CLI
+lifecycle or raise deadlines. Prepare the next native operation through maintained
+helpers, retain exact reservations/Journal/report lineage, measure its setup, and
+keep unsupported frontier/rebind paths open until their real prerequisites exist.
 
 ### Prior complete setup-scope coverage and Task-source unit packet
 

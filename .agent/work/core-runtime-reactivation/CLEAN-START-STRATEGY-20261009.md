@@ -122,8 +122,14 @@ Initial Source admission/bridge fixture for the native Host case and existing
 public regressions. One current request proof replaces duplicated snapshots;
 Host verification remains fresh. Native26assertions and original public producer
 86assertions pass; strict180files and scoped lint pass. Blind resource review
-confirms unchanged private roots, selection and budgets. Measure this causal
-packet once after ordinary checked publication; continue this same contour.
+confirms unchanged private roots, selection and budgets. The795ffb2 stage now
+completes285PASS/0FAIL,2356assertions in215.043s and publishes
+F829/1129,L3420/4966,S3643/5296,B3556/5640. The new native case passes under
+coverage in3.253s against the unchanged5s limit. Operation status remains BLOCKED;
+300functions/closures under91outer owners remain uncovered. Continue this same
+contour with genuine completed-Source-report recovery and retained Work-history
+lineage through existing helpers. Do not fabricate receipts, widen selection or
+raise a budget to reach the remaining branches.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
