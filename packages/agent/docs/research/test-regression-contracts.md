@@ -345,6 +345,19 @@ matching predecessors. Check both released ticket/claim pairs, exact replacement
 resources, unchanged retry and no Source effect. A disjoint peer or one-element
 sort does not exercise this choice. Default fixture callers remain unchanged.
 
+The configured continuation lookup case keeps its stored-row issue/report and
+corruption/restoration controls, then issues the native reviewer wave and reports
+one Source planner through `MastraSessionLedger.report`. Reuse the maintained
+`createPrewriterPreparationObservation` builder and original contract references.
+Assert actual Work PLAN before lookup, mixed reported/issued status, exact current
+Journal version, unchanged completed prefix and step, immutable receipt, preserved
+binding/lease and idempotent report retry. Lifecycle attachment changes Host
+revisions legitimately; an unchanged Host beforeimage is the wrong oracle here.
+Lookup accepts only configured INTAKE/TRACE/PLAN and historical INTAKE, preserving
+active review, lease, resource, FIFO and report guards. This reports no engine
+advancement, Source execution, independent reviewer authentication or Runtime
+acceptance. Keep issued unresolved roots and the original5s fixture deadline.
+
 The corrective authorization case retrieves an original completed observation
 using its complete retry identity, rejects changed/foreign archive identities,
 and claims/completes one genuinely authorized corrective attempt. Preserve prior

@@ -1916,6 +1916,14 @@ Choose each correction packet from the latest attributable report and its existi
 inventory. Group related success, refusal, retry and restoration obligations around
 one maintained fixture when its state transitions genuinely reach them. Prefer a
 reachable causal path over isolated helpers ranked only by missing-function count.
+After TypeScript edits, run the scoped strict check and configured lint before
+starting the affected runtime cases. Use the declared test/tooling tsconfig for
+the changed entrypoints; chain checks with fail-fast shell behavior so a later
+successful command cannot hide a typecheck failure. Once those pass, group the
+affected named cases in one serial Bun invocation where their existing resource
+and timeout contracts permit it. A pure input/schema check should precede an
+expensive fixture when it can resolve the same uncertainty. Reuse current results
+until another change or failure invalidates them.
 Verify each correction with focused cases, then perform one complete selected-contour
 coverage stage after the checked packet is integrated. Do not form another SDK/image
 or repeat the full stage for each assertion. Reuse read-only analysis while Root

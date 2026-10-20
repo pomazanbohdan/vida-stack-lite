@@ -455,6 +455,10 @@ Test changed artifact bytes with exact restoration as well as changed supplied
 digests; those controls exercise different obligations. For foreign packet
 binding, derive internally consistent action IDs before testing the later Host
 guard, so earlier identity validation does not mask the intended refusal.
+For native prewriter reports, reuse the maintained typed preparation builder;
+opaque summary text accepted by a stored-row lookup control is not a valid
+preparation report. Observe lifecycle attachment separately from Journal changes:
+a planner report can legitimately advance Work before the engine wave resumes.
 For a stale-read race, retain an actual earlier persisted snapshot, return it
 only for the initial read, and let the real store enforce current CAS. Assert
 the exact conflict and unchanged live state before a healthy retry. A fabricated

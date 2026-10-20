@@ -133,6 +133,73 @@ The complete unchanged-input stage has not been repeated; all accepted counters
 above still belong to4b8a387. Continuation/producer prerequisites and their
 retained timeouts remain OPEN in the same active contour.
 
+### Three-hour audit and native planner lookup correction
+
+Review window:2026-10-20 18:32:46–21:32:46UTC. The existing Git history has nine
+published commits in this interval. Existing receipts, the current projection and
+named diagnostic logs were reused; no numeric suite, AST or Source/hash scan was
+repeated for the audit. Same boot`89093463-dd07-4789-abcd-d15842df2ba2`, Bun1.4.3,
+connected managed environment and no live numeric/build/install process were
+observed. The working tree was initially clean. Installed vida-agent remains
+absent; checked-in lifecycle instructions supply policy, not installed readiness.
+
+**Testing scripts.** Blind review finds no new producer-script defect in focused
+eligibility, report/outcome publication, retained-map navigation or projection
+repack. Keep report and paired operation outcome separate. The diagnostic owner
+join has no demonstrated hot-path cost; an interval index is not justified.
+No duplicate scan/hash, scheduler, report store or numeric pool is added.
+
+**Test authoring/execution.** Retained v1109 failures distinguish the22.740s
+fixture overrun, missing import/types and wrong earlier packet-identity oracle
+from product defects. Their corrections are already published. Static-first,
+fail-fast checks followed by one serial affected-case group are now explicit
+in TESTING and the plan. Parallel readonly research remains useful; parallel
+test bodies or wider numeric pools are unqualified. Comparing different-input
+17.618s and22.740s invocations is not a controlled speedup measurement.
+
+The continued native lookup scenario exposes a real product defect. After a
+properly typed Source planner report, the native Host reaches PLAN while review
+execution and the original lease remain active. Live continuation lookup formerly
+required INTAKE and denied that supported state. The original failure is retained
+in`audit-v1110-bound-lookup.log` and
+`/home/agent/.cache/vida-cloud-tooling/tmp/frontier-repair-host-0klzvz`; a readonly
+native-row observation confirms PLAN/revision14/active review. The correction
+uses an explicit phase table: configured INTAKE/TRACE/PLAN, historical INTAKE.
+Lease, FIFO, resources, binding, report custody and later suffix revalidation
+remain. No callable or conditional complexity allowance is added or transferred.
+
+The same lookup now reuses one config/context/intake binding instead of invoking
+its reader twice in an adjacent projection literal. Exactly one helper call,
+config/context load and accepted-intake read/hash is removed from that path;
+no elapsed-time improvement is inferred. The later fresh suffix binding remains.
+The existing typed prewriter builder is shared through a narrowed exported test
+helper, with no duplicate schema or new fixture engine. Original stored-row
+controls remain before native issue/report. The case asserts native PLAN, mixed
+report/issue status, Journal versions/prefix/step, immutable receipt, preserved
+binding/lease and exact report retry. No engine advance or Source effect occurs.
+
+Strict148-file TypeScript and configured type-aware lint pass. Final grouped
+checks pass3tests/382assertions in4.94s total; lookup1437.58ms,
+digest repair1083.51ms and historical continuation467.70ms retain their existing
+5s limits. The exact refreshed resource-pin control passes10assertions and the
+runner's strict check passes122files. Independent blind final review finds no
+blocker. Earlier opaque-summary/missing-contract fixture failures and a static
+failure remain retained; static fail-fast prevented that failure from launching
+another runtime case. No accepted coverage counter changes yet.
+
+Audits and final review are retained as`vida-*-v1110*.md` beside the original
+`audit-v1110-*.log` files in focused diagnostics. Native issue leaves an unresolved
+security action in the private fixture; its root stays protected. Full security
+attachment and engine-suffix prerequisites remain OPEN, not newly certified.
+
+**Capacity.** One df observation finds4900794368durable bytes available across
+checkout, disk scratch and retained archives; the unchanged2147483648floor
+leaves2753310720bytes headroom. Original retained tmpfs has9370398720bytes free.
+The existing inventory qualifies no new obsolete private cache. No path is
+deleted, no dependency payload is consolidated and no evidence moves to bypass
+admission. Exact paths/numbers and review copies are in`audit-v1110-capacity.json`.
+The next actual producer still performs its maintained admission check.
+
 ## Latest measurement custody
 
 - Stage:`/workspace/contour-stage-nuFMWq`; exec53790, observed exit0.
@@ -436,7 +503,7 @@ stay read-only; package `.tmp` and coverage remain their already permitted outpu
 The parent fences installs, Git changes, indexing and additional producers.
 
 The current reviewed Host file digest is
-`7198e67e27433d3405631cb003ade48af9ad135eafb0f7aa79cae5b7ad5d0f78`;
+`6bef7be4718116fdeb4a087db0143ae55e92b266cb735dcb46828b8c542491df`;
 stopped-source is now
 `3b7dcdb0bdfb815149d2a5903858e4b4297afecbef4408179bb50e3d91f1974a`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
@@ -446,13 +513,17 @@ namespace or shared-config write is admitted. The focused pin control passes
 10assertions. The complete matching-image stage above establishes capture,
 process/group closure and attributable merged counters for4b8a387 and its original
 Host pin`7fb26389afb1c9ab79824046059fcba7fc6884f9a9cb66fc5d4e26f6ba7d2863`.
-It does not qualify the newer7198e67e test bytes. The assurance/authorization
+It does not qualify the newer6bef7be4 test bytes. The assurance/authorization
 packet uses the Host child's existing unique admission root and same private DB;
 temporary Source/evidence changes are confined to that root and restored. Native
 readonly report/engine calls are serial. The TaskSource predecessor adds data
 inside its existing case root/DB only. No new shared root, Source write, clock
 mutation, parallel body or worker is introduced; final blind review finds no
 resource-scope blocker. One complete matching-image stage remains pending.
+The native planner attachment writes only inside the configured fixture's existing
+private root/DB. Its typed builder was already in the captured helper closure.
+The existing per-process continuation cleanup retains the unresolved issued action;
+no shared root, concurrent body or actual executor is introduced by the extension.
 The TaskSource peer shares only its case's private DB/root; policy callbacks are
 awaited serially and no Git argv runs. Blind resource review finds no blocker.
 The matching stage qualifies this exact selection; it grants no broader selection.

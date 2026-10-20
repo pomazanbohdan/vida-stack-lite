@@ -160,9 +160,9 @@ function preparationObservations(kind: PreparationKind, evidenceRef: string): Pr
 }
 
 /** These controlled test observations advance the required stage; they are not runtime authorization evidence. */
-function controlledPreparation(
+export function createPrewriterPreparationObservation(
   action: PublicPrewriterAction,
-  input: PublicPrewriterInput,
+  input: Pick<PublicPrewriterInput, 'work' | 'workId'>,
   attempt: number,
 ): PreparationRecord {
   const kind = preparationKind(action.request.role),
@@ -217,7 +217,7 @@ async function reportPrewriterAction(
   input: PublicPrewriterInput,
 ): Promise<MastraSessionLedgerSnapshot> {
   const current = currentSnapshot(input),
-    preparation = controlledPreparation(action, input, current.state.attempt),
+    preparation = createPrewriterPreparationObservation(action, input, current.state.attempt),
     observation = reportedObservation(action, preparation),
     reportPath = '.agent/work/' + input.workId + '/prewriter-report-' + action.request.assignment_index + '.json';
   return reportControlledObservation(input, current, observation, reportPath);
@@ -356,9 +356,13 @@ export async function runPrewriterFixtureInProcess(
   let report = prewriterIssue;
   const observations = tracePhase
     ? await tracePhase('prewriter-observation-build', () =>
-        actions.map((action) => reportedObservation(action, controlledPreparation(action, input, input.attempt))),
+        actions.map((action) =>
+          reportedObservation(action, createPrewriterPreparationObservation(action, input, input.attempt)),
+        ),
       )
-    : actions.map((action) => reportedObservation(action, controlledPreparation(action, input, input.attempt)));
+    : actions.map((action) =>
+        reportedObservation(action, createPrewriterPreparationObservation(action, input, input.attempt)),
+      );
   const reportObservations = () => {
     for (const observation of observations)
       report = producer.ledger.report(input.workId, input.attempt, report.version, observation, producer.source);

@@ -236,6 +236,12 @@ import {
 const sessionProducerStore = 'vida-session-producers';
 const recoveryReviewStore = 'vida-recovery-reviews';
 const deliveredContinuationRepairStore = 'vida-delivered-continuation-repairs';
+const continuationLookupPhases: Readonly<
+  Record<DeliveredWorkContinuationRequest['action']['kind'], readonly LifecycleState['phase'][]>
+> = {
+  configured_frontier: ['INTAKE', 'TRACE', 'PLAN'],
+  historical_terminal_review: ['INTAKE'],
+};
 interface DeliveredContinuationRepairDigestOverlay {
   readonly work_id: string;
   readonly attempt: number;
@@ -13864,7 +13870,7 @@ export class HostStateStore {
       ledger &&
         work.execution.status === 'active' &&
         work.execution.phase === 'review' &&
-        work.lifecycle.phase === 'INTAKE' &&
+        continuationLookupPhases[receipt.request.action.kind].includes(work.lifecycle.phase) &&
         work.lifecycle.seal === null &&
         lease?.thread_id === receipt.request.nativeSessionHandle &&
         ticket?.status === 'active' &&
@@ -13920,10 +13926,11 @@ export class HostStateStore {
         engine = JSON.parse(
           Buffer.from(frontier.frontier_snapshot.snapshot_bytes_base64, 'base64').toString('utf8'),
         ) as SessionBridgeSnapshot,
+        requestBinding = this.#configuredFrontierRepairBinding(frontier),
         requests = projectConfiguredPrewriterContinuationRequests({
-          ...this.#configuredFrontierRepairBinding(frontier),
+          ...requestBinding,
           context: {
-            ...this.#configuredFrontierRepairBinding(frontier).context,
+            ...requestBinding.context,
             scope_digest: currentSourceScope.digest,
           },
           engine,

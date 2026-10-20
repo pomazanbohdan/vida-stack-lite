@@ -1834,6 +1834,12 @@ The original developer stays in the immutable beforeimage, and the completed
 prefix stays unchanged. Exact retry returns the retained result before another
 engine read. The Host lookup exposes the whole reviewer wave and each item's
 retained issuance/report state. It rejects missing, duplicate or foreign items.
+While that configured reviewer wave remains current, an accepted planner report
+may advance lifecycle from INTAKE through TRACE to PLAN. Live lookup preserves
+those native phases and the current Journal; it still requires active review,
+the original owner lease, exact resources, FIFO, binding and report custody.
+Historical terminal-review lookup remains restricted to INTAKE. Planning progress
+does not grant Source execution or permit an engine/Journal suffix mismatch.
 
 After a Source change, the verified continuation history preserves the exact
 original scope, acceptance and execution-approval references, admission Source

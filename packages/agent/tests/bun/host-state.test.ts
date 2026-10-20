@@ -11,6 +11,7 @@ import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-r
 import { createInitializationBundle } from '../helpers/init-bundle.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
+import { createPrewriterPreparationObservation } from '../helpers/public-prewriter-fixture.ts';
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
 import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
 import { qualifiedRuntimeCodeEndpointFixture } from '../helpers/qualified-runtime-code-fixture.ts';
@@ -2599,6 +2600,7 @@ test('trusted Host continuation atomically retains historical evidence and never
 test('configured continuation lookup exposes the complete prewriter wave and each retained issue status', async () => {
   preserveHostFixtureRoot = 'case failed or timed out';
   await withConfiguredFrontierHostFixture((f, { workspaceId, input }) => {
+    bindFrontierContractReferences(input);
     seedFrontierHostFixture(f, input);
     const before = requiredValue(
       f.store.readDeliveredWorkContinuation(f.identity, 1),
@@ -2714,6 +2716,55 @@ test('configured continuation lookup exposes the complete prewriter wave and eac
       withFrontierJournalFixture(f, { ...row, revision: row.revision + 1 }, controlled, () => undefined),
     ).toThrow('Configured frontier Journal fixture beforeimage changed.');
     expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(before);
+    const ledger = new MastraSessionLedger(f.db, workspaceId, f.config, f.root, f.store);
+    let current = requiredValue(ledger.resume(f.identity.work_id, 1), 'Native prewriter Journal before issue');
+    expect(current.state).toEqual(beforeJournal.state);
+    current = ledger.issueWave(f.identity.work_id, 1, current.version);
+    const issuedLookup = requiredValue(f.store.readDeliveredWorkContinuation(f.identity, 1), 'Native issued lookup');
+    expect(issuedLookup.item_statuses).toEqual(['issued', 'issued']);
+    expect(issuedLookup.action_status).toBe('issued');
+    expect(issuedLookup.journal.version).toEqual(current.version);
+    expect(issuedLookup.receipt).toEqual(before.receipt);
+    const planner = requiredValue(current.state.items[0], 'Native Source planner');
+    expect(planner.request.role).toBe('source-planner');
+    // Controlled readonly caller reports exercise persistence, not independent native review.
+    const originalWork = requiredValue(before.snapshot.work, 'Native prewriter Work');
+    const preparation = createPrewriterPreparationObservation(
+      { request: planner.request, issue_id: requiredValue(planner.issue_id, 'Native planner issue identity') },
+      { work: originalWork, workId: f.identity.work_id },
+      1,
+    );
+    const plannerSummary = JSON.stringify(preparation),
+      observation = parseSessionBridgeObservation({
+        schema: 'VidaSessionObservation/v1',
+        action_id: planner.request.action_id,
+        issue_id: requiredValue(planner.issue_id, 'Native planner issue identity'),
+        agent_id: preparation.observer_id,
+        tool_call_ref: 'fixture:synthetic-planner-call',
+        status: 'reported_complete',
+        summary: plannerSummary,
+        output_digest: canonicalJsonDigest(plannerSummary),
+        evidence_refs: preparation.evidence_refs,
+      }),
+      source = requiredValue(current.state.source_scope, 'Native prewriter Source scope');
+    current = ledger.report(f.identity.work_id, 1, current.version, observation, source);
+    const planned = readPresentSnapshot(f.store, f.identity);
+    expect(planned.work.lifecycle.phase).toBe('PLAN');
+    expect(planned.work.binding).toEqual(originalWork.binding);
+    expect(planned.work.lease).toEqual(originalWork.lease);
+    const observed = requiredValue(f.store.readDeliveredWorkContinuation(f.identity, 1), 'Native reported lookup');
+    expect(observed.item_statuses).toEqual(['reported', 'issued']);
+    expect(observed.action_status).toBe('issued');
+    expect(observed.journal).toEqual({ state: current.state, version: current.version });
+    expect(observed.journal.state.completed).toEqual(beforeJournal.state.completed);
+    expect(observed.journal.state.step_id).toBe(beforeJournal.state.step_id);
+    expect(observed.receipt).toEqual(before.receipt);
+    expect(observed.snapshot).toEqual(planned);
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(observed);
+    expect(ledger.resume(f.identity.work_id, 1)).toEqual(current);
+    expect(ledger.report(f.identity.work_id, 1, current.version, observation, source)).toEqual(current);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(planned);
+    expect(current.resume_status).toBe('issued_outcome_uncertain');
   });
   preserveHostFixtureRoot = false;
 });

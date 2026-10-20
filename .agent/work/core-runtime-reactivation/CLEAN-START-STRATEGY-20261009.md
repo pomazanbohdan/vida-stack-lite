@@ -98,6 +98,23 @@ Implement in dependency order, using the following checkable contracts:
    explicit navigation gaps. A research label of unreachable is a hypothesis,
    not permission to omit a counter or classify a branch N/A.
 
+The current audit advances this group through native Journal issue and one typed
+planner report in the existing lookup case. Original stored-row controls remain.
+The report legitimately advances Work to PLAN before engine resume; the prior
+INTAKE-only live lookup refused that supported state. The corrected phase table
+allows configured INTAKE/TRACE/PLAN, keeps historical INTAKE and retains every
+lease/FIFO/binding/custody guard. Reuse the maintained typed prewriter builder;
+do not substitute opaque report text or skip contract references. Root's three
+focused cases pass382assertions under their existing limits. One duplicated
+config/context/intake binding read is removed; later suffix revalidation remains.
+Native security attachment and engine suffix advancement still require their
+separate prerequisites; this intermediate milestone does not close them.
+
+For subsequent TypeScript edits, follow TESTING's static-first, fail-fast sequence
+before the serial affected-case group. The three-hour audit uses existing receipts
+and two independent readonly reviews; it found no new producer-script defect.
+Do not add a scheduler/index rewrite without evidence of worthwhile repeated work.
+
 For each group, the exact named Bun case must reach its intended public operation
 and assert its success, refusal and replay behavior before strict TypeScript/lint
 and final integration. Stop a proposed path if its genuine prerequisite cannot be
