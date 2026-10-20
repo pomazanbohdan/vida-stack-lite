@@ -87,6 +87,9 @@ Reuse the genuine fixture and change one owned input between the initial proof
 and final recheck; assert the intended denial, exact restoration and unchanged
 Host/Journal/receipt state. Preserve primary and restoration failures through the
 existing cleanup owner. A repeated live check is not automatically duplicate work.
+For repeated CAS denial oracles, typed exact native row beforeimages can avoid
+repeated API decoding. Keep real API validation before/after the batch and after
+success; preserve receipt, file-effect and unchanged-state checks for every denial.
 
 For YAML/configured-root fixtures, follow [TESTING's fixture contract](../../../packages/agent/TESTING.md#new-and-modified-files).
 Use the bound config's registered and allowed projects; verify targeted negative

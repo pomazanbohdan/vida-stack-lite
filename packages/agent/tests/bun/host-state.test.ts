@@ -20,6 +20,7 @@ import {
   createInitialSourceWorkFixture,
   withInitialSourceCleanup,
   hostStore as initialSourceHostStore,
+  hostDatabase as initialSourceHostDatabase,
   currentJournal as initialSourceJournal,
   changeOneAcceptedDocument,
   currentProof as initialSourceProof,
@@ -78,6 +79,7 @@ import {
 import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
 import * as trustedHostSurface from '../../src/trusted-host.ts';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
+import { MAX_CANONICAL_NODES } from '../../src/contracts/canonical-json-core.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import {
   activeRuntimeConfigurationSource,
@@ -161,7 +163,7 @@ let configuredInstructionRoot!: string;
 let databasePath!: string;
 let database!: Database;
 let store!: HostStateStore;
-let preserveHostFixtureRoot: boolean | 'expected UNKNOWN' = false;
+let preserveHostFixtureRoot: boolean | 'expected UNKNOWN' | 'case failed or timed out' = false;
 const handles: Database[] = [];
 const admittedHostDatabases = new WeakSet<Database>();
 const children: import('node:child_process').ChildProcess[] = [];
@@ -194,6 +196,20 @@ type SessionLedgerSqlRow = {
   readonly payload: string;
   readonly digest: string;
 };
+function readFixtureHostRows(db: Database) {
+  return {
+    host: db
+      .query<HostStateSqlRow, []>(
+        'SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state ORDER BY workspace_id,kind,id',
+      )
+      .all(),
+    journal: db
+      .query<SessionLedgerSqlRow, []>(
+        'SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt',
+      )
+      .all(),
+  };
+}
 type ScalarCountRow = { readonly count: number | bigint };
 type GovernanceStoreSqlRow = {
   readonly store_id: string;
@@ -566,12 +582,16 @@ test(
         ],
       ];
       const authorityPath = path.join(f.root, '.agent/work', f.identity.work_id, 'correction-1-authorization.json');
+      const persistedBefore = readFixtureHostRows(f.database);
       for (const [change, message] of denied) {
         expect(() => f.store.authorizeCorrectiveExecution({ ...request, ...change })).toThrow(message);
-        expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
-        expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+        const persisted = readFixtureHostRows(f.database);
+        expect(persisted.host).toEqual(persistedBefore.host);
+        expect(persisted.journal).toEqual(persistedBefore.journal);
         expect(existsSync(authorityPath)).toBe(false);
       }
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
       const issued = f.store.authorizeCorrectiveExecution(request);
       const after = f.store.readHostStateSnapshot(f.identity);
       const corrected = f.store.readWorkSessionJournal(f.identity);
@@ -1408,6 +1428,8 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
       const request = initialSourceRequest(current);
       const before = presentSnapshot(store.readHostStateSnapshot(current.identity));
       const journalBefore = initialSourceJournal(current);
+      const fixtureDatabase = initialSourceHostDatabase(current);
+      const persistedBefore = readFixtureHostRows(fixtureDatabase);
       expect(request.authorizedSourceChanges.map((change) => change.path)).toEqual([current.documents[1]]);
       expect(request.currentSourceScope).toEqual(source);
       expect(request.currentInitialRequest.stage_id).toBe('synthesize_task');
@@ -1447,8 +1469,9 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
         ];
         for (const denied of staleRequests) {
           expect(() => store.continueInitialSource(denied.request, verifyCurrent)).toThrow(denied.error);
-          expect(store.readHostStateSnapshot(current.identity)).toEqual(before);
-          expect(initialSourceJournal(current)).toEqual(journalBefore);
+          const persisted = readFixtureHostRows(fixtureDatabase);
+          expect(persisted.host).toEqual(persistedBefore.host);
+          expect(persisted.journal).toEqual(persistedBefore.journal);
           expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
         }
         expect(verifications).toBe(0);
@@ -1457,8 +1480,9 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
             throw new Error('fixture current-proof failure');
           }),
         ).toThrow('fixture current-proof failure');
-        expect(store.readHostStateSnapshot(current.identity)).toEqual(before);
-        expect(initialSourceJournal(current)).toEqual(journalBefore);
+        const afterVerifierFailure = readFixtureHostRows(fixtureDatabase);
+        expect(afterVerifierFailure.host).toEqual(persistedBefore.host);
+        expect(afterVerifierFailure.journal).toEqual(persistedBefore.journal);
         expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
         const changedDocument = path.join(current.root, current.documents[1]);
         const beforeDocument = readFileSync(changedDocument);
@@ -3314,7 +3338,7 @@ afterEach(async () => {
   const relative = path.relative(path.resolve(tmpdir()), path.resolve(root));
   if (!relative.startsWith('host-state-') || relative.includes(path.sep)) throw new Error('unsafe scratch cleanup');
   if (preserveHostFixtureRoot) {
-    const reason = preserveHostFixtureRoot === 'expected UNKNOWN' ? 'expected UNKNOWN' : 'setup failed';
+    const reason = typeof preserveHostFixtureRoot === 'string' ? preserveHostFixtureRoot : 'setup failed';
     preserveHostFixtureRoot = false;
     console.error(`Host fixture ${reason}; scratch root retained: ${root}`);
     return;
@@ -4538,6 +4562,8 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
 });
 
 test('consumer migration archives individually bounded governance rows beyond the aggregate ingress node budget', async () => {
+  const deadline = performance.now() + 5_000;
+  preserveHostFixtureRoot = 'case failed or timed out';
   const operation = reserveRequiredOperation(store, 'archive', '1'.repeat(64), '2'.repeat(64));
   store.transitionOperation(operation, 'commit_unknown');
   store.transitionOperation(operation, 'applied', '3'.repeat(64));
@@ -4546,10 +4572,12 @@ test('consumer migration archives individually bounded governance rows beyond th
     .get();
   if (!template) throw new Error('operation fixture row is missing');
   const basePayload = validateHostOperationReservation(parseJsonRecord(template.payload));
+  const rowNodes = Object.keys(template).length + 1;
+  const rowCount = Math.floor((MAX_CANONICAL_NODES - 1) / rowNodes) + 1;
   const insert = database.query<never, SQLQueryBindings[]>('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)');
   database
     .transaction(() => {
-      for (let index = 0; index < 1400; index++) {
+      for (let index = 1; index < rowCount; index++) {
         const key = createHash('sha256')
           .update('archive-operation-' + index)
           .digest('hex');
@@ -4569,6 +4597,8 @@ test('consumer migration archives individually bounded governance rows beyond th
   const rows = database
     .query<GovernanceSqlRow, [string]>('SELECT * FROM agent_host_governance WHERE workspace_id=? ORDER BY rowid')
     .all(workspace);
+  expect(rows).toHaveLength(rowCount);
+  expect(() => canonicalJsonDigest(rows.slice(0, -1))).not.toThrow();
   expect(() => canonicalJsonDigest(rows)).toThrow(/node budget/);
   const migration = maintenanceStore(),
     fence = migration.acquireMaintenanceFence(maintenanceBinding());
@@ -4600,6 +4630,7 @@ test('consumer migration archives individually bounded governance rows beyond th
       .all(workspace),
   ).toEqual(rows);
   await migration.releaseMaintenanceFence(fence);
+  if (performance.now() < deadline) preserveHostFixtureRoot = false;
 });
 
 test('consumer migration restore refuses a prepared admission even when no WorkState was created', async () => {

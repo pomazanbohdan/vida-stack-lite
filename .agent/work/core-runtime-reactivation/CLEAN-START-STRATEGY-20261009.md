@@ -135,6 +135,13 @@ Initial Source case for all four CAS fences, verifier-error rollback, actual lat
 Source drift and immutable retry denial. It passes53assertions in3.049s under the
 unchanged5s limit. Preserve both fresh verifier calls and exact document restoration;
 review/refresh the existing pin, publish, then measure the changed input once.
+The880676f stage fails three deadlines in262.693s with no complete counters.
+Preserve its original failed-stage projection and image;795ffb2 remains the latest
+complete observation. Next replace repeated denial-oracle API decoding with exact
+native beforeimages while keeping real API controls, and use the minimum archive
+node-boundary rows with explicit timeout retention. The three changed cases pass
+115assertions under unchanged limits; full timing qualification, especially the
+corrective constructor, remains pending the next single changed-input stage.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

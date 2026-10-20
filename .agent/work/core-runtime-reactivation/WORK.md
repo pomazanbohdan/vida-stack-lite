@@ -200,6 +200,52 @@ all other resource ownership, selection and budget constraints remain unchanged.
 One changed-input stage follows ordinary checked publication; the795ffb2 counters
 above are not attributed to this newer packet.
 
+The880676f stage /workspace/contour-stage-dJqn7S now terminates failed after
+262692.609ms, exit1, complete capture/group closure, unchanged boot/image.
+There is no attributable complete report; projection1042retains its failed-stage
+outcome and the795ffb2 counters remain the latest complete evidence. Host reports
+266PASS/3FAIL,2126assertions in220.15s; stopped-source16PASS/206assertions in257.08s.
+Case overruns are Initial Source5881.22ms/5s, corrective authorization21310.17ms/20s,
+and aggregate governance archive5228.34ms/5s. Corrective fails during fixture
+preparation before its negative matrix; reducing oracle work does not prove that
+constructor boundary repaired. Original logs, failed publication and image stay
+intact. Run59d4cea0-177e-48c9-8d15-7fce9591b54b binds image
+92004741dca70aa377c36034cdd62a2642db964e, image manifest
+b4a1a6b5db86788b5d9f781d3420702c518f5dbc935b82f542a0771bfae9880a,
+input26dc85af70cc044d427b3010b7d0e7135a6ed6ad79f49754ad73777cef05009e.
+SDK CI39365561774/artifact12239157368 transport SHA
+616cc6139c34270a1a3b9512b99b4eb5212a0b0ca3c5222d49b495bdc3d78beb matches.
+Admission observes6745133056free bytes against2147483648required; reuse that
+new observation without df/du/hash scans or deletion. Explicit failed roots are
+scratch-wOZTJT/scratch/vida-coverage-59d4cea0-177e-48c9-8d15-7fce9591b54b/shard-0001/tmp/
+vida-initial-source-xtlylV and vida-absorption-pntCof beneath the retained stage.
+Prior archive-case DB retention was not explicit; do not invent its custody.
+
+The next correction uses one shared typed readFixtureHostRows test oracle.
+Each negative CAS/verifier attempt still compares exact persisted Host and Journal
+revision/payload/digest rows and its receipt/file absence. Actual Host/Journal APIs
+validate state before/after the matrix and after success. This removes24repeated
+higher-level view calls across the two cases, not production verification or
+required I/O. No causal runtime percentage is established. Archive input now uses
+the declared canonical node cap and native scalar row shape:1250total rows instead
+of1401. The1249-row prefix serializes and the1250-row array crosses the unchanged
+10000-node cap; baseline/restore still verifies every row and decoder bounds.
+It sets failure retention before setup and clears it only after exact restoration,
+fence release and in-deadline completion. Teardown closes handles before retaining
+the private root. Existing expected-UNKNOWN and setup-failure reasons remain exact.
+
+Scoped strict180files/lint pass. Three focused cases pass115assertions in21.11s:
+Initial Source4729.36ms, corrective12028.01ms, archive1424.84ms. The final archive
+retention change passes9assertions in1394.34ms. Logs are
+host-timeout-persisted-oracle-repair.log and archive-boundary-retention-final.log
+in the existing diagnostic directory. Blind review
+/tmp/vida-host-timeout-persisted-oracle-review.md finds no blocker. These distinct
+Source-only observations do not establish a full coverage/timing unblock.
+The final Host pin is
+14ee0c5508cbe32a8e0887f7c8d907799fc52e2f2ed977bffd78209941ea46b4;
+selected files, second pin, resource ownership,5s/20s cases and global budgets stay
+unchanged. Require one changed-input stage after ordinary checked publication.
+
 ### Prior complete setup-scope coverage and Task-source unit packet
 
 The ea86777 stage at /workspace/contour-stage-41AWBl completes in200664.533ms,
