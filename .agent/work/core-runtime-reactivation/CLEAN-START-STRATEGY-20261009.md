@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `52c5b2bf844bf8a6c2ea7f73a381c9f82d8ef126`, run `069eb95d-7303-4161-a43e-0f22ec8254df`: F1059/1129, L4693/4970, S4970/5300 and B4957/5642. It records305PASS/0FAIL,3686assertions in156.543seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is70missing functions under36owners, all with exact retained map coordinates, plus685 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `07e0a8faa9071be40c1131d98fb1dcb84e3e41fe`, run `e821c8db-b29b-4b48-a55d-561d1d32f44c`: F1062/1129, L4696/4970, S4973/5300 and B4963/5642. It records305PASS/0FAIL,3718assertions in150.189seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is67missing functions under34owners, all with exact retained map coordinates, plus679 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -54,15 +54,16 @@ its complete-capture failure stays attempt1091 with no numeric promotion.
 Its same two cases were rebalanced and redundant fixture Journal reads removed.
 Focused2PASS33assertions, strict168-file checks and the complete52c5b2b stage pass;
 retain the same assertions, native rollback, live freshness, private roots and20s
-bounds. Continue from the refreshed70-function/685-arm same-contour inventory.
+bounds. Its result remains bound to52c5b2b; the current inventory is refreshed below.
 
-The next checked packet extends the same heartbeat and held-maintenance cases:
+The latest measured packet extends the same heartbeat and held-maintenance cases:
 native peer admission with the shared Ledger CAS, explicit FIFO guard preimages
 with exact restoration, and terminal snapshot reads under the real held fence.
 Focused2PASS63assertions and strict168-file checks pass; independent blind Luna
 review finds no blocker. Keep the same two serial children, private roots and5s
-case limits. Its complete matching SDK/image/stage remains pending; do not claim
-numeric gains from the focused checks. Failed fixture logs/roots remain retained.
+case limits. Its complete matching SDK/image/stage measures+3F/+3L/+3S/+6B;
+continue from67missing functions and679branch arms in the same contour. Failed
+fixture logs/roots remain retained. No unchanged full rerun is needed.
 
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
@@ -79,7 +80,7 @@ The local report-only planner is retained diagnostic tooling, not published Sour
 After observed native process/group/capture closure, retire only the exact
 qualified private regenerable cache. Reuse shared dependency inventory under
 the no-install fence and preserve every other scratch/evidence byte. The latest
-archive and retirement manifest in WORK leave3402031104bytes above the unchanged
+archive and retirement manifest in WORK leave3324502016bytes above the unchanged
 2GiB durable floor. Earlier comprehensive cleanup and qualifier namespace-guard
 proof remain in Git and retained diagnostics; do not repeat broad scans/cleanup.
 Unknown backup/provision/proposal roots remain excluded. Bootstrap now requires
