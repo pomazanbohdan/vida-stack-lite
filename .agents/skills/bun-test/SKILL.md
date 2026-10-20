@@ -571,7 +571,10 @@ limits must not be mistaken for product failures or numeric qualification.
 
 Use explicit test paths and an anchored `--test-name-pattern` for a focused
 development check. Inspect the exit code and assertions. A name filter is not
-complete-selection evidence. Bun applies the default timeout per individual
+complete-selection evidence. For a shell batch of checks, use fail-fast execution
+or inspect every individual exit status and log. A later lint PASS must not mask
+an earlier typecheck failure through the shell's last-command status. Keep failed
+logs and rerun only corrected checks before publication. Bun applies the default timeout per individual
 test, not to the whole file, phase or pool. Keep case exceptions and aggregate
 child, cleanup and report budgets separate. Do not raise a timeout to make a
 result pass.

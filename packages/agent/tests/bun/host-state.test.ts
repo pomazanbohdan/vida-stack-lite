@@ -1385,6 +1385,7 @@ test('fresh task-source projection preserves the admitted owner and rejects nonc
 });
 
 test('task-source preparation and inspection persist one retry-stable operation without action effects', () => {
+  const deadline = performance.now() + 5_000;
   const f = createTaskSourceHostFixture();
   let completed = false;
   let primaryFailure: { error: unknown } | undefined;
@@ -1403,6 +1404,10 @@ test('task-source preparation and inspection persist one retry-stable operation 
     expect(
       f.database.query("SELECT name FROM sqlite_master WHERE name='agent_host_task_source_binding_operation'").get(),
     ).toBeNull();
+    initializeTaskSourceBindingWorkProjectionSchema(f.database);
+    expect(f.store.inspectTaskSourceBindingOperation(input).status).toBe('not_found');
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
     const prepared = f.prepare();
     expect(prepared.status).toBe('prepared');
     expect(prepared.operation_id).toBe(f.request.operation_id);
@@ -1416,6 +1421,10 @@ test('task-source preparation and inspection persist one retry-stable operation 
       authority: { source_authorization_sha256: 'c'.repeat(64), source_scope_digest: f.journal.source_scope?.digest },
     });
     expect(prepared.state_version).toEqual({ revision: 1, digest: canonicalJsonDigest(prepared.operation) });
+    expect(
+      f.database.query<{ work_id: string }, []>('SELECT work_id FROM agent_host_task_source_binding_operation').get()
+        ?.work_id,
+    ).toBe(f.identity.work_id);
     expect(f.prepare()).toEqual(prepared);
     expect(f.store.inspectTaskSourceBindingOperation(input)).toEqual({ ...prepared, status: 'inspected' });
     const missing = {
@@ -1453,6 +1462,7 @@ test('task-source preparation and inspection persist one retry-stable operation 
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
     expect(f.store.inspectTaskSourceBindingOperation(input)).toEqual({ ...prepared, status: 'inspected' });
+    if (performance.now() >= deadline) throw new Error('TaskSource projected preparation exceeded its case deadline');
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -1461,7 +1471,8 @@ test('task-source preparation and inspection persist one retry-stable operation 
     completeOwnedCleanup(
       [
         () => {
-          f.close(completed);
+          f.close(() => completed && performance.now() < deadline);
+          if (performance.now() >= deadline) throw new Error('TaskSource projected cleanup exceeded its case deadline');
         },
       ],
       primaryFailure,
@@ -7731,7 +7742,10 @@ test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
 );
 
 test('consumer migration keeps canonical SQLite in place, clears active rows and restores exact state under its held fence', async () => {
-  const initial = fixture();
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const deadline = performance.now() + 5_000;
+  const prepared = await writerFixture();
+  const initial = prepared.seed;
   quiesceImportedState([initial.nextWork], initial.nextLedger);
   const first = commitHostState(initial);
   const second = fixture('second', 'file:src/other.ts');
@@ -7739,6 +7753,19 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
   includeExistingLedger(second, first.ledger);
   second.expectedLedger = first.ledgerVersion;
   commitHostState(second);
+  const journal = completedRecoveryJournal(
+    identity.work_id,
+    requiredValue(initial.nextWork.execution.run_id, 'migration retained run id'),
+    prepared.source,
+  );
+  expect(journal.state.completed).toHaveLength(1);
+  expect(firstOf(firstOf(journal.state.completed, 'retained wave').items, 'retained item').observation?.status).toBe(
+    'reported_complete',
+  );
+  const journalRows = database.query<SessionLedgerSqlRow, []>(
+    'SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt',
+  );
+  const retainedJournal = journalRows.all();
   const before = store.readWorkspaceSnapshot();
   expect(before.work).toHaveLength(2);
   const consumerFile = path.join(root, 'consumer-source.txt');
@@ -7775,6 +7802,7 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
   expect(baseline.status).toBe('baseline');
   expect(migration.readWorkspaceSnapshot().work).toHaveLength(0);
   expect(migration.readWorkspaceSnapshot().ledger).toBeNull();
+  expect(journalRows.all()).toEqual([]);
   writeFileSync(consumerFile, 'deterministic initialization failure output');
   expect(() =>
     migration.consumerMigrationState(fence, 'restore', () => {
@@ -7794,6 +7822,7 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
     return 'files restored';
   });
   expect(restored.status).toBe('restored');
+  expect(journalRows.all()).toEqual(retainedJournal);
   await migration.releaseMaintenanceFence(fence);
   const after = migration.readWorkspaceSnapshot();
   expect(after).toEqual({
@@ -7805,6 +7834,8 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
   );
   expect(callbacks).toBe(2);
   expect(readFileSync(consumerFile)).toEqual(originalBytes);
+  if (performance.now() >= deadline) throw new Error('Host migration history fixture exceeded its case deadline');
+  preserveHostFixtureRoot = false;
 });
 
 test('consumer migration archives individually bounded governance rows beyond the aggregate ingress node budget', async () => {
@@ -8056,6 +8087,40 @@ describe('host-owned durable maintenance fence', () => {
         );
         const before = rows.all();
         expect(checked.assertConfiguredDatabase(config)).toBeUndefined();
+        const physical = nodeFs.lstatSync(opened.filename, { bigint: true });
+        const physicalIdentity = { device: String(physical.dev), inode: String(physical.ino) };
+        const sentinelBinding = { fixture: 'opaque storage identity binding', workspace_id: configuredWorkspace };
+        opened.exec(
+          'CREATE TABLE vida_workspace_bootstrap(id INTEGER PRIMARY KEY,payload TEXT NOT NULL,digest TEXT NOT NULL)',
+        );
+        expect(() =>
+          checked.assertWorkspaceDatabaseBootstrap(configuredRoot, relative, physicalIdentity, sentinelBinding),
+        ).toThrow('Host bootstrap sentinel differs from the retained operation');
+        opened
+          .query<never, [string, string]>('INSERT INTO vida_workspace_bootstrap VALUES(1,?,?)')
+          .run(canonicalJson(sentinelBinding), canonicalJsonDigest(sentinelBinding));
+        const sentinel = opened.query<{ payload: string; digest: string }, []>(
+          'SELECT payload,digest FROM vida_workspace_bootstrap WHERE id=1',
+        );
+        const sentinelBefore = sentinel.get();
+        expect(
+          checked.assertWorkspaceDatabaseBootstrap(configuredRoot, relative, physicalIdentity, sentinelBinding),
+        ).toBeUndefined();
+        expect(() =>
+          checked.assertWorkspaceDatabaseBootstrap(
+            configuredRoot,
+            relative,
+            { ...physicalIdentity, inode: physicalIdentity.inode + '0' },
+            sentinelBinding,
+          ),
+        ).toThrow('Host database differs from the published bootstrap identity');
+        expect(() =>
+          checked.assertWorkspaceDatabaseBootstrap(configuredRoot, relative, physicalIdentity, {
+            ...sentinelBinding,
+            fixture: 'different binding',
+          }),
+        ).toThrow('Host bootstrap sentinel differs from the retained operation');
+        expect(sentinel.get()).toEqual(sentinelBefore);
         const foreignConfig = {
           ...config,
           repository: { ...config.repository, repository_id: 'foreign-configured-repository' },
@@ -12347,6 +12412,8 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
   );
 
   test('requires file-backed recoverable database and rejects nested transaction ownership', () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const deadline = performance.now() + 5_000;
     const memory = new Database(':memory:');
     handles.push(memory);
     let rejected: unknown;
@@ -12358,6 +12425,62 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     if (!(rejected instanceof Error)) throw new Error('memory-backed host database was not rejected with an Error');
     expect(Reflect.get(rejected, 'code')).toBe('GAP-HOST-STATE-001');
     expect(rejected.message).toMatch(/file-backed/);
+    const readonlyHandle = new Database(databasePath, { readonly: true, strict: true });
+    handles.push(readonlyHandle);
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      const inspected = new HostStateStore(
+        readonlyHandle,
+        workspace,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true,
+      );
+      const schema = database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name');
+      const schemaBefore = schema.all();
+      const before = store.readHostStateSnapshot(identity);
+      expect(inspected.readHostStateSnapshot(identity)).toEqual(before);
+      expect(() => inspected.recordAdmissionAttempt('readonly-denied', 1, { fixture: true })).toThrow(/readonly/i);
+      expect(store.readHostStateSnapshot(identity)).toEqual(before);
+      expect(schema.all()).toEqual(schemaBefore);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            readonlyHandle.close();
+          },
+        ],
+        primaryFailure,
+      );
+    }
+    const empty = new Database(path.join(root, 'read-only-empty.sqlite'), { create: true, strict: true });
+    handles.push(empty);
+    expect(
+      () =>
+        new HostStateStore(
+          empty,
+          workspace,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          true,
+        ),
+    ).toThrow('read-only Host inspection requires the existing current schema');
+    expect(empty.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual([]);
     database.exec('PRAGMA journal_mode=MEMORY');
     expect(() => new HostStateStore(database, workspace)).toThrow(/journal/);
     expect(() => commitHostState(fixture())).toThrow(/journal/);
@@ -12369,6 +12492,8 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       expect(() => store.readHostStateSnapshot(identity)).toThrow(/nested/);
       expect(() => commitHostState(fixture())).toThrow(/nested/);
     })();
+    if (performance.now() >= deadline) throw new Error('Host readonly database fixture exceeded its case deadline');
+    preserveHostFixtureRoot = false;
   });
 
   test.each(['work-and-ledger', 'governance-reserve', 'governance-transition'])(

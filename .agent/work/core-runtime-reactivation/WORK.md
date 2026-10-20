@@ -126,6 +126,41 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
+### Checked storage and retained-Journal packet; stage pending
+
+Four existing cases now exercise fresh projection initialization before exact
+TaskSource preparation/retry, a completed cooperative readonly Journal wave
+through migration clear/interrupted-restore/restore, actual read-only Host schema
+inspection with native write denial, and bootstrap file-identity comparisons.
+The bootstrap row is an explicitly opaque storage-only test sentinel, not an
+issued bootstrap receipt or Runtime proof. Missing schema/row, wrong inode and
+changed binding deny with native rows unchanged. The read-only connection closes
+through owned cleanup before the existing journal/synchronous tests. Original
+partial effects, file bytes, admission guards and Host/Journal equality remain.
+The TaskSource close owner checks its completion predicate after connection close;
+all changed cases retain the existing5s bounds and failed-root ownership.
+
+Focused4PASS69assertions and configured lint passed. The initial strict168-file
+check failed at an expression-bodied cleanup returning void; a later lint exit0
+in the same shell batch masked its exit status. The526-file Git hook correctly
+refused commit. Original typecheck logs retain TS2322. Root changed the callback
+to a block returning undefined; fail-fast strict168-file and lint checks now pass,
+and the changed read-only case passes again. The bun-test skill records individual
+status inspection/fail-fast sequencing; the hook and all gates stay unchanged.
+Blind Luna required Host/Journal equality before preparation, after projection
+initialization and not-found inspection. Root added those exact checks; the
+changed case passes1PASS23assertions, with strict/lint and the refreshed10-assertion
+resource-pin control passing. Independent recheck finds no remaining blocker;
+storage-history-v1100-review.md retains the finding and resolution.
+One exec-server transport rejection occurred before the final documentation/pin
+command launched. Subsequent access observes the same boot89093463-dd07-4789-abcd-d15842df2ba2
+and all five modified files. No numeric producer had started and no restart,
+lost Source or replay is inferred from that transport failure.
+The bounded Luna plan is retained as task-source-v1100-plan.md in focused
+diagnostics. Its remaining TaskSource admission/FIFO/history proposals stay
+unqualified; no fabricated native transition is used. Numeric gains remain pending
+one matching SDK/image/stage with the same two serial-file resource owners.
+
 ### Measured same-thread retry and guarded plan refresh
 
 The existing no-effect case keeps its original different-thread retry and adds
@@ -212,7 +247,7 @@ stay read-only; package `.tmp` and coverage remain their already permitted outpu
 The parent fences installs, Git changes, indexing and additional producers.
 
 The current reviewed Host file digest is
-`ff49cd84428c4e1d4ed848a355bf11188b35fcfbef742ae03ac28b2c9b8edaa7`;
+`865201de8b351886956e54e88a1ea7bc5fec46412f2720ec6e474b3020c34b65`;
 stopped-source remains
 `a414b790fea1381ffb425552a1f1b9ae29ad00f2998491a44bb8b7d6d45e9037`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
@@ -220,8 +255,8 @@ ownership. The expired-lease case's peer/waiter use that same unique root and sh
 fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
 namespace or shared-config write is admitted. The focused pin control passes
 10assertions. The complete matching-image stage above establishes capture, process/group
-closure and attributable merged counters for7845f62 and the current test pin.
-The complete report remains nonexact. The300s
+closure and attributable merged counters for7845f62. The new test pin still
+needs its matching stage. The complete report remains nonexact. The300s
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.
 

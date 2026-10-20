@@ -290,6 +290,28 @@ every producer fence, current-version check and deterministic rebuild fresh.
 
 ### Coordination history and expired recovery
 
+The maintained TaskSource preparation case initializes the current projection
+schema while its operation table is still absent, then prepares and inspects
+one exact retry-stable operation with the projected Work ID. Preserve no-action
+effects, missing/changed-request denials and exact Host/Journal equality. This
+is a fresh fixture initialization, not an active consumer schema upgrade.
+
+The migration baseline/restore case keeps a completed cooperative readonly
+Journal wave plus an unissued current wave. Baseline clears its rows; successful
+restore returns their exact revision/payload/digest after an interrupted restore
+under the original held fence. Keep its file, admission-denial and Host beforeimage
+checks. This is isolated fixture behavior, not consumer effects or UNKNOWN replay.
+
+The file-backed database case constructs inspection through an actual read-only
+connection with the existing schema, rejects native writes without changing
+Host/schema, and closes that connection before changing journal mode. A separate
+empty fixture rejects inspection without creating schema. The configured-root
+case binds the observed native file identity to an explicitly opaque test
+sentinel and rejects absent row, different binding and wrong inode. That storage-
+only sentinel is not a genuine bootstrap operation/receipt or Runtime evidence.
+Keep same-root ownership,5s case limits, primary/cleanup error preservation and
+failed-root retention, including the TaskSource fixture's after-close predicate.
+
 The existing no-effect retry case keeps its different-thread predecessor route,
 then creates a second public Host attempt and reconciles it through the existing
 typed unit verifier with a same-thread, newer-generation lease. Before advancing

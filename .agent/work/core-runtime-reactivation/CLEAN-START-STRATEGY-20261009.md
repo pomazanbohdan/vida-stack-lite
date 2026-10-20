@@ -84,6 +84,15 @@ deadlines and the same resource topology. Its matching SDK/image/stage measures
 and654branch arms. Do not move coverage work into the separate public prepared-plan suite
 or fabricate an inconsistent newer receipt merely to force a predicate denial.
 
+The next checked packet uses four existing storage/history cases: fresh
+projection-aware TaskSource preparation, exact completed-Journal retention in
+migration baseline/restore, actual read-only inspection/native write denial,
+and observed file identity with an explicitly test-only opaque bootstrap
+sentinel. Focused4PASS69assertions, strict168-file TypeScript and configured lint
+pass. Preserve5s bounds, current private resources and exact pin before one
+matching SDK/image/stage. No consumer cutover, genuine bootstrap receipt or
+numeric gain is claimed from these focused checks.
+
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
 setup. Keep original roots/logs and the unvalidated patch. Resolve the setup cost
