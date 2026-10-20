@@ -7,9 +7,10 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 
 export async function makeFreshRepository(
   prefix = 'project-upgrade-lifecycle-',
-  options: { includeLocalInstructions?: boolean } = {},
+  options: { includeLocalInstructions?: boolean; onRoot?: (root: string) => void } = {},
 ): Promise<string> {
   const root = await mkdtemp(path.join(os.tmpdir(), prefix));
+  options.onRoot?.(root);
   await mkdir(path.join(root, '.git'));
   await mkdir(path.join(root, 'docs/agent-instructions'), { recursive: true });
   if (options.includeLocalInstructions !== false)

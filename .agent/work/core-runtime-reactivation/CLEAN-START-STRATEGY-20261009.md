@@ -208,6 +208,13 @@ bindings. Previous failure remains separate. Current report-only inventory has
 252uncovered functions/89owners. Resume new native unit cases in this same
 contour; the migration wrapper may use a fresh configured root and harmless
 callbacks, with no real consumer effects or legacy-workflow rewrite.
+That wrapper packet now has three passing default5s cases/81assertions: exact
+baseline/restore retries, known no-effect callback failure and inflight denial.
+The fresh fixture records root ownership before async setup and retains the
+expected inflight root without replay. Strict181files and scoped lint pass.
+Finish the final bounded review/pin control and normal publication, then one
+changed-input stage with matching SDK and verified durable scratch retention;
+do not count targeted passes as exact coverage.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

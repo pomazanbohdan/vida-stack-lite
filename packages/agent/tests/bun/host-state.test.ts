@@ -4,6 +4,7 @@ import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.
 import { expectReturned, rejectionReason } from '../helpers/expect-rejection.ts';
 import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-reconciliation-authorization-fixture.ts';
 import { createInitializationBundle } from '../helpers/init-bundle.ts';
+import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
 import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
@@ -80,6 +81,7 @@ import {
   HostStateStore,
   openHostStateDatabase,
   inspectHostWorkspaceDatabase,
+  runConsumerMigrationState,
   workMigrationId,
   withHostStateExclusiveTransaction,
   initializeTaskSourceBindingWorkProjectionSchema,
@@ -4819,6 +4821,135 @@ const maintenanceStore = (handle = database) =>
   new HostStateStore(handle, workspace, undefined, undefined, undefined, maintenanceVerifier);
 const workingStore = (handle = database) =>
   new HostStateStore(handle, workspace, undefined, undefined, undefined, maintenanceVerifier, root);
+
+test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
+  'consumer migration wrapper %s preserves private workflow bytes and exact operation identity',
+  async (mode) => {
+    const deadline = performance.now() + 5_000;
+    let rootOwned: string | undefined;
+    let completed = false;
+    let expectedInflight = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const root = await makeFreshRepository('vida-migration-wrapper-', {
+          includeLocalInstructions: false,
+          onRoot: (created) => {
+            rootOwned = created;
+            console.info('Consumer migration wrapper fixture root: ' + created);
+          },
+        });
+        const config = loadRuntimeConfig(root);
+        const workflowPath = sessionBridgeDatabasePath(root, config);
+        mkdirSync(path.dirname(workflowPath), { recursive: true });
+        // Controlled terminal JSON rows exercise the wrapper's classifier, not a real engine run.
+        const workflow = new Database(workflowPath, { strict: true });
+        try {
+          workflow.exec('CREATE TABLE mastra_workflow_snapshot (snapshot TEXT NOT NULL)');
+          const insert = workflow.query('INSERT INTO mastra_workflow_snapshot VALUES (?)');
+          for (const status of mode === 'inflight-denial'
+            ? ['running']
+            : ['success', 'failed', 'suspended', 'canceled'])
+            insert.run(JSON.stringify({ status, fixture_only: 'terminal-workflow-classification' }));
+        } finally {
+          workflow.close(true);
+        }
+        const workflowBefore = readFileSync(workflowPath);
+        const input = {
+          repositoryRoot: root,
+          operationId: 'fixture-native-migration',
+          actor: 'fixture:host-migration',
+        };
+        let calls = 0;
+        for (const denied of [{ operationId: 'invalid operation' }, { actor: '  ' }, { actor: 'fixture\nactor' }]) {
+          const rejected = await rejectionReason(
+            runConsumerMigrationState({ ...input, ...denied, mode: 'baseline' }, () => {
+              calls++;
+              throw new Error('Invalid attribution reached the filesystem callback');
+            }),
+          );
+          expect(() => {
+            throw rejected;
+          }).toThrow('consumer migration attribution invalid');
+          expect(calls).toBe(0);
+          expect(existsSync(path.join(root, config.control.work_root, 'session-handoff.v1.sqlite'))).toBe(false);
+        }
+        if (mode === 'inflight-denial') {
+          expectedInflight = true;
+          const rejected = await rejectionReason(
+            runConsumerMigrationState({ ...input, mode: 'baseline' }, () => {
+              calls++;
+              throw new Error('Inflight workflow reached the filesystem callback');
+            }),
+          );
+          expect(() => {
+            throw rejected;
+          }).toThrow('consumer workflow run remains unknown or inflight');
+          expect(calls).toBe(0);
+          expect(readFileSync(workflowPath)).toEqual(workflowBefore);
+          if (performance.now() >= deadline) throw new Error('Migration inflight denial exhausted its deadline');
+          completed = true;
+          return;
+        }
+        if (mode === 'callback-retry') {
+          const failure = new Error('fixture native migration callback failure');
+          const rejected = await rejectionReason(
+            runConsumerMigrationState({ ...input, mode: 'baseline' }, () => {
+              calls++;
+              throw failure;
+            }),
+          );
+          expect(rejected).toBe(failure);
+          expect(calls).toBe(1);
+          expect(readFileSync(workflowPath)).toEqual(workflowBefore);
+        }
+        const run = async (phase: 'baseline' | 'restore', hasBackup: boolean) => {
+          if (performance.now() >= deadline) throw new Error('Migration wrapper fixture exhausted its case deadline');
+          const result = await runConsumerMigrationState({ ...input, mode: phase }, (files) => {
+            calls++;
+            expect(files.database_path).toBe(path.join(root, config.control.work_root, 'session-handoff.v1.sqlite'));
+            expect(files.workflow_database_path).toBe(workflowPath);
+            if (hasBackup) {
+              expect(files.backup).toBeInstanceOf(Uint8Array);
+              expect(Buffer.from(files.backup!).subarray(0, 16).toString()).toBe('SQLite format 3\0');
+            } else expect(files.backup).toBeNull();
+            return calls;
+          });
+          expect(result).toEqual({
+            schema: 'ConsumerMigrationState/v1',
+            operation_id: input.operationId,
+            status: phase === 'baseline' ? 'baseline' : 'restored',
+            result: calls,
+          });
+          expect(readFileSync(workflowPath)).toEqual(workflowBefore);
+        };
+        await run('baseline', true);
+        await run('baseline', false);
+        await run('restore', false);
+        if (mode === 'baseline-restore') await run('restore', false);
+        if (performance.now() >= deadline)
+          throw new Error('Migration wrapper fixture completion exhausted its deadline');
+        completed = true;
+      },
+      async () => {
+        if (rootOwned) {
+          if (completed && !expectedInflight && performance.now() < deadline)
+            await rm(rootOwned, { recursive: true, force: true });
+          else {
+            console.error(
+              'Retained consumer migration wrapper fixture (' +
+                (completed && expectedInflight ? 'expected inflight denial; no replay' : 'failure or deadline') +
+                '): ' +
+                rootOwned,
+            );
+            if (performance.now() >= deadline)
+              throw new Error('Migration wrapper fixture cleanup exhausted its deadline');
+          }
+        }
+      },
+      'Consumer migration wrapper fixture',
+    );
+  },
+);
 
 test('consumer migration keeps canonical SQLite in place, clears active rows and restores exact state under its held fence', async () => {
   const initial = fixture();

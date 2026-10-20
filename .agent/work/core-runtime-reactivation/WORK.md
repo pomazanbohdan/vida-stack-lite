@@ -503,6 +503,45 @@ consider the maintained migration-wrapper unit fixture, retaining its actual
 fence, native DB and harmless in-memory callbacks. Do not alter workflows merely
 to choose legacy layout or claim every wrapper closure before measurement.
 
+### Native migration-wrapper coverage packet
+
+The next packet stays in the same open contour. Three default5s cases invoke
+the actual runConsumerMigrationState wrapper on fresh configured roots and
+native SQLite databases: baseline/restore with exact retries, a known no-effect
+callback failure followed by the same operation, and inflight-workflow denial.
+Callbacks only count and return in-memory results. Controlled terminal JSON rows
+exercise the wrapper classifier, not a real engine or consumer migration.
+Invalid operation/actor controls run before database creation; positive cases
+assert exact database paths, backup presence/header, result identity and unchanged
+workflow bytes. The inflight case never reaches the callback and retains its
+root without replay. No runtime/loader/DB cutover or consumer effect occurs.
+
+The existing project-upgrade fixture gains an optional onRoot callback immediately
+after mkdtemp, so ownership precedes later async setup. Paired cleanup preserves
+primary/cleanup failures and monotonic deadlines. Final targeted checks pass
+3tests/81assertions in4.58s, individual1112.92/565.10/702.89ms; strict TS181files
+and scoped type-aware lint have0diagnostics. Original logs remain under the
+current diagnostic directory (host-migration-wrapper-*-denial.log). Expected
+inflight evidence remains at
+/home/agent/.cache/vida-cloud-tooling/tmp/vida-migration-wrapper-LbK1BZ.
+The earlier independent two-case review is
+/tmp/vida-native-migration-case-review.md; its imprecise closure claim was removed
+from the title. Final independent review at
+/tmp/vida-native-migration-case-review-final.md finds no blocker, confirming the
+added denial retention/no-retry and private fixture ownership. Its static review
+does not qualify parallel coverage or establish numeric acceptance.
+
+Root's fresh two-file resource review keeps all new roots/DBs and process-local
+state in the serial Host child's existing TMPDIR namespace. No process, shared
+writable namespace, selected test, worker or budget is added. The Host pin is
+013dc0ea7c302c20f658bd554756b682e446823a7529960b1f572c3a1da0b479;
+stopped-source pin, provider guard, caller binding and serial fallback remain.
+The refreshed shard control passes10assertions in3.46ms; final strict181files,
+scoped lint, documentation links and diff checks pass. Publish through normal
+hooks, select matching CI SDK, then run one changed-input
+stage. Its actual report alone may establish numeric gains; retain all new
+tmpfs scratch durably after terminal/group closure under the rule above.
+
 Next prioritize genuine completed-Source-report recovery and its persisted Work
 history within this same contour. Blind bounded plan
 /tmp/vida-host-stored-work-next-batch.md maps the retained nested guards to their
