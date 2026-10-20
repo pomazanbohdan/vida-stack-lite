@@ -108,8 +108,14 @@ history, lookup and no-reissue retry. Six focused Host cases pass125assertions;
 old coordination cases pass26. The continuation cleanup keeps its existing
 unresolved-state check before close and the unchanged5s deadline after close.
 These remain trusted Host unit seams with protected failure/UNKNOWN evidence.
-Refresh the reviewed Host pin without selection/budget/ownership changes, measure
-this changed-input packet once, then continue remaining owners in this contour.
+The0f1dc92 stage is complete in204.972s:284PASS/0FAIL,2312assertions,
+F799/1129,L3266/4966,S3484/5296,B3421/5640, still nonexact/BLOCKED. Reused
+inventory shows330uncovered functions/closures under98outer owners. The next
+checked batch reuses that same continuation case for18additional terminal,
+absence, missing-lineage and missing-verifier denial assertions;49assertions pass
+in0.580s with no extra fixture, DB or selected file. The reviewed Host pin is
+refreshed, preserving selection/budget/ownership. Measure once after publication,
+then batch the next genuine native cases from the current inventory.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

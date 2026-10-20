@@ -99,72 +99,56 @@ explicitly proves missing-engine inspection creates no engine file. No remaining
 blocking finding was reported. The complete observation below, rather than these
 targeted passes, owns the measured numeric increase.
 
-### Latest complete host-state coverage and native continuation packet
+### Latest complete host-state coverage and lookup batch
 
-The b8e5a3f stage at /workspace/contour-stage-eqbwzT completes in236171.749ms,
-exit0, capture complete, group closed and boot/image inputs unchanged. Host267
-PASS/2073assertions and stopped-source16PASS/206assertions give283PASS/0FAIL
-and2279assertions. Published run0112b1eb-c8db-41bc-805b-90b1cefcf6c4 records
-F758/1129,L3003/4966,S3209/5296,B2945/5640: +34functions,+230lines,
-+240statements,+284branches against43f2d0b with unchanged denominators.
-The operation remains BLOCKED, historical exact closure16/45. Frozen/CRAP and
-mutation remain deferred. The unchanged image is
-/workspace/.vida-quality-inputs/6acb513377f214e6b67f0ede9e7d3b8d0374116e/repository,
-manifest SHA7ba90dd6536905140037a8ebceab4e4ad6e2e9ffe1a924c370f879be3b2049c1,
-input fingerprint a72c32b29192aeb57d2c3674fd7109133ea93442bc9b7c10b0dbea58c8b14b4a.
-SDK CI39345411554/artifact12230467259 succeeds; matching transport ZIP SHA
-202e9cfb3c1ba07145719e2439eb394c7a35e26cab235422c279ed8e4507b1d2.
-Admission observes7938863104free bytes against2147483648required; no disk scan
-or cleanup is needed. Generated projection1035imports its complete terminal result.
-The reused inventory now has371uncovered functions/closures under107outer owners.
-Prior43f2d0b receipt: /workspace/contour-stage-5HTkfG,
-run9514c2ed-3302-4845-a0ae-e6f7259a2a7e; full previous packet/evidence metadata
-remain in this WORK path at published b8e5a3f.
+The0f1dc92 stage at /workspace/contour-stage-rYJHRp completes in204972.279ms,
+exit0, capture complete, group closed and boot/image inputs unchanged. Host268
+PASS/2106assertions and stopped-source16PASS/206assertions give284PASS/0FAIL
+and2312assertions. Published runfc6439ba-f2ad-464c-8936-315c8be508f8 records
+F799/1129,L3266/4966,S3484/5296,B3421/5640: +41functions,+263lines,
++275statements,+476branches against b8e5a3f with unchanged denominators.
+The operation remains BLOCKED; historical exact closure16/45. Frozen/CRAP and
+mutation are deferred and unqualified. Its unchanged image is
+/workspace/.vida-quality-inputs/8b5d4891c992a34fb5c484b37d80d4ff73ea822c/repository,
+manifest SHA42d8db4612b30f69eae3428fa0091d5f6fb2b405a1523c936b82077a3fa52e78,
+input fingerprint07d4764a81c97fcce8d200303226da47cb39c2213f08e382d6c545ca0901b1d3.
+SDK CI39346592981/artifact12230794550 succeeds; transport ZIP SHA
+36efd261b07e8a6e0a0e45e394c1b8b3621379484d934601fa439a19208a39a8 matches.
+Admission observes7639740416free bytes against2147483648required. Projection1037
+imports its terminal result; reuse this disk observation without another scan.
+The same completed inventory now identifies330uncovered functions/closures under
+98outer owners. Prior b8e5a3f stage /workspace/contour-stage-eqbwzT,
+run0112b1eb-c8db-41bc-805b-90b1cefcf6c4 and all prior packet/retention details
+remain in this WORK path at published0f1dc92. Original failure and expected-UNKNOWN
+roots referenced there stay protected; a later passing run does not authorize
+removal or effect replay.
 
-The next checked Source packet extends the existing UNKNOWN test to the real
-configured-root resolver guard. The fixture accepts one optional configuredHost,
-uses the maintained runtime/project-context loaders and seeds matching Work and
-request identity/config digests; its DB remains private. Default fixture behavior
-and both old issue regressions are preserved. Issued and UNKNOWN resolution both
-reject before byte snapshots, without returning a Source root or replay argv.
-No observed binding is fabricated. The fixture workspace key remains an explicit
-unit seed, not proof of a deployed root/workspace mapping. Both configured and
-native DB roots are retained on the expected-UNKNOWN path. Final focused roots:
-/home/agent/.cache/vida-cloud-tooling/tmp/vida-task-source-coordination-SPCYik and
-/home/agent/.cache/vida-cloud-tooling/tmp/host-state-oGuObE.
-Earlier expected-UNKNOWN roots UCp5Rz and JnibCY/RhOcYl remain protected under
-the same temporary parent. These are evidence, not deletion/replay candidates.
+The next checked packet adds18lookup assertions inside the existing continuation
+case, reusing its actual native DB and released-owner state. It checks exact-fence
+terminal snapshot plus drift/nested denial; missing failed-prewriter, completed-
+report and initial-Source receipts; missing original recovery lineage; empty
+qualified code history; and absence of a recovery archive for the real current
+Journal item. Maintenance planning is denied because the fixture lacks its
+acquisition verifier; this is no success/authorization claim. After genuine Host
+continuation, terminal-only inspection rejects the newly active owner and missing
+recovery receipts remain absent. Current Host/Journal are unchanged by the reads.
+No recovery receipt, external approval or observed Source effect is manufactured.
+The existing private fixture, unresolved-operation check, paired close and
+post-close monotonic5s deadline remain the cleanup owners; no new setup or DB
+handle is created. A const body handle makes callback narrowing explicit while
+the optional outer handle remains responsible for partial-setup cleanup.
 
-One additional native Host continuation case imports the existing maintained
-continuation fixture directly; no fixture duplication, CLI/engine bootstrap or
-extra selected test file. It checks the stale Work preimage denial, unchanged
-Host/Journal/no receipt table, actual atomic continuation, exact revisions,
-preserved capture/old Journal history, unissued review, persisted lookup and one
-receipt across exact retry with no reissued action. The trusted verifier and test
-capture qualify this Host seam only, not public approval or Runtime acceptance.
-The first assertion expected a later CAS error; the native original-capture guard
-correctly rejects first. The corrected case passes31assertions in0.576s. Preserve
-its initial failure log and root
-/home/agent/.cache/vida-cloud-tooling/tmp/delivered-work-continuation-eQR3XP.
-
-The case enrolls its private root before asynchronous setup. Cleanup preserves
-the existing unresolved-operation detector before the fixture close removes its
-handle from the registry, invokes the single close owner, then checks the same
-monotonic5s deadline before root removal. Body, detector and close failures retain
-both roots and preserve their primary causes through completeOwnedCleanup.
-There is no extra unresolved-state scan of the closed handle. Native controls
-pass6Host cases/125assertions in4.21s; the old coordination cases pass26assertions
-in2.01s. Strict173files, scoped type-aware lint and the exact eligibility control
-(10assertions/0.299s) pass. Logs are host-native-task-source-continuation-final.log,
-host-delivered-continuation-unit.log, host-delivered-continuation-unit-corrected.log,
-task-source-configured-default-regression.log and native-continuation-shard-eligibility.log
+The changed case passes49assertions in0.580s (command2.61s), strict173files and
+scoped type-aware lint pass. The exact shard control passes10assertions in0.391s.
+Logs are host-continuation-lookup-batch.log and native-lookups-shard-eligibility.log
 under packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
-Blind reviews /tmp/vida-host-configured-task-source-final-review.md and
-/tmp/vida-host-delivered-unit-final-review.md confirm these unit evidence/resource
-boundaries. The final Host pin is
-00ebefacd96dd3a2c417364a3c8efe2ff7d7f34b7fe7445a3043119e2e2fd709;
+Blind review /tmp/vida-host-small-lookups-final-review.md confirms these limited
+absence/denial claims and unchanged resource ownership. The Host pin is
+643828897017fc5e6eddca2beafa793f6f94bce80eac3aaefb36acc15fabbd0b;
 stopped-source selection/pin, worker ownership and all budgets remain unchanged.
-Require one changed-input stage after checked publication before claiming a gain.
+Require one checked changed-input stage before claiming numeric gain. Use the
+current remaining-owner inventory to batch the next genuine native cases; never
+add another full fixture or selected test file merely to reach a wrapper.
 
 ### Prior complete setup-scope coverage and Task-source unit packet
 

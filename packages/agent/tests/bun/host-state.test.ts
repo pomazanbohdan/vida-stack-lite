@@ -1212,30 +1212,72 @@ test('trusted Host continuation atomically retains historical evidence and never
   try {
     // Maintained trusted-caller fixture; this does not establish external approval or Runtime acceptance.
     configRoot = continuationFixtureRepositoryRoot();
-    f = await continuationFixture({ root: fixtureRoot });
+    const current = await continuationFixture({ root: fixtureRoot });
+    f = current;
     if (performance.now() >= deadline) throw new Error('Host continuation fixture exhausted its case deadline.');
     const request = continuationRequestFor(f);
-    const before = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
-    const journalBefore = f.store.readWorkSessionJournal(f.identity);
+    const before = presentSnapshot(current.store.readHostStateSnapshot(current.identity));
+    const journalBefore = current.store.readWorkSessionJournal(current.identity);
     if (!journalBefore || journalBefore.state.step_id === null)
       throw new Error('Expected the fixture historical Journal step.');
-    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toBeNull();
+    const releasedFence = current.store.readMaintenanceFence();
+    if (!releasedFence || releasedFence.status !== 'released')
+      throw new Error('Expected a real released fixture fence.');
+    expect(current.store.readTerminalHostStateSnapshot(current.identity, releasedFence)).toEqual(before);
+    expect(() => current.store.readTerminalHostStateSnapshot(current.identity, null)).toThrow(
+      'terminal maintenance snapshot drift',
+    );
+    expect(() =>
+      current.db
+        .transaction(() => current.store.readTerminalHostStateSnapshot(current.identity, releasedFence))
+        .deferred(),
+    ).toThrow('nested terminal host inspection forbidden');
+    expect(current.store.readFailedPrewriterRecoveryReceipt(current.identity, 1)).toBeNull();
+    expect(() => current.store.readFailedPrewriterRecoveryReceipt(current.identity, 0)).toThrow(
+      'failed prewriter recovery inspection requires a valid nonnested attempt',
+    );
+    expect(current.store.readCompletedSourceReportRecoveryReceipt(current.identity, 1)).toBeNull();
+    expect(() => current.store.readCompletedSourceReportRecoveryReceipt(current.identity, 0)).toThrow(
+      'completed Source report recovery receipt inspection identity invalid',
+    );
+    expect(() => current.store.readCompletedSourceReportRecoveryState(current.identity, 1)).toThrow(
+      'Host, Journal or original Source continuation is missing',
+    );
+    expect(() => current.store.readCompletedSourceReportRecoveryState(current.identity, 0)).toThrow(
+      'completed Source report recovery state inspection identity invalid',
+    );
+    expect(current.store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
+    expect(current.store.readQualifiedRuntimeCodeContinuations(current.identity, 1)).toEqual([]);
+    const terminal = journalBefore.state.items[0];
+    if (!terminal?.issue_id) throw new Error('Expected the genuine fixture terminal action identity.');
+    expect(
+      current.store.findArchivedReportedObservation(current.identity.work_id, 1, {
+        action_id: terminal.request.action_id,
+        issue_id: terminal.issue_id,
+      }),
+    ).toBeNull();
+    expect(() => current.store.assertMaintenancePlanningAuthority(releasedFence.binding)).toThrow(
+      'trusted maintenance planning and release verifiers required',
+    );
+    expect(current.store.readHostStateSnapshot(current.identity)).toEqual(before);
+    expect(current.store.readWorkSessionJournal(current.identity)).toEqual(journalBefore);
+    expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toBeNull();
     await Promise.resolve(
       expect(
-        f.store.continueDeliveredWork({
+        current.store.continueDeliveredWork({
           ...request,
           expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 },
         }),
       ).rejects.toThrow('original known-terminal work, captured body, owner or current review action changed'),
     );
-    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
-    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    expect(current.store.readHostStateSnapshot(current.identity)).toEqual(before);
+    expect(current.store.readWorkSessionJournal(current.identity)).toEqual(journalBefore);
     expect(
-      f.db.query("SELECT name FROM sqlite_master WHERE name='agent_host_delivered_work_continuation'").get(),
+      current.db.query("SELECT name FROM sqlite_master WHERE name='agent_host_delivered_work_continuation'").get(),
     ).toBeNull();
-    const result = await f.store.continueDeliveredWork(request);
+    const result = await current.store.continueDeliveredWork(request);
     const after = presentSnapshot(result.snapshot);
-    const journalAfter = f.store.readWorkSessionJournal(f.identity);
+    const journalAfter = current.store.readWorkSessionJournal(current.identity);
     if (!journalAfter) throw new Error('Expected the continued Journal.');
     expect(result.status).toBe('continued');
     expect(result.action).toEqual(request.action);
@@ -1243,7 +1285,7 @@ test('trusted Host continuation atomically retains historical evidence and never
     expect(after.ledgerVersion.revision).toBe(before.ledgerVersion.revision + 1);
     expect(journalAfter.version.revision).toBe(journalBefore.version.revision + 1);
     expect(after.work.binding).toMatchObject({
-      lifecycle_work_id: f.identity.work_id,
+      lifecycle_work_id: current.identity.work_id,
       config_digest: request.targetConfigDigest,
       work_source_revision: request.currentSourceScope.digest,
       runtime_code_digest: request.targetRuntimeCodeDigest,
@@ -1251,12 +1293,12 @@ test('trusted Host continuation atomically retains historical evidence and never
       schema_digest: request.targetSchemaDigest,
     });
     expect(after.work.execution.status).toBe('active');
-    expect(after.work.lease?.thread_id).toBe(f.threadId);
+    expect(after.work.lease?.thread_id).toBe(current.threadId);
     expect(result.receipt).toMatchObject({
       prior_work: before.work,
       prior_ledger: before.ledger,
       prior_journal: journalBefore.state,
-      historical_capture: f.capture,
+      historical_capture: current.capture,
       rights_granted: false,
       accepted_result: false,
       runtime_acceptance: false,
@@ -1273,7 +1315,7 @@ test('trusted Host continuation atomically retains historical evidence and never
       issue_id: null,
       observation: null,
     });
-    const lookup = f.store.readDeliveredWorkContinuation(f.identity, 1);
+    const lookup = current.store.readDeliveredWorkContinuation(current.identity, 1);
     if (!lookup) throw new Error('Expected the persisted Host continuation lookup.');
     expect(lookup.receipt).toEqual(result.receipt);
     expect(lookup.snapshot).toEqual(after);
@@ -1282,14 +1324,20 @@ test('trusted Host continuation atomically retains historical evidence and never
     expect(lookup.item_statuses).toEqual(['unissued']);
     expect(lookup.items).toEqual(journalAfter.state.items);
     expect(Object.isFrozen(lookup)).toBe(true);
-    const retry = await f.store.continueDeliveredWork(request);
+    const retry = await current.store.continueDeliveredWork(request);
     expect(retry).toEqual({ ...result, status: 'already_continued', action: null });
-    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(lookup);
-    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
-    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalAfter);
+    expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(lookup);
+    expect(current.store.readHostStateSnapshot(current.identity)).toEqual(after);
+    expect(current.store.readWorkSessionJournal(current.identity)).toEqual(journalAfter);
+    expect(() => current.store.readTerminalHostStateSnapshot(current.identity, releasedFence)).toThrow(
+      'terminal host inspection requires suspended closed ownership',
+    );
+    expect(current.store.readFailedPrewriterRecoveryReceipt(current.identity, 1)).toBeNull();
+    expect(current.store.readCompletedSourceReportRecoveryReceipt(current.identity, 1)).toBeNull();
     expect(
-      f.db.query<{ count: number }, []>('SELECT count(*) AS count FROM agent_host_delivered_work_continuation').get()
-        ?.count,
+      current.db
+        .query<{ count: number }, []>('SELECT count(*) AS count FROM agent_host_delivered_work_continuation')
+        .get()?.count,
     ).toBe(1);
     completed = true;
   } catch (error) {
