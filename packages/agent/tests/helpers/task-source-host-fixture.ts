@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
@@ -27,7 +28,6 @@ type TaskSourceMutationVerifier = NonNullable<ConstructorParameters<typeof HostS
 type TaskSourceMutationCheck = TaskSourceMutationVerifier['verify'];
 type TaskSourcePolicyRequest = Parameters<TaskSourceMutationCheck>[0]['request'];
 type CurrentVerifier = Parameters<HostStateStore['prepareTaskSourceBindingOperation']>[0]['verifyCurrent'];
-const workspaceId: string = 'a'.repeat(64);
 const defaultIdentity: WorkIdentity = {
   repository_id: 'vida-agent',
   project_ids: ['agent'],
@@ -44,7 +44,12 @@ type WorkLedgerSeed = {
   readonly ledger: CoordinationLedger;
 };
 
-function workAndLedger(expiresAt: string, identity: WorkIdentity, configDigest: string): WorkLedgerSeed {
+function workAndLedger(
+  expiresAt: string,
+  identity: WorkIdentity,
+  configDigest: string,
+  workspaceId: string,
+): WorkLedgerSeed {
   const scopeBody: Omit<ScopedSourceSnapshot, 'digest'> = {
     schema: 'ScopedSourceSnapshot/v1',
     entries: [{ path: 'src/task.ts', exists: true, bytes: 3, sha256: '2'.repeat(64) }],
@@ -205,10 +210,11 @@ export function createTaskSourceHostFixture({
 }: FixtureOptions = {}) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-task-source-coordination-'));
   mkdirSync(path.join(root, '.git'));
+  const repositoryRoot = configuredHost?.repositoryRoot ?? root;
+  const identity = configuredHost?.identity ?? defaultIdentity;
+  const workspaceId = deriveWorkspaceId(identity.repository_id, repositoryRoot);
   const database = openHostStateDatabase(root, 'host.sqlite', workspaceId);
   try {
-    const repositoryRoot = configuredHost?.repositoryRoot ?? root;
-    const identity = configuredHost?.identity ?? defaultIdentity;
     const config = configuredHost ? loadRuntimeConfig(repositoryRoot) : undefined;
     const configDigest = config ? runtimeConfigDigest(config) : '6'.repeat(64);
     const projectContext = config
@@ -225,7 +231,7 @@ export function createTaskSourceHostFixture({
       undefined,
       policyVerifier ? { verify: policyVerifier } : undefined,
     );
-    const seed = workAndLedger(expiresAt, identity, configDigest);
+    const seed = workAndLedger(expiresAt, identity, configDigest, workspaceId);
     const initial = store.compareAndSwapHostState({
       expectedWork: null,
       expectedLedger: null,
@@ -422,10 +428,16 @@ export function createTaskSourceHostFixture({
           host: peerHost,
         };
       },
-      close(removeRoot: boolean, retentionReason = 'failed') {
-        if (!removeRoot) console.error(`Retained ${retentionReason} TaskSource fixture: ${root}`);
-        closeWorkspaceDatabaseWithAdmission(database);
-        if (removeRoot) rmSync(root, { recursive: true, force: true });
+      close(removeRoot: boolean | (() => boolean), retentionReason = 'failed') {
+        try {
+          closeWorkspaceDatabaseWithAdmission(database);
+        } catch (error) {
+          console.error(`Retained failed TaskSource fixture close: ${root}`);
+          throw error;
+        }
+        if (typeof removeRoot === 'function' ? removeRoot() : removeRoot)
+          rmSync(root, { recursive: true, force: true });
+        else console.error(`Retained ${retentionReason} TaskSource fixture: ${root}`);
       },
     };
   } catch (error) {

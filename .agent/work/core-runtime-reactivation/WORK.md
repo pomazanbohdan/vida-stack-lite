@@ -15,6 +15,54 @@ numeric producer.
 
 ### Sequential coverage observations and active repair
 
+Current correction packet: TaskSource history/report integrity. Root keeps the
+single contour and sole numeric producer. The complete4812447 observation below
+remains the latest numeric evidence until this changed packet is measured.
+
+The execution change groups related success/refusal/retry/restoration obligations
+around one maintained fixture, using the existing report-only inventory. This
+reaches both the historical snapshot path and observed-report reservation checks
+without another fixture per assertion. Comparing alternatives: a full stage per
+small assertion repeatedly pays the observed160.553s stage cost; a cohesive fixture
+matrix pays one setup and one eventual complete stage; parallel contour writers
+conflict with the current sequential scope. The matrix is selected. Expected
+numeric yield and throughput improvement remain hypotheses, not measured wins.
+
+The first historical snapshot reproduced a fixture defect: its fixed synthetic
+workspace ID disagreed with the canonical Host root. The shared helper now derives
+one workspace ID from that root and identity for Work, Ledger, Journal, peer rows
+and store. Product identity, authorization and CAS checks stay unchanged. Its
+cleanup optionally evaluates root retention after DB close and reports close
+failure custody. The new case carries the default5s monotonic deadline through
+setup/body/cleanup. It executes no Git argv: its issued action and cooperative
+observed report are native SQLite unit evidence, not genuine external admission
+or Runtime acceptance.
+
+The final checked packet passes9cases/169assertions in7.21s; the new matrix takes
+657.88ms. It covers canonical versus observed source bytes, prepared fallback,
+issued refusal, stale report CAS, exact report retry, foreign context/path/attempt
+refusals, corrupt retained action/integrity/report refusal and exact digest-guarded
+restoration. Current reading still refuses bytes outside the durable journal
+scope. Related FIFO/async-owner-expiry callers and shard eligibility pass in the
+same command. Strict142files and scoped type-aware lint pass. These are focused
+behavioral observations, not new F/L/S/B qualification or a controlled speed test.
+The reviewed Host file pin is
+a989798bee7820a437a7b61f3682a32c82de5db3a2ca28f7112f45af26fea8b9.
+The resource review retains two process-isolated children, serial cases, the same
+caller namespace and private owned SQLite/source roots. No new worker, background
+process, external effect, clock mutation or shared mutable dependency is added.
+
+Diagnostics use the existing focused-blockers directory: task-source-history-first,
+task-source-history-final, task-source-history-types-final and task-source-history-lint-final
+logs. Original failed and expected-UNKNOWN fixture roots remain protected. Blind
+Luna's bounded review at /tmp/vida-task-source-batch-review.md reports no blocker;
+its copy and /tmp/vida-host-continuation-batch-plan.md are retained there. The latter
+correctly distinguishes historical-terminal and configured-frontier fixtures:
+changing a receipt kind or synthesizing statuses cannot stand in for the real
+configured frontier. Do not duplicate that expensive setup or claim its ten
+missing callbacks from an unrelated historical case. No measured image was edited,
+new disk scan or cleanup performed, or old UNKNOWN replayed.
+
 Latest complete Host-state observation is4812447, run
 1742a75f-8f89-4856-b750-83a3fc0ab96f: F951/1129,L4068/4970,S4322/5300,
 B4412/5642,297PASS/0FAIL,2862assertions,160.553s. It remains nonexact/BLOCKED.

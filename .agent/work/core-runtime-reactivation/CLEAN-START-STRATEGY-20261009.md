@@ -26,6 +26,13 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 ### 3. Close each correction packet
 
+Prioritize report gaps by a reachable shared fixture and causal transitions, rather
+than missing-function count alone. Check related success/refusal/retry obligations
+together before one SDK/image formation and complete contour stage. Root implements;
+bounded read-only Luna review and next-path research can overlap that work. Reuse
+existing inventory and avoid unrelated setup or unchanged numeric reruns. Current
+packet: TaskSource historical-root/report integrity and canonical fixture identity.
+
 Inspect the current report and genuine producer prerequisites. Make the causal correction with maintained fixtures and preserve authorization, CAS, exact assertion identities, freshness checks and UNKNOWN handling. Run static checks and affected cases. Complete review and normal Source publication. Form matching SDK inputs only when selected tests require them. Then form one immutable image and run one complete coverage stage. Observe process, group, capture and input closure. Preserve scratch and let the maintained projection import the attributable report. Reuse unchanged evidence only under its original bindings.
 
 Run focused checks for changed behavior and callers. Do not repeat an unchanged full suite. Do not run suites during package formation or installation. Do not replay archived databases, attempts, leases, issued effects or UNKNOWN operations. Preserve stopped-source custody and every original FAIL, TIMEOUT and UNKNOWN outcome. A correction creates new evidence and cannot upgrade an old result. Native Runtime qualification is deferred; this cycle performs no loader/database cutover or consumer effect.

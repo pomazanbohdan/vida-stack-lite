@@ -1887,6 +1887,16 @@ integrates, runs checks, admits numeric results and owns Git. Any delegated work
 must remain inside the active contour, with one writer per shared file; do not
 start duplicate suites, scans, hashes or inventories.
 
+Choose each correction packet from the latest attributable report and its existing
+inventory. Group related success, refusal, retry and restoration obligations around
+one maintained fixture when its state transitions genuinely reach them. Prefer a
+reachable causal path over isolated helpers ranked only by missing-function count.
+Verify each correction with focused cases, then perform one complete selected-contour
+coverage stage after the checked packet is integrated. Do not form another SDK/image
+or repeat the full stage for each assertion. Reuse read-only analysis while Root
+implements; keep extra writers and other contours closed. Projected coverage gains
+remain hypotheses until the complete report records them.
+
 The owner's 2026-10-19 order is sequential exact F/L/S/B coverage: close one
 contour to F/L/S/B100 before opening the next. During this phase run focused
 repairs and complete coverage for the active contour only. Exact F/L/S/B means
