@@ -1600,12 +1600,14 @@ test('task-source trusted-verifier and CAS denials roll back native preparation 
 });
 
 test('task-source issued and UNKNOWN actions retain reservations without exposing replay argv', async () => {
+  const retainedResources = ['branch:refs/heads/accepted-source', 'execution:task-source-expiry'];
   const policy = mock(
     async ({ request }: Parameters<NonNullable<ConstructorParameters<typeof HostStateStore>[8]>['verify']>[0]) =>
       trustedTaskSourcePolicyDecision(request),
   );
   const f = createTaskSourceHostFixture({
     policyVerifier: policy,
+    retainedResources,
     configuredHost: { repositoryRoot: root, identity: { ...identity } },
   });
   // Keep both the native action DB and its configured Host root for the expected UNKNOWN.
@@ -1615,6 +1617,8 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
   try {
     const input = { request: f.request, identity: f.identity };
     const observation = { ...input, verifyCurrent: f.trustedVerifyCurrent };
+    const sourceRoot = path.resolve(requiredValue(f.request.source_root, 'TaskSource proposed root'));
+    expect(existsSync(sourceRoot)).toBe(false);
     expect(f.store.inspectTaskSourceBindingAction(observation).status).toBe('not_found');
     f.prepare();
     expect(f.store.inspectTaskSourceBindingAction(observation)).toMatchObject({
@@ -1653,6 +1657,32 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
       work_id: f.request.work_id,
       thread_id: f.request.thread_id,
     });
+    const expectedResources = [
+      ...retainedResources,
+      'file:src/task.ts',
+      `branch:${f.request.branch_ref}`,
+      `worktree:${process.platform === 'win32' ? sourceRoot.toLocaleLowerCase('en-US') : sourceRoot}`,
+    ].sort();
+    const nativeTicket = requiredValue(
+      reserved.ledger?.tickets.find((ticket) => ticket.ticket_id === ticketId),
+      'issued TaskSource ticket',
+    );
+    expect(nativeTicket.exclusive_resources).toEqual(expectedResources);
+    expect(nativeTicket.active_resources).toEqual(expectedResources);
+    expect(reserved.ledger?.claims.filter((claim) => claim.ticket_id === ticketId)).toMatchObject([
+      { status: 'active', resources: expectedResources },
+    ]);
+    expect(
+      reserved.ledger?.tickets.find((ticket) => ticket.ticket_id === f.initial.work?.lease?.ticket_id),
+    ).toMatchObject({
+      status: 'released',
+      active_resources: [],
+      blocked_resources: [],
+      expires_at: null,
+    });
+    expect(
+      reserved.ledger?.claims.filter((claim) => claim.ticket_id === f.initial.work?.lease?.ticket_id),
+    ).toMatchObject([{ status: 'released', resources: ['file:src/task.ts', ...retainedResources].sort() }]);
     expect(await f.store.issueTaskSourceBindingOperation(input)).toEqual({
       ...issued,
       status: 'already_issued',
@@ -1730,6 +1760,7 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
     ).toBe(1);
     expect(f.store.inspectTaskSourceBindingAction(observation)).toEqual(uncertain);
     expect(f.store.readWorkSessionJournal(f.identity)?.version).toEqual(f.request.expected_host.journal.version);
+    expect(existsSync(sourceRoot)).toBe(false);
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -1925,7 +1956,8 @@ test('task-source policy denials preserve preparation and queued retries preserv
         : { ...allowed, source_authorization_sha256: 'd'.repeat(64) };
     },
   );
-  const f = createTaskSourceHostFixture({ policyVerifier: policy });
+  const retainedResources = ['execution:task-source-expiry', 'branch:refs/heads/accepted-source'];
+  const f = createTaskSourceHostFixture({ policyVerifier: policy, retainedResources });
   let completed = false;
   let primaryFailure: { error: unknown } | undefined;
   try {
@@ -1979,6 +2011,13 @@ test('task-source policy denials preserve preparation and queued retries preserv
     });
     expect(ticket.blocked_resources).toEqual(ticket.exclusive_resources);
     expect(ticket.blocked_resources).toContain(`branch:${f.request.branch_ref}`);
+    for (const resource of retainedResources) expect(ticket.blocked_resources).toContain(resource);
+    expect(reserved.ledger.tickets.find((item) => item.ticket_id === before.work.lease?.ticket_id)).toEqual(
+      before.ledger.tickets.find((item) => item.ticket_id === before.work.lease?.ticket_id),
+    );
+    expect(reserved.ledger.claims.filter((claim) => claim.ticket_id === before.work.lease?.ticket_id)).toEqual(
+      before.ledger.claims.filter((claim) => claim.ticket_id === before.work.lease?.ticket_id),
+    );
     expect(reserved.work.lease).toEqual(before.work.lease);
     expect(reserved.ledger.claims.filter((claim) => claim.ticket_id === ticketId)).toEqual([]);
     expect(f.store.readHostStateSnapshot(peer.identity).work).toEqual(peerBefore.work);

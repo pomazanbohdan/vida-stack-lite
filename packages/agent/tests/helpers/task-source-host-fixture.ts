@@ -49,7 +49,9 @@ function workAndLedger(
   identity: WorkIdentity,
   configDigest: string,
   workspaceId: string,
+  retainedResources: readonly string[],
 ): WorkLedgerSeed {
+  const resources = [resource, ...retainedResources].sort();
   const scopeBody: Omit<ScopedSourceSnapshot, 'digest'> = {
     schema: 'ScopedSourceSnapshot/v1',
     entries: [{ path: 'src/task.ts', exists: true, bytes: 3, sha256: '2'.repeat(64) }],
@@ -62,7 +64,7 @@ function workAndLedger(
     work_id: identity.work_id,
     thread_id: 'thread-task-source-expiry',
     generation: 1,
-    resources: [resource],
+    resources,
     lease_expires_at: expiresAt,
     status: 'active',
     created_at: new Date().toISOString(),
@@ -79,12 +81,12 @@ function workAndLedger(
     source_revision: sourceScope.digest,
     generation: 1,
     sequence: 1,
-    contour_keys: ['tenant:tenant', 'project:tenant/agent', resource],
-    exclusive_resources: [resource],
+    contour_keys: ['tenant:tenant', 'project:tenant/agent', ...resources],
+    exclusive_resources: resources,
     status: 'active',
     claim_ids: [activeClaim.claim_id],
     expires_at: expiresAt,
-    active_resources: [resource],
+    active_resources: resources,
     blocked_resources: [],
     created_at: new Date().toISOString(),
   };
@@ -103,7 +105,7 @@ function workAndLedger(
     acceptance_manifest_digest: '5'.repeat(64),
     ac_ids: ['AC-1'],
     implementation_paths: ['src/task.ts'],
-    allowed_resources: [resource],
+    allowed_resources: resources,
     config_digest: configDigest,
     runtime_source_revision: '7'.repeat(64),
     schema_digest: '8'.repeat(64),
@@ -192,6 +194,7 @@ function workAndLedger(
 
 type FixtureOptions = {
   readonly expiresAt?: string;
+  readonly retainedResources?: readonly string[];
   readonly policyVerifier?: TaskSourceMutationCheck;
   readonly configuredHost?: { readonly repositoryRoot: string; readonly identity: WorkIdentity };
 };
@@ -205,6 +208,7 @@ type PeerReservation = {
 
 export function createTaskSourceHostFixture({
   expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+  retainedResources = [],
   policyVerifier,
   configuredHost,
 }: FixtureOptions = {}) {
@@ -231,7 +235,7 @@ export function createTaskSourceHostFixture({
       undefined,
       policyVerifier ? { verify: policyVerifier } : undefined,
     );
-    const seed = workAndLedger(expiresAt, identity, configDigest, workspaceId);
+    const seed = workAndLedger(expiresAt, identity, configDigest, workspaceId, retainedResources);
     const initial = store.compareAndSwapHostState({
       expectedWork: null,
       expectedLedger: null,

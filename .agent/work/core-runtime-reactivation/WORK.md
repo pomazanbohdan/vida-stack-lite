@@ -39,6 +39,25 @@ No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
 attempt1104. Failed attempts1091 and1100 remain separately classified.
 
+The next checked packet extends the existing TaskSource fixture with optional
+already allowed non-file resources; default callers still use the original file-only
+seed. The existing queued and issued/UNKNOWN cases now retain an accepted branch
+and execution resource. They check exact replacement ownership, released predecessor
+ownership on issue, unchanged predecessor ownership while queued, retry stability
+and absence of the proposed Source directory. No Git proposal runs. The affected
+eight TaskSource cases pass244assertions; strict148-file TypeScript and configured
+type-aware lint pass. The initial lint invocation used an absent config filename;
+its error remains retained, and the corrected maintained config succeeds.
+The runner's focused strict check passes122files, exact two-file resource-pin
+control passes10assertions, and changed-document links/headings pass. The final
+blind Luna review finds no correctness or resource-scope blocker.
+These are focused results, not new numeric qualification or a reproduced product
+defect. In particular, a blind review's hypothesis that an active predecessor can
+legitimately exceed Work scope is rejected by `validatePair`'s existing active/
+blocked-resource check. Multi-predecessor sorting remains an explicit uncovered
+dependency; a one-element sort does not execute its comparator. The prepared
+review and final scope review remain in the focused diagnostics.
+
 ## Latest measurement custody
 
 - Stage:`/workspace/contour-stage-MivBBO`; exec58706, observed exit0.
@@ -341,7 +360,7 @@ stay read-only; package `.tmp` and coverage remain their already permitted outpu
 The parent fences installs, Git changes, indexing and additional producers.
 
 The current reviewed Host file digest is
-`fb95cb188bc4491665a5b6e660d3186b5ba45023f302426dec80a87bb334eaaf`;
+`7fb26389afb1c9ab79824046059fcba7fc6884f9a9cb66fc5d4e26f6ba7d2863`;
 stopped-source remains
 `a414b790fea1381ffb425552a1f1b9ae29ad00f2998491a44bb8b7d6d45e9037`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
@@ -353,6 +372,10 @@ closure and attributable merged counters fora1f4049 and the current pin.
 The TaskSource peer shares only its case's private DB/root; policy callbacks are
 awaited serially and no Git argv runs. Blind resource review finds no blocker.
 The matching stage qualifies this exact selection; it grants no broader selection.
+The retained-resource packet changes only fixture-local Work/ticket/claim data
+and assertions. It adds no resource root, shared write, clock or parallel body.
+Its updated pin is pending a new matching stage; a1f4049's measurement retains
+the preceding pin and is not reattributed to these newer test bytes.
 The complete report remains nonexact. The300s
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.

@@ -29,6 +29,14 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 Select the next reachable causal path from current missing-function and branch
 locations. Keep one coherent success/refusal/retry/restoration packet per fixture
 before focused/static checks, independent review and one matching SDK/image/stage.
+
+The next TaskSource resource-retention packet extends two existing cases rather
+than adding a second setup wave. Eight affected cases pass244assertions with strict
+TypeScript and lint. Preserve the admitted prior branch/execution resources across
+queued retries and issued/UNKNOWN ownership transfer; the empty fixture default
+remains. After final review and exact resource-pin control, publish this packet
+and form one matching SDK/image/coverage stage. Keep a1f4049's numbers bound to
+their original test bytes until that outcome is observed.
 Root is the sole writer; bounded read-only Luna research/review may overlap only
 development. Preserve the existing inventory and avoid unrelated setup or
 unchanged numeric reruns. Count native visited operands, not added assertions.

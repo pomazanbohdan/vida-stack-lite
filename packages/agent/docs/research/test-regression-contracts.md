@@ -320,6 +320,15 @@ and prepared operation. Use the existing peer admission CAS and private root;
 do not fabricate a successful ticket or execute the returned Git proposal.
 Preserve the default5s deadline through connection close and failed-root retention.
 
+TaskSource fixtures may include already allowed non-file resources in the original
+Work, ticket and claim through `retainedResources`; the empty default stays unchanged.
+The queued case preserves those exact resources and the predecessor's active
+ticket/claim. The issued/UNKNOWN case requires the exact replacement resource set,
+released predecessor ticket/claim, retry-stable reservation and no created Source
+directory. Keep policy denials, null retry argv and retained UNKNOWN roots real.
+An active resource outside Work scope is rejected by the existing Host pair
+validator; carrying a prior resource does not bypass that admission rule.
+
 The migration baseline/restore case keeps a completed cooperative readonly
 Journal wave plus an unissued current wave. Baseline clears its rows; successful
 restore returns their exact revision/payload/digest after an interrupted restore
