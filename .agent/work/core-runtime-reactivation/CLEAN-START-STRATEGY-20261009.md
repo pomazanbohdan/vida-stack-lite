@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `7138df5bfa246b7b56a26b555210220162504bf6`, run `efc87d60-7017-4dd8-ad0c-26ae58907294`: F1107/1129, L4883/4972, S5172/5302 and B5181/5642. It records308PASS/0FAIL,4118assertions in146.983seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is22missing functions under12owners, all with exact retained map coordinates, plus461 exact zero-count branch arms. The packet adds5F/37L/38S/47B with unchanged denominators and no exclusions. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `eae12fea2be6832801ad787c4afae9b3ed6ffd31`, run `d2dc563f-6171-4237-b041-84b3cfa5fdc6`: F1115/1129, L4900/4972, S5190/5302 and B5226/5642. It records308PASS/0FAIL,4162assertions in175.228seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is14missing functions under8owners, all with exact retained map coordinates, plus416 exact zero-count branch arms. The packet adds8F/17L/18S/45B with unchanged denominators and no exclusions. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -30,7 +30,7 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 The owner's current instruction replaces one-function measurement packets with
 one coordinated pass, initially46missing functions and606branch arms. The first
-complete packet stages now leave22functions and461arms; continue the same contour
+complete packet stages now leave14functions and416arms; continue the same contour
 from its refreshed retained map, not the superseded starting counters. Superpowers
 `writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
 guide this plan. Keep this existing strategy as the plan owner; do not create a
@@ -150,7 +150,9 @@ recovery with fresh-connection reconstruction, unprepared release with a genuine
 earlier disjoint execution peer, and the earlier-FIFO recovery fixture with an
 inspect-only TaskSource preparation before writer issue. Check the affected cases
 together after strict/lint, review the bounded packet, then publish and measure
-once. Reuse the same22-function/461-arm report until that next matching stage.
+once. The matching stage now leaves14functions/416arms. Fresh recovery reopen
+did not execute the four stored-history callbacks; their specific binding-history
+prerequisites remain open, not discharged by persistence assertions alone.
 
 For each group, the exact named Bun case must reach its intended public operation
 and assert its success, refusal and replay behavior before strict TypeScript/lint
