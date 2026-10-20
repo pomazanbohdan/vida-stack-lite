@@ -123,8 +123,11 @@ The focused case passes38assertions in483.40ms under the default5s limit.
 Strict TypeScript for the changed tests/helpers passes148files, configured
 type-aware lint passes with0diagnostics, and the three affected existing selected
 cases pass191assertions in33.50s total. The exact two-file pin control passes
-10assertions; runner strict TypeScript passes122files. Hooks and publication are
-pending. The new focused logs use `full-remainder-*-v1109.log` in the existing
+10assertions; runner strict TypeScript passes122files. The five selected Host
+cases pass330assertions across their focused invocations, not a complete suite.
+Source checkpoint`8f278a2` is published to origin/main through normal hooks:
+format519files and strict TypeScript526files pass, with no hook bypass. The
+new focused logs use `full-remainder-*-v1109.log` in the existing
 `packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers` directory.
 The complete unchanged-input stage has not been repeated; all accepted counters
 above still belong to4b8a387. Continuation/producer prerequisites and their
