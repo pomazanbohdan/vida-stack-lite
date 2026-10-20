@@ -45,7 +45,7 @@ normative behavior.
 - **SR-11.** `catalog.get` → the full text of the **exactly specified** instruction; an unknown ID — an error, not an empty result.
 - **SR-12.** `catalog.compose` → the found + mandatory + transitive dependencies, after a compatibility check and removal of duplicates.
 - **SR-13.** Mandatory and dependent instructions are not discarded because of a relevance score; the registry limits of the research contour do not extend to VP.
-- **SR-14.** An `excludes` conflict (in either direction) → an error with the name of the conflicting pair; an unknown or disabled dependency → a separate error.
+- **SR-14.** An `excludes` conflict (in either direction) → an error with the name of the conflicting pair; an unknown or disabled dependency → a separate error. A pair declared as **opposing** (D12) — the two instructions name each other and share one theme pattern tag — is reported with both names; where the pair is the alternatives of one profile group, the active alternative enters the bundle and the other does not.
 - **SR-15.** The catalog = instructions (`.md` + frontmatter) + the machine manifest `VPCatalog/v1` (`catalog.json`: identity, tag vocabulary, aliases, exceptions); `revision` describes the content, the package version is a separate value.
 
 ## 3. Decision Provider

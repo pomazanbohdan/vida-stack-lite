@@ -268,6 +268,14 @@ remain as separate instructions:
 - A source of one donor can substantiate several instructions (segmentation) — this is
   normal; only duplication of the norm itself is forbidden.
 
+**Opposing norms are declared, not narrowed (D12).** The rule above is about the **same**
+norm stated twice. Two norms that state **opposite** rules about the same thing are not
+merged and not narrowed: the pair is **declared** — each instruction names the other in
+`compatibility_excludes`, the pair carries **one shared pattern tag** (the theme they
+disagree on), and the catalogue reports the pair by name when both would enter one bundle
+(SR-14, §7 rule 5). Where the user makes the choice, the two sides are the alternatives of
+one profile group (D10). The texts of the pair stay as their donors stated them (D11 §2).
+
 **Processing map (artifact of phases 2–5).** `packages/powers/corpus-map.json`
 (`VPCorpusMap/v1`) — a bridge between the donors and the corpus: for every donor (with a
 pinned revision) and every carrier file — the processing result.
@@ -356,6 +364,15 @@ the completion of processing each donor or phase. The seed corpus (superpowers +
 12 capability tags, 11 pattern tags, 1 alias — approved in a single pass
 on 2026-10-20. Subsequent donors produce their own packages.
 
+**Before the package proposal — the mapping pass** (owner decision, 2026-10-20):
+every proposed tag is first compared with the vocabulary that already exists.
+A proposal that an existing tag already covers is **folded into that tag** and
+does not enter the package: the same word must not name two things, and the
+catalog search must not have to know which of two synonyms was meant. Only the
+proposals that the existing vocabulary does not cover are put to the owner.
+In the donor `addy-skills` this reduced 134 proposals to 71 (24 capability +
+47 pattern); 63 found an existing counterpart.
+
 The vocabulary is also the **terminology authority for merging**: the terms of a merged
 instruction are taken from the vocabulary; a new term enters the batch proposal rather than
 being introduced "as it comes out". Groups and the active alternative are not in the vocabulary but in the methodological
@@ -443,6 +460,10 @@ and override are outside `compose` (Stage 4);
    Order of application: required → matches → profile filter (only for matches) →
    dependency closure → `excludes` check.
 5. Without a profile: any pair with `compatibility_excludes` → an error (SR-14).
+   A pair declared as **opposing** (D12) — the two instructions name each other and
+   share one theme pattern tag — is reported with both names; where the pair is the
+   alternatives of one profile group, the active alternative enters the bundle and the
+   other does not (§4d).
 6. The output order is stable (by `instruction_id`).
 
 **Semantics of `decision.evaluate` (D5).** In v1 the operation is implemented **deterministically**:
@@ -546,6 +567,9 @@ the digest.
 | The processing map `corpus-map.json` (donor+revision+file → converted/split/merged/rejected) | **owner** | a report in README without a state file |
 | `catalog.json` — the single corpus listing with `sha256` (CAT-D3) | **owner** | digest only at stage E |
 | The tag vocabulary — batch approval by the owner | **owner** | per-item confirmation; no confirmation needed |
+| The proposed tags are mapped onto the existing vocabulary before the package proposal (§6) | **owner** | adding every proposal as a new tag |
+| Opposing norms are declared as a pair — cross-reference, one theme tag, reported by name (D12) | **owner** | narrowing one side away; dropping one side; a separate conflict registry |
+| One severity scale for the whole corpus — Critical / Important / Minor (D13) | **owner** | the domain scales side by side |
 | Tooling inside the skill; product support — in `scripts/` | **owner** | everything in `tooling/` |
 | The VP catalog **replaces** the D3 model: the source — `.md` instructions, `catalog.json` — identity + vocabulary + aliases + exceptions | **owner** | a JSON catalog with instructions inside |
 | The plugin payload = the package root (`skills/` + `instructions/` + `catalog.json`) | **owner** | a separate installation of the corpus |
