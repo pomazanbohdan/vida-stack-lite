@@ -1,3 +1,4 @@
+import { qualifiedRuntimeCodeEndpointFixture } from './helpers/qualified-runtime-code-fixture.ts';
 import {
   createInitialSourceWorkFixture,
   withInitialSourceCleanup as withCleanup,
@@ -1208,26 +1209,7 @@ function completedSourceRecoveryCase(refreshOnly: 'none' | 'guards' | 'crash-bef
         });
       };
 
-      const codeFixtureProof = (
-        candidate: import('../src/orchestration/qualified-runtime-code-continuation.ts').QualifiedRuntimeCodeContinuationRequest,
-      ) => ({
-        oldRuntime: {
-          codeDigest: candidate.oldRuntimeCodeDigest,
-          codePaths: candidate.oldRuntimeCodePaths,
-          manifestRef: candidate.oldManifestRef,
-          manifestDigest: candidate.oldManifestDigest,
-          installRef: candidate.oldInstallRef,
-        },
-        currentRuntime: {
-          codeDigest: candidate.currentRuntimeCodeDigest,
-          codePaths: candidate.currentRuntimeCodePaths,
-          manifestRef: candidate.currentManifestRef,
-          manifestDigest: candidate.currentManifestDigest,
-          installRef: candidate.currentInstallRef,
-        },
-        systemUpdate: { ref: candidate.systemUpdateRef, operationId: candidate.systemUpdateOperationId },
-        nativeSelfAttestationDigest: candidate.nativeSelfAttestationDigest,
-      });
+      const codeFixtureProof = qualifiedRuntimeCodeEndpointFixture;
       const beforeCodeAdoption = continuationState(f),
         codeRequest = codeFixtureRequest(canonicalJsonDigest('fixture-next-code'), 'next-code');
       if (refreshOnly !== 'none') {
@@ -2048,24 +2030,7 @@ registerFixtureTest(
         nativeSelfAttestationDigest: canonicalJsonDigest('fixture-later-code-self'),
       });
       // Endpoint fixtures prove this reader join, not native qualification or rights.
-      hostStore(f).commitQualifiedRuntimeCodeContinuation(codeRequest, (candidate) => ({
-        oldRuntime: {
-          codeDigest: candidate.oldRuntimeCodeDigest,
-          codePaths: candidate.oldRuntimeCodePaths,
-          manifestRef: candidate.oldManifestRef,
-          manifestDigest: candidate.oldManifestDigest,
-          installRef: candidate.oldInstallRef,
-        },
-        currentRuntime: {
-          codeDigest: candidate.currentRuntimeCodeDigest,
-          codePaths: candidate.currentRuntimeCodePaths,
-          manifestRef: candidate.currentManifestRef,
-          manifestDigest: candidate.currentManifestDigest,
-          installRef: candidate.currentInstallRef,
-        },
-        systemUpdate: { ref: candidate.systemUpdateRef, operationId: candidate.systemUpdateOperationId },
-        nativeSelfAttestationDigest: candidate.nativeSelfAttestationDigest,
-      }));
+      hostStore(f).commitQualifiedRuntimeCodeContinuation(codeRequest, qualifiedRuntimeCodeEndpointFixture);
       const later = continuationState(f);
       expect(later.journal).toEqual(after.journal);
       expect(later.ledger).toEqual(after.ledger);

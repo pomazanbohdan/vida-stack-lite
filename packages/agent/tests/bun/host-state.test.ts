@@ -8,6 +8,7 @@ import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
 import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
+import { qualifiedRuntimeCodeEndpointFixture } from '../helpers/qualified-runtime-code-fixture.ts';
 import {
   configuredFrontierRepairHostRoot,
   seedFrontierHostFixture,
@@ -2787,6 +2788,211 @@ test(
   },
   failedFinalHostCaseTimeoutMs,
 );
+
+test('native code-only continuation fences stale proofs and rolls back before exact history-bound retries', async () => {
+  const deadline = performance.now() + 5_000;
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const { seed, source } = await writerFixture();
+  seed.nextWork.binding.runtime_source_revision = seed.nextWork.binding.runtime_code_digest;
+  const initial = commitHostState(seed);
+  const journal = quiescentJournal();
+  journal.state.source_scope = clone(source);
+  persistJournalFixture(journal);
+  const guarded = new HostStateStore(database, workspace, undefined, undefined, undefined, undefined, root);
+  const request: Parameters<HostStateStore['commitQualifiedRuntimeCodeContinuation']>[0] = {
+    schema: 'QualifiedRuntimeCodeContinuationRequest/v1',
+    identity: { ...identity, project_ids: [...identity.project_ids] },
+    attempt: 1,
+    nativeSessionHandle: requiredLease(initial.work).thread_id,
+    leaseGeneration: requiredLease(initial.work).generation,
+    expectedWork: initial.workVersion,
+    expectedLedger: initial.ledgerVersion,
+    expectedJournal: journal.version,
+    expectedMaintenanceGeneration: initial.maintenanceGeneration,
+    originalSourceScopeDigest: source.digest,
+    journalSourceScopeDigest: source.digest,
+    oldRuntimeCodeDigest: initial.work.binding.runtime_code_digest,
+    currentRuntimeCodeDigest: canonicalJsonDigest('fixture-next-code'),
+    oldRuntimeCodePaths: ['packages/agent/src/runtime-kernel.ts'],
+    currentRuntimeCodePaths: ['packages/agent/src/runtime-kernel.ts'],
+    oldManifestRef: '.agent/work/fixture-code/old-manifest.json',
+    oldManifestDigest: canonicalJsonDigest('fixture-old-manifest'),
+    oldInstallRef: '.agent/work/fixture-code/old-install.json',
+    currentManifestRef: '.agent/work/fixture-code/new-manifest.json',
+    currentManifestDigest: canonicalJsonDigest('fixture-new-manifest'),
+    currentInstallRef: '.agent/work/fixture-code/new-install.json',
+    systemUpdateRef: '.agent/work/fixture-code/new-install.json',
+    systemUpdateOperationId: 'fixture-code-update',
+    nativeSelfAttestationDigest: canonicalJsonDigest('fixture-self-attestation'),
+  };
+  const rows = readFixtureHostRows(database);
+  const before = guarded.readHostStateSnapshot(identity);
+  const unchanged = (action: () => unknown, message: string) => {
+    expect(action).toThrow(message);
+    expect(readFixtureHostRows(database)).toEqual(rows);
+    expect(guarded.readQualifiedRuntimeCodeContinuations(identity, 1)).toEqual([]);
+  };
+  let proofCalls = 0;
+  const verify: Parameters<HostStateStore['commitQualifiedRuntimeCodeContinuation']>[1] = (candidate) => {
+    proofCalls++;
+    return qualifiedRuntimeCodeEndpointFixture(candidate);
+  };
+  for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal'] as const)
+    unchanged(
+      () =>
+        guarded.commitQualifiedRuntimeCodeContinuation(
+          { ...request, [key]: { ...request[key], revision: request[key].revision + 1 } },
+          verify,
+        ),
+      'current CAS or maintenance differs',
+    );
+  unchanged(
+    () =>
+      guarded.commitQualifiedRuntimeCodeContinuation(
+        { ...request, expectedMaintenanceGeneration: request.expectedMaintenanceGeneration + 1 },
+        verify,
+      ),
+    'current CAS or maintenance differs',
+  );
+  unchanged(
+    () => guarded.commitQualifiedRuntimeCodeContinuation({ ...request, nativeSessionHandle: 'foreign' }, verify),
+    'owner, Source, run or quiescence differs',
+  );
+  unchanged(
+    () => store.commitQualifiedRuntimeCodeContinuation(request, verify),
+    'qualified code adoption root unavailable',
+  );
+  unchanged(
+    () => database.transaction(() => guarded.commitQualifiedRuntimeCodeContinuation(request, verify)).deferred(),
+    'qualified code adoption verifier invalid',
+  );
+  expect(proofCalls).toBe(0);
+  const failure = new Error('controlled code endpoint observation failed');
+  let observed: unknown;
+  try {
+    guarded.commitQualifiedRuntimeCodeContinuation(request, () => {
+      throw failure;
+    });
+  } catch (error) {
+    observed = error;
+  }
+  expect(observed).toBe(failure);
+  expect(readFixtureHostRows(database)).toEqual(rows);
+  unchanged(
+    () =>
+      guarded.commitQualifiedRuntimeCodeContinuation(request, (candidate) => ({
+        ...qualifiedRuntimeCodeEndpointFixture(candidate),
+        nativeSelfAttestationDigest: 'f'.repeat(64),
+      })),
+    'native endpoint proof differs',
+  );
+  const sourcePath = path.join(root, 'src/task.ts');
+  const originalBytes = readFileSync(sourcePath);
+  let primaryFailure: { error: unknown } | undefined;
+  let freshnessCalls = 0;
+  try {
+    unchanged(
+      () =>
+        guarded.commitQualifiedRuntimeCodeContinuation(request, (candidate) => {
+          freshnessCalls++;
+          writeFileSync(sourcePath, 'changed between endpoint proof and final CAS\n');
+          return qualifiedRuntimeCodeEndpointFixture(candidate);
+        }),
+      'qualified code adoption cannot absorb Source changes',
+    );
+    expect(freshnessCalls).toBe(1);
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          writeFileSync(sourcePath, originalBytes);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+  database.exec(
+    "CREATE TRIGGER reject_code_adoption BEFORE UPDATE ON agent_host_state BEGIN SELECT RAISE(ABORT,'controlled code adoption write failure'); END",
+  );
+  primaryFailure = undefined;
+  try {
+    unchanged(
+      () => guarded.commitQualifiedRuntimeCodeContinuation(request, verify),
+      'controlled code adoption write failure',
+    );
+    expect(
+      database
+        .query("SELECT name FROM sqlite_master WHERE name='agent_host_qualified_runtime_code_continuation'")
+        .get(),
+    ).toBeNull();
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          database.exec('DROP TRIGGER reject_code_adoption');
+        },
+      ],
+      primaryFailure,
+    );
+  }
+  expect(guarded.readHostStateSnapshot(identity)).toEqual(before);
+  proofCalls = 0;
+  const receipt = guarded.commitQualifiedRuntimeCodeContinuation(request, verify);
+  const after = guarded.readHostStateSnapshot(identity);
+  expect(proofCalls).toBe(2);
+  expect(receipt).toMatchObject({
+    status: 'adopted',
+    rights_granted: false,
+    accepted_result: false,
+    runtime_acceptance: false,
+  });
+  expect(Object.isFrozen(receipt)).toBe(true);
+  expect(after.work).toEqual({
+    ...initial.work,
+    revision: initial.work.revision + 1,
+    binding: {
+      ...initial.work.binding,
+      runtime_code_digest: request.currentRuntimeCodeDigest,
+      runtime_source_revision: request.currentRuntimeCodeDigest,
+    },
+    lifecycle: {
+      ...initial.work.lifecycle,
+      revision: initial.work.lifecycle.revision + 1,
+      config_binding: {
+        ...initial.work.lifecycle.config_binding,
+        runtime_code_digest: request.currentRuntimeCodeDigest,
+      },
+    },
+  });
+  expect(after.workVersion).toEqual(receipt.work_version);
+  expect(after.ledger).toEqual(initial.ledger);
+  expect(after.ledgerVersion).toEqual(initial.ledgerVersion);
+  expect(readFixtureHostRows(database).journal).toEqual(rows.journal);
+  expect(guarded.readQualifiedRuntimeCodeContinuations(identity, 1)).toEqual([receipt]);
+  expect(
+    guarded.commitQualifiedRuntimeCodeContinuation(request, () => {
+      throw new Error('exact committed retry must not reobserve endpoints');
+    }),
+  ).toEqual(receipt);
+  expect(guarded.readHostStateSnapshot(identity)).toEqual(after);
+  expect(proofCalls).toBe(2);
+  expect(() =>
+    guarded.commitQualifiedRuntimeCodeContinuation(
+      { ...request, currentRuntimeCodeDigest: canonicalJsonDigest('foreign-retry-code') },
+      verify,
+    ),
+  ).toThrow('current CAS or maintenance differs');
+  expect(guarded.readHostStateSnapshot(identity)).toEqual(after);
+  expect(hasUnresolvedFixtureOperations(database)).toBe(false);
+  if (performance.now() >= deadline) throw new Error('Native code-only continuation exhausted its case deadline');
+  preserveHostFixtureRoot = false;
+});
 
 test('recovery namespace denies generic issuance, settlement and copied handles', () => {
   const operation = validateHostOperationReservation({

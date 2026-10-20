@@ -39,8 +39,10 @@ The measured configured-frontier packet shares its existing fixture and moves
 its lookup case into the active Host selection, with exact-CAS Journal
 mutation/restore and acquired-root custody. Local recovery-review guards and
 reservation transitions are now measured through existing native SQLite fixtures.
-Next select qualified-code continuation or failed-prewriter paths from the current
-inventory, reusing supported fixture contracts. Unit endpoint/observation seams
+The next packet covers qualified-code Host consistency, freshness, rollback and
+exact history-bound retry, sharing duplicate test-only endpoint mappings. After
+its measurement select the next reachable gap from the refreshed inventory.
+Unit endpoint/observation seams
 do not establish genuine producer admission, native qualification or dispatch.
 Review all acquired roots and public-reader
 preconditions before Source publication, so a late fixture-only correction does

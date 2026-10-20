@@ -15,6 +15,47 @@ numeric producer.
 
 ### Sequential coverage observations and active repair
 
+#### Local qualified-code consistency packet
+
+One native Host/SQLite case reuses writerFixture's execution-only claim, actual
+root-bound configuration and Source snapshot, and quiescentJournal. It invokes
+commitQualifiedRuntimeCodeContinuation through its public Host API with explicit
+test-only endpoint observations. The two equivalent mappings previously inside
+initial-source-continuation.test.ts now use the single typed
+tests/helpers/qualified-runtime-code-fixture.ts. Mapping correspondence is exact;
+no install, manifest attestation, real code upgrade or Runtime acceptance is claimed.
+
+The case checks stale Work/Ledger/Journal/maintenance, foreign owner, rootless and
+nested calls, exact thrown endpoint error identity and mismatched endpoint proof.
+It changes actual owned Source after the first proof; the final fenced re-snapshot
+denies before a second proof or write. CompleteOwnedCleanup restores original
+bytes with primary/restore-error custody. A native BEFORE UPDATE abort proves
+receipt-table DDL/insert and Work changes roll back atomically. After trigger
+cleanup, a healthy commit changes only the permitted code/revision fields,
+preserves Ledger/Journal/lease/execution, and stores one immutable no-rights receipt.
+Exact committed retry returns that receipt without endpoint re-observation;
+changed-intent retry remains fenced. It checks no unresolved operation before
+the existing root cleanup owner may dispose the successful fixture.
+
+Strict150files and scoped type-aware lint pass. Focused Host51assertions478.79ms
+plus shard control passes2cases/61assertions in2.11s under default5s. Affected
+existing caller `rebinds code at the real unissued readonly frontier without
+changing source authority` passes its child115assertions in13.20s and complete
+owner14.50s under its unchanged existing exception. No unrelated full suite.
+First Host run's assertions passed but teardown failed because the new request
+shared global mutable identity with the freezing validator. The request now owns
+its identity/project_ids copy; successful rerun establishes normal teardown.
+Original qualified-code-first.log and its failed fixture are not deleted; no
+retroactive pass or product defect is claimed. All logs use the existing focused
+blockers namespace. Blind Luna plan/review /tmp/vida-qualified-code-host-{plan,review}.md
+find no blocker and have retained copies there.
+
+Host SHA19e2651cc825fa69a43c29c59c6510b75f290f93f40a094e5e01076d1dbf1cf2
+retains the same reviewed two-child selection, namespaces, serial cases, resources,
+deadlines and unchanged free-space floor. Latest complete coverage remainsa3c1e5f
+below until this packet has its own published Source/SDK/image-bound observation.
+Root alone owns integration and final numbers; CRAP/frozen/mutation remain deferred.
+
 #### Local recovery-review consistency packet
 
 Complete measurement on Sourcea3c1e5f8d410565a51bc4ec289bb3216e3666b2b,
