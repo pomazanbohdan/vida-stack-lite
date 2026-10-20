@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `c9ace65a9860419978e98c71cd0d6dd297effeb3`, run `0cdcc9aa-b0b7-449a-ac46-1e0f44fc264e`: F1095/1129, L4834/4972, S5122/5302 and B5113/5642. It records306PASS/0FAIL,3966assertions in160.493seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is34missing functions under16owners, all with exact retained map coordinates, plus529 exact zero-count branch arms. The packet adds12F/91L/97S/77B; line/statement denominators each increase by2, without exclusions. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `17b0f77362f051bdeb442f4dfa63410a2ddcf1c3`, run `a5d7d3af-6f1c-47bc-af69-ad2ed28791e9`: F1102/1129, L4846/4972, S5134/5302 and B5134/5642. It records306PASS/0FAIL,4005assertions in170.810seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is27missing functions under14owners, all with exact retained map coordinates, plus508 exact zero-count branch arms. The packet adds7F/12L/12S/21B with unchanged denominators and no exclusions. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -30,7 +30,7 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 The owner's current instruction replaces one-function measurement packets with
 one coordinated pass, initially46missing functions and606branch arms. The first
-complete packet stage now leaves34functions and529arms; continue the same contour
+complete packet stages now leave27functions and508arms; continue the same contour
 from its refreshed retained map, not the superseded starting counters. Superpowers
 `writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
 guide this plan. Keep this existing strategy as the plan owner; do not create a
@@ -121,8 +121,8 @@ target CAS after peer admission and preserve peer Work versions, tickets and
 Source bytes through success/retry. Interrupted-source retirement retries retain
 the exact original request and uncertain outcome; a fresh post-retirement CAS
 would name another operation. Earlier-than-target FIFO callbacks remain separate
-dependencies: a later waiter cannot reach them. Numeric gains remain pending
-the matching complete stage.
+dependencies: a later waiter cannot reach them. The matching17b0f77 stage records
+seven newly executed functions; the same contour remains open with27 missing.
 
 For subsequent TypeScript edits, follow TESTING's static-first, fail-fast sequence
 before the serial affected-case group. The three-hour audit uses existing receipts

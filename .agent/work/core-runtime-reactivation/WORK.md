@@ -10,38 +10,40 @@ exact F/L/S/B100 before selecting another. Root is the sole Source integrator,
 Git owner and numeric producer. Frozen complexity/CRAP qualification and mutation
 remain deferred; their budgets and acceptance rules are unchanged.
 
-Latest complete measurement binds Source `c9ace65a9860419978e98c71cd0d6dd297effeb3` and run
-`0cdcc9aa-b0b7-449a-ac46-1e0f44fc264e`, not later HEAD.
+Latest complete measurement binds Source `17b0f77362f051bdeb442f4dfa63410a2ddcf1c3` and run
+`a5d7d3af-6f1c-47bc-af69-ad2ed28791e9`, not later HEAD.
 
-| Counter | Covered / total | Covered delta from4b8a387 |
+| Counter | Covered / total | Covered delta from c9ace65 |
 | --- | --- | --- |
-| Functions | 1095 / 1129 | +12 |
-| Lines | 4834 / 4972 | +91 |
-| Statements | 5122 / 5302 | +97 |
-| Branches | 5113 / 5642 | +77 |
+| Functions | 1102 / 1129 | +7 |
+| Lines | 4846 / 4972 | +12 |
+| Statements | 5134 / 5302 | +12 |
+| Branches | 5134 / 5642 | +21 |
 
-306PASS/0FAIL,3966assertions,160493.366838ms elapsed.
-Host child:290PASS/3705assertions/153.62s. Stopped-source child:
-16PASS/261assertions/120.61s, contained cleanup complete. Exit0,
+306PASS/0FAIL,4005assertions,170810.003517ms elapsed.
+Host child:290PASS/3734assertions/164.01s. Stopped-source child:
+16PASS/271assertions/127.51s, contained cleanup complete. Exit0,
 full capture, closed group, unchanged boot/image and published report hold.
 Operation remains **BLOCKED/nonexact**. Diagnostic maxCC279/entryCRAP279 is
 unqualified. Historical exact16/45, local triples9/45 and separate data-only1
 remain distinct measures, not a current global PASS. Different-input elapsed
 times do not establish a controlled speedup.
 
-Line and statement denominators each increase by2 in the changed Source; no
-counter domain or gate is narrowed. The report-only refresh now has34missing
-functions under16owners, down from46/21. All34 have retained map-validated body
+All four denominators remain unchanged; no counter domain or gate is narrowed.
+The report-only refresh now has27missing functions under14owners, down from34/16.
+All27 have retained map-validated body
 coordinates. The three final-assurance owners, archive lookup and `checkedWork`
 have no missing functions; this is not branch or whole-contour closure. The
-prior-ticket comparator remains uncovered in this run: merely constructing two
-released predecessors did not execute that later request-reconstruction path.
-529 uncovered branch arms are now listed from the same
+prior-ticket comparator and initial-source continuation now have no missing
+functions. The post-issue factory call genuinely reaches predecessor selection;
+merely constructing released predecessors did not. Retirement's earlier-FIFO
+callback remains uncovered, independent of its now-executed exact retry.
+508 uncovered branch arms are now listed from the same
 report, with exact deficit agreement and explicitly labeled implicit-if ranges.
 Reuse `host-uncovered-plan-current.json` in focused diagnostics.
 No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
-attempt1110. Failed attempts1091 and1100 remain separately classified.
+attempt1112. Failed attempts1091 and1100 remain separately classified.
 
 The measured packet extends the existing TaskSource fixture with optional
 already allowed non-file resources; default callers still use the original file-only
@@ -104,7 +106,8 @@ each stale retirement preserves native Host and Journal beforeimages. Strict
 and configured lint pass again, and these two affected cases pass91assertions
 in11.82s. Final readonly review closes both findings. Its original note is retained
 as `vida-peer-retirement-v1111-review.md` in focused diagnostics.
-These are focused checks only; no new exact counters or contour closure yet.
+The matching17b0f77 complete stage supplies the counters above: +7F/+12L/+12S/+21B.
+No contour closure or product defect is inferred from this test-only packet.
 
 The current strategy applies Superpowers planning and Pstack domain modeling to
 one remaining-contour packet rather than a new complete stage for each callable.
@@ -236,27 +239,27 @@ The next actual producer still performs its maintained admission check.
 
 ## Latest measurement custody
 
-- Stage:`/workspace/contour-stage-tCg0Oc`; exec62992, observed exit0.
-- Image:`/workspace/.vida-quality-inputs/3b3e071e5eda74cd32e0fa5e5ee7505ca76a2a56/repository`.
-- Tree:`112c11ee40bf0f641f21a20b7a309aab950f8da6`.
-- Input:`8acfee21646938c1615c59c6ee8244015b330b4f62ce31c0f83bc3bfdd99d977`.
-- Image manifest SHA256:`085b9b08245823a16e9e15f87cf0c18246eeadd111cd7b3667d17fe3d9c9e2d7`.
-- SDK CI39503092855, successful attempt1, artifact12302006309.
-- SDK name:`vida-sdk-test-inputs-c9ace65a9860419978e98c71cd0d6dd297effeb3-39503092855-1`.
-- ZIP SHA256:`e509c86b40f3dd95a2f384382e98cc454e116332e6b72f39fb9ede7acdde1fe6`.
-- `audit-v1110-stage.log` in focused diagnostics retains the complete outcome.
-- Original scratch:`/dev/shm/vida-quality-retained-3XOYpA`. After observed closure,
+- Stage:`/workspace/contour-stage-NSjdT1`; exec99645, observed exit0.
+- Image:`/workspace/.vida-quality-inputs/6d6aa8c91ca9f83edc0020421f3dfb349aaa34f5/repository`.
+- Tree:`f90b694c324cc61ba1a8b3dabadb04461eafb293`.
+- Input:`5906885e8290aaae257af90224e2bd18558d9e9134d19dbac136567fa3dffb0b`.
+- Image manifest SHA256:`eae5c23505c0e18c91a88294b8a3155bd549735b2d635cd81b323e98666e9963`.
+- SDK CI39506960229, successful attempt1, artifact12304331247.
+- SDK name:`vida-sdk-test-inputs-17b0f77362f051bdeb442f4dfa63410a2ddcf1c3-39506960229-1`.
+- ZIP SHA256:`2262f5516845bf0c333cfefc858844d459374e837a6c4b2a286f21c464cfd178`.
+- `remainder-v1111-stage.log` in focused diagnostics retains the complete outcome.
+- Original scratch:`/dev/shm/vida-quality-retained-65m2qc`. After observed closure,
   only its qualified private regenerable Bun cache is retired; all other original
   scratch, fixtures, DBs and evidence remain.
-- Whole remaining scratch archive:`/workspace/vida-functional-retention-tCg0Oc-Cii2IT/scratch.tar.gz`,
-  194533bytes, full tar compare PASS; SHA256`7c0f549a0211e8c6e49b1592f3db1dd3ee93f75c9775ef0a68c0d3399a277c32`.
+- Whole remaining scratch archive:`/workspace/vida-functional-retention-NSjdT1-JuECMi/scratch.tar.gz`,
+  194642bytes, full tar compare PASS; SHA256`c5b92d8ed4268e79cbab3cf1b87ce3b072f2fd13ed224e19371903a421c54a8a`.
   Original create/compare logs and archive.json remain beside it; the original
   scratch remains intact apart from its separately retired regenerable cache.
-- Durable free before/after archive:4824543232/4824346624bytes;
-  unchanged2147483648floor leaves2676862976bytes headroom. No resource GAP.
+- Durable free before/after archive:4747436032/4747239424bytes;
+  unchanged2147483648floor leaves2599755776bytes headroom. No resource GAP.
 
 Cache retirement is receipted in
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/audit-native-phase-cache-retirement-tCg0Oc`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1111-cache-retirement-NSjdT1`.
 One exact private cache,178155793regular bytes,215846912tmpfs bytes reclaimed;
 4096bytes of durable metadata growth is not counted as reclamation. Closed
 custody, namespace, original Source, boot/image, no active owner and dependency
@@ -266,7 +269,7 @@ No original outcome, archive, sibling scratch, SDK or measured image is modified
 The reused qualifier/retirer keep their declared retained-tmpfs namespace,
 receipt, mount, identity, live-owner and dependency checks. Original predecessor
 scripts remain unchanged. Previous custody is retained in the published
-[c9ace65 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/c9ace65a9860419978e98c71cd0d6dd297effeb3/.agent/work/core-runtime-reactivation/WORK.md).
+[6c51fca WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/6c51fca/.agent/work/core-runtime-reactivation/WORK.md).
 The preceding packet's direct tmpfs path and transport
 recovery proof remain in4b8a387 WORK. During SDK transport, one mixed download/
 process-inspection command echoed its own temporary artifact URL via parent argv.
