@@ -303,6 +303,14 @@ one exact retry-stable operation with the projected Work ID. Preserve no-action
 effects, missing/changed-request denials and exact Host/Journal equality. This
 is a fresh fixture initialization, not an active consumer schema upgrade.
 
+The policy-denial case retains all three no-effect refusals with an admitted
+peer sharing branch/root resources. A subsequent controlled policy allow creates
+only a queued FIFO ticket with null action/version/argv and no active claim.
+An exact retry preserves that ticket, Host, peer Work, original lease, Journal
+and prepared operation. Use the existing peer admission CAS and private root;
+do not fabricate a successful ticket or execute the returned Git proposal.
+Preserve the default5s deadline through connection close and failed-root retention.
+
 The migration baseline/restore case keeps a completed cooperative readonly
 Journal wave plus an unissued current wave. Baseline clears its rows; successful
 restore returns their exact revision/payload/digest after an interrupted restore

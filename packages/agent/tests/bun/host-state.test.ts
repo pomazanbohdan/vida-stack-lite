@@ -1911,13 +1911,15 @@ test('historical task-source snapshots select observed roots and fence corrupted
   }
 });
 
-test('task-source mutation policy rejection leaves native preparation and ownership unchanged', async () => {
+test('task-source policy denials preserve preparation and queued retries preserve native FIFO', async () => {
+  const deadline = performance.now() + 5_000;
   const denial = new Error('fixture trusted policy denied');
-  let mode: 'throw' | 'deny' | 'invalid' = 'throw';
+  let mode: 'throw' | 'deny' | 'invalid' | 'allow' = 'throw';
   const policy = mock(
     async ({ request }: Parameters<NonNullable<ConstructorParameters<typeof HostStateStore>[8]>['verify']>[0]) => {
       if (mode === 'throw') throw denial;
       const allowed = trustedTaskSourcePolicyDecision(request);
+      if (mode === 'allow') return allowed;
       return mode === 'deny'
         ? { ...allowed, authorization: { decision: 'deny' as const, diagnostics: [] } }
         : { ...allowed, source_authorization_sha256: 'd'.repeat(64) };
@@ -1927,8 +1929,10 @@ test('task-source mutation policy rejection leaves native preparation and owners
   let completed = false;
   let primaryFailure: { error: unknown } | undefined;
   try {
+    const peer = f.seedPeerReservation();
     const prepared = f.prepare();
-    const before = f.store.readHostStateSnapshot(f.identity);
+    const before = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    const peerBefore = presentSnapshot(f.store.readHostStateSnapshot(peer.identity));
     const journalBefore = f.store.readWorkSessionJournal(f.identity);
     for (const value of ['throw', 'deny', 'invalid'] as const) {
       mode = value;
@@ -1949,6 +1953,50 @@ test('task-source mutation policy rejection leaves native preparation and owners
       ).toEqual([]);
     }
     expect(policy).toHaveBeenCalledTimes(3);
+    mode = 'allow';
+    const queued = await f.store.issueTaskSourceBindingOperation({ request: f.request, identity: f.identity });
+    expect(queued).toEqual({
+      schema: 'TaskSourceBindingActionResult/v1',
+      status: 'queued',
+      operation_id: f.request.operation_id,
+      request_id: f.request.request_id,
+      action: null,
+      state_version: null,
+      command_argv: null,
+    });
+    const reserved = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    const ticketId = `task-source-ticket:${f.request.work_id}:${f.request.attempt}:${f.request.operation_id}`;
+    const ticket = requiredValue(
+      reserved.ledger.tickets.find((item) => item.ticket_id === ticketId),
+      'queued ticket',
+    );
+    expect(ticket).toMatchObject({
+      status: 'queued',
+      sequence: 3,
+      claim_ids: [],
+      active_resources: [],
+      expires_at: null,
+    });
+    expect(ticket.blocked_resources).toEqual(ticket.exclusive_resources);
+    expect(ticket.blocked_resources).toContain(`branch:${f.request.branch_ref}`);
+    expect(reserved.work.lease).toEqual(before.work.lease);
+    expect(reserved.ledger.claims.filter((claim) => claim.ticket_id === ticketId)).toEqual([]);
+    expect(f.store.readHostStateSnapshot(peer.identity).work).toEqual(peerBefore.work);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    expect(await f.store.issueTaskSourceBindingOperation({ request: f.request, identity: f.identity })).toEqual(queued);
+    expect(policy).toHaveBeenCalledTimes(5);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
+    expect(f.store.readHostStateSnapshot(peer.identity).work).toEqual(peerBefore.work);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    expect(f.prepare()).toEqual(prepared);
+    expect(
+      f.database
+        .query(
+          "SELECT name FROM sqlite_master WHERE name IN ('agent_host_task_source_binding_action','agent_host_task_source_binding_claim')",
+        )
+        .all(),
+    ).toEqual([]);
+    if (performance.now() >= deadline) throw new Error('TaskSource queued retry exhausted its case deadline');
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -1957,7 +2005,8 @@ test('task-source mutation policy rejection leaves native preparation and owners
     completeOwnedCleanup(
       [
         () => {
-          f.close(completed);
+          f.close(() => completed && performance.now() < deadline);
+          if (performance.now() >= deadline) throw new Error('TaskSource queued retry cleanup exhausted its deadline');
         },
       ],
       primaryFailure,

@@ -126,6 +126,26 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
+### Checked TaskSource FIFO retry packet; stage pending
+
+The existing three-policy-denial case now admits its peer through the maintained
+fixture's shared ledger CAS before preparation. Every original denial preserves
+Host, Journal and absent action tables. Controlled allow then queues the genuine
+branch/root conflict without exposing argv or an action, keeps the original owner
+lease and peer Work, and repeats the same request without changing Host/Journal,
+ticket or prepared operation. This is an inert native FIFO reservation, not an
+executed Git command or a reported/UNKNOWN effect. No synthetic successful ticket
+is inserted. The existing separate promotion suite remains outside this selection.
+
+Focused1PASS31assertions and strict168-file TypeScript/configured lint pass.
+The initial TS2769 optional-beforeimage matcher is retained in
+task-source-queue-typecheck.log; both expected Host snapshots now use the
+maintained presence guard. The case retains its default5s deadline through owned
+connection close and keeps the private root on failure/expiry. Independent blind
+Luna review finds no blocker; task-source-queue-v1103-review.md is retained in
+focused diagnostics. One matching SDK/image/stage remains pending; no numeric
+gain is yet attributed.
+
 ### Storage/history stage failed; recovery setup remains open
 
 Published Source26ad2226e8d7a40bcb97ba6ac4c5bfa7069a1348 ran once in
@@ -317,8 +337,8 @@ are isolated by the separate serial children. Image tracked inputs/dependencies
 stay read-only; package `.tmp` and coverage remain their already permitted outputs.
 The parent fences installs, Git changes, indexing and additional producers.
 
-The current reviewed Host file digest is
-`865201de8b351886956e54e88a1ea7bc5fec46412f2720ec6e474b3020c34b65`;
+The current Host file digest awaiting the next stage is
+`fb95cb188bc4491665a5b6e660d3186b5ba45023f302426dec80a87bb334eaaf`;
 stopped-source remains
 `a414b790fea1381ffb425552a1f1b9ae29ad00f2998491a44bb8b7d6d45e9037`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
@@ -326,7 +346,10 @@ ownership. The expired-lease case's peer/waiter use that same unique root and sh
 fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
 namespace or shared-config write is admitted. The focused pin control passes
 10assertions. The complete matching-image stage above establishes capture, process/group
-closure and attributable merged counters fordf3d595, including the current pin.
+closure and attributable merged counters fordf3d595 and its prior pin.
+The TaskSource peer shares only its case's private DB/root; policy callbacks are
+awaited serially and no Git argv runs. Blind resource review finds no blocker.
+The next exact pin awaits a matching stage; it grants no broader selection.
 The complete report remains nonexact. The300s
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.

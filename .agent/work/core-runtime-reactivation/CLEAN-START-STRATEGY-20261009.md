@@ -105,6 +105,15 @@ failure; setup variance and different-input runs do not prove permanent flake
 repair or a controlled speedup. Continue from51missing functions/642branch arms
 in this same contour. WORK owns exact diagnostic outcomes.
 
+The next checked packet extends the same TaskSource policy-denial fixture with
+native peer admission, queued branch/root reservation and exact inert retry.
+Keep the original denials, peer Work, owner lease, Journal/preparation and absent
+action/argv checks. Focused1PASS31assertions and strict168-file checks pass under
+the unchanged5s deadline. Blind review finds no blocker with the same private
+resources; the exact Host pin is refreshed before one matching SDK/image/stage.
+Coverage remains bound to df3d595 until that complete result; do not infer
+counters from assertions.
+
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
 setup. Keep original roots/logs and the unvalidated patch. Resolve the setup cost
