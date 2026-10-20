@@ -107,9 +107,10 @@ checks initially found3test typing errors; corrected strict142files pass. This
 packet is measured above. Its fixture-only corrections do not establish a new
 product bug, Runtime acceptance or any deferred CRAP/mutation qualification.
 
-Resource reuse: latest observed overlay2733117440free bytes remains585633792above
+Resource reuse at audit start: overlay2733117440free bytes was585633792above
 the unchanged2147483648floor; scratch tmpfs was7268278272free before retained
-archival. Checkout and durable evidence share that overlay. Reuse the existing
+archival. Use the newer archival capacity observation above for subsequent admission.
+Checkout and durable evidence share that overlay. Reuse the existing
 inventory and whole lossless compressed archives; no broad du/scan/hash or cleanup
 is launched. No new verified regenerable candidate with closed ownership has been
 established, so original Source, images, SDK, DBs, receipts and FAIL/UNKNOWN remain
