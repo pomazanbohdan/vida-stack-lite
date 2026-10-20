@@ -10,53 +10,53 @@ exact F/L/S/B100 before selecting another. Root is the sole Source integrator,
 Git owner and numeric producer. Frozen complexity/CRAP qualification and mutation
 remain deferred; their budgets and acceptance rules are unchanged.
 
-Latest complete measurement binds Source `7f858d1b2435de03be4360ac23965db32e42d7ad` and run
-`0623f53d-68ca-42c7-9f3d-7dcf2929b3f7`, not later HEAD.
+Latest complete measurement binds Source `3f208d3bb9cbce1008e4f5fc7e4dbb60d16ecf13` and run
+`845c74fa-4379-4137-81cb-f6531b33ff00`, not later HEAD.
 
-| Counter | Covered / total | Delta from8221e8f |
+| Counter | Covered / total | Delta from7f858d1 |
 | --- | --- | --- |
-| Functions | 1030 / 1129 | +9 |
-| Lines | 4544 / 4970 | +96 |
-| Statements | 4815 / 5300 | +98 |
-| Branches | 4854 / 5642 | +51 |
+| Functions | 1033 / 1129 | +3 |
+| Lines | 4547 / 4970 | +3 |
+| Statements | 4818 / 5300 | +3 |
+| Branches | 4854 / 5642 | 0 |
 
-304PASS/0FAIL,3368assertions,136028.554237ms elapsed.
-Host child:288PASS/3115assertions/129.19s. Stopped-source child:
-16PASS/253assertions/110.95s, contained cleanup complete. Exit0,
+304PASS/0FAIL,3379assertions,161317.704132ms elapsed.
+Host child:288PASS/3126assertions/154.13s. Stopped-source child:
+16PASS/253assertions/136.08s, contained cleanup complete. Exit0,
 full capture, closed group, unchanged boot/image and published report hold.
 Operation remains **BLOCKED/nonexact**. Diagnostic maxCC279/entryCRAP2162 is
 unqualified. Historical exact16/45, local triples9/45 and separate data-only1
 remain distinct measures, not a current global PASS. Different-input elapsed
 times do not establish a controlled speedup.
 
-The report-only refresh now has99missing functions under46owners,
-down from108/47. Reuse `host-uncovered-plan-current.json` in focused diagnostics.
+The report-only refresh now has96missing functions under46owners,
+down from99/46. Reuse `host-uncovered-plan-current.json` in focused diagnostics.
 No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
-attempt1082.
+attempt1084.
 
 ## Latest measurement custody
 
-- Stage:`/workspace/contour-stage-FHrlDe`; exec6063, observed exit0.
-- Image:`/workspace/.vida-quality-inputs/f62087e04c33bbd6f4085f6406bf83810e36c2f7/repository`.
-- Tree:`11e8865fbc6eb42f8e48a84b5a5ff6de5f735a1e`.
-- Input:`5a80731a6feb848c02d992ebd4e9edc1d59e4bfc028fa86c0c5eb1790e629e41`.
-- Image manifest SHA256:`137fecdbda2355fa0daa95970edda5b7ea84116a1e2bc7325ea17f8d3cf6327d`.
-- SDK CI39426187277, successful attempt1, artifact12265876897.
-- SDK name:`vida-sdk-test-inputs-7f858d1b2435de03be4360ac23965db32e42d7ad-39426187277-1`.
-- ZIP SHA256:`e28be52f5d8b26ddda3ce953e22e89d97cd10bc87e568fe60a3ec69416e41bf9`.
-- `failed-transition-stage.log` in focused diagnostics retains the complete outcome.
-- Original scratch:`/dev/shm/vida-quality-retained-NaGRyZ`. After observed closure,
+- Stage:`/workspace/contour-stage-28EA06`; exec5328, observed exit0.
+- Image:`/workspace/.vida-quality-inputs/ed20fb75e099ef4786db7a87cb2ab0e2cec666b2/repository`.
+- Tree:`e71da15a2333b1722c7893c40335e9827908e550`.
+- Input:`6210615cb98c0dd717923b86cd748f2dd6e4e7cb3c6b723ca2677a9c861ec876`.
+- Image manifest SHA256:`bca61678ba792329bc71c0d05f7d145bb523e701c2f811615cc4eb1ce8c5103b`.
+- SDK CI39429877421, successful attempt1, artifact12267257762.
+- SDK name:`vida-sdk-test-inputs-3f208d3bb9cbce1008e4f5fc7e4dbb60d16ecf13-39429877421-1`.
+- ZIP SHA256:`39b4820f0b8decf27830a7f791b3e36ae134eb56f713b4f0795e7a08fd34856d`.
+- `authority-repair-stage.log` in focused diagnostics retains the complete outcome.
+- Original scratch:`/dev/shm/vida-quality-retained-NlFcT6`. After observed closure,
   only its qualified private regenerable Bun cache is retired; all other original
   scratch, fixtures, DBs and evidence remain.
-- Whole remaining scratch archive:`/workspace/vida-functional-retention-FHrlDe-Mwju67/scratch.tar.gz`,
-  249627bytes, full tar compare PASS; SHA256`3956c9f6ea0cae909752b8370856489ccbfeb56f86c7710ca8ceffdff7ec7d34`.
+- Whole remaining scratch archive:`/workspace/vida-functional-retention-28EA06-E1pE91/scratch.tar.gz`,
+  249322bytes, full tar compare PASS; SHA256`0405da63e12658f95a852c06ec18db0a5fc68aa27e36cd9bb9b062c1a9779b0e`.
   Original archive.log, scratch.sha256 and archive.json remain beside it.
-- Durable free before/after archive:6006996992/6006738944bytes;
-  unchanged2147483648floor leaves3859255296bytes headroom. No resource GAP.
+- Durable free before/after archive:5931937792/5931683840bytes;
+  unchanged2147483648floor leaves3784200192bytes headroom. No resource GAP.
 
 Cache retirement is receipted in
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/failed-transition-cache-retirement-FHrlDe`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/authority-repair-cache-retirement-28EA06`.
 One exact private cache,178155793regular bytes,215846912tmpfs bytes reclaimed;
 4096bytes of durable metadata growth is not counted as reclamation. Closed
 custody, namespace, original Source, boot/image, no active owner and dependency
@@ -120,7 +120,7 @@ all remaining original evidence. Keep inventory/events and original outcomes;
 do not repeatedly archive regenerable registry payloads as operational evidence.
 [TESTING](../../../packages/agent/TESTING.md) owns the detailed safeguards.
 
-## Measured transition packet and next action
+## Measured repair packet and next action
 
 The shared pinned Bun child creates the actual original suspended Mastra engine.
 Public tests retain their original default60s allowance and data; the Host caller
@@ -138,7 +138,7 @@ its new case passes68assertions in2145.65ms in the captured image. All fixture
 writes remain in the existing Host child's private root and serial case ownership.
 Endpoint proof remains a synthetic unit seam, not native release/Runtime acceptance.
 
-The next checked packet extends the existing authority-repair cases with a
+The measured packet extends the existing authority-repair cases with a
 matching completed Journal predecessor and unissued current action, using the
 actual configured source snapshot. Request-transition planning binds the exact
 Journal version; a native revision-only concurrent write causes the exact CAS
@@ -146,16 +146,17 @@ denial without changing Host, Journal payload/history or the stored plan. A
 fresh operation applies, resumes and restores with that concurrent version intact.
 Terminal correction repair retains the completed Host attempt, released rights
 and completed Journal history. The genuine issued-UNKNOWN cases remain unchanged.
-The two affected cases pass52assertions in2.14seconds combined; their bodies are
+The two affected cases pass52assertions in2.14seconds combined; their focused bodies are
 197.75/373.87ms. Strict150-file TypeScript and scoped lint pass. These are focused
-development results, not new coverage counters.
+development results, separately bound from the complete coverage stage above.
 
 Stopped-source fixture setup now reads the frozen package YAML template once
 per module while still creating every mutable consumer config, Host, Ledger,
 Bridge and owned root independently. Existing package before/after custody
 checks remain. The saved read is confirmed; its runtime benefit is unmeasured,
-and it does not explain the observed23.97682s file/body residual. The next full
-stage will measure the combined stable packet after review and matching SDK.
+and it does not explain the observed23.97682s file/body residual in the preceding
+7f858d1 input. The complete3f208d3 stage now measures the stable combined packet.
+It is slower than the preceding different-input stage; no speedup is claimed.
 Independent blind review finds no blocker; its note is
 `vida-authority-repair-review.md`. Root reviewed the exact two-file resource
 changes: both keep unique mutable roots, serial cases and process-local state.
@@ -167,10 +168,12 @@ vida-stopped-costs-7f858d1.md in the focused diagnostics. No new capacity sweep,
 cleanup or second producer was needed; the latest retained capacity observation
 above remains the reuse basis until fresh admission.
 
-Next use the99-function inventory to inspect remaining reachable Host obligations.
+Next use the96-function inventory to inspect remaining reachable Host obligations.
 Keep one contour and one producer. Batch causal success/denial/retry assertions,
 run affected checks, review and publish once before another matching-input stage.
-The preceding packet details remain in immutable49f1ac7/7f858d1 WORK versions.
+The preceding packet details and original numeric custody remain in immutable
+49f1ac7/7f858d1/8ae6f2c WORK versions. The repair owner now has one remaining
+uncovered closure; do not treat this packet as complete owner or contour closure.
 
 ### Bun-host-state focused shard resource review
 

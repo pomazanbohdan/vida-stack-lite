@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `7f858d1b2435de03be4360ac23965db32e42d7ad`, run `0623f53d-68ca-42c7-9f3d-7dcf2929b3f7`: F1030/1129, L4544/4970, S4815/5300 and B4854/5642. It records304PASS/0FAIL,3368assertions in136.029seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is99missing functions under46owners. WORK retains exact image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `3f208d3bb9cbce1008e4f5fc7e4dbb60d16ecf13`, run `845c74fa-4379-4137-81cb-f6531b33ff00`: F1033/1129, L4547/4970, S4818/5300 and B4854/5642. It records304PASS/0FAIL,3379assertions in161.318seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is96missing functions under46owners. WORK retains exact image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -44,10 +44,11 @@ are now measured, with shared test-only endpoint mappings. Failed-owner recovery
 preservation are now measured. The transitionFailedPrewriter packet now measures its actual bounded child engine
 and shared contract/journal fixtures. Next inspect continuation/recovery-view
 reader obligations using the same compatible fixture and refreshed inventory.
-The next authority-repair packet checks exact Journal dependency drift, fresh
-plan retry and completed-history retention in the existing cases. Keep its
-focused PASS distinct from complete coverage. Reuse only immutable template
-bytes in stopped-source setup; mutable consumer state remains per fixture.
+The measured authority-repair packet checks exact Journal dependency drift,
+fresh plan retry and completed-history retention in the existing cases. Keep
+focused PASS distinct from complete coverage; one owner closure remains missing.
+Stopped-source setup reuses only immutable template bytes; mutable consumer
+state remains per fixture. No controlled speedup is established.
 Retain Root-only integration, one active contour and default5s case/300s coverage limits.
 The three-hour audit fixes the local qualifier namespace-overwrite hazard; WORK
 retains its unchanged-manifest proof and measured-versus-planned comparisons.
