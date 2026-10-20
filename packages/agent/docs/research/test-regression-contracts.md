@@ -371,6 +371,18 @@ Configuration rebind uses `runtime-config` and `ConfigRebindOperation/v1`. Keep 
 
 Correction-generation repair must use an actual isolated admitted Source attempt with an issued action, started Host state, `commit_unknown` approval and null observation. Remove only the coupled correction fields from the Host and mirrored receipts. Check inspect/plan/apply/resume/restore. All other semantic fields must stay unchanged. Deny partial fields, conflicting history, foreign receipts, competing ownership and dependency drift. Inject a transaction failure. Strict readers reject the unrepaired shape. Repair grants no replay, outcome or ownership transition.
 
+For queued-intent FIFO controls around that original writer, validate the complete
+current Ledger before seeding it. A queued ticket with no activated or blocked
+resources remains distinct from native admission. Earlier overlapping exclusive
+intent denies repair; earlier disjoint or later overlapping intent does not.
+Preserve existing ticket order, claims, lease and approvals, and restore the
+exact native row after each inspect. Join restoration errors with the primary
+failure and retain every failed fixture. No synthetic ticket grants rights.
+Continuation digest-repair plan controls cover both reserve and apply before
+effects: malformed keys/schema/branch, actor/ID/time bounds, retained branch
+mismatch and invalid checksums. Recompute otherwise valid body digests so the
+intended guard owns each denial. Preserve every linked row and operation.
+
 Keep raw repair beforeimages separate from normalized current Work and journal
 types. Validate the permitted normalization and exact afterimage before any
 plan retry, applied resume or restore returns. Reject null records, invalid

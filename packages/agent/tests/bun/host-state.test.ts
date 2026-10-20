@@ -2319,6 +2319,48 @@ test('configured continuation digest repair preserves linked state, fences nativ
     };
     const plan = { ...body, digest: canonicalJsonDigest(body) };
     const pending = governance();
+    const invalidBodies = [
+      { ...body, extra: true },
+      { ...body, schema: 'ForeignRepair/v1' },
+      { ...body, branch: 'unsupported' },
+      { ...body, branch: 'historical_terminal_review' },
+      { ...body, repair_id: 1 },
+      { ...body, repair_id: 'UPPERCASE' },
+      { ...body, repair_id: 'r'.repeat(81) },
+      { ...body, actor: null },
+      { ...body, actor: '' },
+      { ...body, actor: ' fixture-owner' },
+      { ...body, actor: 'fixture-owner ' },
+      { ...body, actor: 'a'.repeat(257) },
+      { ...body, actor: 'fixture\u0000owner' },
+      { ...body, timestamp: '2026-02-30T00:00:00Z' },
+      { ...body, inspection: { ...inspection, extra: true } },
+      { ...body, inspection: { ...inspection, schema: 'ForeignInspection/v1' } },
+      { ...body, inspection: { ...inspection, workspace_id: 'foreign-workspace' } },
+      { ...body, inspection: { ...inspection, identity: { ...inspection.identity, extra: true } } },
+      { ...body, inspection: { ...inspection, row: { ...inspection.row, extra: true } } },
+      { ...body, inspection: { ...inspection, work_version: { ...inspection.work_version, extra: true } } },
+      { ...body, inspection: { ...inspection, ledger_version: { ...inspection.ledger_version, extra: true } } },
+      { ...body, inspection: { ...inspection, journal: { ...inspection.journal, extra: true } } },
+      { ...body, inspection: { ...inspection, row: { ...inspection.row, payload: '{"request":null}' } } },
+    ];
+    const invalidPlans = [
+      ...invalidBodies.map((changed) => ({ ...changed, digest: canonicalJsonDigest(changed) })),
+      { ...plan, digest: null },
+      { ...plan, digest: 'not-a-digest' },
+      { ...plan, digest: '0'.repeat(64) },
+    ];
+    for (const invalid of invalidPlans) {
+      for (const operation of [
+        () => f.store.reserveDeliveredWorkContinuationRepair(invalid),
+        () => f.store.applyDeliveredWorkContinuationRepair(invalid),
+      ]) {
+        expect(operation).toThrow('delivered-work continuation repair plan is malformed or changed');
+        expect(governance()).toEqual(pending);
+        expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+        expect(row()).toEqual(staleRow);
+      }
+    }
     expect(() => f.store.reserveDeliveredWorkContinuationRepair(plan)).toThrow(
       'session producer is pending or unknown',
     );
@@ -4466,6 +4508,99 @@ test(
             .get(host.workspaceId, f.identity.work_id);
         const retainedHistory = history();
         if (!retainedHistory) throw new Error('Unknown repair native initial Source history is missing');
+        const ledgerRow = requiredValue(
+          retained.host.find((row) => row.kind === 'ledger'),
+          'unknown repair ledger row',
+        );
+        const owner = requiredValue(
+          before.ledger.tickets.find((ticket) => ticket.ticket_id === requiredLease(before.work).ticket_id),
+          'unknown repair owner ticket',
+        );
+        const ownedFile = requiredValue(
+          owner.exclusive_resources.find((resource) => resource.startsWith('file:')),
+          'unknown repair owned Source',
+        );
+        const disjoint = 'file:fixture-disjoint-repair.ts';
+        expect(owner.exclusive_resources).not.toContain(disjoint);
+        for (const variant of [
+          { kind: 'earlier-disjoint', earlier: true, resource: disjoint, denied: false },
+          { kind: 'earlier-overlap', earlier: true, resource: ownedFile, denied: true },
+          { kind: 'later-overlap', earlier: false, resource: ownedFile, denied: false },
+        ]) {
+          // Unactivated exclusive intent is valid; repair applies its stricter queued-intent FIFO guard.
+          const waiter: CoordinationTicket = {
+            ...owner,
+            ticket_id: 'fixture:' + variant.kind,
+            work_id: 'fixture-fifo-waiter',
+            thread_id: 'fixture:fifo-waiter',
+            generation: 1,
+            sequence: variant.earlier ? 1 : before.ledger.next_sequence + 1,
+            contour_keys: [variant.resource],
+            exclusive_resources: [variant.resource],
+            status: 'queued',
+            claim_ids: [],
+            expires_at: null,
+            active_resources: [],
+            blocked_resources: [],
+            created_at: new Date().toISOString(),
+          };
+          const controlled: CoordinationLedger = {
+            ...before.ledger,
+            next_sequence: before.ledger.next_sequence + 2,
+            tickets: [...before.ledger.tickets.map((ticket) => ({ ...ticket, sequence: ticket.sequence + 1 })), waiter],
+          };
+          const validated = validateCoordinationLedgerV1(controlled, { currentTimeMs: Date.now() });
+          expect(validated.ok).toBe(true);
+          const payload = canonicalJson(controlled),
+            digest = canonicalJsonDigest(controlled);
+          expect(
+            db
+              .query(
+                "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND revision=? AND digest=?",
+              )
+              .run(payload, digest, host.workspaceId, ledgerRow.revision, ledgerRow.digest).changes,
+          ).toBe(1);
+          let failure: { error: unknown } | undefined;
+          try {
+            if (variant.denied)
+              expect(() => host.repairCorrectionGeneration({ ...request, mode: 'inspect' })).toThrow(
+                'earlier FIFO Source owner is waiting for the resource',
+              );
+            else {
+              const inspected = host.repairCorrectionGeneration({ ...request, mode: 'inspect' });
+              expect(inspected.changed_work).toHaveLength(1);
+              expect(inspected.changed_journals).toBe(1);
+            }
+            expect(readFixtureHostRows(db)).toEqual({
+              ...retained,
+              host: retained.host.map((row) => (row.kind === 'ledger' ? { ...row, payload, digest } : row)),
+            });
+            expect(governance()).toEqual(retainedGovernance);
+            expect(history()).toEqual(retainedHistory);
+            expect(
+              db.query("SELECT name FROM sqlite_master WHERE name='agent_host_work_state_repair'").get(),
+            ).toBeNull();
+          } catch (error) {
+            failure = { error };
+            throw error;
+          } finally {
+            completeOwnedCleanup(
+              [
+                () => {
+                  expect(
+                    db
+                      .query(
+                        "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND revision=? AND digest=?",
+                      )
+                      .run(ledgerRow.payload, ledgerRow.digest, host.workspaceId, ledgerRow.revision, digest).changes,
+                  ).toBe(1);
+                  expect(readFixtureHostRows(db)).toEqual(retained);
+                },
+              ],
+              failure,
+            );
+          }
+        }
         for (const kind of ['missing', 'changed'] as const) {
           if (kind === 'missing')
             db.query(

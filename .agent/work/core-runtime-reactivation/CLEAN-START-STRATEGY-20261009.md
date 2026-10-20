@@ -55,6 +55,9 @@ reducing repeated navigation without a new AST/inventory pass. Historical
 missing locations stay GAP and all numeric gates remain unchanged. Next use
 the current location-bound inventory for the remaining repair FIFO/ownership
 predicate and other reachable Host paths; keep one contour and producer.
+The FIFO intent matrix and26 malformed continuation-plan controls are now
+checked and independently reviewed. Publish and measure this stable packet
+once, then select the next same-contour obligation from the refreshed report.
 Retain Root-only integration, one active contour and default5s case/300s coverage limits.
 The three-hour audit fixes the local qualifier namespace-overwrite hazard; WORK
 retains its unchanged-manifest proof and measured-versus-planned comparisons.

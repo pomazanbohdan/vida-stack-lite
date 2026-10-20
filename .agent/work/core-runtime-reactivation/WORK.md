@@ -172,6 +172,28 @@ binding, plus the related current FIFO/ownership refusal contract. Do not infer
 an earlier queued owner or manufacture an accepted authorization. Keep the
 remaining79-function/39-owner inventory and one active contour.
 
+The next checked packet extends the existing genuine issued-UNKNOWN case with
+three synthetic, validator-accepted current Ledger preimages. Earlier disjoint
+and later overlapping exclusive intent permit inspect; earlier overlapping
+intent denies at the exact FIFO guard. Existing ticket relative order and all
+claims/leases/approvals remain unchanged, and complete-owned cleanup restores
+the exact native row after every inspect. The synthetic ticket has no active
+or blocked resources and proves no admission. The existing complete repair,
+reopen and UNKNOWN-retention assertions remain. Focused result:90assertions,
+14667.79ms under its existing justified per-case exception.
+
+The same packet adds26 malformed continuation repair plans, each checked at
+reserve and apply with exact error and Host/Journal/governance/receipt
+beforeimages. Body digests are recomputed except for the explicit checksum
+controls; denial cannot hide behind the pending producer gate. Its affected
+case passes254assertions in1076.43ms, default5s unchanged. Strict165-file
+TypeScript and scoped lint pass. Plan review is retained in
+`vida-repair-fifo-plan-review.md`; final code/resource review is retained as
+`vida-fifo-plan-code-review.md` and finds no blocker. Root refreshes only the
+exact Host test pin; private namespaces, per-file serial execution and existing
+budgets are unchanged. Complete numeric measurement remains pending. No
+unchanged full stage has been rerun.
+
 One exec transport read failed after the producer's observed exit0. The next
 managed-status probe was current/running/connected and the native read succeeded.
 Boot identity remained89093463-dd07-4789-abcd-d15842df2ba2; this is not evidence
