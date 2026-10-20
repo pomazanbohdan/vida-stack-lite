@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `df3d595179b1386d07e84ed8859ebde462ba7c97`, run `6d0c4827-8406-47c1-bde4-37ce1f0d1a4b`: F1078/1129, L4730/4970, S5010/5300 and B5000/5642. It records305PASS/0FAIL,3790assertions in142.820seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is51missing functions under24owners, all with exact retained map coordinates, plus642 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `a1f4049b189c036e6405f6245f2c13c5e690284f`, run `9916e7cf-a69e-4386-9dbb-ed4f9c766b57`: F1080/1129, L4741/4970, S5022/5300 and B5035/5642. It records305PASS/0FAIL,3805assertions in152.801seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is49missing functions under22owners, all with exact retained map coordinates, plus607 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -105,14 +105,15 @@ failure; setup variance and different-input runs do not prove permanent flake
 repair or a controlled speedup. Continue from51missing functions/642branch arms
 in this same contour. WORK owns exact diagnostic outcomes.
 
-The next checked packet extends the same TaskSource policy-denial fixture with
+The latest measured packet extends the same TaskSource policy-denial fixture with
 native peer admission, queued branch/root reservation and exact inert retry.
 Keep the original denials, peer Work, owner lease, Journal/preparation and absent
 action/argv checks. Focused1PASS31assertions and strict168-file checks pass under
 the unchanged5s deadline. Blind review finds no blocker with the same private
-resources; the exact Host pin is refreshed before one matching SDK/image/stage.
-Coverage remains bound to df3d595 until that complete result; do not infer
-counters from assertions.
+resources. The refreshed exact Host pin and matching a1f4049 SDK/image/stage
+pass, measuring+2F/+11L/+12S/+35B and both targeted callbacks. Continue from
+49missing functions/607branch arms in the same contour. Do not replay the now
+measured queued-conflict packet or infer whole-owner closure from these assertions.
 
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
@@ -129,7 +130,7 @@ The local report-only planner is retained diagnostic tooling, not published Sour
 After observed native process/group/capture closure, retire only the exact
 qualified private regenerable cache. Reuse shared dependency inventory under
 the no-install fence and preserve every other scratch/evidence byte. The latest
-archive and retirement manifest in WORK leave2971418624bytes above the unchanged
+archive and retirement manifest in WORK leave2894626816bytes above the unchanged
 2GiB durable floor. Earlier comprehensive cleanup and qualifier namespace-guard
 proof remain in Git and retained diagnostics; do not repeat broad scans/cleanup.
 Unknown backup/provision/proposal roots remain excluded. Bootstrap now requires
