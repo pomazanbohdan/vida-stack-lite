@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/implementer-prompt.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/autonomous-development-loops.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Stop and escalate when the task is over your head
@@ -39,3 +40,7 @@ Use BLOCKED if you cannot complete the task.
 Use NEEDS_CONTEXT if you need information that wasn't provided.
 Use DONE_WITH_CONCERNS if you completed the work but have doubts about correctness.
 Never silently produce work you're unsure about.
+On blocked completion, the workflow records the final status and a blocking condition
+Handle `blocked` as a routing signal, not just a failure signal
+A blocked plan halts every later dispatch of its ticket.
+In practice, `blocked` usually means the workflow ran into a situation where unattended execution would be unsafe. That is often the point where a higher-level orchestrator, another workflow, or a human should take over.

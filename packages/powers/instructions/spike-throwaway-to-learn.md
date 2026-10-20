@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-method/help/prototyping.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Spike to learn, then throw the spike away
@@ -37,3 +38,7 @@ Two exceptions: a spike they said yes to may be built; it stays labeled throwawa
 Keeping what it produced is a new request that comes back through this gate.
 Use it for throwaway prototypes they can click.
 If it grows mid-task, stop, say so, and step up a size.
+
+Ask the user to decide this on purpose.
+The outcome to avoid is a prototype that becomes the real product with nobody deciding it should, and with no spec.
+prototype code written to learn fast seldom meets the codebase's standards

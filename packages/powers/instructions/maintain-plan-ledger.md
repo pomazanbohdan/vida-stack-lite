@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-03-implement.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep a per-plan ledger as the recovery map
@@ -39,3 +40,9 @@ Sibling directories belong to other plans; leave them alone.
 Delete this plan's workspace only when the final review is clean and its fixes are committed — the git history is the record now.
 Before you delete anything, collect every ledger line containing `Ruling:` into your final message.
 A ruling that dies with the workspace was a decision made in secret.
+
+Whenever this workflow captures or records a version-control revision, obtain the full canonical identifier directly from version control and preserve it verbatim.
+
+Capture the baseline revision (current HEAD, or `NO_VCS` if version control is unavailable) before making any changes.
+
+If the recorded base already holds a value (resumed run), preserve it — never overwrite it.

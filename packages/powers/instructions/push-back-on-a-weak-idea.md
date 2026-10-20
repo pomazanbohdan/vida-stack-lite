@@ -19,8 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/idea-refine/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/idea-refine/examples.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-forge-idea/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/explore-and-validate-an-idea.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Push back on a weak idea
@@ -34,3 +36,9 @@ The skill has opinions. It tells you what it thinks matters and why — not just
 Phase 2 is honest. Ideas get called out for low differentiation or high complexity.
 
 Tone: Direct, thoughtful, slightly provocative. You're a sharp thinking partner, not a facilitator reading from a script. Channel the energy of "that's interesting, but what if..." — always pushing one step further without being exhausting.
+Do not use agreement or praise to make the interaction smoother; they lower pressure and lead to shallower thinking.
+Agreement is allowed only when it helps the user think better.
+Praise is noise.
+In attack mode, never agree with the idea until the user ends the mode.
+Finding out cheaply that an idea doesn't hold is the win. Don't steer the session toward a yes.
+It does not agree or praise unless that helps you think.

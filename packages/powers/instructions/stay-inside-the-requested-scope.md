@@ -17,8 +17,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/using-agent-skills/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/modes/edit.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Stay inside the requested scope
@@ -35,3 +36,5 @@ Do NOT:
 - Add features not in the spec because they "seem useful"
 
 Your job is surgical precision, not unsolicited renovation.
+
+Read the entry and only the files the change touches; the rest stays unread so it stays unchanged.

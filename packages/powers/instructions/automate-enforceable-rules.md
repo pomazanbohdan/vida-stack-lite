@@ -20,11 +20,13 @@ provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/anthropic-best-practices.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/retro/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-method/help/preparing-a-repo-for-agents.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/theory-of-project-context.md
 status: active
-revision: 3
+revision: 4
 ---
 
-# Encode the rules that can be checked mechanically
+# Automate rules that can be checked mechanically
 
 If a constraint is enforceable with a regex or a validation, automate it and keep the documentation for the judgment calls.
 
@@ -43,3 +45,7 @@ Match the test to the kind of guidance: for a discipline-enforcing skill, ask ac
 
 When an agent finds a new rationalization, add an explicit counter and re-test until the guidance holds.
 Classify the violation first: a **mechanical** one (a fixed syntactic pattern, a banned API, an import shape, a file-location rule) gets a deterministic check, full stop: a custom rule in the repo's own linter, a new pre-commit hook, or a new CI job, whichever the repo's language and existing guardrail make cheapest. Default to building the check over writing the rule. Reserve the coding standards file for genuine **judgement calls** (cross-file consistency, "matches the surrounding style," anything no guardrail could ever substitute for).
+
+For a style rule a linter, hook, or CI check can enforce, the skill proposes the check.
+Style rules an agent should self-enforce
+The skill proposes the check instead, and a check that lands deletes its line.

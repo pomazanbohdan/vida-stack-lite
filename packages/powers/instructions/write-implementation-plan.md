@@ -20,8 +20,10 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-plans/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/spec-driven-development/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-02-plan.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/plan-template.md
 status: active
-revision: 6
+revision: 7
 ---
 
 # Write the plan for an engineer who has not seen the codebase
@@ -56,3 +58,8 @@ Each task includes a verification step (test, build, manual check).
 Tasks are ordered by dependency, not by perceived importance.
 No task should require changing more than ~5 files.
 The plan should be reviewable: the human should be able to read it and say "yes, that's the right approach" or "no, change X."
+
+The subagent should be able to work from the plan without being told any of it again.
+Bound the size of the plan: target 900–1300 tokens. Above 1600 = high risk of context rot; flag the plan as oversized and continue.
+How the agent confirms its own work. Prefer CLI commands. When no CLI check applies, state what to inspect manually.
+Each verification command states the result that makes it pass: `COMMAND -- expected: SUCCESS_CRITERIA`.

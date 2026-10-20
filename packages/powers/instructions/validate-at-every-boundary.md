@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/systematic-debugging/defense-in-depth.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-boundary-discipline/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/rendered-skill/shape.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Validate at every boundary
@@ -43,3 +44,4 @@ No redundant nil checks deep in call chains when the boundary already validated.
 Business logic lives in pure functions with no framework dependencies. The shell is thin and mechanical.
 Ask whether the data is crossing a system boundary right now. If not, validation is redundant.
 Ask whether the logic can be a pure function that the shell just calls. If yes, extract it.
+A configured value the workflow cannot act on, such as a misspelled selector, is rejected before the first step, one guard per selector.

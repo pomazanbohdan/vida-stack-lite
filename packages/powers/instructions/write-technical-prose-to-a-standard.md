@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/technical-writing/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/in-your-own-words/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/_STYLE_GUIDE.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write technical prose to a standard
@@ -46,3 +47,10 @@ One instruction per sentence. Split long instructions and long sentences.
 Keep words like only and not next to the word they change. Make every it, they, and this point at one obvious thing.
 Call each thing by one name everywhere. Skip idioms, colloquialisms, Latin abbreviations, and metaphors.
 A change description and a commit message are writing too. A change body is a briefing a reviewer can read in under a minute. Do not paste logs, identifier lists, or metric tables. Link them.
+Make the main point easy to find and act on.
+Prefer concrete, familiar words and short sentences.
+Use literal language.
+Avoid decorative metaphors, and do not use a metaphor instead of explaining how something works.
+Give the gist before qualifications and detailed mechanics.
+Remove repetition, opening text that delays the point, inflated claims, and caveats that do not change the reader's decision.
+Define an unfamiliar term at first use.

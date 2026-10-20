@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/anthropic-best-practices.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/canon.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Set the degree of freedom the guidance allows
@@ -37,3 +38,5 @@ Run exactly the script; do not modify the command or add additional flags.
 Think of the agent as a robot exploring a path.
 A narrow bridge with cliffs on both sides has only one safe way forward: provide specific guardrails and exact instructions.
 An open field with no hazards has many paths to success: give general direction and trust the agent to find the best route.
+
+Write what survives as a goal. State intent and let the model find the path. Exact procedure only where a wrong move costs something.

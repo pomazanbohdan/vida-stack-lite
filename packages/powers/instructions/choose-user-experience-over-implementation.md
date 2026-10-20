@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-experience-first/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-product-brief/assets/brief-template.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Choose user experience over implementation convenience
@@ -38,3 +39,5 @@ The engineer who maintains the code next is a user too.
 Weigh their experience the same way, and explain impact from their perspective.
 Foundations should serve the experience.
 Foundational thinking governs the sequence of work; this principle governs the target.
+
+Focus on the experience and the outcome, not the implementation.

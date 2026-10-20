@@ -14,7 +14,10 @@ artifact_contract_required_data:
   - state before
   - state after
 artifact_contract_verified_by: the working tree is unchanged after the review
-compatibility_excludes: []
+compatibility_excludes:
+  - hand-the-review-prompt-to-a-separate-session-when-no-subagent-exists
+  - run-the-review-lenses-as-one-blocking-batch
+  - run-the-lenses-and-fix-what-they-find
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/requesting-code-review/code-reviewer.md
@@ -33,8 +36,14 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-gain/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-help/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-04-review.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-02-review.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/modes/review.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/lenses/lens-contract.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/review-a-change.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/reference/skills-and-agents.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Run the review and the report without changing the environment
@@ -53,3 +62,10 @@ Reads and reports only, changes nothing.
 To persist it, ask and it writes the ledger to a file.
 One-shot: do not change mode, write flag files, or persist anything.
 One-shot display: edits nothing, changes no mode.
+
+When an instruction launches a reviewer subagent, launch that child with the prompt text after placeholder substitution; do not load the reviewer instruction file yourself.
+you also need to decide: should this automatic reviewer build, run tests and fix the code?
+If not, say so when invoking the skill.
+This tells the review session to output the findings in a form you can pass directly to the coding agent and stop at that.
+The two editorial lenses hold content sacrosanct: they critique only how a document is organized and expressed, and they propose changes rather than making them.
+Zero findings is a valid outcome; it never pads to look thorough.

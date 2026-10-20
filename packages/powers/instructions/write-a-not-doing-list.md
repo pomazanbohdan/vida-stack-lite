@@ -19,8 +19,11 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/idea-refine/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/idea-refine/refinement-criteria.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/idea-refine/examples.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-spec/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/assets/prd-template.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-product-brief/assets/brief-template.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write a not-doing list
@@ -32,3 +35,8 @@ The "Not Doing" list does real work. It's specific and reasoned. Each item is so
 Say no to 1,000 things. Focus beats breadth.
 
 **The 'Not Doing' list is mandatory.** Explicitly name what you're cutting and why. This prevents scope creep and forces honest prioritization.
+
+Non-goals are explicit. At least one. Absence means downstream skills fill the vacuum.
+What this product is *not* and what it will *not* do in v1. Does outsized work for downstream readers and workflows — prevents the "let me also add this nearby thing" failure mode at every level (epic, ticket, code).
+Inline `[NON-GOAL for MVP]` callouts within Features cover deferred items within features; this section captures the broader "we are not building X / we are not becoming Y" statements.
+Keep this tight — boundary document, not a feature list.

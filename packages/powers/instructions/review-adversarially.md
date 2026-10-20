@@ -6,6 +6,7 @@ capability_tags:
   - review-code
 pattern_tags:
   - code-review
+  - empty-result-policy
 conditions_applies_when: A change or design is ready and needs review independent of its author.
 conditions_does_not_apply_when: Only a mechanical format or build check is needed.
 artifact_contract_output_type: adversarial-review
@@ -16,7 +17,8 @@ artifact_contract_required_data:
   - severity
   - verdict
 artifact_contract_verified_by: a reviewer reproduction of each claimed failure scenario
-compatibility_excludes: []
+compatibility_excludes:
+  - let-each-lens-set-its-own-stance-toward-zero-findings
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=agents/comment-sicko.md
@@ -27,7 +29,7 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/reflect/references/divergent-reviewer.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/reflect/references/tooling-reviewer.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Review adversarially

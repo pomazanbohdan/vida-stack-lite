@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/run.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Choose the worker by task complexity
@@ -39,3 +40,4 @@ Turn count beats token price.
 Wall-clock and context cost scale with how many turns a subagent takes, and the cheapest models routinely take 2-3× the turns on multi-step work — costing more overall.
 Use a mid-tier model as the floor for reviewers and for implementers working from prose descriptions.
 When the task's plan text contains the complete code to write, the implementation is transcription plus testing: use the cheapest tier for that implementer.
+Keep the lead on the strongest model; researchers at most one tier down; judgment work never on the smallest tier.

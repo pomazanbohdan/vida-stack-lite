@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/in-chat-techniques.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Ask one open question at a time
@@ -42,3 +44,7 @@ Questions that work anchor in specifics: "Walk me through the last time..."
 "What would make you wince if I got it wrong?"
 A guess they can correct often beats a question.
 Do not read the territory out as questions.
+One prompt per message while in dialogue; no multiple-choice menus.
+Don't stack questions into a wall or hand a menu that invites lazy picking — both pull the user out of generating.
+The only exceptions are the two up-front *process* choices (the stance, and the technique flow): *how* to run is theirs to pick; *what* to ideate never is.
+Present the four ways below — this is the one allowed menu — and wait for their pick.

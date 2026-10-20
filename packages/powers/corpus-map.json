@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 1331,
-  "updated_at": "2026-10-20T15:25:56.321Z",
+  "revision": 2557,
+  "updated_at": "2026-10-20T17:59:58.965Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -719,12 +719,9 @@
           ]
         },
         ".openclaw/skills/ponytail-help/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "keep-review-read-only"
-          ],
-          "contributed_sources": [
-            "ponytail:.openclaw/skills/ponytail-help/SKILL.md"
           ]
         },
         ".agents/rules/ponytail.md": {
@@ -780,12 +777,9 @@
           "reason": "Rules for accepting changes into the donor repository and benchmark requirements; house rules."
         },
         ".opencode/command/ponytail-help.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "keep-review-read-only"
-          ],
-          "contributed_sources": [
-            "ponytail:.opencode/command/ponytail-help.md"
           ]
         },
         "after-install.md": {
@@ -931,12 +925,9 @@
           "reason": "Description of the donor product, version history and marketing claims; not a norm of agent behavior."
         },
         "skills/ponytail-help/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "keep-review-read-only"
-          ],
-          "contributed_sources": [
-            "ponytail:skills/ponytail-help/SKILL.md"
           ]
         },
         ".opencode/command/ponytail-audit.md": {
@@ -1785,12 +1776,9 @@
           ]
         },
         "skills/principle-guard-the-context-window/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "delegate-subagent-work"
-          ],
-          "contributed_sources": [
-            "pstack:skills/principle-guard-the-context-window/SKILL.md"
           ]
         },
         "skills/principle-laziness-protocol/SKILL.md": {
@@ -1824,12 +1812,9 @@
           ]
         },
         "skills/principle-boundary-discipline/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "validate-at-every-boundary"
-          ],
-          "contributed_sources": [
-            "pstack:skills/principle-boundary-discipline/SKILL.md"
           ]
         },
         "skills/principle-prove-it-works/SKILL.md": {
@@ -2624,7 +2609,8 @@
             "hand-the-reviewer-only-artifact-and-contract",
             "bound-the-doubt-loop",
             "offer-a-cross-model-second-opinion",
-            "never-interpolate-content-into-a-shell-command"
+            "never-interpolate-content-into-a-shell-command",
+            "triage-review-findings-with-judgment"
           ]
         },
         "skills/debugging-and-error-recovery/SKILL.md": {
@@ -2646,7 +2632,8 @@
             "review-the-prose-without-changing-the-facts",
             "write-a-readme-a-newcomer-can-follow",
             "record-shipped-changes-in-a-changelog",
-            "keep-the-agent-facing-docs-current"
+            "keep-the-agent-facing-docs-current",
+            "record-decisions-as-adrs"
           ]
         },
         "skills/constraint-driven-development/SKILL.md": {
@@ -3012,7 +2999,8 @@
             "write-the-spec-with-the-core-areas",
             "reframe-vague-requirements-as-success-criteria",
             "stop-after-saving-the-spec",
-            "keep-the-spec-current"
+            "keep-the-spec-current",
+            "write-implementation-plan"
           ]
         },
         "references/definition-of-done.md": {
@@ -3492,6 +3480,2850 @@
         "hooks/SIMPLIFY-IGNORE.md": {
           "status": "rejected",
           "reason": "description of a session hook for one host, including its block annotation syntax"
+        }
+      }
+    },
+    "bmad-method": {
+      "source_revision": "cfba3ff5f982c1809e060606e399f55ebd7bce5e",
+      "files": {
+        "skills/bmad-build/plan-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "freeze-the-human-owned-intent-in-the-plan",
+            "keep-the-plan-within-the-token-budget",
+            "audit-the-behaviour-matrix-against-the-tests",
+            "log-every-review-finding-with-its-verdict",
+            "score-the-change-risk-and-scale-the-review-with-it",
+            "record-the-route-the-review-and-the-lenses-that-ran",
+            "delete-a-plan-section-that-has-nothing-to-say",
+            "re-derive-the-code-from-a-corrected-plan",
+            "map-file-structure-before-tasks"
+          ]
+        },
+        "skills/bmad-build/step-03-implement.md": {
+          "status": "split",
+          "instruction_ids": [
+            "freeze-the-human-owned-intent-in-the-plan",
+            "judge-the-change-from-the-diff-since-the-baseline",
+            "hand-the-plan-to-the-implementer-as-the-only-source-of-truth",
+            "maintain-plan-ledger"
+          ]
+        },
+        "skills/bmad-build/step-05-present.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "close-with-a-short-completion-summary"
+          ]
+        },
+        "skills/bmad-build/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "follow-the-step-sequence-and-halt-at-checkpoints"
+          ]
+        },
+        "skills/bmad-build/workflow.md": {
+          "status": "split",
+          "instruction_ids": [
+            "gate-the-plan-on-the-readiness-standard",
+            "judge-multi-goal-by-independent-shippable-deliverables",
+            "keep-the-plan-within-the-token-budget",
+            "follow-the-step-sequence-and-halt-at-checkpoints"
+          ]
+        },
+        "skills/bmad-build/step-01-clarify-and-route.md": {
+          "status": "split",
+          "instruction_ids": [
+            "follow-the-step-sequence-and-halt-at-checkpoints",
+            "judge-multi-goal-by-independent-shippable-deliverables",
+            "name-the-plan-file-after-the-intent",
+            "keep-per-task-commits-clean-and-reversible"
+          ]
+        },
+        "skills/bmad-build/step-02-plan.md": {
+          "status": "split",
+          "instruction_ids": [
+            "freeze-the-human-owned-intent-in-the-plan",
+            "gate-the-plan-on-the-readiness-standard",
+            "keep-the-plan-within-the-token-budget",
+            "score-the-change-risk-and-scale-the-review-with-it",
+            "stop-when-the-request-left-out-something-the-user-would-notice",
+            "hand-the-plan-to-the-implementer-as-the-only-source-of-truth",
+            "record-the-route-the-review-and-the-lenses-that-ran",
+            "re-check-a-research-claim-against-the-current-code",
+            "re-read-the-plan-before-acting-on-the-approval",
+            "map-file-structure-before-tasks"
+          ]
+        },
+        "skills/bmad-build-auto/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "end-the-run-with-an-explicit-terminal-status",
+            "follow-the-step-sequence-and-halt-at-checkpoints"
+          ]
+        },
+        "skills/bmad-build-auto/workflow.md": {
+          "status": "split",
+          "instruction_ids": [
+            "end-the-run-with-an-explicit-terminal-status",
+            "treat-a-required-delegation-as-mandatory",
+            "run-every-activation-step-before-the-main-workflow",
+            "check-the-plan-against-the-readiness-standard",
+            "write-acceptance-criteria-as-given-when-then",
+            "anchor-acceptance-criteria-on-the-outermost-surface",
+            "capture-the-baseline-revision-before-any-change",
+            "follow-the-step-sequence-and-halt-at-checkpoints"
+          ]
+        },
+        "skills/bmad-build/step-04-review.md": {
+          "status": "split",
+          "instruction_ids": [
+            "route-review-findings-into-one-action",
+            "log-every-review-finding-with-its-verdict",
+            "re-derive-the-code-from-a-corrected-plan",
+            "hand-the-review-prompt-to-a-separate-session-when-no-subagent-exists",
+            "judge-the-change-from-the-diff-since-the-baseline",
+            "record-the-route-the-review-and-the-lenses-that-ran",
+            "verify-the-claim-before-triage",
+            "label-code-review-findings",
+            "scope-the-check-to-the-change",
+            "fan-out-independent-checks-in-one-turn",
+            "keep-review-read-only",
+            "delegate-subagent-work"
+          ]
+        },
+        "skills/bmad-build/step-oneshot.md": {
+          "status": "split",
+          "instruction_ids": [
+            "log-every-review-finding-with-its-verdict",
+            "hand-the-review-prompt-to-a-separate-session-when-no-subagent-exists",
+            "stop-when-the-request-left-out-something-the-user-would-notice",
+            "record-the-route-the-review-and-the-lenses-that-ran"
+          ]
+        },
+        "skills/bmad-code-review/step-02-review.md": {
+          "status": "split",
+          "instruction_ids": [
+            "run-the-review-lenses-as-one-blocking-batch",
+            "skip-and-announce-the-lenses-that-do-not-apply",
+            "record-a-failed-lens-and-continue",
+            "compose-the-review-prompt-from-paths-and-intent",
+            "keep-review-read-only",
+            "hand-the-review-prompt-to-a-separate-session-when-no-subagent-exists"
+          ]
+        },
+        "skills/bmad-build-auto/step-02-plan.md": {
+          "status": "split",
+          "instruction_ids": [
+            "run-the-steps-without-human-interaction",
+            "plan-from-distilled-summaries",
+            "re-check-a-research-claim-against-the-current-code",
+            "score-the-risk-by-the-impact-if-the-change-is-wrong",
+            "check-the-plan-against-the-readiness-standard",
+            "annotate-the-code-map-with-what-to-reuse-and-what-not-to-change"
+          ]
+        },
+        "skills/bmad-build-auto/step-04-review.md": {
+          "status": "split",
+          "instruction_ids": [
+            "reject-a-finding-as-out-of-scope-only-when-the-intent-excludes-it",
+            "group-findings-by-shared-root-cause",
+            "cap-the-review-repair-loop",
+            "save-the-attempted-work-as-a-patch-before-reverting",
+            "extract-keep-instructions-before-re-deriving",
+            "scope-the-fix-request-to-the-covering-tests",
+            "append-deferred-items-to-one-list-and-re-parse-it",
+            "recommend-a-follow-up-review-by-a-fixed-rule",
+            "leave-the-working-copy-clean-after-the-run",
+            "run-the-review-lanes-at-the-session-model-capability",
+            "pass-the-diff-by-path-not-by-paste",
+            "launch-every-review-lane-before-reading-any-result",
+            "carry-forward-a-finding-that-was-already-triaged",
+            "trust-a-pre-verified-finding-as-filed",
+            "record-the-amendment-with-its-trigger-and-its-keep-instructions",
+            "route-review-findings-into-one-action"
+          ]
+        },
+        "skills/bmad-brainstorming/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "aim-past-the-obvious-and-resist-concluding",
+            "ask-one-open-question",
+            "choose-the-stance-and-hold-it",
+            "record-who-each-idea-came-from",
+            "shift-the-creative-domain-every-few-ideas"
+          ]
+        },
+        "skills/bmad-brainstorming/references/mode-autonomous.md": {
+          "status": "split",
+          "instruction_ids": [
+            "aim-past-the-obvious-and-resist-concluding",
+            "shift-the-creative-domain-every-few-ideas"
+          ]
+        },
+        "skills/bmad-eval/references/self-improvement.md": {
+          "status": "split",
+          "instruction_ids": [
+            "change-one-thing-per-round",
+            "fix-the-intent-category-not-the-failing-case",
+            "keep-the-human-as-the-judge",
+            "prefer-the-explanation-over-the-shouting-rule",
+            "scale-the-loop-to-the-stakes",
+            "write-directive-rules"
+          ]
+        },
+        "skills/bmad-brainstorming/references/mode-partner.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-stance-and-hold-it",
+            "record-who-each-idea-came-from",
+            "watch-how-much-you-contribute"
+          ]
+        },
+        "skills/bmad-eval/references/grader.md": {
+          "status": "split",
+          "instruction_ids": [
+            "critique-the-rubric-alongside-the-grade",
+            "fail-the-assertion-when-the-evidence-is-uncertain"
+          ]
+        },
+        "skills/bmad-eval/references/eval-format.md": {
+          "status": "split",
+          "instruction_ids": [
+            "critique-the-rubric-alongside-the-grade",
+            "cut-the-section-that-does-no-work",
+            "make-the-skill-run-unattended",
+            "reach-a-mid-workflow-point-without-a-multi-turn-simulator",
+            "retire-the-skill-when-it-stops-beating-the-bare-model",
+            "write-an-expectation-a-wrong-output-cannot-pass"
+          ]
+        },
+        "skills/bmad-forge-idea/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "distil-the-forged-idea-to-the-decisions",
+            "give-the-session-an-outside-voice",
+            "name-the-outcome-of-a-hardened-idea",
+            "push-back-on-a-weak-idea",
+            "sharpen-domain-language",
+            "verify-the-claim-before-triage"
+          ]
+        },
+        "skills/bmad-brainstorming/references/finalize.md": {
+          "status": "split",
+          "instruction_ids": [
+            "delegate-subagent-work",
+            "do-not-pour-the-artefact-into-a-template",
+            "hand-back-the-mirror-before-adding-connections",
+            "include-the-buried-ideas-when-you-reflect-the-field-back",
+            "write-the-handoff-for-the-next-tool"
+          ]
+        },
+        "skills/bmad-eval/references/description-optimization.md": {
+          "status": "split",
+          "instruction_ids": [
+            "feed-the-failed-attempts-back-into-the-loop",
+            "hold-out-a-test-set-the-improver-never-sees",
+            "make-the-negative-query-a-near-miss",
+            "measure-the-trigger-by-whether-the-skill-fired"
+          ]
+        },
+        "skills/bmad-advanced-elicitation/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "give-the-session-an-outside-voice",
+            "match-the-language-of-the-session",
+            "never-change-the-work-without-acceptance",
+            "offer-the-methods-and-stop-for-a-choice",
+            "refine-the-target-and-scale-the-depth"
+          ]
+        },
+        "skills/bmad-brainstorming/references/converge.md": {
+          "status": "split",
+          "instruction_ids": [
+            "include-the-buried-ideas-when-you-reflect-the-field-back",
+            "keep-divergence-and-convergence-apart",
+            "pick-the-lens-that-fits"
+          ]
+        },
+        "skills/bmad-brainstorming/references/mode-facilitator.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "let-the-user-generate-the-ideas"
+          ]
+        },
+        "skills/bmad-eval/references/harness.md": {
+          "status": "split",
+          "instruction_ids": [
+            "measure-the-trigger-by-whether-the-skill-fired",
+            "prove-the-harness-on-one-case-before-the-set",
+            "run-each-case-in-a-clean-room",
+            "say-that-the-run-is-uncontained"
+          ]
+        },
+        "skills/bmad-eval/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "measure-the-trigger-by-whether-the-skill-fired",
+            "retire-the-skill-when-it-stops-beating-the-bare-model",
+            "run-each-case-in-a-clean-room",
+            "say-that-the-run-is-uncontained"
+          ]
+        },
+        "skills/bmad-brainstorming/references/in-chat-techniques.md": {
+          "status": "split",
+          "instruction_ids": [
+            "ask-one-open-question",
+            "never-pull-the-library-whole-into-context"
+          ]
+        },
+        "skills/bmad-brainstorming/references/headless.md": {
+          "status": "split",
+          "instruction_ids": [
+            "record-the-assumptions-you-had-to-infer",
+            "shift-the-creative-domain-every-few-ideas",
+            "treat-a-present-human-as-interactive"
+          ]
+        },
+        "skills/bmad-project-context/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-the-line-until-the-check-is-live",
+            "exclude-what-the-repository-already-states",
+            "ask-only-what-no-scan-can-answer",
+            "show-the-ledger-beside-the-replacement",
+            "verify-that-a-nested-instruction-file-is-loaded",
+            "admit-a-pitfall-only-on-observed-evidence",
+            "verify-a-command-claim-against-the-script-that-runs-it",
+            "keep-the-contents-and-the-index-in-sync"
+          ]
+        },
+        "skills/bmad-project-context/references/best-practices.md": {
+          "status": "split",
+          "instruction_ids": [
+            "admit-a-rule-by-the-cost-of-not-having-it",
+            "exclude-what-the-repository-already-states",
+            "treat-every-existing-instruction-as-intentional",
+            "verify-that-a-nested-instruction-file-is-loaded",
+            "admit-a-pitfall-only-on-observed-evidence"
+          ]
+        },
+        "skills/bmad-correct-course/checklist.md": {
+          "status": "split",
+          "instruction_ids": [
+            "assess-the-impact-across-every-artifact",
+            "evaluate-every-path-forward-before-recommending-one",
+            "ground-the-change-in-a-concrete-trigger-and-evidence",
+            "analyze-the-change-factually-and-without-blame",
+            "halt-with-the-reason-when-a-precondition-is-missing",
+            "get-explicit-approval-before-applying-the-change",
+            "track-the-checklist-item-status-as-you-go"
+          ]
+        },
+        "skills/bmad-architecture/references/reviewer-gate.md": {
+          "status": "split",
+          "instruction_ids": [
+            "sweep-every-dimension-or-name-it-deferred",
+            "run-the-reviewer-gate-as-independent-lenses",
+            "apply-the-clear-fixes-and-surface-only-what-needs-the-user"
+          ]
+        },
+        "skills/bmad-correct-course/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "assess-the-impact-across-every-artifact",
+            "halt-with-the-reason-when-a-precondition-is-missing",
+            "propose-the-change-as-a-before-and-after-edit",
+            "classify-the-change-scope-and-route-the-handoff",
+            "get-explicit-approval-before-applying-the-change",
+            "track-the-checklist-item-status-as-you-go"
+          ]
+        },
+        "skills/bmad-party-mode/references/mode-agent-team.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "catch-up-the-members-the-channel-does-not-reach"
+          ]
+        },
+        "skills/bmad-party-mode/references/create-party.md": {
+          "status": "split",
+          "instruction_ids": [
+            "cluster-raw-data-by-what-differentiates-behavior",
+            "propose-a-first-cut-instead-of-interrogating",
+            "check-for-a-collision-before-saving-an-override"
+          ]
+        },
+        "skills/bmad-party-mode/references/mode-subagent.md": {
+          "status": "split",
+          "instruction_ids": [
+            "weave-the-answers-into-one-conversation",
+            "constrain-the-form-and-not-the-reasoning",
+            "route-the-whole-exchange-to-every-participant",
+            "keep-the-cast-alive-until-the-session-ends"
+          ]
+        },
+        "skills/bmad-architecture/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "separate-the-invariants-from-the-cold-start-scaffold",
+            "show-the-alternatives-for-the-load-bearing-calls",
+            "give-every-decision-an-id-a-binding-and-a-prevented-divergence",
+            "inherit-the-parent-invariants-as-binding",
+            "sweep-every-dimension-or-name-it-deferred",
+            "keep-the-architecture-document-a-build-substrate",
+            "verify-a-named-technology-before-you-pin-it"
+          ]
+        },
+        "skills/bmad-architecture/assets/spine-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "separate-the-invariants-from-the-cold-start-scaffold",
+            "give-every-decision-an-id-a-binding-and-a-prevented-divergence",
+            "keep-the-architecture-document-a-build-substrate",
+            "supply-a-stack-table"
+          ]
+        },
+        "skills/bmad-party-mode/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "weave-the-answers-into-one-conversation",
+            "leave-the-conflict-unresolved",
+            "push-the-clash-until-it-earns-its-keep",
+            "make-the-voices-unequal-and-rotate-the-spotlight",
+            "pull-the-user-into-the-exchange",
+            "keep-the-cast-alive-until-the-session-ends"
+          ]
+        },
+        "skills/bmad-party-mode/references/party-memory.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "record-only-what-changes-a-future-run"
+          ]
+        },
+        "skills/bmad-party-mode/references/mode-auto.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "spawn-independent-agents-only-when-divergence-changes-the-answer"
+          ]
+        },
+        "skills/bmad-architecture/references/headless.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "verify-a-named-technology-before-you-pin-it"
+          ]
+        },
+        "skills/bmad-project-context/references/template.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-the-instruction-block-in-a-fixed-section-order"
+          ]
+        },
+        "skills/bmad-walkthrough/workflow.md": {
+          "status": "split",
+          "instruction_ids": [
+            "accept-a-block-only-when-the-user-says-so",
+            "keep-the-bookkeeping-out-of-the-session",
+            "write-for-a-human-who-knows-nothing-of-the-target",
+            "make-every-file-reference-clickable",
+            "open-with-the-intent-and-say-where-it-came-from",
+            "name-the-entry-points-a-reader-would-open-first",
+            "group-the-change-by-concern-not-by-file",
+            "keep-the-periphery-block-to-references"
+          ]
+        },
+        "skills/bmad-walkthrough/step-02-narrative.md": {
+          "status": "split",
+          "instruction_ids": [
+            "accept-a-block-only-when-the-user-says-so",
+            "keep-findings-and-decisions-out-of-the-narrative"
+          ]
+        },
+        "skills/bmad-walkthrough/step-03-walkthrough.md": {
+          "status": "split",
+          "instruction_ids": [
+            "suggest-a-few-moves-that-fit-and-stop",
+            "drop-the-status-chatter",
+            "rewrite-a-block-in-the-shape-the-reviewer-names",
+            "present-the-next-block-before-recording-the-previous-one",
+            "ask-before-committing-on-a-dirty-tree",
+            "help-the-reviewer-test-and-drive-the-target",
+            "record-what-was-actually-tested",
+            "start-a-move-only-when-the-user-picks-it",
+            "answer-the-question-in-a-fresh-subagent",
+            "answer-in-the-session-with-concrete-findings",
+            "use-the-formal-review-skill-for-the-formal-review-move",
+            "guess-the-follow-through-and-ask-before-doing-it"
+          ]
+        },
+        "skills/bmad/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "answer-only-from-what-the-installed-modules-say",
+            "recommend-the-next-step-and-say-why",
+            "load-the-reference-that-matches-the-request"
+          ]
+        },
+        "skills/bmad-walkthrough/step-01-orientation.md": {
+          "status": "split",
+          "instruction_ids": [
+            "ask-until-you-know-what-the-target-is-and-what-it-is-for",
+            "keep-the-bookkeeping-out-of-the-session"
+          ]
+        },
+        "skills/bmad-agent-analyst/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "elicit-the-needs-into-an-actionable-spec-grounded-in-evidence",
+            "dispatch-on-a-clear-match-and-ask-only-when-two-items-are-close",
+            "render-the-menu-as-a-numbered-table-and-wait-for-the-pick",
+            "carry-the-role-method-into-every-turn-and-every-skill"
+          ]
+        },
+        "skills/bmad-agent-architect/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "turn-requirements-into-architecture-that-ships",
+            "dispatch-on-a-clear-match-and-ask-only-when-two-items-are-close",
+            "render-the-menu-as-a-numbered-table-and-wait-for-the-pick",
+            "carry-the-role-method-into-every-turn-and-every-skill"
+          ]
+        },
+        "skills/bmad-agent-dev/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "execute-approved-stories-against-every-acceptance-criterion",
+            "dispatch-on-a-clear-match-and-ask-only-when-two-items-are-close",
+            "render-the-menu-as-a-numbered-table-and-wait-for-the-pick",
+            "carry-the-role-method-into-every-turn-and-every-skill"
+          ]
+        },
+        "skills/bmad-agent-pm/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "turn-the-vision-into-small-validated-increments",
+            "dispatch-on-a-clear-match-and-ask-only-when-two-items-are-close",
+            "render-the-menu-as-a-numbered-table-and-wait-for-the-pick",
+            "carry-the-role-method-into-every-turn-and-every-skill"
+          ]
+        },
+        "skills/bmad-agent-ux-designer/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-the-design-intent-for-architecture-and-implementation",
+            "dispatch-on-a-clear-match-and-ask-only-when-two-items-are-close",
+            "render-the-menu-as-a-numbered-table-and-wait-for-the-pick",
+            "carry-the-role-method-into-every-turn-and-every-skill"
+          ]
+        },
+        "skills/bmad-customize/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "say-plainly-when-the-exposed-surface-does-not-cover-the-change",
+            "classify-the-customization-intent",
+            "choose-the-agent-surface-or-the-workflow-surface",
+            "read-the-existing-override-before-composing",
+            "keep-the-override-sparse",
+            "merge-the-override-layers-by-field-kind",
+            "place-a-policy-override-with-the-team-and-a-personal-one-with-the-user",
+            "show-the-override-and-wait-for-an-explicit-yes",
+            "verify-the-override-actually-landed",
+            "state-when-the-customization-is-done"
+          ]
+        },
+        "skills/bmad-qa-generate-e2e-tests/workflow.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-only-tests-for-behavior-that-already-works",
+            "find-the-feature-to-cover-in-a-fixed-order",
+            "list-the-scenarios-before-touching-the-harness",
+            "write-the-new-tests-in-the-shape-the-project-already-uses",
+            "stay-with-the-frameworks-standard-api-for-the-tests-you-add-now",
+            "run-the-existing-suite-before-adding-to-it",
+            "propose-a-missing-harness-as-its-own-change",
+            "write-one-test-per-scenario-against-the-public-surface",
+            "run-the-new-tests-twice",
+            "decide-whether-the-test-the-harness-or-the-application-is-wrong",
+            "find-the-cause-of-a-flaky-test-instead-of-retrying",
+            "report-the-covered-and-the-uncovered-scenarios",
+            "discover-the-repositorys-test-tooling"
+          ]
+        },
+        "skills/bmad-walkthrough/templates/log-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-the-log-for-the-session-that-continues",
+            "give-every-finding-a-disposition",
+            "stamp-the-log-entry-with-the-real-session-id-and-time",
+            "keep-each-log-entry-short",
+            "keep-findings-and-decisions-out-of-the-narrative"
+          ]
+        },
+        "skills/bmod-method/help/prototyping.md": {
+          "status": "split",
+          "instruction_ids": [
+            "a-prototype-that-disproves-the-idea-is-a-success",
+            "spike-throwaway-to-learn"
+          ]
+        },
+        "skills/bmod-toolsmith/help/shape-rendered-skill.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "add-the-rendering-machinery-only-when-the-teams-really-differ"
+          ]
+        },
+        "skills/bmod-method/help/preparing-a-repo-for-agents.md": {
+          "status": "split",
+          "instruction_ids": [
+            "agents-copy-the-patterns-they-find",
+            "schedule-a-refactoring-pass",
+            "keep-codebase-documentation-small",
+            "automate-enforceable-rules",
+            "separate-refactoring-from-feature-work"
+          ]
+        },
+        "skills/bmod-toolsmith/help/shape-multi-skill-module.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "ask-the-shared-configuration-once-and-let-every-member-read-it"
+          ]
+        },
+        "skills/bmod-toolsmith/help/shape-single-skill-module.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "ask-the-shared-configuration-once-and-let-every-member-read-it"
+          ]
+        },
+        "skills/bmod-toolsmith/help/how-to-memory-agent.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "ask-whether-memory-is-warranted-before-building-it"
+          ]
+        },
+        "skills/bmod-toolsmith/help/shape-memory-agent.md": {
+          "status": "split",
+          "instruction_ids": [
+            "ask-whether-memory-is-warranted-before-building-it",
+            "keep-a-record-by-subject-and-replace-what-is-no-longer-true"
+          ]
+        },
+        "skills/bmod-toolsmith/help/craft-progressive-disclosure.md": {
+          "status": "split",
+          "instruction_ids": [
+            "carve-the-entry-by-relevance-not-by-size",
+            "write-the-body-around-the-output"
+          ]
+        },
+        "skills/bmod-toolsmith/help/shape-plain-skill.md": {
+          "status": "split",
+          "instruction_ids": [
+            "carve-the-entry-by-relevance-not-by-size",
+            "write-the-body-around-the-output"
+          ]
+        },
+        "skills/bmod-toolsmith/help/how-to-add-to-module.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "change-the-source-not-the-installed-copy"
+          ]
+        },
+        "skills/bmod-method/help/ticketing-setup.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "copy-a-document-into-the-store-rather-than-moving-it"
+          ]
+        },
+        "skills/bmod-method/help/ticketing-and-epics.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "keep-the-plans-after-the-work-is-done"
+          ]
+        },
+        "skills/bmod-toolsmith/help/shapes.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "derive-the-shape-from-the-conversation-not-a-menu"
+          ]
+        },
+        "skills/bmod-toolsmith/help/how-to-convert-external.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "drop-the-host-mechanics-when-you-port-a-skill"
+          ]
+        },
+        "skills/bmod-method/help/implementation-skills.md": {
+          "status": "split",
+          "instruction_ids": [
+            "raise-the-tier-when-the-change-forces-an-undecided-boundary",
+            "size-a-build-session-to-one-goal",
+            "fix-the-clear-findings-and-ask-when-the-intent-is-in-doubt"
+          ]
+        },
+        "skills/bmod-method/help/monorepo-and-polyrepo.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-the-planning-at-the-root-that-holds-every-project",
+            "give-each-project-its-own-checkout-and-its-own-rules"
+          ]
+        },
+        "skills/bmod-toolsmith/help/craft-customization.md": {
+          "status": "split",
+          "instruction_ids": [
+            "read-every-declared-value-in-the-body",
+            "keep-one-reader-and-one-writer-for-overrides"
+          ]
+        },
+        "skills/bmod-toolsmith/help/shape-agent.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-one-reader-and-one-writer-for-overrides",
+            "write-the-description-as-a-summary-and-trigger-phrases"
+          ]
+        },
+        "skills/bmod-method/help/unattended-builds.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "keep-the-first-blocked-reason-and-clear-it-deliberately"
+          ]
+        },
+        "skills/bmod-method/help/project-context.md": {
+          "status": "split",
+          "instruction_ids": [
+            "remove-a-rule-only-when-its-subject-is-gone",
+            "keep-the-instructions-block-small"
+          ]
+        },
+        "skills/bmod-method/help/artifact-lifetime.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-the-plans-after-the-work-is-done",
+            "scope-agent-reads-to-the-current-work"
+          ]
+        },
+        "skills/bmod-method/help/review-choices.md": {
+          "status": "split",
+          "instruction_ids": [
+            "stop-the-review-when-the-findings-are-minor",
+            "name-the-reason-review-is-slow"
+          ]
+        },
+        "skills/bmod-toolsmith/help/craft-description.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-the-description-as-a-summary-and-trigger-phrases",
+            "write-the-body-around-the-output",
+            "name-the-sibling-when-a-sibling-takes-the-requests",
+            "revise-the-description-from-the-failures-not-the-queries"
+          ]
+        },
+        "skills/bmod-toolsmith/help/evals.md": {
+          "status": "split",
+          "instruction_ids": [
+            "name-the-sibling-when-a-sibling-takes-the-requests",
+            "revise-the-description-from-the-failures-not-the-queries",
+            "run-each-eval-case-three-times",
+            "run-each-case-in-a-clean-environment",
+            "retire-a-skill-the-bare-model-matches"
+          ]
+        },
+        "skills/bmod-toolsmith/help/naming.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "name-your-own-artifacts-with-your-own-prefix"
+          ]
+        },
+        "skills/bmod-method/help/existing-codebase.md": {
+          "status": "split",
+          "instruction_ids": [
+            "plan-for-an-inherited-codebase-without-a-documentation-pass",
+            "raise-the-tier-when-the-change-forces-an-undecided-boundary"
+          ]
+        },
+        "skills/bmod-toolsmith/help/craft-scripts.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "put-one-right-answer-work-in-a-script"
+          ]
+        },
+        "skills/bmod-toolsmith/help/shape-script-utility.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "put-one-right-answer-work-in-a-script"
+          ]
+        },
+        "skills/bmod-method/help/help.md": {
+          "status": "split",
+          "instruction_ids": [
+            "recommend-the-smallest-path-that-fits-the-work",
+            "recommend-the-next-step-from-what-exists"
+          ]
+        },
+        "skills/bmod-toolsmith/help/approaches.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "retire-a-skill-the-bare-model-matches"
+          ]
+        },
+        "skills/bmod-toolsmith/help/help.md": {
+          "status": "split",
+          "instruction_ids": [
+            "retire-a-skill-the-bare-model-matches",
+            "show-the-read-back-before-you-write"
+          ]
+        },
+        "skills/bmod-toolsmith/help/how-to-review.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "review-a-skill-with-parallel-readers-over-every-file"
+          ]
+        },
+        "skills/bmod-toolsmith/help/how-to-personal-skill.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "show-the-read-back-before-you-write"
+          ]
+        },
+        "skills/bmod-toolsmith/help/registration.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "show-the-read-back-before-you-write"
+          ]
+        },
+        "skills/bmod-method/help/validation-skills.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "stop-the-review-when-the-findings-are-minor"
+          ]
+        },
+        "skills/bmod-method/help/working-in-an-organization.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "take-the-heavy-path-only-when-it-is-warranted"
+          ]
+        },
+        "skills/bmad-toolsmith/modes/review.md": {
+          "status": "split",
+          "instruction_ids": [
+            "advise-without-applying-the-fix",
+            "run-the-lenses-and-fix-what-they-find",
+            "run-each-lens-on-the-whole-skill-not-the-entry",
+            "keep-review-read-only"
+          ]
+        },
+        "skills/bmad-toolsmith/lenses/lens-architecture.md": {
+          "status": "split",
+          "instruction_ids": [
+            "load-a-route-file-only-when-its-branch-is-reached",
+            "apply-a-pattern-only-where-it-earns-its-cost"
+          ]
+        },
+        "skills/bmad-toolsmith/lenses/standards.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-the-script-and-the-prose-on-their-own-sides",
+            "assert-what-the-script-produced-never-what-the-model-wrote",
+            "make-every-declared-override-reach-the-place-it-changes"
+          ]
+        },
+        "skills/bmad-toolsmith/lenses/lens-determinism.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-the-script-and-the-prose-on-their-own-sides",
+            "assert-what-the-script-produced-never-what-the-model-wrote"
+          ]
+        },
+        "skills/bmad-toolsmith/discover.md": {
+          "status": "split",
+          "instruction_ids": [
+            "mine-the-conversation-before-you-ask",
+            "settle-the-five-things-before-you-build",
+            "challenge-the-need-for-a-skill",
+            "test-the-bare-model-before-writing-a-skill",
+            "offer-what-the-outcome-implies-but-nobody-named",
+            "derive-the-bar-from-the-consumer",
+            "get-the-read-back-approved-before-you-write",
+            "let-the-shape-surface-from-the-answers",
+            "ask-one-question-with-a-guess"
+          ]
+        },
+        "skills/bmad-toolsmith/modes/cut-roles.md": {
+          "status": "split",
+          "instruction_ids": [
+            "truncate-before-you-delete",
+            "check-the-rewrite-against-the-old-version"
+          ]
+        },
+        "skills/bmad-toolsmith/modes/cut.md": {
+          "status": "split",
+          "instruction_ids": [
+            "check-the-rewrite-against-the-old-version",
+            "keep-an-example-only-when-it-fixes-a-shape"
+          ]
+        },
+        "skills/bmad-toolsmith/ship.md": {
+          "status": "split",
+          "instruction_ids": [
+            "run-the-lenses-and-fix-what-they-find",
+            "check-the-rewrite-against-the-old-version",
+            "report-the-cost-of-what-you-wrote",
+            "offer-a-trigger-eval-with-near-misses",
+            "fix-the-description-not-the-eval"
+          ]
+        },
+        "skills/bmad-toolsmith/approaches/eval-loop.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-the-cases-before-the-skill",
+            "compare-the-arms-and-read-the-delta",
+            "stop-the-loop-on-its-stated-conditions"
+          ]
+        },
+        "skills/bmad-toolsmith/modes/convert.md": {
+          "status": "split",
+          "instruction_ids": [
+            "convert-in-place-and-leave-the-source-untouched",
+            "extract-the-know-how-from-the-source",
+            "get-the-read-back-approved-before-you-write",
+            "write-the-procedure-not-the-workaround"
+          ]
+        },
+        "skills/bmad-toolsmith/modes/edit.md": {
+          "status": "split",
+          "instruction_ids": [
+            "get-the-read-back-approved-before-you-write",
+            "cut-the-dead-lines-and-edit-the-sources",
+            "rebuild-instead-of-editing-when-the-outcomes-change",
+            "stay-inside-the-requested-scope"
+          ]
+        },
+        "skills/bmad-toolsmith/ecosystem.md": {
+          "status": "split",
+          "instruction_ids": [
+            "find-the-existing-tool-before-writing-a-new-one",
+            "declare-a-dependency-only-where-it-is-used",
+            "offer-the-install-command-and-do-not-run-it",
+            "verify-against-official-documentation"
+          ]
+        },
+        "skills/bmad-toolsmith/canon.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-the-destination-not-the-route",
+            "derive-the-bar-from-the-consumer",
+            "keep-a-line-only-when-it-prevents-a-named-failure",
+            "truncate-before-you-delete",
+            "keep-the-why-behind-a-non-obvious-goal",
+            "prefer-the-word-the-model-already-holds",
+            "keep-an-example-only-when-it-fixes-a-shape",
+            "make-the-description-the-whole-trigger",
+            "number-only-true-sequences",
+            "judge-a-structure-by-running-the-smallest-version",
+            "match-guidance-form-to-failure",
+            "optimize-guidance-triggers",
+            "set-guidance-specificity",
+            "structure-and-compress-guidance",
+            "write-steps-with-completion-criteria"
+          ]
+        },
+        "skills/bmad-toolsmith/approaches/from-logs.md": {
+          "status": "split",
+          "instruction_ids": [
+            "mine-skill-candidates-from-the-logs",
+            "find-the-existing-tool-before-writing-a-new-one"
+          ]
+        },
+        "skills/bmad-toolsmith/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "get-the-read-back-approved-before-you-write",
+            "let-the-shape-surface-from-the-answers",
+            "load-a-route-file-only-when-its-branch-is-reached",
+            "run-the-lenses-and-fix-what-they-find"
+          ]
+        },
+        "skills/bmad-toolsmith/approaches/lean.md": {
+          "status": "split",
+          "instruction_ids": [
+            "read-the-trace-not-just-the-output",
+            "get-the-read-back-approved-before-you-write"
+          ]
+        },
+        "skills/bmad-toolsmith/modes/package.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "group-tools-and-ask-once-per-setting"
+          ]
+        },
+        "skills/bmad-toolsmith/lenses/lens-leanness.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-a-line-only-when-it-prevents-a-named-failure",
+            "keep-the-why-behind-a-non-obvious-goal",
+            "prefer-the-word-the-model-already-holds",
+            "number-only-true-sequences"
+          ]
+        },
+        "skills/bmad-toolsmith/lenses/lens-customization.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "make-every-declared-override-reach-the-place-it-changes"
+          ]
+        },
+        "skills/bmad-toolsmith/approaches/skill-creator-loop.md": {
+          "status": "split",
+          "instruction_ids": [
+            "make-the-description-the-whole-trigger",
+            "make-every-declared-override-reach-the-place-it-changes"
+          ]
+        },
+        "skills/bmad-toolsmith/lenses/lens-trigger.md": {
+          "status": "split",
+          "instruction_ids": [
+            "make-the-description-the-whole-trigger",
+            "offer-a-trigger-eval-with-near-misses",
+            "optimize-guidance-triggers"
+          ]
+        },
+        "skills/bmad-toolsmith/modes/migrate.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "plan-the-migration-as-an-old-to-new-mapping"
+          ]
+        },
+        "skills/bmad-toolsmith/lenses/lens-contract.md": {
+          "status": "split",
+          "instruction_ids": [
+            "run-each-lens-on-the-whole-skill-not-the-entry",
+            "return-findings-in-a-fixed-shape-with-no-padding",
+            "keep-review-read-only"
+          ]
+        },
+        "skills/bmad-toolsmith/modes/validate.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "run-every-check-before-reporting-the-first-failure"
+          ]
+        },
+        "skills/bmad-toolsmith/approaches/scaffold.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "scaffold-for-a-user-who-will-write-it-themselves"
+          ]
+        },
+        "skills/bmad-toolsmith/approaches/eval-first.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-the-cases-before-the-skill"
+          ]
+        },
+        "docs/plan/explore-and-validate-an-idea.md": {
+          "status": "split",
+          "instruction_ids": [
+            "close-the-idea-session-with-one-of-three-verdicts",
+            "push-back-on-a-weak-idea",
+            "write-the-distillate-for-the-next-stage"
+          ]
+        },
+        "docs/build/test-completed-work.md": {
+          "status": "split",
+          "instruction_ids": [
+            "confirm-the-scenarios-before-you-write-the-tests",
+            "keep-the-generated-coverage-simple-and-in-scope",
+            "never-edit-the-expectation-to-match-the-code",
+            "report-the-change-and-what-you-left-alone"
+          ]
+        },
+        "docs/toolsmith/modes.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "count-a-cut-as-a-loss-only-when-it-changes-the-action"
+          ]
+        },
+        "docs/build/build-a-change.md": {
+          "status": "split",
+          "instruction_ids": [
+            "gate-the-plan-on-the-three-facts-of-the-settled-design",
+            "look-for-the-evidence-before-you-ask-the-question",
+            "start-each-run-in-its-own-session",
+            "re-derive-the-code-from-a-corrected-plan",
+            "warn-on-multiple-goals-and-continue"
+          ]
+        },
+        "docs/existing-codebases/theory-of-project-context.md": {
+          "status": "split",
+          "instruction_ids": [
+            "let-the-code-be-the-source-not-prose-about-it",
+            "keep-a-rule-until-what-it-is-about-is-gone",
+            "prefer-a-prohibition-that-names-the-permitted-alternative",
+            "separate-implementation-context-from-planning-context",
+            "point-at-the-other-documents-instead-of-copying-them",
+            "write-minimal-agent-guidance",
+            "automate-enforceable-rules",
+            "document-the-current-state-not-the-change-history",
+            "optimize-guidance-triggers"
+          ]
+        },
+        "docs/existing-codebases/set-and-maintain-project-context.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-minimal-agent-guidance",
+            "keep-a-rule-until-what-it-is-about-is-gone",
+            "prefer-a-prohibition-that-names-the-permitted-alternative",
+            "every-referenced-file-exists-and-opens"
+          ]
+        },
+        "docs/existing-codebases/start-in-an-existing-codebase.md": {
+          "status": "split",
+          "instruction_ids": [
+            "let-the-code-be-the-source-not-prose-about-it",
+            "match-the-codebase-conventions-not-your-preferences",
+            "load-the-planning-documents-that-constrain-the-intent",
+            "size-and-gate-the-work"
+          ]
+        },
+        "docs/customize/run-multi-agent-discussions.md": {
+          "status": "split",
+          "instruction_ids": [
+            "make-a-persona-unmistakable",
+            "stop-the-repetition-and-the-fake-disagreement",
+            "make-independent-investigators-challenge-each-other"
+          ]
+        },
+        "docs/reference/skills-and-agents.md": {
+          "status": "split",
+          "instruction_ids": [
+            "offer-named-critique-methods-and-propose-the-changes",
+            "keep-review-read-only"
+          ]
+        },
+        "docs/customize/customize-bmad.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "override-only-the-fields-you-change"
+          ]
+        },
+        "docs/plan/choose-a-planning-path.md": {
+          "status": "split",
+          "instruction_ids": [
+            "pick-the-planning-tools-by-the-gap",
+            "size-and-gate-the-work",
+            "re-slice-when-the-picture-changes"
+          ]
+        },
+        "docs/customize/adopt-bmad-across-a-team.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "place-a-rule-in-the-layer-that-matches-its-scope"
+          ]
+        },
+        "docs/plan/plan-inside-an-organization.md": {
+          "status": "split",
+          "instruction_ids": [
+            "place-the-approvals-where-they-block",
+            "review-the-whole-unit-for-what-isolation-hides",
+            "keep-each-fact-in-one-place",
+            "a-shared-decision-has-one-home",
+            "re-slice-when-the-picture-changes"
+          ]
+        },
+        "docs/plan/define-requirements-and-a-specification.md": {
+          "status": "split",
+          "instruction_ids": [
+            "point-at-the-other-documents-instead-of-copying-them",
+            "work-backwards-from-the-finished-product",
+            "specify-the-what-and-the-boundaries-not-the-how"
+          ]
+        },
+        "docs/plan/design-ux-and-architecture.md": {
+          "status": "split",
+          "instruction_ids": [
+            "record-only-the-decisions-two-builders-would-conflict-on",
+            "elicit-the-design-vision-never-impose-it"
+          ]
+        },
+        "docs/build/finish-an-epic.md": {
+          "status": "split",
+          "instruction_ids": [
+            "review-the-whole-unit-for-what-isolation-hides",
+            "close-a-container-against-its-done-when",
+            "record-decisions-as-adrs",
+            "state-what-you-checked-in-the-finding"
+          ]
+        },
+        "docs/build/review-a-change.md": {
+          "status": "split",
+          "instruction_ids": [
+            "compose-the-review-prompt-from-paths-and-intent",
+            "offer-the-patch-options-and-apply-on-choice",
+            "run-unattended-without-asking",
+            "keep-review-read-only",
+            "gate-the-review-fan-out-on-blast-radius",
+            "start-each-run-in-its-own-session"
+          ]
+        },
+        "docs/build/autonomous-development-loops.md": {
+          "status": "split",
+          "instruction_ids": [
+            "stay-on-the-one-item-in-scope",
+            "read-the-state-from-the-record-that-owns-it",
+            "escalate-blocked-work",
+            "keep-the-human-as-the-orchestrator",
+            "state-the-risk-on-every-ticket",
+            "save-the-attempted-work-as-a-patch-before-reverting",
+            "start-each-run-in-its-own-session",
+            "route-review-findings-into-one-action"
+          ]
+        },
+        "docs/build/walk-through-a-change.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "walk-the-human-through-the-change-in-blocks"
+          ]
+        },
+        "docs/plan/research-a-decision.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-a-research-prompt-for-another-tool",
+            "order-the-research-dimensions-and-prune-to-the-decision"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/plain-skill/shape.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-shape-from-the-work",
+            "give-the-tool-a-stable-result-and-a-one-line-failure",
+            "structure-and-compress-guidance",
+            "put-one-right-answer-work-in-a-script",
+            "lay-out-a-skill-directory",
+            "keep-one-reader-and-one-writer-for-overrides"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/script-utility/shape.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-shape-from-the-work",
+            "give-the-tool-a-stable-result-and-a-one-line-failure",
+            "test-the-tool-as-a-subprocess"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/rendered-skill/shape.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-shape-from-the-work",
+            "follow-the-workflow-one-step-at-a-time",
+            "validate-at-every-boundary"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/agent/shape.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-shape-from-the-work",
+            "choose-where-each-capability-lives",
+            "make-a-persona-unmistakable"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/shape.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-shape-from-the-work",
+            "make-a-persona-unmistakable",
+            "keep-a-record-by-subject-and-replace-what-is-no-longer-true",
+            "write-standing-orders-that-never-complete"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/single-skill-module/shape.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-shape-from-the-work",
+            "ask-the-shared-configuration-once-and-let-every-member-read-it"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/multi-skill-module/shape.md": {
+          "status": "split",
+          "instruction_ids": [
+            "choose-the-shape-from-the-work",
+            "write-the-help-for-the-answerer",
+            "ask-the-shared-configuration-once-and-let-every-member-read-it",
+            "declare-a-dependency-only-where-it-is-used"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/CAPABILITIES-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "choose-where-each-capability-lives"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/memory-agent/assets/CAPABILITIES-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/script-utility/assets/SKILL-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "give-the-tool-a-stable-result-and-a-one-line-failure",
+            "keep-the-script-and-the-prose-on-their-own-sides"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/script-utility/assets/SKILL-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/SKILL-template-bootloader.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-the-record-as-you-go",
+            "never-fabricate-what-you-did-not-store",
+            "carry-the-role-method-into-every-turn-and-every-skill"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/CREED-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-standing-orders-that-never-complete",
+            "give-every-capability-an-intent-and-a-testable-success",
+            "review-your-own-sessions-and-note-it-for-the-next-one"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/PULSE-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "review-your-own-sessions-and-note-it-for-the-next-one"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/memory-agent/assets/PULSE-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/first-breath-config-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "serve-the-immediate-need-before-the-setup-questions",
+            "elicit-the-goal-users-and-boundaries-before-writing-the-spec"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/first-breath-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "write-the-record-as-you-go",
+            "elicit-the-goal-users-and-boundaries-before-writing-the-spec",
+            "keep-a-record-by-subject-and-replace-what-is-no-longer-true"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/multi-skill-module/assets/help-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "write-the-help-for-the-answerer"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/multi-skill-module/assets/help-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/single-skill-module/assets/help-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "write-the-help-for-the-answerer"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/single-skill-module/assets/help-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/HOW-I-REMEMBER-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "keep-a-record-by-subject-and-replace-what-is-no-longer-true",
+            "write-the-record-as-you-go"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/memory-agent/assets/HOW-I-REMEMBER-template.md"
+          ]
+        },
+        "tools/skill-validator.md": {
+          "status": "split",
+          "instruction_ids": [
+            "anchor-an-internal-reference-to-the-file-that-holds-it",
+            "write-the-path-inline-instead-of-through-a-variable",
+            "anchor-a-path-outside-the-unit-to-a-configured-root",
+            "invoke-the-other-unit-instead-of-reaching-into-its-files",
+            "resolve-every-placeholder-to-a-defined-source",
+            "make-the-step-halt-where-the-menu-is",
+            "never-write-a-skip-instruction-into-a-workflow",
+            "keep-the-rendering-machine-out-of-the-template",
+            "make-the-description-the-whole-trigger",
+            "load-a-route-file-only-when-its-branch-is-reached",
+            "never-state-time-estimates",
+            "load-a-route-file-only-when-its-branch-is-reached"
+          ]
+        },
+        "docs-site/javascript-conventions.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "define-functions-in-call-order"
+          ]
+        },
+        "skills/bmad-ux/assets/key-screens.md": {
+          "status": "split",
+          "instruction_ids": [
+            "do-not-mock-what-the-design-has-not-decided",
+            "make-the-mock-render-fully-offline",
+            "confirm-a-visual-reference-for-every-surface"
+          ]
+        },
+        "CONTRIBUTING.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "explain-every-line-you-submit"
+          ]
+        },
+        "AGENTS.md": {
+          "status": "split",
+          "instruction_ids": [
+            "leave-a-runtime-choice-in-the-text",
+            "write-a-conditional-as-a-block-not-inside-a-sentence",
+            "write-minimal-agent-guidance",
+            "assert-what-the-script-produced-never-what-the-model-wrote"
+          ]
+        },
+        "skills/bmad-ux/assets/color-themes.md": {
+          "status": "split",
+          "instruction_ids": [
+            "make-each-variation-a-different-personality-not-a-recolouring",
+            "make-the-mock-render-fully-offline"
+          ]
+        },
+        "skills/bmad-ux/assets/design-directions.md": {
+          "status": "split",
+          "instruction_ids": [
+            "make-each-variation-a-different-personality-not-a-recolouring",
+            "make-the-mock-render-fully-offline"
+          ]
+        },
+        "tools/release.md": {
+          "status": "split",
+          "instruction_ids": [
+            "promote-only-the-artifact-you-verified",
+            "stop-the-line-on-an-unexpected-failure"
+          ]
+        },
+        "skills/bmod-core-tools/help/modules.md": {
+          "status": "split",
+          "instruction_ids": [
+            "announce-what-a-package-needs-before-and-where-to-start-after-the-install",
+            "mark-the-package-record-as-a-record-and-not-an-entry-point",
+            "never-reuse-a-retired-name-and-carry-the-local-files-with-it"
+          ]
+        },
+        "skills/bmod-core-tools/help/team-adoption.md": {
+          "status": "split",
+          "instruction_ids": [
+            "ask-before-a-completion-step-that-everyone-will-see",
+            "name-the-exact-tool-and-when-to-call-it",
+            "pin-only-what-the-whole-team-must-share",
+            "start-a-team-template-from-the-shipped-one-and-keep-its-headings"
+          ]
+        },
+        "skills/bmod-core-tools/help/party-mode.md": {
+          "status": "split",
+          "instruction_ids": [
+            "carry-the-objections-back-to-the-owner-of-the-document",
+            "keep-a-debate-out-of-the-verdict",
+            "remember-the-outcomes-of-a-session-not-the-transcript"
+          ]
+        },
+        "skills/bmod-core-tools/help/help.md": {
+          "status": "split",
+          "instruction_ids": [
+            "go-to-the-upstream-documentation-when-the-local-help-runs-out",
+            "make-a-status-report-read-only-and-name-the-one-next-command",
+            "make-the-setup-step-safe-to-run-at-any-time",
+            "suggest-a-standalone-capability-without-making-it-required"
+          ]
+        },
+        "skills/bmod-core-tools/help/customization.md": {
+          "status": "split",
+          "instruction_ids": [
+            "never-let-the-setup-overwrite-an-existing-answer",
+            "offer-only-the-fields-the-target-declares",
+            "reset-an-override-by-deleting-the-file-or-the-field"
+          ]
+        },
+        "skills/bmod-core-tools/help/research.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "scale-the-research-depth-to-the-cost-of-reversing-the-decision"
+          ]
+        },
+        "skills/bmad/references/help.md": {
+          "status": "split",
+          "instruction_ids": [
+            "answer-the-question-before-recommending-a-route",
+            "read-every-installed-module-before-answering"
+          ]
+        },
+        "skills/bmad/references/setup.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "check-then-fix-what-the-request-names"
+          ]
+        },
+        "skills/bmad/references/migrate.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "verify-each-migration-before-the-next"
+          ]
+        },
+        "skills/bmad-build-auto/plan-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "specify-the-what-and-the-boundaries-not-the-how",
+            "delete-an-empty-section-instead-of-writing-none",
+            "keep-design-notes-only-for-non-obvious-choices",
+            "annotate-the-code-map-with-what-to-reuse-and-what-not-to-change",
+            "keep-one-task-per-file",
+            "keep-acceptance-criteria-out-of-the-matrix",
+            "write-acceptance-criteria-as-given-when-then",
+            "keep-the-implementation-notes-append-only",
+            "record-the-amendment-with-its-trigger-and-its-keep-instructions"
+          ]
+        },
+        "skills/bmad-build-auto/review-prompts/verification-gap.md": {
+          "status": "split",
+          "instruction_ids": [
+            "ask-would-verification-fail-if-the-behavior-broke",
+            "name-the-smallest-regression-the-consumer-would-observe",
+            "count-a-test-only-when-it-runs-and-asserts",
+            "require-a-supersession-signal-for-a-missing-adoption-gap",
+            "screen-each-part-of-the-change-for-behavioral-change",
+            "state-what-you-checked-in-the-finding",
+            "report-the-other-findings-separately",
+            "trust-a-pre-verified-finding-as-filed"
+          ]
+        },
+        "skills/bmad-build-auto/step-03-implement.md": {
+          "status": "split",
+          "instruction_ids": [
+            "run-the-steps-without-human-interaction",
+            "keep-the-plan-as-the-sole-source-of-truth",
+            "capture-the-baseline-revision-before-any-change",
+            "judge-the-change-against-the-diff-not-the-report",
+            "judge-the-acceptance-criteria-at-review-not-during-implementation",
+            "require-a-test-that-ran-for-every-matrix-row",
+            "never-edit-the-expectation-to-match-the-code"
+          ]
+        },
+        "skills/bmad-build-auto/review-prompts/edge-case-hunter.md": {
+          "status": "split",
+          "instruction_ids": [
+            "enumerate-paths-mechanically-not-by-intuition",
+            "check-each-changed-call-site-against-the-callee-declaration",
+            "treat-the-unmentioned-members-of-a-changed-set-as-implicit-branches",
+            "name-the-call-that-invalidates-a-re-checked-handle",
+            "keep-the-claims-out-of-the-path-tracing"
+          ]
+        },
+        "skills/bmad-build-auto/references/deletion-check.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "check-removed-code-for-a-contract-it-carried"
+          ]
+        },
+        "skills/bmad-code-review/step-03-triage.md": {
+          "status": "split",
+          "instruction_ids": [
+            "render-one-verdict-per-finding",
+            "prove-a-refuted-finding-and-name-what-would-settle-an-undecided-one",
+            "reject-the-findings-that-do-not-earn-their-place",
+            "group-findings-by-shared-root-cause",
+            "route-each-finding-to-decide-patch-or-defer",
+            "report-the-review-result-with-counts-and-the-rejected-appendix",
+            "require-concrete-failure-case",
+            "label-code-review-findings"
+          ]
+        },
+        "skills/bmad-build-auto/references/claims-check.md": {
+          "status": "split",
+          "instruction_ids": [
+            "treat-the-change-account-of-itself-as-testimony",
+            "try-to-falsify-each-checkable-claim",
+            "keep-the-claims-out-of-the-path-tracing"
+          ]
+        },
+        "skills/bmad-build-auto/step-01-clarify-and-route.md": {
+          "status": "split",
+          "instruction_ids": [
+            "run-the-steps-without-human-interaction",
+            "stay-on-the-one-item-in-scope",
+            "read-the-state-from-the-record-that-owns-it",
+            "require-a-clean-tree-and-a-fitting-branch",
+            "load-the-planning-documents-that-constrain-the-intent",
+            "warn-on-multiple-goals-and-continue"
+          ]
+        },
+        "skills/bmad-code-review/step-01-gather-context.md": {
+          "status": "split",
+          "instruction_ids": [
+            "resolve-the-review-target-from-the-context",
+            "set-the-review-mode-from-what-was-given",
+            "diff-the-range-the-review-covers",
+            "stage-the-review-inputs-in-files-outside-the-repository",
+            "run-unattended-without-asking"
+          ]
+        },
+        "skills/bmad-code-review/workflow.md": {
+          "status": "split",
+          "instruction_ids": [
+            "run-the-review-lenses-as-one-blocking-batch",
+            "follow-the-workflow-one-step-at-a-time",
+            "do-the-workflow-preflight-before-the-first-step"
+          ]
+        },
+        "skills/bmad-code-review/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "run-unattended-without-asking",
+            "follow-the-workflow-one-step-at-a-time"
+          ]
+        },
+        "skills/bmad-code-review/step-04-present.md": {
+          "status": "split",
+          "instruction_ids": [
+            "record-review-findings-in-the-plan",
+            "report-the-review-result-with-counts-and-the-rejected-appendix",
+            "offer-the-patch-options-and-apply-on-choice",
+            "hand-over-the-review-as-a-fix-brief",
+            "run-unattended-without-asking"
+          ]
+        },
+        "skills/bmad-prd/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "hand-the-pen-back",
+            "open-with-a-brain-dump",
+            "offer-a-fast-or-a-guided-working-mode",
+            "calibrate-the-rigor-to-the-stakes",
+            "name-the-concerns-the-product-actually-carries",
+            "capture-the-journeys-the-user-narrates",
+            "shape-the-document-to-the-product-not-the-template",
+            "route-the-overflow-into-the-addendum",
+            "honour-a-forwarded-activation-verbatim",
+            "finish-the-activation-steps-before-the-main-work",
+            "keep-a-canonical-run-log",
+            "derive-the-document-from-the-log",
+            "account-for-every-log-entry-before-closing",
+            "offer-to-resume-an-in-progress-run",
+            "reconcile-every-input-against-the-document",
+            "triage-the-open-items-into-blockers-and-deferred",
+            "polish-the-structure-before-the-prose",
+            "extract-the-sources-instead-of-ingesting-them",
+            "name-the-counter-metric-beside-the-metric",
+            "format-quality-findings",
+            "surface-a-conflict-instead-of-picking-one"
+          ]
+        },
+        "skills/bmad-product-brief/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "hand-the-pen-back",
+            "open-with-a-brain-dump",
+            "calibrate-the-rigor-to-the-stakes",
+            "shape-the-document-to-the-product-not-the-template",
+            "route-the-overflow-into-the-addendum",
+            "finish-the-activation-steps-before-the-main-work",
+            "keep-a-canonical-run-log",
+            "account-for-every-log-entry-before-closing",
+            "offer-to-resume-an-in-progress-run",
+            "extract-the-sources-instead-of-ingesting-them",
+            "do-not-fabricate-the-differentiation",
+            "offer-a-new-document-when-the-change-is-fundamental"
+          ]
+        },
+        "skills/bmad-prd/assets/prd-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "shape-the-document-to-the-product-not-the-template",
+            "capture-the-journeys-the-user-narrates",
+            "anchor-the-vocabulary-in-the-glossary",
+            "give-requirements-stable-ids-and-cross-reference-them",
+            "give-every-requirement-a-testable-consequence",
+            "name-the-counter-metric-beside-the-metric",
+            "make-the-executive-summary-stand-alone",
+            "write-a-not-doing-list"
+          ]
+        },
+        "skills/bmad-prd/assets/prd-validation-checklist.md": {
+          "status": "split",
+          "instruction_ids": [
+            "review-a-requirements-document-dimension-by-dimension",
+            "flag-the-theater-in-a-requirements-document",
+            "calibrate-the-rigor-to-the-stakes",
+            "triage-the-open-items-into-blockers-and-deferred",
+            "give-every-requirement-a-testable-consequence"
+          ]
+        },
+        "skills/bmad-spec/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "offer-a-fast-or-a-guided-working-mode",
+            "honour-a-forwarded-activation-verbatim",
+            "finish-the-activation-steps-before-the-main-work",
+            "keep-a-canonical-run-log",
+            "derive-the-document-from-the-log",
+            "record-the-gap-instead-of-inventing-the-detail",
+            "keep-the-capability-ids-stable",
+            "keep-the-kernel-lean-and-the-overflow-in-companions",
+            "give-every-capability-an-intent-and-a-testable-success",
+            "write-only-constraints-that-bend-the-design",
+            "validate-the-spec-in-two-passes",
+            "surface-a-conflict-instead-of-picking-one",
+            "keep-the-spec-current"
+          ]
+        },
+        "skills/bmad-product-brief/assets/brief-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "shape-the-document-to-the-product-not-the-template",
+            "name-the-counter-metric-beside-the-metric",
+            "do-not-fabricate-the-differentiation",
+            "make-the-executive-summary-stand-alone",
+            "write-a-not-doing-list",
+            "choose-user-experience-over-implementation"
+          ]
+        },
+        "skills/bmad-spec/assets/spec-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "separate-what-consumers-read-from-what-is-only-for-audit",
+            "name-the-force-behind-the-work",
+            "give-every-capability-an-intent-and-a-testable-success",
+            "write-only-constraints-that-bend-the-design"
+          ]
+        },
+        "skills/bmad-prd/references/validate.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "publish-the-consolidated-review-report"
+          ]
+        },
+        "skills/bmad-prd/assets/headless-schemas.md": {
+          "status": "split",
+          "instruction_ids": [
+            "report-the-run-outcome-assumptions-and-open-questions",
+            "publish-the-consolidated-review-report"
+          ]
+        },
+        "skills/bmad-prd/references/headless.md": {
+          "status": "split",
+          "instruction_ids": [
+            "record-the-gap-instead-of-inventing-the-detail",
+            "report-the-run-outcome-assumptions-and-open-questions"
+          ]
+        },
+        "skills/bmad-spec/assets/headless-schemas.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "report-the-run-outcome-assumptions-and-open-questions"
+          ]
+        },
+        "skills/bmad-prfaq/references/customer-faq.md": {
+          "status": "split",
+          "instruction_ids": [
+            "answer-the-faq-honestly-and-specifically",
+            "ask-the-questions-they-hope-nobody-asks",
+            "calibrate-the-questions-to-the-concept-type",
+            "force-a-decision-on-every-gap-the-answers-reveal",
+            "run-without-asking-and-record-the-gaps"
+          ]
+        },
+        "skills/bmad-prfaq/references/internal-faq.md": {
+          "status": "split",
+          "instruction_ids": [
+            "ask-the-stakeholders-the-founder-avoids",
+            "calibrate-the-questions-to-the-concept-type",
+            "reject-unexamined-unknowns",
+            "run-without-asking-and-record-the-gaps"
+          ]
+        },
+        "skills/bmad-prfaq/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "calibrate-the-questions-to-the-concept-type",
+            "capture-the-decisions-in-a-canonical-log",
+            "challenge-hard-and-offer-a-way-forward",
+            "delegate-the-input-scanning-and-merge-the-findings",
+            "ground-the-market-claims-in-current-data",
+            "run-without-asking-and-record-the-gaps",
+            "start-from-the-customer-not-the-solution",
+            "work-backwards-from-the-finished-product"
+          ]
+        },
+        "skills/bmad-prfaq/references/press-release.md": {
+          "status": "split",
+          "instruction_ids": [
+            "calibrate-the-questions-to-the-concept-type",
+            "capture-the-decisions-in-a-canonical-log",
+            "challenge-hard-and-offer-a-way-forward",
+            "draft-self-challenge-invite-deepen",
+            "hold-the-announcement-to-the-quality-bars",
+            "write-the-announcement-so-every-section-forces-clarity"
+          ]
+        },
+        "skills/bmad-prfaq/references/verdict.md": {
+          "status": "split",
+          "instruction_ids": [
+            "capture-the-decisions-in-a-canonical-log",
+            "give-the-concept-strength-a-narrative-not-a-score",
+            "work-backwards-from-the-finished-product",
+            "write-the-announcement-so-every-section-forces-clarity",
+            "write-the-distillate-for-the-next-stage"
+          ]
+        },
+        "skills/bmad-ux/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "capture-the-decisions-in-a-canonical-log",
+            "choose-the-working-mode-for-the-design",
+            "close-the-information-architecture-with-every-need-and-surface",
+            "confirm-a-visual-reference-for-every-surface",
+            "elicit-the-design-vision-never-impose-it",
+            "finalize-the-design-in-a-fixed-order",
+            "give-the-experience-document-its-required-sections",
+            "give-the-visual-document-a-fixed-section-order",
+            "inherit-from-a-ui-system-and-specify-only-the-deltas",
+            "name-the-concerns-the-design-carries",
+            "offer-the-review-lenses-and-dispatch-only-the-chosen-ones",
+            "promote-only-the-artifacts-a-future-reader-would-open",
+            "surface-the-input-paths-and-let-the-user-confirm",
+            "triage-the-open-items-one-blocker-at-a-time",
+            "write-the-design-as-two-peer-documents",
+            "write-the-journey-with-a-named-protagonist-and-a-climax"
+          ]
+        },
+        "skills/bmad-ux/references/validate.md": {
+          "status": "split",
+          "instruction_ids": [
+            "check-the-design-coverage-mechanically-before-judging-it",
+            "check-the-design-for-bloat-inheritance-and-shape",
+            "consolidate-the-review-into-one-report",
+            "offer-the-review-lenses-and-dispatch-only-the-chosen-ones",
+            "rate-a-design-finding-by-downstream-impact"
+          ]
+        },
+        "skills/bmad-ux/references/headless.md": {
+          "status": "split",
+          "instruction_ids": [
+            "consolidate-the-review-into-one-report",
+            "run-without-asking-and-record-the-gaps"
+          ]
+        },
+        "skills/bmad-ux/references/design-md-spec.md": {
+          "status": "split",
+          "instruction_ids": [
+            "declare-the-design-tokens-and-reference-them-by-name",
+            "give-the-visual-document-a-fixed-section-order",
+            "inherit-from-a-ui-system-and-specify-only-the-deltas",
+            "reference-platform-conventions-instead-of-restating-values"
+          ]
+        },
+        "skills/bmad-prfaq/agents/web-researcher.md": {
+          "status": "split",
+          "instruction_ids": [
+            "ground-the-market-claims-in-current-data",
+            "report-a-bounded-structured-payload"
+          ]
+        },
+        "skills/bmad-ux/references/creative-tools.md": {
+          "status": "split",
+          "instruction_ids": [
+            "promote-only-the-artifacts-a-future-reader-would-open",
+            "render-options-when-seeing-helps-decide"
+          ]
+        },
+        "skills/bmad-prfaq/agents/artifact-analyzer.md": {
+          "status": "split",
+          "instruction_ids": [
+            "report-a-bounded-structured-payload",
+            "scan-a-document-set-for-what-is-relevant"
+          ]
+        },
+        "skills/bmad-prfaq/assets/prfaq-template.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-the-announcement-so-every-section-forces-clarity"
+          ]
+        },
+        "skills/bmad-ticket/references/validate-checks.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-lanes-independent",
+            "every-referenced-file-exists-and-opens",
+            "nothing-in-the-ticket-contradicts-its-source",
+            "the-set-must-satisfy-the-done-when",
+            "every-prerequisite-is-real-and-none-restates-the-order",
+            "a-builder-must-be-able-to-write-the-criteria",
+            "every-requirement-has-an-accountable-epic",
+            "a-shared-decision-has-one-home",
+            "list-what-must-exist-before-each-item-can-start",
+            "give-shared-setup-one-owner-the-earliest-item",
+            "name-the-handoff-in-both-descriptions",
+            "close-a-container-against-its-done-when"
+          ]
+        },
+        "skills/bmad-ticket/references/slice.md": {
+          "status": "split",
+          "instruction_ids": [
+            "mark-a-ticket-that-needs-a-person",
+            "never-reshape-a-closed-record",
+            "record-a-user-choice-as-a-dated-decision",
+            "make-a-story-an-implementation-step-not-a-user-value-slice",
+            "cut-the-work-into-epics-by-capability-and-owner",
+            "split-only-for-a-distinct-outcome-or-owner",
+            "put-the-platform-baseline-in-the-opening-epic",
+            "keep-lanes-independent",
+            "split-never-shrink",
+            "plan-the-whole-epic-not-only-the-next-story",
+            "close-an-epic-with-a-refactor-sweep",
+            "present-the-set-in-build-order-and-name-the-rule",
+            "re-slice-when-the-picture-changes",
+            "write-the-done-when-as-three-to-six-checks",
+            "ask-the-questions-that-decide-the-split",
+            "every-prerequisite-is-real-and-none-restates-the-order",
+            "a-shared-decision-has-one-home",
+            "give-every-task-acceptance-criteria-and-a-check"
+          ]
+        },
+        "skills/bmad-ticket/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "facilitate-the-breakdown-and-let-the-user-decide",
+            "keep-the-unsettled-in-the-notes-and-mark-it",
+            "use-the-recorded-state-instead-of-deriving-it",
+            "approve-publish-and-start-are-three-separate-steps",
+            "mark-a-ticket-that-needs-a-person",
+            "assign-a-work-item-an-id-once-and-never-reuse-it",
+            "make-a-story-an-implementation-step-not-a-user-value-slice"
+          ]
+        },
+        "skills/bmad-ticket/references/ticket.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-the-unsettled-in-the-notes-and-mark-it",
+            "approve-publish-and-start-are-three-separate-steps",
+            "ask-only-what-is-unsettled-and-offer-a-default",
+            "keep-each-fact-in-one-place",
+            "name-the-behaviour-that-must-not-change",
+            "write-tickets-in-short-declarative-sentences",
+            "write-a-reference-as-type-location-section",
+            "link-the-design-and-keep-the-criteria-functional",
+            "mark-a-ticket-that-needs-a-person",
+            "state-the-risk-on-every-ticket",
+            "write-a-bug-with-a-reproduction-and-a-cause-hypothesis",
+            "write-a-spike-that-names-the-question-and-who-waits",
+            "self-review-the-ticket-before-the-user-sees-it",
+            "review-changes-the-intent-and-not-the-state",
+            "never-reshape-a-closed-record",
+            "match-the-example-for-detail-not-for-text",
+            "nothing-in-the-ticket-contradicts-its-source",
+            "write-tracer-bullet-tickets",
+            "give-every-task-acceptance-criteria-and-a-check"
+          ]
+        },
+        "skills/bmad-ticket/references/board.md": {
+          "status": "split",
+          "instruction_ids": [
+            "use-the-recorded-state-instead-of-deriving-it",
+            "approve-publish-and-start-are-three-separate-steps",
+            "assign-a-work-item-an-id-once-and-never-reuse-it",
+            "close-a-container-against-its-done-when",
+            "resolve-a-named-item-through-the-resolver",
+            "progress-lives-on-the-items-not-in-a-separate-status-file",
+            "resolve-drift-by-making-the-two-records-equal",
+            "do-not-self-advance-a-work-item-past-built",
+            "mark-waiting-on-a-person-as-blocked-with-a-reason",
+            "drop-only-after-a-recorded-reason",
+            "publish-parents-before-children",
+            "the-local-record-is-the-working-copy-the-remote-is-pulled-back"
+          ]
+        },
+        "skills/bmad-ticket/assets/spike-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "mark-a-ticket-that-needs-a-person",
+            "write-a-spike-that-names-the-question-and-who-waits"
+          ]
+        },
+        "skills/bmad-ticket/assets/story-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "name-the-behaviour-that-must-not-change",
+            "match-the-example-for-detail-not-for-text"
+          ]
+        },
+        "skills/bmad-ticket/references/validate.md": {
+          "status": "split",
+          "instruction_ids": [
+            "record-a-user-choice-as-a-dated-decision",
+            "run-the-set-check-on-every-draft",
+            "merge-validation-findings-into-fix-suggest-or-ask"
+          ]
+        },
+        "skills/bmad-ticket/assets/epic-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "record-a-user-choice-as-a-dated-decision",
+            "write-the-done-when-as-three-to-six-checks"
+          ]
+        },
+        "skills/bmad-ticket/assets/bug-template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "state-the-severity-of-the-defect",
+            "write-a-bug-with-a-reproduction-and-a-cause-hypothesis"
+          ]
+        },
+        "skills/bmad-ticket/assets/initiative-template.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-the-done-when-as-three-to-six-checks"
+          ]
+        },
+        "skills/bmad-deep-recon/references/selection.md": {
+          "status": "split",
+          "instruction_ids": [
+            "compute-the-staleness-map-from-the-claims",
+            "let-the-validation-level-decide-what-gets-checked",
+            "agree-the-requirements-frame-before-candidate-research",
+            "screen-the-candidate-field-and-record-the-cuts",
+            "price-the-total-cost-including-the-cost-of-leaving",
+            "show-the-scoring-not-just-the-total"
+          ]
+        },
+        "skills/bmad-deep-recon/references/codebase.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-project-context-out-of-the-evidence",
+            "let-the-validation-level-decide-what-gets-checked",
+            "write-questions-that-do-not-state-the-goal",
+            "assign-locator-analyzer-historian-and-verifier-roles",
+            "replace-an-unbounded-ask-with-bounded-asks",
+            "answer-in-chat-when-one-file-is-enough",
+            "pin-the-commit-so-the-research-reads-a-fixed-state",
+            "open-a-decision-record-only-when-the-ask-names-it",
+            "ask-the-subagent-once-and-take-unsettled-questions-in-the-digest",
+            "describe-how-the-code-works-and-how-it-got-that-way",
+            "write-each-section-from-its-digests-in-their-words",
+            "record-decisions-as-adrs",
+            "report-diagnosis-without-prescribing",
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "skills/bmad-deep-recon/references/run.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-project-context-out-of-the-evidence",
+            "cite-the-publisher-and-the-dates-on-every-claim",
+            "set-the-effort-knobs-explicitly",
+            "match-the-fan-out-shape-to-the-question",
+            "search-broad-first-then-narrow-as-the-shape-emerges",
+            "stop-a-dimension-on-coverage-or-novelty-exhaustion",
+            "stop-and-publish-what-you-have-when-the-run-overruns",
+            "ask-the-subagent-once-and-take-unsettled-questions-in-the-digest",
+            "research-from-primary-sources",
+            "select-model-per-task"
+          ]
+        },
+        "skills/bmad-deep-recon/references/synthesis.md": {
+          "status": "split",
+          "instruction_ids": [
+            "assemble-the-report-decision-first-and-succinct",
+            "report-what-only-the-combination-shows",
+            "bind-each-recommendation-to-the-decision-and-its-confidence",
+            "number-every-source-and-resolve-every-inline-marker",
+            "compute-the-staleness-map-from-the-claims"
+          ]
+        },
+        "skills/bmad-deep-recon/references/codebase-analyzer.md": {
+          "status": "split",
+          "instruction_ids": [
+            "assign-locator-analyzer-historian-and-verifier-roles",
+            "pin-the-commit-so-the-research-reads-a-fixed-state",
+            "treat-a-plan-document-as-not-evidence",
+            "report-diagnosis-without-prescribing"
+          ]
+        },
+        "skills/bmad-deep-recon/references/finalize.md": {
+          "status": "split",
+          "instruction_ids": [
+            "compute-the-staleness-map-from-the-claims",
+            "check-the-citations-mechanically-then-semantically",
+            "keep-the-rendered-view-a-view-not-a-second-source-of-truth"
+          ]
+        },
+        "skills/bmad-deep-recon/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "never-conclude-from-training-data",
+            "keep-project-context-out-of-the-evidence",
+            "write-every-intermediate-to-disk",
+            "cite-the-publisher-and-the-dates-on-every-claim",
+            "report-the-data-as-thick-as-it-is",
+            "set-the-effort-knobs-explicitly",
+            "keep-an-append-only-claims-ledger",
+            "never-fabricate-research",
+            "honour-an-explicit-choice-and-infer-only-the-rest",
+            "open-the-floor-before-structured-questions",
+            "offer-to-resume-existing-work-instead-of-duplicating-it",
+            "gate-the-research-plan-on-one-approval",
+            "isolate-wide-research-in-a-digest-returning-subagent"
+          ]
+        },
+        "skills/bmad-deep-recon/references/lifecycle.md": {
+          "status": "split",
+          "instruction_ids": [
+            "compute-the-staleness-map-from-the-claims",
+            "refresh-by-re-verifying-only-the-stale-claims",
+            "deepen-one-slice-and-say-when-it-changes-no-conclusion"
+          ]
+        },
+        "skills/bmad-deep-recon/references/draft.md": {
+          "status": "split",
+          "instruction_ids": [
+            "open-the-floor-before-structured-questions",
+            "demand-citations-contrary-evidence-and-admitted-gaps-in-the-brief"
+          ]
+        },
+        "skills/bmad-deep-recon/references/html-briefing.md": {
+          "status": "split",
+          "instruction_ids": [
+            "rate-the-confidence-per-claim-and-show-doubt-louder",
+            "keep-the-rendered-view-a-view-not-a-second-source-of-truth",
+            "escape-every-source-cell-and-link-only-validated-urls"
+          ]
+        },
+        "skills/bmad-deep-recon/references/process.md": {
+          "status": "split",
+          "instruction_ids": [
+            "report-the-data-as-thick-as-it-is",
+            "keep-an-append-only-claims-ledger",
+            "extract-every-decision-relevant-claim-into-a-digest",
+            "keep-the-imported-original-untouched-in-one-place"
+          ]
+        },
+        "skills/bmad-deep-recon/references/codebase-historian.md": {
+          "status": "split",
+          "instruction_ids": [
+            "follow-the-trail-only-through-a-cited-commit",
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/bmad-deep-recon/references/verification.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-an-append-only-claims-ledger",
+            "verify-as-material-lands-not-as-an-end-of-run-pass",
+            "let-the-validation-level-decide-what-gets-checked",
+            "require-an-independent-publisher",
+            "give-every-checked-claim-one-of-four-verdicts",
+            "rate-the-confidence-per-claim-and-show-doubt-louder",
+            "red-team-each-major-conclusion-in-a-fresh-context"
+          ]
+        },
+        "skills/bmad-deep-recon/references/codebase-verifier.md": {
+          "status": "split",
+          "instruction_ids": [
+            "let-the-validation-level-decide-what-gets-checked",
+            "give-every-checked-claim-one-of-four-verdicts",
+            "verify-from-what-you-open-not-from-the-claim-s-wording"
+          ]
+        },
+        "skills/bmad-deep-recon/references/codebase-locator.md": {
+          "status": "split",
+          "instruction_ids": [
+            "treat-a-plan-document-as-not-evidence",
+            "mark-the-load-bearing-claims-and-report-the-null-result"
+          ]
+        },
+        "skills/bmad-deep-recon/assets/codebase.template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "record-the-research-document-metadata",
+            "pin-the-codebase-research-to-a-repository-and-commit",
+            "ask-numbered-questions-with-their-shape",
+            "answer-one-question-per-section-with-inline-citations",
+            "record-where-the-answers-meet",
+            "record-open-questions-and-the-next-ask",
+            "list-the-prior-documents-in-reach",
+            "record-the-decisions-found-last",
+            "record-the-ask-the-ticket-and-the-prior-document"
+          ]
+        },
+        "skills/bmad-deep-recon/assets/research.template.md": {
+          "status": "split",
+          "instruction_ids": [
+            "name-the-decision-the-research-serves",
+            "append-the-sections-in-the-approved-plan-order",
+            "write-the-executive-summary-last-and-place-it-first",
+            "record-the-research-document-metadata"
+          ]
+        },
+        "skills/bmad-deep-recon/types/technical.md": {
+          "status": "split",
+          "instruction_ids": [
+            "assess-a-technology-area-before-adopting-it",
+            "read-the-retrospective-not-the-launch",
+            "favor-production-numbers-over-advocacy",
+            "re-check-a-pain-point-against-the-current-version",
+            "read-the-project-history-not-its-snapshot",
+            "order-the-research-dimensions-and-prune-to-the-decision",
+            "set-a-freshness-bar-for-each-class-of-claim",
+            "corroborate-load-bearing-claims-with-a-second-independent-source"
+          ]
+        },
+        "skills/bmad-deep-recon/types/domain.md": {
+          "status": "split",
+          "instruction_ids": [
+            "study-a-domain-before-building-in-it",
+            "build-the-glossary-in-domain-research",
+            "read-conference-keynotes-for-who-matters",
+            "read-regulator-sites-and-enforcement-actions",
+            "weigh-pending-regulatory-changes-with-current-text",
+            "read-job-postings-as-a-strategy-signal",
+            "read-the-filings-for-industry-structure-and-sizing",
+            "order-the-research-dimensions-and-prune-to-the-decision",
+            "set-a-freshness-bar-for-each-class-of-claim",
+            "corroborate-load-bearing-claims-with-a-second-independent-source"
+          ]
+        },
+        "skills/bmad-deep-recon/types/academic-lit.md": {
+          "status": "split",
+          "instruction_ids": [
+            "run-a-literature-review",
+            "read-one-survey-before-twenty-abstracts",
+            "chase-citations-in-both-directions",
+            "label-every-citation-as-preprint-or-peer-reviewed",
+            "take-benchmark-numbers-from-the-original-paper",
+            "weigh-an-empirical-claim-before-relying-on-it",
+            "order-the-research-dimensions-and-prune-to-the-decision",
+            "set-a-freshness-bar-for-each-class-of-claim",
+            "corroborate-load-bearing-claims-with-a-second-independent-source"
+          ]
+        },
+        "skills/bmad-deep-recon/types/competitive.md": {
+          "status": "split",
+          "instruction_ids": [
+            "tear-down-a-named-competitor",
+            "read-the-changelog-as-roadmap-truth",
+            "read-pricing-pages-not-roundups",
+            "verify-competitor-capability-claims-against-their-docs",
+            "try-the-product-yourself-when-a-trial-exists",
+            "mine-the-review-ratings-for-pain-and-for-loyalty",
+            "read-job-postings-as-a-strategy-signal",
+            "order-the-research-dimensions-and-prune-to-the-decision",
+            "set-a-freshness-bar-for-each-class-of-claim",
+            "corroborate-load-bearing-claims-with-a-second-independent-source"
+          ]
+        },
+        "skills/bmad-deep-recon/types/market.md": {
+          "status": "split",
+          "instruction_ids": [
+            "size-a-market-before-entering-it",
+            "treat-a-persistent-complaint-pattern-as-stronger",
+            "read-pricing-pages-not-roundups",
+            "mine-the-review-ratings-for-pain-and-for-loyalty",
+            "read-job-postings-as-a-strategy-signal",
+            "read-the-filings-for-industry-structure-and-sizing",
+            "order-the-research-dimensions-and-prune-to-the-decision",
+            "set-a-freshness-bar-for-each-class-of-claim",
+            "corroborate-load-bearing-claims-with-a-second-independent-source"
+          ]
+        },
+        "skills/bmad-deep-recon/types/user-voice.md": {
+          "status": "split",
+          "instruction_ids": [
+            "research-what-users-actually-experience",
+            "read-a-workaround-as-unpriced-demand",
+            "triangulate-forums-against-reviews-and-surveys",
+            "keep-verbatim-quotes-and-redact-identities",
+            "read-feature-requests-as-willingness-to-wait",
+            "count-distinct-voices-not-thread-length",
+            "mine-the-review-ratings-for-pain-and-for-loyalty",
+            "order-the-research-dimensions-and-prune-to-the-decision",
+            "set-a-freshness-bar-for-each-class-of-claim",
+            "corroborate-load-bearing-claims-with-a-second-independent-source"
+          ]
+        },
+        "skills/bmad-review/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "review-only-when-a-review-was-asked-for",
+            "select-the-lenses-from-the-resolved-set",
+            "run-the-lenses-by-dependency-not-by-order",
+            "announce-the-review-plan-in-one-line",
+            "classify-the-content-before-the-lenses-run",
+            "report-the-review-in-one-canonical-finding-shape",
+            "assemble-the-report-from-every-lens",
+            "let-each-lens-set-its-own-stance-toward-zero-findings"
+          ]
+        },
+        "skills/bmad-retrospective/workflow.md": {
+          "status": "split",
+          "instruction_ids": [
+            "attach-a-source-reference-to-every-retrospective-finding",
+            "never-state-time-estimates",
+            "record-the-assumptions-made-without-the-user",
+            "check-the-body-of-work-is-finished-before-the-retro",
+            "resume-the-retrospective-from-the-document",
+            "weight-the-analysis-by-the-going-in-concerns",
+            "run-the-review-lenses-over-the-whole-diff",
+            "exercise-the-changed-flows-end-to-end",
+            "consolidate-and-provenance-link-the-findings",
+            "propose-the-action-items-without-applying-them",
+            "render-the-acceptance-verdict-in-three-spellings",
+            "let-the-retrospective-document-be-the-only-write"
+          ]
+        },
+        "skills/bmad-review/references/lens-edge-case-hunter.md": {
+          "status": "split",
+          "instruction_ids": [
+            "bound-the-edge-case-finding-to-four-fields",
+            "scope-the-path-tracing-to-the-diff-or-the-whole-content"
+          ]
+        },
+        "skills/bmad-review/references/editorial-common.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-the-editorial-content-sacrosanct",
+            "let-the-style-guide-in-effect-win",
+            "calibrate-the-editorial-findings-to-the-reader-type",
+            "ground-the-length-estimate-in-word-counts",
+            "open-with-the-one-sentence-read-of-purpose-and-audience",
+            "render-the-editorial-findings-as-a-table"
+          ]
+        },
+        "skills/bmad-retrospective/references/evidence-gathering.md": {
+          "status": "split",
+          "instruction_ids": [
+            "inventory-the-evidence-before-you-analyse-it",
+            "never-hide-a-gap-in-the-evidence",
+            "derive-the-diff-ranges-from-the-plan-baselines",
+            "read-the-measured-evidence-keys-precisely",
+            "capture-the-session-logs-before-they-expire"
+          ]
+        },
+        "skills/bmad-review/references/lens-prose.md": {
+          "status": "split",
+          "instruction_ids": [
+            "copy-edit-for-comprehension-not-for-preference",
+            "skip-the-cut-passages-and-merge-the-duplicate-fixes"
+          ]
+        },
+        "skills/bmad-retrospective/references/aggregate-views.md": {
+          "status": "split",
+          "instruction_ids": [
+            "derive-the-aggregate-views-from-the-whole-change",
+            "derive-the-architecture-delta-from-the-range",
+            "map-the-duplication-across-the-change",
+            "rank-the-files-by-churn-and-then-read-them",
+            "find-the-pattern-divergence-from-the-surrounding-code",
+            "reconcile-the-as-built-with-the-spec",
+            "delegate-the-derivation-without-delegating-the-verdict"
+          ]
+        },
+        "skills/bmad-review/references/lens-verification-gap.md": {
+          "status": "split",
+          "instruction_ids": [
+            "name-the-three-shapes-of-a-verification-gap",
+            "keep-the-verification-gap-findings-shaped-by-their-kind",
+            "trace-the-changed-behavior-to-the-nearest-observable-boundary",
+            "treat-a-broad-impact-change-as-behavioral",
+            "seek-verification-of-behavior-not-of-literal-text",
+            "stop-the-gap-analysis-at-the-inference-boundary",
+            "do-not-report-what-the-gap-analysis-must-not-report",
+            "state-what-you-checked-in-the-finding",
+            "report-the-other-findings-separately"
+          ]
+        },
+        "skills/bmad-retrospective/references/acceptance-verdict.md": {
+          "status": "split",
+          "instruction_ids": [
+            "route-each-finding-to-an-action-and-to-a-prevention",
+            "re-check-a-subagent-finding-against-the-primary-source",
+            "propose-the-action-items-without-applying-them",
+            "source-the-reason-in-a-decision-record",
+            "follow-through-on-the-previous-retros-action-items",
+            "render-the-acceptance-verdict-in-three-spellings",
+            "let-unfinished-work-force-the-rejected-verdict"
+          ]
+        },
+        "skills/bmad-review/references/lens-structure.md": {
+          "status": "split",
+          "instruction_ids": [
+            "optimize-for-the-minimum-words-that-maintain-understanding",
+            "judge-the-document-against-the-matching-structure-model",
+            "tag-each-structural-finding-with-a-disposition"
+          ]
+        },
+        "skills/bmad-review/references/structure-models.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "judge-the-document-against-the-matching-structure-model"
+          ]
+        },
+        "skills/bmad-review/references/lens-adversarial.md": {
+          "status": "split",
+          "instruction_ids": [
+            "let-each-lens-set-its-own-stance-toward-zero-findings",
+            "look-for-what-is-missing-not-only-what-is-wrong"
+          ]
+        },
+        "skills/bmad-retrospective/references/retro-document.md": {
+          "status": "split",
+          "instruction_ids": [
+            "never-state-time-estimates",
+            "write-the-retrospective-document-in-a-fixed-shape",
+            "let-the-retrospective-document-be-the-only-write"
+          ]
+        },
+        "skills/bmad-retrospective/references/team-discussion.md": {
+          "status": "split",
+          "instruction_ids": [
+            "let-the-team-discuss-evidence-never-invention",
+            "seed-the-discussion-with-sourced-findings-and-the-criteria",
+            "run-the-discussion-inline-when-the-agents-are-unavailable"
+          ]
+        },
+        "skills/bmad-brainstorming/references/resume.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "resume-plan-from-record"
+          ],
+          "contributed_sources": [
+            "skills/bmad-brainstorming/references/resume.md"
+          ]
+        },
+        "docs/start/get-answers-about-bmad.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "verify-against-official-documentation"
+          ],
+          "contributed_sources": [
+            "docs/start/get-answers-about-bmad.md"
+          ]
+        },
+        "docs/plan/set-up-the-ticket-tree.md": {
+          "status": "split",
+          "instruction_ids": [
+            "a-shared-decision-has-one-home",
+            "keep-the-unsettled-in-the-notes-and-mark-it",
+            "give-shared-setup-one-owner-the-earliest-item",
+            "the-local-record-is-the-working-copy-the-remote-is-pulled-back"
+          ]
+        },
+        "docs/plan/break-work-into-stories-and-track-it.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "do-not-self-advance-a-work-item-past-built",
+            "never-reshape-a-closed-record"
+          ],
+          "contributed_sources": [
+            "docs/plan/break-work-into-stories-and-track-it.md"
+          ]
+        },
+        "tools/ticket-tree-rules.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "do-not-self-advance-a-work-item-past-built",
+            "capture-the-baseline-revision-before-any-change",
+            "assign-a-work-item-an-id-once-and-never-reuse-it",
+            "read-the-state-from-the-record-that-owns-it",
+            "record-review-findings-in-the-plan",
+            "let-the-retrospective-document-be-the-only-write"
+          ],
+          "contributed_sources": [
+            "tools/ticket-tree-rules.md"
+          ]
+        },
+        "docs/existing-codebases/getting-deeper.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "never-reshape-a-closed-record"
+          ],
+          "contributed_sources": [
+            "docs/existing-codebases/getting-deeper.md"
+          ]
+        },
+        "docs/index.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "size-and-gate-the-work"
+          ],
+          "contributed_sources": [
+            "docs/index.md"
+          ]
+        },
+        "docs/_STYLE_GUIDE.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "write-technical-prose-to-a-standard"
+          ],
+          "contributed_sources": [
+            "docs/_STYLE_GUIDE.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/BOND-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "elicit-the-goal-users-and-boundaries-before-writing-the-spec"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/memory-agent/assets/BOND-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/rendered-skill/assets/step.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "follow-the-workflow-one-step-at-a-time"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/rendered-skill/assets/step.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/rendered-skill/assets/workflow.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "follow-the-workflow-one-step-at-a-time"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/rendered-skill/assets/workflow.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "follow-the-workflow-one-step-at-a-time"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/agent/assets/capability-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "give-every-capability-an-intent-and-a-testable-success"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/agent/assets/capability-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/agent/assets/sample-capability.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "give-every-capability-an-intent-and-a-testable-success"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/agent/assets/sample-capability.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/intake-capability-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "keep-a-record-by-subject-and-replace-what-is-no-longer-true"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/memory-agent/assets/intake-capability-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/plain-skill/assets/sample-skill/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "record-decisions-as-adrs",
+            "mine-the-conversation-before-you-ask"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/plain-skill/assets/sample-skill/SKILL.md"
+          ]
+        },
+        "skills/bmad-walkthrough/SKILL.md": {
+          "status": "rejected",
+          "reason": "Only the render dispatch and the install hint for the donor package; the frontmatter trigger was carried into the conditions of the walkthrough instructions."
+        },
+        "skills/bmad-qa-generate-e2e-tests/SKILL.md": {
+          "status": "rejected",
+          "reason": "Only the render dispatch and the install hint for the donor package; the scope line in the description was carried into the conditions of write-only-tests-for-behavior-that-already-works."
+        },
+        "skills/bmod-toolsmith/help/modes.md": {
+          "status": "rejected",
+          "reason": "The table of the donor's six modes with the phrase that reaches each of them, the `module.yaml` old format and the `bmad setup` call are the donor's own menu of its own commands; no rule that is not about the donor's own tooling is stated in the file."
+        },
+        "skills/bmod-toolsmith/help/references.md": {
+          "status": "rejected",
+          "reason": "The file is a table of links to the open skill specification and to the documentation of the harnesses the donor supports, with one line on what each page covers. It states no rule and is the donor's bibliography."
+        },
+        "skills/bmod-method/help/analysis-skills.md": {
+          "status": "rejected",
+          "reason": "The file routes between the donor's own two skills and states which file each one writes. The transferable rule behind it - pick by what the user lacks, and a brief never asks whether the product should exist - is already carried by the corpus instructions 'separate-a-painkiller-from-a-vitamin' and 'write-the-idea-one-pager'."
+        },
+        "skills/bmod-method/help/planning-skills.md": {
+          "status": "rejected",
+          "reason": "The file routes between the donor's own five planning skills and states which file each one writes. The rules it carries - the architect coaches by default so no prior knowledge is needed, the options are laid out with the reason for the lean and the user chooses, and the spine leaves open what is deliberately open - are already carried by the corpus instructions 'elicit-the-goal-users-and-boundaries-before-writing-the-spec', 'render-options-when-seeing-helps-decide' and 'converge-on-target-architecture'."
+        },
+        "docs/404.md": {
+          "status": "rejected",
+          "reason": "A 404 splash page with a link back to the home page; it states no rule and no behaviour."
+        },
+        "docs/customize/add-modules.md": {
+          "status": "rejected",
+          "reason": "The donor's module installer: its official module catalogue, its npm and Git names, its manifest conventions and its installer flags. Host wiring with no transferable rule."
+        },
+        "docs/start/build-your-first-change.md": {
+          "status": "rejected",
+          "reason": "A guided tutorial of the donor's own product in one named coding tool: its commands, its release names, its preview version and its sample application."
+        },
+        "docs/start/install-bmad.md": {
+          "status": "rejected",
+          "reason": "The donor's installation procedure: its skills-CLI command, its plugin marketplace registration, its install layout and its setup and update commands."
+        },
+        "docs/toolsmith/approaches.md": {
+          "status": "rejected",
+          "reason": "A stub page that only announces that the section is being written; it states no rule."
+        },
+        "docs/toolsmith/bmad-eval.md": {
+          "status": "rejected",
+          "reason": "A stub page that only announces that the section is being written; it states no rule."
+        },
+        "docs/toolsmith/migrate-an-old-module.md": {
+          "status": "rejected",
+          "reason": "A stub page that only announces that the section is being written; it states no rule."
+        },
+        "docs/toolsmith/shapes.md": {
+          "status": "rejected",
+          "reason": "A stub page that only announces that the section is being written; it states no rule."
+        },
+        "docs/toolsmith/toolsmith.md": {
+          "status": "rejected",
+          "reason": "An overview of the donor's own authoring module and its agent, with the pages still unwritten; it describes the product, not a rule."
+        },
+        "skills/bmad-toolsmith/shapes/agent/assets/SKILL-template.md": {
+          "status": "rejected",
+          "reason": "the activation wiring of the donor's own agent: the configuration and customization calls, the eight activation steps, the icon prefix and the install command. Its transferable rules are already carried by the corpus (the menu is rendered as a numbered table and the pick is awaited, the persona carries into every invoked skill, and a failed customization falls back to what shipped)."
+        },
+        "skills/bmad-toolsmith/shapes/memory-agent/assets/PERSONA-template.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "make-a-persona-unmistakable"
+          ],
+          "contributed_sources": [
+            "skills/bmad-toolsmith/shapes/memory-agent/assets/PERSONA-template.md"
+          ]
+        },
+        "skills/bmad-toolsmith/shapes/multi-skill-module/assets/record-SKILL-template.md": {
+          "status": "rejected",
+          "reason": "the placeholder file of a module record: a fixed description that says the skill is never invoked and a body that only redirects to the donor's setup command with its install line. Host wiring, not a norm."
+        },
+        "skills/bmad-toolsmith/shapes/plain-skill/assets/SKILL-template.md": {
+          "status": "rejected",
+          "reason": "the donor's activation section: the configuration and customization calls, the output path rule and the install command. The transferable rules it carries — the body states the outcome once, the \"when to use\" lives in the description alone, a reference is named when its branch is reached — are already carried by the corpus."
+        },
+        "CHANGELOG.md": {
+          "status": "rejected",
+          "reason": "Release history of the donor."
+        },
+        "CONTRIBUTORS.md": {
+          "status": "rejected",
+          "reason": "A list of contributor names."
+        },
+        "README.md": {
+          "status": "rejected",
+          "reason": "The donor shopfront and install instructions."
+        },
+        "SECURITY.md": {
+          "status": "rejected",
+          "reason": "The donor disclosure policy; its boundary is already carried by the corpus."
+        },
+        "TRADEMARK.md": {
+          "status": "rejected",
+          "reason": "The trademark rules for the donor brand."
+        },
+        ".github/CODE_OF_CONDUCT.md": {
+          "status": "rejected",
+          "reason": "The donor community code of conduct."
+        },
+        ".github/ISSUE_TEMPLATE/feature-request.md": {
+          "status": "rejected",
+          "reason": "The donor issue form for features."
+        },
+        ".github/ISSUE_TEMPLATE/issue.md": {
+          "status": "rejected",
+          "reason": "The donor bug report form."
+        },
+        ".github/PULL_REQUEST_TEMPLATE.md": {
+          "status": "rejected",
+          "reason": "The donor pull request form."
+        },
+        "docs-site/README.md": {
+          "status": "rejected",
+          "reason": "The readme of the donor documentation site."
+        },
+        "tools/tests/fixtures/validate-skills/deprecated-shim/SKILL.md": {
+          "status": "rejected",
+          "reason": "A fixture of the donor validator test suite."
+        },
+        "tools/tests/fixtures/validate-skills/missing-trigger/SKILL.md": {
+          "status": "rejected",
+          "reason": "A fixture of the donor validator test suite."
+        },
+        "tools/tests/fixtures/validate-skills/with-trigger/SKILL.md": {
+          "status": "rejected",
+          "reason": "A fixture of the donor validator test suite."
+        },
+        "skills/bmad-ux/assets/design-example-editorial.md": {
+          "status": "rejected",
+          "reason": "A worked design document for one brand."
+        },
+        "skills/bmad-ux/assets/design-example-mobile.md": {
+          "status": "rejected",
+          "reason": "A worked design document for one brand."
+        },
+        "skills/bmad-ux/assets/design-example-shadcn.md": {
+          "status": "rejected",
+          "reason": "A worked design document for one brand."
+        },
+        "skills/bmad-ux/assets/excalidraw-wireframe.md": {
+          "status": "rejected",
+          "reason": "The file format of one drawing tool."
+        },
+        "skills/bmad-ux/assets/experience-example-mobile.md": {
+          "status": "rejected",
+          "reason": "A worked experience document for one product."
+        },
+        "skills/bmad-ux/assets/experience-example-shadcn.md": {
+          "status": "rejected",
+          "reason": "A worked experience document for one product."
+        },
+        "skills/bmad-ux/assets/headless-schemas.md": {
+          "status": "rejected",
+          "reason": "The headless payload rules are already carried by report-the-run-outcome-assumptions-and-open-questions and report-a-bounded-structured-payload."
+        },
+        "skills/bmod-core-tools/SKILL.md": {
+          "status": "rejected",
+          "reason": "the module registration stub names the donor module code, the host skill and the install command; its one transferable rule is carried by make-the-setup-step-safe-to-run-at-any-time"
+        },
+        "skills/bmod-method/SKILL.md": {
+          "status": "rejected",
+          "reason": "the module registration stub names the donor module code, the host skill and the install command; its one transferable rule is carried by make-the-setup-step-safe-to-run-at-any-time"
+        },
+        "skills/bmod-toolsmith/SKILL.md": {
+          "status": "rejected",
+          "reason": "the module registration stub names the donor module code, the host skill and the install command; its one transferable rule is carried by make-the-setup-step-safe-to-run-at-any-time"
+        },
+        "skills/bmad/references/initiative.md": {
+          "status": "rejected",
+          "reason": "the transferable rules are already carried by the corpus; the rest is the donor own folder layout and config keys"
+        },
+        "skills/bmad-build/references/claims-check.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "keep-the-claims-out-of-the-path-tracing",
+            "treat-the-change-account-of-itself-as-testimony",
+            "try-to-falsify-each-checkable-claim"
+          ],
+          "contributed_sources": [
+            "skills/bmad-build-auto/references/claims-check.md"
+          ]
+        },
+        "skills/bmad-build/references/deletion-check.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "check-removed-code-for-a-contract-it-carried"
+          ],
+          "contributed_sources": [
+            "skills/bmad-build-auto/references/deletion-check.md"
+          ]
+        },
+        "skills/bmad-build/review-prompts/edge-case-hunter.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "check-each-changed-call-site-against-the-callee-declaration",
+            "enumerate-paths-mechanically-not-by-intuition",
+            "keep-the-claims-out-of-the-path-tracing",
+            "name-the-call-that-invalidates-a-re-checked-handle",
+            "treat-the-unmentioned-members-of-a-changed-set-as-implicit-branches"
+          ],
+          "contributed_sources": [
+            "skills/bmad-build-auto/review-prompts/edge-case-hunter.md"
+          ]
+        },
+        "skills/bmad-build/review-prompts/verification-gap.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "ask-would-verification-fail-if-the-behavior-broke",
+            "count-a-test-only-when-it-runs-and-asserts",
+            "name-the-smallest-regression-the-consumer-would-observe",
+            "report-the-other-findings-separately",
+            "require-a-supersession-signal-for-a-missing-adoption-gap",
+            "screen-each-part-of-the-change-for-behavioral-change",
+            "state-what-you-checked-in-the-finding",
+            "trust-a-pre-verified-finding-as-filed"
+          ],
+          "contributed_sources": [
+            "skills/bmad-build-auto/review-prompts/verification-gap.md"
+          ]
+        },
+        "skills/bmad-code-review/references/claims-check.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "keep-the-claims-out-of-the-path-tracing",
+            "treat-the-change-account-of-itself-as-testimony",
+            "try-to-falsify-each-checkable-claim"
+          ],
+          "contributed_sources": [
+            "skills/bmad-build-auto/references/claims-check.md"
+          ]
+        },
+        "skills/bmad-code-review/references/deletion-check.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "check-removed-code-for-a-contract-it-carried"
+          ],
+          "contributed_sources": [
+            "skills/bmad-build-auto/references/deletion-check.md"
+          ]
+        },
+        "skills/bmad-code-review/review-prompts/edge-case-hunter.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "check-each-changed-call-site-against-the-callee-declaration",
+            "enumerate-paths-mechanically-not-by-intuition",
+            "keep-the-claims-out-of-the-path-tracing",
+            "name-the-call-that-invalidates-a-re-checked-handle",
+            "treat-the-unmentioned-members-of-a-changed-set-as-implicit-branches"
+          ],
+          "contributed_sources": [
+            "skills/bmad-build-auto/review-prompts/edge-case-hunter.md"
+          ]
+        },
+        "skills/bmad-code-review/review-prompts/verification-gap.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "ask-would-verification-fail-if-the-behavior-broke",
+            "count-a-test-only-when-it-runs-and-asserts",
+            "name-the-smallest-regression-the-consumer-would-observe",
+            "report-the-other-findings-separately",
+            "require-a-supersession-signal-for-a-missing-adoption-gap",
+            "screen-each-part-of-the-change-for-behavioral-change",
+            "state-what-you-checked-in-the-finding",
+            "trust-a-pre-verified-finding-as-filed"
+          ],
+          "contributed_sources": [
+            "skills/bmad-build-auto/review-prompts/verification-gap.md"
+          ]
+        },
+        "skills/bmad-ticket/references/store-setup.md": {
+          "status": "rejected",
+          "reason": "Host machinery: the whole file is the configuration of the donor's ticketing integration."
+        },
+        "skills/bmad-retrospective/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "end-the-run-with-an-explicit-terminal-status",
+            "follow-the-step-sequence-and-halt-at-checkpoints"
+          ],
+          "contributed_sources": [
+            "skills/bmad-retrospective/SKILL.md"
+          ]
         }
       }
     }

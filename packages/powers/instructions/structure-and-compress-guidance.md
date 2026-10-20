@@ -22,8 +22,10 @@ provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/anthropic-best-practices.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/writing-for-agents/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/canon.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/plain-skill/shape.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Keep guidance short and navigable
@@ -49,3 +51,6 @@ Getting-started workflows aim for under 150 words each.
 Frequently loaded guidance aims for under 200 words total.
 Other guidance aims for under 500 words.
 A document is built from two content types: **steps** (the ordered actions the agent performs) and **reference** (definitions, rules, facts consulted on demand). The core decision is where each piece sits on the **information hierarchy**, a ladder ranked by how immediately the agent needs the material: in-file step, in-file reference, disclosed reference. Push too little down and the top bloats; push too much and you hide material the agent actually needs. **Progressive disclosure** is the move down the ladder so the top stays legible. Branching is the cleanest disclosure test: inline what every branch needs, and push behind a pointer what only some branches reach. **Co-location** is the within-file companion: keep a concept's definition, rules, and caveats under one heading rather than scattered. **Sprawl** is the failure mode: a document simply too long, even when every line is live and unique. The cure is the ladder: disclose reference behind pointers, and split by branch or sequence so each path carries only what it needs.
+
+Carve by relevance, not size. The entry is paid on every invocation; a reference only when its branch fires. Carve what only some branches need and keep a routing map in the entry; leave what is too small to repay the indirection. A small skill is one file; a reference exists only when a branch has earned it. The budget is for what one run loads, not for the skill as a whole: a complex workflow is the right size when each branch sits in its own file and loads only when reached, whatever the total comes to. A carved file stands alone, because the entry can drop from context, and references stay one level deep.
+Several operating modes get one reference each; one thing to do gets no router.

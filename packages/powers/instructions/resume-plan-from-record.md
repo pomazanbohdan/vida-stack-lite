@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/executing-plans/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-01-clarify-and-route.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/resume.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Resume from the ledger, not from memory
@@ -37,3 +39,14 @@ Harness todos are a live view; the ledger is the record.
 `git clean -fdx` will destroy the workspace; if that happens, recover from `git log`.
 Another plan's directory is never yours to read or write.
 The workspace and ledger are shared with subagent-driven development — same directory, same format — so a plan can change executors mid-flight and the new one resumes from the same ledger.
+
+The `status` field of the plan decides where a resumed run picks up: `draft` → planning (resume planning from the draft); `ready-for-dev` and `in-progress` → implementation; `in-review` and `built` → review.
+
+For `done`, ingest as context — do not resume.
+
+For `blocked`, show its `blocked_reason` and HALT.
+
+For `dropped`, say the work was dropped and HALT.
+Read the record in full — the one time you read it.
+Frontmatter restores topic, goal, status, and mode: reload that mode's frame and hold it again.
+Reconstruct the picture, then reflect back where things stand to re-establish shared state before continuing.

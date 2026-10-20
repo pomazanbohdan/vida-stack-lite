@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/to-tickets/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ticket/references/ticket.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write tracer bullet tickets
@@ -44,3 +45,6 @@ Iterate until the user approves the breakdown.
 Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
 Do NOT close or modify any parent issue.
 In either form, avoid specific file paths or code snippets: they go stale fast. Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it and note briefly that it came from a prototype.
+No source-code paths or snippets; the builder reads the repo.
+A snippet stays only when it is the decision itself, not an illustration of it.
+A path the user wants recorded goes in Notes.

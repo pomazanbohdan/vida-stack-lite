@@ -1,7 +1,7 @@
 ---
 instruction_id: self-review-plan-against-spec
 title: Self-review the plan against the spec
-summary: "Run the five-point checklist yourself: spec coverage, step scan, type consistency, review focus, and proportion."
+summary: "Run the checklist yourself against the spec, repair the plan once, and block with the failing criteria when it still fails."
 capability_tags:
   - plan-implementation
 pattern_tags:
@@ -20,8 +20,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-plans/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-02-plan.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Self-review the plan against the spec
@@ -39,3 +40,6 @@ If code blocks are most of the document, replace bodies with signatures, test na
 If you find issues, fix them inline. No need to re-review — just fix and move on.
 If you find a spec requirement with no task, add the task.
 An empty review focus section means you checked and found none, not that you skipped the check.
+
+If the plan does not meet the standard: repair it once, then re-read it from disk and verify again.
+If it still does not meet the standard, stop with status `blocked`, blocking condition `plan failed ready-for-development standard`, and include the failing criteria and evidence gathered.

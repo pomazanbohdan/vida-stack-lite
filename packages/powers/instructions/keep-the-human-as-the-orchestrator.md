@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/orchestration-patterns.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/autonomous-development-loops.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep the human as the orchestrator
@@ -40,3 +41,7 @@ A persona whose job is to decide which other persona to call.
 - Removes user agency at exactly the points where judgment matters most
 **What to do instead:** keep the user as the orchestrator. Document the recommended sequence in the project documentation and let users invoke it.
 **Why not automate it:** an LLM "lifecycle orchestrator" would (a) lose nuance between steps because it has to summarize for hand-off, (b) skip the human checkpoints that catch wrong-direction work early, and (c) double the token cost via paraphrasing turns.
+The worker builds only what its invocation names; it never picks the next ticket itself.
+It owns only its implementation run and the plan it creates or resumes.
+A human or an orchestrator owns backlog policy and dispatch.
+The orchestrating session remains responsible for keeping those revisions consistent with the larger intent.

@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/domain-modeling/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-forge-idea/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Sharpen domain language
@@ -34,3 +35,6 @@ When domain relationships are being discussed, stress-test them with specific sc
 When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible. Which is right?"
 ### Update GLOSSARY.md inline
 When a term is resolved, update `GLOSSARY.md` right there. Don't batch these up: capture them as they happen. `GLOSSARY.md` should be totally devoid of implementation details. Do not treat `GLOSSARY.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
+Do not assume the user's terms are precise.
+When a term is fuzzy or overloaded, name the ambiguity and ask for a precise choice before continuing.
+For example, do not let `user`, `buyer`, and `payer` collapse into one entity unless the idea actually requires that.

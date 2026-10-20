@@ -1,0 +1,29 @@
+---
+instruction_id: never-let-the-setup-overwrite-an-existing-answer
+title: Never let the setup overwrite an existing answer
+summary: "The setup asks the configuration questions once and never changes an answer that was already given; to change an answer, edit its key by hand in the file the setup reports for it."
+capability_tags:
+  - write-configuration-override
+pattern_tags:
+  - override-layering
+conditions_applies_when: "A configuration answer has to change, or the setup step is about to run again."
+conditions_does_not_apply_when: The answer has never been given and the setup asks for it the first time.
+artifact_contract_output_type: answer-change
+artifact_contract_required_data:
+  - the answer
+  - the file that holds it
+  - the key to edit
+artifact_contract_verified_by: "the setup leaves every answer that was already given unchanged, and the new answer is a hand edit"
+compatibility_excludes: []
+compatibility_requires: []
+provenance:
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-core-tools/help/customization.md
+status: active
+revision: 1
+---
+
+# Never let the setup overwrite an existing answer
+The setup asks the questions once
+and never changes an existing value.
+To change an answer, edit its key in the file
+it reports for it.

@@ -23,8 +23,9 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/reflect/references/judgment-reviewer.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/reflect/references/synthesizer.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/doubt-driven-development/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-04-review.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Triage review findings with judgment
@@ -53,3 +54,12 @@ For each finding, classify in this **precedence order** (first matching class wi
 4. **Noise** — reviewer flagged something that's actually correct under context the reviewer didn't have. Note it, move on, and ask: would adding that context to the contract have prevented the false flag?
 
 A fresh reviewer can be wrong because it lacks context. Don't defer just because it's "fresh."
+
+Once every lane has reported — and not before — render a verdict on each finding, ahead of any deduplication or grouping.
+Disregard any severity a reviewing subagent assigned — they lack the context to grade.
+Render exactly one verdict from what verification established — the verdict is the whole triage decision; there is no separate keep-or-dismiss.
+Verify the finding's claim. At the cited file and line, does the bad outcome the reviewer describes actually occur?
+Read beyond the changed lines — follow callers, guards upstream, etc — until you can answer yes or no.
+A different finding about nearby code does not settle this one.
+Judge whether the problem is real, not whether the proposed fix is plausible.
+Code that loudly fails on a situation you never showed the program can reach is correct behavior, not a defect.

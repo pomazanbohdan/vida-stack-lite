@@ -19,11 +19,17 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=.claude/commands/ship.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/review-a-change.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Gate the review fan-out on blast radius
 5. **Skip the fan-out only if all of the following are true:** the change touches 2 files or fewer, the diff is under 50 lines, and it does not touch auth, payments, data access, or config/env. Otherwise, default to fan-out.
 The fan-out
 is designed for production-bound changes — when the blast radius is non-trivial, run the parallel review even if the diff looks small.
+Out of the box, you get two review depths to choose from: `quick` and `thorough`.
+Quick is good enough for small simple changes or throwaway prototypes.
+Thorough is highly recommended for any serious work with production consequences.
+a good compromise is to default to quick reviews inside the personal development cycle (selectively bumping up to `thorough` on high risk changes)
+Say `thorough` or `quick` when you invoke a skill to override its default for one run.

@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/constraint-driven-development/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-04-review.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Scope the check to the change
@@ -29,3 +30,7 @@ revision: 1
 **Scope the expensive ones to the diff.** `stryker run --mutate` on the whole repo takes hours and gets turned off; on the files a change touched it takes under a minute. Same for Semgrep, which takes a path list.
 
 **Coverage needs no second test run.** Read the lcov your suite already writes and intersect it with `git diff`. Running the suite twice to get a number is the fastest way to make people hate this.
+
+Run only the tests that cover the files you edit — nothing wider.
+
+Then re-run the checks in `{plan_file}`'s `## Verification` section, if present — the patches changed code after the implementer's verification; if verification fails and the failure cannot be fixed, HALT and escalate to the human.

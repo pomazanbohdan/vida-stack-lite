@@ -18,8 +18,9 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/idea-refine/frameworks.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/idea-refine/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/converge.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Pick the lens that fits the idea
@@ -35,3 +36,6 @@ Use these frameworks selectively. Pick the lens that fits the idea — don't mec
 - Constraint-Based Ideation — cutting through complexity. When the idea is growing too large or too vague.
 - Pre-mortem — evaluating a direction. Stress-testing ideas that feel good but haven't been pressure-tested.
 - Analogous Inspiration — expanding the idea. Generating variations that feel genuinely different from the obvious approach.
+pick **one** convergence move that fits the goal — don't hand the user a menu of methods; choose the one that suits *this* decision and name it.
+Run it to a result, log the outcome, and stop when a clear short-list or single direction emerges.
+Two or three convergence moves chained is fine (e.g. cluster → score the clusters); more than that is usually over-processing.

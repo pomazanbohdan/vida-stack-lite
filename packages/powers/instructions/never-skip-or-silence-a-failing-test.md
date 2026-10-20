@@ -14,12 +14,14 @@ artifact_contract_required_data:
   - the reason it was silenced
   - what happens to the test now
 artifact_contract_verified_by: "no test is skipped and every asynchronous assertion is awaited, so a rejection fails the test"
-compatibility_excludes: []
+compatibility_excludes:
+  - decide-whether-the-test-the-harness-or-the-application-is-wrong
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/testing-patterns.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-qa-generate-e2e-tests/workflow.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Never skip or silence a failing test

@@ -20,8 +20,10 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-guard-the-context-window/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-04-review.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/finalize.md
 status: active
-revision: 4
+revision: 5
 ---
 
 # Delegate subagent work
@@ -41,3 +43,7 @@ A task review is a gate. Never accept a report missing either the specification 
 Fix loops resume the original implementer for the first rounds and switch to a fresh implementer on a more capable model after that. Every round ends with a scoped re-review.
 Never fix findings yourself in the controller session. Your context stays clean for coordination, and controller fixes skip review.
 When no subagent tool exists, execute the plan inline and keep the same review gates.
+
+Re-engage the implementation subagent — the same one, addressed by the name or id its launch returned; a fresh launch is not re-engagement.
+Spawn one per requested artifact, telling it only: the spec below, the path of the canonical record (its sole source — read it in full), the output path, and "return ONLY the written file path."
+This keeps the heavy generation out of the main thread and proves the record is genuinely the canonical source.

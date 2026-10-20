@@ -19,8 +19,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/source-driven-development/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/ecosystem.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/start/get-answers-about-bmad.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Verify against the official documentation
@@ -61,3 +63,7 @@ When official sources conflict with each other (e.g. a migration guide contradic
 
 - Citing Stack Overflow or blog posts instead of official documentation
 - Fetching an entire docs site when only one page is relevant
+
+When the user names a marketplace or registry, fetch its current docs then rather than describing it from memory.
+Be specific — "What does step 3 of the PRD workflow do?" beats "How does PRD work?"
+Verify surprising claims — LLMs occasionally get things wrong. Check the source file.

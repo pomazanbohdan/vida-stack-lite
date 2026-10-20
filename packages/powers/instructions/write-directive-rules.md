@@ -15,14 +15,18 @@ artifact_contract_required_data:
   - exception
   - cost of violation
 artifact_contract_verified_by: the rule has one unambiguous reading
-compatibility_excludes: []
+compatibility_excludes:
+  - prefer-the-explanation-over-the-shouting-rule
+  - prefer-a-prohibition-that-names-the-permitted-alternative
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/persuasion-principles.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/writing-for-agents/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-eval/references/self-improvement.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/theory-of-project-context.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Write mandatory rules as directives

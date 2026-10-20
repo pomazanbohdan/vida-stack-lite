@@ -28,8 +28,9 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-help/references/prompting.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/why/references/investigator-prompt.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/why/references/synthesizer-prompt.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/codebase.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write a complete delegation brief
@@ -47,3 +48,4 @@ Include the interfaces and decisions from earlier work that the brief cannot kno
 Name the report contract and where the full report goes. The executor returns status, what changed, a one-line check summary, and concerns.
 The executor never dispatches its own reviewer. Review arrives from the delegating side after the report.
 A brief that needs a clarifying question is incomplete. Close the gap before dispatching.
+Subagents answer them from the code and its history knowing only the questions, because a researcher who knows what is being built reports what should be instead of what is.

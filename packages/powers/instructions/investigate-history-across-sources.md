@@ -31,8 +31,9 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/why/references/sources/notion.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/why/references/sources/sentry.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/why/references/sources/slack.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/codebase-historian.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Investigate history across sources
@@ -53,3 +54,4 @@ Synthesize into one evidence-cited narrative that says honestly what the evidenc
 Merge overlaps, surface contradictions, and calibrate every claim to its confidence tier.
 Document specific gaps: what you searched, in which sources, and what you found or did not find.
 When the question points at changing the code, convert the lineage findings into a set of constraints to preserve, change, avoid, and risk.
+A commit message is its author’s claim about intent, weaker when an agent wrote it: check it against the diff and prefer the pull request description and the linked issue.

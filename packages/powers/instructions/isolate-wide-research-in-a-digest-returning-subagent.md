@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/orchestration-patterns.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Isolate wide research in a digest-returning subagent
@@ -29,3 +30,4 @@ When a task requires reading large amounts of material that shouldn't pollute th
 - The investigation result is much smaller than the input it consumes
 - The decision quality benefits from the main agent having room to think after
 **Cost:** one isolated sub-agent context. Worth it any time the alternative is loading hundreds of files into the main context.
+Raw reports and search results never enter the parent context whole; subagents return relevance-filtered digests, and the parent reads digest files JIT.

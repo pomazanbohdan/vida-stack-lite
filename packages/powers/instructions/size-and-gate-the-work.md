@@ -21,8 +21,12 @@ compatibility_requires:
   - proceed-without-waiting-for-confirmation
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/choose-a-planning-path.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/index.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/start-in-an-existing-codebase.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/build-a-change.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Size and gate the work
@@ -41,3 +45,12 @@ The written design must let a talented builder in the domain plan without going 
 Cover intent and the why, goals, non-goals, anti-goals, constraints, the parts of the how the human decided, and what is left to the builder.
 Mark anything you are guessing as your guess; only what the human said goes in as theirs.
 Bring only the questions that the human alone can answer, most important first, and update the document with their answers.
+A typical session is one goal: about 500 lines of code added or changed (not counting tests) in a small handful of files.
+The size of the intent decides how many implementation sessions follow.
+One coherent outcome that needs several sessions is an epic.
+Scope is only one signal: use more planning when the work has high risk, unclear requirements, broad architectural reach, cross-system effects, or coordination between people or teams.
+Every path uses the same implementation unit.
+Larger work adds shared context around that unit and repeats it; it does not switch to a separate delivery system.
+Every path runs the same loop.
+Bigger work enters it earlier and goes round it more often; it does not become a different way of delivering.
+Too little planning costs one implementation run: the implementer looks at the code first, and stops to ask when it cannot settle the intent. Too much planning costs documents nobody reads.

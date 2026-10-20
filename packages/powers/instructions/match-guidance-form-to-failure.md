@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/canon.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Match the form of guidance to the failure
@@ -42,3 +43,6 @@ Exemption clauses don't scope.
 If part of the output must be exempt, restructure so the rule can't reach it.
 Micro-test your own case rather than assuming.
 Never reach for the prohibition by default.
+
+When a line exists because of a failure you saw, decide what kind of failure it was before writing the line, since each kind takes a different form. A rule the model skipped takes the rule with its reason. Output in the wrong shape takes a contract that says what the output is. A piece left out takes a slot in the template where it goes. A wrong move under some condition takes that condition, stated as something the model can observe. A fix in the wrong form patches nothing.
+Say what to do rather than what to avoid. A sentence about the wrong behaviour puts that behaviour in front of the model; a sentence about the right one leaves it out. Keep a prohibition only where no positive form says the same thing, and put the right behaviour beside it.

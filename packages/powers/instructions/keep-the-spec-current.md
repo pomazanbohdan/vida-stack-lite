@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/spec-driven-development/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-spec/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep the spec current
@@ -40,3 +41,5 @@ That's documentation, not specification. The spec's value is in forcing clarity 
 
 "Requirements will change anyway"
 That's why the spec is a living document. An outdated spec is still better than no spec.
+
+When a change overrides something that came from a source input, offer to update that source too, so upstream and the spec don't silently diverge.

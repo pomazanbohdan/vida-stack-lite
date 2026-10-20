@@ -21,8 +21,11 @@ provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/domain-modeling/SKILL.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/domain-modeling/ADR-FORMAT.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/documentation-and-adrs/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/codebase.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/finish-an-epic.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/plain-skill/assets/sample-skill/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Record decisions as ADRs
@@ -53,3 +56,11 @@ PROPOSED → ACCEPTED → (SUPERSEDED or DEPRECATED)
 - When a decision changes, write a new ADR that references and supersedes the old one.
 
 A 10-minute ADR prevents a 2-hour debate about the same decision six months later.
+Verify proposals like any claim, then ask the user about each, interactively only, and record the answer beside the proposal.
+The review proposes; you decide what runs.
+Nothing touches your code or your specs automatically.
+Spec reconciliations arrive with the evidence attached, for you to apply to the project contract by hand.
+An uncertain interpretation never gets written into a spec on its own.
+Decision records (ADRs) are written beside the code they govern only when you approve each one, and committing them is up to you.
+Each option gets one line on why it lost.
+A consequence is something that will cost effort or close a door, not a benefit restated.

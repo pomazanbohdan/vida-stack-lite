@@ -20,8 +20,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/diagnosing-superpowers/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/codebase.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Report the evidence without prescribing a fix
@@ -39,3 +40,5 @@ No advice to your partner either.
 Numbers you did not compute from the transcript are invented. Cite or drop.
 Approval gates: no issue or comment before they approve the exact text.
 Do not attribute intent to the implementer.
+Describe what the code is; the reader decides what to change.
+It states what the code shares, never what to change.

@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/context-engineering/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-spec/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Surface a conflict instead of picking one side
@@ -42,3 +43,5 @@ C) Ask — this seems like an intentional decision I shouldn't override
 ```
 
 Silent confusion | Agent guesses when it should ask | Surface ambiguity explicitly using the confusion management patterns above
+
+When two currently-live sources or companions disagree on the same field, or an either/or never got resolved, surface it to the user rather than silently choosing — the resolution is itself a new run log entry.

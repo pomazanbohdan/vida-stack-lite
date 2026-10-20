@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=docs/skill-anatomy.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/modes/convert.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write the procedure, not the workaround
@@ -31,3 +32,5 @@ Two smells to check for before proposing skill content:
 
 - **Over-specified mechanics.** Prescribing an exact command form or serialization detail where stating the goal alone would do. If the justification is "model X gets this wrong otherwise", it's a workaround, not a procedure.
 - **Fragmented diagnostics.** A multi-step inspection sequence where one step would confirm the same thing. Every extra step spends turns, and turn budget is finite.
+
+The host tool's mechanics: its frontmatter keys, slash-command syntax and arguments, conversation starters, knowledge-file uploads. And the instructions the model already follows unasked: be helpful, think step by step, format as markdown.

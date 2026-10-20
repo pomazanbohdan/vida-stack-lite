@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-plans/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-02-plan.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Map the file structure before defining tasks
@@ -38,3 +39,9 @@ Each task should produce self-contained changes that make sense independently.
 If the spec covers multiple independent subsystems, suggest breaking this into separate plans — one per subsystem.
 Each plan should produce working, testable software on its own.
 A task is the smallest unit that carries its own test cycle and is worth a fresh reviewer's gate.
+
+Keep only what the work needs: the specific files, symbols or lines, what to reuse, and what not to change. Write that into the Code Map.
+
+Put the investigation into the Code Map: paths, symbols or lines, what to reuse, and what not to change.
+
+Annotated paths prevent blind codebase searching.

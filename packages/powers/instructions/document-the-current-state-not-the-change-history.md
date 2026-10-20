@@ -18,11 +18,16 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/definition-of-done.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/theory-of-project-context.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Document the current state, not the change history
 Public interfaces, APIs, and user-facing behavior are documented
 Architectural decisions worth preserving are recorded
 Documentation describes the current state in timeless language, not the change history
+Git holds history; the block states present truth only.
+What the system should become belongs in specs.
+An agent that treats a future state as current will write the wrong code.
+When a claim's source disappears, the claim is fixed or removed, never silently pointed at a different document that still mentions it.

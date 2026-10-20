@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/code-simplification/SKILL.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/start-in-an-existing-codebase.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Match the codebase conventions, not your preferences
@@ -40,3 +41,9 @@ Simplification means making code more consistent with the codebase, not imposing
 Simplification that breaks project consistency is not simplification — it's churn.
 
 Renaming things to match your preferences rather than project conventions
+You do not inventory conventions beforehand.
+The implementer investigates the repository, writes down what to reuse and what not to change, and follows that.
+If you want this change to break a pattern, say so in the request, and write why in the spec so later sessions follow the new rule.
+If you dislike a pattern but have no plan to change it, say nothing — it will match the code.
+Hoping it modernizes on its own continues the pattern.
+Changing one file and leaving the rest leaves two standards with no record of which one wins.

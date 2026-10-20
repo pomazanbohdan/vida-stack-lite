@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=evals/README.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/ship.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Fix the description, not the eval
@@ -28,3 +29,5 @@ is a **lexical approximation** of routing (stemmed TF-IDF over descriptions). It
 A routing-check failure
 usually means *fix the description*, not the eval.
 If a realistic prompt can't rank because the description lacks its vocabulary, that is a real finding — improve the description.
+
+When the description is revised from failures, change its contexts and anchors, never paste a failed query's words into it.
