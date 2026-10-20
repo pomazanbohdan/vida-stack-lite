@@ -390,6 +390,25 @@ successful Host, Journal or physical engine history. A current already-planned
 wave2 fails this legacy action's index/prefix contract; that is not proof its
 INTAKE producer phase guard is defective.
 
+Extend that same low-risk native case through target-config bridge initialization,
+actual Source-planner issue/report and bridge resume. Assert its one selected
+reviewer role explicitly, complete original synthesis/reviewer history, an
+unissued developer suffix, lookup returning null after frontier advancement and
+the unchanged retained receipt. Close the continuation bridge before original
+fixture resources. The external runtime endpoint remains a synthetic dependency
+seam; this does not qualify security-prewriter attachment, runtime-code adoption
+or native endpoint formation. A high-risk extension needs a genuinely eligible
+different runtime endpoint; equal prior/target runtime digests are ineligible.
+
+After completed Source recovery's successful commit, close and reopen its native
+ledger on the retained fixture root. Require exact Work/Journal/ledger snapshot,
+receipt and unchanged idempotent retry through the fresh Host instance. Cached
+same-instance reads alone do not establish durable history reconstruction.
+
+Unprepared release admits its execution-only disjoint peer before the target.
+Require a lower sequence, nonempty active resources and matching claim, then
+preserve exact peer Work/version/ticket/claims across target rollback/release/retry.
+
 For completed Source recovery's earlier-FIFO control, admit disjoint owner/waiter
 before the initial-source continuation creates its successor ticket. Require the
 waiter sequence to be lower than that target and exact resource disjointness;
@@ -397,6 +416,12 @@ a later waiter cannot execute the same predicate. Shared peer oracles compare
 exact native Work bytes/revisions/digests already validated at admission, then
 the current target's supported API and all peer tickets/claims/file bytes after
 success. Avoid decoding each unchanged peer through the full Host reader again.
+Before writer issue, prepare and inspect one TaskSource `inspect` intent under
+the current native CAS. Its trusted fixture verifier checks exact Work/Ledger/
+Journal and binds the retained authorization-file hash and current Source scope.
+Require equal preparation retry and unchanged Host/Journal and peers. No Git
+command, proposed Source tree or actual TaskSource execution belongs to this
+control; it exercises live-owner FIFO admission without adding writer effects.
 
 The configured continuation lookup case keeps its stored-row issue/report and
 corruption/restoration controls, then issues the native reviewer wave and reports

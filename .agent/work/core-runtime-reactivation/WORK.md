@@ -76,6 +76,49 @@ No numeric gain or product defect is claimed from the focused PASS.
 
 ### Whole remaining-contour packet in progress
 
+The v1115 packet extends the already native low-risk legacy continuation with a
+target-config bridge over its original Host/DB, actual Source-planner issue/report
+and native resume to an unissued developer suffix. Exact lookup/receipt/history
+checks remain. Fresh-connection completed-report recovery reconstruction and
+earlier disjoint unprepared-release peer controls reuse their existing fixtures.
+An inspect-only TaskSource preparation before writer issue checks the native
+earlier-FIFO owner without executing Git or creating another Source tree.
+Current numeric evidence remains7138df5 until a matching stage completes.
+
+The initial readonly-array matcher type error is retained in
+`native-suffix-v1115-ZATnDo/static.log`. Corrected strict148-file TypeScript/lint
+and two affected cases pass88assertions in22.80s; recovery commit15.323s and
+low-risk continuation5.918s remain under their existing20s bounds. The earlier
+disjoint unprepared peer passes35assertions in1.216s under5s. No speedup is
+inferred from different inputs or concurrent development checks.
+
+High-risk exploration is not adopted: one report reused a tool-call reference
+and correctly denied; its corrected unique-reference run reaches security
+attachment and rejects the synthetic runtime endpoint. Equal prior/target code
+digests then fail this protocol's endpoint contract. Original roots
+`vida-initial-source-v9leQI`, `vida-initial-source-XR5USR` and
+`vida-initial-source-BJrwRA` remain retained under the host tooling tmp root,
+with distinct logs in the named v1115 diagnostics. No product defect, security
+attachment success or native endpoint qualification is claimed. The final case
+explicitly checks low risk and its one Source-planner reviewer; no runtime guard
+or Source digest is relaxed and no old runtime is fabricated.
+
+Final four-case strict/lint/serial check passes165assertions in43.61s. Its
+rollback takes19.154s under20s. Two repeated full Host/Journal oracle decodes
+are then replaced with exact native-row comparisons, retaining the already
+validated API beforeimage, each callback's exact decoded input, the final
+supported target/peer API and every producer freshness check. The redundant
+intermediate peer decode is removed; final preservation remains. The final
+two affected cases pass72assertions in19.75s, rollback17.244s and unprepared
+release1.069s; the latter also requires explicit active claim status. These are
+different-input observations, not a controlled speedup. The unchanged commit
+reopen and native suffix results remain attributable to their preceding run.
+Named final logs are`native-final-v1115-RwI2rE` and
+`native-final-oracles-v1115-Gy91nL` in focused diagnostics. Blind native-frontier
+and producer reviews find no blocker; security attachment and abort semantics
+remain outside these specific controls. Only the changed Host test resource pin
+is refreshed; the stopped-source pin is reused unchanged. Numeric gain is pending.
+
 The next v1113 packet adds genuine Host consumer scenarios without changing
 product guards. The readonly-dispatch case configures no-egress before actual
 admission, issues one native Mastra action and cooperatively pauses its owner.

@@ -141,6 +141,17 @@ before the serial affected-case group. The three-hour audit uses existing receip
 and two independent readonly reviews; it found no new producer-script defect.
 Do not add a scheduler/index rewrite without evidence of worthwhile repeated work.
 
+The next v1115 packet reuses that native low-risk continuation to initialize the
+target-config bridge, issue/report its one Source planner and resume to the real
+unissued developer suffix. Keep the synthetic external runtime endpoint explicit;
+security attachment needs a separately eligible different native endpoint, not
+equal-digest acceptance or weakened runtime checks. Extend completed-report
+recovery with fresh-connection reconstruction, unprepared release with a genuinely
+earlier disjoint execution peer, and the earlier-FIFO recovery fixture with an
+inspect-only TaskSource preparation before writer issue. Check the affected cases
+together after strict/lint, review the bounded packet, then publish and measure
+once. Reuse the same22-function/461-arm report until that next matching stage.
+
 For each group, the exact named Bun case must reach its intended public operation
 and assert its success, refusal and replay behavior before strict TypeScript/lint
 and final integration. Stop a proposed path if its genuine prerequisite cannot be

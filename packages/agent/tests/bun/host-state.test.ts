@@ -1546,6 +1546,24 @@ test('Host unprepared release rolls back both rows and retries the retained requ
   let completed = false;
   let primaryFailure: { error: unknown } | undefined;
   try {
+    const peerInput = f.prepare('unprepared-disjoint-peer', 'fixture:unprepared-peer', 'fixture:peer-session');
+    const peer = presentSnapshot(f.admit(peerInput).host);
+    const peerIdentity: WorkIdentity = {
+      repository_id: peer.work.binding.repository_id,
+      project_ids: peer.work.binding.project_ids,
+      integrations_digest: peer.work.binding.integrations_digest,
+      work_id: peerInput.context.work_id,
+    };
+    const peerTicket = requiredValue(
+      peer.ledger.tickets.find((item) => item.ticket_id === peer.work.lease?.ticket_id),
+      'Earlier unprepared disjoint peer ticket',
+    );
+    const peerClaims = peer.ledger.claims.filter((item) => item.ticket_id === peerTicket.ticket_id);
+    expect(peerTicket.status).toBe('active');
+    expect(peerTicket.exclusive_resources).toEqual(['execution:' + peerIdentity.work_id]);
+    expect(peerClaims).toHaveLength(1);
+    expect(peerClaims[0]?.status).toBe('active');
+    expect(peerClaims[0]?.resources).toEqual(peerTicket.exclusive_resources);
     const admission = f.prepare('host-unprepared-release', 'fixture:unprepared-owner');
     admission.intakePath = '.agent/work/host-unprepared-release/raw-intake.json';
     writeFileSync(
@@ -1587,6 +1605,7 @@ test('Host unprepared release rolls back both rows and retries the retained requ
     expect(f.store.readWorkSessionJournal(identity)).toBeNull();
     expect(request.originalWork).toEqual(before.work);
     expect(request.originalTicket.active_resources).toEqual(['execution:' + identity.work_id]);
+    expect(peerTicket.sequence).toBeLessThan(request.originalTicket.sequence);
     f.database.exec(
       "CREATE TEMP TRIGGER deny_host_release BEFORE UPDATE ON agent_host_state WHEN OLD.kind='ledger' BEGIN SELECT RAISE(ABORT, 'controlled ledger publication failure'); END",
     );
@@ -1626,6 +1645,11 @@ test('Host unprepared release rolls back both rows and retries the retained requ
     expect(f.store.readHostStateSnapshot(identity)).toEqual(released);
     expect(f.store.readWorkSessionJournal(identity)).toBeNull();
     expect(() => f.store.inspectUnpreparedWorkRecovery(context)).toThrow('unprepared recovery owner missing');
+    const retainedPeer = presentSnapshot(f.store.readHostStateSnapshot(peerIdentity));
+    expect(retainedPeer.work).toEqual(peer.work);
+    expect(retainedPeer.workVersion).toEqual(peer.workVersion);
+    expect(retainedPeer.ledger.tickets.find((item) => item.ticket_id === peerTicket.ticket_id)).toEqual(peerTicket);
+    expect(retainedPeer.ledger.claims.filter((item) => item.ticket_id === peerTicket.ticket_id)).toEqual(peerClaims);
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -3728,6 +3752,7 @@ test(
     let f: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
     let ownedRoot: string | undefined;
     let completed = false;
+    let continuationBridge: MastraSessionBridge | undefined;
     await withInitialSourceCleanup(
       async () => {
         const current = await createInitialSourceWorkFixture({
@@ -3776,6 +3801,7 @@ test(
         const before = presentSnapshot(host.readHostStateSnapshot(current.identity));
         const journal = initialSourceJournal(current);
         expect(before.work.lifecycle.phase).toBe('INTAKE');
+        expect(before.work.lifecycle.risk).toBe('low');
         expect(journal).toEqual(prepared);
         expect(journal.state.items).toHaveLength(1);
         expect(journal.state.items[0]).toMatchObject({
@@ -3849,6 +3875,7 @@ test(
           currentSourceScope: source,
           lifecycleRisk: paused.work.lifecycle.risk,
         });
+        expect(requests.map((item) => item.role)).toEqual(['source-planner']);
         const seed = continuationRequestSeed({
           priorConfigDigest: paused.work.binding.config_digest,
           targetConfigDigest,
@@ -3951,12 +3978,98 @@ test(
         expect(lookup.receipt).toEqual(result.receipt);
         expect(readFixtureHostRows(db)).toEqual(after);
         expect(verify).toHaveBeenCalledTimes(2);
+        const currentLedger = new MastraSessionLedger(db, host.workspaceId, targetConfig, current.root, store);
+        continuationBridge = await MastraSessionBridge.open({
+          repositoryRoot: current.root,
+          config: targetConfig,
+          ledger: currentLedger,
+          projectIds: current.identity.project_ids,
+          selection: admission.selection,
+          context: { ...admission.context, scope_digest: source.digest },
+          workflowId: paused.work.binding.workflow_id,
+          workspaceId: host.workspaceId,
+          configuredFrontier: { identity: current.identity, attempt: 1 },
+        });
+        expect(currentLedger.resume(current.identity.work_id, 1)?.state).toEqual(result.receipt.successor_journal);
+        expect(store.readHostStateSnapshot(current.identity)).toEqual(result.snapshot);
+        const reviewerStep = requiredValue(lookup.journal.state.step_id, 'Native continuation reviewer step');
+        let reported = currentLedger.issueWave(current.identity.work_id, 1, lookup.journal.version);
+        const issuedLookup = requiredValue(
+          store.readDeliveredWorkContinuation(current.identity, 1),
+          'Native continuation issued reviewers',
+        );
+        expect(issuedLookup.item_statuses).toEqual(requests.map(() => 'issued'));
+        for (const item of reported.state.items) {
+          const preparation = createPrewriterPreparationObservation(
+            { request: item.request, issue_id: requiredValue(item.issue_id, 'Native continuation reviewer issue') },
+            {
+              work: requiredValue(store.readHostStateSnapshot(current.identity).work, 'Native reviewer Work'),
+              workId: current.identity.work_id,
+            },
+            1,
+          );
+          const summary = JSON.stringify(preparation);
+          reported = currentLedger.report(
+            current.identity.work_id,
+            1,
+            reported.version,
+            {
+              schema: 'VidaSessionObservation/v1',
+              action_id: item.request.action_id,
+              issue_id: requiredValue(item.issue_id, 'Native reported reviewer issue'),
+              agent_id: preparation.observer_id,
+              tool_call_ref: 'fixture:native-continuation-reviewer-' + item.issue_id,
+              status: 'reported_complete',
+              summary,
+              output_digest: canonicalJsonDigest(summary),
+              evidence_refs: preparation.evidence_refs,
+            },
+            source,
+          );
+        }
+        const reportedLookup = requiredValue(
+          store.readDeliveredWorkContinuation(current.identity, 1),
+          'Native continuation completed reviewers',
+        );
+        expect(reportedLookup.action_status).toBe('reported');
+        expect(reportedLookup.item_statuses).toEqual(requests.map(() => 'reported'));
+        expect(reportedLookup.journal).toEqual({ state: reported.state, version: reported.version });
+        const observations = reported.state.items.map((item) =>
+          requiredValue(item.observation, 'Native reviewer result'),
+        );
+        const advanced = await continuationBridge.resume(reviewerStep, observations, source);
+        const advancedJournal = requiredValue(
+          currentLedger.resume(current.identity.work_id, 1),
+          'Native developer suffix',
+        );
+        expect(advanced.step_id).not.toBe(reviewerStep);
+        expect(advanced.requests.map((item) => item.stage_id)).toEqual(['develop_task']);
+        expect(advancedJournal.state.items.map((item) => item.request)).toEqual([...advanced.requests]);
+        expect(advancedJournal.state.items.every((item) => item.issue_id === null && item.observation === null)).toBe(
+          true,
+        );
+        expect(advancedJournal.state.completed).toEqual([
+          ...journal.state.completed,
+          { step_id: reviewerStep, items: reported.state.items },
+        ]);
+        const advancedBefore = readFixtureHostRows(db);
+        expect(store.readDeliveredWorkContinuation(current.identity, 1)).toBeNull();
+        expect(store.readDeliveredWorkContinuationReceipt(current.identity, 1)).toEqual(result.receipt);
+        expect(readFixtureHostRows(db)).toEqual(advancedBefore);
         peers.verifyUnchanged();
         expect(performance.now()).toBeLessThan(deadline);
         completed = true;
       },
       async () => {
-        if (f) await f.close();
+        await withInitialSourceCleanup(
+          async () => {
+            if (continuationBridge) await continuationBridge.close();
+          },
+          async () => {
+            if (f) await f.close();
+          },
+          'Native continuation bridge cleanup',
+        );
         if (ownedRoot) {
           if (completed && performance.now() < deadline) await rm(ownedRoot, { recursive: true, force: true });
           else console.error('Retained genuine legacy frontier Host fixture: ' + ownedRoot);
@@ -4166,6 +4279,56 @@ test.each(['rollback', 'commit'] as const)(
           throw new Error('Completed Source report fixture preparation exhausted its deadline');
         expect(prepared.receipt.status).toBe('initial_request_ready');
         expect(prepared.journal.state.items.every((item) => item.issue_id === null)).toBe(true);
+        if (peers) {
+          const nativeBefore = initialSourceState(f);
+          const nativeRows = readFixtureHostRows(initialSourceHostDatabase(f));
+          const admission = requiredValue(f.input, 'Earlier FIFO native admission');
+          const project = loadProjectSetContext(f.root, f.config, f.identity.repository_id, f.identity.project_ids);
+          const request: TaskSourceBindingRequest = {
+            schema: 'TaskSourceBindingRequest/v1',
+            operation: 'inspect',
+            operation_id: 'host-earlier-fifo-inspect',
+            request_id: 'host-earlier-fifo-request',
+            expected_host: {
+              work: nativeBefore.workVersion,
+              ledger: nativeBefore.ledgerVersion,
+              journal: { attempt: 1, version: nativeBefore.journalVersion },
+              maintenance_generation: nativeBefore.maintenanceGeneration,
+            },
+            work_id: f.identity.work_id,
+            attempt: 1,
+            thread_id: admission.nativeSessionHandle,
+            repository_id: f.identity.repository_id,
+            project_ids: f.identity.project_ids,
+            canonical_host_root: f.root,
+            config_digest: runtimeConfigDigest(f.config),
+            project_context_digest: project.project_context_digest,
+          };
+          const sourceAuthorizationDigest = createHash('sha256')
+            .update(readFileSync(path.join(f.root, f.sourceAuthorizationPath)))
+            .digest('hex');
+          const verifyCurrent: Parameters<HostStateStore['prepareTaskSourceBindingOperation']>[0]['verifyCurrent'] = ({
+            work,
+            ledger,
+            journal,
+          }) => {
+            expect(work).toEqual(nativeBefore.work);
+            expect(ledger).toEqual(nativeBefore.ledger);
+            expect(journal).toEqual(nativeBefore.journal);
+            return {
+              source_authorization_sha256: sourceAuthorizationDigest,
+              source_scope_digest: work.binding.work_source_revision,
+            };
+          };
+          const host = initialSourceHostStore(f);
+          const input = { request, identity: f.identity, verifyCurrent };
+          const preparation = host.prepareTaskSourceBindingOperation(input);
+          expect(preparation.status).toBe('prepared');
+          expect(host.prepareTaskSourceBindingOperation(input)).toEqual(preparation);
+          expect(readFixtureHostRows(initialSourceHostDatabase(f))).toEqual(nativeRows);
+          expect(host.inspectTaskSourceBindingOperation(input)).toEqual({ ...preparation, status: 'inspected' });
+          expect(readFixtureHostRows(initialSourceHostDatabase(f))).toEqual(nativeRows);
+        }
         const issued = await issueInitialSourceFixtureWriter(f);
         const readyAt = performance.now();
         if (readyAt >= deadline) throw new Error('Completed Source report fixture reservation exhausted its deadline');
@@ -4314,6 +4477,17 @@ test.each(['rollback', 'commit'] as const)(
               recovery.verifyCurrent,
             ),
           ).toThrow('completed Source report recovery exact retry differs');
+          expect(initialSourceState(f)).toEqual(after);
+          await f.close();
+          f.ledger = openConfiguredMastraSessionLedger(f.root);
+          f.database = f.ledger.sessionProducerBinding().database;
+          f.store = f.ledger.hostState;
+          const reopened = initialSourceHostStore(f);
+          expect(initialSourceState(f)).toEqual(after);
+          expect(reopened.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
+          expect(reopened.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toEqual(
+            receipt,
+          );
           expect(initialSourceState(f)).toEqual(after);
         }
         peers?.verifyUnchanged();
