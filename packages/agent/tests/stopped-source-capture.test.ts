@@ -146,6 +146,7 @@ async function publicRun(args: string[], runner: typeof run = run): Promise<Json
 }
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+let runtimeConfigTemplate: string | undefined;
 let containedPackage: ContainedControllerFixture | undefined;
 let containedPreparationFailed = false;
 let containedPreparationFailure: unknown;
@@ -312,7 +313,10 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
   if (deferFixtureCleanup) activeConsumerRoots.push(root);
   writeFileSync(
     path.join(root, 'agent-runtime.config.v1.yaml'),
-    readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
+    (runtimeConfigTemplate ??= readFileSync(
+      path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'),
+      'utf8',
+    ))
       .replaceAll('{{REPOSITORY}}', 'stopped-source-repository')
       .replaceAll('{{PROJECT}}', 'sample')
       .replaceAll('{{BUNDLE}}', 'vida-agent'),

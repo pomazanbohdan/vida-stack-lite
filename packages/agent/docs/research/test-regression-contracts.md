@@ -377,6 +377,13 @@ plan retry, applied resume or restore returns. Reject null records, invalid
 arrays, extra fields, foreign identity, invalid actor/status and changed frozen
 transformations without modifying Host state or the stored operation.
 Request-transition repair does not supply missing correction authority.
+Bind a nonempty Journal with completed history to the repair plan. Advance only
+its native revision after planning; applying that stale plan must preserve the
+Host rows, concurrent Journal and stored operation. A fresh plan may apply and
+restore while retaining that exact Journal history and ledger. Terminal
+correction repair also preserves the actual completed Host attempt and released
+ownership through apply, resume and restore. These fixtures are distinct from
+the genuine issued-UNKNOWN repair above.
 Remove a required stored change and recompute its operation checksum in a
 fixture. The reader must deny the incomplete set. A matching checksum does not
 prove complete repair or permit an early plan/resume result.

@@ -4014,8 +4014,11 @@ test('successor admission atomically releases predecessor rights and rejects cha
   ).toEqual(journal);
 });
 
-test('bundled work-state repair plans atomically, resumes exact postimages and restores without evidence loss', () => {
-  const original = commitHostState(fixture());
+test('bundled work-state repair plans atomically, resumes exact postimages and restores without evidence loss', async () => {
+  const { seed, source } = await writerFixture();
+  const original = commitHostState(seed);
+  const journal = completedRecoveryJournal('work', requiredValue(original.work.execution.run_id, 'repair run'), source);
+  const retained = readFixtureHostRows(database);
   const inspection = store.repairRequestTransitionFields({ mode: 'inspect', operationId: 'fixture-repair' });
   expect(inspection.changed_work).toHaveLength(1);
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
@@ -4025,31 +4028,69 @@ test('bundled work-state repair plans atomically, resumes exact postimages and r
     actor: 'fixture-owner',
   });
   expect(plan.status).toBe('planned');
+  expect(plan.bindings).toEqual({
+    ledger_version: original.ledgerVersion,
+    journals: [{ work_id: 'work', attempt: journal.state.attempt, version: journal.version }],
+  });
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
-  const applied = store.repairRequestTransitionFields({ mode: 'apply', operationId: 'fixture-repair' });
+  const plannedRows = database.query<PayloadSqlRow, []>('SELECT * FROM agent_host_work_state_repair').all();
+  expect(
+    database
+      .query('UPDATE agent_host_mastra_session_ledger SET revision=revision+1 WHERE work_id=? AND attempt=?')
+      .run('work', journal.state.attempt).changes,
+  ).toBe(1);
+  const concurrentJournal = retained.journal.map((row) => ({ ...row, revision: row.revision + 1 }));
+  expect(() => store.repairRequestTransitionFields({ mode: 'apply', operationId: 'fixture-repair' })).toThrow(
+    'repair dependency CAS conflict',
+  );
+  expect(readFixtureHostRows(database)).toEqual({ host: retained.host, journal: concurrentJournal });
+  expect(database.query<PayloadSqlRow, []>('SELECT * FROM agent_host_work_state_repair').all()).toEqual(plannedRows);
+  const request = { operationId: 'fixture-repair-current' };
+  const currentPlan = store.repairRequestTransitionFields({ ...request, mode: 'plan', actor: 'fixture-owner' });
+  expect(currentPlan.bindings).toEqual({
+    ledger_version: original.ledgerVersion,
+    journals: [
+      {
+        work_id: 'work',
+        attempt: journal.state.attempt,
+        version: { ...journal.version, revision: journal.version.revision + 1 },
+      },
+    ],
+  });
+  const applied = store.repairRequestTransitionFields({ ...request, mode: 'apply' });
   expect(applied.status).toBe('applied');
   const saved = readPresentSnapshot(store, identity);
   expect(saved.work.request_transition).toBeNull();
   expect(saved.work.artifacts).toEqual(original.work.artifacts);
   expect(saved.work.execution).toEqual(original.work.execution);
   expect(saved.ledgerVersion).toEqual(original.ledgerVersion);
-  expect(store.repairRequestTransitionFields({ mode: 'resume', operationId: 'fixture-repair' })).toEqual(applied);
-  const restored = store.repairRequestTransitionFields({ mode: 'restore', operationId: 'fixture-repair' });
+  expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal.state);
+  expect(readFixtureHostRows(database).journal).toEqual(concurrentJournal);
+  expect(store.repairRequestTransitionFields({ ...request, mode: 'resume' })).toEqual(applied);
+  const restored = store.repairRequestTransitionFields({ ...request, mode: 'restore' });
   expect(restored.status).toBe('restored');
   const after = readPresentSnapshot(store, identity);
   expect(Object.hasOwn(after.work, 'request_transition')).toBe(false);
   expect(after.work.revision).toBe(saved.work.revision + 1);
   expect(after.work.lifecycle.phase).toBe(original.work.lifecycle.phase);
   expect(after.work.lifecycle.assurance).toEqual(original.work.lifecycle.assurance);
-  expect(store.repairRequestTransitionFields({ mode: 'restore', operationId: 'fixture-repair' })).toEqual(restored);
+  expect(after.ledger).toEqual(original.ledger);
+  expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal.state);
+  expect(readFixtureHostRows(database).journal).toEqual(concurrentJournal);
+  expect(store.repairRequestTransitionFields({ ...request, mode: 'restore' })).toEqual(restored);
 });
 
-test('correction-generation repair preserves terminal results and a quiescent journal through apply and restore', () => {
-  commitHostState(fixture());
+test('correction-generation repair preserves terminal results and completed journal history through apply and restore', async () => {
+  const { seed, source } = await writerFixture();
+  commitHostState(seed);
   const started = store.claimWorkflowAttempt(attemptRequest());
   const completed = store.completeWorkflowAttempt(started, { terminal: 'observed Host fixture result' });
   const terminal = readPresentSnapshot(store, identity);
-  const journal = quiescentJournal();
+  const journal = completedRecoveryJournal(
+    'work',
+    requiredValue(terminal.work.execution.run_id, 'terminal repair run'),
+    source,
+  );
   const raw = parseJsonRecord(canonicalJson(terminal.work));
   const execution = recordAt(raw, 'execution');
   const attempts = arrayAt(execution, 'assignment_attempts');

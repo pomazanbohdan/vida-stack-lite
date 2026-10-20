@@ -44,6 +44,10 @@ are now measured, with shared test-only endpoint mappings. Failed-owner recovery
 preservation are now measured. The transitionFailedPrewriter packet now measures its actual bounded child engine
 and shared contract/journal fixtures. Next inspect continuation/recovery-view
 reader obligations using the same compatible fixture and refreshed inventory.
+The next authority-repair packet checks exact Journal dependency drift, fresh
+plan retry and completed-history retention in the existing cases. Keep its
+focused PASS distinct from complete coverage. Reuse only immutable template
+bytes in stopped-source setup; mutable consumer state remains per fixture.
 Retain Root-only integration, one active contour and default5s case/300s coverage limits.
 The three-hour audit fixes the local qualifier namespace-overwrite hazard; WORK
 retains its unchanged-manifest proof and measured-versus-planned comparisons.

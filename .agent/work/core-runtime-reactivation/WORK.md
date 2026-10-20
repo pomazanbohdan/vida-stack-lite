@@ -138,8 +138,36 @@ its new case passes68assertions in2145.65ms in the captured image. All fixture
 writes remain in the existing Host child's private root and serial case ownership.
 Endpoint proof remains a synthetic unit seam, not native release/Runtime acceptance.
 
-Next inspect configured-frontier recovery-view and continuation-reader obligations
-using this now-qualified reusable engine fixture and the99-function inventory.
+The next checked packet extends the existing authority-repair cases with a
+matching completed Journal predecessor and unissued current action, using the
+actual configured source snapshot. Request-transition planning binds the exact
+Journal version; a native revision-only concurrent write causes the exact CAS
+denial without changing Host, Journal payload/history or the stored plan. A
+fresh operation applies, resumes and restores with that concurrent version intact.
+Terminal correction repair retains the completed Host attempt, released rights
+and completed Journal history. The genuine issued-UNKNOWN cases remain unchanged.
+The two affected cases pass52assertions in2.14seconds combined; their bodies are
+197.75/373.87ms. Strict150-file TypeScript and scoped lint pass. These are focused
+development results, not new coverage counters.
+
+Stopped-source fixture setup now reads the frozen package YAML template once
+per module while still creating every mutable consumer config, Host, Ledger,
+Bridge and owned root independently. Existing package before/after custody
+checks remain. The saved read is confirmed; its runtime benefit is unmeasured,
+and it does not explain the observed23.97682s file/body residual. The next full
+stage will measure the combined stable packet after review and matching SDK.
+Independent blind review finds no blocker; its note is
+`vida-authority-repair-review.md`. Root reviewed the exact two-file resource
+changes: both keep unique mutable roots, serial cases and process-local state.
+The only shared cache is an immutable string. The two exact reviewed test pins
+are refreshed in the existing eligibility owner without changing topology or
+allowances. No new generic parallel eligibility is granted.
+Notes are retained as vida-next-authority-gap-7f858d1.md and
+vida-stopped-costs-7f858d1.md in the focused diagnostics. No new capacity sweep,
+cleanup or second producer was needed; the latest retained capacity observation
+above remains the reuse basis until fresh admission.
+
+Next use the99-function inventory to inspect remaining reachable Host obligations.
 Keep one contour and one producer. Batch causal success/denial/retry assertions,
 run affected checks, review and publish once before another matching-input stage.
 The preceding packet details remain in immutable49f1ac7/7f858d1 WORK versions.
@@ -258,6 +286,18 @@ Earlier focused observations remain separately bound evidence. Measured Host dig
 The existing two-child namespace/case-serial resource contract stays unchanged.
 
 ## Owners and acceptance boundaries
+
+The bounded audit refreshed to10:20–13:20UTC on2026-10-20 reuses the prior
+receipt inventory and the one subsequent known completed stage, without another
+directory scan. Its six complete Source-bound observations move from
+F993/L4266/S4530/B4681 toF1030/L4544/S4815/B4854, a measured delta of
++37F/+278L/+285S/+173B. They remain nonexact, with no newly closed contour.
+The retained `three-hour-receipts-20261020-1320.json` states its log-mtime basis;
+it is not complete session/tool/token telemetry. Prior execution-order and
+two-child comparisons still apply; different inputs do not establish a speedup.
+The stopped-source body/file residual remains unattributed. This update reuses
+the original receipts and capacity inventory rather than rerunning suites,
+scans, hashes or cleanup merely to refresh a status.
 
 [Sidecar](../../../AGENT.sidecar.md) owns Source and delegation policy;
 [TESTING](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle) owns
