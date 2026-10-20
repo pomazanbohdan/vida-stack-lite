@@ -241,6 +241,15 @@ path and nesting denials preserve unchanged Host/Journal; focused38assertions
 pass8.645s under unchanged composite allowance, strict181/scoped lint pass.
 Finish final blind review/pin control, publish, then one changed-input stage;
 numeric counters remain2711562 until a new complete report is accepted.
+The bcbfbd6 stage-8vDqai now completes294PASS/0FAIL,2574assertions in145.177s,
+with complete terminal/input checks and published F894/1129,L3807/4966,
+S4045/5296,B4058/5640. Gains4/21/21/32 leave235functions/85owners uncovered;
+historical Source binding pairs remain a distinct genuine-producer task. Entire
+new scratch is durably archived/compared and original retained; WORK owns all
+bindings. Across three packets gains17/124/130/90, historical exact16/45 stays.
+Observed complete range118–145s does not support a60s timeout or causal speedup.
+Reuse the accepted report, keep one contour and batch related assertions into
+existing fixtures without inventing receipts or external effects.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

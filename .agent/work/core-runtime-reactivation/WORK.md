@@ -101,6 +101,45 @@ targeted passes, owns the measured numeric increase.
 
 ### Latest complete host-state coverage and Initial Source packet
 
+The bcbfbd6 stage /workspace/contour-stage-8vDqai completes in145177.405ms,
+exit0, with complete capture/group closure, unchanged boot/image inputs and
+published report. Host278PASS/2359assertions in138.58s plus stopped-source
+16PASS/215assertions in135.94s give294PASS/0FAIL and2574assertions. Run
+60dcd3d6-42a0-4d37-815e-f42afd7724cc records
+F894/1129,L3807/4966,S4045/5296,B4058/5640: gains4/21/21/32 over2711562.
+The historical-read owner has3remaining closures, needing retained task-source
+operation/action predicates; the basic released-owner read is now executed.
+The existing report-only inventory now has235uncovered functions/85owners.
+Operation remains BLOCKED/nonexact, historical exact16/45, and frozen/CRAP/
+mutation stay deferred/unqualified. Projection1056 retains this terminal result.
+Across the three new complete packets since2a82e24, gains are17functions,
+124lines,130statements,90branches and133assertions; no new exact contour closes.
+
+Source bcbfbd6aab9e0f4e41a07df71d5bf65a96b945fd forms matching SDK via
+CI39377150401/artifact12244425107. Downloaded ZIP SHA
+8a2d589d57c1ad317c9ab53d0a128fe0fd268680e2696d7c37b16518cdc71b31 matches.
+Image /workspace/.vida-quality-inputs/80c97aeefdc55ece1a4072a5732771ddd7e034cf/repository,
+manifest SHAf03b04f4491ed5014a825464dfb6de44e1e2b7bd6e4e9a4da7df543508d9d1d8,
+input4273734be7d93b89b40468fc8af37299af9a2eff0c834b49c24f8929175d201c,
+Source tree b3e54487d6ee9335a8118619bf10fc4f4d8ce7ac. Source published through
+ordinary hooks:516format/523strict files, lint/Knip pass; pinned strict181files
+and refreshed eligibility10assertions in4.56ms also pass. No budgets/rights or
+Source inventory are changed. These changed-test runs do not establish causal
+throughput improvement: complete observations range118.026–145.177s.
+
+After observed exec66801 exit0/group closure, the one owned-scratch inventory is
+179327602bytes at /dev/shm/vida-quality-retained-otmr8X; selected scratch is
+scratch-3sfMfK. Overlay before preservation4324835328free bytes. Entire scratch
+is durably retained at
+/workspace/vida-functional-retention-8vDqai-ZsGqJm/scratch.tar,206448640bytes,
+SHA05476c61dee8d07a9fb375b189e922e8781cd012a2469a29320017b131b90ac6.
+GNU tar comparison against the unchanged original succeeds. Original scratch,
+scratch.sha256 and archive.log remain, including all expected UNKNOWN state;
+overlay after4118372352bytes remains above unchanged2147483648floor. No cleanup,
+state replay, real cutover/consumer effect or power-loss durability claim occurs.
+
+### Prior2711562 complete host-state observation
+
 The2711562 stage /workspace/contour-stage-o2A0tZ completes in118025.774ms,
 exit0, complete capture/group closure, unchanged boot/image and published report.
 Host278PASS/2359assertions in111.21s plus stopped-source16PASS/206assertions
@@ -677,7 +716,7 @@ it is not a causal speedup or complete coverage observation. Strict181files and
 scoped lint pass. A fresh blind Luna implementation review
 (/root/blind_historical_source_case_final, no history) reports no concrete
 correctness/resource issue, confirming the independent file oracle, guard
-placement and unchanged Host/Journal. It ran no tools/tests and grants no numeric
+placement and unchanged Host/Journal. It ran no runtime/tests and grants no numeric
 qualification. Final shard control passes10assertions; pinned strict181files,
 documentation and diff checks pass before ordinary publication hooks.
 
@@ -688,6 +727,13 @@ changes. Stopped-source pin88c2abd9572db080a96875b47d9792a8bc3d67a2c073d8a5e4985
 binds the final formatted test; Host pinab5c2cff, exact selection/provider/caller
 checks and serial fallback remain. Finish pin/control/review and normal
 publication, then one changed-input stage before counting gains.
+
+That one bcbfbd6 stage is now complete, as recorded above; reuse its accepted
+report instead of retrying unchanged inputs. Remaining historical binding pair
+callbacks need actual native preparation/report lineage or explicit denial
+controls; do not seed records or invent external Source effects to reach them.
+Continue the same open contour from the235-function inventory, batching related
+assertions into existing fixtures when their state contract permits it.
 
 ### Complete-run60-second target assessment
 
@@ -710,8 +756,9 @@ setup/public-child cost; only a demonstrated behavior-preserving reduction or
 separately qualified partition/merge can support the target. Preserve all
 assertions, fresh Host/Journal/ownership, exact counts and current final budgets.
 
-Next prioritize genuine completed-Source-report recovery and its persisted Work
-history within this same contour. Blind bounded plan
+The earlier plan below led to genuine completed-Source-report recovery and its
+persisted Work history; it is retained context, not a duplicate next task.
+Blind bounded plan
 /tmp/vida-host-stored-work-next-batch.md maps the retained nested guards to their
 real receipt producers and existing helper. Initial Source history is now reached;
 its four formerly missing stored-work closures reduce that group from32to28.
