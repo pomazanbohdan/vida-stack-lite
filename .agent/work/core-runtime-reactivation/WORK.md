@@ -393,6 +393,39 @@ Reused current admission is5792698368free bytes against2147483648minimum;
 no cleanup or additional broad scan is justified. Complete numeric
 counters remain bound to dcaa148 above; this focused pass is not a coverage gain.
 
+The a2d4b7b changed-input stage /workspace/contour-stage-hwbTyf terminates failed
+after270754.570ms, exit1, with complete capture/group closure and unchanged
+boot/image inputs but no complete attributable report. Projection1048 retains
+the failure. New readonly-frontier passes10884.92ms and recovery rollback passes
+19877.32ms. The later recovery commit fails its explicit reservation/setup guard
+at38713.82ms before its body; Host child has no complete terminal suite summary.
+Stopped-source completes16PASS/0FAIL/206assertions in260.85s. The outer error is
+execution-budget exhaustion before report child launch, not a numeric result.
+Do not count earlier case PASS rows or stage timed_out=false as complete coverage.
+Keep the original failed root at
+/workspace/contour-stage-hwbTyf/scratch-Tc7jZF/scratch/vida-coverage-e2af9f1a-f8bd-4d65-bc38-5e9c96b68b42/shard-0001/tmp/vida-initial-source-XKolsr.
+The image is
+/workspace/.vida-quality-inputs/4978486fcf0453966d543ba504fca674bfdfbc98/repository,
+manifest SHA0c1c1509bde77be8d02332bc4e7a32ae39f21a210933b726d66d6fe67d0b1576,
+inputd279282cf7ed4b9c25453ecf9bb7c9e7409811e8b7f23022db57aace0d0e1cb9.
+SDK CI39372461459/artifact12241463042 succeeds; transport ZIP SHA
+fc981f9ff9cf270c4b631bbe9ac936d7e0ae2776327f37ce0dc554118aac1f44 matches.
+Admission observes5494939648free bytes against unchanged2147483648minimum.
+Ordinary hooks pass516format/523strict TS files, lint and Knip; the refreshed
+shard control passes10assertions. Latest complete counters remain dcaa148;
+historical exact16/45 is unchanged.
+
+Defer further new cases while resolving this same reservation setup variance.
+The next bounded review challenges whether the Host-only recovery subject can
+use an actual approved Host reservation producer directly, without a broad
+runtime-kernel construction, while retaining native configured approval,
+preflight, CAS and ownership. No shortcut is accepted before that boundary is
+checked. Otherwise attribute the actual wait before a new changed-input stage.
+Do not raise20s/300s bounds, seed receipts, disable production freshness guards
+or repeat unchanged input. The separate migration-wrapper plan is deferred;
+its suggested workflow rewrite is unnecessary: legacy database layout depends
+on runtime configuration source in project-paths.ts, not workflow stage shape.
+
 Next prioritize genuine completed-Source-report recovery and its persisted Work
 history within this same contour. Blind bounded plan
 /tmp/vida-host-stored-work-next-batch.md maps the retained nested guards to their

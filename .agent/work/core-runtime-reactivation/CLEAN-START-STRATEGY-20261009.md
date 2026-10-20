@@ -188,6 +188,14 @@ serve the existing public caller and new Host case. Its21assertions pass8.471s
 under the existing20s allowance; no receipt, engine state or runtime acceptance
 is fabricated. Finish caller regression, independent review and pin/resource
 check, publish, then run exactly one changed-input stage before accepting gains.
+The a2d4b7b stage-hwbTyf fails at270.755s without complete counters. Readonly
+frontier passes10.885s, but a later recovery reservation setup takes38.714s and
+fails its unchanged20s bound. Preserve projection1048/image/failed fixture.
+Defer new cases; first resolve the actual reservation construction/wait in this
+same contour. Review a supported genuine approved Host producer for this Host
+unit subject; retain configured approval/preflight/CAS/ownership or reject that
+route. No budget increase or unchanged retry is permitted. Latest complete
+F/L/S/B remains dcaa148, not these partial PASS rows.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
