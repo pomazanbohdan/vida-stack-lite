@@ -148,6 +148,17 @@ F/L/S/B remain829/1129,3420/4966,3643/5296,3556/5640, still nonexact/BLOCKED.
 This is an assertion/reliability improvement, not a coverage gain. Do not repeat
 the unchanged stage. Continue the dense genuine recovery/history producer path,
 using the retained300-function/91-owner inventory and explicit native lineage.
+The next checked packet adds genuine completed-report recovery through the
+configured ledger, actual admitted capability and real writer reservation.
+Reuse the shared Initial Source fixture and current-owner expiry reader. Keep
+private fixture effects distinct from native/consumer proof and preserve Work
+Source binding while checking evolved Journal scope. Focused recovery passes
+26assertions in18.131s under the existing20s complex-case allowance; explicit
+monotonic phase/cleanup guards now retain exhausted roots. Prior Host/public
+producer regressions pass53/86assertions. Review/refresh the same two-file pin,
+publish through ordinary hooks, obtain matching CI SDK inputs, then measure the
+changed contour once. No other contour or mutation producer may start. WORK
+retains failure roots, review, timing attribution and final numeric bindings.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

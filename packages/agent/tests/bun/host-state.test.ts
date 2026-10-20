@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import { afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test, setSystemTime } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
 import { expectReturned, rejectionReason } from '../helpers/expect-rejection.ts';
@@ -26,7 +26,12 @@ import {
   currentProof as initialSourceProof,
   initialRequest as initialSourceRequest,
   withExpiredOwner as withExpiredInitialSourceOwner,
+  continuationState as initialSourceState,
+  prepareInitialSourceWriterFrontier,
+  issueInitialSourceFixtureWriter,
+  expiredOwnerTime as initialSourceExpiredOwnerTime,
 } from '../helpers/initial-source-work-fixture.ts';
+import { createCompletedSourceReportRecoveryFixture } from '../helpers/completed-source-report-recovery-fixture.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import {
   prepareLifecycleForCorrection,
@@ -1570,6 +1575,191 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
     'Initial Source Host fixture',
   );
 });
+
+test(
+  'completed Source report Host recovery persists genuine writer lineage and rolls back Journal faults',
+  async () => {
+    const started = performance.now();
+    const deadline = started + failedFinalHostCaseTimeoutMs;
+    let rootOwned: string | undefined;
+    let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let completed = false;
+    let clockHeld = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const f = await createInitialSourceWorkFixture({
+          onRoot: (created) => {
+            rootOwned = created;
+            console.info('Completed Source report Host fixture root: ' + created);
+          },
+        });
+        fixture = f;
+        if (performance.now() >= deadline)
+          throw new Error('Completed Source report fixture setup exhausted its deadline');
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        clockHeld = true;
+        const prepared = await prepareInitialSourceWriterFrontier(f);
+        if (performance.now() >= deadline)
+          throw new Error('Completed Source report fixture preparation exhausted its deadline');
+        expect(prepared.receipt.status).toBe('initial_request_ready');
+        expect(prepared.journal.state.items.every((item) => item.issue_id === null)).toBe(true);
+        const issued = await issueInitialSourceFixtureWriter(f);
+        const readyAt = performance.now();
+        if (readyAt >= deadline) throw new Error('Completed Source report fixture reservation exhausted its deadline');
+        const sourceBefore = issued.journal.state.source_scope;
+        if (!sourceBefore) throw new Error('Native writer fixture has no Source snapshot');
+        const host = initialSourceHostStore(f);
+        const db = initialSourceHostDatabase(f);
+        const before = initialSourceState(f);
+        expect(
+          before.work.execution.assignment_attempts.find((attempt) => attempt.attempt_id === issued.hostAttemptId),
+        ).toMatchObject({ status: 'started', result: null, result_digest: null });
+        expect(issued.journal.state.items[0]?.host_reservation?.approvalAction).toBe('source.write');
+        // A controlled private-fixture effect and report; no writer argv or consumer effect is observed.
+        const changedPath = f.documents[0];
+        const changedFile = path.join(f.root, changedPath);
+        writeFileSync(changedFile, readFileSync(changedFile, 'utf8') + 'fixture writer output\n');
+        const sourceAfter = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
+        const summary = 'Controlled Host fixture Source report';
+        const observation = parseSessionBridgeObservation({
+          schema: 'VidaSessionObservation/v1',
+          action_id: issued.writer.request.action_id,
+          host_attempt_id: issued.hostAttemptId,
+          changed_paths: [changedPath],
+          issue_id: issued.writer.issue_id,
+          agent_id: 'fixture:host-source-writer',
+          tool_call_ref: 'fixture:host-source-report',
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: ['fixture://host-source-report'],
+        });
+        const reportPath = path.join(f.root, '.agent/work', f.identity.work_id, 'host-source-report.json');
+        writeFileSync(reportPath, JSON.stringify(observation) + '\n');
+        const recovery = createCompletedSourceReportRecoveryFixture(
+          {
+            root: f.root,
+            identity: f.identity,
+            documents: f.documents,
+            config: f.config,
+            hostStore: host,
+            continuationState: () => initialSourceState(f),
+            currentJournal: () => initialSourceJournal(f),
+          },
+          issued.writer,
+          issued.hostAttemptId,
+          observation,
+          sourceBefore,
+          sourceAfter,
+          null,
+          reportPath,
+        );
+        const persistedBefore = readFixtureHostRows(db);
+        expect(() =>
+          host.commitCompletedSourceReportRecovery(
+            {
+              ...recovery.request,
+              expectedWork: { ...recovery.request.expectedWork, revision: recovery.request.expectedWork.revision + 1 },
+            },
+            recovery.verifyCurrent,
+          ),
+        ).toThrow('state compare-and-swap conflict');
+        expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+        expect(() => host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toThrow(
+          'completed Source report recovery original Source ticket or claim differs',
+        );
+        expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        db.exec(
+          "CREATE TRIGGER fixture_recovery_journal_fault BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'fixture recovery Journal fault'); END",
+        );
+        let faultFailure: { error: unknown } | undefined;
+        try {
+          expect(() => host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toThrow(
+            'fixture recovery Journal fault',
+          );
+          expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+          expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toBeNull();
+        } catch (error) {
+          faultFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                db.exec('DROP TRIGGER fixture_recovery_journal_fault');
+                return undefined;
+              },
+            ],
+            faultFailure,
+          );
+        }
+        const receipt = host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent);
+        const after = initialSourceState(f);
+        expect(receipt).toMatchObject({
+          status: 'completed_report_recovered',
+          source_write_rights: false,
+          runtime_acceptance: false,
+        });
+        expect(receipt.record.prior_work).toEqual(before.work);
+        expect(after.work).toEqual(receipt.record.successor_work);
+        expect(after.workVersion).toEqual(receipt.work_version);
+        expect(after.ledgerVersion).toEqual(receipt.ledger_version);
+        expect(after.journalVersion).toEqual(receipt.journal_version);
+        expect(after.work.binding.work_source_revision).toBe(sourceBefore.digest);
+        expect(initialSourceJournal(f).state.source_scope?.digest).toBe(sourceAfter.digest);
+        expect(
+          after.work.execution.assignment_attempts.find((attempt) => attempt.attempt_id === issued.hostAttemptId),
+        ).toMatchObject({ status: 'completed', result: observation, result_digest: canonicalJsonDigest(observation) });
+        expect(
+          after.ledger.claims.some(
+            (claim) => claim.status === 'active' && claim.resources.some((resource) => resource.startsWith('file:')),
+          ),
+        ).toBe(false);
+        expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
+        expect(host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toEqual(receipt);
+        expect(initialSourceState(f)).toEqual(after);
+        expect(() =>
+          host.commitCompletedSourceReportRecovery(
+            { ...recovery.request, nativeSessionHandle: recovery.request.nativeSessionHandle + '-foreign' },
+            recovery.verifyCurrent,
+          ),
+        ).toThrow('completed Source report recovery exact retry differs');
+        expect(initialSourceState(f)).toEqual(after);
+        console.info(
+          JSON.stringify({
+            fixture: 'completed-source-report-host',
+            setup_ms: readyAt - started,
+            body_ms: performance.now() - readyAt,
+          }),
+        );
+        if (performance.now() >= deadline)
+          throw new Error('Completed Source report fixture body exhausted its deadline');
+        completed = true;
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (fixture) await fixture.close();
+          },
+          () => {
+            if (clockHeld) setSystemTime();
+          },
+          'Completed Source report fixture clock restoration',
+        );
+        if (rootOwned) {
+          if (completed && performance.now() < deadline) await rm(rootOwned, { recursive: true, force: true });
+          else {
+            console.error('Retained completed Source report Host fixture: ' + rootOwned);
+            if (completed) throw new Error('Completed Source report fixture cleanup exhausted its deadline');
+          }
+        }
+      },
+      'Completed Source report Host fixture',
+    );
+  },
+  failedFinalHostCaseTimeoutMs,
+);
 
 test('recovery namespace denies generic issuance, settlement and copied handles', () => {
   const operation = validateHostOperationReservation({

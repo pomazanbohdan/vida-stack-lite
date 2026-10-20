@@ -20,15 +20,22 @@ import {
 } from '../../src/orchestration/scoped-source-snapshot.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import {
-  HostStateStore,
-  openHostStateDatabase,
+  type HostStateStore,
   type WorkIdentity,
   type WorkState,
   type HostStateSnapshot,
   type CoordinationLedger,
   type StateVersion,
 } from '../../src/host-state.ts';
-import { admitLocalSessionWork, type LocalWorkAdmissionInput } from '../../src/orchestration/local-work-admission.ts';
+import {
+  admitLocalSessionWork,
+  acquireLocalSourceWriterLease,
+  type LocalWorkAdmissionInput,
+} from '../../src/orchestration/local-work-admission.ts';
+import { openAdmittedSessionExecution } from '../../src/orchestration/admitted-session-execution.ts';
+import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } from '../../src/runtime-kernel.ts';
+import { runPreparationFixtureInProcess } from './public-prewriter-fixture.ts';
+import { bindControlledRuntimeInitialization } from './controlled-runtime-initialization-fixture.ts';
 import {
   MastraSessionBridge,
   type SessionBridgeSnapshot,
@@ -36,6 +43,7 @@ import {
 } from '../../src/orchestration/mastra-session-bridge.ts';
 import {
   MastraSessionLedger,
+  openConfiguredMastraSessionLedger,
   type MastraSessionLedgerSnapshot,
 } from '../../src/orchestration/persistent-session-handoff.ts';
 import type { SessionHandoffContext } from '../../src/orchestration/session-handoff.ts';
@@ -150,12 +158,9 @@ export async function createInitialSourceWorkFixture({
     const config = loadRuntimeConfig(root);
     mkdirSync(path.join(root, config.control.work_root), { recursive: true });
     const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
-    database = openHostStateDatabase(
-      root,
-      path.posix.join(config.control.work_root, 'session-handoff.v1.sqlite'),
-      workspaceId,
-    );
-    const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root);
+    ledger = openConfiguredMastraSessionLedger(root);
+    database = ledger.sessionProducerBinding().database;
+    const store = ledger.hostState;
     const id = 'initial-' + randomUUID();
     const nativeSessionHandle = 'initial-thread-' + randomUUID();
     const scopePath = '.agent/work/' + id + '/scope.json';
@@ -273,7 +278,6 @@ export async function createInitialSourceWorkFixture({
       changeKind: 'documentation',
     };
     const admitted = admitLocalSessionWork(input);
-    ledger = new MastraSessionLedger(database, workspaceId, config, root, store);
     bridge = await MastraSessionBridge.open({
       repositoryRoot: root,
       config,
@@ -498,14 +502,20 @@ export function initialRequest(f: InitialWorkFixture): InitialSourceContinuation
   };
 }
 
-export function withExpiredOwner<T>(f: InitialWorkFixture, callback: () => T) {
+export function expiredOwnerTime(f: InitialWorkFixture): number {
   const before = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
   const owner = before.ledger.tickets.find((ticket) => ticket.ticket_id === workLease(before.work).ticket_id);
   if (!owner || typeof owner.expires_at !== 'string')
     throw new Error('Initial Source fixture owner lease is unavailable');
-  const expiresAt = owner.expires_at;
+  const expiredAt = Date.parse(owner.expires_at) + 1;
+  if (!Number.isFinite(expiredAt)) throw new Error('Initial Source fixture owner expiry is invalid');
+  return expiredAt;
+}
+
+export function withExpiredOwner<T>(f: InitialWorkFixture, callback: () => T) {
+  const expiredAt = expiredOwnerTime(f);
   const originalNow = Date.now;
-  Date.now = () => Date.parse(expiresAt) + 1;
+  Date.now = () => expiredAt;
   let outcome: { ok: true; value: T } | { ok: false; error: unknown };
   try {
     outcome = { ok: true, value: callback() };
@@ -515,6 +525,100 @@ export function withExpiredOwner<T>(f: InitialWorkFixture, callback: () => T) {
   Date.now = originalNow;
   if (!outcome.ok) throw outcome.error;
   return outcome.value;
+}
+
+/** Real Host continuation and controlled readonly preparation; no native Source effect is claimed. */
+export async function prepareInitialSourceWriterFrontier(f: InitialWorkFixture) {
+  const source = changeOneAcceptedDocument(f);
+  const request = initialRequest(f);
+  const receipt = withExpiredOwner(f, () =>
+    hostStore(f).continueInitialSource(request, (state) => currentProof(f, state)),
+  );
+  await hostBridge(f).close();
+  f.bridge = null;
+  const input = admittedInput(f);
+  f.bridge = await MastraSessionBridge.open({
+    repositoryRoot: f.root,
+    config: f.config,
+    ledger: hostLedger(f),
+    projectIds: f.identity.project_ids,
+    selection: input.selection,
+    context: { ...input.context, scope_digest: source.digest },
+    workflowId: 'task_execution',
+    workspaceId: deriveWorkspaceId(f.config.repository.repository_id, f.root),
+    initialSourceContinuation: { identity: f.identity, attempt: 1 },
+  });
+  await bindControlledRuntimeInitialization(f.root, f.config, hostStore(f));
+  const journal = await runPreparationFixtureInProcess(
+    {
+      args: [],
+      publicRun: () => {
+        throw new Error('Native preparation fixture must not enter the public CLI');
+      },
+      sync: () => currentJournal(f),
+      repositoryRoot: f.root,
+      workId: f.identity.work_id,
+      attempt: 1,
+      work: continuationState(f).work,
+    },
+    { ledger: hostLedger(f), bridge: hostBridge(f), source },
+  );
+  return { receipt, journal };
+}
+
+/** Obtain the actual admitted opaque capability and Host reservation; execute no writer argv. */
+export async function issueInitialSourceFixtureWriter(f: InitialWorkFixture) {
+  const journal = currentJournal(f);
+  const item = journal.state.items[0];
+  if (journal.state.items.length !== 1 || !item || item.request.stage_id !== 'develop_task' || item.issue_id !== null)
+    throw new Error('Initial Source fixture needs one unissued writer frontier');
+  const state = continuationState(f);
+  const selection = admittedInput(f).selection;
+  acquireLocalSourceWriterLease({
+    repositoryRoot: f.root,
+    config: f.config,
+    store: hostStore(f),
+    identity: f.identity,
+    nativeSessionHandle: workLease(state.work).thread_id,
+    stageId: item.request.stage_id,
+    assignmentIndex: item.request.assignment_index,
+    expectedWork: state.workVersion,
+    expectedLedger: state.ledgerVersion,
+    expectedSessionJournal: { attempt: 1, version: journal.version },
+  });
+  const execution = await openAdmittedSessionExecution(f.root, hostStore(f), selection.project, f.identity.work_id);
+  const capability = execution.composition.workflowExecutionCapability;
+  if (!capability) throw new Error('Initial Source fixture admitted execution capability is unavailable');
+  const configDigest = runtimeConfigDigest(f.config);
+  const prepared = await prepareWorkflowExecution(capability, {
+    repositoryRoot: f.root,
+    configDigest,
+    teamId: selection.team,
+    workItemId: f.identity.work_id,
+  });
+  const reservation = await reserveWorkflowAssignmentForSession(capability, {
+    repositoryRoot: f.root,
+    configDigest,
+    teamId: selection.team,
+    workflowId: item.request.workflow_id,
+    stageId: item.request.stage_id,
+    assignmentIndex: item.request.assignment_index,
+    workItemId: f.identity.work_id,
+    workItemDigest: prepared.workItemDigest,
+    workContextDigest: prepared.workContextDigest,
+    input: { bindings_manifest_ref: item.request.bindings_manifest_ref },
+  });
+  const issued = hostLedger(f).issueWave(f.identity.work_id, 1, journal.version, {
+    [item.request.action_id]: reservation,
+  });
+  const writer = issued.state.items[0];
+  if (!writer?.issue_id || !writer.host_reservation)
+    throw new Error('Initial Source fixture did not persist its native writer reservation');
+  return {
+    journal: issued,
+    writer: { request: writer.request, issue_id: writer.issue_id },
+    hostAttemptId: writer.host_reservation.receipt.attempt.attempt_id,
+  };
 }
 
 export async function withInitialSourceCleanup<T>(

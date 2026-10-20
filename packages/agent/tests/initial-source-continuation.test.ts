@@ -16,6 +16,7 @@ import {
   changeOneAcceptedDocument,
   currentProof,
   initialRequest,
+  expiredOwnerTime,
   withExpiredOwner,
   type InitialWorkFixture,
 } from './helpers/initial-source-work-fixture.ts';
@@ -251,12 +252,8 @@ async function makeInitialWork(): Promise<InitialWorkFixture> {
 }
 
 function holdExpiredOwnerClockForFixture(f: InitialWorkFixture) {
-  const before = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
-  const owner = before.ledger.tickets.find((ticket) => ticket.ticket_id === workLease(before.work).ticket_id);
-  if (!owner || typeof owner.expires_at !== 'string')
-    throw new Error('Initial Source fixture owner lease is unavailable');
   const originalClose = f.close;
-  const expiredAt = Date.parse(owner.expires_at) + 1;
+  const expiredAt = expiredOwnerTime(f);
   setSystemTime(new Date(expiredAt));
   f.close = async () => {
     try {
@@ -268,13 +265,9 @@ function holdExpiredOwnerClockForFixture(f: InitialWorkFixture) {
 }
 
 async function withExpiredOwnerAsync<T>(f: InitialWorkFixture, callback: () => Promise<T>) {
-  const before = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
-  const owner = before.ledger.tickets.find((ticket) => ticket.ticket_id === workLease(before.work).ticket_id);
-  if (!owner || typeof owner.expires_at !== 'string')
-    throw new Error('Initial Source fixture owner lease is unavailable');
-  const expiresAt = owner.expires_at;
+  const expiredAt = expiredOwnerTime(f);
   const originalNow = Date.now;
-  Date.now = () => Date.parse(expiresAt) + 1;
+  Date.now = () => expiredAt;
   return withCleanup(
     callback,
     () => {

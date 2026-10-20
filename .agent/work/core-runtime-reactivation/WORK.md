@@ -168,6 +168,68 @@ changed-input stage passes the native case under coverage in3253.13ms, with
 setup2264.923ms/body835.219ms; the5s case and all stage/shard budgets are unchanged.
 This is coverage evidence for795ffb2, not frozen/CRAP, mutation or Runtime acceptance.
 
+### Genuine completed-Source-report Host recovery packet
+
+The next packet now reaches the actual completed-report recovery through real
+Initial Source admission/continuation, readonly bridge preparation, admitted
+opaque workflow capability, Source writer lease and native reservation. The
+shared fixture opens the maintained configured ledger factory instead of manually
+constructing a store without its approval/preflight verifiers. Both old and new
+callers retain one owned native database. The common current-owner expiry reader
+replaces three duplicated lease lookups; the recovery case observes live-ticket
+denial, then advances the clock past the actual renewed writer ticket expiry.
+Clock restoration follows handle closure, with both failures retained.
+
+Only private fixture document/report effects and fixture-only endpoint labels
+are supplied. No writer argv, native Source effect, receipt seeding or consumer
+effect is claimed. Host itself persists the recovery receipt. The case checks
+stale CAS and live ownership denial with unchanged native row images, a genuine
+SQLite-trigger Journal failure and atomic rollback, successful attempt completion,
+the preserved original Work Source binding versus evolved Journal Source scope,
+receipt lineage, retired Source rights, exact idempotent retry and foreign retry
+denial. Rights and runtime-acceptance flags remain false.
+
+The focused binding-corrected case passes26assertions in18131.45ms; setup is
+14495.946ms and body3225.308ms in that single sample. It reuses the existing
+20s complex-lifecycle allowance, justified by actual admission, bridge preparation
+and writer reservation; default5s, global300s,30s reserve and stage330s are
+unchanged. Explicit monotonic checks now stop after exhausted setup, preparation,
+reservation, body or cleanup, retaining failed roots. This is not a controlled
+speed comparison. Final monotonic-guarded bytes pass26assertions in18243.02ms,
+with setup14486.674ms/body3549.521ms. The refreshed shard control passes
+10assertions in6.94ms; documentation checks2changed documents/8local links with
+no failures. The next numeric result is recorded below when available.
+Prior Initial Source Host regression passes53assertions
+in3156.69ms; the existing public producer passes86assertions in11984.67ms,
+with its parent wrapper13491.82ms. Strict targeted compilation passes180files;
+scoped type-aware lint passes. Zero-match wrong-case pattern output is retained
+and is not a successful check.
+
+Four earlier fixture failures are retained in the existing diagnostic directory:
+host-completed-report-native-first.log (lease clock regression),
+host-completed-report-native-clock-corrected.log (missing trusted verifier in the
+old manually constructed store), host-completed-report-native-configured.log
+(correct live-owner denial), and host-completed-report-native-expired-source.log
+(incorrect test expectation that recovery rewrites Work Source binding). Their
+roots vrQWPS,lSn3PI,Poe1yN,DK8dxC under the current owned tooling tmp namespace
+remain protected. These expose fixture prerequisites, not confirmed product bugs.
+The Source contract preserves Work Source binding and evolves Journal scope;
+the corrected assertions cover both independently. Blind read-only review is
+retained at /tmp/vida-host-native-report-final-review.md, with no static blocker.
+
+The bounded resource re-review keeps the same two serial children. New database,
+report, authorization and runtime-binding writes remain within the Host child's
+unique TMPDIR fixture root. Configured-ledger services use that same consumer
+root; common package inputs retain verified no-CAS readers. The test-local Bun
+clock is restored before the serial child's next case and cannot affect the
+separate stopped-source process. No new process, shared writable namespace,
+selected file, worker, dependency install or budget is introduced. The final
+formatted Host pin is9aa19d9ea74c54c51550b5bf86053ecef7e4b95d2a60579712e1ce1a8b1c3a49;
+stopped-source pin and stale-selection serial fallback remain unchanged.
+Reuse existing disk admission (6453854208free bytes against2147483648required);
+no cleanup or new broad scan is justified. Complete changed-input coverage is
+pending; the98bce8b counters above remain the latest complete observation.
+
 Next prioritize genuine completed-Source-report recovery and its persisted Work
 history within this same contour. Blind bounded plan
 /tmp/vida-host-stored-work-next-batch.md maps the retained nested guards to their
