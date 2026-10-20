@@ -77,6 +77,9 @@ After an orchestration transport error, inspect every earlier call's retained
 logs and process state before retry. A later call's launch rejection does not
 prove that an earlier call never started. Partial test rows without a terminal
 summary remain incomplete; preserve their original logs and fixtures.
+Separate artifact downloads from process inspection. For owner checks, list
+PID, parent PID, state and command names instead of full caller argv, which can
+echo a temporary signed transport URL. Keep those URLs out of retained summaries.
 During the owner's sequential exact F/L/S/B phase, work on one contour only and
 defer frozen CRAP and mutation producers. Preserve their existing gaps and
 evidence; a coverage milestone is not complete-triple closure. Do not launch CRAP
