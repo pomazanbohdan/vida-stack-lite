@@ -171,6 +171,13 @@ Check YAML schema, project identity, integration mapping, storage and safe refer
 
 Check canonical JSON wire equivalence and legal shared references. Deny getters, descriptors, prototypes, `toJSON`, cycles and malformed limits. Preserve finite node, depth and byte bounds. Cache digests only for loader-owned deeply frozen values. Recheck inherited serialization hooks on every read. New YAML or mutable caller data needs fresh validation.
 
+Captured object images retain a null prototype and ordinary writable, enumerable,
+configurable data properties. Exercise `__proto__`, `constructor` and non-callable
+`toJSON` data on that image; their canonical bytes and descriptors stay exact.
+Direct stores on the owned null-prototype image must not weaken input descriptor,
+Proxy/getter/hook checks or change traversal order. Micro timing is diagnostic;
+native recovery, deadlines and current-input coverage remain separate checks.
+
 Timestamp controls include trailing LF, CR, CRLF and Unicode line separators.
 Check whole-input rejection separately from native parser failure. A scoped
 Date.parse fault proves fail-closed handling of NaN for an otherwise valid

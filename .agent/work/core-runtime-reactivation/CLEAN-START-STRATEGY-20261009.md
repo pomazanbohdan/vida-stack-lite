@@ -84,14 +84,21 @@ deadlines and the same resource topology. Its matching SDK/image/stage measures
 and654branch arms. Do not move coverage work into the separate public prepared-plan suite
 or fabricate an inconsistent newer receipt merely to force a predicate denial.
 
-The next checked packet uses four existing storage/history cases: fresh
+The checked storage/history packet uses four existing cases: fresh
 projection-aware TaskSource preparation, exact completed-Journal retention in
 migration baseline/restore, actual read-only inspection/native write denial,
 and observed file identity with an explicitly test-only opaque bootstrap
 sentinel. Focused4PASS69assertions, strict168-file TypeScript and configured lint
 pass. Preserve5s bounds, current private resources and exact pin before one
 matching SDK/image/stage. No consumer cutover, genuine bootstrap receipt or
-numeric gain is claimed from these focused checks.
+numeric gain is claimed from these focused checks. Its matching26ad222 stage
+failed once at the existing genuine recovery rollback20s case; all four changed
+storage cases pass, but no report counters are promoted. Keep failure attempt1100
+and its original custody. Resolve setup variance in the same contour, preserving
+the genuine lineage and every live freshness/CAS boundary. A bounded blind review
+finds no safe preparation/bridge deletion. The canonical-image owner has a small
+equivalent null-prototype data-store simplification under focused verification;
+it does not yet establish timeout repair. WORK owns exact diagnostic outcomes.
 
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer

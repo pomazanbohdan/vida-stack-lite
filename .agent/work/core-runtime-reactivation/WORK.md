@@ -126,7 +126,44 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
-### Checked storage and retained-Journal packet; stage pending
+### Storage/history stage failed; recovery setup remains open
+
+Published Source26ad2226e8d7a40bcb97ba6ac4c5bfa7069a1348 ran once in
+stage `/workspace/contour-stage-vgKVuC`, exec98031. It terminated exit1 in
+162784.469058ms. Run a649a82c-b0b3-401f-a7b2-5ba2c6ab5ad2 has full capture,
+closed group and unchanged boot/image. Publication is unknown-or-partial because
+failed tests produced no attributable coverage report. Projection attempt1100
+retains the failure without promoting counters;7845f62 remains the latest
+complete measurement above. Host child288PASS/1FAIL/3537assertions/155.86s;
+stopped-source16PASS/253assertions/137.15s with contained cleanup complete.
+The four changed storage cases pass, but no coverage gain is inferred.
+
+The only failed case is completed Source report recovery rollback at23078.69ms
+under its unchanged20000ms limit. Setup19387.510371ms and body3615.664167ms
+identify setup dominance, not a removable operation. The original failed root,
+DB and logs remain retained. A fresh bounded diagnostic passes14.65s with
+setup12011.36712ms/body2465.257481ms and complete writer phase capture. Blind
+Luna finds no safe deletion of workflow preparation, bridge reopen/resume or
+live runtime freshness checks. Timing variation alone proves no speedup.
+
+Failed image `/workspace/.vida-quality-inputs/6a244cb8126c3a51e1bbc75202016ecf0e2f26b4/repository`
+has tree6356ac252b212dce4fa3bfad7d40b17e49e8e8c1,
+inputd1124aeaeb4c9b1b17fe564c8a503962cf00b5febee95700604f57020de49a87
+and manifest8367442e383c6768893224d790e4bcc6d6982d1b33376212ea127451cff1d3e0.
+Matching SDK CI39472235948/attempt1/artifact12286434670 succeeded;
+ZIP4567da1b4f28f9c3693f92662c1fcf2f7f503e99bae6d940ddfcb27326200782.
+Its SDK name uses that full Source SHA and run/attempt. Original scratch is
+`/dev/shm/vida-quality-retained-6aP49Q`. After observed termination only the
+qualified private cache was retired under `storage-history-cache-retirement-vgKVuC`.
+The remaining scratch archive is
+`/workspace/vida-functional-retention-vgKVuC-vexL4u/scratch.tar.gz`,355229bytes,
+full tar compare PASS, SHA256d6c966ed2595306fec7b99b8149631c578290997e269b032e1bdb099e3a50c0e.
+Durable free before/after archive5247344640/5246984192bytes leaves3099500544
+above the unchanged2147483648floor. The next bounded filesystem observation
+finds5246955520durable/9380745216tmpfs free, no new resource GAP or deletion.
+Original remaining scratch and every failed receipt stay protected.
+
+### Checked storage and retained-Journal packet
 
 Four existing cases now exercise fresh projection initialization before exact
 TaskSource preparation/retry, a completed cooperative readonly Journal wave
@@ -158,8 +195,36 @@ and all five modified files. No numeric producer had started and no restart,
 lost Source or replay is inferred from that transport failure.
 The bounded Luna plan is retained as task-source-v1100-plan.md in focused
 diagnostics. Its remaining TaskSource admission/FIFO/history proposals stay
-unqualified; no fabricated native transition is used. Numeric gains remain pending
-one matching SDK/image/stage with the same two serial-file resource owners.
+unqualified; no fabricated native transition is used. Numeric gains remain
+unqualified after the failed matching stage above.
+
+### Canonical image simplification under recovery diagnosis
+
+Root applies Pstack Fix Root Causes and Laziness Protocol within the same contour.
+The existing retained native recovery JSC profile identifies canonicalObject937
+of16051samples; it does not establish performance of current bytes. The owned
+null-prototype image now receives ordinary data assignments rather than repeated
+Object.defineProperty descriptors. Input descriptor validation, hook/prototype
+denial, traversal order, cycle/byte/node/depth budgets and serializer are unchanged.
+The existing canonical-image case explicitly checks __proto__, constructor and
+non-callable toJSON data plus exact output descriptors and null prototype.
+Independent Luna review finds the scoped assignment equivalent; both review
+artifacts remain in focused diagnostics. No intrinsic-hardening claim is added.
+
+A five-round alternating synthetic micro diagnostic observes equal wire bytes,
+100calls and1873000bytes per side/round with no errors. Medians before120.835ms,
+after94.641ms have overlapping ranges and warmup drift; this is not an end-to-end
+speedup or timeout repair claim. Focused genuine rollback/commit2PASS33assertions
+retain20s limits. Their19.22s/16.08s timings overlap static development work and
+are behavioral checks only. Final reviewed canonical checks pass16tests with
+160assertions, strict169-file TypeScript and configured lint pass. A separate
+bounded native JSC profile observes rollback1PASS10assertions/15.56s and12871
+samples, including2075fsyncSync and531canonicalObject samples. Retain raw stacks
+and logs under recovery-profile-v1101; sampling time is not benchmark time and
+cross-run sample changes do not establish an end-to-end speedup. A matching
+SDK/image/stage remains pending for the changed Source. Host test bytes and the
+reviewed two-file resource topology are unchanged, so no new pin is invented.
+No unchanged full stage is launched merely to retry the failure.
 
 ### Measured same-thread retry and guarded plan refresh
 

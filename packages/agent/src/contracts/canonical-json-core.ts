@@ -227,12 +227,7 @@ function canonicalObject(
     const descriptor = canonicalDescriptor(target, key, childPointer);
     budget.bytes += Buffer.byteLength(String(key), 'utf8');
     reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${childPointer}`);
-    Object.defineProperty(image, key, {
-      value: assertValue(descriptor.value, childPointer, seen, depth + 1, budget, maxNodes),
-      enumerable: true,
-      configurable: true,
-      writable: true,
-    });
+    image[key as string] = assertValue(descriptor.value, childPointer, seen, depth + 1, budget, maxNodes);
   }
   seen.delete(target);
   return image;

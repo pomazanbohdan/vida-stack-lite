@@ -117,8 +117,23 @@ describe('canonical JSON core contract', () => {
     expect(expectReturned(() => canonicalJson(input))).toBe('{"value":1}');
     expect(valueGets).toBe(0);
     expect(hookCalls).toBe(0);
-    const nullRecord = Object.assign(Object.create(null) as Record<string, unknown>, { ['__proto__']: { safe: true } });
-    expect(expectReturned(() => canonicalJson(nullRecord))).toBe('{"__proto__":{"safe":true}}');
+    const nullRecord = Object.assign(Object.create(null) as Record<string, unknown>, {
+      ['__proto__']: { safe: true },
+      constructor: 7,
+      toJSON: { data: true },
+    });
+    const nullRecordJson = '{"__proto__":{"safe":true},"constructor":7,"toJSON":{"data":true}}';
+    expect(expectReturned(() => canonicalJson(nullRecord))).toBe(nullRecordJson);
+    const capturedRecord = canonicalJsonImageWithNodeLimit(nullRecord, 0, MAX_CANONICAL_NODES);
+    expect(capturedRecord.json).toBe(nullRecordJson);
+    expect(Object.getPrototypeOf(capturedRecord.image)).toBeNull();
+    for (const [key, value] of Object.entries(nullRecord))
+      expect(Object.getOwnPropertyDescriptor(capturedRecord.image, key)).toEqual({
+        value,
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      });
     const shared = { leaf: 1 };
     expect(expectReturned(() => canonicalJson([shared, shared]))).toBe('[{"leaf":1},{"leaf":1}]');
     const capturedArray = expectReturned(() => canonicalJsonImageWithNodeLimit([1], 0, MAX_CANONICAL_NODES));
