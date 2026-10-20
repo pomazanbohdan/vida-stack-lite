@@ -234,6 +234,13 @@ around127s and no safe single change supporting60s. Keep current300s and one
 contour; investigate genuine setup/public-child costs without dropping states
 or activating unqualified parallelism. Continue native history/recovery cases
 from the current report-only inventory, with actual receipt producers.
+The next native history read is added to the existing retired-source case after
+real owner retirement, before Source mutation, without another fixture/kernel/
+reservation/CLI. Actual-file oracle plus invalid/missing attempt, owner/root,
+path and nesting denials preserve unchanged Host/Journal; focused38assertions
+pass8.645s under unchanged composite allowance, strict181/scoped lint pass.
+Finish final blind review/pin control, publish, then one changed-input stage;
+numeric counters remain2711562 until a new complete report is accepted.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

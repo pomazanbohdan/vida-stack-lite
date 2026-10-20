@@ -655,6 +655,40 @@ is justified. Continue using the239-function existing inventory in the same open
 contour; the next dependency-ready native history/recovery packet must preserve
 genuine receipt producers rather than seed state to reach a callback.
 
+### Native historical Source read without another fixture
+
+The next packet extends the existing stopped-source retired-capture success case
+immediately after the actual retireInterruptedSourceOwner producer and before
+retiredCaptureInput changes Source. It invokes snapshotHistoricalTaskSourceSources
+with the original owner, current Work fingerprint scope and real release/Journal.
+Expected entries, lengths and SHA/digest come from current physical file bytes,
+not the same Source snapshot builder. Denials cover invalid/missing attempt,
+foreign owner/repository, changed paths and nested transaction; both Host rows
+and Journal stay unchanged. The original capture fault/rollback/public CLI and
+exact retry checks remain. No new root, bridge, kernel, reservation or public
+call is prepared. No archived UNKNOWN or consumer effect is replayed.
+
+Bounded independent plan /tmp/vida-native-retired-history-next-plan.md validates
+that the actual ledger release authorizes this read-only path and leaves later
+grant callbacks as a separate GAP needing real later writers. The focused case
+passes38assertions in8644.81ms (command9.83s), under its unchanged existing60s
+composite allowance. This is9new assertions without another expensive fixture;
+it is not a causal speedup or complete coverage observation. Strict181files and
+scoped lint pass. A fresh blind Luna implementation review
+(/root/blind_historical_source_case_final, no history) reports no concrete
+correctness/resource issue, confirming the independent file oracle, guard
+placement and unchanged Host/Journal. It ran no tools/tests and grants no numeric
+qualification. Final shard control passes10assertions; pinned strict181files,
+documentation and diff checks pass before ordinary publication hooks.
+
+Root's fresh resource review retains the same stopped-source child namespace,
+private TMPDIR/canonical DB and reviewed no-CAS package reads. Only existing
+read-only native calls are added; no process/shared writer/clock/worker/budget
+changes. Stopped-source pin88c2abd9572db080a96875b47d9792a8bc3d67a2c073d8a5e4985de20678a4b3
+binds the final formatted test; Host pinab5c2cff, exact selection/provider/caller
+checks and serial fallback remain. Finish pin/control/review and normal
+publication, then one changed-input stage before counting gains.
+
 ### Complete-run60-second target assessment
 
 The owner asks whether complete testing can reach60s. This is a desired target,

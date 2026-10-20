@@ -1169,8 +1169,59 @@ test(
   async () => {
     const f = await fixture();
     try {
-      const retirement = f.retireOwner(),
-        c = f.retiredCaptureInput(retirement),
+      const retirement = f.retireOwner();
+      const historicalRead = {
+        identity: f.identity,
+        threadId: f.input.nativeSessionHandle,
+        attempt: 1,
+        canonicalHostRoot: f.root,
+        paths: f.source.entries.map((entry) => entry.path),
+      };
+      const historicalBefore = f.inspect();
+      const journalBeforeRead = currentJournal(f.ledger, 'stopped', 1);
+      const expectedSource = {
+        schema: 'ScopedSourceSnapshot/v1' as const,
+        entries: [...historicalRead.paths].sort().map((file) => {
+          const bytes = readFileSync(path.join(f.root, file));
+          return {
+            path: file,
+            exists: true,
+            bytes: bytes.length,
+            sha256: createHash('sha256').update(bytes).digest('hex'),
+          };
+        }),
+      };
+      expect(f.store.snapshotHistoricalTaskSourceSources(historicalRead)).toEqual({
+        ...expectedSource,
+        digest: canonicalJsonDigest(expectedSource),
+      });
+      expect(() => f.store.snapshotHistoricalTaskSourceSources({ ...historicalRead, attempt: 0 })).toThrow(
+        'historical task source read context is invalid',
+      );
+      expect(() => f.store.snapshotHistoricalTaskSourceSources({ ...historicalRead, attempt: 2 })).toThrow(
+        'historical task source original journal is missing or changed',
+      );
+      expect(() =>
+        f.store.snapshotHistoricalTaskSourceSources({ ...historicalRead, threadId: 'foreign-owner' }),
+      ).toThrow('historical task source original owner differs');
+      expect(() => f.store.snapshotHistoricalTaskSourceSources({ ...historicalRead, paths: [] })).toThrow(
+        'historical task source paths differ from original fingerprint scope',
+      );
+      expect(() =>
+        f.store.snapshotHistoricalTaskSourceSources({
+          ...historicalRead,
+          identity: { ...f.identity, repository_id: 'foreign-historical-repository' },
+        }),
+      ).toThrow('historical task source canonical Host root differs');
+      expect(() =>
+        f.ledger
+          .sessionProducerBinding()
+          .database.transaction(() => f.store.snapshotHistoricalTaskSourceSources(historicalRead))
+          .deferred(),
+      ).toThrow('historical task source read context is invalid');
+      expect(f.inspect()).toEqual(historicalBefore);
+      expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(journalBeforeRead);
+      const c = f.retiredCaptureInput(retirement),
         before = f.inspect(),
         ddl = f.ddl(),
         journalBefore = currentJournal(f.ledger, 'stopped', 1),
