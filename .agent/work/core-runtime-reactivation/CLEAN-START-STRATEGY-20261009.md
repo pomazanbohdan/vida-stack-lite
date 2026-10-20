@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `7845f62bec2670b4bc185446d8555fa7209183d2`, run `243b0f18-7992-46ec-9c07-0c9b506f519c`: F1073/1129, L4715/4970, S4994/5300 and B4988/5642. It records305PASS/0FAIL,3771assertions in143.701seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is56missing functions under28owners, all with exact retained map coordinates, plus654 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `df3d595179b1386d07e84ed8859ebde462ba7c97`, run `6d0c4827-8406-47c1-bde4-37ce1f0d1a4b`: F1078/1129, L4730/4970, S5010/5300 and B5000/5642. It records305PASS/0FAIL,3790assertions in142.820seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is51missing functions under24owners, all with exact retained map coordinates, plus642 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -97,8 +97,13 @@ storage cases pass, but no report counters are promoted. Keep failure attempt110
 and its original custody. Resolve setup variance in the same contour, preserving
 the genuine lineage and every live freshness/CAS boundary. A bounded blind review
 finds no safe preparation/bridge deletion. The canonical-image owner has a small
-equivalent null-prototype data-store simplification under focused verification;
-it does not yet establish timeout repair. WORK owns exact diagnostic outcomes.
+equivalent null-prototype data-store simplification, with canonical16PASS160assertions,
+strict169-file TypeScript and genuine recovery2PASS33assertions. The matching
+df3d595 stage passes with the same20s case limits and measures all five planned
+storage/history callbacks, +5F/+15L/+16S/+12B. It resolves the current execution
+failure; setup variance and different-input runs do not prove permanent flake
+repair or a controlled speedup. Continue from51missing functions/642branch arms
+in this same contour. WORK owns exact diagnostic outcomes.
 
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
@@ -115,7 +120,7 @@ The local report-only planner is retained diagnostic tooling, not published Sour
 After observed native process/group/capture closure, retire only the exact
 qualified private regenerable cache. Reuse shared dependency inventory under
 the no-install fence and preserve every other scratch/evidence byte. The latest
-archive and retirement manifest in WORK leave3169964032bytes above the unchanged
+archive and retirement manifest in WORK leave2971418624bytes above the unchanged
 2GiB durable floor. Earlier comprehensive cleanup and qualifier namespace-guard
 proof remain in Git and retained diagnostics; do not repeat broad scans/cleanup.
 Unknown backup/provision/proposal roots remain excluded. Bootstrap now requires
