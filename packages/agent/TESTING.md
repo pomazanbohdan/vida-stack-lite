@@ -1897,6 +1897,12 @@ or repeat the full stage for each assertion. Reuse read-only analysis while Root
 implements; keep extra writers and other contours closed. Projected coverage gains
 remain hypotheses until the complete report records them.
 
+Check reader preconditions before choosing an unchanged-state oracle. Ordinary
+Host/Journal readers must still deny a held maintenance fence. Use exact native
+row/schema beforeimages within that fenced fixture, and check supported public
+behavior after release. An absent Work need not mean a Journal API returns null.
+Retain every failed fixture before correcting an invalid test assumption.
+
 The owner's 2026-10-19 order is sequential exact F/L/S/B coverage: close one
 contour to F/L/S/B100 before opening the next. During this phase run focused
 repairs and complete coverage for the active contour only. Exact F/L/S/B means

@@ -35,6 +35,11 @@ historical-root/report integrity is measured. Next, select the remaining reachab
 Host path from the updated inventory; a genuine configured-frontier lookup requires
 its own compatible fixture, not a fabricated historical-terminal receipt.
 
+Current checked packet uses one isolated native SQLite legacy TaskSource projection
+fixture for fence/refusal/schema/backfill/rollback/retry. Review all acquired roots
+and public-reader preconditions before Source publication, so a late fixture-only
+correction does not form another avoidable SDK artifact before measurement.
+
 Inspect the current report and genuine producer prerequisites. Make the causal correction with maintained fixtures and preserve authorization, CAS, exact assertion identities, freshness checks and UNKNOWN handling. Run static checks and affected cases. Complete review and normal Source publication. Form matching SDK inputs only when selected tests require them. Then form one immutable image and run one complete coverage stage. Observe process, group, capture and input closure. Preserve scratch and let the maintained projection import the attributable report. Reuse unchanged evidence only under its original bindings.
 
 Run focused checks for changed behavior and callers. Do not repeat an unchanged full suite. Do not run suites during package formation or installation. Do not replay archived databases, attempts, leases, issued effects or UNKNOWN operations. Preserve stopped-source custody and every original FAIL, TIMEOUT and UNKNOWN outcome. A correction creates new evidence and cannot upgrade an old result. Native Runtime qualification is deferred; this cycle performs no loader/database cutover or consumer effect.

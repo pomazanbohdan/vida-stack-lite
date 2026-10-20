@@ -15,6 +15,75 @@ numeric producer.
 
 ### Sequential coverage observations and active repair
 
+#### Current three-hour audit and projection-repair packet
+
+The maintained receipts for b2492fb,95e7ff0,4812447 and e2a01db record complete
+stages153.589s/141.587s/160.553s/168.026s, with exit0, complete capture and closed
+groups. Each operation independently stays BLOCKED/nonexact. From b2492fb to
+e2a01db, covered counts improve938→964F,4008→4148L,4259→4408S,4281→4562B;
+L/S denominators grow by2from real product repair, with unchanged selection.
+Tests grow296→298and assertions2786→2901. These differing-input observations
+prove repairs and coverage gains, not a causal speedup or a benchmark average.
+
+Script audit: the inspected recent diff in packages/agent/tooling,tooling/agent
+and .githooks changes only reviewed test-file digests in run-bun-coverage.ts.
+The earlier bounded contour-stage/progress/capture audit remains applicable to
+those unchanged owners; no new launcher/capture defect is confirmed. Reuse its
+retained /tmp/vida-three-hour-script-audit.md instead of another full scan. Stage
+output already publishes the attributable report, imports progress and separates
+terminal execution from nonexact BLOCKED. Read the concise outcome and reuse its
+report inventory once, rather than repeatedly dumping instrumented maps. Capture
+commands must return the producer's exit status after printing a log tail; dependent
+format/type/test commands stop on failure. Two failed patch anchors and a wrong
+relative diagnostic-copy path in this packet caused extra tool calls; no Source
+change from those failed operations is claimed. Use verified current anchors and
+absolute evidence destinations, keeping repository and package working directories
+explicit. They are execution mistakes, not product or numeric failures.
+
+Execution alternatives: a full stage per small assertion repeatedly pays the
+observed141–168s stage cost; a cohesive matrix shares setup and ends with one
+complete stage; unrelated concurrent writers violate the active single-contour
+contract. Keep Root as writer and numeric owner, with bounded blind Luna review
+overlapping implementation. The current two-file supervisor records160.78s Host
+and142.72s stopped-source children inside168.026s total, showing observed overlap;
+there is no matching serial benchmark or evidence to raise worker count. Review
+all acquired-root custody before publishing so a late test-only change does not
+trigger another avoidable SDK formation. Do not omit the subsequent final numeric
+run or weaken assertions, timeouts, frozen budgets or mutation classification.
+
+Current implementation adds one storage-only native SQLite TaskSource projection
+case. Its typed legacy prepared row grants no admission, authorization or Git
+effect. The existing trusted unit maintenance verifier acquires a native fence.
+The case checks foreign/nested denial, orphan action, malformed schema retention,
+real BEFORE UPDATE abort with transactional ALTER/backfill/repair-row rollback,
+healthy same-fence retry, exact preserved operation bytes, digest-bound repair
+receipt, corrupted-retry denial and exact CAS restoration, then native release
+and stale-receipt refusal. Ordinary Host/Journal reads remain fenced; exact SQL
+beforeimages and absent Journal storage establish unchanged state while held.
+The first two targeted FAILs exposed test-oracle mistakes, not product defects:
+reading under a held fence and expecting a missing Work's Journal to return null.
+Both logs and original roots are retained. Final checks pass2cases/65assertions
+in4.28s, including the exact single-row setup and shard pin control. The new
+55assertion repair case takes214.56ms under default5s. Strict142files and scoped
+type-aware lint pass. The reviewed Host test/resource pin is
+c7497654d5040000ae19ae4cb087f0705c5c8a6c8701b320988d6c9c7b0fc870;
+two isolated children and serial cases retain their existing resources and limits.
+Blind /tmp/vida-task-source-projection-plan.md reports no false-pass or custody
+blocker; its copy is retained in the existing focused-blockers directory. Static
+checks initially found3test typing errors; corrected strict142files pass. This
+packet is not measured yet and does not change the complete counters below.
+
+Resource reuse: latest observed overlay2733117440free bytes remains585633792above
+the unchanged2147483648floor; scratch tmpfs was7268278272free before retained
+archival. Checkout and durable evidence share that overlay. Reuse the existing
+inventory and whole lossless compressed archives; no broad du/scan/hash or cleanup
+is launched. No new verified regenerable candidate with closed ownership has been
+established, so original Source, images, SDK, DBs, receipts and FAIL/UNKNOWN remain
+protected. No current resource GAP is observed. Do not move durable evidence to
+tmpfs, delete an unknown directory or reinterpret old custody to reclaim space.
+
+#### Last complete coverage observation
+
 The TaskSource history/report packet is measured on e2a01db, run
 7b73f43b-94d9-4ef8-a447-56004a36fa41: F964/1129,L4148/4970,S4408/5300,
 B4562/5642,298PASS/0FAIL,2901assertions,168.026s. It remains nonexact/BLOCKED.

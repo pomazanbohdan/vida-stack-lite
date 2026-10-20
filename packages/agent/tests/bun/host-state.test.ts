@@ -8,7 +8,11 @@ import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
 import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
-import { createTaskSourceBinding, type TaskSourceBindingReport } from '../../src/orchestration/task-source-binding.ts';
+import {
+  createTaskSourceBinding,
+  type TaskSourceBindingReport,
+  type TaskSourceBindingRequest,
+} from '../../src/orchestration/task-source-binding.ts';
 import {
   continuationFixture,
   continuationFixtureRepositoryRoot,
@@ -5749,6 +5753,195 @@ const maintenanceStore = (handle = database) =>
   new HostStateStore(handle, workspace, undefined, undefined, undefined, maintenanceVerifier);
 const workingStore = (handle = database) =>
   new HostStateStore(handle, workspace, undefined, undefined, undefined, maintenanceVerifier, root);
+
+test('TaskSource projection repair rolls back native faults and retries only its exact held fence and rows', async () => {
+  const deadline = performance.now() + 5_000;
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const checked = maintenanceStore();
+  // Storage-only legacy fixture: this row grants no admission and executes no Git action.
+  const request: TaskSourceBindingRequest = {
+    schema: 'TaskSourceBindingRequest/v1',
+    operation: 'propose-create',
+    operation_id: 'legacy-projection-operation',
+    request_id: 'legacy-projection-request',
+    branch_ref: 'refs/heads/codex/projection',
+    expected_host: {
+      work: { revision: 1, digest: '1'.repeat(64) },
+      ledger: { revision: 1, digest: '2'.repeat(64) },
+      journal: { attempt: 1, version: { revision: 1, digest: '3'.repeat(64) } },
+      maintenance_generation: 0,
+    },
+    work_id: 'legacy-projected-work',
+    attempt: 1,
+    thread_id: 'legacy-projection-owner',
+    repository_id: identity.repository_id,
+    project_ids: identity.project_ids,
+    canonical_host_root: root,
+    source_root: path.join(root, 'task-source'),
+    config_digest: '4'.repeat(64),
+    project_context_digest: '5'.repeat(64),
+  };
+  const operation = {
+    schema: 'TaskSourceBindingOperation/v1',
+    status: 'prepared',
+    operation_id: request.operation_id,
+    request_id: request.request_id,
+    revision: 1,
+    request_digest: canonicalJsonDigest(request),
+    request,
+    authority: { source_authorization_sha256: '6'.repeat(64), source_scope_digest: '7'.repeat(64) },
+    created_at: new Date().toISOString(),
+  };
+  database.exec(
+    'CREATE TABLE agent_host_task_source_binding_operation (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,request_id TEXT NOT NULL,request_digest TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id),UNIQUE(workspace_id,request_id))',
+  );
+  database
+    .query('INSERT INTO agent_host_task_source_binding_operation VALUES(?,?,?,?,?,?,?)')
+    .run(
+      workspace,
+      request.operation_id,
+      request.request_id,
+      operation.request_digest,
+      operation.revision,
+      canonicalJson(operation),
+      canonicalJsonDigest(operation),
+    );
+  const before = database
+    .query<Record<string, SQLQueryBindings>, []>('SELECT * FROM agent_host_task_source_binding_operation')
+    .all();
+  expect(before).toHaveLength(1);
+  const receipt = checked.acquireMaintenanceFence(maintenanceBinding());
+  const hostRows = () => database.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all();
+  const journalStorage = () =>
+    database.query("SELECT name,sql FROM sqlite_master WHERE name='agent_host_mastra_session_ledger'").all();
+  const hostBefore = hostRows();
+  const journalBefore = journalStorage();
+  expect(journalBefore).toEqual([]);
+  expect(() => checked.readHostStateSnapshot(identity)).toThrow('working access blocked by maintenance fence');
+  expect(() => checked.readWorkSessionJournal(identity)).toThrow('working access blocked by maintenance fence');
+  const columns = () =>
+    database
+      .query<{ name: string }, []>('PRAGMA table_info(agent_host_task_source_binding_operation)')
+      .all()
+      .map((column) => column.name);
+  const assertRolledBack = () => {
+    expect(database.inTransaction).toBe(false);
+    expect(columns()).not.toContain('work_id');
+    expect(database.query('SELECT * FROM agent_host_task_source_binding_operation').all()).toEqual(before);
+    expect(
+      database.query("SELECT name FROM sqlite_master WHERE name='agent_host_task_source_projection_repair'").get(),
+    ).toBeNull();
+    expect(hostRows()).toEqual(hostBefore);
+    expect(journalStorage()).toEqual(journalBefore);
+    expect(checked.readMaintenanceFence()).toEqual(receipt.fence);
+  };
+  expect(() => checked.repairTaskSourceBindingWorkProjection({ ...receipt, token: randomUUID() })).toThrow(
+    'maintenance fence receipt stale or forged',
+  );
+  expect(() => database.transaction(() => checked.repairTaskSourceBindingWorkProjection(receipt)).deferred()).toThrow(
+    'nested task source projection repair forbidden',
+  );
+  assertRolledBack();
+  database.exec('CREATE TABLE agent_host_task_source_binding_action (workspace_id TEXT,operation_id TEXT)');
+  database.query('INSERT INTO agent_host_task_source_binding_action VALUES(?,?)').run(workspace, 'orphan');
+  expect(() => checked.repairTaskSourceBindingWorkProjection(receipt)).toThrow(
+    'orphan task source action prevents projection repair',
+  );
+  assertRolledBack();
+  database.exec('DROP TABLE agent_host_task_source_binding_action');
+  database.exec('CREATE TABLE agent_host_task_source_projection_repair (workspace_id TEXT)');
+  const malformedSchema = database.query('PRAGMA table_info(agent_host_task_source_projection_repair)').all();
+  expect(() => checked.repairTaskSourceBindingWorkProjection(receipt)).toThrow(
+    'task source projection repair table schema differs',
+  );
+  expect(columns()).not.toContain('work_id');
+  expect(database.query('SELECT * FROM agent_host_task_source_binding_operation').all()).toEqual(before);
+  expect(database.query('PRAGMA table_info(agent_host_task_source_projection_repair)').all()).toEqual(malformedSchema);
+  expect(hostRows()).toEqual(hostBefore);
+  expect(journalStorage()).toEqual(journalBefore);
+  expect(checked.readMaintenanceFence()).toEqual(receipt.fence);
+  database.exec('DROP TABLE agent_host_task_source_projection_repair');
+  database.exec(
+    "CREATE TEMP TRIGGER projection_fault BEFORE UPDATE ON agent_host_task_source_binding_operation BEGIN SELECT RAISE(ABORT,'controlled projection backfill fault'); END",
+  );
+  expect(() => checked.repairTaskSourceBindingWorkProjection(receipt)).toThrow('controlled projection backfill fault');
+  assertRolledBack();
+  database.exec('DROP TRIGGER projection_fault');
+  if (performance.now() >= deadline) throw new Error('TaskSource projection denials exhausted the case deadline.');
+  const repaired = checked.repairTaskSourceBindingWorkProjection(receipt);
+  if (typeof repaired.identity_digest !== 'string' || typeof repaired.rows_digest !== 'string')
+    throw new Error('Expected projection repair identity and rows digests.');
+  expect(repaired).toMatchObject({
+    schema: 'TaskSourceBindingWorkProjectionRepair/v1',
+    workspace_id: workspace,
+    operation_id: receipt.fence.binding.operation_id,
+    maintenance_generation: receipt.fence.generation,
+    maintenance_revision: receipt.fence.revision,
+  });
+  expect(columns()).toContain('work_id');
+  expect(database.query('SELECT * FROM agent_host_task_source_binding_operation').all()).toEqual(
+    before.map((row) => ({ ...row, work_id: request.work_id })),
+  );
+  const repairRow = requiredValue(
+    database
+      .query<
+        {
+          maintenance_generation: number;
+          maintenance_revision: number;
+          identity_digest: string;
+          rows_digest: string;
+          payload: string;
+          digest: string;
+        },
+        [string, string]
+      >(
+        'SELECT maintenance_generation,maintenance_revision,identity_digest,rows_digest,payload,digest FROM agent_host_task_source_projection_repair WHERE workspace_id=? AND operation_id=?',
+      )
+      .get(workspace, receipt.fence.binding.operation_id),
+    'projection repair receipt',
+  );
+  expect(repairRow).toEqual({
+    maintenance_generation: receipt.fence.generation,
+    maintenance_revision: receipt.fence.revision,
+    identity_digest: repaired.identity_digest,
+    rows_digest: repaired.rows_digest,
+    payload: canonicalJson(repaired),
+    digest: canonicalJsonDigest(repaired),
+  });
+  expect(checked.repairTaskSourceBindingWorkProjection(receipt)).toEqual(repaired);
+  const corruptDigest = '0'.repeat(64);
+  const updateDigest = database.query(
+    'UPDATE agent_host_task_source_projection_repair SET digest=? WHERE workspace_id=? AND operation_id=? AND digest=?',
+  );
+  expect(updateDigest.run(corruptDigest, workspace, receipt.fence.binding.operation_id, repairRow.digest).changes).toBe(
+    1,
+  );
+  try {
+    expect(() => checked.repairTaskSourceBindingWorkProjection(receipt)).toThrow(
+      'task source projection repair retry differs or its afterimage changed',
+    );
+    expect(hostRows()).toEqual(hostBefore);
+    expect(journalStorage()).toEqual(journalBefore);
+    expect(checked.readMaintenanceFence()).toEqual(receipt.fence);
+  } finally {
+    expect(
+      updateDigest.run(repairRow.digest, workspace, receipt.fence.binding.operation_id, corruptDigest).changes,
+    ).toBe(1);
+  }
+  expect(checked.repairTaskSourceBindingWorkProjection(receipt)).toEqual(repaired);
+  expect(hostRows()).toEqual(hostBefore);
+  expect(journalStorage()).toEqual(journalBefore);
+  const released = await checked.releaseMaintenanceFence(receipt);
+  expect(released.status).toBe('released');
+  expect(checked.readHostStateSnapshot(identity).work).toBeNull();
+  expect(() => checked.readWorkSessionJournal(identity)).toThrow('journal work is unavailable');
+  expect(() => checked.repairTaskSourceBindingWorkProjection(receipt)).toThrow(
+    'maintenance fence receipt stale or forged',
+  );
+  expect(checked.readMaintenanceFence()).toEqual(released);
+  if (performance.now() >= deadline) throw new Error('TaskSource projection fixture exhausted its case deadline.');
+  preserveHostFixtureRoot = false;
+});
 
 test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
   'consumer migration wrapper %s preserves private workflow bytes and exact operation identity',
