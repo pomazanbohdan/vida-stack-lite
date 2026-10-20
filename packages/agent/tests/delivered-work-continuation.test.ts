@@ -1,3 +1,13 @@
+import {
+  mutableCoordinationLedger,
+  mutableFrontierFixture,
+  useNormalConfigEndpointProof,
+  normalConfigEndpointProof,
+  seedFrontierHostFixture,
+  configuredFrontierRepairHostRoot,
+  type MutableCoordinationClaim,
+  type MutableCoordinationLedger,
+} from './helpers/configured-frontier-host-fixture.ts';
 import { prewriterProjectionFixture, configuredFrontierRepairFixture } from './helpers/configured-frontier-fixture.ts';
 import { afterEach, test, expect, spyOn } from 'bun:test';
 import { Database } from 'bun:sqlite';
@@ -15,9 +25,7 @@ import path from 'node:path';
 import { runRuntimeCodeRebind, assertCommittedSourceChanges } from '../bin/runtime-code-rebind.ts';
 import type { AgentRuntimeConfig, WorkItemSelection } from '../src/config/runtime-config.ts';
 import type {
-  CoordinationClaim,
   CoordinationLedger,
-  CoordinationTicket,
   ContractReference,
   StateVersion,
   WorkIdentity,
@@ -33,11 +41,7 @@ import type { MastraSessionLedgerState } from '../src/orchestration/persistent-s
 import type { SessionBridgeObservation, SessionBridgeSnapshot } from '../src/orchestration/mastra-session-bridge.ts';
 import type { SessionHandoffContext } from '../src/orchestration/session-handoff.ts';
 import type { ConfiguredFrontierReceipt } from '../src/orchestration/delivered-work-continuation-repair.ts';
-import type {
-  ConfiguredRuntimeEndpointTransition,
-  DeliveredWorkContinuationRequest,
-  ClosedConfigRebindProof,
-} from '../src/orchestration/delivered-work-continuation.ts';
+import type { DeliveredWorkContinuationRequest } from '../src/orchestration/delivered-work-continuation.ts';
 import {
   canonicalJson,
   canonicalJsonAtDepth,
@@ -53,14 +57,12 @@ import {
 import { validateLifecycleAggregate } from '../src/lifecycle/lifecycle-state.ts';
 import {
   runtimeConfigDigest,
-  loadRuntimeConfig,
   runtimePackageAccess,
   readRuntimePackageResourceBytes,
   runtimePackageCodePaths,
 } from '../src/config/runtime-config.ts';
 import * as runtimeConfigModule from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
-import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import {
   parseSessionBridgeObservation,
   parseSessionBridgeRequest,
@@ -85,72 +87,6 @@ import { run as runAgent } from '../bin/run.ts';
 import { acceptedContractSourceRevision } from '../src/orchestration/admitted-development-packet.ts';
 import { expectHistorySnapshotAfterOwner } from './helpers/ledger-cache-observer.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
-
-type MutableCoordinationTicket = {
-  -readonly [
-    Key in keyof Omit<
-      CoordinationTicket,
-      'claim_ids' | 'exclusive_resources' | 'active_resources' | 'blocked_resources'
-    >
-  ]: CoordinationTicket[Key];
-} & {
-  claim_ids: string[];
-  exclusive_resources: string[];
-  active_resources: string[];
-  blocked_resources: string[];
-};
-type MutableCoordinationClaim = {
-  -readonly [Key in keyof Omit<CoordinationClaim, 'resources'>]: CoordinationClaim[Key];
-} & { resources: string[] };
-type MutableCoordinationLedger = Omit<
-  CoordinationLedger,
-  'revision' | 'next_sequence' | 'tickets' | 'claims' | 'operations'
-> & {
-  revision: number;
-  next_sequence: number;
-  tickets: MutableCoordinationTicket[];
-  claims: MutableCoordinationClaim[];
-  operations: Record<string, unknown>[];
-};
-type PrewriterConfiguredFrontierFixture = Omit<
-  ReturnType<typeof configuredFrontierRepairFixture>,
-  'prewriterBinding'
-> & {
-  prewriterBinding: Parameters<typeof continuationProjection.projectConfiguredPrewriterContinuationRequests>[0];
-};
-
-function mutableCoordinationLedger(ledger: CoordinationLedger): MutableCoordinationLedger {
-  return {
-    ...ledger,
-    tickets: ledger.tickets.map((ticket) => ({
-      ...ticket,
-      claim_ids: [...ticket.claim_ids],
-      exclusive_resources: [...ticket.exclusive_resources],
-      active_resources: [...ticket.active_resources],
-      blocked_resources: [...ticket.blocked_resources],
-    })),
-    claims: ledger.claims.map((claim) => ({ ...claim, resources: [...claim.resources] })),
-    operations: ledger.operations.map((operation) => ({ ...operation })),
-  };
-}
-
-/** Copy the synthetic builder's current v1 receipt into the writable shape needed by these test mutations. */
-function mutableFrontierFixture(fixture: PrewriterConfiguredFrontierFixture) {
-  const priorLedger = mutableCoordinationLedger(fixture.receipt.prior_ledger),
-    successorLedger = mutableCoordinationLedger(fixture.receipt.successor_ledger);
-  if (fixture.receipt.prior_ledger.operations === fixture.receipt.successor_ledger.operations)
-    successorLedger.operations = priorLedger.operations;
-  return {
-    ...fixture,
-    receipt: {
-      ...fixture.receipt,
-      prior_ledger: priorLedger,
-      successor_ledger: successorLedger,
-    },
-    current: { ...fixture.current },
-    ...(fixture.prewriterBinding ? { prewriterBinding: fixture.prewriterBinding } : {}),
-  };
-}
 
 function requireFixtureValue<T>(value: T | null | undefined, label: string): T {
   if (value === null || value === undefined) throw new Error(`Fixture is missing ${label}`);
@@ -1605,76 +1541,6 @@ test('configured continuation reads actual regular commit blobs instead of trust
 });
 
 /** Construct parser-contract fixture data only; these values are not native delivery or acceptance evidence. */
-function normalConfigEndpointProof(request: DeliveredWorkContinuationRequest): ClosedConfigRebindProof {
-  const originalTransition = request.sourceTransition.transition;
-  const workspaceId =
-    originalTransition.schema === 'RuntimeConfigDeliveryTransition/v1'
-      ? originalTransition.fence.workspace_id
-      : originalTransition.workspace_id;
-  const transition: ConfiguredRuntimeEndpointTransition = {
-    schema: 'ConfiguredRuntimeEndpointTransition/v1',
-    workspace_id: workspaceId,
-    repository_id: request.identity.repository_id,
-    project_ids: request.identity.project_ids,
-    operation_path: '.agent/work/config-only/runtime-config-rebind-operation.v1.json',
-    target_config_digest: request.targetConfigDigest,
-    target_schema_digest: request.targetSchemaDigest,
-    receipt_path: '.agent/runtime-initialization.v1.json',
-    prior_runtime_code_digest: request.priorRuntimeCodeDigest,
-    target_runtime_code_digest: request.targetRuntimeCodeDigest,
-    parent_manifest_digest: request.parentManifestDigest,
-    successor_manifest_digest: request.successorManifestDigest,
-    parent_manifest_ref: '.tmp/endpoint/parent/manifest.json',
-    successor_manifest_ref: '.tmp/endpoint/current/manifest.json',
-    system_update_operation_id: request.forwardOperationId,
-    system_update_ref: '.tmp/endpoint/system-updated-result.json',
-    system_update_sha256: 'a'.repeat(64),
-    source_correction_ref: '.tmp/endpoint/source-publication.json',
-    source_correction_sha256: 'a'.repeat(64),
-    original_intake_ref: '.agent/work/original/local-session-intake.v1.json',
-    original_intake_sha256: 'a'.repeat(64),
-    operation_sha256: 'a'.repeat(64),
-    operation_plan_digest: 'a'.repeat(64),
-    operation_release_digest: 'a'.repeat(64),
-    target_yaml_sha256: 'a'.repeat(64),
-    receipt_sha256: 'a'.repeat(64),
-    native_self_attestation_digest: 'a'.repeat(64),
-    runtime_accepted: false,
-  };
-  return {
-    status: 'closed_config_rebind_proven',
-    operation_id: 'config-only',
-    baseline_config_digest: request.priorConfigDigest,
-    transition,
-    transition_digest: canonicalJsonDigest(transition),
-    caller_owner_cas_required: true,
-    runtime_accepted: false,
-    writes_host_state: false,
-  };
-}
-
-function useNormalConfigEndpointProof(input: { receipt: ConfiguredFrontierReceipt }) {
-  const receipt = input.receipt;
-  const request = { ...receipt.request, sourceTransition: normalConfigEndpointProof(receipt.request) };
-  input.receipt = {
-    ...receipt,
-    request,
-    request_digest: canonicalJsonDigest(request),
-    authorization: {
-      ...receipt.authorization,
-      request_digest: canonicalJsonDigest(request),
-      transition_digest: request.sourceTransition.transition_digest,
-    },
-    continuation_id: canonicalJsonDigest({
-      identity: request.identity,
-      attempt: request.attempt,
-      action_id: request.action.request.action_id,
-      transition_digest: request.sourceTransition.transition_digest,
-    }),
-  };
-  return input;
-}
-
 test('normal config endpoint receipt repair retains current maintenance CAS without inventing a delivery fence', () => {
   const input = useNormalConfigEndpointProof(mutableFrontierFixture(configuredFrontierRepairFixture(true)));
   expect(() => continuationRepair.validateConfiguredFrontierReceiptStructure(input)).not.toThrow();
@@ -3108,50 +2974,6 @@ function seedQualifiedCodeReaderHop(f: Awaited<ReturnType<typeof continuationFix
   return receipt;
 }
 
-function seedFrontierHostFixture(
-  f: Awaited<ReturnType<typeof continuationFixture>>,
-  input: { receipt: ConfiguredFrontierReceipt },
-  staleDigest = false,
-) {
-  const { receipt } = input;
-  const stateRows: readonly (
-    | readonly ['work', WorkState, StateVersion]
-    | readonly ['ledger', CoordinationLedger, StateVersion]
-  )[] = [
-    ['work', receipt.successor_work, receipt.work_version],
-    ['ledger', receipt.successor_ledger, receipt.ledger_version],
-  ];
-  for (const [kind, state, version] of stateRows)
-    f.db
-      .query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=?')
-      .run(version.revision, canonicalJson(state), version.digest, f.workspaceId, kind);
-  f.db
-    .query(
-      'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?',
-    )
-    .run(
-      receipt.journal_version.revision,
-      canonicalJson(receipt.successor_journal),
-      receipt.journal_version.digest,
-      f.workspaceId,
-      f.identity.work_id,
-      1,
-    );
-  f.db.exec(
-    'CREATE TABLE IF NOT EXISTS agent_host_delivered_work_continuation (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,action_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,action_id))',
-  );
-  f.db
-    .query('INSERT INTO agent_host_delivered_work_continuation VALUES(?,?,?,?,?,?)')
-    .run(
-      f.workspaceId,
-      f.identity.work_id,
-      1,
-      receipt.request.action.request.action_id,
-      canonicalJson(receipt),
-      staleDigest ? '0'.repeat(64) : canonicalJsonDigest(receipt),
-    );
-}
-
 test('Host reads configured-frontier binding history after later Work progress without replaying the old developer', async () => {
   const input = configuredFrontierRepairFixture(true);
   const f = await continuationFixture({ identity: input.receipt.request.identity });
@@ -3173,74 +2995,6 @@ test('Host reads configured-frontier binding history after later Work progress w
     ),
   ).toBe(canonicalJson(input.receipt));
   expect(input.receipt.successor_journal.completed).toEqual(input.receipt.prior_journal.completed);
-});
-
-test('configured continuation lookup exposes the complete prewriter wave and each retained issue status', async () => {
-  const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot();
-  const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
-  mkdirSync(path.dirname(databasePath), { recursive: true });
-  const f = await continuationFixture({
-    root,
-    config,
-    workspaceId,
-    databasePath,
-    repositoryRoot: root,
-    identity: input.receipt.request.identity,
-  });
-  seedFrontierHostFixture(f, input);
-  const before = requireFixtureValue(
-    f.store.readDeliveredWorkContinuation(f.identity, 1),
-    'configured continuation before lookup',
-  );
-  const beforeJournal = requireFixtureValue(before.journal, 'configured continuation journal');
-  const beforeItem = requireFixtureValue(before.item, 'configured continuation item');
-  const beforeLedger = requireFixtureValue(before.snapshot.ledger, 'configured continuation ledger');
-  const beforeTicket = requireFixtureValue(beforeLedger.tickets[0], 'configured continuation ticket');
-  for (const value of [
-    before,
-    before.receipt,
-    before.snapshot,
-    beforeJournal,
-    beforeJournal.state,
-    beforeItem,
-    before.items,
-    before.item_statuses,
-    beforeItem.request,
-    beforeTicket.exclusive_resources,
-  ])
-    expect(Object.isFrozen(value)).toBe(true);
-  expect(before.items.map((item) => item.request.role)).toEqual(['source-planner', 'security-prewriter']);
-  expect(before.item_statuses).toEqual(['unissued', 'unissued']);
-  expect(before.items.some((item) => item.request.action_id === input.receipt.request.action.request.action_id)).toBe(
-    false,
-  );
-  const journal = {
-    ...input.receipt.successor_journal,
-    items: input.receipt.successor_journal.items.map((item, index) =>
-      index === 0 ? { ...item, issue_id: '71e62a38-b44b-470e-b732-81cefbaf983a' } : item,
-    ),
-  };
-  f.db
-    .query(
-      'UPDATE agent_host_mastra_session_ledger SET revision=revision+1,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
-    )
-    .run(canonicalJson(journal), canonicalJsonDigest(journal), workspaceId, f.identity.work_id);
-  const issued = requireFixtureValue(
-    f.store.readDeliveredWorkContinuation(f.identity, 1),
-    'configured continuation issued lookup',
-  );
-  expect(issued.item_statuses).toEqual(['issued', 'unissued']);
-  expect(issued.action_status).toBe('issued');
-  expect(requireFixtureValue(issued.journal, 'issued continuation journal').state.completed).toEqual(
-    input.receipt.prior_journal.completed,
-  );
-  const corrupt = { ...journal, items: [journal.items[0]] };
-  f.db
-    .query(
-      'UPDATE agent_host_mastra_session_ledger SET revision=revision+1,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
-    )
-    .run(canonicalJson(corrupt), canonicalJsonDigest(corrupt), workspaceId, f.identity.work_id);
-  expect(() => f.store.readDeliveredWorkContinuation(f.identity, 1)).toThrow();
 });
 
 async function createOriginalFrontierEngine(
@@ -3756,95 +3510,6 @@ test.each(['delivery', 'normal', 'normal-large', 'normal-history'])(
   },
   30000,
 );
-
-function configuredFrontierRepairHostRoot(
-  proofKind: 'delivery' | 'normal' | 'normal-large' = 'delivery',
-  changedSource = false,
-) {
-  const root = mkdtempSync(path.join(tmpdir(), 'frontier-repair-host-'));
-  trackContinuationFixtureRoot(root);
-  mkdirSync(path.join(root, 'docs', 'agent-instructions'), { recursive: true });
-  const template = readFileSync(
-    path.join(runtimeRoot, 'packages', 'agent', 'templates', 'agent-runtime.config.template.v1.yaml'),
-    'utf8',
-  )
-    .replaceAll('{{REPOSITORY}}', 'vida-agent')
-    .replaceAll('{{PROJECT}}', 'agent')
-    .replaceAll('{{BUNDLE}}', 'vida-agent');
-  writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), template);
-  writeFileSync(path.join(root, 'AGENTS.md'), 'Fixture policy\n');
-  writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Fixture map\n');
-  writeFileSync(path.join(root, 'docs', 'agent-instructions', 'documentation-policy.v1.json'), '{}');
-  const config = loadRuntimeConfig(root),
-    workspaceId = deriveWorkspaceId('vida-agent', root);
-  const input = mutableFrontierFixture(
-    configuredFrontierRepairFixture(true, changedSource, { root, config, workspaceId }, 'implementation'),
-  );
-  const item = {
-    schema: 'WorkItem/v1',
-    id: input.receipt.request.identity.work_id,
-    provider: 'local',
-    provider_type: 'Task',
-    canonical_kind: 'task',
-    intent: 'task_execution',
-    project_id: 'agent',
-    title: 'Repair the original frontier',
-    description: 'Fixture task',
-    risk_flags: ['high'],
-    labels: [],
-  };
-  const intake = {
-    schema: 'VidaLocalSessionIntake/v1',
-    native_session_handle: input.receipt.request.nativeSessionHandle,
-    runtime_code_paths: [config.runtime.bundle + '/bin/run.mjs'],
-    risk: 'high',
-    route: 'R4',
-    change_kind: 'fix',
-    work_item: item,
-  };
-  const intakePath = '.agent/work/work-1/local-session-intake.v1.json',
-    bytes = Buffer.from(canonicalJson(intake));
-  mkdirSync(path.dirname(path.join(root, intakePath)), { recursive: true });
-  writeFileSync(path.join(root, intakePath), bytes);
-  const prior = {
-    ...input.receipt.prior_work,
-    binding: { ...input.receipt.prior_work.binding, work_item_digest: canonicalJsonDigest(item) },
-    artifacts: [
-      {
-        artifact_id: 'local-session-intake',
-        schema: 'VidaLocalSessionIntake/v1',
-        path: intakePath,
-        sha256: createHash('sha256').update(bytes).digest('hex'),
-        stage_id: 'intake',
-        scope_id: 'scope-fixture',
-        source_revision: input.receipt.prior_work.binding.work_source_revision,
-        ac_ids: ['AC-1'],
-      },
-    ],
-  };
-  const successor = {
-    ...input.receipt.successor_work,
-    binding: { ...input.receipt.successor_work.binding, work_item_digest: canonicalJsonDigest(item) },
-    artifacts: prior.artifacts,
-  };
-  const priorVersion = { revision: prior.revision, digest: canonicalJsonDigest(prior) };
-  const successorVersion = { revision: successor.revision, digest: canonicalJsonDigest(successor) };
-  const request = { ...input.receipt.request, expectedWork: priorVersion };
-  input.receipt = {
-    ...input.receipt,
-    prior_work: prior,
-    prior_work_version: priorVersion,
-    successor_work: successor,
-    successor_binding: successor.binding,
-    work_version: successorVersion,
-    request,
-    request_digest: canonicalJsonDigest(request),
-    authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(request) },
-  };
-  input.current = { ...input.current, work: successor, work_version: successorVersion };
-  if (proofKind === 'normal') useNormalConfigEndpointProof(input);
-  return { root, config, workspaceId, input, intakePath };
-}
 
 test('Host keeps nonempty original admission references and intake through a changed Source continuation', async () => {
   const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot('normal', true);

@@ -36,10 +36,13 @@ Host path from the updated inventory; a genuine configured-frontier lookup requi
 its own compatible fixture, not a fabricated historical-terminal receipt.
 
 The measured projection packet uses one isolated native SQLite legacy TaskSource
-fixture for fence/refusal/schema/backfill/rollback/retry. Select the next reachable
-path from the updated inventory in this same contour. Review all acquired roots
-and public-reader preconditions before Source publication, so a late fixture-only
-correction does not form another avoidable SDK artifact before measurement.
+fixture for fence/refusal/schema/backfill/rollback/retry. The next correction reuses
+the existing configured-frontier fixture and moves its lookup case into the active
+Host selection, with shared exact-CAS Journal mutation/restore and acquired-root
+custody. Verify affected existing callers and the reviewed file pin before one
+publication and complete stage. Review all acquired roots and public-reader
+preconditions before Source publication, so a late fixture-only correction does
+not form another avoidable SDK artifact before measurement.
 
 Inspect the current report and genuine producer prerequisites. Make the causal correction with maintained fixtures and preserve authorization, CAS, exact assertion identities, freshness checks and UNKNOWN handling. Run static checks and affected cases. Complete review and normal Source publication. Form matching SDK inputs only when selected tests require them. Then form one immutable image and run one complete coverage stage. Observe process, group, capture and input closure. Preserve scratch and let the maintained projection import the attributable report. Reuse unchanged evidence only under its original bindings.
 

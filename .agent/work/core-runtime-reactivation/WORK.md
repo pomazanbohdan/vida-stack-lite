@@ -15,6 +15,50 @@ numeric producer.
 
 ### Sequential coverage observations and active repair
 
+#### Configured-frontier lookup sharing packet
+
+Root moves the existing case `configured continuation lookup exposes the complete
+prewriter wave and each retained issue status` from
+packages/agent/tests/delivered-work-continuation.test.ts to
+packages/agent/tests/bun/host-state.test.ts. This is one registration, not a second
+suite or a new contour. The original case remains in Git11f00ee and the retained
+frontier-lookup-original-case.txt. Existing mutable ledger, endpoint proof, native
+Host seed and root builders now share
+packages/agent/tests/helpers/configured-frontier-host-fixture.ts; existing public
+callers use that same owner. This changes path-based test identity and does not
+reattribute prior evidence. Its native SQLite seed is a synthetic unit seam,
+not genuine external admission, execution or Runtime acceptance.
+
+The lookup matrix preserves its original17assertions and expands to48: frozen
+snapshots, complete reviewer wave, issued/mixed/reported statuses, exact Journal
+versions, repeated reads, immutable receipt/history, malformed-wave rejection,
+invalid/nested/absent attempts, primary-error identity and stale-beforeimage
+refusal. One helper owns temporary Journal changes with revision/digest/payload
+CAS, protected injection and exact restore; completeOwnedCleanup preserves body
+and cleanup errors. The root is tracked before setup can fail and unresolved
+operations are checked before database closure/unregistration. Expected negative
+controls conservatively retain their root; this is retained control evidence,
+not a newly observed external UNKNOWN or a replay authorization.
+
+Focused Host case passes1test/48assertions in1318.92ms under default5s, versus
+the original17assertion case954.10ms; these differing cases are not a benchmark.
+Three affected public callers pass20assertions in2.22s. Strict148files and scoped
+type-aware lint pass. Final Host plus shard-pin control passes2cases/58assertions
+in3.02s (Host1465.40ms); changed-document links/headings pass. Logs
+frontier-lookup-first.log, frontier-shared-callers.log, frontier-shared-pin-control.log,
+frontier-shared-types-verified.log and frontier-shared-lint-final.log remain in
+packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers. Blind Luna
+review /tmp/vida-frontier-shared-review.md finds no blocker; its retained copy
+and review contract are in that same directory. Root alone integrates and measures.
+
+Reviewed Host SHA0fbf57c9e854b984187feef07de8cd2205c9701407f91170ffaf16fc592721d1
+retains the existing exact two-child selection, serial cases, provider/caller
+namespaces, memory limits, case deadlines and unchanged2147483648admission floor.
+No process, worker, install, global clock or product behavior is added. The prior
+resource inventory and protected originals are reused; no broad scan or cleanup.
+The latest complete numeric result remains4e1be0d below until this packet receives
+its own published Source/SDK/image-bound stage. CRAP/frozen and mutation stay deferred.
+
 #### Current three-hour audit and projection-repair packet
 
 Latest complete observation is4e1be0d2350d71844428dd2ff8da1b1fc892afd6,

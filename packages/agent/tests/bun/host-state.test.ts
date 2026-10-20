@@ -9,6 +9,11 @@ import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-corr
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
 import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
 import {
+  configuredFrontierRepairHostRoot,
+  seedFrontierHostFixture,
+  withFrontierJournalFixture,
+} from '../helpers/configured-frontier-host-fixture.ts';
+import {
   createTaskSourceBinding,
   type TaskSourceBindingReport,
   type TaskSourceBindingRequest,
@@ -2104,6 +2109,186 @@ test('trusted Host continuation atomically retains historical evidence and never
       ],
       primaryFailure,
     );
+  }
+});
+
+test('configured continuation lookup exposes the complete prewriter wave and each retained issue status', async () => {
+  const deadline = performance.now() + 5_000;
+  preserveHostFixtureRoot = 'case failed or timed out';
+  let ownedRoot: string | undefined;
+  let fixture: Awaited<ReturnType<typeof continuationFixture>> | undefined;
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  const retain = () => {
+    if (ownedRoot) retainContinuationFixtureRoot(ownedRoot);
+  };
+  try {
+    const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot('delivery', false, (created) => {
+      ownedRoot = created;
+    });
+    const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+    mkdirSync(path.dirname(databasePath), { recursive: true });
+    const f = await continuationFixture({
+      root,
+      config,
+      workspaceId,
+      databasePath,
+      repositoryRoot: root,
+      identity: input.receipt.request.identity,
+    });
+    fixture = f;
+    if (performance.now() >= deadline) throw new Error('Configured frontier setup exhausted its case deadline.');
+    seedFrontierHostFixture(f, input);
+    const before = requiredValue(
+      f.store.readDeliveredWorkContinuation(f.identity, 1),
+      'configured continuation before lookup',
+    );
+    const beforeJournal = requiredValue(before.journal, 'configured continuation journal');
+    const beforeItem = requiredValue(before.item, 'configured continuation item');
+    const beforeLedger = requiredValue(before.snapshot.ledger, 'configured continuation ledger');
+    const beforeTicket = requiredValue(beforeLedger.tickets[0], 'configured continuation ticket');
+    for (const value of [
+      before,
+      before.receipt,
+      before.snapshot,
+      beforeJournal,
+      beforeJournal.state,
+      beforeItem,
+      before.items,
+      before.item_statuses,
+      beforeItem.request,
+      beforeTicket.exclusive_resources,
+    ])
+      expect(Object.isFrozen(value)).toBe(true);
+    expect(before.items.map((item) => item.request.role)).toEqual(['source-planner', 'security-prewriter']);
+    expect(before.item_statuses).toEqual(['unissued', 'unissued']);
+    expect(before.items.some((item) => item.request.action_id === input.receipt.request.action.request.action_id)).toBe(
+      false,
+    );
+    const row = requiredValue(
+      f.db
+        .query<RevisionPayloadDigestSqlRow, [string, string]>(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=1',
+        )
+        .get(workspaceId, f.identity.work_id),
+      'configured continuation native Journal',
+    );
+    const issueIds = ['71e62a38-b44b-470e-b732-81cefbaf983a', '1727e065-c8d6-4db1-b942-7d22388e7954'];
+    const issuedItems = beforeJournal.state.items.map((item, index) => ({
+      ...item,
+      issue_id: requiredValue(issueIds[index], 'controlled issue id'),
+    }));
+    const summary = 'Controlled persisted reviewer result; no executor effect.';
+    const reportedItems = issuedItems.map((item) => ({
+      ...item,
+      observation: parseSessionBridgeObservation({
+        schema: 'VidaSessionObservation/v1',
+        action_id: item.request.action_id,
+        issue_id: item.issue_id,
+        agent_id: 'fixture:reviewer',
+        tool_call_ref: 'fixture:cooperative-result',
+        status: 'reported_complete',
+        summary,
+        output_digest: canonicalJsonDigest(summary),
+        evidence_refs: ['fixture:review-evidence'],
+      }),
+    }));
+    const firstIssued = requiredValue(issuedItems[0], 'first controlled issued item');
+    const firstReported = requiredValue(reportedItems[0], 'first controlled reported item');
+    const secondUnissued = requiredValue(beforeJournal.state.items[1], 'second unissued item');
+    const states = [
+      { items: [firstIssued, secondUnissued], statuses: ['issued', 'unissued'], action: 'issued' },
+      { items: [firstReported, secondUnissued], statuses: ['reported', 'unissued'], action: 'issued' },
+      { items: reportedItems, statuses: ['reported', 'reported'], action: 'reported' },
+    ] as const;
+    for (const variant of states) {
+      const journal = { ...beforeJournal.state, items: [...variant.items] };
+      withFrontierJournalFixture(f, row, journal, (version) => {
+        const observed = requiredValue(f.store.readDeliveredWorkContinuation(f.identity, 1), 'controlled lookup');
+        expect(observed.item_statuses).toEqual(variant.statuses);
+        expect(observed.action_status).toBe(variant.action);
+        expect(observed.journal).toEqual({ state: journal, version });
+        expect(observed.journal.state.completed).toEqual(input.receipt.prior_journal.completed);
+        expect(observed.receipt).toEqual(before.receipt);
+        expect(observed.snapshot).toEqual(before.snapshot);
+        expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(observed);
+      });
+      expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(before);
+    }
+    const corrupt = { ...beforeJournal.state, items: [firstIssued] };
+    withFrontierJournalFixture(f, row, corrupt, () => {
+      expect(() => f.store.readDeliveredWorkContinuation(f.identity, 1)).toThrow(
+        'configured-frontier lookup current reviewer wave or issue custody differs',
+      );
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before.snapshot);
+    });
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(before);
+    expect(
+      f.db
+        .query<RevisionPayloadDigestSqlRow, [string, string]>(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=1',
+        )
+        .get(workspaceId, f.identity.work_id),
+    ).toEqual(row);
+    expect(() => f.store.readDeliveredWorkContinuation(f.identity, 0)).toThrow(
+      'delivered-work continuation attempt is invalid',
+    );
+    expect(() => f.db.transaction(() => f.store.readDeliveredWorkContinuation(f.identity, 1)).deferred()).toThrow(
+      'nested delivered-work continuation inspection forbidden',
+    );
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 2)).toBeNull();
+    const controlled = { ...beforeJournal.state, items: [firstIssued, secondUnissued] };
+    const failure = new Error('controlled frontier Journal assertion failure');
+    let observedFailure: unknown;
+    try {
+      withFrontierJournalFixture(f, row, controlled, () => {
+        throw failure;
+      });
+    } catch (error) {
+      observedFailure = error;
+    }
+    expect(observedFailure).toBe(failure);
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(before);
+    expect(() =>
+      withFrontierJournalFixture(f, { ...row, revision: row.revision + 1 }, controlled, () => undefined),
+    ).toThrow('Configured frontier Journal fixture beforeimage changed.');
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toEqual(before);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          if (!completed || performance.now() >= deadline) retain();
+        },
+        () => {
+          try {
+            if (fixture && hasUnresolvedFixtureOperations(fixture.db)) retain();
+          } catch (error) {
+            retain();
+            throw error;
+          }
+        },
+        () => {
+          try {
+            fixture?.closeDatabase();
+          } catch (error) {
+            retain();
+            throw error;
+          }
+        },
+        () => {
+          if (!completed || performance.now() >= deadline) retain();
+          cleanupContinuationFixtures();
+          if (performance.now() >= deadline)
+            throw new Error('Configured frontier fixture exhausted its case deadline.');
+        },
+      ],
+      primaryFailure,
+    );
+    if (completed) preserveHostFixtureRoot = false;
   }
 });
 
