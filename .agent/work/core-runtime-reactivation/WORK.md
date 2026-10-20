@@ -17,6 +17,39 @@ numeric producer.
 
 #### Current three-hour audit and projection-repair packet
 
+Latest complete observation is4e1be0d2350d71844428dd2ff8da1b1fc892afd6,
+run3c4d7554-895c-4010-8001-eb771a9f1796: F984/1129,L4219/4970,S4482/5300,
+B4603/5642,299PASS/0FAIL,2956assertions,133.898s. Stage
+/workspace/contour-stage-WxUNBQ, exec73903, exits0 with full capture, closed group,
+unchanged boot/image and complete publication. Operation remains BLOCKED/nonexact;
+historical exact16/45 and unqualified diagnostic maxCC279/entryCRAP2162 remain.
+The new packet gains20F/71L/74S/41B with unchanged denominators. Report-only inventory
+now has145missing functions under56owners. Host283PASS/2703assertions/126.57s and
+stopped16PASS/253assertions/107.73s both terminate successfully. The34.127s difference
+from the prior single observation is not a controlled throughput improvement.
+
+Image /workspace/.vida-quality-inputs/b242795860afbb94be083850e97d3bfbd55e8167/repository
+binds tree63b9b9a30c728d08abbefac534451107ac11b38f,
+input9c94f56faa3b6e67d24e00a59b4b274aae82a4f117a1b144ebcab2c4fce7fbb5,
+manifest SHA372f15919058c33b767a9a2618c8bf99c2bd8d899bc2e96cdd4a8fe2a16d379a.
+SDK CI39403067109 attempt1 succeeds; artifact12256006652,
+vida-sdk-test-inputs-4e1be0d2350d71844428dd2ff8da1b1fc892afd6-39403067109-1,
+ZIP SHA78cd473a86d17b8f10ca97bb6dde614c74ade090b96531d82e48843407c390c6.
+projection-stage.log retains the full outcome in the existing focused-blockers
+directory; maintained projection1070imports the report automatically. The report-only
+inventory is refreshed once, without another AST/Source scan/hash or full suite.
+
+After observed process/group closure, scratch /dev/shm/vida-quality-retained-YFkyL2
+measures180432240apparent bytes. Complete lossless durable archive
+/workspace/vida-functional-retention-WxUNBQ-KUiBUX/scratch.tar.gz is45739294bytes,
+versus207605760in the raw tar stream. Full tar compare passes; SHA
+40be363fc7ed0bab25cd6c70c799a5a2a42244bf1ef30bfe8b780ca874a5e9c1.
+archive.log/scratch.sha256 and unchanged originals remain. The archival capacity
+check observes2656808960free overlay bytes before and2611056640after, leaving
+463572992above the unchanged2147483648floor. Stage scratch admission records
+7268278272free tmpfs bytes. This post-producer capacity check supports retention;
+it is not another broad disk inventory or an evidence-deletion authorization.
+
 The maintained receipts for b2492fb,95e7ff0,4812447 and e2a01db record complete
 stages153.589s/141.587s/160.553s/168.026s, with exit0, complete capture and closed
 groups. Each operation independently stays BLOCKED/nonexact. From b2492fb to
@@ -71,7 +104,8 @@ two isolated children and serial cases retain their existing resources and limit
 Blind /tmp/vida-task-source-projection-plan.md reports no false-pass or custody
 blocker; its copy is retained in the existing focused-blockers directory. Static
 checks initially found3test typing errors; corrected strict142files pass. This
-packet is not measured yet and does not change the complete counters below.
+packet is measured above. Its fixture-only corrections do not establish a new
+product bug, Runtime acceptance or any deferred CRAP/mutation qualification.
 
 Resource reuse: latest observed overlay2733117440free bytes remains585633792above
 the unchanged2147483648floor; scratch tmpfs was7268278272free before retained
@@ -82,7 +116,7 @@ established, so original Source, images, SDK, DBs, receipts and FAIL/UNKNOWN rem
 protected. No current resource GAP is observed. Do not move durable evidence to
 tmpfs, delete an unknown directory or reinterpret old custody to reclaim space.
 
-#### Last complete coverage observation
+#### Preceding complete coverage observation
 
 The TaskSource history/report packet is measured on e2a01db, run
 7b73f43b-94d9-4ef8-a447-56004a36fa41: F964/1129,L4148/4970,S4408/5300,

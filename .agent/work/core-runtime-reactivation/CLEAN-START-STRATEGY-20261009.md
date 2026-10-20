@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation is Source commit `e2a01dbd45a111a8daa9ed2e06e51ef9c0a871ae`, run `7b73f43b-94d9-4ef8-a447-56004a36fa41`: F964/1129, L4148/4970, S4408/5300 and B4562/5642. The run records 298PASS/0FAIL and 2901 assertions in 168.026 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 165 missing functions under 70 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
+The active contour is `bun-host-state`. Its latest complete observation is Source commit `4e1be0d2350d71844428dd2ff8da1b1fc892afd6`, run `3c4d7554-895c-4010-8001-eb771a9f1796`: F984/1129, L4219/4970, S4482/5300 and B4603/5642. The run records 299PASS/0FAIL and 2956 assertions in 133.898 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 145 missing functions under 56 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -35,8 +35,9 @@ historical-root/report integrity is measured. Next, select the remaining reachab
 Host path from the updated inventory; a genuine configured-frontier lookup requires
 its own compatible fixture, not a fabricated historical-terminal receipt.
 
-Current checked packet uses one isolated native SQLite legacy TaskSource projection
-fixture for fence/refusal/schema/backfill/rollback/retry. Review all acquired roots
+The measured projection packet uses one isolated native SQLite legacy TaskSource
+fixture for fence/refusal/schema/backfill/rollback/retry. Select the next reachable
+path from the updated inventory in this same contour. Review all acquired roots
 and public-reader preconditions before Source publication, so a late fixture-only
 correction does not form another avoidable SDK artifact before measurement.
 
