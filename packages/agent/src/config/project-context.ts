@@ -830,7 +830,7 @@ export function loadProjectSetContext(
   const config = currentConfig(root, suppliedConfig);
   const ids = prepareProjectSetContext(config, repositoryId, projectIds, options);
   const profiles = ids.map((projectId) =>
-    resolvePathProfile(root, config, {
+    resolvePathProfileFromCurrentConfig(root, config, {
       processing_scope: 'selected_project',
       repository_id: repositoryId,
       project_id: projectId,

@@ -228,7 +228,91 @@ formatted Host pin is9aa19d9ea74c54c51550b5bf86053ecef7e4b95d2a60579712e1ce1a8b1
 stopped-source pin and stale-selection serial fallback remain unchanged.
 Reuse existing disk admission (6453854208free bytes against2147483648required);
 no cleanup or new broad scan is justified. Complete changed-input coverage is
-pending; the98bce8b counters above remain the latest complete observation.
+pending at publication; the98bce8b counters above remain the latest complete observation.
+
+The c799bc8 changed-input stage /workspace/contour-stage-zseE4d terminates
+failed after260954.027ms, exit1. Capture/group closure, boot and image-input
+identity pass, but no complete attributable coverage report is published;
+projection1045 records this failure. Host269PASS/1FAIL/2183assertions in227.59s
+and stopped-source16PASS/0FAIL/206assertions in253.02s are child observations,
+not accepted F/L/S/B counters. The new recovery case reaches its explicit
+reservation deadline guard at21278.06ms, before its recovery body; its unchanged
+20s ceiling remains. Initial Source Host passes4058.19ms, and the corrective
+case passes16085.85ms under its existing allowance. Do not retry unchanged
+inputs or treat the stage's timed_out=false as absence of a case timeout.
+Retain run92e5ff34-0125-48a2-95c4-c69d4acc9429 and root
+/workspace/contour-stage-zseE4d/scratch-60lmv4/scratch/vida-coverage-92e5ff34-0125-48a2-95c4-c69d4acc9429/shard-0001/tmp/vida-initial-source-teGeh0.
+The immutable image is
+/workspace/.vida-quality-inputs/5919e869c8c68e1c5bd7b85bb1e70ecb89d32485/repository,
+manifest SHAb06fc5dfd9600e7499cb32f829d6fbf677a07568fb9a9dad096c3b0e188073fc,
+input9faa9c19dcc9df1793d4c3e7fdae1cc7c047cecd773596d7c9c5a527eeadff6f.
+Matching SDK CI39370204805/artifact12241355581 passes; transport ZIP SHA
+aae76bd4f99dd958a1bf6ab0247d954679eddd2126ab8d2c8a4e660f1f98ad09 matches.
+Current admission observes6150221824free bytes against unchanged2147483648.
+Ordinary Source hooks passed516formatted/523strict TS files, lint and Knip.
+
+Blind bounded reservation-cost review /tmp/vida-native-reservation-cost-review.md
+finds one repeated Journal resume in the test helper, removed by using its
+already-collected Host/Journal state and exact CAS version. It does not establish
+that this small saving closes the timeout. Repeated runtime currency checks
+protect distinct live approval boundaries and remain. Next use the existing
+opt-in Initial Source phase observer around the actual reservation sequence;
+its callbacks delegate unchanged operations. No new profiler, AST pass, timeout
+allowance or parallel producer is added. Resolve this same preparation GAP
+before another changed-input coverage run. Historical exact remains16/45.
+
+The retained native profile host-native-recovery-jsc-stacks.json and its functions
+report under the existing diagnostic directory confirm sampled fsync/CAS and
+canonical JSON costs; they do not measure uninstrumented wall-time savings.
+Of16051samples,2290are fsyncSync, with1505legacy-config fsync samples and
+544of those attributed to project-context currentConfig. The existing opt-in
+observer completes with pending0. Its nested reservation phases are inclusive:
+lease201.883ms, execution-open1118.910ms across2calls, prepare358.814ms,
+reserve4454.174ms, runtime-current2091.505ms across9calls containing
+706.866ms of runtime snapshots. Do not add nested times together. The second
+probe isolates synthesis/prewriter bridge resumes at1724.894/1754.622ms;
+readonly issue/report setup and native reservation remain real. The profiler's
+21.406s failure/root1faJaw is retained; profiler overhead is not a speed comparison.
+
+One confirmed product simplification removes nested public resolvePathProfile
+calls inside loadProjectSetContext. The existing private current-config builder
+uses the already admitted config snapshot for every profile, retaining all path,
+override and issuance checks. The batch still performs its actual initial read
+and final live config check. Public standalone profile calls remain unchanged;
+no loader, CAS, authorization or runtime-currency check is cached or disabled.
+Blind /tmp/vida-project-context-nested-read-review.md finds no independent
+security/freshness invariant requiring these nested reads. Intermediate sampling
+of a change-and-revert is reduced, but every profile uses one admitted snapshot
+and completion still requires matching live bytes. This never promised atomic
+filesystem observation. All18project-context boundary tests pass200assertions
+in4.38s, including actual final-profile config drift, forged/stale snapshots,
+trusted override admission, exact project membership and filesystem identities.
+The new recovery case then passes26assertions in17.011s in one unprofiled sample;
+different instrumentation/cache conditions prohibit a causal speedup percentage.
+
+Rollback and success/history are now separate fresh parameterized Host cases,
+each retaining real admission/preparation/reservation and its existing20s bound.
+This increases total fixture work; it is a per-case deadline repair, not a
+throughput improvement or coverage gain. All existing denials, exact rollback
+beforeimages, actual successful receipt/history and immutable retries remain.
+The opt-in diagnostic delegates are reused, with no profiling by default and no
+new schema/trace owner. Their async generic callback now explicitly returns
+Promise<Awaited<T>>; the initial TS7 inference error remains in the retained
+strict log, followed by a clean targeted180-file compilation and scoped lint.
+The split probe passes2cases/30assertions in30.81s, success15151.86ms and
+rollback13172.61ms. Rollback then gains3explicit retained-request retry checks:
+after dropping the fault trigger, the original request produces the actual
+receipt, lookup and current Work version. That final changed case passes
+14assertions in17246.58ms (setup13758.223ms/body3330.928ms). No prior assertion
+or successful/failed receipt lineage is dropped. The final Host digest is
+7a944515c57475445dccf6f8c35d96cfe8a04946bcd3214b77b3e9ff7cd62bf0.
+Fresh bounded resource review keeps these two parameterized cases inside the
+same serial Host child with distinct fixture roots, unchanged clock restoration
+and no new writable namespace. The diagnostics are disabled by default and add
+no processes. The nested project-context change removes a read; all remaining
+reads and native CAS stay on the same consumer/package owners. Existing
+two-worker resources, stopped-source digest and fallback remain unchanged.
+Final publication and changed-input numeric verification follow.
 
 Next prioritize genuine completed-Source-report recovery and its persisted Work
 history within this same contour. Blind bounded plan

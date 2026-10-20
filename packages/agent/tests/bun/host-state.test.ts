@@ -1576,9 +1576,9 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
   );
 });
 
-test(
-  'completed Source report Host recovery persists genuine writer lineage and rolls back Journal faults',
-  async () => {
+test.each(['rollback', 'commit'] as const)(
+  'completed Source report Host recovery %s preserves genuine writer lineage',
+  async (mode) => {
     const started = performance.now();
     const deadline = started + failedFinalHostCaseTimeoutMs;
     let rootOwned: string | undefined;
@@ -1654,81 +1654,97 @@ test(
           null,
           reportPath,
         );
-        const persistedBefore = readFixtureHostRows(db);
-        expect(() =>
-          host.commitCompletedSourceReportRecovery(
-            {
-              ...recovery.request,
-              expectedWork: { ...recovery.request.expectedWork, revision: recovery.request.expectedWork.revision + 1 },
-            },
-            recovery.verifyCurrent,
-          ),
-        ).toThrow('state compare-and-swap conflict');
-        expect(readFixtureHostRows(db)).toEqual(persistedBefore);
-        expect(() => host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toThrow(
-          'completed Source report recovery original Source ticket or claim differs',
-        );
-        expect(readFixtureHostRows(db)).toEqual(persistedBefore);
-        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
-        db.exec(
-          "CREATE TRIGGER fixture_recovery_journal_fault BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'fixture recovery Journal fault'); END",
-        );
-        let faultFailure: { error: unknown } | undefined;
-        try {
+        if (mode === 'rollback') {
+          const persistedBefore = readFixtureHostRows(db);
+          expect(() =>
+            host.commitCompletedSourceReportRecovery(
+              {
+                ...recovery.request,
+                expectedWork: {
+                  ...recovery.request.expectedWork,
+                  revision: recovery.request.expectedWork.revision + 1,
+                },
+              },
+              recovery.verifyCurrent,
+            ),
+          ).toThrow('state compare-and-swap conflict');
+          expect(readFixtureHostRows(db)).toEqual(persistedBefore);
           expect(() => host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toThrow(
-            'fixture recovery Journal fault',
+            'completed Source report recovery original Source ticket or claim differs',
           );
           expect(readFixtureHostRows(db)).toEqual(persistedBefore);
-          expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toBeNull();
-        } catch (error) {
-          faultFailure = { error };
-          throw error;
-        } finally {
-          completeOwnedCleanup(
-            [
-              () => {
-                db.exec('DROP TRIGGER fixture_recovery_journal_fault');
-                return undefined;
-              },
-            ],
-            faultFailure,
+          setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+          db.exec(
+            "CREATE TRIGGER fixture_recovery_journal_fault BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'fixture recovery Journal fault'); END",
           );
+          let faultFailure: { error: unknown } | undefined;
+          try {
+            expect(() => host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toThrow(
+              'fixture recovery Journal fault',
+            );
+            expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+            expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toBeNull();
+          } catch (error) {
+            faultFailure = { error };
+            throw error;
+          } finally {
+            completeOwnedCleanup(
+              [
+                () => {
+                  db.exec('DROP TRIGGER fixture_recovery_journal_fault');
+                  return undefined;
+                },
+              ],
+              faultFailure,
+            );
+          }
+          const retried = host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent);
+          expect(retried.status).toBe('completed_report_recovered');
+          expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
+          expect(initialSourceState(f).workVersion).toEqual(retried.work_version);
+        } else {
+          setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+          const receipt = host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent);
+          const after = initialSourceState(f);
+          expect(receipt).toMatchObject({
+            status: 'completed_report_recovered',
+            source_write_rights: false,
+            runtime_acceptance: false,
+          });
+          expect(receipt.record.prior_work).toEqual(before.work);
+          expect(after.work).toEqual(receipt.record.successor_work);
+          expect(after.workVersion).toEqual(receipt.work_version);
+          expect(after.ledgerVersion).toEqual(receipt.ledger_version);
+          expect(after.journalVersion).toEqual(receipt.journal_version);
+          expect(after.work.binding.work_source_revision).toBe(sourceBefore.digest);
+          expect(initialSourceJournal(f).state.source_scope?.digest).toBe(sourceAfter.digest);
+          expect(
+            after.work.execution.assignment_attempts.find((attempt) => attempt.attempt_id === issued.hostAttemptId),
+          ).toMatchObject({
+            status: 'completed',
+            result: observation,
+            result_digest: canonicalJsonDigest(observation),
+          });
+          expect(
+            after.ledger.claims.some(
+              (claim) => claim.status === 'active' && claim.resources.some((resource) => resource.startsWith('file:')),
+            ),
+          ).toBe(false);
+          expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
+          expect(host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toEqual(receipt);
+          expect(initialSourceState(f)).toEqual(after);
+          expect(() =>
+            host.commitCompletedSourceReportRecovery(
+              { ...recovery.request, nativeSessionHandle: recovery.request.nativeSessionHandle + '-foreign' },
+              recovery.verifyCurrent,
+            ),
+          ).toThrow('completed Source report recovery exact retry differs');
+          expect(initialSourceState(f)).toEqual(after);
         }
-        const receipt = host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent);
-        const after = initialSourceState(f);
-        expect(receipt).toMatchObject({
-          status: 'completed_report_recovered',
-          source_write_rights: false,
-          runtime_acceptance: false,
-        });
-        expect(receipt.record.prior_work).toEqual(before.work);
-        expect(after.work).toEqual(receipt.record.successor_work);
-        expect(after.workVersion).toEqual(receipt.work_version);
-        expect(after.ledgerVersion).toEqual(receipt.ledger_version);
-        expect(after.journalVersion).toEqual(receipt.journal_version);
-        expect(after.work.binding.work_source_revision).toBe(sourceBefore.digest);
-        expect(initialSourceJournal(f).state.source_scope?.digest).toBe(sourceAfter.digest);
-        expect(
-          after.work.execution.assignment_attempts.find((attempt) => attempt.attempt_id === issued.hostAttemptId),
-        ).toMatchObject({ status: 'completed', result: observation, result_digest: canonicalJsonDigest(observation) });
-        expect(
-          after.ledger.claims.some(
-            (claim) => claim.status === 'active' && claim.resources.some((resource) => resource.startsWith('file:')),
-          ),
-        ).toBe(false);
-        expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
-        expect(host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toEqual(receipt);
-        expect(initialSourceState(f)).toEqual(after);
-        expect(() =>
-          host.commitCompletedSourceReportRecovery(
-            { ...recovery.request, nativeSessionHandle: recovery.request.nativeSessionHandle + '-foreign' },
-            recovery.verifyCurrent,
-          ),
-        ).toThrow('completed Source report recovery exact retry differs');
-        expect(initialSourceState(f)).toEqual(after);
         console.info(
           JSON.stringify({
             fixture: 'completed-source-report-host',
+            mode,
             setup_ms: readyAt - started,
             body_ms: performance.now() - readyAt,
           }),

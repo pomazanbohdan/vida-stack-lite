@@ -159,6 +159,19 @@ producer regressions pass53/86assertions. Review/refresh the same two-file pin,
 publish through ordinary hooks, obtain matching CI SDK inputs, then measure the
 changed contour once. No other contour or mutation producer may start. WORK
 retains failure roots, review, timing attribution and final numeric bindings.
+That c799bc8 stage fails its new reservation setup at21.278s under the unchanged
+20s ceiling; no complete coverage counters are published. Preserve stage-zseE4d
+and projection1045. Remove the confirmed duplicate Journal resume, attribute
+actual reservation phases with the existing opt-in observer, then repair the
+measured setup bottleneck before the next changed-input stage. Runtime currency,
+approval, CAS and receipt-production checks remain real and uncached.
+Sampled cost identifies repeated nested project-context config loads. Reuse its
+existing private builder inside the outer start/end checked batch;18boundary
+tests/200assertions pass, with blind review of the retained freshness invariant.
+Split rollback and successful recovery/history into separate fresh cases under
+unchanged20s bounds. Measure total work honestly; the split adds setup and is
+not a throughput improvement. Refresh the final pin after targeted checks, then
+publish and run one matching changed-input stage. Retain all earlier failures.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

@@ -36,6 +36,7 @@ import { openAdmittedSessionExecution } from '../../src/orchestration/admitted-s
 import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } from '../../src/runtime-kernel.ts';
 import { runPreparationFixtureInProcess } from './public-prewriter-fixture.ts';
 import { bindControlledRuntimeInitialization } from './controlled-runtime-initialization-fixture.ts';
+import { initialSourcePhases } from './initial-source-phase-timing.ts';
 import {
   MastraSessionBridge,
   type SessionBridgeSnapshot,
@@ -562,63 +563,88 @@ export async function prepareInitialSourceWriterFrontier(f: InitialWorkFixture) 
       work: continuationState(f).work,
     },
     { ledger: hostLedger(f), bridge: hostBridge(f), source },
+    initialSourcePhases.enabled
+      ? async <T>(phase: string, operation: () => T | Promise<T>): Promise<Awaited<T>> => {
+          const started = performance.now();
+          try {
+            return await operation();
+          } finally {
+            console.info(
+              JSON.stringify({ fixture: 'initial-source-preparation', phase, elapsed_ms: performance.now() - started }),
+            );
+          }
+        }
+      : undefined,
   );
   return { receipt, journal };
 }
 
 /** Obtain the actual admitted opaque capability and Host reservation; execute no writer argv. */
 export async function issueInitialSourceFixtureWriter(f: InitialWorkFixture) {
-  const journal = currentJournal(f);
-  const item = journal.state.items[0];
-  if (journal.state.items.length !== 1 || !item || item.request.stage_id !== 'develop_task' || item.issue_id !== null)
-    throw new Error('Initial Source fixture needs one unissued writer frontier');
   const state = continuationState(f);
-  const selection = admittedInput(f).selection;
-  acquireLocalSourceWriterLease({
-    repositoryRoot: f.root,
-    config: f.config,
-    store: hostStore(f),
-    identity: f.identity,
-    nativeSessionHandle: workLease(state.work).thread_id,
-    stageId: item.request.stage_id,
-    assignmentIndex: item.request.assignment_index,
-    expectedWork: state.workVersion,
-    expectedLedger: state.ledgerVersion,
-    expectedSessionJournal: { attempt: 1, version: journal.version },
-  });
-  const execution = await openAdmittedSessionExecution(f.root, hostStore(f), selection.project, f.identity.work_id);
-  const capability = execution.composition.workflowExecutionCapability;
-  if (!capability) throw new Error('Initial Source fixture admitted execution capability is unavailable');
-  const configDigest = runtimeConfigDigest(f.config);
-  const prepared = await prepareWorkflowExecution(capability, {
-    repositoryRoot: f.root,
-    configDigest,
-    teamId: selection.team,
-    workItemId: f.identity.work_id,
-  });
-  const reservation = await reserveWorkflowAssignmentForSession(capability, {
-    repositoryRoot: f.root,
-    configDigest,
-    teamId: selection.team,
-    workflowId: item.request.workflow_id,
-    stageId: item.request.stage_id,
-    assignmentIndex: item.request.assignment_index,
-    workItemId: f.identity.work_id,
-    workItemDigest: prepared.workItemDigest,
-    workContextDigest: prepared.workContextDigest,
-    input: { bindings_manifest_ref: item.request.bindings_manifest_ref },
-  });
-  const issued = hostLedger(f).issueWave(f.identity.work_id, 1, journal.version, {
-    [item.request.action_id]: reservation,
-  });
-  const writer = issued.state.items[0];
-  if (!writer?.issue_id || !writer.host_reservation)
-    throw new Error('Initial Source fixture did not persist its native writer reservation');
-  return {
-    journal: issued,
-    writer: { request: writer.request, issue_id: writer.issue_id },
-    hostAttemptId: writer.host_reservation.receipt.attempt.attempt_id,
-  };
+  const item = state.journal.items[0];
+  if (state.journal.items.length !== 1 || !item || item.request.stage_id !== 'develop_task' || item.issue_id !== null)
+    throw new Error('Initial Source fixture needs one unissued writer frontier');
+  if (
+    initialSourcePhases.enabled &&
+    !initialSourcePhases.arm({
+      repositoryRoot: f.root,
+      workId: f.identity.work_id,
+      actionId: item.request.action_id,
+      stageId: 'develop_task',
+    })
+  )
+    throw new Error('Initial Source writer fixture phase capture could not be armed');
+  try {
+    const selection = admittedInput(f).selection;
+    acquireLocalSourceWriterLease({
+      repositoryRoot: f.root,
+      config: f.config,
+      store: hostStore(f),
+      identity: f.identity,
+      nativeSessionHandle: workLease(state.work).thread_id,
+      stageId: item.request.stage_id,
+      assignmentIndex: item.request.assignment_index,
+      expectedWork: state.workVersion,
+      expectedLedger: state.ledgerVersion,
+      expectedSessionJournal: { attempt: 1, version: state.journalVersion },
+    });
+    const execution = await openAdmittedSessionExecution(f.root, hostStore(f), selection.project, f.identity.work_id);
+    const capability = execution.composition.workflowExecutionCapability;
+    if (!capability) throw new Error('Initial Source fixture admitted execution capability is unavailable');
+    const configDigest = runtimeConfigDigest(f.config);
+    const prepared = await prepareWorkflowExecution(capability, {
+      repositoryRoot: f.root,
+      configDigest,
+      teamId: selection.team,
+      workItemId: f.identity.work_id,
+    });
+    const reservation = await reserveWorkflowAssignmentForSession(capability, {
+      repositoryRoot: f.root,
+      configDigest,
+      teamId: selection.team,
+      workflowId: item.request.workflow_id,
+      stageId: item.request.stage_id,
+      assignmentIndex: item.request.assignment_index,
+      workItemId: f.identity.work_id,
+      workItemDigest: prepared.workItemDigest,
+      workContextDigest: prepared.workContextDigest,
+      input: { bindings_manifest_ref: item.request.bindings_manifest_ref },
+    });
+    const issued = hostLedger(f).issueWave(f.identity.work_id, 1, state.journalVersion, {
+      [item.request.action_id]: reservation,
+    });
+    const writer = issued.state.items[0];
+    if (!writer?.issue_id || !writer.host_reservation)
+      throw new Error('Initial Source fixture did not persist its native writer reservation');
+    return {
+      journal: issued,
+      writer: { request: writer.request, issue_id: writer.issue_id },
+      hostAttemptId: writer.host_reservation.receipt.attempt.attempt_id,
+    };
+  } finally {
+    initialSourcePhases.disarm();
+  }
 }
 
 export async function withInitialSourceCleanup<T>(
