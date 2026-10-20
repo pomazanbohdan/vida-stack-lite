@@ -126,6 +126,34 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
+The next custody/history packet extends those same maintained fixtures. Returning
+the exact owned captureInput avoids reconstructing its request. Historical receipt
+read checks success, absence, nested/changed-body denial and refusal after a
+dependent continuation. Successor admission rejects a real started attempt,
+then retains the publicly completed result and cooperative readonly Journal
+history. A native ledger publication abort proves Work/ledger rollback and closed
+transaction before healthy admission/retry. Numeric delta is pending.
+
+The first successor development fixture used an old non-digest scope string;
+the newly exercised Journal parser correctly rejected it. Reusing the existing
+currentConfigHostFixture fixes that precondition. A new cleanup callback initially
+returned SQL Changes, correctly rejected by TypeScript and completeOwnedCleanup;
+its block now returns undefined. Original failed logs/roots remain retained.
+Strict165-file TypeScript and configured lint pass after these corrections.
+No product guard, budget, ownership or UNKNOWN semantics changed.
+Independent Luna review found a cleanup-custody gap: a standalone DROP TRIGGER
+failure could leave the global retention flag false. Root now marks this case
+failed/pending at entry and clears retention only after all successful cleanup,
+admission/retry and final Journal assertions. Every failed path retains its root.
+The preceding stable two-case focused check passes89assertions; the resource-pin
+control passes10. Final pin binds the retention correction as well.
+
+Read-only Luna identifies an existing persisted final-assurance public case, but
+that file is outside the active two-file Host selection and has its own90s
+exception. Do not claim its callbacks as current coverage or copy that full route
+into the default5s Host fixture. The bounded plan stays in focused diagnostics
+as final-assurance-gap-plan.md; a smaller genuine fixture remains OPEN.
+
 The current packet adds genuine completed Host attempt history to the existing
 historical-terminal continuation test, through public claim/complete APIs before
 quiescence. It preserves completed results across stale CAS refusal, successful

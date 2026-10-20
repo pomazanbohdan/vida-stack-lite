@@ -659,6 +659,7 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
     identity,
     originalSource,
     capture,
+    captureInput,
     principal,
     workspaceId,
     config,

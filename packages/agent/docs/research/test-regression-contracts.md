@@ -15,6 +15,20 @@ Host/Journal after stale CAS denial, exact history retention after continuation,
 persisted lookup and an idempotent retry with one receipt and no reissued action.
 This is fresh fixture evidence, not replay or Runtime acceptance.
 
+Reuse the helper's exact `captureInput` to check the persisted request-bound read:
+same request returns the receipt and released snapshot; missing action returns
+null; nested, changed-body and post-continuation reads deny without altering
+Host/Journal. This is read-only receipt recovery, not a new capture or replay.
+
+The successor-admission case claims a real Host attempt and proves a started
+effect blocks absorption. After public completion, it retains the exact attempt
+and cooperative unreserved readonly Journal history through admission and retry.
+Its configured fixture supplies a schema-valid scope digest. A native ledger
+update trigger fails after predecessor/successor Work writes; assert full rollback,
+closed transaction and unchanged Journal, drop the trigger through owned cleanup,
+then perform healthy admission. The cooperative report grants no provider or
+Runtime acceptance. All cases keep the default5s deadline and private root.
+
 The separate configured-frontier suffix case remains unqualified. Its first
 bounded child timed out inside the existing default5s case; a fresh traced run
 reached `beginSessionProducer` before its deadline. Both original roots and logs

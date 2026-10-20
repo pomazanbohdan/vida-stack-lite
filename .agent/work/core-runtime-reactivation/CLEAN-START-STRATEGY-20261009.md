@@ -41,6 +41,15 @@ unchanged. Prior packets and their exact acceptance/evidence bindings stay in
 and the maintained regression contracts. Do not repeat those closed function
 packets; they do not establish whole-owner or contour closure.
 
+Next measure the checked request-bound capture-read and successor-absorption
+history packet. Reuse the exact captured request, genuine started/completed Host
+attempts, existing valid configured scope, unreserved cooperative Journal history
+and native ledger-abort rollback. Keep default5s cases and the same private
+resources; review and refresh only the exact Host test pin before one stage.
+The public final-assurance end-to-end case is outside this selection and has90s
+budget; its passing history cannot close these callbacks. A smaller supported
+fixture is a later same-contour dependency, not an expanded test selection.
+
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
 setup. Keep original roots/logs and the unvalidated patch. Resolve the setup cost

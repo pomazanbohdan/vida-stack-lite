@@ -1981,6 +1981,31 @@ test('trusted Host continuation atomically retains historical evidence and never
     const releasedFence = current.store.readMaintenanceFence();
     if (!releasedFence || releasedFence.status !== 'released')
       throw new Error('Expected a real released fixture fence.');
+    const captureRead = current.store.readHistoricalTerminalSynthesisCaptureForRequest(current.captureInput);
+    expect(captureRead).toEqual({
+      snapshot: before,
+      request_digest: current.capture.request_digest,
+      receipt: current.capture,
+    });
+    expect(
+      current.store.readHistoricalTerminalSynthesisCaptureForRequest({
+        ...current.captureInput,
+        actionId: '0'.repeat(64),
+      }),
+    ).toBeNull();
+    expect(() =>
+      current.db
+        .transaction(() => current.store.readHistoricalTerminalSynthesisCaptureForRequest(current.captureInput))
+        .deferred(),
+    ).toThrow('nested historical synthesis custody read forbidden');
+    expect(() =>
+      current.store.readHistoricalTerminalSynthesisCaptureForRequest({
+        ...current.captureInput,
+        bodyBytes: Buffer.from('changed historical body'),
+      }),
+    ).toThrow('historical synthesis custody exact retry differs');
+    expect(current.store.readHostStateSnapshot(current.identity)).toEqual(before);
+    expect(current.store.readWorkSessionJournal(current.identity)).toEqual(journalBefore);
     expect(current.store.readTerminalHostStateSnapshot(current.identity, releasedFence)).toEqual(before);
     expect(() => current.store.readTerminalHostStateSnapshot(current.identity, null)).toThrow(
       'terminal maintenance snapshot drift',
@@ -2088,6 +2113,9 @@ test('trusted Host continuation atomically retains historical evidence and never
     expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(lookup);
     expect(current.store.readHostStateSnapshot(current.identity)).toEqual(after);
     expect(current.store.readWorkSessionJournal(current.identity)).toEqual(journalAfter);
+    expect(() => current.store.readHistoricalTerminalSynthesisCaptureForRequest(current.captureInput)).toThrow(
+      'historical synthesis custody retry follows dependent Host or Journal write',
+    );
     expect(() => current.store.readTerminalHostStateSnapshot(current.identity, releasedFence)).toThrow(
       'terminal host inspection requires suspended closed ownership',
     );
@@ -4164,16 +4192,52 @@ function currentConfigHostFixture(id = 'work', resource = 'file:src/task.ts'): M
 }
 
 test('successor admission atomically releases predecessor rights and rejects changed retry or stale CAS', () => {
-  const first = commitHostState(fixture('work', 'file:src/one.ts'));
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const active = commitHostState(currentConfigHostFixture('work', 'file:src/one.ts'));
+  const attempt = store.claimWorkflowAttempt(attemptRequest(active));
+  let first = readPresentSnapshot(store, identity);
+  const retainedRequest: TestJournalState['items'][number]['request'] = {
+    schema: 'VidaSessionRequest/v1',
+    run_id: 'run-work',
+    workflow_id: first.work.binding.workflow_id,
+    wave_index: 0,
+    action_id: '2'.repeat(64),
+    assignment_index: 0,
+    stage_id: 'readonly',
+    role: 'research-synthesizer',
+    config_digest: first.work.binding.config_digest,
+    scope_digest: first.work.binding.work_source_revision,
+    bindings_manifest_ref: '3'.repeat(64),
+  };
+  const issueId = randomUUID();
+  const summary = 'Retained cooperative readonly Journal report.';
+  const retainedObservation = parseSessionBridgeObservation({
+    schema: 'VidaSessionObservation/v1',
+    action_id: retainedRequest.action_id,
+    issue_id: issueId,
+    agent_id: 'fixture:readonly',
+    tool_call_ref: 'fixture:absorption-readonly',
+    status: 'reported_complete',
+    summary,
+    output_digest: canonicalJsonDigest(summary),
+    evidence_refs: [],
+  });
   const journal: TestJournalState = {
     schema: 'MastraSessionLedger/v1',
     workspace_id: workspace,
     work_id: 'work',
     attempt: 1,
     run_id: 'run-work',
-    step_id: 'wave0',
-    items: [],
-    completed: [],
+    step_id: 'wave1',
+    items: [
+      { request: { ...retainedRequest, action_id: '4'.repeat(64), wave_index: 1 }, issue_id: null, observation: null },
+    ],
+    completed: [
+      {
+        step_id: 'wave0',
+        items: [{ request: retainedRequest, issue_id: issueId, observation: retainedObservation }],
+      },
+    ],
   };
   database.exec(
     'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
@@ -4183,7 +4247,7 @@ test('successor admission atomically releases predecessor rights and rejects cha
     .run(workspace, 'work', 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
   const incoming = includeExistingLedger(fixture('successor', 'file:src/two.ts'), first.ledger);
   const { expectedWork: _omittedExpectedWork, ...incomingState } = incoming;
-  const request: Parameters<HostStateStore['admitSuccessorWork']>[0] = {
+  let request: Parameters<HostStateStore['admitSuccessorWork']>[0] = {
     ...incomingState,
     expectedLedger: first.ledgerVersion,
     expectedMaintenanceGeneration: first.maintenanceGeneration,
@@ -4204,6 +4268,18 @@ test('successor admission atomically releases predecessor rights and rejects cha
       expect(current).toEqual(journal);
     },
   };
+  expect(() => store.admitSuccessorWork(request)).toThrow(
+    'predecessor authority or active source effect prevents absorption',
+  );
+  expect(store.readHostStateSnapshot(identity)).toEqual(first);
+  expect(store.readHostStateSnapshot({ ...identity, work_id: 'successor' }).work).toBeNull();
+  store.completeWorkflowAttempt(attempt, { summary: 'Original retained implementation result.' });
+  first = readPresentSnapshot(store, identity);
+  request = {
+    ...request,
+    expectedLedger: first.ledgerVersion,
+    predecessors: request.predecessors.map((entry) => ({ ...entry, expectedWork: first.workVersion })),
+  };
   const firstPredecessor = request.predecessors[0];
   if (!firstPredecessor) throw new Error('successor fixture predecessor missing');
   const bad = {
@@ -4213,6 +4289,30 @@ test('successor admission atomically releases predecessor rights and rejects cha
   expect(() => Reflect.apply(store.admitSuccessorWork.bind(store), undefined, [bad])).toThrow(/journal CAS/);
   expect(store.readHostStateSnapshot(identity)).toEqual(first);
   expect(store.readHostStateSnapshot({ ...identity, work_id: 'successor' }).work).toBeNull();
+  database.exec(
+    "CREATE TEMP TRIGGER fixture_successor_ledger_failure BEFORE UPDATE ON agent_host_state WHEN NEW.kind='ledger' BEGIN SELECT RAISE(ABORT, 'fixture successor ledger failure'); END",
+  );
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    expect(() => store.admitSuccessorWork(request)).toThrow('fixture successor ledger failure');
+    expect(database.inTransaction).toBe(false);
+    expect(store.readHostStateSnapshot(identity)).toEqual(first);
+    expect(store.readHostStateSnapshot({ ...identity, work_id: 'successor' }).work).toBeNull();
+    expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal);
+  } catch (error) {
+    primaryFailure = { error };
+    preserveHostFixtureRoot = true;
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          database.exec('DROP TRIGGER fixture_successor_ledger_failure');
+        },
+      ],
+      primaryFailure,
+    );
+  }
   const admitted = presentSnapshot(store.admitSuccessorWork(request));
   const prior = presentSnapshot(store.readHostStateSnapshot(identity));
   const priorTransition = prior.work.request_transition;
@@ -4222,6 +4322,9 @@ test('successor admission atomically releases predecessor rights and rejects cha
   expect(prior.work.execution.status).toBe('suspended');
   expect(prior.work.lifecycle.phase).toBe(first.work.lifecycle.phase);
   expect(prior.work.artifacts).toEqual(first.work.artifacts);
+  expect(first.work.execution.assignment_attempts).toHaveLength(1);
+  expect(first.work.execution.assignment_attempts[0]?.status).toBe('completed');
+  expect(prior.work.execution.assignment_attempts).toEqual(first.work.execution.assignment_attempts);
   expect(priorTransition.successor_work_id).toBe('successor');
   expect(admittedTransition.predecessor_work_ids).toEqual(['work']);
   const releasedClaim = admitted.ledger.claims.find((claim) => claim.work_id === 'work');
@@ -4243,6 +4346,7 @@ test('successor admission atomically releases predecessor rights and rejects cha
         .get('work')?.payload ?? '',
     ),
   ).toEqual(journal);
+  preserveHostFixtureRoot = false;
 });
 
 test('bundled work-state repair plans atomically, resumes exact postimages and restores without evidence loss', async () => {
