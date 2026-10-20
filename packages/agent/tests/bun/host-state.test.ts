@@ -27,7 +27,10 @@ import {
   initialRequest as initialSourceRequest,
   withExpiredOwner as withExpiredInitialSourceOwner,
   continuationState as initialSourceState,
-  prepareInitialSourceWriterFrontier,
+  prepareInitialSourceFrontier,
+  frontierCodeRequest,
+  fixtureFrontierProof,
+  trustedHostFixtureVerifier,
   issueInitialSourceFixtureWriter,
   expiredOwnerTime as initialSourceExpiredOwnerTime,
 } from '../helpers/initial-source-work-fixture.ts';
@@ -1598,7 +1601,7 @@ test.each(['rollback', 'commit'] as const)(
           throw new Error('Completed Source report fixture setup exhausted its deadline');
         setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
         clockHeld = true;
-        const prepared = await prepareInitialSourceWriterFrontier(f);
+        const prepared = await prepareInitialSourceFrontier(f, 'writer');
         if (performance.now() >= deadline)
           throw new Error('Completed Source report fixture preparation exhausted its deadline');
         expect(prepared.receipt.status).toBe('initial_request_ready');
@@ -1772,6 +1775,133 @@ test.each(['rollback', 'commit'] as const)(
         }
       },
       'Completed Source report Host fixture',
+    );
+  },
+  failedFinalHostCaseTimeoutMs,
+);
+
+test(
+  'readonly Initial Source Host frontier rebind retains unissued action and validates persisted history',
+  async () => {
+    const started = performance.now();
+    const deadline = started + failedFinalHostCaseTimeoutMs;
+    let rootOwned: string | undefined;
+    let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let completed = false;
+    let clockHeld = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const f = await createInitialSourceWorkFixture({
+          onRoot: (root) => {
+            rootOwned = root;
+            console.info('Readonly frontier Host fixture root: ' + root);
+          },
+        });
+        fixture = f;
+        if (performance.now() >= deadline) throw new Error('Readonly frontier fixture setup exhausted its deadline');
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        clockHeld = true;
+        const prepared = await prepareInitialSourceFrontier(f, 'readonly');
+        if (performance.now() >= deadline) throw new Error('Readonly frontier preparation exhausted its deadline');
+        expect(prepared.journal.state.items).toHaveLength(1);
+        expect(prepared.journal.state.items[0]).toMatchObject({
+          request: { stage_id: 'review_source_prewrite' },
+          issue_id: null,
+          observation: null,
+        });
+        const host = initialSourceHostStore(f);
+        const db = initialSourceHostDatabase(f);
+        const before = initialSourceState(f);
+        const request = frontierCodeRequest(f);
+        const verify = trustedHostFixtureVerifier(f, fixtureFrontierProof(request));
+        const persistedBefore = readFixtureHostRows(db);
+        let verifierCalls = 0;
+        const checkedVerify: typeof verify = (candidate, state) => {
+          verifierCalls++;
+          return verify(candidate, state);
+        };
+        expect(() =>
+          host.commitReadOnlyFrontierRuntimeCode(
+            { ...request, expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 } },
+            checkedVerify,
+          ),
+        ).toThrow('state compare-and-swap conflict');
+        expect(verifierCalls).toBe(0);
+        expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+        expect(
+          host.readInitialSourceFrontierCodeRebindReceipt(f.identity, 1, request.initialContinuationId),
+        ).toBeNull();
+        const receipt = host.commitReadOnlyFrontierRuntimeCode(request, checkedVerify);
+        const after = initialSourceState(f);
+        expect(verifierCalls).toBe(2);
+        expect(receipt).toMatchObject({
+          status: 'rebound',
+          rights_granted: false,
+          accepted_result: false,
+          runtime_acceptance: false,
+          current_runtime_code_digest: request.newRuntimeCodeDigest,
+        });
+        expect(after.work).toEqual({
+          ...before.work,
+          revision: before.work.revision + 1,
+          binding: {
+            ...before.work.binding,
+            runtime_code_digest: request.newRuntimeCodeDigest,
+            runtime_source_revision: request.newRuntimeCodeDigest,
+          },
+          lifecycle: {
+            ...before.work.lifecycle,
+            revision: before.work.lifecycle.revision + 1,
+            config_binding: {
+              ...before.work.lifecycle.config_binding,
+              runtime_code_digest: request.newRuntimeCodeDigest,
+            },
+          },
+        });
+        expect(after.work).toEqual(receipt.record.successor_work);
+        expect(after.workVersion).toEqual(receipt.record.work_version);
+        expect(after.ledger).toEqual(before.ledger);
+        expect(after.ledgerVersion).toEqual(before.ledgerVersion);
+        expect(after.journal).toEqual(before.journal);
+        expect(after.journalVersion).toEqual(before.journalVersion);
+        expect(host.readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(prepared.receipt);
+        expect(host.readInitialSourceFrontierCodeRebindReceipt(f.identity, 1, request.initialContinuationId)).toEqual(
+          receipt,
+        );
+        expect(host.commitReadOnlyFrontierRuntimeCode(request, checkedVerify)).toEqual(receipt);
+        expect(() =>
+          host.commitReadOnlyFrontierRuntimeCode(
+            { ...request, nativeSessionHandle: request.nativeSessionHandle + '-foreign' },
+            checkedVerify,
+          ),
+        ).toThrow('frontier rebind retry differs from the committed request');
+        expect(verifierCalls).toBe(2);
+        expect(initialSourceState(f)).toEqual(after);
+        console.info(
+          JSON.stringify({ fixture: 'readonly-frontier-native-host', elapsed_ms: performance.now() - started }),
+        );
+        if (performance.now() >= deadline) throw new Error('Readonly frontier body exhausted its deadline');
+        completed = true;
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (fixture) await fixture.close();
+          },
+          () => {
+            if (clockHeld) setSystemTime();
+          },
+          'Readonly frontier clock restoration',
+        );
+        if (rootOwned) {
+          if (completed && performance.now() < deadline) await rm(rootOwned, { recursive: true, force: true });
+          else {
+            console.error('Retained readonly frontier Host fixture: ' + rootOwned);
+            if (completed) throw new Error('Readonly frontier cleanup exhausted its deadline');
+          }
+        }
+      },
+      'Readonly frontier Host fixture',
     );
   },
   failedFinalHostCaseTimeoutMs,

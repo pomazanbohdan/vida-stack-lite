@@ -17,6 +17,9 @@ import {
   currentProof,
   initialRequest,
   expiredOwnerTime,
+  frontierCodeRequest,
+  fixtureFrontierProof,
+  trustedHostFixtureVerifier,
   withExpiredOwner,
   type InitialWorkFixture,
 } from './helpers/initial-source-work-fixture.ts';
@@ -39,11 +42,7 @@ import {
   runtimePackageCodePaths,
 } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
-import {
-  snapshotDeclaredSources,
-  snapshotRuntimePackageSources,
-  compareScopedSourceSnapshots,
-} from '../src/orchestration/scoped-source-snapshot.ts';
+import { snapshotDeclaredSources, compareScopedSourceSnapshots } from '../src/orchestration/scoped-source-snapshot.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { createCompletedSourceReportRecoveryFixture } from './helpers/completed-source-report-recovery-fixture.ts';
@@ -84,11 +83,7 @@ import type { LifecycleArtifactReference } from '../src/lifecycle/lifecycle-stat
 import type { CoordinationLedger } from '../src/contracts/envelopes.ts';
 import type { StateVersion, WorkState } from '../src/host-state.ts';
 import type { InitialSourceContinuationRequest } from '../src/orchestration/initial-source-continuation.ts';
-import type {
-  InitialSourceFrontierCodeRebindRequest,
-  InitialSourceFrontierCodeRebindVerifiedCurrent,
-  InitialSourceFrontierCodeRebindVerifyCurrent,
-} from '../src/orchestration/initial-source-frontier-code-rebind.ts';
+import type { InitialSourceFrontierCodeRebindRequest } from '../src/orchestration/initial-source-frontier-code-rebind.ts';
 import type { CompletedSourceReportRecoveryVerifyCurrent } from '../src/orchestration/completed-source-report-recovery.ts';
 
 import type { SessionBridgeObservation } from '../src/orchestration/mastra-session-bridge.ts';
@@ -505,11 +500,7 @@ function registerFixtureTest(name: string, operation: () => Promise<void>) {
   else test(name, () => runOwnedInitialSourceFixture(name), 190_000);
 }
 
-/**
- * Reuse the real admitted-work/initial-continuation/same-run synthesis path and
- * stop at the current unissued wave-1 frontier. This is shared by the existing
- * CLI regression and the Host-only code-rebind tests.
- */
+/** Public inspect/apply preparation stops at the real same-run unissued wave-1 frontier. */
 async function prepareInitialSourceWaveOne(f: InitialWorkFixture, checkInitialRetries = true) {
   const currentSource = changeOneAcceptedDocument(f);
   const requestPath = '.agent/work/' + f.identity.work_id + '/initial-source-continuation.json';
@@ -771,96 +762,6 @@ async function prepareInitialSourceWaveOne(f: InitialWorkFixture, checkInitialRe
     reportedRequests,
     summary,
     observation,
-  };
-}
-
-function frontierCodeRequest(f: InitialWorkFixture): InitialSourceFrontierCodeRebindRequest {
-  const state = continuationState(f);
-  const receipt = hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1);
-  if (!receipt) throw new Error('Initial Source frontier fixture receipt is unavailable');
-  const action = firstValue(state.journal.items, 'Initial Source readonly frontier action');
-  const runtimeCodePaths = [...runtimePackageCodePaths(f.config.runtime.bundle)].sort();
-  const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
-  const newRuntimeCodeDigest = canonicalJsonDigest({
-    fixtureOnly: 'trusted-host-seam; not an installed-code claim',
-    prior: state.work.binding.runtime_code_digest,
-    work: f.identity.work_id,
-  });
-  return {
-    schema: 'InitialSourceFrontierCodeRebindRequest/v1',
-    identity: f.identity,
-    attempt: 1,
-    actionId: action.request.action_id,
-    nativeSessionHandle: receipt.request.nativeSessionHandle,
-    leaseGeneration: workLease(state.work).generation,
-    expectedWork: state.workVersion,
-    expectedLedger: state.ledgerVersion,
-    expectedJournal: state.journalVersion,
-    expectedMaintenanceGeneration: state.maintenanceGeneration,
-    initialContinuationId: receipt.continuation_id,
-    initialContinuationRequestDigest: receipt.request_digest,
-    configDigest: runtimeConfigDigest(f.config),
-    sourceScopeDigest: sourceScope.digest,
-    oldRuntimeCodeDigest: state.work.binding.runtime_code_digest,
-    newRuntimeCodeDigest,
-    runtimeCodePaths,
-    parentManifestRef: '.tmp/fixture/qualified-parent-native-manifest.json',
-    parentManifestDigest: canonicalJsonDigest('fixture-qualified-parent'),
-    successorManifestRef: '.tmp/fixture/qualified-successor-native-manifest.json',
-    successorManifestDigest: canonicalJsonDigest('fixture-qualified-successor'),
-    systemUpdateRef: '.tmp/fixture/system-update-result.json',
-    systemUpdateOperationId: 'fixture-system-update-operation',
-    nativeSelfAttestationDigest: canonicalJsonDigest('fixture-native-self-attestation'),
-  };
-}
-
-function fixtureFrontierProof(
-  request: InitialSourceFrontierCodeRebindRequest,
-): InitialSourceFrontierCodeRebindVerifiedCurrent {
-  // This injected verifier seam is a Host fixture only; it does not establish
-  // installed bytes, a qualified native endpoint, or native self-attestation.
-  return {
-    runtimeCodePaths: request.runtimeCodePaths,
-    oldRuntimeCodeDigest: request.oldRuntimeCodeDigest,
-    newRuntimeCodeDigest: request.newRuntimeCodeDigest,
-    parentManifestRef: request.parentManifestRef,
-    parentManifestDigest: request.parentManifestDigest,
-    successorManifestRef: request.successorManifestRef,
-    successorManifestDigest: request.successorManifestDigest,
-    systemUpdateRef: request.systemUpdateRef,
-    systemUpdateOperationId: request.systemUpdateOperationId,
-    nativeSelfAttestationDigest: request.nativeSelfAttestationDigest,
-  };
-}
-
-function trustedHostFixtureVerifier(
-  f: InitialWorkFixture,
-  proof: InitialSourceFrontierCodeRebindVerifiedCurrent,
-): InitialSourceFrontierCodeRebindVerifyCurrent {
-  return (request, state) => {
-    const initial = state.initialReceipt;
-    if (
-      request.initialContinuationId !== initial.continuation_id ||
-      request.initialContinuationRequestDigest !== initial.request_digest ||
-      request.nativeSessionHandle !== initial.request.nativeSessionHandle
-    )
-      throw new Error('fixture Host verifier: continuation history or owner changed');
-    if (runtimeConfigDigest(loadRuntimeConfig(f.root)) !== request.configDigest)
-      throw new Error('fixture Host verifier: current config changed');
-    const source = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
-    if (source.digest !== request.sourceScopeDigest)
-      throw new Error('fixture Host verifier: current Source scope changed');
-    if (
-      snapshotRuntimePackageSources(runtimePackageAccess(), f.config.runtime.bundle, request.runtimeCodePaths)
-        .digest !== request.oldRuntimeCodeDigest
-    )
-      throw new Error('fixture Host verifier: prior runtime code changed');
-    const authorization = initial.request.sourceAuthorizationReference;
-    if (sha256(readFileSync(path.join(f.root, authorization.path))) !== initial.request.sourceAuthorizationSha256)
-      throw new Error('fixture Host verifier: source permission changed');
-    // The endpoint proof is an injected Host test seam; it is not verified
-    // against installed target bytes and proves no native qualification.
-    return proof;
   };
 }
 

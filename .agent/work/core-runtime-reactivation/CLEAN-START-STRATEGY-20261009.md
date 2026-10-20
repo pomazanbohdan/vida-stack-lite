@@ -182,6 +182,12 @@ Next prepare genuine unissued readonly frontier/history through the existing
 Initial Source and synthesis helpers, preserving actual receipt and owner
 lineage. Do not chain blindly from completed-report recovery, fabricate receipts
 or repeat these unchanged complete inputs. WORK owns exact Source/SDK bindings.
+The native readonly-frontier packet is now implemented through actual Initial
+Source continuation and synthesis only. Shared request/proof/verifier helpers
+serve the existing public caller and new Host case. Its21assertions pass8.471s
+under the existing20s allowance; no receipt, engine state or runtime acceptance
+is fabricated. Finish caller regression, independent review and pin/resource
+check, publish, then run exactly one changed-input stage before accepting gains.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

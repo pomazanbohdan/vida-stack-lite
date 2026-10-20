@@ -345,7 +345,53 @@ and no new writable namespace. The diagnostics are disabled by default and add
 no processes. The nested project-context change removes a read; all remaining
 reads and native CAS stay on the same consumer/package owners. Existing
 two-worker resources, stopped-source digest and fallback remain unchanged.
-Final publication and changed-input numeric verification follow.
+Final publication and changed-input numeric verification are recorded in the
+dcaa148 complete observation above; no unchanged rerun is authorized.
+
+### Native readonly Initial Source frontier packet
+
+The next packet remains in bun-host-state. The maintained Initial Source
+preparation helper now selects its explicit readonly or writer endpoint.
+Readonly stops after actual synthesis issue/report/bridge resume, leaving the
+configured unissued review_source_prewrite action. Writer preserves the prior
+full synthesis/prewriter path. No new engine state, reservation or receipt is
+seeded. Request, fixture endpoint proof and fresh Host verifier are moved from
+the existing public test into that same shared helper, with both public and
+native callers. This removes duplication rather than importing a test module
+or copying the broad CLI lifecycle.
+
+The native case passes21assertions in8471.48ms, with body/setup8275.132ms
+before close. It creates and persists a real Host frontier receipt, checks stale
+CAS before any verifier call, exact native beforeimages/absent receipt, two
+fresh proofs for success, actual changed runtime-code Work fields/revisions,
+unchanged Source/lease/Ledger/Journal, original Initial Source receipt, persisted
+history lookup, exact retry and foreign-handle retry denial without more proof
+calls. Endpoint/native-manifest labels remain expressly fixture-only, and
+rights_granted/accepted_result/runtime_acceptance remain false. No actual
+runtime/loader/DB cutover, installed-code qualification or consumer effect occurs.
+
+The case uses the existing20s complex lifecycle allowance for real admission,
+continuation and synthesis, without raising any default/global budget. Root
+owns all handles/fixture path before async setup, closes before restoring the
+Bun clock, carries a monotonic phase/body/cleanup deadline and retains failures.
+The initial extraction misses one digest import; strict TS catches it before
+execution. A now-unused public-test snapshot import is removed after lint
+reports it. Corrected strict180files and scoped lint pass. The native first-pass
+log is host-readonly-frontier-native-first.log in the existing diagnostic
+directory. The existing public frontier caller passes115assertions in17205.99ms
+(child command18.42s, outer wrapper18452.93ms/command19.89s). Blind bounded
+implementation review /tmp/vida-readonly-frontier-native-case-review.md finds
+no blocker. Its imprecise public-preparation comment is corrected; public CLI
+preparation remains separate while both callers share request/proof/verifier.
+Fresh resource review keeps all added fixture/database/clock writes in the same
+serial Host child and its unique TMPDIR roots. Package reads remain verified
+no-CAS; no new process, shared writable namespace, selected test file, worker or
+budget is introduced. The final Host pin is
+5611a2edddc09d3243f4b84dcadcdeced89d588dc3f61f7397d81ec76365b40a;
+the stopped-source digest, Linux provider guard and serial fallback are unchanged.
+Reused current admission is5792698368free bytes against2147483648minimum;
+no cleanup or additional broad scan is justified. Complete numeric
+counters remain bound to dcaa148 above; this focused pass is not a coverage gain.
 
 Next prioritize genuine completed-Source-report recovery and its persisted Work
 history within this same contour. Blind bounded plan
