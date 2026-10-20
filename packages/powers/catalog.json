@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 427,
+  "revision": 431,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-20T11:42:07.162Z",
+  "updated_at": "2026-10-20T11:48:13.214Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -128,7 +128,7 @@
     {
       "instruction_id": "apply-code-review",
       "path": "instructions/apply-code-review.md",
-      "sha256": "82eeba4a95771e94ddc17212e8271dbbb14df9e6b4c2b344972cfad43cd619f7"
+      "sha256": "b6fc6d05bafed2a4c90a8deb4c7867b6a68ccf75c335b197e3bea45b6067aebc"
     },
     {
       "instruction_id": "ask-one-open-question",
@@ -233,7 +233,7 @@
     {
       "instruction_id": "debug-systematically",
       "path": "instructions/debug-systematically.md",
-      "sha256": "b361378a3b125d28ef56ccce020f521a94bdd988cfd6a8066091d84be0e5d1c5"
+      "sha256": "a513e246809870cc3cdbd9bc6fd49edc63e4da5b26e1d811f2f6d1eaa5a2cd3b"
     },
     {
       "instruction_id": "decide-whether-to-write-guidance",
@@ -573,7 +573,7 @@
     {
       "instruction_id": "record-available-executor-models",
       "path": "instructions/record-available-executor-models.md",
-      "sha256": "137b636628032ca8f8fc2ba592e192dd598fa45c0f905ea43a7cc43ab89f9971"
+      "sha256": "95eaa21234307f89dd56aff25f2e02460dfffe73040f0bd8da6abd750624debc"
     },
     {
       "instruction_id": "record-execution-rulings",
@@ -858,7 +858,7 @@
     {
       "instruction_id": "write-implementation-plan",
       "path": "instructions/write-implementation-plan.md",
-      "sha256": "be86c988b18cd93da9c60da42dbfb59c77851cc116f2a03ac8be2a090d8d3222"
+      "sha256": "7edb1b6b5ba1772eb655f20ff84b9e5daa0f2208407701d9a6942f385e1b6c51"
     },
     {
       "instruction_id": "write-minimal-agent-guidance",

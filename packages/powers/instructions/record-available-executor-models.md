@@ -22,21 +22,19 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=automations/benny/skills/setup-benny/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-help/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
-# Record available executor models
-During setup, record which models and providers are actually available, and which model serves each role.
-Use only model identifiers you have confirmed as available in this environment. Never write an identifier you have not confirmed.
-The setup rule applies to new sessions; a changed model choice has no effect in a session that already started.
-Ask for or confirm a model for each working role: verification, review, exploration, implementation, and any role the workflow defines.
-A role set to auto or inherit-parent runs on the session's model. Say so, because that is how Auto users stay on Auto.
-Record the provider and model family alongside each identifier, so the executor ladder can avoid a shared failure point.
-When no model rule exists, every role keeps its default model. Say that explicitly rather than implying a choice was made.
-State the reasoning budget that applies, and note that a shorter panel or a smaller budget runs fewer subagents.
-Confirm each recorded model is selectable in the current environment before relying on it.
-If a recorded model is unavailable, check the family and use the closest valid identifier, then update the record and say what changed.
-Keep the inventory outside the delivered package when it is user-owned, so a refresh cannot overwrite it.
-Prefer committed, secret-free configuration in the target repository when a fresh run must read it.
-Reference the committed path only after confirming it is committed in the repository where the run executes.
-Report the providers, the models, the role assignments, and the confirmation that each model is selectable.
+# Record the available executor models
+
+Use only model identifiers that are shown as available in the environment. Do not guess an identifier and do not carry over a private default.
+
+Record, for every provider that is available: the provider id, every model with its family, and the roles the model can serve (main or agent). Mark each model with whether it is available right now.
+
+Assign a model to each role and to each verification lane, and say which model serves the verification lane.
+
+Keep the inventory of the user outside the delivered package: the configuration, the feature maps and the routing maps stay with the user, and nothing in them is overwritten or copied into the package.
+
+Reference the files of the delivered package only by stable repository-relative paths, and only after you confirmed that they are committed; never reference a source directory or a cache path.
+
+Never put a secret value in a package file, a prompt or a committed configuration.

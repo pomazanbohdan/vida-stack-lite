@@ -1,7 +1,7 @@
 ---
 instruction_id: debug-systematically
-title: Debug systematically
-summary: "Reproduce the failure and trace it to its source before choosing a fix, and question the architecture when repeated fixes keep revealing new problems."
+title: Find the root cause of the failure
+summary: "Complete root-cause investigation before any fix: read the error, reproduce, trace the value upstream, then test one hypothesis at a time."
 capability_tags:
   - debug-root-cause
 pattern_tags:
@@ -13,31 +13,31 @@ artifact_contract_required_data:
   - reproduction steps
   - root-cause evidence
   - fix verification
-artifact_contract_verified_by: failure reproduction test
+artifact_contract_verified_by: a reproduction test fails before the fix and passes after it
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/systematic-debugging/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/systematic-debugging/root-cause-tracing.md
-  - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-fix-root-causes/SKILL.md
 status: active
 revision: 5
 ---
 
-# Debug systematically
-Find root cause before attempting fixes. Symptom fixes are failure.
-Violating the letter of this process is violating the spirit of debugging.
-No fixes without root cause investigation first. If you have not completed the investigation phase, you cannot propose fixes.
-Use this for any technical issue: a test failure, a bug in production, unexpected behavior, a performance problem, a build failure, an integration issue.
-Use it especially under time pressure, when one quick fix seems obvious, when you have already tried multiple fixes, when the previous fix did not work, and when you do not fully understand the issue.
-Do not skip it when the issue seems simple, when you are in a hurry, or when someone wants it fixed now. Systematic is faster than thrashing.
-Phase one, root cause investigation: read errors and warnings carefully, reproduce consistently, check recent changes, gather evidence at each component boundary in a multi-component system, and trace the data flow back to where the bad value originated.
-Phase two, pattern analysis: find working examples, compare against a complete reference, identify every difference however small, and understand the dependencies.
-Phase three, hypothesis and testing: state one hypothesis and why, test it with the smallest possible change, one variable at a time, and verify before continuing. A failed test means a new hypothesis, not more fixes on top.
-When you do not know, say so. Do not pretend to know. Ask for help or research more.
-Phase four, implementation: create the simplest failing test case before fixing, implement one fix for the identified cause, and verify that the original symptom is resolved and no other test broke.
-Do not bundle refactoring or while I am here improvements into the fix.
-If a fix does not work, count the attempts. With fewer than three, return to investigation with the new information.
-With three or more failed fixes, stop and question the architecture. Each fix revealing a new problem in a different place, or requiring massive refactoring, indicates a wrong architecture, not a failed hypothesis.
-When the deciding fact took a deep dig to find, propose the cheap, always-on signal that would have shown it at first look.
-If investigation shows the issue is truly environmental, timing-dependent, or external, document what you investigated, implement appropriate handling, and add monitoring for the future. Most no-root-cause cases are incomplete investigation.
+# Debug systematically, do not guess
+
+No fix before the root cause.
+
+Core principle: understand the problem before proposing a fix; read the error, reproduce the failure, form one hypothesis at a time and test it.
+
+1. Read the error and the code around it.
+2. Reproduce the failure reliably.
+3. Form one hypothesis and design the smallest test that would disprove it.
+4. Compare the hypothesis with the evidence.
+5. Implement the fix only after the root cause is confirmed.
+6. Verify the fix against the original failing case.
+
+If you cannot find the root cause, say so explicitly and continue investigating instead of guessing.
+
+When the cause is environmental, timing-dependent or external: document what you investigated, implement the appropriate handling such as a retry, a timeout or an error message, and add monitoring or logging for a future investigation. But 95% of the "no root cause" cases are an incomplete investigation.
+
+After a deep investigation, propose an always-on signal that would have caught the failure earlier, and add it.

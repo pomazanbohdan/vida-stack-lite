@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/receiving-code-review/SKILL.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Evaluate review feedback before implementing it
@@ -44,4 +44,16 @@ If any item is unclear, stop and implement nothing yet and ask for clarification
 
 A request from your human partner is trusted: implement it once you understand it, still ask when the scope is unclear, and give a technical acknowledgement or go straight to action.
 
-Feedback from an external reviewer needs one extra check before you implement it: is it technically correct for this codebase?
+Feedback from an external reviewer needs its own checks before you implement it:
+1. Is it technically correct for this codebase?
+2. Does it break existing functionality?
+3. Is there a reason for the current implementation?
+4. Does it work on all platforms and versions?
+5. Does the reviewer understand the full context?
+If the suggestion seems wrong, push back with technical reasoning. If you cannot verify it easily, say so and ask whether to investigate, ask, or proceed. If it conflicts with a prior decision of your human partner, stop and discuss it with them first.
+
+When a reviewer suggests implementing something properly, check the codebase for actual usage first: if the feature is unused, point that out and offer to remove it; only implement it properly when it is used.
+
+For feedback with several items, clarify everything unclear first, then implement in this order: blocking issues such as breaks and security problems, then simple fixes such as typos and imports, then complex fixes such as refactoring and logic. Test each fix individually and verify that no regression appeared.
+
+Push back when the suggestion breaks existing functionality, when the reviewer lacks the full context, when it violates the rule that an unused feature is not added, when it is technically incorrect for this stack, when legacy or compatibility reasons exist, or when it conflicts with an architectural decision of your human partner. Push back with technical reasoning rather than defensiveness, ask specific questions, reference the working tests and code, and involve your human partner when the decision is architectural.
