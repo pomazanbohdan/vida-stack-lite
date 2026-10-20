@@ -250,6 +250,21 @@ bindings. Across three packets gains17/124/130/90, historical exact16/45 stays.
 Observed complete range118–145s does not support a60s timeout or causal speedup.
 Reuse the accepted report, keep one contour and batch related assertions into
 existing fixtures without inventing receipts or external effects.
+The next corrective-authority packet adds18assertions to the existing genuine
+failed-final fixture, reaching retrieval and execution-binding APIs without
+another kernel/root/approval. Corrected focused case passes69assertions in
+12.665s under unchanged20s allowance; strict181/scoped lint pass. The original
+invalid-UUID negative fixture is retained and corrected to reach the actual
+authority comparison. Finish pin/control and normal publication, then one
+matching-SDK stage; latest numeric counters remain bcbfbd6 until completion.
+The same packet's new genuine native rebind case exposes and repairs a P0
+sequencing defect: rebind now preserves VERIFY/source seal/counts until explicit
+corrective authorization owns the single transition and Journal replacement.
+Native targets pass147assertions; the existing public runtime-rebind caller
+passes43. Blind Luna plan/final review finds no remaining blocker. Scope approval,
+CAS/lease/UNKNOWN guards, runtime-proof retirement and historical receipts stay
+intact. Finish normal publication and the one changed-input stage; no Runtime
+cutover, consumer effect or exact-contour closure is claimed from targeted tests.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned

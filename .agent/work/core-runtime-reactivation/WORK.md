@@ -756,6 +756,99 @@ setup/public-child cost; only a demonstrated behavior-preserving reduction or
 separately qualified partition/merge can support the target. Preserve all
 assertions, fresh Host/Journal/ownership, exact counts and current final budgets.
 
+### Corrective authority retrieval and execution-binding packet
+
+The next packet reuses the existing genuine failed-final correction fixture and
+authorizeCorrectiveExecution producer. It adds no root, kernel, bridge, approval
+callback or receipt. Retrieval is null before authorization, returns the actual
+issued execution afterward through standalone and supported nested reads, and
+binds the ORIGINAL Journal version recorded in the authority. Post-authorization
+Journal, absent Work/attempt and mismatched stages/instruction cannot retrieve
+that authority. The explicit execution assertions accept the actual persisted
+binding, reject missing owners/attempt/engine identity, and reject an unapproved
+stage through claimWorkflowAttempt before any new attempt is written. Original
+full Host/Journal and authority-file byte assertions remain at the end.
+
+The first negative engine-ID mutation appended text to a UUID, so it failed the
+schema guard before the intended native authority comparison. The failed fixture
+is retained at
+/home/agent/.cache/vida-cloud-tooling/tmp/vida-absorption-Sdb1fV with its original
+log host-corrective-read-targeted.log. A scoped search finds no similar foreign
+engine/base/attempt ID suffix in the two selected test files. The corrected
+case uses another valid UUID and passes69assertions (18more) in12665.21ms,
+command14.46s, within unchanged20s complex-lifecycle allowance. No product defect
+is inferred from the test-input failure. Strict181files and scoped lint pass.
+The later UUID-only correction is Root-owned and verified by the actual case;
+the earlier independent blind Luna source review
+/root/blind_corrective_reads_case_review reports no structural/resource issue.
+
+Root's fresh two-file resource review keeps all new reads and rejected claim
+inside the existing Host child's private fixture namespace. No shared writable
+root, process, clock, worker or selected-file change is added. Final Host pin
+b20d654867a23614a0eb83a6fa039b79cf3ddaed703ecd6ade2818b1f88502d1;
+stopped-source88c2abd9 and provider/caller/selection guards stay unchanged. Finish
+the pin/control and normal publication; one matching-SDK changed-input stage
+must own any numeric gains, followed by verified durable scratch retention.
+
+Pstack Test Behavior, Not Implementation keeps return/error/state/file oracles
+at native public interfaces. Sequence work into verifiable units keeps one
+focused correction before Source publication and one complete numeric run.
+The separate rebind plan /tmp/vida-native-rebind-next-plan.md identifies the
+genuine runtime-rebind member in automatic-work-absorption.test.ts; the cheap
+delivered-work fixture alone lacks that producer lineage. Its reported missing
+inventory is a relative-path navigation error, corrected with the existing
+absolute package coverage path; no inventory/custody GAP exists here. Its stray
+90s reference is not an accepted budget: the existing case is60s. The native
+case below reuses that genuine failed-final producer without copying the whole
+enclosing matrix into this contour.
+
+### Focused runtime rebind sequencing correction — 2026-10-20
+
+The new native case reproduces a P0 defect: focused runtime rebind prematurely
+entered EXECUTE, cleared the source seal and advanced correction_count while
+preserving the base Journal. Ordinary reading then rejected `base session binding
+differs`; explicit corrective authorization also could not run because it requires
+VERIFY and that source seal. Preserve the original failure log
+host-runtime-rebind-targeted.log and root
+/home/agent/.cache/vida-cloud-tooling/tmp/vida-absorption-99xIrV; do not replay it.
+
+Rebind now preserves VERIFY, the unchanged source seal, source-only implementation
+reference and assurance counts. Other generation/fingerprint-bound proof remains
+retired, and focused receipts correctly report no retired execution approvals.
+Explicit authorizeCorrectiveExecution alone retires the implementation/seal and
+increments both generations once while replacing the Journal under its existing
+CAS. No new phase, schema, automatic authorization or downstream reader exception
+is introduced. The system specification owns this clarified sequencing contract.
+All original lease/owner/authorization/maintenance/terminal-effect guards remain.
+
+The native case proves six exact stale/foreign denials, verifier rejection,
+SQLite-trigger rollback, same-request retry, original Journal/history preservation,
+restart, stale retry denial, blocked delivery, and explicit corrective issuance.
+Post-rebind blank instruction and wrong stage closure are still denied. Recovery
+bytes preserve original Work/Journal, and count/review generation advance once.
+Together with the existing expanded authority case, final targets pass2cases,
+147assertions in23.44s; the new case is11.136s within the unchanged20s allowance.
+The existing public runtime-rebind caller passes43assertions in15.486s (16.80s
+command), preserving its60s bound and history-corruption denial/restoration checks.
+The intermediate recovery oracle incorrectly included Host-only attempt metadata;
+the public caller oracle confused Ledger resume_status with Host attempt metadata.
+Both now compare exact declared snapshot shapes; original failed logs remain
+host-runtime-rebind-sequence.log and host-runtime-rebind-public-caller.log.
+The former fixture remains at vida-absorption-rrDaa8 under the same retained cache
+root. Those oracle failures are distinct from the reproduced product defect.
+
+Strict181files and scoped type-aware lint pass. Blind native Luna independently
+confirms the sequencing cause and minimal representation in
+/tmp/vida-focused-sequence-plan-review.md; final bounded correctness/security
+review /tmp/vida-focused-rebind-fix-review.md reports no blocker. Its noted missing
+direct retirement matrix is a coverage opportunity, not numeric qualification.
+Root's refreshed two-file resource review keeps the one additional fresh native
+fixture inside the existing Host child's owned namespace. It adds no child,
+external effect, shared write root or clock/global-state mutation. The same
+20s per-case allowance, two-worker selection, provider/caller guards and aggregate
+budget remain. Finish pin/control and normal publication, then one matching-SDK
+stage; current complete counters remain bcbfbd6 until a new complete report exists.
+
 The earlier plan below led to genuine completed-Source-report recovery and its
 persisted Work history; it is retained context, not a duplicate next task.
 Blind bounded plan

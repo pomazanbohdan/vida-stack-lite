@@ -3790,11 +3790,9 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             const reboundWork = requireHostWork(rebound);
             expect(reboundWork.binding.runtime_code_digest).toBe(request.newRuntimeCodeDigest);
             expect(reboundWork.execution.assignment_attempts).toEqual(oldAttempts);
-            expect(reboundWork.lifecycle.phase).toBe('EXECUTE');
-            expect(reboundWork.lifecycle.seal).toBeNull();
-            expect(reboundWork.lifecycle.assurance.correction_count).toBe(
-              requireHostWork(current).lifecycle.assurance.correction_count + 1,
-            );
+            expect(reboundWork.lifecycle.phase).toBe('VERIFY');
+            expect(reboundWork.lifecycle.seal).toEqual(current.work.lifecycle.seal);
+            expect(reboundWork.lifecycle.assurance).toEqual(current.work.lifecycle.assurance);
             expect(
               reboundWork.lifecycle.references.find((reference) => reference.kind === 'execution_approval')
                 ?.disposition,
@@ -3805,8 +3803,13 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
                 (reference) =>
                   reference.kind === 'implementation_result' && reference.record_id === priorImplementation.record_id,
               )?.disposition,
-            ).toBe('retired');
+            ).toBe('current');
             expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(oldJournal);
+            expect(reboundStore.readWorkSessionJournal(identity)).toEqual({
+              attempt: 1,
+              version: oldJournal.version,
+              state: oldJournal.state,
+            });
             const restarted = new HostStateStore(
               f.database,
               f.store.workspaceId,

@@ -750,6 +750,11 @@ A known-terminal VERIFY failure may use the existing forward runtime-code rebind
 under an explicit owner correction basis, exact attempt/live lease/CAS and verified
 installed-package lineage. Preserve the original failed journal and Mastra snapshot;
 then issue an explicit corrective generation through the existing Host operation.
+Rebind retains VERIFY, the unchanged source seal and its implementation reference,
+and the current correction/review counts so that explicit authorization can still
+validate the failed source. Other generation- or fingerprint-bound proof is retired.
+The explicit corrective transition alone retires that source implementation proof,
+clears the seal and advances both counts once; rebind grants no corrective execution.
 The original INTAKE rebind and unknown-effect guards remain separate. Only current
 runtime-bound evidence can support delivery; correction retires stale proof through
 the lifecycle's existing invalidation rules. No automatic retry, acceptance or

@@ -65,7 +65,12 @@ import type { MastraSessionLedgerSnapshot } from '../../src/orchestration/persis
 import { validateHostOperationReservation } from '../../src/governance/edictum-boundary.ts';
 import { validateCoordinationLedgerV1 } from '../../src/contracts/envelopes.ts';
 import { validateLifecycleAggregate } from '../../src/lifecycle/lifecycle-state.ts';
-import type { WorkflowAttemptApprovalVerifier, WorkflowAttemptReceipt } from '../../src/host-state.ts';
+import type {
+  RuntimeCodeRebindRequest,
+  RuntimeCodeRebindVerifier,
+  WorkflowAttemptApprovalVerifier,
+  WorkflowAttemptReceipt,
+} from '../../src/host-state.ts';
 import type { LifecycleState } from '../../src/lifecycle/lifecycle-state.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import * as nodeFs from 'node:fs';
@@ -552,7 +557,13 @@ test(
       });
       const before = f.store.readHostStateSnapshot(f.identity);
       const journal = f.store.readWorkSessionJournal(f.identity);
-      if (!prepared.workVersion || !prepared.ledgerVersion || !before.work?.execution.run_id || !journal)
+      if (
+        !prepared.workVersion ||
+        !prepared.ledgerVersion ||
+        !before.work?.execution.run_id ||
+        !before.work.lease ||
+        !journal
+      )
         throw new Error('Prepared corrective Host fixture is incomplete.');
       const request = {
         identity: f.identity,
@@ -564,6 +575,14 @@ test(
         userInstructionRef: 'fixture:host-corrective-owner',
         config: f.config,
       };
+      const lookup = {
+        identity: f.identity,
+        attempt: request.attempt,
+        journal: request.expectedJournal,
+        stageIds: request.stageIds,
+        userInstructionRef: request.userInstructionRef,
+      };
+      expect(f.store.retrieveCorrectiveAuthorization(lookup)).toBeNull();
       const denied: readonly [Partial<typeof request>, string][] = [
         [{ userInstructionRef: ' ' }, 'attributable corrective authorization missing'],
         [
@@ -605,7 +624,8 @@ test(
       const issued = f.store.authorizeCorrectiveExecution(request);
       const after = f.store.readHostStateSnapshot(f.identity);
       const corrected = f.store.readWorkSessionJournal(f.identity);
-      if (!after.work || !corrected) throw new Error('Corrective authorization lost its persisted state.');
+      if (!after.work?.lease || !after.workVersion || !after.ledgerVersion || !corrected)
+        throw new Error('Corrective authorization lost its persisted state.');
       expect(after.work.lifecycle.phase).toBe('EXECUTE');
       expect(after.work.lifecycle.assurance.correction_count).toBe(1);
       expect(after.work.lease).toEqual(before.work.lease);
@@ -629,10 +649,336 @@ test(
           .map((item) => item.request.action_id),
       );
       expect(createHash('sha256').update(authorityBytes).digest('hex')).toBe(issued.authorization.sha256);
+      expect(f.store.retrieveCorrectiveAuthorization(lookup)).toEqual(issued);
+      expect(f.database.transaction(() => f.store.retrieveCorrectiveAuthorization(lookup)).deferred()).toEqual(issued);
+      expect(corrected.version).not.toEqual(lookup.journal);
+      expect(f.store.retrieveCorrectiveAuthorization({ ...lookup, journal: corrected.version })).toBeNull();
+      expect(f.store.retrieveCorrectiveAuthorization({ ...lookup, attempt: 2 })).toBeNull();
+      expect(
+        f.store.retrieveCorrectiveAuthorization({
+          ...lookup,
+          identity: { ...f.identity, work_id: 'missing-corrective-work' },
+        }),
+      ).toBeNull();
+      expect(() => f.store.retrieveCorrectiveAuthorization({ ...lookup, stageIds: ['foreign-stage'] })).toThrow(
+        'corrective authorization stages differ',
+      );
+      expect(() =>
+        f.store.retrieveCorrectiveAuthorization({ ...lookup, userInstructionRef: 'fixture:foreign-owner' }),
+      ).toThrow('corrective authorization instruction differs');
+      expect(f.store.assertCorrectiveExecution(f.identity, 1, issued)).toBeUndefined();
+      expect(f.store.assertCorrectiveExecutionForWork(f.identity.work_id, 1, issued)).toBeUndefined();
+      expect(() =>
+        f.store.assertCorrectiveExecution({ ...f.identity, work_id: 'missing-corrective-work' }, 1, issued),
+      ).toThrow('corrective execution work unavailable');
+      expect(() => f.store.assertCorrectiveExecutionForWork('missing-corrective-work', 1, issued)).toThrow(
+        'corrective journal Host owner missing',
+      );
+      expect(() => f.store.assertCorrectiveExecution(f.identity, 2, issued)).toThrow(
+        'corrective authority contract differs',
+      );
+      expect(() =>
+        f.store.assertCorrectiveExecution(f.identity, 1, {
+          ...issued,
+          engine_run_id: randomUUID(),
+        }),
+      ).toThrow('corrective authority contract differs');
+      expect(() =>
+        f.store.claimWorkflowAttempt({
+          identity: f.identity,
+          expectedWork: after.workVersion!,
+          expectedLedger: after.ledgerVersion!,
+          expectedMaintenanceGeneration: after.maintenanceGeneration,
+          stageId: 'foreign-stage',
+          assignmentIndex: 0,
+          requestDigest: 'f'.repeat(64),
+          lease: after.work!.lease!,
+        }),
+      ).toThrow('corrective assignment authority binding differs');
       expect(() => f.store.authorizeCorrectiveExecution(request)).toThrow('state compare-and-swap conflict');
       expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
       expect(f.store.readWorkSessionJournal(f.identity)).toEqual(corrected);
       expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            f.close(() => completed && performance.now() < deadline);
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  },
+  failedFinalHostCaseTimeoutMs,
+);
+
+test(
+  'native focused runtime rebind preserves correction history through CAS denial, rollback and restart',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    const f = await createFailedFinalCorrectionFixture();
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      if (performance.now() >= deadline) throw new Error('Native rebind fixture setup exhausted its deadline');
+      prepareLifecycleForCorrection({
+        root: f.root,
+        config: f.config,
+        store: f.store,
+        identity: f.identity,
+        journal: f.journal,
+        preparationPath: f.preparationPath,
+      });
+      const before = f.store.readHostStateSnapshot(f.identity);
+      const journal = f.store.readWorkSessionJournal(f.identity);
+      if (
+        !before.work?.lease ||
+        !before.work.execution.run_id ||
+        !before.workVersion ||
+        !before.ledgerVersion ||
+        !journal
+      )
+        throw new Error('Native rebind fixture is incomplete');
+      expect(before.work.lifecycle.phase).toBe('VERIFY');
+      expect(before.work.execution.assignment_attempts.length).toBeGreaterThan(0);
+      expect(
+        before.work.execution.assignment_attempts.every((entry) => ['completed', 'no_effect'].includes(entry.status)),
+      ).toBe(true);
+      expect(
+        before.work.lifecycle.references.find(
+          (ref) =>
+            ref.kind === 'execution_approval' &&
+            ref.disposition === 'current' &&
+            ref.decision === 'approved' &&
+            ref.generation === null &&
+            ref.implementation_fingerprint === null,
+        ),
+      ).toBeDefined();
+      const failed = [...journal.state.items, ...journal.state.completed.flatMap((wave) => wave.items)].find(
+        (item) => item.observation?.status === 'reported_failed',
+      );
+      if (!failed?.issue_id) throw new Error('Native rebind needs its actual failed Journal issue');
+      const principal = 'fixture:host-runtime-rebind';
+      let rejectAuthorization = false;
+      // Controlled qualification seam only; this does not attest installed runtime code.
+      const verifier: RuntimeCodeRebindVerifier = {
+        principal,
+        verify: (request) => ({
+          schema: 'VidaRuntimeCodeRebindAuthorization/v1',
+          request_digest: canonicalJsonDigest(request),
+          principal: rejectAuthorization ? 'fixture:foreign-rebind' : principal,
+          forward_operation_id: request.forwardOperationId,
+          parent_manifest_digest: request.parentManifestDigest,
+          successor_manifest_digest: request.successorManifestDigest,
+          owner_correction_pointer: request.focusedFailureCorrection!.ownerCorrectionPointer,
+        }),
+      };
+      const checked = new HostStateStore(
+        f.database,
+        f.store.workspaceId,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        f.root,
+        verifier,
+      );
+      const request: RuntimeCodeRebindRequest = {
+        identity: f.identity,
+        attempt: 1,
+        actionId: failed.request.action_id,
+        issueId: failed.issue_id,
+        nativeSessionHandle: before.work.lease.thread_id,
+        expectedWork: before.workVersion,
+        expectedLedger: before.ledgerVersion,
+        expectedJournal: journal.version,
+        expectedMaintenanceGeneration: before.maintenanceGeneration,
+        oldRuntimeCodeDigest: before.work.binding.runtime_code_digest,
+        newRuntimeCodeDigest: canonicalJsonDigest('fixture:host-runtime-successor'),
+        forwardOperationId: 'fixture-host-runtime-forward',
+        parentManifestDigest: canonicalJsonDigest('fixture:host-runtime-parent-manifest'),
+        successorManifestDigest: canonicalJsonDigest('fixture:host-runtime-successor-manifest'),
+        focusedFailureCorrection: { ownerCorrectionPointer: 'fixture:host-correct-known-failure' },
+      };
+      const rowsBefore = readFixtureHostRows(f.database);
+      const receiptTable = f.database.query<SqliteNameRow, []>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_runtime_code_rebind'",
+      );
+      expect(receiptTable.get()).toBeNull();
+      const denied: readonly [Partial<RuntimeCodeRebindRequest>, string][] = [
+        [
+          { expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 } },
+          'state compare-and-swap conflict',
+        ],
+        [
+          { expectedLedger: { ...request.expectedLedger, revision: request.expectedLedger.revision + 1 } },
+          'state compare-and-swap conflict',
+        ],
+        [
+          { expectedJournal: { ...request.expectedJournal, revision: request.expectedJournal.revision + 1 } },
+          'runtime-code rebind journal CAS changed',
+        ],
+        [
+          { expectedMaintenanceGeneration: before.maintenanceGeneration + 1 },
+          'maintenance generation is stale or missing',
+        ],
+        [
+          { nativeSessionHandle: request.nativeSessionHandle + '-foreign' },
+          'runtime-code rebind owner or assurance state changed',
+        ],
+        [{ issueId: randomUUID() }, 'VERIFY rebind requires exact accepted negative report'],
+      ];
+      for (const [change, message] of denied) {
+        const failure = await rejectionReason(checked.rebindRuntimeCode({ ...request, ...change }));
+        expect(() => {
+          throw failure;
+        }).toThrow(message);
+        expect(readFixtureHostRows(f.database)).toEqual(rowsBefore);
+        expect(receiptTable.get()).toBeNull();
+      }
+      rejectAuthorization = true;
+      const deniedAuthorization = await rejectionReason(checked.rebindRuntimeCode(request));
+      expect(() => {
+        throw deniedAuthorization;
+      }).toThrow('runtime-code rebind authorization differs from transition');
+      expect(readFixtureHostRows(f.database)).toEqual(rowsBefore);
+      rejectAuthorization = false;
+      f.database.exec(
+        "CREATE TRIGGER reject_host_runtime_rebind AFTER UPDATE ON agent_host_state WHEN NEW.kind='work' BEGIN SELECT RAISE(ABORT,'fixture runtime rebind rollback'); END",
+      );
+      const rolledBack = await rejectionReason(checked.rebindRuntimeCode(request));
+      expect(() => {
+        throw rolledBack;
+      }).toThrow('fixture runtime rebind rollback');
+      expect(readFixtureHostRows(f.database)).toEqual(rowsBefore);
+      expect(checked.readHostStateSnapshot(f.identity)).toEqual(before);
+      expect(receiptTable.get()).toBeNull();
+      f.database.exec('DROP TRIGGER reject_host_runtime_rebind');
+      if (performance.now() >= deadline) throw new Error('Native rebind denials exhausted the case deadline');
+      const after = await checked.rebindRuntimeCode(request);
+      if (!after.work) throw new Error('Native rebind lost its Work');
+      expect(after.work.binding).toEqual({
+        ...before.work.binding,
+        runtime_code_digest: request.newRuntimeCodeDigest,
+        runtime_source_revision: request.newRuntimeCodeDigest,
+      });
+      expect(after.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
+      expect(after.work.lease).toEqual(before.work.lease);
+      expect(after.ledger).toEqual(before.ledger);
+      expect(after.ledgerVersion).toEqual(before.ledgerVersion);
+      expect(after.work.lifecycle.phase).toBe('VERIFY');
+      expect(after.work.lifecycle.seal).toEqual(before.work.lifecycle.seal);
+      expect(after.work.lifecycle.assurance).toEqual(before.work.lifecycle.assurance);
+      const implementation = before.work.lifecycle.references.find(
+        (ref) => ref.kind === 'implementation_result' && ref.disposition === 'current',
+      );
+      if (!implementation) throw new Error('Native rebind lost its source implementation evidence');
+      expect(after.work.lifecycle.references).toContainEqual(implementation);
+      expect(checked.readFinalAssurance(f.identity, 1)).toBeNull();
+      expect(() => checked.projectLifecycleTransition(after.work!, 'DELIVERY', 'fixture:premature-delivery')).toThrow(
+        'delivery requires three reviews',
+      );
+      expect(checked.readWorkSessionJournal(f.identity)).toEqual(journal);
+      const row = f.database
+        .query<{ payload: string; digest: string }, [string, string, number, string]>(
+          'SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+        )
+        .get(f.store.workspaceId, f.identity.work_id, 1, request.actionId);
+      if (!row) throw new Error('Native rebind receipt is missing');
+      const receipt = parseJsonRecord(row.payload);
+      expect(canonicalJsonDigest(receipt)).toBe(row.digest);
+      expect(receipt).toMatchObject({
+        request,
+        retired_execution_approval_ids: [],
+        prior_work_version: before.workVersion,
+        journal_version: journal.version,
+        binding_history: {
+          original_work: before.work,
+          original_journal: journal.state,
+          successor_binding: after.work.binding,
+          terminal_attempt_ids: before.work.execution.assignment_attempts.map((entry) => entry.attempt_id),
+        },
+      });
+      const reopened = new HostStateStore(
+        f.database,
+        f.store.workspaceId,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        f.root,
+        verifier,
+      );
+      expect(reopened.readHostStateSnapshot(f.identity)).toEqual(after);
+      expect(reopened.readWorkSessionJournal(f.identity)).toEqual(journal);
+      const staleRetry = await rejectionReason(checked.rebindRuntimeCode(request));
+      expect(() => {
+        throw staleRetry;
+      }).toThrow('state compare-and-swap conflict');
+      expect(reopened.readHostStateSnapshot(f.identity)).toEqual(after);
+      if (!after.workVersion || !after.ledgerVersion) throw new Error('Rebound Host versions are missing');
+      const correctionRequest = {
+        identity: f.identity,
+        attempt: 1,
+        expectedWork: after.workVersion,
+        expectedLedger: after.ledgerVersion,
+        expectedJournal: journal.version,
+        stageIds: ['develop_task', 'validate_focused', 'test_task'],
+        userInstructionRef: 'fixture:explicit-post-rebind-correction',
+        config: f.config,
+      };
+      const reboundRows = readFixtureHostRows(f.database);
+      expect(() => reopened.authorizeCorrectiveExecution({ ...correctionRequest, userInstructionRef: ' ' })).toThrow(
+        'attributable corrective authorization missing',
+      );
+      expect(() => reopened.authorizeCorrectiveExecution({ ...correctionRequest, stageIds: ['develop_task'] })).toThrow(
+        'corrective stage selection differs',
+      );
+      expect(readFixtureHostRows(f.database)).toEqual(reboundRows);
+      const issued = reopened.authorizeCorrectiveExecution(correctionRequest);
+      const corrected = reopened.readHostStateSnapshot(f.identity);
+      const correctedJournal = reopened.readWorkSessionJournal(f.identity);
+      if (!corrected.work || !correctedJournal) throw new Error('Explicit rebind correction lost its state');
+      expect(corrected.work.lifecycle.phase).toBe('EXECUTE');
+      expect(corrected.work.lifecycle.seal).toBeNull();
+      expect(corrected.work.lifecycle.assurance.correction_count).toBe(
+        before.work.lifecycle.assurance.correction_count + 1,
+      );
+      expect(corrected.work.lifecycle.assurance.review_generation).toBe(
+        before.work.lifecycle.assurance.review_generation + 1,
+      );
+      expect(corrected.work.binding).toEqual(after.work.binding);
+      expect(corrected.work.lease).toEqual(before.work.lease);
+      expect(corrected.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
+      expect(corrected.work.lifecycle.references).toContainEqual({ ...implementation, disposition: 'retired' });
+      expect(correctedJournal.state.corrective_execution).toEqual(issued);
+      expect(correctedJournal.state.run_id).toBe(issued.engine_run_id);
+      expect(issued.correction_generation).toBe(before.work.lifecycle.assurance.correction_count + 1);
+      expect(issued.base_run_id).toBe(before.work.execution.run_id);
+      expect(issued.stage_ids).toEqual(correctionRequest.stageIds);
+      expect(reopened.assertCorrectiveExecution(f.identity, 1, issued)).toBeUndefined();
+      const recovery = parseJsonRecord(
+        readFileSync(
+          path.join(
+            f.root,
+            '.agent/work',
+            f.identity.work_id,
+            `correction-${issued.correction_generation}-recovery.json`,
+          ),
+          'utf8',
+        ),
+      );
+      expect(recovery.original_journal).toEqual({ version: journal.version, state: journal.state });
+      expect(recovery.original_work).toEqual(after.work);
+      expect(() => reopened.authorizeCorrectiveExecution(correctionRequest)).toThrow('state compare-and-swap conflict');
+      expect(reopened.readHostStateSnapshot(f.identity)).toEqual(corrected);
+      expect(reopened.readWorkSessionJournal(f.identity)).toEqual(correctedJournal);
+      if (performance.now() >= deadline) throw new Error('Native rebind body exhausted its deadline');
       completed = true;
     } catch (error) {
       primaryFailure = { error };

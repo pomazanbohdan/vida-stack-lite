@@ -11773,16 +11773,8 @@ export class HostStateStore {
             revision: work.revision + 1,
             ...(focused
               ? {
-                  phase: 'EXECUTE' as const,
                   next_action:
-                    'Authorize one corrective generation against the rebound runtime; prior implementation evidence and verification are retired.',
-                  seal: null,
-                  assurance: {
-                    ...work.lifecycle.assurance,
-                    correction_count: work.lifecycle.assurance.correction_count + 1,
-                    review_generation: work.lifecycle.assurance.review_generation + 1,
-                    delivery_cycle_id: null,
-                  },
+                    'Explicitly authorize correction against the rebound runtime; retain the failed source seal until that transition retires it.',
                 }
               : {}),
             config_binding: { ...work.lifecycle.config_binding, runtime_code_digest: input.newRuntimeCodeDigest },
@@ -11791,6 +11783,7 @@ export class HostStateStore {
               ((!focused && reference.kind === 'execution_approval') ||
                 (focused &&
                   reference.kind !== 'execution_approval' &&
+                  reference.kind !== 'implementation_result' &&
                   (reference.generation !== null || reference.implementation_fingerprint !== null)))
                 ? { ...reference, disposition: 'retired' as const }
                 : reference,
@@ -11828,7 +11821,9 @@ export class HostStateStore {
         prior_work_version: input.expectedWork,
         journal_version: input.expectedJournal,
         retired_execution_approval_ids: work.lifecycle.references
-          .filter((reference) => reference.kind === 'execution_approval' && reference.disposition === 'current')
+          .filter(
+            (reference) => !focused && reference.kind === 'execution_approval' && reference.disposition === 'current',
+          )
           .map((reference) => reference.record_id),
       };
       this.#database
