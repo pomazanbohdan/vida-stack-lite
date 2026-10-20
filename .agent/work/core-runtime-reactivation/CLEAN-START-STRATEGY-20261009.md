@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `cec9eee15553c86b79419e6e627aee2c6a611aa9`, run `0314f1f9-7436-4e6f-a1eb-bf5a18051fc0`: F1054/1129, L4653/4970, S4927/5300 and B4952/5642. It records305PASS/0FAIL,3666assertions in151.988seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is75missing functions under38owners, all with exact retained map coordinates, plus690 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `52c5b2bf844bf8a6c2ea7f73a381c9f82d8ef126`, run `069eb95d-7303-4161-a43e-0f22ec8254df`: F1059/1129, L4693/4970, S4970/5300 and B4957/5642. It records305PASS/0FAIL,3686assertions in156.543seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is70missing functions under36owners, all with exact retained map coordinates, plus685 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -41,8 +41,8 @@ unchanged. Prior packets and their exact acceptance/evidence bindings stay in
 and the maintained regression contracts. Do not repeat those closed function
 packets; they do not establish whole-owner or contour closure.
 
-Next measure the checked request-bound capture-read and successor-absorption
-history packet. Reuse the exact captured request, genuine started/completed Host
+The request-bound capture-read and successor-absorption history packet is now
+measured. Reuse the exact captured request, genuine started/completed Host
 attempts, existing valid configured scope, unreserved cooperative Journal history
 and native ledger-abort rollback. Keep default5s cases and the same private
 resources; review and refresh only the exact Host test pin before one stage.
@@ -51,9 +51,10 @@ budget; its passing history cannot close these callbacks. A smaller supported
 fixture is a later same-contour dependency, not an expanded test selection.
 The first packet stage failed at the existing completed Source rollback20s case;
 its complete-capture failure stays attempt1091 with no numeric promotion.
-Before repeating, rebalance its same two cases and remove only redundant fixture
-Journal reads. Focused2PASS33assertions and strict168-file checks now pass; retain
-the same assertions, native rollback, live freshness, private roots and20s bounds.
+Its same two cases were rebalanced and redundant fixture Journal reads removed.
+Focused2PASS33assertions, strict168-file checks and the complete52c5b2b stage pass;
+retain the same assertions, native rollback, live freshness, private roots and20s
+bounds. Continue from the refreshed70-function/685-arm same-contour inventory.
 
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
@@ -70,7 +71,7 @@ The local report-only planner is retained diagnostic tooling, not published Sour
 After observed native process/group/capture closure, retire only the exact
 qualified private regenerable cache. Reuse shared dependency inventory under
 the no-install fence and preserve every other scratch/evidence byte. The latest
-archive and retirement manifest in WORK leave3549286400bytes above the unchanged
+archive and retirement manifest in WORK leave3402031104bytes above the unchanged
 2GiB durable floor. Earlier comprehensive cleanup and qualifier namespace-guard
 proof remain in Git and retained diagnostics; do not repeat broad scans/cleanup.
 Unknown backup/provision/proposal roots remain excluded. Bootstrap now requires
