@@ -15,6 +15,43 @@ numeric producer.
 
 ### Sequential coverage observations and active repair
 
+#### Closed private cache retirement and capacity recovery
+
+Before another producer, current Sourceaac6981 is clean and no active numeric,
+build or install owner is found. The capacity observation2237333504free bytes
+leaves89849856above2147483648,32247808less than the preceding packet's observed
+122097664growth; this is a forecast, not a failed admission. Global Bun cache is
+excluded because its shared ownership is insufficient. Old SDK formation roots
+already symlink current installed dependencies; no duplicate dependency removal.
+
+The exact launch/execution receipts for /workspace/contour-stage-Nka1td qualify
+only /workspace/contour-stage-Nka1td/scratch-kMRIJc/scratch/bun-install-cache as
+its private declared Bun install cache, outside the immutable image. The original
+dcaa148 execution exits0 with complete capture, process/group termination and
+unchanged boot/image; its operation remains BLOCKED/nonexact. Single-pass cache
+inventory preserves15243entries/modes/SHA/symlink targets and178155793regular
+bytes, all with link count1. A bounded27551-entry dependency metadata pass over
+its known retained scratch/image output/installed dependency roots finds no
+cache links; no active group, cwd or open-file consumer is found. No extra AST
+or repository hash pass is run. Earlier exact 0EeN3h private cache is empty and
+left alone; its original UNKNOWN evidence is untouched.
+
+Root retires only that qualified Nka1td cache after exact root dev/inode/mtime/
+ctime/realpath recheck. All sibling fixtures/DBs, images, Source, SDK, original
+logs/receipts and FAIL/TIMEOUT/UNKNOWN evidence remain. The retirement manifest
+closed-stage-cache-retirement-Nka1td.json and qualification log/script are retained
+in packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers. Its original
+outcome field is corrected from a copied UNKNOWN label to the receipt's actual
+BLOCKED/nonexact; no original receipt or classification changes. Blind Luna
+/tmp/vida-capacity-cache-plan.md confirms the bounded classification and proof
+requirements; a copy remains with those diagnostics.
+
+Immediate free bytes before/after retirement2233753600/2456776704 establish
+223023104reclaimed bytes, leaving309293056above the unchanged floor. The prior
+forecast GAP is resolved for the next bounded packet. No cache reinstallation,
+old-state replay, budget increase or Runtime/consumer effect occurs. Continue the
+same Host contour using the current116-function report inventory.
+
 #### Local qualified-code consistency packet
 
 Complete measurement on Source08586513691d66f5921518297bf135370d1da8e5,

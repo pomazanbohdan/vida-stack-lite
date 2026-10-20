@@ -42,9 +42,11 @@ reservation transitions are now measured through existing native SQLite fixtures
 Qualified-code Host consistency, freshness, rollback and exact history-bound retry
 are now measured, with shared test-only endpoint mappings. Next inspect the
 remaining failed-prewriter and recovery gaps from the refreshed inventory. Before
-another numeric producer, establish retained capacity: current durable margin is
-99340288bytes above the unchanged floor, less than the latest packet's observed
-122097664-byte growth. That is a planning forecast, not an observed admission failure.
+another numeric producer, retain sufficient capacity. The receipted closed Nka1td
+private Bun cache retirement reclaims223023104bytes, leaving309293056above the
+unchanged floor. This resolves the prior forecast shortfall for the next bounded
+packet. Keep global/shared caches and every original evidence class protected;
+WORK owns the exact retirement manifest, dependency proof and before/after values.
 Unit endpoint/observation seams
 do not establish genuine producer admission, native qualification or dispatch.
 Review all acquired roots and public-reader
