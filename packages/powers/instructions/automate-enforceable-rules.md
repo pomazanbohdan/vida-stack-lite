@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/anthropic-best-practices.md
+  - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-encode-lessons-in-structure/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Автоматизуй те, що можна перевірити механічно
@@ -38,4 +39,8 @@ revision: 1
 Дай зрозумілу помилку.
 Онови настанову після зміни перевірки.
 Не автоматизуй те, що потребує контексту.
+Коли впіймав себе на повторі тієї самої настанови, закодуй правило в перевірку, прапорець метаданих або скрипт.
+Для правила, що потребує судження, зроби настанову помітнішою й додай приклад самого порушення.
+Структурне виправлення замінює текст, а не дублює його.
+Вважай текст настанови симптомом, коли ту саму помилку вже виправляли двічі.
 Перевір автоматику на реальному порушенні.

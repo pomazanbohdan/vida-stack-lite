@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 342,
-  "updated_at": "2026-10-20T06:13:55.802Z",
+  "revision": 447,
+  "updated_at": "2026-10-20T08:34:27.267Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -165,12 +165,9 @@
           ]
         },
         "skills/systematic-debugging/root-cause-tracing.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "debug-systematically"
-          ],
-          "contributed_sources": [
-            "superpowers:skills/systematic-debugging/root-cause-tracing.md"
           ]
         },
         "skills/test-driven-development/writing-good-tests.md": {
@@ -651,12 +648,9 @@
       "source_revision": "6f1c2bfff0c837d268929a7c4e490918eb4fab29",
       "files": {
         ".openclaw/skills/ponytail/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:.openclaw/skills/ponytail/SKILL.md"
           ]
         },
         ".openclaw/skills/ponytail-review/SKILL.md": {
@@ -734,75 +728,51 @@
           ]
         },
         ".agents/rules/ponytail.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:.agents/rules/ponytail.md"
           ]
         },
         ".clinerules/ponytail.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:.clinerules/ponytail.md"
           ]
         },
         ".github/copilot-instructions.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:.github/copilot-instructions.md"
           ]
         },
         ".kiro/steering/ponytail.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:.kiro/steering/ponytail.md"
           ]
         },
         ".opencode/command/ponytail.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:.opencode/command/ponytail.md"
           ]
         },
         ".qoder/rules/ponytail.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:.qoder/rules/ponytail.md"
           ]
         },
         ".windsurf/rules/ponytail.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:.windsurf/rules/ponytail.md"
           ]
         },
         "skills/ponytail/SKILL.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:skills/ponytail/SKILL.md"
           ]
         },
         ".github/CONTRIBUTING.md": {
@@ -823,12 +793,9 @@
           "reason": "Хостові кроки вмикання й обмеження доступу після інсталяції; інфраструктура."
         },
         "AGENTS.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "minimize-code-surface"
-          ],
-          "contributed_sources": [
-            "ponytail:AGENTS.md"
           ]
         },
         "benchmarks/agentic/README.md": {
@@ -1080,6 +1047,842 @@
             "present-impact-without-invented-baseline",
             "keep-review-read-only"
           ]
+        }
+      }
+    },
+    "pstack": {
+      "source_revision": "2f8377461fd533f5af782e1fd643783b1067b847",
+      "files": {
+        "skills/principle-attack-the-premise/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "attack-the-shared-premise"
+          ]
+        },
+        "skills/poteto-mode/playbooks/authoring-a-skill.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "author-an-agent-skill"
+          ]
+        },
+        "skills/sharpen/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "author-an-agent-skill"
+          ]
+        },
+        "skills/create-verification-skill/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "build-a-project-verification-harness",
+            "verify-with-independent-lanes"
+          ]
+        },
+        "skills/create-verification-skill/references/feature-map-example/README.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "build-a-project-verification-harness"
+          ]
+        },
+        "skills/create-verification-skill/references/feature-map-example/create-note.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "build-a-project-verification-harness"
+          ]
+        },
+        "skills/create-verification-skill/references/feature-map-example/search.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "build-a-project-verification-harness"
+          ]
+        },
+        "automations/benny/skills/reproduce-and-fix-issues/references/feature-map.example.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "build-a-project-verification-harness"
+          ]
+        },
+        "docs/guide/06-verify-and-ship.md": {
+          "status": "split",
+          "instruction_ids": [
+            "build-a-project-verification-harness",
+            "design-an-agent-facing-control-interface",
+            "verify-with-independent-lanes"
+          ]
+        },
+        "skills/principle-build-the-lever/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "build-a-rerunnable-tool"
+          ]
+        },
+        "skills/principle-experience-first/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "choose-user-experience-over-implementation"
+          ]
+        },
+        "skills/poteto-mode/playbooks/refactoring.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "converge-on-target-architecture"
+          ]
+        },
+        "skills/poteto-mode/playbooks/orchestrate.md": {
+          "status": "split",
+          "instruction_ids": [
+            "coordinate-a-program-of-delegated-work",
+            "report-what-changed-since-last-update"
+          ]
+        },
+        "skills/poteto-mode/playbooks/autopilot-full.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "coordinate-a-program-of-delegated-work"
+          ]
+        },
+        "skills/swarm/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "coordinate-a-program-of-delegated-work"
+          ]
+        },
+        "skills/automate-me/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "derive-a-workflow-from-history"
+          ]
+        },
+        "skills/poteto-help/references/recipes.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "derive-a-workflow-from-history"
+          ]
+        },
+        "automations/benny/skills/setup-benny/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "design-a-bespoke-workflow",
+            "record-available-executor-models"
+          ]
+        },
+        "docs/guide/09-make-it-yours.md": {
+          "status": "split",
+          "instruction_ids": [
+            "design-a-bespoke-workflow",
+            "keep-a-decision-trail",
+            "merge-copied-tree-with-local-edits"
+          ]
+        },
+        "automations/benny/skills/reproduce-and-fix-issues/references/control-adapter.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "design-an-agent-facing-control-interface"
+          ]
+        },
+        "skills/architect/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "design-data-structures-first",
+            "design-from-caller-usage"
+          ]
+        },
+        "docs/guide/04-design.md": {
+          "status": "split",
+          "instruction_ids": [
+            "design-data-structures-first",
+            "design-from-caller-usage"
+          ]
+        },
+        "skills/poteto-mode/playbooks/runtime-forensics.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "diagnose-from-runtime-evidence"
+          ]
+        },
+        "skills/poteto-mode/playbooks/eval.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "evaluate-skill-changes-blind"
+          ]
+        },
+        "skills/how/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "explain-a-subsystem"
+          ]
+        },
+        "skills/how/references/explainer-prompt.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "explain-a-subsystem"
+          ]
+        },
+        "skills/bro/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "explain-a-subsystem"
+          ]
+        },
+        "skills/teach/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "explain-a-subsystem"
+          ]
+        },
+        "skills/benchmark-checklist/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "explain-the-measured-number"
+          ]
+        },
+        "skills/poteto-mode/playbooks/perf-issue.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "explain-the-measured-number"
+          ]
+        },
+        "skills/principle-explain-the-number/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "explain-the-measured-number"
+          ]
+        },
+        "skills/poteto-mode/playbooks/hillclimb.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "hillclimb-one-metric"
+          ]
+        },
+        "skills/figure-it-out/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/poteto-mode/playbooks/trace-forensics.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/references/source-playbook.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/references/sources/code-archaeology.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/references/sources/databricks.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/references/sources/datadog.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/references/sources/incident-postmortem.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/references/sources/linear.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/references/sources/notion.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/references/sources/sentry.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "skills/why/references/sources/slack.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-history-across-sources"
+          ]
+        },
+        "docs/guide/03-understand.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-read-only"
+          ]
+        },
+        "skills/how/references/explorer-prompt.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-read-only"
+          ]
+        },
+        "skills/poteto-mode/playbooks/investigation.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "investigate-read-only"
+          ]
+        },
+        "skills/architect/references/rationale-template.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "keep-a-decision-trail"
+          ]
+        },
+        "skills/poteto-mode/playbooks/autopilot-stack.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "keep-one-writer-per-branch"
+          ]
+        },
+        "skills/maintain-verification-skill/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "maintain-verification-harness-against-drift"
+          ]
+        },
+        "skills/principle-type-system-discipline/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "make-illegal-states-unrepresentable"
+          ]
+        },
+        "skills/typescript-best-practices/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "make-illegal-states-unrepresentable"
+          ]
+        },
+        "skills/typescript-best-practices/references/patterns.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "make-illegal-states-unrepresentable"
+          ]
+        },
+        "skills/principle-make-operations-idempotent/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "make-operations-idempotent"
+          ]
+        },
+        "skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "migrate-callers-and-delete-legacy"
+          ]
+        },
+        "skills/principle-minimize-reader-load/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "minimize-reader-load"
+          ]
+        },
+        "skills/principle-model-the-domain/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "model-domain-in-structure"
+          ]
+        },
+        "skills/poteto-mode/playbooks/opening-a-pr.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "open-a-reviewable-change"
+          ]
+        },
+        "skills/poteto-mode/playbooks/shipping.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "open-a-reviewable-change"
+          ]
+        },
+        "skills/poteto-mode/playbooks/pause-safely.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "pause-work-with-a-handoff"
+          ]
+        },
+        "skills/principle-never-block-on-the-human/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "proceed-without-waiting-for-confirmation"
+          ]
+        },
+        "skills/arena/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "prototype-competing-designs"
+          ]
+        },
+        "skills/principle-exhaust-the-design-space/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "prototype-competing-designs"
+          ]
+        },
+        "skills/poteto-mode/playbooks/prototype.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "prototype-competing-designs"
+          ]
+        },
+        "skills/correct/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "prove-behavior-around-a-change"
+          ]
+        },
+        "automations/benny/skills/reproduce-and-fix-issues/references/verify-existing-fix.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "prove-behavior-around-a-change"
+          ]
+        },
+        "skills/blast-radius/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "prove-blast-radius-by-running-code"
+          ]
+        },
+        "skills/poteto-mode/playbooks/visual-parity.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "prove-visual-parity-with-image-diff"
+          ]
+        },
+        "skills/poteto-mode/playbooks/worktree-cleanup.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "prune-worktrees-with-safety-gates"
+          ]
+        },
+        "skills/poteto-help/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "record-available-executor-models",
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "docs/guide/10-recipes-and-pitfalls.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "record-skipped-steps-with-reason"
+          ]
+        },
+        "skills/principle-redesign-from-first-principles/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "redesign-as-if-foundational"
+          ]
+        },
+        "skills/principle-foundational-thinking/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "redesign-as-if-foundational"
+          ]
+        },
+        "docs/guide/07-overnight.md": {
+          "status": "split",
+          "instruction_ids": [
+            "report-what-changed-since-last-update",
+            "run-until-a-done-predicate"
+          ]
+        },
+        "skills/poteto-mode/playbooks/bug-fix.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "reproduce-defect-before-fixing"
+          ]
+        },
+        "automations/benny/skills/reproduce-and-fix-issues/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "reproduce-defect-before-fixing"
+          ]
+        },
+        "agents/comment-sicko.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "review-adversarially"
+          ]
+        },
+        "skills/interrogate/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "review-adversarially"
+          ]
+        },
+        "skills/interrogate/references/code-quality-review.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "review-adversarially"
+          ]
+        },
+        "skills/interrogate/references/rubric.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "review-adversarially"
+          ]
+        },
+        "skills/reflect/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "review-adversarially"
+          ]
+        },
+        "skills/reflect/references/divergent-reviewer.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "review-adversarially"
+          ]
+        },
+        "skills/reflect/references/tooling-reviewer.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "review-adversarially"
+          ]
+        },
+        "skills/poteto-mode/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "run-until-a-done-predicate"
+          ]
+        },
+        "docs/guide/02-poteto-mode.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "run-until-a-done-predicate"
+          ]
+        },
+        "skills/poteto-mode/playbooks/babysit.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "run-until-a-done-predicate"
+          ]
+        },
+        "skills/poteto-mode/playbooks/autonomous-run.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "run-until-a-done-predicate"
+          ]
+        },
+        "skills/architect/references/design-red-flags.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "screen-design-for-structural-red-flags"
+          ]
+        },
+        "skills/why/references/epistemics.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "separate-evidence-from-inference"
+          ]
+        },
+        "skills/principle-separate-before-serializing-shared-state/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "separate-shared-state-before-serializing"
+          ]
+        },
+        "skills/principle-sequence-verifiable-units/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "sequence-verifiable-units"
+          ]
+        },
+        "skills/poteto-mode/playbooks/feature.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "sequence-verifiable-units"
+          ]
+        },
+        "skills/show-me-your-work/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "state-goal-check-and-proof"
+          ]
+        },
+        "skills/principle-outcome-oriented-execution/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "state-goal-check-and-proof"
+          ]
+        },
+        "skills/unslop/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "strip-ai-writing-tells"
+          ]
+        },
+        "skills/ketchup/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "take-over-in-flight-work"
+          ]
+        },
+        "skills/poteto-mode/playbooks/session-pickup.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "take-over-in-flight-work"
+          ]
+        },
+        "skills/poteto-mode/references/bugbot-triage.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "triage-automated-review-findings"
+          ]
+        },
+        "automations/benny/FOR_AGENTS.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "triage-incoming-reports"
+          ]
+        },
+        "automations/benny/skills/triage-issue-reports/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "triage-incoming-reports"
+          ]
+        },
+        "automations/benny/skills/triage-issue-reports/references/routing.example.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "triage-incoming-reports"
+          ]
+        },
+        "skills/interrogate/references/lead-judgment.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "triage-review-findings-with-judgment"
+          ]
+        },
+        "skills/reflect/references/judgment-reviewer.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "triage-review-findings-with-judgment"
+          ]
+        },
+        "skills/reflect/references/synthesizer.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "triage-review-findings-with-judgment"
+          ]
+        },
+        "agents/poteto-agent.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "automations/benny/templates/reproduce-automation-prompt.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "automations/benny/templates/triage-automation-prompt.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "skills/architect/references/runner-prompt.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "skills/interrogate/references/reviewer-prompt.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "skills/poteto-help/references/prompting.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "skills/why/references/investigator-prompt.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "skills/why/references/synthesizer-prompt.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-a-complete-delegation-brief"
+          ]
+        },
+        "skills/poteto-mode/playbooks/multi-phase-plan.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-evidence-gated-program-plan"
+          ]
+        },
+        "docs/guide/05-build-and-clean.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-evidence-gated-program-plan"
+          ]
+        },
+        "skills/no-comments/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-few-meaningful-comments"
+          ]
+        },
+        "skills/technical-writing/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-technical-prose-to-a-standard"
+          ]
+        },
+        "skills/in-your-own-words/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "write-technical-prose-to-a-standard"
+          ]
+        },
+        "skills/principle-encode-lessons-in-structure/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "automate-enforceable-rules"
+          ],
+          "contributed_sources": [
+            "pstack:skills/principle-encode-lessons-in-structure/SKILL.md"
+          ]
+        },
+        "skills/principle-fix-root-causes/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "debug-systematically"
+          ],
+          "contributed_sources": [
+            "pstack:skills/principle-fix-root-causes/SKILL.md"
+          ]
+        },
+        "skills/principle-guard-the-context-window/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "delegate-subagent-work"
+          ],
+          "contributed_sources": [
+            "pstack:skills/principle-guard-the-context-window/SKILL.md"
+          ]
+        },
+        "skills/principle-laziness-protocol/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "minimize-code-surface"
+          ],
+          "contributed_sources": [
+            "pstack:skills/principle-laziness-protocol/SKILL.md"
+          ]
+        },
+        "skills/principle-subtract-before-you-add/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "minimize-code-surface"
+          ],
+          "contributed_sources": [
+            "pstack:skills/principle-subtract-before-you-add/SKILL.md"
+          ]
+        },
+        "skills/recall/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "offer-context-recon"
+          ],
+          "contributed_sources": [
+            "pstack:skills/recall/SKILL.md"
+          ]
+        },
+        "skills/tdd/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "test-first-development"
+          ],
+          "contributed_sources": [
+            "pstack:skills/tdd/SKILL.md"
+          ]
+        },
+        "skills/principle-boundary-discipline/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "validate-at-every-boundary"
+          ],
+          "contributed_sources": [
+            "pstack:skills/principle-boundary-discipline/SKILL.md"
+          ]
+        },
+        "skills/principle-prove-it-works/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "verify-before-completion"
+          ],
+          "contributed_sources": [
+            "pstack:skills/principle-prove-it-works/SKILL.md"
+          ]
+        },
+        "skills/principle-test-behavior-not-implementation/SKILL.md": {
+          "status": "merged",
+          "instruction_ids": [
+            "write-tests-that-catch-breaks"
+          ],
+          "contributed_sources": [
+            "pstack:skills/principle-test-behavior-not-implementation/SKILL.md"
+          ]
+        },
+        "automations/benny/README.md": {
+          "status": "rejected",
+          "reason": "Опис конкретної автоматизації та її налаштування в хості; норма вилучена з інших файлів тієї самої автоматизації."
+        },
+        "docs/guide/01-setup.md": {
+          "status": "rejected",
+          "reason": "Інструкція встановлення для конкретного хоста: шляхи, команди й назви продукту не переносяться в універсальну норму."
+        },
+        "docs/guide/08-principles.md": {
+          "status": "rejected",
+          "reason": "Стислий переказ принципів, кожен з яких має окремий повний файл; переказ не додає нової норми."
+        },
+        "docs/guide/README.md": {
+          "status": "rejected",
+          "reason": "Покажчик розділів посібника без власного змісту; норма міститься в проіндексованих розділах."
+        },
+        "README.md": {
+          "status": "rejected",
+          "reason": "Опис продукту, встановлення й перелік скілів для конкретного хоста; не містить узагальнюваної норми роботи агента."
+        },
+        "skills/make-bot-ui/SKILL.md": {
+          "status": "rejected",
+          "reason": "Продуктовий шаблон інтерфейсу для конкретного застосунку; містить смакові рішення й назви продукту замість норми."
+        },
+        "skills/setup-pstack/SKILL.md": {
+          "status": "rejected",
+          "reason": "Налаштування конкретного пакета в конкретному хості: копіювання файлів і правки конфігурації без узагальнюваної норми."
         }
       }
     }

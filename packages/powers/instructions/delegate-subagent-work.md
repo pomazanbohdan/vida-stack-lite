@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/SKILL.md
+  - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-guard-the-context-window/SKILL.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Делегуй задачі з чіткими межами
@@ -45,4 +46,6 @@ revision: 3
 Якщо окремого виконавця для задачі немає, виконай її самостійно в цій сесії.
 Не вигадуй передачу задачі, якої не можеш виконати.
 Познач у звіті, що власна перевірка слабша за незалежний перегляд.
+Тримай у головній сесії лише підсумки, а великий обсяг виводу віддавай окремим виконавцям.
+Обмежуй обсяг кожної фази: кількість файлів, довжину виводу, бюджет кроків.
 Не переходь до залежної задачі, доки її попередник відкритий.

@@ -144,13 +144,19 @@ function checkProvenance(id: string, front: Dict, donors: DonorSet, seenSources:
     if (donor === undefined) { issue(issues, 'CORPUS_PROVENANCE_MISMATCH', `instruction ${id} references unknown donor ${donorId}`, { instruction_id: id, donor: donorId }); continue; }
     if (source.license !== donor.license || source.revision !== donor.head_sha) issue(issues, 'CORPUS_PROVENANCE_MISMATCH', `instruction ${id} donor ${donorId} license or revision does not match donors.yaml`, { instruction_id: id, donor: donorId, path: sourcePath });
     const cloneRoot = resolve(donors.localRoot, String(donor.local_path ?? ''));
+    const contentRoot = resolve(cloneRoot, String(donor.content_path ?? ''));
     let cloneAvailable = false;
     try { cloneAvailable = statSync(cloneRoot).isDirectory(); } catch (error) {
       if (!(isRecord(error) && error.code === 'ENOENT')) issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect donor clone ${cloneRoot}: ${String(error)}`, { donor: donorId, path: cloneRoot });
     }
     if (!cloneAvailable) { issue(issues, 'CORPUS_CLONE_MISSING', `pinned clone for donor ${donorId} is unavailable at ${cloneRoot}`, { donor: donorId, path: cloneRoot }); continue; }
-    const sourceFile = resolve(cloneRoot, sourcePath);
-    if (sourceFile === cloneRoot || !sourceFile.startsWith(`${cloneRoot}${sep}`)) { issue(issues, 'CORPUS_PROVENANCE_PATH_INVALID', `instruction ${id} donor path ${sourcePath} escapes pinned clone ${donorId}`, { instruction_id: id, donor: donorId, path: sourcePath }); continue; }
+    let contentAvailable = false;
+    try { contentAvailable = statSync(contentRoot).isDirectory(); } catch (error) {
+      if (!(isRecord(error) && error.code === 'ENOENT')) issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect donor content root ${contentRoot}: ${String(error)}`, { donor: donorId, path: contentRoot });
+    }
+    if (!contentAvailable) { issue(issues, 'CORPUS_CLONE_MISSING', `pinned clone content for donor ${donorId} is unavailable at ${contentRoot}`, { donor: donorId, path: contentRoot }); continue; }
+    const sourceFile = resolve(contentRoot, sourcePath);
+    if (sourceFile === contentRoot || !sourceFile.startsWith(`${contentRoot}${sep}`)) { issue(issues, 'CORPUS_PROVENANCE_PATH_INVALID', `instruction ${id} donor path ${sourcePath} escapes pinned clone ${donorId}`, { instruction_id: id, donor: donorId, path: sourcePath }); continue; }
     try {
       if (!statSync(sourceFile).isFile()) issue(issues, 'CORPUS_PROVENANCE_PATH_INVALID', `instruction ${id} donor path ${donorId}:${sourcePath} is not a regular file`, { instruction_id: id, donor: donorId, path: sourcePath });
     } catch (error) {
@@ -183,6 +189,7 @@ function checkDonorCoverage(map: Dict, donors: DonorSet, issues: CorpusIssue[]):
   for (const [donorId, donor] of donors.donors) {
     if (!Object.prototype.hasOwnProperty.call(donorMaps, donorId)) continue;
     const cloneRoot = resolve(donors.localRoot, String(donor.local_path ?? ''));
+    const contentRoot = resolve(cloneRoot, String(donor.content_path ?? ''));
     let cloneStat;
     try { cloneStat = statSync(cloneRoot); }
     catch (error) {
@@ -194,15 +201,26 @@ function checkDonorCoverage(map: Dict, donors: DonorSet, issues: CorpusIssue[]):
       issue(issues, 'CORPUS_FILESYSTEM_ERROR', `donor clone path ${cloneRoot} for ${donorId} is not a directory`, { donor: donorId, path: cloneRoot });
       continue;
     }
+    let contentStat;
+    try { contentStat = statSync(contentRoot); }
+    catch (error) {
+      if (isRecord(error) && error.code === 'ENOENT') issue(issues, 'CORPUS_CLONE_MISSING', `pinned clone content for donor ${donorId} is unavailable at ${contentRoot}`, { donor: donorId, path: contentRoot });
+      else issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect donor content root ${contentRoot}: ${String(error)}`, { donor: donorId, path: contentRoot });
+      continue;
+    }
+    if (!contentStat.isDirectory()) {
+      issue(issues, 'CORPUS_FILESYSTEM_ERROR', `donor content path ${contentRoot} for ${donorId} is not a directory`, { donor: donorId, path: contentRoot });
+      continue;
+    }
     const carrierPaths = new Set<string>();
     const visit = (directory: string): void => {
       for (const entry of readdirSync(directory, { withFileTypes: true })) {
         const absolute = join(directory, entry.name);
         if (entry.isDirectory()) visit(absolute);
-        else if (entry.isFile() && entry.name.endsWith('.md')) carrierPaths.add(relative(cloneRoot, absolute).split(sep).join('/'));
+        else if (entry.isFile() && entry.name.endsWith('.md')) carrierPaths.add(relative(contentRoot, absolute).split(sep).join('/'));
       }
     };
-    try { visit(cloneRoot); }
+    try { visit(contentRoot); }
     catch (error) { issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot enumerate donor clone ${cloneRoot}: ${String(error)}`, { donor: donorId, path: cloneRoot }); continue; }
     const donorMap = isRecord(donorMaps[donorId]) ? donorMaps[donorId] as Dict : {};
     const records = isRecord(donorMap.files) ? donorMap.files : {};

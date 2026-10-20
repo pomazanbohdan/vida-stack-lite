@@ -448,4 +448,35 @@ describe('CLI helpers', () => {
     const corpus = await fixture(); const result = corpusCli(['--root', corpus.root]);
     expect(result).toMatchObject({ issues: [], instructions: 1, exitCode: 0 });
   });
+
+  test('uses content_path as the donor root for provenance and map coverage', async () => {
+    const corpus = await fixture();
+    const contentRoot = join(corpus.root, cloneRoot, 'content');
+    await mkdir(contentRoot, { recursive: true });
+    await writeFile(join(contentRoot, donorFile), 'synthetic donor source\n');
+    await writeFile(join(corpus.root, cloneRoot, 'other-plugin.md'), 'outside donor content\n');
+    await rm(join(corpus.root, cloneRoot, donorFile));
+    await writeFile(join(corpus.root, 'donors.yaml'), `schema: vida-powers-donors/v1\nlocal_root: .tmp/donors\ndonors:\n  - id: ${donorId}\n    local_path: synthetic\n    content_path: content\n    head_sha: '${revision}'\n    license: MIT\n`);
+    expect(checkCorpus(corpus.root)).toEqual([]);
+  });
+
+  test('reports a missing content subdirectory at the content root', async () => {
+    const corpus = await fixture();
+    await writeFile(join(corpus.root, 'donors.yaml'), `schema: vida-powers-donors/v1\nlocal_root: .tmp/donors\ndonors:\n  - id: ${donorId}\n    local_path: synthetic\n    content_path: missing\n    head_sha: '${revision}'\n    license: MIT\n`);
+    expect(checkCorpus(corpus.root).filter((item) => item.code === 'CORPUS_CLONE_MISSING').map((item) => item.details?.path)).toEqual([resolve(corpus.root, cloneRoot, 'missing')]);
+  });
+
+  test('reports a non-directory content root as a filesystem error', async () => {
+    const corpus = await fixture();
+    await writeFile(join(corpus.root, cloneRoot, 'not-a-directory'), 'file\n');
+    await writeFile(join(corpus.root, 'donors.yaml'), `schema: vida-powers-donors/v1\nlocal_root: .tmp/donors\ndonors:\n  - id: ${donorId}\n    local_path: synthetic\n    content_path: not-a-directory\n    head_sha: '${revision}'\n    license: MIT\n`);
+    expect(checkCorpus(corpus.root).some((item) => item.code === 'CORPUS_FILESYSTEM_ERROR' && item.details?.path === resolve(corpus.root, cloneRoot, 'not-a-directory'))).toBe(true);
+  });
+
+  test('contains filesystem errors while inspecting a content root', async () => {
+    const corpus = await fixture();
+    await writeFile(join(corpus.root, cloneRoot, 'not-a-directory'), 'file\n');
+    await writeFile(join(corpus.root, 'donors.yaml'), `schema: vida-powers-donors/v1\nlocal_root: .tmp/donors\ndonors:\n  - id: ${donorId}\n    local_path: synthetic\n    content_path: not-a-directory/child\n    head_sha: '${revision}'\n    license: MIT\n`);
+    expect(checkCorpus(corpus.root).some((item) => ['CORPUS_CLONE_MISSING', 'CORPUS_FILESYSTEM_ERROR'].includes(item.code) && item.details?.path === resolve(corpus.root, cloneRoot, 'not-a-directory/child'))).toBe(true);
+  });
 });

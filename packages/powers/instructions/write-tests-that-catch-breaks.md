@@ -25,8 +25,9 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.opencode/command/ponytail-review.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-audit/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
+  - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-test-behavior-not-implementation/SKILL.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Пиши тести, які ловлять конкретну поломку
@@ -53,4 +54,7 @@ revision: 3
 Ризикованою вважай гілку, розбір, гроші, безпеку, запис даних і виправлення помилки.
 Одного хорошого тесту достатньо; покриття саме по собі не є вимогою.
 Визнай непокриту поведінку замість тесту, який нічого не ловить.
+Уважай реалізацією те, чого користувач не бачить: приватні помічники, порядок викликів, проміжні дані.
+Перевіряй тест двома уявними правками: зламай поведінку — мусить упасти; зміни будову — мусить встояти.
+Тримай у тесті тип помилки, за яким розгалужуються виклики, а не дослівне формулювання повідомлення.
 Заверши, коли кожен тест має названу поломку й перевіряє справжню поведінку.

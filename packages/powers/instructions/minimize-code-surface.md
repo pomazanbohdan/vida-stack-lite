@@ -34,8 +34,10 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=AGENTS.md
+  - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-laziness-protocol/SKILL.md
+  - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-subtract-before-you-add/SKILL.md
 status: active
-revision: 5
+revision: 6
 ---
 
 # Мінімізуй поверхню зміни
@@ -76,4 +78,5 @@ revision: 5
 Назви в одному рядку менший повний варіант і дай власнику вибрати; якщо частина запиту не потрібна для потреби, запереч до початку роботи.
 Переглянь диф на зайві файли та код і прибери рядки, не потрібні для повного результату.
 Заверши відповідь одним-двома рядками: що пропустив або не перевірив і який ризик мусить знати власник.
+Прибери мертвий код і надлишкові перевірки до побудови нового, а кожне рішення тримай в одному джерелі істини.
 Заверши лише після повної перевірки погодженого обсягу.

@@ -126,7 +126,7 @@ revision: '1'
 | D1. Конвертер: записи мапи, видалення, `split` | **закрито** | `scripts/convert.ts`, `tests/convert.test.ts` — `--map-record` (rejected / merged / split), `--remove`, канонізація аліасів, ідемпотентність; 3 рев'ю-раунди |
 | D2. Донор superpowers | **закрито** | 120 файлів → 73 інструкції, 8 конфліктів знято звуженням, 72 відхилення; рев'ю змісту: 1 blocker (вигадана норма) + 7 major/minor — закрито |
 | D3. Донор ponytail | **закрито** | 60 файлів → 13 інструкцій, 12 злиттів, 36 відхилень; 4 нових теги затверджено |
-| D4. Матеріалізація та валідація | **закрито** | корпус 102 інструкції; `check-corpus.ts` → `issues: []`; карта 180 записів (29 split / 29 converted / 14 merged / 108 rejected); 224 тести, coverage 100 % |
+| D4. Матеріалізація та валідація | **закрито** | корпус 161 інструкція (superpowers + ponytail + pstack); `check-corpus.ts` → `issues: []`; карта 314 записів (37 split / 149 converted / 14 merged / 114 rejected); 230 тестів, coverage 100 % |
 
 **Поза планом кроку D (залишилось):** донори поза MVP-парою (BMAD, matt-skills,
 addy-skills, pstack, gsd-core) — окремий крок із рішенням власника щодо межі;

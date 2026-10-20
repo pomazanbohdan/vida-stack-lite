@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 175,
+  "revision": 249,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-20T06:11:07.205Z",
+  "updated_at": "2026-10-20T08:34:26.804Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Починає зміну поведінки з перевірки очікуваного результату.",
@@ -29,7 +29,17 @@
       "communicate-concisely": "Подає результат стисло й по суті.",
       "define-output-format": "Задає точні розділи, порядок і поля результату.",
       "audit-codebase": "Оцінює ціле сховище за впливом знахідок, а не окрему зміну.",
-      "manage-technical-debt": "Обліковує відкладені спрощення разом із їхніми умовами перегляду."
+      "manage-technical-debt": "Обліковує відкладені спрощення разом із їхніми умовами перегляду.",
+      "design-structure": "Здатність обирати форму даних, межі модулів і структуру взаємодії до написання коду.",
+      "make-states-unrepresentable": "Здатність переносити правила допустимих станів у тип і конструктор, щоб незаконний стан не можна було створити.",
+      "measure-performance": "Здатність вимірювати показник відтворювано й пояснювати число разом із базою та розкидом.",
+      "design-experiments": "Здатність порівнювати варіанти рішення або інструкції на однакових задачах і однаковому критерії.",
+      "write-technical-prose": "Здатність писати технічний текст, який дає відповідь у першому абзаці й не містить шаблонного шуму.",
+      "explain-subsystem": "Здатність пояснювати частину системи через її мету, межу й основний шлях виконання.",
+      "build-verification-harness": "Здатність збирати й підтримувати сценарії, що доводять спостережувану поведінку продукту.",
+      "triage-reports": "Здатність класифікувати вхідні звіти й зауваження та призначати їм маршрут за класом.",
+      "coordinate-program": "Здатність розбивати велику роботу на частини з власником, залежностями й точками зведення.",
+      "keep-decision-trail": "Здатність фіксувати рішення з варіантами, підставою й умовою перегляду."
     },
     "pattern": {
       "test-first-development": "Спершу перевіряє очікувану поведінку, потім додає реалізацію.",
@@ -54,7 +64,18 @@
       "concise-communication": "Подає результат без вступу й повторень.",
       "output-formatting": "Фіксує форму результату до його створення.",
       "code-audit": "Переглядає все сховище в сталому порядку впливу.",
-      "technical-debt": "Робить відкладені рішення видимими й відслідковуваними."
+      "technical-debt": "Робить відкладені рішення видимими й відслідковуваними.",
+      "structural-design": "Підхід, у якому структура даних і межі модулів визначають форму коду.",
+      "state-modeling": "Підхід, у якому допустимі стани описуються типом, а не набором перевірок.",
+      "performance-measurement": "Підхід, у якому зміна оцінюється вимірюванням із базою та розкидом.",
+      "experiment-design": "Підхід, у якому варіанти порівнюються на однакових задачах і однаковому критерії.",
+      "technical-writing": "Підхід, у якому технічний текст будується навколо тези, прикладу й читацького питання.",
+      "subsystem-explanation": "Підхід, у якому підсистема пояснюється від мети до основного шляху.",
+      "verification-harness": "Підхід, у якому поведінка продукту доводиться відтворюваним набором сценаріїв.",
+      "report-triage": "Підхід, у якому вхідні звіти класифікуються й маршрутизуються за єдиним правилом.",
+      "program-orchestration": "Підхід, у якому велика робота ведеться частинами з явними власниками й залежностями.",
+      "decision-trail": "Підхід, у якому рішення фіксуються разом із підставою та умовою перегляду.",
+      "approval-policy": "Підхід, у якому політика погодження обирається налаштуванням користувача, а обидві протилежні політики описані явно."
     }
   },
   "tag_aliases": {
@@ -113,9 +134,19 @@
       "sha256": "ccd566e2165558350417fe64eeb695eeecba1d726b05806219b7bc565b0fad72"
     },
     {
+      "instruction_id": "attack-the-shared-premise",
+      "path": "instructions/attack-the-shared-premise.md",
+      "sha256": "348729f62022f86e731d2f7711f31d0c3b719c260306518236d4d1a179677b81"
+    },
+    {
+      "instruction_id": "author-an-agent-skill",
+      "path": "instructions/author-an-agent-skill.md",
+      "sha256": "d63ce85a3af821a0b0c8ac744e35bb05bae0e9feb24b1d86386291786b93d49a"
+    },
+    {
       "instruction_id": "automate-enforceable-rules",
       "path": "instructions/automate-enforceable-rules.md",
-      "sha256": "e1f0a80929891bcb6aaee42bf683f09994936da408b29645b398414e7f4070d0"
+      "sha256": "07b4c76535df5d1d88b85a33211c976655074ac089524c78d05d8eb01120acce"
     },
     {
       "instruction_id": "avoid-performative-review-agreement",
@@ -128,9 +159,24 @@
       "sha256": "d78dc57e9afb84a64ac7d30c82f556c9be34e72ea3faa148c3034b501f40b373"
     },
     {
+      "instruction_id": "build-a-project-verification-harness",
+      "path": "instructions/build-a-project-verification-harness.md",
+      "sha256": "d98398513fab115d731a5ad59db5b029490d84593183dc74a6b1499cb6d13026"
+    },
+    {
+      "instruction_id": "build-a-rerunnable-tool",
+      "path": "instructions/build-a-rerunnable-tool.md",
+      "sha256": "dee7b833dc686b005c86bcc358d8567eb12ed90e404054c1fac16c96a3505a86"
+    },
+    {
       "instruction_id": "check-requested-feature-usage",
       "path": "instructions/check-requested-feature-usage.md",
       "sha256": "9824daa258df8a274eb26f6ae8295a63f357055a84b95bec4f607684eb570a61"
+    },
+    {
+      "instruction_id": "choose-user-experience-over-implementation",
+      "path": "instructions/choose-user-experience-over-implementation.md",
+      "sha256": "f1ba8684f18981d16810a9c0072a95de4330896b77ff9b93f180b60dc22d043a"
     },
     {
       "instruction_id": "choose-visual-or-textual-explanation",
@@ -173,9 +219,19 @@
       "sha256": "e32cbb194d7256767466abb047a4113127eb93d860d8d65017f37fb485ae288f"
     },
     {
+      "instruction_id": "converge-on-target-architecture",
+      "path": "instructions/converge-on-target-architecture.md",
+      "sha256": "c9afbdb965679800d293da0756bc963c0b7f864b0b141c1e1800d06077e1ec60"
+    },
+    {
+      "instruction_id": "coordinate-a-program-of-delegated-work",
+      "path": "instructions/coordinate-a-program-of-delegated-work.md",
+      "sha256": "d5f2e0ffcfa2e893352facf439ad0db6d23e8d7046f506ab1f35d9e1f20f3612"
+    },
+    {
       "instruction_id": "debug-systematically",
       "path": "instructions/debug-systematically.md",
-      "sha256": "b0eb63dfbea5e517bd1f3cc936c0532d0a8728d36c29a1ce18707c501fb19dff"
+      "sha256": "d0b1c7c6b2898487964919bb8d3ac6ca92fd5c1fddf416e8b85144557d3d94c3"
     },
     {
       "instruction_id": "decide-whether-to-write-guidance",
@@ -185,12 +241,42 @@
     {
       "instruction_id": "delegate-subagent-work",
       "path": "instructions/delegate-subagent-work.md",
-      "sha256": "b5181528371cff13f56484ab434c1826942229d99f3d25eaf87258da662f2bf8"
+      "sha256": "0f71113faeed19f4c1ba50194b3e61f74453a28d54a2ebf12bc7320525e1d240"
     },
     {
       "instruction_id": "delete-code-written-before-test",
       "path": "instructions/delete-code-written-before-test.md",
       "sha256": "56a9e7264c1217388f90d60db2cd295c998a0b513235b61e9d19f5e20b639f4b"
+    },
+    {
+      "instruction_id": "derive-a-workflow-from-history",
+      "path": "instructions/derive-a-workflow-from-history.md",
+      "sha256": "ff5f900547f829bc9748615b60993a2738390b2647b46e926f7b03fc21843fa0"
+    },
+    {
+      "instruction_id": "design-a-bespoke-workflow",
+      "path": "instructions/design-a-bespoke-workflow.md",
+      "sha256": "9b76dd9139b7cb2ba2ae44b7e9a752784969d2f76e38f9a22d314e3c52b75d81"
+    },
+    {
+      "instruction_id": "design-an-agent-facing-control-interface",
+      "path": "instructions/design-an-agent-facing-control-interface.md",
+      "sha256": "9ee27e9133bd73ceec62a147bab4bb4667067ba9955a19e5a1a4765b2c251e2a"
+    },
+    {
+      "instruction_id": "design-data-structures-first",
+      "path": "instructions/design-data-structures-first.md",
+      "sha256": "1bb896fdaefc6a3c2c5344891d7b493a7aeb15e5d77c0d76073b3841e052ffc5"
+    },
+    {
+      "instruction_id": "design-from-caller-usage",
+      "path": "instructions/design-from-caller-usage.md",
+      "sha256": "5c88cfb704ab3440b05cba065942f0524ee6c7cbadd04f64d10a57b796605771"
+    },
+    {
+      "instruction_id": "diagnose-from-runtime-evidence",
+      "path": "instructions/diagnose-from-runtime-evidence.md",
+      "sha256": "5a1f36f55d5478a1df39168f3693ff54dd3110836d9a9cdeceeaa3a328de400a"
     },
     {
       "instruction_id": "disclose-affected-environment",
@@ -213,9 +299,24 @@
       "sha256": "98fe26c9b525faedc5d0c28501bfb26cc76336c29551da38850a33fefe0d6557"
     },
     {
+      "instruction_id": "evaluate-skill-changes-blind",
+      "path": "instructions/evaluate-skill-changes-blind.md",
+      "sha256": "8a534772e09cd21929607fd058c9967efde21f642ab22bdf27a8af8dd89977e2"
+    },
+    {
       "instruction_id": "execute-plan-in-order",
       "path": "instructions/execute-plan-in-order.md",
       "sha256": "76e7e142383c6fb9b65b4c90c365aaadc96dcc41a9eb25ca5cf71cc0dc18c1fb"
+    },
+    {
+      "instruction_id": "explain-a-subsystem",
+      "path": "instructions/explain-a-subsystem.md",
+      "sha256": "434abe24013695ebee2dcc53dfd103381a6afb1b00eaed200021df55d14ff580"
+    },
+    {
+      "instruction_id": "explain-the-measured-number",
+      "path": "instructions/explain-the-measured-number.md",
+      "sha256": "4b987c86c81f61b61a591a5485d13bc1a73e4ac04874e3102aedad6631e51f13"
     },
     {
       "instruction_id": "format-diagnosis-report",
@@ -241,6 +342,11 @@
       "instruction_id": "harvest-shortcut-debt-ledger",
       "path": "instructions/harvest-shortcut-debt-ledger.md",
       "sha256": "694b5439295b2d4306495c88c0b21e97f78987e08be6815d0df5731fa88093d0"
+    },
+    {
+      "instruction_id": "hillclimb-one-metric",
+      "path": "instructions/hillclimb-one-metric.md",
+      "sha256": "c878a76e81a7e75c26003ec9808371179344c304dda53370fe00644bb720de19"
     },
     {
       "instruction_id": "inspect-data-integrity",
@@ -273,9 +379,29 @@
       "sha256": "739f2f01db4cbd6d9e233261f8170aacaee46bfba93877766bdc38c3c58d97cb"
     },
     {
+      "instruction_id": "investigate-history-across-sources",
+      "path": "instructions/investigate-history-across-sources.md",
+      "sha256": "c16a32ceeb9c2416e033a00e550c9b875e8dc80ad26bd277654e83b25df8e66e"
+    },
+    {
+      "instruction_id": "investigate-read-only",
+      "path": "instructions/investigate-read-only.md",
+      "sha256": "088ce7c91ca3ebf94ec3f3dd20e0e739a97247a07aff63a2eb830899ab827a3e"
+    },
+    {
       "instruction_id": "isolate-work-in-worktree",
       "path": "instructions/isolate-work-in-worktree.md",
       "sha256": "e3280c4f6d99c171acbf9ec9a18fca4094fa0ac800047753069f719f5763da0b"
+    },
+    {
+      "instruction_id": "keep-a-decision-trail",
+      "path": "instructions/keep-a-decision-trail.md",
+      "sha256": "245d4eb4e6829d188d8271292904688d4e9a5094528be406588bc9a62fc66f64"
+    },
+    {
+      "instruction_id": "keep-one-writer-per-branch",
+      "path": "instructions/keep-one-writer-per-branch.md",
+      "sha256": "58ba46a7b36cf3ad1ca26c3ba5d2e1060dfee20c31f57415cffb4c9deae37c68"
     },
     {
       "instruction_id": "keep-review-read-only",
@@ -298,6 +424,21 @@
       "sha256": "9012fb72ca07619df4a3b5d3154dfd14c2713795ca808c954761cf76563eb882"
     },
     {
+      "instruction_id": "maintain-verification-harness-against-drift",
+      "path": "instructions/maintain-verification-harness-against-drift.md",
+      "sha256": "b63812ea6af0f83a342b16120031c6555074820bff5b18596a7a784c81622193"
+    },
+    {
+      "instruction_id": "make-illegal-states-unrepresentable",
+      "path": "instructions/make-illegal-states-unrepresentable.md",
+      "sha256": "e9878fafa55e63297f5e0fa0a625b0670de783df8532979742718f9054723ced"
+    },
+    {
+      "instruction_id": "make-operations-idempotent",
+      "path": "instructions/make-operations-idempotent.md",
+      "sha256": "c25b4bb3a63fc6340fcec5c4262679213aa14d5b3c2249c10cdb9f071dc8f0b9"
+    },
+    {
       "instruction_id": "map-file-structure-before-tasks",
       "path": "instructions/map-file-structure-before-tasks.md",
       "sha256": "f13cbccb6a03032a7cd83e46e10cafb2cb5bfd2fef50b884add704866af090a2"
@@ -308,19 +449,44 @@
       "sha256": "c5a49fa719e5c94335df2185b02795978678a0eecf664351c63a36471587eec7"
     },
     {
+      "instruction_id": "merge-copied-tree-with-local-edits",
+      "path": "instructions/merge-copied-tree-with-local-edits.md",
+      "sha256": "b5c763232282e173db8df6bd22fd4bbddf38b6130e845cc83845263227cc2883"
+    },
+    {
+      "instruction_id": "migrate-callers-and-delete-legacy",
+      "path": "instructions/migrate-callers-and-delete-legacy.md",
+      "sha256": "1e6fe565056b938739c98e4df789d3addadbae087849c360d8741ff99855bb7a"
+    },
+    {
       "instruction_id": "minimize-code-surface",
       "path": "instructions/minimize-code-surface.md",
-      "sha256": "cbc1c202294a0a318f7fd443b5854c15b5f0aa102ebda491078119bb3f9bba0e"
+      "sha256": "1b25eb591f19bc60a18eefc90fe600e1a7a781fc0b145f06de8de0dd5cd2b2dc"
+    },
+    {
+      "instruction_id": "minimize-reader-load",
+      "path": "instructions/minimize-reader-load.md",
+      "sha256": "b7b6fc184d5b845c173be45f808d2247f00e854023115953f497ed25a2675cd7"
+    },
+    {
+      "instruction_id": "model-domain-in-structure",
+      "path": "instructions/model-domain-in-structure.md",
+      "sha256": "87dcfd37dafd34ce8392cdcc4710fe2bcc03229938b126d42e57397b44f8886b"
     },
     {
       "instruction_id": "offer-context-recon",
       "path": "instructions/offer-context-recon.md",
-      "sha256": "af86a554cf50ec0a2095e5e006c326f0061f6f77da994a7e6c01e36d4d52da19"
+      "sha256": "1f76b49713ee7ef8c3a13e85dfb9cea957b8539b5de3eec7df13d8ef222e0941"
     },
     {
       "instruction_id": "offer-plan-execution-methods",
       "path": "instructions/offer-plan-execution-methods.md",
       "sha256": "69475154dc8a2f9083352ae334d5a33518fdecd719e62e6aa2418000d5218f19"
+    },
+    {
+      "instruction_id": "open-a-reviewable-change",
+      "path": "instructions/open-a-reviewable-change.md",
+      "sha256": "1bb0c9cb20aa3871d39a5f1f8939c178dd6e6ab51f6761d3f91b9af3a0b83951"
     },
     {
       "instruction_id": "optimize-guidance-triggers",
@@ -331,6 +497,11 @@
       "instruction_id": "parallelize-independent-tasks",
       "path": "instructions/parallelize-independent-tasks.md",
       "sha256": "9428af616d6fae795ca8a2272acc5eb0e0797c3f1260351637dd0a191a923dc9"
+    },
+    {
+      "instruction_id": "pause-work-with-a-handoff",
+      "path": "instructions/pause-work-with-a-handoff.md",
+      "sha256": "f33840c72c8387865c0b7276de3215fe8182a2a86685434139b34ca84ac2bd1a"
     },
     {
       "instruction_id": "play-back-understanding-in-chunks",
@@ -353,9 +524,29 @@
       "sha256": "fca84147c54d414bc9a3d2a990c4c80d80bc66b7c697a44f0b5df6b1ad5007be"
     },
     {
+      "instruction_id": "proceed-without-waiting-for-confirmation",
+      "path": "instructions/proceed-without-waiting-for-confirmation.md",
+      "sha256": "1427b6c75ae392cd1e45773021f6498b1136dc75604dea1a530d7780e49e89dc"
+    },
+    {
       "instruction_id": "protect-sensitive-artifacts",
       "path": "instructions/protect-sensitive-artifacts.md",
       "sha256": "244563559543749218fe174f5dee298674ffd3a6b51ed145791e9331afb157aa"
+    },
+    {
+      "instruction_id": "prototype-competing-designs",
+      "path": "instructions/prototype-competing-designs.md",
+      "sha256": "82c48e4516fde44013b59a6854b4af027338ac33fefb555ab5c4755268becc79"
+    },
+    {
+      "instruction_id": "prove-behavior-around-a-change",
+      "path": "instructions/prove-behavior-around-a-change.md",
+      "sha256": "c0d80529ca5453336bd7517652fc1ac05e4396ed08793d1a575b42a3c40cbc0f"
+    },
+    {
+      "instruction_id": "prove-blast-radius-by-running-code",
+      "path": "instructions/prove-blast-radius-by-running-code.md",
+      "sha256": "4ba3a80861506b88325c4a9b203da24265cb6631d1135962a23812d4607ce0c8"
     },
     {
       "instruction_id": "prove-regression-test-detects-bug",
@@ -363,9 +554,24 @@
       "sha256": "6c044a2112273f20bb73efdaaa21abb447a9cb3863a08bec69094a112b085159"
     },
     {
+      "instruction_id": "prove-visual-parity-with-image-diff",
+      "path": "instructions/prove-visual-parity-with-image-diff.md",
+      "sha256": "41ebfa94c3e65b06d7af842e9f951599a50d3e65084e5d65559131247fd3352a"
+    },
+    {
+      "instruction_id": "prune-worktrees-with-safety-gates",
+      "path": "instructions/prune-worktrees-with-safety-gates.md",
+      "sha256": "fd56607f7f44ccc4021e137182a2cf30352106efa1bf208a2e030acbe2ac8c49"
+    },
+    {
       "instruction_id": "read-artifacts-without-overflow",
       "path": "instructions/read-artifacts-without-overflow.md",
       "sha256": "2f119a3365860c8006e61059ff5a3af693153931b7bbe719d28e2f89a3e1cc6a"
+    },
+    {
+      "instruction_id": "record-available-executor-models",
+      "path": "instructions/record-available-executor-models.md",
+      "sha256": "31f769520d57c26d6463245f99181810bb8190e7f085df382273061e62a8761c"
     },
     {
       "instruction_id": "record-execution-rulings",
@@ -373,9 +579,29 @@
       "sha256": "60aaa5bde24ef0bb20b386da6ab84285cfe333c514a25c09b8dcfa8a55300116"
     },
     {
+      "instruction_id": "record-skipped-steps-with-reason",
+      "path": "instructions/record-skipped-steps-with-reason.md",
+      "sha256": "c9548d50e356f72029c935269fa6b1810ad476470a9cfd2e9fbea49ff0bfd2fc"
+    },
+    {
+      "instruction_id": "redesign-as-if-foundational",
+      "path": "instructions/redesign-as-if-foundational.md",
+      "sha256": "dde9fd6e9edbc3eec371a553cc2110b68d5bb5d1cc0278342d270ef9121b2f69"
+    },
+    {
       "instruction_id": "report-diagnosis-without-prescribing",
       "path": "instructions/report-diagnosis-without-prescribing.md",
       "sha256": "7bf5b2c2d024aa6f93aa3ed5a3785e881fcdb7e9671ce8368d9d52a2b7c420a9"
+    },
+    {
+      "instruction_id": "report-what-changed-since-last-update",
+      "path": "instructions/report-what-changed-since-last-update.md",
+      "sha256": "378ff7696987f737a1c56391891654478158964babecb851f8cc5d9e194843c8"
+    },
+    {
+      "instruction_id": "reproduce-defect-before-fixing",
+      "path": "instructions/reproduce-defect-before-fixing.md",
+      "sha256": "485d9f7f2b2b63ea9d653dfc412dd6ba3edfae446637089f6c98a27387eb38c6"
     },
     {
       "instruction_id": "request-independent-review",
@@ -403,6 +629,11 @@
       "sha256": "225ce10a3bd9532b2a7d9558a2879729dc7ed59f632c75ba55c363d0f6211274"
     },
     {
+      "instruction_id": "review-adversarially",
+      "path": "instructions/review-adversarially.md",
+      "sha256": "9135703f0044a44fab768218e7696b1f116926dcbc914421285bc4840f11b531"
+    },
+    {
       "instruction_id": "review-change-against-requirements",
       "path": "instructions/review-change-against-requirements.md",
       "sha256": "cd659932cf88590ab0bd7d28ab64010d2e4a52c026850f755b3ac08027aea6b8"
@@ -428,9 +659,19 @@
       "sha256": "b1aeb0dca2b5b6c188846b871bd9bdc917fa640fe24f22230e28b9160fdeb4d4"
     },
     {
+      "instruction_id": "run-until-a-done-predicate",
+      "path": "instructions/run-until-a-done-predicate.md",
+      "sha256": "54cb19f79cfe6a56226a9d6aede2abf44b4789a0d8d334c521eee0d7b94a49eb"
+    },
+    {
       "instruction_id": "scan-plan-for-conflicts",
       "path": "instructions/scan-plan-for-conflicts.md",
       "sha256": "a87031718bd25ccee1889b73f43e81094c4ce8e1f0396e2c3b5f14a1c23dc8ec"
+    },
+    {
+      "instruction_id": "screen-design-for-structural-red-flags",
+      "path": "instructions/screen-design-for-structural-red-flags.md",
+      "sha256": "c61d2fafdd776a4d23faffb29dda4104ccc121faaaa74748825a0fdf4c39188c"
     },
     {
       "instruction_id": "scrub-and-gate-artifact-sharing",
@@ -458,6 +699,21 @@
       "sha256": "3a66bbf657a4666a2fbf19a01d254b5623c9f9becb446d1ac603eedbbe66df23"
     },
     {
+      "instruction_id": "separate-evidence-from-inference",
+      "path": "instructions/separate-evidence-from-inference.md",
+      "sha256": "54f98005c500a89d87c7c4b96e3e96bf79017d3f26a700964eab182ac01387d3"
+    },
+    {
+      "instruction_id": "separate-shared-state-before-serializing",
+      "path": "instructions/separate-shared-state-before-serializing.md",
+      "sha256": "435309124801b8ae815f6294723f1c21ea093bb884dbfcc5e20e63e71876a52f"
+    },
+    {
+      "instruction_id": "sequence-verifiable-units",
+      "path": "instructions/sequence-verifiable-units.md",
+      "sha256": "fb0894cced1daa37d5a56054d12cb48d88b9f87ba33428b9fe73fe29d1e18abb"
+    },
+    {
       "instruction_id": "set-guidance-specificity",
       "path": "instructions/set-guidance-specificity.md",
       "sha256": "142b9773515d97c4f396dba4620cc9cd5fee155c9db5bf32ac04e3b14822dfe7"
@@ -470,7 +726,7 @@
     {
       "instruction_id": "size-and-gate-the-work",
       "path": "instructions/size-and-gate-the-work.md",
-      "sha256": "4eeb4503e75edab1b20e5915df73531705d113d604fe21fc2a9231306920d746"
+      "sha256": "845309766298426b64be7f773fa7e8177a0e8d873b26497213c852c4b3865887"
     },
     {
       "instruction_id": "specify-output-format",
@@ -493,14 +749,29 @@
       "sha256": "65b4af5cdfd215bf8bca907cf96bdb31ba0b663b3ed20c0d3dcbc4e1018b4f5a"
     },
     {
+      "instruction_id": "state-goal-check-and-proof",
+      "path": "instructions/state-goal-check-and-proof.md",
+      "sha256": "be750d955830ce483459a1dbd600207442d8629b2bf2e43efafb04374a75fafd"
+    },
+    {
+      "instruction_id": "strip-ai-writing-tells",
+      "path": "instructions/strip-ai-writing-tells.md",
+      "sha256": "9e29e22baae6849a78c03ea98ef0d45097eee02bcc28affc028a4d7575d92688"
+    },
+    {
       "instruction_id": "structure-and-compress-guidance",
       "path": "instructions/structure-and-compress-guidance.md",
       "sha256": "ef8c9be6aa98ca24c0b9c4f22e7f6c4ef274b093c4e3b9d06725d297ca65cd84"
     },
     {
+      "instruction_id": "take-over-in-flight-work",
+      "path": "instructions/take-over-in-flight-work.md",
+      "sha256": "f861353702c66caf81290dabd6b3e5800741b3aec641b89e76411093e0bdf996"
+    },
+    {
       "instruction_id": "test-first-development",
       "path": "instructions/test-first-development.md",
-      "sha256": "920bb4b9a3c64ad7ce9a8717ab22015f5ab4b24a4755ad00e95be489c606e7f0"
+      "sha256": "4cf71ba03e7038990597ee2c0848827f4f434901f0a940f00b8ba5cbc2672fc3"
     },
     {
       "instruction_id": "test-guidance-against-baseline",
@@ -513,19 +784,39 @@
       "sha256": "916af7518abc5b68457010523142a2be6f3cf07e176753e0065d62fda831cc6d"
     },
     {
+      "instruction_id": "triage-automated-review-findings",
+      "path": "instructions/triage-automated-review-findings.md",
+      "sha256": "d2bde52924c219a6290106864f832da7199a0065da3ed23c797add6909be2548"
+    },
+    {
+      "instruction_id": "triage-incoming-reports",
+      "path": "instructions/triage-incoming-reports.md",
+      "sha256": "789bb62c105bf936f08c1833d4d769dfd366ef22014fdeaafbe3f77c41a867e7"
+    },
+    {
+      "instruction_id": "triage-review-findings-with-judgment",
+      "path": "instructions/triage-review-findings-with-judgment.md",
+      "sha256": "53d1c1ffd4a704a2858a8189f5c169d12b854d3ea8a0b8b5fd153baa72f342c8"
+    },
+    {
       "instruction_id": "validate-at-every-boundary",
       "path": "instructions/validate-at-every-boundary.md",
-      "sha256": "6bb1d5102581bca2a66e8edf939c5b351bda2a6b812544d82c87d2a6ae34e484"
+      "sha256": "2267d96ea56d0f72a5116228eaf2434fa5be7612132139ba7c92919befd0bea5"
     },
     {
       "instruction_id": "verify-before-completion",
       "path": "instructions/verify-before-completion.md",
-      "sha256": "90965186df0e649a045fe84142f0ea0cf426d84c484806106735d463f743aa71"
+      "sha256": "27e136148259f75c31ae877910d1c95c363c69e51465d1b3a71e2e130db06c65"
     },
     {
       "instruction_id": "verify-exported-evidence",
       "path": "instructions/verify-exported-evidence.md",
       "sha256": "ae4b87f608bf215d6166d7cf77a7299f6a3fe1aad99b66c93d2a435c8d47f878"
+    },
+    {
+      "instruction_id": "verify-with-independent-lanes",
+      "path": "instructions/verify-with-independent-lanes.md",
+      "sha256": "e3fec98e5a9a6e9c13e8523abb2df786e95b36bc7589e996b3cf433327e7b7eb"
     },
     {
       "instruction_id": "wait-boundedly-for-workers",
@@ -538,6 +829,11 @@
       "sha256": "99385cda8eda958128a21340dfe8b695154c564942669c1c422a4a145b73f781"
     },
     {
+      "instruction_id": "write-a-complete-delegation-brief",
+      "path": "instructions/write-a-complete-delegation-brief.md",
+      "sha256": "8b665a47b8cf111a9f5813500c4c324f7b4c4b8bcc9f045ebd3f9e97bc7484fd"
+    },
+    {
       "instruction_id": "write-design-document",
       "path": "instructions/write-design-document.md",
       "sha256": "43809a31556fa9da3c9f8729f81a22744bbcac31e6455ad44bb6385be93c1517"
@@ -546,6 +842,16 @@
       "instruction_id": "write-directive-rules",
       "path": "instructions/write-directive-rules.md",
       "sha256": "c78aced5f7234bdff78cf59059a49e59b790b97990b84164bfb4c6e37350a0ad"
+    },
+    {
+      "instruction_id": "write-evidence-gated-program-plan",
+      "path": "instructions/write-evidence-gated-program-plan.md",
+      "sha256": "40c7d1689189e914592f258a328153ae0e2c47d60d967dc592ed455daa969d72"
+    },
+    {
+      "instruction_id": "write-few-meaningful-comments",
+      "path": "instructions/write-few-meaningful-comments.md",
+      "sha256": "e74ef338bf2138186f43749d3447f969485b899142e12c74745dbb1d7bd08a10"
     },
     {
       "instruction_id": "write-implementation-plan",
@@ -568,9 +874,14 @@
       "sha256": "204c90660d2d946c87c5a8e86eedb6e363acf647a96dfbc63882dfc2039c811e"
     },
     {
+      "instruction_id": "write-technical-prose-to-a-standard",
+      "path": "instructions/write-technical-prose-to-a-standard.md",
+      "sha256": "f9c233166ed15758e1d4ec9ad55a338d7b0538d82e0fdbe2409a1bc217c98a16"
+    },
+    {
       "instruction_id": "write-tests-that-catch-breaks",
       "path": "instructions/write-tests-that-catch-breaks.md",
-      "sha256": "c0423e64163ec6d6a7a429d9afb5b63f3d735bba4705cd188832a49b1451207f"
+      "sha256": "e24ea3f0bb4d2983134f2ca0592c7f6f72e439707de571c40f14ec2456bd2ceb"
     }
   ]
 }
