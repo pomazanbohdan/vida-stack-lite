@@ -101,21 +101,23 @@ targeted passes, owns the measured numeric increase.
 
 ### Latest complete host-state coverage and Initial Source packet
 
-The795ffb2 stage at /workspace/contour-stage-m1rXJI completes in215043.171ms,
+The98bce8b stage at /workspace/contour-stage-C84ORv completes in222758.581ms,
 exit0, capture complete, group closed and boot/image inputs unchanged. Host269
-PASS/2150assertions in173.15s and stopped-source16PASS/206assertions in208.33s
-produce285PASS/0FAIL and2356assertions. Published run
-8262c06c-2e4e-43f0-9c83-295c7bf234a6 records
-F829/1129,L3420/4966,S3643/5296,B3556/5640: +16functions,+124lines,
-+126statements,+110branches againsta4bbe80 with unchanged denominators.
+PASS/2181assertions in184.97s and stopped-source16PASS/206assertions in215.40s
+produce285PASS/0FAIL and2387assertions. Published run
+a4dbf107-5df5-46e8-9c8d-519075cc24b9 records
+F829/1129,L3420/4966,S3643/5296,B3556/5640, unchanged against795ffb2.
+The packet strengthens assertions and timing reliability; no new coverage gain
+or contour closure is claimed. The prior795ffb2 complete stage remains retained
+at /workspace/contour-stage-m1rXJI,215043.171ms, with its own bound inputs.
 The operation remains BLOCKED; historical exact closure16/45. Frozen/CRAP and
 mutation are deferred and unqualified. Its unchanged image is
-/workspace/.vida-quality-inputs/fbdafad85edd49ac1962d1b0c232ed21b66a09fd/repository,
-image manifest SHA7825251409ee5142b49b3b59066b340271b6a5b5ee36a1350c680bd42b703de6,
-input fingerprint69d6c3be25693052a0c402eb7c65695daeef596d716b4c74b44bf99ba1c3845b.
-SDK CI39349277629/artifact12232038898 succeeds; transport ZIP SHA
-260cd2d5527ca70fbb5cf9f56f74effef91cff20ac0651dfb3d8d3120876c902 matches.
-Admission observes7044210688free bytes against2147483648required. Projection1041
+/workspace/.vida-quality-inputs/5ccecf6b42f3ebc2a6d6c792ba42985a54946396/repository,
+image manifest SHA2ddd1d48e62136eb847e22d8d49db25a6a97969d1eb78b7ec2ce456723b6526d,
+input fingerprintaf6bcf0e672fa088efc39ca7a856a09428dc86cbd0b72b401fd17fc68475c018.
+SDK CI39366540593/artifact12239866255 succeeds; transport ZIP SHA
+44ca68e51527fda13fc6e4bee855d798e5a46f7c7cc7f3b3e2c98a67fc92c4a9 matches.
+Admission observes6453854208free bytes against2147483648required. Projection1044
 imports its terminal result. Reused completed inventory identifies300uncovered
 functions/closures under91outer owners without another AST/scan/hash pass.
 Prior a4bbe80 stage /workspace/contour-stage-JoPANH binds run
@@ -161,8 +163,8 @@ stopped-source pin, selected files, worker ceiling and budgets stay unchanged.
 Ordinary hooks pass formatting516files, strict523files, lint and Knip. The first
 hook rejects two unused helper exports; they become private before the checked
 commit, without bypassing the hook or widening configuration. Retained logs are
-initial-source-commit.log and initial-source-commit-corrected.log. The changed-input
-stage above now passes the native case under coverage in3253.13ms, with
+initial-source-commit.log and initial-source-commit-corrected.log. Its795ffb2
+changed-input stage passes the native case under coverage in3253.13ms, with
 setup2264.923ms/body835.219ms; the5s case and all stage/shard budgets are unchanged.
 This is coverage evidence for795ffb2, not frozen/CRAP, mutation or Runtime acceptance.
 
@@ -245,6 +247,20 @@ The final Host pin is
 14ee0c5508cbe32a8e0887f7c8d907799fc52e2f2ed977bffd78209941ea46b4;
 selected files, second pin, resource ownership,5s/20s cases and global budgets stay
 unchanged. Require one changed-input stage after ordinary checked publication.
+
+The complete98bce8b stage above now observes all three repaired cases passing:
+Initial Source3290.92ms/5s, corrective14522.63ms/20s and archive1721.29ms/5s.
+Ordinary hooks pass formatting516files, strict523files, lint and Knip; the exact
+shard control passes. Raw logs are host-timeout-oracle-commit.log and
+host-timeout-oracle-stage.log in the same diagnostic directory. The former failed
+stage remains failed; neither this pass nor its closed children authorizes deleting
+its DBs, scratch or receipts. Different inputs/cache conditions preclude attributing
+all timing differences to the oracle/row reductions. One passing constructor
+sample does not establish absence of timing variance. No limits were raised.
+Coverage counters are unchanged: reuse the retained300-function/91-owner inventory
+instead of another scan or unchanged stage. Next implement the genuine completed-
+Source-report recovery producer and stored-history checks from the bounded plan.
+Do not add more already-covered guard cases solely to pursue F/L/S/B gains.
 
 ### Prior complete setup-scope coverage and Task-source unit packet
 

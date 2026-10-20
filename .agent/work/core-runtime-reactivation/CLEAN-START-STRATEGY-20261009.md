@@ -142,6 +142,12 @@ native beforeimages while keeping real API controls, and use the minimum archive
 node-boundary rows with explicit timeout retention. The three changed cases pass
 115assertions under unchanged limits; full timing qualification, especially the
 corrective constructor, remains pending the next single changed-input stage.
+The98bce8b stage now completes285PASS/0FAIL,2387assertions in222.759s.
+All three prior timeout cases pass under unchanged limits:3.291s/14.523s/1.721s.
+F/L/S/B remain829/1129,3420/4966,3643/5296,3556/5640, still nonexact/BLOCKED.
+This is an assertion/reliability improvement, not a coverage gain. Do not repeat
+the unchanged stage. Continue the dense genuine recovery/history producer path,
+using the retained300-function/91-owner inventory and explicit native lineage.
 Reuse current
 focused evidence; do not repeat unchanged full selections. WORK's bounded two-file
 resource review permits the existing two-worker supervisor only for its pinned
