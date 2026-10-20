@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation is Source commit `2fca376cb44b55147f14d3b3e09903efaac74bd1`, run `7076cd44-8b25-4041-8379-d449bb76daa4`: F993/1129, L4266/4970, S4530/5300 and B4681/5642. The run records 300PASS/0FAIL and 3004 assertions in 150.118 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 136 missing functions under 55 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
+The active contour is `bun-host-state`. Its latest complete observation is Source commit `a3c1e5f8d410565a51bc4ec289bb3216e3666b2b`, run `20dc6c75-e588-4044-9190-606f06071a81`: F1003/1129, L4338/4970, S4603/5300 and B4736/5642. The run records 301PASS/0FAIL and 3139 assertions in 164.837 seconds. It is bound to that published Source, not current-HEAD qualification. Coverage remains nonexact and the operation remains BLOCKED. The report-only inventory has 126 missing functions under 52 owners. WORK.md records the complete input, SDK, image, process, archive and resource bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -37,9 +37,11 @@ its own compatible fixture, not a fabricated historical-terminal receipt.
 
 The measured configured-frontier packet shares its existing fixture and moves
 its lookup case into the active Host selection, with exact-CAS Journal
-mutation/restore and acquired-root custody. The next packet covers local
-recovery-review guards and reservation transitions through existing native SQLite
-fixtures. It does not establish genuine producer admission or review dispatch.
+mutation/restore and acquired-root custody. Local recovery-review guards and
+reservation transitions are now measured through existing native SQLite fixtures.
+Next select qualified-code continuation or failed-prewriter paths from the current
+inventory, reusing supported fixture contracts. Unit endpoint/observation seams
+do not establish genuine producer admission, native qualification or dispatch.
 Review all acquired roots and public-reader
 preconditions before Source publication, so a late fixture-only correction does
 not form another avoidable SDK artifact before measurement.

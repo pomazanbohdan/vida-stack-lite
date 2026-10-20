@@ -17,6 +17,38 @@ numeric producer.
 
 #### Local recovery-review consistency packet
 
+Complete measurement on Sourcea3c1e5f8d410565a51bc4ec289bb3216e3666b2b,
+run20dc6c75-e588-4044-9190-606f06071a81, records F1003/1129,L4338/4970,
+S4603/5300,B4736/5642,301PASS/0FAIL,3139assertions,164.837s. Delta10F/72L/
+73S/55B with unchanged denominators; report-only inventory126missing functions
+under52owners. Host285PASS/2886assertions/154.65s; stopped16PASS/253assertions/
+131.57s with contained cleanup complete. Stage /workspace/contour-stage-H2VIDH,
+exec12856, exit0, full capture/closed group/unchanged boot/image/published.
+Operation remains BLOCKED/nonexact. Historical exact16/45 and unqualified
+maxCC279/entryCRAP2162 are unchanged; frozen/mutation deferred. The two latest
+packets together add19F/119L/121S/133B; no controlled speedup is claimed.
+
+Image /workspace/.vida-quality-inputs/a2d21ff419306482a06906ae1c8b23724fde737e/repository
+binds tree02aa9709050ed3e2efa425dd5dfaf400d8bd4396,
+input4ee79fb14aebeb7c32dc4ed6a00dc3ea8c7def5845ad96f6d5e6d5c776568b26,
+manifest SHA66324692b80483136ecce49067e5140a1749609e825dde5c3520a08ceb541155.
+SDK CI39408427380 attempt1 succeeds, artifact12258580138,
+vida-sdk-test-inputs-a3c1e5f8d410565a51bc4ec289bb3216e3666b2b-39408427380-1,
+ZIP SHA6a1a9e6841e2844fcd372f147927a95c36b41f9e0df431d8b19d66eef6805b09.
+recovery-review-stage.log retains complete outcome; maintained projection1074
+imports it. Report-only planner runs once without another AST/hash/scan or suite.
+
+After observed closure, /dev/shm/vida-quality-retained-7ePJiD measures180604532
+apparent bytes; original remains. Lossless complete archive
+/workspace/vida-functional-retention-H2VIDH-ijnyXi/scratch.tar.gz is45762506bytes,
+raw tar207790080bytes, full tar compare PASS, SHA
+fffe50e1fbb63e2e8e25aa867d645412aaafa9c5564680083389a8999a2e51f2.
+archive.log/scratch.sha256 are retained. Durable free bytes before/after archive
+are2414702592/2368921600, leaving221437952above unchanged2147483648floor.
+Launch tmpfs6831603712free bytes, post-producer6613172224. No protected deletion
+or threshold change occurs; no current admission GAP. Reuse this capacity record
+until a subsequent producer or identified resource change requires another check.
+
 The next reachable Host gap uses existing fixture(), fixtureSourceScope(),
 quiescentJournal()/persistJournalFixture() and a root-bound HostStateStore over
 the same native SQLite database. No new fixture process/root or public adapter
@@ -52,9 +84,8 @@ producer/admission/dispatch evidence remains explicitly limited.
 
 Host SHA4171d2fc76cce4eeb14dbc6feb7d6c73f50b8dde428623c8079f31b93167b514
 updates the reviewed exact-two-file resource binding; all namespaces, serial
-cases, memory limits, deadlines and free-space floor stay unchanged. Latest
-complete numeric observation is still2fca376 below until this packet has its own
-published Source/SDK/image-bound stage. CRAP/frozen/mutation remain deferred.
+cases, memory limits, deadlines and free-space floor stay unchanged. The packet's
+published Source/SDK/image-bound measurement is above. CRAP/frozen/mutation remain deferred.
 
 #### Configured-frontier lookup sharing packet
 
