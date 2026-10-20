@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `50494ed376bcbefd749bb3ef9ba602fa160190f8`, run `3c2f017f-369e-4352-9dfe-797c0b03fa3b`: F1069/1129, L4704/4970, S4983/5300 and B4974/5642. It records305PASS/0FAIL,3740assertions in143.668seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is60missing functions under31owners, all with exact retained map coordinates, plus668 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `7845f62bec2670b4bc185446d8555fa7209183d2`, run `243b0f18-7992-46ec-9c07-0c9b506f519c`: F1073/1129, L4715/4970, S4994/5300 and B4988/5642. It records305PASS/0FAIL,3771assertions in143.701seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is56missing functions under28owners, all with exact retained map coordinates, plus654 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -75,12 +75,13 @@ same-thread no-effect retry is now exercised by the next checked packet through
 the existing exact typed unit verifier and public Host APIs, without external
 attestation claims or fabricated authority.
 
-The next packet extends the same no-effect and native code-only cases: preserve
+The latest measured packet extends the same no-effect and native code-only cases: preserve
 different-thread history, authorize a same-thread newer fence, and prove guarded
 prepared-plan success/rollback, stale outer CAS and a consistent fresh-CAS
 successor. Focused2PASS89assertions and strict168-file checks pass; retain5s
-deadlines and the same resource topology. One matching SDK/image/stage remains
-pending. Do not move coverage work into the separate public prepared-plan suite
+deadlines and the same resource topology. Its matching SDK/image/stage measures
++4F/+11L/+11S/+14B, all four targeted callbacks; continue from56missing functions
+and654branch arms. Do not move coverage work into the separate public prepared-plan suite
 or fabricate an inconsistent newer receipt merely to force a predicate denial.
 
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
@@ -98,7 +99,7 @@ The local report-only planner is retained diagnostic tooling, not published Sour
 After observed native process/group/capture closure, retire only the exact
 qualified private regenerable cache. Reuse shared dependency inventory under
 the no-install fence and preserve every other scratch/evidence byte. The latest
-archive and retirement manifest in WORK leave3247288320bytes above the unchanged
+archive and retirement manifest in WORK leave3169964032bytes above the unchanged
 2GiB durable floor. Earlier comprehensive cleanup and qualifier namespace-guard
 proof remain in Git and retained diagnostics; do not repeat broad scans/cleanup.
 Unknown backup/provision/proposal roots remain excluded. Bootstrap now requires
