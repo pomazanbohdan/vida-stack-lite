@@ -154,6 +154,19 @@ once. The matching stage now leaves14functions/416arms. Fresh recovery reopen
 did not execute the four stored-history callbacks; their specific binding-history
 prerequisites remain open, not discharged by persistence assertions alone.
 
+The v1117/v1118 packet now combines historical disjoint-peer capture and digest
+inspection with explicit Host-only post-report endpoint proof. Actual readonly
+Host preparation creates nonempty terminal history without seeding receipts or
+claiming a configured Mastra dispatch. It reproduced a product failure in
+readonly frontier code adoption: preserved assignment identity was checked under
+the new runtime instead of its original binding. Repair stored-history prefix
+validation and binding registration, preserving terminal/current-attempt guards.
+Remove the independently reviewed identical-array duplicate lookup in completed
+recovery; retain its exact completed-attempt and full-array checks. Do not raise
+the frozen279 complexity budget or transfer the removed closure's budget. Root
+checks the whole affected group, records the deleted callback correspondence,
+then publishes and measures once under unchanged deadlines.
+
 For each group, the exact named Bun case must reach its intended public operation
 and assert its success, refusal and replay behavior before strict TypeScript/lint
 and final integration. Stop a proposed path if its genuine prerequisite cannot be

@@ -367,6 +367,21 @@ produce a different operation ID. Require an equal receipt and unchanged native
 Host/Journal, with the retained attempt still uncertain and null result/digest.
 This retry disposes no UNKNOWN effect and issues no new Source action.
 
+An opt-in stopped-Source fixture admits a disjoint owner and actual queued
+waiter on the existing `AGENTS.md` before primary admission. Require its lower
+sequence, disjoint nonempty resources and exact active claim, then unchanged
+peer Work/version/tickets/claims after retirement and retry. No peer engine or
+Source effect is needed.
+
+For later-grant chronology, move the existing released later claim before the
+retired claim while preserving every record and operation order. Encode/checksum
+the ledger through its own canonical owner, conditionally update only that row,
+and confirm the supported reader accepts the representation. A foreign later
+actor must still fail at the exact terminal-evidence guard, proving chronological
+release evidence cannot be hidden by claim-array order. Keep Workspace, Journal,
+DDL and the changed row unchanged through denial, then conditionally restore
+exact original bytes with primary/cleanup error retention before success/retry.
+
 The native readonly-dispatch Host case sets the fixture synthesis profile to
 no-egress before real admission, issues one actual unobserved Mastra action and
 cooperatively suspends its same owner. Build the repair plan from the supported
@@ -400,10 +415,38 @@ seam; this does not qualify security-prewriter attachment, runtime-code adoption
 or native endpoint formation. A high-risk extension needs a genuinely eligible
 different runtime endpoint; equal prior/target runtime digests are ineligible.
 
+For nonempty terminal Host history, claim a separately labeled fixture-only
+readonly preparation through the public Host API, actually load/check the current
+config and complete that Host attempt. This is not a configured Mastra-stage
+execution or Source effect. Add it after the initial zero-attempt continuation
+prerequisite, or after legacy synthesis. Preserve the actual completed attempt
+through continuation/rebind and retry. After readonly frontier code adoption,
+deliberately alter the persisted terminal result and its digest together;
+require exact historical-prefix rejection and unchanged corrupt rows, then
+restore exact original bytes with primary/cleanup error retention. The original
+assignment remains bound to its old runtime while later attempts use current
+binding; neither allowance can authorize an active historical attempt.
+
 After completed Source recovery's successful commit, close and reopen its native
 ledger on the retained fixture root. Require exact Work/Journal/ledger snapshot,
 receipt and unchanged idempotent retry through the fresh Host instance. Cached
 same-instance reads alone do not establish durable history reconstruction.
+An unchanged runtime binding can legitimately take the transaction-local
+projection path and miss the history-reconstruction loop even after reopen.
+The Host-only recovery variant therefore controls exactly the external new-code,
+manifest and attestation proof fields. Its wrapper still invokes the maintained
+verifier for actual Source, package, report, permission, reservation and CAS
+checks; only the corresponding returned endpoint fields are replaced. Host
+creates the real transition/receipt. Require a different successor code digest
+and exact reopen/retry/history preservation. This unit proof is fixture-only,
+with no installed runtime change or native endpoint qualification.
+
+Historical terminal continuation also carries a disjoint active peer through
+public Host CAS. Its execution-only ticket/claim is separate from its allowed
+file authority; preserve full peer state across native capture/continue/retry.
+Corrupt only the resulting receipt digest, inspect repair twice without applying,
+check exact overlay, Work/Ledger/Journal and unchanged corrupt receipt, then
+restore the original digest before normal lookup. Do not seed a repair success.
 
 Unprepared release admits its execution-only disjoint peer before the target.
 Require a lower sequence, nonempty active resources and matching claim, then

@@ -2726,6 +2726,10 @@ current code inventory. No unknown action is reissued.
 Current readers treat the initial receipt as an immutable ancestor. Host history
 proves the permitted code-only descendant; actual installed bytes must match
 the current Work binding. Existing active v1 records remain unchanged.
+Preserved completed or no-effect Host attempts keep their original assignment
+binding. Validate their exact ordered prefix against the rebind beforeimage;
+do not reinterpret those attempts under the new runtime or allow a changed
+terminal result. Later attempts retain the ordinary current-binding checks.
 
 ## Qualified code continuation after an installed update
 

@@ -3370,12 +3370,6 @@ function checkedStoredWork(
           targetBefore.request_digest === reservation?.receipt.attempt.request_digest &&
           targetAfter?.status === 'completed' &&
           sameJson(targetAfter, transition.completed_attempt) &&
-          sameJson(
-            targetAfter,
-            transition.successor_work.execution.assignment_attempts.find(
-              (attempt) => attempt.attempt_id === request.hostAttemptId,
-            ),
-          ) &&
           successor.execution.assignment_attempts.length === original.execution.assignment_attempts.length &&
           sameJson(
             successor.execution.assignment_attempts,
@@ -3504,6 +3498,14 @@ function checkedStoredWork(
           frontierItem.host_reservation === undefined,
         'initial-source frontier code rebind history is not continuous',
       );
+      requireState(
+        sameJson(
+          candidate.execution.assignment_attempts.slice(0, original.execution.assignment_attempts.length),
+          original.execution.assignment_attempts,
+        ),
+        'initial-source frontier code rebind assignment history differs',
+      );
+      for (const attempt of original.execution.assignment_attempts) bindings.set(attempt.attempt_id, original.binding);
       expected = original.binding;
       continue;
     }

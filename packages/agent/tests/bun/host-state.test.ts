@@ -2474,7 +2474,7 @@ test('trusted Host continuation atomically retains historical evidence and never
   try {
     // Maintained trusted-caller fixture; this does not establish external approval or Runtime acceptance.
     configRoot = continuationFixtureRepositoryRoot();
-    const current = await continuationFixture({ root: fixtureRoot, completedAttempt: true });
+    const current = await continuationFixture({ root: fixtureRoot, completedAttempt: true, disjointPeer: true });
     f = current;
     if (performance.now() >= deadline) throw new Error('Host continuation fixture exhausted its case deadline.');
     const request = continuationRequestFor(f);
@@ -2636,6 +2636,71 @@ test('trusted Host continuation atomically retains historical evidence and never
         .query<{ count: number }, []>('SELECT count(*) AS count FROM agent_host_delivered_work_continuation')
         .get()?.count,
     ).toBe(1);
+    const peer = requiredValue(current.peer, 'Historical continuation disjoint peer');
+    const peerAfter = presentSnapshot(current.store.readHostStateSnapshot(peer.identity));
+    expect(peer.ticket.status).toBe('active');
+    expect(peer.ticket.exclusive_resources).toEqual(['execution:' + peer.identity.work_id]);
+    expect(peer.claim.status).toBe('active');
+    expect(peer.claim.resources).toEqual(peer.ticket.exclusive_resources);
+    expect(peerAfter.work).toEqual(requiredValue(peer.snapshot.work, 'Original disjoint peer Work'));
+    expect(peerAfter.workVersion).toEqual(requiredValue(peer.snapshot.workVersion, 'Original disjoint peer version'));
+    expect(peerAfter.ledger.tickets.find((item) => item.ticket_id === peer.ticket.ticket_id)).toEqual(peer.ticket);
+    expect(peerAfter.ledger.claims.filter((item) => item.ticket_id === peer.ticket.ticket_id)).toEqual([peer.claim]);
+    const receiptRow = requiredValue(
+      current.db
+        .query<{ payload: string; digest: string }, []>(
+          'SELECT payload,digest FROM agent_host_delivered_work_continuation',
+        )
+        .get(),
+      'Historical continuation original receipt row',
+    );
+    const persistedRows = readFixtureHostRows(current.db);
+    expect(
+      current.db.query('UPDATE agent_host_delivered_work_continuation SET digest=?').run('0'.repeat(64)).changes,
+    ).toBe(1);
+    let repairFailure: { error: unknown } | undefined;
+    try {
+      const inspection = current.store.inspectDeliveredWorkContinuationRepair(
+        current.identity,
+        1,
+        current.capture.action_id,
+      );
+      expect(inspection.row).toEqual({
+        payload: receiptRow.payload,
+        before_digest: '0'.repeat(64),
+        after_digest: receiptRow.digest,
+      });
+      expect(inspection.work).toEqual(after.work);
+      expect(inspection.ledger).toEqual(after.ledger);
+      expect(inspection.journal.state).toEqual(journalAfter.state);
+      expect(inspection.journal.revision).toBe(journalAfter.version.revision);
+      expect(inspection.journal.digest).toBe(journalAfter.version.digest);
+      expect(readFixtureHostRows(current.db)).toEqual(persistedRows);
+      expect(
+        current.store.inspectDeliveredWorkContinuationRepair(current.identity, 1, current.capture.action_id),
+      ).toEqual(inspection);
+      expect(current.db.query('SELECT payload,digest FROM agent_host_delivered_work_continuation').get()).toEqual({
+        payload: receiptRow.payload,
+        digest: '0'.repeat(64),
+      });
+    } catch (error) {
+      repairFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            expect(
+              current.db.query('UPDATE agent_host_delivered_work_continuation SET digest=?').run(receiptRow.digest)
+                .changes,
+            ).toBe(1);
+          },
+        ],
+        repairFailure,
+      );
+    }
+    expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(lookup);
+    expect(readFixtureHostRows(current.db)).toEqual(persistedRows);
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -3516,6 +3581,37 @@ test('Host failed prewriter transition atomically retains failed reports and ori
   preserveHostFixtureRoot = false;
 });
 
+function completeReadonlyFixtureHostPreparation(
+  current: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>,
+  stageId = 'fixture_readonly_preparation',
+) {
+  const host = initialSourceHostStore(current);
+  const before = presentSnapshot(host.readHostStateSnapshot(current.identity));
+  const preparation = host.claimWorkflowAttempt({
+    identity: current.identity,
+    expectedWork: before.workVersion,
+    expectedLedger: before.ledgerVersion,
+    expectedMaintenanceGeneration: before.maintenanceGeneration,
+    stageId,
+    assignmentIndex: 0,
+    requestDigest: canonicalJsonDigest({
+      fixture_only: true,
+      operation: 'read-current-config',
+      identity: current.identity,
+    }),
+    lease: requiredValue(before.work.lease, 'Readonly fixture preparation lease'),
+  });
+  const result = {
+    fixture_only: true,
+    operation: 'read-current-config',
+    config_digest: runtimeConfigDigest(loadRuntimeConfig(current.root)),
+  };
+  expect(result.config_digest).toBe(before.work.binding.config_digest);
+  const completed = host.completeWorkflowAttempt(preparation, result);
+  expect(completed.attempt).toMatchObject({ status: 'completed', result, result_digest: canonicalJsonDigest(result) });
+  return completed;
+}
+
 function admitDisjointInitialSourcePeers(current: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>) {
   const store = initialSourceHostStore(current);
   const peerPath = 'docs/PEER.md';
@@ -3784,6 +3880,7 @@ test(
             source: current.originalSource,
           },
         );
+        const readonlyPreparation = completeReadonlyFixtureHostPreparation(current);
         const peers = admitDisjointInitialSourcePeers(current);
         const executionOnly = presentSnapshot(host.readHostStateSnapshot(current.identity));
         acquireLocalSourceWriterLease({
@@ -3951,6 +4048,7 @@ test(
         expect(result.receipt.prior_work).toEqual(paused.work);
         expect(result.receipt.prior_ledger).toEqual(paused.ledger);
         expect(result.receipt.prior_journal).toEqual(journal.state);
+        expect(result.snapshot.work?.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
         expect(result.receipt).toMatchObject({
           rights_granted: false,
           accepted_result: false,
@@ -4374,7 +4472,7 @@ test.each(['rollback', 'commit'] as const)(
         });
         const reportPath = path.join(f.root, '.agent/work', f.identity.work_id, 'host-source-report.json');
         writeFileSync(reportPath, JSON.stringify(observation) + '\n');
-        const recovery = createCompletedSourceReportRecoveryFixture(
+        const nativeRecovery = createCompletedSourceReportRecoveryFixture(
           {
             root: f.root,
             identity: f.identity,
@@ -4391,6 +4489,44 @@ test.each(['rollback', 'commit'] as const)(
           null,
           reportPath,
         );
+        const controlledEndpoint = {
+          currentRuntimeCodeDigest: canonicalJsonDigest({ fixture_only: true, endpoint: 'post-report-runtime' }),
+          currentManifestDigest: canonicalJsonDigest({ fixture_only: true, manifest: 'post-report-runtime' }),
+          nativeSelfAttestationDigest: canonicalJsonDigest({ fixture_only: true, attestation: 'post-report-runtime' }),
+        };
+        // Only the external new-runtime proof is controlled; Host creates its own transition history.
+        const recovery: typeof nativeRecovery =
+          mode === 'commit'
+            ? {
+                ...nativeRecovery,
+                request: { ...nativeRecovery.request, ...controlledEndpoint },
+                verifyCurrent(candidate, state) {
+                  expect({
+                    currentRuntimeCodeDigest: candidate.currentRuntimeCodeDigest,
+                    currentManifestDigest: candidate.currentManifestDigest,
+                    nativeSelfAttestationDigest: candidate.nativeSelfAttestationDigest,
+                  }).toEqual(controlledEndpoint);
+                  const verified = nativeRecovery.verifyCurrent(
+                    {
+                      ...candidate,
+                      currentRuntimeCodeDigest: nativeRecovery.request.currentRuntimeCodeDigest,
+                      currentManifestDigest: nativeRecovery.request.currentManifestDigest,
+                      nativeSelfAttestationDigest: nativeRecovery.request.nativeSelfAttestationDigest,
+                    },
+                    state,
+                  );
+                  return {
+                    ...verified,
+                    currentRuntime: {
+                      ...verified.currentRuntime,
+                      codeDigest: controlledEndpoint.currentRuntimeCodeDigest,
+                      manifestDigest: controlledEndpoint.currentManifestDigest,
+                    },
+                    nativeSelfAttestationDigest: controlledEndpoint.nativeSelfAttestationDigest,
+                  };
+                },
+              }
+            : nativeRecovery;
         if (mode === 'rollback') {
           const persistedBefore = readFixtureHostRows(db);
           setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
@@ -4454,6 +4590,8 @@ test.each(['rollback', 'commit'] as const)(
           expect(after.workVersion).toEqual(receipt.work_version);
           expect(after.ledgerVersion).toEqual(receipt.ledger_version);
           expect(after.journalVersion).toEqual(receipt.journal_version);
+          expect(after.work.binding.runtime_code_digest).toBe(controlledEndpoint.currentRuntimeCodeDigest);
+          expect(after.work.binding.runtime_code_digest).not.toBe(before.work.binding.runtime_code_digest);
           expect(after.work.binding.work_source_revision).toBe(sourceBefore.digest);
           expect(initialSourceJournal(f).state.source_scope?.digest).toBe(sourceAfter.digest);
           expect(
@@ -4556,6 +4694,7 @@ test(
           issue_id: null,
           observation: null,
         });
+        const readonlyPreparation = completeReadonlyFixtureHostPreparation(f);
         const peers = admitDisjointInitialSourcePeers(f);
         const host = initialSourceHostStore(f);
         const db = initialSourceHostDatabase(f);
@@ -4607,6 +4746,7 @@ test(
           },
         });
         expect(after.work).toEqual(receipt.record.successor_work);
+        expect(after.work.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
         expect(after.workVersion).toEqual(receipt.record.work_version);
         expect(after.ledger).toEqual(before.ledger);
         expect(after.ledgerVersion).toEqual(before.ledgerVersion);
@@ -4625,6 +4765,72 @@ test(
         ).toThrow('frontier rebind retry differs from the committed request');
         expect(verifierCalls).toBe(2);
         expect(initialSourceState(f)).toEqual(after);
+        const originalRow = requiredValue(
+          db
+            .query<HostStateSqlRow, [string, string]>(
+              "SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+            )
+            .get(host.workspaceId, f.identity.work_id),
+          'Readonly rebind persisted target Work',
+        );
+        const changedResult = { fixture_only: true, operation: 'tampered-readonly-preparation' };
+        const changedHistory = {
+          ...after.work,
+          execution: {
+            ...after.work.execution,
+            assignment_attempts: after.work.execution.assignment_attempts.map((attempt) => ({
+              ...attempt,
+              result: changedResult,
+              result_digest: canonicalJsonDigest(changedResult),
+            })),
+          },
+        };
+        const writeTarget = db.query(
+          "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=?",
+        );
+        expect(
+          writeTarget.run(
+            canonicalJson(changedHistory),
+            canonicalJsonDigest(changedHistory),
+            host.workspaceId,
+            originalRow.id,
+          ).changes,
+        ).toBe(1);
+        const corruptRows = readFixtureHostRows(db);
+        let historyFailure: { error: unknown } | undefined;
+        try {
+          expect(() => host.readHostStateSnapshot(f.identity)).toThrow(
+            'initial-source frontier code rebind assignment history differs',
+          );
+          expect(readFixtureHostRows(db)).toEqual(corruptRows);
+        } catch (error) {
+          historyFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                expect(
+                  writeTarget.run(originalRow.payload, originalRow.digest, host.workspaceId, originalRow.id).changes,
+                ).toBe(1);
+              },
+            ],
+            historyFailure,
+          );
+        }
+        expect(initialSourceState(f)).toEqual(after);
+        const laterPreparation = completeReadonlyFixtureHostPreparation(f, 'fixture_readonly_after_rebind');
+        const later = initialSourceState(f);
+        expect(later.work.execution.assignment_attempts).toEqual([
+          readonlyPreparation.attempt,
+          laterPreparation.attempt,
+        ]);
+        expect(laterPreparation.attempt.assignment_id).not.toBe(readonlyPreparation.attempt.assignment_id);
+        expect(later.work.binding).toEqual(after.work.binding);
+        expect(later.journal).toEqual(after.journal);
+        expect(later.ledger).toEqual(after.ledger);
+        expect(host.commitReadOnlyFrontierRuntimeCode(request, checkedVerify)).toEqual(receipt);
+        expect(initialSourceState(f)).toEqual(later);
         peers.verifyUnchanged();
         console.info(
           JSON.stringify({ fixture: 'readonly-frontier-native-host', elapsed_ms: performance.now() - started }),

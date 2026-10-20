@@ -43,6 +43,8 @@ import { createPublicCliFixturePhaseMarker } from './helpers/public-cli-fixture-
 import { containedControllerFixture, type ContainedControllerFixture } from './contained-controller-fixture.ts';
 import * as bunCommands from '../bin/bun.ts';
 import { snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
+import { coordinationLedgerJson, coordinationLedgerDigest } from '../src/contracts/envelopes.ts';
 
 type ExecutionBudget = ReturnType<ContainedControllerFixture['caseBudget']>;
 type SessionLedger = ReturnType<typeof openConfiguredMastraSessionLedger>;
@@ -288,8 +290,9 @@ const writeJson = (root: string, file: string, value: unknown): void => {
 };
 
 type FixtureSetupClose = () => void | Promise<void>;
+type FixtureOptions = { writer?: boolean; earlierDisjointPeers?: boolean };
 
-async function fixture(options: { writer?: boolean } = {}, prepare: typeof buildFixture = buildFixture) {
+async function fixture(options: FixtureOptions = {}, prepare: typeof buildFixture = buildFixture) {
   const closes: FixtureSetupClose[] = [];
   try {
     return await prepare(options, closes);
@@ -307,7 +310,10 @@ async function fixture(options: { writer?: boolean } = {}, prepare: typeof build
   }
 }
 
-async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses: FixtureSetupClose[]) {
+async function buildFixture(
+  { writer = true, earlierDisjointPeers = false }: FixtureOptions,
+  setupCloses: FixtureSetupClose[],
+) {
   markPhase?.('fixture:start');
   const root = mkdtempSync(path.join(tmpdir(), 'vida-stopped-source-'));
   if (deferFixtureCleanup) activeConsumerRoots.push(root);
@@ -462,6 +468,37 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
     return { input, source, identity, admitted };
   }
   const extraBridges: MastraSessionBridge[] = [];
+  const earlierPeers = earlierDisjointPeers
+    ? ['earlier-disjoint-owner', 'earlier-disjoint-waiter'].map((id, index) => {
+        const peer = admission(id, 'AGENTS.md', 'synthetic-' + id);
+        const before = completeHost(store.readHostStateSnapshot(peer.identity));
+        const acquire = () =>
+          acquireLocalSourceWriterLease({
+            repositoryRoot: root,
+            config,
+            store,
+            identity: peer.identity,
+            nativeSessionHandle: peer.input.nativeSessionHandle,
+            stageId: 'develop_task',
+            assignmentIndex: 0,
+            expectedWork: before.workVersion,
+            expectedLedger: before.ledgerVersion,
+          });
+        if (index === 0) acquire();
+        else expect(acquire).toThrow('queued behind an earlier exclusive resource');
+        const after = completeHost(store.readHostStateSnapshot(peer.identity));
+        return { identity: peer.identity, work: after.work, version: after.workVersion };
+      })
+    : [];
+  const earlierLedger = earlierPeers.length
+    ? completeHost(store.readHostStateSnapshot(earlierPeers[0]!.identity)).ledger
+    : undefined;
+  const earlierTickets =
+    earlierLedger?.tickets.filter((ticket) => earlierPeers.some((peer) => peer.identity.work_id === ticket.work_id)) ??
+    [];
+  const earlierClaims =
+    earlierLedger?.claims.filter((claim) => earlierTickets.some((ticket) => ticket.ticket_id === claim.ticket_id)) ??
+    [];
   const original = admission(),
     { input, identity, source } = original;
   const bridge = await MastraSessionBridge.open({
@@ -1067,6 +1104,9 @@ async function buildFixture({ writer = true }: { writer?: boolean }, setupCloses
     admission,
     laterWriter,
     completeAndReleaseOverlappingWriter,
+    earlierPeers,
+    earlierTickets,
+    earlierClaims,
   };
 }
 
@@ -1221,11 +1261,35 @@ test(
 test(
   'retired Source capture settles only the issued failure and retries through its separate public route',
   async () => {
-    const f = await fixture();
+    const f = await fixture({ earlierDisjointPeers: true });
     try {
       const request = f.retirementRequest();
       const originalHost = f.inspect();
       const originalJournal = currentJournal(f.ledger, 'stopped', 1);
+      const original = completeHost(f.store.readHostStateSnapshot(f.identity));
+      const targetTicket = required(
+        original.ledger.tickets.find((ticket) => ticket.ticket_id === original.work.lease?.ticket_id),
+        'Original Source ticket',
+      );
+      const earlierWaiter = required(
+        f.earlierTickets.find((ticket) => ticket.status === 'queued'),
+        'Earlier disjoint queued Source waiter',
+      );
+      const earlierOwner = required(
+        f.earlierTickets.find(
+          (ticket) => ticket.status === 'active' && ticket.active_resources.includes('file:AGENTS.md'),
+        ),
+        'Earlier disjoint Source owner',
+      );
+      expect(earlierWaiter.sequence).toBeLessThan(targetTicket.sequence);
+      expect(earlierWaiter.exclusive_resources).toContain('file:AGENTS.md');
+      expect(
+        earlierWaiter.exclusive_resources.some((resource) => targetTicket.exclusive_resources.includes(resource)),
+      ).toBe(false);
+      expect(
+        f.earlierClaims.find((claim) => claim.ticket_id === earlierOwner.ticket_id && claim.status === 'active')
+          ?.resources,
+      ).toEqual(earlierOwner.active_resources);
       for (const { denied, error } of [
         {
           denied: {
@@ -1252,6 +1316,18 @@ test(
       expect(f.retireOwner(request)).toEqual(retirement);
       expect(f.inspect()).toEqual(retiredState);
       expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(retiredJournal);
+      for (const peer of f.earlierPeers) {
+        const retainedPeer = completeHost(f.store.readHostStateSnapshot(peer.identity));
+        expect(retainedPeer.work).toEqual(peer.work);
+        expect(retainedPeer.workVersion).toEqual(peer.version);
+      }
+      const retainedLedger = completeHost(f.store.readHostStateSnapshot(f.identity)).ledger;
+      expect(
+        retainedLedger.tickets.filter((ticket) => f.earlierTickets.some((peer) => peer.ticket_id === ticket.ticket_id)),
+      ).toEqual(f.earlierTickets);
+      expect(
+        retainedLedger.claims.filter((claim) => f.earlierClaims.some((peer) => peer.claim_id === claim.claim_id)),
+      ).toEqual(f.earlierClaims);
       expect(retirement.attempt_receipt.attempt).toMatchObject({
         status: 'uncertain',
         result: null,
@@ -1542,6 +1618,88 @@ test(
         expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(journalBefore);
         expect(f.ddl()).toEqual(ddlBefore);
       }
+      const db = f.ledger.sessionProducerBinding().database;
+      const ledgerRow = required(
+        db
+          .query<{ revision: number; payload: string; digest: string }, [string]>(
+            "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='ledger' AND id='shared'",
+          )
+          .get(f.workspace),
+        'Retired capture original Ledger row',
+      );
+      const retiredClaimIndex = released.ledger.claims.findIndex(
+        (entry) => entry.claim_id === fresh.operation.retirementClaimId,
+      );
+      const laterClaimIndex = released.ledger.claims.findIndex((entry) => entry.claim_id === claim.claim_id);
+      expect(retiredClaimIndex).toBeGreaterThanOrEqual(0);
+      expect(laterClaimIndex).toBeGreaterThan(retiredClaimIndex);
+      const reorderedLedger = {
+        ...released.ledger,
+        claims: [claim, ...released.ledger.claims.filter((entry) => entry.claim_id !== claim.claim_id)],
+      };
+      const reorderedPayload = coordinationLedgerJson(reorderedLedger);
+      const reorderedDigest = coordinationLedgerDigest(reorderedLedger);
+      const updateLedger = db.query(
+        "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND id='shared' AND revision=? AND payload=? AND digest=?",
+      );
+      expect(
+        updateLedger.run(
+          reorderedPayload,
+          reorderedDigest,
+          f.workspace,
+          ledgerRow.revision,
+          ledgerRow.payload,
+          ledgerRow.digest,
+        ).changes,
+      ).toBe(1);
+      let reorderFailure: { error: unknown } | undefined;
+      try {
+        const reordered = completeHost(f.store.readHostStateSnapshot(f.identity));
+        const reorderedWorkspace = f.inspect();
+        expect(reordered.work).toEqual(released.work);
+        expect(reordered.ledger).toEqual(reorderedLedger);
+        expect(reordered.ledger.operations).toEqual(released.ledger.operations);
+        expect(() =>
+          f.store.captureRetiredSourceObservation({
+            ...request,
+            expectedLedger: reordered.ledgerVersion,
+            terminalEvidence: { ...terminalEvidence, later_grants: [{ ...grant, actor_id: 'foreign-actor' }] },
+          }),
+        ).toThrow('later Source grant lacks its exact terminal Host and Journal evidence');
+        expect(f.inspect()).toEqual(reorderedWorkspace);
+        expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(journalBefore);
+        expect(f.ddl()).toEqual(ddlBefore);
+        expect(
+          db
+            .query(
+              "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='ledger' AND id='shared'",
+            )
+            .get(f.workspace),
+        ).toEqual({ ...ledgerRow, payload: reorderedPayload, digest: reorderedDigest });
+      } catch (error) {
+        reorderFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              expect(
+                updateLedger.run(
+                  ledgerRow.payload,
+                  ledgerRow.digest,
+                  f.workspace,
+                  ledgerRow.revision,
+                  reorderedPayload,
+                  reorderedDigest,
+                ).changes,
+              ).toBe(1);
+            },
+          ],
+          reorderFailure,
+        );
+      }
+      expect(f.inspect()).toEqual(releasedBefore);
+      expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(journalBefore);
       const captured = f.store.captureRetiredSourceObservation(request),
         after = completeHost(captured.snapshot),
         capturedJournal = currentJournal(f.ledger, 'stopped', 1);

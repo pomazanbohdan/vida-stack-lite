@@ -35,6 +35,7 @@ type ContinuationFixtureOptions = {
   queued?: boolean;
   uncertain?: boolean;
   completedAttempt?: boolean;
+  disjointPeer?: boolean;
   root?: string;
   config?: AgentRuntimeConfig;
   identity?: WorkIdentity;
@@ -475,6 +476,68 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
     });
     store.completeWorkflowAttempt(claimed, { summary: 'Retained original implementation result.' });
   }
+  let peer:
+    | {
+        identity: WorkIdentity;
+        snapshot: ReturnType<HostStateStore['readHostStateSnapshot']>;
+        ticket: CoordinationTicket;
+        claim: CoordinationClaim;
+      }
+    | undefined;
+  if (options.disjointPeer) {
+    const before = store.readHostStateSnapshot(identity);
+    if (!before.work || !before.ledger || !before.ledgerVersion) throw Error('Disjoint peer needs its original owner');
+    const peerIdentity = { ...identity, work_id: identity.work_id + '-peer' },
+      peerResource = 'execution:' + peerIdentity.work_id,
+      peerTicket: CoordinationTicket = {
+        ...ticket,
+        ticket_id: 'ticket-disjoint-peer',
+        work_id: peerIdentity.work_id,
+        thread_id: 'fixture-disjoint-peer',
+        sequence: before.ledger.next_sequence,
+        contour_keys: ['task:' + peerIdentity.work_id],
+        claim_ids: ['claim-disjoint-peer'],
+        exclusive_resources: [peerResource],
+        active_resources: [peerResource],
+      },
+      peerClaim: CoordinationClaim = {
+        ...claim,
+        claim_id: 'claim-disjoint-peer',
+        ticket_id: peerTicket.ticket_id,
+        work_id: peerIdentity.work_id,
+        thread_id: peerTicket.thread_id,
+        resources: [peerResource],
+      };
+    const peerSnapshot = store.compareAndSwapHostState({
+      expectedWork: null,
+      expectedLedger: before.ledgerVersion,
+      expectedMaintenanceGeneration: before.maintenanceGeneration,
+      nextWork: {
+        ...before.work,
+        revision: 1,
+        binding: {
+          ...before.work.binding,
+          lifecycle_work_id: peerIdentity.work_id,
+          provider_work_item_id: 'fixture-disjoint-peer',
+          allowed_resources: [
+            peerResource,
+            ...before.work.binding.allowed_resources.filter((resource) => resource.startsWith('file:')),
+          ].sort(),
+        },
+        lease: { ticket_id: peerTicket.ticket_id, thread_id: peerTicket.thread_id, generation: peerTicket.generation },
+        lifecycle: { ...before.work.lifecycle, revision: 1 },
+        execution: { ...before.work.execution, run_id: 'run-disjoint-peer', assignment_attempts: [] },
+      },
+      nextLedger: {
+        ...before.ledger,
+        revision: before.ledger.revision + 1,
+        next_sequence: before.ledger.next_sequence + 1,
+        tickets: [...before.ledger.tickets, peerTicket],
+        claims: [...before.ledger.claims, peerClaim],
+      },
+    });
+    peer = { identity: peerIdentity, snapshot: peerSnapshot, ticket: peerTicket, claim: peerClaim };
+  }
   let journalItem = historicalJournalItem(originalSource, runId, workflowId);
   if (uncertain) journalItem = { ...journalItem, observation: null };
   else
@@ -667,6 +730,7 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
     priorConfigDigest,
     threadId,
     runId,
+    peer,
     closeDatabase,
   };
 }

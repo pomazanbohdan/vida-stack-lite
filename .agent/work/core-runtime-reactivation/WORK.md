@@ -77,6 +77,75 @@ No numeric gain or product defect is claimed from the focused PASS.
 
 ### Whole remaining-contour packet in progress
 
+The v1117/v1118 packet reproduces a product defect: readonly frontier code
+adoption rejects a genuine completed Host preparation with `attempt assignment
+binding invalid`. Failure log`native-history-v1117-k1RAI7/focused.log` and root
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-initial-source-LNrKzk` remain.
+The generic Host fixture operation claims exact current CAS/lease, actually
+reads configuration, and completes a labeled readonly result. It represents no
+configured Mastra-stage dispatch or Source effect. Legacy continuation and
+historical capture controls pass in that same invocation; only rebind fails.
+
+Root traces the defect to `checkedStoredWork`'s initial-frontier-code history:
+it validates the receipt projection but never registers preserved attempts'
+original binding. The correction adds exact current-candidate prefix continuity
+and registers original bindings. Final `checkedWork` keeps completed/no-effect,
+assignment/attempt identity, reconciliation and result-digest checks. A negative
+control changes terminal result and digest together, expects history rejection,
+and restores exact original row bytes. Independent blind Luna plan review agrees.
+
+The same checked owner contains an identical second lookup of `targetAfter` in
+the same immutable successor attempt array. It is removed with its tautological
+equality; the completed-status, exact completed-attempt and full-array transition
+checks remain. Prior report key179, body3376:27–3376:71, identifies the removed
+`src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#1`.
+Its budget is retired, never transferred. Removing that boolean and adding one
+history-registration loop is expected to retain rootCC279; current qualification
+and full function correspondence remain deferred to the existing owner.
+
+Historical peer setup initially violates file-authority/lifecycle equality;
+original failure`historical-peer-v1117-3GEokV` and fixture
+`delivered-work-continuation-0WbtSr` remain retained. Correcting allowed file
+authority keeps the actual lease/claim execution-only; the80-assertion case
+passes in0.765s under5s. It also corrupts/restores only a receipt digest and
+checks repeated read-only historical repair inspection with exact beforeimages.
+Initial nullable/wrapper-shape compiler failures are retained in
+`historical-peer-v1117-KRWPV5`; the corrected strict148-file and lint checks pass.
+
+The recovery commit case adds a different external runtime endpoint through an
+explicit fixture-only typed proof seam. The maintained verifier still checks
+actual Source/package/report/permission/reservation inputs; only three declared
+endpoint proof fields are controlled. Host creates the receipt and successor,
+then fresh-connection lookup and exact retry preserve them. Focused31assertions
+pass18.482s under20s; no native endpoint formation, installation or Runtime
+acceptance is claimed. The unchanged-binding reopen from the previous packet
+did not exercise those callbacks and is not represented as having done so.
+Numeric evidence remains the published eae12fe stage until this packet's run.
+
+The Source repair passes strict148-file TypeScript, configured type-aware lint
+and5affected Host cases/252assertions in44.88s. Logs remain under
+`frontier-terminal-fix-v1118-FlxaYa`. The final readonly-rebind case adds an
+actual later config-read Host attempt under the new binding; original and new
+attempts, Journal/Ledger and retained retry receipt remain exact. This final
+48-assertion check passes8.382s under20s, with strict152-file TypeScript/lint in
+`frontier-future-v1119-RTpb0H`. Independent final review finds no blocker; it
+does not qualify frozen correspondence or certify CC279 independently.
+
+Stopped-source controls now admit a genuine disjoint owner/queued waiter before
+primary admission on existing`AGENTS.md`, requiring exact lower FIFO sequence,
+nonempty resources and claim/Work/ticket preservation after retirement/retry.
+A separate negative control reorders only the actual released later claim,
+retains real release operation order and uses the ledger's canonical digest.
+The supported reader accepts that representation, then foreign-actor capture
+still rejects at the exact terminal-evidence guard. Conditional exact row
+restoration preserves the original successful capture/retry. No new engine,
+Source effect, release history or successful receipt is seeded. Strict129-file
+TypeScript/lint and2cases/126assertions pass32.60s (10.154s/21.303s) within their
+original60s bounds in`retired-fifo-v1118-Orll0C`. The initial workspace-versus-Host
+wrapper static errors remain in`retired-fifo-v1118-zdrCF9`; no runtime followed
+that static failure. Blind final review agrees. Both changed resource pins are
+refreshed once after the packet stabilizes; full numeric gains remain pending.
+
 The v1115 packet extends the already native low-risk legacy continuation with a
 target-config bridge over its original Host/DB, actual Source-planner issue/report
 and native resume to an unissued developer suffix. Exact lookup/receipt/history
