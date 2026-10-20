@@ -138,7 +138,9 @@ The first successor development fixture used an old non-digest scope string;
 the newly exercised Journal parser correctly rejected it. Reusing the existing
 currentConfigHostFixture fixes that precondition. A new cleanup callback initially
 returned SQL Changes, correctly rejected by TypeScript and completeOwnedCleanup;
-its block now returns undefined. Original failed logs/roots remain retained.
+its block now returns undefined. Original failed logs remain retained. There is
+no qualified retention proof for those pre-fix failed fixture roots; do not claim
+their SQLite bytes remain available. None is reused as a later test input.
 Strict165-file TypeScript and configured lint pass after these corrections.
 No product guard, budget, ownership or UNKNOWN semantics changed.
 Independent Luna review found a cleanup-custody gap: a standalone DROP TRIGGER
@@ -147,6 +149,8 @@ failed/pending at entry and clears retention only after all successful cleanup,
 admission/retry and final Journal assertions. Every failed path retains its root.
 The preceding stable two-case focused check passes89assertions; the resource-pin
 control passes10. Final pin binds the retention correction as well.
+The repeated blind review confirms that correction and finds no remaining blocker;
+its retained note is custody-history-review.md in focused diagnostics.
 
 Read-only Luna identifies an existing persisted final-assurance public case, but
 that file is outside the active two-file Host selection and has its own90s
