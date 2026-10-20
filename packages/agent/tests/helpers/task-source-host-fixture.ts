@@ -305,6 +305,93 @@ export function createTaskSourceHostFixture({
       prepare(verifyCurrent: CurrentVerifier = trustedVerifyCurrent) {
         return store.prepareTaskSourceBindingOperation({ request, identity, verifyCurrent });
       },
+      rotateOwnerReservation() {
+        const before = store.readHostStateSnapshot(identity);
+        requireHostState(before);
+        const prior = before.ledger.tickets.find((ticket) => ticket.ticket_id === before.work.lease?.ticket_id);
+        if (!prior || prior.status !== 'active') throw new Error('Owner rotation needs a current active ticket');
+        const claim = before.ledger.claims.find(
+          (entry) => entry.ticket_id === prior.ticket_id && entry.status === 'active',
+        );
+        if (!claim) throw new Error('Owner rotation needs its current active claim');
+        const now = new Date().toISOString(),
+          ticketId = `fixture-owner-ticket-${before.ledger.next_sequence}`,
+          claimId = `fixture-owner-claim-${before.ledger.next_sequence}`,
+          nextWork: WorkState = {
+            ...before.work,
+            revision: before.work.revision + 1,
+            lifecycle: { ...before.work.lifecycle, revision: before.work.revision + 1 },
+            lease: { ticket_id: ticketId, thread_id: prior.thread_id, generation: prior.generation },
+          },
+          nextLedger: CoordinationLedger = {
+            ...before.ledger,
+            revision: before.ledger.revision + 1,
+            next_sequence: before.ledger.next_sequence + 1,
+            tickets: [
+              ...before.ledger.tickets.map((ticket) =>
+                ticket.ticket_id === prior.ticket_id
+                  ? {
+                      ...ticket,
+                      status: 'released' as const,
+                      active_resources: [],
+                      blocked_resources: [],
+                      expires_at: null,
+                    }
+                  : ticket,
+              ),
+              {
+                ...prior,
+                ticket_id: ticketId,
+                claim_ids: [claimId],
+                sequence: before.ledger.next_sequence,
+                created_at: now,
+              },
+            ],
+            claims: [
+              ...before.ledger.claims.map((entry) =>
+                entry.claim_id === claim.claim_id ? { ...entry, status: 'released' as const, renewed_at: now } : entry,
+              ),
+              { ...claim, claim_id: claimId, ticket_id: ticketId, created_at: now, renewed_at: now },
+            ],
+            operations: [
+              ...before.ledger.operations,
+              {
+                schema: 'CoordinationOperation/v1',
+                operation_id: `fixture-owner-release-${prior.ticket_id}`,
+                kind: 'release',
+                ticket_id: prior.ticket_id,
+                work_id: prior.work_id,
+                thread_id: prior.thread_id,
+                source_revision: prior.source_revision,
+                resources: prior.active_resources,
+                from_ledger_revision: before.ledger.revision,
+                to_ledger_revision: before.ledger.revision + 1,
+                decided_by: prior.thread_id,
+                decision_pointer: 'fixture:rotate-admitted-owner',
+                created_at: now,
+              },
+            ],
+          };
+        const rotated = store.compareAndSwapHostState({
+          expectedWork: before.workVersion,
+          expectedLedger: before.ledgerVersion,
+          expectedMaintenanceGeneration: before.maintenanceGeneration,
+          expectedSessionJournal: request.expected_host.journal,
+          nextWork,
+          nextLedger,
+        });
+        requireHostState(rotated);
+        request = {
+          ...request,
+          expected_host: {
+            ...request.expected_host,
+            work: rotated.workVersion,
+            ledger: rotated.ledgerVersion,
+            maintenance_generation: rotated.maintenanceGeneration,
+          },
+        };
+        return rotated;
+      },
       seedPeerReservation(): PeerReservation {
         const peerIdentity = { ...identity, work_id: 'task-source-peer' },
           peerThread = 'thread-task-source-peer',

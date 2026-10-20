@@ -468,6 +468,29 @@ export async function createFailedFinalCorrectionFixture(
         output_digest: canonicalJsonDigest(summary),
         evidence_refs: [evidenceRef],
       };
+      // These readonly unit reports use the existing native Journal/engine boundary.
+      // Writer completion and delivery preparation retain their public CLI effects.
+      if (item.request.stage_id === 'validate_focused' || item.request.stage_id === 'test_task') {
+        if (item.host_reservation) throw new Error('Focused readonly report unexpectedly owns a Host assignment');
+        const currentSource = snapshotDeclaredSources(
+          requireSafeRepositoryAccess(fixture.root),
+          work.lifecycle.scope.allowed_paths,
+        );
+        journal = ledger.report(id, 1, journal.version, observation, currentSource);
+        if (journal.resume_status === 'ready_to_resume') {
+          if (!bridge || !journal.state.step_id) throw new Error('Focused report has no suspended native engine');
+          await bridge.resume(
+            journal.state.step_id,
+            journal.state.items.map((entry) => {
+              if (!entry.observation) throw new Error('Ready focused wave has an unreported action');
+              return entry.observation;
+            }),
+            currentSource,
+          );
+          journal = sync();
+        }
+        return journal;
+      }
       const reportPath = `.agent/work/${id}/focused-${item.request.action_id}.json`;
       writeFileSync(path.join(fixture.root, reportPath), JSON.stringify(observation));
       await publicRun([

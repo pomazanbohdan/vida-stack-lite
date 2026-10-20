@@ -59,6 +59,13 @@ import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts'
 import {
   prepareLifecycleForCorrection,
   correctiveAssignmentAuthorizationSchema,
+  prepareFinalAssurance,
+  createFinalAssuranceState,
+  issueFinalAssuranceWave,
+  reportFinalAssurance,
+  finalAssuranceStatus,
+  finalAssuranceReceiptReferences,
+  type FinalAssuranceReport,
 } from '../../src/orchestration/final-assurance.ts';
 import { validateWorkState } from '../../src/contracts/work-state-schema.ts';
 import type {
@@ -158,6 +165,7 @@ import {
 import {
   MastraSessionLedger,
   openConfiguredMastraSessionLedger,
+  mastraLedgerStatus,
 } from '../../src/orchestration/persistent-session-handoff.ts';
 import {
   computeEdictumWorkflowApprovalEvidenceDigest,
@@ -725,6 +733,59 @@ test(
       expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
       expect(f.store.readWorkSessionJournal(f.identity)).toEqual(corrected);
       expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+      const archived = requiredValue(
+        journal.state.completed.flatMap((wave) => wave.items).find((item) => item.observation !== null),
+        'Original completed corrective archive item',
+      );
+      const archivedIdentity = requiredValue(archived.observation, 'Original complete archive observation');
+      expect(f.store.findArchivedReportedObservation(f.identity.work_id, 1, archivedIdentity)).toEqual(archived);
+      expect(() =>
+        f.store.findArchivedReportedObservation(f.identity.work_id, 1, { ...archivedIdentity, issue_id: randomUUID() }),
+      ).toThrow('archived terminal report retry differs');
+      expect(
+        f.store.findArchivedReportedObservation(f.identity.work_id, 1, {
+          ...archivedIdentity,
+          action_id: '0'.repeat(64),
+        }),
+      ).toBeNull();
+      expect(f.store.findArchivedReportedObservation(f.identity.work_id, 2, archivedIdentity)).toBeNull();
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(corrected);
+      const correctiveRequest = {
+        identity: f.identity,
+        expectedWork: after.workVersion,
+        expectedLedger: after.ledgerVersion,
+        expectedMaintenanceGeneration: after.maintenanceGeneration,
+        stageId: 'develop_task',
+        assignmentIndex: 0,
+        requestDigest: canonicalJsonDigest({ fixture: 'corrective-claim', authorization: issued.authorization }),
+        lease: after.work.lease,
+      };
+      const claimed = f.store.claimWorkflowAttempt(correctiveRequest);
+      expect(claimed.attempt.correction_generation).toBe(1);
+      expect(claimed.attempt.correction_authorization).toEqual(issued.authorization);
+      expect(claimed.attempt.previous_attempt_id).toBe(
+        after.work.execution.assignment_attempts.findLast(
+          (entry) => entry.stage_id === 'develop_task' && entry.assignment_index === 0,
+        )?.attempt_id ?? null,
+      );
+      const result = { summary: 'Host unit corrective result in the approved generation.' };
+      f.store.completeWorkflowAttempt(claimed, result);
+      const terminal = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+      expect(terminal.work.execution.assignment_attempts).toEqual([
+        ...after.work.execution.assignment_attempts,
+        { ...claimed.attempt, status: 'completed', result, result_digest: canonicalJsonDigest(result) },
+      ]);
+      expect(
+        f.store.claimWorkflowAttempt({
+          ...correctiveRequest,
+          expectedWork: terminal.workVersion,
+          expectedLedger: terminal.ledgerVersion,
+        }).attempt,
+      ).toEqual(terminal.work.execution.assignment_attempts.at(-1)!);
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(terminal);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(corrected);
+      expect(readFileSync(authorityPath)).toEqual(authorityBytes);
       completed = true;
     } catch (error) {
       primaryFailure = { error };
@@ -734,6 +795,261 @@ test(
         [
           () => {
             f.close(() => completed && performance.now() < deadline);
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  },
+  failedFinalHostCaseTimeoutMs,
+);
+
+// Reuse the admitted writer and focused reports; reviewer observations remain synthetic unit inputs.
+test(
+  'Host final assurance binds issued pairs and exact delivery evidence without changing the Journal',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    const f = await createFailedFinalCorrectionFixture('passing');
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      if (performance.now() >= deadline) throw new Error('Host assurance fixture exceeded the case deadline.');
+      const journal = requiredValue(f.store.readWorkSessionJournal(f.identity), 'Completed assurance Journal');
+      expect(f.store.readFinalAssurance(f.identity, 1)).toBeNull();
+      let assurance = prepareFinalAssurance({
+        root: f.root,
+        config: f.config,
+        store: f.store,
+        identity: f.identity,
+        journal: { ...journal, resume_status: mastraLedgerStatus(journal.state) },
+        preparationPath: f.preparationPath,
+      });
+      const before = readPresentSnapshot(f.store, f.identity),
+        packet = assurance.state.packet,
+        save = (next: typeof assurance.state, expected = assurance.version) =>
+          f.store.compareAndSwapFinalAssurance({
+            identity: f.identity,
+            attempt: 1,
+            expected,
+            expectedWork: before.workVersion,
+            expectedLedger: before.ledgerVersion,
+            next,
+          });
+      expect(before.work.lifecycle.phase).toBe('VERIFY');
+      expect(assurance.state.actions).toHaveLength(6);
+      expect(finalAssuranceStatus(assurance.state)).toBe('ready');
+      expect(f.store.readFinalAssurance(f.identity, 1)).toEqual(assurance);
+      expect(f.store.readFinalAssurance(f.identity, 2)).toBeNull();
+      const issued = issueFinalAssuranceWave(assurance.state);
+      expect(() => save(issued, { ...assurance.version, revision: assurance.version.revision + 1 })).toThrow(
+        'state compare-and-swap conflict',
+      );
+      expect(() =>
+        save(
+          issueFinalAssuranceWave(
+            createFinalAssuranceState({
+              ...packet,
+              scope_id: 'fixture:foreign-assurance-scope',
+            }),
+          ),
+        ),
+      ).toThrow('final assurance has stale or foreign lifecycle binding');
+      expect(f.store.readFinalAssurance(f.identity, 1)).toEqual(assurance);
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+      const changedBytesRefusal = (relative: string, operation: () => unknown, message: string) => {
+        const file = path.join(f.root, relative),
+          bytes = readFileSync(file);
+        let bodyFailure: { error: unknown } | undefined;
+        try {
+          writeFileSync(file, Buffer.concat([bytes, Buffer.from('\n')]));
+          expect(operation).toThrow(message);
+          expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+          expect(f.store.readFinalAssurance(f.identity, 1)).toEqual(assurance);
+          expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+        } catch (error) {
+          bodyFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                writeFileSync(file, bytes);
+                return undefined;
+              },
+            ],
+            bodyFailure,
+          );
+        }
+        expect(readFileSync(file)).toEqual(bytes);
+      };
+      changedBytesRefusal(
+        requiredValue(before.work.lifecycle.scope.allowed_paths[0], 'Admitted Source path'),
+        () => save(issued),
+        'source changed; normal correction and new assurance required',
+      );
+      changedBytesRefusal(
+        requiredValue(
+          before.work.lifecycle.references.find(
+            (ref) =>
+              ref.kind === 'review_packet' && ref.disposition === 'current' && ref.record_id === packet.packet_id,
+          ),
+          'Current packet reference',
+        ).path,
+        () => save(issued),
+        'current review packet bytes changed',
+      );
+      assurance = save(issued);
+      expect(finalAssuranceStatus(assurance.state)).toBe('issued_outcome_uncertain');
+      const checks = {
+        scope_and_trace: 'pass',
+        tests_security_rollback: 'pass',
+        evidence_invalidation_binding: 'pass',
+      } as const;
+      for (const kind of ['review', 'reverse'] as const) {
+        if (kind === 'reverse') assurance = save(issueFinalAssuranceWave(assurance.state));
+        for (const action of assurance.state.actions.filter((entry) => entry.kind === kind)) {
+          const review = assurance.state.actions.find(
+            (entry) => entry.kind === 'review' && entry.perspective === action.perspective,
+          );
+          const binding = {
+            work_id: packet.work_id,
+            attempt: packet.attempt,
+            packet_id: packet.packet_id,
+            action_id: action.action_id,
+            issue_id: requiredValue(action.issue_id, 'Issued assurance action'),
+            generation: packet.generation,
+            implementation_fingerprint: packet.implementation_fingerprint,
+            scope_id: packet.scope_id,
+            agent_id: `fixture:synthetic-host-reviewer-${action.perspective}`,
+            history_id: `fixture:synthetic-host-review-history-${action.perspective}`,
+            tool_call_ref: `fixture:synthetic-host-${kind}-${action.perspective}`,
+            verdict: 'pass' as const,
+            evidence_refs: [`local://fixture/synthetic-host-${kind}-${action.perspective}`],
+            checks,
+          };
+          const report: FinalAssuranceReport =
+            kind === 'review'
+              ? { ...binding, schema: 'FinalAssuranceReview/v1', perspective: action.perspective, findings: [] }
+              : {
+                  ...binding,
+                  schema: 'FinalAssuranceReverse/v1',
+                  review_action_id: requiredValue(review, 'Matching review').action_id,
+                  review_issue_id: requiredValue(review?.issue_id, 'Matching issued review'),
+                };
+          const next = reportFinalAssurance(assurance.state, report),
+            priorVersion = assurance.version;
+          assurance = save(next);
+          expect(f.store.readFinalAssurance(f.identity, 1)).toEqual(assurance);
+          expect(reportFinalAssurance(assurance.state, report)).toBe(assurance.state);
+          expect(() => save(next, priorVersion)).toThrow('state compare-and-swap conflict');
+          expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+          expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+        }
+      }
+      expect(finalAssuranceStatus(assurance.state)).toBe('reviewed');
+      const manifestPath = `.agent/work/${f.identity.work_id}/delivery.json`;
+      writeFileSync(
+        path.join(f.root, manifestPath),
+        JSON.stringify({
+          schema: 'FinalAssuranceDelivery/v1',
+          work_id: f.identity.work_id,
+          implementation_fingerprint: packet.implementation_fingerprint,
+          destination: 'fixture:synthetic-host-delivery-only',
+          order: ['AGENT.sidecar.md'],
+          post_deployment_checks: ['Fixture inspection only; no Runtime acceptance'],
+        }),
+      );
+      const references = finalAssuranceReceiptReferences(f.root, before.work, assurance.state);
+      expect(references).toHaveLength(8);
+      const request = {
+        identity: f.identity,
+        attempt: 1,
+        expected: assurance.version,
+        expectedWork: before.workVersion,
+        expectedLedger: before.ledgerVersion,
+        references,
+        documentationContext: {
+          repository_root: f.root,
+          repository_id: before.work.binding.repository_id,
+          project_id: requiredValue(before.work.binding.project_ids[0], 'Assurance project'),
+          work_id: f.identity.work_id,
+        },
+      };
+      const denied: readonly [Partial<typeof request>, string][] = [
+        [
+          { expectedWork: { ...before.workVersion, revision: before.workVersion.revision + 1 } },
+          'state compare-and-swap conflict',
+        ],
+        [
+          { expectedLedger: { ...before.ledgerVersion, revision: before.ledgerVersion.revision + 1 } },
+          'state compare-and-swap conflict',
+        ],
+        [
+          { expected: { ...assurance.version, revision: assurance.version.revision + 1 } },
+          'state compare-and-swap conflict',
+        ],
+        [{ references: references.slice(1) }, 'six reports, CLEAR and delivery manifest required'],
+        [
+          {
+            references: references.map((ref, index) =>
+              index === 0 ? { ...ref, principal: 'fixture:foreign-reviewer' } : ref,
+            ),
+          },
+          'review reference differs from issued report',
+        ],
+        [
+          { references: references.map((ref, index) => (index === 0 ? { ...ref, sha256: '0'.repeat(64) } : ref)) },
+          'report bytes differ from accepted observation',
+        ],
+        [
+          { references: references.map((ref, index) => (index === 7 ? { ...ref, sha256: '0'.repeat(64) } : ref)) },
+          'assurance reference bytes changed',
+        ],
+      ];
+      for (const [change, message] of denied) {
+        expect(() => f.store.commitFinalAssuranceDelivery({ ...request, ...change })).toThrow(message);
+        expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+        expect(f.store.readFinalAssurance(f.identity, 1)).toEqual(assurance);
+        expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+      }
+      changedBytesRefusal(
+        requiredValue(references[0], 'Bound review reference').path,
+        () => f.store.commitFinalAssuranceDelivery(request),
+        'report bytes differ from accepted observation',
+      );
+      changedBytesRefusal(
+        manifestPath,
+        () => f.store.commitFinalAssuranceDelivery(request),
+        'assurance reference bytes changed',
+      );
+      const delivered = presentSnapshot(f.store.commitFinalAssuranceDelivery(request));
+      expect(delivered.work.lifecycle.phase).toBe('DELIVERY');
+      expect(delivered.work.lifecycle.references.slice(-8)).toEqual(references);
+      expect(delivered.work.execution).toEqual(before.work.execution);
+      expect(delivered.work.lease).toEqual(before.work.lease);
+      expect(delivered.workVersion).not.toEqual(before.workVersion);
+      expect(f.store.readFinalAssurance(f.identity, 1)).toEqual(assurance);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+      expect(() => f.store.commitFinalAssuranceDelivery(request)).toThrow('state compare-and-swap conflict');
+      expect(() =>
+        f.store.compareAndSwapFinalAssurance({
+          ...request,
+          expectedWork: delivered.workVersion,
+          expectedLedger: delivered.ledgerVersion,
+          next: assurance.state,
+        }),
+      ).toThrow('final assurance cannot progress after delivery');
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(delivered);
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            f.close(() => completed && performance.now() < deadline);
+            return undefined;
           },
         ],
         primaryFailure,
@@ -1615,6 +1931,8 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
   let completed = false;
   let primaryFailure: { error: unknown } | undefined;
   try {
+    const predecessor = f.rotateOwnerReservation();
+    expect(predecessor.work?.lease?.ticket_id).not.toBe(f.initial.work?.lease?.ticket_id);
     const input = { request: f.request, identity: f.identity };
     const observation = { ...input, verifyCurrent: f.trustedVerifyCurrent };
     const sourceRoot = path.resolve(requiredValue(f.request.source_root, 'TaskSource proposed root'));
@@ -1683,6 +2001,21 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
     expect(
       reserved.ledger?.claims.filter((claim) => claim.ticket_id === f.initial.work?.lease?.ticket_id),
     ).toMatchObject([{ status: 'released', resources: ['file:src/task.ts', ...retainedResources].sort() }]);
+    const predecessors = requiredValue(reserved.ledger, 'Issued ledger').tickets.filter((ticket) =>
+      [f.initial.work?.lease?.ticket_id, predecessor.work?.lease?.ticket_id].includes(ticket.ticket_id),
+    );
+    expect(predecessors).toHaveLength(2);
+    for (const prior of predecessors) {
+      expect(prior).toMatchObject({
+        status: 'released',
+        active_resources: [],
+        blocked_resources: [],
+        expires_at: null,
+      });
+      expect(reserved.ledger?.claims.filter((claim) => claim.ticket_id === prior.ticket_id)).toMatchObject([
+        { status: 'released', resources: prior.exclusive_resources },
+      ]);
+    }
     expect(await f.store.issueTaskSourceBindingOperation(input)).toEqual({
       ...issued,
       status: 'already_issued',

@@ -337,6 +337,32 @@ directory. Keep policy denials, null retry argv and retained UNKNOWN roots real.
 An active resource outside Work scope is rejected by the existing Host pair
 validator; carrying a prior resource does not bypass that admission rule.
 
+For newest-predecessor retry, use `rotateOwnerReservation()` before actual
+TaskSource prepare/issue. It releases the genuine target ticket/claim and admits
+its successor through paired public Host CAS with release history and fresh
+request versions. The operation then releases that successor, leaving two
+matching predecessors. Check both released ticket/claim pairs, exact replacement
+resources, unchanged retry and no Source effect. A disjoint peer or one-element
+sort does not exercise this choice. Default fixture callers remain unchanged.
+
+The corrective authorization case retrieves an original completed observation
+using its complete retry identity, rejects changed/foreign archive identities,
+and claims/completes one genuinely authorized corrective attempt. Preserve prior
+attempt history, consumed authority bytes and unchanged Host/Journal on replay.
+Do not fabricate a successful report or authorize the original failed assignment.
+
+The selected Host assurance case reuses the existing passing final-correction
+fixture and its real admitted writer, focused reports and terminal Journal. The
+fixture's readonly validator/tester reports use public native Journal report and
+conditional engine resume, rejecting Host reservations; writer completion and
+delivery preparation retain their public CLI effects. The case persists all six
+review/reverse actions and commits eight bound references atomically. Preserve
+stale Work/ledger/assurance refusals, foreign binding, incomplete evidence, actual
+Source/packet/report/manifest byte changes with exact restoration, and unchanged
+Host/assurance/Journal beforeimages. Synthetic reviewer inputs and fixture DELIVERY
+do not establish independent native review, deployment or Runtime acceptance.
+Keep the existing20s composite fixture bound and retain every failed setup.
+
 The migration baseline/restore case keeps a completed cooperative readonly
 Journal wave plus an unissued current wave. Baseline clears its rows; successful
 restore returns their exact revision/payload/digest after an interrupted restore

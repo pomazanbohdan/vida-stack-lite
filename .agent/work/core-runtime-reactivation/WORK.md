@@ -71,6 +71,65 @@ for this same private root and shared ledger scope; its exact pin control passes
 10assertions and the complete4b8a387 stage above qualifies that selection.
 No numeric gain or product defect is claimed from the focused PASS.
 
+### Whole remaining-contour packet in progress
+
+The current strategy applies Superpowers planning and Pstack domain modeling to
+one remaining-contour packet rather than a new complete stage for each callable.
+The retained report-only planner joins all606zero-count arms to existing function
+geometry, including covered owners and explicit navigation gaps. Its total equals
+the retained branch deficit; no new AST, Source scan or numeric result is implied.
+Blind Luna continuation and assurance research is retained at
+`/tmp/vida-full-continuation-v1109.md` and `/tmp/vida-full-assurance-v1109.md`.
+Root's verification found the existing passing failed-final fixture, so a missing
+final-assurance fixture is not a valid prerequisite GAP. The independent plan
+review is retained as `full-remainder-plan-review-v1109.md` in focused diagnostics.
+Final blind Luna diff review is retained as `full-remainder-final-review-v1109.md`;
+it finds no remaining correctness blocker and establishes no numeric result.
+
+The existing corrective authorization case now also retrieves an original archived
+observation using its complete identity, rejects changed/foreign identities and
+claims/completes the genuinely authorized corrective attempt. It verifies exact
+prior history and replay with unchanged Host, Journal and authorization bytes.
+Before the shared fixture optimization, its focused check passes83assertions.
+
+The new selected Host assurance case uses real admission, writer completion and
+persisted focused reports from `createFailedFinalCorrectionFixture('passing')`.
+It exercises six issued/reported review/reverse states, eight bound references,
+native assurance CAS and atomic DELIVERY. It rejects stale versions, foreign
+scope/principal, incomplete evidence, changed digests and actual Source, packet,
+report and manifest bytes, restoring temporary changes. Exact beforeimages keep
+Host, assurance and Journal preservation separate. Synthetic reviewer observations
+remain explicit unit inputs; DELIVERY here establishes no external deployment,
+independent native review or Runtime acceptance.
+
+The first passing-fixture preparation exceeds the unchanged20s case deadline:
+22740.19ms, before assurance assertions. Its failed fixture is retained at
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-absorption-f5FTgD`.
+Readonly validator/tester fixture reports now reuse the existing public native
+Journal report/conditional engine-resume pattern and reject unexpected Host
+reservations. Writer completion and delivery preparation keep their CLI effects.
+The checked assurance case passes101assertions in17618.11ms under the same20s
+bound. Different invocations are not a controlled speedup claim. Initial missing
+import/type errors and a foreign-packet fixture that hit action-identity validation
+before lifecycle binding were corrected; their original failure logs remain in
+focused diagnostics. These were test-authoring failures, not product defects.
+
+The TaskSource fixture adds optional explicit `rotateOwnerReservation()` through
+paired public Host CAS with genuine release history; ordinary callers are
+unchanged. The existing issued/UNKNOWN case uses it before actual prepare/issue
+and exact retry, leaving two matching released predecessors. It checks both
+ticket/claim pairs, replacement resources, unchanged retry and no Source effect.
+The focused case passes38assertions in483.40ms under the default5s limit.
+Strict TypeScript for the changed tests/helpers passes148files, configured
+type-aware lint passes with0diagnostics, and the three affected existing selected
+cases pass191assertions in33.50s total. The exact two-file pin control passes
+10assertions; runner strict TypeScript passes122files. Hooks and publication are
+pending. The new focused logs use `full-remainder-*-v1109.log` in the existing
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers` directory.
+The complete unchanged-input stage has not been repeated; all accepted counters
+above still belong to4b8a387. Continuation/producer prerequisites and their
+retained timeouts remain OPEN in the same active contour.
+
 ## Latest measurement custody
 
 - Stage:`/workspace/contour-stage-nuFMWq`; exec53790, observed exit0.
@@ -374,15 +433,23 @@ stay read-only; package `.tmp` and coverage remain their already permitted outpu
 The parent fences installs, Git changes, indexing and additional producers.
 
 The current reviewed Host file digest is
-`7fb26389afb1c9ab79824046059fcba7fc6884f9a9cb66fc5d4e26f6ba7d2863`;
+`7198e67e27433d3405631cb003ade48af9ad135eafb0f7aa79cae5b7ad5d0f78`;
 stopped-source is now
 `3b7dcdb0bdfb815149d2a5903858e4b4297afecbef4408179bb50e3d91f1974a`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
 ownership. The expired-lease case's peer/waiter use that same unique root and shared
 fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
 namespace or shared-config write is admitted. The focused pin control passes
-10assertions. The complete matching-image stage above establishes capture, process/group
-closure and attributable merged counters for4b8a387 and the current pin.
+10assertions. The complete matching-image stage above establishes capture,
+process/group closure and attributable merged counters for4b8a387 and its original
+Host pin`7fb26389afb1c9ab79824046059fcba7fc6884f9a9cb66fc5d4e26f6ba7d2863`.
+It does not qualify the newer7198e67e test bytes. The assurance/authorization
+packet uses the Host child's existing unique admission root and same private DB;
+temporary Source/evidence changes are confined to that root and restored. Native
+readonly report/engine calls are serial. The TaskSource predecessor adds data
+inside its existing case root/DB only. No new shared root, Source write, clock
+mutation, parallel body or worker is introduced; final blind review finds no
+resource-scope blocker. One complete matching-image stage remains pending.
 The TaskSource peer shares only its case's private DB/root; policy callbacks are
 awaited serially and no Git argv runs. Blind resource review finds no blocker.
 The matching stage qualifies this exact selection; it grants no broader selection.

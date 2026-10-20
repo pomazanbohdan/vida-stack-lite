@@ -447,6 +447,14 @@ reference, generation and Host versions, plus the newly committed result. Do
 not manufacture intermediate rows through SQL or replace authority with mocks.
 This controlled method-boundary fault does not prove a process crash or power
 loss. Keep fresh public CLI success separate from this recovery control.
+For later native Host assurance, first check the maintained fixture's supported
+outcomes before introducing another workflow setup. Readonly unit reports may
+reuse its genuine Journal report and conditional engine resume; preserve writer
+completion and delivery preparation effects. Reject unexpected Host reservations.
+Test changed artifact bytes with exact restoration as well as changed supplied
+digests; those controls exercise different obligations. For foreign packet
+binding, derive internally consistent action IDs before testing the later Host
+guard, so earlier identity validation does not mask the intended refusal.
 For a stale-read race, retain an actual earlier persisted snapshot, return it
 only for the initial read, and let the real store enforce current CAS. Assert
 the exact conflict and unchanged live state before a healthy retry. A fabricated

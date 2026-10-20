@@ -26,6 +26,87 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 ### 3. Close each correction packet
 
+#### Whole remaining-contour packet
+
+The owner's current instruction replaces one-function measurement packets with
+one coordinated pass over all46missing functions and606branch arms. Superpowers
+`writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
+guide this plan. Keep this existing strategy as the plan owner; do not create a
+second plan/ledger or adopt plugin worktree/model defaults. Root implements the
+coupled files inline, with independent blind Luna research and final review.
+
+Goal: address every remaining counter in the current map through a supported
+scenario or an exact unresolved prerequisite. A proposed scenario or blocker
+classification never changes its numeric status. The stop condition for coverage
+remains positive-denominator exact F/L/S/B100 with complete execution and custody.
+
+| Work group | Files and dependencies | Execution owner and evidence |
+| --- | --- | --- |
+| Continuation and session producer | `packages/agent/src/host-state.ts`; existing configured-frontier/initial-source fixtures and selected Host test | Blind Luna research; Root writes. Reach genuine prewriter/engine suffix through current public operations; preserve original5s limits and retained timed-out proposals. |
+| Assurance, recovery and runtime rebind | Same Host Source/test; existing failed-final and completed-report fixtures; selected stopped-source case | Separate blind Luna research; Root writes. Reuse native VERIFY/correction/history states. A public90s out-of-selection case supplies neither counters nor timeout allowance. |
+| TaskSource, archive lookup, ownership and remaining validation | Selected Host/stopped tests and existing TaskSource fixture; current native Host/Journal beforeimages | Root writes. Exercise real predecessor chains, current corrective authorization, archive identity/refusal and unchanged-state oracles. No fabricated successful receipt or private-state activation. |
+| Complete branch accounting | Existing `host-uncovered-plan.ts` and retained4b8a387 report; its function inventory/maps | Root owns the report-only join. Assign all606arms, including already-covered function owners and explicit navigation gaps; no new AST/Source scan/hash or narrowed gate. |
+
+- [x] Join the existing zero-counter map to its retained function geometry and
+  account for every arm; record exact IDs/lines and fixture prerequisites.
+- [ ] Extend supported fixtures/tests in the selected two files. Check each causal
+  group with its exact Bun name filter and strict/lint checks. Preserve all genuine
+  refusal, retry, restoration, CAS, authorization and UNKNOWN obligations.
+- [ ] Integrate the whole coherent packet, refresh only changed exact test pins,
+  review its complete diff and current resource scope, then ordinary commit/push.
+- [ ] Form matching SDK inputs once, capture one immutable image and run one full
+  selected-contour F/L/S/B stage. Import once through the maintained projection.
+  Preserve failed outcomes and remaining GAPs; never declare unexecuted paths covered.
+
+Blocking first steps are current map/input custody, existing fixture budgets and
+one writer. Independent research may overlap Root development; shared Source
+integration and final producers serialize. Native fixtures and narrow tests are
+the smallest safe decomposition. Additional numeric pools, repeated unchanged
+stages and redundant fixture engines are not part of this packet. Every old
+numeric, frozen-budget and storage limit remains unchanged.
+
+Implement in dependency order, using the following checkable contracts:
+
+1. Reuse `createFailedFinalCorrectionFixture()` in the existing corrective
+   authorization case. After real authorization, look up an original completed
+   observation with its complete retry identity, reject changed/foreign identities,
+   then claim/complete the authorized corrective attempt. Assert exact retained
+   histories and unchanged Host/Journal/authorization on replay and denial. The
+   focused83-assertion PASS is development evidence; numeric gain is pending.
+2. Reuse `createFailedFinalCorrectionFixture('passing')` for Host final assurance;
+   no new workflow engine or copied public90s case is necessary. Call
+   `prepareFinalAssurance`, persist real issued/reported review and reverse states
+   through `compareAndSwapFinalAssurance`, then call
+   `commitFinalAssuranceDelivery` with the eight bound references. Before authoring,
+   verify current CLEAR generation, delivery-manifest bytes and documentation
+   context. Exercise stale versions, changed Source/packet/report bytes and
+   incomplete evidence with unchanged-state oracles, restoring temporary fixture
+   bytes. Synthetic reviewer reports are explicit unit inputs, not independent
+   native review or Runtime acceptance. Keep the existing20s composite fixture
+   bound; a timeout remains a failure requiring diagnosis.
+3. Reach `taskSourcePriorTicket`'s comparator by rotating the genuine active
+   predecessor through paired public Host CAS, then issuing/retrieving the actual
+   TaskSource operation. Refresh request versions from each returned snapshot.
+   Require two released predecessors, matching ticket/claim resources, the newest
+   predecessor's exact retry binding and no Source effect. Extend the maintained
+   TaskSource fixture and existing selected case; keep default callers unchanged.
+4. Resolve remaining continuation/recovery owners from actual persisted engine,
+   Journal and lease transitions. The retained `beginSessionProducer` timeouts
+   forbid an unchanged retry or larger deadline; first identify the missing
+   prerequisite or reproduce and correct its causal defect. Reuse the existing
+   planner's owner counts, including covered functions with missing branches and
+   explicit navigation gaps. A research label of unreachable is a hypothesis,
+   not permission to omit a counter or classify a branch N/A.
+
+For each group, the exact named Bun case must reach its intended public operation
+and assert its success, refusal and replay behavior before strict TypeScript/lint
+and final integration. Stop a proposed path if its genuine prerequisite cannot be
+established inside the existing bounds; record the exact dependency and continue
+resolving this same contour. Do not loop an unchanged focused failure or launch
+another full stage merely to reconfirm it. Final review checks the entire coupled
+diff and resource ownership; refresh the selected-test pins once after that diff
+stabilizes. Only the final matching SDK/image/report can establish new counters.
+
 Select the next reachable causal path from current missing-function and branch
 locations. Keep one coherent success/refusal/retry/restoration packet per fixture
 before focused/static checks, independent review and one matching SDK/image/stage.
