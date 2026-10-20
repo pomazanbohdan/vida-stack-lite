@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `a1f4049b189c036e6405f6245f2c13c5e690284f`, run `9916e7cf-a69e-4386-9dbb-ed4f9c766b57`: F1080/1129, L4741/4970, S5022/5300 and B5035/5642. It records305PASS/0FAIL,3805assertions in152.801seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is49missing functions under22owners, all with exact retained map coordinates, plus607 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `8ac1d9e9722ce14f70e4507fd252664596133c36`, run `3fba13f0-0b8f-4ed7-b8a2-82d1ab4db047`: F1081/1129, L4742/4970, S5023/5300 and B5035/5642. It records305PASS/0FAIL,3816assertions in153.353seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is48missing functions under21owners, all with exact retained map coordinates, plus607 exact zero-count branch arms. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -30,13 +30,13 @@ Select the next reachable causal path from current missing-function and branch
 locations. Keep one coherent success/refusal/retry/restoration packet per fixture
 before focused/static checks, independent review and one matching SDK/image/stage.
 
-The next TaskSource resource-retention packet extends two existing cases rather
+The measured TaskSource resource-retention packet extends two existing cases rather
 than adding a second setup wave. Eight affected cases pass244assertions with strict
 TypeScript and lint. Preserve the admitted prior branch/execution resources across
 queued retries and issued/UNKNOWN ownership transfer; the empty fixture default
-remains. After final review and exact resource-pin control, publish this packet
-and form one matching SDK/image/coverage stage. Keep a1f4049's numbers bound to
-their original test bytes until that outcome is observed.
+remains. Final blind review, exact resource-pin control, ordinary commit/hooks/push
+and one matching SDK/image/coverage stage pass. The accepted delta is1F/1L/1S/0B.
+Continue from the new map; preserve earlier numbers under their original test bytes.
 Root is the sole writer; bounded read-only Luna research/review may overlap only
 development. Preserve the existing inventory and avoid unrelated setup or
 unchanged numeric reruns. Count native visited operands, not added assertions.
@@ -120,7 +120,7 @@ action/argv checks. Focused1PASS31assertions and strict168-file checks pass unde
 the unchanged5s deadline. Blind review finds no blocker with the same private
 resources. The refreshed exact Host pin and matching a1f4049 SDK/image/stage
 pass, measuring+2F/+11L/+12S/+35B and both targeted callbacks. Continue from
-49missing functions/607branch arms in the same contour. Do not replay the now
+48missing functions/607branch arms in the same contour. Do not replay the now
 measured queued-conflict packet or infer whole-owner closure from these assertions.
 
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
@@ -138,7 +138,7 @@ The local report-only planner is retained diagnostic tooling, not published Sour
 After observed native process/group/capture closure, retire only the exact
 qualified private regenerable cache. Reuse shared dependency inventory under
 the no-install fence and preserve every other scratch/evidence byte. The latest
-archive and retirement manifest in WORK leave2894626816bytes above the unchanged
+archive and retirement manifest in WORK leave2829262848bytes above the unchanged
 2GiB durable floor. Earlier comprehensive cleanup and qualifier namespace-guard
 proof remain in Git and retained diagnostics; do not repeat broad scans/cleanup.
 Unknown backup/provision/proposal roots remain excluded. Bootstrap now requires
@@ -155,7 +155,7 @@ replaces normal post-producer refresh. Focused159tests/491assertions and strict
 200-file checks pass; WORK records exact proof, current capacity and the retained
 partial run from the transport interruption. No unchanged numeric stage is needed
 for this representation-only packet. Continue the same bun-host-state contour
-from49missing functions/607branch arms; the last numeric Source remains a1f4049.
+from48missing functions/607branch arms; the last numeric Source is8ac1d9e.
 
 Exact coverage is the current phase. Frozen complexity, CRAP and mutation remain deferred; their gates and missing evidence remain open. After coverage, reuse the same immutable gitless image and bound inputs for compatible lanes. Require independent, exhaustive, one-to-one function correspondence and preserve every original frozen CC/CRAP ceiling. Budget each new callable at no more than CC/CRAP 10/10; do not transfer an allowance. Accept Killed100 only from assertion-confirmed mutation evidence. A focused PASS, historical maximum or coverage milestone does not establish those gates. Timeouts, compile/runtime errors, missing coverage and UNKNOWN remain separate outcomes, never kills.
 

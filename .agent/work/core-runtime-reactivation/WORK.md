@@ -10,36 +10,36 @@ exact F/L/S/B100 before selecting another. Root is the sole Source integrator,
 Git owner and numeric producer. Frozen complexity/CRAP qualification and mutation
 remain deferred; their budgets and acceptance rules are unchanged.
 
-Latest complete measurement binds Source `a1f4049b189c036e6405f6245f2c13c5e690284f` and run
-`9916e7cf-a69e-4386-9dbb-ed4f9c766b57`, not later HEAD.
+Latest complete measurement binds Source `8ac1d9e9722ce14f70e4507fd252664596133c36` and run
+`3fba13f0-0b8f-4ed7-b8a2-82d1ab4db047`, not later HEAD.
 
-| Counter | Covered / total | Delta fromdf3d595 |
+| Counter | Covered / total | Delta froma1f4049 |
 | --- | --- | --- |
-| Functions | 1080 / 1129 | +2 |
-| Lines | 4741 / 4970 | +11 |
-| Statements | 5022 / 5300 | +12 |
-| Branches | 5035 / 5642 | +35 |
+| Functions | 1081 / 1129 | +1 |
+| Lines | 4742 / 4970 | +1 |
+| Statements | 5023 / 5300 | +1 |
+| Branches | 5035 / 5642 | 0 |
 
-305PASS/0FAIL,3805assertions,152800.622509ms elapsed.
-Host child:289PASS/3552assertions/146.52s. Stopped-source child:
-16PASS/253assertions/127.95s, contained cleanup complete. Exit0,
+305PASS/0FAIL,3816assertions,153352.944116ms elapsed.
+Host child:289PASS/3563assertions/146.66s. Stopped-source child:
+16PASS/253assertions/123.04s, contained cleanup complete. Exit0,
 full capture, closed group, unchanged boot/image and published report hold.
 Operation remains **BLOCKED/nonexact**. Diagnostic maxCC279/entryCRAP279 is
 unqualified. Historical exact16/45, local triples9/45 and separate data-only1
 remain distinct measures, not a current global PASS. Different-input elapsed
 times do not establish a controlled speedup.
 
-The report-only refresh now has49missing functions under22owners,
-down from51/24. All49 have retained map-validated body coordinates. The
+The report-only refresh now has48missing functions under21owners,
+down from49/22. All48 have retained map-validated body coordinates. The
 `repairWorkAuthority` owner has no missing functions; this is not branch or
 whole-contour closure.607 uncovered branch arms are now listed from the same
 report, with exact deficit agreement and explicitly labeled implicit-if ranges.
 Reuse `host-uncovered-plan-current.json` in focused diagnostics.
 No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
-attempt1104. Failed attempts1091 and1100 remain separately classified.
+attempt1106. Failed attempts1091 and1100 remain separately classified.
 
-The next checked packet extends the existing TaskSource fixture with optional
+The measured packet extends the existing TaskSource fixture with optional
 already allowed non-file resources; default callers still use the original file-only
 seed. The existing queued and issued/UNKNOWN cases now retain an accepted branch
 and execution resource. They check exact replacement ownership, released predecessor
@@ -60,32 +60,38 @@ review and final scope review remain in the focused diagnostics.
 
 ## Latest measurement custody
 
-- Stage:`/workspace/contour-stage-MivBBO`; exec58706, observed exit0.
-- Image:`/workspace/.vida-quality-inputs/f88edd6410823835e63b06526d6a1607280b3df8/repository`.
-- Tree:`2b201c8cdf0e9f4ff83ab477e7ef673e50ce2c82`.
-- Input:`0cb019951506a3c7245921415b8a148a3ab48544fcd248e8fc11b98fd2e5c59f`.
-- Image manifest SHA256:`37e1650521b6a6c8160f331fe1d4223822f576f0f764ff9aff4f070944c47202`.
-- SDK CI39476130310, successful attempt1, artifact12288018870.
-- SDK name:`vida-sdk-test-inputs-a1f4049b189c036e6405f6245f2c13c5e690284f-39476130310-1`.
-- ZIP SHA256:`4b578980723fa4fa3db9a139ceffaa8f37ebef57d00a6338b3659f1cad8f4bec`.
-- `task-source-queue-stage.log` in focused diagnostics retains the complete outcome.
-- Original scratch:`/dev/shm/vida-quality-retained-lIzrZn`. After observed closure,
+- Stage:`/workspace/contour-stage-Xhmdu4`; exec37138, observed exit0.
+- Image:`/workspace/.vida-quality-inputs/e5845f65aeacd2e3fc2acb9674b37772ecf007f4/repository`.
+- Tree:`77c7ec0d57440a8af221f43b989e89b605773868`.
+- Input:`0ca0841543ad6715920520daef4eb5a39ce6671926611a31ae8e8a47c8cd4e0f`.
+- Image manifest SHA256:`2da90b38eb76e4650b3e62f16efa14d6a6de31b84f68b85694fad37286138de9`.
+- SDK CI39484592887, successful attempt1, artifact12292048807.
+- SDK name:`vida-sdk-test-inputs-8ac1d9e9722ce14f70e4507fd252664596133c36-39484592887-1`.
+- ZIP SHA256:`aa5b7bd0a0fc3af6e0488c92c1685ae003c50295af30c43148ea2cf971d3414e`.
+- `resource-scope-stage-v1107.log` in focused diagnostics retains the complete outcome.
+- Original scratch:`/dev/shm/scratch-Zk66vv`. After observed closure,
   only its qualified private regenerable Bun cache is retired; all other original
   scratch, fixtures, DBs and evidence remain.
-- Whole remaining scratch archive:`/workspace/vida-functional-retention-MivBBO-GY3k8A/scratch.tar.gz`,
-  248325bytes, full tar compare PASS; SHA256`6aba63799d921f987152055fbf16b99116c3435d357c6b13ca101c5d0df8c9b8`.
-  Original archive.log, scratch.sha256 and archive.json remain beside it.
-- Durable free before/after archive:5042364416/5042110464bytes;
-  unchanged2147483648floor leaves2894626816bytes headroom. No resource GAP.
+- Whole remaining scratch archive:`/workspace/vida-functional-retention-Xhmdu4-gYteuL/scratch.tar.gz`,
+  193797bytes, full tar compare PASS; SHA256`5a9142a6a3584f67952f03f74ef1b368b97bec01eafb5fd5f38f42d9ea7ebe5b`.
+  Original create/compare logs and archive.json remain beside it; the original
+  scratch remains intact apart from its separately retired regenerable cache.
+- Durable free before/after archive:4976943104/4976746496bytes;
+  unchanged2147483648floor leaves2829262848bytes headroom. No resource GAP.
 
 Cache retirement is receipted in
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/task-source-queue-cache-retirement-MivBBO`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/resource-scope-cache-retirement-Xhmdu4`.
 One exact private cache,178155793regular bytes,215846912tmpfs bytes reclaimed;
-4096bytes of durable metadata growth is not counted as reclamation. Closed
+8192bytes of durable metadata growth is not counted as reclamation. Closed
 custody, namespace, original Source, boot/image, no active owner and dependency
 links are checked. Shared installed-dependency metadata is reused under Root's
 uninterrupted no-install fence; only new stage roots need new metadata reads.
 No original outcome, archive, sibling scratch, SDK or measured image is modified.
+The reused qualifier/retirer are narrowed to this stage's exact direct tmpfs
+cache path, with all receipt, mount, identity, live-owner and dependency checks
+preserved. Their original predecessor scripts remain unchanged. The initial
+pre-launch exec transport failure resolves with the same boot and no producer;
+connected Cloud spec3206 then admits this single observed stage.
 
 ## Comprehensive cleanup and capacity
 
@@ -145,28 +151,20 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
-### Measured TaskSource FIFO retry packet
+### Measured TaskSource resource retention
 
-The existing three-policy-denial case now admits its peer through the maintained
-fixture's shared ledger CAS before preparation. Every original denial preserves
-Host, Journal and absent action tables. Controlled allow then queues the genuine
-branch/root conflict without exposing argv or an action, keeps the original owner
-lease and peer Work, and repeats the same request without changing Host/Journal,
-ticket or prepared operation. This is an inert native FIFO reservation, not an
-executed Git command or a reported/UNKNOWN effect. No synthetic successful ticket
-is inserted. The existing separate promotion suite remains outside this selection.
+The complete8ac1d9e stage above measures the nonempty retained-resource predicate:
++1F/+1L/+1S/0B. Every denominator remains unchanged. The existing three policy
+denials and genuine queued peer case keep their earlier behavior; issued and
+UNKNOWN reservations now also protect the accepted prior branch/execution rights.
+The new report removes that function owner from the missing map. Continue within
+the same contour from48missing functions/21owners/607branch arms. More denial
+assertions without reaching a new mapped path are not a coverage gain.
 
-Focused1PASS31assertions and strict168-file TypeScript/configured lint pass.
-The initial TS2769 optional-beforeimage matcher is retained in
-task-source-queue-typecheck.log; both expected Host snapshots now use the
-maintained presence guard. The case retains its default5s deadline through owned
-connection close and keeps the private root on failure/expiry. Independent blind
-Luna review finds no blocker; task-source-queue-v1103-review.md is retained in
-focused diagnostics. The matching a1f4049 SDK/image/stage above passes with
-current resource pin and complete report publication. It measures both planned
-callbacks and+2F/+11L/+12S/+35B. Recovery rollback/commit pass12.53s/10.45s under
-their unchanged20s bounds. Across this packet and df3d595, the accepted gain from
-7845f62 is+7F/+26L/+28S/+47B; no whole-contour closure or controlled speedup is claimed.
+The preceding a1f4049 FIFO packet, its original validation, recovery timings,
+resource pin and cumulative delta remain in the published
+[8ac1d9e WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/8ac1d9e/.agent/work/core-runtime-reactivation/WORK.md).
+The old receipts, failed checks and private fixtures remain unchanged.
 
 ### Failed storage/history stage retained
 
@@ -368,14 +366,14 @@ ownership. The expired-lease case's peer/waiter use that same unique root and sh
 fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
 namespace or shared-config write is admitted. The focused pin control passes
 10assertions. The complete matching-image stage above establishes capture, process/group
-closure and attributable merged counters fora1f4049 and the current pin.
+closure and attributable merged counters for8ac1d9e and the current pin.
 The TaskSource peer shares only its case's private DB/root; policy callbacks are
 awaited serially and no Git argv runs. Blind resource review finds no blocker.
 The matching stage qualifies this exact selection; it grants no broader selection.
 The retained-resource packet changes only fixture-local Work/ticket/claim data
 and assertions. It adds no resource root, shared write, clock or parallel body.
-Its updated pin is pending a new matching stage; a1f4049's measurement retains
-the preceding pin and is not reattributed to these newer test bytes.
+Its updated pin is qualified by the matching8ac1d9e stage above; a1f4049's
+measurement retains the preceding pin and is not reattributed to newer test bytes.
 The complete report remains nonexact. The300s
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.
@@ -384,11 +382,11 @@ fallback remain unchanged. UNKNOWN remains fenced.
 
 | Combination | Evidence and decision |
 | --- | --- |
-| Root causal packet, focused/static checks, independent review, one final SDK/image/stage | Selected. Current completed run is152.801s; prior Source-bound runs retain distinct inputs. |
+| Root causal packet, focused/static checks, independent review, one final SDK/image/stage | Selected. Current completed run is153.353s; prior Source-bound runs retain distinct inputs. |
 | Full stage after each partial assertion edit | Reject. Latest malformed-plan packet added only1F/1L/1S/2B despite many assertions; plan from actual missing map locations. No extra unchanged stage is needed. |
 | Root writer plus bounded read-only Luna review/research | Selected during development only. Shared files retain one writer; workers close before numeric freeze. |
-| Two reviewed serial-file children | Keep current qualification and pins. Current child times146.52s and127.95s; full capture/group closure hold. |
-| Fully serial files | Supported fallback. Their274.47s sum is only a planning comparator, not a measured serial wall time. |
+| Two reviewed serial-file children | Keep current qualification and pins. Current child times146.66s and123.04s; full capture/group closure hold. |
+| Fully serial files | Supported fallback. Their269.70s sum is only a planning comparator, not a measured serial wall time. |
 | Wider numeric pool or concurrent suites/cleanup/indexing | Unqualified and not selected. Existing caps, one producer and freeze remain unchanged. |
 
 The earlier three-hour audit's local qualifier namespace-overwrite correction,
@@ -503,6 +501,11 @@ no suites. No archived state/leases/attempts/UNKNOWN replay, gate relaxation,
 loader/DB cutover or consumer effect is authorized by these records.
 
 ## Historical provenance
+
+The preceding complete a1f4049 measurement and its original SDK/image, custody,
+archive and resource bindings remain in the
+[8ac1d9e WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/8ac1d9e/.agent/work/core-runtime-reactivation/WORK.md).
+Its original evidence remains unchanged.
 
 The preceding complete df3d595 run, its SDK/image/custody/archive bindings and
 accepted counters remain in the
