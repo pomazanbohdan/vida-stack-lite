@@ -11,56 +11,56 @@ integrator, Git owner and numeric producer. Frozen complexity/CRAP qualification
 and mutation remain deferred; their budgets and acceptance rules are unchanged.
 
 The latest complete measurement binds Source
-`d6e31629476c2054cf4687103115c6e2152dde4a` and run
-`95778175-314f-4a39-9b48-c081fe44a1cf`, not a later HEAD.
+`8221e8f72f6b67bfe7ddcde55e233530a7f21882` and run
+`8a0e7b4a-dc0a-4fe0-a25f-f03656c1e230`, not a later HEAD.
 
-| Counter | Covered / total | Delta from0858651 |
+| Counter | Covered / total | Delta fromd6e3162 |
 | --- | --- | --- |
-| Functions | 1019 / 1129 | +6 |
-| Lines | 4446 / 4970 | +52 |
-| Statements | 4715 / 5300 | +54 |
-| Branches | 4798 / 5642 | +30 |
+| Functions | 1021 / 1129 | +2 |
+| Lines | 4448 / 4970 | +2 |
+| Statements | 4717 / 5300 | +2 |
+| Branches | 4803 / 5642 | +5 |
 
-303 PASS,0 FAIL,3243 assertions,155804.618559ms elapsed. Host child:
-287 PASS,2990 assertions,148.40s. Stopped-source child:16 PASS,
-253 assertions,132.74s; contained cleanup complete. Stage exit0, complete
+303 PASS,0 FAIL,3300 assertions,141096.190575ms elapsed. Host child:
+287 PASS,3047 assertions,133.38s. Stopped-source child:16 PASS,
+253 assertions,114.92s; contained cleanup complete. Stage exit0, complete
 capture, closed process group, unchanged boot/image and published report.
 Operation remains **BLOCKED/nonexact**; diagnostic maxCC279/entryCRAP2162 is
 unqualified. Historical exact16/45, historical local triples9/45 and separate
 reviewed data-only closure1 remain different measures, not a current global PASS.
 Different input timings do not establish a speedup.
 
-The refreshed report-only inventory has110 missing functions under47 owners,
-down from116/48. Reuse
+The refreshed report-only inventory has108 missing functions under47 owners,
+down from110/47. Reuse
 `packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/host-uncovered-plan-current.json`.
 One report-only refresh followed terminal measurement; no extra AST/Source scan,
 hash pass, unchanged full suite, frozen or mutation producer was run.
 
 ## Latest measurement custody
 
-- Stage: `/workspace/contour-stage-HJ00le`; exec73293, observed exit0.
-- Image: `/workspace/.vida-quality-inputs/f35b04ba0bd15fa733df94774c8409b70aa74fa9/repository`.
-- Tree: `f77d2159dcd6fcfefba1fc3f6721d1cc21108cd4`.
-- Input: `5edae0ec2693faa71b6d8d61aeb761bcb6ee72e9853ab8818502db6676141d9c`.
-- Image manifest SHA256: `d1bb483f83a837150cd891eb71c27985ae39f07d945da5cd7d3e98c1efb22150`.
-- SDK CI39420501563, successful attempt1, artifact12263024139.
-- SDK name: `vida-sdk-test-inputs-d6e31629476c2054cf4687103115c6e2152dde4a-39420501563-1`.
-- ZIP SHA256: `63820647ab2189b15aa8169e64162820302c1e249911afc3e49539399c1d6cdb`.
-- `failed-owner-stage.log` in the focused diagnostics retains complete outcome;
-  maintained projection1078 automatically imported its report.
-- Original scratch: `/dev/shm/vida-quality-retained-mpi3tz`. After observed
+- Stage: `/workspace/contour-stage-ljYeIE`; exec68908, observed exit0.
+- Image: `/workspace/.vida-quality-inputs/bdea181b6be88c462010fd8302351c202b43210f/repository`.
+- Tree: `bf2c7a2222001b1ab21304b8277dbbf6ce447359`.
+- Input: `25e9c6beab678ba7641f340be7c5d5e5196667c80c6243964df01e2370097bd9`.
+- Image manifest SHA256: `12ac6d7f0682d05dbfbed26b77757db4b12df05101e659f8967fdbab03cd966e`.
+- SDK CI39422565951, successful attempt1, artifact12264755994.
+- SDK name: `vida-sdk-test-inputs-8221e8f72f6b67bfe7ddcde55e233530a7f21882-39422565951-1`.
+- ZIP SHA256: `8ccecdb3b7529f642031c51142fb9902a462f3e883c18e81a51819907cb1c1b9`.
+- `expired-lease-stage.log` in the focused diagnostics retains complete outcome;
+  maintained projection1080 automatically imported its report.
+- Original scratch: `/dev/shm/vida-quality-retained-J3Fcix`. After observed
   closure, only its qualified private Bun install cache was retired. All other
   original scratch/evidence remains.
 - All remaining original scratch is preserved in
-  `/workspace/vida-functional-retention-HJ00le-EFTLIv/scratch.tar.gz`,248810bytes,
+  `/workspace/vida-functional-retention-ljYeIE-Pcibqo/scratch.tar.gz`,249150bytes,
   full tar compare PASS; SHA256
-  `730aa1cc83378cbce816307d93c79fa0ebe83eb5f79b15f8b1000756978a8483`.
+  `22e55cb5ce84fdc065787e5a09bb8a6fd8a00f096eef3985e6743a2a4866c058`.
   Original `archive.log`, `scratch.sha256` and `archive.json` remain beside it.
-- Durable free before/after archive:6177169408/6176911360bytes, above the unchanged
-  2147483648floor by4029427712bytes afterward; no resource GAP is observed.
+- Durable free before/after archive:6100254720/6099996672bytes, above the unchanged
+  2147483648floor by3952513024bytes afterward; no resource GAP is observed.
 
 Cache retirement retains its complete manifest and fsynced deletion events at
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/failed-owner-cache-retirement-HJ00le`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/expired-lease-cache-retirement-ljYeIE`.
 One exact cache,178155793regular bytes,215846912tmpfs bytes reclaimed; durable
 metadata growth4096bytes is not falsely reported as reclaimed disk. Namespace,
 terminal receipt, unchanged boot/image, no live owner and dependency links were
@@ -144,7 +144,7 @@ and strict525-file checks. Source is pushed through ordinary hooks. Logs, origin
 case and review remain in the focused diagnostics. The full stage above now
 measures this exact packet. No production defect is inferred from missing tests.
 
-## Pending expired-local-lease packet
+## Measured expired-local-lease packet and next action
 
 The existing runtime-identity recovery case now uses the maintained writer fixture
 and real public Host admission/acquisition to retain a disjoint file writer and
@@ -167,14 +167,18 @@ oracles. The final case now asserts the actual active peer/file claim, persisted
 queued waiter with exact blocked resources, and nonempty disjoint owner rights.
 Final blind review finds no blocking issue; its cleanup note preserves the
 maintained distinction between an expected asserted SQL exception and an actual
-failed test body. The final note is retained as vida-expired-lease-review.md. These are static/focused results, not new full F/L/S/B numbers.
+failed test body. The final note is retained as vida-expired-lease-review.md. The complete Source8221e8f stage above now measures this packet; focused checks
+remain separate evidence. The full run adds2functions/2lines/2statements/5branches.
 
-Pending Host SHA256:
+Measured Host SHA256:
 `7f0068fc111c7faf36648ff39d814a258cbda7a661f1807aa0ddc82f546f76e3`.
 All writes remain in the existing Host child's unique fixture root; cases stay
-serial and no new producer/resource namespace is introduced. Complete review,
-normal Source publication and matching SDK before one complete same-contour stage.
-Do not repeat unchanged focused cases or start another contour.
+serial and no new producer/resource namespace is introduced. Normal commit hooks
+and matching CI SDK precede the complete measurement. Next cover the remaining
+transitionFailedPrewriter API through a maintained actual suspended-engine fixture.
+A bounded Luna is reviewing safe reuse of the existing physical engine builder;
+its result is planning, not native Runtime acceptance. Do not repeat unchanged
+focused cases, create a second producer or start another contour.
 
 ### Bun-host-state focused shard resource review
 
@@ -204,11 +208,12 @@ stay read-only; package `.tmp` and coverage remain their already permitted outpu
 The parent fences installs, Git changes, indexing and additional producers.
 
 The measured reviewed Host file digest is
-`f0b21baf96a9f8a33604b11f18b3403bfa41ea9c1a369ec139a80d0db149d85d`;
+`7f0068fc111c7faf36648ff39d814a258cbda7a661f1807aa0ddc82f546f76e3`;
 stopped-source remains
 `0c6cd50f2aa09755d7cec6ae832817b7fe0fd2969db0d672fde49eafdb132695`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
-ownership. Module-global fixture cleanup is serial-only; no additional worker,
+ownership. The expired-lease case's peer/waiter use that same unique root and shared
+fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
 namespace or shared-config write is admitted. The focused pin control passes
 10assertions. The complete matching-image stage above establishes capture, process/group
 closure and attributable merged counters for these exact bytes. It remains nonexact. The300s
@@ -237,7 +242,9 @@ loader/DB cutover or consumer effect is authorized by these records.
 
 ## Historical provenance
 
-The preceding complete0858651 measurement and its original bindings remain in the
+The preceding completed6e3162 measurement remains in the
+[b763186 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/b763186/.agent/work/core-runtime-reactivation/WORK.md).
+The earlier complete0858651 measurement and its original bindings remain in the
 [0b18f92 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/0b18f92/.agent/work/core-runtime-reactivation/WORK.md).
 Superseded packet narratives, failed/UNKNOWN attempts, prior resource reviews,
 original decisions and exact evidence locators remain in the immutable
