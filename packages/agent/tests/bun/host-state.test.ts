@@ -2808,6 +2808,220 @@ test('recovery namespace denies generic issuance, settlement and copied handles'
   expect(() => store.completeRecoveryReview({ operation }, { status: 'PASS' })).toThrow(/foreign/);
   expect(database.query<GovernanceSqlRow, []>('SELECT * FROM agent_host_governance').all()).toEqual([]);
 });
+test('native recovery review rechecks context and preserves its exact reservation through observed completion', () => {
+  const deadline = performance.now() + 5_000;
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const source = fixtureSourceScope();
+  const seed = fixture();
+  seed.nextWork.binding.work_source_revision = source.digest;
+  seed.nextWork.lifecycle.source_revision = source.digest;
+  firstTicket(seed.nextLedger).source_revision = source.digest;
+  const initial = commitHostState(seed);
+  const journal = quiescentJournal();
+  journal.state.source_scope = clone(source);
+  persistJournalFixture(journal);
+  const guarded = new HostStateStore(database, workspace, undefined, undefined, undefined, undefined, root);
+  const binding: Parameters<HostStateStore['openRecoveryReview']>[0] = {
+    identity,
+    attempt: 1,
+    callerSession: 'fixture:review-caller',
+    controllerId: 'fixture:review-controller',
+    userInstructionRef: 'fixture:human-review-intent',
+    historicalOwner: 'thread',
+    expectedWork: initial.workVersion,
+    expectedLedger: initial.ledgerVersion,
+    expectedJournal: journal.version,
+    maintenanceGeneration: initial.maintenanceGeneration,
+    source,
+    context: { kind: 'local-consistency-unit-fixture' },
+  };
+  const rows = readFixtureHostRows(database);
+  const governance = () =>
+    database
+      .query<GovernanceSqlRow, []>('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key')
+      .all();
+  let verifierCalls = 0;
+  let rejectContext = false;
+  const verifyContext = () => {
+    verifierCalls++;
+    if (rejectContext) throw new Error('controlled current review context changed');
+  };
+  const unchanged = (action: () => unknown, message: string, expectedGovernance = governance()) => {
+    expect(action).toThrow(message);
+    expect(readFixtureHostRows(database)).toEqual(rows);
+    expect(governance()).toEqual(expectedGovernance);
+  };
+  for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal'] as const)
+    unchanged(
+      () =>
+        guarded.openRecoveryReview(
+          { ...binding, [key]: { ...binding[key], revision: binding[key].revision + 1 } },
+          verifyContext,
+        ),
+      'state compare-and-swap conflict',
+    );
+  unchanged(
+    () =>
+      guarded.openRecoveryReview(
+        { ...binding, maintenanceGeneration: binding.maintenanceGeneration + 1 },
+        verifyContext,
+      ),
+    'maintenance generation is stale or missing',
+  );
+  for (const patch of [
+    { attempt: 0 },
+    { callerSession: '' },
+    { controllerId: 'x'.repeat(513) },
+    { userInstructionRef: ' ' },
+    { historicalOwner: '' },
+  ])
+    unchanged(
+      () => guarded.openRecoveryReview({ ...binding, ...patch }, verifyContext),
+      'recovery caller/intent/owner binding missing',
+    );
+  unchanged(
+    () => guarded.openRecoveryReview({ ...binding, historicalOwner: 'foreign' }, verifyContext),
+    'recovery historical owner differs',
+  );
+  unchanged(
+    () => guarded.openRecoveryReview({ ...binding, attempt: 2 }, verifyContext),
+    'recovery original journal missing',
+  );
+  unchanged(
+    () => guarded.openRecoveryReview({ ...binding, source: { ...source, entries: [] } }, verifyContext),
+    'recovery source scope changed',
+  );
+  expect(verifierCalls).toBe(0);
+  unchanged(() => store.openRecoveryReview(binding, verifyContext), 'recovery original context unavailable');
+  unchanged(
+    () => database.transaction(() => guarded.openRecoveryReview(binding, verifyContext)).deferred(),
+    'nested recovery transaction forbidden',
+  );
+  unchanged(() => guarded.openRecoveryReview(binding, () => true), 'recovery context check invalid');
+  unchanged(
+    () => guarded.openRecoveryReview(binding, verifyContext, 'resume'),
+    'recovery reservation exists or resume body is missing',
+  );
+  rejectContext = true;
+  unchanged(() => guarded.openRecoveryReview(binding, verifyContext), 'controlled current review context changed');
+  rejectContext = false;
+  const handle = guarded.openRecoveryReview(binding, verifyContext);
+  expect(Object.isFrozen(handle)).toBe(true);
+  expect(Object.isFrozen(handle.operation)).toBe(true);
+  expect(handle.operation.status).toBe('reserved');
+  expect(guarded.inspectRecoveryReview(handle)).toEqual(handle.operation);
+  expect(readFixtureHostRows(database)).toEqual(rows);
+  unchanged(
+    () => guarded.openRecoveryReview(binding, verifyContext),
+    'recovery reservation exists or resume body is missing',
+  );
+  unchanged(
+    () => guarded.openRecoveryReview({ ...binding, context: { kind: 'foreign' } }, verifyContext, 'resume'),
+    'recovery retained request differs',
+  );
+  const resumed = guarded.openRecoveryReview(binding, verifyContext, 'resume');
+  expect(resumed.operation).toEqual(handle.operation);
+  unchanged(() => guarded.beginRecoveryReview({ ...handle }), 'recovery handle is foreign');
+  const observation = {
+    action_id: handle.operation.operation_key,
+    caller_session: binding.callerSession,
+    controller_id: binding.controllerId,
+    status: 'PASS',
+    observation: {
+      agent_id: 'fixture:reviewer',
+      tool_call_ref: 'fixture:cooperative-review',
+      result: { reviewed: true },
+    },
+  };
+  unchanged(
+    () => guarded.completeRecoveryReview(handle, observation),
+    'recovery action already possible or terminal; reissue forbidden',
+  );
+  const sourcePath = path.join(root, 'src/task.ts');
+  const originalBytes = readFileSync(sourcePath);
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    writeFileSync(sourcePath, 'changed current review Source\n');
+    unchanged(() => guarded.beginRecoveryReview(handle), 'recovery source scope changed');
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          writeFileSync(sourcePath, originalBytes);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+  rejectContext = true;
+  unchanged(() => guarded.beginRecoveryReview(handle), 'controlled current review context changed');
+  rejectContext = false;
+  const begun = guarded.beginRecoveryReview(resumed);
+  expect(begun).toEqual({ ...handle.operation, status: 'commit_unknown', terminal_revision: 2 });
+  expect(guarded.inspectRecoveryReview(handle)).toEqual(begun);
+  unchanged(
+    () => guarded.beginRecoveryReview(handle),
+    'recovery action already possible or terminal; reissue forbidden',
+  );
+  unchanged(
+    () => database.transaction(() => guarded.completeRecoveryReview(handle, observation)).deferred(),
+    'nested recovery transaction forbidden',
+  );
+  for (const patch of [
+    { action_id: 'foreign' },
+    { status: 'UNKNOWN' },
+    { controller_id: 'foreign' },
+    { caller_session: 'foreign' },
+    { extra: true },
+    { observation: null },
+    { observation: [] },
+  ])
+    unchanged(
+      () => guarded.completeRecoveryReview(handle, { ...observation, ...patch }),
+      'recovery terminal observation differs',
+    );
+  for (const patch of [{ agent_id: '' }, { agent_id: 'x'.repeat(513) }, { tool_call_ref: ' ' }, { result: null }])
+    unchanged(
+      () =>
+        guarded.completeRecoveryReview(handle, {
+          ...observation,
+          observation: { ...observation.observation, ...patch },
+        }),
+      'recovery actual native observation missing',
+    );
+  unchanged(() => guarded.completeRecoveryReview(handle, undefined), 'recovery actual observation required');
+  const completed = guarded.completeRecoveryReview(handle, observation);
+  expect(completed).toEqual({
+    ...handle.operation,
+    status: 'applied',
+    terminal_revision: 3,
+    result_digest: canonicalJsonDigest(observation),
+  });
+  expect(guarded.completeRecoveryReview(resumed, observation)).toEqual(completed);
+  const terminalResume = guarded.openRecoveryReview(binding, verifyContext, 'resume');
+  expect(terminalResume.operation).toEqual(handle.operation);
+  expect(guarded.inspectRecoveryReview(terminalResume)).toEqual(completed);
+  unchanged(
+    () => guarded.beginRecoveryReview(terminalResume),
+    'recovery action already possible or terminal; reissue forbidden',
+  );
+  unchanged(
+    () => guarded.completeRecoveryReview(handle, { ...observation, status: 'FAIL' }),
+    'recovery terminal result conflict',
+  );
+  expect(guarded.inspectRecoveryReview(handle)).toEqual(completed);
+  expect(guarded.readHostStateSnapshot(identity)).toEqual(initial);
+  expect(readFixtureHostRows(database)).toEqual(rows);
+  expect(
+    governance().filter((row) => row.store_id === handle.operation.store_id && row.kind === 'operation'),
+  ).toHaveLength(1);
+  expect(hasUnresolvedFixtureOperations(database)).toBe(false);
+  if (performance.now() >= deadline) throw new Error('Native recovery review exhausted its case deadline');
+  preserveHostFixtureRoot = false;
+});
 test('Codex Desktop adapter contract binds identity, digests, opaque host capability and service closure', () => {
   const contract = {
     schema: 'CodexDesktopAdapterContract/v1',

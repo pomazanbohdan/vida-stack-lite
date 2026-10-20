@@ -15,6 +15,47 @@ numeric producer.
 
 ### Sequential coverage observations and active repair
 
+#### Local recovery-review consistency packet
+
+The next reachable Host gap uses existing fixture(), fixtureSourceScope(),
+quiescentJournal()/persistJournalFixture() and a root-bound HostStateStore over
+the same native SQLite database. No new fixture process/root or public adapter
+is introduced. This is local consistency evidence only: the completion payload
+is caller-supplied fixture:cooperative-review, not actual native review dispatch,
+genuine configured-frontier admission or Runtime acceptance.
+
+One5s case checks stale Work/Ledger/Journal/maintenance, malformed caller intent,
+historical owner mismatch, absent Journal, changed path/current bytes, rootless
+and nested calls, non-undefined/throwing context verifier, reserve/resume body
+identity, foreign copied handles, completion-before-begin denial, exact
+reserved→commit_unknown→applied transitions, reissue refusal, malformed terminal
+observations, idempotent same-result completion, conflicting completion and
+resume-after-applied fence preservation. Every denial compares native Host/Journal
+and governance rows; public reads establish valid initial/final state. Source
+mutation restores through completeOwnedCleanup with primary/restore-error custody.
+The root starts retained on any failure/timeout; successful closure checks no
+unresolved operation before the existing close/delete owner may dispose it.
+
+Strict148files and scoped type-aware lint pass. Focused Host135assertions461.33ms
+plus shard-pin control passes2cases/145assertions in2.11s, within default5s.
+The first test FAIL was an incorrect expected error string, not a product defect;
+recovery-review-first.log and original host-state-biMpYB root remain retained.
+A static check first named a nonexistent config, then reused the existing
+frontier-tsconfig.json; strict found and corrected a void-returning cleanup
+callback. No suite or numeric success is attributed to those failed commands.
+Logs recovery-review-{types-final,lint-final,final}.log are in the existing
+packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers namespace.
+Blind Luna /tmp/vida-recovery-review-final.md finds no blocker; that note and
+corrected /tmp/vida-failed-prewriter-plan.md have retained copies in the same
+namespace. Synthetic setup can measure executed product branches, while its
+producer/admission/dispatch evidence remains explicitly limited.
+
+Host SHA4171d2fc76cce4eeb14dbc6feb7d6c73f50b8dde428623c8079f31b93167b514
+updates the reviewed exact-two-file resource binding; all namespaces, serial
+cases, memory limits, deadlines and free-space floor stay unchanged. Latest
+complete numeric observation is still2fca376 below until this packet has its own
+published Source/SDK/image-bound stage. CRAP/frozen/mutation remain deferred.
+
 #### Configured-frontier lookup sharing packet
 
 Complete measurement of Source2fca376cb44b55147f14d3b3e09903efaac74bd1 is

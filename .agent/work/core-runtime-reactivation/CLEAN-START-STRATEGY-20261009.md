@@ -37,9 +37,10 @@ its own compatible fixture, not a fabricated historical-terminal receipt.
 
 The measured configured-frontier packet shares its existing fixture and moves
 its lookup case into the active Host selection, with exact-CAS Journal
-mutation/restore and acquired-root custody. Next inspect reachable failed-prewriter
-and recovery-review paths using the refreshed inventory and existing native
-fixtures. Review all acquired roots and public-reader
+mutation/restore and acquired-root custody. The next packet covers local
+recovery-review guards and reservation transitions through existing native SQLite
+fixtures. It does not establish genuine producer admission or review dispatch.
+Review all acquired roots and public-reader
 preconditions before Source publication, so a late fixture-only correction does
 not form another avoidable SDK artifact before measurement.
 
