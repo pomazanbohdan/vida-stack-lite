@@ -8044,12 +8044,14 @@ describe('host-owned durable maintenance fence', () => {
     );
   });
   test('maintenance acquisition rejects asynchronous or boolean owner checks before fence effects', () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const deadline = performance.now() + 5_000;
     const asynchronousVerifier = { ...maintenanceVerifier };
     setFixtureField(asynchronousVerifier, 'verifyAcquisition', async () => undefined);
     expect(
       () => new HostStateStore(database, workspace, undefined, undefined, undefined, asynchronousVerifier),
     ).toThrow('verifier invalid');
-    for (const invalidVerifier of [() => true, () => Promise.resolve()]) {
+    for (const invalidVerifier of [() => true, () => Promise.resolve(), () => Promise.reject(undefined)]) {
       const verifier = { ...maintenanceVerifier };
       setFixtureField(verifier, 'verifyAcquisition', invalidVerifier);
       const checked = new HostStateStore(database, workspace, undefined, undefined, undefined, verifier);
@@ -8058,6 +8060,8 @@ describe('host-owned durable maintenance fence', () => {
       );
       expect(checked.readMaintenanceFence()).toBeNull();
     }
+    if (performance.now() >= deadline) throw new Error('Host maintenance verifier fixture exceeded its case deadline');
+    preserveHostFixtureRoot = false;
   });
   test('acquisition verifier reads the same Host transaction on first acquire and held-fence retry', () => {
     let checked!: HostStateStore;
@@ -11579,6 +11583,8 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
   });
 
   test('binds ticket retirement history to the exact work CAS transition', () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const deadline = performance.now() + 5_000;
     const initial = fixture();
     const retiredTicket = firstTicket(initial.nextLedger);
     const retiredClaim = firstClaim(initial.nextLedger);
@@ -11631,6 +11637,20 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     expect(() => commitHostState(staleRevision)).toThrow(
       /history transition invalid|coordination rebind binding invalid/,
     );
+    expect(store.readHostStateSnapshot(identity)).toEqual(saved);
+    const valid = clone(staleRevision);
+    const retirement = atIndex(valid.nextLedger.retirements, 0, 'owned retirement');
+    retirement.retirement_id = 'retirement-owned-current-work';
+    retirement.from_revision = saved.work.revision;
+    retirement.to_revision = valid.nextWork.revision;
+    const retired = commitHostState(valid);
+    expect(retired.ledger.retirements).toEqual([retirement]);
+    expect(retired.work.lease).toBeNull();
+    expect(firstTicket(retired.ledger).status).toBe('read_only');
+    expect(() => commitHostState(valid)).toThrow('state compare-and-swap conflict');
+    expect(store.readHostStateSnapshot(identity)).toEqual(retired);
+    if (performance.now() >= deadline) throw new Error('Host ticket retirement fixture exceeded its case deadline');
+    preserveHostFixtureRoot = false;
   });
 
   test('rejects incomplete handoff, cross-generation FIFO bypass and terminal ticket reactivation', () => {
@@ -11706,6 +11726,8 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
   });
 
   test('accepts an authorized notice acknowledgement and partial claim release', () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const deadline = performance.now() + 5_000;
     const first = commitHostState(fixture());
     const queued = fixture('other');
     queued.nextWork.lease = null;
@@ -11751,9 +11773,35 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       actor: 'principal-other',
       at: '2026-09-18T00:01:00.000Z',
     });
-    expect(atIndex(commitHostState(acknowledge).ledger.notices, 0, 'committed acknowledged notice').status).toBe(
-      'acknowledged',
-    );
+    const acknowledged = commitHostState(acknowledge);
+    expect(atIndex(acknowledged.ledger.notices, 0, 'committed acknowledged notice').status).toBe('acknowledged');
+    const resolved = next(acknowledged);
+    atIndex(resolved.nextLedger.notices, 0, 'resolved notice').status = 'resolved';
+    resolved.nextLedger.dispositions.push({
+      schema: 'ConflictDisposition/v1',
+      disposition_id: 'disposition-unrelated-claim',
+      subject_kind: 'claim',
+      subject_id: 'claim-other',
+      kind: 'recover_expired',
+      decided_by: 'principal-other',
+      decision_pointer: '.agent/decisions/coordination.json',
+      created_at: '2026-09-18T00:02:00.000Z',
+    });
+    const queuedIdentity = { ...identity, work_id: 'other' };
+    expect(() => commitHostState(resolved)).toThrow('resolved notice requires a disposition');
+    expect(store.readHostStateSnapshot(queuedIdentity)).toEqual(acknowledged);
+    resolved.nextLedger.dispositions.push({
+      ...atIndex(resolved.nextLedger.dispositions, 0, 'prior claim disposition'),
+      disposition_id: 'disposition-resolve-notice',
+      subject_kind: 'notice',
+      subject_id: acknowledgementNotice.notice_id,
+      kind: 'serialize',
+    });
+    const settled = commitHostState(resolved);
+    expect(atIndex(settled.ledger.notices, 0, 'persisted resolved notice').status).toBe('resolved');
+    expect(settled.ledger.dispositions).toEqual(resolved.nextLedger.dispositions);
+    expect(() => commitHostState(resolved)).toThrow('state compare-and-swap conflict');
+    expect(store.readHostStateSnapshot(queuedIdentity)).toEqual(settled);
 
     const partialDatabase = new Database(path.join(root, 'partial.sqlite'), { create: true, strict: true });
     handles.push(partialDatabase);
@@ -11773,6 +11821,8 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     firstClaim(release.nextLedger).resources = ['file:src/task.ts'];
     setFixtureField(requiredLease(release.nextWork), 'generation', 2);
     expect(firstTicket(commitHostStateOn(partialStore, release).ledger).active_resources).toEqual(['file:src/task.ts']);
+    if (performance.now() >= deadline) throw new Error('Host notice resolution fixture exceeded its case deadline');
+    preserveHostFixtureRoot = false;
   });
 
   test('rejects duplicate active ownership, active-claim expansion and orphan rebind history', () => {
@@ -13118,6 +13168,8 @@ test('issued readonly release: completed official-docs predecessor does not bloc
 });
 
 test('expired recovery keeps runtime identity coupled across verified bundle changes without replaying research', async () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const deadline = performance.now() + 5_000;
   const prepared = await writerFixture();
   const seed = prepared.seed;
   const digestA = 'a'.repeat(64),
@@ -13376,7 +13428,51 @@ test('expired recovery keeps runtime identity coupled across verified bundle cha
       }),
     ).toThrow('expired lease recovery owner, fencing identity or live expiry differs');
     expect(readFixtureHostRows(database)).toEqual(recoveredRows);
+    const started = store.claimWorkflowAttempt(attemptRequest(recovered));
+    const inflight = readPresentSnapshot(store, identity);
+    const inflightRows = readFixtureHostRows(database);
+    const recoveryClock = Date.now();
+    const successorExpiry = Date.parse(requiredValue(successor.expires_at, 'successor expiry')) + 1;
+    const currentProof = mock(request.verifyCurrent);
+    Date.now = () => successorExpiry;
+    expect(() =>
+      store.recoverExpiredLocalLease({
+        ...request,
+        generation: requiredLease(inflight.work).generation,
+        expectedWork: inflight.workVersion,
+        expectedLedger: inflight.ledgerVersion,
+        expectedJournal: { revision: stored.revision, digest: stored.digest },
+        verifyCurrent: currentProof,
+      }),
+    ).toThrow('issued writer outcome must settle before expired lease recovery');
+    expect(currentProof).not.toHaveBeenCalled();
+    expect(readFixtureHostRows(database)).toEqual(inflightRows);
+    Date.now = () => recoveryClock;
+    store.completeWorkflowAttempt(started, { summary: 'Completed Host result without accepted Journal observation.' });
+    const completed = readPresentSnapshot(store, identity);
+    expect(completed.work.execution.assignment_attempts.at(-1)).toMatchObject({
+      attempt_id: started.attempt.attempt_id,
+      status: 'completed',
+      result: { summary: 'Completed Host result without accepted Journal observation.' },
+    });
+    const completedRows = readFixtureHostRows(database);
+    expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal.state);
+    Date.now = () => successorExpiry;
+    expect(() =>
+      store.recoverExpiredLocalLease({
+        ...request,
+        generation: requiredLease(completed.work).generation,
+        expectedWork: completed.workVersion,
+        expectedLedger: completed.ledgerVersion,
+        expectedJournal: { revision: stored.revision, digest: stored.digest },
+        verifyCurrent: currentProof,
+      }),
+    ).toThrow('expired execution recovery requires every writer result durably accepted');
+    expect(currentProof).not.toHaveBeenCalled();
+    expect(readFixtureHostRows(database)).toEqual(completedRows);
   } finally {
     Date.now = now;
   }
+  if (performance.now() >= deadline) throw new Error('Host expired recovery fixture exceeded its case deadline');
+  preserveHostFixtureRoot = false;
 });

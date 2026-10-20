@@ -65,6 +65,14 @@ case limits. Its complete matching SDK/image/stage measures+3F/+3L/+3S/+6B;
 continue from67missing functions and679branch arms in the same contour. Failed
 fixture logs/roots remain retained. No unchanged full rerun is needed.
 
+The next checked packet extends four existing cases for owned notice resolution,
+properly versioned ticket retirement, completed-but-unaccepted Host recovery
+history and rejected async verification. Focused4PASS98assertions and strict168-file
+checks pass. Preserve the same5s case bounds, private resources and exact two-file
+pin before one matching SDK/image/stage; numeric gains are pending. A separate
+same-thread no-effect retry needs genuine contract-qualified authority and is
+not manufactured to reach its remaining callback.
+
 The actual post-prewriter engine/Journal suffix remains OPEN under its original
 5s deadline. Two fresh fixture attempts timed out; the trace reached producer
 setup. Keep original roots/logs and the unvalidated patch. Resolve the setup cost

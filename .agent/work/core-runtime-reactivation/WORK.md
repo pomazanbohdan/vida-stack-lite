@@ -126,6 +126,33 @@ do not repeatedly archive regenerable registry payloads as operational evidence.
 
 ## Measured repair packet and next action
 
+### Checked coordination-history and expired-recovery packet; stage pending
+
+Four existing cases are extended without another fixture family. Notice
+resolution first rejects an unrelated claim disposition, then persists the exact
+owned notice disposition and denies stale retry. Ticket retirement preserves
+the original stale-Work denial, then commits the correctly bound Work/Ledger
+transition and rejects stale retry. Expired recovery uses public Host claim and
+complete APIs after its original healthy recovery to deny both an inflight
+attempt and a completed result absent from accepted Journal history, before
+current-authority verification; exact native rows stay unchanged. Clock changes
+stay inside this serial case and restore in finally. The maintenance verifier
+matrix includes a Promise rejected with undefined, consumed by synchronousProof.
+Every case retains failed roots at entry and checks its unchanged5s monotonic
+deadline before success. The same private roots and two serial-file child owners
+remain; no additional shared resource or producer is admitted.
+
+Focused4PASS98assertions, strict168-file TypeScript and configured lint pass.
+Resource-pin control passes10assertions. Independent blind Luna finds no
+actionable blocker; progress-recovery-review.md is retained in focused diagnostics.
+The reviewer used the prepared worker contract and project testing skill; it
+reports no executor Pstack catalog entry, not a failed check or numeric result.
+Report-only missing callbacks motivated the packet; numeric gains remain pending
+one matching SDK/image/stage. No product defect, accepted Source result, CRAP,
+mutation kill or Runtime acceptance is claimed. The blind plan is retained as
+progress-gap-plan.md in focused diagnostics. Its separate same-thread no-effect
+authorization precondition remains OPEN; no fabricated authorization is added.
+
 ### Measured heartbeat and held-fence packet
 
 The same existing heartbeat case now admits a genuine independent active peer
@@ -280,7 +307,7 @@ stay read-only; package `.tmp` and coverage remain their already permitted outpu
 The parent fences installs, Git changes, indexing and additional producers.
 
 The current reviewed Host file digest is
-`6d106f2cc7c0fd29228d6b6ac13c4bb1847ac2b24b21d3deedc20116503f18a9`;
+`818c84fbf55a71f2f50978ed1710ea64caf3cc2ab612c8773f8962c2aef695ba`;
 stopped-source remains
 `a414b790fea1381ffb425552a1f1b9ae29ad00f2998491a44bb8b7d6d45e9037`.
 The failed-owner and lookup helper retain the Host child's private consumer-root
@@ -288,8 +315,8 @@ ownership. The expired-lease case's peer/waiter use that same unique root and sh
 fixture DB, with only declared local Source files and no shared package write. Module-global fixture cleanup is serial-only; no additional worker,
 namespace or shared-config write is admitted. The focused pin control passes
 10assertions. The complete matching-image stage above establishes capture, process/group
-closure and attributable merged counters for07e0a8f and the current reviewed test
-pin. The complete report remains distinct from exact closure. The300s
+closure and attributable merged counters for07e0a8f. The new test pin still needs
+its matching stage; neither establishes exact closure. The300s
 coverage budget,330s stage envelope,30s report reserve, resource caps and serial
 fallback remain unchanged. UNKNOWN remains fenced.
 

@@ -288,6 +288,26 @@ Reuse the rebuilt plan's serialization only within this validated transaction;
 preserve caller-plan serialization before rebuilt-plan serialization and keep
 every producer fence, current-version check and deterministic rebuild fresh.
 
+### Coordination history and expired recovery
+
+Use the existing real-SQLite notice and retirement cases for positive history
+transitions. A claim disposition cannot resolve a notice; the exact authorized
+notice disposition can. Preserve acknowledged history and check unchanged state
+after refusal. An owned ticket retirement must bind the exact Work and Ledger
+revision transition; stale input denies, corrected input persists, and stale
+retry changes nothing. Keep the original negative and partial-release controls.
+
+After successful expired recovery, use public Host claim/complete calls to prove
+that an inflight attempt blocks another recovery, and that a completed Host
+result absent from accepted Journal observations still blocks it before current
+authority verification. Compare exact Host/Journal rows after both denials.
+Advance only the serial fixture clock beyond each actual lease deadline, restore
+it for ordinary completion, and restore the original clock in finally. This is
+native Host-history guard proof, not accepted Source observation or Runtime proof.
+The maintenance verifier control also rejects a Promise rejected with undefined;
+the synchronous verification owner must consume its rejection. Keep all four
+existing cases within5s, retaining failed roots until complete success.
+
 ### Failed prewriter recovery
 
 The live-heartbeat case admits an independent active peer with the actual shared
