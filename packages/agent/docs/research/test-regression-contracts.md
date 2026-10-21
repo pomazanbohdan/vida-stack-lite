@@ -463,6 +463,16 @@ the original Journal bytes through owned cleanup. Preserve the subsequent real
 apply/rollback/reopen/resume/restore sequence and original case budget. Such
 refusals neither settle UNKNOWN nor prove acceptance of malformed authority.
 
+The same UNKNOWN repair fixture also admits a disjoint peer with its own declared
+intake through public admission. Its actual configured bridge prepares a nonempty
+suspended first wave; close that bridge with no issued action, observation or
+reservation before repair. Keep the genuine foreign Work Journal in the native
+table through inspect/plan/apply/reopen/restore. Only the original legacy Work
+and Journal change; assert exact peer rows during maintenance and public peer
+snapshots after restore, plus unchanged owner rights and original UNKNOWN approval.
+This is a distinct fixture Work, not same-Work attempt history or provider execution.
+Preserve both bridge and fixture cleanup errors within the unchanged case bound.
+
 Corrective authorization retries use actual product-written candidate artifacts.
 An owned Journal-update fault occurs after file writes: verify exact Host/Journal
 and recovery-table rollback, no accepted authorization, and transaction closure.
@@ -847,6 +857,13 @@ assignment history. Both new producer operations must settle as applied; the
 start result digest binds its actual engine snapshot and Journal version. Close
 the bridge through the async dual-error owner before fixture-owned ledger close.
 Do not issue/report/resume these requests or claim provider/Runtime execution.
+
+Focused runtime rebind's existing real receipt also gets a current-row corruption
+control: omit binding_history with a recomputed outer digest and require public
+Host reading to deny assignment binding. Keep native Host/Journal unchanged and
+conditionally restore the exact receipt key/payload/digest through owned cleanup
+before original stale-retry and correction checks continue. This proves refusal
+of corrupted current history, not genuine legacy baseline or accepted authority.
 
 The selected Host assurance case reuses the existing passing final-correction
 fixture and its real admitted writer, focused reports and terminal Journal. The

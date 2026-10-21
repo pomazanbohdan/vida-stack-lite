@@ -1651,11 +1651,10 @@ test(
         'delivery requires three reviews',
       );
       expect(checked.readWorkSessionJournal(f.identity)).toEqual(journal);
-      const row = f.database
-        .query<{ payload: string; digest: string }, [string, string, number, string]>(
-          'SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
-        )
-        .get(f.store.workspaceId, f.identity.work_id, 1, request.actionId);
+      const receiptQuery = f.database.query<{ payload: string; digest: string }, [string, string, number, string]>(
+        'SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+      );
+      const row = receiptQuery.get(f.store.workspaceId, f.identity.work_id, 1, request.actionId);
       if (!row) throw new Error('Native rebind receipt is missing');
       const receipt = parseJsonRecord(row.payload);
       expect(canonicalJsonDigest(receipt)).toBe(row.digest);
@@ -1683,6 +1682,58 @@ test(
       );
       expect(reopened.readHostStateSnapshot(f.identity)).toEqual(after);
       expect(reopened.readWorkSessionJournal(f.identity)).toEqual(journal);
+      const rowsBeforeOmission = readFixtureHostRows(f.database);
+      const withoutBindingHistory = { ...receipt };
+      expect(Reflect.deleteProperty(withoutBindingHistory, 'binding_history')).toBe(true);
+      expect(Object.hasOwn(withoutBindingHistory, 'binding_history')).toBe(false);
+      const omittedPayload = canonicalJson(withoutBindingHistory);
+      const omittedDigest = canonicalJsonDigest(withoutBindingHistory);
+      const replaceReceipt = f.database.query(
+        'UPDATE agent_host_runtime_code_rebind SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=? AND payload=? AND digest=?',
+      );
+      expect(
+        replaceReceipt.run(
+          omittedPayload,
+          omittedDigest,
+          f.store.workspaceId,
+          f.identity.work_id,
+          1,
+          request.actionId,
+          row.payload,
+          row.digest,
+        ).changes,
+      ).toBe(1);
+      let omissionFailure: { error: unknown } | undefined;
+      try {
+        expect(() => reopened.readHostStateSnapshot(f.identity)).toThrow('attempt assignment binding invalid');
+        expect(readFixtureHostRows(f.database)).toEqual(rowsBeforeOmission);
+        expect(f.database.inTransaction).toBe(false);
+      } catch (error) {
+        omissionFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              expect(
+                replaceReceipt.run(
+                  row.payload,
+                  row.digest,
+                  f.store.workspaceId,
+                  f.identity.work_id,
+                  1,
+                  request.actionId,
+                  omittedPayload,
+                  omittedDigest,
+                ).changes,
+              ).toBe(1);
+              expect(receiptQuery.get(f.store.workspaceId, f.identity.work_id, 1, request.actionId)).toEqual(row);
+            },
+          ],
+          omissionFailure,
+        );
+      }
+      expect(readFixtureHostRows(f.database)).toEqual(rowsBeforeOmission);
       const staleRetry = await rejectionReason(checked.rebindRuntimeCode(request));
       expect(() => {
         throw staleRetry;
@@ -8511,6 +8562,7 @@ test(
   async () => {
     const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
     let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let peerBridge: MastraSessionBridge | undefined;
     let clockHeld = false;
     await withInitialSourceCleanup(
       async () => {
@@ -8526,6 +8578,55 @@ test(
         if (performance.now() >= deadline) throw new Error('Unknown repair reservation exceeded its case deadline');
         const host = initialSourceHostStore(f);
         let db = initialSourceHostDatabase(f);
+        const peerPath = 'docs/PEER.md';
+        writeFileSync(path.join(f.root, peerPath), 'Disjoint peer source\n');
+        const peerInput = f.preparePeerAdmission('initial-peer-journal', [peerPath]);
+        const peerIntakePath = '.agent/work/initial-peer-journal/local-session-intake.json';
+        writeFileSync(
+          path.join(f.root, peerIntakePath),
+          canonicalJson({
+            schema: 'VidaLocalSessionIntake/v1',
+            work_item: peerInput.workItem,
+            native_session_handle: peerInput.nativeSessionHandle,
+            scope_path: peerInput.scopePath,
+            acceptance_path: peerInput.acceptancePath,
+            source_authorization_path: peerInput.sourceAuthorizationPath,
+            runtime_code_paths: peerInput.runtimeCodePaths,
+            route: peerInput.route,
+            risk: peerInput.risk,
+            change_kind: peerInput.changeKind,
+          }),
+        );
+        const peerAdmission = admitLocalSessionWork({ ...peerInput, intakePath: peerIntakePath });
+        const peerIdentity = { ...f.identity, work_id: peerInput.context.work_id };
+        peerBridge = await MastraSessionBridge.open({
+          repositoryRoot: f.root,
+          config: f.config,
+          ledger: initialSourceHostLedger(f),
+          projectIds: f.identity.project_ids,
+          selection: peerInput.selection,
+          context: peerInput.context,
+          workflowId: 'task_execution',
+          workspaceId: host.workspaceId,
+        });
+        const peerEngine = await peerBridge.start(peerAdmission.source);
+        const peerJournal = requiredValue(host.readWorkSessionJournal(peerIdentity), 'Disjoint peer native Journal');
+        const peerHost = readPresentSnapshot(host, peerIdentity);
+        expect(peerEngine.status).toBe('suspended');
+        expect(peerEngine.requests.length).toBeGreaterThan(0);
+        expect(peerJournal.state.work_id).toBe(peerIdentity.work_id);
+        expect(peerJournal.state.run_id).toBe(peerEngine.run_id);
+        expect(peerJournal.state.completed).toEqual([]);
+        expect(peerJournal.state.items.map((item) => item.request)).toEqual([...peerEngine.requests]);
+        for (const peerItem of peerJournal.state.items) {
+          expect(peerItem.issue_id).toBeNull();
+          expect(peerItem.observation).toBeNull();
+          expect(peerItem.host_reservation).toBeUndefined();
+        }
+        await peerBridge.close();
+        peerBridge = undefined;
+        if (performance.now() >= deadline)
+          throw new Error('Unknown repair peer preparation exceeded its case deadline');
         const before = readPresentSnapshot(host, f.identity);
         const journal = host.readWorkSessionJournal(f.identity);
         if (!journal) throw new Error('Unknown repair native Journal is missing');
@@ -8598,6 +8699,25 @@ test(
             ).changes,
         ).toBe(1);
         const retained = readFixtureHostRows(db);
+        const peerWorkPayload = canonicalJson(peerHost.work);
+        const peerWorkRow = requiredValue(
+          retained.host.find((row) => row.kind === 'work' && row.payload === peerWorkPayload),
+          'disjoint peer native Work row',
+        );
+        const peerJournalRow = requiredValue(
+          retained.journal.find((row) => row.work_id === peerIdentity.work_id && row.attempt === 1),
+          'disjoint peer native Journal row',
+        );
+        const peerRows = () => ({
+          work: db
+            .query("SELECT * FROM agent_host_state WHERE workspace_id=? AND kind='work' AND id=?")
+            .get(host.workspaceId, peerWorkRow.id),
+          journal: db
+            .query('SELECT * FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=1')
+            .get(host.workspaceId, peerIdentity.work_id),
+        });
+        const retainedPeerRows = { work: peerWorkRow, journal: peerJournalRow };
+        expect(peerRows()).toEqual(retainedPeerRows);
         const governance = () =>
           db.query('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key').all();
         const retainedGovernance = governance();
@@ -8622,6 +8742,15 @@ test(
         const owner = requiredValue(
           before.ledger.tickets.find((ticket) => ticket.ticket_id === requiredLease(before.work).ticket_id),
           'unknown repair owner ticket',
+        );
+        const peerOwner = requiredValue(
+          before.ledger.tickets.find((ticket) => ticket.ticket_id === requiredLease(peerHost.work).ticket_id),
+          'disjoint peer owner ticket',
+        );
+        expect(peerOwner.status).toBe('active');
+        expect(peerOwner.exclusive_resources.length).toBeGreaterThan(0);
+        expect(peerOwner.exclusive_resources.some((resource) => owner.exclusive_resources.includes(resource))).toBe(
+          false,
         );
         const ownedFile = requiredValue(
           owner.exclusive_resources.find((resource) => resource.startsWith('file:')),
@@ -8841,6 +8970,7 @@ test(
         }
         const applied = host.repairCorrectionGeneration({ ...request, mode: 'apply' });
         expect(applied.status).toBe('applied');
+        expect(peerRows()).toEqual(retainedPeerRows);
         const after = readPresentSnapshot(host, f.identity);
         expect(after.work.execution).toEqual(before.work.execution);
         expect(after.work.lease).toEqual(before.work.lease);
@@ -8866,12 +8996,23 @@ test(
         expect(governance()).toEqual(retainedGovernance);
         expect(history()).toEqual(retainedHistory);
         expect(reopened.repairCorrectionGeneration({ ...request, mode: 'restore' })).toEqual(restored);
+        expect(peerRows()).toEqual(retainedPeerRows);
+        expect(reopened.readHostStateSnapshot(peerIdentity)).toEqual(peerHost);
+        expect(reopened.readWorkSessionJournal(peerIdentity)).toEqual(peerJournal);
         if (performance.now() >= deadline) throw new Error('Unknown repair body exceeded its case deadline');
       },
       async () => {
         await withInitialSourceCleanup(
           async () => {
-            if (fixture) await fixture.close();
+            await withInitialSourceCleanup(
+              async () => {
+                if (peerBridge) await peerBridge.close();
+              },
+              async () => {
+                if (fixture) await fixture.close();
+              },
+              'Unknown authority repair bridge cleanup',
+            );
           },
           () => {
             if (clockHeld) setSystemTime();

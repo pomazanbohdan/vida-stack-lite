@@ -32,6 +32,9 @@ the guard and exercise the public refusal when the preceding contract allows it.
 Distinguish validated stored state from a public builder's unvalidated DTO input.
 Keep malformed negative DTOs outside persistence and authority; require the
 public refusal and exact native beforeimages, not an accepted fabricated state.
+An omitted compatibility/history field in a corrupted current receipt can prove
+a fail-closed reader path. Preserve exact guarded restoration and label that
+negative evidence honestly; it does not establish genuine legacy acceptance.
 For UNKNOWN recovery, check the original and effective report's own integrity
 and their status relation. An outer payload digest or a valid effective report
 alone does not prove that both retained reports are consistent.
@@ -157,6 +160,15 @@ exact agreement with its active claim. Keep current
 CAS after admission and exact peer Work/file preservation through success and
 retry. An unstarted disjoint peer needs no extra bridge, synthesis or issued
 workflow. Coverage of the visited predicates still needs the matching report.
+
+When a regression specifically needs another Work's real Journal, an admitted
+peer alone is insufficient. Check the producer's intake and live-owner contract
+before launch: `preparePeerAdmission` omits intake by default. Declare the peer's
+own raw intake before public admission, then use the actual configured ledger
+and bridge to prepare a nonempty suspended first wave. Keep issue/observation
+null and reservation absent under their actual schema, close its bridge before
+repair, and preserve the peer's exact native rows and owner rights. This is
+prepared foreign Work, not another attempt or provider execution.
 
 When repeated verifier reads protect a precommit freshness boundary, retain them.
 Reuse the genuine fixture and change one owned input between the initial proof

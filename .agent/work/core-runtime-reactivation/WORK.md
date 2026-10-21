@@ -14,22 +14,25 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-55024fb75697286f96d6f1be91b53af90cc1dc69, run
-3c0fd965-0a27-434a-ba26-c785e55c94f9, projection attempts1180.
+301f0e709be27212b7a490fc729b6642d270f2dd, run
+5ad9ead2-e36d-4bac-bc7b-2826345ad205, projection attempts1182.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs336cases/5660assertions
-in184843.991274ms. Host and stopped-source children take177.30s and120.97s.
-Rollback recovery takes12688.78ms, terminal-history8987.73ms and commit14188.94ms,
+unchanged boot/image and automatic publication. It runs336cases/5680assertions
+in197456.958851ms. Host and stopped-source children take190.92s and121.18s.
+Rollback recovery takes11285.36ms, terminal-history10513.03ms and commit14353.91ms,
 inside their unchanged20s bounds. Their setup/body durations are respectively
-9963.491845/2673.400975ms,7223.354406/1723.727516ms and8866.899954/5260.306610ms.
+8534.562180/2681.446340ms,8226.978271/2233.735166ms and9936.795345/4320.610447ms.
 The preceding rollback timeout does not recur in this complete instrumented run.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains5statement/112branch-arm gaps, no missing function
-or line: F1126/1126,L4978/4978,S5303/5308,B5490/5602. Unsorted identity refusals
+The report-only join retains5statement/107branch-arm gaps, no missing function
+or line: F1126/1126,L4978/4978,S5303/5308,B5495/5602. Real corrective start and
+queued-claim refusal gain five actual arm visits versus55024fb with unchanged
+production denominators. beginSessionProducer, settleSessionProducer and
+taskSourceTicketMatches now have no missing arms. Unsorted identity refusals
 and actual empty-workspace inspection gain three visits versus9a29175, with
 unchanged production denominators. checkedWork and version have no missing arms.
 Corrective initialization
@@ -67,12 +70,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-XLHhQm/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1314-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1314-scratch-parent.json and DIAG/remainder-v1314-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1314-cache-retirement-XLHhQm/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-XLHhQm-Zz3zSl/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-soCcwj |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-LH4AVs/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1321-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1321-scratch-parent.json and DIAG/remainder-v1321-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1321-cache-retirement-LH4AVs/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-LH4AVs-6tiE9u/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-nXXFDB |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -81,7 +84,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3212103680bytes and retained tmpfs9197719552bytes available, both above the
+3143745536bytes and retained tmpfs9192992768bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -295,7 +298,8 @@ all original corrective CAS, artifacts, authority and claim/retry assertions
 remain. Original fixture owns DB/ledger close and failed-root retention.
 Strict149/lint0 and1case/133assertions pass9.44s overall,7102.60ms native, in
 corrective-producer-v1305-I0vKoQ. The existing20s exception is unchanged.
-Start still needs its real engine transition and is not covered by this probe.
+This initialization-only probe does not cover start; the later301f0e7 packet
+below supplies its separate real engine-preparation proof.
 Blind final review vida-corrective-producer-review-v1306.md accepts the actual
 borrowed ledger, unchanged oracles and initialize-only boundary, and inspects the
 absolute focused logs without rerunning them. Pin refreshed once in
@@ -304,7 +308,7 @@ remainder-v1307-test-pin.json; strict122/lint0 and two-file control pass
 links/headings pass. Ordinary hooks pass formatting520/strict527 and normal push
 publishes9a29175. Its matching complete stage above confirms nine additional
 branch-arm visits with unchanged denominators. The corrective case takes4992.44ms;
-remaining start predicates stay open. The original2814c4a measurement, image,
+the later301f0e7 stage covers the previously missing start predicates. The original2814c4a measurement, image,
 SDK and custody stay retained under contour-stage-6ou7QI and remainder-v1303.
 
 Next pure-refusal packet reuses the existing paired-Host attempt-admission case
@@ -366,8 +370,10 @@ bytes pass strict149/lint0 and2cases/293assertions10.14s,8119.80/449.06ms native
 in corrective-start-final-v1319-XqvGWE. Final pin is bound once in
 remainder-v1320-test-pin.json; strict122/lint0/two-file control pass
 1case/10assertions309ms in remainder-v1320-controls-rwFEBx. Changed links/headings
-pass. Ordinary publication and one matching complete stage remain next. The
-latest report above still binds55024fb.
+pass. Ordinary hooks pass formatting520/strict527 and normal push publishes301f0e7.
+Its complete matching stage above confirms five additional arms; corrective
+preparation takes6303.69ms. Earlier55024fb measurement and custody stay retained
+under contour-stage-XLHhQm and remainder-v1314.
 
 Three completed WORK packets now link their published55024fb full checks and
 failure custody while retaining incoming headings; no original evidence is
@@ -376,7 +382,52 @@ local. The current plan, backlog and WORK keep their existing ownership.
 
 ### Next actions and unresolved prerequisites
 
-1. Select the next causal S/B packet from the current5statement/112arm gap list;
+Bounded independent Source reviews are retained in DIAG. The lookup study
+vida-tasksource-lookup-review-v1322.md recommends keeping the bounded ticket
+searches: unmeasured savings do not justify new ticket-provenance coupling or
+removing a refusal guard. The thread-change study
+vida-tasksource-thread-change-review-v1323.md finds renewal and expired-lease
+recovery preserve the same owner. A foreign read handle fails earlier; it does
+not cover the retained-action skip. Keep that prerequisite GAP and no fabricated
+thread/Journal/authority.
+
+The current negative runtime-history packet uses the actual receipt created by
+the existing focused rebind case. Remove only binding_history from a copy,
+recompute outer payload/digest, and require public read to deny with
+attempt assignment binding invalid. Snapshot native Host/Journal, restore the
+exact receipt under key/payload/digest CAS through owned cleanup, and continue
+every original stale-retry/correction oracle. This is current-row corruption,
+not genuine legacy acceptance. Bounded blind Source study
+vida-runtime-history-omission-review-v1324.md derives the seam. Strict149/lint0
+and1case/87assertions pass6.47s,5025.09ms native, in
+runtime-history-omission-v1325-4QRyc8. No extra fixture/engine or changed20s bound.
+Matching complete measurement remains pending; the shared final pin/control is
+recorded below.
+
+The related foreign-Journal packet now prepares a real disjoint Work in that
+existing UNKNOWN repair fixture. The1326 static proposal overlooked a producer
+prerequisite: preparePeerAdmission deliberately omits intake. Root declares the
+peer's own intake before public admission, then uses its actual configured ledger
+and bridge to produce a nonempty suspended, unissued wave. No peer issue/report,
+writer lease or fabricated Journal/authority. Close the bridge before repair;
+require exact peer native Work/Journal through apply/reopen/restore and public
+snapshots after maintenance, with disjoint active rights. This reaches a different
+Work Journal; it is not the still-missing second attempt of the same Work.
+Strict149/lint0 pass. The first focused packet1328 retains1PASS/1FAIL and its
+original root /tmp/vida-initial-source-wlVvwS: the new assertion incorrectly
+expected a null reservation instead of the schema's absent field. After changing
+that oracle only,1329 passes1case/163assertions11.19s,9570.98ms native, at
+foreign-journal-v1329-ak4Cfi. The runtime-history case also passes unchanged in
+1328. No higher case or stage budget. Numeric gains remain unmeasured.
+Blind1327 review confirms the intake/owner/cleanup preconditions, Source-only,
+at vida-peer-intake-producer-review-v1327.md. Final test pin is recorded once in
+remainder-v1330-test-pin.json; strict122/lint0 and the existing two-file namespace
+control pass1case/10assertions658ms in remainder-v1330-controls-LXVFIT. Test strict
+checks cover149files; no repeated full suite or new fixture family. Documentation
+check passes4documents/19local links. Fetch observes HEAD equal origin/main before
+publication. Ordinary hooks/push and the one matching SDK/image/stage follow.
+
+1. Select the next causal S/B packet from the current5statement/107arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,
@@ -417,7 +468,7 @@ Keep these specific unresolved paths open:
 
 ### Execution combinations
 
-The07:37–10:37UTC audit reuses the retained script-cost review, native receipts,
+The08:40–11:40UTC audit reuses the retained script-cost review, native receipts,
 gap map and Source packets instead of another suite/AST/hash inventory. Stage
 stdout is already bounded, memoized and read once; diagnostic/report parsing
 has distinct contracts. No confirmed safe runtime-cost change is established
@@ -435,6 +486,31 @@ packet uses one combined pin/control, normal publication and one complete stage.
 Actual complete stage durations vary by input; neither concurrency alternatives
 nor total tool calls/tokens have a controlled benchmark. No claimed speedup is
 derived by dividing an already parallel stage duration by worker count.
+
+One pass over the latest native child logs derives
+DIAG/remainder-v1321-native-timings.json; every timed PASS matches its native
+summary,320/320 and16/16. Printed case-clock min/mean/nearest-rank-p95/max are
+32.04/580.9235625/3269.99/14353.91ms for Host and
+0.45/5858.916875/25518.80/25518.80ms for stopped Source. These are observed case
+clocks, not isolated body or controller timings. The stopped-source25.52s maximum
+uses its unchanged justified exception; it is not a reason to raise a budget.
+No extra producer, AST/hash inventory or standalone benchmark lane is created.
+Raw logs and original outcomes remain with the bound stage above.
+
+The bounded Git history in that interval confirms the historical TaskSource
+integrity correction2814c4a and the smaller schema-lookup simplification6425ed6,
+followed by actual corrective initialization/start and negative DTO packets.
+No new test-runner defect is confirmed by this audit; do not rewrite its capture,
+timeout or report owner based only on repeated use. Two concrete wasted steps are
+corrected in this packet: qualify peer intake before producer setup, and seal the
+test pin once after grouped causal edits.1328's null-versus-absent oracle failure
+is retained, corrected and rechecked only in the affected case; its passing
+runtime-history case is reused. Pre-runtime type failures in prior packets and
+that fixture schema mistake are test/tooling findings, not new product bugs.
+The host observation before this packet records3142737920durable and9192992768
+tmpfs bytes available, both above2147483648. There is no live numeric/build/install
+owner or new qualified obsolete directory; reuse the latest terminal retirement
+manifest and dependency inventory. No additional deletion or broad scan is needed.
 
 | Combination | Evidence and decision |
 | --- | --- |
