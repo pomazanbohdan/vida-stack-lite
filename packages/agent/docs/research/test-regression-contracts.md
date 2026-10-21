@@ -385,6 +385,15 @@ the original Journal bytes through owned cleanup. Preserve the subsequent real
 apply/rollback/reopen/resume/restore sequence and original case budget. Such
 refusals neither settle UNKNOWN nor prove acceptance of malformed authority.
 
+Corrective authorization retries use actual product-written candidate artifacts.
+An owned Journal-update fault occurs after file writes: verify exact Host/Journal
+and recovery-table rollback, no accepted authorization, and transaction closure.
+Conflicting recovery bytes deny before native publication and are restored through
+owned cleanup. An exact retry preserves all three files, engine ID and issue time.
+An optional corrective-execution absence probe changes only an actual authorized
+Journal's fixture payload/digest at its retained revision; use conditional exact
+restoration and never claim a public version transition or minted authority.
+
 TaskSource projection repair initializes absent storage through its public
 held-fence operation, preserving empty operation rows, exact receipt retry and
 no Work admission. Protected no-effect retry controls target the retained

@@ -785,6 +785,70 @@ test(
       }
       expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
       expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+      const recoveryTable = f.database.query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_corrective_recovery'",
+      );
+      const recoveryRows = () =>
+        recoveryTable.get()
+          ? f.database.query('SELECT * FROM agent_host_corrective_recovery ORDER BY work_id,attempt,generation').all()
+          : null;
+      const recoveryBefore = recoveryRows();
+      f.database.exec(
+        "CREATE TEMP TRIGGER deny_corrective_journal BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT, 'controlled corrective Journal failure'); END",
+      );
+      let triggerFailure: { error: unknown } | undefined;
+      try {
+        expect(() => f.store.authorizeCorrectiveExecution(request)).toThrow('controlled corrective Journal failure');
+      } catch (error) {
+        triggerFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              f.database.exec('DROP TRIGGER deny_corrective_journal');
+            },
+          ],
+          triggerFailure,
+        );
+      }
+      expect(f.database.inTransaction).toBe(false);
+      expect(readFixtureHostRows(f.database)).toEqual(persistedBefore);
+      expect(recoveryRows()).toEqual(recoveryBefore);
+      expect(f.store.retrieveCorrectiveAuthorization(lookup)).toBeNull();
+      const artifactBase = authorityPath.slice(0, -'-authorization.json'.length);
+      const retainedArtifacts = ['authorization', 'recovery', 'feedback'].map((kind) => {
+        const file = artifactBase + '-' + kind + '.json';
+        return { file, bytes: readFileSync(file) };
+      });
+      const proposed = correctiveAssignmentAuthorizationSchema.parse(
+        JSON.parse(firstOf(retainedArtifacts, 'retained corrective authorization').bytes.toString('utf8')) as unknown,
+      );
+      const retainedRecovery = requiredValue(
+        retainedArtifacts.find((artifact) => artifact.file.endsWith('-recovery.json')),
+        'retained corrective recovery artifact',
+      );
+      writeFileSync(retainedRecovery.file, Buffer.concat([retainedRecovery.bytes, Buffer.from(' ')]));
+      let artifactFailure: { error: unknown } | undefined;
+      try {
+        expect(() => f.store.authorizeCorrectiveExecution(request)).toThrow('corrective artifact retry differs');
+        expect(readFixtureHostRows(f.database)).toEqual(persistedBefore);
+        expect(recoveryRows()).toEqual(recoveryBefore);
+        expect(f.store.retrieveCorrectiveAuthorization(lookup)).toBeNull();
+      } catch (error) {
+        artifactFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              writeFileSync(retainedRecovery.file, retainedRecovery.bytes);
+              expect(readFileSync(retainedRecovery.file)).toEqual(retainedRecovery.bytes);
+            },
+          ],
+          artifactFailure,
+        );
+      }
       const issued = f.store.authorizeCorrectiveExecution(request);
       const after = f.store.readHostStateSnapshot(f.identity);
       const corrected = f.store.readWorkSessionJournal(f.identity);
@@ -798,6 +862,8 @@ test(
       expect(corrected.state.items).toEqual([]);
       expect(corrected.state.completed).toEqual([]);
       expect(corrected.state.run_id).toBe(issued.engine_run_id);
+      expect(issued.engine_run_id).toBe(proposed.engine_run_id);
+      for (const artifact of retainedArtifacts) expect(readFileSync(artifact.file)).toEqual(artifact.bytes);
       expect(issued.base_run_id).toBe(before.work.execution.run_id);
       expect(issued.stage_ids).toEqual(request.stageIds);
       const authorityBytes = readFileSync(authorityPath);
@@ -805,6 +871,7 @@ test(
         JSON.parse(authorityBytes.toString('utf8')) as unknown,
       );
       expect(authority.user_instruction_ref).toBe(request.userInstructionRef);
+      expect(authority.issued_at).toBe(proposed.issued_at);
       expect(authority.stage_ids).toEqual(request.stageIds);
       expect(authority.allowed_paths).toEqual([...before.work.lifecycle.scope.allowed_paths]);
       expect(authority.failed_action_ids).toEqual(
@@ -813,6 +880,66 @@ test(
           .map((item) => item.request.action_id),
       );
       expect(createHash('sha256').update(authorityBytes).digest('hex')).toBe(issued.authorization.sha256);
+      expect(f.store.retrieveCorrectiveAuthorization(lookup)).toEqual(issued);
+      const authorizedRows = readFixtureHostRows(f.database);
+      const authorizedJournal = requiredValue(
+        authorizedRows.journal.find((row) => row.work_id === f.identity.work_id && row.attempt === 1),
+        'authorized corrective Journal preimage',
+      );
+      const withoutExecution = parseJsonRecord(authorizedJournal.payload);
+      expect(Reflect.deleteProperty(withoutExecution, 'corrective_execution')).toBe(true);
+      const probePayload = canonicalJson(withoutExecution),
+        probeDigest = canonicalJsonDigest(withoutExecution);
+      const replaceJournal = f.database.query(
+        'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND revision=? AND digest=?',
+      );
+      expect(
+        replaceJournal.run(
+          probePayload,
+          probeDigest,
+          f.store.workspaceId,
+          f.identity.work_id,
+          authorizedJournal.revision,
+          authorizedJournal.digest,
+        ).changes,
+      ).toBe(1);
+      let probeFailure: { error: unknown } | undefined;
+      try {
+        expect(
+          f.store.retrieveCorrectiveAuthorization({
+            ...lookup,
+            journal: { revision: authorizedJournal.revision, digest: probeDigest },
+          }),
+        ).toBeNull();
+        expect(readFixtureHostRows(f.database)).toEqual({
+          ...authorizedRows,
+          journal: authorizedRows.journal.map((row) =>
+            row === authorizedJournal ? { ...row, payload: probePayload, digest: probeDigest } : row,
+          ),
+        });
+      } catch (error) {
+        probeFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              expect(
+                replaceJournal.run(
+                  authorizedJournal.payload,
+                  authorizedJournal.digest,
+                  f.store.workspaceId,
+                  f.identity.work_id,
+                  authorizedJournal.revision,
+                  probeDigest,
+                ).changes,
+              ).toBe(1);
+              expect(readFixtureHostRows(f.database)).toEqual(authorizedRows);
+            },
+          ],
+          probeFailure,
+        );
+      }
       expect(f.store.retrieveCorrectiveAuthorization(lookup)).toEqual(issued);
       expect(f.database.transaction(() => f.store.retrieveCorrectiveAuthorization(lookup)).deferred()).toEqual(issued);
       expect(corrected.version).not.toEqual(lookup.journal);

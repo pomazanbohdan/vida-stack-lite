@@ -14,18 +14,18 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-b62ffb5f1f2595b2edf171860ad3337a29c1fd18, run
-f40c5a96-e593-4ea8-a354-5cfa94c485d7, attempt1139.
+7d2f4518919c7c8c87b6f494cba83cf35e036fda, run
+64dcf095-052b-4527-80b8-a16f1a5dfa0c, attempt1141.
 Coverage remains BLOCKED/nonexact; the pending test additions are not
 measured. A historical maximum or projection row is not new-HEAD acceptance.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs320cases/4810assertions
-in169952.637289ms. Host and stopped-source children take163.21s and119.61s.
-Commit/rollback recovery take15498.25ms/13567.41ms under unchanged20s limits.
+unchanged boot/image and automatic publication. It runs324cases/4977assertions
+in171672.525059ms. Host and stopped-source children take164.97s and119.97s.
+Commit/rollback recovery take12594.67ms/13014.58ms under unchanged20s limits.
 These are measurements of this input, not a controlled performance comparison.
-The measured Journal packet adds1statement/4branch arms with unchanged
-denominators. The report-only join retains27statement/206branch-arm gaps;
+The measured migration packet adds1line/3statements/3branch arms with unchanged
+denominators. The report-only join retains24statement/203branch-arm gaps;
 it performs no new AST/Source scan/hash.
 
 ## Latest measurement custody
@@ -36,12 +36,12 @@ these locators grant no additional acceptance authority.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-6t7DPu/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1160-sdk-provider.json |
-| Admission and complete producer log | Same diagnostics root: remainder-v1160-scratch-parent.json and remainder-v1160-stage.log |
-| Qualified private-cache retirement | Same root: remainder-v1160-cache-retirement-6t7DPu/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-6t7DPu-6qdYPW/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-zXTZAu |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-v5psQi/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1166-sdk-provider.json |
+| Admission and complete producer log | Same diagnostics root: remainder-v1166-scratch-parent.json and remainder-v1166-stage.log |
+| Qualified private-cache retirement | Same root: remainder-v1166-cache-retirement-v5psQi/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-v5psQi-wHvti6/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-VNlisF |
 | Current report-only zero-counter join | Same diagnostics root: host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -50,7 +50,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-4697104384bytes and retained tmpfs9305276416bytes available, both above the
+4630089728bytes and retained tmpfs9300549632bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -70,7 +70,7 @@ Original focused1/138, strict149/lint, pin1/10 and blind review remain in the
 [publishedb62ffb5 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/b62ffb5f1f2595b2edf171860ad3337a29c1fd18/.agent/work/core-runtime-reactivation/WORK.md).
 Original failures and UNKNOWN stay unchanged, never replayed or counted as kills.
 
-### Checked migration-close packet awaiting its own measurement
+### Measured migration-close packet
 
 The existing wrapper matrix now covers absent workflow storage and close failure
 after body Error, thrown undefined or successful metadata callback. Reuse the
@@ -93,10 +93,32 @@ receiver set without casts/suppressions. Both failed logs stay retained.
 Independent final review resolves its leaf-error-identity finding and reports
 no new issue: vida-consumer-migration-close-review-v1163.md.
 The bounded proposal is vida-consumer-migration-fault-routes-v1162.md.
-No numeric gain is claimed until this packet's own complete measurement.
+The complete7d2f451 measurement above now covers this packet; its UNKNOWN repair
+case takes12205.96ms and wrapper cases181.22–417.89ms within their original bounds.
 The final exact pin passes strict122-file checks, configured zero-warning lint
 and1/10assertion control in remainder-v1166-controls-g10HS6. Root's complete-diff
 review retains serial cases, private roots and independent two-file processes.
+
+### Checked corrective-artifact retry awaiting its own measurement
+
+The existing corrective authorization case now injects a native Journal-update
+fault after actual product artifact creation. Exact Host/Journal/recovery rows
+roll back, the transaction closes, and candidate files create no accepted
+authorization. A conflicting recovery file denies before native publication and
+owned cleanup restores exact bytes. The same request then converges with identical
+authorization/recovery/feedback bytes, engine ID and issue time.
+An optional missing corrective-execution read probe changes only the fixture's
+authorized Journal payload/digest at its unchanged revision, then restores exact
+bytes under conditional CAS. It does not claim a public version transition.
+
+Strict149/configured zero-warning lint and1PASS/105assertions pass in7.61s overall,
+5949.38ms case time under the unchanged20s limit. Diagnostics:
+corrective-artifact-retry-v1168-RzhECD. No new product defect or numeric gain is
+claimed. Blind research and final current-byte review are retained as
+vida-corrective-artifact-retry-v1167.md and
+vida-corrective-artifact-retry-review-v1168.md. Review finds no semantic blocker.
+The final changed pin passes strict122/configured lint and1/10assertion control
+in remainder-v1170-controls-RwpBx3; no other selected file or resource changes.
 
 ### Three-hour audit:2026-10-21 01:02–04:02 UTC
 
@@ -129,7 +151,7 @@ duplicate update sites are directly observable, runtime savings are unmeasured.
 
 ### Next actions and unresolved prerequisites
 
-1. Publish the checked migration-close packet through ordinary hooks after
+1. Publish the checked corrective-artifact retry packet through ordinary hooks after
    document validation. Its focused checks, review and exact pin control are complete.
 2. Reuse one matching SDK artifact, capture one immutable image and execute one
    selected-contour stage. Import its outcome once; preserve failure/UNKNOWN.
@@ -156,8 +178,8 @@ Keep these specific unresolved paths open:
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
-| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage169.953s with both native exits0 and complete custody. |
-| Fully serial files | Supported fallback; latest concurrent child times sum282.82s. That sum is a planning quantity, not measured serial elapsed time or admission. |
+| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage171.673s with both native exits0 and complete custody. |
+| Fully serial files | Supported fallback; latest concurrent child times sum284.94s. That sum is a planning quantity, not measured serial elapsed time or admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |
 
