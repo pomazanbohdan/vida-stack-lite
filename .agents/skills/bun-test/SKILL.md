@@ -167,6 +167,12 @@ Before comparing snapshots across Host, Ledger resume and recovery artifacts,
 read their declared shapes. Compare exact version/state fields and assert each
 API's own metadata separately: Host attempt and Ledger resume_status are different
 wrapper fields, and the recovery artifact stores neither wrapper.
+When a fixture already owns a configured ledger, expose that actual ledger and
+its typed existing producer input for an additional proof. Do not reopen its DB
+or repeat its engine setup. The original fixture retains close ownership; a
+borrowed ledger is not a new handle to close. Prove initialized corrective
+reservation settlement with the exact Journal and unchanged Host. This does not
+cover start or any engine execution.
 For rollback failures, use distinct body/artifact/SQL sentinels, including thrown
 undefined. Assert exact ordered error identities and original cause, persisted
 rows/files, transaction state and later admissible entry. Keep an instance-local

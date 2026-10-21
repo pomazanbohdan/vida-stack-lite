@@ -14,25 +14,30 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-01b8928b0c17dd338a0a05df41ce19868abcd768, run
-e2c69efe-c3f6-4efe-b1fb-e400657105e6, projection attempts1174.
+2814c4a69eb41d8ea2715b1f2f6b04639002d349, run
+7294f1b9-0fa2-4718-9deb-aec8de1f4ce7, projection attempts1176.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs335cases/5548assertions
-in174812.594014ms. Host and stopped-source children take168.49s and109.33s.
-Rollback recovery takes8834.61ms, terminal-history8763.46ms and commit10709.76ms,
-all inside unchanged20s bounds. Their setup/body durations are respectively
-6965.571170/1814.840164ms,6984.826513/1733.587878ms and7197.192711/3442.764500ms.
+unchanged boot/image and automatic publication. It runs336cases/5645assertions
+in186391.337320ms. Host and stopped-source children take180.47s and118.80s.
+Rollback recovery takes10884.20ms and terminal-history11422.00ms, inside their
+unchanged20s bounds. Their setup/body durations are respectively
+8232.193270/2603.348491ms and9097.127551/2281.039760ms.
 The preceding rollback timeout does not recur in this complete instrumented run.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains5statement/134branch-arm gaps, no missing function
-or line: F1126/1126,L4975/4975,S5300/5305,B5488/5622. Compared with the preceding
-completea529007 report, malformed-lease refusal, absent-Host DTOs and real empty
-qualified-code history gain one statement and three branch-arm visits, with
-unchanged production denominators. In the preceding complete6425ed6 comparison,
+The report-only join retains5statement/124branch-arm gaps, no missing function
+or line: F1126/1126,L4978/4978,S5303/5308,B5478/5602. Historical report-pair
+validation now shares the existing validator; the branch denominator changes
+by20 and missing arms by10 versus01b8928. Removed duplicate terms are not newly
+executed paths. New malformed identity DTO controls and report-pair cases pass;
+createTaskSourceMutationPolicyRequest and identityKey have no missing arms.
+In the preceding complete01b8928 comparison witha529007, malformed-lease refusal,
+absent-Host DTOs and real empty qualified-code history gain one statement and
+three branch-arm visits with unchanged production denominators.
+In the preceding complete6425ed6 comparison,
 three native bigint budget arms gain visits with unchanged denominators.
 boundedInspectionInteger has no missing arms. In the preceding simplification,
 removing two nullish expressions removed four instrumented arms, two previously
@@ -57,12 +62,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-GJOkoJ/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1294-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1294-scratch-parent.json and DIAG/remainder-v1294-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1294-cache-retirement-GJOkoJ/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-GJOkoJ-gsbY7d/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-2hGyf1 |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-6ou7QI/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1303-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1303-scratch-parent.json and DIAG/remainder-v1303-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1303-cache-retirement-6ou7QI/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-6ou7QI-v9LKkE/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-gOCbQ6 |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -71,7 +76,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3419303936bytes and retained tmpfs9211899904bytes available, both above the
+3348852736bytes and retained tmpfs9207173120bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -288,9 +293,9 @@ case passes the exact ticket-mismatch assertion without any Source change.
 Strict149/lint0 and1case/140assertions pass2.01s,366.44ms native, in
 identity-dto-v1296-WEQC8g. Review suggestions do not authorize reordering a
 production guard merely to change this oracle. Source identities and budgets
-remain unchanged; its new nullish/project-order arm visits are pending numeric
-confirmation. This matrix is included in the report-pair packet below; refresh
-its combined test pin once and use one matching stage.
+remain unchanged by this test-only matrix. The later complete2814c4a stage
+includes this matrix and leaves no missing arms in its public policy builder
+or identityKey; it does not establish valid persisted authority from adverse DTOs.
 
 ### Confirmed historical TaskSource report-pair correction
 
@@ -332,8 +337,10 @@ Test skill now requires absolute reviewer evidence locators and checking both
 retained reports. Changed test pin is refreshed once in remainder-v1302-test-pin.json.
 Strict122/lint0 and the two-file resource control pass1case/10assertions300ms
 in remainder-v1302-controls-SC0CHL; changed-document links/headings pass. Fetch
-finds HEAD and origin/main identical. Ordinary hooks/push and one matching
-complete stage are next. Source changes alter geometry/denominators; do not present
+finds HEAD and origin/main identical. Ordinary hooks pass formatting520/strict527;
+normal push publishes2814c4a. Its matching complete stage above passes both
+historical modes,333.33/438.86ms native, with valid full custody. Source changes
+alter geometry/denominators; do not present
 removed duplicate terms as newly executed paths.
 
 At10:34UTC one filesystem observation finds durable3415465984bytes and retained
@@ -343,7 +350,30 @@ retirement manifests suffice; no further safe cleanup is identified here.
 
 ### Next actions and unresolved prerequisites
 
-1. Select the next causal S/B packet from the current5statement/134arm gap list;
+Blind bounded review vida-begin-producer-review-v1304.md identifies the eight
+beginSessionProducer arms as corrective-Journal predicates in start/initialize.
+Its proposed existing fixture is qualified conditionally, not proof of execution.
+Root finds the existing actual ledger and bridge input inside the failed-final
+builder, exposes those borrowed values and reuses the same typed input for the
+original bridge. No extra fixture, connection, engine or setup is created.
+The actual authorized empty corrective Journal then acquires initialization,
+asserts its current handle and settles against its exact Journal version.
+Native producer state is applied/revision3 with a result digest bound to absent
+corrective engine and the retained Journal. Host and Journal are unchanged;
+all original corrective CAS, artifacts, authority and claim/retry assertions
+remain. Original fixture owns DB/ledger close and failed-root retention.
+Strict149/lint0 and1case/133assertions pass9.44s overall,7102.60ms native, in
+corrective-producer-v1305-I0vKoQ. The existing20s exception is unchanged.
+Start still needs its real engine transition and is not covered by this probe.
+Blind final review vida-corrective-producer-review-v1306.md accepts the actual
+borrowed ledger, unchanged oracles and initialize-only boundary, and inspects the
+absolute focused logs without rerunning them. Pin refreshed once in
+remainder-v1307-test-pin.json; strict122/lint0 and two-file control pass
+1case/10assertions308ms in remainder-v1307-controls-9S8CR2. Changed-document
+links/headings pass. Publish normally and use one matching stage; current
+numeric evidence above remains bound to2814c4a.
+
+1. Select the next causal S/B packet from the current5statement/124arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,
@@ -383,6 +413,25 @@ Keep these specific unresolved paths open:
   established neither a defect nor numeric execution.
 
 ### Execution combinations
+
+The07:37–10:37UTC audit reuses the retained script-cost review, native receipts,
+gap map and Source packets instead of another suite/AST/hash inventory. Stage
+stdout is already bounded, memoized and read once; diagnostic/report parsing
+has distinct contracts. No confirmed safe runtime-cost change is established
+there. The reproduced product correction above removes weaker duplicated
+historical validation and reuses parsed reports. Assertions use the actual
+prepared fixture and a typed DTO matrix; only the independent recovery mode
+gets another real fixture. The earlier timeout was corrected by separating
+independent proof groups, preserving every prerequisite and20s case limit.
+This increases fixture count and is not evidence of lower total setup cost.
+
+The concrete workflow error is relative reviewer evidence paths resolving under
+a fixture. Absolute DIAG paths now belong to the Bun Test technique reference;
+Root reuses the actual logs rather than rerunning their producer. The current
+packet uses one combined pin/control, normal publication and one complete stage.
+Actual complete stage durations vary by input; neither concurrency alternatives
+nor total tool calls/tokens have a controlled benchmark. No claimed speedup is
+derived by dividing an already parallel stage duration by worker count.
 
 | Combination | Evidence and decision |
 | --- | --- |

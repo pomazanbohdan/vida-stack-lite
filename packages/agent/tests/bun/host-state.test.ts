@@ -961,6 +961,28 @@ test(
       ).toThrow('corrective authorization instruction differs');
       expect(f.store.assertCorrectiveExecution(f.identity, 1, issued)).toBeUndefined();
       expect(f.store.assertCorrectiveExecutionForWork(f.identity.work_id, 1, issued)).toBeUndefined();
+      const correctiveProducer = f.ledger.beginSessionProducer({
+        ...f.producerInput,
+        phase: 'initialize',
+        runId: issued.engine_run_id,
+      });
+      f.store.assertSessionProducerCurrent(correctiveProducer);
+      f.store.settleSessionProducer(correctiveProducer, corrected.version);
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(corrected);
+      const producerOperation = requiredValue(
+        f.database
+          .query<{ payload: string }, [string, string]>(
+            "SELECT payload FROM agent_host_governance WHERE workspace_id=? AND store_id='vida-session-producers' AND kind='operation' AND record_key=?",
+          )
+          .get(f.store.workspaceId, correctiveProducer.operation.operation_key),
+        'settled corrective producer operation',
+      );
+      expect(parseJsonRecord(producerOperation.payload)).toMatchObject({
+        status: 'applied',
+        terminal_revision: 3,
+        result_digest: canonicalJsonDigest({ engine: null, journal: corrected.version }),
+      });
       expect(() =>
         f.store.assertCorrectiveExecution({ ...f.identity, work_id: 'missing-corrective-work' }, 1, issued),
       ).toThrow('corrective execution work unavailable');

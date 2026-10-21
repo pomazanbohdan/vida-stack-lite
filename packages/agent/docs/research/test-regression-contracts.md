@@ -821,6 +821,12 @@ using its complete retry identity, rejects changed/foreign archive identities,
 and claims/completes one genuinely authorized corrective attempt. Preserve prior
 attempt history, consumed authority bytes and unchanged Host/Journal on replay.
 Do not fabricate a successful report or authorize the original failed assignment.
+Reuse the fixture's already configured ledger and original typed producer input
+to acquire and settle initialization at the fresh corrective run ID. Require
+unchanged Host/Journal and an applied native producer result bound to the exact
+Journal and absent corrective engine. Borrow the actual ledger without reopening
+or closing it separately. Initialization does not prove start or engine execution;
+retain the original fixture deadline and all corrective authority/retry oracles.
 
 The selected Host assurance case reuses the existing passing final-correction
 fixture and its real admitted writer, focused reports and terminal Journal. The

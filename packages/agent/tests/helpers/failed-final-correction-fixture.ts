@@ -45,6 +45,11 @@ export interface FailedFinalCorrectionFixture {
   readonly root: string;
   readonly config: AgentRuntimeConfig;
   readonly store: HostStateStore;
+  readonly ledger: MastraSessionLedger;
+  readonly producerInput: Pick<
+    Parameters<MastraSessionLedger['beginSessionProducer']>[0],
+    'projectIds' | 'selection' | 'context' | 'workflowId'
+  >;
   readonly database: ReturnType<typeof createAutomaticWorkAdmissionFixture>['database'];
   readonly identity: WorkIdentity;
   readonly journal: MastraSessionLedgerSnapshot;
@@ -325,14 +330,17 @@ export async function createFailedFinalCorrectionFixture(
         if (record.status === 'blocked') throw new Error('Configured fixture run was blocked');
         return result;
       };
-    bridge = await MastraSessionBridge.open({
-      ledger,
+    const producerInput = {
       projectIds: [input.selection.project],
-      repositoryRoot: fixture.root,
-      config: fixture.config,
       selection: input.selection,
       context: input.context,
       workflowId: 'task_execution',
+    };
+    bridge = await MastraSessionBridge.open({
+      ...producerInput,
+      ledger,
+      repositoryRoot: fixture.root,
+      config: fixture.config,
       workspaceId: fixture.store.workspaceId,
     });
     await bridge.start(source);
@@ -570,6 +578,8 @@ export async function createFailedFinalCorrectionFixture(
       root: fixture.root,
       config: fixture.config,
       store: host,
+      ledger,
+      producerInput,
       database: fixture.database,
       identity,
       journal,
