@@ -23,6 +23,7 @@ import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 
 type FixtureWorkItem = Parameters<typeof buildObservedResearchResult>[0]['workItem'];
 type HistoricalResearchFixtureOptions = {
+  readonly onRoot?: (root: string) => void;
   readonly config?: ReturnType<typeof loadRuntimeConfig>;
   readonly feature?: ReturnType<typeof loadRuntimeConfig>['research_decision'];
   readonly binding?: Partial<ObservedResearchBinding>;
@@ -80,6 +81,7 @@ function createHistoricalResearchFixtureInternal(
 ): HistoricalResearchFixtureFoundation | HistoricalResearchReportFixture {
   const repositoryRoot = configuredTestRepositoryRoot();
   const root = mkdtempSync(path.join(os.tmpdir(), 'vida-historical-research-'));
+  overrides.onRoot?.(root);
   writeFileSync(
     path.join(root, 'agent-runtime.config.v1.yaml'),
     readFileSync(path.join(repositoryRoot, 'agent-runtime.config.v1.yaml')),

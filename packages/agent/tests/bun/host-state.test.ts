@@ -288,6 +288,69 @@ function readFixtureHostRows(db: Database) {
       .all(),
   };
 }
+
+function withSuspendedFixtureOwner(db: Database, suspend: () => void, verify: () => void): void {
+  const before = readFixtureHostRows(db);
+  const ddl = db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all();
+  let suspended: ReturnType<typeof readFixtureHostRows> | undefined;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    suspend();
+    suspended = readFixtureHostRows(db);
+    expect(suspended.journal).toEqual(before.journal);
+    expect(suspended.host).toHaveLength(before.host.length);
+    verify();
+    expect(db.inTransaction).toBe(false);
+    expect(readFixtureHostRows(db)).toEqual(suspended);
+    expect(db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(ddl);
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    const changed = suspended;
+    completeOwnedCleanup(
+      [
+        ...before.host.map((original) => (): undefined => {
+          if (!changed) return;
+          const current = requiredValue(
+            changed.host.find(
+              (row) =>
+                row.workspace_id === original.workspace_id && row.kind === original.kind && row.id === original.id,
+            ),
+            'Suspended fixture row',
+          );
+          if (
+            current.payload === original.payload &&
+            current.digest === original.digest &&
+            current.revision === original.revision
+          )
+            return;
+          expect(
+            db
+              .query(
+                'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND payload=? AND digest=?',
+              )
+              .run(
+                original.revision,
+                original.payload,
+                original.digest,
+                original.workspace_id,
+                original.kind,
+                original.id,
+                current.revision,
+                current.payload,
+                current.digest,
+              ).changes,
+          ).toBe(1);
+        }),
+        () => {
+          expect(readFixtureHostRows(db)).toEqual(before);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+}
 type ScalarCountRow = { readonly count: number | bigint };
 function withCorruptedFixtureWorkRow(
   db: Database,
@@ -6736,7 +6799,45 @@ test(
         expect(lookup.receipt).toEqual(result.receipt);
         expect(readFixtureHostRows(db)).toEqual(after);
         expect(verify).toHaveBeenCalledTimes(2);
+        const continuationOwner = presentSnapshot(lookup.snapshot);
         const currentLedger = new MastraSessionLedger(db, host.workspaceId, targetConfig, current.root, store);
+        const continuationJournal = requiredValue(
+          currentLedger.resume(current.identity.work_id, 1),
+          'Current configured continuation Journal',
+        );
+        expect(continuationJournal).toMatchObject(lookup.journal);
+        withSuspendedFixtureOwner(
+          db,
+          () => {
+            suspendLocalWork({
+              store,
+              identity: current.identity,
+              journal: continuationJournal,
+              expectedWork: continuationOwner.workVersion,
+              expectedLedger: continuationOwner.ledgerVersion,
+              expectedMaintenanceGeneration: continuationOwner.maintenanceGeneration,
+              nativeSessionHandle: admission.nativeSessionHandle,
+              userRequestPointer: 'fixture:continuation-lookup-after-suspension',
+              requestIntent: 'linked_correction',
+              config: targetConfig,
+              documentationContext: {
+                repository_root: current.root,
+                repository_id: current.identity.repository_id,
+                project_id: 'sample',
+                work_id: current.identity.work_id,
+              },
+            });
+          },
+          () => {
+            expect(store.readHostStateSnapshot(current.identity).work?.lease).toBeNull();
+            expect(currentLedger.resume(current.identity.work_id, 1)).toEqual(continuationJournal);
+            expect(store.readDeliveredWorkContinuationReceipt(current.identity, 1)).toEqual(result.receipt);
+            expect(() => store.readDeliveredWorkContinuation(current.identity, 1)).toThrow(
+              'delivered-work continuation original owner lease or FIFO position is no longer current',
+            );
+          },
+        );
+        expect(store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(lookup);
         continuationBridge = await MastraSessionBridge.open({
           repositoryRoot: current.root,
           config: targetConfig,
@@ -7649,6 +7750,65 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
               };
             },
           } satisfies Parameters<HostStateStore['recoverExpiredLocalLease']>[0];
+          const recoveryDb = initialSourceHostDatabase(f);
+          const recoveryHistory = recoveryDb.query<{ payload: string; digest: string }, [string, string]>(
+            'SELECT payload,digest FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
+          );
+          expect(recoveryHistory.get(reopened.workspaceId, f.identity.work_id)).toEqual(originalHistory);
+          let missingDuringVerificationFailure: { error: unknown } | undefined;
+          let missingDuringVerificationCalls = 0;
+          try {
+            expect(() =>
+              reopened.recoverExpiredLocalLease({
+                ...expiredRequest,
+                verifyCurrent: (...args) => {
+                  const result = expiredRequest.verifyCurrent(...args);
+                  missingDuringVerificationCalls += 1;
+                  expect(
+                    recoveryDb
+                      .query(
+                        'DELETE FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1 AND payload=? AND digest=?',
+                      )
+                      .run(reopened.workspaceId, f.identity.work_id, originalHistory.payload, originalHistory.digest)
+                      .changes,
+                  ).toBe(1);
+                  return result;
+                },
+              }),
+            ).toThrow('lifecycle artifact authority binding differs from current work');
+            expect(missingDuringVerificationCalls).toBe(1);
+            expect(recoveryDb.inTransaction).toBe(false);
+            expect(recoveryHistory.get(reopened.workspaceId, f.identity.work_id)).toEqual(originalHistory);
+            expect(persistedRows()).toEqual(retainedRows);
+            expect(initialSourceState(f)).toEqual(reopenedState);
+          } catch (error) {
+            missingDuringVerificationFailure = { error };
+            throw error;
+          } finally {
+            completeOwnedCleanup(
+              [
+                () => {
+                  if (recoveryHistory.get(reopened.workspaceId, f.identity.work_id) === null)
+                    expect(
+                      recoveryDb
+                        .query(
+                          'INSERT INTO agent_host_initial_source_continuation (workspace_id,work_id,attempt,payload,digest) SELECT ?,?,1,?,? WHERE NOT EXISTS (SELECT 1 FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1)',
+                        )
+                        .run(
+                          reopened.workspaceId,
+                          f.identity.work_id,
+                          originalHistory.payload,
+                          originalHistory.digest,
+                          reopened.workspaceId,
+                          f.identity.work_id,
+                        ).changes,
+                    ).toBe(1);
+                  expect(recoveryHistory.get(reopened.workspaceId, f.identity.work_id)).toEqual(originalHistory);
+                },
+              ],
+              missingDuringVerificationFailure,
+            );
+          }
           const recovered = presentSnapshot(reopened.recoverExpiredLocalLease(expiredRequest));
           const renewedLease = requiredLease(recovered.work);
           expect(renewedLease.ticket_id).not.toBe(expiredLease.ticket_id);
@@ -7873,6 +8033,43 @@ test(
           issue_id: null,
           observation: null,
         });
+        const frontierStore = initialSourceHostStore(f);
+        const frontierBefore = initialSourceState(f);
+        const suspendedRequest = frontierCodeRequest(f);
+        const suspendedVerifier = mock(trustedHostFixtureVerifier(f, fixtureFrontierProof(suspendedRequest)));
+        withSuspendedFixtureOwner(
+          initialSourceHostDatabase(f),
+          () => {
+            suspendLocalWork({
+              store: frontierStore,
+              identity: f.identity,
+              journal: prepared.journal,
+              expectedWork: frontierBefore.workVersion,
+              expectedLedger: frontierBefore.ledgerVersion,
+              expectedMaintenanceGeneration: frontierBefore.maintenanceGeneration,
+              nativeSessionHandle: suspendedRequest.nativeSessionHandle,
+              userRequestPointer: 'fixture:readonly-frontier-stale-owner',
+              requestIntent: 'linked_correction',
+              config: f.config,
+              documentationContext: {
+                repository_root: f.root,
+                repository_id: f.identity.repository_id,
+                project_id: 'sample',
+                work_id: f.identity.work_id,
+              },
+            });
+          },
+          () => {
+            expect(frontierStore.readHostStateSnapshot(f.identity).work?.lease).toBeNull();
+            expect(initialSourceJournal(f)).toEqual(prepared.journal);
+            expect(frontierStore.readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(prepared.receipt);
+            expect(() => frontierStore.commitReadOnlyFrontierRuntimeCode(suspendedRequest, suspendedVerifier)).toThrow(
+              'frontier recovery control owner resources or FIFO changed',
+            );
+            expect(suspendedVerifier).not.toHaveBeenCalled();
+          },
+        );
+        expect(initialSourceState(f)).toEqual(frontierBefore);
         const readonlyPreparation = completeReadonlyFixtureHostPreparation(f);
         const peers = admitDisjointInitialSourcePeers(f);
         const host = initialSourceHostStore(f);

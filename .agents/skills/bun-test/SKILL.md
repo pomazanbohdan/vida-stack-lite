@@ -62,6 +62,29 @@ negative evidence honestly; it does not establish genuine legacy acceptance.
 For UNKNOWN recovery, check the original and effective report's own integrity
 and their status relation. An outer payload digest or a valid effective report
 alone does not prove that both retained reports are consistent.
+After a configuration continuation, use the Journal owner bound to that current
+configuration. A ledger facade retained from preparation still checks its old
+config and can reject before the intended test boundary. Reuse the current facade
+already needed by the subsequent positive control.
+For stale-owner reader tests, suspend through the actual public producer and
+restore only the observed changed fixture rows with exact post-suspension CAS.
+Check the producer's full predicate: an unissued current item does not mean its
+completed history is empty. Preserve the original positive path after restoration.
+A callback that removes lineage may be rejected by intermediate progress/admission
+validation before a later reread. Assert the observed refusal and rollback, and
+trace that earlier guard before claiming either a branch visit or an objective skip.
+For malformed sibling projection controls, reuse parser-valid research fixture
+fields, register its root with the enclosing failure-retention owner, and keep
+invalid history inside a refused or explicitly fault-aborted transaction. Compare
+native Host/Journal/DDL beforeimages and restore the exact injected row before
+the original success control. A source-derived visit remains a hypothesis until
+the complete contour report records it.
+Register a constructor's root immediately after allocation, before its first
+write, through the fixture's existing onRoot convention. An expected setup-error
+control uses the ordinary case owner: retain on real case failure, then permit
+normal cleanup on PASS. Forcing the retained-root list from a passing control can
+unnecessarily retain the entire enclosing installed fixture. Keep original failed
+attempts and their custody unchanged when correcting this test behavior.
 Before declaring a fixture absent, inspect every test path in the contour's
 existing selection. A missing direct call in one selected file is not a contour
 prerequisite GAP; another selected file may own the real producer and fixture.

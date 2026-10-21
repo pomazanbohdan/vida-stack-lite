@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -46,6 +47,7 @@ import * as bunCommands from '../bin/bun.ts';
 import { snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { coordinationLedgerJson, coordinationLedgerDigest } from '../src/contracts/envelopes.ts';
+import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.ts';
 
 type ExecutionBudget = ReturnType<ContainedControllerFixture['caseBudget']>;
 type SessionLedger = ReturnType<typeof openConfiguredMastraSessionLedger>;
@@ -140,6 +142,147 @@ function currentJournal(ledger: SessionLedger, workId: string, attempt: number):
   const snapshot = ledger.resume(workId, attempt);
   if (!snapshot) throw new Error(`Session journal ${workId}/${attempt} is missing.`);
   return snapshot;
+}
+
+function assertMalformedSiblingRefusals(
+  f: Pick<Awaited<ReturnType<typeof fixture>>, 'ledger' | 'workspace' | 'identity' | 'ddl'>,
+  actionId: string,
+  capture: (version: LedgerSnapshot['version'], fault?: () => never) => unknown,
+  message: string,
+  kind: 'stopped' | 'retired',
+): void {
+  const db = f.ledger.sessionProducerBinding().database;
+  const journal = currentJournal(f.ledger, f.identity.work_id, 1);
+  const readRow = () =>
+    required(
+      db
+        .query<{ revision: number; payload: string; digest: string }, [string, string]>(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=1',
+        )
+        .get(f.workspace, f.identity.work_id),
+      'Original capture Journal row',
+    );
+  const original = readRow();
+  expect({ revision: original.revision, digest: original.digest }).toEqual(journal.version);
+  const target = required(
+    journal.state.items.find((item) => item.request.action_id === actionId),
+    'Original issued capture item',
+  );
+  expect(target.issue_id).not.toBeNull();
+  expect(target.observation).toBeNull();
+  expect(target.host_reservation).toBeDefined();
+  const research = createHistoricalResearchFixture({ onRoot: (root) => activeConsumerRoots.push(root) });
+  const observed = required(
+    journal.state.completed
+      .flatMap((wave) => wave.items)
+      .find((item) => item.observation !== null && item.request.action_id !== actionId),
+    'Completed native capture preparation',
+  );
+  const blank = { request: target.request, issue_id: null, observation: null };
+  const distinctBlank = { ...blank, request: observed.request };
+  const variants: {
+    sibling: LedgerSnapshot['state']['items'][number];
+    message: string;
+    abortAfterProjection?: boolean;
+    moveTargetToCompleted?: boolean;
+  }[] = [
+    { sibling: target, message },
+    { sibling: { ...target, issue_id: null }, message },
+    {
+      sibling: { ...blank, research_activation: { use: research.activationUse, plan: research.activationPlan } },
+      message,
+    },
+    { sibling: { ...blank, research_normalization: research.plan }, message },
+    { sibling: blank, message: 'terminal writer journal transition differs from completed host outcome' },
+    { sibling: distinctBlank, message: 'controlled sibling projection rollback', abortAfterProjection: true },
+  ];
+  if (kind === 'stopped') variants.push({ sibling: { ...observed, issue_id: null }, message });
+  else
+    variants.push({
+      sibling: distinctBlank,
+      message: 'controlled sibling projection rollback',
+      abortAfterProjection: true,
+      moveTargetToCompleted: true,
+    });
+  const hostRows = () => db.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all();
+  const beforeHost = hostRows(),
+    beforeDdl = f.ddl();
+  const replace = db.query(
+    'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND revision=? AND payload=? AND digest=?',
+  );
+  for (const variant of variants) {
+    const completedWave = at(journal.state.completed, 0, 'Original completed preparation wave');
+    const state = variant.moveTargetToCompleted
+      ? {
+          ...journal.state,
+          items: [variant.sibling],
+          completed: [
+            { ...completedWave, items: [...completedWave.items, target] },
+            ...journal.state.completed.slice(1),
+          ],
+        }
+      : { ...journal.state, items: [...journal.state.items, variant.sibling] };
+    const corrupted = {
+      revision: original.revision + 1,
+      payload: canonicalJson(state),
+      digest: canonicalJsonDigest(state),
+    };
+    let replaced = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      replaced =
+        replace.run(
+          corrupted.revision,
+          corrupted.payload,
+          corrupted.digest,
+          f.workspace,
+          f.identity.work_id,
+          original.revision,
+          original.payload,
+          original.digest,
+        ).changes === 1;
+      expect(replaced).toBe(true);
+      let projectionFaultCalls = 0;
+      const fault = variant.abortAfterProjection
+        ? () => {
+            projectionFaultCalls += 1;
+            throw new Error('controlled sibling projection rollback');
+          }
+        : undefined;
+      expect(() => capture({ revision: corrupted.revision, digest: corrupted.digest }, fault)).toThrow(variant.message);
+      expect(projectionFaultCalls).toBe(variant.abortAfterProjection ? 1 : 0);
+      expect(db.inTransaction).toBe(false);
+      expect(hostRows()).toEqual(beforeHost);
+      expect(readRow()).toEqual(corrupted);
+      expect(f.ddl()).toEqual(beforeDdl);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            if (replaced)
+              expect(
+                replace.run(
+                  original.revision,
+                  original.payload,
+                  original.digest,
+                  f.workspace,
+                  f.identity.work_id,
+                  corrupted.revision,
+                  corrupted.payload,
+                  corrupted.digest,
+                ).changes,
+              ).toBe(1);
+            expect(readRow()).toEqual(original);
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  }
+  expect(currentJournal(f.ledger, f.identity.work_id, 1)).toEqual(journal);
 }
 
 async function publicRun(args: string[], runner: typeof run = run): Promise<JsonRecord> {
@@ -1267,6 +1410,20 @@ test(
   'stopped-source setup preserves primary and cleanup errors and closes acquired SQLite handles',
   async () => {
     const deadlineAt = performance.now() + 5000;
+    const constructorFailure = new Error('controlled research setup failure');
+    let declaredResearchRoot: string | undefined;
+    expect(() =>
+      createHistoricalResearchFixture({
+        onRoot(root) {
+          declaredResearchRoot = root;
+          activeConsumerRoots.push(root);
+          throw constructorFailure;
+        },
+      }),
+    ).toThrow(constructorFailure);
+    const registeredResearchRoot = required(declaredResearchRoot, 'Declared research setup root');
+    expect(activeConsumerRoots).toContain(registeredResearchRoot);
+    expect(readdirSync(registeredResearchRoot)).toEqual([]);
     for (const setupFailure of [new Error('controlled setup failure'), undefined]) {
       const first = new Database(':memory:');
       const second = new Database(':memory:');
@@ -2099,6 +2256,19 @@ test(
       }
       at(artifact.data.turns, 0, 'Retired source turn').items.pop();
       writeJson(f.root, c.operation.nativeTurnEvidenceRef, artifact);
+      assertMalformedSiblingRefusals(
+        f,
+        c.operation.actionId,
+        (expectedJournal, fault) =>
+          f.store.captureRetiredSourceObservation({
+            ...c.operation,
+            expectedJournal,
+            verifyCurrent: c.verifyCurrent,
+            ...(fault ? { fault } : {}),
+          }),
+        'retired-source pending issue, protected reservation or scope differs',
+        'retired',
+      );
       expect(await publicRun(args)).toMatchObject({
         status: 'captured_original_partial_source_failure',
         rights_granted: false,
@@ -2177,6 +2347,19 @@ test('public stopped capture preserves failure, rolls back all fields and DDL, t
     ).toThrow('synthetic post-settlement fault');
     expect(f.inspect()).toEqual(before);
     expect(f.ddl()).toEqual(ddl);
+    assertMalformedSiblingRefusals(
+      f,
+      required(c.operation.observation, 'Stopped-source observation').action_id,
+      (expectedJournal, fault) =>
+        f.store.captureStoppedSourceObservation({
+          ...c.operation,
+          expectedJournal,
+          verifyCurrent: c.verifyCurrent,
+          ...(fault ? { fault } : {}),
+        }),
+      'other issued outcome remains pending',
+      'stopped',
+    );
     expect(c.cli('inspect').status).toBe('inspect_current');
     expect(c.cli('plan').status).toBe('planned');
     const result = c.cli('apply');
