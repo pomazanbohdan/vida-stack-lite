@@ -543,6 +543,14 @@ every producer fence, current-version check and deterministic rebuild fresh.
 
 ### Coordination history and expired recovery
 
+The existing file-backed/recoverable case exercises its actual empty workspace
+through native readonly Bun number and safeIntegers bigint handles. Require
+native COUNT0/0n and matching empty public workspace snapshots, retain Host/schema
+and write-denial controls, and compare main DB bytes from before open through
+close. Close each handle through owned cleanup preserving primary/close/assertion
+errors; keep failure retention and default5s. This proof grants no populated
+bigint snapshot support and changes no default operational mode.
+
 Readonly workspace inspection retains its existing populated governance case.
 For optional admission-table absence, first require zero admission rows and no
 consumer baseline, then drop only the known-empty fixture table. Require the

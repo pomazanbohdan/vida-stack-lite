@@ -14,25 +14,28 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-a984c3c8b5f86db6a8dd135a3ca6aaad9b9ff56a, run
-b9eaf8dd-d425-4653-b938-07e01db05155, projection attempts1165.
+6425ed69913dbfe9285e2430740d2fd6abd1f40b, run
+e2d4151a-6f9e-4910-a688-ed103be35376, projection attempts1167.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs334cases/5471assertions
-in186994.116318ms. Host and stopped-source children take180.00s and126.38s.
-Commit recovery has setup9234.358676ms/body3684.479150ms; rollback has
-setup9185.173442ms/body2593.053753ms. Both pass unchanged20s bounds after
+unchanged boot/image and automatic publication. It runs334cases/5482assertions
+in169812.281739ms. Host and stopped-source children take162.24s and110.86s.
+Commit recovery has setup7521.381818ms/body3341.939240ms; rollback has
+setup7622.914675ms/body2519.099583ms. Both pass unchanged20s bounds after
 fixture optimization; the previous commit timeout does not recur.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains8statement/145branch-arm gaps, no missing function
-or line. Compared with the preceding complete526ca2e report, four branch arms
-gain visits with unchanged production denominators. assertCodexDesktopAdapterContract,
-recordAdmissionAttempt and validateMutableHistories have no missing branch arms.
-The earlier58d309d simplification removed ten unused
-private alternatives; denominator removal is not new execution. Its retained
+The report-only join retains8statement/142branch-arm gaps, no missing function
+or line. Compared with the preceding completea984c3c report, the absent-table
+inspection arm gains a visit. Removing two nullish expressions removes four
+instrumented arms: two previously covered and two missing. Thus B changes from
+5481/5626 to5480/5622; the raw covered-counter delta is not execution gain.
+assertCodexDesktopAdapterContract, recordAdmissionAttempt and
+validateMutableHistories retain no missing branch arms. The earlier58d309d
+simplification changed the branch denominator by ten; denominator removal is
+not new execution. Its retained
 measurement and custody are in the
 [published526ca2e WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/526ca2e382401768e385cb2de558780d441741b8/.agent/work/core-runtime-reactivation/WORK.md).
 The join performs no new AST/Source scan/hash. Frozen CC/CRAP remains deferred;
@@ -49,12 +52,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-65Kaqt/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1266-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1266-scratch-parent.json and DIAG/remainder-v1266-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1266-cache-retirement-65Kaqt/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-65Kaqt-BUQf1v/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-hnZ0kF |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-VvgFlE/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1270-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1270-scratch-parent.json and DIAG/remainder-v1270-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1270-cache-retirement-VvgFlE/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-VvgFlE-Qg5mLs/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-qkGZBk |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -63,7 +66,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3751673856bytes and retained tmpfs9236692992bytes available, both above the
+3681435648bytes and retained tmpfs9231966208bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -434,14 +437,40 @@ optional-inspection-v1268-9u8gtX. Fresh projected schema/noncanonical indexes,
 readonly absence/restoration and held-fence legacy projection repair cases take
 413.32ms/120.70ms/76.23ms. The unchanged two earlier cases are the actual callers
 of both projected and no-projection shapes. Complete current-input numerical
-confirmation is pending one matching SDK/image/stage for this packet. Refresh
-the changed Host test pin once; strict122/configured lint0 and the existing
+confirmation is complete in the6425ed6 stage: its absent-table arm is visited,
+and the two removed PK fallbacks are separately accounted above. The readonly
+case takes207.25ms. Refresh the changed Host test pin once; strict122/configured lint0 and the existing
 two-file resource control pass1case/10assertions in332ms:
 remainder-v1270-controls-PZ9QBz. Changed documentation links/headings pass.
 
+### Checked native bigint empty-workspace packet
+
+Extend only the existing file-backed/recoverable case's readonly-handle segment.
+Require its fresh actual workspace to contain no Work or Ledger. Loop real Bun
+number/bigint handle modes, prove native COUNT returns0/0n, and compare the public
+workspace snapshot with the normal baseline. Preserve Host equality, readonly
+write denial, schema, memory/unshared/empty-schema/nonrecoverable controls and
+the existing5s deadline. Each handle closes through primary-error cleanup.
+Capture DB bytes before each native open and compare only after its close;
+there is no additional engine, Journal, schema or operational-mode change.
+
+The bounded review is vida-bigint-workspace-review-v1271.md. Its populated-mode
+revision decoder limitation is Source-only and has no executed reproduction;
+this empty-workspace proof neither resolves nor grants populated-mode support.
+Keep that compatibility question separate from the default runtime and current
+coverage acceptance. Final review vida-bigint-workspace-final-review-v1273.md
+finds the empty oracle and cleanup sound and prompted the open-to-close boundary
+refinement. Original narrower1case/25assertions1.82s evidence stays in
+bigint-workspace-v1272-NXgfcO. The strengthened exact case passes strict149,
+configured lint0 and1case/25assertions1.66s overall,139.98ms case time in
+bigint-lifecycle-v1274-kc7c9x. Refresh the changed test pin once; strict122,
+configured lint0 and the existing two-file resource control pass1case/10assertions
+in292ms: remainder-v1275-controls-uHnr95. Changed documentation links/headings
+pass. Current-input numeric confirmation is pending.
+
 ### Next actions and unresolved prerequisites
 
-1. Select the next causal S/B packet from the current8statement/145arm gap list;
+1. Select the next causal S/B packet from the current8statement/142arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,

@@ -16901,42 +16901,60 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     if (!(rejected instanceof Error)) throw new Error('memory-backed host database was not rejected with an Error');
     expect(Reflect.get(rejected, 'code')).toBe('GAP-HOST-STATE-001');
     expect(rejected.message).toMatch(/file-backed/);
-    const readonlyHandle = new Database(databasePath, { readonly: true, strict: true });
-    handles.push(readonlyHandle);
-    let primaryFailure: { error: unknown } | undefined;
-    try {
-      const inspected = new HostStateStore(
-        readonlyHandle,
-        workspace,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true,
-      );
-      const schema = database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name');
-      const schemaBefore = schema.all();
-      const before = store.readHostStateSnapshot(identity);
-      expect(inspected.readHostStateSnapshot(identity)).toEqual(before);
-      expect(() => inspected.recordAdmissionAttempt('readonly-denied', 1, { fixture: true })).toThrow(/readonly/i);
-      expect(store.readHostStateSnapshot(identity)).toEqual(before);
-      expect(schema.all()).toEqual(schemaBefore);
-    } catch (error) {
-      primaryFailure = { error };
-      throw error;
-    } finally {
-      completeOwnedCleanup(
-        [
-          () => {
-            readonlyHandle.close();
-          },
-        ],
-        primaryFailure,
-      );
+    const beforeWorkspace = store.readWorkspaceSnapshot();
+    expect(beforeWorkspace.work).toEqual([]);
+    expect(beforeWorkspace.ledger).toBeNull();
+    for (const integerMode of ['number', 'bigint'] as const) {
+      const bytesBefore = readFileSync(databasePath);
+      const readonlyHandle = new Database(databasePath, {
+        readonly: true,
+        strict: true,
+        safeIntegers: integerMode === 'bigint',
+      });
+      handles.push(readonlyHandle);
+      let primaryFailure: { error: unknown } | undefined;
+      try {
+        const inspected = new HostStateStore(
+          readonlyHandle,
+          workspace,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          true,
+        );
+        const schema = database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name');
+        const schemaBefore = schema.all();
+        const before = store.readHostStateSnapshot(identity);
+        expect(
+          requiredValue(
+            readonlyHandle.query<ScalarCountRow, []>('SELECT COUNT(*) AS count FROM agent_host_state').get(),
+            'native integer mode count',
+          ).count,
+        ).toBe(integerMode === 'bigint' ? 0n : 0);
+        expect(inspected.readWorkspaceSnapshot()).toEqual(beforeWorkspace);
+        expect(inspected.readHostStateSnapshot(identity)).toEqual(before);
+        expect(() => inspected.recordAdmissionAttempt('readonly-denied', 1, { fixture: true })).toThrow(/readonly/i);
+        expect(store.readHostStateSnapshot(identity)).toEqual(before);
+        expect(schema.all()).toEqual(schemaBefore);
+      } catch (error) {
+        primaryFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              readonlyHandle.close();
+              expect(readFileSync(databasePath)).toEqual(bytesBefore);
+            },
+          ],
+          primaryFailure,
+        );
+      }
     }
     const empty = new Database(path.join(root, 'read-only-empty.sqlite'), { create: true, strict: true });
     handles.push(empty);
