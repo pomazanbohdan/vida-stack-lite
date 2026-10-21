@@ -1858,8 +1858,32 @@ test(
   async () => {
     const f = await fixture();
     try {
-      const retirement = f.retireOwner(),
-        c = f.retiredCaptureInput(retirement),
+      const originalReceipt = workflowReservation(f.reservation).receipt;
+      const originalJournal = currentJournal(f.ledger, 'stopped', 1);
+      const uncertain = f.store.markWorkflowAttemptUncertain(originalReceipt);
+      expect(uncertain.attempt).toEqual({
+        ...originalReceipt.attempt,
+        status: 'uncertain',
+        result: null,
+        result_digest: null,
+      });
+      const prepared = completeHost(f.store.readHostStateSnapshot(f.identity));
+      expect(prepared.work.execution.assignment_attempts).toEqual([uncertain.attempt]);
+      expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(originalJournal);
+      const request = f.retirementRequest();
+      expect(request.expectedWork).toEqual(prepared.workVersion);
+      expect(request.authorization.receipt).toEqual(originalReceipt);
+      expect(required(request.authorization.approval, 'Original uncertain writer approval').status).toBe(
+        'commit_unknown',
+      );
+      const retirement = f.retireOwner(request);
+      expect(retirement.attempt_receipt.attempt).toEqual(uncertain.attempt);
+      expect(retirement.attempt_receipt.workVersion).toEqual(completeHost(retirement.snapshot).workVersion);
+      const retired = f.inspect();
+      expect(f.retireOwner(request)).toEqual(retirement);
+      expect(f.inspect()).toEqual(retired);
+      expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(originalJournal);
+      const c = f.retiredCaptureInput(retirement),
         before = f.inspect(),
         artifactPath = path.join(f.root, c.operation.nativeTurnEvidenceRef),
         retainedArtifactValue: unknown = JSON.parse(readFileSync(artifactPath, 'utf8')),

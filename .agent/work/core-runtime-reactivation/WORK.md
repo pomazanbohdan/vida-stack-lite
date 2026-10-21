@@ -363,9 +363,23 @@ DIAG/remainder-v1375-controls-hMDNDo. Ordinary hooks pass formatting520/strict52
 and normal push publishesffb1223. Build-only SDK run39611591651 and the complete
 selected stage above pass. Publication/import and report-only map refresh occur
 once. The completed sibling gains two actual arms without changing denominators.
-The next bounded blind1377 study checks whether the public uncertain-attempt
-producer can precede an existing retirement case. No UNKNOWN is replayed and
-a proposed path does not establish runtime execution or coverage.
+Blind study DIAG/vida-uncertain-retirement-review-v1377.md identifies the public
+uncertain-attempt producer before the existing command-patch retirement case.
+Root adds that producer with exact persisted uncertain/null result/digest,
+fresh Host CAS, original start approval, unchanged Journal and exact retry
+oracles. The retirement attempt body stays equal while its receipt version
+binds the new retirement snapshot; full receipts across the version advance
+are not interchangeable. Existing patch/exclusion/refusal assertions remain.
+1378 stops on two nullability errors before runtime; corrected1379 passes
+strict129/lint0 and1case/23assertions5.55s,4282.68ms native, under its unchanged
+case exception. Exact logs: DIAG/retired-uncertain-v1378-f6zRH5 and
+DIAG/retired-uncertain-v1379-eyD6kJ. Independent current-Source review
+DIAG/vida-uncertain-retirement-final-v1380.md accepts the change without
+re-attesting checks. Root binds the changed second file once in
+DIAG/remainder-v1381-test-pin.json. Strict122/lint0 and the same namespace
+control pass1case/10assertions335ms in DIAG/remainder-v1381-controls-TEZMrR.
+No UNKNOWN is replayed. This focused result is not numeric acceptance; one
+matching SDK and full selected coverage stage remain next.
 
 The tsrs research decision is maintained in
 [test cost research](../../../packages/agent/docs/research/test-timeout-cost-20261013.md#tsrs-compiler-candidate--2026-10-21).
