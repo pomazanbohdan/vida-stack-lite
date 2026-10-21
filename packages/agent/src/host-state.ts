@@ -3648,28 +3648,15 @@ function checkedStoredWork(
           )
             admissionArtifacts.push(artifact);
         }
-        const reportRecovery = records.find(
-          (entry): entry is Extract<(typeof records)[number], { kind: 'completed-source-report-recovery' }> =>
-            entry.kind === 'completed-source-report-recovery' &&
-            entry.receipt.record.request.identity.work_id === request.identity.work_id &&
-            entry.receipt.record.request.attempt === request.attempt,
-        );
+        // The receipt validator requires terminal attempts and preserves this
+        // exact prefix. Report recovery never changes an already terminal attempt.
         for (const attempt of original.execution.assignment_attempts) {
           const current = candidate.execution.assignment_attempts.find(
-              (entry) => entry.attempt_id === attempt.attempt_id,
-            ),
-            recoveryPriorAttempt = reportRecovery?.receipt.record.prior_work.execution.assignment_attempts.find(
-              (entry) => entry.attempt_id === attempt.attempt_id,
-            ),
-            recoveredAttempt = reportRecovery?.receipt.record.completed_attempt;
+            (entry) => entry.attempt_id === attempt.attempt_id,
+          );
           requireState(
-            current &&
-              (sameJson(current, attempt) ||
-                (recoveryPriorAttempt &&
-                  sameJson(recoveryPriorAttempt, attempt) &&
-                  recoveredAttempt?.attempt_id === attempt.attempt_id &&
-                  sameJson(current, recoveredAttempt))),
-            'configured-frontier assignment changed outside the exact completed report transition',
+            current && sameJson(current, attempt),
+            'configured-frontier terminal assignment history differs',
           );
           bindings.set(attempt.attempt_id, original.binding);
         }
@@ -5520,6 +5507,7 @@ export class HostStateStore {
     requireState(!this.#database.inTransaction, 'nested consumer migration transaction forbidden');
     const operationId = receipt.fence.binding.operation_id;
     const tables = ['agent_host_state', 'agent_host_mastra_session_ledger', 'agent_host_governance'] as const;
+    type MigrationRows = Record<(typeof tables)[number], Record<string, unknown>[]>;
     // Private SQL operation records retain ordered, individually bounded row payloads.
     // They are not one public ingress document and do not duplicate a shared ledger.
     const encodePlan = (plan: unknown): string => JSON.stringify(plan);
@@ -5528,13 +5516,41 @@ export class HostStateStore {
       Array.isArray(expected) &&
       actual.length === expected.length &&
       actual.every((row, index) => sameJson(row, expected[index]));
-    const sameRows = (actual: Record<string, Record<string, unknown>[]>, expected: unknown): boolean =>
+    const sameRows = (actual: MigrationRows, expected: unknown): boolean =>
       Boolean(
         expected &&
         typeof expected === 'object' &&
         sameJson(Object.keys(actual).sort(), Object.keys(expected).sort()) &&
-        tables.every((table) => sameRecords(actual[table] ?? [], (expected as Record<string, unknown>)[table])),
+        tables.every((table) => sameRecords(actual[table], (expected as Record<string, unknown>)[table])),
       );
+    const readRestorePlan = (payload: string) => {
+      const plan = JSON.parse(payload) as {
+        status: string;
+        binding: unknown;
+        before: MigrationRows;
+        after: unknown;
+        admissions: unknown;
+      };
+      requireState(
+        isPlainRecord(plan) &&
+          isPlainRecord(plan.before) &&
+          sameJson(Object.keys(plan.before).sort(), [...tables].sort()) &&
+          Object.values(plan.before).every(Array.isArray),
+        'consumer migration beforeimage tables differ',
+      );
+      for (const table of tables)
+        for (const row of plan.before[table]) {
+          requireState(isPlainRecord(row) && typeof row.payload === 'string', 'consumer migration row payload invalid');
+          const decoded = decodeWorkspaceSqlRow(
+            table,
+            { ...row, raw_payload_bytes: Buffer.from(row.payload as string, 'utf8') },
+            this.#workspaceId,
+            this.#database,
+          );
+          migrationRowValues.set(row, decoded.value);
+        }
+      return plan;
+    };
 
     const migrationRowValues = new WeakMap<Record<string, unknown>, unknown>();
     const migrationColumns = {
@@ -5560,9 +5576,11 @@ export class HostStateStore {
         return persisted.row;
       });
     };
-    const readRows = (): Record<string, Record<string, unknown>[]> => {
-      return Object.fromEntries(tables.map((table) => [table, readTable(table)]));
-    };
+    const readRows = (): MigrationRows => ({
+      agent_host_state: readTable('agent_host_state'),
+      agent_host_mastra_session_ledger: readTable('agent_host_mastra_session_ledger'),
+      agent_host_governance: readTable('agent_host_governance'),
+    });
     const readMigrationRowValue = (row: Record<string, unknown>): unknown => {
       requireState(migrationRowValues.has(row), 'current migration row has no decoded payload');
       return migrationRowValues.get(row);
@@ -5576,7 +5594,7 @@ export class HostStateStore {
     const checkSettled = (): { validatedLedger: CoordinationLedger | null; rows: ReturnType<typeof readRows> } => {
       const validatedLedger = this.#assertMaintenanceQuiescent();
       const rows = readRows();
-      for (const row of rows.agent_host_mastra_session_ledger ?? []) {
+      for (const row of rows.agent_host_mastra_session_ledger) {
         const journal = parseMastraSessionLedgerState(readMigrationRowValue(row));
         requireState(
           journal.schema === 'MastraSessionLedger/v1' &&
@@ -5613,7 +5631,7 @@ export class HostStateStore {
           .query('SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?')
           .get(this.#workspaceId, operationId) as { payload: string; digest: string } | null;
         requireState(row && digestPlan(row.payload) === row.digest, 'consumer migration baseline missing or corrupt');
-        const plan = JSON.parse(row.payload) as Record<string, unknown>;
+        const plan = readRestorePlan(row.payload);
         requireState(sameJson(plan.binding, receipt.fence.binding), 'consumer migration maintenance binding differs');
         requireState(
           plan.status === 'baseline' || plan.status === 'restoring' || plan.status === 'restored',
@@ -5670,7 +5688,7 @@ export class HostStateStore {
         const { validatedLedger, rows: before } = checkSettled();
         const attemptBaseline = admissions();
         // Validate every current-v1 pair before hiding old tasks; retired readers are never selected.
-        for (const row of before.agent_host_state ?? [])
+        for (const row of before.agent_host_state)
           if (row.kind === 'work') {
             const work = this.#checkedWork(readMigrationRowValue(row));
             validatePair(work, validatedLedger);
@@ -5681,7 +5699,7 @@ export class HostStateStore {
           'consumer migration callback must be synchronous',
         );
         for (const table of tables)
-          if (before[table]?.length)
+          if (before[table].length)
             this.#database.query(`DELETE FROM ${table} WHERE workspace_id=?`).run(this.#workspaceId);
         const plan = {
           schema: 'ConsumerMigrationState/v1',
@@ -5703,12 +5721,7 @@ export class HostStateStore {
         };
       }
       requireState(prior && digestPlan(prior.payload) === prior.digest, 'consumer migration baseline corrupt');
-      const plan = JSON.parse(prior.payload) as {
-        status: string;
-        before: Record<string, Record<string, unknown>[]>;
-        after: unknown;
-        admissions: unknown;
-      };
+      const plan = readRestorePlan(prior.payload);
       if (plan.status === 'restored') {
         requireState(
           sameRows(readRows(), plan.before) && sameRecords(admissions(), plan.admissions),
@@ -5732,21 +5745,21 @@ export class HostStateStore {
       );
       checkSettled();
       // Schema validation precedes filesystem effects; exact historic payloads and revisions are retained.
-      for (const row of plan.before.agent_host_state ?? []) {
-        if (row.kind === 'work') this.#checkedWork(JSON.parse(row.payload as string));
+      for (const row of plan.before.agent_host_state) {
+        if (row.kind === 'work') this.#checkedWork(readMigrationRowValue(row));
         else {
           requireState(row.kind === 'ledger', 'consumer migration state kind invalid');
-          checkedLedger(JSON.parse(row.payload as string));
+          checkedLedger(readMigrationRowValue(row));
         }
         requireState(
-          canonicalJsonDigest(JSON.parse(row.payload as string)) === row.digest,
+          canonicalJsonDigest(readMigrationRowValue(row)) === row.digest,
           'consumer migration beforeimage integrity differs',
         );
       }
-      const ledgerRow = plan.before.agent_host_state?.find((row) => row.kind === 'ledger');
-      const priorLedger = ledgerRow ? checkedLedger(JSON.parse(ledgerRow.payload as string)) : null;
-      for (const row of plan.before.agent_host_state ?? [])
-        if (row.kind === 'work') validatePair(this.#checkedWork(JSON.parse(row.payload as string)), priorLedger);
+      const ledgerRow = plan.before.agent_host_state.find((row) => row.kind === 'ledger');
+      const priorLedger = ledgerRow ? checkedLedger(readMigrationRowValue(ledgerRow)) : null;
+      for (const row of plan.before.agent_host_state)
+        if (row.kind === 'work') validatePair(this.#checkedWork(readMigrationRowValue(row)), priorLedger);
       const tableColumns = new Map<string, string[]>();
       for (const table of tables) {
         const columns = this.#database.query(`PRAGMA table_info(${table})`).all() as { name: string }[];
@@ -5754,24 +5767,25 @@ export class HostStateStore {
           table,
           columns.map((column) => column.name),
         );
-        for (const row of plan.before[table] ?? [])
+        for (const row of plan.before[table])
           requireState(
             sameJson(columns.map((column) => column.name).sort(), Object.keys(row).sort()),
             'consumer migration row columns differ',
           );
       }
-      const result = files();
-      requireState(
-        !result || typeof (result as { then?: unknown }).then !== 'function',
-        'consumer migration callback must be synchronous',
-      );
       for (const table of tables)
-        for (const row of plan.before[table] ?? []) {
+        for (const row of plan.before[table]) {
           const columns = tableColumns.get(table)!;
           this.#database
             .query(`INSERT INTO ${table} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`)
             .run(...(columns.map((column) => row[column]) as (string | number | null)[]));
         }
+      requireState(sameRows(readRows(), plan.before), 'consumer migration restored rows differ');
+      const result = files();
+      requireState(
+        !result || typeof (result as { then?: unknown }).then !== 'function',
+        'consumer migration callback must be synchronous',
+      );
       requireState(sameRows(readRows(), plan.before), 'consumer migration restored rows differ');
       plan.status = 'restored';
       this.#database

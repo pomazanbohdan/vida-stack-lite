@@ -19,6 +19,7 @@ import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-r
 import { createInitializationBundle } from '../helpers/init-bundle.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
+import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
 import {
   createPrewriterPreparationObservation,
   runSynthesisFixtureInProcess,
@@ -105,7 +106,10 @@ import type {
   HostStateSnapshot,
   StateVersion,
 } from '../../src/host-state.ts';
-import type { MastraSessionLedgerSnapshot } from '../../src/orchestration/persistent-session-handoff.ts';
+import type {
+  MastraSessionLedgerSnapshot,
+  SynthesisObservationCorrectionPlan,
+} from '../../src/orchestration/persistent-session-handoff.ts';
 import { validateHostOperationReservation } from '../../src/governance/edictum-boundary.ts';
 import {
   coordinationLedgerJson,
@@ -283,6 +287,83 @@ function readFixtureHostRows(db: Database) {
   };
 }
 type ScalarCountRow = { readonly count: number | bigint };
+function expectTerminalHostResultMutationDenied(
+  db: Database,
+  host: HostStateStore,
+  identity: WorkIdentity,
+  work: WorkState,
+  message: string,
+): void {
+  const originalRow = requiredValue(
+    db
+      .query<HostStateSqlRow, [string, string]>(
+        "SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+      )
+      .get(host.workspaceId, identity.work_id),
+    'Persisted terminal-history Work',
+  );
+  expect(originalRow.payload).toBe(canonicalJson(work));
+  expect(work.execution.assignment_attempts[0]?.status).toBe('completed');
+  const changedResult = { fixture_only: true, operation: 'tampered-readonly-preparation' };
+  const changed = {
+    ...work,
+    execution: {
+      ...work.execution,
+      assignment_attempts: work.execution.assignment_attempts.map((attempt, index) =>
+        index === 0
+          ? {
+              ...attempt,
+              result: changedResult,
+              result_digest: canonicalJsonDigest(changedResult),
+            }
+          : attempt,
+      ),
+    },
+  };
+  const changedDigest = canonicalJsonDigest(changed);
+  const writeTarget = db.query(
+    "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
+  );
+  expect(
+    writeTarget.run(
+      canonicalJson(changed),
+      changedDigest,
+      host.workspaceId,
+      originalRow.id,
+      originalRow.revision,
+      originalRow.digest,
+    ).changes,
+  ).toBe(1);
+  const corruptRows = readFixtureHostRows(db);
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    expect(() => host.readHostStateSnapshot(identity)).toThrow(message);
+    expect(readFixtureHostRows(db)).toEqual(corruptRows);
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          expect(
+            writeTarget.run(
+              originalRow.payload,
+              originalRow.digest,
+              host.workspaceId,
+              originalRow.id,
+              originalRow.revision,
+              changedDigest,
+            ).changes,
+          ).toBe(1);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+  expect(host.readHostStateSnapshot(identity).work).toEqual(work);
+}
+
 type GovernanceStoreSqlRow = {
   readonly store_id: string;
   readonly generation: string;
@@ -1962,6 +2043,104 @@ test('task-source trusted-verifier and CAS denials roll back native preparation 
   }
 });
 
+test('task-source inspection issues only fixed read commands without mutation policy or lease replacement', async () => {
+  const deadline = performance.now() + 5_000;
+  const policy = mock(async () => {
+    throw new Error('Inspection must not invoke mutation policy');
+  });
+  const f = createTaskSourceHostFixture({ policyVerifier: policy });
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const { branch_ref: _branch, ...base } = f.request;
+    const request = { ...base, operation: 'inspect' as const, source_root: f.root };
+    const input = { request, identity: f.identity };
+    const before = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    const journal = f.store.readWorkSessionJournal(f.identity);
+    const nativeBefore = readFixtureHostRows(f.database);
+    const prepared = f.store.prepareTaskSourceBindingOperation({ ...input, verifyCurrent: f.trustedVerifyCurrent });
+    const issued = await f.store.issueTaskSourceBindingOperation(input);
+    expect(issued.status).toBe('issued');
+    expect(issued.command_argv).toEqual([
+      ['-C', f.root, 'rev-parse', '--show-toplevel'],
+      ['-C', f.root, 'rev-parse', '--path-format=absolute', '--git-common-dir'],
+      ['-C', f.root, 'branch', '--show-current'],
+      ['-C', f.root, 'rev-parse', 'HEAD'],
+    ]);
+    expect(policy).not.toHaveBeenCalled();
+    expect(readFixtureHostRows(f.database)).toEqual(nativeBefore);
+    expect(await f.store.issueTaskSourceBindingOperation(input)).toEqual({
+      ...issued,
+      status: 'already_issued',
+      command_argv: null,
+    });
+    const actionVersion = requiredValue(
+      f.database
+        .query<StateVersion, [string]>(
+          'SELECT revision,digest FROM agent_host_task_source_binding_action WHERE operation_id=?',
+        )
+        .get(request.operation_id),
+      'Issued inspection state version',
+    );
+    const report: TaskSourceBindingReport = {
+      schema: 'TaskSourceBindingReport/v1',
+      operation: request.operation,
+      operation_id: request.operation_id,
+      request_id: request.request_id,
+      report_id: 'fixture:observed-inspection',
+      expected_host: request.expected_host,
+      status: 'observed',
+      // Controlled Git observation, not an executed Git command or Source effect.
+      binding: createTaskSourceBinding({
+        request,
+        source_scope: requiredValue(f.journal.source_scope, 'Inspection Source scope'),
+        canonical_host_common_dir: path.join(f.root, '.git'),
+        git: {
+          source_root: f.root,
+          common_dir: path.join(f.root, '.git'),
+          branch: 'main',
+          head: '1'.repeat(40),
+          cwd: f.root,
+        },
+      }),
+    };
+    const reportInput = { ...input, report, expectedActionStateVersion: actionVersion };
+    const observed = f.store.reportTaskSourceBindingOperation(reportInput);
+    expect(observed).toMatchObject({
+      status: 'reported',
+      command_argv: null,
+      action: { report, policy_decision: null },
+    });
+    expect(f.store.reportTaskSourceBindingOperation(reportInput)).toEqual(observed);
+    expect(f.store.prepareTaskSourceBindingOperation({ ...input, verifyCurrent: f.trustedVerifyCurrent })).toEqual(
+      prepared,
+    );
+    expect(f.store.inspectTaskSourceBindingAction({ ...input, verifyCurrent: f.trustedVerifyCurrent })).toEqual(
+      observed,
+    );
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+    expect(readFixtureHostRows(f.database)).toEqual(nativeBefore);
+    expect(policy).not.toHaveBeenCalled();
+    expect(existsSync(path.join(f.root, 'task-source'))).toBe(false);
+    expect(performance.now()).toBeLessThan(deadline);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(() => completed && performance.now() < deadline);
+          if (performance.now() >= deadline) throw new Error('TaskSource inspection cleanup exhausted its deadline');
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
 test('task-source issued and UNKNOWN actions retain reservations without exposing replay argv', async () => {
   const retainedResources = ['branch:refs/heads/accepted-source', 'execution:task-source-expiry'];
   const policy = mock(
@@ -2697,6 +2876,9 @@ test('trusted Host continuation atomically retains historical evidence and never
       request_digest: current.capture.request_digest,
       receipt: current.capture,
     });
+    expect(current.store.captureHistoricalTerminalSynthesisAndRelease(current.captureInput)).toEqual(
+      requiredValue(captureRead, 'Request-bound historical capture'),
+    );
     expect(
       current.store.readHistoricalTerminalSynthesisCaptureForRequest({
         ...current.captureInput,
@@ -2936,6 +3118,66 @@ test('trusted Host continuation atomically retains historical evidence and never
         },
         () => {
           if (!completed || performance.now() >= deadline) retain();
+          cleanupContinuationFixtures();
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test('historical capture releases its original owner while preserving the same-owner queue and denying continuation', async () => {
+  const deadline = performance.now() + 5_000;
+  const fixtureRoot = mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-'));
+  let configRoot: string | undefined;
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    configRoot = continuationFixtureRepositoryRoot();
+    const current = await continuationFixture({ root: fixtureRoot, queued: true });
+    const before = presentSnapshot(current.store.readHostStateSnapshot(current.identity));
+    const queued = before.ledger.tickets.filter((ticket) => ticket.status === 'queued');
+    expect(queued).toHaveLength(1);
+    expect(queued[0]).toMatchObject({
+      work_id: current.identity.work_id,
+      thread_id: current.threadId,
+      generation: before.ledger.open_generation,
+      source_revision: before.work.binding.work_source_revision,
+      claim_ids: [],
+      active_resources: [],
+      exclusive_resources: ['execution:' + current.identity.work_id],
+    });
+    expect(before.ledger.claims.filter((claim) => claim.ticket_id === queued[0]?.ticket_id)).toEqual([]);
+    expect(before.work.lease).toBeNull();
+    expect(before.work.execution.status).toBe('suspended');
+    expect(current.store.captureHistoricalTerminalSynthesisAndRelease(current.captureInput)).toEqual({
+      snapshot: before,
+      request_digest: current.capture.request_digest,
+      receipt: current.capture,
+    });
+    const journal = current.store.readWorkSessionJournal(current.identity);
+    const rowsBefore = readFixtureHostRows(current.db);
+    const captured = current.db.query('SELECT payload,digest FROM agent_host_historical_terminal_synthesis_capture');
+    const captureBefore = captured.all();
+    await expectRejection(current.store.continueDeliveredWork(continuationRequestFor(current)), /FIFO/);
+    expect(readFixtureHostRows(current.db)).toEqual(rowsBefore);
+    expect(captured.all()).toEqual(captureBefore);
+    expect(current.store.readHostStateSnapshot(current.identity)).toEqual(before);
+    expect(current.store.readWorkSessionJournal(current.identity)).toEqual(journal);
+    expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toBeNull();
+    expect(performance.now()).toBeLessThan(deadline);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          if (!completed || performance.now() >= deadline) {
+            retainContinuationFixtureRoot(fixtureRoot);
+            if (configRoot) retainContinuationFixtureRoot(configRoot);
+          }
           cleanupContinuationFixtures();
         },
       ],
@@ -4195,6 +4437,217 @@ test('native readonly replacement runtime rebind retires only its admitted sourc
   });
 });
 
+test('native synthesis correction runtime rebind preserves admitted research and exact corrected history', async () => {
+  const deadline = performance.now() + 5_000;
+  let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+  let ownedRoot: string | undefined;
+  let completed = false;
+  await withInitialSourceCleanup(
+    async () => {
+      const current = await createInitialSourceWorkFixture({
+        cooperativeSynthesis: true,
+        researchSynthesis: true,
+        onRoot: (root) => {
+          ownedRoot = root;
+          console.info('Native synthesis correction Host fixture root: ' + root);
+        },
+      });
+      fixture = current;
+      const prepared = await prepareNativeUnnormalizedSynthesis(current);
+      const host = initialSourceHostStore(current);
+      const ledger = initialSourceHostLedger(current);
+      const admitted = requiredValue(current.input, 'Native synthesis admission');
+      const before = presentSnapshot(host.readHostStateSnapshot(current.identity));
+      expect(prepared.journal.state.completed).toHaveLength(1);
+      expect(prepared.originalItem.research_activation).toBeDefined();
+      expect(prepared.originalItem.research_normalization).toBeUndefined();
+      expect(before.work.artifacts.filter((artifact) => artifact.schema === 'ResearchResult/v1')).toHaveLength(1);
+      expect(before.work.artifacts.filter((artifact) => artifact.schema === 'ResearchSynthesis/v1')).toEqual([]);
+      const correctionPointer = 'fixture:correct-native-synthesis-observation';
+      suspendLocalWork({
+        store: host,
+        identity: current.identity,
+        journal: prepared.journal,
+        expectedWork: before.workVersion,
+        expectedLedger: before.ledgerVersion,
+        expectedMaintenanceGeneration: before.maintenanceGeneration,
+        nativeSessionHandle: admitted.nativeSessionHandle,
+        userRequestPointer: correctionPointer,
+        requestIntent: 'linked_correction',
+        config: current.config,
+        documentationContext: {
+          repository_root: current.root,
+          repository_id: current.identity.repository_id,
+          project_id: requiredValue(current.identity.project_ids[0], 'Synthesis project'),
+          work_id: current.identity.work_id,
+        },
+      });
+      const paused = presentSnapshot(host.readHostStateSnapshot(current.identity));
+      expect(paused.work.execution.status).toBe('suspended');
+      expect(paused.work.lease).toBeNull();
+      const body: Omit<SynthesisObservationCorrectionPlan, 'digest'> = {
+        schema: 'VidaSynthesisObservationCorrectionPlan/v1',
+        correction_id: 'fixture-native-synthesis-correction',
+        actor: admitted.nativeSessionHandle,
+        timestamp: new Date().toISOString(),
+        workspace_id: host.workspaceId,
+        repository_id: current.identity.repository_id,
+        project_ids: current.identity.project_ids,
+        integrations_digest: current.identity.integrations_digest,
+        work_id: current.identity.work_id,
+        attempt: 1,
+        action_id: prepared.originalItem.request.action_id,
+        prior_issue_id: requiredValue(prepared.originalItem.issue_id, 'Completed native synthesis issue'),
+        native_session_handle: admitted.nativeSessionHandle,
+        owner_correction_pointer: correctionPointer,
+        config_digest: paused.work.binding.config_digest,
+        source_digest: paused.work.binding.work_source_revision,
+        predecessor_refs: prepared.catalog.result_refs,
+        catalog_digest: canonicalJsonDigest(prepared.catalog),
+        expected_work: paused.workVersion,
+        expected_ledger: paused.ledgerVersion,
+        expected_journal: prepared.journal.version,
+        original_item: prepared.originalItem,
+      };
+      // Controlled correction plan input over actual admitted predecessor bytes;
+      // this Host unit case does not qualify the CLI's provenance-collision planner.
+      const correction = { ...body, digest: canonicalJsonDigest(body) };
+      const corrected = ledger.correctObservedSynthesis(correction);
+      expect(corrected.state.items).toEqual([
+        { request: prepared.originalItem.request, issue_id: null, observation: null },
+      ]);
+      expect(corrected.state.completed).toEqual(prepared.journal.state.completed);
+      expect(ledger.synthesisCorrection(current.identity.work_id, 1, body.action_id)).toEqual(correction);
+      expect(ledger.correctObservedSynthesis(correction)).toEqual(corrected);
+      expect(host.readHostStateSnapshot(current.identity)).toEqual(paused);
+      resumePausedLocalWork({
+        store: host,
+        ledger,
+        identity: current.identity,
+        attempt: 1,
+        expectedWork: paused.workVersion,
+        expectedLedger: paused.ledgerVersion,
+        expectedJournal: corrected.version,
+        nativeSessionHandle: admitted.nativeSessionHandle,
+        configDigest: body.config_digest,
+        sourceDigest: body.source_digest,
+      });
+      const active = presentSnapshot(host.readHostStateSnapshot(current.identity));
+      const approvals = active.work.lifecycle.references.filter(
+        (reference) => reference.kind === 'execution_approval' && reference.disposition === 'current',
+      );
+      expect(approvals).toHaveLength(1);
+      const principal = 'fixture:native-synthesis-runtime-rebind';
+      const verifier: RuntimeCodeRebindVerifier = {
+        principal,
+        verify: (request) => ({
+          schema: 'VidaRuntimeCodeRebindAuthorization/v1',
+          request_digest: canonicalJsonDigest(request),
+          principal,
+          forward_operation_id: request.forwardOperationId,
+          parent_manifest_digest: request.parentManifestDigest,
+          successor_manifest_digest: request.successorManifestDigest,
+          owner_correction_pointer: request.synthesisCorrection!.ownerCorrectionPointer,
+          synthesis_correction_digest: request.synthesisCorrection!.correctionDigest,
+        }),
+      };
+      const db = initialSourceHostDatabase(current);
+      const checked = new HostStateStore(
+        db,
+        host.workspaceId,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        current.root,
+        verifier,
+      );
+      const request: RuntimeCodeRebindRequest = {
+        identity: current.identity,
+        attempt: 1,
+        actionId: body.action_id,
+        issueId: body.prior_issue_id,
+        nativeSessionHandle: admitted.nativeSessionHandle,
+        expectedWork: active.workVersion,
+        expectedLedger: active.ledgerVersion,
+        expectedJournal: corrected.version,
+        expectedMaintenanceGeneration: active.maintenanceGeneration,
+        oldRuntimeCodeDigest: active.work.binding.runtime_code_digest,
+        newRuntimeCodeDigest: canonicalJsonDigest('fixture:corrected-synthesis-runtime'),
+        forwardOperationId: 'fixture:corrected-synthesis-forward',
+        parentManifestDigest: canonicalJsonDigest('fixture:corrected-synthesis-parent'),
+        successorManifestDigest: canonicalJsonDigest('fixture:corrected-synthesis-successor'),
+        synthesisCorrection: {
+          correctionId: correction.correction_id,
+          correctionDigest: correction.digest,
+          ownerCorrectionPointer: correctionPointer,
+        },
+      };
+      const rowsBefore = readFixtureHostRows(db);
+      await expectRejection(
+        checked.rebindRuntimeCode({
+          ...request,
+          synthesisCorrection: {
+            ...requiredValue(request.synthesisCorrection, 'Synthesis correction request'),
+            correctionDigest: '0'.repeat(64),
+          },
+        }),
+        'runtime-code rebind issued read-only action changed',
+      );
+      expect(readFixtureHostRows(db)).toEqual(rowsBefore);
+      expect(ledger.synthesisCorrection(current.identity.work_id, 1, body.action_id)).toEqual(correction);
+      const rebound = presentSnapshot(await checked.rebindRuntimeCode(request));
+      expect(rebound.work.binding).toEqual({
+        ...active.work.binding,
+        runtime_code_digest: request.newRuntimeCodeDigest,
+        runtime_source_revision: request.newRuntimeCodeDigest,
+      });
+      expect(rebound.work.execution).toEqual(active.work.execution);
+      expect(rebound.work.artifacts).toEqual(active.work.artifacts);
+      expect(rebound.work.lease).toEqual(active.work.lease);
+      expect(rebound.ledger).toEqual(active.ledger);
+      expect(rebound.work.lifecycle.phase).toBe(active.work.lifecycle.phase);
+      expect(
+        rebound.work.lifecycle.references.filter(
+          (reference) => reference.kind === 'execution_approval' && reference.disposition === 'current',
+        ),
+      ).toEqual([]);
+      expect(checked.readWorkSessionJournal(current.identity)).toEqual({
+        attempt: 1,
+        state: corrected.state,
+        version: corrected.version,
+      });
+      expect(ledger.synthesisCorrection(current.identity.work_id, 1, body.action_id)).toEqual(correction);
+      const row = requiredValue(
+        db
+          .query<{ payload: string; digest: string }, []>('SELECT payload,digest FROM agent_host_runtime_code_rebind')
+          .get(),
+        'Synthesis runtime rebind receipt',
+      );
+      const receipt = parseJsonRecord(row.payload);
+      expect(canonicalJsonDigest(receipt)).toBe(row.digest);
+      expect(receipt).toMatchObject({
+        request,
+        synthesis_correction_digest: correction.digest,
+        retired_execution_approval_ids: approvals.map((reference) => reference.record_id),
+        binding_history: { original_work: active.work, original_journal: corrected.state },
+      });
+      await expectRejection(checked.rebindRuntimeCode(request), 'state compare-and-swap conflict');
+      expect(checked.readHostStateSnapshot(current.identity)).toEqual(rebound);
+      expect(performance.now()).toBeLessThan(deadline);
+      completed = true;
+    },
+    async () => {
+      if (fixture) await fixture.close();
+      if (ownedRoot) {
+        if (completed && performance.now() < deadline) await rm(ownedRoot, { recursive: true, force: true });
+        else console.error('Retained native synthesis correction Host fixture: ' + ownedRoot);
+      }
+    },
+    'Native synthesis correction Host fixture',
+  );
+});
+
 test(
   'native legacy developer frontier continues through current reviewers without fabricated Host history',
   async () => {
@@ -4403,6 +4856,13 @@ test(
         expect(result.receipt.prior_ledger).toEqual(paused.ledger);
         expect(result.receipt.prior_journal).toEqual(journal.state);
         expect(result.snapshot.work?.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
+        expectTerminalHostResultMutationDenied(
+          db,
+          store,
+          current.identity,
+          requiredValue(result.snapshot.work, 'Configured-frontier successor Work'),
+          'configured-frontier terminal assignment history differs',
+        );
         expect(result.receipt).toMatchObject({
           rights_granted: false,
           accepted_result: false,
@@ -5119,59 +5579,13 @@ test(
         ).toThrow('frontier rebind retry differs from the committed request');
         expect(verifierCalls).toBe(2);
         expect(initialSourceState(f)).toEqual(after);
-        const originalRow = requiredValue(
-          db
-            .query<HostStateSqlRow, [string, string]>(
-              "SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
-            )
-            .get(host.workspaceId, f.identity.work_id),
-          'Readonly rebind persisted target Work',
+        expectTerminalHostResultMutationDenied(
+          db,
+          host,
+          f.identity,
+          after.work,
+          'initial-source frontier code rebind assignment history differs',
         );
-        const changedResult = { fixture_only: true, operation: 'tampered-readonly-preparation' };
-        const changedHistory = {
-          ...after.work,
-          execution: {
-            ...after.work.execution,
-            assignment_attempts: after.work.execution.assignment_attempts.map((attempt) => ({
-              ...attempt,
-              result: changedResult,
-              result_digest: canonicalJsonDigest(changedResult),
-            })),
-          },
-        };
-        const writeTarget = db.query(
-          "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=?",
-        );
-        expect(
-          writeTarget.run(
-            canonicalJson(changedHistory),
-            canonicalJsonDigest(changedHistory),
-            host.workspaceId,
-            originalRow.id,
-          ).changes,
-        ).toBe(1);
-        const corruptRows = readFixtureHostRows(db);
-        let historyFailure: { error: unknown } | undefined;
-        try {
-          expect(() => host.readHostStateSnapshot(f.identity)).toThrow(
-            'initial-source frontier code rebind assignment history differs',
-          );
-          expect(readFixtureHostRows(db)).toEqual(corruptRows);
-        } catch (error) {
-          historyFailure = { error };
-          throw error;
-        } finally {
-          completeOwnedCleanup(
-            [
-              () => {
-                expect(
-                  writeTarget.run(originalRow.payload, originalRow.digest, host.workspaceId, originalRow.id).changes,
-                ).toBe(1);
-              },
-            ],
-            historyFailure,
-          );
-        }
         expect(initialSourceState(f)).toEqual(after);
         const laterPreparation = completeReadonlyFixtureHostPreparation(f, 'fixture_readonly_after_rebind');
         const later = initialSourceState(f);
@@ -9490,6 +9904,77 @@ test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
   },
 );
 
+test('consumer migration rejects incomplete beforeimages before invoking the file callback', async () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const migration = maintenanceStore();
+  const fence = migration.acquireMaintenanceFence(maintenanceBinding());
+  migration.consumerMigrationState(fence, 'baseline', () => undefined);
+  const original = requiredValue(
+    database
+      .query<{ payload: string; digest: string }, [string, string]>(
+        'SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?',
+      )
+      .get(workspace, fence.fence.binding.operation_id),
+    'migration beforeimage row',
+  );
+  const plan = parseJsonRecord(original.payload);
+  const before = parseJsonRecord(JSON.stringify(plan.before));
+  const malformed = [
+    null,
+    [],
+    ...Object.keys(before).map((missing) =>
+      Object.fromEntries(Object.entries(before).filter(([key]) => key !== missing)),
+    ),
+    { ...before, agent_host_state: {} },
+    { ...before, unexpected_table: [] },
+  ];
+  const replace = database.query<never, [string, string, string, string, string]>(
+    'UPDATE agent_host_consumer_migration SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest=?',
+  );
+  let calls = 0;
+  for (const invalid of malformed) {
+    const payload = JSON.stringify({ ...plan, before: invalid });
+    const digest = createHash('sha256').update(payload).digest('hex');
+    expect(replace.run(payload, digest, workspace, fence.fence.binding.operation_id, original.digest).changes).toBe(1);
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      expect(() =>
+        migration.consumerMigrationState(fence, 'restore', () => {
+          calls++;
+        }),
+      ).toThrow('consumer migration beforeimage tables differ');
+      expect(calls).toBe(0);
+      expect(
+        database
+          .query<{ payload: string; digest: string }, [string, string]>(
+            'SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?',
+          )
+          .get(workspace, fence.fence.binding.operation_id),
+      ).toEqual({ payload, digest });
+      expect(database.query<ScalarCountRow, []>('SELECT count(*) AS count FROM agent_host_state').get()?.count).toBe(0);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            expect(
+              replace.run(original.payload, original.digest, workspace, fence.fence.binding.operation_id, digest)
+                .changes,
+            ).toBe(1);
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  }
+  expect(migration.consumerMigrationState(fence, 'restore', () => ++calls).status).toBe('restored');
+  expect(calls).toBe(1);
+  await migration.releaseMaintenanceFence(fence);
+  preserveHostFixtureRoot = false;
+});
+
 test('consumer migration keeps canonical SQLite in place, clears active rows and restores exact state under its held fence', async () => {
   preserveHostFixtureRoot = 'case failed or timed out';
   const deadline = performance.now() + 5_000;
@@ -9552,6 +10037,79 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
   expect(migration.readWorkspaceSnapshot().work).toHaveLength(0);
   expect(migration.readWorkspaceSnapshot().ledger).toBeNull();
   expect(journalRows.all()).toEqual([]);
+  const planRow = requiredValue(
+    database
+      .query<{ payload: string; digest: string }, [string, string]>(
+        'SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?',
+      )
+      .get(workspace, fence.fence.binding.operation_id),
+    'populated migration beforeimage',
+  );
+  const plan = parseJsonRecord(planRow.payload);
+  const beforeRows = parseJsonRecord(JSON.stringify(plan.before));
+  if (!Array.isArray(beforeRows.agent_host_state)) throw new Error('migration fixture state rows missing');
+  const stateRows: readonly unknown[] = beforeRows.agent_host_state;
+  const originalStateRow = parseJsonRecord(JSON.stringify(firstOf(beforeRows.agent_host_state, 'migration state row')));
+  const corruptBeforeimages = [
+    {
+      ...beforeRows,
+      agent_host_state: [{ ...originalStateRow, workspace_id: 'foreign-workspace' }, ...stateRows.slice(1)],
+    },
+    { ...beforeRows, agent_host_state: [...stateRows, originalStateRow] },
+  ];
+  for (const corruptBeforeimage of corruptBeforeimages) {
+    const corruptPayload = JSON.stringify({ ...plan, before: corruptBeforeimage });
+    const corruptDigest = createHash('sha256').update(corruptPayload).digest('hex');
+    const restoringDigest = createHash('sha256')
+      .update(JSON.stringify({ ...plan, before: corruptBeforeimage, status: 'restoring' }))
+      .digest('hex');
+    const replacePlan = database.query<never, [string, string, string, string, string, string]>(
+      'UPDATE agent_host_consumer_migration SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest IN (?,?)',
+    );
+    expect(
+      replacePlan.run(
+        corruptPayload,
+        corruptDigest,
+        workspace,
+        fence.fence.binding.operation_id,
+        planRow.digest,
+        planRow.digest,
+      ).changes,
+    ).toBe(1);
+    let corruptCallbacks = 0;
+    let preflightFailure: { error: unknown } | undefined;
+    try {
+      expect(() =>
+        migration.consumerMigrationState(fence, 'restore', () => {
+          corruptCallbacks++;
+        }),
+      ).toThrow(/another workspace|UNIQUE constraint/);
+      expect(corruptCallbacks).toBe(0);
+      expect(journalRows.all()).toEqual([]);
+      expect(migration.readWorkspaceSnapshot().work).toEqual([]);
+    } catch (error) {
+      preflightFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            expect(
+              replacePlan.run(
+                planRow.payload,
+                planRow.digest,
+                workspace,
+                fence.fence.binding.operation_id,
+                corruptDigest,
+                restoringDigest,
+              ).changes,
+            ).toBe(1);
+          },
+        ],
+        preflightFailure,
+      );
+    }
+  }
   writeFileSync(consumerFile, 'deterministic initialization failure output');
   expect(() =>
     migration.consumerMigrationState(fence, 'restore', () => {

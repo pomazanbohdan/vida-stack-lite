@@ -1927,6 +1927,12 @@ failure with a later successful retry. Preserve transport failures separately
 when no log was created. A corrected invocation gets a new path, not a rewritten
 original. This rule applies to manual focused checks as well as producer logs.
 
+Keep the native test exit receipt distinct from an outer shell or transport
+outcome. If they disagree, retain both and qualify capture with an inert command
+before repeating a suite. Neither a shell failure nor partial PASS rows replace
+terminal/capture/group evidence. A wrapper correction changes no product exit
+contract or numeric acceptance rule.
+
 Once the static checks pass, group affected named cases in one serial Bun
 invocation where their existing resource
 and timeout contracts permit it. A pure input/schema check should precede an

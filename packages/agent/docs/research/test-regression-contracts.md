@@ -4,6 +4,47 @@ This reference holds detailed, scenario-specific regression contracts that are t
 
 ## Required agent regressions
 
+### Exact terminal history and native synthesis correction
+
+Configured-frontier receipts require an exact terminal attempt prefix. Report
+recovery completes only its own started attempt; it cannot replace a terminal
+prefix entry. Both original and configured-frontier readers share the native-row
+negative oracle: change result and result digest together, require the owning
+history guard, preserve rows, then conditionally restore exact original bytes
+through owned cleanup. Supported terminal history needs no recovery exception.
+
+The opt-in Initial Source fixture configures its research/synthesis graph before
+admission. Issue, activate and report research through the native ledger,
+normalize/admit its artifact, then resume synthesis against that predecessor.
+Leave its real activated report unnormalized. The Host case suspends, applies
+and retries a controlled typed correction plan, resumes, denies a changed
+correction digest without effects, then performs the real runtime rebind.
+Preserve research artifacts, execution, lease, Journal and correction/receipt
+history while retiring current approvals. Controlled report content and the Host
+verifier are unit seams, not CLI planner, external research, endpoint formation
+or Runtime acceptance. Keep the default5s deadline and functional scratch custody.
+
+Historical capture checks both request-bound reads and direct exact producer
+retry. A separate real same-owner queued ticket stays queued and claimless after
+capture releases the original owner; continuation still denies FIFO with exact
+Host/Journal/receipt preservation. TaskSource inspection issues only the fixed
+read commands without mutation policy or lease replacement. Preserve actual
+issue/report/retry observations and unchanged rows; do not execute Git argv.
+
+### Consumer migration rejects incomplete beforeimages before effects
+
+Use a real baseline under its held maintenance fence. Change only its private
+beforeimage and recompute the actual payload digest: null, array, each missing
+table, a non-array table and an extra table must deny before a file callback or
+plan change. A populated beforeimage also rejects a foreign SQL workspace and
+duplicate valid primary keys before callback entry. The duplicate-key SQL failure
+retains restoring progress, rolls back rows and never calls the inert callback.
+Restore original plan bytes through conditional owned cleanup, preserving
+primary and cleanup errors; the valid restore must then succeed. Negative callbacks
+are inert counters, so these controls perform no real consumer effects. Retain
+the existing Journal/history, interruption/retry, prepared-admission, foreign-row,
+UNKNOWN and aggregate-governance cases and their original limits.
+
 ### Historical continuation retains actual completed Host attempts
 
 The existing Host historical-terminal continuation case opts into

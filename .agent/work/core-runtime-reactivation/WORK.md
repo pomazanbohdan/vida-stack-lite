@@ -10,6 +10,78 @@ exact F/L/S/B100 before selecting another. Root is the sole Source integrator,
 Git owner and numeric producer. Frozen complexity/CRAP qualification and mutation
 remain deferred; their budgets and acceptance rules are unchanged.
 
+### Current three-hour audit and migration preflight correction
+
+The00:40–00:45UTC observation reuses the current Source15 receipts, projection
+and map. Twelve published commits fall in the preceding three hours; the last
+three complete stages take175.228s,161.206s and186.306s on different inputs.
+No controlled speedup, complete tool-call count or token telemetry is available.
+Root keeps one writer and one producer; independent Luna work is read-only.
+No full suite, AST inventory, Source scan/hash or projection import is duplicated.
+
+The pending packet removes configured-frontier's redundant report-recovery scan
+and per-attempt predecessor lookup. Independent reader/producer proof establishes
+an exact terminal prefix; recovery only completes a started target. Shared exact
+result+digest corruption controls preserve the rejection. Retired callable roles
+are `binding:reportRecovery/closure:CallExpression:arguments[0]#0` and
+`binding:recoveryPriorAttempt/closure:OptionalCallExpression:arguments[0]#0`
+under `src/host-state.ts#fn:checkedStoredWork#0`; transfer no complexity allowance.
+
+The new native fixture reaches real research issue/activation/report, artifact
+normalization/admission, synthesis report, correction and runtime rebind. It uses
+controlled report/plan/verifier inputs at declared unit seams, not a CLI planner,
+live research or Runtime acceptance. Historical capture now has direct producer
+retry and a genuine same-owner queue control; TaskSource inspect checks fixed read
+argv, skipped mutation policy, unchanged lease and actual report/retry behavior.
+Focused terminal/history6PASS384assertions, inspect1PASS15assertions and native
+synthesis32assertions are retained with strict149-file and configured lint checks.
+The native disk case times out at5390.01ms and its FD6cL0 root stays protected.
+The owned retained-host-tmpfs case passes2089.71ms with native exit0; this single
+observation is neither a statistical speedup nor power-loss durability evidence.
+Its direct native exit and outer shell1 remain separate. Inert controls reproduce
+outer1 on explicit shell exit0 and outer0 on a final status test; no expensive
+suite rerun is needed to diagnose that transport discrepancy. Its mechanism is
+unproven and no product exit behavior changes. TESTING and bun-test now encode
+receipt-first inert diagnosis rather than automatic rerun.
+
+Root independently reproduces two migration preflight defects: a missing table
+and a foreign SQL workspace each invoke an inert file callback before rejection.
+Original failing logs and roots F1sclJ/a05FCO remain protected. Exact three-table
+runtime validation now precedes the durable restoring transition. The existing
+bounded SQL row decoder checks both current plan snapshots; its decoded values
+replace repeated JSON.parse calls in later payload/pair checks. Fixed typed table
+rows replace Object.fromEntries/map and redundant internal empty defaults; do not
+erase persisted-input validation. A seven-case malformed-table matrix passes
+44assertions. The insertion-order review also reproduces a duplicate valid key
+calling the callback before its UNIQUE failure; original Mp5EEY fixture/log stay
+retained. Restoration now stages SQL and verifies exact readback before callback,
+retaining the post-callback exact-row guard and immediate rollback/retry behavior.
+The final affected migration selection passes9/181assertions, all existing case
+limits unchanged. Strict149-file checks and lint pass; runner strict122-file and
+exact Host two-file pin control10assertions pass. Final blind review finds no
+remaining blocker in that bounded scope. Reviews and controls are retained in
+`coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1127-controls-HGBHea`.
+The removed readRows map closure is retired; the new restore-plan decoder has
+its own correspondence and no transferred frozen complexity allowance. Numeric
+qualification is still pending the matching published-input stage.
+
+Capacity reuses the retained v1123 admission/inventory and the observed terminal
+functional retention receipt, not another broad du/scan/hash. Functional scratch
+`/dev/shm/vida-functional-synthesis-rbC87i` is inactive, its remaining bytes fully
+tar-compared to `/workspace/vida-functional-retention-synthesis-v1126-F9aNn4/scratch.tar.gz`:
+140bytes, SHA256`a5b7dd19239b6c62bc39eceb18288089fab0ef8180b7dd14a5b5caf7e34b70db`.
+Original scratch remains retained. Durable free5441748992bytes leaves3294265344
+above the unchanged2147483648floor; scratch admission had9351106560free. No new
+resource GAP, stale cache candidate or safe evidence deletion is established.
+
+Select static-first causal checks, bounded read-only review and one final matching
+SDK/image/stage. Wider numeric pools, compiler/runtime overlap or a full stage per
+assertion have no demonstrated benefit and add resource competition. Keep the
+two reviewed serial-file children. Reuse exact map coordinates and one bounded
+Bun metadata read for logs rather than repeated shell path-discovery pipelines.
+The Source15 counters below remain the latest complete numbers until the new
+packet's own stage; no current-HEAD closure is claimed.
+
 Latest complete measurement binds Source `15f3e6bf21b5ed22bfa8159de10d8ffb92a4ab6d` and run
 `6672c496-0e72-4ce7-a40e-079b3841e43e`, not later HEAD.
 
@@ -800,11 +872,11 @@ fallback remain unchanged. UNKNOWN remains fenced.
 
 | Combination | Evidence and decision |
 | --- | --- |
-| Root causal packet, static-first focused checks, independent review, one final SDK/image/stage | Selected. Current completed run is160.493s; prior Source-bound runs retain distinct inputs. |
+| Root causal packet, static-first focused checks, independent review, one final SDK/image/stage | Selected. Latest Source15 run is186.306s; prior Source-bound runs retain distinct inputs. |
 | Full stage after each partial assertion edit | Reject. Latest malformed-plan packet added only1F/1L/1S/2B despite many assertions; plan from actual missing map locations. No extra unchanged stage is needed. |
 | Root writer plus bounded read-only Luna review/research | Selected during development only. Shared files retain one writer; workers close before numeric freeze. |
-| Two reviewed serial-file children | Keep current qualification and pins. Current child times153.62s and120.61s; full capture/group closure hold. |
-| Fully serial files | Supported fallback. Their274.23s sum is only a planning comparator, not a measured serial wall time. |
+| Two reviewed serial-file children | Keep current qualification and pins. Source15 child times177.15s and139.11s; full capture/group closure hold. |
+| Fully serial files | Supported fallback. Their316.26s sum is only a planning comparator, not measured serial wall time or admission. |
 | Wider numeric pool or concurrent suites/cleanup/indexing | Unqualified and not selected. Existing caps, one producer and freeze remain unchanged. |
 
 The earlier three-hour audit's local qualifier namespace-overwrite correction,

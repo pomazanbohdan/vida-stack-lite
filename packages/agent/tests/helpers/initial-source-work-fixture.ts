@@ -142,11 +142,13 @@ export async function createInitialSourceWorkFixture({
   onRoot,
   cooperativeSynthesis = false,
   legacyTaskFrontier = false,
+  researchSynthesis = false,
 }: {
   readonly parentRoot?: string;
   readonly onRoot?: (root: string) => void;
   readonly cooperativeSynthesis?: boolean;
   readonly legacyTaskFrontier?: boolean;
+  readonly researchSynthesis?: boolean;
 } = {}): Promise<InitialWorkFixture> {
   const fixtureBase = parentRoot === undefined ? tmpdir() : assertOwnedFixtureParent(parentRoot);
   const root = mkdtempSync(path.join(fixtureBase, parentRoot === undefined ? 'vida-initial-source-' : 'case-'));
@@ -205,6 +207,46 @@ export async function createInitialSourceWorkFixture({
         },
       };
       writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), stringifyYaml(legacyConfig));
+    }
+    if (researchSynthesis) {
+      const before = loadRuntimeConfig(root);
+      const task = before.workflows.task_execution;
+      if (!task?.stages.some((stage) => stage.id === 'synthesize_task'))
+        throw new Error('Research synthesis fixture requires task synthesis');
+      const configured: AgentRuntimeConfig = {
+        ...before,
+        workflows: {
+          ...before.workflows,
+          task_execution: {
+            ...task,
+            entry_stage: 'research_parallel',
+            stages: [
+              {
+                id: 'research_parallel',
+                kind: 'research',
+                mode: 'single',
+                assignments: [{ role: 'requirements-researcher', profile: 'researcher', contour: 'requirements' }],
+                consumes: ['WorkItem/v1'],
+                produces: ['ResearchResult/v1'],
+                required_after: [],
+              },
+              ...task.stages.map((stage) =>
+                stage.id === 'synthesize_task'
+                  ? {
+                      ...stage,
+                      consumes: [...stage.consumes, 'ResearchResult/v1'],
+                      produces: [...stage.produces, 'ResearchSynthesis/v1'],
+                      required_after: ['research_parallel'],
+                    }
+                  : stage,
+              ),
+            ],
+            edges: [['research_parallel', 'synthesize_task'], ...task.edges],
+          },
+        },
+      };
+      configBytes = stringifyYaml(configured);
+      writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
     }
     const config = loadRuntimeConfig(root);
     mkdirSync(path.join(root, config.control.work_root), { recursive: true });

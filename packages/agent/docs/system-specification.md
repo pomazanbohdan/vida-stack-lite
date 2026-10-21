@@ -263,6 +263,16 @@ open, including package snapshot and binding preparation. Setup failure must
 close through that paired owner before propagating the original error; if close
 also fails, report both errors and retain the exact handle for the existing retry
 path. No migration callback or maintenance acquisition follows failed capture.
+Restore validates the persisted beforeimage's exact three canonical table keys,
+array values and bounded persisted SQL row identities/digests before marking it
+restoring, then revalidates the current plan before any file callback. Missing,
+extra, non-array or foreign-workspace rows are corruption, not empty state.
+Existing Work/Ledger pairing, column, admission and maintenance checks still
+precede restoration effects.
+Inside the restore transaction, stage the exact SQL beforeimage and verify its
+readback before invoking the file callback. An insertion/constraint failure must
+not invoke that callback. Recheck exact rows afterward; callback failure rolls
+back staged SQL while retaining the same restoring operation and held fence.
 
 The current separate storage-admission database remains a compatibility
 implementation GAP against that target. Its uninitialized exact zero-byte file
@@ -1834,6 +1844,10 @@ The original developer stays in the immutable beforeimage, and the completed
 prefix stays unchanged. Exact retry returns the retained result before another
 engine read. The Host lookup exposes the whole reviewer wave and each item's
 retained issuance/report state. It rejects missing, duplicate or foreign items.
+Every pre-existing Host attempt in that configured-frontier receipt is terminal
+and remains exactly equal through later history reconstruction. Completed-report
+recovery changes only its exact started attempt; it cannot override that terminal
+prefix, whether its receipt precedes or follows the continuation.
 While that configured reviewer wave remains current, an accepted planner report
 may advance lifecycle from INTAKE through TRACE to PLAN. Live lookup preserves
 those native phases and the current Journal; it still requires active review,

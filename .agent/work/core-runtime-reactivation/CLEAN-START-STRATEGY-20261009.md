@@ -180,8 +180,16 @@ and a broader TaskSource policy-result denial matrix. Independent default5s case
 share builders and keep separate roots; preserve the original combined-case
 timeout. Root publishes the coherent packet, forms matching SDK inputs and
 measures once. The matching15f3e6b stage confirms both new functions and29arms;
-keep the same contour active. Then resolve the native research/synthesis-correction and composed
-frontier/report-recovery prerequisites from the refreshed map, never seeded success.
+keep the same contour active. The next packet now reaches native research,
+synthesis correction and current-approval retirement through actual product APIs.
+Independent review proves configured-frontier originals are an exact terminal
+prefix, so remove its unreachable recovery-lookup exception rather than inventing
+a joined history fixture. Keep genuine terminal-result corruption denials.
+The same packet adds capture producer retry, same-owner queued capture and
+TaskSource inspect, and repairs reproduced migration preflight ordering defects.
+Complete scoped checks/review, refresh the exact Host pin once, publish, then use
+one matching SDK/image/stage. Source15's2missing functions/333arms stay the last
+measured inventory until that stage; focused PASS does not close those counters.
 
 For each group, the exact named Bun case must reach its intended public operation
 and assert its success, refusal and replay behavior before strict TypeScript/lint
