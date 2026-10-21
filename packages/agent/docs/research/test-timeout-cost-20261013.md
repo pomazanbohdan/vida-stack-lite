@@ -7,6 +7,35 @@ and the existing CLEAR repair/parallel implementation plans.
 
 ## Observed boundaries
 
+### tsrs compiler candidate — 2026-10-21
+
+The npm registry reports `tsrs` latest as
+`0.18.0-ts7.1.0-dev.20260929`, Apache-2.0. It is Oxc's Rust port of the
+TypeScript7 compiler and language server. These are metadata/documentation
+observations, not a local installation or compatibility result.
+
+Current Source checks use Bun1.4.3 `bun check`; the package also retains
+TypeScript7.0.2. Bun's [release notes](https://bun.com/blog/bun-v1.4.3)
+already document native type checking. No evidence here identifies its engine
+as tsrs. Adding another compiler for the same routine check has no measured
+VIDA benefit. Keep the current gate and do not add tsrs as a normal dependency.
+
+A separate possible pilot is SDK declaration emission: build-package.ts runs
+`typescript/bin/tsc` through Bun, while `bun check` emits no declarations.
+Only pursue it after a measured declaration bottleneck. Compare the same
+captured inputs, diagnostics/exit status, declarations and downstream SDK
+consumer checks, elapsed time and peak RSS. TypeScript7.1-dev versus7.0.2 is a
+language-version change, not an isolated compiler comparison.
+
+The [compatibility table](https://github.com/oxc-project/tsrs/blob/main/docs/COMPATIBILITY.md)
+lists Linux/macOS packages but no Windows binary in0.18.0. Windows support in
+upstream main is a next-release plan. The npm launcher declares Node>=16.20;
+Bun execution is unqualified here. The programmatic API is unstable, adds an
+IPC/server boundary and does not consume our retained Babel AST. Preserve Babel
+function identities, test/scenario links, Ajv, Bun coverage and all current
+gates. Compiler replacement alone does not accelerate native fixture execution
+or supply coverage, CRAP or assertion-confirmed mutation evidence.
+
 ### Mutation scratch successors — 2026-10-14
 
 The sequential Stryker gate formerly launched a successor even after an

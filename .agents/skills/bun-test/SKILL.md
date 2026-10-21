@@ -881,6 +881,13 @@ For a repeated SQLite BUSY wait in a functional lease-denial case, use
 Keep the real lock, exact connection, healthy retry and production timing policy;
 do not replace the native denial with a thrown error.
 
+For refusal before a write transaction opens, a private connection's query_only
+mode can supply a native SQLITE_READONLY control. Qualify BEGIN IMMEDIATE on the
+selected Bun/SQLite first. Preserve zero body/rollback calls, unchanged native
+rows and artifacts, and no open transaction. Restore the observed original mode
+through owned cleanup before the healthy control. This proves a pre-BEGIN denial,
+not a BUSY lock, contention timing or persistence recovery.
+
 For mutation resource pressure, distinguish disposable Bun `.pile` transpiler
 cache from fixture/evidence data. Follow TESTING's isolated worker cache policy;
 retain the exact cleanup manifest and every database, raw receipt and UNKNOWN

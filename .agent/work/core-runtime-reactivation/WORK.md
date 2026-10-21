@@ -302,6 +302,37 @@ removal. Thread review vida-tasksource-thread-change-review-v1323.md confirms
 renewal/recovery preserve the owner; foreign read handles refuse before the
 different-attempt skip. Keep that prerequisite GAP and no fabricated authority.
 
+The next packet reuses two existing inexpensive cases. Native capability probe
+DIAG/query-only-begin-v1362.json confirms SQLite3.53.4 refuses BEGIN IMMEDIATE
+under query_only with SQLITE_READONLY/errno8 and no transaction. The actual Host
+artifact case uses that connection-local mode, proves neither body nor rollback
+entered, preserves exact Host/Journal/artifact data, then restores the original
+mode through owned cleanup before all original refusal/success/error controls.
+Strict149/lint0 and1case/91assertions pass2.39s,579.43ms native, in
+DIAG/guarded-readonly-v1364-3tOmk5. No lock wait, new connection or larger budget.
+
+The existing two-Work import case adds a typed pending migration to one fresh
+quiescent Work and a reversed-input stale-version refusal. Native Host/gate rows
+and transaction closure remain unchanged after denial. The original canonical
+import then preserves both exact Work/ledger snapshots, including pending lineage.
+Strict149/lint0 and1case/6assertions pass1.80s,227.65ms native, in
+DIAG/import-sort-v1365-5kKO2L. This is a current private fixture, not archived
+migration/UNKNOWN replay. The bounded study is
+DIAG/vida-reconciliation-sort-review-v1361.md. Independent final Source review
+DIAG/vida-guarded-import-final-review-v1366.md finds no blocking issue. It guessed
+JSON filenames for diagnostic directories; Root verified the actual named
+strict.log/lint.log/test.log files above. Review does not independently attest
+those runtime numbers. Final test binding is recorded once in
+DIAG/remainder-v1367-test-pin.json. Strict122/lint0 and the existing two-file
+namespace control pass1case/10assertions370ms in
+DIAG/remainder-v1367-controls-pyuQPN. Normal publication and one matching complete
+stage remain; proposed branch visits are not numeric proof.
+
+The tsrs research decision is maintained in
+[test cost research](../../../packages/agent/docs/research/test-timeout-cost-20261013.md#tsrs-compiler-candidate--2026-10-21).
+Keep built-in Bun check as the current gate. No package is installed and no
+unmeasured compiler replacement or new AST/inventory pass is introduced.
+
 The next read-only recovery-view control reuses the existing genuine writer
 commit case before its controlled Source effect. Require exact current Work,
 Ledger, versions, issued Journal and original continuation receipt, with absent
@@ -357,6 +388,10 @@ publishes1fc3483. The push receipt is DIAG/sdk-command-cause-v1358-push.log.
    Do not rerun unchanged groups or start another contour before full F/L/S/B100.
 
 Keep these specific unresolved paths open:
+- A configured-frontier recovery view with nonempty qualified runtime history
+  still needs a genuine joined producer fixture. Corrected bounded1360 review
+  checks the actual two-file focused selection, not the broader package command.
+  No cross-fixture receipt or invented execution-only rights may fill that GAP.
 - The readonly frontier's five missing item/stage/assignment/profile arms have
   no supported producer in the bounded current fixture path. The1352 Source
   review distinguishes schema reachability from an eligible public frontier.

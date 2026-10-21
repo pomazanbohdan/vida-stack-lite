@@ -1886,6 +1886,45 @@ test('Host artifact mutation preserves primary and rollback failures with native
     const rows = readFixtureHostRows(f.database);
     let entered = 0;
     let restored = 0;
+    const queryOnly = f.database.query<{ query_only: number }, []>('PRAGMA query_only');
+    expect(queryOnly.get()?.query_only).toBe(0);
+    f.database.exec('PRAGMA query_only=ON');
+    let readonlyFailure: { error: unknown } | undefined;
+    try {
+      const denied = await rejectionReason(
+        f.store.withHistoricalNormalizationMutation({
+          ...guard,
+          action: () => {
+            entered += 1;
+          },
+          rollback: () => {
+            restored += 1;
+          },
+        }),
+      );
+      expect(denied).toBeInstanceOf(Error);
+      if (!(denied instanceof Error)) throw new Error('Native readonly denial must retain its SQLite error');
+      expect(Reflect.get(denied, 'code')).toBe('SQLITE_READONLY');
+      expect(f.database.inTransaction).toBe(false);
+      expect(entered).toBe(0);
+      expect(restored).toBe(0);
+      expect(readFixtureHostRows(f.database)).toEqual(rows);
+      expect(values()).toEqual([]);
+      expect(readFileSync(artifact, 'utf8')).toBe('before');
+    } catch (error) {
+      readonlyFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            f.database.exec('PRAGMA query_only=OFF');
+          },
+        ],
+        readonlyFailure,
+      );
+    }
+    expect(queryOnly.get()?.query_only).toBe(0);
     for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal'] as const) {
       const denied = await rejectionReason(
         f.store.withHistoricalNormalizationMutation({
@@ -13868,6 +13907,22 @@ describe('host-owned reconciliation rollback gate', () => {
     quiesceImportedState([first.nextWork, second.nextWork], ledger);
     const firstIdentity = identity;
     const secondIdentity = { ...identity, work_id: 'other' };
+    const migrationSource = {
+      source_schema: 'WorkCheckpoint/v2',
+      source_sha256: 'a'.repeat(64),
+      source_work_id: secondIdentity.work_id,
+      source_revision: second.nextWork.binding.work_source_revision,
+      original_run_id: null,
+    } satisfies Parameters<typeof workMigrationId>[0];
+    second.nextWork.execution.run_id = null;
+    second.nextWork.migration = {
+      schema: 'WorkMigrationLineage/v1',
+      ...migrationSource,
+      continuation_run_id: null,
+      migration_id: workMigrationId(migrationSource),
+      rebind_status: 'pending',
+      rebind_receipt: null,
+    };
     const binding = {
       ...reconciliationBinding({ workVersion: { revision: 7, digest: canonicalJsonDigest(first.nextWork) } }),
       work: [
@@ -13877,9 +13932,22 @@ describe('host-owned reconciliation rollback gate', () => {
     };
     store = maintenanceStore();
     const fence = store.acquireMaintenanceFence(maintenanceBinding());
+    const hostRows = database.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id');
+    const gateRows = database.query('SELECT * FROM agent_host_reconciliation ORDER BY workspace_id');
+    const persistedBefore = { host: hostRows.all(), gate: gateRows.all() };
+    const staleBinding = clone(binding);
+    const staleVersion = firstOf(staleBinding.work, 'imported Work version').version;
+    staleVersion.digest = staleVersion.digest === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
+    expect(() =>
+      store.importReconciledHostState([second.nextWork, first.nextWork], ledger, staleBinding, fence),
+    ).toThrow('reconciliation gate does not bind the imported work versions');
+    expect({ host: hostRows.all(), gate: gateRows.all() }).toEqual(persistedBefore);
+    expect(database.inTransaction).toBe(false);
     const gate = store.importReconciledHostState([first.nextWork, second.nextWork], ledger, binding, fence);
     expect(gate.binding.work.map((item) => item.identity.work_id)).toEqual(['other', 'work']);
     await store.releaseMaintenanceFence(fence);
+    expect(store.readHostStateSnapshot(firstIdentity)).toMatchObject({ work: first.nextWork, ledger });
+    expect(store.readHostStateSnapshot(secondIdentity)).toMatchObject({ work: second.nextWork, ledger });
   });
 
   test('failed gate insert rolls back every imported row', async () => {
