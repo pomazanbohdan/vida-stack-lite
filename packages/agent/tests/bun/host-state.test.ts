@@ -8597,7 +8597,7 @@ test(
             change_kind: peerInput.changeKind,
           }),
         );
-        const peerAdmission = admitLocalSessionWork({ ...peerInput, intakePath: peerIntakePath });
+        admitLocalSessionWork({ ...peerInput, intakePath: peerIntakePath });
         const peerIdentity = { ...f.identity, work_id: peerInput.context.work_id };
         peerBridge = await MastraSessionBridge.open({
           repositoryRoot: f.root,
@@ -8609,13 +8609,14 @@ test(
           workflowId: 'task_execution',
           workspaceId: host.workspaceId,
         });
-        const peerEngine = await peerBridge.start(peerAdmission.source);
+        const peerEngine = await peerBridge.start();
         const peerJournal = requiredValue(host.readWorkSessionJournal(peerIdentity), 'Disjoint peer native Journal');
         const peerHost = readPresentSnapshot(host, peerIdentity);
         expect(peerEngine.status).toBe('suspended');
         expect(peerEngine.requests.length).toBeGreaterThan(0);
         expect(peerJournal.state.work_id).toBe(peerIdentity.work_id);
         expect(peerJournal.state.run_id).toBe(peerEngine.run_id);
+        expect(peerJournal.state.source_scope).toBeNull();
         expect(peerJournal.state.completed).toEqual([]);
         expect(peerJournal.state.items.map((item) => item.request)).toEqual([...peerEngine.requests]);
         for (const peerItem of peerJournal.state.items) {
@@ -8671,6 +8672,19 @@ test(
         const rawReservation = recordAt(rawItem, 'host_reservation');
         stripFixtureAssignmentAuthority(recordAt(rawReservation, 'receipt').attempt);
         stripFixtureAssignmentAuthority(recordAt(recordAt(rawReservation, 'authorization'), 'receipt').attempt);
+        const governance = () =>
+          db.query('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key').all();
+        const retainedGovernance = governance();
+        expect(retainedGovernance.length).toBeGreaterThan(0);
+        const history = () =>
+          db
+            .query<{ payload: string; digest: string }, [string, string]>(
+              'SELECT payload,digest FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
+            )
+            .get(host.workspaceId, f.identity.work_id);
+        const retainedHistory = history();
+        if (!retainedHistory) throw new Error('Unknown repair native initial Source history is missing');
+        const request = { operationId: 'native-unknown-authority-repair' };
         expect(
           db
             .query(
@@ -8684,6 +8698,15 @@ test(
               before.workVersion.digest,
             ).changes,
         ).toBe(1);
+        const currentJournalRows = readFixtureHostRows(db);
+        const currentJournalInspection = host.repairCorrectionGeneration({ ...request, mode: 'inspect' });
+        expect(currentJournalInspection.changed_work).toHaveLength(1);
+        expect(currentJournalInspection.changed_journals).toBe(0);
+        expect(readFixtureHostRows(db)).toEqual(currentJournalRows);
+        expect(governance()).toEqual(retainedGovernance);
+        expect(history()).toEqual(retainedHistory);
+        expect(db.query("SELECT name FROM sqlite_master WHERE name='agent_host_work_state_repair'").get()).toBeNull();
+        expect(db.inTransaction).toBe(false);
         expect(
           db
             .query(
@@ -8718,23 +8741,12 @@ test(
         });
         const retainedPeerRows = { work: peerWorkRow, journal: peerJournalRow };
         expect(peerRows()).toEqual(retainedPeerRows);
-        const governance = () =>
-          db.query('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key').all();
-        const retainedGovernance = governance();
-        expect(retainedGovernance.length).toBeGreaterThan(0);
+        expect(governance()).toEqual(retainedGovernance);
         expect(() => host.readHostStateSnapshot(f.identity)).toThrow('work record must match current WorkState/v1');
-        const request = { operationId: 'native-unknown-authority-repair' };
         expect(() => host.repairRequestTransitionFields({ ...request, mode: 'inspect' })).toThrow(
           'request transition cannot repair assignment authority',
         );
-        const history = () =>
-          db
-            .query<{ payload: string; digest: string }, [string, string]>(
-              'SELECT payload,digest FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
-            )
-            .get(host.workspaceId, f.identity.work_id);
-        const retainedHistory = history();
-        if (!retainedHistory) throw new Error('Unknown repair native initial Source history is missing');
+        expect(history()).toEqual(retainedHistory);
         const ledgerRow = requiredValue(
           retained.host.find((row) => row.kind === 'ledger'),
           'unknown repair ledger row',

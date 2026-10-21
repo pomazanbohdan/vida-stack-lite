@@ -465,13 +465,20 @@ refusals neither settle UNKNOWN nor prove acceptance of malformed authority.
 
 The same UNKNOWN repair fixture also admits a disjoint peer with its own declared
 intake through public admission. Its actual configured bridge prepares a nonempty
-suspended first wave; close that bridge with no issued action, observation or
+suspended first wave with its supported initial null Source scope; close that
+bridge with no issued action, observation or
 reservation before repair. Keep the genuine foreign Work Journal in the native
 table through inspect/plan/apply/reopen/restore. Only the original legacy Work
 and Journal change; assert exact peer rows during maintenance and public peer
 snapshots after restore, plus unchanged owner rights and original UNKNOWN approval.
 This is a distinct fixture Work, not same-Work attempt history or provider execution.
 Preserve both bridge and fixture cleanup errors within the unchanged case bound.
+Inspect the Work-only legacy intermediate state before altering the genuine
+Journal: exactly one Work needs normalization and zero Journals do. Preserve all
+native Host/Journal rows, governance and continuation history, require transaction
+closure and no repair-operation table, then perform the original Journal alteration
+and full sequence. This does not settle the original UNKNOWN or issue an unscoped
+peer request. A bound nonnull Journal scope remains fenced against later changes.
 
 Corrective authorization retries use actual product-written candidate artifacts.
 An owned Journal-update fault occurs after file writes: verify exact Host/Journal

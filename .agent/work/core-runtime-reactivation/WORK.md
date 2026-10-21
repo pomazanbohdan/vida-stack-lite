@@ -14,22 +14,27 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-301f0e709be27212b7a490fc729b6642d270f2dd, run
-5ad9ead2-e36d-4bac-bc7b-2826345ad205, projection attempts1182.
+9808afa9ff9e565ec3c85adc62a6fa75c753218f, run
+57b2fbd5-56f2-4bc9-b973-7952f5492638, projection attempts1184.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs336cases/5680assertions
-in197456.958851ms. Host and stopped-source children take190.92s and121.18s.
-Rollback recovery takes11285.36ms, terminal-history10513.03ms and commit14353.91ms,
+unchanged boot/image and automatic publication. It runs336cases/5706assertions
+in187868.966638ms. Host and stopped-source children take181.37s and121.52s.
+The expanded UNKNOWN repair case takes14567.02ms and the runtime-history omission
+case5075.78ms, both within their unchanged20s limits. On the preceding301f0e7 input,
+rollback recovery takes11285.36ms, terminal-history10513.03ms and commit14353.91ms,
 inside their unchanged20s bounds. Their setup/body durations are respectively
 8534.562180/2681.446340ms,8226.978271/2233.735166ms and9936.795345/4320.610447ms.
 The preceding rollback timeout does not recur in this complete instrumented run.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains5statement/107branch-arm gaps, no missing function
-or line: F1126/1126,L4978/4978,S5303/5308,B5495/5602. Real corrective start and
+The report-only join retains4statement/103branch-arm gaps, no missing function
+or line: F1126/1126,L4978/4978,S5304/5308,B5499/5602. Runtime-history omission
+and the real foreign Journal gain one statement and four actual arm visits versus
+301f0e7 with unchanged denominators. runtimeBindingHistoryRecords now has no
+missing arms. Real corrective start and
 queued-claim refusal gain five actual arm visits versus55024fb with unchanged
 production denominators. beginSessionProducer, settleSessionProducer and
 taskSourceTicketMatches now have no missing arms. Unsorted identity refusals
@@ -70,12 +75,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-LH4AVs/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1321-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1321-scratch-parent.json and DIAG/remainder-v1321-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1321-cache-retirement-LH4AVs/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-LH4AVs-6tiE9u/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-nXXFDB |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-4196h5/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1331-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1331-scratch-parent.json and DIAG/remainder-v1331-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1331-cache-retirement-4196h5/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-4196h5-Ws4ofO/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-OPP3QY |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -84,7 +89,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3143745536bytes and retained tmpfs9192992768bytes available, both above the
+3074359296bytes and retained tmpfs9188204544bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -401,8 +406,8 @@ not genuine legacy acceptance. Bounded blind Source study
 vida-runtime-history-omission-review-v1324.md derives the seam. Strict149/lint0
 and1case/87assertions pass6.47s,5025.09ms native, in
 runtime-history-omission-v1325-4QRyc8. No extra fixture/engine or changed20s bound.
-Matching complete measurement remains pending; the shared final pin/control is
-recorded below.
+The matching complete9808afa measurement is accepted as full execution above;
+its coverage remains nonexact. The shared final pin/control is recorded below.
 
 The related foreign-Journal packet now prepares a real disjoint Work in that
 existing UNKNOWN repair fixture. The1326 static proposal overlooked a producer
@@ -418,16 +423,41 @@ original root /tmp/vida-initial-source-wlVvwS: the new assertion incorrectly
 expected a null reservation instead of the schema's absent field. After changing
 that oracle only,1329 passes1case/163assertions11.19s,9570.98ms native, at
 foreign-journal-v1329-ak4Cfi. The runtime-history case also passes unchanged in
-1328. No higher case or stage budget. Numeric gains remain unmeasured.
+1328. No higher case or stage budget. The matching complete stage above confirms
+the combined gain; it does not close the contour.
 Blind1327 review confirms the intake/owner/cleanup preconditions, Source-only,
 at vida-peer-intake-producer-review-v1327.md. Final test pin is recorded once in
 remainder-v1330-test-pin.json; strict122/lint0 and the existing two-file namespace
 control pass1case/10assertions658ms in remainder-v1330-controls-LXVFIT. Test strict
 checks cover149files; no repeated full suite or new fixture family. Documentation
 check passes4documents/19local links. Fetch observes HEAD equal origin/main before
-publication. Ordinary hooks/push and the one matching SDK/image/stage follow.
+publication. Ordinary hooks pass format520/strict527 and normal push publishes
+9808afa; the one matching SDK/image/stage and terminal cleanup are recorded above.
 
-1. Select the next causal S/B packet from the current5statement/107arm gap list;
+The next checked candidate reuses the same fixture in two distinct supported
+preparation states: a real unissued peer first wave with null Source scope, and
+an inspect-only phase after the original Work becomes legacy while its issued
+Journal still retains actual current authority. Source permits null at initial
+start and does not issue a request; the test explicitly preserves that boundary.
+The mixed-shape inspect must find one changed Work and zero changed Journals,
+leave all native rows/governance/history unchanged and create no repair operation.
+Then the original both-legacy repair sequence remains intact. Blind1332 review
+derives the latter seam in vida-current-journal-repair-review-v1332.md. Strict149,
+configured lint0 and1case/173assertions pass9.95s,8517.98ms native, in
+current-journal-v1333-c1vdmx. All original oracles and20s limit remain. The earlier
+case's governance/history closures move before the new inspect phase, preventing
+an inspection side effect from becoming an expected later beforeimage. Numeric
+qualification remains pending; standalone timing is not a controlled speedup.
+Final blind1334 review at vida-peer-null-scope-final-review-v1334.md finds no
+actionable defect in null-scope preparation, identity, no-issue and cleanup guards;
+it reads Root's focused evidence without executing checks. The null Journal
+snapshot does not clear the Work's source binding or qualify a Source effect.
+Final pin is sealed once at remainder-v1335-test-pin.json. Runner strict122,
+configured lint0 and the existing namespace control pass in
+remainder-v1335-controls-01LKlP. Publish through ordinary hooks and use one matching
+SDK/image/stage for these related mixed/current Journal states.
+
+1. Select the next causal S/B packet from the current4statement/103arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,
@@ -487,7 +517,7 @@ Actual complete stage durations vary by input; neither concurrency alternatives
 nor total tool calls/tokens have a controlled benchmark. No claimed speedup is
 derived by dividing an already parallel stage duration by worker count.
 
-One pass over the latest native child logs derives
+One pass over the301f0e7 native child logs derives
 DIAG/remainder-v1321-native-timings.json; every timed PASS matches its native
 summary,320/320 and16/16. Printed case-clock min/mean/nearest-rank-p95/max are
 32.04/580.9235625/3269.99/14353.91ms for Host and

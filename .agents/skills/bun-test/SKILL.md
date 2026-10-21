@@ -169,6 +169,12 @@ and bridge to prepare a nonempty suspended first wave. Keep issue/observation
 null and reservation absent under their actual schema, close its bridge before
 repair, and preserve the peer's exact native rows and owner rights. This is
 prepared foreign Work, not another attempt or provider execution.
+The supported initial `start()` may prepare a Journal with null Source scope;
+assert that exact state and stop before issue. Do not clear an already-bound
+scope on resume. For mixed legacy/current repair, inspect after the controlled
+Work alteration while the genuine Journal is still current, then continue the
+existing both-legacy case. Capture governance/history before that first phase
+so an inspection defect cannot become the later expected beforeimage.
 
 When repeated verifier reads protect a precommit freshness boundary, retain them.
 Reuse the genuine fixture and change one owned input between the initial proof
