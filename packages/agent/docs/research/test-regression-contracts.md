@@ -496,6 +496,12 @@ proves actual deletion and checks its domain refusal. A sorted project list with
 one extra project must fail exact ticket identity matching. Retain the real
 queued lease and ticket; do not apply own-ticket predecessor filtering to this
 direct lease-lookup route or change Source behavior to fit a guessed message.
+The existing paired-Host admission case separately rejects unsorted project and
+request-transition predecessor IDs through public CAS. Keep these malformed
+proposals out of persistence, preserve exact Host rows and schema catalog, and
+assert transaction closure before the original positive claim/retry sequence.
+Its empty initial database has no Journal table; use prepared native queries
+instead of a snapshot helper that requires that table to exist.
 An exact current Work version with a mismatching prepared-record revision is a
 separate pure CAS denial. A foreign execution-only peer may use the existing
 fixture's real Journal and public preparation; preparation alone creates neither
@@ -503,6 +509,12 @@ an action nor a Source root. Check its absent current binding alongside the
 original Work's drift denial and historical snapshot, preserving all native and
 prepared rows. Fixture verifier callbacks remain component seams, not external
 authorization or provider-execution proof.
+
+The canonical workspace inspector first observes the real empty Host database
+before its existing populated governance proof. Require exact empty
+Work/Journal/governance/admission lists and null Ledger/version, with unchanged
+database bytes and catalog. Empty rows are distinct from absent storage and from
+unrelated positive-attempt history; do not create a fake success table.
 
 Historical TaskSource snapshots cover direct observed reporting and a fresh
 UNKNOWN followed by observed recovery in separate real fixtures. Issue only once;

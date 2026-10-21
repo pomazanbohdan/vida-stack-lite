@@ -9150,6 +9150,22 @@ test('restored repair plan retry rejects a changed restored list without canonic
 test('readonly canonical workspace inspection preserves populated governance and database bytes', async () => {
   preserveHostFixtureRoot = 'case failed or timed out';
   const deadline = performance.now() + 5_000;
+  const emptyBytes = await readFile(databasePath);
+  const emptyCatalog = database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all();
+  expect(inspectHostWorkspaceDatabase(root, 'authority.db', workspace)).toEqual({
+    schema: 'HostWorkspaceInspection/v1',
+    workspace_id: workspace,
+    work: [],
+    ledger: null,
+    ledger_version: null,
+    journals: [],
+    governance: [],
+    admission_attempts: [],
+  });
+  expect(await readFile(databasePath)).toEqual(emptyBytes);
+  expect(database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(
+    emptyCatalog,
+  );
   const original = commitHostState(fixture());
   const operation = reserveRequiredOperation(store, 'inspection', '1'.repeat(64), '2'.repeat(64));
   store.transitionOperation(operation, 'commit_unknown');
@@ -15122,8 +15138,40 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
   });
 
   test('attempt admission rejects stale CAS, wrong lease, changed replay input and unversioned v1 state', () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
     const input = fixture();
-    Reflect.deleteProperty(input.nextWork.execution, 'assignment_attempts');
+    const hostRows = database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id');
+    const catalog = database.query<{ type: string; name: string; tbl_name: string; sql: string | null }, []>(
+      'SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name',
+    );
+    const before = hostRows.all();
+    const catalogBefore = catalog.all();
+    const invalidIdentities: readonly [WorkState, string][] = [
+      [
+        { ...input.nextWork, binding: { ...input.nextWork.binding, project_ids: ['zz-foreign', 'aa-foreign'] } },
+        'work project identity must be an exact sorted set',
+      ],
+      [
+        {
+          ...input.nextWork,
+          request_transition: {
+            schema: 'WorkRequestTransition/v1',
+            request_pointer: 'fixture:unsorted-predecessors',
+            native_session_handle: 'fixture:transition-owner',
+            predecessor_work_ids: ['zz-predecessor', 'aa-predecessor'],
+            successor_work_id: null,
+          },
+        },
+        'request transition identity invalid',
+      ],
+    ];
+    for (const [nextWork, reason] of invalidIdentities) {
+      expect(() => commitHostState({ ...input, nextWork })).toThrow(reason);
+      expect(hostRows.all()).toEqual(before);
+      expect(catalog.all()).toEqual(catalogBefore);
+      expect(database.inTransaction).toBe(false);
+    }
+    expect(Reflect.deleteProperty(input.nextWork.execution, 'assignment_attempts')).toBe(true);
     expect(() => commitHostState(input)).toThrow(/current WorkState/);
     const initial = commitHostState(fixture());
     const stale = attemptRequest(initial);
@@ -15136,6 +15184,7 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     expect(() => store.claimWorkflowAttempt({ ...attemptRequest(), requestDigest: '6'.repeat(64) })).toThrow(
       /request changed/,
     );
+    preserveHostFixtureRoot = false;
   });
 
   test('Host progress preserves an unresolved readonly attempt and its execution-only ownership', async () => {

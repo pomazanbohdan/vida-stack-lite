@@ -14,22 +14,24 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-2814c4a69eb41d8ea2715b1f2f6b04639002d349, run
-7294f1b9-0fa2-4718-9deb-aec8de1f4ce7, projection attempts1176.
+9a2917539178d81d9db5447c2109c422d54cfcd1, run
+b1ec6615-f4e3-4256-8c25-b99ec07bec4e, projection attempts1178.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs336cases/5645assertions
-in186391.337320ms. Host and stopped-source children take180.47s and118.80s.
-Rollback recovery takes10884.20ms and terminal-history11422.00ms, inside their
-unchanged20s bounds. Their setup/body durations are respectively
-8232.193270/2603.348491ms and9097.127551/2281.039760ms.
+unchanged boot/image and automatic publication. It runs336cases/5648assertions
+in179200.945754ms. Host and stopped-source children take172.87s and113.65s.
+Rollback recovery takes11549.19ms, terminal-history9102.25ms and commit12669.75ms,
+inside their unchanged20s bounds. Their setup/body durations are respectively
+9099.883418/2393.064509ms,7146.515186/1893.127833ms and8968.247092/3641.923266ms.
 The preceding rollback timeout does not recur in this complete instrumented run.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains5statement/124branch-arm gaps, no missing function
-or line: F1126/1126,L4978/4978,S5303/5308,B5478/5602. Historical report-pair
+The report-only join retains5statement/115branch-arm gaps, no missing function
+or line: F1126/1126,L4978/4978,S5303/5308,B5487/5602. Corrective initialization
+and its exact Journal settlement gain nine actual branch-arm visits versus2814c4a
+with unchanged production denominators. Historical report-pair
 validation now shares the existing validator; the branch denominator changes
 by20 and missing arms by10 versus01b8928. Removed duplicate terms are not newly
 executed paths. New malformed identity DTO controls and report-pair cases pass;
@@ -62,12 +64,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-6ou7QI/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1303-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1303-scratch-parent.json and DIAG/remainder-v1303-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1303-cache-retirement-6ou7QI/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-6ou7QI-v9LKkE/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-gOCbQ6 |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-FzAdrN/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1308-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1308-scratch-parent.json and DIAG/remainder-v1308-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1308-cache-retirement-FzAdrN/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-FzAdrN-mye9eg/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-0GuRJl |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -76,7 +78,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3348852736bytes and retained tmpfs9207173120bytes available, both above the
+3281514496bytes and retained tmpfs9202446336bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -370,10 +372,38 @@ borrowed ledger, unchanged oracles and initialize-only boundary, and inspects th
 absolute focused logs without rerunning them. Pin refreshed once in
 remainder-v1307-test-pin.json; strict122/lint0 and two-file control pass
 1case/10assertions308ms in remainder-v1307-controls-9S8CR2. Changed-document
-links/headings pass. Publish normally and use one matching stage; current
-numeric evidence above remains bound to2814c4a.
+links/headings pass. Ordinary hooks pass formatting520/strict527 and normal push
+publishes9a29175. Its matching complete stage above confirms nine additional
+branch-arm visits with unchanged denominators. The corrective case takes4992.44ms;
+remaining start predicates stay open. The original2814c4a measurement, image,
+SDK and custody stay retained under contour-stage-6ou7QI and remainder-v1303.
 
-1. Select the next causal S/B packet from the current5statement/124arm gap list;
+Next pure-refusal packet reuses the existing paired-Host attempt-admission case
+for unsorted project_ids and request-transition predecessor_work_ids. Both
+proposals are schema-shaped negative inputs, never accepted stored authority.
+Require exact domain refusals, unchanged native Host/catalog and a closed
+transaction before all original stale-CAS, lease, malformed-v1 and replay checks.
+Failure-retention marker now spans that entire modified synchronous case.
+The initial diagnostic fails before its target because readFixtureHostRows
+requires a Journal table absent in this empty fixture. Retain
+unsorted-host-identities-v1309-dkamsE/test.log and/tmp/host-state-LU8zfG.
+Reuse two prepared Host/catalog queries instead of creating a Journal merely
+for the oracle. Strict149/lint0 and1case/13assertions pass1.63s,199.06ms native,
+in unsorted-host-identities-v1310-2RMbNT. The skill records that precondition.
+The same packet adds actual pre-admission inspection to the existing readonly
+case: exact empty workspace, null Ledger/version, empty Journal/governance and
+admission lists, unchanged native bytes/catalog before ordinary populated proof.
+The final grouped control passes strict149/lint0 and2cases/37assertions1.69s,
+206.08/108.95ms native in empty-inspection-identities-v1312-nT0WSt. No product
+change, extra fixture or timeout. The intermediate1311pin/control predates the
+empty-inspection addition; refresh the final binding and do not relabel that
+earlier control as current. Final binding remainder-v1313-test-pin.json and
+strict122/lint0/two-file control pass1case/10assertions268ms in
+remainder-v1313-controls-ahi4ps. Changed-document links/headings pass. One matching
+stage remains pending; the latest complete report above does not qualify these
+bytes.
+
+1. Select the next causal S/B packet from the current5statement/115arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,

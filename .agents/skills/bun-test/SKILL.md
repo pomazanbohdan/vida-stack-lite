@@ -44,6 +44,9 @@ states in compatible existing cases and keep their original per-case bounds.
 Distinguish an absent table from an absent positive-attempt row in a populated
 table. Prefer an extra read in the existing real producer fixture, preserving
 its row oracle, over another setup or a fabricated empty success table.
+Check which tables a shared snapshot helper requires before choosing it for an
+absent-storage refusal. Reuse prepared Host-row and catalog queries when no
+Journal table exists; do not create storage merely to satisfy the test oracle.
 Before adding Host unit history to a composite, check later Journal acceptance
 requirements. A completed Host readonly result is not an accepted Journal item;
 keep that probe in a compatible existing case rather than weaken recovery.
