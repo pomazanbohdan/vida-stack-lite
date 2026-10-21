@@ -10,38 +10,37 @@ exact F/L/S/B100 before selecting another. Root is the sole Source integrator,
 Git owner and numeric producer. Frozen complexity/CRAP qualification and mutation
 remain deferred; their budgets and acceptance rules are unchanged.
 
-Latest complete measurement binds Source `483c7e72cc6dcd06ef4b6b5a9911e40b69267996` and run
-`ae8a6516-522c-4cff-ac38-fe2c8324e449`, not later HEAD.
+Latest complete measurement binds Source `15f3e6bf21b5ed22bfa8159de10d8ffb92a4ab6d` and run
+`6672c496-0e72-4ce7-a40e-079b3841e43e`, not later HEAD.
 
-| Counter | Covered / total | Covered delta fromeae12fe |
+| Counter | Covered / total | Covered delta from483c7e7 |
 | --- | --- | --- |
-| Functions | 1124 / 1128 | +9 |
-| Lines | 4926 / 4973 | +26 |
-| Statements | 5217 / 5304 | +27 |
-| Branches | 5279 / 5641 | +53 |
+| Functions | 1126 / 1128 | +2 |
+| Lines | 4928 / 4973 | +2 |
+| Statements | 5219 / 5304 | +2 |
+| Branches | 5308 / 5641 | +29 |
 
-308PASS/0FAIL,4232assertions,161205.725504ms elapsed.
-Host child:292PASS/3936assertions/152.74s. Stopped-source child:
-16PASS/296assertions/117.56s, contained cleanup complete. Exit0,
+309PASS/0FAIL,4441assertions,186305.915623ms elapsed.
+Host child:293PASS/4145assertions/177.15s. Stopped-source child:
+16PASS/296assertions/139.11s, contained cleanup complete. Exit0,
 full capture, closed group, unchanged boot/image and published report hold.
 Operation remains **BLOCKED/nonexact**. Diagnostic maxCC279/entryCRAP279 is
 unqualified. Historical exact16/45, local triples9/45 and separate data-only1
 remain distinct measures, not a current global PASS. Different-input elapsed
 times do not establish a controlled speedup.
 
-The genuine product repair and redundant lookup removal change denominators by
--1F/+1L/+2S/-1B; no counter domain, exclusion or gate is narrowed.
-The report-only refresh now has4missing functions under3owners, down from14/8.
-All4 have retained map-validated body coordinates: two runtime-rebind callbacks,
-one historical lifecycle-reference map and one stored recovery-prior lookup.
-The changed-runtime recovery reconstruction and terminal frontier binding paths
-now execute. This does not imply branch or whole-contour closure.
-362 uncovered branch arms are now listed from the same
+All four denominators remain unchanged; no counter domain, exclusion or gate is
+narrowed. The report-only refresh now has2missing functions under2owners, down
+from4/3. Both have retained map-validated coordinates: the synthesis-correction
+runtime-rebind body and stored recovery-prior lookup. Ordinary readonly runtime
+rebind and historical lifecycle-reference mapping now execute. This does not
+imply branch or whole-contour closure.
+333 uncovered branch arms are now listed from the same
 report, with exact deficit agreement and explicitly labeled implicit-if ranges.
 Reuse `host-uncovered-plan-current.json` in focused diagnostics.
 No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
-attempt1118. Failed attempts1091 and1100 remain separately classified.
+attempt1120. Failed attempts1091 and1100 remain separately classified.
 
 The measured packet extends the existing TaskSource fixture with optional
 already allowed non-file resources; default callers still use the original file-only
@@ -114,8 +113,8 @@ inferred. Blind correctness/resource reviews find no blocker. The historical
 case also incorporates their stale Work/Ledger/generation suggestion.
 
 Only the changed Host resource pin is refreshed; stopped-source bytes and the
-same private serial resource scope remain. Numeric gains are pending until the
-packet's matching SDK/image/full stage. The two remaining fixture research
+same private serial resource scope remain. The matching full stage adds2F/2L/2S/29B
+with unchanged denominators. The two remaining fixture research
 dependencies are genuine configured-frontier plus report-recovery history, and
 activated synthesis correction with admitted research predecessors. No private
 successful history, typed approval or outcome is fabricated to satisfy them.
@@ -457,27 +456,27 @@ The next actual producer still performs its maintained admission check.
 
 ## Latest measurement custody
 
-- Stage:`/workspace/contour-stage-VHJB8v`; exec17641, observed exit0.
-- Image:`/workspace/.vida-quality-inputs/ed8da0a3cf20da532798acdb9e6156c8487ab305/repository`.
-- Tree:`666a6249db8878f401c12ff82133f8c1e8fc6158`.
-- Input:`765723331690419259c6beed17449d2f6ac38b0b75bffe6b3c88f41f2ed6ba79`.
-- Image manifest SHA256:`878b95f821a3d81aa2bea3139cf601d7935ddc74c8f084abd0dcd22b24445ec4`.
-- SDK CI39517279344, successful attempt1, artifact12308034013.
-- SDK name:`vida-sdk-test-inputs-483c7e72cc6dcd06ef4b6b5a9911e40b69267996-39517279344-1`.
-- ZIP SHA256:`6602a90ccafa8867fd3f36b71607544f1b4ee1a97cc7a3d86fbd68318ec1988b`.
-- `remainder-v1119-stage.log` in focused diagnostics retains the complete outcome.
-- Original scratch:`/dev/shm/vida-quality-retained-RSBsFK`. After observed closure,
+- Stage:`/workspace/contour-stage-DDWjVP`; exec51910, observed exit0.
+- Image:`/workspace/.vida-quality-inputs/ba83daff37b9b48272135e73d4461158a6cefbc1/repository`.
+- Tree:`2d07d72b56f0f382e7287e9ac90d325ec0141267`.
+- Input:`90450f2ffce50e980ca34f017f7fe098b1979bd84f51a86802d5eb6e428dde09`.
+- Image manifest SHA256:`f6ddc741aed70c7f9fcaff5b3bea131be79561ea253b533216b52cc2864ca123`.
+- SDK CI39519621171, successful attempt1, artifact12310057449.
+- SDK name:`vida-sdk-test-inputs-15f3e6bf21b5ed22bfa8159de10d8ffb92a4ab6d-39519621171-1`.
+- ZIP SHA256:`fa3b348abe069fc4799cd36d3a68336e63a970e98c2c69e3af6439a1ae40ec36`.
+- `remainder-v1123-stage.log` in focused diagnostics retains the complete outcome.
+- Original scratch:`/dev/shm/vida-quality-retained-uV9KDc`. After observed closure,
   only its qualified private regenerable Bun cache is retired; all other original
   scratch, fixtures, DBs and evidence remain.
-- Whole remaining scratch archive:`/workspace/vida-functional-retention-VHJB8v-n7SIDn/scratch.tar.gz`,
-  227299bytes, full tar compare PASS; SHA256`9246675f05db1ef1229e84ed7245f9e26a7db8fda05fc03f42564a63e7f389c4`.
+- Whole remaining scratch archive:`/workspace/vida-functional-retention-DDWjVP-ymNBuX/scratch.tar.gz`,
+  263002bytes, full tar compare PASS; SHA256`39bad737e7e645aaad581da29340130fc9871bfd04b2660a18fbeaa91420d563`.
   Original create/compare logs and archive.json remain beside it; the original
   scratch remains intact apart from its separately retired regenerable cache.
-- Durable free before/after archive:4509995008/4509765632bytes;
-  unchanged2147483648floor leaves2362281984bytes headroom. No resource GAP.
+- Durable free before/after archive:5449805824/5449539584bytes;
+  unchanged2147483648floor leaves3302055936bytes headroom. No resource GAP.
 
 Cache retirement is receipted in
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1119-cache-retirement-VHJB8v`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1123-cache-retirement-DDWjVP`.
 One exact private cache,178155793regular bytes,215846912tmpfs bytes reclaimed;
 4096bytes of durable metadata growth is not counted as reclamation. Closed
 custody, namespace, original Source, boot/image, no active owner and dependency
@@ -487,7 +486,7 @@ No original outcome, archive, sibling scratch, SDK or measured image is modified
 The reused qualifier/retirer keep their declared retained-tmpfs namespace,
 receipt, mount, identity, live-owner and dependency checks. Original predecessor
 scripts remain unchanged. Previous custody is retained in the published
-[3b7e114 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/3b7e114/.agent/work/core-runtime-reactivation/WORK.md).
+[94b869d WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/94b869d/.agent/work/core-runtime-reactivation/WORK.md).
 The preceding packet's direct tmpfs path and transport
 recovery proof remain in4b8a387 WORK. During SDK transport, one mixed download/
 process-inspection command echoed its own temporary artifact URL via parent argv.

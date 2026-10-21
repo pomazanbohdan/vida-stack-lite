@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `483c7e72cc6dcd06ef4b6b5a9911e40b69267996`, run `ae8a6516-522c-4cff-ac38-fe2c8324e449`: F1124/1128, L4926/4973, S5217/5304 and B5279/5641. It records308PASS/0FAIL,4232assertions in161.206seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is4missing functions under3owners, all with exact retained map coordinates, plus362 exact zero-count branch arms. The packet adds9F/26L/27S/53B; the genuine repair and duplicate lookup removal change denominators by-1F/+1L/+2S/-1B without exclusions or budget changes. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `15f3e6bf21b5ed22bfa8159de10d8ffb92a4ab6d`, run `6672c496-0e72-4ce7-a40e-079b3841e43e`: F1126/1128, L4928/4973, S5219/5304 and B5308/5641. It records309PASS/0FAIL,4441assertions in186.306seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is2missing functions under2owners, all with exact retained map coordinates, plus333 exact zero-count branch arms. The packet adds2F/2L/2S/29B with unchanged denominators and no exclusions or budget changes. WORK retains image, SDK, custody, archive and capacity bindings.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -30,7 +30,7 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 The owner's current instruction replaces one-function measurement packets with
 one coordinated pass, initially46missing functions and606branch arms. The first
-complete packet stages now leave4functions and362arms; continue the same contour
+complete packet stages now leave2functions and333arms; continue the same contour
 from its refreshed retained map, not the superseded starting counters. Superpowers
 `writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
 guide this plan. Keep this existing strategy as the plan owner; do not create a
@@ -179,7 +179,8 @@ matrix with ordinary readonly replacement runtime rebind, real approval retireme
 and a broader TaskSource policy-result denial matrix. Independent default5s cases
 share builders and keep separate roots; preserve the original combined-case
 timeout. Root publishes the coherent packet, forms matching SDK inputs and
-measures once. Then resolve the native research/synthesis-correction and composed
+measures once. The matching15f3e6b stage confirms both new functions and29arms;
+keep the same contour active. Then resolve the native research/synthesis-correction and composed
 frontier/report-recovery prerequisites from the refreshed map, never seeded success.
 
 For each group, the exact named Bun case must reach its intended public operation
