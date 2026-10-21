@@ -14,22 +14,26 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-651381772ceb369002471bbd249cd1010cb16654, run
-73f86ad7-b9c1-4bf8-ae3a-a6c9e09fd52d, projection attempts1169.
+a529007812bde119a039b19e28f9dbb2e1d502a5, run
+59dfa7c0-e726-4dd0-add4-c107013960da, projection attempts1172.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs334cases/5494assertions
-in175775.747965ms. Host and stopped-source children take169.62s and118.96s.
-Commit recovery has setup11272.470307ms/body3599.561024ms; rollback has
-setup11027.090326ms/body4117.716686ms. Both pass unchanged20s bounds after
-fixture optimization; the previous commit timeout does not recur.
+unchanged boot/image and automatic publication. It runs335cases/5541assertions
+in196928.724641ms. Host and stopped-source children take188.16s and123.17s.
+Rollback recovery takes12337.44ms, terminal-history10124.52ms and commit12079.02ms,
+all inside unchanged20s bounds. Their setup/body durations are respectively
+9256.918487/3026.542764ms,7825.871673/2249.529752ms and7707.553005/4281.043660ms.
+The preceding rollback timeout does not recur in this complete instrumented run.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains8statement/139branch-arm gaps, no missing function
-or line. Compared with the preceding complete6425ed6 report, three native bigint
-budget arms gain visits with unchanged production denominators: B5483/5622.
+The report-only join retains6statement/137branch-arm gaps, no missing function
+or line: F1126/1126,L4975/4975,S5299/5305,B5485/5622. Compared with the preceding
+complete6513817 report, the empty frozen-contour refusal and omitted-resource
+stale reconstruction each gain one statement and one branch-arm visit, with
+unchanged production denominators. In the preceding complete6425ed6 comparison,
+three native bigint budget arms gain visits with unchanged denominators.
 boundedInspectionInteger has no missing arms. In the preceding simplification,
 removing two nullish expressions removed four instrumented arms, two previously
 covered and two missing; the raw covered-counter delta is not execution gain.
@@ -53,12 +57,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-pZIZ8R/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1275-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1275-scratch-parent.json and DIAG/remainder-v1275-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1275-cache-retirement-pZIZ8R/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-pZIZ8R-xwlEJx/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-SD2Bd3 |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-uZAelC/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1289-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1289-scratch-parent.json and DIAG/remainder-v1289-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1289-cache-retirement-uZAelC/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-uZAelC-dUCKoi/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-jSxL50 |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -67,7 +71,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3614228480bytes and retained tmpfs9227239424bytes available, both above the
+3487600640bytes and retained tmpfs9216626688bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -163,7 +167,8 @@ Final current-byte review vida-empty-freeze-final-review-v1277.md confirms guard
 ordering and cleanup; its Journal-baseline precision is now an explicit empty
 array assertion. Strict149/configured lint0 and3cases/81assertions pass2.01s,
 249.63ms/129.42ms/133.89ms native, in empty-freeze-v1278-UkveqF. The matching
-d798e49 stage below fails another case, so the new statement/arm remains unqualified.
+d798e49 stage below fails another case. The later complete a529007 stage confirms
+the missing-seed statement and arm without weakening its refusal.
 Refresh the changed test pin once; strict122/configured lint0 and the existing
 two-file resource control pass1case/10assertions in286ms:
 remainder-v1279-controls-bX4R2E. Changed documentation links/headings pass.
@@ -231,12 +236,15 @@ mutation kill. Numeric visitation still needs its exact report. The actual
 queued retry remains the positive public control. Refresh the changed test pin
 once in remainder-v1288-test-pin.json. Strict122/lint0 and the existing two-file
 resource control pass1case/10assertions315ms in remainder-v1288-controls-2AND1e.
-Changed documentation and diff checks pass. One complete changed-input stage
-remains pending. No production code, timeout, gate or authority changes.
+Changed documentation and diff checks pass. Normal hooks pass formatting520 and
+strict527; a529007 is published by ordinary push. Its complete changed-input
+stage above confirms both new causal visits and all three split recovery cases.
+No production code, timeout, gate or authority changes. Different Source/setup
+conditions and the additional independent fixture do not establish a speedup.
 
 ### Next actions and unresolved prerequisites
 
-1. Select the next causal S/B packet from the current8statement/139arm gap list;
+1. Select the next causal S/B packet from the current6statement/137arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,
@@ -281,7 +289,7 @@ Keep these specific unresolved paths open:
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
 | Two reviewed serial-file children | Selected under the exact pins. Reuse the latest complete measurement above; the later timeout remains a separate failed attempt. |
-| Fully serial files | Protocol fallback only; concurrent child times sum283.89s. That sum is a planning quantity, not measured serial elapsed time or current admission. |
+| Fully serial files | Protocol fallback only. Concurrent child durations do not establish serial wall time or admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |
 
