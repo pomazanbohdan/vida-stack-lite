@@ -16533,85 +16533,125 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     expect(() => commitHostState(input)).toThrow(/rebind binding invalid/);
   });
 
-  test('requires contour assurance before batching and accepts one attributable batch decision', () => {
-    const initial = commitHostState(fixture());
-    const ready = next(initial);
-    ready.nextWork.lease = null;
-    firstTicket(ready.nextLedger).status = 'ready_for_handoff';
-    const readySaved = commitHostState(ready);
+  test.each(['accepted', 'feedback', 'rejected'] as const)(
+    'requires contour assurance before batching and commits an attributable %s batch decision',
+    (decision) => {
+      preserveHostFixtureRoot = 'case failed or timed out';
+      const deadline = performance.now() + 5_000;
+      const initial = commitHostState(fixture());
+      const ready = next(initial);
+      ready.nextWork.lease = null;
+      firstTicket(ready.nextLedger).status = 'ready_for_handoff';
+      const readySaved = commitHostState(ready);
 
-    const freeze = next(readySaved);
-    const contour = frozenContour(freeze.nextLedger);
-    freeze.nextLedger.contours.push(contour);
-    freeze.nextLedger.open_generation++;
-    const frozen = commitHostState(freeze);
-    const batch = {
-      schema: 'ReleaseBatch/v1',
-      batch_id: 'batch-work',
-      contour_id: contour.contour_id,
-      generation: contour.generation,
-      work_ids: [...contour.work_ids],
-      operations: [{ order: 1, source: 'src/task.ts', destination: 'target/task.ts', operation: 'copy' }],
-      do_not_deploy: [],
-      post_deployment_checks: [
-        { id: 'check-1', step: 'Run the task.', expected: 'The task succeeds.', ac_refs: ['AC-1'] },
-      ],
-      status: 'ready_for_user_testing',
-      created_at: '2026-09-18T00:02:00.000Z',
-    };
-    const withoutAssurance = next(frozen);
-    withoutAssurance.nextLedger.batches.push(batch);
-    expect(() => commitHostState(withoutAssurance)).toThrow(/requires contour assurance/);
+      const freeze = next(readySaved);
+      const contour = frozenContour(freeze.nextLedger);
+      freeze.nextLedger.contours.push(contour);
+      freeze.nextLedger.open_generation++;
+      const frozen = commitHostState(freeze);
+      const batch = {
+        schema: 'ReleaseBatch/v1',
+        batch_id: 'batch-work',
+        contour_id: contour.contour_id,
+        generation: contour.generation,
+        work_ids: [...contour.work_ids],
+        operations: [{ order: 1, source: 'src/task.ts', destination: 'target/task.ts', operation: 'copy' }],
+        do_not_deploy: [],
+        post_deployment_checks: [
+          { id: 'check-1', step: 'Run the task.', expected: 'The task succeeds.', ac_refs: ['AC-1'] },
+        ],
+        status: 'ready_for_user_testing',
+        created_at: '2026-09-18T00:02:00.000Z',
+      };
+      const withoutAssurance = next(frozen);
+      withoutAssurance.nextLedger.batches.push(batch);
+      expect(() => commitHostState(withoutAssurance)).toThrow(/requires contour assurance/);
 
-    const assurance = next(frozen);
-    assurance.nextLedger.operations.push({
-      schema: 'CoordinationOperation/v1',
-      operation_id: 'assurance-work',
-      kind: 'contour_assurance',
-      contour_id: contour.contour_id,
-      contour_digest: contour.contour_digest,
-      integration_work_id: identity.work_id,
-      test_receipts: ['test-receipt'],
-      review_receipt_ids: ['review-1', 'review-2', 'review-3'],
-      reverse_receipt_ids: ['reverse-1', 'reverse-2', 'reverse-3'],
-      from_ledger_revision: frozen.ledger.revision,
-      to_ledger_revision: frozen.ledger.revision + 1,
-      created_at: '2026-09-18T00:03:00.000Z',
-    });
-    const assured = commitHostState(assurance);
-    const directAccepted = next(assured);
-    directAccepted.nextLedger.batches.push({
-      ...batch,
-      status: 'accepted',
-      decision_pointer: '.agent/decisions/direct-batch.json',
-    });
-    firstTicket(directAccepted.nextLedger).status = 'released';
-    firstTicket(directAccepted.nextLedger).active_resources = [];
-    firstTicket(directAccepted.nextLedger).expires_at = null;
-    firstClaim(directAccepted.nextLedger).status = 'released';
-    firstClaim(directAccepted.nextLedger).resources = [];
-    expect(() => commitHostState(directAccepted)).toThrow(/history transition invalid/);
-    const build = next(assured);
-    build.nextLedger.batches.push(batch);
-    const built = commitHostState(build);
+      const assurance = next(frozen);
+      assurance.nextLedger.operations.push({
+        schema: 'CoordinationOperation/v1',
+        operation_id: 'assurance-work',
+        kind: 'contour_assurance',
+        contour_id: contour.contour_id,
+        contour_digest: contour.contour_digest,
+        integration_work_id: identity.work_id,
+        test_receipts: ['test-receipt'],
+        review_receipt_ids: ['review-1', 'review-2', 'review-3'],
+        reverse_receipt_ids: ['reverse-1', 'reverse-2', 'reverse-3'],
+        from_ledger_revision: frozen.ledger.revision,
+        to_ledger_revision: frozen.ledger.revision + 1,
+        created_at: '2026-09-18T00:03:00.000Z',
+      });
+      const assured = commitHostState(assurance);
+      const directAccepted = next(assured);
+      directAccepted.nextLedger.batches.push({
+        ...batch,
+        status: 'accepted',
+        decision_pointer: '.agent/decisions/direct-batch.json',
+      });
+      firstTicket(directAccepted.nextLedger).status = 'released';
+      firstTicket(directAccepted.nextLedger).active_resources = [];
+      firstTicket(directAccepted.nextLedger).expires_at = null;
+      firstClaim(directAccepted.nextLedger).status = 'released';
+      firstClaim(directAccepted.nextLedger).resources = [];
+      expect(() => commitHostState(directAccepted)).toThrow(/history transition invalid/);
+      const build = next(assured);
+      build.nextLedger.batches.push(batch);
+      const built = commitHostState(build);
+      const rows = () => ({
+        host: database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all(),
+        journalSchema: database
+          .query<SqliteNameRow, []>("SELECT name FROM sqlite_master WHERE name='agent_host_mastra_session_ledger'")
+          .all(),
+      });
+      const journalBefore = rows().journalSchema;
+      expect(journalBefore).toEqual([]);
+      const governanceBefore = governanceRows();
+      const preserved = commitHostState(next(built));
+      expect(preserved.ledger.batches).toEqual(built.ledger.batches);
+      expect(preserved.ledger.tickets).toEqual(built.ledger.tickets);
+      expect(preserved.ledger.claims).toEqual(built.ledger.claims);
+      expect(preserved.work.lease).toBeNull();
+      expect(rows().journalSchema).toEqual(journalBefore);
+      expect(governanceRows()).toEqual(governanceBefore);
 
-    const inconsistent = next(built);
-    const inconsistentBatch = atIndex(inconsistent.nextLedger.batches, 0, 'inconsistent batch fixture');
-    inconsistentBatch.status = 'accepted';
-    inconsistentBatch.decision_pointer = '.agent/decisions/batch-work.json';
-    expect(() => commitHostState(inconsistent)).toThrow(/atomically release contour tickets/);
+      const inconsistent = next(preserved);
+      const inconsistentBatch = atIndex(inconsistent.nextLedger.batches, 0, 'inconsistent batch fixture');
+      inconsistentBatch.status = decision;
+      inconsistentBatch.decision_pointer = '.agent/decisions/batch-work.json';
+      const rowsBefore = rows();
+      expect(() => commitHostState(inconsistent)).toThrow(
+        decision === 'accepted' ? 'atomically release contour tickets' : 'atomically queue contour tickets',
+      );
+      expect(rows()).toEqual(rowsBefore);
+      expect(governanceRows()).toEqual(governanceBefore);
 
-    const accept = next(built);
-    const acceptedBatch = atIndex(accept.nextLedger.batches, 0, 'accepted batch fixture');
-    acceptedBatch.status = 'accepted';
-    acceptedBatch.decision_pointer = '.agent/decisions/batch-work.json';
-    firstTicket(accept.nextLedger).status = 'released';
-    firstTicket(accept.nextLedger).active_resources = [];
-    firstTicket(accept.nextLedger).expires_at = null;
-    firstClaim(accept.nextLedger).status = 'released';
-    firstClaim(accept.nextLedger).resources = [];
-    expect(atIndex(commitHostState(accept).ledger.batches, 0, 'committed batch').status).toBe('accepted');
-  });
+      const decide = next(preserved);
+      const decisionBatch = atIndex(decide.nextLedger.batches, 0, 'batch decision fixture');
+      decisionBatch.status = decision;
+      decisionBatch.decision_pointer = '.agent/decisions/batch-work.json';
+      firstTicket(decide.nextLedger).status = decision === 'accepted' ? 'released' : 'queued';
+      firstTicket(decide.nextLedger).active_resources = [];
+      firstTicket(decide.nextLedger).blocked_resources =
+        decision === 'accepted' ? [] : [...firstTicket(decide.nextLedger).exclusive_resources];
+      firstTicket(decide.nextLedger).expires_at = null;
+      firstClaim(decide.nextLedger).status = 'released';
+      firstClaim(decide.nextLedger).resources = [];
+      const decided = commitHostState(decide);
+      expect(decided.work).toEqual(decide.nextWork);
+      expect(decided.ledger).toEqual(decide.nextLedger);
+      expect(atIndex(decided.ledger.batches, 0, 'committed batch').status).toBe(decision);
+      expect(rows().journalSchema).toEqual(journalBefore);
+      expect(governanceRows()).toEqual(governanceBefore);
+      const decidedRows = rows();
+      expect(() => commitHostState(decide)).toThrow('state compare-and-swap conflict');
+      expect(rows()).toEqual(decidedRows);
+      expect(governanceRows()).toEqual(governanceBefore);
+      expect(store.readHostStateSnapshot(identity)).toEqual(decided);
+      if (performance.now() >= deadline) throw new Error('Host batch decision fixture exceeded its case deadline');
+      preserveHostFixtureRoot = false;
+    },
+  );
 
   test('persists canonical bytes for the same canonical state digest', () => {
     const saved = commitHostState(fixture());

@@ -14,21 +14,25 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-b934fabcbf1d038bcc18336a3cd21884d0180b3c, run
-c133f632-e35f-4c60-81ba-d2538cb4af72, attempt1158.
+58d309d78b388f8280bd9fe3f5b72a135ab01782, run
+f0077229-53d5-44c3-a621-5e9f86736e74, projection attempts1161.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs330cases/5361assertions
-in177722.140487ms. Host and stopped-source children take169.31s and114.58s.
-Commit/rollback recovery take12948.89ms/11564.58ms under unchanged20s limits.
+unchanged boot/image and automatic publication. It runs332cases/5401assertions
+in194928.619753ms. Host and stopped-source children take187.57s and131.35s.
+Commit recovery has setup9114.111750ms/body4007.720502ms; rollback has
+setup8677.342419ms/body2616.359373ms. Both pass unchanged20s bounds after
+fixture optimization; the previous commit timeout does not recur.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains9statement/166branch-arm gaps, no missing function
-or line. The queued recovery callback is visited again. Denominators changed
-with actual Source corrections; do not report a raw counter delta as coverage
-gain. The join performs no new AST/Source scan/hash.
+The report-only join retains8statement/153branch-arm gaps, no missing function
+or line. Compared with the preceding completeb934fab report, one statement and
+three branch arms gain visits; ten unused private branch alternatives are
+removed from the denominator. Denominator removal is not new execution.
+The join performs no new AST/Source scan/hash. Frozen CC/CRAP remains deferred;
+the diagnostic273 maxima do not establish frozen-gate acceptance.
 
 ## Latest measurement custody
 
@@ -41,12 +45,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-VweMBP/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1237-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1237-scratch-parent.json and DIAG/remainder-v1237-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1237-cache-retirement-VweMBP/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-VweMBP-j71Fsm/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-sC28qF |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-PC90jk/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1254-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1254-scratch-parent.json and DIAG/remainder-v1254-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1254-cache-retirement-PC90jk/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-PC90jk-1o2fIH/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-R5VCoH |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -55,7 +59,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-4017696768bytes and retained tmpfs9256792064bytes available, both above the
+3887259648bytes and retained tmpfs9246146560bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -73,9 +77,9 @@ locators remain in the
 [published245d2b0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/245d2b0b2104e3fbd5d59031952f7e1dd2f8250c/.agent/work/core-runtime-reactivation/WORK.md).
 This replaces completed narratives, not evidence or accepted criteria.
 
-### Latest failed execution
+### Resolved timing failure and retained evidence
 
-The complete stage for Source7aace49bba0454014e2bd59a8339ff756dd768f1,
+The earlier complete stage for Source7aace49bba0454014e2bd59a8339ff756dd768f1,
 /workspace/contour-stage-rm0MSW, fails in173651.573748ms. The commit-recovery
 case exceeds its unchanged20s bound: setup14507.051650ms/body5568.283977ms,
 case20136.76ms. Host has315PASS/1FAIL; stopped Source16PASS. New restore and
@@ -338,9 +342,39 @@ Numeric closure requires one new Source-bound SDK/image/stage for this whole pac
 The changed test pin is refreshed once. Strict122/configured zero-warning lint
 and the existing two-file resource control pass in remainder-v1254-controls-Bs6Tcj.
 
+### Checked inexpensive batch-decision packet
+
+Parameterize the existing assured frozen-contour Host-CAS case for accepted,
+feedback and rejected decisions. A benign paired CAS first preserves the ready
+batch, tickets and claims. Decisions atomically release or queue the ticket and
+remove active claim resources; exact Work/Ledger, absent Journal, governance and
+stale-CAS row preservation are asserted. No engine setup, production Source,
+release effect, schema or timeout changes. The independent candidate review is
+vida-batch-transition-review-v1257.md; it finds no actionable gap.
+
+The first focused attempt, batch-decision-v1258-N34sGn, fails3cases because the
+selected generic row helper requires a Journal table absent from this fixture.
+Its original logs and roots /tmp/host-state-gjJ7PZ, /tmp/host-state-v5cpKf and
+/tmp/host-state-S7EP6q remain. Replace that helper with typed exact Host rows and
+the actual Journal-table absence oracle. Corrected strict149/configured lint0
+and3cases/63assertions pass1.80s overall in batch-schema-v1259-jLt3HR; native
+cases take230.08ms,118.39ms and114.81ms under unchanged5s bounds. The changed
+test pin is refreshed once. Strict122/configured lint0 and the existing two-file
+resource control pass1case/10assertions in281ms:
+remainder-v1260-controls-bZwJkf. Changed documentation links/headings pass;
+current-input numerical confirmation remains pending.
+
+Two bounded blind reviews reject wasteful fixture additions. The queued
+TaskSource builder exits before the internal missing-lease guard, and its missing
+own-ticket denial already exists; vida-tasksource-guard-review-v1255.md retains
+the exact reachability GAP. The17capture arms require unavailable lineage or
+states excluded by earlier guards in the existing fixtures; keep those open in
+vida-capture-gaps-review-v1256.md rather than forge accepted authority or repeat
+expensive setup. No numeric result is inferred from either static review.
+
 ### Next actions and unresolved prerequisites
 
-1. Select the next causal S/B packet from the current9statement/166arm gap list;
+1. Select the next causal S/B packet from the current8statement/153arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,

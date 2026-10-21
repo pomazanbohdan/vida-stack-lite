@@ -543,6 +543,18 @@ every producer fence, current-version check and deterministic rebuild fresh.
 
 ### Coordination history and expired recovery
 
+The existing assured ReleaseBatch Host-CAS fixture covers accepted, feedback and
+rejected decisions with distinct native case names. Preserve its actual frozen
+contour and assurance operation; first persist the ready batch, then retain it
+unchanged through a benign paired CAS. Acceptance releases the ticket; feedback
+and rejection queue its full exclusive resource set. All decisions remove active
+claim resources and expiry. Refuse a terminal batch on insertion, absent assurance,
+and a decision without its matching ticket transition. Preserve exact Host rows,
+Journal-table absence and governance on denial and stale retry; compare the full
+successful Work/Ledger and decoded Host. This fixture never creates a Journal or
+executes a release/deployment effect. Arm failure retention before setup and keep
+the existing default5s bound.
+
 The retired-source capture case pairs the active overlapping-writer denial
 with a genuine active disjoint peer admitted through the same fixture's public
 admission. Require a nonempty active claim outside the captured file resource.
