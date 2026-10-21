@@ -313,7 +313,33 @@ DIAG/vida-frontier-gap-review-v1352.md finds no blocking issue in that block.
 Final changed-test binding is recorded once in DIAG/remainder-v1354-test-pin.json.
 Strict122/lint0 and the existing two-file namespace control pass1case/10assertions
 368ms in DIAG/remainder-v1354-controls-xKl15U. This focused result is not new
-numeric acceptance; normal publication and matching full stage remain.
+numeric acceptance. Ordinary hooks pass formatting520/strict527 and normal push
+publishes0a8d1d51946b8adf35f4539c815b4b97ab5de741.
+
+The matching build-only SDK run39602919382 completes successfully. Its sole
+artifact12347280991 and once-verified ZIP remain in
+DIAG/remainder-v1355-sdk-provider.json and remainder-v1355-sdk-verified.json.
+The attempt in DIAG/remainder-v1355-stage.log stops before image/stage creation:
+SDK readiness's gh metadata command fails. A bounded direct metadata probe
+observes HTTP401 Bad credentials; removing the ambient token finds no configured
+gh credential. This is an access GAP, not a test failure or numeric result.
+No suite, image, projection import or map refresh occurs for this attempt.
+Keep the verified SDK archive and owned empty scratch parent q1p1CT. Original
+185743a measurement remains current proof. Resume requires valid gh metadata
+authorization, then one Source-matching SDK/image/stage; no guard bypass or
+stale-artifact acceptance.
+
+That failure exposes a confirmed tooling diagnostic defect: command() discarded
+the native execFile error. Preserve it as Error.cause without changing the
+message, timeout, maxBuffer or rejection. The isolated regression removes PATH
+access to executables for its serial body and restores the original value in
+finally. It proves the original ENOENT/code/path survives and cannot run Git or
+contact a provider. DIAG/sdk-command-cause-v1356-red.log retains the reproduced
+cause loss. An initial formatting invocation refuses parent-relative paths in
+sdk-command-cause-v1357-AsNkEF before compiler/runtime; use exact absolute paths.
+Strict26/lint0 and that one case pass93ms in
+DIAG/sdk-command-cause-v1358-PNMaO7. This Source repair supplies diagnostics,
+not restored credentials or new numeric acceptance.
 
 1. Select the next causal S/B packet from the current4statement/95arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
@@ -381,6 +407,10 @@ The concrete workflow error is relative reviewer evidence paths resolving under
 a fixture. Absolute DIAG paths now belong to the Bun Test technique reference;
 Root reuses the actual logs rather than rerunning their producer. The current
 packet uses one combined pin/control, normal publication and one complete stage.
+One premature push returned up-to-date while its commit session was still live.
+Root observed terminal commit closure, then published0a8d1d5 by ordinary push.
+The Cloud reference now requires a terminal exit before dependent Git calls;
+hook PASS rows alone never release that dependency.
 Actual complete stage durations vary by input; neither concurrency alternatives
 nor total tool calls/tokens have a controlled benchmark. No claimed speedup is
 derived by dividing an already parallel stage duration by worker count.

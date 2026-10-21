@@ -77,6 +77,9 @@ calls during those checks. Outside that freeze, use `git --no-optional-locks`
 for status/diff inspection: default status can refresh the index and invalidate
 the hook's captured identity even when staged content is unchanged. Keep the
 identity guard strict; serialize inspection instead of bypassing it.
+If a command returns a live session ID, wait for its terminal exit before any
+dependent Git operation. Printed formatting/typecheck PASS rows are not commit
+completion; an early push can return up-to-date before the commit exists.
 
 Vex is the single primary index. ast-index and its original skill are inactive
 fallback material; never maintain both indexes simultaneously. A switch has one

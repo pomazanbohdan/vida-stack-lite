@@ -5,12 +5,14 @@ import * as fs from 'node:fs';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import type { AgentJSZipModule } from '../../packages/agent/tooling/release-dependency-types.ts';
 import { sha256 } from '../../packages/agent/tooling/bun-coverage-evidence.ts';
 import { expectedJavascriptFiles } from '../../packages/agent/tooling/maintained-source-inventory.ts';
 import { classifyMaintainedSourcePath } from '../../packages/agent/tooling/ts-only-source-gate.ts';
 import {
   assertSdkArtifactDigest,
+  ensureSdkCoverageInputsForTests,
   publishSdkTestInputs,
   validateSdkTestArchive,
 } from '../../tooling/agent/sdk-coverage-readiness.ts';
@@ -24,6 +26,29 @@ const payloads = new Map(
   ]),
 );
 const roots: string[] = [];
+
+test('SDK readiness preserves the native cause when a bounded command cannot start', async () => {
+  const originalPath = process.env.PATH;
+  const missingExecutables = path.join(os.tmpdir(), 'sdk-no-executables-' + randomUUID());
+  assert.equal(existsSync(missingExecutables), false);
+  process.env.PATH = missingExecutables;
+  try {
+    await assert.rejects(
+      ensureSdkCoverageInputsForTests({ root: path.resolve(import.meta.dir, '../../packages/agent') }),
+      (error: unknown) => {
+        assert.ok(error instanceof Error);
+        assert.match(error.message, /git did not return a bounded successful result/u);
+        assert.ok(error.cause instanceof Error);
+        assert.equal(Reflect.get(error.cause, 'code'), 'ENOENT');
+        assert.equal(Reflect.get(error.cause, 'path'), 'git');
+        return true;
+      },
+    );
+  } finally {
+    if (originalPath === undefined) delete process.env.PATH;
+    else process.env.PATH = originalPath;
+  }
+});
 
 test('the SDK transport bridge accepts only the exact API-bound ZIP bytes', () => {
   const bytes = Buffer.from('transport fixture');

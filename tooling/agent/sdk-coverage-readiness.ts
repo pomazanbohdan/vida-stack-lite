@@ -300,7 +300,7 @@ function command(
   return new Promise((resolve, reject) => {
     execFile(executable, args, { cwd, encoding: 'buffer', timeout, maxBuffer, windowsHide: true }, (error, stdout) => {
       if (error) {
-        reject(new Error(`${executable} did not return a bounded successful result.`));
+        reject(new Error(`${executable} did not return a bounded successful result.`, { cause: error }));
         return;
       }
       if (!Buffer.isBuffer(stdout) || stdout.length > maxBuffer) {
