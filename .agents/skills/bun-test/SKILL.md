@@ -176,6 +176,12 @@ or repeat its engine setup. The original fixture retains close ownership; a
 borrowed ledger is not a new handle to close. Prove initialized corrective
 reservation settlement with the exact Journal and unchanged Host. This does not
 cover start or any engine execution.
+For a separate corrective-start proof, open the real configured bridge with its
+persisted correctiveExecution and current source scope. Keep earlier claim and
+retry oracles before that preparation. Stop at the suspended unissued wave,
+check exact run/Journal agreement and terminal producer results, and close the
+bridge through the async dual-error owner before the fixture closes its ledger.
+Prepared requests do not prove provider execution or authorize effect replay.
 For rollback failures, use distinct body/artifact/SQL sentinels, including thrown
 undefined. Assert exact ordered error identities and original cause, persisted
 rows/files, transaction state and later admissible entry. Keep an instance-local

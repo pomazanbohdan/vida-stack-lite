@@ -14,22 +14,25 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-9a2917539178d81d9db5447c2109c422d54cfcd1, run
-b1ec6615-f4e3-4256-8c25-b99ec07bec4e, projection attempts1178.
+55024fb75697286f96d6f1be91b53af90cc1dc69, run
+3c0fd965-0a27-434a-ba26-c785e55c94f9, projection attempts1180.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs336cases/5648assertions
-in179200.945754ms. Host and stopped-source children take172.87s and113.65s.
-Rollback recovery takes11549.19ms, terminal-history9102.25ms and commit12669.75ms,
+unchanged boot/image and automatic publication. It runs336cases/5660assertions
+in184843.991274ms. Host and stopped-source children take177.30s and120.97s.
+Rollback recovery takes12688.78ms, terminal-history8987.73ms and commit14188.94ms,
 inside their unchanged20s bounds. Their setup/body durations are respectively
-9099.883418/2393.064509ms,7146.515186/1893.127833ms and8968.247092/3641.923266ms.
+9963.491845/2673.400975ms,7223.354406/1723.727516ms and8866.899954/5260.306610ms.
 The preceding rollback timeout does not recur in this complete instrumented run.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains5statement/115branch-arm gaps, no missing function
-or line: F1126/1126,L4978/4978,S5303/5308,B5487/5602. Corrective initialization
+The report-only join retains5statement/112branch-arm gaps, no missing function
+or line: F1126/1126,L4978/4978,S5303/5308,B5490/5602. Unsorted identity refusals
+and actual empty-workspace inspection gain three visits versus9a29175, with
+unchanged production denominators. checkedWork and version have no missing arms.
+Corrective initialization
 and its exact Journal settlement gain nine actual branch-arm visits versus2814c4a
 with unchanged production denominators. Historical report-pair
 validation now shares the existing validator; the branch denominator changes
@@ -64,12 +67,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-FzAdrN/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1308-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1308-scratch-parent.json and DIAG/remainder-v1308-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1308-cache-retirement-FzAdrN/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-FzAdrN-mye9eg/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-0GuRJl |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-XLHhQm/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1314-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1314-scratch-parent.json and DIAG/remainder-v1314-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1314-cache-retirement-XLHhQm/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-XLHhQm-Zz3zSl/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-soCcwj |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -78,7 +81,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3281514496bytes and retained tmpfs9202446336bytes available, both above the
+3212103680bytes and retained tmpfs9197719552bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -129,60 +132,11 @@ See the published6513817 WORK linked above for this completed packet and its ori
 
 ### Checked native bigint empty-workspace packet
 
-Extend only the existing file-backed/recoverable case's readonly-handle segment.
-Require its fresh actual workspace to contain no Work or Ledger. Loop real Bun
-number/bigint handle modes, prove native COUNT returns0/0n, and compare the public
-workspace snapshot with the normal baseline. Preserve Host equality, readonly
-write denial, schema, memory/unshared/empty-schema/nonrecoverable controls and
-the existing5s deadline. Each handle closes through primary-error cleanup.
-Capture DB bytes before each native open and compare only after its close;
-there is no additional engine, Journal, schema or operational-mode change.
-
-The bounded review is vida-bigint-workspace-review-v1271.md. Its populated-mode
-revision decoder limitation is Source-only and has no executed reproduction;
-this empty-workspace proof neither resolves nor grants populated-mode support.
-Keep that compatibility question separate from the default runtime and current
-coverage acceptance. Final review vida-bigint-workspace-final-review-v1273.md
-finds the empty oracle and cleanup sound and prompted the open-to-close boundary
-refinement. Original narrower1case/25assertions1.82s evidence stays in
-bigint-workspace-v1272-NXgfcO. The strengthened exact case passes strict149,
-configured lint0 and1case/25assertions1.66s overall,139.98ms case time in
-bigint-lifecycle-v1274-kc7c9x. Refresh the changed test pin once; strict122,
-configured lint0 and the existing two-file resource control pass1case/10assertions
-in292ms: remainder-v1275-controls-uHnr95. Changed documentation links/headings
-pass. The complete6513817 stage confirms all three native bigint budget arms;
-the case takes38.30ms. Original SDK/image/receipts/scratch remain bound to that
-Source and do not qualify future test changes.
+Native bigint row-budget and empty-history controls are included in the latest complete coverage. No missing boundedInspectionInteger arms remain. Full checks, original failure custody and pins remain in the [published packet](https://github.com/pomazanbohdan/vida-stack-lite/blob/55024fb75697286f96d6f1be91b53af90cc1dc69/.agent/work/core-runtime-reactivation/WORK.md#checked-native-bigint-empty-workspace-packet).
 
 ### Checked empty frozen-contour refusal packet
 
-Keep the missing-seed guard in validateProgress. The bounded blind caller proof
-vida-frozen-seed-guard-review-v1276.md finds every caller checked, but the shared
-stringList schema permits zero entries and referential every(Boolean) passes
-empty lists. Removing the guard would dereference a missing seed rather than
-produce the intended domain refusal. No production Source or schema changes.
-
-Reuse each existing assured batch case's actual readySaved predecessor before
-the ordinary positive freeze. Construct a digest-correct proposal with empty
-ticket/work lists and one generation advance; require the exact frozen-contour
-denial. Preserve native Host, explicitly absent Journal, governance, a closed
-transaction and decoded readySaved state. Move/reuse its existing native-row
-closure; no new fixture/engine or timeout. All original assurance, successful
-batch decisions and stale retries remain.
-
-Final current-byte review vida-empty-freeze-final-review-v1277.md confirms guard
-ordering and cleanup; its Journal-baseline precision is now an explicit empty
-array assertion. Strict149/configured lint0 and3cases/81assertions pass2.01s,
-249.63ms/129.42ms/133.89ms native, in empty-freeze-v1278-UkveqF. The matching
-d798e49 stage below fails another case. The later complete a529007 stage confirms
-the missing-seed statement and arm without weakening its refusal.
-Refresh the changed test pin once; strict122/configured lint0 and the existing
-two-file resource control pass1case/10assertions in286ms:
-remainder-v1279-controls-bX4R2E. Changed documentation links/headings pass.
-The Bun Test skill now requires checking exact list minima and vacuous reference
-predicates before a guard-dominance claim. Completed narratives above are linked
-to immutable Git while incoming headings and current prerequisite GAPs remain;
-no Source, DB, original receipt or failure artifact is removed by this compaction.
+The empty-list public refusal preserves the validateProgress seed guard. Its statement/arm execution is confirmed; the original separate recovery timeout and retained fixture remain in the linked record. Full checks, original failure custody and pins remain in the [published packet](https://github.com/pomazanbohdan/vida-stack-lite/blob/55024fb75697286f96d6f1be91b53af90cc1dc69/.agent/work/core-runtime-reactivation/WORK.md#checked-empty-frozen-contour-refusal-packet).
 
 ### Three-hour audit and recovery timeout correction:2026-10-21 06:40–09:40 UTC
 
@@ -251,32 +205,7 @@ conditions and the additional independent fixture do not establish a speedup.
 
 ### Checked absent-Host and malformed-lease packet
 
-Reuse the current queued TaskSource fixture for pure-builder refusals with
-absent Work, absent Ledger, and null Work lease plus the cloned predecessor's
-ticket ID removed. Prove deletion succeeded and the property is absent. Retain
-the actual own queued ticket, prepared operation/CAS and all native Host,
-prepared-row, Source-absence, peer, Journal and FIFO retry oracles. These inputs
-never become persisted authority; no schema, Source guard or policy changes.
-The earlier lease-dominance review's malformed DTO counterexample is now a real
-public negative input, not a claimed valid Host state or authorization defect.
-
-The existing empty-workspace readonly fixture reads qualified-code history as
-[] through each real number/bigint handle. Keep native zero-row proof, unchanged
-Host/catalog and full database bytes from before open through after owned close.
-No new fixture, receipt table, engine or Journal is created.
-
-Blind current-byte review vida-absent-host-review-v1291.md finds the guard path
-and preservation sound, without numeric claims. Original narrower proof remains
-in absent-host-v1290-dcmOLU:strict149/lint0,2cases/153assertions2.13s. Final
-malformed-lease extension passes strict149/lint0 and2cases/156assertions2.03s in
-absent-lease-v1292-dAjvl2. The malformed TaskSource case takes304.64ms. Keep the
-current complete a529007 measurement separate from these pending test bytes.
-Changed test pin refreshed once in remainder-v1293-test-pin.json. Strict122/lint0
-and the two-file resource control pass1case/10assertions293ms in
-remainder-v1293-controls-qLRO2P. Ordinary hooks pass formatting520/strict527 and
-01b8928 is published. Its complete bound stage confirms the three new arms and
-expected-lease refusal statement; raw custody, exact counts and cache retirement
-remain with the current owners above. It qualifies no future test bytes.
+Absent Work/Ledger and malformed lease/predecessor DTOs are negative-only inputs. Their public refusal, real empty qualified history and native beforeimages are in the latest complete measurement; no authority is fabricated. Full checks, original failure custody and pins remain in the [published packet](https://github.com/pomazanbohdan/vida-stack-lite/blob/55024fb75697286f96d6f1be91b53af90cc1dc69/.agent/work/core-runtime-reactivation/WORK.md#checked-absent-host-and-malformed-lease-packet).
 
 ### Checked malformed identity DTO matrix
 
@@ -350,7 +279,7 @@ tmpfs9211899904bytes available, above the unchanged2147483648floor. No numeric,
 build or install producer is active. The existing inventory and completed
 retirement manifests suffice; no further safe cleanup is identified here.
 
-### Next actions and unresolved prerequisites
+### Checked corrective producer preparation packets
 
 Blind bounded review vida-begin-producer-review-v1304.md identifies the eight
 beginSessionProducer arms as corrective-Journal predicates in start/initialize.
@@ -399,11 +328,55 @@ change, extra fixture or timeout. The intermediate1311pin/control predates the
 empty-inspection addition; refresh the final binding and do not relabel that
 earlier control as current. Final binding remainder-v1313-test-pin.json and
 strict122/lint0/two-file control pass1case/10assertions268ms in
-remainder-v1313-controls-ahi4ps. Changed-document links/headings pass. One matching
-stage remains pending; the latest complete report above does not qualify these
-bytes.
+remainder-v1313-controls-ahi4ps. Changed-document links/headings pass. Ordinary
+hooks pass formatting520/strict527 and normal push publishes55024fb. Its complete
+stage above confirms all three proposed arm visits with unchanged denominators.
+Original9a29175 measurement/custody remains under contour-stage-FzAdrN and
+remainder-v1308; it is not relabeled as current bytes.
 
-1. Select the next causal S/B packet from the current5statement/115arm gap list;
+The backlog still named obsolete active storage-image/envelope/admission slots.
+Replace that superseded execution narrative with its resolvable published55024fb
+history link and current single-contour order, retaining all task IDs, explicit
+attestation/activation/frozen/mutation gaps and UNKNOWN no-replay obligations.
+
+The next bounded blind study vida-corrective-start-review-v1315.md identifies a
+supported actual corrective bridge route after the original claim/retry oracles.
+Root adds that real start with existing f.ledger/producerInput, issued correction
+and retained source scope. Stop at suspended preparation: nonempty exact requests,
+null issue/observation, unchanged assignment history and authority bytes. Both
+new producer operations settle applied/revision3; one result digest binds the
+actual engine snapshot and Journal version. Async bridge close precedes original
+fixture-owned ledger close through existing dual-error owners. No provider effect
+is issued or replayed, and the20s case limit is unchanged.
+
+In the same typed queued-policy matrix, clone one real active peer claim with
+only its ticket_id redirected to the real queued ticket. Require exact queued
+ownership refusal; never persist the adverse DTO. All native Host/Journal/peer/
+FIFO and original positive retry oracles remain. No new fixture or Source API.
+The first1316check stops statically on Bun matcher's readonly-array overload;
+use a shallow expected-array copy, retaining that original compiler diagnostic.
+Strict149/lint0 and2cases/293assertions pass8.52s in
+corrective-start-queued-claim-v1317-sAYf1g. Final bounded static review
+vida-corrective-start-final-review-v1318.md accepts authority, exact operation
+binding and nested cleanup; its Pstack entry/leaves are readable. This static
+review does not create numeric evidence or relabel prior runtime inputs.
+Hoist the identical expected start-result hash out of the two-operation filter,
+reducing its computation from two to one without a speedup claim. Final current
+bytes pass strict149/lint0 and2cases/293assertions10.14s,8119.80/449.06ms native,
+in corrective-start-final-v1319-XqvGWE. Final pin is bound once in
+remainder-v1320-test-pin.json; strict122/lint0/two-file control pass
+1case/10assertions309ms in remainder-v1320-controls-rwFEBx. Changed links/headings
+pass. Ordinary publication and one matching complete stage remain next. The
+latest report above still binds55024fb.
+
+Three completed WORK packets now link their published55024fb full checks and
+failure custody while retaining incoming headings; no original evidence is
+removed. Current measured outcome, causal correction and exact open gaps remain
+local. The current plan, backlog and WORK keep their existing ownership.
+
+### Next actions and unresolved prerequisites
+
+1. Select the next causal S/B packet from the current5statement/112arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,

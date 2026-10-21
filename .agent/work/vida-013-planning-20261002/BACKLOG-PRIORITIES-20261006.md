@@ -61,63 +61,19 @@ bounded cleanup of descendants after a normal leader exit, while preserving the
 non-successful result. WORK records its negative controls, native proof and
 focused verification. These implemented TEST013 repairs do not close global gates.
 
-The fresh body-local facade triple at91906ff has refilled its slot with storage
-image. Main-host has a fresh compatible triple atfebad42 and immediately refills
-its slot with fs-safe-attestation. Attestation now has exact L4/4,S4/4 with no
-callable/branch inventory and a reader-validated full7/7 native Killed proof;
-its explicit CRAP applicability gap parks the contour without a closure. The
-released slot prepares service-operation-custody. Active lanes are storage image,
-envelopes and service-operation-custody; admission's
-stateful static-initialization gap releases its idle slot without a closure.
-Initialization remains OPEN on qualified child-only activation evidence. Admission's caller-owned
-request defect now has real RED/GREEN evidence and a bounded snapshot correction.
-Its interrupted mutation attempt stays UNKNOWN. The native pilot now shares one
-partition deadline across all batches; fresh numeric qualification remains open.
-The storage-image lane reuses its recorded pair as history and needs fresh evidence.
-Envelope's five
-new survivors have targeted native Killed confirmations, and admission's real
-initial/exclusive/checkpoint dual-error phases share their fixture and exact owned cleanup.
-Initialization's package-asset reader correction preserves the sealed input
-contract; its remaining activation gap is distinct from setup and generic failures.
-Full compatible mutation closures remain OPEN; diagnostic sets are not unioned.
-WORK owns the exact receipts and pending equivalent/unattempted mutant analysis.
-The image survivor exposed a duplicate subset-schema read after exact whole-schema
-equality. Independent review accepts its removal, with two explicitly retired
-Source-added callbacks and unchanged ceilings for all surviving roles; fresh
-original-lineage frozen proof remains required. Its follow-up reuses the validated
-final schema array for the digest, removing a second post-merge catalog read with
-unchanged50-role correspondence and original ceilings. The data-only attestation
-Source remains executable for coverage/mutation; CRAP applicability needs explicit
-empty-callable proof, not a synthetic zero score or static-export exemption.
-Actual fault controls also expose missing private-DB close when memory-client
-construction fails in inventory and Host-clone preparation. The existing image
-initializer now owns both setup and cleanup for either prepared DB, with tagged
-outcomes and flat ordered body/store/DB causes. Shared-body deletion preserves all
-50identities and prospective ceilings; affected regressions pass. Fresh numeric
-qualification remains OPEN. WORK owns the exact RED/GREEN and mutation receipts.
+The former multi-contour slot assignments and daily image/envelope/admission
+mutation narratives are retained in the [published testing history](https://github.com/pomazanbohdan/vida-stack-lite/blob/55024fb75697286f96d6f1be91b53af90cc1dc69/.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md#test-acceptance-boundary).
+They do not authorize active lanes. Current execution is the single bun-host-state
+coverage cycle until exact F/L/S/B100; the strategy owns order and WORK owns its
+input-bound outcomes and next packet. Frozen and mutation work stay deferred.
 
-Within TEST013, real capture fault controls expose skipped native log close after
-sync failure and unread-pipe backpressure after log open/write failure. Published
-8120162 fixes both, preserving observed child custody and ordered capture codes;
-incomplete/failed output still denies mutation admission under unchanged budgets.
-The current image packet also strengthens real SQLite schema/integrity/custody
-and independent digest/ledger assertions. Fresh compatible full mutation remains
-OPEN; historical UNKNOWN namespaces stay retained rather than replayed.
-An analogous image review also confirms two product error-masking defects in
-readonly catalog close and INSERT statement finalization. Shared existing cleanup
-finishing now retains undefined/body/cleanup identities and ordered aggregates;
-real-handle RED/GREEN tests cover both. Existing50caps stay10/10; two new cleanup
-callbacks have separately reviewed prospective1/1 caps, pinned atb1ecf6b and
-verified through the fresh52-role coverage/frozen pair recorded in WORK. Full
-mutation closure remains OPEN. The next TEST013 packet adds a real empty-Mastra
-schema assertion and removes residual cached subject imports from envelope test
-bodies after an actual zero-owned-hit UNKNOWN. Original failed evidence remains.
-The exact-row boundary then reproduces a product defect: the storage row digest
-applies the10,000-node ingress budget to its supported100,000-row aggregate.
-The causal correction reuses the existing byte-bounded internal canonicalizer,
-retaining public/per-row limits and all52role ceilings. Exact1024-object and
-100000-row acceptance plus existing over-limit denials are checked together;
-WORK owns the new immutable pin and pending numeric proof.
+Keep the original open obligations: attestation requires explicit empty-callable
+CRAP applicability; initialization needs qualified child-only activation evidence;
+admission retains its interrupted UNKNOWN without replay; storage-image and
+envelope need compatible frozen correspondence and complete mutation evidence.
+Their published cleanup, capture, schema-limit and body/cleanup corrections remain
+implemented Source, distinct from complete acceptance. Historical diagnostic
+mutation sets cannot be unioned into current closure.
 
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
 

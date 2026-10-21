@@ -839,6 +839,14 @@ unchanged Host/Journal and an applied native producer result bound to the exact
 Journal and absent corrective engine. Borrow the actual ledger without reopening
 or closing it separately. Initialization does not prove start or engine execution;
 retain the original fixture deadline and all corrective authority/retry oracles.
+After those original oracles, real corrective bridge preparation passes the
+persisted correctiveExecution, original configured input and retained source
+scope. Start once at the new corrective run ID; require a suspended, nonempty
+unissued wave with exact run/Journal/request agreement and unchanged Host
+assignment history. Both new producer operations must settle as applied; the
+start result digest binds its actual engine snapshot and Journal version. Close
+the bridge through the async dual-error owner before fixture-owned ledger close.
+Do not issue/report/resume these requests or claim provider/Runtime execution.
 
 The selected Host assurance case reuses the existing passing final-correction
 fixture and its real admitted writer, focused reports and terminal Journal. The

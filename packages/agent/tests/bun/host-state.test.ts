@@ -1158,6 +1158,59 @@ test(
       expect(f.store.readHostStateSnapshot(f.identity)).toEqual(terminal);
       expect(f.store.readWorkSessionJournal(f.identity)).toEqual(corrected);
       expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+      const producerRows = f.database.query<{ record_key: string; payload: string }, [string]>(
+        "SELECT record_key,payload FROM agent_host_governance WHERE workspace_id=? AND store_id='vida-session-producers' AND kind='operation' ORDER BY record_key",
+      );
+      const producerKeysBefore = new Set(producerRows.all(f.store.workspaceId).map((row) => row.record_key));
+      let correctiveBridge: MastraSessionBridge | undefined;
+      await withInitialSourceCleanup(
+        async () => {
+          correctiveBridge = await MastraSessionBridge.open({
+            ...f.producerInput,
+            repositoryRoot: f.root,
+            config: f.config,
+            workspaceId: f.store.workspaceId,
+            ledger: f.ledger,
+            correctiveExecution: issued,
+          });
+          const started = await correctiveBridge.start(corrected.state.source_scope);
+          const startedJournal = requiredValue(
+            f.store.readWorkSessionJournal(f.identity),
+            'prepared corrective producer Journal',
+          );
+          expect(started.run_id).toBe(issued.engine_run_id);
+          expect(started.status).toBe('suspended');
+          expect(startedJournal.state.corrective_execution).toEqual(issued);
+          expect(startedJournal.state.run_id).toBe(issued.engine_run_id);
+          expect(startedJournal.state.step_id).toBe(started.step_id);
+          expect(startedJournal.state.completed).toEqual([]);
+          expect(startedJournal.state.items.map((item) => item.request)).toEqual([...started.requests]);
+          expect(startedJournal.state.items.length).toBeGreaterThan(0);
+          for (const item of startedJournal.state.items) {
+            expect(item.issue_id).toBeNull();
+            expect(item.observation).toBeNull();
+            expect(item.request.run_id).toBe(issued.engine_run_id);
+            expect(issued.stage_ids).toContain(item.request.stage_id);
+          }
+          expect(f.store.readHostStateSnapshot(f.identity).work?.execution.assignment_attempts).toEqual(
+            terminal.work.execution.assignment_attempts,
+          );
+          expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+          const operations = producerRows
+            .all(f.store.workspaceId)
+            .filter((row) => !producerKeysBefore.has(row.record_key))
+            .map((row) => parseJsonRecord(row.payload));
+          expect(operations).toHaveLength(2);
+          for (const operation of operations)
+            expect(operation).toMatchObject({ status: 'applied', terminal_revision: 3 });
+          const expectedStartDigest = canonicalJsonDigest({ engine: started, journal: startedJournal.version });
+          expect(operations.filter((operation) => operation.result_digest === expectedStartDigest)).toHaveLength(1);
+        },
+        async () => {
+          if (correctiveBridge) await correctiveBridge.close();
+        },
+        'Corrective producer engine preparation',
+      );
       completed = true;
     } catch (error) {
       primaryFailure = { error };
@@ -3283,6 +3336,23 @@ test('task-source policy denials preserve preparation and queued retries preserv
         message: stalePolicyMessage,
       },
     ];
+    const activePeerClaim = requiredValue(
+      reserved.ledger.claims.find((claim) => claim.status === 'active'),
+      'existing active queued-policy peer claim',
+    );
+    expect(activePeerClaim.ticket_id).not.toBe(ticketId);
+    adverseHosts.push({
+      hostSnapshot: {
+        ...reserved,
+        ledger: {
+          ...reserved.ledger,
+          claims: reserved.ledger.claims.map((claim) =>
+            claim.claim_id === activePeerClaim.claim_id ? { ...claim, ticket_id: ticketId } : claim,
+          ),
+        },
+      },
+      message: 'queued TaskSource ticket has active or incomplete ownership',
+    });
     for (const key of ['repository_id', 'project_ids', 'integrations_digest'] as const) {
       const binding = clone(reserved.work.binding);
       expect(Reflect.deleteProperty(binding, key)).toBe(true);
