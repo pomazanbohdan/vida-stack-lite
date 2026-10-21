@@ -71,6 +71,26 @@ floor. All non-cache originals and the verified durable scratch archive remain.
 
 ### Current negative-edge repair packet
 
+### Current TaskSource lookup simplification
+
+After1461's complete measurement, independent1463 approves consolidating the
+TaskSource prior-ticket helper's two branch-local lookup forms. Root computes
+the actual Work lease ticket once and returns that ticket or null when it is not
+the operation's own ticket. The existing missing-ticket refusal, released-history
+filter, ordering, caller guard order and public behavior remain unchanged.
+Each old branch already performs one lookup; no runtime scan saving is claimed.
+The concrete reduction is one duplicated declaration/callback and one null-return
+owner. The outer function keeps CC3; filter/sort stay unchanged. Frozen
+correspondence must record the deleted duplicate lookup closure without transferring
+allowance. DIAG/vida-task-ticket-lookup-v1463.md retains the equivalence review.
+1465 passes Source84 strict/lint0 and two existing public reservation/UNKNOWN/FIFO
+cases2PASS/77assertions2.13s in DIAG/task-ticket-lookup-v1465-Il3ZQ1. Expected UNKNOWN
+roots are retained. Unchanged tests retain1449's exact pin. The numeric observation
+below still binds5f8e1d7; this pending Source simplification needs its own matching
+SDK/image and one complete coverage stage, without an unchanged full retry.
+
+### Published retry-graph repair packet
+
 The resumed goal keeps this same contour and Root numeric owner.1444 independently
 checks a bounded corruption-only route past generic Work validation: a genuine
 next-slot writer preserves its actual reservation/observation while one fixture
@@ -406,37 +426,34 @@ where copying/archive retention consumes the same space.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-5e5f5fb3320ef477f6b0d28fa18d51c35b2f3bcb, run
-410ef9e0-2742-4a8e-937a-d7eced7572b6.
-F1127/1127,L4994/4995,S5324/5331,B5539/5610 leave1line/7statement/71branch-arm gaps.
-F is exact100; L/S/B remain BLOCKED/nonexact. Documentation-only checkpoints
+5f8e1d797d588b0075e4b48b230719ecaf3e8ffc, run
+e5fded91-0793-4285-a09d-8e0fba910c7e.
+F1126/1126,L4993/4993,S5325/5328,B5537/5603 leave3statement/66branch-arm gaps.
+F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. All338cases/5921assertions pass
-in213894.698935ms. Host322/5594 takes205.55s; stopped-source16/327 takes130.32s.
-The preceding complete336-case observation took173.81s under different Source
-and tests; this is not a controlled speed benchmark. Both stay within unchanged
+unchanged boot/image and automatic publication. All341cases/5990assertions pass
+in202470.503798ms. Host325/5663 takes195.49s; stopped-source16/327 takes122.26s.
+The preceding complete338-case observation took213894.698935ms under different
+Source and tests; this is not a controlled speed benchmark. Both stay within unchanged
 300s coverage/330s stage budgets. No unchanged full retry is launched.
 
-The retained map owner deficits decrease by1 for authorizeCorrectiveExecution,
-2 for admitSuccessorWork and1 for renewActiveLocalLease. The new provenance helper
-adds4missing branch arms and3missing statements, including the one missing line;
-the four earlier statement gaps remain. Total branch deficit therefore stays71.
-This is owner-counter accounting, not an invented exact counter correspondence
-or denominator-based completion. The security fix is not withdrawn to recover
-the old line percentage. Blind1441 finds no genuine producer of ambiguous or
-non-+1 retry edges. Its corruption-only proposals are unvalidated: a naive same-slot
-mutation fails the earlier Work chain validator and cannot prove the later graph
-refusal. DIAG/vida-retry-negative-edges-v1441.md records that exact prerequisite.
-Do not weaken validation, export the private helper, manufacture accepted history
-or repeat a full stage unchanged. Untrusted-storage denial remains distinct from
-genuine acceptance; Root must qualify a bounded negative fixture before claiming
-those counters. The four older producer/defensive statement GAPs remain unchanged.
-The predecessor map is DIAG/remainder-v1440-predecessor-gap-map.json; the current
-map is refreshed once through the retained report-only join. Earlier numeric,
+The graph helper now has no missing counters. Its three statements and four
+previously missing branch arms are exercised by the qualified negative fixtures.
+The reviewed private commit-mode refactor removes one helper and its unsupported
+combination. Total denominators decrease by1function/2lines/3statements/7arms;
+these removals are not new execution. Four statement deficits become three actual
+visits plus one eliminated unsupported statement; the remaining three are the
+TaskSource own-ticket null fallback and two historical-attempt skip statements.
+One eliminated missing arm plus four newly visited graph arms reduces the branch
+deficit71to66. The old naive same-slot blocker is superseded by the genuine
+different-slot producer and explicit untrusted-row denial, without accepting
+fabricated history or weakening Work validation.
+The predecessor map is DIAG/remainder-v1461-predecessor-gap-map.json; the current
+map is refreshed once through the retained report-only join. The prior numeric,
 timing and retirement evidence remains in the
-[published5e5f5fb WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/5e5f5fb3320ef477f6b0d28fa18d51c35b2f3bcb/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
+[published5f8e1d7 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/5f8e1d797d588b0075e4b48b230719ecaf3e8ffc/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
 No new AST/Source scan/hash is used for this join. Frozen CC/CRAP remains deferred;
 the diagnostic273 maxima do not establish frozen-gate acceptance.
 
@@ -451,23 +468,26 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-DfKEwa/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1440-sdk-provider.json and DIAG/remainder-v1440-sdk-verified.json |
-| Admission and complete producer log | DIAG/remainder-v1440-scratch-parent.json and DIAG/remainder-v1440-stage.log |
-| Private-cache disposition | Retained unchanged; exact excluded path in the archive manifest below |
-| Non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-DfKEwa-VHDtpV/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-87AHkZ |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-Fj3gHO/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1461-sdk-provider.json and DIAG/remainder-v1461-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1461-scratch-parent.json and DIAG/remainder-v1461-stage.log |
+| Private-cache disposition | DIAG/remainder-v1462-cache-retirement-Fj3gHO/manifest.json and retirement-events.jsonl |
+| Non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-Fj3gHO-KVtgrZ/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-BFXCXa |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
 and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
-The324722-byte durable archive excludes only this stage's declared private
-regenerable Bun cache, which also remains present. All archived entries compare
+The324891-byte durable archive excludes only this stage's declared private
+regenerable Bun cache, retired after closed custody and dependency qualification.
+The exact cache path,15243-entry inventory and exclusive events are retained;
+observed scratch gain215846912bytes is separate from durable-4096bytes.
+All archived entries compare
 with their originals; its digest is computed once. This is custody, not a space
 gain or reattestation. Prior qualified cache retirement stays in the published
 history linked above; no shared dependency scan/hash is repeated.
 
-A postclosure observation records2445701120durable bytes after archive, above the
+A postclosure observation records2374889472durable bytes after archive, above the
 unchanged2147483648floor. Both filesystems passed admission before launch;
 checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad

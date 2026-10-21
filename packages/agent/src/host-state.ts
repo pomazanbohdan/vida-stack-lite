@@ -2508,12 +2508,9 @@ function taskSourcePriorTicket(
   work: WorkState,
   request: TaskSourceBindingRequest,
 ): CoordinationTicket | null {
-  const ownId = taskSourceTicketId(request);
-  if (work.lease?.ticket_id !== ownId) {
-    return ledger.tickets.find((ticket) => ticket.ticket_id === work.lease?.ticket_id) ?? null;
-  }
-  const own = ledger.tickets.find((ticket) => ticket.ticket_id === ownId);
-  if (!own) return null;
+  const ownId = taskSourceTicketId(request),
+    currentTicket = ledger.tickets.find((ticket) => ticket.ticket_id === work.lease?.ticket_id) ?? null;
+  if (!currentTicket || currentTicket.ticket_id !== ownId) return currentTicket;
   const prior = ledger.tickets
     .filter(
       (ticket) =>
@@ -2522,8 +2519,8 @@ function taskSourcePriorTicket(
         identityKey(ticketIdentity(ticket)) === identityKey(workIdentity(work)) &&
         ticket.thread_id === request.thread_id &&
         ticket.source_revision === work.binding.work_source_revision &&
-        ticket.generation === own.generation &&
-        ticket.sequence < own.sequence,
+        ticket.generation === currentTicket.generation &&
+        ticket.sequence < currentTicket.sequence,
     )
     .sort((left, right) => right.sequence - left.sequence);
   return prior[0] ?? null;
