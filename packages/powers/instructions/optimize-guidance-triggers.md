@@ -6,6 +6,7 @@ capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
+  - description-shape-policy
 conditions_applies_when: The guidance must be found for the task it addresses.
 conditions_does_not_apply_when: The guidance is always loaded together with the task.
 artifact_contract_output_type: guidance-trigger
@@ -27,7 +28,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/lenses/lens-trigger.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/theory-of-project-context.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Describe triggering conditions in the guidance

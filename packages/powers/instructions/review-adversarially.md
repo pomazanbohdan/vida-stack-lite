@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - code-review
   - empty-result-policy
+  - adversarial-empty-result-policy
 conditions_applies_when: A change or design is ready and needs review independent of its author.
 conditions_does_not_apply_when: Only a mechanical format or build check is needed.
 artifact_contract_output_type: adversarial-review
@@ -29,7 +30,7 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/reflect/references/divergent-reviewer.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/reflect/references/tooling-reviewer.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Review adversarially

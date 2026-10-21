@@ -21,7 +21,7 @@ compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/to-spec/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Choose the highest test seam

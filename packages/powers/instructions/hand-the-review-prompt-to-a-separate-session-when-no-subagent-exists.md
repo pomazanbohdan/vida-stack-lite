@@ -8,6 +8,7 @@ capability_tags:
 pattern_tags:
   - code-review
   - subagent-delegation
+  - review-execution-policy
 conditions_applies_when: A review step needs a separate reviewer and no executor can be launched in this session.
 conditions_does_not_apply_when: "An executor can be launched, or the review is done in this session without a separate reviewer."
 artifact_contract_output_type: review-prompt-handoff
@@ -24,7 +25,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-oneshot.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-02-review.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Hand the review prompt to a separate session when no executor is available

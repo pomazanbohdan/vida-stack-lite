@@ -1,7 +1,7 @@
 ---
 instruction_id: never-let-the-setup-overwrite-an-existing-answer
 title: Never let the setup overwrite an existing answer
-summary: "The setup asks the configuration questions once and never changes an answer that was already given; to change an answer, edit its key by hand in the file the setup reports for it."
+summary: "The setup never changes an answer that was already given; to change an answer, edit its key by hand in the file the setup reports for it."
 capability_tags:
   - write-configuration-override
 pattern_tags:
@@ -19,11 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-core-tools/help/customization.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Never let the setup overwrite an existing answer
-The setup asks the questions once
-and never changes an existing value.
+The setup never changes an existing value.
 To change an answer, edit its key in the file
 it reports for it.

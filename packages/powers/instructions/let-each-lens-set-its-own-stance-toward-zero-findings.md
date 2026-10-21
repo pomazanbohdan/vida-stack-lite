@@ -6,6 +6,7 @@ capability_tags:
   - review-code
 pattern_tags:
   - code-review
+  - adversarial-empty-result-policy
 conditions_applies_when: A review is run by lenses that do not all share the same stance.
 conditions_does_not_apply_when: Only one lens runs and its stance is already known.
 artifact_contract_output_type: lens-stance
@@ -13,13 +14,14 @@ artifact_contract_required_data:
   - the stance of each lens
   - what an empty result means for each lens
 artifact_contract_verified_by: "the finding count follows the stance of the lens that produced it, and nothing was padded"
-compatibility_excludes: []
+compatibility_excludes:
+  - review-adversarially
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-review/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-review/references/lens-adversarial.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Let each lens set its own stance toward zero findings

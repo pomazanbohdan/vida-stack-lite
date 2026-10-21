@@ -14,7 +14,7 @@ artifact_contract_required_data:
   - the old interface
   - the new implementation
   - the translation
-  - "the condition that ends the adapter's life"
+  - "\"the condition that ends the adapter's life\""
 artifact_contract_verified_by: the adapter is removed once the last consumer has migrated
 compatibility_excludes:
   - migrate-callers-and-delete-legacy
@@ -22,7 +22,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/deprecation-and-migration/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Adapt the old interface to the new implementation

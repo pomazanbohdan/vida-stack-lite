@@ -6,6 +6,7 @@ capability_tags:
   - write-tests-first
 pattern_tags:
   - test-design
+  - failing-test-policy
 conditions_applies_when: "A test fails, is skipped, or ends without its assertion being awaited."
 conditions_does_not_apply_when: The suite is green and no test is skipped.
 artifact_contract_output_type: test-silence-review
@@ -21,7 +22,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/testing-patterns.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-qa-generate-e2e-tests/workflow.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Never skip or silence a failing test

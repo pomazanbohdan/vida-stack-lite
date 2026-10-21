@@ -72,11 +72,27 @@ catalogue names the conflict and the caller decides.
 
 ## 4. The declared pairs in the corpus
 
-| Pair | Theme | The disagreement |
-|---|---|---|
-| `adapt-the-old-interface-to-the-new-implementation` ↔ `migrate-callers-and-delete-legacy` | `migration-strategy` | keep the old interface behind an adapter while the backend moves, or migrate the callers and delete the old path in the same wave |
-| `run-each-check-only-when-the-code-changed` ↔ `verify-before-completion` | `verification-rerun-policy` | reuse the last successful run while the code has not changed, or run the verification command again at the moment of the claim |
-| `choose-the-test-level` ↔ `choose-the-highest-test-seam` | `test-placement-strategy` | the lowest test level that captures the behaviour, or the highest seam available |
+The table lists every pair the corpus currently declares — it is regenerated from
+the instructions, so a pair that is added or removed is visible here. A pair
+carries **one dedicated theme tag**: the one that names the disagreement. The
+other shared tag, where there is one, is a topic tag that many instructions
+carry and that therefore cannot identify the pair.
+
+| Pair | Shared tags |
+|---|---|
+| `adapt-the-old-interface-to-the-new-implementation` ↔ `migrate-callers-and-delete-legacy` | `migration-strategy` |
+| `choose-the-highest-test-seam` ↔ `choose-the-test-level` | `test-placement-strategy` |
+| `decide-whether-the-test-the-harness-or-the-application-is-wrong` ↔ `never-skip-or-silence-a-failing-test` | `test-design, failing-test-policy` |
+| `format-quality-findings` ↔ `report-the-review-in-one-canonical-finding-shape` | `finding-severity-policy, finding-presentation-policy` |
+| `hand-the-review-prompt-to-a-separate-session-when-no-subagent-exists` ↔ `keep-review-read-only` | `code-review, review-execution-policy` |
+| `keep-review-read-only` ↔ `run-the-review-lenses-as-one-blocking-batch` | `review-application-policy` |
+| `keep-review-read-only` ↔ `run-the-lenses-and-fix-what-they-find` | `code-review, review-fix-application-policy` |
+| `label-code-review-findings` ↔ `report-the-review-in-one-canonical-finding-shape` | `code-review, finding-severity-policy` |
+| `let-each-lens-set-its-own-stance-toward-zero-findings` ↔ `review-adversarially` | `code-review, adversarial-empty-result-policy` |
+| `optimize-guidance-triggers` ↔ `write-the-description-as-a-summary-and-trigger-phrases` | `instruction-authoring, description-shape-policy` |
+| `prefer-a-prohibition-that-names-the-permitted-alternative` ↔ `write-directive-rules` | `instruction-authoring, directive-form-policy` |
+| `prefer-the-explanation-over-the-shouting-rule` ↔ `write-directive-rules` | `instruction-authoring, rule-authority-policy` |
+| `run-each-check-only-when-the-code-changed` ↔ `verify-before-completion` | `verification-rerun-policy` |
 
 ## 5. Consequences
 

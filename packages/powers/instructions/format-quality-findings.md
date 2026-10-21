@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - output-formatting
   - finding-severity-policy
+  - finding-presentation-policy
 conditions_applies_when: You present findings from a review or an audit.
 conditions_does_not_apply_when: There are no findings.
 artifact_contract_output_type: ranked-findings
@@ -29,7 +30,7 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/SKILL.md
 status: active
-revision: 5
+revision: 6
 ---
 
 # Present findings by impact in a fixed shape

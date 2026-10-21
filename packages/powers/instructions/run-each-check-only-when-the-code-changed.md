@@ -5,7 +5,6 @@ summary: "Run a verification command after a change that could affect it, and do
 capability_tags:
   - verify-work-results
 pattern_tags:
-  - verification-before-completion
   - verification-rerun-policy
 conditions_applies_when: A verification command has just run successfully and no code has changed since.
 conditions_does_not_apply_when: "The code changed since the last run, so the check has to run again."
@@ -20,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/incremental-implementation/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Run each check only when the code changed

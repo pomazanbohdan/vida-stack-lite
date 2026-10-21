@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 2557,
-  "updated_at": "2026-10-20T17:59:58.965Z",
+  "revision": 2607,
+  "updated_at": "2026-10-21T10:29:25.110Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -2609,8 +2609,7 @@
             "hand-the-reviewer-only-artifact-and-contract",
             "bound-the-doubt-loop",
             "offer-a-cross-model-second-opinion",
-            "never-interpolate-content-into-a-shell-command",
-            "triage-review-findings-with-judgment"
+            "never-interpolate-content-into-a-shell-command"
           ]
         },
         "skills/debugging-and-error-recovery/SKILL.md": {
@@ -2632,8 +2631,7 @@
             "review-the-prose-without-changing-the-facts",
             "write-a-readme-a-newcomer-can-follow",
             "record-shipped-changes-in-a-changelog",
-            "keep-the-agent-facing-docs-current",
-            "record-decisions-as-adrs"
+            "keep-the-agent-facing-docs-current"
           ]
         },
         "skills/constraint-driven-development/SKILL.md": {
@@ -2881,7 +2879,7 @@
           ]
         },
         "skills/security-and-hardening/references/hardening-patterns.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "allowlist-server-side-fetch-targets",
             "back-rate-limits-with-a-shared-store",
@@ -2901,9 +2899,6 @@
             "treat-model-output-as-untrusted-input",
             "triage-audit-findings-by-reachability",
             "validate-with-a-schema-at-the-boundary"
-          ],
-          "contributed_sources": [
-            "skills/security-and-hardening/references/hardening-patterns.md"
           ]
         },
         "skills/planning-and-task-breakdown/SKILL.md": {
@@ -2923,7 +2918,7 @@
           ]
         },
         "skills/performance-optimization/references/optimization-patterns.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "cache-only-what-is-expensive-and-re-read",
             "fetch-the-relation-in-the-same-query",
@@ -2935,9 +2930,6 @@
             "size-the-connection-pool-under-the-ceiling",
             "split-the-bundle-and-lazy-load-heavy-features",
             "state-one-invalidation-strategy-and-the-staleness-window"
-          ],
-          "contributed_sources": [
-            "skills/performance-optimization/references/optimization-patterns.md"
           ]
         },
         ".claude/commands/plan.md": {
@@ -2999,8 +2991,7 @@
             "write-the-spec-with-the-core-areas",
             "reframe-vague-requirements-as-success-criteria",
             "stop-after-saving-the-spec",
-            "keep-the-spec-current",
-            "write-implementation-plan"
+            "keep-the-spec-current"
           ]
         },
         "references/definition-of-done.md": {
@@ -3640,7 +3631,8 @@
             "carry-forward-a-finding-that-was-already-triaged",
             "trust-a-pre-verified-finding-as-filed",
             "record-the-amendment-with-its-trigger-and-its-keep-instructions",
-            "route-review-findings-into-one-action"
+            "route-review-findings-into-one-action",
+            "label-code-review-findings"
           ]
         },
         "skills/bmad-brainstorming/SKILL.md": {
@@ -4044,7 +4036,8 @@
             "decide-whether-the-test-the-harness-or-the-application-is-wrong",
             "find-the-cause-of-a-flaky-test-instead-of-retrying",
             "report-the-covered-and-the-uncovered-scenarios",
-            "discover-the-repositorys-test-tooling"
+            "discover-the-repositorys-test-tooling",
+            "never-skip-or-silence-a-failing-test"
           ]
         },
         "skills/bmad-walkthrough/templates/log-template.md": {
@@ -4211,7 +4204,8 @@
             "write-the-description-as-a-summary-and-trigger-phrases",
             "write-the-body-around-the-output",
             "name-the-sibling-when-a-sibling-takes-the-requests",
-            "revise-the-description-from-the-failures-not-the-queries"
+            "revise-the-description-from-the-failures-not-the-queries",
+            "optimize-guidance-triggers"
           ]
         },
         "skills/bmod-toolsmith/help/evals.md": {
@@ -4558,7 +4552,8 @@
             "write-minimal-agent-guidance",
             "automate-enforceable-rules",
             "document-the-current-state-not-the-change-history",
-            "optimize-guidance-triggers"
+            "optimize-guidance-triggers",
+            "write-directive-rules"
           ]
         },
         "docs/existing-codebases/set-and-maintain-project-context.md": {
@@ -4751,17 +4746,15 @@
             "choose-where-each-capability-lives"
           ],
           "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/memory-agent/assets/CAPABILITIES-template.md"
+            "bmad-method:skills/bmad-toolsmith/shapes/agent/shape.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/CAPABILITIES-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/script-utility/assets/SKILL-template.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "give-the-tool-a-stable-result-and-a-one-line-failure",
             "keep-the-script-and-the-prose-on-their-own-sides"
-          ],
-          "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/script-utility/assets/SKILL-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/memory-agent/assets/SKILL-template-bootloader.md": {
@@ -4786,7 +4779,8 @@
             "review-your-own-sessions-and-note-it-for-the-next-one"
           ],
           "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/memory-agent/assets/PULSE-template.md"
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/PULSE-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/CREED-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/memory-agent/assets/first-breath-config-template.md": {
@@ -4810,7 +4804,10 @@
             "write-the-help-for-the-answerer"
           ],
           "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/multi-skill-module/assets/help-template.md"
+            "bmad-method:skills/bmad-toolsmith/shapes/multi-skill-module/shape.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/multi-skill-module/assets/help-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/single-skill-module/assets/help-template.md",
+            "bmad-method:skills/bmod-core-tools/help/help.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/single-skill-module/assets/help-template.md": {
@@ -4819,17 +4816,17 @@
             "write-the-help-for-the-answerer"
           ],
           "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/single-skill-module/assets/help-template.md"
+            "bmad-method:skills/bmad-toolsmith/shapes/multi-skill-module/shape.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/multi-skill-module/assets/help-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/single-skill-module/assets/help-template.md",
+            "bmad-method:skills/bmod-core-tools/help/help.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/memory-agent/assets/HOW-I-REMEMBER-template.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "keep-a-record-by-subject-and-replace-what-is-no-longer-true",
             "write-the-record-as-you-go"
-          ],
-          "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/memory-agent/assets/HOW-I-REMEMBER-template.md"
           ]
         },
         "tools/skill-validator.md": {
@@ -5891,7 +5888,9 @@
             "resume-plan-from-record"
           ],
           "contributed_sources": [
-            "skills/bmad-brainstorming/references/resume.md"
+            "bmad-method:skills/executing-plans/SKILL.md",
+            "bmad-method:skills/bmad-build/step-01-clarify-and-route.md",
+            "bmad-method:skills/bmad-brainstorming/references/resume.md"
           ]
         },
         "docs/start/get-answers-about-bmad.md": {
@@ -5900,7 +5899,9 @@
             "verify-against-official-documentation"
           ],
           "contributed_sources": [
-            "docs/start/get-answers-about-bmad.md"
+            "bmad-method:skills/source-driven-development/SKILL.md",
+            "bmad-method:skills/bmad-toolsmith/ecosystem.md",
+            "bmad-method:docs/start/get-answers-about-bmad.md"
           ]
         },
         "docs/plan/set-up-the-ticket-tree.md": {
@@ -5913,17 +5914,14 @@
           ]
         },
         "docs/plan/break-work-into-stories-and-track-it.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "do-not-self-advance-a-work-item-past-built",
             "never-reshape-a-closed-record"
-          ],
-          "contributed_sources": [
-            "docs/plan/break-work-into-stories-and-track-it.md"
           ]
         },
         "tools/ticket-tree-rules.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "do-not-self-advance-a-work-item-past-built",
             "capture-the-baseline-revision-before-any-change",
@@ -5931,9 +5929,6 @@
             "read-the-state-from-the-record-that-owns-it",
             "record-review-findings-in-the-plan",
             "let-the-retrospective-document-be-the-only-write"
-          ],
-          "contributed_sources": [
-            "tools/ticket-tree-rules.md"
           ]
         },
         "docs/existing-codebases/getting-deeper.md": {
@@ -5942,7 +5937,10 @@
             "never-reshape-a-closed-record"
           ],
           "contributed_sources": [
-            "docs/existing-codebases/getting-deeper.md"
+            "bmad-method:skills/bmad-ticket/references/ticket.md",
+            "bmad-method:skills/bmad-ticket/references/slice.md",
+            "bmad-method:docs/existing-codebases/getting-deeper.md",
+            "bmad-method:docs/plan/break-work-into-stories-and-track-it.md"
           ]
         },
         "docs/index.md": {
@@ -5951,7 +5949,11 @@
             "size-and-gate-the-work"
           ],
           "contributed_sources": [
-            "docs/index.md"
+            "bmad-method:skills/brainstorming/SKILL.md",
+            "bmad-method:docs/plan/choose-a-planning-path.md",
+            "bmad-method:docs/index.md",
+            "bmad-method:docs/existing-codebases/start-in-an-existing-codebase.md",
+            "bmad-method:docs/build/build-a-change.md"
           ]
         },
         "docs/_STYLE_GUIDE.md": {
@@ -5960,7 +5962,9 @@
             "write-technical-prose-to-a-standard"
           ],
           "contributed_sources": [
-            "docs/_STYLE_GUIDE.md"
+            "bmad-method:skills/technical-writing/SKILL.md",
+            "bmad-method:skills/in-your-own-words/SKILL.md",
+            "bmad-method:docs/_STYLE_GUIDE.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/memory-agent/assets/BOND-template.md": {
@@ -5969,34 +5973,28 @@
             "elicit-the-goal-users-and-boundaries-before-writing-the-spec"
           ],
           "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/memory-agent/assets/BOND-template.md"
+            "bmad-method:.claude/commands/spec.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/first-breath-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/first-breath-config-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/BOND-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/rendered-skill/assets/step.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "follow-the-workflow-one-step-at-a-time"
-          ],
-          "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/rendered-skill/assets/step.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/rendered-skill/assets/workflow.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "follow-the-workflow-one-step-at-a-time"
-          ],
-          "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/rendered-skill/assets/workflow.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "follow-the-workflow-one-step-at-a-time"
-          ],
-          "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/agent/assets/capability-template.md": {
@@ -6005,7 +6003,11 @@
             "give-every-capability-an-intent-and-a-testable-success"
           ],
           "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/agent/assets/capability-template.md"
+            "bmad-method:skills/bmad-spec/SKILL.md",
+            "bmad-method:skills/bmad-spec/assets/spec-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/agent/assets/capability-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/agent/assets/sample-capability.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/CREED-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/agent/assets/sample-capability.md": {
@@ -6014,7 +6016,11 @@
             "give-every-capability-an-intent-and-a-testable-success"
           ],
           "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/agent/assets/sample-capability.md"
+            "bmad-method:skills/bmad-spec/SKILL.md",
+            "bmad-method:skills/bmad-spec/assets/spec-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/agent/assets/capability-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/agent/assets/sample-capability.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/CREED-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/memory-agent/assets/intake-capability-template.md": {
@@ -6023,17 +6029,18 @@
             "keep-a-record-by-subject-and-replace-what-is-no-longer-true"
           ],
           "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/memory-agent/assets/intake-capability-template.md"
+            "bmad-method:skills/bmod-toolsmith/help/shape-memory-agent.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/HOW-I-REMEMBER-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/intake-capability-template.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/shape.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/assets/first-breath-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/plain-skill/assets/sample-skill/SKILL.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "record-decisions-as-adrs",
             "mine-the-conversation-before-you-ask"
-          ],
-          "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/plain-skill/assets/sample-skill/SKILL.md"
           ]
         },
         "skills/bmad-walkthrough/SKILL.md": {
@@ -6106,7 +6113,9 @@
             "make-a-persona-unmistakable"
           ],
           "contributed_sources": [
-            "skills/bmad-toolsmith/shapes/memory-agent/assets/PERSONA-template.md"
+            "bmad-method:docs/customize/run-multi-agent-discussions.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/agent/shape.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/shape.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/multi-skill-module/assets/record-SKILL-template.md": {
@@ -6214,14 +6223,11 @@
           "reason": "the transferable rules are already carried by the corpus; the rest is the donor own folder layout and config keys"
         },
         "skills/bmad-build/references/claims-check.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "keep-the-claims-out-of-the-path-tracing",
             "treat-the-change-account-of-itself-as-testimony",
             "try-to-falsify-each-checkable-claim"
-          ],
-          "contributed_sources": [
-            "skills/bmad-build-auto/references/claims-check.md"
           ]
         },
         "skills/bmad-build/references/deletion-check.md": {
@@ -6230,24 +6236,21 @@
             "check-removed-code-for-a-contract-it-carried"
           ],
           "contributed_sources": [
-            "skills/bmad-build-auto/references/deletion-check.md"
+            "bmad-method:skills/bmad-build-auto/references/deletion-check.md"
           ]
         },
         "skills/bmad-build/review-prompts/edge-case-hunter.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "check-each-changed-call-site-against-the-callee-declaration",
             "enumerate-paths-mechanically-not-by-intuition",
             "keep-the-claims-out-of-the-path-tracing",
             "name-the-call-that-invalidates-a-re-checked-handle",
             "treat-the-unmentioned-members-of-a-changed-set-as-implicit-branches"
-          ],
-          "contributed_sources": [
-            "skills/bmad-build-auto/review-prompts/edge-case-hunter.md"
           ]
         },
         "skills/bmad-build/review-prompts/verification-gap.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "ask-would-verification-fail-if-the-behavior-broke",
             "count-a-test-only-when-it-runs-and-asserts",
@@ -6257,20 +6260,14 @@
             "screen-each-part-of-the-change-for-behavioral-change",
             "state-what-you-checked-in-the-finding",
             "trust-a-pre-verified-finding-as-filed"
-          ],
-          "contributed_sources": [
-            "skills/bmad-build-auto/review-prompts/verification-gap.md"
           ]
         },
         "skills/bmad-code-review/references/claims-check.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "keep-the-claims-out-of-the-path-tracing",
             "treat-the-change-account-of-itself-as-testimony",
             "try-to-falsify-each-checkable-claim"
-          ],
-          "contributed_sources": [
-            "skills/bmad-build-auto/references/claims-check.md"
           ]
         },
         "skills/bmad-code-review/references/deletion-check.md": {
@@ -6279,24 +6276,21 @@
             "check-removed-code-for-a-contract-it-carried"
           ],
           "contributed_sources": [
-            "skills/bmad-build-auto/references/deletion-check.md"
+            "bmad-method:skills/bmad-build-auto/references/deletion-check.md"
           ]
         },
         "skills/bmad-code-review/review-prompts/edge-case-hunter.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "check-each-changed-call-site-against-the-callee-declaration",
             "enumerate-paths-mechanically-not-by-intuition",
             "keep-the-claims-out-of-the-path-tracing",
             "name-the-call-that-invalidates-a-re-checked-handle",
             "treat-the-unmentioned-members-of-a-changed-set-as-implicit-branches"
-          ],
-          "contributed_sources": [
-            "skills/bmad-build-auto/review-prompts/edge-case-hunter.md"
           ]
         },
         "skills/bmad-code-review/review-prompts/verification-gap.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "ask-would-verification-fail-if-the-behavior-broke",
             "count-a-test-only-when-it-runs-and-asserts",
@@ -6306,9 +6300,6 @@
             "screen-each-part-of-the-change-for-behavioral-change",
             "state-what-you-checked-in-the-finding",
             "trust-a-pre-verified-finding-as-filed"
-          ],
-          "contributed_sources": [
-            "skills/bmad-build-auto/review-prompts/verification-gap.md"
           ]
         },
         "skills/bmad-ticket/references/store-setup.md": {
@@ -6316,13 +6307,10 @@
           "reason": "Host machinery: the whole file is the configuration of the donor's ticketing integration."
         },
         "skills/bmad-retrospective/SKILL.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "end-the-run-with-an-explicit-terminal-status",
             "follow-the-step-sequence-and-halt-at-checkpoints"
-          ],
-          "contributed_sources": [
-            "skills/bmad-retrospective/SKILL.md"
           ]
         }
       }

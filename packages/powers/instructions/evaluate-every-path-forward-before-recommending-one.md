@@ -22,7 +22,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/checklist.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Evaluate every path forward before recommending one
@@ -46,5 +46,5 @@ Technical risk and complexity
 Impact on team morale and momentum
 Long-term sustainability and maintainability
 Stakeholder expectations and business value
-Effort estimate: Critical | Important | Minor
-Risk level: Critical | Important | Minor
+Effort estimate: [High/Medium/Low]
+Risk level: [High/Medium/Low]

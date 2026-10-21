@@ -19,10 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/planning-and-task-breakdown/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep the plan document separate from the task list
 
 **Plan document:** Save the implementation plan to the plan document. This is always a markdown file — design decisions, risks, and open questions don't map cleanly onto individual tracker issues.
-Create the directory if it does not exist.
+Create the plan directory if it does not exist.

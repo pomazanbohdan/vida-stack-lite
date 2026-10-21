@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - test-design
   - report-triage
+  - failing-test-policy
 conditions_applies_when: The new tests fail.
 conditions_does_not_apply_when: No test failed.
 artifact_contract_output_type: test-report
@@ -20,7 +21,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-qa-generate-e2e-tests/workflow.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Decide whether the test, the harness or the application is wrong

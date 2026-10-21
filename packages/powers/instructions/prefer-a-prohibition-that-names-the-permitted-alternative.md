@@ -6,6 +6,7 @@ capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
+  - directive-form-policy
 conditions_applies_when: "A rule in the repository's instructions can be written as a prohibition or as positive guidance."
 conditions_does_not_apply_when: A guardrail cannot be phrased positively at all.
 artifact_contract_output_type: constraint-form-choice
@@ -20,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/theory-of-project-context.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/set-and-maintain-project-context.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Prefer a prohibition that names the permitted alternative

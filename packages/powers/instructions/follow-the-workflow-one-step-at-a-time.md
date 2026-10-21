@@ -23,13 +23,12 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/rendered-skill/assets/workflow.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Follow the workflow one step at a time
 When a step directs you to another file, read it fully and follow it. Load one step at a time, when it is reached.
 A step that shows a menu or checkpoint halts there and waits for the user.
-The workflow hands you a document.
 Read that file and follow it.
 `HALT: <reason>`: report the reason and stop.
 Each step is loaded when reached, says at the top what it produces, and ends by naming the next step or by saying the workflow is complete.

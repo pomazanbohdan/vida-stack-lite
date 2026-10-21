@@ -20,15 +20,13 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-04-review.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-03-triage.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Group findings by shared root cause
 Group the survivors by shared root cause — two findings belong in one entry only when the same defect produced both.
 Same location alone is not a shared root cause, and neither is a shared fix.
 An entry carries every member's verified bad outcome
-All remaining findings continue to grouping.
-Group the survivors by shared root cause -- two findings belong in one entry only when the same defect produced both.
 An entry carries every member's verified bad outcome in `detail` and the highest verdict among them
 Order: Critical, Important, Minor.
 `maybe-false` ranks lowest.

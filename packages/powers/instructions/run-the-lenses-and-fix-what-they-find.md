@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - code-review
   - verification-before-completion
+  - review-fix-application-policy
 conditions_applies_when: A tool or a skill has been written and is about to be handed over.
 conditions_does_not_apply_when: Nothing was written in this session.
 artifact_contract_output_type: lens-round
@@ -16,14 +17,15 @@ artifact_contract_required_data:
   - the judgment calls left
   - the rounds run
 artifact_contract_verified_by: "every defect finding was applied, the judgment calls were left, and the lenses were re-run after a critical or important fix"
-compatibility_excludes: []
+compatibility_excludes:
+  - keep-review-read-only
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/ship.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/modes/review.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Run the lenses and fix what they find

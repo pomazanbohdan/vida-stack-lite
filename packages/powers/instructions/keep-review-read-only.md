@@ -6,6 +6,9 @@ capability_tags:
   - review-code
 pattern_tags:
   - code-review
+  - review-execution-policy
+  - review-application-policy
+  - review-fix-application-policy
 conditions_applies_when: You review a change or produce a one-shot report in a checkout you do not own.
 conditions_does_not_apply_when: You are the author working on the change.
 artifact_contract_output_type: read-only-review
@@ -43,7 +46,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/review-a-change.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/reference/skills-and-agents.md
 status: active
-revision: 4
+revision: 5
 ---
 
 # Run the review and the report without changing the environment

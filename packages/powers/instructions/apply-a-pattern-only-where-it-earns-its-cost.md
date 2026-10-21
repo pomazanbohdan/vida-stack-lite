@@ -20,12 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/lenses/lens-architecture.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Apply a pattern only where it earns its cost
-A pattern over-applied (parallel reviewers on a one-file transform, a memory log on a one-shot, a menu on a one-job skill):
-- Minor
-- say what removing it loses
-A multi-turn build with no state across turns:
-- Minor
+A pattern over-applied (parallel reviewers on a one-file transform, a memory log on a one-shot, a menu on a one-job skill): Minor; say what removing it loses.
+A multi-turn build with no state across turns: Minor

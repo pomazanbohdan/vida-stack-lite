@@ -6,6 +6,7 @@ capability_tags:
   - review-code
 pattern_tags:
   - parallel-execution
+  - review-application-policy
 conditions_applies_when: Several independent review lenses are about to run against the same change.
 conditions_does_not_apply_when: The lenses have to run one after another because they depend on each other.
 artifact_contract_output_type: lens-batch
@@ -21,7 +22,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-02-review.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/workflow.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Run the review lenses as one blocking batch

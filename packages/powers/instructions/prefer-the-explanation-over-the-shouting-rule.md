@@ -6,6 +6,7 @@ capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
+  - rule-authority-policy
 conditions_applies_when: A proposed fix to an instruction is stated as a rule the model cannot miss.
 conditions_does_not_apply_when: The rule states a hard boundary the model is allowed to enforce.
 artifact_contract_output_type: rule-tone-choice
@@ -19,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-eval/references/self-improvement.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Prefer the explanation over the shouting rule

@@ -6,6 +6,7 @@ capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
+  - description-shape-policy
 conditions_applies_when: The description of a skill has to be written or revised.
 conditions_does_not_apply_when: The skill is only ever invoked by name and never competes for a request.
 artifact_contract_output_type: skill-description
@@ -20,7 +21,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-toolsmith/help/craft-description.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write the description as a summary and trigger phrases

@@ -6,6 +6,8 @@ capability_tags:
   - author-agent-instructions
 pattern_tags:
   - instruction-authoring
+  - directive-form-policy
+  - rule-authority-policy
 conditions_applies_when: You are stating a mandatory rule for an executor.
 conditions_does_not_apply_when: You are giving advice or describing an optional practice.
 artifact_contract_output_type: directive-rule
@@ -26,7 +28,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-eval/references/self-improvement.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/theory-of-project-context.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Write mandatory rules as directives
