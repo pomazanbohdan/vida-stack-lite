@@ -2043,10 +2043,11 @@ test('task-source trusted-verifier and CAS denials roll back native preparation 
   }
 });
 
-test('task-source inspection issues only fixed read commands without mutation policy or lease replacement', async () => {
+test('task-source inspection preserves ownership and permits a distinct proposal after its observed report', async () => {
   const deadline = performance.now() + 5_000;
-  const policy = mock(async () => {
-    throw new Error('Inspection must not invoke mutation policy');
+  const policy = mock(async ({ request }: { request: Parameters<typeof trustedTaskSourcePolicyDecision>[0] }) => {
+    expect(request.operation_id).toBe('task-source-op-expiry-after-inspect');
+    return trustedTaskSourcePolicyDecision(request);
   });
   const f = createTaskSourceHostFixture({ policyVerifier: policy });
   let completed = false;
@@ -2123,6 +2124,38 @@ test('task-source inspection issues only fixed read commands without mutation po
     expect(readFixtureHostRows(f.database)).toEqual(nativeBefore);
     expect(policy).not.toHaveBeenCalled();
     expect(existsSync(path.join(f.root, 'task-source'))).toBe(false);
+    const inspectRow = f.database.query<{ payload: string; digest: string }, [string]>(
+      'SELECT payload,digest FROM agent_host_task_source_binding_action WHERE operation_id=?',
+    );
+    const inspectBefore = requiredValue(inspectRow.get(request.operation_id), 'reported inspection row');
+    const proposal = {
+      ...f.request,
+      operation_id: f.request.operation_id + '-after-inspect',
+      request_id: f.request.request_id + '-after-inspect',
+    };
+    const proposalInput = { request: proposal, identity: f.identity };
+    f.store.prepareTaskSourceBindingOperation({ ...proposalInput, verifyCurrent: f.trustedVerifyCurrent });
+    const proposalIssue = await f.store.issueTaskSourceBindingOperation(proposalInput);
+    expect(proposalIssue.status).toBe('issued');
+    expect(proposalIssue.command_argv).not.toBeNull();
+    expect(policy).toHaveBeenCalledTimes(1);
+    const reserved = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    expect(reserved.work.lease?.ticket_id).not.toBe(before.work.lease?.ticket_id);
+    expect(reserved.ledger.tickets.find((ticket) => ticket.ticket_id === before.work.lease?.ticket_id)?.status).toBe(
+      'released',
+    );
+    expect(reserved.ledger.tickets.find((ticket) => ticket.ticket_id === reserved.work.lease?.ticket_id)?.status).toBe(
+      'active',
+    );
+    expect(inspectRow.get(request.operation_id)).toEqual(inspectBefore);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+    expect(await f.store.issueTaskSourceBindingOperation(proposalInput)).toEqual({
+      ...proposalIssue,
+      status: 'already_issued',
+      command_argv: null,
+    });
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
+    expect(existsSync(path.join(f.root, 'task-source'))).toBe(false);
     expect(performance.now()).toBeLessThan(deadline);
     completed = true;
   } catch (error) {
@@ -2132,7 +2165,7 @@ test('task-source inspection issues only fixed read commands without mutation po
     completeOwnedCleanup(
       [
         () => {
-          f.close(() => completed && performance.now() < deadline);
+          f.close(false, completed ? 'issued proposal without observation; no replay' : 'failed or timed out');
           if (performance.now() >= deadline) throw new Error('TaskSource inspection cleanup exhausted its deadline');
         },
       ],
@@ -5441,6 +5474,79 @@ test.each(['rollback', 'commit'] as const)(
             receipt,
           );
           expect(initialSourceState(f)).toEqual(after);
+          const acceptedJournal = initialSourceJournal(f);
+          const expiredLease = requiredLease(after.work);
+          setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+          const expiredRequest = {
+            identity: f.identity,
+            attempt: 1,
+            nativeSessionHandle: expiredLease.thread_id,
+            generation: expiredLease.generation,
+            expectedWork: after.workVersion,
+            expectedLedger: after.ledgerVersion,
+            expectedJournal: acceptedJournal.version,
+            expectedMaintenanceGeneration: after.maintenanceGeneration,
+            verifyCurrent: (
+              work: WorkState,
+              journal: MastraSessionLedgerSnapshot['state'],
+              sourceRoot: string | undefined,
+            ) => {
+              expect(work).toEqual(after.work);
+              expect(journal).toEqual(acceptedJournal.state);
+              expect(sourceRoot).toBe(f.root);
+              return {
+                runtimeCodeDigest: work.binding.runtime_code_digest,
+                authorityPointer: 'fixture:accepted-report-expiry',
+              };
+            },
+          } satisfies Parameters<HostStateStore['recoverExpiredLocalLease']>[0];
+          const recovered = presentSnapshot(reopened.recoverExpiredLocalLease(expiredRequest));
+          const renewedLease = requiredLease(recovered.work);
+          expect(renewedLease.ticket_id).not.toBe(expiredLease.ticket_id);
+          expect(renewedLease.thread_id).toBe(expiredLease.thread_id);
+          expect(renewedLease.generation).toBe(after.ledger.open_generation);
+          expect(recovered.work.execution).toEqual(after.work.execution);
+          expect(recovered.work.artifacts).toEqual(after.work.artifacts);
+          expect(recovered.work.binding).toEqual(after.work.binding);
+          expect(recovered.ledger.tickets.find((ticket) => ticket.ticket_id === expiredLease.ticket_id)?.status).toBe(
+            'read_only',
+          );
+          expect(recovered.ledger.tickets.find((ticket) => ticket.ticket_id === renewedLease.ticket_id)?.status).toBe(
+            'active',
+          );
+          const priorClaim = requiredValue(
+            after.ledger.claims.find(
+              (claim) => claim.ticket_id === expiredLease.ticket_id && claim.status === 'active',
+            ),
+            'Accepted-report expired claim',
+          );
+          expect(recovered.ledger.claims.find((claim) => claim.claim_id === priorClaim.claim_id)).toEqual({
+            ...priorClaim,
+            status: 'recovered',
+          });
+          const replacementClaims = recovered.ledger.claims.filter(
+            (claim) => claim.ticket_id === renewedLease.ticket_id,
+          );
+          expect(replacementClaims).toHaveLength(1);
+          expect(replacementClaims[0]).toMatchObject({
+            status: 'active',
+            resources: priorClaim.resources,
+            thread_id: renewedLease.thread_id,
+            generation: renewedLease.generation,
+          });
+          expect(recovered.ledger.tickets.find((ticket) => ticket.ticket_id === renewedLease.ticket_id)).toMatchObject({
+            claim_ids: [requiredValue(replacementClaims[0], 'Accepted-report replacement claim').claim_id],
+            exclusive_resources: priorClaim.resources,
+            active_resources: priorClaim.resources,
+          });
+          expect(initialSourceJournal(f)).toMatchObject({
+            state: acceptedJournal.state,
+            version: { revision: acceptedJournal.version.revision + 1, digest: acceptedJournal.version.digest },
+          });
+          expect(reopened.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
+          const recoveredRows = readFixtureHostRows(initialSourceHostDatabase(f));
+          expect(() => reopened.recoverExpiredLocalLease(expiredRequest)).toThrow('state compare-and-swap conflict');
+          expect(readFixtureHostRows(initialSourceHostDatabase(f))).toEqual(recoveredRows);
         }
         peers?.verifyUnchanged();
         console.info(

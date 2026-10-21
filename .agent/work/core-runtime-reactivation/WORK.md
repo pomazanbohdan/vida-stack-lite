@@ -531,6 +531,24 @@ The next actual producer still performs its maintained admission check.
 
 ## Latest measurement custody
 
+The next branch packet is in development against the current map, within the
+same contour. Real observed TaskSource inspect now precedes a distinct proposal,
+exercising reported-predecessor validation without duplicate setup. Inspection
+keeps its original no-policy/no-lease-change assertions; the proposal preserves
+the report, replaces the lease and issues once, without executing argv. Its
+unobserved root is retained explicitly, including PASS. The existing completed
+Source commit case now reopens, checks exact retry, expires its actual readonly
+lease and recovers from current CAS. It preserves the accepted Source/receipt,
+execution/artifacts/runtime binding and exact Journal body, checks old and new
+ticket/claim ownership and rejects stale retry. Both original20s cases and the
+inspect5s case remain unchanged. Initial grouped3PASS109assertions, strict149-file
+and lint pass. The final strengthened claim/inspection group passes2/77assertions:
+commit16594.26ms, inspection595.96ms, within their existing20s/5s bounds. Its
+strict149-file checks and lint pass; blind review finds no blocker. Two fresh
+issued-proposal PASS roots pkRIBW/lPPBOl stay retained under `/tmp`, never replayed.
+The retained map confirms both recovery receipt-backed branches; no product defect
+or numeric delta is inferred from these new functional checks.
+
 - Stage:`/workspace/contour-stage-kDQ7uV`; exec3988, observed exit0.
 - Image:`/workspace/.vida-quality-inputs/7703dce23a5360cc083561abeba9aa70179309ca/repository`.
 - Tree:`f840fc0986547fa6b2a3f49e3327dda3169dbabb`.

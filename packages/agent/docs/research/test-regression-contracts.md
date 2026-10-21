@@ -87,6 +87,21 @@ rows, cleanup and healthy same-fixture retry. This balances their independent
 obligations without removing an assertion or increasing a deadline. The builder
 uses the Journal/version already returned in continuationState; both callers use
 that one owner. Live verifyCurrent Source/package rereads stay unchanged.
+After the commit case's reopen and exact retry, expire that actual readonly lease
+and recover with current Work/Ledger/Journal/maintenance CAS. Its controlled verifier
+checks exact state/root and keeps the current runtime digest. Preserve the accepted
+Source report, execution, artifacts and immutable receipt; require a read_only old
+ticket/recovered old claim, one active replacement claim linked to its ticket with
+identical resources, and one Journal revision bump without body/digest change.
+A stale retry must preserve exact rows. This exercises accepted-report recovery
+inside the same20s case; it executes neither archived UNKNOWN nor a writer argv.
+
+After observed TaskSource inspect, a separate proposal with distinct request and
+operation IDs may issue under current policy. Preserve inspection argv/no-policy/
+unchanged-lease checks before the proposal, then assert replacement ownership,
+unchanged prior report/Journal, exact issue retry and no Source directory creation.
+The returned proposal argv is never executed; retain its issued, unobserved root
+even on PASS. No synthetic completion authorizes deleting that evidence.
 
 The separate configured-frontier suffix case remains unqualified. Its first
 bounded child timed out inside the existing default5s case; a fresh traced run
