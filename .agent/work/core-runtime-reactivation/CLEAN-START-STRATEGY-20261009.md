@@ -83,7 +83,7 @@ are planning quantities, not serial wall-time proof.
 
 | Group | Dependency and acceptance |
 | --- | --- |
-| TaskSource current/history/policy | Existing real peer preparation and typed native callback inputs; metadata-only and no-effect scope, exact Host/Journal/operation preservation. Pending checked additions and their controls are in WORK. |
+| TaskSource current/history/policy | Existing real peer preparation and typed native callback inputs; metadata-only and no-effect scope, exact Host/Journal/operation preservation. Current controls and remaining exact gaps are in WORK. |
 | Continuation/session producer | Native configured-frontier/initial-source owners; resolve actual post-prewriter setup cost within its original5s bound. Preserve timed-out proposals and current producer fences. |
 | Recovery/reconciliation | Existing native report/repair fixtures; qualify legacy split-state prerequisites before claiming retained-report delegation. Current atomic report is insufficient. |
 | Defensive validation and all remaining arms | Existing exact zero-counter geometry and function inventory; preserve contracts/frozen callables. No deletion, synthetic authority or duplicate live reads solely for coverage. |

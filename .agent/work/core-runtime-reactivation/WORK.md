@@ -14,22 +14,21 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-b06c3e646a832968da64ed5e7b805dcdcd236731, run
-3631119f-b314-4784-97d3-90396c44e283, attempt1152.
-Coverage remains BLOCKED/nonexact; the pending test additions are not
-measured. A historical maximum or projection row is not new-HEAD acceptance.
+245d2b0b2104e3fbd5d59031952f7e1dd2f8250c, run
+1c63f83f-7fcd-4bb2-adf0-e864ee4e4e25, attempt1154.
+F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
+projection row is not new-HEAD acceptance. Documentation-only checkpoints do
+not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs330cases/5315assertions
-in182880.056167ms. Host and stopped-source children take175.49s and131.47s.
-Commit/rollback recovery take11643.83ms/14048.78ms under unchanged20s limits.
+unchanged boot/image and automatic publication. It runs330cases/5331assertions
+in167719.669756ms. Host and stopped-source children take160.46s and116.28s.
+Commit/rollback recovery take12796.09ms/11491.72ms under unchanged20s limits.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains1function/12statement/173branch-arm gaps.
-One line is uncovered. Denominators changed with the reservation deduplication
-and real restore correction; do not report a raw counter delta as coverage gain.
-The recovery setup move also lost one previously visited queued-resource callback;
-the current repair below addresses that observed regression. The join
-performs no new AST/Source scan/hash.
+The report-only join retains11statement/171branch-arm gaps, no missing function
+or line. The queued recovery callback is visited again. Denominators changed
+with actual Source corrections; do not report a raw counter delta as coverage
+gain. The join performs no new AST/Source scan/hash.
 
 ## Latest measurement custody
 
@@ -42,12 +41,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-EsfaqZ/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1218-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1218-scratch-parent.json and DIAG/remainder-v1218-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1218-cache-retirement-EsfaqZ/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-EsfaqZ-H4A5IA/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-vL1cDZ |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-kA7mTM/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1224-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1224-scratch-parent.json and DIAG/remainder-v1224-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1224-cache-retirement-kA7mTM/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-kA7mTM-AW4wVD/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-hQMXzh |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -56,14 +55,14 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-4219691008bytes and retained tmpfs9270972416bytes available, both above the
+4153147392bytes and retained tmpfs9266245632bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
 
 ### Measured packets and regression custody
 
-The complete b06c3e6 run above includes prepared-peer and adverse-ledger
+The complete245d2b0 run above includes prepared-peer and adverse-ledger
 controls, corrupt repair Journal refusals, migration body/close error custody,
 corrective artifact retries and unavailable-generation refusals, and non-target
 completed-report history. Source guards, accepted Journal requirements,
@@ -71,7 +70,7 @@ conditional restoration and ordinary positive retries remain unchanged.
 The maintained regression contracts own these obligations. Detailed focused
 outcomes, original failures, independent reviews and preceding measurement
 locators remain in the
-[published b06c3e6 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/b06c3e646a832968da64ed5e7b805dcdcd236731/.agent/work/core-runtime-reactivation/WORK.md).
+[published245d2b0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/245d2b0b2104e3fbd5d59031952f7e1dd2f8250c/.agent/work/core-runtime-reactivation/WORK.md).
 This replaces completed narratives, not evidence or accepted criteria.
 
 ### Latest failed execution
@@ -95,9 +94,9 @@ passes full tar compare; original /dev/shm/vida-quality-retained-qkuBjH remains.
 Postarchive durable4291043328/tmpfs9275699200available exceed2147483648.
 No image, DB, SDK, original log, failure or shared dependency is deleted.
 
-### Current digest-integrity and queued-peer packet
+### Qualified digest-integrity and queued-peer packet
 
-The historical continuation reader accepts a structurally valid observation with
+The historical continuation reader previously accepted a structurally valid observation with
 a false summary output_digest after its Journal row digest is recomputed. The
 public report producer and configured reader reject that input. RED is retained
 in historical-digest-red-v1219-d6kMul; the controlled caller is returned reported
@@ -124,8 +123,8 @@ overall,5016.62ms under its existing20s bound in peer-reopen-caller-v1222-SFJjLi
 The first grouped regex used an absent alias for that caller; the exact declared
 case was then checked alone, reusing unchanged strict/lint proof. No passing
 group was repeated. Future groups must bind every alternative to declarations.
-Original failures and retained roots stay unchanged. Final exact coverage for
-these Source/test bytes remains pending.
+Original failures and retained roots stay unchanged. The complete bound report
+above now qualifies this packet's actual coverage; S/B gaps remain open.
 The changed Host test pin is refreshed once; stopped-Source pin is unchanged.
 Strict123/configured lint and1case/10assertions pass326ms in
 remainder-v1224-controls-Wg30WU. Changed documentation links/headings pass.
@@ -173,15 +172,14 @@ walk or deletion is justified. Original failed roots and durable evidence stay.
 
 ### Next actions and unresolved prerequisites
 
-1. Publish checked historical digest-integrity correction and mode-specific
-   recovery peers with post-reopen verification.
-   Preserve exact GAPs for unsupported paths.
-   Review the final diff, refresh the changed test pin once, run its narrow control
-   and documentation check, then ordinary commit/push.
-2. Reuse one matching SDK artifact, capture one immutable image and execute one
-   selected-contour stage. Import its outcome once; preserve failure/UNKNOWN.
-3. Continue from that report's exact zero-counter geometry. Do not rerun unchanged
-   groups or start another contour before exact F/L/S/B closes.
+1. Select the next causal S/B packet from the current11statement/171arm gap list;
+   keep the same contour and preserve its qualified F/L paths. Bind every test
+   filter alternative before launch; reuse actual fixtures and retained geometry.
+2. Check changed behavior statically and with its direct named callers, review,
+   refresh changed test pins once and publish through ordinary hooks/push.
+3. Use one matching SDK/image/full selected-contour stage for that coherent
+   packet. Import once, preserve all failures and qualify exact terminal custody.
+   Do not rerun unchanged groups or start another contour before full F/L/S/B100.
 
 Keep these specific unresolved paths open:
 - The selected old recovery construction's missing completed native callback in
@@ -206,14 +204,19 @@ Keep these specific unresolved paths open:
   do not fabricate invalid accepted state. The corrected fixture study is
   vida-retired-capture-gap-matrix-v1211.md. Its prior fixture-absence claim was
   limited to one file; the existing second selected file owns the real fixture.
+- TaskSource's queued expected-lease refusal is dominated on schema-valid state,
+  but its exported builder can receive malformed DTOs before its final refusal.
+  Keep the guard; supported-path unreachability does not justify removing it.
+  Review vida-tasksource-lease-dominance-review-v1225.md is static only and does
+  not prove a new authorization defect or a runnable coverage case.
 
 ### Execution combinations
 
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
-| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage182.880s with both native exits0 and complete custody. |
-| Fully serial files | Protocol fallback only; concurrent child times sum306.96s. That sum is a planning quantity, not measured serial elapsed time or current admission. |
+| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage167.720s with both native exits0 and complete custody. |
+| Fully serial files | Protocol fallback only; concurrent child times sum276.74s. That sum is a planning quantity, not measured serial elapsed time or current admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |
 
