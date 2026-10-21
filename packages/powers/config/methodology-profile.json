@@ -37,7 +37,6 @@
           "title": "Test-first development",
           "description": "Write behavior tests before implementation.",
           "instruction_ids": [
-            "delete-code-written-before-test",
             "simplify-design-when-tests-are-hard",
             "test-first-development",
             "write-tests-that-catch-breaks"

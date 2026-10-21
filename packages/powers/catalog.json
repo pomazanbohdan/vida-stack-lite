@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 3525,
+  "revision": 3526,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-21T14:56:51.369Z",
+  "updated_at": "2026-10-21T20:47:49.620Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -2855,11 +2855,6 @@
       "instruction_id": "delete-an-empty-section-instead-of-writing-none",
       "path": "instructions/delete-an-empty-section-instead-of-writing-none.md",
       "sha256": "79c80e43c925fc653541dc3251f507ff5a5120723a84142ca4c9054e76aac939"
-    },
-    {
-      "instruction_id": "delete-code-written-before-test",
-      "path": "instructions/delete-code-written-before-test.md",
-      "sha256": "4e4977667d2030fa3705d6d186aabadf6261ada3d33ed8be91df3b5579a7c2fe"
     },
     {
       "instruction_id": "delimit-user-authored-text-so-it-cannot-become-an-instruction",

@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4829,
-  "updated_at": "2026-10-21T14:56:51.337Z",
+  "revision": 4830,
+  "updated_at": "2026-10-21T20:47:49.627Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -81,7 +81,6 @@
           "status": "split",
           "instruction_ids": [
             "test-first-development",
-            "delete-code-written-before-test",
             "simplify-design-when-tests-are-hard"
           ]
         },
@@ -12230,7 +12229,7 @@
         },
         "docs/features/tdd-pipeline-mode.md": {
           "status": "rejected",
-          "reason": "The red-green-refactor sequence and the fail-fast on an unexpected green are already carried by test-first-development and delete-code-written-before-test."
+          "reason": "The red-green-refactor sequence and the fail-fast on an unexpected green are already carried by test-first-development."
         },
         "docs/features/test-generation.md": {
           "status": "rejected",
