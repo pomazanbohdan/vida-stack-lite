@@ -26,6 +26,9 @@ Native binaries live in ~/.local/bin; verified receipts and disk-backed scratch
 live in ~/.cache/vida-cloud-tooling. Repeat setup reuses verified downloads.
 The tooling setup installs Vex, LeanCTX, ast-grep (including its sg alias) and
 actionlint from the lock, verifying archive checksums and installed binary receipts.
+Use `bun x --bun` for Bunx package execution when the host lacks a separate
+`bunx` executable. This is Bun's built-in alias and forces the launcher to use
+Bun. A missing symlink does not establish missing package-execution support.
 It provisions the configured semantic model but never automatically indexes Source.
 It copies the qualified executing Bun to persistent host storage; it cannot
 bootstrap Bun itself. The shell prelude in the startup patch handles that first

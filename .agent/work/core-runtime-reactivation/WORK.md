@@ -342,10 +342,45 @@ bounded read-only1370 study checks whether the existing native fixture can
 produce a genuine prior readonly Host attempt before writer issue, without
 fabricated rows or extra provider effects. A proposal alone is not execution.
 
+The1370 study is retained in DIAG/vida-retired-prior-attempt-review-v1370.md.
+Root's pending stopped-source fixture change adds one public Host config-read
+claim/completion before writer issue, using an actual configured readonly stage
+and assignment. Its request/result describe the current config read, not an
+invented provider execution or retroactive reuse of a Journal observation.
+Only the selected retired-capture case opts in and asserts that exact completed
+attempt survives original writer retirement/capture. Existing writer issue,
+approval, CAS, Source and peer oracles remain.1371 stops statically on an omitted
+destructured option and starts no runtime; corrected1372 passes strict129/lint0
+and1case/65assertions7.14s,5972.47ms native, under its unchanged exception.
+Exact logs are DIAG/retired-readonly-v137{1-kC8co0,2-aYoC5C}. Final independent
+review and changed second-file pin remain; these bytes are not numeric acceptance.
+
 The tsrs research decision is maintained in
 [test cost research](../../../packages/agent/docs/research/test-timeout-cost-20261013.md#tsrs-compiler-candidate--2026-10-21).
-Keep built-in Bun check as the current gate. No package is installed and no
-unmeasured compiler replacement or new AST/inventory pass is introduced.
+Keep built-in Bun check as the current gate; no compiler replacement or new
+AST/inventory pass is introduced. The owner subsequently requests an isolated
+bunx installation and SDK declaration pilot by a separate blind Luna. Its sole
+write/cache/log/output root is /workspace/vida-tsrs-pilot-v1373-Tf8Pzt, contract
+worker-contract.json. No Source dependency/lock/shared node_modules change is
+authorized. The pilot reads immutable94cd912 inputs and compares raw declaration
+emission with the current Bun-launched TypeScript compiler. Existing later SDK
+redaction/packaging acceptance remains separate. Root suspends numeric/compiler/
+build/install lanes until that pilot's processes and output custody close.
+Attempt2 closes with PASS_RAW_DECLARATION_PARITY in
+/workspace/vida-tsrs-pilot-v1373-Tf8Pzt/attempt-2/{report.md,result.json,logs}.
+The first preflight could not launch /usr/bin/time or a standalone bunx.
+Root verified `bun x --help` and authorized Bun's built-in Bunx alias instead.
+`bun x --bun tsrs@latest --version` exits0 with tsrs0.18.0 and
+TypeScript7.1.0-dev.20260930.4. TypeScript7.0.2 and that candidate each exit0
+on the same four captured SDK entrypoints, producing91 declaration files with
+equal path inventories and bytes, and zero JavaScript files. Root inspects
+both terminal receipts, the comparison receipt and consumer diagnostics.
+The valid LifecyclePhase consumer passes; the invalid consumer exits1/TS2322.
+Original prelaunch and CommonJS-fixture failures remain in their own logs.
+Final package postprocessing, Windows and JavaScript API acceptance remain GAP.
+No benchmark/RSS is collected and compiler versions differ: performance is
+INCONCLUSIVE. No Source compiler, package dependency or lock changes. The
+pilot is terminal, so its exclusive compiler/build/install pause is released.
 
 The next read-only recovery-view control reuses the existing genuine writer
 commit case before its controlled Source effect. Require exact current Work,

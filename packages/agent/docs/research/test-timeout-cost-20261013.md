@@ -11,26 +11,42 @@ and the existing CLEAR repair/parallel implementation plans.
 
 The npm registry reports `tsrs` latest as
 `0.18.0-ts7.1.0-dev.20260929`, Apache-2.0. It is Oxc's Rust port of the
-TypeScript7 compiler and language server. These are metadata/documentation
-observations, not a local installation or compatibility result.
+TypeScript7 compiler and language server. The isolated pilot below qualifies
+only CLI execution and raw SDK declaration emission on this Linux host.
 
 Current Source checks use Bun1.4.3 `bun check`; the package also retains
 TypeScript7.0.2. Bun's [release notes](https://bun.com/blog/bun-v1.4.3)
 already document native type checking. No evidence here identifies its engine
 as tsrs. Adding another compiler for the same routine check has no measured
 VIDA benefit. Keep the current gate and do not add tsrs as a normal dependency.
+The owner subsequently authorizes a separate-agent `bunx --bun` experiment.
+Its isolated installation and declaration outputs do not change Source
+dependencies or qualify adoption. WORK owns the pilot's custody and outcomes.
 
-A separate possible pilot is SDK declaration emission: build-package.ts runs
+The SDK declaration pilot targets the phase where build-package.ts runs
 `typescript/bin/tsc` through Bun, while `bun check` emits no declarations.
-Only pursue it after a measured declaration bottleneck. Compare the same
-captured inputs, diagnostics/exit status, declarations and downstream SDK
-consumer checks, elapsed time and peak RSS. TypeScript7.1-dev versus7.0.2 is a
-language-version change, not an isolated compiler comparison.
+The separate Luna installed the candidate through `bun x --bun tsrs@latest`
+under Bun1.4.3, using a private cache and copied immutable94cd912 SDK inputs.
+Both TypeScript7.0.2 and tsrs0.18.0 exit0 on the four SDK entrypoints. Each
+emits91 `.d.ts` files with identical paths and bytes, and no JavaScript.
+Valid and invalid tiny fixtures pass their expected exit/diagnostic controls.
+A stable TypeScript7.0.2 consumer accepts a valid `LifecyclePhase` import from
+the candidate declarations and rejects an invalid value with TS2322.
+
+Raw parity does not qualify the final package: the existing declaration
+postprocessing was not run. Both raw outputs contain the same internal/test
+issuer names in three files. No alternating benchmark or RSS measurement was
+collected, so speed remains INCONCLUSIVE. TypeScript7.1-dev versus7.0.2 also
+changes the language version. Retain the current compiler until final package
+acceptance and a measured benefit justify adoption. The full report, terminal
+receipts and original failed attempts remain under
+`/workspace/vida-tsrs-pilot-v1373-Tf8Pzt/attempt-2/{report.md,result.json,logs}`.
 
 The [compatibility table](https://github.com/oxc-project/tsrs/blob/main/docs/COMPATIBILITY.md)
 lists Linux/macOS packages but no Windows binary in0.18.0. Windows support in
 upstream main is a next-release plan. The npm launcher declares Node>=16.20;
-Bun execution is unqualified here. The programmatic API is unstable, adds an
+The Bun CLI launch is qualified by this pilot; the JavaScript API is untested.
+The programmatic API is unstable, adds an
 IPC/server boundary and does not consume our retained Babel AST. Preserve Babel
 function identities, test/scenario links, Ajv, Bun coverage and all current
 gates. Compiler replacement alone does not accelerate native fixture execution
