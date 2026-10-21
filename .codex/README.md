@@ -136,6 +136,18 @@ independent files before future writable use. Inode sharing and timestamps chang
 including a candidate file's mtime taking the donor value; this does not reattest
 old runs or permit image mutation.
 
+The owner's2026-10-21 cleanup amendment covers only the exact roots
+`/workspace/.vida-quality-inputs`, `/workspace/.vida-retained` and direct
+`/workspace/contour*` children. The existing three-hour audit timer retires closed
+images, scratch and historical copies there after owner/dependency qualification;
+active or unknown consumers defer removal. Preserve the last completed report,
+manifest, terminal receipts and raw logs outside those roots with a byte-bound
+relocation record, without another full-tree backup. Keep Source, operational
+state, SDKs and outside resources protected. Absent targets are a no-op; do not
+expand the glob into Source. WORK owns the exact deletion and remaining-custody
+record. Regenerate future images with the sole producer; retired images grant no
+fresh qualification, replay authority or released fences.
+
 Ordinary Vex queries refresh under its native single-writer lock after readiness.
 Auto-update runs at query time, not as a background watcher. Check its terminal
 result and returned freshness; enabling it does not guarantee a successful refresh.

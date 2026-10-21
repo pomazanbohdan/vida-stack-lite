@@ -13,6 +13,28 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current retention resource blocker
 
+The owner's later explicit deletion order supersedes the earlier image/archive
+retention observations below for `/workspace/.vida-quality-inputs`,
+`/workspace/.vida-retained` and direct `/workspace/contour*` children only.
+At2026-10-21T22:10:12Z Root removes both hidden roots and154contour-stage roots
+after observing no active consumers or mounted descendants. DIAG/user-delete-v1535
+owns intent.json, exclusive events.jsonl, result.json and relocation.json.
+Actual available durable bytes increase from3610710016 to26715930624:
+23105220608bytes reclaimed and79.11%free. Source/Git/configuration, outside SDKs,
+operational state and remaining outside restoration archives are untouched.
+The home-cache dependency controller survives removal of its hardlink donors.
+
+Before removal,15246574bytes of the last completed run's report, manifest,
+process/shard receipts, raw logs, image identity and stage receipts are copied
+byte-exactly to DIAG/user-delete-v1535/latest-evidence. Original execution images,
+snapshots and unselected historical proof inside the authorized roots are retired;
+this retained subset is not full original-image custody or fresh qualification.
+Historical measurements below keep their original bindings and BLOCKED status.
+The existing enabled three-hour audit timer now includes these exact targets;
+DIAG/user-delete-v1535/automation.json records its unchanged schedule and amendment.
+It defers active/unknown dependencies, preserves the latest necessary proof outside
+the targets and treats missing roots as a no-op. No duplicate timer is created.
+
 The earlier durable-retention GAP is resolved by the detailed cleanup below.
 Its original admission refusal remains in DIAG/remainder-v1499-retention-admission.log;
 the prior observations remain recoverable at
@@ -26,8 +48,9 @@ The latest5350412 stage's non-cache scratch now has a durable archive with a
 complete tar comparison and SHA binding at
 /workspace/vida-functional-retention-afnEnK-VNkbbW/archive.json.
 After forming its324980-byte archive,3611430912durable bytes remain available.
-All original scratch, images and reports remain in place. Its private regenerable
-cache alone is retired under DIAG/remainder-v1532-cache-retirement-afnEnK.
+Original scratch outside the authorized deletion roots remains. The latest report
+now resolves through DIAG/user-delete-v1535/relocation.json; its old image is retired.
+The earlier private-cache retirement is under DIAG/remainder-v1532-cache-retirement-afnEnK.
 Fresh admission still applies before another producer. Cleanup and archival
 do not change numeric outcomes or reattest old measurements.
 
@@ -899,17 +922,20 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-afnEnK/execution.json, launch.json and publication.json |
+| Retained stage/input, launch, native outcome and capture | DIAG/user-delete-v1535/latest-evidence/stage/{execution,launch,publication}.json; original stage/image retired |
+| Latest retained raw report, manifest and process/shard logs | DIAG/user-delete-v1535/latest-evidence; exact original-to-retained mapping in relocation.json one level above |
 | SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1528-sdk-provider.json and DIAG/remainder-v1528-sdk-verified.json |
 | Admission and complete producer log | DIAG/remainder-v1528-scratch-parent.json and DIAG/remainder-v1528-stage.log |
 | Current private-cache disposition | DIAG/remainder-v1532-cache-retirement-afnEnK/manifest.json and retirement-events.jsonl |
 | Current non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-afnEnK-VNkbbW/archive.json |
-| Current durable-retention capacity | DIAG/cleanup-v1524/dependency-dedup/retirement.json; resource GAP resolved, archive formed |
+| Current durable-retention capacity and exact deletion | DIAG/user-delete-v1535/result.json and events.jsonl;26715930624available bytes at completion |
 | Original retained scratch | /dev/shm/vida-quality-retained-KObG4F |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
-Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
-and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
+Original scratch outside the selected roots, SDK and outside restoration archives
+remain. The immutable image and historical proof inside the explicitly authorized
+roots are retired under the current deletion record above. No worktree or active
+shared dependency is removed. Missing original image custody remains explicit.
 The current324980-byte durable archive excludes only that stage's declared private
 regenerable Bun cache, retired after closed custody and dependency qualification.
 The exact cache path,15243-entry inventory and exclusive events are retained;
@@ -923,7 +949,8 @@ Both filesystems passed admission before the current launch; checkout and
 durable evidence share the overlay. The later retention observation and exact
 capacity are owned by the resolved resource blocker above. Reuse the existing inventory;
 do not add broad du/scan/hash or cleanup competing with numeric/build/install
-operations. Original evidence remains protected after retention qualification.
+operations. Remaining evidence outside the explicit deletion scope stays protected;
+future image formation requires fresh admission and cannot reuse retired paths.
 
 ### Measured packets and regression custody
 
