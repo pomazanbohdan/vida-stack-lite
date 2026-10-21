@@ -38,6 +38,12 @@ review after the current complete report has refreshed that map. Earlier produce
 research remains provisional. Resolve the report path from the map's `report`
 or the stage's `publication.json`; do not retype long execution-image identifiers
 or infer staleness from an optional absent commit field.
+For process cleanup, prove detached-descendant termination and reaping separately
+from owned process-group closure. A zombie has no useful command line; a native
+test can assign its own unique kernel `/proc/self/comm`, confirm it before exit,
+then check that name after completion. Bun's process.title is not that kernel
+comm. Keep namespace-init and outer-launcher reapers under their existing owner;
+do not signal old PID-1 zombies or alter original custody receipts.
 Before removing a guard as dominated, verify the exact schema's minimum list
 length and the validator's empty-list semantics. Reference checks using `every`
 can pass an empty list without proving that a later lookup has a seed. Preserve

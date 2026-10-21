@@ -11,6 +11,7 @@ import {
   type CampaignOutcome,
 } from '../tooling/contour-campaign.ts';
 import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
+import { executeMutationCommand } from '../tooling/mutation-evidence.ts';
 import type { MutationPartition } from '../tooling/mutation-partitions.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import { selectContourCampaign } from '../tooling/contour-progress.ts';
@@ -18,6 +19,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, statfsSync, symlinkSync
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
+import { randomUUID } from 'node:crypto';
 
 test('campaign retains private scratch with its stage instead of accumulating host tmpfs roots', () => {
   const parent = tmpdir();
@@ -58,6 +60,72 @@ test('campaign retains private scratch with its stage instead of accumulating ho
     if (completed) rmSync(stage, { recursive: true });
   }
 });
+
+const nativeTini = process.env.VIDA_QUALITY_TINI ?? Bun.which('tini');
+test
+  .skipIf(process.platform !== 'linux' || !Bun.which('bwrap') || !nativeTini)
+  .each([0, 23, 'signal', 'timeout'] as const)(
+  'campaign namespace init contains detached children and preserves %s outcome',
+  async (outcome) => {
+    const stage = mkdtempSync(path.join(tmpdir(), 'contour-reaper-control-'));
+    let completed = false;
+    try {
+      const childName = 'vr-' + randomUUID().slice(0, 10);
+      const source = `
+        const { readFileSync } = await import('node:fs');
+        const child = Bun.spawn([process.execPath, '-e',
+          ${JSON.stringify(`const fs = await import('node:fs'); fs.writeFileSync('/proc/self/comm', ${JSON.stringify(childName)}); console.log(fs.readFileSync('/proc/self/comm', 'utf8').trim()); setInterval(() => {}, 1000);`)}],
+          { detached: true, stdin: 'ignore', stdout: 'pipe', stderr: 'ignore' });
+        const ready = await child.stdout.getReader().read();
+        const childName = new TextDecoder().decode(ready.value).trim();
+        if (childName !== ${JSON.stringify(childName)}) throw new Error('Child did not start');
+        console.log(JSON.stringify({ init: readFileSync('/proc/1/comm', 'utf8').trim(), detached_ready: true, child_name: childName }));
+        ${outcome === 'timeout' ? 'setInterval(() => {}, 1000);' : outcome === 'signal' ? "process.kill(process.pid, 'SIGTERM');" : `process.exit(${outcome});`}
+      `;
+      const isolated = isolatedCommand(stage, ['-e', source], {
+        tini: nativeTini!,
+        bwrap: Bun.which('bwrap')!,
+      });
+      const result = await executeMutationCommand(isolated.command, stage, outcome === 'timeout' ? 500 : 2000, {
+        ownedProcessGroup: true,
+        env: { ...process.env, ...isolated.environment },
+        stdoutFile: path.join(stage, 'stdout.log'),
+        stderrFile: path.join(stage, 'stderr.log'),
+        outputByteLimit: 16 * 1024,
+      });
+      writeFileSync(path.join(stage, 'execution.json'), JSON.stringify(result), { flag: 'wx' });
+      expect(result.timedOut).toBe(outcome === 'timeout');
+      if (outcome !== 'timeout') expect(result.exitCode).toBe(outcome === 'signal' ? 143 : outcome);
+      expect(result.spawnError).toBeNull();
+      expect(result.output_capture?.complete).toBe(true);
+      expect(result.processCustody?.terminationObserved).toBe(true);
+      expect(result.processCustody?.processGroupTerminationObserved).toBe(true);
+      expect(JSON.parse(readFileSync(path.join(stage, 'stdout.log'), 'utf8'))).toEqual({
+        init: 'tini',
+        detached_ready: true,
+        child_name: childName,
+      });
+      const survivors: string[] = [];
+      for (const pid of readdirSync('/proc')) {
+        if (!/^\d+$/u.test(pid)) continue;
+        try {
+          const stat = readFileSync(`/proc/${pid}/stat`, 'utf8');
+          if (stat.slice(stat.indexOf('(') + 1, stat.lastIndexOf(')')) === childName) survivors.push(stat);
+        } catch (error) {
+          if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') throw error;
+        }
+      }
+      writeFileSync(path.join(stage, 'descendant-observation.json'), JSON.stringify({ childName, survivors }), {
+        flag: 'wx',
+      });
+      expect(survivors).toEqual([]);
+      completed = true;
+    } finally {
+      if (completed) rmSync(stage, { recursive: true });
+      else console.error('Namespace reaper fixture retained:', stage);
+    }
+  },
+);
 
 test('campaign can retain isolated scratch under an explicit external existing root', () => {
   const operationParent = tmpdir();

@@ -17,10 +17,17 @@ Run from the checkout root with the host proxy and CA settings inherited:
 
 ```sh
 export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"
+git config --local maintenance.autoDetach false
+git config --local gc.autoDetach false
 bun tooling/agent/cloud-tooling-setup.ts
 . "$HOME/.cache/vida-cloud-tooling/environment.sh"
 bun tooling/agent/cloud-pstack-setup.ts --install --provision-only
 ```
+
+The managed checkout keeps automatic Git housekeeping in the foreground with
+these two local settings. Git waits for maintenance instead of leaving a detached
+process for the host's PID 1. The settings preserve automatic maintenance and
+apply to this checkout, not consumer hosts or other repositories.
 
 Native binaries live in ~/.local/bin; verified receipts and disk-backed scratch
 live in ~/.cache/vida-cloud-tooling. Repeat setup reuses verified downloads.

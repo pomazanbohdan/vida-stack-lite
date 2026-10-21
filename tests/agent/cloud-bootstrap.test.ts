@@ -45,6 +45,8 @@ for (const mode of ['matching', 'valid', 'bad-checksum', 'wrong-version'] as con
     );
     let verified = false;
     try {
+      const initialized = Bun.spawnSync(['git', 'init', '--quiet', root], { stdout: 'pipe', stderr: 'pipe' });
+      assert.equal(initialized.exitCode, 0, initialized.stderr.toString());
       const result = Bun.spawnSync(['bash', '-c', prelude], {
         cwd: root,
         env: {
@@ -59,6 +61,15 @@ for (const mode of ['matching', 'valid', 'bad-checksum', 'wrong-version'] as con
         timeout: 5000,
       });
       assert.equal(result.signalCode, undefined);
+      for (const key of ['maintenance.autoDetach', 'gc.autoDetach']) {
+        const configured = Bun.spawnSync(['git', 'config', '--local', '--get', key], {
+          cwd: root,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        });
+        assert.equal(configured.exitCode, 0, configured.stderr.toString());
+        assert.equal(configured.stdout.toString().trim(), 'false');
+      }
       if (mode === 'bad-checksum' || mode === 'wrong-version') {
         assert.notEqual(result.exitCode, 0);
         assert.equal(readFileSync(path.join(bin, 'bun'), 'utf8'), old);

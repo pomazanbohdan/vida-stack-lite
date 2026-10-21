@@ -11,6 +11,89 @@ F/L/S/B100 or complete reviewed objective-gap disposition under the owner's
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
 
+### Three-hour audit and zombie reaping correction
+
+The bounded audit covers15:37:43–18:37:43UTC on2026-10-21 from the clean
+c17c5d3 checkpoint. Root reuses the current projection, four distinct changed-input
+coverage runs and the retained1454 script-cost study. Source corrections in that
+window include retry-provenance e1ad268, explicit fenced commit mode af7a39d,
+early invalid-output refusal5f8e1d7, TaskSource lookup f90f60b and shared history
+predicates aca52f0. They are already published; the audit does not claim them as
+new work. The four observations change statement gaps7to3to2to2 and branch gaps
+71to66to65to65. Equivalent consolidation changes denominators separately from
+new visits. Latest full execution remains bound to aca52f0 below.
+
+Independent1490 finds no new stage/CLI stdout or report defect. Stage stdout is
+already read once, memoized including failure, and shared by route/diagnostic
+consumers. Native inputs and report payloads have distinct validation boundaries.
+DIAG/vida-recent-runner-audit-v1490.md retains that review. No duplicate AST, scan,
+hash inventory or unchanged full suite is started for this audit.
+
+The owner's added zombie request produces two confirmed lifecycle findings.
+Git Trace2 shows fetch launching maintenance run --auto --no-quiet --detach;
+the private observer reaps its adopted392288 after fetch. Root sets only this
+checkout's maintenance.autoDetach=false and gc.autoDetach=false. The corresponding
+foreground Trace2/probe has no adopted child. Automatic housekeeping remains
+enabled. The Cloud startup patch and reference now preserve these local settings.
+DIAG/zombie-v1492/git-policy-before.json records both prior unset values;
+git-fetch-trace.jsonl and git-fetch-foreground-trace.jsonl retain actual commands.
+
+The former outer-Tini/bwrap topology leaves a separate bwrap namespace-init
+descendant. An observed probe with an outer guardian reaps that descendant after
+the main command. Moving Tini inside without --as-pid-1 still leaves bwrap as
+PID 1. Inner-only --as-pid-1 fixes normal exit but the timeout regression leaves
+orphan tini392083 and correctly returns process-group-termination-unobserved.
+Keep DIAG/reaper-checks-v1493-AZbgOb/tests.log and
+/tmp/contour-reaper-control-Lc2fMk unchanged. The final three-line launcher change
+keeps outer Tini, uses --as-pid-1 and inserts inner Tini before unchanged Bun argv.
+No custom reaper, FFI library, polling supervisor or new dependency is added.
+
+The first scoped compiler omitted the existing istanbul-public-api.d.ts and
+returns16errors; its original log remains. Including that maintained declaration
+passes strict133 with lint0. Original process.title-based controls fail before
+the requested exit because that property is not kernel comm. Preserve their
+four roots/log. Final native controls write and read their own unique kernel
+comm before exit, then observe its absence among live and zombie processes.
+They honor VIDA_QUALITY_TINI and retain exit0, exit23, SIGTERM143, timeout,
+output capture and process/group closure. The affected campaign/stage group
+passes42cases/517assertions1.86s in
+DIAG/reaper-checks-v1493-AZbgOb/tests-native-comm.log. Numeric gates and budgets
+are unchanged. These controls do not reattest old measurements.
+
+Blind review1494 required direct detached-child observation and support for the
+configured Tini path. Both are included in the final controls above. Review1495
+then caught a bootstrap edit that collapsed the shell's PID suffix from $$ to $.
+Root restored the original script byte for byte apart from the two intended Git
+settings. The correction preserves both per-process Bun staging paths. The
+corrected1495 review accepts the inspected changes. All original review reports
+and the corrected report remain under DIAG.
+
+The bootstrap fixture now creates its own temporary Git repository and checks
+both local settings in each installation mode. Its focused run passes5tests in
+415ms, covering a matching Bun, valid replacement, checksum refusal, version
+refusal and invalid plugin options. DIAG/zombie-v1492/bootstrap-focused.log
+retains the result. This verifies repository startup behavior, not activation of
+the provider's environment template. Changed Markdown links and headings pass
+the maintained documentation check. Git history records Source publication
+separately from the last complete coverage result below.
+
+The single capacity observation records2235334656available durable bytes on
+checkout/evidence device27 and9135534080scratch bytes on device26. Both exceed
+the unchanged2147483648floor. Boot remains89093463-dd07-4789-abcd-d15842df2ba2;
+no active producer or second writer is observed. Reuse the1486 cache-retirement
+inventory below; no additional obsolete owned directory is qualified or removed.
+An unshare alternative returns EPERM and is not adopted. No privilege, PID1,
+history, lease/attempt, consumer or Runtime state is changed. Existing host PID1
+is tail and cannot reap its old children; those zombies are not cleared by this
+packet. A host-init replacement/restart is outside this change.
+
+| Combination | Evidence and decision |
+| --- | --- |
+| Scoped static, coherent focused cases, one published SDK/image/stage | Retained. The42-case control costs1.86s; the last full stage costs220.48s for different work. Do not compare these as a speedup. |
+| Existing two selected serial-file children | Retained under exact pins. Their observed213.59s/125.50s clocks overlap; adding or summing workers does not prove a faster full run. |
+| Wider suites or per-assertion full stages | Reject without new evidence. They repeat preparation or contend with the one numeric owner; no controlled wider-concurrency benchmark exists. |
+| Counter review before fresh map, manual image-path transcription, short repeated polls | Avoid. Use current counters and receipt-owned paths, and a bounded native wait. Token/tool-call totals are unavailable; no numerical savings are claimed. |
+
 ### Resumed shared-history packet and objective skips
 
 The owner's current instruction permits skipping objectively untestable coverage

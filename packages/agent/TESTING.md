@@ -2778,6 +2778,16 @@ do not set TMPDIR to a directory inside that target for the full suite.
 
 ### Parallel testing: current status and required contract
 
+Linux campaign and stage launchers retain the outer Tini subreaper and use
+`bwrap --unshare-pid --as-pid-1` with Tini as the sandbox's PID 1. The inner init
+reaps namespace descendants; the outer init owns the launcher during termination.
+Do not run Bun directly as PID 1 or infer detached-child closure from the outer
+process group alone. Native campaign controls prove namespace init identity,
+exit0, nonzero exit, SIGTERM and timeout with a detached ready child, then check
+its unique kernel comm for absence among both live and zombie processes.
+Missing Linux isolation tools leave native qualification open; a skipped control
+does not establish it. Preserve native signal, timeout and capture outcomes.
+
 Parallel coverage remains pending; it is not a supported flag override. The pure
 `tooling/coverage-shard-plan.ts` scheduler does not activate parallel production.
 The deployed serial v2 run/v1 process receipts require the whole selected set
