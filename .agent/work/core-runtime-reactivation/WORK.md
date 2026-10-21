@@ -14,17 +14,18 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-185743a0f32f04a7e4d0ee58a9a0e98696fd2623, run
-3be7c416-9a7a-4bb5-8929-7811a3cc820c, projection attempts1190.
-F1126/1126,L4979/4979,S5305/5309,B5505/5600 leave4statement/95branch-arm gaps.
+1fc34834b0f88f47dbb225981d2ce013e7420f07, run
+c51d9334-28bd-469d-b371-5c9f649835fd, projection attempts1192.
+F1126/1126,L4979/4979,S5305/5309,B5506/5600 leave4statement/94branch-arm gaps.
 F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. All336cases/5743assertions pass
-in190995.447579ms. Host and stopped-source children take183.08s and119.41s.
-The UNKNOWN repair case takes14701.36ms and runtime-history omission7180.66ms,
-within their unchanged20s bounds. Absent-lease refusal takes36.03ms.
+unchanged boot/image and automatic publication. All336cases/5753assertions pass
+in188348.06817800002ms. Host and stopped-source children take181.56s and126.68s.
+The expanded genuine writer commit case takes13495.72ms within its unchanged20s
+bound. The pre-recovery public view gains one actual branch-arm visit versus
+185743a with unchanged production denominators.
 Different inputs and scheduling do not establish a controlled speedup.
 
 Three preceding test packets gain one statement and eleven actual branch-arm
@@ -50,12 +51,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-5kbD6N/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1349-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1349-scratch-parent.json and DIAG/remainder-v1349-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1349-cache-retirement-5kbD6N/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-5kbD6N-63quWJ/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-5KDdVb |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-AUt3ok/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1359-sdk-provider.json and DIAG/remainder-v1359-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1359-scratch-parent.json and DIAG/remainder-v1359-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1359-cache-retirement-AUt3ok/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-AUt3ok-Hx4egr/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-w94aWu |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -64,7 +65,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-2870448128bytes and retained tmpfs9173839872bytes available, both above the
+2802225152bytes and retained tmpfs9169051648bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -322,12 +323,15 @@ DIAG/remainder-v1355-sdk-provider.json and remainder-v1355-sdk-verified.json.
 The attempt in DIAG/remainder-v1355-stage.log stops before image/stage creation:
 SDK readiness's gh metadata command fails. A bounded direct metadata probe
 observes HTTP401 Bad credentials; removing the ambient token finds no configured
-gh credential. This is an access GAP, not a test failure or numeric result.
+gh credential. This is a transient access failure, not a test failure or numeric result.
 No suite, image, projection import or map refresh occurs for this attempt.
 Keep the verified SDK archive and owned empty scratch parent q1p1CT. Original
-185743a measurement remains current proof. Resume requires valid gh metadata
-authorization, then one Source-matching SDK/image/stage; no guard bypass or
-stale-artifact acceptance.
+185743a measurement remains the preceding complete proof. After normal push
+publishes1fc3483, the same explicit-host API query succeeds without changing an
+admission guard or credential. Its Source-matching SDK run39603767735 succeeds;
+the matching image/stage above passes336cases/5753assertions in188.35s. The
+zero-counter join is refreshed once, confirming one actual additional arm and
+the remaining4statement/94arm gaps. No stale artifact or archived UNKNOWN replay.
 
 That failure exposes a confirmed tooling diagnostic defect: command() discarded
 the native execFile error. Preserve it as Error.cause without changing the
@@ -339,9 +343,10 @@ cause loss. An initial formatting invocation refuses parent-relative paths in
 sdk-command-cause-v1357-AsNkEF before compiler/runtime; use exact absolute paths.
 Strict26/lint0 and that one case pass93ms in
 DIAG/sdk-command-cause-v1358-PNMaO7. This Source repair supplies diagnostics,
-not restored credentials or new numeric acceptance.
+not credentials. Ordinary hooks pass formatting520/strict527 and normal push
+publishes1fc3483. The push receipt is DIAG/sdk-command-cause-v1358-push.log.
 
-1. Select the next causal S/B packet from the current4statement/95arm gap list;
+1. Select the next causal S/B packet from the current4statement/94arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,
