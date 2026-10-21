@@ -7505,6 +7505,53 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
           ).toBe(false);
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 2)).toBeNull();
+          const initialHistory = db.query<{ payload: string; digest: string }, [string, string]>(
+            'SELECT payload,digest FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
+          );
+          const originalHistory = requiredValue(
+            initialHistory.get(host.workspaceId, f.identity.work_id),
+            'Completed report initial continuation row',
+          );
+          let missingHistoryFailure: { error: unknown } | undefined;
+          let historyRemoved = false;
+          try {
+            const removed = db
+              .query(
+                'DELETE FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1 AND payload=? AND digest=?',
+              )
+              .run(host.workspaceId, f.identity.work_id, originalHistory.payload, originalHistory.digest);
+            historyRemoved = removed.changes === 1;
+            expect(removed.changes).toBe(1);
+            expect(() => host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toThrow(
+              'lifecycle artifact authority binding differs from current work',
+            );
+            expect(initialHistory.get(host.workspaceId, f.identity.work_id)).toBeNull();
+            expect(persistedRows()).toEqual(retainedRows);
+            expect(db.inTransaction).toBe(false);
+          } catch (error) {
+            missingHistoryFailure = { error };
+            throw error;
+          } finally {
+            completeOwnedCleanup(
+              [
+                () => {
+                  if (historyRemoved)
+                    expect(
+                      db
+                        .query(
+                          'INSERT INTO agent_host_initial_source_continuation (workspace_id,work_id,attempt,payload,digest) VALUES(?,?,1,?,?)',
+                        )
+                        .run(host.workspaceId, f.identity.work_id, originalHistory.payload, originalHistory.digest)
+                        .changes,
+                    ).toBe(1);
+                  expect(initialHistory.get(host.workspaceId, f.identity.work_id)).toEqual(originalHistory);
+                  expect(persistedRows()).toEqual(retainedRows);
+                  expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
+                },
+              ],
+              missingHistoryFailure,
+            );
+          }
           expect(host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toEqual(receipt);
           expect(persistedRows()).toEqual(retainedRows);
           expect(() =>

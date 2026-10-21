@@ -1907,7 +1907,8 @@ Reclaim only terminal, dependency-free derivatives under the existing retention 
 Work on one contour at a time, as declared by the root
 [sidecar](../../AGENT.sidecar.md#orchestration-and-delegation). Keep its product
 fixes, tests and exact coverage in the same active lane. Do not prepare or measure
-another contour until the current contour has accepted full F/L/S/B100. Root
+another contour until the current contour has accepted full F/L/S/B100 or every
+remaining counter has a reviewed [objective skip](#objective-coverage-skips). Root
 integrates, runs checks, admits numeric results and owns Git. Any delegated work
 must remain inside the active contour, with one writer per shared file; do not
 start duplicate suites, scans, hashes or inventories.
@@ -1959,24 +1960,44 @@ row/schema beforeimages within that fenced fixture, and check supported public
 behavior after release. An absent Work need not mean a Journal API returns null.
 Retain every failed fixture before correcting an invalid test assumption.
 
-The owner's 2026-10-19 order is sequential exact F/L/S/B coverage: close one
-contour to F/L/S/B100 before opening the next. During this phase run focused
+The owner's2026-10-21 amendment retains sequential F/L/S/B work and allows
+reviewed objective skips before opening the next contour. During this phase run focused
 repairs and complete coverage for the active contour only. Exact F/L/S/B means
 every covered count equals its full positive denominator, with complete test
 execution, capture, terminal group custody and bound unchanged inputs. Keep
 data-only zero denominators under their existing explicit N/A contract. Do not
 exclude defensive paths, omit files, reduce scope or weaken assertions to
-manufacture a maximum. A blocked path stays the active contour with a real
-regression, reviewed behavior-preserving correction or an explicit unresolved GAP.
+manufacture a maximum. An undispositioned path stays in the active contour with a
+real regression, reviewed behavior-preserving correction or explicit unresolved GAP.
 
-After an exact coverage milestone, select the next contour and only then begin its
+After exact coverage or a complete objective-skip disposition, select the next contour and only then begin its
 repair cycle. Keep each contour OPEN for frozen CRAP and mutation; their existing
 historical evidence and current gaps remain separate. Do not launch those producers
-during this phase. After all contours have compatible exact coverage, reuse each
+during this phase. After all contours have compatible coverage evidence and any reviewed objective skips, reuse each
 unchanged image/report for frozen correspondence and CRAP, then complete
 assertion-confirmed mutation. Revalidate affected inputs before reuse; historical
 maxima alone do not establish current coverage. Static checks, frozen budgets, full
 closure rules and all numeric timeouts remain unchanged.
+
+#### Objective coverage skips
+
+The owner's2026-10-21 instruction permits skipping paths that cannot objectively
+be exercised under the supported contract. Record each skipped counter in WORK
+with its bound report/run, Source/test/config identity, function and exact counter
+location, the causal prerequisite, independent review and remaining qualification.
+Reuse the existing zero-counter map and evidence; do not create another inventory.
+Keep unsupported transition requirements separate from platform-specific evidence
+that must eventually run on its native target. A search finding no fixture alone
+does not establish untestability. Trace the actual producer and preceding guards.
+
+Root may advance the queue only after all testable paths are checked and every
+remaining counter has this disposition. Preserve the raw covered/total values,
+denominators and BLOCKED numeric outcome. Label the work as skipped with objective
+gaps, never exact100 or numeric PASS. Do not remove guards, exclude files or invent
+accepted history to visit a counter. Ordinary FAIL, TIMEOUT, UNKNOWN, an absent
+run or temporary resource pressure does not establish objective untestability.
+Reopen the skip when the bound contract, producer or native target changes.
+This queue exception grants no frozen CC/CRAP waiver or mutation kill evidence.
 
 After each terminal handoff, Root retires the completed preparation directory
 under the [sidecar's worktree retention rule](../../AGENT.sidecar.md#orchestration-and-delegation).

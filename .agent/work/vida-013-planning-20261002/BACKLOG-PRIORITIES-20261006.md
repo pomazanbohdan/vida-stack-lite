@@ -53,9 +53,11 @@ producer gaps; this does not close the complete contour or native delivery.
 The owner's 2026-10-19 directive selects the sequential
 [one-contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle):
 repair and run focused checks for the active contour, then accept its complete,
-input-bound F/L/S/B100 result before selecting another. Root owns integration,
+input-bound F/L/S/B100 result or the owner's2026-10-21 reviewed
+[objective-skip disposition](../../../packages/agent/TESTING.md#objective-coverage-skips)
+before selecting another. Root owns integration,
 numeric production, final checks and Git. Frozen CRAP and mutation remain
-deferred until every contour has exact coverage; complete closure still requires
+deferred until the coverage queue is processed; complete numeric closure still requires
 their compatible evidence and all original gates remain unchanged.
 Current audit corrections and unresolved per-field validation, cleanup analogues
 and optimization candidates are recorded once in WORK, under the existing P0/P1
@@ -68,7 +70,8 @@ focused verification. These implemented TEST013 repairs do not close global gate
 The former multi-contour slot assignments and daily image/envelope/admission
 mutation narratives are retained in the [published testing history](https://github.com/pomazanbohdan/vida-stack-lite/blob/55024fb75697286f96d6f1be91b53af90cc1dc69/.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md#test-acceptance-boundary).
 They do not authorize active lanes. Current execution is the single bun-host-state
-coverage cycle until exact F/L/S/B100; the strategy owns order and WORK owns its
+coverage cycle until exact F/L/S/B100 or complete objective-gap disposition;
+the strategy owns order and WORK owns its
 input-bound outcomes and next packet. Frozen and mutation work stay deferred.
 
 Keep the original open obligations: attestation requires explicit empty-callable

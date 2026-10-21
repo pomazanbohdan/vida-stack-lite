@@ -6,9 +6,68 @@ Historical records do not authorize state replay, Runtime cutover or acceptance.
 ## Current sequential F/L/S/B cycle
 
 The active contour is **bun-host-state only** until positive-denominator exact
-F/L/S/B100. Root owns Source integration, Git and the sole numeric producer.
+F/L/S/B100 or complete reviewed objective-gap disposition under the owner's
+2026-10-21 amendment. Root owns Source integration, Git and the sole numeric producer.
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
+
+### Resumed shared-history packet and objective skips
+
+The owner's current instruction permits skipping objectively untestable coverage
+paths. TESTING owns the exact counter-level review/binding rule; sidecar, strategy,
+backlog and Bun-test technique now reference it. A queue skip keeps raw counts,
+denominators and BLOCKED numeric status intact. It is neither exact100 nor a
+frozen/mutation waiver. The two TaskSource history prerequisites have fresh blind
+review1470 in addition to1395's producer trace. Native Windows normalization needs
+its real target. These are candidates for bound objective disposition after the
+next complete report; no blanket exception covers the remaining65arms.
+
+Blind1471 finds no safe extra sibling-action capture or expired-recovery fixture
+in its selected scope;1472 proposes a missing-initial-receipt refusal and a
+duplicate read cleanup. Root disproves the proposed late-lineage error: the
+actual public reader denies earlier while checking lifecycle artifact authority.
+1474 retains that original FAIL/root in DIAG/admission-history-v1474-d1TAbg.
+It passes Source84/test149 strict and lints0, plus the genuine initial-source and
+configured-frontier positives. Root corrects only the oracle to the actual earliest
+error. The negative case removes one exact payload/digest-bound history row,
+proves unchanged Host/Journal/recovery/governance rows and transaction closure,
+restores it by plain INSERT without overwrite, then accepts the original receipt.
+It supplies corruption-only refusal evidence, not the later optional-arm visit.
+
+Root consolidates repeated admission matching into private reference/artifact
+predicates with shared typed schema registries. Initial-source still deduplicates;
+configured-frontier still appends in original order. The repeated schema-literal
+construction is removed; no database traversal saving or measured speedup is claimed.
+1473 and1475 approve the initial shared-predicate extraction. The final private
+Readonly Record registries preserve the original bracket-key coercion, prototype
+lookup and truthiness for malformed JSON keys as well; they do not introduce Map
+or own-property-only semantics. Independent1479 approves these exact final bytes
+and all four predicate callers in DIAG/vida-record-registry-final-v1479.md.
+1473 calls this a small maintainability/allocation improvement, not a severity-P1
+defect; it remains within the owner's P1 supported-mechanism optimization scope.
+Two predicate roles and their folded AC callbacks require exact later frozen
+correspondence/new-callable10/10, without allowance transfer or ceiling changes.
+
+The configured continuation lookup now reuses its already-validated bindingRecovery
+instead of reading/parsing the same immutable receipt again after pure synchronous
+checks.1475 confirms no intervening callback, await, writer, commit or freshness
+boundary; the old second read was not an atomic snapshot. Public guard order,
+historical null behavior and all live-owner checks remain. Its report is retained
+as DIAG/vida-history-packet-review-v1475.md, alongside1470through1473 reports.
+1476 passes Source84/test149 strict, both lints0 and four affected cases
+4PASS/352assertions22.12s in DIAG/admission-history-v1476-hBCC4X. Final registry
+bytes pass Source84 strict/lint0 and three public initial-source, configured-frontier
+and completed-report cases3PASS/263assertions25.73s in
+DIAG/record-history-v1480-8K005U. The completed-report case takes16738.50ms within
+its unchanged20s exception. Test149 strict/lint0 remains bound to unchanged test
+bytes from1476. All expected UNKNOWN and original failed roots remain retained.
+Root refreshes the changed Host test pin once after final formatting to
+69cfff8f1c95faa5540da861ff60ccd6c7d76ebc7719c5be322507bedbae1f36;
+DIAG/remainder-v1477-test-pin.json retains its predecessor and unchanged sibling.
+DIAG/history-pin-v1477-HEn1Vf passes tooling122 strict/lint0 and the namespace
+control1PASS/10assertions373ms. No full stage starts per helper or failed candidate.
+The numerical observation below still bindsf90f60b
+until this reviewed packet has ordinary publication and its matching SDK/image.
 
 ### Three-hour execution audit and private commit-mode repair
 

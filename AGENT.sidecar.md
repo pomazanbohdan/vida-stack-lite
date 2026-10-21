@@ -85,14 +85,17 @@ Root retains Source integration, shared-file ownership, final checks and Git.
 Native blind Luna is the selected provider/model route for all delegated lanes.
 
 For test-contour repairs, work on exactly one contour at a time. The owner's
-2026-10-19 order replaces the earlier three-contour pool: finish its full,
-input-bound F/L/S/B coverage at 100% before selecting another contour. Root owns
+2026-10-19 order replaces the earlier three-contour pool. The owner's2026-10-21
+amendment permits objectively untestable coverage paths to be skipped under
+[TESTING's disposition rule](packages/agent/TESTING.md#objective-coverage-skips).
+Finish exact input-bound F/L/S/B100 or disposition every remaining path under
+that rule before selecting another contour. Root owns
 the sole numeric producer and all final numbers. Repeat repair, focused checks and
 the exact selected-contour run through
 [TESTING's contour cycle](packages/agent/TESTING.md#rolling-contour-repair-cycle).
-Do not start work on another contour while the current one is open or blocked;
-record its exact GAP and continue resolving that same contour. After exact F/L/S/B
-coverage is accepted, move to the next contour. Frozen correspondence, CRAP and
+Do not start another contour while testable or undispositioned paths remain;
+record the exact GAP and continue resolving that same contour. Objective skips
+permit queue progression, not numeric PASS or changed denominators. Frozen correspondence, CRAP and
 mutation remain deferred until the coverage phase finishes; their budgets and
 assertion-confirmed Killed100 rules are unchanged. A patch, review, partial run or
 timeout does not close a contour.

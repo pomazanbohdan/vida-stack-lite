@@ -2631,6 +2631,39 @@ function validateReferences(refs: readonly ContractReference[]): void {
     'artifact paths',
   );
 }
+const historicalAdmissionReferenceSchemas: Readonly<Record<string, string | undefined>> = {
+  implementation_scope: 'ImplementationScope/v1',
+  acceptance_manifest: 'AcceptanceManifest/v1',
+  execution_approval: 'LocalSourceWriteAuthorization/v1',
+};
+const historicalAdmissionArtifactSchemas: Readonly<Record<string, string | undefined>> = {
+  'admission-source-snapshot': 'ScopedSourceSnapshot/v1',
+  'local-session-intake': 'VidaLocalSessionIntake/v1',
+};
+function matchesHistoricalAdmissionReference(
+  binding: WorkState['binding'],
+  reference: LifecycleArtifactReference,
+): boolean {
+  const schema = historicalAdmissionReferenceSchemas[reference.kind];
+  return (
+    Boolean(schema) &&
+    reference.artifact_schema === schema &&
+    reference.source_revision === binding.work_source_revision &&
+    reference.scope_id === binding.scope_id &&
+    reference.ac_ids.every((id) => binding.ac_ids.includes(id))
+  );
+}
+function matchesHistoricalAdmissionArtifact(binding: WorkState['binding'], artifact: WorkArtifactReference): boolean {
+  const schema = historicalAdmissionArtifactSchemas[artifact.artifact_id];
+  return (
+    Boolean(schema) &&
+    artifact.schema === schema &&
+    artifact.stage_id === 'intake' &&
+    artifact.source_revision === binding.work_source_revision &&
+    artifact.scope_id === binding.scope_id &&
+    artifact.ac_ids.every((id) => binding.ac_ids.includes(id))
+  );
+}
 interface ContinuationAdmissionHistory {
   readonly references: readonly LifecycleArtifactReference[];
   readonly artifacts: readonly WorkArtifactReference[];
@@ -3560,33 +3593,15 @@ function checkedStoredWork(
         'initial Source continuation binding history is not continuous',
       );
       for (const reference of original.lifecycle.references) {
-        const schema = {
-          implementation_scope: 'ImplementationScope/v1',
-          acceptance_manifest: 'AcceptanceManifest/v1',
-          execution_approval: 'LocalSourceWriteAuthorization/v1',
-        }[reference.kind as 'implementation_scope' | 'acceptance_manifest' | 'execution_approval'];
         if (
-          schema &&
-          reference.artifact_schema === schema &&
-          reference.source_revision === original.binding.work_source_revision &&
-          reference.scope_id === original.binding.scope_id &&
-          reference.ac_ids.every((id) => original.binding.ac_ids.includes(id)) &&
+          matchesHistoricalAdmissionReference(original.binding, reference) &&
           !admissionReferences.some((entry) => sameJson(entry, reference))
         )
           admissionReferences.push(reference);
       }
       for (const artifact of original.artifacts) {
-        const schema = {
-          'admission-source-snapshot': 'ScopedSourceSnapshot/v1',
-          'local-session-intake': 'VidaLocalSessionIntake/v1',
-        }[artifact.artifact_id as 'admission-source-snapshot' | 'local-session-intake'];
         if (
-          schema &&
-          artifact.schema === schema &&
-          artifact.stage_id === 'intake' &&
-          artifact.source_revision === original.binding.work_source_revision &&
-          artifact.scope_id === original.binding.scope_id &&
-          artifact.ac_ids.every((id) => original.binding.ac_ids.includes(id)) &&
+          matchesHistoricalAdmissionArtifact(original.binding, artifact) &&
           !admissionArtifacts.some((entry) => sameJson(entry, artifact))
         )
           admissionArtifacts.push(artifact);
@@ -3634,34 +3649,10 @@ function checkedStoredWork(
           'configured-frontier binding history is not continuous',
         );
         for (const reference of original.lifecycle.references) {
-          const schema = {
-            implementation_scope: 'ImplementationScope/v1',
-            acceptance_manifest: 'AcceptanceManifest/v1',
-            execution_approval: 'LocalSourceWriteAuthorization/v1',
-          }[reference.kind as 'implementation_scope' | 'acceptance_manifest' | 'execution_approval'];
-          if (
-            schema &&
-            reference.artifact_schema === schema &&
-            reference.source_revision === original.binding.work_source_revision &&
-            reference.scope_id === original.binding.scope_id &&
-            reference.ac_ids.every((id) => original.binding.ac_ids.includes(id))
-          )
-            admissionReferences.push(reference);
+          if (matchesHistoricalAdmissionReference(original.binding, reference)) admissionReferences.push(reference);
         }
         for (const artifact of original.artifacts) {
-          const schema = {
-            'admission-source-snapshot': 'ScopedSourceSnapshot/v1',
-            'local-session-intake': 'VidaLocalSessionIntake/v1',
-          }[artifact.artifact_id as 'admission-source-snapshot' | 'local-session-intake'];
-          if (
-            schema &&
-            artifact.schema === schema &&
-            artifact.stage_id === 'intake' &&
-            artifact.source_revision === original.binding.work_source_revision &&
-            artifact.scope_id === original.binding.scope_id &&
-            artifact.ac_ids.every((id) => original.binding.ac_ids.includes(id))
-          )
-            admissionArtifacts.push(artifact);
+          if (matchesHistoricalAdmissionArtifact(original.binding, artifact)) admissionArtifacts.push(artifact);
         }
         // The receipt validator requires terminal attempts and preserves this
         // exact prefix. Report recovery never changes an already terminal attempt.
@@ -13887,10 +13878,7 @@ export class HostStateStore {
         ),
       'delivered-work continuation lookup receipt or current Work binding differs',
     );
-    const recovery =
-      receipt.request.action.kind === 'configured_frontier'
-        ? this.#readFailedPrewriterRecoveryReceipt(identity, attempt)
-        : null;
+    const recovery = receipt.request.action.kind === 'configured_frontier' ? bindingRecovery : null;
     const currentSourceScope = recovery?.request.currentSourceScope ?? receipt.request.currentSourceScope;
     const work = current.work!,
       ledger = current.ledger,

@@ -31,10 +31,13 @@ existing owner, preserving resolvable historical Git references and live anchors
 
 ### 2. Continue one contour at a time
 
-Finish the complete selected bun-host-state positive-denominator exact F/L/S/B100
+Finish the complete selected bun-host-state positive-denominator exact F/L/S/B100,
+or disposition every remaining path under the owner's2026-10-21
+[objective-skip amendment](../../../packages/agent/TESTING.md#objective-coverage-skips),
 before choosing another contour. Preserve selection, denial/retry/restoration
 assertions, CAS, ownership, authorization and UNKNOWN semantics. Keep a blocked
-contour active; a missing prerequisite stays an exact GAP.
+contour active while testable or undispositioned paths remain. An objective skip
+permits queue progression while its true counts and numeric GAP remain visible.
 
 Root alone integrates Source, owns Git and produces final numbers. Independent
 blind native Luna may research/review bounded dependency-ready paths; no worker
