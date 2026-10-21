@@ -14,18 +14,20 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-1fc34834b0f88f47dbb225981d2ce013e7420f07, run
-c51d9334-28bd-469d-b371-5c9f649835fd, projection attempts1192.
-F1126/1126,L4979/4979,S5305/5309,B5506/5600 leave4statement/94branch-arm gaps.
+94cd912af2ab32fbf7bc2b601dc8010976e996d5, run
+152c15e1-3bc2-4160-974b-1a64423b22e8, projection attempts1194.
+F1126/1126,L4979/4979,S5305/5309,B5511/5600 leave4statement/89branch-arm gaps.
 F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. All336cases/5753assertions pass
-in188348.06817800002ms. Host and stopped-source children take181.56s and126.68s.
-The expanded genuine writer commit case takes13495.72ms within its unchanged20s
-bound. The pre-recovery public view gains one actual branch-arm visit versus
-185743a with unchanged production denominators.
+unchanged boot/image and automatic publication. All336cases/5769assertions pass
+in187277.717794ms. Host and stopped-source children take180.02s and112.77s.
+Native guarded readonly refusal takes412.00ms and the expanded two-Work import
+105.84ms, under their unchanged5s default. Their packet gains five actual
+branch-arm visits versus1fc3483 with unchanged production denominators.
+The preceding pre-recovery public view gains one actual branch-arm visit versus
+185743a, also without denominator changes.
 Different inputs and scheduling do not establish a controlled speedup.
 
 Three preceding test packets gain one statement and eleven actual branch-arm
@@ -51,12 +53,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-AUt3ok/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1359-sdk-provider.json and DIAG/remainder-v1359-sdk-verified.json |
-| Admission and complete producer log | DIAG/remainder-v1359-scratch-parent.json and DIAG/remainder-v1359-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1359-cache-retirement-AUt3ok/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-AUt3ok-Hx4egr/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-w94aWu |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-TESKLU/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1369-sdk-provider.json and DIAG/remainder-v1369-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1369-scratch-parent.json and DIAG/remainder-v1369-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1369-cache-retirement-TESKLU/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-TESKLU-UDyOaQ/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-Slgq1z |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -65,7 +67,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-2802225152bytes and retained tmpfs9169051648bytes available, both above the
+2733801472bytes and retained tmpfs9164263424bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -302,7 +304,7 @@ removal. Thread review vida-tasksource-thread-change-review-v1323.md confirms
 renewal/recovery preserve the owner; foreign read handles refuse before the
 different-attempt skip. Keep that prerequisite GAP and no fabricated authority.
 
-The next packet reuses two existing inexpensive cases. Native capability probe
+The checked94cd912 packet reuses two existing inexpensive cases. Native capability probe
 DIAG/query-only-begin-v1362.json confirms SQLite3.53.4 refuses BEGIN IMMEDIATE
 under query_only with SQLITE_READONLY/errno8 and no transaction. The actual Host
 artifact case uses that connection-local mode, proves neither body nor rollback
@@ -325,8 +327,20 @@ strict.log/lint.log/test.log files above. Review does not independently attest
 those runtime numbers. Final test binding is recorded once in
 DIAG/remainder-v1367-test-pin.json. Strict122/lint0 and the existing two-file
 namespace control pass1case/10assertions370ms in
-DIAG/remainder-v1367-controls-pyuQPN. Normal publication and one matching complete
-stage remain; proposed branch visits are not numeric proof.
+DIAG/remainder-v1367-controls-pyuQPN. Ordinary hooks pass formatting520/strict527
+and normal push publishes94cd912. One matching build-only SDK run39606831989 and
+complete stage above pass. Import occurs once and the report-only map refresh
+confirms five actual arm visits with unchanged denominators. All remaining
+4statement/89arm gaps stay OPEN; no frozen or mutation acceptance is inferred.
+
+Retired-capture study DIAG/vida-retired-capture-review-v1368.md proposes a typed
+candidate matrix, but the actual latest map has no missing candidate-inventory
+operand. Do not add duplicate probes to claim coverage progress. Keep that
+assertion-strength proposal for the deferred mutation phase. Its other proposed
+paths require real earlier/sibling assignments or valid later grants. The next
+bounded read-only1370 study checks whether the existing native fixture can
+produce a genuine prior readonly Host attempt before writer issue, without
+fabricated rows or extra provider effects. A proposal alone is not execution.
 
 The tsrs research decision is maintained in
 [test cost research](../../../packages/agent/docs/research/test-timeout-cost-20261013.md#tsrs-compiler-candidate--2026-10-21).
@@ -377,7 +391,7 @@ DIAG/sdk-command-cause-v1358-PNMaO7. This Source repair supplies diagnostics,
 not credentials. Ordinary hooks pass formatting520/strict527 and normal push
 publishes1fc3483. The push receipt is DIAG/sdk-command-cause-v1358-push.log.
 
-1. Select the next causal S/B packet from the current4statement/94arm gap list;
+1. Select the next causal S/B packet from the current4statement/89arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,
