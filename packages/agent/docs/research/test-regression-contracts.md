@@ -121,6 +121,20 @@ recovery receipt rows, conditional exact restoration and healthy public reads.
 Keep the commit/expiry case's native writer history unchanged: a Host unit result
 without an accepted Journal item cannot satisfy expired-execution recovery.
 
+A separate synthetic legacy Source reconciliation component case reuses the
+Initial Source builder and existing20s composite bound: admission, issuance,
+actual Host unit completion, report rollback and reconciliation require that
+bound rather than the default5s. Capture the public report-generated candidate
+with its real verifier, abort the atomic transaction and prove exact rollback.
+Only then install the conditional fixture-only legacy Journal split. Foreign
+owner and changed Source must refuse with unchanged native rows and a closed
+transaction. Restore exact private Source bytes before the healthy retry.
+Preserve nonlease Work and completed result, release every original file claim,
+require an execution-only handoff and prove repeated reconciliation writes
+nothing. Keep owned spy/clock/store cleanup and retained failed roots. Synthetic
+authorization, observation and split state prove component behavior only; they
+do not attest native writer invocation, producer crash or Runtime acceptance.
+
 After observed TaskSource inspect, a separate proposal with distinct request and
 operation IDs may issue under current policy. Preserve inspection argv/no-policy/
 unchanged-lease checks before the proposal, then assert replacement ownership,

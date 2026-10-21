@@ -69,6 +69,8 @@ Search results are candidates, not exhaustive binding, types or deletion proof.
 Stale, unsupported, empty or truncated results require current Source fallback.
 Use native shell for AST search, machine JSON, diffs, compiler/test failures and
 exact evidence. LeanCTX raw output can merge streams, redact and truncate.
+For minified generated projections, review the maintained compact Markdown or
+schema-decoded selected records; a raw one-line JSON diff can emit megabytes.
 
 The lead owns staged checks and Git mutations. Delegated readers make no Git
 calls during those checks. Outside that freeze, use `git --no-optional-locks`
@@ -175,6 +177,10 @@ when its instruction text exactly equals an already-read prepared block, reuse
 that block in the worker brief and emit only a compact preparation summary.
 Read changed instructions in full. Cached text alone is not fresh preparation;
 do not skip the kind/instructions checks or omit the contract from the brief.
+
+Bounded direct reads and textual rg searches on assigned files are not full
+repository/AST/index/hash scans. State that distinction in restricted reader
+briefs; use the declared checked-in lifecycle fallback when the CLI is absent.
 
 cloud-pstack-setup.ts --install installs/enables pstack@open-pstack and
 superpowers@superpowers-dev through the native Codex Git marketplaces. It discovers

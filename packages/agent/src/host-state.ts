@@ -1143,12 +1143,7 @@ export function createTaskSourceMutationPolicyRequest(input: {
       : null;
   let reservationMatches = false;
   if (work && hostSnapshot.ledger && reservationTicket) {
-    const prior = taskSourcePriorTicket(hostSnapshot.ledger, work, request);
-    if (prior) {
-      const reservation = taskSourceReservationResources(repositoryRoot, request, work, prior);
-      taskSourceTicketMatches(hostSnapshot.ledger, work, request, reservation.resources);
-      reservationMatches = taskSourceExpectedWorkMatches(work, prior, request, reservation.added, reservationTicket);
-    }
+    reservationMatches = taskSourceReservationForRequest(repositoryRoot, hostSnapshot, request) !== null;
   }
   const expectedWorkMatches =
     (hostSnapshot.workVersion?.revision === request.expected_host.work.revision &&

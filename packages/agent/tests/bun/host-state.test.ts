@@ -6060,6 +6060,238 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
   );
 });
 
+test(
+  'synthetic legacy Source report reconciliation preserves the completed Host result and releases only file ownership',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    let rootOwned: string | undefined;
+    let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let completed = false;
+    let clockHeld = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const f = await createInitialSourceWorkFixture({
+          onRoot: (created) => {
+            rootOwned = created;
+            console.info('Synthetic legacy Source report fixture root: ' + created);
+          },
+        });
+        fixture = f;
+        if (performance.now() >= deadline) throw new Error('Legacy component setup exhausted its deadline');
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        clockHeld = true;
+        await prepareInitialSourceFrontier(f, 'writer');
+        if (performance.now() >= deadline) throw new Error('Legacy component preparation exhausted its deadline');
+        const issued = await issueInitialSourceFixtureWriter(f);
+        if (performance.now() >= deadline) throw new Error('Legacy component issuance exhausted its deadline');
+        const host = initialSourceHostStore(f),
+          db = initialSourceHostDatabase(f),
+          ledger = initialSourceHostLedger(f);
+        const reservation = requiredValue(
+          issued.journal.state.items[0]?.host_reservation,
+          'actual fixture writer reservation',
+        );
+        const changedPath = f.documents[0];
+        const changedFile = path.join(f.root, changedPath);
+        writeFileSync(changedFile, readFileSync(changedFile, 'utf8') + 'fixture legacy Source outcome\n');
+        const source = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
+        const summary = 'Synthetic component Source outcome; no writer argv';
+        const observation = parseSessionBridgeObservation({
+          schema: 'VidaSessionObservation/v1',
+          action_id: issued.writer.request.action_id,
+          issue_id: issued.writer.issue_id,
+          host_attempt_id: issued.hostAttemptId,
+          changed_paths: [changedPath],
+          agent_id: 'fixture:legacy-source-component',
+          tool_call_ref: 'fixture:legacy-source-report',
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: ['fixture://legacy-source-component'],
+        });
+        const result = host.completeWorkflowAttempt(reservation.receipt, observation);
+        expect(result.attempt).toMatchObject({
+          status: 'completed',
+          result: observation,
+          result_digest: canonicalJsonDigest(observation),
+        });
+        const before = initialSourceState(f);
+        const nativeRows = readFixtureHostRows(db);
+        const priorRow = requiredValue(
+          nativeRows.journal.find((row) => row.work_id === f.identity.work_id && row.attempt === 1),
+          'legacy component Journal preimage',
+        );
+        const candidates: Parameters<HostStateStore['commitCompletedSourceReport']>[0][] = [];
+        const stop = new Error('observed component atomic-report rollback');
+        const nativeCommit = host.commitCompletedSourceReport.bind(host);
+        const commitSpy = spyOn(host, 'commitCompletedSourceReport').mockImplementation((input) => {
+          candidates.push(input);
+          return nativeCommit({
+            ...input,
+            verifyCurrent: () => {
+              input.verifyCurrent();
+              throw stop;
+            },
+          });
+        });
+        let reportFailure: { error: unknown } | undefined;
+        try {
+          let observed: unknown;
+          try {
+            ledger.report(f.identity.work_id, 1, issued.journal.version, observation, source);
+          } catch (error) {
+            observed = error;
+          }
+          expect(observed).toBe(stop);
+          expect(db.inTransaction).toBe(false);
+          expect(readFixtureHostRows(db)).toEqual(nativeRows);
+          expect(initialSourceState(f)).toEqual(before);
+        } catch (error) {
+          reportFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                commitSpy.mockRestore();
+              },
+            ],
+            reportFailure,
+          );
+        }
+        expect(candidates).toHaveLength(1);
+        const candidate = firstOf(candidates, 'actual report-generated Journal candidate');
+        const payload = canonicalJson(candidate.nextJournal),
+          digest = canonicalJsonDigest(candidate.nextJournal);
+        // Fixture-only LEGACY split input; the current atomic report above rolled back.
+        expect(
+          db
+            .query(
+              'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND revision=? AND payload=? AND digest=?',
+            )
+            .run(
+              priorRow.revision + 1,
+              payload,
+              digest,
+              host.workspaceId,
+              f.identity.work_id,
+              priorRow.revision,
+              priorRow.payload,
+              priorRow.digest,
+            ).changes,
+        ).toBe(1);
+        expect(readFixtureHostRows(db).host).toEqual(nativeRows.host);
+        const legacyJournal = initialSourceJournal(f);
+        expect(legacyJournal.state).toEqual(candidate.nextJournal);
+        expect(legacyJournal.version).toEqual({ revision: priorRow.revision + 1, digest });
+        const reconcile = {
+          identity: f.identity,
+          nativeSessionHandle: requiredLease(before.work).thread_id,
+          verifyCurrent: candidate.verifyCurrent,
+        };
+        const splitRows = readFixtureHostRows(db);
+        expect(() =>
+          host.reconcileCompletedSourceOwnership({
+            ...reconcile,
+            nativeSessionHandle: reconcile.nativeSessionHandle + '-foreign',
+          }),
+        ).toThrow('terminal ownership reconciliation owner differs');
+        expect(readFixtureHostRows(db)).toEqual(splitRows);
+        const acceptedSourceBytes = readFileSync(changedFile);
+        let freshnessFailure: { error: unknown } | undefined;
+        try {
+          writeFileSync(changedFile, Buffer.concat([acceptedSourceBytes, Buffer.from('unreported fixture drift\n')]));
+          expect(() => host.reconcileCompletedSourceOwnership(reconcile)).toThrow(
+            'new source report snapshot changed before atomic acceptance',
+          );
+          expect(db.inTransaction).toBe(false);
+          expect(readFixtureHostRows(db)).toEqual(splitRows);
+        } catch (error) {
+          freshnessFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                writeFileSync(changedFile, acceptedSourceBytes);
+                expect(readFileSync(changedFile)).toEqual(acceptedSourceBytes);
+              },
+            ],
+            freshnessFailure,
+          );
+        }
+        const after = presentSnapshot(host.reconcileCompletedSourceOwnership(reconcile));
+        expect(after.workVersion.revision).toBe(before.workVersion.revision + 1);
+        expect(after.work).toEqual({
+          ...before.work,
+          revision: after.work.revision,
+          lifecycle: { ...before.work.lifecycle, revision: after.work.lifecycle.revision },
+          lease: after.work.lease,
+        });
+        expect(after.work.lease?.ticket_id).not.toBe(before.work.lease?.ticket_id);
+        expect(after.ledger.tickets.find((ticket) => ticket.ticket_id === before.work.lease?.ticket_id)).toMatchObject({
+          status: 'released',
+          active_resources: [],
+          blocked_resources: [],
+          expires_at: null,
+        });
+        for (const claim of before.ledger.claims.filter(
+          (claim) => claim.ticket_id === before.work.lease?.ticket_id && claim.status === 'active',
+        )) {
+          const releasedClaim = requiredValue(
+            after.ledger.claims.find((item) => item.claim_id === claim.claim_id),
+            'released original Source claim',
+          );
+          expect(releasedClaim).toEqual({
+            ...claim,
+            status: 'released',
+            renewed_at: releasedClaim.renewed_at,
+          });
+          expect(Date.parse(releasedClaim.renewed_at)).toBeGreaterThanOrEqual(Date.parse(claim.renewed_at));
+        }
+        const handoff = requiredValue(
+          after.ledger.tickets.find((ticket) => ticket.ticket_id === after.work.lease?.ticket_id),
+          'execution-only handoff ticket',
+        );
+        expect(handoff.status).toBe('active');
+        expect(handoff.exclusive_resources).toEqual(['execution:' + f.identity.work_id]);
+        expect(
+          after.ledger.claims.filter(
+            (claim) => claim.status === 'active' && claim.resources.some((resource) => resource.startsWith('file:')),
+          ),
+        ).toEqual([]);
+        expect(initialSourceJournal(f).state).toEqual(candidate.nextJournal);
+        const settledRows = readFixtureHostRows(db);
+        expect(host.reconcileCompletedSourceOwnership(reconcile)).toEqual(after);
+        expect(readFixtureHostRows(db)).toEqual(settledRows);
+        expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents)).toEqual(source);
+        if (performance.now() >= deadline) throw new Error('Legacy component body exhausted its deadline');
+        completed = true;
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (fixture) await fixture.close();
+          },
+          () => {
+            if (clockHeld) setSystemTime();
+          },
+          'Legacy component clock restoration',
+        );
+        if (rootOwned) {
+          if (completed && performance.now() < deadline) await rm(rootOwned, { recursive: true, force: true });
+          else {
+            console.error('Retained synthetic legacy Source report fixture: ' + rootOwned);
+            if (completed) throw new Error('Legacy component cleanup exhausted its deadline');
+          }
+        }
+      },
+      'Synthetic legacy Source report fixture',
+    );
+  },
+  failedFinalHostCaseTimeoutMs,
+);
+
 test.each(['rollback', 'commit'] as const)(
   'completed Source report Host recovery %s preserves genuine writer lineage',
   async (mode) => {
