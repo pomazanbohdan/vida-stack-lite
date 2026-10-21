@@ -86,18 +86,18 @@ the retained stage was not rerun. A bounded read recovered with unchanged boot.
 Provider status reports connected/running, current spec3241 and no failure; this
 does not diagnose the transport's root cause or establish a host restart.
 
-Latest complete measurement binds Source `575959134d38069296586b121ac9ad1a2ddbff43` and run
-`8dd2ecc6-d756-46c7-96a3-15d88f3e7c76`, not later HEAD. The audit packet above
-is now measured; its original focused failures remain failures.
+Latest complete measurement binds Source `4e41dcc89a50653c80f849fcf9b56ccd3f234b29` and run
+`2b2122a8-2879-4034-9878-c6781e07a34d`, not later HEAD. Both audit correction
+packets are now measured; original focused failures remain failures.
 
-| Counter | Covered / total | Covered delta from15f3e6b |
+| Counter | Covered / total | Covered delta from5759591 |
 | --- | --- | --- |
 | Functions | 1126 / 1126 | 0 |
-| Lines | 4945 / 4977 | +17 |
-| Statements | 5237 / 5308 | +18 |
-| Branches | 5362 / 5626 | +54 |
+| Lines | 4956 / 4977 | +11 |
+| Statements | 5248 / 5308 | +11 |
+| Branches | 5382 / 5626 | +20 |
 
-The complete stage takes175357.055064ms. Both native shards exit0 without
+The complete stage takes189924.829847ms. Both native shards exit0 without
 signal/error/UNKNOWN. Exit0,
 full capture, closed group, unchanged boot/image and published report hold.
 Operation remains **BLOCKED/nonexact**. Diagnostic maxCC275/entryCRAP275 is
@@ -107,15 +107,20 @@ times do not establish a controlled speedup.
 
 Functions are exact100%. Source simplification retires three closures and adds
 the validated restore-plan decoder; no correspondence allowance is transferred.
-Total denominators change -2F/+4L/+4S/-15B; no exclusion, scope or gate is narrowed.
+All denominators are unchanged from5759591; no exclusion, scope or gate is narrowed.
 The report-only refresh has0missing functions; native synthesis correction now
 executes. Lines, statements and branches remain nonexact, not whole-contour closure.
-264 uncovered branch arms are now listed from the same
+244 uncovered branch arms are now listed from the same
 report, with exact deficit agreement and explicitly labeled implicit-if ranges.
 Reuse `host-uncovered-plan-current.json` in focused diagnostics.
 No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
-attempt1122. Failed attempts1091 and1100 remain separately classified.
+attempt1124. Failed attempts1091 and1100 remain separately classified.
+The same report-only diagnostic now includes60exact zero-count statement entries,
+checked against the owning statement deficit. It reuses the already loaded
+Istanbul map and one shared geometry join; no AST/Source scan/hash or extra suite.
+Its scoped strict check passes2files. This retained diagnostic remains a local
+navigation tool, not a new numeric gate or published product API.
 
 The measured packet extends the existing TaskSource fixture with optional
 already allowed non-file resources; default callers still use the original file-only
@@ -531,7 +536,7 @@ The next actual producer still performs its maintained admission check.
 
 ## Latest measurement custody
 
-The next branch packet is in development against the current map, within the
+The next branch packet is now measured against its own current map, within the
 same contour. Real observed TaskSource inspect now precedes a distinct proposal,
 exercising reported-predecessor validation without duplicate setup. Inspection
 keeps its original no-policy/no-lease-change assertions; the proposal preserves
@@ -547,29 +552,31 @@ commit16594.26ms, inspection595.96ms, within their existing20s/5s bounds. Its
 strict149-file checks and lint pass; blind review finds no blocker. Two fresh
 issued-proposal PASS roots pkRIBW/lPPBOl stay retained under `/tmp`, never replayed.
 The retained map confirms both recovery receipt-backed branches; no product defect
-or numeric delta is inferred from these new functional checks.
+is inferred from these new functional checks. One matching SDK/image/stage records
++11L/+11S/+20B with exact F100 retained. Continue from21uncovered lines,
+60statements and244arms. No new whole-contour closure or frozen qualification.
 
-- Stage:`/workspace/contour-stage-kDQ7uV`; exec3988, observed exit0.
-- Image:`/workspace/.vida-quality-inputs/7703dce23a5360cc083561abeba9aa70179309ca/repository`.
-- Tree:`f840fc0986547fa6b2a3f49e3327dda3169dbabb`.
-- Input:`420c1be6b8a96cadf812398c4ba084226fe4afb22f55d7755fe1afc5d87c85ce`.
-- Image manifest SHA256:`3b4a4af649ada084252628f735d96b286e9b7f52095e6ecc9246ddbb8b702b2a`.
-- SDK CI39524430458, successful attempt1, artifact12311979318.
-- SDK name:`vida-sdk-test-inputs-575959134d38069296586b121ac9ad1a2ddbff43-39524430458-1`.
-- ZIP SHA256:`fa272513c6f651cd6fdb9791b1da14c996351c009e741a1f23ae4b85b8cfa728`.
-- `remainder-v1127-stage.log` in focused diagnostics retains the complete outcome.
-- Original scratch:`/dev/shm/vida-quality-retained-u7ElxG`. After observed closure,
+- Stage:`/workspace/contour-stage-rSlct0`; exec19223, observed exit0.
+- Image:`/workspace/.vida-quality-inputs/a79cd1ad3712085a01008ee1b843010131812d65/repository`.
+- Tree:`aad98072169ba155f32dc1a48c4a8437c0b68182`.
+- Input:`c8d49973cc32c46c4908cca361ac27cf2280d6d4f90eaa831c7ae87c6a9e9d77`.
+- Image manifest SHA256:`77faa4923de83f50f0eb8a882898329196a0dd203538300aa5d344949c4ac773`.
+- SDK CI39526196624, successful attempt1, artifact12313876911.
+- SDK name:`vida-sdk-test-inputs-4e41dcc89a50653c80f849fcf9b56ccd3f234b29-39526196624-1`.
+- ZIP SHA256:`092cef94c014b602405b4b1c427e92605b75b90172874f27ceddea98691a10b7`.
+- `remainder-v1129-stage.log` in focused diagnostics retains the complete outcome.
+- Original scratch:`/dev/shm/vida-quality-retained-Ut9fXz`. After observed closure,
   only its qualified private regenerable Bun cache is retired; all other original
   scratch, fixtures, DBs and evidence remain.
-- Whole remaining scratch archive:`/workspace/vida-functional-retention-kDQ7uV-65anCU/scratch.tar.gz`,
-  261765bytes, full tar compare PASS; SHA256`ac2f8fcd6cda4bf37bc2a128237e1d69416ce9b5b746e756e828d9f19924815a`.
+- Whole remaining scratch archive:`/workspace/vida-functional-retention-rSlct0-okahXz/scratch.tar.gz`,
+  269231bytes, full tar compare PASS; SHA256`210cbea46bf6a3be686f0eb89a80db20727a9b366f2e5e052e70593909050df6`.
   Original create/compare logs and archive.json remain beside it; the original
   scratch remains intact apart from its separately retired regenerable cache.
-- Durable free before/after archive:5368823808/5368561664bytes;
-  unchanged2147483648floor leaves3221078016bytes headroom. No resource GAP.
+- Durable free before/after archive:5295960064/5295689728bytes;
+  unchanged2147483648floor leaves3148206080bytes headroom. No resource GAP.
 
 Cache retirement is receipted in
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1127-cache-retirement-kDQ7uV`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1129-cache-retirement-rSlct0`.
 One exact private cache,178155793regular bytes,215846912tmpfs bytes reclaimed;
 4096bytes of durable metadata growth is not counted as reclamation. Closed
 custody, namespace, original Source, boot/image, no active owner and dependency
@@ -893,7 +900,7 @@ fallback remain unchanged. UNKNOWN remains fenced.
 
 | Combination | Evidence and decision |
 | --- | --- |
-| Root causal packet, static-first focused checks, independent review, one final SDK/image/stage | Selected. Latest Source5759591 run is175.357s; prior Source-bound runs retain distinct inputs. |
+| Root causal packet, static-first focused checks, independent review, one final SDK/image/stage | Selected. Latest Source4e41dcc run is189.925s; prior Source-bound runs retain distinct inputs. |
 | Full stage after each partial assertion edit | Reject. Latest malformed-plan packet added only1F/1L/1S/2B despite many assertions; plan from actual missing map locations. No extra unchanged stage is needed. |
 | Root writer plus bounded read-only Luna review/research | Selected during development only. Shared files retain one writer; workers close before numeric freeze. |
 | Two reviewed serial-file children | Keep current qualification and pins. Both latest shards exit0; full capture/group closure hold. |
