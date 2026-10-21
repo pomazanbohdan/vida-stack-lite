@@ -666,6 +666,9 @@ Split independently testable proof groups before increasing a case's scope beyon
 its bound. Reuse one fixture builder with independent roots per named case; do not
 carry live state between ordered tests. Keep the original timeout evidence and
 all prerequisite transitions, refusal checks and cleanup ownership.
+Move each independent assertion group intact, including its native restoration
+and receipt oracles. Splitting can add setup work; report per-case reliability
+separately from total elapsed time rather than claiming a speedup.
 
 A justified composite-case exception needs the dependent contract and measured
 phase costs, not only an overrun. Preserve its freshness/CAS checks and document

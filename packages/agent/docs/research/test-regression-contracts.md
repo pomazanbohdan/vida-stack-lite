@@ -110,8 +110,9 @@ closed transaction and unchanged Journal, drop the trigger through owned cleanup
 then perform healthy admission. The cooperative report grants no provider or
 Runtime acceptance. All cases keep the default5s deadline and private root.
 
-Completed Source report recovery keeps its two existing20s cases and fixture
-count. Commit checks stale CAS and live-owner refusal before expiry, then healthy
+Completed Source report recovery separates rollback, terminal-history integrity
+and commit into three independent20s cases. Each forms its own native fixture.
+Commit checks stale CAS and live-owner refusal before expiry, then healthy
 commit and exact retry; rollback checks the native Journal abort, exact preserved
 rows, cleanup and healthy same-fixture retry. This balances their independent
 obligations without removing an assertion or increasing a deadline. The builder
@@ -126,20 +127,21 @@ identical resources, and one Journal revision bump without body/digest change.
 A stale retry must preserve exact rows. This exercises accepted-report recovery
 inside the same20s case; it executes neither archived UNKNOWN nor a writer argv.
 
-Only the rollback case adds a completed Host readonly preparation before writer
-issue. Preserve that non-target attempt through native rollback and healthy retry,
-then change only its result and matching digest in the persisted Work preimage.
+The rollback and terminal-history cases add a completed Host readonly preparation
+before writer issue. Rollback preserves it through the native abort and healthy
+retry. Terminal-history performs healthy recovery, then changes only the prior
+attempt's result and matching digest in the persisted Work preimage.
 Require the completed-report continuity refusal, unchanged Host/Journal and
 recovery receipt rows, conditional exact restoration and healthy public reads.
 Keep the commit/expiry case's native writer history unchanged: a Host unit result
 without an accepted Journal item cannot satisfy expired-execution recovery.
-Rollback retains an actual active disjoint peer and its exact Work/ticket/claim/
+Both retain an actual active disjoint peer and its exact Work/ticket/claim/
 file preservation oracle. The existing native legacy frontier case owns the
 full active/queued peer pair, earlier nonoverlapping FIFO assertion and TaskSource
 prepare/retry/inspect no-effect probe. Reuse its setup rather than duplicate that
-independent proof inside the long recovery body. Both keep their existing20s bounds.
+independent proof inside the long recovery body. Each keeps its existing20s bound.
 Commit recovery retains both peers so its queued-resource predicate executes;
-rollback retains the active peer. Assert absence of the recovering Work's active
+rollback and terminal-history retain the active peer. Assert absence of the recovering Work's active
 file claims while preserving foreign peer claims. Peer verification resolves
 the current fixture DB/store after an actual reopen, retaining original row,
 ticket, claim and file beforeimages rather than closed prepared handles.
@@ -479,6 +481,10 @@ These are Host component seams, not kernel issuance or provider observations.
 Queued TaskSource stale-policy controls reuse the actual callback's typed
 prepared operation/CAS and native queued snapshot; change only ephemeral expected
 Work revision/digest and preserve native rows, prepared metadata and absent root.
+Omitted-resource probes remove each actual added branch/worktree resource from
+a cloned Work scope with a stale expected digest. Prove the resource was present
+and was removed; never persist the adverse DTO. Preserve the queued reservation,
+peer, Journal and exact retry/FIFO oracles without another fixture.
 An exact current Work version with a mismatching prepared-record revision is a
 separate pure CAS denial. A foreign execution-only peer may use the existing
 fixture's real Journal and public preparation; preparation alone creates neither

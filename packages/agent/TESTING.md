@@ -2088,14 +2088,13 @@ Do not copy the implementation, invent callback inputs or export a private helpe
 solely for a mutation score. Callback-law assertions, public behavior, coverage
 and assertion-confirmed mutation remain distinct evidence.
 
-Preparation is parallel across the active contours. Numeric producers remain
-under one Root owner and their existing resource admission; this policy does not
-activate concurrent coverage shards. Freeze the measured checkout until its
-producer is terminal. Other lanes may prepare changes in their isolated checkouts;
-Root integrates them afterward. After each terminal bounded attempt, select the
-next ready measurement and return failures to their owning lane, avoiding an
-unchanged full-suite retry. A blocked prerequisite releases capacity for ready
-work while its contour remains OPEN; it is never counted as a closure.
+Preparation and review stay within the single active contour selected by the
+root sidecar. Root owns integration and the sole numeric producer under existing
+resource admission. Keep its captured image immutable; workers may prepare
+bounded patches in ordinary isolated directories, without worktrees. After a
+terminal attempt, resolve its causal failures before the next changed-input
+measurement. A blocked prerequisite remains OPEN and does not authorize another
+contour, an unchanged full-suite retry or concurrent coverage shards.
 
 The generated contour JSON/Markdown is the single progress projection. Do not add
 a manual percentage ledger or combine diagnostic kills into a passing score.

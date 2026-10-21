@@ -3131,6 +3131,38 @@ test('task-source policy denials preserve preparation and queued retries preserv
         }),
       ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
     }
+    const addedResources = [
+      `branch:${f.request.branch_ref}`,
+      `worktree:${process.platform === 'win32' ? sourceRoot.toLocaleLowerCase('en-US') : sourceRoot}`,
+    ];
+    for (const omitted of addedResources) {
+      expect(reserved.work.binding.allowed_resources).toContain(omitted);
+      const work = {
+        ...reserved.work,
+        binding: {
+          ...reserved.work.binding,
+          allowed_resources: reserved.work.binding.allowed_resources.filter((resource) => resource !== omitted),
+        },
+      };
+      expect(work.binding.allowed_resources).not.toContain(omitted);
+      expect(() =>
+        createTaskSourceMutationPolicyRequest({
+          repositoryRoot: queuedPolicy.repositoryRoot,
+          operation: {
+            ...queuedPolicy.operation,
+            request: {
+              ...f.request,
+              expected_host: {
+                ...f.request.expected_host,
+                work: { ...f.request.expected_host.work, digest: '0'.repeat(64) },
+              },
+            },
+          },
+          preparedStateVersion: queuedPolicy.stateVersion,
+          hostSnapshot: { ...reserved, work },
+        }),
+      ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
+    }
     expect(() =>
       createTaskSourceMutationPolicyRequest({
         repositoryRoot: queuedPolicy.repositoryRoot,
@@ -6470,7 +6502,7 @@ test(
   failedFinalHostCaseTimeoutMs,
 );
 
-test.each(['rollback', 'commit'] as const)(
+test.each(['rollback', 'terminal-history', 'commit'] as const)(
   'completed Source report Host recovery %s preserves genuine writer lineage',
   async (mode) => {
     const started = performance.now();
@@ -6501,7 +6533,7 @@ test.each(['rollback', 'commit'] as const)(
         const preparedAt = performance.now();
         const peers = admitDisjointInitialSourcePeers(f, mode === 'commit');
         const peersReadyAt = performance.now();
-        const readonlyPreparation = mode === 'rollback' ? completeReadonlyFixtureHostPreparation(f) : undefined;
+        const readonlyPreparation = mode !== 'commit' ? completeReadonlyFixtureHostPreparation(f) : undefined;
         if (readonlyPreparation)
           expect(initialSourceState(f).work.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
         const issued = await issueInitialSourceFixtureWriter(f);
@@ -6592,38 +6624,40 @@ test.each(['rollback', 'commit'] as const)(
                 },
               }
             : nativeRecovery;
-        if (mode === 'rollback') {
-          const persistedBefore = readFixtureHostRows(db);
+        if (mode !== 'commit') {
           setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
-          db.exec(
-            "CREATE TRIGGER fixture_recovery_journal_fault BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'fixture recovery Journal fault'); END",
-          );
-          let faultFailure: { error: unknown } | undefined;
-          try {
-            expect(() => host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toThrow(
-              'fixture recovery Journal fault',
+          if (mode === 'rollback') {
+            const persistedBefore = readFixtureHostRows(db);
+            db.exec(
+              "CREATE TRIGGER fixture_recovery_journal_fault BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'fixture recovery Journal fault'); END",
             );
-            expect(readFixtureHostRows(db)).toEqual(persistedBefore);
-            expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toBeNull();
-          } catch (error) {
-            faultFailure = { error };
-            throw error;
-          } finally {
-            completeOwnedCleanup(
-              [
-                () => {
-                  db.exec('DROP TRIGGER fixture_recovery_journal_fault');
-                  return undefined;
-                },
-              ],
-              faultFailure,
-            );
+            let faultFailure: { error: unknown } | undefined;
+            try {
+              expect(() => host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toThrow(
+                'fixture recovery Journal fault',
+              );
+              expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+              expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toBeNull();
+            } catch (error) {
+              faultFailure = { error };
+              throw error;
+            } finally {
+              completeOwnedCleanup(
+                [
+                  () => {
+                    db.exec('DROP TRIGGER fixture_recovery_journal_fault');
+                    return undefined;
+                  },
+                ],
+                faultFailure,
+              );
+            }
           }
           const retried = host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent);
           expect(retried.status).toBe('completed_report_recovered');
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
-          expect(host.readHostStateSnapshot(f.identity).workVersion).toEqual(retried.work_version);
           const restored = initialSourceState(f);
+          expect(restored.workVersion).toEqual(retried.work_version);
           const readonlyAttempt = requiredValue(readonlyPreparation, 'completed readonly preparation').attempt;
           expect(readonlyAttempt.attempt_id).not.toBe(issued.hostAttemptId);
           expect(restored.work.execution.assignment_attempts[0]).toEqual(readonlyAttempt);
@@ -6640,16 +6674,18 @@ test.each(['rollback', 'commit'] as const)(
             result: observation,
             result_digest: canonicalJsonDigest(observation),
           });
-          expectTerminalHostResultMutationDenied(
-            db,
-            host,
-            f.identity,
-            restored.work,
-            'completed Source report recovery binding history is not continuous',
-          );
-          expect(initialSourceState(f)).toEqual(restored);
-          expect(recoveryReceiptRows.all(host.workspaceId, f.identity.work_id)).toEqual(recoveryReceiptBefore);
-          expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
+          if (mode === 'terminal-history') {
+            expectTerminalHostResultMutationDenied(
+              db,
+              host,
+              f.identity,
+              restored.work,
+              'completed Source report recovery binding history is not continuous',
+            );
+            expect(initialSourceState(f)).toEqual(restored);
+            expect(recoveryReceiptRows.all(host.workspaceId, f.identity.work_id)).toEqual(recoveryReceiptBefore);
+            expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
+          }
         } else {
           const persistedBefore = readFixtureHostRows(db);
           expect(() =>

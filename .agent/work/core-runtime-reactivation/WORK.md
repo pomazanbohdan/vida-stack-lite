@@ -162,8 +162,8 @@ batch decisions and stale retries remain.
 Final current-byte review vida-empty-freeze-final-review-v1277.md confirms guard
 ordering and cleanup; its Journal-baseline precision is now an explicit empty
 array assertion. Strict149/configured lint0 and3cases/81assertions pass2.01s,
-249.63ms/129.42ms/133.89ms native, in empty-freeze-v1278-UkveqF. One complete
-matching Source/SDK/image stage must still confirm its new statement/arm visit.
+249.63ms/129.42ms/133.89ms native, in empty-freeze-v1278-UkveqF. The matching
+d798e49 stage below fails another case, so the new statement/arm remains unqualified.
 Refresh the changed test pin once; strict122/configured lint0 and the existing
 two-file resource control pass1case/10assertions in286ms:
 remainder-v1279-controls-bX4R2E. Changed documentation links/headings pass.
@@ -171,6 +171,68 @@ The Bun Test skill now requires checking exact list minima and vacuous reference
 predicates before a guard-dominance claim. Completed narratives above are linked
 to immutable Git while incoming headings and current prerequisite GAPs remain;
 no Source, DB, original receipt or failure artifact is removed by this compaction.
+
+### Three-hour audit and recovery timeout correction:2026-10-21 06:40–09:40 UTC
+
+Use published packets and existing receipts, with no duplicate AST/inventory/Source hash pass.
+The bounded script review vida-script-cost-review-v1281.md finds no confirmed
+safe capture/read/timeout/report-cost correction. Stage stdout is read once
+through its bounded memoized owner; diagnostic parsing and report routing enforce
+different contracts. Do not merge freshness reads or add infrastructure for an
+unmeasured saving. Controller timing, tool-call/token counts and controlled
+serial-versus-parallel performance are not measured.
+
+The matching d798e49 stage9qCSuy/runabceafbe-5d8c-4fc4-930c-81fa37db904e
+fails:317Host cases pass, one rollback case exceeds its unchanged20s bound at
+20814.67ms. Its setup is15282.008452ms and body5406.427390ms; commit passes
+11534.96ms on the same stage. This variation does not establish a contention
+cause. Original execution.json records native1, full capture, closed group and
+unchanged boot/image; publication-error.json and automatic projection attempt1170
+retain the failure. No complete numeric report is published or joined. Keep the
+previous6513817 complete counters separate from this failed Source.
+
+Original SDK/admission/log owners are DIAG/remainder-v1281-{sdk-provider.json,
+scratch-parent.json,stage.log}. The immutable image is
+/workspace/.vida-quality-inputs/49ec2fdc6f781f69d7561cab62bef440d14b5f9e/repository.
+Retained scratch is /dev/shm/vida-quality-retained-ZIwn9W. After terminal closure,
+DIAG/remainder-v1281-cache-retirement-9qCSuy/manifest.json qualifies and retires
+only its private regenerable cache, reclaiming215846912tmpfs bytes. The original
+failed fixture, DBs and logs remain. The full-compare archive record is
+/workspace/vida-functional-retention-9qCSuy-tHJ0Lb/archive.json. After archive,
+durable3555966976bytes and retained tmpfs9221353472bytes remain above the unchanged
+2147483648floor. No broad inventory or dependency attestation is repeated.
+
+Apply TESTING's existing independent-case rule: separate terminal-history
+tamper/restoration from native rollback/retry into a third independently created
+20s fixture. Preserve every original assertion, completed readonly predecessor,
+actual continuation/engine/Journal/writer reservation, peer and cleanup oracle.
+Reuse restored.workVersion instead of an adjacent duplicate Host decode before
+any effect. Do not claim lower total setup cost. TESTING's obsolete multi-contour/
+worktree paragraph now follows the current single-contour gitless policy.
+
+Reuse the actual queued TaskSource fixture for two omitted-resource pure-input
+denials, proving each resource existed and was removed. Native state, prepared
+rows, absent Source root, peer, Journal and FIFO retry remain unchanged. Preserve
+the missing-own and expected-lease guards; stable valid-state dominance is not
+proof for every public DTO. The bounded subset review is
+vida-tasksource-subset-review-v1282.md. Strict149 passes; initial matcher lint failure is retained in
+tasksource-subset-v1284-T02kcH and prevented runtime execution. Replacing the
+unsafe matcher with typed containment checks passes strict149/lint0 and one
+case/124assertions2.56s,379.44ms native, in tasksource-subset-v1285-urMV0q.
+Recovery split strict149/lint0 and three cases/120assertions pass30.56s total,
+9296.19ms/8896.44ms/10415.29ms per case, in recovery-split-v1286-BhexeS.
+This focused result does not establish full instrumented-case reliability.
+Current-byte review vida-recovery-split-review-v1287.md accepts the split's
+assertion/fixture preservation and identifies the subset probes' evidence limit:
+their stale digest alone suffices for denial. Root retains that digest to force
+exhaustive reconstruction before refusal. These are stale-input execution probes,
+not proof that resource omission independently denies or an assertion-confirmed
+mutation kill. Numeric visitation still needs its exact report. The actual
+queued retry remains the positive public control. Refresh the changed test pin
+once in remainder-v1288-test-pin.json. Strict122/lint0 and the existing two-file
+resource control pass1case/10assertions315ms in remainder-v1288-controls-2AND1e.
+Changed documentation and diff checks pass. One complete changed-input stage
+remains pending. No production code, timeout, gate or authority changes.
 
 ### Next actions and unresolved prerequisites
 
@@ -218,7 +280,7 @@ Keep these specific unresolved paths open:
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
-| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage177.722s with both native exits0 and complete custody. |
+| Two reviewed serial-file children | Selected under the exact pins. Reuse the latest complete measurement above; the later timeout remains a separate failed attempt. |
 | Fully serial files | Protocol fallback only; concurrent child times sum283.89s. That sum is a planning quantity, not measured serial elapsed time or current admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |
