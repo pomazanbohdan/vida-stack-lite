@@ -36,7 +36,9 @@ Batching reviewed changes, static checks and affected named cases before one
 complete selected-contour stage is the chosen sequence. Independent read-only
 study can overlap Source repair, while multiple writers or numeric producers
 would add input/resource contention without measured benefit. No parallel
-coverage or speedup is claimed. Blind1454 confirms one script sequencing defect:
+coverage or speedup is claimed. The inspected receipts do not provide complete
+three-hour tool-call/token accounting; no savings are invented from commit counts.
+Blind1454 confirms one script sequencing defect:
 missing/non-directory output is checked only after SDK readiness and image
 formation. The original CLI refusal reaches the deliberately missing SDK instead
 of the invalid output. Root moves directory preflight before that work, reuses its
@@ -69,8 +71,6 @@ scratch gain is215846912bytes; durable change is-4096bytes, not a durable gain.
 Post-retirement durable2440593408/scratch9149898752bytes remain above the same
 floor. All non-cache originals and the verified durable scratch archive remain.
 
-### Current negative-edge repair packet
-
 ### Current TaskSource lookup simplification
 
 After1461's complete measurement, independent1463 approves consolidating the
@@ -85,11 +85,13 @@ correspondence must record the deleted duplicate lookup closure without transfer
 allowance. DIAG/vida-task-ticket-lookup-v1463.md retains the equivalence review.
 1465 passes Source84 strict/lint0 and two existing public reservation/UNKNOWN/FIFO
 cases2PASS/77assertions2.13s in DIAG/task-ticket-lookup-v1465-Il3ZQ1. Expected UNKNOWN
-roots are retained. Unchanged tests retain1449's exact pin. The numeric observation
-below still binds5f8e1d7; this pending Source simplification needs its own matching
-SDK/image and one complete coverage stage, without an unchanged full retry.
+roots are retained. Unchanged tests retain1449's exact pin. Ordinary hooks pass
+formatting520/strict527 and normal push publishesf90f60b. One matching SDK and
+complete1467 stage qualify those bytes below. The own-ticket fallback remains
+fail-closed in the common lookup return; its old separate unvisited statement is
+coalesced, not newly executed. The actual duplicated callback is removed.
 
-### Published retry-graph repair packet
+### Current negative-edge repair packet
 
 The resumed goal keeps this same contour and Root numeric owner.1444 independently
 checks a bounded corruption-only route past generic Work validation: a genuine
@@ -426,34 +428,44 @@ where copying/archive retention consumes the same space.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-5f8e1d797d588b0075e4b48b230719ecaf3e8ffc, run
-e5fded91-0793-4285-a09d-8e0fba910c7e.
-F1126/1126,L4993/4993,S5325/5328,B5537/5603 leave3statement/66branch-arm gaps.
+f90f60bdfe0e08ae29761860f2670ff04f1878d3, run
+4da4447c-25f2-4cd4-b8dc-9f4eec03955a.
+F1125/1125,L4991/4991,S5323/5325,B5538/5603 leave2statement/65branch-arm gaps.
 F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
 unchanged boot/image and automatic publication. All341cases/5990assertions pass
-in202470.503798ms. Host325/5663 takes195.49s; stopped-source16/327 takes122.26s.
-The preceding complete338-case observation took213894.698935ms under different
+in190896.208148ms. Host325/5663 takes184.26s; stopped-source16/327 takes107.25s.
+The preceding complete341-case observation took202470.503798ms under different
 Source and tests; this is not a controlled speed benchmark. Both stay within unchanged
 300s coverage/330s stage budgets. No unchanged full retry is launched.
 
-The graph helper now has no missing counters. Its three statements and four
-previously missing branch arms are exercised by the qualified negative fixtures.
-The reviewed private commit-mode refactor removes one helper and its unsupported
-combination. Total denominators decrease by1function/2lines/3statements/7arms;
-these removals are not new execution. Four statement deficits become three actual
-visits plus one eliminated unsupported statement; the remaining three are the
-TaskSource own-ticket null fallback and two historical-attempt skip statements.
-One eliminated missing arm plus four newly visited graph arms reduces the branch
-deficit71to66. The old naive same-slot blocker is superseded by the genuine
-different-slot producer and explicit untrusted-row denial, without accepting
-fabricated history or weakening Work validation.
-The predecessor map is DIAG/remainder-v1461-predecessor-gap-map.json; the current
+The graph helper remains fully exercised. Relative to1461, the TaskSource lookup
+consolidation removes1duplicate function/2lines/3statements and leaves the branch
+denominator unchanged. The common return preserves its missing-ticket refusal;
+the coalesced old statement is a denominator change, not new execution. One more
+arm is now visited, reducing the deficit66to65. The earlier graph visits and
+private commit-mode correspondence remain in the published predecessor record.
+No simplification grants new accepted history, rights or UNKNOWN replay.
+
+The two remaining statement locations are current#resolveTaskSourceBinding:9210
+and snapshotHistoricalTaskSourceSources:9398. They skip reported history from a
+different attempt or thread. DIAG/vida-task-source-history-producer-v1395.md traces
+the genuine producer prerequisite: bridge start is once per Work, resume keeps
+the same attempt, and existing continuation/recovery preserves its handle.
+That report's old own-ticket prerequisite is superseded by1463's equivalent
+lookup consolidation; only the two historical-producer GAPs remain applicable.
+Creating Journal/action rows directly would not supply a native producer. Keep
+those historical guards, all65missing arms and exact acceptance OPEN;
+do not repeat a full stage unchanged, fabricate history or open another contour.
+The next packet needs a supported producer or independently reviewed equivalent
+contract correction before another numeric launch. Frozen/mutation stay deferred.
+
+The predecessor map is DIAG/remainder-v1467-predecessor-gap-map.json; the current
 map is refreshed once through the retained report-only join. The prior numeric,
 timing and retirement evidence remains in the
-[published5f8e1d7 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/5f8e1d797d588b0075e4b48b230719ecaf3e8ffc/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
+[publishedf90f60b WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/f90f60bdfe0e08ae29761860f2670ff04f1878d3/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
 No new AST/Source scan/hash is used for this join. Frozen CC/CRAP remains deferred;
 the diagnostic273 maxima do not establish frozen-gate acceptance.
 
@@ -468,17 +480,17 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-Fj3gHO/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1461-sdk-provider.json and DIAG/remainder-v1461-sdk-verified.json |
-| Admission and complete producer log | DIAG/remainder-v1461-scratch-parent.json and DIAG/remainder-v1461-stage.log |
-| Private-cache disposition | DIAG/remainder-v1462-cache-retirement-Fj3gHO/manifest.json and retirement-events.jsonl |
-| Non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-Fj3gHO-KVtgrZ/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-BFXCXa |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-iFeKx3/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1467-sdk-provider.json and DIAG/remainder-v1467-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1467-scratch-parent.json and DIAG/remainder-v1467-stage.log |
+| Private-cache disposition | DIAG/remainder-v1468-cache-retirement-iFeKx3/manifest.json and retirement-events.jsonl |
+| Non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-iFeKx3-iOAMIv/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-4Nlvz4 |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
 and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
-The324891-byte durable archive excludes only this stage's declared private
+The324751-byte durable archive excludes only this stage's declared private
 regenerable Bun cache, retired after closed custody and dependency qualification.
 The exact cache path,15243-entry inventory and exclusive events are retained;
 observed scratch gain215846912bytes is separate from durable-4096bytes.
@@ -487,7 +499,7 @@ with their originals; its digest is computed once. This is custody, not a space
 gain or reattestation. Prior qualified cache retirement stays in the published
 history linked above; no shared dependency scan/hash is repeated.
 
-A postclosure observation records2374889472durable bytes after archive, above the
+A postclosure observation records2307710976durable bytes after archive, above the
 unchanged2147483648floor. Both filesystems passed admission before launch;
 checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
