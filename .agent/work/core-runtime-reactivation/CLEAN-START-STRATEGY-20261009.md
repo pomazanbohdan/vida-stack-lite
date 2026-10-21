@@ -20,12 +20,13 @@ historical maxima with current inputs. Frozen complexity/CRAP and mutation remai
 deferred. TypeScript Source migration is complete; runtime qualification remains
 open. Installation, focused PASS and published code do not establish acceptance.
 
-The latest selected stage is complete and its non-cache scratch has verified
-durable archival. The owner's subsequent exact-path cleanup retires its original
-image; WORK owns the retained last-report/receipt relocation and custody limit.
-Regenerate the next image through the sole producer with fresh admission under
-the unchanged floor/reserve. Retired paths and historical numbers grant no fresh
-qualification; protect remaining evidence outside the explicit cleanup scope.
+The latest selected stage is complete. Its new immutable image and original
+receipts remain retained, and its non-cache scratch has verified durable archival.
+WORK distinguishes this current custody from the predecessor image retired by
+the owner's earlier exact-path cleanup and its retained report/receipt subset.
+Form the next image through the sole producer after a coherent checked repair
+packet and fresh admission under the unchanged floor/reserve. Retired paths and
+historical numbers grant no fresh qualification; protect all current evidence.
 
 ## Work sequence
 
