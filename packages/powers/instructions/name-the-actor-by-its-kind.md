@@ -17,10 +17,14 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=SPEC.md
+  - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=src/reference_agent/prompts/reference_instruction.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Name the actor by its kind
 **Actor**: A string identifying who or what performed an action, using the convention `<producer>/<version>` for agents, `human:<id>` for people, and `process:<id>` for automated processes (see §7).
 Fields that record an identity (`generated.by`, `verified[].by`) use a single actor convention:
+# Name the actor by its convention
+Actors follow the convention `<producer>/<version>` for tools, `human:<id>` for people, and `process:<id>` for automated processes.
+Only supply a `{by, at}` mapping yourself if you need to override it.

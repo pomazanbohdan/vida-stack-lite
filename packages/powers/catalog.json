@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 3487,
+  "revision": 3496,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-21T12:11:12.166Z",
+  "updated_at": "2026-10-21T12:18:05.435Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -1644,7 +1644,7 @@
     {
       "instruction_id": "carry-every-key-into-a-replacement-record",
       "path": "instructions/carry-every-key-into-a-replacement-record.md",
-      "sha256": "1b42299e899a4ac40dec8607a5deca8be2021f84dec4438c678944bbffb2c7d4"
+      "sha256": "d3233f69a2cff7e77b52a0448418ddf53b9700baa0721d2cb066cb54c158e63e"
     },
     {
       "instruction_id": "carry-every-verdict-forward",
@@ -2454,7 +2454,7 @@
     {
       "instruction_id": "consume-an-unknown-format-version-in-best-effort-mode",
       "path": "instructions/consume-an-unknown-format-version-in-best-effort-mode.md",
-      "sha256": "bc7999dc63d78b44e296024a3e32cc55df4d73ce113064c9fc7638ae3a804078"
+      "sha256": "f86f239b8f1a5f40c862992335fe9b863bef9c1d650a5b90e5d7f68b6dd0bda5"
     },
     {
       "instruction_id": "consume-the-handoff-and-delete-it-after-the-resume",
@@ -3959,7 +3959,7 @@
     {
       "instruction_id": "follow-the-high-value-links-out-of-a-seed-page",
       "path": "instructions/follow-the-high-value-links-out-of-a-seed-page.md",
-      "sha256": "60cf8c4004dd4a3e86b18eea62ff6253de596dd31aeccb8619e22e979f18b071"
+      "sha256": "22be1279dce93458b29baa29d3f9a9c926dace2e054375828859e789bd51fb0e"
     },
     {
       "instruction_id": "follow-the-step-sequence-and-halt-at-checkpoints",
@@ -5759,7 +5759,7 @@
     {
       "instruction_id": "link-only-to-targets-you-have-seen",
       "path": "instructions/link-only-to-targets-you-have-seen.md",
-      "sha256": "d2b84e16a43ae1f5b8c9cf0b72acca57e9ec7b86b357ea54d3377e53ba189a30"
+      "sha256": "ec92b854a9629d63f660d10c60e594289f74f40d9971be63dd40c19a8fce99a1"
     },
     {
       "instruction_id": "link-the-design-and-keep-the-criteria-functional",
@@ -6004,7 +6004,7 @@
     {
       "instruction_id": "make-every-file-reference-clickable",
       "path": "instructions/make-every-file-reference-clickable.md",
-      "sha256": "c7d3d17382a4dc2af9a98176775c09ef6c978f4d07a6f14fbba553bbbeed16d9"
+      "sha256": "e73b5e9b4d8f5d736e1adc20e03be359db056897ff46190d2b6fc2a8df1e2aaf"
     },
     {
       "instruction_id": "make-every-interactive-element-keyboard-accessible",
@@ -6522,14 +6522,9 @@
       "sha256": "ae6d417703faf0c3e692c2b94c7162d3bc062ac2dde14c67ff34a82a49197544"
     },
     {
-      "instruction_id": "name-the-actor-by-its-convention",
-      "path": "instructions/name-the-actor-by-its-convention.md",
-      "sha256": "3d4470b41e50f283af7a7979f3b52986008793dea74c10153871759527800c23"
-    },
-    {
       "instruction_id": "name-the-actor-by-its-kind",
       "path": "instructions/name-the-actor-by-its-kind.md",
-      "sha256": "f50b23bb2431fa46634abd35da097f3566e294e006e712d75989a30aba5b8eb4"
+      "sha256": "4fffb95caa762e225fa5d673050128eeeb4f806a21a8edc43f02e91aae29cfc4"
     },
     {
       "instruction_id": "name-the-analog-file-and-the-lines-to-copy-from",
@@ -6999,7 +6994,7 @@
     {
       "instruction_id": "never-reject-a-document-for-a-missing-optional-field",
       "path": "instructions/never-reject-a-document-for-a-missing-optional-field.md",
-      "sha256": "c43a9b5587329b6e42f85e9f32d69d02e122b5ac27bad6ee3b08622ca60d864f"
+      "sha256": "3dce66f7a314c14767e33e0db2e0703223f46f108fde77cc3ebada0e38986470"
     },
     {
       "instruction_id": "never-report-a-state-you-did-not-capture",
@@ -11789,7 +11784,7 @@
     {
       "instruction_id": "use-the-bundle-root-for-an-absolute-cross-link",
       "path": "instructions/use-the-bundle-root-for-an-absolute-cross-link.md",
-      "sha256": "121200cd0f04f0cdc8e6609d33ab3d86b25815b90d1065d7214c5a1693df3874"
+      "sha256": "e4b9bfd4a58233acaa40615c665c0f9f873a45f1ed2bb94a9157ba703477c01c"
     },
     {
       "instruction_id": "use-the-design-systems-values",

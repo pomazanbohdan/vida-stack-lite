@@ -13,13 +13,13 @@ artifact_contract_required_data:
   - the missing optional field
   - the unknown key that was preserved
   - the constraints that were treated as soft guidance
-artifact_contract_verified_by: "the document was neither rejected for a missing optional field nor for an unknown key, and the unknown key survived the round-trip"
+artifact_contract_verified_by: "the document was neither rejected for a missing optional field nor for an unknown key, the unknown key survived the round-trip, and the trust tiers were treated as advisory signals"
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=SPEC.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Never reject a document for a missing optional field

@@ -19,11 +19,10 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-walkthrough/workflow.md
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=src/reference_agent/prompts/reference_instruction.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Make every file reference clickable
 Never write a file or `file:line` reference in human-facing output as plain text.
 In the review narrative file, every file and `file:line` must be a markdown link relative to that file (`[label](../src/foo.ts)`).
 In the session, never write a markdown link. Use a form the host can click: a Cursor code citation (`startLine:endLine:path` on the opening fence); a VS Code `#file:path`; or a CWD-relative `path:line` with no leading `/`. If unsure, use `path:line`.
-Use file-relative paths only. Never start a link with `/` (that breaks GitHub rendering), and don’t use bare filenames that aren’t actual siblings.

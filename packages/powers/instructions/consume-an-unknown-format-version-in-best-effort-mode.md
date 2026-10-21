@@ -18,9 +18,9 @@ compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=SPEC.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Consume an unknown format version in best-effort mode
-Bundles MAY declare the version they target in the frontmatter block of the bundle-root index.
+Bundles MAY declare the version they target with `okf_version: "0.2"` in a bundle-root `index.md` frontmatter block (the only place frontmatter is permitted in an `index.md`).
 Consumers that do not understand the declared version SHOULD attempt best-effort consumption rather than refusing the bundle.

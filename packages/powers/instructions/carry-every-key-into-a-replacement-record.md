@@ -13,13 +13,13 @@ artifact_contract_required_data:
   - every key the previous record had
   - the values that are kept
   - the key that may be dropped
-artifact_contract_verified_by: no key of the previous record is missing in the new one
+artifact_contract_verified_by: "no key of the previous record is missing in the new one, except `generated`, which is omitted so the tool refreshes it"
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=src/reference_agent/prompts/web_ingestion_instruction.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Carry every key into a replacement record
@@ -29,6 +29,6 @@ The augmentation rule is about which *values* you keep, not which *keys* you sen
 Copy `type` verbatim from the existing frontmatter into your new dict.
 The web page’s `<title>` is not the concept’s title.
 The web page URL goes in the `sources` list, never in `resource`.
-You may refine `description` if the web page surfaces a more accurate one-sentence summary;
+You may refine `description` if the web page surfaces a more accurate one-sentence summary; otherwise copy it verbatim.
 Leave `generated` unset (omit the key) so the tool refreshes it.
 This is the *only* key you may legitimately drop.

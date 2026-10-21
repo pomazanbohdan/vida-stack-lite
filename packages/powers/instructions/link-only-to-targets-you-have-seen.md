@@ -12,13 +12,13 @@ artifact_contract_output_type: document
 artifact_contract_required_data:
   - the links that were written
   - the list of targets that exists
-artifact_contract_verified_by: "every link names a target from the list and no link sits in a heading, a code block or a field listing"
+artifact_contract_verified_by: "every link names a target from the list, no link sits in a heading, a code block or a field listing, and no concept is linked more than once per section"
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=src/reference_agent/prompts/reference_instruction.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Link only to targets you have seen

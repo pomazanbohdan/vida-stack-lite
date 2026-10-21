@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4812,
-  "updated_at": "2026-10-21T12:11:17.006Z",
+  "revision": 4825,
+  "updated_at": "2026-10-21T12:18:47.547Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -3622,8 +3622,7 @@
             "carry-forward-a-finding-that-was-already-triaged",
             "trust-a-pre-verified-finding-as-filed",
             "record-the-amendment-with-its-trigger-and-its-keep-instructions",
-            "route-review-findings-into-one-action",
-            "label-code-review-findings"
+            "route-review-findings-into-one-action"
           ]
         },
         "skills/bmad-brainstorming/SKILL.md": {
@@ -4027,8 +4026,7 @@
             "decide-whether-the-test-the-harness-or-the-application-is-wrong",
             "find-the-cause-of-a-flaky-test-instead-of-retrying",
             "report-the-covered-and-the-uncovered-scenarios",
-            "discover-the-repositorys-test-tooling",
-            "never-skip-or-silence-a-failing-test"
+            "discover-the-repositorys-test-tooling"
           ]
         },
         "skills/bmad-walkthrough/templates/log-template.md": {
@@ -4195,8 +4193,7 @@
             "write-the-description-as-a-summary-and-trigger-phrases",
             "write-the-body-around-the-output",
             "name-the-sibling-when-a-sibling-takes-the-requests",
-            "revise-the-description-from-the-failures-not-the-queries",
-            "optimize-guidance-triggers"
+            "revise-the-description-from-the-failures-not-the-queries"
           ]
         },
         "skills/bmod-toolsmith/help/evals.md": {
@@ -4543,8 +4540,7 @@
             "write-minimal-agent-guidance",
             "automate-enforceable-rules",
             "document-the-current-state-not-the-change-history",
-            "optimize-guidance-triggers",
-            "write-directive-rules"
+            "optimize-guidance-triggers"
           ]
         },
         "docs/existing-codebases/set-and-maintain-project-context.md": {
@@ -5971,21 +5967,45 @@
           ]
         },
         "skills/bmad-toolsmith/shapes/rendered-skill/assets/step.md": {
-          "status": "converted",
+          "status": "merged",
           "instruction_ids": [
             "follow-the-workflow-one-step-at-a-time"
+          ],
+          "contributed_sources": [
+            "bmad-method:skills/bmad-code-review/workflow.md",
+            "bmad-method:skills/bmad-code-review/SKILL.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/shape.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/assets/step.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/assets/workflow.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/rendered-skill/assets/workflow.md": {
-          "status": "converted",
+          "status": "merged",
           "instruction_ids": [
             "follow-the-workflow-one-step-at-a-time"
+          ],
+          "contributed_sources": [
+            "bmad-method:skills/bmad-code-review/workflow.md",
+            "bmad-method:skills/bmad-code-review/SKILL.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/shape.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/assets/step.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/assets/workflow.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md": {
-          "status": "converted",
+          "status": "merged",
           "instruction_ids": [
             "follow-the-workflow-one-step-at-a-time"
+          ],
+          "contributed_sources": [
+            "bmad-method:skills/bmad-code-review/workflow.md",
+            "bmad-method:skills/bmad-code-review/SKILL.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/shape.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/assets/step.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/assets/workflow.md",
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md"
           ]
         },
         "skills/bmad-toolsmith/shapes/agent/assets/capability-template.md": {
@@ -7136,10 +7156,13 @@
           ]
         },
         "gsd-core/workflows/new-project/steps/auto-mode-config.md": {
-          "status": "split",
+          "status": "merged",
           "instruction_ids": [
             "never-let-the-setup-overwrite-an-existing-answer",
             "run-without-asking-and-record-the-gaps"
+          ],
+          "contributed_sources": [
+            "gsd-core:gsd-core/workflows/new-project/steps/auto-mode-config.md"
           ]
         },
         "gsd-core/workflows/new-project/steps/auto-mode-detection.md": {
@@ -9187,8 +9210,7 @@
           "status": "split",
           "instruction_ids": [
             "do-not-inject-a-year-into-a-search-query",
-            "rate-the-confidence-per-claim-and-show-doubt-louder",
-            "write-the-artifact-to-disk-and-return-only-the-confirmation"
+            "rate-the-confidence-per-claim-and-show-doubt-louder"
           ]
         },
         "agents/gsd-research-synthesizer.compact.md": {
@@ -10216,9 +10238,12 @@
           ]
         },
         "commands/gsd/discuss-phase.md": {
-          "status": "converted",
+          "status": "merged",
           "instruction_ids": [
             "follow-the-workflow-one-step-at-a-time"
+          ],
+          "contributed_sources": [
+            "commands/gsd/spec-phase.md"
           ]
         },
         "commands/gsd/docs-update.md": {
@@ -10600,9 +10625,13 @@
           ]
         },
         "skills/gsd-discuss-phase/SKILL.md": {
-          "status": "converted",
+          "status": "merged",
           "instruction_ids": [
             "follow-the-workflow-one-step-at-a-time"
+          ],
+          "contributed_sources": [
+            "skills/gsd-spec-phase/SKILL.md",
+            "commands/gsd/discuss-phase.md"
           ]
         },
         "skills/gsd-docs-update/SKILL.md": {
@@ -16224,11 +16253,11 @@
             "do-not-invent-the-structure-the-source-does-not-state",
             "keep-the-provenance-in-the-record-not-in-a-body-section",
             "link-only-to-targets-you-have-seen",
-            "name-the-actor-by-its-convention",
             "record-only-the-sources-you-actually-read",
             "write-the-body-concretely-and-without-narration",
             "write-the-artifact-to-disk-and-return-only-the-confirmation",
-            "make-every-file-reference-clickable"
+            "make-every-file-reference-clickable",
+            "name-the-actor-by-its-kind"
           ]
         },
         "bundles/acme_retail/attesters/index.md": {

@@ -13,13 +13,13 @@ artifact_contract_required_data:
   - the seed pages
   - the links that were followed
   - the links that were skipped
-artifact_contract_verified_by: "the authoritative links behind every seed were followed and the navigation, footer and marketing links were skipped"
+artifact_contract_verified_by: "the authoritative links behind every seed were followed, the navigation, footer and marketing links were skipped, and the page budget was not exceeded"
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=src/reference_agent/prompts/web_ingestion_instruction.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Follow the high-value links out of a seed page

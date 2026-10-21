@@ -18,7 +18,7 @@ compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=SPEC.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Use the bundle root for an absolute cross-link
@@ -26,3 +26,4 @@ Concepts MAY link to other concepts using standard markdown links.
 **Absolute (bundle-relative):** begins with `/`, interpreted relative to the bundle root.
 This is the **recommended** form because it is stable when documents are moved within their subdirectory.
 **Relative:** a standard markdown relative path.
+Use file-relative paths only. Never start a link with `/` (that breaks GitHub rendering), and don’t use bare filenames that aren’t actual siblings.
