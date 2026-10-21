@@ -317,8 +317,14 @@ adds4missing branch arms and3missing statements, including the one missing line;
 the four earlier statement gaps remain. Total branch deficit therefore stays71.
 This is owner-counter accounting, not an invented exact counter correspondence
 or denominator-based completion. The security fix is not withdrawn to recover
-the old line percentage. Blind1441 reviews only its negative-edge test producers;
-unreachable/corrupted-history premises stay separate from genuine acceptance.
+the old line percentage. Blind1441 finds no genuine producer of ambiguous or
+non-+1 retry edges. Its corruption-only proposals are unvalidated: a naive same-slot
+mutation fails the earlier Work chain validator and cannot prove the later graph
+refusal. DIAG/vida-retry-negative-edges-v1441.md records that exact prerequisite.
+Do not weaken validation, export the private helper, manufacture accepted history
+or repeat a full stage unchanged. Untrusted-storage denial remains distinct from
+genuine acceptance; Root must qualify a bounded negative fixture before claiming
+those counters. The four older producer/defensive statement GAPs remain unchanged.
 The predecessor map is DIAG/remainder-v1440-predecessor-gap-map.json; the current
 map is refreshed once through the retained report-only join. Earlier numeric,
 timing and retirement evidence remains in the
