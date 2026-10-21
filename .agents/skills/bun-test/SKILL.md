@@ -31,6 +31,9 @@ its row oracle, over another setup or a fabricated empty success table.
 Before adding Host unit history to a composite, check later Journal acceptance
 requirements. A completed Host readonly result is not an accepted Journal item;
 keep that probe in a compatible existing case rather than weaken recovery.
+Use descriptive string labels for parameterized proof cases and check the
+expanded native names. Boolean inputs with `%s` can retain identical literal
+labels on the selected Bun; distinct assertions alone do not give distinct names.
 
 ## Load the current owners
 

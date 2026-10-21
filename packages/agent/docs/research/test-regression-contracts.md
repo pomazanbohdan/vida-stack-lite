@@ -66,6 +66,13 @@ Host/Journal after stale CAS denial, exact history retention after continuation,
 persisted lookup and an idempotent retry with one receipt and no reissued action.
 This is fresh fixture evidence, not replay or Runtime acceptance.
 
+Once the actual initial or delivered continuation creates its receipt table,
+reuse its successful request with current Host/Ledger/Journal versions and an
+absent attempt. Require the owning public refusal, exact unchanged state and
+receipt bytes, then preserve the original positive retry. Keep verifier-count
+observations separate where the existing fixture exposes no counter. These
+checks add no producer, authority, fixture family or extended deadline.
+
 The optional implementation-scope reference is backed by schema-validated,
 canonical bytes written before initial Host admission. Bind its exact SHA to
 Work, contract and current lifecycle reference. A Source-changing continuation

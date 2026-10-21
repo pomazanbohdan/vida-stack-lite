@@ -170,6 +170,12 @@ alone can exit0 without preparing anything. Require a nonempty parsed result
 with `kind: prepared` and nonempty `instructions` before dispatch. Exit0 alone
 does not establish contract preparation.
 
+Keep the parsed preparation in session-local state. Prepare each dispatch, but
+when its instruction text exactly equals an already-read prepared block, reuse
+that block in the worker brief and emit only a compact preparation summary.
+Read changed instructions in full. Cached text alone is not fresh preparation;
+do not skip the kind/instructions checks or omit the contract from the brief.
+
 cloud-pstack-setup.ts --install installs/enables pstack@open-pstack and
 superpowers@superpowers-dev through the native Codex Git marketplaces. It discovers
 the actual Pstack skill path and installs locked production script dependencies

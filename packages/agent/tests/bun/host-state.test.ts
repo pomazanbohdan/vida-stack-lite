@@ -685,6 +685,7 @@ test('absent Work exposes no continuation or corrective authority and leaves sto
   expect(store.readDeliveredWorkContinuationReceipt(identity, 1)).toBeNull();
   expect(store.readConfiguredFrontierRecoveryView(identity, 1)).toBeNull();
   expect(store.readInitialSourceContinuationReceipt(identity, 1)).toBeNull();
+  expect(store.readInitialSourceFrontierCodeRebindReceipt(identity, 1, 'a'.repeat(64))).toBeNull();
   expect(store.readFailedPrewriterRecoveryReceipt(identity, 1)).toBeNull();
   expect(store.readCompletedSourceReportRecoveryReceipt(identity, 1)).toBeNull();
   expect(store.readHistoricalTerminalSynthesisCapture(identity, 1, 'absent-action')).toBeNull();
@@ -3696,6 +3697,26 @@ test('trusted Host continuation atomically retains historical evidence and never
     expect(lookup.item_statuses).toEqual(['unissued']);
     expect(lookup.items).toEqual(journalAfter.state.items);
     expect(Object.isFrozen(lookup)).toBe(true);
+    const receiptRows = current.db.query<{ payload: string; digest: string }, []>(
+      'SELECT payload,digest FROM agent_host_delivered_work_continuation',
+    );
+    const receiptRow = requiredValue(receiptRows.get(), 'Historical continuation original receipt row');
+    const persistedRows = readFixtureHostRows(current.db);
+    const absentAttempt = await rejectionReason(
+      current.store.continueDeliveredWork({
+        ...request,
+        attempt: 2,
+        expectedWork: after.workVersion,
+        expectedLedger: after.ledgerVersion,
+        expectedJournal: journalAfter.version,
+      }),
+    );
+    expect(() => {
+      throw absentAttempt;
+    }).toThrow('original known-terminal work, captured body, owner or current review action changed');
+    expect(readFixtureHostRows(current.db)).toEqual(persistedRows);
+    expect(receiptRows.get()).toEqual(receiptRow);
+    expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(lookup);
     const retry = await current.store.continueDeliveredWork(request);
     expect(retry).toEqual({ ...result, status: 'already_continued', action: null });
     expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(lookup);
@@ -3724,15 +3745,6 @@ test('trusted Host continuation atomically retains historical evidence and never
     expect(peerAfter.workVersion).toEqual(requiredValue(peer.snapshot.workVersion, 'Original disjoint peer version'));
     expect(peerAfter.ledger.tickets.find((item) => item.ticket_id === peer.ticket.ticket_id)).toEqual(peer.ticket);
     expect(peerAfter.ledger.claims.filter((item) => item.ticket_id === peer.ticket.ticket_id)).toEqual([peer.claim]);
-    const receiptRow = requiredValue(
-      current.db
-        .query<{ payload: string; digest: string }, []>(
-          'SELECT payload,digest FROM agent_host_delivered_work_continuation',
-        )
-        .get(),
-      'Historical continuation original receipt row',
-    );
-    const persistedRows = readFixtureHostRows(current.db);
     expect(
       current.db.query('UPDATE agent_host_delivered_work_continuation SET digest=?').run('0'.repeat(64)).changes,
     ).toBe(1);
@@ -5991,6 +6003,29 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
         ]);
         expect(journalAfter.state.completed).toEqual(journalBefore.state.completed);
         expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toEqual(receipt);
+        expect(verifications).toBe(2);
+        const continuedRows = readFixtureHostRows(fixtureDatabase);
+        const continuationRows = fixtureDatabase.query(
+          'SELECT * FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? ORDER BY attempt',
+        );
+        const continuationBefore = continuationRows.all(store.workspaceId, current.identity.work_id);
+        expect(continuationBefore).toHaveLength(1);
+        expect(() =>
+          store.continueInitialSource(
+            {
+              ...request,
+              attempt: 2,
+              expectedWork: after.workVersion,
+              expectedLedger: after.ledgerVersion,
+              expectedJournal: journalAfter.version,
+            },
+            verifyCurrent,
+          ),
+        ).toThrow('initial Source continuation Journal CAS or checksum changed');
+        expect(readFixtureHostRows(fixtureDatabase)).toEqual(continuedRows);
+        expect(continuationRows.all(store.workspaceId, current.identity.work_id)).toEqual(continuationBefore);
+        expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toEqual(receipt);
+        expect(store.readInitialSourceContinuationReceipt(current.identity, 2)).toBeNull();
         expect(verifications).toBe(2);
         expect(store.continueInitialSource(request, verifyCurrent)).toEqual(receipt);
         expect(verifications).toBe(2);
@@ -15760,42 +15795,50 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     );
   });
 
-  test('accepts an owned scope rebind and claim disposition in one history transition', () => {
-    const saved = commitHostState(fixture());
-    const input = next(saved);
-    input.nextLedger.dispositions.push({
-      schema: 'ConflictDisposition/v1',
-      disposition_id: 'disposition-recover',
-      subject_kind: 'claim',
-      subject_id: 'claim-work',
-      kind: 'recover_expired',
-      decided_by: 'principal-1',
-      decision_pointer: '.agent/decisions/coordination.json',
-      created_at: '2026-09-18T00:01:00.000Z',
-    });
-    input.nextLedger.rebinds.push({
-      schema: 'CoordinationScopeRebind/v1',
-      rebind_id: 'rebind-work',
-      work_id: identity.work_id,
-      previous_ticket_id: null,
-      previous_source_revision: null,
-      ticket_id: 'ticket-work',
-      thread_id: 'thread',
-      source_revision: 'source',
-      resources: ['file:src/task.ts'],
-      claimed_resources: ['file:src/task.ts'],
-      retired_claim_ids: [],
-      reason: 'scope correction',
-      decided_by: 'principal-1',
-      decision_pointer: '.agent/decisions/rebind.json',
-      from_ledger_revision: saved.ledger.revision,
-      to_ledger_revision: input.nextLedger.revision,
-      created_at: '2026-09-18T00:01:00.000Z',
-    });
-    const rebound = commitHostState(input);
-    expect(atIndex(rebound.ledger.dispositions, 0, 'committed disposition').subject_id).toBe('claim-work');
-    expect(atIndex(rebound.ledger.rebinds, 0, 'committed scope rebind').ticket_id).toBe('ticket-work');
-  });
+  test.each(['explicit', 'omitted'] as const)(
+    'accepts an owned scope rebind and claim disposition in one history transition (claimed resources %s)',
+    (claimedResourcesMode) => {
+      const withClaimedResources = claimedResourcesMode === 'explicit';
+      const saved = commitHostState(fixture());
+      const input = next(saved);
+      input.nextLedger.dispositions.push({
+        schema: 'ConflictDisposition/v1',
+        disposition_id: 'disposition-recover',
+        subject_kind: 'claim',
+        subject_id: 'claim-work',
+        kind: 'recover_expired',
+        decided_by: 'principal-1',
+        decision_pointer: '.agent/decisions/coordination.json',
+        created_at: '2026-09-18T00:01:00.000Z',
+      });
+      input.nextLedger.rebinds.push({
+        schema: 'CoordinationScopeRebind/v1',
+        rebind_id: 'rebind-work',
+        work_id: identity.work_id,
+        previous_ticket_id: null,
+        previous_source_revision: null,
+        ticket_id: 'ticket-work',
+        thread_id: 'thread',
+        source_revision: 'source',
+        resources: ['file:src/task.ts'],
+        ...(withClaimedResources ? { claimed_resources: ['file:src/task.ts'] } : {}),
+        retired_claim_ids: [],
+        reason: 'scope correction',
+        decided_by: 'principal-1',
+        decision_pointer: '.agent/decisions/rebind.json',
+        from_ledger_revision: saved.ledger.revision,
+        to_ledger_revision: input.nextLedger.revision,
+        created_at: '2026-09-18T00:01:00.000Z',
+      });
+      const rebound = commitHostState(input);
+      expect(atIndex(rebound.ledger.dispositions, 0, 'committed disposition').subject_id).toBe('claim-work');
+      expect(atIndex(rebound.ledger.rebinds, 0, 'committed scope rebind').ticket_id).toBe('ticket-work');
+      expect(atIndex(rebound.ledger.rebinds, 0, 'committed scope rebind').claimed_resources).toEqual(
+        withClaimedResources ? ['file:src/task.ts'] : undefined,
+      );
+      expect(store.readHostStateSnapshot(identity)).toEqual(rebound);
+    },
+  );
 
   test('accepts a same-ticket retired claim in an owned scope rebind', () => {
     const saved = commitHostState(fixture());
