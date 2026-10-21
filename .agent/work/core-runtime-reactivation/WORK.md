@@ -15,15 +15,17 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The reaper correction is published as f9c0ace. Its single complete selected
 coverage stage is recorded below. Durable-retention admission then refuses at
-19:23:05UTC with2169643008available bytes. The unchanged floor2147483648 plus
-67108864archive reserve requires2214592512bytes, leaving a44949504-byte GAP.
-DIAG/remainder-v1499-retention-admission.json and its original exit1 log own
-that observation. No archive is created and no original evidence is removed.
+19:23:05UTC; its original exit1 remains in DIAG/remainder-v1499-retention-admission.log.
+After the owner's cleanup request, the20:30:23UTC closeout records2168242176
+available durable bytes. The unchanged floor2147483648 plus67108864archive
+reserve requires2214592512bytes, leaving a46350336-byte GAP.
+DIAG/cleanup-v1505/closeout.json owns that current observation.
+No archive is created and no original evidence is removed.
 The current image and original scratch remain retained in their existing locations.
 Do not start another numeric producer until durable retention passes admission.
 
-Existing cleanup inventories provide no newly qualified durable candidate.
-The current private Bun cache is on tmpfs and cannot close this durable GAP.
+The confirmed cache and duplicate cleanup is recorded below. It does not close
+this durable GAP; no further durable candidate is qualified by current inventories.
 Source, Git history, SDK artifacts, prior images and original receipts remain
 protected. No broad scan, hash pass or deletion is repeated to lower the threshold.
 Additional durable capacity or a separately qualified disposable durable path is
@@ -36,6 +38,50 @@ validated workflow graph. Root adds no disposition or accepted synthetic history
 The existing7branch/2statement dispositions retain exact gap geometry and matching
 Source/test fingerprints in DIAG/remainder-v1499-objective-rebind.json. All other
 58arms remain open. No further suite or mutation producer is started.
+
+### Qualified historical temporary cleanup
+
+The owner's cleanup request uses the existing inventories and two independent
+blind Luna reviews. Root retains the only Git/deletion authority. No test,
+compiler, build, install, index refresh or other numeric producer competes with
+cleanup. Git lists only the current Source checkout; no historical worktree is
+present to remove. Shared dependencies and immutable images remain untouched.
+
+Root retires only the declared private Bun cache at
+/dev/shm/vida-quality-retained-Uwf5Wc/scratch-OHEv3m/scratch/bun-install-cache.
+The bound launch, native terminal/capture/group receipt, current consumers and
+retained dependency links pass qualification. Its15243-entry inventory and events
+are in DIAG/remainder-v1502-cache-retirement-yKpj7E. Immediate observed tmpfs
+gain is215846912bytes; durable change during that deletion is-4096bytes.
+No original non-cache scratch or numeric evidence is deleted.
+
+Luna1500/1503 finds exact duplicates in the terminal TSRS pilot's generated
+attempt-2/tmp/bunx-1000-tsrs@latest/node_modules. Root verifies775payload entries
+against the retained attempt-2/cache packages, including bytes, modes and link
+targets. All59630878apparent file bytes already share native inodes. Removing
+the duplicate paths therefore yields only114688observed durable bytes. Root also
+removes the generated launcher and two empty first-preflight directories. The
+manifest records the launcher target and exact restoration locations. Adjacent
+package.json/bun.lock bytes, the original recorded compiler path, all inputs,
+outputs, logs, results and worker contracts remain. Postcleanup checks verify
+retained payload identities and resolution metadata. This does not reattest the
+old declaration pilot or any numeric run.
+
+The first pilot cleanup qualifier refuses unreadable dockerd process metadata;
+DIAG/pilot-qualification-v1504.log remains unchanged. The corrected qualifier
+admits only the recognized root Docker daemons after Docker reports no running
+containers; all other unknown visibility errors still refuse cleanup. It checks
+pilot consumers again before deletion and validates unchanged payload identities.
+DIAG/cleanup-v1505/pilot-retirement.json and its exclusive event log retain the
+comparison, before/after space and retained paths. The final closeout above owns
+the remaining resource GAP. Root never deletes a directory solely by age/name.
+
+Luna1501 finds no provisioning archive candidate: the setup owner removes its
+own extraction stage, and its verified receipts/binaries remain required. All
+three review reports are retained under DIAG/cleanup-v1505. Existing global/shared
+caches, Source/Git history, SDKs, DBs, leases/attempts and original
+FAIL/TIMEOUT/UNKNOWN receipts/logs remain protected. No broad du/hash inventory or
+blind removal of the host's historical test-fixture directory is performed.
 
 ### Three-hour audit and zombie reaping correction
 
