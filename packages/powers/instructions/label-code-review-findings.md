@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - code-review
   - finding-severity-policy
+  - finding-shape-policy
 conditions_applies_when: A review has produced findings that need a severity and a merge decision.
 conditions_does_not_apply_when: The findings already carry a settled severity from an earlier review.
 artifact_contract_output_type: labelled-findings
@@ -26,7 +27,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/contexts/review.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/reference/plan-md.md
 status: active
-revision: 7
+revision: 8
 ---
 
 # Label every finding with a severity

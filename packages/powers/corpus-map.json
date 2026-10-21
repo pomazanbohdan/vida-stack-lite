@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4830,
-  "updated_at": "2026-10-21T20:47:49.627Z",
+  "revision": 4980,
+  "updated_at": "2026-10-21T21:04:48.014Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -616,7 +616,6 @@
         "skills/writing-skills/anthropic-best-practices.md": {
           "status": "split",
           "instruction_ids": [
-            "automate-enforceable-rules",
             "optimize-guidance-triggers",
             "require-verifiable-intermediate-outputs",
             "set-guidance-specificity",
@@ -690,7 +689,6 @@
             "write-report-in-plain-language",
             "check-requested-feature-usage",
             "classify-and-state-review-verdict",
-            "keep-review-read-only",
             "write-tests-that-catch-breaks",
             "minimize-code-surface"
           ]
@@ -699,9 +697,7 @@
           "status": "split",
           "instruction_ids": [
             "harvest-shortcut-debt-ledger",
-            "present-impact-without-invented-baseline",
-            "treat-declared-shortcut-as-decision",
-            "keep-review-read-only"
+            "treat-declared-shortcut-as-decision"
           ]
         },
         ".opencode/command/ponytail-debt.md": {
@@ -711,17 +707,14 @@
           ]
         },
         ".openclaw/skills/ponytail-gain/SKILL.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "present-impact-without-invented-baseline",
-            "keep-review-read-only"
+            "present-impact-without-invented-baseline"
           ]
         },
         ".openclaw/skills/ponytail-help/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "keep-review-read-only"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         ".agents/rules/ponytail.md": {
           "status": "converted",
@@ -776,10 +769,8 @@
           "reason": "Rules for accepting changes into the donor repository and benchmark requirements; house rules."
         },
         ".opencode/command/ponytail-help.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "keep-review-read-only"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "after-install.md": {
           "status": "rejected",
@@ -924,16 +915,13 @@
           "reason": "Description of the donor product, version history and marketing claims; not a norm of agent behavior."
         },
         "skills/ponytail-help/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "keep-review-read-only"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         ".opencode/command/ponytail-audit.md": {
           "status": "split",
           "instruction_ids": [
             "establish-review-scope",
-            "state-assumed-load",
             "inspect-edge-case-classes",
             "inspect-security-surface",
             "inspect-data-integrity",
@@ -941,20 +929,16 @@
             "separate-blocking-slowdowns",
             "treat-declared-shortcut-as-decision",
             "format-quality-findings",
-            "write-report-in-plain-language",
             "require-concrete-failure-case",
             "minimize-code-surface",
             "write-tests-that-catch-breaks",
-            "check-requested-feature-usage",
-            "classify-and-state-review-verdict",
-            "keep-review-read-only"
+            "check-requested-feature-usage"
           ]
         },
         ".opencode/command/ponytail-review.md": {
           "status": "split",
           "instruction_ids": [
             "establish-review-scope",
-            "state-assumed-load",
             "inspect-edge-case-classes",
             "inspect-security-surface",
             "inspect-data-integrity",
@@ -968,7 +952,6 @@
             "write-tests-that-catch-breaks",
             "check-requested-feature-usage",
             "classify-and-state-review-verdict",
-            "keep-review-read-only",
             "review-code-quality-and-tests"
           ]
         },
@@ -989,8 +972,7 @@
             "minimize-code-surface",
             "write-tests-that-catch-breaks",
             "check-requested-feature-usage",
-            "classify-and-state-review-verdict",
-            "keep-review-read-only"
+            "classify-and-state-review-verdict"
           ]
         },
         "skills/ponytail-review/SKILL.md": {
@@ -1019,23 +1001,19 @@
           "status": "split",
           "instruction_ids": [
             "harvest-shortcut-debt-ledger",
-            "treat-declared-shortcut-as-decision",
-            "present-impact-without-invented-baseline",
-            "keep-review-read-only"
+            "treat-declared-shortcut-as-decision"
           ]
         },
         ".opencode/command/ponytail-gain.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "present-impact-without-invented-baseline",
-            "keep-review-read-only"
+            "present-impact-without-invented-baseline"
           ]
         },
         "skills/ponytail-gain/SKILL.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "present-impact-without-invented-baseline",
-            "keep-review-read-only"
+            "present-impact-without-invented-baseline"
           ]
         }
       }
@@ -1757,28 +1735,16 @@
           ]
         },
         "skills/principle-encode-lessons-in-structure/SKILL.md": {
-          "status": "merged",
-          "instruction_ids": [
-            "automate-enforceable-rules"
-          ],
-          "contributed_sources": [
-            "pstack:skills/principle-encode-lessons-in-structure/SKILL.md"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/principle-fix-root-causes/SKILL.md": {
-          "status": "merged",
-          "instruction_ids": [
-            "debug-systematically"
-          ],
-          "contributed_sources": [
-            "pstack:skills/principle-fix-root-causes/SKILL.md"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/principle-guard-the-context-window/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "delegate-subagent-work"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/principle-laziness-protocol/SKILL.md": {
           "status": "converted",
@@ -2575,7 +2541,8 @@
             "split-the-bundle-and-lazy-load-heavy-features",
             "start-from-the-symptom-to-choose-the-measurement",
             "state-one-invalidation-strategy-and-the-staleness-window",
-            "build-vertical-slices"
+            "build-vertical-slices",
+            "hillclimb-one-metric"
           ]
         },
         "skills/deprecation-and-migration/SKILL.md": {
@@ -2600,7 +2567,8 @@
             "hand-the-reviewer-only-artifact-and-contract",
             "bound-the-doubt-loop",
             "offer-a-cross-model-second-opinion",
-            "never-interpolate-content-into-a-shell-command"
+            "never-interpolate-content-into-a-shell-command",
+            "triage-review-findings-with-judgment"
           ]
         },
         "skills/debugging-and-error-recovery/SKILL.md": {
@@ -2622,7 +2590,9 @@
             "review-the-prose-without-changing-the-facts",
             "write-a-readme-a-newcomer-can-follow",
             "record-shipped-changes-in-a-changelog",
-            "keep-the-agent-facing-docs-current"
+            "keep-the-agent-facing-docs-current",
+            "record-decisions-as-adrs",
+            "write-few-meaningful-comments"
           ]
         },
         "skills/constraint-driven-development/SKILL.md": {
@@ -2635,7 +2605,8 @@
             "watch-for-the-moves-that-lower-the-bar",
             "judge-a-check-for-circularity",
             "hold-the-measured-baseline",
-            "give-every-question-a-default"
+            "give-every-question-a-default",
+            "separate-facts-from-decisions"
           ]
         },
         "skills/constraint-driven-development/references/floor-guard.md": {
@@ -2663,7 +2634,8 @@
             "review-without-rubber-stamping-or-softening",
             "evaluate-a-dependency-before-adding-it",
             "review-a-dependency-upgrade",
-            "check-the-authors-verification-story"
+            "check-the-authors-verification-story",
+            "open-a-reviewable-change"
           ]
         },
         "skills/context-engineering/SKILL.md": {
@@ -2756,7 +2728,8 @@
             "write-the-idea-one-pager",
             "write-a-not-doing-list",
             "audit-the-assumptions-behind-a-direction",
-            "pick-the-lens-that-fits"
+            "pick-the-lens-that-fits",
+            "challenge-assumptions-from-first-principles"
           ]
         },
         "skills/idea-refine/examples.md": {
@@ -2896,7 +2869,6 @@
           "status": "split",
           "instruction_ids": [
             "break-down-tasks-that-are-too-large",
-            "build-vertical-slices",
             "classify-the-work-before-parallelizing",
             "explore-in-read-only-before-planning",
             "give-every-task-acceptance-criteria-and-a-check",
@@ -2971,7 +2943,8 @@
             "write-one-test-one-behaviour",
             "let-another-agent-write-the-reproduction-test",
             "do-not-rerun-checks-without-a-change",
-            "choose-the-test-level"
+            "choose-the-test-level",
+            "write-tests-that-catch-breaks"
           ]
         },
         "skills/spec-driven-development/SKILL.md": {
@@ -3064,7 +3037,8 @@
             "name-tests-by-unit-behaviour-and-condition",
             "query-elements-by-role-not-test-id",
             "assert-specific-values-instead-of-snapshots",
-            "never-skip-or-silence-a-failing-test"
+            "never-skip-or-silence-a-failing-test",
+            "mock-only-system-boundaries"
           ]
         },
         "references/performance-checklist.md": {
@@ -3477,7 +3451,6 @@
             "audit-the-behaviour-matrix-against-the-tests",
             "log-every-review-finding-with-its-verdict",
             "score-the-change-risk-and-scale-the-review-with-it",
-            "record-the-route-the-review-and-the-lenses-that-ran",
             "delete-a-plan-section-that-has-nothing-to-say",
             "re-derive-the-code-from-a-corrected-plan",
             "map-file-structure-before-tasks"
@@ -3489,7 +3462,9 @@
             "freeze-the-human-owned-intent-in-the-plan",
             "judge-the-change-from-the-diff-since-the-baseline",
             "hand-the-plan-to-the-implementer-as-the-only-source-of-truth",
-            "maintain-plan-ledger"
+            "maintain-plan-ledger",
+            "audit-the-behaviour-matrix-against-the-tests",
+            "follow-the-step-sequence-and-halt-at-checkpoints"
           ]
         },
         "skills/bmad-build/step-05-present.md": {
@@ -3519,7 +3494,8 @@
             "follow-the-step-sequence-and-halt-at-checkpoints",
             "judge-multi-goal-by-independent-shippable-deliverables",
             "name-the-plan-file-after-the-intent",
-            "keep-per-task-commits-clean-and-reversible"
+            "keep-per-task-commits-clean-and-reversible",
+            "resume-plan-from-record"
           ]
         },
         "skills/bmad-build/step-02-plan.md": {
@@ -3534,7 +3510,8 @@
             "record-the-route-the-review-and-the-lenses-that-ran",
             "re-check-a-research-claim-against-the-current-code",
             "re-read-the-plan-before-acting-on-the-approval",
-            "map-file-structure-before-tasks"
+            "map-file-structure-before-tasks",
+            "follow-the-step-sequence-and-halt-at-checkpoints"
           ]
         },
         "skills/bmad-build-auto/SKILL.md": {
@@ -3554,7 +3531,8 @@
             "write-acceptance-criteria-as-given-when-then",
             "anchor-acceptance-criteria-on-the-outermost-surface",
             "capture-the-baseline-revision-before-any-change",
-            "follow-the-step-sequence-and-halt-at-checkpoints"
+            "follow-the-step-sequence-and-halt-at-checkpoints",
+            "issue-parallel-dispatches-in-one-turn"
           ]
         },
         "skills/bmad-build/step-04-review.md": {
@@ -3570,7 +3548,6 @@
             "label-code-review-findings",
             "scope-the-check-to-the-change",
             "fan-out-independent-checks-in-one-turn",
-            "keep-review-read-only",
             "delegate-subagent-work"
           ]
         },
@@ -3590,7 +3567,6 @@
             "skip-and-announce-the-lenses-that-do-not-apply",
             "record-a-failed-lens-and-continue",
             "compose-the-review-prompt-from-paths-and-intent",
-            "keep-review-read-only",
             "hand-the-review-prompt-to-a-separate-session-when-no-subagent-exists"
           ]
         },
@@ -3601,9 +3577,10 @@
             "plan-from-distilled-summaries",
             "re-check-a-research-claim-against-the-current-code",
             "score-the-risk-by-the-impact-if-the-change-is-wrong",
-            "check-the-plan-against-the-readiness-standard",
             "annotate-the-code-map-with-what-to-reuse-and-what-not-to-change",
-            "write-implementation-plan"
+            "write-implementation-plan",
+            "flag-an-unanswerable-ask-as-a-blocker",
+            "self-review-plan-against-spec"
           ]
         },
         "skills/bmad-build-auto/step-04-review.md": {
@@ -3624,7 +3601,10 @@
             "carry-forward-a-finding-that-was-already-triaged",
             "trust-a-pre-verified-finding-as-filed",
             "record-the-amendment-with-its-trigger-and-its-keep-instructions",
-            "route-review-findings-into-one-action"
+            "route-review-findings-into-one-action",
+            "label-code-review-findings",
+            "run-the-steps-without-human-interaction",
+            "triage-review-findings-with-judgment"
           ]
         },
         "skills/bmad-brainstorming/SKILL.md": {
@@ -3651,8 +3631,7 @@
             "fix-the-intent-category-not-the-failing-case",
             "keep-the-human-as-the-judge",
             "prefer-the-explanation-over-the-shouting-rule",
-            "scale-the-loop-to-the-stakes",
-            "write-directive-rules"
+            "scale-the-loop-to-the-stakes"
           ]
         },
         "skills/bmad-brainstorming/references/mode-partner.md": {
@@ -3754,9 +3733,8 @@
           ]
         },
         "skills/bmad-brainstorming/references/in-chat-techniques.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "ask-one-open-question",
             "never-pull-the-library-whole-into-context"
           ]
         },
@@ -4028,7 +4006,8 @@
             "decide-whether-the-test-the-harness-or-the-application-is-wrong",
             "find-the-cause-of-a-flaky-test-instead-of-retrying",
             "report-the-covered-and-the-uncovered-scenarios",
-            "discover-the-repositorys-test-tooling"
+            "discover-the-repositorys-test-tooling",
+            "never-skip-or-silence-a-failing-test"
           ]
         },
         "skills/bmad-walkthrough/templates/log-template.md": {
@@ -4060,7 +4039,6 @@
             "agents-copy-the-patterns-they-find",
             "schedule-a-refactoring-pass",
             "keep-codebase-documentation-small",
-            "automate-enforceable-rules",
             "separate-refactoring-from-feature-work"
           ]
         },
@@ -4116,9 +4094,10 @@
           ]
         },
         "skills/bmod-method/help/ticketing-and-epics.md": {
-          "status": "converted",
+          "status": "split",
           "instruction_ids": [
-            "keep-the-plans-after-the-work-is-done"
+            "keep-the-plans-after-the-work-is-done",
+            "copy-a-document-into-the-store-rather-than-moving-it"
           ]
         },
         "skills/bmod-toolsmith/help/shapes.md": {
@@ -4156,10 +4135,9 @@
           ]
         },
         "skills/bmod-toolsmith/help/shape-agent.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "keep-one-reader-and-one-writer-for-overrides",
-            "write-the-description-as-a-summary-and-trigger-phrases"
+            "keep-one-reader-and-one-writer-for-overrides"
           ]
         },
         "skills/bmod-method/help/unattended-builds.md": {
@@ -4288,8 +4266,7 @@
           "instruction_ids": [
             "advise-without-applying-the-fix",
             "run-the-lenses-and-fix-what-they-find",
-            "run-each-lens-on-the-whole-skill-not-the-entry",
-            "keep-review-read-only"
+            "run-each-lens-on-the-whole-skill-not-the-entry"
           ]
         },
         "skills/bmad-toolsmith/lenses/lens-architecture.md": {
@@ -4476,8 +4453,7 @@
           "status": "split",
           "instruction_ids": [
             "run-each-lens-on-the-whole-skill-not-the-entry",
-            "return-findings-in-a-fixed-shape-with-no-padding",
-            "keep-review-read-only"
+            "return-findings-in-a-fixed-shape-with-no-padding"
           ]
         },
         "skills/bmad-toolsmith/modes/validate.md": {
@@ -4528,7 +4504,8 @@
             "look-for-the-evidence-before-you-ask-the-question",
             "start-each-run-in-its-own-session",
             "re-derive-the-code-from-a-corrected-plan",
-            "warn-on-multiple-goals-and-continue"
+            "warn-on-multiple-goals-and-continue",
+            "size-and-gate-the-work"
           ]
         },
         "docs/existing-codebases/theory-of-project-context.md": {
@@ -4572,10 +4549,9 @@
           ]
         },
         "docs/reference/skills-and-agents.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "offer-named-critique-methods-and-propose-the-changes",
-            "keep-review-read-only"
+            "offer-named-critique-methods-and-propose-the-changes"
           ]
         },
         "docs/customize/customize-bmad.md": {
@@ -4638,7 +4614,6 @@
             "compose-the-review-prompt-from-paths-and-intent",
             "offer-the-patch-options-and-apply-on-choice",
             "run-unattended-without-asking",
-            "keep-review-read-only",
             "gate-the-review-fan-out-on-blast-radius",
             "start-each-run-in-its-own-session"
           ]
@@ -4685,7 +4660,8 @@
           "instruction_ids": [
             "choose-the-shape-from-the-work",
             "give-the-tool-a-stable-result-and-a-one-line-failure",
-            "test-the-tool-as-a-subprocess"
+            "test-the-tool-as-a-subprocess",
+            "keep-the-script-and-the-prose-on-their-own-sides"
           ]
         },
         "skills/bmad-toolsmith/shapes/rendered-skill/shape.md": {
@@ -4740,10 +4716,9 @@
           ]
         },
         "skills/bmad-toolsmith/shapes/script-utility/assets/SKILL-template.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "give-the-tool-a-stable-result-and-a-one-line-failure",
-            "keep-the-script-and-the-prose-on-their-own-sides"
+            "give-the-tool-a-stable-result-and-a-one-line-failure"
           ]
         },
         "skills/bmad-toolsmith/shapes/memory-agent/assets/SKILL-template-bootloader.md": {
@@ -4759,7 +4734,8 @@
           "instruction_ids": [
             "write-standing-orders-that-never-complete",
             "give-every-capability-an-intent-and-a-testable-success",
-            "review-your-own-sessions-and-note-it-for-the-next-one"
+            "review-your-own-sessions-and-note-it-for-the-next-one",
+            "never-fabricate-what-you-did-not-store"
           ]
         },
         "skills/bmad-toolsmith/shapes/memory-agent/assets/PULSE-template.md": {
@@ -4784,7 +4760,8 @@
           "instruction_ids": [
             "write-the-record-as-you-go",
             "elicit-the-goal-users-and-boundaries-before-writing-the-spec",
-            "keep-a-record-by-subject-and-replace-what-is-no-longer-true"
+            "keep-a-record-by-subject-and-replace-what-is-no-longer-true",
+            "serve-the-immediate-need-before-the-setup-questions"
           ]
         },
         "skills/bmad-toolsmith/shapes/multi-skill-module/assets/help-template.md": {
@@ -4899,7 +4876,10 @@
             "ask-before-a-completion-step-that-everyone-will-see",
             "name-the-exact-tool-and-when-to-call-it",
             "pin-only-what-the-whole-team-must-share",
-            "start-a-team-template-from-the-shipped-one-and-keep-its-headings"
+            "start-a-team-template-from-the-shipped-one-and-keep-its-headings",
+            "place-a-policy-override-with-the-team-and-a-personal-one-with-the-user",
+            "place-a-rule-in-the-layer-that-matches-its-scope",
+            "point-at-the-other-documents-instead-of-copying-them"
           ]
         },
         "skills/bmod-core-tools/help/party-mode.md": {
@@ -4916,7 +4896,9 @@
             "go-to-the-upstream-documentation-when-the-local-help-runs-out",
             "make-a-status-report-read-only-and-name-the-one-next-command",
             "make-the-setup-step-safe-to-run-at-any-time",
-            "suggest-a-standalone-capability-without-making-it-required"
+            "suggest-a-standalone-capability-without-making-it-required",
+            "answer-only-from-what-the-installed-modules-say",
+            "write-the-help-for-the-answerer"
           ]
         },
         "skills/bmod-core-tools/help/customization.md": {
@@ -4924,13 +4906,18 @@
           "instruction_ids": [
             "never-let-the-setup-overwrite-an-existing-answer",
             "offer-only-the-fields-the-target-declares",
-            "reset-an-override-by-deleting-the-file-or-the-field"
+            "reset-an-override-by-deleting-the-file-or-the-field",
+            "merge-the-override-layers-by-field-kind",
+            "verify-the-override-actually-landed"
           ]
         },
         "skills/bmod-core-tools/help/research.md": {
-          "status": "converted",
+          "status": "split",
           "instruction_ids": [
-            "scale-the-research-depth-to-the-cost-of-reversing-the-decision"
+            "scale-the-research-depth-to-the-cost-of-reversing-the-decision",
+            "describe-how-the-code-works-and-how-it-got-that-way",
+            "never-conclude-from-training-data",
+            "show-the-scoring-not-just-the-total"
           ]
         },
         "skills/bmad/references/help.md": {
@@ -4989,7 +4976,8 @@
             "judge-the-change-against-the-diff-not-the-report",
             "judge-the-acceptance-criteria-at-review-not-during-implementation",
             "require-a-test-that-ran-for-every-matrix-row",
-            "never-edit-the-expectation-to-match-the-code"
+            "never-edit-the-expectation-to-match-the-code",
+            "stop-the-line-on-an-unexpected-failure"
           ]
         },
         "skills/bmad-build-auto/review-prompts/edge-case-hunter.md": {
@@ -5032,12 +5020,12 @@
         "skills/bmad-build-auto/step-01-clarify-and-route.md": {
           "status": "split",
           "instruction_ids": [
-            "run-the-steps-without-human-interaction",
             "stay-on-the-one-item-in-scope",
             "read-the-state-from-the-record-that-owns-it",
             "require-a-clean-tree-and-a-fitting-branch",
             "load-the-planning-documents-that-constrain-the-intent",
-            "warn-on-multiple-goals-and-continue"
+            "warn-on-multiple-goals-and-continue",
+            "flag-an-unanswerable-ask-as-a-blocker"
           ]
         },
         "skills/bmad-code-review/step-01-gather-context.md": {
@@ -5097,8 +5085,7 @@
             "polish-the-structure-before-the-prose",
             "extract-the-sources-instead-of-ingesting-them",
             "name-the-counter-metric-beside-the-metric",
-            "format-quality-findings",
-            "surface-a-conflict-instead-of-picking-one"
+            "give-requirements-stable-ids-and-cross-reference-them"
           ]
         },
         "skills/bmad-product-brief/SKILL.md": {
@@ -5115,7 +5102,9 @@
             "offer-to-resume-an-in-progress-run",
             "extract-the-sources-instead-of-ingesting-them",
             "do-not-fabricate-the-differentiation",
-            "offer-a-new-document-when-the-change-is-fundamental"
+            "offer-a-new-document-when-the-change-is-fundamental",
+            "offer-a-fast-or-a-guided-working-mode",
+            "polish-the-structure-before-the-prose"
           ]
         },
         "skills/bmad-prd/assets/prd-template.md": {
@@ -5156,7 +5145,9 @@
             "write-only-constraints-that-bend-the-design",
             "validate-the-spec-in-two-passes",
             "surface-a-conflict-instead-of-picking-one",
-            "keep-the-spec-current"
+            "keep-the-spec-current",
+            "separate-what-consumers-read-from-what-is-only-for-audit",
+            "write-a-not-doing-list"
           ]
         },
         "skills/bmad-product-brief/assets/brief-template.md": {
@@ -5509,7 +5500,8 @@
             "stop-and-publish-what-you-have-when-the-run-overruns",
             "ask-the-subagent-once-and-take-unsettled-questions-in-the-digest",
             "research-from-primary-sources",
-            "select-model-per-task"
+            "select-model-per-task",
+            "gate-the-research-plan-on-one-approval"
           ]
         },
         "skills/bmad-deep-recon/references/synthesis.md": {
@@ -5528,7 +5520,8 @@
             "assign-locator-analyzer-historian-and-verifier-roles",
             "pin-the-commit-so-the-research-reads-a-fixed-state",
             "treat-a-plan-document-as-not-evidence",
-            "report-diagnosis-without-prescribing"
+            "report-diagnosis-without-prescribing",
+            "mark-the-load-bearing-claims-and-report-the-null-result"
           ]
         },
         "skills/bmad-deep-recon/references/finalize.md": {
@@ -5553,7 +5546,6 @@
             "honour-an-explicit-choice-and-infer-only-the-rest",
             "open-the-floor-before-structured-questions",
             "offer-to-resume-existing-work-instead-of-duplicating-it",
-            "gate-the-research-plan-on-one-approval",
             "isolate-wide-research-in-a-digest-returning-subagent"
           ]
         },
@@ -5934,16 +5926,9 @@
           ]
         },
         "docs/index.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "size-and-gate-the-work"
-          ],
-          "contributed_sources": [
-            "bmad-method:skills/brainstorming/SKILL.md",
-            "bmad-method:docs/plan/choose-a-planning-path.md",
-            "bmad-method:docs/index.md",
-            "bmad-method:docs/existing-codebases/start-in-an-existing-codebase.md",
-            "bmad-method:docs/build/build-a-change.md"
           ]
         },
         "docs/_STYLE_GUIDE.md": {
@@ -6122,15 +6107,8 @@
           "reason": "the activation wiring of the donor's own agent: the configuration and customization calls, the eight activation steps, the icon prefix and the install command. Its transferable rules are already carried by the corpus (the menu is rendered as a numbered table and the pick is awaited, the persona carries into every invoked skill, and a failed customization falls back to what shipped)."
         },
         "skills/bmad-toolsmith/shapes/memory-agent/assets/PERSONA-template.md": {
-          "status": "merged",
-          "instruction_ids": [
-            "make-a-persona-unmistakable"
-          ],
-          "contributed_sources": [
-            "bmad-method:docs/customize/run-multi-agent-discussions.md",
-            "bmad-method:skills/bmad-toolsmith/shapes/agent/shape.md",
-            "bmad-method:skills/bmad-toolsmith/shapes/memory-agent/shape.md"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/bmad-toolsmith/shapes/multi-skill-module/assets/record-SKILL-template.md": {
           "status": "rejected",
@@ -6245,12 +6223,9 @@
           ]
         },
         "skills/bmad-build/references/deletion-check.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "check-removed-code-for-a-contract-it-carried"
-          ],
-          "contributed_sources": [
-            "bmad-method:skills/bmad-build-auto/references/deletion-check.md"
           ]
         },
         "skills/bmad-build/review-prompts/edge-case-hunter.md": {
@@ -6277,20 +6252,15 @@
           ]
         },
         "skills/bmad-code-review/references/claims-check.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "keep-the-claims-out-of-the-path-tracing",
-            "treat-the-change-account-of-itself-as-testimony",
             "try-to-falsify-each-checkable-claim"
           ]
         },
         "skills/bmad-code-review/references/deletion-check.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "check-removed-code-for-a-contract-it-carried"
-          ],
-          "contributed_sources": [
-            "bmad-method:skills/bmad-build-auto/references/deletion-check.md"
           ]
         },
         "skills/bmad-code-review/review-prompts/edge-case-hunter.md": {
@@ -6298,7 +6268,6 @@
           "instruction_ids": [
             "check-each-changed-call-site-against-the-callee-declaration",
             "enumerate-paths-mechanically-not-by-intuition",
-            "keep-the-claims-out-of-the-path-tracing",
             "name-the-call-that-invalidates-a-re-checked-handle",
             "treat-the-unmentioned-members-of-a-changed-set-as-implicit-branches"
           ]
@@ -6353,9 +6322,12 @@
           ]
         },
         "gsd-core/workflows/add-todo.md": {
-          "status": "converted",
+          "status": "split",
           "instruction_ids": [
-            "confirm-a-proposed-severity-before-you-record-it"
+            "confirm-a-proposed-severity-before-you-record-it",
+            "check-redundancy-and-prior-rejections",
+            "never-overwrite-an-incomplete-plan",
+            "write-the-distillate-for-the-next-stage"
           ]
         },
         "gsd-core/workflows/ai-integration-phase.md": {
@@ -6380,21 +6352,24 @@
           "instruction_ids": [
             "split-a-finding-into-auto-fixable-and-manual-only",
             "when-uncertain-route-the-finding-to-a-human",
-            "trace-the-commit-back-to-the-finding"
+            "trace-the-commit-back-to-the-finding",
+            "wait-boundedly-for-workers"
           ]
         },
         "gsd-core/workflows/audit-milestone.md": {
           "status": "split",
           "instruction_ids": [
             "derive-the-status-of-each-requirement-from-independent-sources",
-            "a-requirement-nobody-verified-is-unsatisfied"
+            "a-requirement-nobody-verified-is-unsatisfied",
+            "wait-boundedly-for-workers"
           ]
         },
         "gsd-core/workflows/audit-uat.md": {
           "status": "split",
           "instruction_ids": [
             "an-empty-result-is-not-all-clear-when-the-parser-could-have-failed",
-            "check-that-a-recorded-item-still-points-at-something-real"
+            "check-that-a-recorded-item-still-points-at-something-real",
+            "triage-the-open-items-into-blockers-and-deferred"
           ]
         },
         "gsd-core/workflows/autonomous.md": {
@@ -6403,7 +6378,8 @@
             "do-not-loop-a-step-whose-output-already-exists",
             "branch-on-the-recorded-next-action-not-on-the-status-word",
             "re-read-the-plan-after-every-step",
-            "chain-the-review-and-the-fix-in-an-unattended-run"
+            "chain-the-review-and-the-fix-in-an-unattended-run",
+            "an-empty-result-is-not-all-clear-when-the-parser-could-have-failed"
           ]
         },
         "gsd-core/workflows/autonomous/steps/converge-banner.md": {
@@ -6445,13 +6421,17 @@
           "status": "split",
           "instruction_ids": [
             "the-executed-list-is-the-confirmed-list",
-            "bucket-the-items-that-carry-no-provenance"
+            "bucket-the-items-that-carry-no-provenance",
+            "approve-publish-and-start-are-three-separate-steps"
           ]
         },
         "gsd-core/workflows/code-review-fix.md": {
-          "status": "converted",
+          "status": "split",
           "instruction_ids": [
-            "the-record-must-exist-before-another-record-claims-it"
+            "the-record-must-exist-before-another-record-claims-it",
+            "review-only-when-a-review-was-asked-for",
+            "use-the-recorded-state-instead-of-deriving-it",
+            "wait-boundedly-for-workers"
           ]
         },
         "gsd-core/workflows/code-review.md": {
@@ -6464,7 +6444,8 @@
             "tell-nothing-changed-from-nothing-found",
             "keep-the-guard-and-the-step-it-protects-in-one-decision",
             "do-not-write-a-partial-artifact-when-the-delegated-step-fails",
-            "let-the-worker-write-the-artifact-but-not-the-commit"
+            "let-the-worker-write-the-artifact-but-not-the-commit",
+            "wait-boundedly-for-workers"
           ]
         },
         "gsd-core/workflows/code-review/steps/dispatch-fix.md": {
@@ -6487,13 +6468,16 @@
           "instruction_ids": [
             "commit-the-new-state-before-removing-the-old",
             "mark-a-milestone-only-when-something-shipped",
-            "re-append-the-extracted-section-verbatim"
+            "re-append-the-extracted-section-verbatim",
+            "reconcile-the-as-built-with-the-spec"
           ]
         },
         "gsd-core/workflows/complete-milestone/detail/elaboration.md": {
-          "status": "converted",
+          "status": "split",
           "instruction_ids": [
-            "halt-when-a-suppression-step-refuses"
+            "halt-when-a-suppression-step-refuses",
+            "carry-forward-a-finding-that-was-already-triaged",
+            "never-hide-a-gap-in-the-evidence"
           ]
         },
         "gsd-core/workflows/complete-milestone/steps/git-tag.md": {
@@ -6509,14 +6493,16 @@
           "status": "split",
           "instruction_ids": [
             "an-unrecognised-result-is-not-a-completion",
-            "guard-the-resume-loop-with-a-cap-and-a-steady-signal"
+            "guard-the-resume-loop-with-a-cap-and-a-steady-signal",
+            "reproduce-defect-before-fixing"
           ]
         },
         "gsd-core/workflows/diagnose-issues.md": {
           "status": "split",
           "instruction_ids": [
             "the-declared-isolation-must-match-the-actual-execution",
-            "the-suggested-fix-is-a-hint-not-a-contract"
+            "the-suggested-fix-is-a-hint-not-a-contract",
+            "wait-boundedly-for-workers"
           ]
         },
         "gsd-core/workflows/discuss-phase-assumptions.md": {
@@ -6682,7 +6668,6 @@
           "status": "split",
           "instruction_ids": [
             "audit-against-general-standards-when-the-plan-is-missing",
-            "classify-and-state-review-verdict",
             "log-the-choice-you-made-on-behalf-of-the-user"
           ]
         },
@@ -6771,13 +6756,8 @@
           ]
         },
         "gsd-core/workflows/execute-phase/steps/gap-closure-artifacts.md": {
-          "status": "merged",
-          "instruction_ids": [
-            "keep-a-record-by-subject-and-replace-what-is-no-longer-true"
-          ],
-          "contributed_sources": [
-            "gsd-core/workflows/execute-phase/steps/gap-closure-artifacts.md"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "gsd-core/workflows/execute-phase/steps/partial-wave.md": {
           "status": "converted",
@@ -6834,10 +6814,9 @@
           ]
         },
         "gsd-core/workflows/execute-phase/steps/sequential-root-pin.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "pin-the-root-instead-of-deriving-it-from-the-current-directory",
-            "separate-shared-state-before-serializing"
+            "pin-the-root-instead-of-deriving-it-from-the-current-directory"
           ]
         },
         "gsd-core/workflows/execute-phase/steps/tdd-applicability-resolution.md": {
@@ -6861,7 +6840,6 @@
             "report-an-undetermined-check-as-undetermined",
             "stop-working-on-the-task-while-the-dispatched-agent-is-active",
             "verify-the-goal-not-only-the-completed-tasks",
-            "assert-what-the-script-produced-never-what-the-model-wrote",
             "record-a-failed-lens-and-continue"
           ]
         },
@@ -7007,7 +6985,8 @@
             "validate-an-external-path-against-the-configured-root",
             "do-not-write-when-a-blocking-finding-exists",
             "classify-a-check-result-by-its-severity-not-by-its-marker",
-            "stop-working-on-the-task-while-the-dispatched-agent-is-active"
+            "stop-working-on-the-task-while-the-dispatched-agent-is-active",
+            "match-the-language-of-the-session"
           ]
         },
         "gsd-core/workflows/inbox.md": {
@@ -7031,7 +7010,8 @@
             "ask-only-what-no-scan-can-answer",
             "the-manifest-is-authoritative-over-the-heuristic",
             "a-hard-cap-on-the-input-set-stops-the-run",
-            "never-nest-a-repository-inside-an-existing-worktree"
+            "never-nest-a-repository-inside-an-existing-worktree",
+            "match-the-language-of-the-session"
           ]
         },
         "gsd-core/workflows/insert-phase.md": {
@@ -7072,7 +7052,8 @@
             "run-without-asking-and-record-the-gaps",
             "background-only-where-the-host-can-nest-the-gates",
             "re-read-the-state-from-disk-at-every-refresh",
-            "stop-working-on-the-task-while-the-dispatched-agent-is-active"
+            "stop-working-on-the-task-while-the-dispatched-agent-is-active",
+            "match-the-language-of-the-session"
           ]
         },
         "gsd-core/workflows/map-codebase.md": {
@@ -7100,7 +7081,8 @@
             "validate-the-assembled-artifact-with-the-rule-the-later-check-uses",
             "assert-the-written-value-by-reading-it-back",
             "propose-the-action-items-without-applying-them",
-            "never-change-the-work-without-acceptance"
+            "never-change-the-work-without-acceptance",
+            "match-the-language-of-the-session"
           ]
         },
         "gsd-core/workflows/new-milestone.md": {
@@ -7114,7 +7096,9 @@
             "every-requirement-has-an-accountable-epic",
             "name-the-decision-the-research-serves",
             "give-every-requirement-a-testable-consequence",
-            "capture-the-outgoing-value-before-the-state-flips"
+            "capture-the-outgoing-value-before-the-state-flips",
+            "match-the-language-of-the-session",
+            "write-the-files-before-you-report"
           ]
         },
         "gsd-core/workflows/new-milestone/steps/project-md-milestone-write.md": {
@@ -7146,7 +7130,8 @@
             "cross-check-the-requirements-against-the-core-value",
             "show-every-requirement-not-counts",
             "write-the-files-before-you-report",
-            "run-without-asking-and-record-the-gaps"
+            "run-without-asking-and-record-the-gaps",
+            "match-the-language-of-the-session"
           ]
         },
         "gsd-core/workflows/new-project/detail/elaboration.md": {
@@ -7187,9 +7172,10 @@
           ]
         },
         "gsd-core/workflows/new-workspace.md": {
-          "status": "converted",
+          "status": "split",
           "instruction_ids": [
-            "report-all-validation-errors-at-once"
+            "report-all-validation-errors-at-once",
+            "match-the-language-of-the-session"
           ]
         },
         "gsd-core/workflows/next.md": {
@@ -7487,8 +7473,7 @@
           "instruction_ids": [
             "keep-the-delegated-worker-out-of-the-shared-state",
             "leave-backlogged-work-pending-never-failed",
-            "never-dispatch-a-unit-that-has-already-finished",
-            "separate-shared-state-before-serializing"
+            "never-dispatch-a-unit-that-has-already-finished"
           ]
         },
         "gsd-core/workflows/quick.md": {
@@ -7575,7 +7560,6 @@
             "order-the-aggregate-by-selection-not-by-completion",
             "preserve-each-run-s-evidence-in-its-own-directory",
             "reserve-the-path-citation-for-real-repo-files",
-            "sweep-every-dimension-or-name-it-deferred",
             "treat-an-empty-review-result-as-a-dropped-lane",
             "treat-an-explicitly-named-reviewer-as-a-requirement",
             "verify-from-what-you-open-not-from-the-claim-s-wording",
@@ -7825,8 +7809,7 @@
             "take-the-package-name-from-a-fixed-source",
             "show-what-changes-before-you-change-it",
             "back-up-and-offer-the-restore-of-what-the-wipe-would-destroy",
-            "render-an-untrusted-path-as-literal-text",
-            "make-operations-idempotent"
+            "render-an-untrusted-path-as-literal-text"
           ]
         },
         "gsd-core/workflows/update/steps/channel-banner.md": {
@@ -7845,7 +7828,6 @@
             "present-the-gap-plan-before-you-generate-the-tests",
             "constrain-the-filler-to-the-tests",
             "audit-the-behaviour-matrix-against-the-tests",
-            "make-operations-idempotent",
             "commit-each-verified-increment",
             "delegate-subagent-work"
           ]
@@ -7871,20 +7853,14 @@
             "an-item-without-wired-evidence-routes-to-a-human",
             "delegate-subagent-work",
             "cap-the-review-repair-loop",
-            "read-the-state-from-the-record-that-owns-it",
-            "make-operations-idempotent",
             "write-the-log-for-the-session-that-continues"
           ]
         },
         "gsd-core/workflows/verify-work/detail/elaboration.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "count-the-unresolved-issues-not-the-raw-issues",
-            "never-re-diagnose-a-gap-whose-fix-already-ran",
-            "cap-the-review-repair-loop"
-          ],
-          "contributed_sources": [
-            "gsd-core:gsd-core/workflows/verify-work/detail/elaboration.md"
+            "never-re-diagnose-a-gap-whose-fix-already-ran"
           ]
         },
         "gsd-core/workflows/verify-work/steps/automated-ui-verification.md": {
@@ -8239,23 +8215,14 @@
           ]
         },
         "gsd-core/references/model-profile-resolution.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
-            "select-model-per-task",
             "omit-a-parameter-that-resolved-to-nothing"
-          ],
-          "contributed_sources": [
-            "gsd-core/references/model-profiles.md"
           ]
         },
         "gsd-core/references/model-profiles.md": {
-          "status": "merged",
-          "instruction_ids": [
-            "select-model-per-task"
-          ],
-          "contributed_sources": [
-            "gsd-core/references/model-profile-resolution.md"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "gsd-core/references/mvp-concepts.md": {
           "status": "rejected",
@@ -8735,7 +8702,8 @@
           "status": "split",
           "instruction_ids": [
             "require-deterministic-evidence-before-a-new-finding-blocks",
-            "never-hide-a-gap-in-the-evidence"
+            "never-hide-a-gap-in-the-evidence",
+            "delete-an-empty-section-instead-of-writing-none"
           ]
         },
         "gsd-core/references/verifier-phase-gates.md": {
@@ -8822,7 +8790,8 @@
           "instruction_ids": [
             "cite-the-file-path-that-supports-every-assumption",
             "flag-the-gap-the-codebase-cannot-answer-instead-of-researching-it",
-            "state-the-concrete-consequence-if-the-assumption-is-wrong"
+            "state-the-concrete-consequence-if-the-assumption-is-wrong",
+            "rate-the-confidence-per-claim-and-show-doubt-louder"
           ]
         },
         "agents/gsd-assumptions-analyzer.md": {
@@ -8830,7 +8799,8 @@
           "instruction_ids": [
             "cite-the-file-path-that-supports-every-assumption",
             "flag-the-gap-the-codebase-cannot-answer-instead-of-researching-it",
-            "state-the-concrete-consequence-if-the-assumption-is-wrong"
+            "state-the-concrete-consequence-if-the-assumption-is-wrong",
+            "rate-the-confidence-per-claim-and-show-doubt-louder"
           ]
         },
         "agents/gsd-code-fixer.compact.md": {
@@ -8848,7 +8818,8 @@
             "mark-a-logic-fix-as-needing-human-verification",
             "read-the-source-before-you-apply-the-review-suggestion",
             "roll-back-only-the-finding-that-failed-verification",
-            "scope-each-fix-to-the-files-it-touches"
+            "scope-each-fix-to-the-files-it-touches",
+            "keep-per-task-commits-clean-and-reversible"
           ]
         },
         "agents/gsd-code-reviewer.compact.md": {
@@ -8896,7 +8867,8 @@
           "instruction_ids": [
             "pass-the-file-path-to-the-sub-agent-not-the-file-contents",
             "report-a-non-terminal-marker-instead-of-a-fabricated-terminal-summary",
-            "treat-the-user-answer-as-data-when-you-pass-it-on"
+            "treat-the-user-answer-as-data-when-you-pass-it-on",
+            "end-the-run-with-an-explicit-terminal-status"
           ]
         },
         "agents/gsd-debug-session-manager.md": {
@@ -8904,7 +8876,8 @@
           "instruction_ids": [
             "pass-the-file-path-to-the-sub-agent-not-the-file-contents",
             "report-a-non-terminal-marker-instead-of-a-fabricated-terminal-summary",
-            "treat-the-user-answer-as-data-when-you-pass-it-on"
+            "treat-the-user-answer-as-data-when-you-pass-it-on",
+            "end-the-run-with-an-explicit-terminal-status"
           ]
         },
         "agents/gsd-debugger.md": {
@@ -8915,7 +8888,9 @@
             "fill-the-reasoning-checkpoint-before-you-propose-a-fix",
             "record-the-prevention-block-when-you-archive-the-session",
             "write-the-failing-test-before-you-fix-the-bug",
-            "write-the-session-state-before-you-act-not-after"
+            "write-the-session-state-before-you-act-not-after",
+            "debug-systematically",
+            "reproduce-defect-before-fixing"
           ]
         },
         "agents/gsd-doc-classifier.compact.md": {
@@ -8923,7 +8898,8 @@
           "instruction_ids": [
             "apply-the-taxonomy-to-the-source-instead-of-generating-a-summary",
             "lock-only-an-accepted-architecture-decision",
-            "resolve-an-ambiguous-classification-by-precedence-and-record-it"
+            "resolve-an-ambiguous-classification-by-precedence-and-record-it",
+            "never-hide-a-gap-in-the-evidence"
           ]
         },
         "agents/gsd-doc-classifier.md": {
@@ -8931,7 +8907,8 @@
           "instruction_ids": [
             "apply-the-taxonomy-to-the-source-instead-of-generating-a-summary",
             "lock-only-an-accepted-architecture-decision",
-            "resolve-an-ambiguous-classification-by-precedence-and-record-it"
+            "resolve-an-ambiguous-classification-by-precedence-and-record-it",
+            "never-hide-a-gap-in-the-evidence"
           ]
         },
         "agents/gsd-doc-synthesizer.compact.md": {
@@ -9062,7 +9039,8 @@
             "stop-reading-and-write-something-or-report-yourself-blocked",
             "treat-an-authentication-error-as-a-gate-not-a-failure",
             "verify-the-claims-you-wrote-in-the-summary-before-you-report-done",
-            "write-the-artifact-to-disk-and-return-only-the-confirmation"
+            "write-the-artifact-to-disk-and-return-only-the-confirmation",
+            "keep-per-task-commits-clean-and-reversible"
           ]
         },
         "agents/gsd-framework-selector.compact.md": {
@@ -9208,7 +9186,10 @@
           "status": "split",
           "instruction_ids": [
             "do-not-inject-a-year-into-a-search-query",
-            "rate-the-confidence-per-claim-and-show-doubt-louder"
+            "rate-the-confidence-per-claim-and-show-doubt-louder",
+            "answer-in-one-of-the-three-research-modes",
+            "be-comprehensive-but-opinionated-in-the-research-output",
+            "write-the-artifact-to-disk-and-return-only-the-confirmation"
           ]
         },
         "agents/gsd-research-synthesizer.compact.md": {
@@ -9226,11 +9207,9 @@
           ]
         },
         "agents/gsd-roadmapper.compact.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "fold-a-thin-phase-into-its-nearest-neighbour",
-            "drop-a-phase-that-is-project-management-theater",
-            "write-both-representations-of-every-phase-not-only-the-summary"
+            "drop-a-phase-that-is-project-management-theater"
           ]
         },
         "agents/gsd-roadmapper.md": {
@@ -9259,10 +9238,9 @@
           ]
         },
         "agents/gsd-ui-auditor.compact.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "give-every-scored-dimension-at-least-one-finding-that-justifies-the-score",
-            "record-a-partial-capture-as-a-partial-one"
+            "give-every-scored-dimension-at-least-one-finding-that-justifies-the-score"
           ]
         },
         "agents/gsd-ui-auditor.md": {
@@ -9332,8 +9310,7 @@
             "defer-a-gap-only-against-specific-evidence-in-a-later-phase",
             "an-accepted-override-counts-as-a-pass-not-as-a-failure",
             "a-passed-verdict-requires-an-empty-human-verification-list",
-            "verify-behaviour-at-runtime-not-only-at-compile",
-            "assert-what-the-script-produced-never-what-the-model-wrote"
+            "verify-behaviour-at-runtime-not-only-at-compile"
           ]
         },
         "docs/how-to/acknowledge-emitted-drift.md": {
@@ -10095,10 +10072,9 @@
           ]
         },
         "gsd-core/templates/state.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "keep-one-small-state-file-that-every-workflow-reads-first",
-            "keep-the-state-file-a-digest-not-an-archive"
+            "keep-one-small-state-file-that-every-workflow-reads-first"
           ]
         },
         "gsd-core/templates/summary-complex.md": {
@@ -10175,20 +10151,16 @@
           ]
         },
         "commands/gsd/ai-integration-phase.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "commands/gsd/audit-fix.md": {
           "status": "rejected",
           "reason": "The file states the donor's audit-to-fix pipeline with its own flags (--source, --severity, --max, --dry-run) and the agents it drives. The only norm it carries - classify a finding as auto-fixable or manual-only and fix only the first - is already mined from the donor's audit workflow (split-a-finding-into-auto-fixable-and-manual-only), and the severity words are the donor's own scale."
         },
         "commands/gsd/audit-milestone.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "commands/gsd/audit-uat.md": {
           "status": "rejected",
@@ -10241,13 +10213,12 @@
             "follow-the-workflow-one-step-at-a-time"
           ],
           "contributed_sources": [
-            "commands/gsd/spec-phase.md"
+            "commands/gsd/discuss-phase.md"
           ]
         },
         "commands/gsd/docs-update.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to",
             "treat-a-documented-option-as-inactive-until-its-token-appears"
           ]
         },
@@ -10282,7 +10253,7 @@
             "keep-secrets-out-of-code-and-logs"
           ],
           "contributed_sources": [
-            "skills/gsd-forensics/SKILL.md"
+            "commands/gsd/forensics.md"
           ]
         },
         "commands/gsd/graphify.md": {
@@ -10477,13 +10448,8 @@
           ]
         },
         "commands/gsd/spec-phase.md": {
-          "status": "merged",
-          "instruction_ids": [
-            "follow-the-workflow-one-step-at-a-time"
-          ],
-          "contributed_sources": [
-            "commands/gsd/discuss-phase.md"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "commands/gsd/spike.md": {
           "status": "split",
@@ -10556,26 +10522,20 @@
           "reason": "The file is the donor's workstream sub-command table and the invocations of its own workstream tool. The norms it states - the active selection is kept per session so concurrent sessions do not overwrite each other, and the result is rendered as a human-readable table - are covered by the corpus (keep-lanes-independent, format-the-results-as-a-table); the rest is the donor's tooling."
         },
         "skills/gsd-add-tests/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-ai-integration-phase/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-audit-fix/SKILL.md": {
           "status": "rejected",
           "reason": "The skill stub repeats commands/gsd/audit-fix.md: The file states the donor's audit-to-fix pipeline with its own flags (--source, --severity, --max, --dry-run) and the agents it drives. The only norm it carries - classify a finding as auto-fixable or manual-only and fix only the first - is already mined from the donor's audit workflow (split-a-finding-into-auto-fixable-and-manual-only), and the severity words are the donor's own scale."
         },
         "skills/gsd-audit-milestone/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-audit-uat/SKILL.md": {
           "status": "rejected",
@@ -10610,9 +10570,8 @@
           ]
         },
         "skills/gsd-config/SKILL.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to",
             "route-by-the-leading-token-and-pass-the-remainder-through"
           ]
         },
@@ -10628,22 +10587,19 @@
             "follow-the-workflow-one-step-at-a-time"
           ],
           "contributed_sources": [
-            "skills/gsd-spec-phase/SKILL.md",
+            "skills/gsd-discuss-phase/SKILL.md",
             "commands/gsd/discuss-phase.md"
           ]
         },
         "skills/gsd-docs-update/SKILL.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to",
             "treat-a-documented-option-as-inactive-until-its-token-appears"
           ]
         },
         "skills/gsd-eval-review/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-execute-phase/SKILL.md": {
           "status": "split",
@@ -10670,13 +10626,12 @@
             "keep-secrets-out-of-code-and-logs"
           ],
           "contributed_sources": [
-            "commands/gsd/forensics.md"
+            "skills/gsd-forensics/SKILL.md"
           ]
         },
         "skills/gsd-graphify/SKILL.md": {
           "status": "split",
           "instruction_ids": [
-            "route-by-the-leading-token-and-pass-the-remainder-through",
             "run-a-must-finish-pipeline-in-the-foreground",
             "keep-the-last-valid-artefact-when-a-regeneration-fails"
           ]
@@ -10692,20 +10647,16 @@
           "reason": "The skill stub repeats commands/gsd/help.md: The file is the donor's help command: it lists the tiers of its reference and the reference file it points at. The norm it states - answer with the reference content of the chosen tier and add nothing - is already mined from the donor's own help workflow (output-only-the-requested-reference); the tier names are the donor's own."
         },
         "skills/gsd-import/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "route-by-the-leading-token-and-pass-the-remainder-through"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-inbox/SKILL.md": {
           "status": "rejected",
           "reason": "The skill stub repeats commands/gsd/inbox.md: The file states that every incoming issue and pull request is reviewed against the template of its type, reported for completeness and optionally labelled or closed. That norm is already mined from the donor's own inbox workflow (score-each-submission-against-the-required-fields); the template list and the flags are the donor's tooling."
         },
         "skills/gsd-ingest-docs/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-manager/SKILL.md": {
           "status": "rejected",
@@ -10732,22 +10683,16 @@
           "reason": "The skill stub repeats commands/gsd/milestone-summary.md: The file states that a milestone summary is written from the archived artefacts with seven fixed sections and offered with follow-up questions. The norm it states - write the summary for a newcomer who will read one document - is already in the corpus as write-for-a-human-who-knows-nothing-of-the-target; the section list is the donor's template."
         },
         "skills/gsd-mvp-phase/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-new-milestone/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-new-project/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-next/SKILL.md": {
           "status": "rejected",
@@ -10778,10 +10723,8 @@
           "reason": "The skill stub repeats commands/gsd/ns-workflow.md: A routing table over the donor's own phase-pipeline commands with a long note about which commands were renamed, absorbed or retired. It states no rule that the donor's workflows do not state; the inventory itself is the donor's house arrangement."
         },
         "skills/gsd-onboard/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-pause-work/SKILL.md": {
           "status": "rejected",
@@ -10795,16 +10738,12 @@
           ]
         },
         "skills/gsd-plan-phase/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-plan-review-convergence/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-pr-branch/SKILL.md": {
           "status": "rejected",
@@ -10815,19 +10754,16 @@
           "reason": "The skill stub repeats commands/gsd/profile-user.md: The file describes the donor's behavioural profile: the consent gate, the questionnaire fallback, the profile artefacts and the dimension diff. The norms it states - consent before a user's sessions are analysed and a refresh that shows what changed - are already in the corpus as collect-personal-data-only-against-a-stated-purpose and report-what-changed-since-last-update; the artefact names are the donor's own."
         },
         "skills/gsd-progress/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "route-by-the-leading-token-and-pass-the-remainder-through"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-quick-batch/SKILL.md": {
           "status": "rejected",
           "reason": "The skill stub repeats commands/gsd/quick-batch.md: The file is the donor's batch dispatcher: the batch id, the jobs cap, the worktree lifecycle and the invocations of the donor's own tool. The norms it states are already mined from the donor's own workflows - the grammar belongs to the tool (let-the-tool-own-the-grammar), a failed parse stops before any dispatch (stop-before-dispatch-when-the-parse-fails), one coordinator owns every shared write (keep-the-shared-writes-with-one-owner) and the raw argument text is never passed as a shell argument (never-interpolate-content-into-a-shell-command); the rest is product-specific wiring."
         },
         "skills/gsd-quick/SKILL.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to",
             "route-by-the-leading-token-and-pass-the-remainder-through"
           ]
         },
@@ -10844,10 +10780,8 @@
           "reason": "The skill stub repeats commands/gsd/review.md: The file lists the external reviewer CLIs and the flags that select them, and says that a configured default reviewer list narrows the fan-out. The norm is already mined from the donor's own review workflow (derive-the-reviewer-selection-from-the-roster); the CLI names are the donor's integrations."
         },
         "skills/gsd-secure-phase/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-settings/SKILL.md": {
           "status": "rejected",
@@ -10858,26 +10792,18 @@
           "reason": "The skill stub repeats commands/gsd/ship.md: The file describes the donor's publish path: push the branch, create the pull request with a generated body, trigger the review and track the merge. The norms it states are already in the corpus as ship-in-small-batches and write-pr-body-with-visual-evidence; the branch and tag handling is the donor's tooling."
         },
         "skills/gsd-sketch/SKILL.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to",
             "route-by-the-leading-token-and-pass-the-remainder-through"
           ]
         },
         "skills/gsd-spec-phase/SKILL.md": {
-          "status": "merged",
-          "instruction_ids": [
-            "follow-the-workflow-one-step-at-a-time"
-          ],
-          "contributed_sources": [
-            "skills/gsd-discuss-phase/SKILL.md",
-            "commands/gsd/spec-phase.md"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-spike/SKILL.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to",
             "route-by-the-leading-token-and-pass-the-remainder-through"
           ]
         },
@@ -10896,16 +10822,12 @@
           "reason": "The skill stub repeats commands/gsd/thread.md: The file states that a thread is a lightweight cross-session store for work that belongs to no phase and points at the donor's thread workflow. The norms it states are already in the corpus as keep-a-long-running-goal-in-subagents and start-each-run-in-its-own-session; the thread commands are the donor's tooling."
         },
         "skills/gsd-ui-phase/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-ui-review/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-ultraplan-phase/SKILL.md": {
           "status": "rejected",
@@ -10922,16 +10844,12 @@
           ]
         },
         "skills/gsd-validate-phase/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-verify-work/SKILL.md": {
-          "status": "converted",
-          "instruction_ids": [
-            "preserve-the-gates-of-the-workflow-you-dispatch-to"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "skills/gsd-workspace/SKILL.md": {
           "status": "split",
@@ -11053,13 +10971,9 @@
           ]
         },
         "docs/contributing/adding-a-portability-rule.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
-            "automate-enforceable-rules",
             "keep-the-line-until-the-check-is-live"
-          ],
-          "contributed_sources": [
-            "gsd-core:docs/contributing/adding-a-portability-rule.md"
           ]
         },
         "docs/contributing/bootstrap.md": {
@@ -11215,13 +11129,9 @@
           ]
         },
         "docs/reference/capability-matrix.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
-            "keep-each-fact-in-one-place",
-            "maintain-verification-harness-against-drift"
-          ],
-          "contributed_sources": [
-            "gsd-core:docs/reference/capability-matrix.md"
+            "keep-each-fact-in-one-place"
           ]
         },
         "docs/reference/context-md.md": {
@@ -11364,18 +11274,16 @@
           ]
         },
         "examples/dynamic-context-management/README.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "select-the-relevant-subset-instead-of-citing-the-whole-file",
-            "maintain-verification-harness-against-drift"
+            "select-the-relevant-subset-instead-of-citing-the-whole-file"
           ]
         },
         "gsd-core/bin/lib/vendor/README.md": {
           "status": "split",
           "instruction_ids": [
             "never-hand-edit-a-vendored-artifact",
-            "declare-only-the-symbols-you-use-in-a-hand-written-type-twin",
-            "automate-enforceable-rules"
+            "declare-only-the-symbols-you-use-in-a-hand-written-type-twin"
           ]
         },
         "gsd-core/contexts/dev.md": {
@@ -11749,12 +11657,9 @@
           ]
         },
         "docs/features/improved-prompt-injection-scanner.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "never-hide-a-gap-in-the-evidence"
-          ],
-          "contributed_sources": [
-            "gsd-core:docs/features/improved-prompt-injection-scanner.md"
           ]
         },
         "docs/features/installer-migrations.md": {
@@ -11855,12 +11760,9 @@
           "reason": "The file lists the flags the donor's installer accepts for three hosts."
         },
         "docs/features/no-silent-swallow-no-verdict-from-dropped-data.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "never-hide-a-gap-in-the-evidence"
-          ],
-          "contributed_sources": [
-            "gsd-core:docs/features/no-silent-swallow-no-verdict-from-dropped-data.md"
           ]
         },
         "docs/features/node-repair.md": {
@@ -11960,13 +11862,8 @@
           "reason": "The file wires an optional visual check of the donor into its own verify phase and compares the capture against the donor's own expectations file."
         },
         "docs/features/post-execute-codebase-drift-detection.md": {
-          "status": "merged",
-          "instruction_ids": [
-            "degrade-gracefully-under-failure"
-          ],
-          "contributed_sources": [
-            "gsd-core:docs/features/post-execute-codebase-drift-detection.md"
-          ]
+          "status": "rejected",
+          "reason": "the file contributed no norm to the corpus; its content is carried by other files of the donor"
         },
         "docs/features/post-execution-verification.md": {
           "status": "merged",
@@ -12261,12 +12158,9 @@
           "reason": "The file scores the six visual pillars of the donor and writes the screenshots into the directory of the donor."
         },
         "docs/features/unreadable-directory-scope-signal.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "never-hide-a-gap-in-the-evidence"
-          ],
-          "contributed_sources": [
-            "gsd-core:docs/features/unreadable-directory-scope-signal.md"
           ]
         },
         "docs/features/update-banner-opt-in.md": {
@@ -12509,7 +12403,7 @@
             "derive-the-version-from-the-release-tag"
           ],
           "contributed_sources": [
-            "VERSIONING.md"
+            "docs/adr/218-release-version-validation.md"
           ]
         },
         "docs/adr/22-plan-drift-guard.md": {
@@ -12653,10 +12547,9 @@
           "reason": "The donor's own lint harness choice — ESLint flat config, its plugin set and the scripts it retires. The toolchain is one repository's."
         },
         "docs/adr/456-test-rigor-architecture.md": {
-          "status": "split",
+          "status": "converted",
           "instruction_ids": [
-            "test-concurrency-through-a-controlled-clock",
-            "never-skip-or-silence-a-failing-test"
+            "test-concurrency-through-a-controlled-clock"
           ]
         },
         "docs/adr/457-generated-cjs-single-source.md": {
@@ -12759,7 +12652,6 @@
             "write-tests-that-catch-breaks",
             "mock-only-system-boundaries",
             "mutate-the-change-to-test-the-test",
-            "never-skip-or-silence-a-failing-test",
             "count-a-test-only-when-it-runs-and-asserts",
             "cover-the-scenario-classes"
           ]
@@ -16207,7 +16099,9 @@
             "consume-an-unknown-format-version-in-best-effort-mode",
             "read-the-new-field-and-fall-back-to-the-old-one",
             "favour-structured-markdown-over-freeform-prose",
-            "synthesize-the-tag-view-at-consumption-time"
+            "synthesize-the-tag-view-at-consumption-time",
+            "choose-the-version-bump-by-consumer-impact",
+            "keep-the-contents-and-the-index-in-sync"
           ]
         },
         "README.md": {
@@ -16239,7 +16133,8 @@
             "name-the-derived-file-the-same-way-every-time",
             "one-write-call-carries-one-concept",
             "record-only-the-sources-you-actually-read",
-            "close-with-a-short-completion-summary"
+            "close-with-a-short-completion-summary",
+            "do-not-invent-the-structure-the-source-does-not-state"
           ]
         },
         "src/reference_agent/prompts/reference_instruction.md": {

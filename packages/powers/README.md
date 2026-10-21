@@ -219,7 +219,12 @@ relations to other Work Items; evidence — as separate records.
 a list selects one document and makes the check empty), `bun run --cwd
 packages/powers test`, `bun run --cwd packages/powers test:coverage`.
 
-**Audit the corpus** — `bun packages/powers/scripts/audit.ts <map|pairs|fidelity|specs>`.
+**Audit the corpus** — `bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs>`.
+`map` compares the processing map with the instruction provenance, `pairs` the
+declared opposing pairs, `pair-agreement` the D12 decision record with the corpus,
+`pair-table` the rows of the D12 table regenerated from the corpus, `fidelity` the
+instruction bodies with the donor text, `specs` a repair specification with the
+corpus it will be written into.
 The command is read-only and prints the counters of the report and the first rows
 of every section; `--limit <n>`, `--offset <n>` and `--filter <text>` choose the
 rows, `--summary` prints the counters only, `--all` prints every row, and

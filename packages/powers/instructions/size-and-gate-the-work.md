@@ -16,9 +16,9 @@ artifact_contract_required_data:
   - agreed description
   - work boundary
 artifact_contract_verified_by: owner confirms the stated size and description
-compatibility_excludes: []
-compatibility_requires:
+compatibility_excludes:
   - proceed-without-waiting-for-confirmation
+compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/choose-a-planning-path.md
@@ -29,7 +29,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/the-phase-loop.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/context-engineering.md
 status: active
-revision: 5
+revision: 6
 ---
 
 # Size and gate the work

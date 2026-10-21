@@ -74,11 +74,27 @@ function readJsonFile(path: string): Record<string, unknown> {
   return isRecord(value) ? value : {};
 }
 
-/** A source of the processing map is written `donor:path`; a claim is `donor::path`. */
-function normalizeSource(source: string): string {
+/**
+ * A source of the processing map is written `donor:path`, `donor::path` or as a
+ * bare `path`; a claim of the instruction provenance is written `donor::path`.
+ * A bare path belongs to the donor of the record that names it.
+ */
+function normalizeSource(source: string, donor: string): string {
   const separator = source.indexOf(':');
-  if (separator < 0) return source;
+  if (separator < 0) return `${donor}::${source}`;
   return `${source.slice(0, separator)}::${source.slice(separator + 1)}`;
+}
+
+/**
+ * The path of a source, without its donor.
+ *
+ * The donors ship the same file under several names, so a source of the map
+ * and a claim of the provenance can name the same path under different
+ * donors. The path alone says whether they are the same file.
+ */
+function sourcePath(source: string): string {
+  const separator = source.indexOf(':');
+  return separator < 0 ? source : source.slice(separator + 1);
 }
 
 /** The instruction set of a corpus root, with the frontmatter the reports read. */
@@ -227,9 +243,11 @@ export function mapReport(corpus: CorpusView): Report {
         continue;
       }
       const carried = new Set(targetInstruction.provenance.map((source) => `${source.donor}::${source.path}`));
+      const carriedPaths = new Set(targetInstruction.provenance.map((source) => source.path));
       const missing = record.contributedSources
-        .filter((source) => !carried.has(normalizeSource(source)))
-        .map((source) => normalizeSource(source));
+        .filter((source) => !carried.has(normalizeSource(source, record.donor)))
+        .filter((source) => !carriedPaths.has(sourcePath(source)))
+        .map((source) => normalizeSource(source, record.donor));
       if (missing.length > 0) mergedMismatch.push(`${key} -> ${missing.join(', ')}`);
     }
   }
@@ -264,7 +282,7 @@ export function mapReport(corpus: CorpusView): Report {
  * mechanical: the pair is declared in both directions, the two sides share a
  * pattern tag, and the record's table agrees with the corpus.
  */
-export function pairsReport(corpus: CorpusView, decisionRecord?: string): Report {
+export function pairsReport(corpus: CorpusView): Report {
   const carriers = new Map<string, number>();
   for (const instruction of corpus.instructions.values()) {
     for (const tag of instruction.patternTags) carriers.set(tag, (carriers.get(tag) ?? 0) + 1);
@@ -348,6 +366,40 @@ export function readDeclaredPairs(decisionRecord: string): DeclaredPair[] {
  * is a pair the corpus lost. A theme tag the record names that the two sides
  * do not share is a theme the corpus does not carry.
  */
+/**
+ * The rows of the pair table, regenerated from the corpus.
+ *
+ * D12 section 4: "The table lists every pair the corpus currently declares —
+ * it is regenerated from the instructions." The dedicated theme tag of a pair
+ * is listed first; the other shared tag, where there is one, is a topic tag.
+ */
+export function pairTableRows(corpus: CorpusView): string[] {
+  const carriers = new Map<string, number>();
+  for (const instruction of corpus.instructions.values()) {
+    for (const tag of instruction.patternTags) carriers.set(tag, (carriers.get(tag) ?? 0) + 1);
+  }
+  const pairs = new Map<string, { a: string; b: string }>();
+  for (const instruction of corpus.instructions.values()) {
+    for (const other of instruction.excludes) {
+      const [a, b] = [instruction.id, other].sort();
+      if (a === undefined || b === undefined) continue;
+      pairs.set(`${a}|${b}`, { a, b });
+    }
+  }
+  return [...pairs.values()].sort((left, right) => (left.a < right.a ? -1 : 1)).map((pair) => {
+    const left = corpus.instructions.get(pair.a);
+    const right = corpus.instructions.get(pair.b);
+    const shared = [...(left?.patternTags ?? [])].filter((tag) => (right?.patternTags ?? []).includes(tag));
+    const ordered = [...shared].sort((first, second) => {
+      const firstCarriers = carriers.get(first) ?? 0;
+      const secondCarriers = carriers.get(second) ?? 0;
+      if (firstCarriers !== secondCarriers) return firstCarriers - secondCarriers;
+      return first < second ? -1 : 1;
+    });
+    return `| \`${pair.a}\` ↔ \`${pair.b}\` | ${ordered.map((tag) => `\`${tag}\``).join(', ')} |`;
+  });
+}
+
 export function pairAgreementReport(corpus: CorpusView, decisionRecord: string): Report {
   const declared = new Map<string, string[]>();
   for (const instruction of corpus.instructions.values()) {

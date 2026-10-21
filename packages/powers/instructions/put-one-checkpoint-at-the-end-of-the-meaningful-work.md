@@ -6,6 +6,7 @@ capability_tags:
   - plan-implementation
 pattern_tags:
   - human-in-the-loop
+  - checkpoint-cadence-policy
 conditions_applies_when: Verification checkpoints are placed among the tasks of a plan.
 conditions_does_not_apply_when: The task itself needs a human decision before the next task can run.
 artifact_contract_output_type: checkpoint-placement
@@ -19,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/planner-antipatterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Put one checkpoint at the end of the meaningful work

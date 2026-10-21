@@ -76,23 +76,37 @@ The table lists every pair the corpus currently declares — it is regenerated f
 the instructions, so a pair that is added or removed is visible here. A pair
 carries **one dedicated theme tag**: the one that names the disagreement. The
 other shared tag, where there is one, is a topic tag that many instructions
-carry and that therefore cannot identify the pair.
+carry and that therefore cannot identify the pair. The dedicated theme tag is
+listed first.
+
+Where the two sides are the alternatives of one profile group (§3), the group
+marker is their theme: it names the policy the pair disagrees on, and each side
+keeps its own pattern tag for the approach it describes.
 
 | Pair | Shared tags |
 |---|---|
 | `adapt-the-old-interface-to-the-new-implementation` ↔ `migrate-callers-and-delete-legacy` | `migration-strategy` |
+| `adjust-the-behaviour-to-the-context-degradation-signals` ↔ `measure-the-context-and-start-a-fresh-session-before-it-degrades` | `context-degradation-policy` |
 | `choose-the-highest-test-seam` ↔ `choose-the-test-level` | `test-placement-strategy` |
-| `decide-whether-the-test-the-harness-or-the-application-is-wrong` ↔ `never-skip-or-silence-a-failing-test` | `test-design, failing-test-policy` |
-| `format-quality-findings` ↔ `report-the-review-in-one-canonical-finding-shape` | `finding-severity-policy, finding-presentation-policy` |
-| `hand-the-review-prompt-to-a-separate-session-when-no-subagent-exists` ↔ `keep-review-read-only` | `code-review, review-execution-policy` |
+| `clear-the-acceptance-criteria-before-the-next-step` ↔ `judge-the-acceptance-criteria-at-review-not-during-implementation` | `acceptance-criteria-timing-policy`, `testable-criteria` |
+| `decide-whether-the-test-the-harness-or-the-application-is-wrong` ↔ `never-skip-or-silence-a-failing-test` | `failing-test-policy`, `test-design` |
+| `declare-what-a-hook-produces-and-consumes` ↔ `fail-open-loudly-when-a-control-cannot-load` | `control-failure-posture-policy`, `control-tiering` |
+| `delete-an-empty-section-instead-of-writing-none` ↔ `never-hide-a-gap-in-the-evidence` | `empty-result-posture-policy`, `empty-result-policy` |
+| `format-quality-findings` ↔ `report-the-review-in-one-canonical-finding-shape` | `finding-presentation-policy`, `finding-severity-policy` |
+| `hand-the-review-prompt-to-a-separate-session-when-no-subagent-exists` ↔ `keep-review-read-only` | `review-execution-policy`, `code-review` |
 | `keep-review-read-only` ↔ `run-the-review-lenses-as-one-blocking-batch` | `review-application-policy` |
-| `keep-review-read-only` ↔ `run-the-lenses-and-fix-what-they-find` | `code-review, review-fix-application-policy` |
-| `label-code-review-findings` ↔ `report-the-review-in-one-canonical-finding-shape` | `code-review, finding-severity-policy` |
-| `let-each-lens-set-its-own-stance-toward-zero-findings` ↔ `review-adversarially` | `code-review, adversarial-empty-result-policy` |
-| `optimize-guidance-triggers` ↔ `write-the-description-as-a-summary-and-trigger-phrases` | `instruction-authoring, description-shape-policy` |
-| `prefer-a-prohibition-that-names-the-permitted-alternative` ↔ `write-directive-rules` | `instruction-authoring, directive-form-policy` |
-| `prefer-the-explanation-over-the-shouting-rule` ↔ `write-directive-rules` | `instruction-authoring, rule-authority-policy` |
+| `keep-review-read-only` ↔ `run-the-lenses-and-fix-what-they-find` | `review-fix-application-policy`, `code-review` |
+| `label-code-review-findings` ↔ `report-the-review-in-one-canonical-finding-shape` | `finding-shape-policy`, `finding-severity-policy`, `code-review` |
+| `let-each-lens-set-its-own-stance-toward-zero-findings` ↔ `review-adversarially` | `adversarial-empty-result-policy`, `code-review` |
+| `optimize-guidance-triggers` ↔ `write-the-description-as-a-summary-and-trigger-phrases` | `description-shape-policy`, `instruction-authoring` |
+| `place-checkpoints-and-front-load-the-risky-work` ↔ `put-one-checkpoint-at-the-end-of-the-meaningful-work` | `checkpoint-cadence-policy` |
+| `prefer-a-prohibition-that-names-the-permitted-alternative` ↔ `write-directive-rules` | `directive-form-policy`, `instruction-authoring` |
+| `prefer-the-explanation-over-the-shouting-rule` ↔ `write-directive-rules` | `rule-authority-policy`, `instruction-authoring` |
+| `proceed-without-waiting-for-confirmation` ↔ `size-and-gate-the-work` | `approval-policy` |
+| `run-bounded-fix-loop` ↔ `start-a-fresh-agent-for-each-revision-round` | `revision-round-continuity-policy`, `code-review` |
 | `run-each-check-only-when-the-code-changed` ↔ `verify-before-completion` | `verification-rerun-policy` |
+| `run-the-discussion-inline-when-the-agents-are-unavailable` ↔ `treat-a-required-delegation-as-mandatory` | `delegation-requirement-policy`, `subagent-delegation` |
+| `the-local-record-is-the-working-copy-the-remote-is-pulled-back` ↔ `treat-the-version-controlled-copy-as-authoritative-when-you-push-to-a-catalogue` | `working-copy-authority-policy`, `single-source-of-truth` |
 
 ## 5. Consequences
 

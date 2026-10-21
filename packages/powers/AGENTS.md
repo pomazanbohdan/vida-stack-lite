@@ -101,7 +101,7 @@ bun run --cwd packages/agent lint:knip:pinned
 bun packages/powers/scripts/validate-donors.ts
 
 # Corpus audit (read-only reports over the corpus)
-bun packages/powers/scripts/audit.ts <map|pairs|fidelity|specs> [--limit <n>] [--offset <n>] [--filter <text>] [--summary] [--all] [--json] [--out <file>]
+bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs> [--limit <n>] [--offset <n>] [--filter <text>] [--summary] [--all] [--json] [--out <file>]
 ```
 
 > Invocation form: `bun run --cwd <dir> <script>`. The variant `bun --cwd <dir> run <script>`

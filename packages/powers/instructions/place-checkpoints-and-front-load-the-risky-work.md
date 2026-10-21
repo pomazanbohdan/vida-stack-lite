@@ -6,6 +6,7 @@ capability_tags:
   - plan-implementation
 pattern_tags:
   - implementation-planning
+  - checkpoint-cadence-policy
 conditions_applies_when: A plan has several tasks to execute in order.
 conditions_does_not_apply_when: The plan is a single task.
 artifact_contract_output_type: checkpoint-plan
@@ -21,7 +22,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/planning-and-task-breakdown/SKILL.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/planner-antipatterns.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Place checkpoints and front-load the risky work

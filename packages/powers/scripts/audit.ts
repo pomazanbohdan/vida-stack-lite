@@ -2,7 +2,7 @@
  * The corpus audit CLI: one command per report, one option set for every
  * command, and a bounded view of every report by default.
  *
- *   bun packages/powers/scripts/audit.ts <map|pairs|fidelity|specs> [options]
+ *   bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs> [options]
  *
  * The reports are read-only. The converter stays the single writer of the
  * corpus files.
@@ -23,12 +23,13 @@ import {
   mapReport,
   pairAgreementReport,
   pairsReport,
+  pairTableRows,
   specsReport,
   type Report,
   type Section,
 } from './audit-report.ts';
 
-export type AuditCommand = 'map' | 'pairs' | 'pair-agreement' | 'fidelity' | 'specs';
+export type AuditCommand = 'map' | 'pairs' | 'pair-agreement' | 'pair-table' | 'fidelity' | 'specs';
 export type AuditOptions = {
   command: AuditCommand;
   root: string;
@@ -45,11 +46,11 @@ export type AuditOptions = {
 };
 export type CliOutput = { stdout: (text: string) => void; stderr: (text: string) => void };
 
-export const AUDIT_COMMANDS: AuditCommand[] = ['map', 'pairs', 'pair-agreement', 'fidelity', 'specs'];
+export const AUDIT_COMMANDS: AuditCommand[] = ['map', 'pairs', 'pair-agreement', 'pair-table', 'fidelity', 'specs'];
 export const DEFAULT_LIMIT = 20;
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const usage = [
-  'usage: audit.ts <map|pairs|fidelity|specs> [options]',
+  'usage: audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs> [options]',
   '  --root <dir>        the corpus root (default: the package root)',
   '  --limit <n>         rows per section (default: 20)',
   '  --offset <n>        rows skipped before the first shown row',
@@ -178,6 +179,14 @@ export function buildReport(options: AuditOptions): Report {
   if (options.command === 'pairs') return pairsReport(corpus);
   if (options.command === 'pair-agreement') {
     return pairAgreementReport(corpus, resolve(options.root, 'docs/decisions/D12-declared-conflicts.md'));
+  }
+  if (options.command === 'pair-table') {
+    const rows = pairTableRows(corpus);
+    return {
+      command: 'pair-table',
+      counters: [{ label: 'pairs', value: String(rows.length) }],
+      sections: [{ name: 'row', kind: 'info', rows }],
+    };
   }
   const clones = loadDonorClones(options.root);
   if (options.command === 'fidelity') return fidelityReport(corpus, clones, options.instruction);

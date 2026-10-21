@@ -6,6 +6,7 @@ capability_tags:
   - persist-work-to-disk
 pattern_tags:
   - single-source-of-truth
+  - working-copy-authority-policy
 conditions_applies_when: A corpus is pushed to a catalogue that cannot merge changes back.
 conditions_does_not_apply_when: The catalogue can mirror the corpus and merge what comes back.
 artifact_contract_output_type: sync-policy
@@ -19,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=connectors/gcp-knowledge-catalog.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Treat the version-controlled copy as authoritative when you push to a catalogue

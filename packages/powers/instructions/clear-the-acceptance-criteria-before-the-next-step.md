@@ -6,6 +6,7 @@ capability_tags:
   - execute-plan
 pattern_tags:
   - testable-criteria
+  - acceptance-criteria-timing-policy
 conditions_applies_when: A unit declares acceptance criteria and the implementation has just finished them.
 conditions_does_not_apply_when: The unit declares no acceptance criteria.
 artifact_contract_output_type: acceptance-criteria-gate
@@ -20,7 +21,7 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-plan.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Clear the acceptance criteria before the next step

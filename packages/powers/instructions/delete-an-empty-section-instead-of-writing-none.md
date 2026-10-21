@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - implementation-planning
   - empty-result-policy
+  - empty-result-posture-policy
 conditions_applies_when: A section of the plan has no content to put in it.
 conditions_does_not_apply_when: Every section has real content.
 artifact_contract_output_type: plan-sections
@@ -22,7 +23,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/progress.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/verifier-evidence-gate.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Delete an empty section instead of writing N/A

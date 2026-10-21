@@ -9,6 +9,7 @@ pattern_tags:
   - evidence-analysis
   - code-audit
   - empty-result-policy
+  - empty-result-posture-policy
 conditions_applies_when: An analysis needs an input that the evidence may not contain.
 conditions_does_not_apply_when: Every input the analysis needs is available.
 artifact_contract_output_type: evidence-gaps
@@ -31,7 +32,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/unreadable-directory-scope-signal.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/improved-prompt-injection-scanner.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Never hide a gap in the evidence

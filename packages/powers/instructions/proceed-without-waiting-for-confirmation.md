@@ -17,13 +17,13 @@ artifact_contract_required_data:
   - basis
   - stop boundary
 artifact_contract_verified_by: "the chosen interpretation still passes the project's checks"
-compatibility_excludes: []
-compatibility_requires:
+compatibility_excludes:
   - size-and-gate-the-work
+compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-never-block-on-the-human/SKILL.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Proceed without waiting for confirmation

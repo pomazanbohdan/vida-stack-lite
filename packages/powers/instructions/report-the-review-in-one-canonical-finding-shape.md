@@ -8,6 +8,7 @@ pattern_tags:
   - code-review
   - finding-severity-policy
   - finding-presentation-policy
+  - finding-shape-policy
 conditions_applies_when: A lens-based review has produced findings and they are written out.
 conditions_does_not_apply_when: The findings are graded for a human report that labels every finding with a severity.
 artifact_contract_output_type: lens-findings
@@ -25,7 +26,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-review/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Report the review in one canonical finding shape

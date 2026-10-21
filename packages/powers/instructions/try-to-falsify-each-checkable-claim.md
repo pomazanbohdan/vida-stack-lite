@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/references/claims-check.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/references/claims-check.md
+  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/references/claims-check.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Try to falsify each checkable claim

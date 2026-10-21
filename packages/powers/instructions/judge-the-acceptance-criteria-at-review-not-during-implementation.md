@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - plan-execution
   - testable-criteria
+  - acceptance-criteria-timing-policy
 conditions_applies_when: The implementation finished and the acceptance criteria are at hand.
 conditions_does_not_apply_when: The work is in the review stage already.
 artifact_contract_output_type: implementation-verification
@@ -21,7 +22,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-03-implement.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-plan.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Judge the acceptance criteria at review, not during implementation

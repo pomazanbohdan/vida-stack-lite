@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - graceful-degradation
   - control-tiering
+  - control-failure-posture-policy
 conditions_applies_when: A control declared by an extension cannot be loaded.
 conditions_does_not_apply_when: The control loads normally.
 artifact_contract_output_type: missing-control-warning
@@ -21,7 +22,7 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/capability-overlay-model.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Fail open loudly when a control cannot load

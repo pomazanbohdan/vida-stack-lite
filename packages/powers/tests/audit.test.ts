@@ -21,6 +21,7 @@ import {
   mapReport,
   pairAgreementReport,
   pairsReport,
+  pairTableRows,
   readDeclaredPairs,
   specsReport,
   tokenize,
@@ -359,6 +360,14 @@ describe('the donor index', () => {
     expect(carrierOf(index, 'another donor carries its own')).toEqual({ donor: 'another-donor', path: 'source.md' });
   });
 
+  test('indexes a donor file in a subdirectory', async () => {
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })]);
+    await mkdir(join(corpus.root, '.tmp', 'donors', 'synthetic', 'skills'), { recursive: true });
+    await writeFile(join(corpus.root, '.tmp', 'donors', 'synthetic', 'skills', 'nested.md'), 'nested donor text\n');
+    const clones = loadDonorClones(corpus.root);
+    expect(clones.donors.get('synthetic-donor')?.paths).toHaveLength(2);
+  });
+
   test('reports a missing donor manifest', async () => {
     const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })]);
     await rm(join(corpus.root, 'donors.yaml'));
@@ -563,6 +572,74 @@ describe('the pair agreement report', () => {
       .toContain('a-theme-the-sides-do-not-share');
   });
 
+  test('reports a merged record whose source the target does not carry', async () => {
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })], {
+      schema: 'VPCorpusMap/v1', revision: 1, updated_at: '2026-10-21',
+      donors: {
+        [donorId]: {
+          source_revision: revision,
+          files: {
+            'source.md': { status: 'merged', instruction_ids: ['instruction-0'], contributed_sources: ['other.md'] },
+          },
+        },
+      },
+    });
+    const report = mapReport(loadCorpus(corpus.root));
+    expect(report.sections.find((section) => section.name === 'merged-source-mismatch')?.rows.join())
+      .toContain('other.md');
+  });
+
+  test('accepts a merged record whose source the target carries under another donor', async () => {
+    const corpus = await fixture([
+      instruction({
+        id: 'instruction-0',
+        body: 'A body.',
+        provenance: [`donor=other-donor; license=MIT; revision=${revision}; path=source.md`],
+      }),
+    ], {
+      schema: 'VPCorpusMap/v1', revision: 1, updated_at: '2026-10-21',
+      donors: {
+        [donorId]: {
+          source_revision: revision,
+          files: {
+            'source.md': { status: 'merged', instruction_ids: ['instruction-0'], contributed_sources: ['other-donor:source.md'] },
+          },
+        },
+      },
+    });
+    const report = mapReport(loadCorpus(corpus.root));
+    expect(report.sections.find((section) => section.name === 'merged-source-mismatch')?.rows).toEqual([]);
+  });
+
+  test('reports a merged record whose target is unknown', async () => {
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })], {
+      schema: 'VPCorpusMap/v1', revision: 1, updated_at: '2026-10-21',
+      donors: {
+        [donorId]: {
+          source_revision: revision,
+          files: {
+            'source.md': { status: 'merged', instruction_ids: ['nowhere'], contributed_sources: ['source.md'] },
+          },
+        },
+      },
+    });
+    const report = mapReport(loadCorpus(corpus.root));
+    expect(report.sections.find((section) => section.name === 'merged-source-mismatch')?.rows.join())
+      .toContain('target nowhere is unknown');
+  });
+
+  test('orders several pairs', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-2'] }),
+      instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-3'] }),
+      instruction({ id: 'instruction-2', body: 'A body.', excludes: ['instruction-0'] }),
+      instruction({ id: 'instruction-3', body: 'A body.', excludes: ['instruction-1'] }),
+    ]);
+    const report = pairsReport(loadCorpus(corpus.root));
+    expect(report.sections.find((section) => section.name === 'pair')?.rows.map((row) => row.split(' ')[1]))
+      .toEqual(['instruction-0', 'instruction-1']);
+  });
+
   test('reports nothing when the record and the corpus agree', async () => {
     const corpus = await fixture([
       instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-1'], patternTags: ['test-first-development'] }),
@@ -572,6 +649,58 @@ describe('the pair agreement report', () => {
     await writeFile(file, record(['| `instruction-0` ↔ `instruction-1` | `test-first-development` |']));
     const report = pairAgreementReport(loadCorpus(corpus.root), file);
     expect(report.counters.find((counter) => counter.label === 'findings')?.value).toBe('0');
+  });
+});
+
+describe('the pair table', () => {
+  test('lists every declared pair with the theme tag first', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-1'], patternTags: ['test-first-development'] }),
+      instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-0'], patternTags: ['test-first-development'] }),
+      instruction({ id: 'instruction-2', body: 'A body.', patternTags: ['a-topic-tag'] }),
+    ]);
+    const rows = pairTableRows(loadCorpus(corpus.root));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toBe('| `instruction-0` ↔ `instruction-1` | `test-first-development` |');
+  });
+
+  test('orders the pair by the first instruction id', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-2', body: 'A body.', excludes: ['instruction-0'] }),
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-2'] }),
+    ]);
+    const rows = pairTableRows(loadCorpus(corpus.root));
+    expect(rows[0]).toContain('`instruction-0` ↔ `instruction-2`');
+  });
+
+  test('orders several pairs', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-2'] }),
+      instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-3'] }),
+      instruction({ id: 'instruction-2', body: 'A body.', excludes: ['instruction-0'] }),
+      instruction({ id: 'instruction-3', body: 'A body.', excludes: ['instruction-1'] }),
+    ]);
+    const rows = pairTableRows(loadCorpus(corpus.root));
+    expect(rows.map((row) => row.split('`')[1])).toEqual(['instruction-0', 'instruction-1']);
+  });
+
+  test('lists the tag carried by fewer instructions first', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-1'], patternTags: ['test-first-development', 'a-topic-tag'] }),
+      instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-0'], patternTags: ['test-first-development', 'a-topic-tag'] }),
+      instruction({ id: 'instruction-2', body: 'A body.', patternTags: ['a-topic-tag'] }),
+    ]);
+    const rows = pairTableRows(loadCorpus(corpus.root));
+    expect(rows[0]).toBe('| `instruction-0` ↔ `instruction-1` | `test-first-development`, `a-topic-tag` |');
+  });
+
+  test('orders two tags of the same carrier count by name', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-1'], patternTags: ['zebra-tag', 'alpha-tag'] }),
+      instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-0'], patternTags: ['zebra-tag', 'alpha-tag'] }),
+    ]);
+    const rows = pairTableRows(loadCorpus(corpus.root));
+    expect(rows[0]).toBe('| `instruction-0` ↔ `instruction-1` | `alpha-tag`, `zebra-tag` |');
   });
 });
 
@@ -689,6 +818,15 @@ describe('the CLI', () => {
       stdout: (text) => stdout.push(text), stderr: () => {},
     })).toBe(0);
     expect(stdout.join('')).toContain('== audit pair-agreement ==');
+  });
+
+  test('writes the report of the pair-table command', async () => {
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })]);
+    const stdout: string[] = [];
+    expect(runAuditCli(['pair-table', '--root', corpus.root], {
+      stdout: (text) => stdout.push(text), stderr: () => {},
+    })).toBe(0);
+    expect(stdout.join('')).toContain('== audit pair-table ==');
   });
 
   test('writes the report of the specs command', async () => {

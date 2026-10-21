@@ -6,6 +6,7 @@ capability_tags:
   - plan-implementation
 pattern_tags:
   - single-source-of-truth
+  - working-copy-authority-policy
 conditions_applies_when: A remote system holds copies of the work items.
 conditions_does_not_apply_when: There is no remote copy.
 artifact_contract_output_type: sync-record
@@ -20,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ticket/references/board.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/set-up-the-ticket-tree.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # The local record is the working copy, the remote is pulled back
