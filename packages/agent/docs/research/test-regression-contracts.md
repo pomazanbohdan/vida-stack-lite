@@ -689,6 +689,11 @@ checks; only the corresponding returned endpoint fields are replaced. Host
 creates the real transition/receipt. Require a different successor code digest
 and exact reopen/retry/history preservation. This unit proof is fixture-only,
 with no installed runtime change or native endpoint qualification.
+In the recovery composite, admit the real disjoint active/queued peers after
+frontier preparation and before writer issue. Keep first before/after API reads,
+receipt lookups and fresh reopen validation. Repeated no-write checks use exact
+Host, Journal, recovery-receipt and governance rows from the current connection.
+Retain the same expiry, queue, rollback, retry and per-case deadline checks.
 
 Host-component progress may retain a started readonly attempt with an actual
 execution-only ticket and claim. Use public assignment admission, then a benign
@@ -964,6 +969,10 @@ plan retry, applied resume or restore returns. Reject null records, invalid
 arrays, extra fields, foreign identity, invalid actor/status and changed frozen
 transformations without modifying Host state or the stored operation.
 Request-transition repair does not supply missing correction authority.
+Private Work validators receive explicit history and assignment authority from
+their maintained callers. Narrow pending receipts to the three actually supplied
+variants; initial-source and completed-report receipts still validate through
+persisted history. Removing unused private defaults is not execution evidence.
 Bind a nonempty Journal with completed history to the repair plan. Advance only
 its native revision after planning; applying that stale plan must preserve the
 Host rows, concurrent Journal and stored operation. A fresh plan may apply and

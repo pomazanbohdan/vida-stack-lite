@@ -75,24 +75,28 @@ This replaces completed narratives, not evidence or accepted criteria.
 
 ### Latest failed execution
 
-Published04d8271781b5bbb9448ffad0866c07ac37065855 includes reservation-owner reuse
-and the separately qualified synthetic legacy reconciliation case. Exact focused
-checks, reviews and boundaries remain in its
-[published WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/04d8271781b5bbb9448ffad0866c07ac37065855/.agent/work/core-runtime-reactivation/WORK.md).
-Its one full stage, /workspace/contour-stage-xHClZ6, fails in190143.92053ms:
-rollback recovery setup15902.354621ms/body5022.494047ms exceeds its20s bound.
-Host has313PASS/1FAIL; stopped Source has16PASS. Complete capture, closed group,
-same boot/image and native exit1 are observed; original failed root remains in
-the bound image/scratch. No new coverage metrics are accepted from this run.
-Use DIAG/remainder-v1209-stage.log, SDK-provider/scratch-parent JSON siblings and
-execution.json for original custody. Projection records the failed outcome.
+The complete stage for Source7aace49bba0454014e2bd59a8339ff756dd768f1,
+/workspace/contour-stage-rm0MSW, fails in173651.573748ms. The commit-recovery
+case exceeds its unchanged20s bound: setup14507.051650ms/body5568.283977ms,
+case20136.76ms. Host has315PASS/1FAIL; stopped Source16PASS. New restore and
+execution-only cases pass, but no new numeric coverage is accepted.
+Native exit1, complete211-byte stdout/1212-byte stderr capture, closed group,
+same boot/image are observed. The missing complete report correctly prevents
+publication; the projection records attempt1159 failure, not a numeric success.
+The original case log is in image bb7aaf24b463e4a20bb67e3ea914be0345e809f8,
+run76473bc7-9914-4010-b333-830d9ff32c62/shards/shard-0001/child.log.
+DIAG/remainder-v1243-stage.log and SDK-provider/scratch-parent siblings retain
+original acquisition/admission; stage execution.json owns exact image identity.
+The failed fixture is physically retained at
+/dev/shm/vida-quality-retained-wy8pUD/scratch-iAAO8t/scratch/vida-coverage-76473bc7-9914-4010-b333-830d9ff32c62/shard-0001/tmp/vida-initial-source-t8Be4G.
 
-After observed closure, remainder-v1209-cache-retirement-xHClZ6/manifest.json
-qualifies1private cache/0skipped and reclaims215846912tmpfs bytes. The remaining
-scratch archive /workspace/vida-functional-retention-xHClZ6-eRiTYn/archive.json
-passes full tar compare; original /dev/shm/vida-quality-retained-qkuBjH remains.
-Postarchive durable4291043328/tmpfs9275699200available exceed2147483648.
-No image, DB, SDK, original log, failure or shared dependency is deleted.
+After observed closure, remainder-v1243-cache-retirement-rm0MSW/manifest.json
+qualifies1cache/0skipped and reclaims215846912tmpfs bytes. The remaining scratch
+archive /workspace/vida-functional-retention-rm0MSW-17cFZQ/archive.json passes
+full tar compare; original scratch remains. Postarchive durable3957436416 and
+tmpfs9250873344available exceed2147483648. No image, SDK, DB, original failure,
+log or shared dependency is deleted. Prior failure custody remains in the
+[published7aace49 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/7aace49bba0454014e2bd59a8339ff756dd768f1/.agent/work/core-runtime-reactivation/WORK.md#latest-failed-execution).
 
 ### Qualified digest-integrity and queued-peer packet
 
@@ -282,6 +286,57 @@ The changed test pin is refreshed once. Strict122/configured lint0 and the
 existing two-shard resource control pass1case/10assertions in
 remainder-v1243-controls-A4bjdx. Cases remain serial within each exact file;
 no shared dependency, process, timeout, resource or worker cap is changed.
+
+### Checked coverage and fixture-cost optimization packet
+
+Root grouped the retained gaps with three independent blind reader matrices:
+vida-stored-work-gap-batch-v1244.md, vida-producer-gap-batch-v1245.md and
+vida-lease-gap-batch-v1246.md. Their proposals are static, not visited counters.
+The producer reader disclosed an accidental broad mutable-root text read; its
+conclusions were then checked against the assigned immutable image. No worker
+wrote Source, ran checks or acquired Git/numeric authority.
+
+Remove six unused defaults from module-private checkedWork, assignmentIdentity
+and validateProgress. Their actual callers already supply those inputs; retain
+the class wrappers' defaults and make documentationContext explicitly accept
+undefined at the internal boundary. Narrow checkedStoredWork pending receipts
+to the three types its only forwarding caller already accepts. Initial-source
+and completed-report receipts retain ALL persisted-history handling. No public
+API, validator guard, check order or authority changes. Four top-level function
+IDs remain one-to-one: checkedWork, checkedStoredWork, assignmentIdentity and
+validateProgress. No callable retirement, exclusions, budget or baseline edits.
+The independent caller review is vida-host-private-contract-review-v1247.md.
+Removed private paths change denominators; they are not claimed as new visits.
+
+For the observed20s recovery failure, move actual peer admission after frontier
+preparation but before readonly preparation/writer issue. Both peer states still
+exist before recovery. Keep first before/after API snapshots, exact receipt
+lookups/retries and full fresh-reopen decoding. Replace three redundant post-retry
+or denial full decodes with exact current-connection Host/Journal/recovery and
+governance row equality. Reuse the already observed reopened Journal/version.
+All ticket, claim, history, rollback, expiry, FIFO and peer-file oracles remain.
+Add admission/frontier/peers/writer sub-timings to the existing timing record.
+Reviews: vida-recovery-fixture-cost-review-v1248.md and
+vida-recovery-fixture-cost-final-review-v1250.md.
+
+Strict TypeScript over149files and configured zero-warning lint pass. The five
+focused cases pass161assertions in23.30s: recovery-cost-v1249-J5bveg.
+Commit recovery takes10647.52ms, setup7157.59ms/body3383.06ms under unchanged20s.
+The failed full and successful focused runs have different concurrency/input;
+this proves the focused bound, not a controlled speedup or final numeric closure.
+
+Reuse the existing real producer case to close and reopen its bridge after an
+actual start, require identical engine/Journal state, and continue its existing
+refusal/report/resume checks. Current handle custody uses withProducerFixtureCustody
+and withInitialSourceCleanup, preserving failed roots and primary/cleanup errors.
+The final review vida-producer-reopen-final-review-v1252.md found an empty-array
+oracle risk; require nonempty initial operation rows and no row-count loss after
+resume. Strict149/lint0 and the strengthened exact case pass16assertions in2.37s
+(overall),1047.94ms case time: producer-rows-v1253-vtJJRo.
+Original producer-reopen-v1251-AtwMrA proof remains, with no repeated full suite.
+Numeric closure requires one new Source-bound SDK/image/stage for this whole packet.
+The changed test pin is refreshed once. Strict122/configured zero-warning lint
+and the existing two-file resource control pass in remainder-v1254-controls-Bs6Tcj.
 
 ### Next actions and unresolved prerequisites
 

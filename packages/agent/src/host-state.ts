@@ -2610,8 +2610,8 @@ type StoredWorkHistoryReadCache = Map<string, StoredWorkHistory> & {
 
 function checkedWork(
   value: unknown,
-  historicalBindings: ReadonlyMap<string, WorkState['binding']> = new Map(),
-  admissionHistory: ContinuationAdmissionHistory = { references: [], artifacts: [] },
+  historicalBindings: ReadonlyMap<string, WorkState['binding']>,
+  admissionHistory: ContinuationAdmissionHistory,
 ): WorkState {
   requireState(validateWork(value), 'work record must match current WorkState/v1');
   const work = value as WorkState,
@@ -3187,12 +3187,7 @@ function checkedStoredWork(
   database: Database,
   workspaceId: string,
   value: unknown,
-  pendingReceipt?:
-    | RuntimeCodeRebindReceipt
-    | DeliveredWorkContinuationReceipt
-    | FailedPrewriterRecoveryReceipt
-    | InitialSourceContinuationReceipt
-    | CompletedSourceReportRecoveryReceipt,
+  pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt | FailedPrewriterRecoveryReceipt,
   continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
   observeAdmissionHistory?: (history: ContinuationAdmissionHistory) => void,
   validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
@@ -3218,11 +3213,7 @@ function checkedStoredWork(
         ? { kind: 'failed-prewriter', receipt: pendingReceipt }
         : pendingReceipt.schema === 'VidaRuntimeCodeRebindAuthorization/v1'
           ? { kind: 'runtime', receipt: pendingReceipt }
-          : pendingReceipt.schema === 'InitialSourceContinuationReceipt/v1'
-            ? { kind: 'initial-source', receipt: pendingReceipt }
-            : pendingReceipt.schema === 'CompletedSourceReportRecoveryReceipt/v1'
-              ? { kind: 'completed-source-report-recovery', receipt: pendingReceipt }
-              : { kind: 'continuation', receipt: pendingReceipt },
+          : { kind: 'continuation', receipt: pendingReceipt },
     );
   }
   records.sort((a, b) => {
@@ -3833,8 +3824,8 @@ function assignmentIdentity(
   work: WorkState,
   stageId: string,
   assignmentIndex: number,
-  correctionGeneration = 0,
-  authority: ContractReference | null = null,
+  correctionGeneration: number,
+  authority: ContractReference | null,
 ): string {
   requireState(typeof work.execution.run_id === 'string' && work.execution.run_id.length > 0, 'run identity required');
   const base = canonicalJsonDigest({
@@ -4183,9 +4174,9 @@ function validateProgress(
   before: HostStateSnapshot,
   work: WorkState,
   ledger: CoordinationLedger,
-  documentationContext?: DocumentationVerificationContext,
-  taskSourceResourceAdditions: readonly string[] = [],
-  admissionHistory: readonly LifecycleArtifactReference[] = [],
+  documentationContext: DocumentationVerificationContext | undefined,
+  taskSourceResourceAdditions: readonly string[],
+  admissionHistory: readonly LifecycleArtifactReference[],
 ): void {
   requireState(
     work.revision === (before.work?.revision ?? 0) + 1 && ledger.revision === (before.ledger?.revision ?? 0) + 1,

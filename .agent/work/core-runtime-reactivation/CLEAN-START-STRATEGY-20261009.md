@@ -50,6 +50,9 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
 1. Reuse current retained inventory and the report-only zero-counter/geometry join.
    Check proposed prerequisites against actual producer/helper contracts before
    writing a test. Preserve navigation gaps; an added assertion is not coverage.
+   Review private optional routes against actual callers before adding fixtures.
+   A supported simplification preserves public and persisted-history acceptance;
+   report changed denominators separately from newly visited counters.
 2. Group supported success/refusal/retry/restoration checks around existing real
    fixtures. Keep exact native beforeimages, owned cleanup and failed-root retention.
    Prefer a small added read/control over duplicated workflow or CLI setup.

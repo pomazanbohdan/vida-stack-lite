@@ -6488,9 +6488,9 @@ test.each(['rollback', 'commit'] as const)(
           },
         });
         fixture = f;
+        const admittedAt = performance.now();
         if (performance.now() >= deadline)
           throw new Error('Completed Source report fixture setup exhausted its deadline');
-        const peers = admitDisjointInitialSourcePeers(f, mode === 'commit');
         setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
         clockHeld = true;
         const prepared = await prepareInitialSourceFrontier(f, 'writer');
@@ -6498,6 +6498,9 @@ test.each(['rollback', 'commit'] as const)(
           throw new Error('Completed Source report fixture preparation exhausted its deadline');
         expect(prepared.receipt.status).toBe('initial_request_ready');
         expect(prepared.journal.state.items.every((item) => item.issue_id === null)).toBe(true);
+        const preparedAt = performance.now();
+        const peers = admitDisjointInitialSourcePeers(f, mode === 'commit');
+        const peersReadyAt = performance.now();
         const readonlyPreparation = mode === 'rollback' ? completeReadonlyFixtureHostPreparation(f) : undefined;
         if (readonlyPreparation)
           expect(initialSourceState(f).work.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
@@ -6669,6 +6672,23 @@ test.each(['rollback', 'commit'] as const)(
           setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
           const receipt = host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent);
           const after = initialSourceState(f);
+          const persistedRows = () => {
+            const currentDb = initialSourceHostDatabase(f);
+            return {
+              ...readFixtureHostRows(currentDb),
+              receipts: currentDb
+                .query(
+                  'SELECT * FROM agent_host_completed_source_report_recovery ORDER BY workspace_id,work_id,attempt',
+                )
+                .all(),
+              governance: currentDb
+                .query<GovernanceSqlRow, []>(
+                  'SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key',
+                )
+                .all(),
+            };
+          };
+          const retainedRows = persistedRows();
           expect(receipt).toMatchObject({
             status: 'completed_report_recovered',
             source_write_rights: false,
@@ -6682,7 +6702,7 @@ test.each(['rollback', 'commit'] as const)(
           expect(after.work.binding.runtime_code_digest).toBe(controlledEndpoint.currentRuntimeCodeDigest);
           expect(after.work.binding.runtime_code_digest).not.toBe(before.work.binding.runtime_code_digest);
           expect(after.work.binding.work_source_revision).toBe(sourceBefore.digest);
-          expect(initialSourceJournal(f).state.source_scope?.digest).toBe(sourceAfter.digest);
+          expect(after.journal.source_scope?.digest).toBe(sourceAfter.digest);
           expect(
             after.work.execution.assignment_attempts.find((attempt) => attempt.attempt_id === issued.hostAttemptId),
           ).toMatchObject({
@@ -6701,26 +6721,27 @@ test.each(['rollback', 'commit'] as const)(
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 2)).toBeNull();
           expect(host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toEqual(receipt);
-          expect(initialSourceState(f)).toEqual(after);
+          expect(persistedRows()).toEqual(retainedRows);
           expect(() =>
             host.commitCompletedSourceReportRecovery(
               { ...recovery.request, nativeSessionHandle: recovery.request.nativeSessionHandle + '-foreign' },
               recovery.verifyCurrent,
             ),
           ).toThrow('completed Source report recovery exact retry differs');
-          expect(initialSourceState(f)).toEqual(after);
+          expect(persistedRows()).toEqual(retainedRows);
           await f.close();
           f.ledger = openConfiguredMastraSessionLedger(f.root);
           f.database = f.ledger.sessionProducerBinding().database;
           f.store = f.ledger.hostState;
           const reopened = initialSourceHostStore(f);
-          expect(initialSourceState(f)).toEqual(after);
+          const reopenedState = initialSourceState(f);
+          expect(reopenedState).toEqual(after);
           expect(reopened.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
           expect(reopened.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toEqual(
             receipt,
           );
-          expect(initialSourceState(f)).toEqual(after);
-          const acceptedJournal = initialSourceJournal(f);
+          expect(persistedRows()).toEqual(retainedRows);
+          const acceptedJournal = { state: reopenedState.journal, version: reopenedState.journalVersion };
           const expiredLease = requiredLease(after.work);
           setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
           const expiredRequest = {
@@ -6800,6 +6821,10 @@ test.each(['rollback', 'commit'] as const)(
             fixture: 'completed-source-report-host',
             mode,
             setup_ms: readyAt - started,
+            admission_ms: admittedAt - started,
+            frontier_ms: preparedAt - admittedAt,
+            peers_ms: peersReadyAt - preparedAt,
+            writer_ms: readyAt - peersReadyAt,
             body_ms: performance.now() - readyAt,
           }),
         );
@@ -10367,68 +10392,82 @@ test('session producer acquisition rejects stale CAS, maintenance and selection 
 
 test(
   'session producer settles real engine and journal and rejects invalid resume before reservation',
-  async () => {
-    const f = producerFixture();
-    const bridge = await MastraSessionBridge.open(f.args);
-    try {
-      const first = await bridge.start();
-      let journal = requiredSessionJournal(f.ledger);
-      expect(journal.state.run_id).toBe(first.run_id);
-      expect(journal.state.items.map((item) => clone(item.request))).toEqual(
-        first.requests.map((request) => clone(request)),
+  async () =>
+    withProducerFixtureCustody(async (f) => {
+      let current: MastraSessionBridge | undefined;
+      await withInitialSourceCleanup(
+        async () => {
+          let bridge = await MastraSessionBridge.open(f.args);
+          current = bridge;
+          const first = await bridge.start();
+          let journal = requiredSessionJournal(f.ledger);
+          expect(journal.state.run_id).toBe(first.run_id);
+          expect(journal.state.items.map((item) => clone(item.request))).toEqual(
+            first.requests.map((request) => clone(request)),
+          );
+          await bridge.close();
+          current = undefined;
+          bridge = await MastraSessionBridge.open(f.args);
+          current = bridge;
+          expect(await bridge.snapshot()).toEqual(first);
+          expect(requiredSessionJournal(f.ledger)).toEqual(journal);
+          const firstStepId = requiredValue(first.step_id, 'first producer step id');
+          expect(f.rows().every((row) => row.revision === 3 && parseJsonRecord(row.payload).status === 'applied')).toBe(
+            true,
+          );
+          const before = f.rows();
+          expect(before.length).toBeGreaterThan(0);
+          await Promise.resolve(expect(bridge.start()).rejects.toThrow(/already exists/));
+          await Promise.resolve(expect(bridge.resume('wave-foreign', [])).rejects.toThrow(/resume intent/));
+          await Promise.resolve(expect(bridge.resume(firstStepId, [])).rejects.toThrow(/resume intent/));
+          expect(f.rows()).toEqual(before);
+          journal = f.ledger.issueWave('producer', 1, journal.version);
+          for (const item of journal.state.items) {
+            const issueId = item.issue_id;
+            if (issueId === null) throw new Error('issued session journal item has no issue id');
+            const summary = 'Actual local fixture observation';
+            journal = f.ledger.report('producer', 1, journal.version, {
+              schema: 'VidaSessionObservation/v1',
+              action_id: item.request.action_id,
+              issue_id: issueId,
+              agent_id: 'fixture',
+              tool_call_ref: 'local:producer/observation',
+              status: 'reported_complete',
+              summary,
+              output_digest: canonicalJsonDigest(summary),
+              evidence_refs: ['local://fixture/observation'],
+            });
+          }
+          const observations = journal.state.items.map((item) =>
+            requiredValue(item.observation, 'reported session observation'),
+          );
+          await Promise.resolve(
+            expect(
+              bridge.resume(
+                firstStepId,
+                observations.map((item) => ({ ...item, agent_id: 'foreign' })),
+              ),
+            ).rejects.toThrow(/resume intent/),
+          );
+          expect(f.rows()).toEqual(before);
+          const next = await bridge.resume(firstStepId, observations);
+          expect(next.step_id).not.toBe(firstStepId);
+          expect(
+            firstOf(requiredSessionJournal(f.ledger).state.completed, 'completed session step').items.map(
+              (item) => item.observation,
+            ),
+          ).toEqual(observations);
+          expect(f.rows().length).toBeGreaterThanOrEqual(before.length);
+          expect(f.rows().every((row) => row.revision === 3 && parseJsonRecord(row.payload).status === 'applied')).toBe(
+            true,
+          );
+        },
+        async () => {
+          if (current) await current.close();
+        },
+        'Reopened session producer fixture',
       );
-      const firstStepId = requiredValue(first.step_id, 'first producer step id');
-      expect(f.rows().every((row) => row.revision === 3 && parseJsonRecord(row.payload).status === 'applied')).toBe(
-        true,
-      );
-      const before = f.rows();
-      await Promise.resolve(expect(bridge.start()).rejects.toThrow(/already exists/));
-      await Promise.resolve(expect(bridge.resume('wave-foreign', [])).rejects.toThrow(/resume intent/));
-      await Promise.resolve(expect(bridge.resume(firstStepId, [])).rejects.toThrow(/resume intent/));
-      expect(f.rows()).toEqual(before);
-      journal = f.ledger.issueWave('producer', 1, journal.version);
-      for (const item of journal.state.items) {
-        const issueId = item.issue_id;
-        if (issueId === null) throw new Error('issued session journal item has no issue id');
-        const summary = 'Actual local fixture observation';
-        journal = f.ledger.report('producer', 1, journal.version, {
-          schema: 'VidaSessionObservation/v1',
-          action_id: item.request.action_id,
-          issue_id: issueId,
-          agent_id: 'fixture',
-          tool_call_ref: 'local:producer/observation',
-          status: 'reported_complete',
-          summary,
-          output_digest: canonicalJsonDigest(summary),
-          evidence_refs: ['local://fixture/observation'],
-        });
-      }
-      const observations = journal.state.items.map((item) =>
-        requiredValue(item.observation, 'reported session observation'),
-      );
-      await Promise.resolve(
-        expect(
-          bridge.resume(
-            firstStepId,
-            observations.map((item) => ({ ...item, agent_id: 'foreign' })),
-          ),
-        ).rejects.toThrow(/resume intent/),
-      );
-      expect(f.rows()).toEqual(before);
-      const next = await bridge.resume(firstStepId, observations);
-      expect(next.step_id).not.toBe(firstStepId);
-      expect(
-        firstOf(requiredSessionJournal(f.ledger).state.completed, 'completed session step').items.map(
-          (item) => item.observation,
-        ),
-      ).toEqual(observations);
-      expect(f.rows().every((row) => row.revision === 3 && parseJsonRecord(row.payload).status === 'applied')).toBe(
-        true,
-      );
-    } finally {
-      await bridge.close();
-    }
-  },
+    }),
   { timeout: 30_000 },
 );
 
