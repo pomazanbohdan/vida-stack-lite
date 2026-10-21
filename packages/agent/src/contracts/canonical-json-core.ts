@@ -11,8 +11,8 @@ interface CanonicalBudget {
   capturedArrays?: unknown[][];
 }
 
-function reject(conditions: readonly boolean[], message: string): void {
-  if (conditions.some(Boolean)) throw new Error(message);
+function reject(condition: boolean, message: string): void {
+  if (condition) throw new Error(message);
 }
 function denseArrayIndex(key: string, length: number): boolean {
   const numeric = Number(key);
@@ -66,8 +66,11 @@ export function canonicalJsonImageWithNodeLimit(
   depth: number,
   maxNodes: number,
 ): { readonly image: unknown; readonly json: string } {
-  reject([!Number.isSafeInteger(depth), depth < 0, depth > MAX_CANONICAL_DEPTH], 'canonical JSON root depth invalid');
-  reject([!Number.isSafeInteger(maxNodes), maxNodes < 1], 'canonical JSON node limit invalid');
+  reject(
+    [!Number.isSafeInteger(depth), depth < 0, depth > MAX_CANONICAL_DEPTH].some(Boolean),
+    'canonical JSON root depth invalid',
+  );
+  reject([!Number.isSafeInteger(maxNodes), maxNodes < 1].some(Boolean), 'canonical JSON node limit invalid');
   const budget: CanonicalBudget = { nodes: 0, bytes: 0, capturedArrays: [] };
   const image = assertValue(value, '$', new WeakSet<object>(), depth, budget, maxNodes);
   const json = serializeCanonicalJson(image);
@@ -101,12 +104,12 @@ function assertValue(
   maxNodes: number,
 ): unknown {
   budget.nodes += 1;
-  reject([budget.nodes > maxNodes], `canonical JSON node budget exceeded at ${pointer}`);
-  reject([depth > MAX_CANONICAL_DEPTH], `canonical JSON depth budget exceeded at ${pointer}`);
+  reject(budget.nodes > maxNodes, `canonical JSON node budget exceeded at ${pointer}`);
+  reject(depth > MAX_CANONICAL_DEPTH, `canonical JSON depth budget exceeded at ${pointer}`);
   if (value === null || typeof value === 'boolean') return value;
   const kind = Array.isArray(value) ? 'array' : typeof value;
   const handler = canonicalValidators[kind];
-  reject([handler === undefined], `non-canonical JSON value at ${pointer}`);
+  reject(handler === undefined, `non-canonical JSON value at ${pointer}`);
   return handler!(value, pointer, seen, depth, budget, maxNodes);
 }
 
@@ -124,7 +127,7 @@ export function isCanonicalJsonNumber(value: unknown): value is number {
 }
 
 function canonicalNumber(value: unknown, pointer: string): unknown {
-  reject([!isCanonicalJsonNumber(value)], `non-canonical JSON number at ${pointer}`);
+  reject(!isCanonicalJsonNumber(value), `non-canonical JSON number at ${pointer}`);
   return value;
 }
 
@@ -137,7 +140,7 @@ function canonicalString(
   _maxNodes: number,
 ): unknown {
   budget.bytes += Buffer.byteLength(value as string, 'utf8');
-  reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${pointer}`);
+  reject(budget.bytes > MAX_CANONICAL_BYTES, `canonical JSON byte budget exceeded at ${pointer}`);
   return value;
 }
 
@@ -150,7 +153,7 @@ function canonicalArray(
   maxNodes: number,
 ): unknown {
   const target = value as unknown[];
-  reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
+  reject(seen.has(target), `cyclic JSON value at ${pointer}`);
   const { descriptors } = canonicalArrayEntries(target, pointer);
   seen.add(target);
   const image = new Array<unknown>(descriptors.length);
@@ -181,17 +184,17 @@ function canonicalArrayEntries(
   target: unknown[],
   pointer: string,
 ): { keys: string[]; descriptors: PropertyDescriptor[] } {
-  reject([Object.getPrototypeOf(target) !== Array.prototype], `non-canonical array prototype at ${pointer}`);
-  reject(
-    [hasUnsafeSerializationHook(target as unknown as Record<string, unknown>)],
-    `serialization hook at ${pointer}`,
-  );
+  reject(Object.getPrototypeOf(target) !== Array.prototype, `non-canonical array prototype at ${pointer}`);
+  reject(hasUnsafeSerializationHook(target as unknown as Record<string, unknown>), `serialization hook at ${pointer}`);
   const length = Object.getOwnPropertyDescriptor(target, 'length')?.value as number;
-  reject([!Number.isSafeInteger(length)], `non-canonical array length at ${pointer}`);
+  reject(!Number.isSafeInteger(length), `non-canonical array length at ${pointer}`);
   const ownKeys = Reflect.ownKeys(target);
-  reject([ownKeys.some((key) => arrayPropertyInvalid(key, length))], `non-canonical array property at ${pointer}`);
+  reject(
+    ownKeys.some((key) => arrayPropertyInvalid(key, length)),
+    `non-canonical array property at ${pointer}`,
+  );
   const elements = ownKeys.filter(arrayElementKey);
-  reject([elements.length !== length], `sparse array at ${pointer}`);
+  reject(elements.length !== length, `sparse array at ${pointer}`);
   // Validate every descriptor before any child is inspected; accessors never execute.
   const descriptors = new Array<PropertyDescriptor>(elements.length);
   for (const key of elements) descriptors[Number(key)] = canonicalDescriptor(target, key, `${pointer}[${key}]`);
@@ -201,7 +204,7 @@ function canonicalArrayEntries(
 function canonicalDescriptor(target: object, key: PropertyKey, pointer: string): PropertyDescriptor {
   const descriptor = Object.getOwnPropertyDescriptor(target, key);
   reject(
-    [!descriptor?.enumerable, descriptor?.get !== undefined, descriptor?.set !== undefined],
+    [!descriptor?.enumerable, descriptor?.get !== undefined, descriptor?.set !== undefined].some(Boolean),
     `non-canonical property descriptor at ${pointer}`,
   );
   return descriptor!;
@@ -216,17 +219,17 @@ function canonicalObject(
   maxNodes: number,
 ): unknown {
   const target = value as Record<string, unknown>;
-  reject([!isPlainRecord(target)], `non-canonical JSON object at ${pointer}`);
-  reject([hasUnsafeSerializationHook(target)], `serialization hook at ${pointer}`);
-  reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
+  reject(!isPlainRecord(target), `non-canonical JSON object at ${pointer}`);
+  reject(hasUnsafeSerializationHook(target), `serialization hook at ${pointer}`);
+  reject(seen.has(target), `cyclic JSON value at ${pointer}`);
   seen.add(target);
   const image = Object.create(null) as Record<string, unknown>;
   for (const key of Reflect.ownKeys(target)) {
-    reject([typeof key !== 'string'], `symbol property at ${pointer}`);
+    reject(typeof key !== 'string', `symbol property at ${pointer}`);
     const childPointer = `${pointer}.${String(key)}`;
     const descriptor = canonicalDescriptor(target, key, childPointer);
     budget.bytes += Buffer.byteLength(String(key), 'utf8');
-    reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${childPointer}`);
+    reject(budget.bytes > MAX_CANONICAL_BYTES, `canonical JSON byte budget exceeded at ${childPointer}`);
     image[key as string] = assertValue(descriptor.value, childPointer, seen, depth + 1, budget, maxNodes);
   }
   seen.delete(target);
@@ -251,16 +254,19 @@ export function canonicalJsonComponents(
 ): string {
   canonicalJsonAtDepth(null, depth);
   const array = Array.isArray(value);
-  reject([!array && !isPlainRecord(value)], 'canonical component envelope must be an object or array');
+  reject(!array && !isPlainRecord(value), 'canonical component envelope must be an object or array');
   const target = value as Record<string, unknown>;
-  reject([hasUnsafeSerializationHook(target)], 'serialization hook at component envelope');
+  reject(hasUnsafeSerializationHook(target), 'serialization hook at component envelope');
   let keys: string[];
   if (array) {
-    reject([value.length > byteLimit], 'component array exceeds its byte bound');
+    reject(value.length > byteLimit, 'component array exceeds its byte bound');
     keys = canonicalArrayKeys(value, '$');
   } else {
     const ownKeys = Reflect.ownKeys(target);
-    reject([ownKeys.some((key) => typeof key !== 'string')], 'symbol property at component envelope');
+    reject(
+      ownKeys.some((key) => typeof key !== 'string'),
+      'symbol property at component envelope',
+    );
     keys = (ownKeys as string[]).sort();
     for (const key of keys) canonicalDescriptor(target, key, '$.' + key);
   }
@@ -270,7 +276,7 @@ export function canonicalJsonComponents(
     const child = Object.getOwnPropertyDescriptor(target, key)!.value as unknown;
     const part = (array ? '' : JSON.stringify(key) + ':') + encode(child, depth + 1, key);
     bytes += Buffer.byteLength(part, 'utf8') + (parts.length ? 1 : 0);
-    reject([bytes > byteLimit], 'canonical component envelope exceeds its byte bound');
+    reject(bytes > byteLimit, 'canonical component envelope exceeds its byte bound');
     parts.push(part);
   }
   return (array ? '[' : '{') + parts.join(',') + (array ? ']' : '}');

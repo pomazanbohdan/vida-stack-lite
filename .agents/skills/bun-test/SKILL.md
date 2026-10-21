@@ -762,6 +762,12 @@ rejection behavior before its native caller. Do not remove fresh runtime or
 authority reads because their stacks repeat. Alternating micro comparisons with
 overlapping ranges or warmup drift do not establish end-to-end speedup; overlapping
 static checks likewise disqualify focused test times as performance comparisons.
+When a profile identifies a scalar guard that allocates a single-condition
+array per node, prefer its exact boolean expression. Preserve eager evaluation
+for multi-condition guards and retain complete descriptor/Proxy/limit controls.
+Check the owning contract suite before its native caller, then qualify the
+changed input through the existing complete contour stage. A cheaper expression
+or a faster focused observation alone does not close an earlier timeout.
 Upgrade/activation/output presence probes use the existing observer without memoizing live
 state; native controls must retain active-CAS denial and the unsupported-provider
 fallback. Never replace writer CAS or durability with this read-path optimization.

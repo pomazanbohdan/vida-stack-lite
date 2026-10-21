@@ -18,6 +18,11 @@ setup; stopped-source16PASS. Projection retains failed stage attempt1125 and WOR
 owns exact original custody. Do not replace the admitted4e41dcc counters with
 partial rows. Repair this setup/concurrency GAP before another complete stage;
 the passing fresh functional phase diagnostic is not instrumented qualification.
+The subsequent CPU profile identifies canonical guard allocation/traversal.
+The reviewed boolean-guard correction preserves all checks and passes the complete
+canonical regression selection plus both native recovery cases under20s. Form
+one matching SDK/image and validate this candidate through the next complete
+selected-contour stage. Its full numeric and timeout qualification remain pending.
 
 ## Work sequence
 

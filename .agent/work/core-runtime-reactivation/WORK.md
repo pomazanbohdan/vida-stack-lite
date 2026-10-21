@@ -12,6 +12,38 @@ remain deferred; their budgets and acceptance rules are unchanged.
 
 ### Current three-hour audit and migration preflight correction
 
+The current timeout repair candidate follows the observed native CPU profile,
+not removal of real lineage/freshness reads. Published Source36c3264 keeps the
+TaskSource predecessor correction. One separately labeled CPU diagnostic passes
+the completed-report commit case1/50 in16293.47ms, setup10474.219546ms and
+body5726.397001ms. Its nonempty raw stacks/functions are retained under
+`completed-source-cpu-profile-v1133-rmYNnC`. The13486sample function view includes
+stringify1183, canonicalObject858, some817, assertValue742 and descriptor730.
+The raw Source ID43 maps to `src/contracts/canonical-json-core.ts`; sampled
+CPU attribution is not invocation counts or an end-to-end timing benchmark.
+
+Canonical scalar guards allocate one-element arrays and traverse them with
+`.some(Boolean)` on each node/property. The private guard now accepts a boolean;
+single-condition callers pass their exact expression. The three multi-condition
+callers retain their full eager arrays and `.some(Boolean)` at the call site,
+preserving evaluation and rejection order. No freshness read, descriptor check,
+serializer boundary, node/depth/byte limit or error text is removed. No callable
+or frozen allowance moves. Blind independent current-byte review finds no
+counterexample; retained review is `review.md` in the scalar-guard caller controls.
+Core strict3-file/lint pass and the complete canonical contract selection passes
+16/160assertions in89ms, including Proxy, descriptor/toJSON, cycle/shared-reference
+and finite-budget controls in `canonical-single-guard-v1134-BR3VAv`.
+
+Both affected Host recovery cases pass2/86assertions under their unchanged20s
+limits in `completed-source-scalar-guard-v1134-FYJTj4`: commit10765.70ms with
+setup7319.416985ms/body3373.910519ms; rollback10401.58ms with
+setup8350.526868ms/body1948.668072ms. Different diagnostic instrumentation and a
+single observation do not prove a statistical speedup. This is a concrete
+allocation/traversal reduction with healthy native callers; complete matching
+instrumented-stage qualification is still required. Original9d1c200 timeout,
+failed stage1125 and its protected custody remain unchanged. Do not declare the
+contour closed or replace the last admitted4e41dcc counters before that stage.
+
 The next checked Source packet removes a confirmed repeated TaskSource
 predecessor lookup: all three callers already resolve a non-null predecessor
 from the same snapshot/request before checking canonical Work reconstruction.

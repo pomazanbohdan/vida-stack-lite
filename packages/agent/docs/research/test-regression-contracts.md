@@ -261,6 +261,12 @@ Check source, extracted and unrelated-working-directory routes where applicable.
 Check YAML schema, project identity, integration mapping, storage and safe references. Deny literal credentials and unsafe paths. A repair-validated configuration remains unbranded. Ordinary current context must use a loader-owned, root-bound configuration.
 
 Check canonical JSON wire equivalence and legal shared references. Deny getters, descriptors, prototypes, `toJSON`, cycles and malformed limits. Preserve finite node, depth and byte bounds. Cache digests only for loader-owned deeply frozen values. Recheck inherited serialization hooks on every read. New YAML or mutable caller data needs fresh validation.
+Scalar guard simplifications preserve exact rejection messages and expression
+evaluation. Keep multiple conditions eager and ordered where the original guard
+evaluates a complete array; do not substitute short-circuit operators without a
+separate equivalence proof. Run the complete canonical contract selection and
+the affected native caller. Reduced allocations or sampled hot frames alone do
+not establish end-to-end speedup, timeout repair or coverage qualification.
 
 Captured object images retain a null prototype and ordinary writable, enumerable,
 configurable data properties. Exercise `__proto__`, `constructor` and non-callable
