@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { contourAttempts, mergeContourProgress, contourStageInputOutcome } from '../tooling/contour-progress.ts';
 import { runContourProgressWithNative } from '../tooling/contour-progress-cli.ts';
-import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
+import { executeMutationCommand, type MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { CampaignResourceError } from '../tooling/contour-campaign.ts';
 
@@ -343,6 +343,56 @@ test('canonical output cannot write through direct or nested symlinks into the m
     expect(contourStageOutput(repository, output)).toBe(output);
     for (const denied of [repository, path.join(repository, 'nested'), alias, path.join(alias, 'nested'), 'relative'])
       expect(() => contourStageOutput(repository, denied)).toThrow();
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true });
+  }
+});
+
+test.each([
+  ['missing formation', false, false],
+  ['file formation', true, false],
+  ['missing reuse', false, true],
+  ['file reuse', true, true],
+] as const)('stage rejects %s output before accessing SDK or image inputs', async (_name, fileOutput, reuse) => {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-output-preflight-'));
+  const output = path.join(root, 'invalid-output');
+  const archive = path.join(root, 'must-not-read-sdk.zip');
+  const manifest = path.join(root, 'must-not-read-image.json');
+  if (fileOutput) writeFileSync(output, 'not a directory\n');
+  let passed = false;
+  try {
+    const result = await executeMutationCommand(
+      [
+        process.execPath,
+        'tooling/contour-stage.ts',
+        '--contour',
+        'bun-host-state',
+        '--lane',
+        'coverage',
+        '--output',
+        output,
+        ...(reuse ? ['--image-manifest', manifest, '--image-sha256', 'a'.repeat(64)] : []),
+      ],
+      path.resolve(import.meta.dir, '..'),
+      3000,
+      {
+        env: { ...process.env, VIDA_SDK_TEST_INPUT_ARCHIVE: archive },
+        stdoutFile: path.join(root, 'stdout.log'),
+        stderrFile: path.join(root, 'stderr.log'),
+        outputByteLimit: 64 * 1024,
+      },
+    );
+    expect(result).toMatchObject({ exitCode: 1, signal: null, spawnError: null, timedOut: false });
+    expect(result.output_capture?.complete).toBe(true);
+    expect(result.processCustody?.terminationObserved).toBe(true);
+    const stderr = readFileSync(path.join(root, 'stderr.log'), 'utf8');
+    expect(stderr).toContain(fileOutput ? 'Canonical output must be an existing directory.' : output);
+    expect(stderr).not.toContain(archive);
+    expect(stderr).not.toContain(manifest);
+    expect(readFileSync(path.join(root, 'stdout.log'), 'utf8')).toBe('');
+    if (fileOutput) expect(readFileSync(output, 'utf8')).toBe('not a directory\n');
+    else expect(existsSync(output)).toBe(false);
     passed = true;
   } finally {
     if (passed) rmSync(root, { recursive: true });

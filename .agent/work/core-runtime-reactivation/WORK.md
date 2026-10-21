@@ -36,15 +36,38 @@ Batching reviewed changes, static checks and affected named cases before one
 complete selected-contour stage is the chosen sequence. Independent read-only
 study can overlap Source repair, while multiple writers or numeric producers
 would add input/resource contention without measured benefit. No parallel
-coverage or speedup is claimed. Blind1454 checks the script/execution seams;
-Root remains the only writer and final numeric owner.
+coverage or speedup is claimed. Blind1454 confirms one script sequencing defect:
+missing/non-directory output is checked only after SDK readiness and image
+formation. The original CLI refusal reaches the deliberately missing SDK instead
+of the invalid output. Root moves directory preflight before that work, reuses its
+canonical path and retains physical revalidation plus image-containment admission
+after the asynchronous preparation. This second read protects freshness; it is
+not a redundant scan. Existing contourStageOutput callers keep their contract.
+1457 passes tooling133/test135 strict, both lints0 and the stage controller's
+18cases/199assertions1175ms, including four real CLI refusals across formation/reuse
+and missing/file outputs, plus the existing direct/nested symlink control.
+DIAG/output-preflight-v1457-Qr3q2m retains original RED and independent static/test
+logs; DIAG/vida-test-execution-audit-v1454.md retains the audit. No new capture or
+publication defect was confirmed. Root remains the only writer/final numeric owner.
+Independent1458 approves the current preflight, post-await revalidation, image
+containment and four CLI controls. Its report is retained in
+DIAG/vida-output-preflight-review-v1458.md. It could not locate the shorthand RED
+path; Root separately read the original1457 log at its full DIAG path above.
 
 The audit's single filesystem observation records checkout/durable evidence on
 the same overlay with2442104832bytes available, and scratch/dev/shm with
 8934051840bytes. Both exceed the unchanged2147483648byte floor. Reuse the existing
 retention inventories; the next launch still performs its required fresh admission.
 No unknown/shared path or protected receipt, SDK, image, database or failed root
-is removed. The retained scratch cache has not been newly qualified for retirement.
+is removed. A later bounded1459 qualification reuses the retained dependency
+inventory and verifies native terminal/group/capture, exact private cache identity,
+no active consumer and no retained symlink dependency. It retires only
+/dev/shm/vida-quality-retained-87AHkZ/scratch-2bnsf5/scratch/bun-install-cache.
+DIAG/remainder-v1459-cache-retirement-DfKEwa/manifest.json and exclusive events
+retain the exact15243-entry classification and before/after capacity. Observed
+scratch gain is215846912bytes; durable change is-4096bytes, not a durable gain.
+Post-retirement durable2440593408/scratch9149898752bytes remain above the same
+floor. All non-cache originals and the verified durable scratch archive remain.
 
 ### Current negative-edge repair packet
 

@@ -2306,7 +2306,10 @@ bun run test:contour:stage --contour bun-service-operation-custody --lane mutati
 
 Root alone runs this controller and serializes publication. `--output` must be an
 existing canonical directory outside the measured checkout; its existing JSON is
-merged automatically. `--snapshot <JSON>` optionally supplies an additional explicit
+merged automatically. Reject missing or non-directory output before SDK readiness
+or image formation/reuse. Revalidate the canonical directory after asynchronous
+preparation and check containment against the measured image, not live Source.
+`--snapshot <JSON>` optionally supplies an additional explicit
 snapshot. The controller retains launch and terminal process/capture receipts,
 checks unchanged boot/commit/clean inputs, then imports the exact structured
 producer report location through the existing CLI. Coverage always imports its

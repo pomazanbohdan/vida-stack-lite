@@ -170,10 +170,15 @@ export function contourStageReportArguments(lane: Lane, stdout: string, coverage
   return [lane === 'coverage' ? '--coverage-run' : lane === 'mutation' ? '--native-report' : '--report', reports[0]!];
 }
 
-export function contourStageOutput(repository: string, output: string): string {
+function canonicalStageOutputDirectory(output: string): string {
   if (!path.isAbsolute(output)) throw new Error('Canonical output must be absolute.');
   const canonical = realpathSync(output);
   if (!statSync(canonical).isDirectory()) throw new Error('Canonical output must be an existing directory.');
+  return canonical;
+}
+
+export function contourStageOutput(repository: string, output: string): string {
+  const canonical = canonicalStageOutputDirectory(output);
   const relative = path.relative(realpathSync(repository), canonical);
   if (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep))
     throw new Error('Canonical output must be outside the immutable measured checkout.');
@@ -293,8 +298,9 @@ async function main(): Promise<void> {
     lane === 'coverage' ? 'coverage' : lane === 'crap-applicability' ? lane : frozen ? 'frozen-crap' : 'mutation';
   const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const repository = realpathSync(path.resolve(packageRoot, '../..'));
+  const canonicalOutput = canonicalStageOutputDirectory(values.output);
   const image = await stageExecutionImage(packageRoot, repository, partition, values);
-  const output = contourStageOutput(image.repository, values.output);
+  const output = contourStageOutput(image.repository, canonicalOutput);
   const commit = image.source_commit;
   const boot = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
   const directory = mkdtempSync(path.join(path.dirname(repository), 'contour-stage-'));
