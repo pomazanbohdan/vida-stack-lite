@@ -547,8 +547,8 @@ The existing assured ReleaseBatch Host-CAS fixture covers accepted, feedback and
 rejected decisions with distinct native case names. Preserve its actual frozen
 contour and assurance operation; first persist the ready batch, then retain it
 unchanged through a benign paired CAS. Acceptance releases the ticket; feedback
-and rejection queue its full exclusive resource set. All decisions remove active
-claim resources and expiry. Refuse a terminal batch on insertion, absent assurance,
+and rejection queue its full exclusive resource set. All decisions clear ticket
+expiry and active claim resources. Refuse a terminal batch on insertion, absent assurance,
 and a decision without its matching ticket transition. Preserve exact Host rows,
 Journal-table absence and governance on denial and stale retry; compare the full
 successful Work/Ledger and decoded Host. This fixture never creates a Journal or

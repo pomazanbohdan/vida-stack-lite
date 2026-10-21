@@ -69,7 +69,7 @@ du/scan/hash or cleanup competing with numeric/build/install operations.
 
 ### Measured packets and regression custody
 
-The completeb934fab run above includes prepared-peer and adverse-ledger
+The earlier completeb934fab run includes prepared-peer and adverse-ledger
 controls, corrupt repair Journal refusals, migration body/close error custody,
 corrective artifact retries and unavailable-generation refusals, and non-target
 completed-report history. Source guards, accepted Journal requirements,
@@ -249,7 +249,7 @@ Host. Valid corrective-context repair admission remains a separate fixture GAP;
 the negative decoder control does not claim it. The exact changed test pin is
 refreshed once; strict122/configured lint0 and the existing two-shard resource
 control pass in remainder-v1237-controls-SlUENV.
-The completeb934fab stage above now confirms2additional statements and2arms
+The earlier completeb934fab stage confirms2additional statements and2arms
 with unchanged production denominators: S5296/5305 and B5470/5636. F/L stay100.
 Both children pass; the exact failed-wave and terminal cases take2318.90ms and
 4281.37ms. The report-only join runs once, with no new AST/Source scan/hash.
@@ -287,8 +287,9 @@ requirement; no generic cleanup owner or evidence gate is weakened.
 After the causal Journal-oracle correction, strict149/configured lint0 and only
 the changed execution-only case pass13assertions,2.10s overall/208.11ms case:
 progress-journal-v1242-3Pt4lt. Already passing restoration cases are not repeated.
-Numeric visits remain pending one complete bound stage. Previous measured images
-and all original SDK/receipts/FAIL logs remain unchanged.
+The complete58d309d stage subsequently includes both restoration modes and the
+execution-only progress case; the latest526ca2e stage retains those proofs.
+Previous measured images and all original SDK/receipts/FAIL logs remain unchanged.
 The changed test pin is refreshed once. Strict122/configured lint0 and the
 existing two-shard resource control pass1case/10assertions in
 remainder-v1243-controls-A4bjdx. Cases remain serial within each exact file;
@@ -341,7 +342,9 @@ oracle risk; require nonempty initial operation rows and no row-count loss after
 resume. Strict149/lint0 and the strengthened exact case pass16assertions in2.37s
 (overall),1047.94ms case time: producer-rows-v1253-vtJJRo.
 Original producer-reopen-v1251-AtwMrA proof remains, with no repeated full suite.
-Numeric closure requires one new Source-bound SDK/image/stage for this whole packet.
+The complete58d309d and526ca2e stages subsequently execute this whole packet
+without failure. Exact S/B closure remains open in the current gap list; a
+successful reopen is not evidence for every producer-context alternative.
 The changed test pin is refreshed once. Strict122/configured zero-warning lint
 and the existing two-file resource control pass in remainder-v1254-controls-Bs6Tcj.
 
