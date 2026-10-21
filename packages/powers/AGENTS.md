@@ -99,6 +99,9 @@ bun run --cwd packages/agent lint:knip:pinned
 
 # Donor manifest (scratch tool in .tmp, ignored by Git)
 bun packages/powers/scripts/validate-donors.ts
+
+# Corpus audit (read-only reports over the corpus)
+bun packages/powers/scripts/audit.ts <map|pairs|fidelity|specs> [--limit <n>] [--offset <n>] [--filter <text>] [--summary] [--all] [--json] [--out <file>]
 ```
 
 > Invocation form: `bun run --cwd <dir> <script>`. The variant `bun --cwd <dir> run <script>`
@@ -127,7 +130,7 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | `corpus-map.json` | corpus processing map: donor + file → converted/split/merged/rejected | D |
 | `skills/vp-mode/`, `skills/vp-setup/` | Skills (orchestration, setup) together with their `scripts/` — catalog and setup tooling; shipped in the plugin | C, D, E |
 | `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | Per-host plugin and marketplace manifests | E |
-| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts` | C, D |
+| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts` | C, D |
 | `skills/*/scripts/` | Tooling shipped in the skills (catalog, setup) | C, D, E |
 | `tests/` | Tests of the VP harness | A–F |
 | `donors.yaml` | Donor manifest: exact revisions, licenses, counters | existing |

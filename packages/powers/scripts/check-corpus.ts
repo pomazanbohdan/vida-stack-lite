@@ -28,8 +28,8 @@ function listMarkdown(path: string, issues: CorpusIssue[]): string[] {
   }
 }
 
-function checkSchema(value: unknown, path: string, issues: CorpusIssue[], label: string, details?: Record<string, unknown>): void {
-  const errors = validateAgainstSchema(value, readJson(path) as Schema);
+function checkSchema(value: unknown, schema: Schema, issues: CorpusIssue[], label: string, details?: Record<string, unknown>): void {
+  const errors = validateAgainstSchema(value, schema);
   if (errors.length > 0) issue(issues, `${label}_SCHEMA_INVALID`, `${label} schema validation failed: ${errors.join('; ')}`, { ...details, errors });
 }
 
@@ -60,17 +60,18 @@ function readCorpusJson(root: string, name: string, issues: CorpusIssue[], code:
   return {};
 }
 
-function readInstruction(path: string, file: string, issues: CorpusIssue[]): Dict | undefined {
-  try { return parseFrontmatter(readFileSync(path, 'utf8')).data; }
+function readInstruction(path: string, file: string, issues: CorpusIssue[], bytes?: string): Dict | undefined {
+  try { return parseFrontmatter(bytes ?? readFileSync(path, 'utf8')).data; }
   catch (error) {
     issue(issues, 'CORPUS_FRONTMATTER_INVALID', `instruction ${file} cannot be read or has invalid frontmatter: ${String(error)}`, { path });
     return undefined;
   }
 }
 
-function validateManifestPaths(base: string, entries: Dict[], files: string[], issues: CorpusIssue[]): Set<string> {
+function validateManifestPaths(base: string, entries: Dict[], files: string[], issues: CorpusIssue[]): Map<string, string> {
   const instructionRoot = join(base, 'instructions');
   const diskPaths = new Set<string>();
+  const bytesByFile = new Map<string, string>();
   for (const entry of entries) {
     const entryId = typeof entry.instruction_id === 'string' ? entry.instruction_id : String(entry.instruction_id);
     const rel = typeof entry.path === 'string' ? entry.path : '';
@@ -82,15 +83,17 @@ function validateManifestPaths(base: string, entries: Dict[], files: string[], i
     try {
       const stat = statSync(absolute);
       if (!stat.isFile()) { issue(issues, 'CORPUS_PATH_INVALID', `manifest entry ${entryId} path ${rel} is not a regular file`, { instruction_id: entryId, path: rel }); continue; }
-      const digest = createHash('sha256').update(readFileSync(absolute)).digest('hex');
+      const bytes = readFileSync(absolute);
+      const digest = createHash('sha256').update(bytes).digest('hex');
       if (digest !== entry.sha256) issue(issues, 'CORPUS_DIGEST_MISMATCH', `instruction ${entryId} at ${rel} sha256 does not match catalog.json`, { instruction_id: entryId, path: rel, expected: entry.sha256, actual: digest });
+      bytesByFile.set(fileName, bytes.toString('utf8'));
     } catch (error) {
       if (isRecord(error) && error.code === 'ENOENT') issue(issues, 'CORPUS_MANIFEST_FILE_MISSING', `manifest entry ${entryId} lists missing path ${rel}`, { instruction_id: entryId, path: rel });
       else issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect manifest path ${rel} for ${entryId}: ${String(error)}`, { instruction_id: entryId, path: rel });
     }
   }
   for (const file of files) if (!diskPaths.has(file)) issue(issues, 'CORPUS_FILE_UNMANIFESTED', `instruction file instructions/${file} has no manifest entry`, { path: `instructions/${file}` });
-  return diskPaths;
+  return bytesByFile;
 }
 
 function checkDictionary(catalog: Dict, issues: CorpusIssue[]): { dictionary: Dict; aliases: Dict; exemptions: Dict[] } {
@@ -125,7 +128,9 @@ function checkInstructionTags(id: string, front: Dict, dictionary: Dict, aliases
   }
 }
 
-function checkProvenance(id: string, front: Dict, donors: DonorSet, seenSources: Set<string>, issues: CorpusIssue[]): void {
+type DonorRoots = { cloneRoot: string; contentRoot: string };
+
+function checkProvenance(id: string, front: Dict, donors: DonorSet, seenSources: Set<string>, issues: CorpusIssue[], donorRoots: Map<string, DonorRoots>, regularSources: Set<string>): void {
   const raw = Array.isArray(front.provenance) ? front.provenance : [];
   const sources = raw.map((value) => {
     if (isRecord(value)) return value;
@@ -143,22 +148,40 @@ function checkProvenance(id: string, front: Dict, donors: DonorSet, seenSources:
     seenSources.add(key);
     if (donor === undefined) { issue(issues, 'CORPUS_PROVENANCE_MISMATCH', `instruction ${id} references unknown donor ${donorId}`, { instruction_id: id, donor: donorId }); continue; }
     if (source.license !== donor.license || source.revision !== donor.head_sha) issue(issues, 'CORPUS_PROVENANCE_MISMATCH', `instruction ${id} donor ${donorId} license or revision does not match donors.yaml`, { instruction_id: id, donor: donorId, path: sourcePath });
-    const cloneRoot = resolve(donors.localRoot, String(donor.local_path ?? ''));
-    const contentRoot = resolve(cloneRoot, String(donor.content_path ?? ''));
-    let cloneAvailable = false;
-    try { cloneAvailable = statSync(cloneRoot).isDirectory(); } catch (error) {
-      if (!(isRecord(error) && error.code === 'ENOENT')) issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect donor clone ${cloneRoot}: ${String(error)}`, { donor: donorId, path: cloneRoot });
+    // The clone root and the content root of a donor do not change during one
+    // validation run, so a donor that is present is inspected once and reused.
+    // A donor that is missing or broken is inspected per entry, so that every
+    // entry that names it reports the same defect as before.
+    let cloneRoot: string;
+    let contentRoot: string;
+    const cached = donorRoots.get(donorId);
+    if (cached !== undefined) {
+      cloneRoot = cached.cloneRoot;
+      contentRoot = cached.contentRoot;
+    } else {
+      cloneRoot = resolve(donors.localRoot, String(donor.local_path ?? ''));
+      contentRoot = resolve(cloneRoot, String(donor.content_path ?? ''));
+      let cloneAvailable = false;
+      try { cloneAvailable = statSync(cloneRoot).isDirectory(); } catch (error) {
+        if (!(isRecord(error) && error.code === 'ENOENT')) issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect donor clone ${cloneRoot}: ${String(error)}`, { donor: donorId, path: cloneRoot });
+      }
+      if (!cloneAvailable) { issue(issues, 'CORPUS_CLONE_MISSING', `pinned clone for donor ${donorId} is unavailable at ${cloneRoot}`, { donor: donorId, path: cloneRoot }); continue; }
+      let contentAvailable = false;
+      try { contentAvailable = statSync(contentRoot).isDirectory(); } catch (error) {
+        if (!(isRecord(error) && error.code === 'ENOENT')) issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect donor content root ${contentRoot}: ${String(error)}`, { donor: donorId, path: contentRoot });
+      }
+      if (!contentAvailable) { issue(issues, 'CORPUS_CLONE_MISSING', `pinned clone content for donor ${donorId} is unavailable at ${contentRoot}`, { donor: donorId, path: contentRoot }); continue; }
+      donorRoots.set(donorId, { cloneRoot, contentRoot });
     }
-    if (!cloneAvailable) { issue(issues, 'CORPUS_CLONE_MISSING', `pinned clone for donor ${donorId} is unavailable at ${cloneRoot}`, { donor: donorId, path: cloneRoot }); continue; }
-    let contentAvailable = false;
-    try { contentAvailable = statSync(contentRoot).isDirectory(); } catch (error) {
-      if (!(isRecord(error) && error.code === 'ENOENT')) issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect donor content root ${contentRoot}: ${String(error)}`, { donor: donorId, path: contentRoot });
-    }
-    if (!contentAvailable) { issue(issues, 'CORPUS_CLONE_MISSING', `pinned clone content for donor ${donorId} is unavailable at ${contentRoot}`, { donor: donorId, path: contentRoot }); continue; }
     const sourceFile = resolve(contentRoot, sourcePath);
     if (sourceFile === contentRoot || !sourceFile.startsWith(`${contentRoot}${sep}`)) { issue(issues, 'CORPUS_PROVENANCE_PATH_INVALID', `instruction ${id} donor path ${sourcePath} escapes pinned clone ${donorId}`, { instruction_id: id, donor: donorId, path: sourcePath }); continue; }
+    // The same donor file is cited by many instructions; a file that is present
+    // and regular is inspected once.
+    const sourceKey = `${donorId}::${sourcePath}`;
+    if (regularSources.has(sourceKey)) continue;
     try {
       if (!statSync(sourceFile).isFile()) issue(issues, 'CORPUS_PROVENANCE_PATH_INVALID', `instruction ${id} donor path ${donorId}:${sourcePath} is not a regular file`, { instruction_id: id, donor: donorId, path: sourcePath });
+      else regularSources.add(sourceKey);
     } catch (error) {
       if (isRecord(error) && error.code === 'ENOENT') issue(issues, 'CORPUS_PROVENANCE_PATH_MISSING', `instruction ${id} source ${donorId}:${sourcePath} does not exist in the pinned clone`, { instruction_id: id, donor: donorId, path: sourcePath });
       else issue(issues, 'CORPUS_FILESYSTEM_ERROR', `cannot inspect donor path ${donorId}:${sourcePath}: ${String(error)}`, { instruction_id: id, donor: donorId, path: sourcePath });
@@ -267,12 +290,15 @@ function checkMethodologyProfile(base: string, catalog: Dict, instructionIds: Se
 function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   const catalog = readCorpusJson(base, 'catalog.json', issues, 'CORPUS_MANIFEST_INVALID');
   const map = readCorpusJson(base, 'corpus-map.json', issues, 'CORPUS_MAP_INCONSISTENT');
-  checkSchema(catalog, join(packageRoot, 'config/vpcatalog.v1.schema.json'), issues, 'CORPUS_MANIFEST');
-  checkSchema(map, join(packageRoot, 'config/vpcorpusmap.v1.schema.json'), issues, 'CORPUS_MAP');
+  const catalogSchema = readJson(join(packageRoot, 'config/vpcatalog.v1.schema.json')) as Schema;
+  const mapSchema = readJson(join(packageRoot, 'config/vpcorpusmap.v1.schema.json')) as Schema;
+  const instructionSchema = readJson(join(packageRoot, 'config/vpinstruction.v1.schema.json')) as Schema;
+  checkSchema(catalog, catalogSchema, issues, 'CORPUS_MANIFEST');
+  checkSchema(map, mapSchema, issues, 'CORPUS_MAP');
   const donorSet = readDonors(base, issues);
   const entries = Array.isArray(catalog.instructions) ? catalog.instructions.filter(isRecord) : [];
   const files = listMarkdown(join(base, 'instructions'), issues);
-  validateManifestPaths(base, entries, files, issues);
+  const instructionBytes = validateManifestPaths(base, entries, files, issues);
   const manifestIds = new Set<string>();
   const entryIdsByFile = new Map<string, string>();
   for (const entry of entries) {
@@ -295,19 +321,21 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   }
   const instructionIds = new Set<string>();
   const frontmatterById = new Map<string, Dict>();
+  const donorRoots = new Map<string, DonorRoots>();
+  const regularSources = new Set<string>();
   for (const file of files) {
-    const path = join(base, 'instructions', file); const front = readInstruction(path, file, issues);
+    const path = join(base, 'instructions', file); const front = readInstruction(path, file, issues, instructionBytes.get(file));
     if (front === undefined) continue;
     const filename = file.slice(0, -3); const id = typeof front.instruction_id === 'string' ? front.instruction_id : '';
     if (id !== filename) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `frontmatter instruction_id ${id} does not match file basename ${filename}`, { instruction_id: id, filename, path: `instructions/${file}` });
     if (instructionIds.has(filename)) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `duplicate instruction identity ${filename}`, { filename });
     instructionIds.add(filename); frontmatterById.set(filename, front);
-    checkSchema(front, join(packageRoot, 'config/vpinstruction.v1.schema.json'), issues, 'CORPUS_INSTRUCTION', { instruction_id: filename });
+    checkSchema(front, instructionSchema, issues, 'CORPUS_INSTRUCTION', { instruction_id: filename });
     checkInstructionTags(filename, front, dictionary, aliases, exemptions, issues);
     if (front.artifact_contract_output_type !== 'none' && (typeof front.artifact_contract_verified_by !== 'string' || front.artifact_contract_verified_by.trim() === '')) issue(issues, 'CORPUS_ARTIFACT_CONTRACT_INVALID', `instruction ${filename} requires artifact_contract_verified_by`, { instruction_id: filename });
     if (front.artifact_contract_output_type === 'none' && stringArray(front.artifact_contract_required_data).length > 0) issue(issues, 'CORPUS_ARTIFACT_CONTRACT_INVALID', `guidance instruction ${filename} must have empty artifact_contract_required_data`, { instruction_id: filename });
     const seenSources = new Set<string>();
-    checkProvenance(filename, front, donorSet, seenSources, issues);
+    checkProvenance(filename, front, donorSet, seenSources, issues, donorRoots, regularSources);
   }
   for (const [id, front] of frontmatterById) {
     for (const field of ['compatibility_requires', 'compatibility_excludes']) for (const ref of stringArray(front[field])) {

@@ -187,7 +187,7 @@ packages/powers/
   instructions/                 canonical instructions: .md + metadata, flat
   skills/                       vp-mode, vp-setup (+ their scripts/)
   .codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/   per-host manifests
-  scripts/                      product support: check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts
+  scripts/                      product support: check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts, audit.ts
   catalog.json                  catalog identity, tag vocabulary, aliases, corpus listing with sha256
   corpus-map.json               processing map: donor + file → converted/split/merged/rejected
   tests/                        harness tests
@@ -218,6 +218,13 @@ relations to other Work Items; evidence — as separate records.
 `bun tooling/agent/check-documentation.ts <explicit list of .md files>` (a directory instead of
 a list selects one document and makes the check empty), `bun run --cwd
 packages/powers test`, `bun run --cwd packages/powers test:coverage`.
+
+**Audit the corpus** — `bun packages/powers/scripts/audit.ts <map|pairs|fidelity|specs>`.
+The command is read-only and prints the counters of the report and the first rows
+of every section; `--limit <n>`, `--offset <n>` and `--filter <text>` choose the
+rows, `--summary` prints the counters only, `--all` prints every row, and
+`--out <file>` writes the whole report to a file and leaves the terminal with the
+counters. `--json` emits the report as JSON.
 
 ## 11. Roadmap
 
