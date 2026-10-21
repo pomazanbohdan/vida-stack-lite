@@ -57,6 +57,14 @@ retry lease through the public producer. A released ticket observed after the
 report does not show which ticket was current when that report was accepted.
 For a pre-report refusal, stop an opt-in fixture at that verified boundary instead
 of preparing unrelated later workflow stages; preserve normal failure retention.
+For a stored-history refusal beyond the generic Work validator, start with real
+different-slot attempts and change only the intended fixture row. Preserve the
+actual report reservation and observation. Keep corrupted-input evidence distinct
+from a genuine producer; do not add invented accepted attempts to reach a guard.
+Reuse the row-corruption owner for original, denied and restored Host/Journal
+beforeimages, revision/digest CAS restoration and preservation of body/cleanup
+errors. After restoration, accept the unchanged original report as the positive
+control. Keep retry evidence paths exclusive across all slots in the same fixture.
 After moving proof setup between cases, check the next report for lost closure
 and branch visits even when every case passes. Preserve required queued/active
 states in compatible existing cases and keep their original per-case bounds.

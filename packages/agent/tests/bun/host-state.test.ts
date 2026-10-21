@@ -288,39 +288,21 @@ function readFixtureHostRows(db: Database) {
   };
 }
 type ScalarCountRow = { readonly count: number | bigint };
-function expectTerminalHostResultMutationDenied(
+function withCorruptedFixtureWorkRow(
   db: Database,
   host: HostStateStore,
   identity: WorkIdentity,
   work: WorkState,
-  message: string,
+  changed: WorkState,
+  verify: () => void,
 ): void {
-  const originalRow = requiredValue(
-    db
-      .query<HostStateSqlRow, [string, string]>(
-        "SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
-      )
-      .get(host.workspaceId, identity.work_id),
-    'Persisted terminal-history Work',
+  const originalRows = readFixtureHostRows(db);
+  const originalPayload = canonicalJson(work);
+  const workRows = originalRows.host.filter(
+    (row) => row.workspace_id === host.workspaceId && row.kind === 'work' && row.payload === originalPayload,
   );
-  expect(originalRow.payload).toBe(canonicalJson(work));
-  expect(work.execution.assignment_attempts[0]?.status).toBe('completed');
-  const changedResult = { fixture_only: true, operation: 'tampered-readonly-preparation' };
-  const changed = {
-    ...work,
-    execution: {
-      ...work.execution,
-      assignment_attempts: work.execution.assignment_attempts.map((attempt, index) =>
-        index === 0
-          ? {
-              ...attempt,
-              result: changedResult,
-              result_digest: canonicalJsonDigest(changedResult),
-            }
-          : attempt,
-      ),
-    },
-  };
+  expect(workRows).toHaveLength(1);
+  const originalRow = requiredValue(workRows[0], 'Persisted fixture Work');
   const changedDigest = canonicalJsonDigest(changed);
   const writeTarget = db.query(
     "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
@@ -338,7 +320,7 @@ function expectTerminalHostResultMutationDenied(
   const corruptRows = readFixtureHostRows(db);
   let primaryFailure: { error: unknown } | undefined;
   try {
-    expect(() => host.readHostStateSnapshot(identity)).toThrow(message);
+    verify();
     expect(readFixtureHostRows(db)).toEqual(corruptRows);
   } catch (error) {
     primaryFailure = { error };
@@ -362,7 +344,37 @@ function expectTerminalHostResultMutationDenied(
       primaryFailure,
     );
   }
+  expect(readFixtureHostRows(db)).toEqual(originalRows);
   expect(host.readHostStateSnapshot(identity).work).toEqual(work);
+}
+
+function expectTerminalHostResultMutationDenied(
+  db: Database,
+  host: HostStateStore,
+  identity: WorkIdentity,
+  work: WorkState,
+  message: string,
+): void {
+  expect(work.execution.assignment_attempts[0]?.status).toBe('completed');
+  const changedResult = { fixture_only: true, operation: 'tampered-readonly-preparation' };
+  const changed = {
+    ...work,
+    execution: {
+      ...work.execution,
+      assignment_attempts: work.execution.assignment_attempts.map((attempt, index) =>
+        index === 0
+          ? {
+              ...attempt,
+              result: changedResult,
+              result_digest: canonicalJsonDigest(changedResult),
+            }
+          : attempt,
+      ),
+    },
+  };
+  withCorruptedFixtureWorkRow(db, host, identity, work, changed, () => {
+    expect(() => host.readHostStateSnapshot(identity)).toThrow(message);
+  });
 }
 
 type GovernanceStoreSqlRow = {
@@ -742,15 +754,7 @@ test('absent Work exposes no continuation or corrective authority and leaves sto
 test('completed Source report rejects a stale retry root even when its current fence equals the admission epoch', async () => {
   await createFailedFinalCorrectionFixture('failed', {
     noEffectRetry: 'same-slot',
-    verifyInitialNoEffectReport({
-      store: host,
-      ledger,
-      identity: owner,
-      journal,
-      observation,
-      source,
-      preparePeerAdmission,
-    }) {
+    verifyNoEffectReport({ store: host, ledger, identity: owner, journal, observation, source, preparePeerAdmission }) {
       const original = readPresentSnapshot(host, owner);
       const originalLease = requiredLease(original.work);
       const noEffect = requiredValue(
@@ -820,6 +824,82 @@ test('completed Source report rejects a stale retry root even when its current f
     },
   });
 });
+
+test.each(['jump', 'ambiguous-parent', 'duplicate-parent'] as const)(
+  'corrupted no-effect %s history cannot authorize a completed Source report',
+  async (corruption) => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    await createFailedFinalCorrectionFixture('failed', {
+      noEffectRetry: corruption === 'jump' ? 'next-writer' : 'two-slots',
+      noEffectRetries: corruption === 'jump' ? 2 : 1,
+      verifyNoEffectReport({ database, store: host, ledger, identity: owner, journal, observation, source }) {
+        const original = readPresentSnapshot(host, owner);
+        const noEffects = original.work.execution.assignment_attempts.filter(
+          (attempt) => attempt.status === 'no_effect',
+        );
+        expect(noEffects).toHaveLength(2);
+        const first = requiredValue(noEffects[0], 'first retained no-effect attempt');
+        const second = requiredValue(noEffects[1], 'second retained no-effect attempt');
+        const retryLease = requiredValue(second.reconciliation?.retry_lease, 'second exact retry lease');
+        expect(second.previous_attempt_id).toBe(corruption === 'jump' ? first.attempt_id : null);
+        expect(second.lease).toEqual(requiredValue(first.reconciliation?.retry_lease, 'first exact retry lease'));
+        expect(retryLease.generation).toBe(first.lease.generation + 2);
+        expect(requiredLease(original.work)).toEqual(retryLease);
+        const writer = requiredValue(
+          original.work.execution.assignment_attempts.find(
+            (attempt) => attempt.attempt_id === observation.host_attempt_id,
+          ),
+          'completed next-slot writer',
+        );
+        expect(writer.status).toBe('completed');
+        expect(writer.previous_attempt_id).toBeNull();
+        expect(writer.stage_id).not.toBe(first.stage_id);
+        const corrupted = clone(original.work);
+        if (corruption === 'jump')
+          corrupted.execution.assignment_attempts = corrupted.execution.assignment_attempts.filter(
+            (attempt) => attempt.attempt_id !== second.attempt_id,
+          );
+        const corruptedFirst = requiredValue(
+          corrupted.execution.assignment_attempts.find((attempt) => attempt.attempt_id === first.attempt_id),
+          'corrupted first no-effect attempt',
+        );
+        requiredValue(corruptedFirst.reconciliation, 'corrupted retry proof').retry_lease = clone(retryLease);
+        if (corruption === 'duplicate-parent') {
+          corruptedFirst.lease = clone(second.lease);
+          corruptedFirst.attempt_id = canonicalJsonDigest({
+            assignment_id: corruptedFirst.assignment_id,
+            request_digest: corruptedFirst.request_digest,
+            lease: corruptedFirst.lease,
+            previous_attempt_id: corruptedFirst.previous_attempt_id,
+          });
+          requiredValue(corruptedFirst.reconciliation, 'corrupted duplicate-parent proof').attempt_id =
+            corruptedFirst.attempt_id;
+        }
+        withCorruptedFixtureWorkRow(database, host, owner, original.work, corrupted, () => {
+          expect(host.readHostStateSnapshot(owner).work).toEqual(corrupted);
+          expect(() => ledger.report(owner.work_id, 1, journal.version, observation, source)).toThrow(
+            'completed writer lease is stale or an effect remains uncertain',
+          );
+          expect(database.inTransaction).toBe(false);
+        });
+        expect(host.readHostStateSnapshot(owner)).toEqual(original);
+        const accepted = ledger.report(owner.work_id, 1, journal.version, observation, source);
+        const acceptedItem = requiredValue(
+          accepted.state.items.find((item) => item.request.action_id === observation.action_id),
+          'restored report observation',
+        );
+        expect(acceptedItem.observation).toEqual(observation);
+        const after = readPresentSnapshot(host, owner);
+        expect(requiredLease(after.work).ticket_id).not.toBe(retryLease.ticket_id);
+        expect(requiredLease(after.work).generation).toBe(after.ledger.open_generation);
+        expect(after.work.execution.assignment_attempts).toEqual(original.work.execution.assignment_attempts);
+        if (performance.now() >= deadline)
+          throw new Error('No-effect corrupted-history proof exceeded its case deadline.');
+      },
+    });
+  },
+  failedFinalHostCaseTimeoutMs,
+);
 
 test(
   'completed Source report accepts repeated exact no-effect retries and replays the terminal observation',

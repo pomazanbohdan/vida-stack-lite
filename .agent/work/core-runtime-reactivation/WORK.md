@@ -10,6 +10,55 @@ F/L/S/B100. Root owns Source integration, Git and the sole numeric producer.
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
 
+### Current negative-edge repair packet
+
+The resumed goal keeps this same contour and Root numeric owner.1444 independently
+checks a bounded corruption-only route past generic Work validation: a genuine
+next-slot writer preserves its actual reservation/observation while one fixture
+Work row removes an intermediate no-effect record and redirects the first retry
+to the actual final lease. The report must refuse the non-+1 edge. Original SQL
+rows are restored with revision/digest CAS, then the real original report succeeds.
+1445 passes test149 strict/lint0 and1case/21assertions7.65s in
+DIAG/retry-corruption-v1445-uUbHM9. This is negative untrusted-storage evidence,
+not accepted fabricated authority or a new engine transition.
+
+Root reuses the exact unissued reconciliation producer at the real Source-prewriter
+slot as well as initial synthesis. The two-slots mode reaches the actual writer
+with two genuinely produced no-effect stages, each with a null same-slot
+predecessor. The same parameterized test then denies three corruption shapes:
+the same-slot missing-middle jump, different-slot conflicting parents, and a
+duplicate parent rooted above the global epoch. No new attempts, assignments,
+Journal rows or observations are invented. Only the duplicate-parent negative
+recomputes the changed existing attempt's canonical lease-bound ID and its own
+reconciliation reference; it is never accepted as a genuine operational proof.
+1446 passes all3cases/66assertions17.02s with test149 strict/lint0 in
+DIAG/retry-graph-negatives-v1446-puxv8H. Product Source remains unchanged.
+
+The existing SQL-corruption owner is extracted into withCorruptedFixtureWorkRow
+and reused by its three terminal-result callers plus these report probes. It
+captures original/corrupted/restored Host and Journal rows, uses the original
+revision/digest for restoration and preserves primary plus cleanup errors.
+The typed report observer supports both initial and actual writer boundaries,
+completes the real persisted writer reservation through the opaque kernel
+capability, then stops before unrelated validation. Evidence files use short
+per-fixture monotonic names and exclusive writes; actual action identity stays
+in the bound JSON. Existing5s/20s case exceptions and all outer budgets stay intact.
+Independent1447 approves the current shared owner, actual two-slot producer and
+all three explicitly untrusted corruption cases. Its read-only report is retained
+in DIAG/vida-graph-negative-final-v1447.md.1448 passes test149 strict/lint0 and
+five exact changed/affected controls5PASS/177assertions30.54s in
+DIAG/retry-graph-controls-v1448-xAGpiU. The healthy old terminal-history caller
+and default5s initial probe pass alongside all three negatives. TESTING records
+why the later writer probes reuse the existing20s exception, without a budget
+increase. No new full stage starts before the refreshed exact test pin and
+ordinary Source publication. This supersedes1441's naive same-slot blocker;
+the genuine different-slot producer permits these bounded negative fixtures.
+1449 refreshes the Host test pin once after final formatting, then passes
+runner122 strict/lint0 and the namespace control1PASS/10assertions320ms in
+DIAG/retry-graph-pin-v1449-lzpDS3. Original static failures and focused attempts
+remain retained under their own names; product Source, budgets and old numeric
+input binding remain unchanged until the new complete stage.
+
 The owner's2026-10-21 instruction requires reviewing all remaining bun-host-state
 gaps before the next full stage. The publisheded1a21d packet includes the
 focused-checked uncertain retirement path fromc86cff9 and the six blind

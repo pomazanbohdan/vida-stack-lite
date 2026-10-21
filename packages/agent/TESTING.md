@@ -2577,6 +2577,17 @@ Typed passing reports are synthetic
 caller-report inputs and do not establish native test execution or Runtime
 acceptance. The separate public CLI preparation case remains intact.
 
+Completed Source report's corrupted no-effect history probes reuse that existing
+20s failed-final fixture bound. They stop after real admission, synthesis,
+prewriter preparation and native writer completion, before final validation.
+The three cases exercise a lost intermediate retry, conflicting parents and a
+duplicate parent using one controlled Work-row corruption. Require exact raw
+Host/Journal beforeimages, revision/digest CAS restoration and acceptance of the
+unchanged original report afterward. Corrupted input is negative evidence only.
+The initial synthesis stale-epoch probe retains the5s default; no outer budget
+or frozen/mutation gate changes. Keep proof and decision filenames exclusive
+across every slot within one fixture.
+
 The Host correction-generation started-UNKNOWN integration case uses the existing
 20s composite bound. It includes real admission, Initial Source continuation,
 native prewriter preparation, protected writer reservation/issue, history denials,

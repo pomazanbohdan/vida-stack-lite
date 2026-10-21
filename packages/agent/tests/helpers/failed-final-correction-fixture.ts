@@ -75,9 +75,10 @@ export interface FailedFinalCorrectionFixture {
 
 interface FailedFinalCorrectionFixtureOptions {
   readonly preparationInputs?: false;
-  readonly noEffectRetry?: 'same-slot' | 'next-writer';
+  readonly noEffectRetry?: 'same-slot' | 'next-writer' | 'two-slots';
   readonly noEffectRetries?: number;
-  readonly verifyInitialNoEffectReport?: (input: {
+  readonly verifyNoEffectReport?: (input: {
+    readonly database: FailedFinalCorrectionFixture['database'];
     readonly store: HostStateStore;
     readonly ledger: MastraSessionLedger;
     readonly identity: WorkIdentity;
@@ -217,24 +218,22 @@ export async function reportFailedFinalValidatorWave(input: {
 export function createFailedFinalCorrectionFixture(
   outcome: FinalCorrectionOutcome,
   options: FailedFinalCorrectionFixtureOptions & {
-    readonly noEffectRetry: 'same-slot';
-    readonly verifyInitialNoEffectReport: NonNullable<
-      FailedFinalCorrectionFixtureOptions['verifyInitialNoEffectReport']
-    >;
+    readonly noEffectRetry: NonNullable<FailedFinalCorrectionFixtureOptions['noEffectRetry']>;
+    readonly verifyNoEffectReport: NonNullable<FailedFinalCorrectionFixtureOptions['verifyNoEffectReport']>;
   },
 ): Promise<void>;
 export function createFailedFinalCorrectionFixture(
   outcome: FinalCorrectionOutcome,
-  options: Omit<FailedFinalCorrectionFixtureOptions, 'verifyInitialNoEffectReport'> & {
+  options: Omit<FailedFinalCorrectionFixtureOptions, 'verifyNoEffectReport'> & {
     readonly preparationInputs: false;
-    readonly verifyInitialNoEffectReport?: never;
+    readonly verifyNoEffectReport?: never;
   },
 ): Promise<Omit<FailedFinalCorrectionFixture, 'preparationPath'>>;
 export function createFailedFinalCorrectionFixture(
   outcome: FinalCorrectionOutcome,
-  options: Omit<FailedFinalCorrectionFixtureOptions, 'preparationInputs' | 'verifyInitialNoEffectReport'> & {
+  options: Omit<FailedFinalCorrectionFixtureOptions, 'preparationInputs' | 'verifyNoEffectReport'> & {
     readonly preparationInputs?: never;
-    readonly verifyInitialNoEffectReport?: never;
+    readonly verifyNoEffectReport?: never;
   },
 ): Promise<FailedFinalCorrectionFixture>;
 export function createFailedFinalCorrectionFixture(
@@ -393,8 +392,30 @@ export async function createFailedFinalCorrectionFixture(
     });
     await bridge.start(source);
     let journal = sync();
+    const verifyReport = options?.verifyNoEffectReport;
+    const finishAtReport = verifyReport
+      ? async (observation: SessionBridgeObservation, currentSource: ScopedSourceSnapshot) => {
+          verifyReport({
+            database: fixture.database,
+            store: host,
+            ledger,
+            identity,
+            journal,
+            observation,
+            source: currentSource,
+            preparePeerAdmission: (peerId) => ({
+              ...fixture.prepare(peerId, 'fixture:disjoint-admission-epoch', 'peer-session'),
+              store: host,
+            }),
+          });
+          await bridge?.close();
+          bridge = undefined;
+          close(true);
+        }
+      : undefined;
     let completeNoEffectRetry: ((observation: SessionBridgeObservation) => Promise<void>) | undefined;
-    if (options?.noEffectRetry) {
+    let noEffectProofSequence = 0;
+    const reconcileCurrentUnissuedItem = async (retryCount: number, reserveLastRetry: boolean) => {
       if (
         journal.state.items.length !== 1 ||
         journal.state.items[0]?.issue_id !== null ||
@@ -428,7 +449,6 @@ export async function createFailedFinalCorrectionFixture(
           throw new Error('No-effect fixture action unexpectedly entered an approval effect');
         return reservation;
       };
-      const retryCount = options.noEffectRetries ?? 1;
       if (!Number.isSafeInteger(retryCount) || retryCount < 1 || retryCount > 3)
         throw new Error('No-effect fixture retry count must be between one and three');
       let reservation = await reserveCurrentItem();
@@ -439,7 +459,7 @@ export async function createFailedFinalCorrectionFixture(
         if (!boundWork.lease || !journal.state.source_scope)
           throw new Error('No-effect fixture has no current lease or Journal source binding');
         const inspectedAt = new Date().toISOString();
-        const proofSuffix = String(retryIndex + 1);
+        const proofSuffix = String(++noEffectProofSequence);
         const decisionPath = `.agent/work/${id}/local-no-effect-decision-${proofSuffix}.json`;
         const proofPath = `.agent/work/${id}/local-no-effect-evidence-${proofSuffix}.json`;
         const proof = {
@@ -489,8 +509,8 @@ export async function createFailedFinalCorrectionFixture(
           decided_at: inspectedAt,
           reason: 'This fixture made no provider call after the approval-free local reservation.',
         };
-        writeFileSync(path.join(fixture.root, proofPath), proofBytes);
-        writeFileSync(path.join(fixture.root, decisionPath), JSON.stringify(decision));
+        writeFileSync(path.join(fixture.root, proofPath), proofBytes, { flag: 'wx' });
+        writeFileSync(path.join(fixture.root, decisionPath), JSON.stringify(decision), { flag: 'wx' });
         await reconcileUnissuedLocalSessionAction({
           root: fixture.root,
           proofPath,
@@ -499,7 +519,7 @@ export async function createFailedFinalCorrectionFixture(
           journal,
           configDigest: runtimeConfigDigest(fixture.config),
         });
-        if (options.noEffectRetry === 'next-writer' && retryIndex + 1 === retryCount) break;
+        if (!reserveLastRetry && retryIndex + 1 === retryCount) break;
         const retryReservation = await reserveCurrentItem();
         if (
           retryReservation.receipt.attempt.previous_attempt_id !== noEffectAttempt.attempt_id ||
@@ -509,6 +529,13 @@ export async function createFailedFinalCorrectionFixture(
           throw new Error('No-effect fixture retry differs from the exact current-action fence');
         reservation = retryReservation;
       }
+      return { item, reservation };
+    };
+    if (options?.noEffectRetry) {
+      const { item, reservation } = await reconcileCurrentUnissuedItem(
+        options.noEffectRetries ?? 1,
+        options.noEffectRetry === 'same-slot',
+      );
       if (options.noEffectRetry === 'same-slot') {
         const finalRetryReservation = reservation;
         completeNoEffectRetry = async (observation) => {
@@ -551,22 +578,8 @@ export async function createFailedFinalCorrectionFixture(
         item.request.action_id === journal.state.items[0]?.request.action_id
       )
         await completeNoEffectRetry(observation);
-      if (options?.verifyInitialNoEffectReport) {
-        options.verifyInitialNoEffectReport({
-          store: host,
-          ledger,
-          identity,
-          journal,
-          observation,
-          source,
-          preparePeerAdmission: (peerId) => ({
-            ...fixture.prepare(peerId, 'fixture:disjoint-admission-epoch', 'peer-session'),
-            store: host,
-          }),
-        });
-        await bridge.close();
-        bridge = undefined;
-        close(true);
+      if (finishAtReport && options?.noEffectRetry === 'same-slot') {
+        await finishAtReport(observation, source);
         return;
       }
       journal = requireSnapshot(ledger.report(id, 1, journal.version, observation, source));
@@ -593,6 +606,7 @@ export async function createFailedFinalCorrectionFixture(
         nextLedger: { ...intake.ledger, revision: intake.ledger.revision + 1 },
       });
     }
+    if (options?.noEffectRetry === 'two-slots') await reconcileCurrentUnissuedItem(1, false);
     journal = await runPrewriterFixtureInProcess(
       {
         args,
@@ -651,6 +665,17 @@ export async function createFailedFinalCorrectionFixture(
       changed_paths: validatorsPass ? ['AGENT.sidecar.md'] : [],
     };
     const writerReport = `.agent/work/${id}/failed-final-writer.json`;
+    if (finishAtReport && options?.noEffectRetry !== 'same-slot') {
+      const execution = await openAdmittedSessionExecution(fixture.root, host, 'sample', id);
+      const capability = execution.composition.workflowExecutionCapability;
+      if (!capability) throw new Error('No-effect writer completion capability is unavailable');
+      await completeWorkflowAssignmentForSession(capability, writer.host_reservation, writerObservation);
+      await finishAtReport(
+        writerObservation,
+        snapshotDeclaredSources(requireSafeRepositoryAccess(fixture.root), work.lifecycle.scope.allowed_paths),
+      );
+      return;
+    }
     writeFileSync(path.join(fixture.root, writerReport), JSON.stringify(writerObservation));
     await publicRun([
       ...args,
