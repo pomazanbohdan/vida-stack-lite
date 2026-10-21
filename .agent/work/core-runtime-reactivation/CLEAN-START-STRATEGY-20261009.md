@@ -20,6 +20,11 @@ historical maxima with current inputs. Frozen complexity/CRAP and mutation remai
 deferred. TypeScript Source migration is complete; runtime qualification remains
 open. Installation, focused PASS and published code do not establish acceptance.
 
+The latest selected stage is complete, but durable scratch retention has a
+resource admission GAP recorded in WORK. Restore that admission before another
+numeric producer. Preserve the current image, original scratch and all evidence;
+do not lower the floor or archive reserve to advance the queue.
+
 ## Work sequence
 
 ### 1. Preserve document ownership

@@ -11,6 +11,32 @@ F/L/S/B100 or complete reviewed objective-gap disposition under the owner's
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
 
+### Current retention resource blocker
+
+The reaper correction is published as f9c0ace. Its single complete selected
+coverage stage is recorded below. Durable-retention admission then refuses at
+19:23:05UTC with2169643008available bytes. The unchanged floor2147483648 plus
+67108864archive reserve requires2214592512bytes, leaving a44949504-byte GAP.
+DIAG/remainder-v1499-retention-admission.json and its original exit1 log own
+that observation. No archive is created and no original evidence is removed.
+The current image and original scratch remain retained in their existing locations.
+Do not start another numeric producer until durable retention passes admission.
+
+Existing cleanup inventories provide no newly qualified durable candidate.
+The current private Bun cache is on tmpfs and cannot close this durable GAP.
+Source, Git history, SDK artifacts, prior images and original receipts remain
+protected. No broad scan, hash pass or deletion is repeated to lower the threshold.
+Additional durable capacity or a separately qualified disposable durable path is
+the next prerequisite. Resource pressure is not an objective coverage skip.
+
+Blind1498 studies the terminal Journal map arms1617/1 and1618/0. The original and
+corrected notes are retained under DIAG. Its singleton-wave proof is bound to
+the inspected task graph; it does not establish generic unreachability for every
+validated workflow graph. Root adds no disposition or accepted synthetic history.
+The existing7branch/2statement dispositions retain exact gap geometry and matching
+Source/test fingerprints in DIAG/remainder-v1499-objective-rebind.json. All other
+58arms remain open. No further suite or mutation producer is started.
+
 ### Three-hour audit and zombie reaping correction
 
 The bounded audit covers15:37:43–18:37:43UTC on2026-10-21 from the clean
@@ -572,25 +598,22 @@ where copying/archive retention consumes the same space.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-aca52f04331b9bc9fb99f8c3536e5118468b358b, run
-62b2652b-6f62-40f3-8629-159f04e36b2d.
+f9c0ace199f904970bf25238123c815e2ef8b6d9, run
+22985d90-b004-47f2-81b9-feaa3ba743f6.
 F1125/1125,L4989/4989,S5323/5325,B5529/5594 leave2statement/65branch-arm gaps.
 F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
-The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. All341cases/5999assertions pass
-in220481.861301ms. Host325/5672 takes213.59s; stopped-source16/327 takes125.50s.
-The preceding complete341-case observation took190896.208148ms under different
-Source and tests; this is not a controlled speed benchmark. Both stay within unchanged
-300s coverage/330s stage budgets. No unchanged full retry is launched.
-
-Relative to1467, shared historical predicates remove2lines/9branch arms from the
-denominators; functions and statements retain their denominators. Both remaining
-deficits are unchanged. This is equivalent consolidation, not evidence of new
-visits or exact coverage. The completed-report corruption refusal adds9assertions
-and restores original history. The graph helper remains fully exercised.
-No simplification grants new accepted history, rights or UNKNOWN replay.
+The stage has parent/native exits0, full capture, closed process group,
+unchanged boot/image and automatic projection publication. All341cases and
+5999assertions pass in228240.751152ms. Host325/5672 takes220.75s;
+stopped-source16/327 takes135.82s. The previous220481.861301ms observation has
+the same selected Source/test fingerprints and different captured tooling.
+This is infrastructure qualification, not a controlled speed benchmark or new
+coverage. Both runs stay within unchanged300s coverage/330s stage budgets.
+The operation owner reports execution_complete=true but retains numeric BLOCKED,
+report_complete=false and resource_safe_to_advance=false. Parent exit0 does not
+override those results. No unchanged full retry is launched.
 
 The two remaining statement locations are current#resolveTaskSourceBinding:9201
 and snapshotHistoricalTaskSourceSources:9389. They skip reported history from a
@@ -605,7 +628,7 @@ objective-skip rule only after exact-counter disposition; remaining testable or
 undispositioned paths keep this same contour active. Do not repeat a full stage
 unchanged or fabricate history. Frozen/mutation stay deferred.
 
-The predecessor map is DIAG/remainder-v1481-predecessor-gap-map.json; the current
+The predecessor map is DIAG/host-uncovered-plan-pre-v1499.json; the current
 map is refreshed once through the retained report-only join. The prior numeric,
 timing and retirement evidence remains in the
 [publishedaca52f0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/aca52f04331b9bc9fb99f8c3536e5118468b358b/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
@@ -614,13 +637,15 @@ the diagnostic255 maxima do not establish frozen-gate acceptance.
 
 ### Bound objective coverage dispositions
 
-The table binds the62b2652b report, aca52f0 Source/image and native execution
+The table retains its original62b2652b/aca52f0 proof and is rebound to the current
+22985d90/f9c0ace report's identical gap geometry and Source/test fingerprints in
+DIAG/remainder-v1499-objective-rebind.json. It binds the native execution
 receipts above. Source fingerprint is
 aaec43aea318e9ce3d193c1cfe424be656926988979a8582efa366fc785d976a;
 test fingerprint is
 fe8b68138505b185a7f7b86aa1d586c88009a29fd8519769b20b182027a7e68c.
 The report's original manifest, tool_inputs/config hashes and tool fingerprint
-1dc9c5d410753cddf3c762635f7c5941661ab905f013536dbc3c9e2ed6b1fae1
+ee194ba2641bfc9406f489fd8e46c854180fcbd6be1be6622f4f26a5ce55bf96
 bind the checks without another hash pass. Independent blind1487 re-reads exact
 current counters and producers; DIAG/vida-objective-exact-history-v1487.md owns
 the detailed proof. Root accepts its two history dispositions. Independent1484
@@ -677,17 +702,18 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-ZMaBPU/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1481-sdk-provider.json and DIAG/remainder-v1481-sdk-verified.json |
-| Admission and complete producer log | DIAG/remainder-v1481-scratch-parent.json and DIAG/remainder-v1481-stage.log |
-| Private-cache disposition | DIAG/remainder-v1486-cache-retirement-ZMaBPU/manifest.json and retirement-events.jsonl |
-| Non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-ZMaBPU-LJoe0z/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-Iy6Wx3 |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-yKpj7E/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1497-sdk-provider.json and DIAG/remainder-v1497-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1497-scratch-parent.json and DIAG/remainder-v1497-stage.log |
+| Previous private-cache disposition | DIAG/remainder-v1486-cache-retirement-ZMaBPU/manifest.json and retirement-events.jsonl |
+| Previous non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-ZMaBPU-LJoe0z/archive.json |
+| Current durable-retention admission | DIAG/remainder-v1499-retention-admission.json; BLOCKED_RESOURCE, no new archive |
+| Original retained scratch | /dev/shm/vida-quality-retained-Uwf5Wc |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
 and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
-The325170-byte durable archive excludes only this stage's declared private
+The previous325170-byte durable archive excludes only that stage's declared private
 regenerable Bun cache, retired after closed custody and dependency qualification.
 The exact cache path,15243-entry inventory and exclusive events are retained;
 observed scratch gain215846912bytes is separate from durable-4096bytes.
@@ -696,11 +722,11 @@ with their originals; its digest is computed once. This is custody, not a space
 gain or reattestation. Prior qualified cache retirement stays in the published
 history linked above; no shared dependency scan/hash is repeated.
 
-A postclosure observation records2236084224durable bytes after archive, above the
-unchanged2147483648floor. Both filesystems passed admission before launch;
-checkout and durable evidence share the overlay.
-No resource GAP is established. Reuse the existing inventory; do not add broad
-du/scan/hash or cleanup competing with numeric/build/install operations.
+Both filesystems passed admission before the current launch; checkout and
+durable evidence share the overlay. The later retention observation and exact
+reserve GAP are owned by the current blocker above. Reuse the existing inventory;
+do not add broad du/scan/hash or cleanup competing with numeric/build/install
+operations. Original evidence remains protected while retention is blocked.
 
 ### Measured packets and regression custody
 
