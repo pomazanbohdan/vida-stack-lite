@@ -485,6 +485,12 @@ Omitted-resource probes remove each actual added branch/worktree resource from
 a cloned Work scope with a stale expected digest. Prove the resource was present
 and was removed; never persist the adverse DTO. Preserve the queued reservation,
 peer, Journal and exact retry/FIFO oracles without another fixture.
+Absent Work/Ledger and a malformed cloned predecessor with no ticket ID plus
+a null Work lease are pure-builder refusal inputs only. Prove the ID removal,
+retain the actual own queued ticket and never persist these DTOs or claim valid
+Host authority. The existing file-backed readonly fixture separately requires
+empty qualified-code history on a real no-Work workspace in number/bigint modes,
+with the full open-to-close database bytes and catalog preserved.
 An exact current Work version with a mismatching prepared-record revision is a
 separate pure CAS denial. A foreign execution-only peer may use the existing
 fixture's real Journal and public preparation; preparation alone creates neither

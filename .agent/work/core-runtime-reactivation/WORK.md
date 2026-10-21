@@ -242,6 +242,33 @@ stage above confirms both new causal visits and all three split recovery cases.
 No production code, timeout, gate or authority changes. Different Source/setup
 conditions and the additional independent fixture do not establish a speedup.
 
+### Checked absent-Host and malformed-lease packet
+
+Reuse the current queued TaskSource fixture for pure-builder refusals with
+absent Work, absent Ledger, and null Work lease plus the cloned predecessor's
+ticket ID removed. Prove deletion succeeded and the property is absent. Retain
+the actual own queued ticket, prepared operation/CAS and all native Host,
+prepared-row, Source-absence, peer, Journal and FIFO retry oracles. These inputs
+never become persisted authority; no schema, Source guard or policy changes.
+The earlier lease-dominance review's malformed DTO counterexample is now a real
+public negative input, not a claimed valid Host state or authorization defect.
+
+The existing empty-workspace readonly fixture reads qualified-code history as
+[] through each real number/bigint handle. Keep native zero-row proof, unchanged
+Host/catalog and full database bytes from before open through after owned close.
+No new fixture, receipt table, engine or Journal is created.
+
+Blind current-byte review vida-absent-host-review-v1291.md finds the guard path
+and preservation sound, without numeric claims. Original narrower proof remains
+in absent-host-v1290-dcmOLU:strict149/lint0,2cases/153assertions2.13s. Final
+malformed-lease extension passes strict149/lint0 and2cases/156assertions2.03s in
+absent-lease-v1292-dAjvl2. The malformed TaskSource case takes304.64ms. Keep the
+current complete a529007 measurement separate from these pending test bytes.
+Changed test pin refreshed once in remainder-v1293-test-pin.json. Strict122/lint0
+and the two-file resource control pass1case/10assertions293ms in
+remainder-v1293-controls-qLRO2P. Ordinary publication and one matching full stage
+are next; exact new statement/arm visitation remains pending.
+
 ### Next actions and unresolved prerequisites
 
 1. Select the next causal S/B packet from the current6statement/137arm gap list;

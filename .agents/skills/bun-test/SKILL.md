@@ -29,6 +29,9 @@ Before removing a guard as dominated, verify the exact schema's minimum list
 length and the validator's empty-list semantics. Reference checks using `every`
 can pass an empty list without proving that a later lookup has a seed. Preserve
 the guard and exercise the public refusal when the preceding contract allows it.
+Distinguish validated stored state from a public builder's unvalidated DTO input.
+Keep malformed negative DTOs outside persistence and authority; require the
+public refusal and exact native beforeimages, not an accepted fabricated state.
 Before declaring a fixture absent, inspect every test path in the contour's
 existing selection. A missing direct call in one selected file is not a contour
 prerequisite GAP; another selected file may own the real producer and fixture.

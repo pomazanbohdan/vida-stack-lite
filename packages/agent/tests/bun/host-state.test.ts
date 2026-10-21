@@ -3113,7 +3113,7 @@ test('task-source policy denials preserve preparation and queued retries preserv
     for (const resource of retainedResources) expect(ticket.blocked_resources).toContain(resource);
     const queuedNativeBefore = readFixtureHostRows(f.database);
     const queuedPolicy = requiredValue(policy.mock.calls.at(-1)?.[0], 'native queued policy input');
-    // Pure stale policy inputs must not alter the real queued reservation or prepared operation.
+    // Adverse pure inputs never become persisted Host authority.
     for (const revision of [reserved.workVersion.revision, f.request.expected_host.work.revision]) {
       const staleRequest = {
         ...f.request,
@@ -3163,6 +3163,28 @@ test('task-source policy denials preserve preparation and queued retries preserv
         }),
       ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
     }
+    const predecessorId = requiredLease(reserved.work).ticket_id;
+    const malformedLedger = clone(reserved.ledger);
+    const malformedPredecessor = requiredValue(
+      malformedLedger.tickets.find((entry) => entry.ticket_id === predecessorId),
+      'malformed DTO predecessor',
+    );
+    expect(Reflect.deleteProperty(malformedPredecessor, 'ticket_id')).toBe(true);
+    expect(Object.hasOwn(malformedPredecessor, 'ticket_id')).toBe(false);
+    for (const hostSnapshot of [
+      { ...reserved, work: null },
+      { ...reserved, ledger: null },
+      { ...reserved, work: { ...reserved.work, lease: null }, ledger: malformedLedger },
+    ]) {
+      expect(() =>
+        createTaskSourceMutationPolicyRequest({
+          repositoryRoot: queuedPolicy.repositoryRoot,
+          operation: queuedPolicy.operation,
+          preparedStateVersion: queuedPolicy.stateVersion,
+          hostSnapshot,
+        }),
+      ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
+    }
     expect(() =>
       createTaskSourceMutationPolicyRequest({
         repositoryRoot: queuedPolicy.repositoryRoot,
@@ -3177,7 +3199,6 @@ test('task-source policy denials preserve preparation and queued retries preserv
         hostSnapshot: reserved,
       }),
     ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
-    const predecessorId = requiredLease(reserved.work).ticket_id;
     // These snapshots are adverse pure inputs, never persisted or supplied as current Host authority.
     const adverseLedgers: readonly { ledger: CoordinationLedger; message: string }[] = [
       {
@@ -16991,6 +17012,7 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
         ).toBe(integerMode === 'bigint' ? 0n : 0);
         expect(inspected.readWorkspaceSnapshot()).toEqual(beforeWorkspace);
         expect(inspected.readHostStateSnapshot(identity)).toEqual(before);
+        expect(inspected.readQualifiedRuntimeCodeContinuations(identity, 1)).toEqual([]);
         expect(() => inspected.recordAdmissionAttempt('readonly-denied', 1, { fixture: true })).toThrow(/readonly/i);
         expect(store.readHostStateSnapshot(identity)).toEqual(before);
         expect(schema.all()).toEqual(schemaBefore);
