@@ -76,25 +76,25 @@ checked-in self-development fallback and makes no installed Runtime claim.
 
 ### Latest complete measurement
 
-Sourceda18a879843b6931d564e85c9772300b6f0127ad, run
-87b97002-39de-4255-8ae7-20da3ed47126, projection attempt1129.
+Source7d81d65908b78bd1ba3560d3336a73c14556a055, run
+3befffc1-8e84-4c97-9835-4e06e11d319c, projection attempt1131.
 
-| Counter | Covered / total | Covered delta from1296dc6 | Total delta |
+| Counter | Covered / total | Covered delta fromda18a87 | Total delta |
 | --- | --- | --- | --- |
 | Functions | 1126 / 1126 | 0 | 0 |
-| Lines | 4955 / 4974 | +1 | 0 |
-| Statements | 5255 / 5305 | +5 | 0 |
-| Branches | 5395 / 5624 | +6 | 0 |
+| Lines | 4961 / 4974 | +6 | 0 |
+| Statements | 5261 / 5305 | +6 | 0 |
+| Branches | 5398 / 5624 | +3 | 0 |
 
-No file, defensive contract or gate is excluded. Deficits improve from20/55/235
-to19lines/50statements/229branch arms. Functions stay exact100%. The refreshed
+No file, defensive contract or gate is excluded. Deficits improve from19/50/229
+to13lines/44statements/226branch arms. Functions stay exact100%. The refreshed
 host-uncovered-plan-current.json checks every zero statement/branch against the
 owning deficit and reports0missing functions. No new AST/Source scan/hash is used.
 
-Stage171862.666803ms, parent0, both native shards0, no signal/error/UNKNOWN,
-complete capture, closed group and unchanged boot/image. Host299PASS/4375assertions
-takes164.54s; stopped-source16PASS/296assertions takes122.59s. Total315PASS with
-4671assertions. Commit recovery15312.94ms and rollback12650.68ms fit their20s
+Stage184697.475598ms, parent0, both native shards0, no signal/error/UNKNOWN,
+complete capture, closed group and unchanged boot/image. Host303PASS/4432assertions
+takes177.74s; stopped-source16PASS/296assertions takes129.57s. Total319PASS with
+4728assertions. Commit recovery15361.72ms and rollback12918.31ms fit their20s
 bounds in this complete run. Coverage operation remains BLOCKED/nonexact.
 Diagnostic maxCC275/entryCRAP275 is not frozen qualification. Mutation is deferred.
 Historical exact16/45, local triples9/45 and separate data-only1 are not a current
@@ -102,34 +102,34 @@ global PASS or a newly closed contour.
 
 ## Latest measurement custody
 
-- Stage /workspace/contour-stage-jMhuwy, Root session71276, observed exit0.
-- Image /workspace/.vida-quality-inputs/f29086aa7d81675ae8dd7283483d9fdc00df1b97/repository.
-- Treeecb14c99087daf4c4df1fc4c17208e18576b52ee.
-- Input 80168025cbc78e106ff8f1655d94d98ac4ce660d595cdacc9312c73e62ec9bab.
-- Manifest SHA256 920d959c3e685850a978936bc778b3c2c79b2ce670085e743d3e3933d2822d92.
-- SDK CI39533124029, successful attempt1, artifact12316088755; name
-  vida-sdk-test-inputs-da18a879843b6931d564e85c9772300b6f0127ad-39533124029-1.
-- ZIP /workspace/vida-sdk-da18a87-39533124029-1.zip, SHA256
-  9f3609704b3256b2f4484890352b2f3834a9f43789e8fd8e104efffe918c1e41.
-- Admission remainder-v1137-scratch-parent.json and outcome remainder-v1137-stage.log
+- Stage /workspace/contour-stage-4Hi0DX, Root session16231, observed exit0.
+- Image /workspace/.vida-quality-inputs/cf791685ff009c1d82adeeec1dbc7a2bff457e84/repository.
+- Tree168d3210b6ff8e941b74b388fc9472dcd164ee69.
+- Input 4a07f2ddcfb9b567dcb754c94b280ad9132d328b2feecf6722e5d184dd672d20.
+- Manifest SHA256 d7fe6d8ffe26a95b6d4731dc6b3e71a4585ce449ac81170acee499356126e965.
+- SDK CI39534864846, successful attempt1, artifact12316538619; name
+  vida-sdk-test-inputs-7d81d65908b78bd1ba3560d3336a73c14556a055-39534864846-1.
+- ZIP /workspace/vida-sdk-7d81d65-39534864846-1.zip, SHA256
+  22763369136a0eb6c152a439a9767c27e5be6e16dd1c04853131c077ce1ea562.
+- Admission remainder-v1145-scratch-parent.json and outcome remainder-v1145-stage.log
   are in packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
-- Original scratch /dev/shm/vida-quality-retained-HJw9oh remains retained.
-- Remaining scratch archive /workspace/vida-functional-retention-jMhuwy-3Tn4F5/scratch.tar.gz,
-  277303bytes, full tar compare PASS, SHA256
-  01d06d55805291a44724afb6bd9b1b4c86a9899f2bac94e454b443add5466026.
+- Original scratch /dev/shm/vida-quality-retained-JXduyt remains retained.
+- Remaining scratch archive /workspace/vida-functional-retention-4Hi0DX-qbziB3/scratch.tar.gz,
+  317822bytes, full tar compare PASS, SHA256
+  5df2f0c9bbdf07b302d24c4f566cda7fa1dd577374e91cc1c6f6be17e316f4d5.
 
 Only the declared private regenerable Bun cache retires after observed terminal,
 group/live-owner and dependency checks. Manifest
-remainder-v1137-cache-retirement-jMhuwy/manifest.json qualifies1/0skipped,
+remainder-v1145-cache-retirement-4Hi0DX/manifest.json qualifies1/0skipped,
 178155793regular bytes; deletion reclaims215846912tmpfs bytes. Durable metadata
 costs4096bytes rather than reclaiming them. The existing shared-dependency link
 inventory is reused under Root's uninterrupted no-install fence. Original images,
 SDKs, journals, receipts, DBs, leases/attempts and FAIL/TIMEOUT/UNKNOWN are protected.
 
 Checkout and durable evidence share the overlay; scratch is retained host tmpfs.
-Admission durable5108224000/tmpfs9333260288bytes and archive durable
-5044195328→5043916800bytes remain above the unchanged2147483648floor.
-Final durable headroom2896433152bytes. No resource GAP, unknown-directory deletion,
+Admission durable5037531136/tmpfs9328910336bytes and archive durable
+4973473792→4973154304bytes remain above the unchanged2147483648floor.
+Final durable headroom2825670656bytes. No resource GAP, unknown-directory deletion,
 broad du/scan/hash, worktree or dependency consolidation is established.
 
 ### Current repair and execution order
@@ -139,7 +139,7 @@ TaskSource reads are now measured above; they preserve drift/corrupted-history
 denials and native rows/Journal. Controlled Git observations remain unit seams,
 not Git execution, external authorization or Runtime acceptance.
 
-The next packet fixes a reproduced product race in continuation repair. A second
+Source7d81d65 fixes a reproduced product race in continuation repair. A second
 real connection reserves and applies the exact plan after the first connection's
 empty deferred read commits, but before its immediate writer begins. The original
 Source wrongly inspects the now-healthy row before its existing APPLIED recheck
@@ -165,10 +165,25 @@ retained in repair-reservation-final-v1145-urgO5r. Blind final-byte review finds
 confirmed blocker; an unrelated producer interleaved at this precise boundary
 remains untested, separate from existing sequential producer controls. Review is
 retained as vida-continuation-reservation-review-v1143.md. The analogous ownRetry
-pattern search finds only this reservation owner. No numeric gain is claimed yet.
+pattern search finds only this reservation owner. Its complete bound stage is
+recorded above; the preceding RED stays FAIL. No statistical speedup is claimed.
 
-Refresh the changed exact test pin once, complete ordinary hooks/commit/push,
-form one matching SDK/image and run one complete selected-contour stage. Root
+The next packet adds absent positive-attempt receipt reads after the real table
+has been populated, an absent-table frontier read with current Work, and exact
+same-owner/changed-owner frozen-plan retries. Existing fixture setup and row
+oracles remain; no new runtime state or success receipt is fabricated. Static149
+and zero-warning lint pass; the four-case group passes4/336 in3.62s. Native
+recovery/frontier cases pass3/140 in27.90s total, each under its existing bound.
+Diagnostics: receipt-attempt-readers-v1146-Qux1Tb and
+receipt-attempt-native-v1147-wAl3C1. The bounded research note is retained as
+vida-repair-authority-paths-v1146.md; proposals are not closed findings.
+The changed failed-prewriter case has a different exact name from the recovery
+owner case. A final selected-case reconciliation catches that omission. The
+mistyped v1148 filter fails with no selected tests; its log is retained, with no
+product failure inferred. The exact existing label then passes1/73 in3.37s,
+receipt-recovery-attempt-v1149-hBGGYv. No earlier group is replayed.
+Refresh only the changed test pin, complete ordinary hooks/commit/push, then form
+one matching SDK/image and run one complete selected-contour stage. Root
 keeps shared-file integration and final numbers. No second producer/writer,
 UNKNOWN replay, consumer effect or runtime/loader/DB cutover is permitted.
 
@@ -177,8 +192,8 @@ UNKNOWN replay, consumer effect or runtime/loader/DB cutover is permitted.
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first grouped causal cases, bounded read-only review, one SDK/image/stage | Selected; the actual cleanup type error prevents a wasted runtime run. |
-| Two reviewed serial-file children | Selected; current complete171.863s, both native exits0 with full custody. |
-| Fully serial files | Supported fallback; the current concurrent child times sum287.13s, a planning quantity, not measured serial wall time or admission. |
+| Two reviewed serial-file children | Selected; current complete184.697s, both native exits0 with full custody. |
+| Fully serial files | Supported fallback; the current concurrent child times sum307.31s, a planning quantity, not measured serial wall time or admission. |
 | Full stage after each assertion or unchanged timeout | Reject; profile and repair the causal owner before a changed-input complete stage. |
 | Wider pool, concurrent compilers/suites/cleanup/indexing | Unqualified and not selected; existing clocks, caps and one numeric owner remain. |
 
@@ -209,6 +224,11 @@ no suites. No archived state/leases/attempts/UNKNOWN replay, gate relaxation,
 loader/DB cutover or consumer effect is authorized by these records.
 
 ## Historical provenance
+
+The precedingda18a87 measurement, SDK/image, original scratch, cleanup manifest
+and archive bindings remain in the
+[7d81d65 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/7d81d65908b78bd1ba3560d3336a73c14556a055/.agent/work/core-runtime-reactivation/WORK.md).
+Their original bytes and outcomes remain unchanged.
 
 Superseded audit narratives, Source-bound measurements, original decisions and
 exact custody through1296dc6 remain in the

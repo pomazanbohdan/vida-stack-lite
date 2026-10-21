@@ -3269,6 +3269,8 @@ test('trusted Host continuation atomically retains historical evidence and never
       'completed Source report recovery state inspection identity invalid',
     );
     expect(current.store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
+    expect(current.store.readInitialSourceFrontierCodeRebindReceipt(current.identity, 1, 'a'.repeat(64))).toBeNull();
+    expect(current.store.readDeliveredWorkContinuationReceipt(current.identity, 1)).toBeNull();
     expect(current.store.readQualifiedRuntimeCodeContinuations(current.identity, 1)).toEqual([]);
     const terminal = journalBefore.state.items[0];
     if (!terminal?.issue_id) throw new Error('Expected the genuine fixture terminal action identity.');
@@ -3543,6 +3545,7 @@ test('configured continuation lookup exposes the complete prewriter wave and eac
       'configured continuation before lookup',
     );
     const beforeViewRows = readFixtureHostRows(f.db);
+    expect(f.store.readDeliveredWorkContinuationReceipt(f.identity, 2)).toBeNull();
     const beforeView = requiredValue(
       f.store.readConfiguredFrontierRecoveryView(f.identity, 1),
       'configured original recovery view',
@@ -4417,6 +4420,7 @@ test('Host failed prewriter transition atomically retains failed reports and ori
       'failed-wave recovery receipt',
     );
     const recoveryViewRows = readFixtureHostRows(f.db);
+    expect(f.store.readFailedPrewriterRecoveryReceipt(f.identity, 2)).toBeNull();
     const recoveryView = requiredValue(
       f.store.readConfiguredFrontierRecoveryView(f.identity, 1),
       'configured recovered frontier view',
@@ -5941,6 +5945,7 @@ test.each(['rollback', 'commit'] as const)(
             ),
           ).toBe(false);
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
+          expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 2)).toBeNull();
           expect(host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent)).toEqual(receipt);
           expect(initialSourceState(f)).toEqual(after);
           expect(() =>
@@ -6160,6 +6165,10 @@ test(
         expect(after.journal).toEqual(before.journal);
         expect(after.journalVersion).toEqual(before.journalVersion);
         expect(host.readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(prepared.receipt);
+        expect(host.readInitialSourceContinuationReceipt(f.identity, 2)).toBeNull();
+        expect(
+          host.readInitialSourceFrontierCodeRebindReceipt(f.identity, 2, request.initialContinuationId),
+        ).toBeNull();
         expect(host.readInitialSourceFrontierCodeRebindReceipt(f.identity, 1, request.initialContinuationId)).toEqual(
           receipt,
         );
@@ -7315,6 +7324,20 @@ test('correction-generation repair preserves terminal results and completed jour
     actor: 'fixture:terminal-repair-owner',
   });
   expect(planned.status).toBe('planned');
+  const plannedGovernance = database
+    .query<GovernanceSqlRow, []>('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key')
+    .all();
+  expect(
+    store.repairCorrectionGeneration({ ...request, mode: 'plan', actor: 'fixture:terminal-repair-owner' }),
+  ).toEqual(planned);
+  expect(() =>
+    store.repairCorrectionGeneration({ ...request, mode: 'plan', actor: 'fixture:foreign-repair-owner' }),
+  ).toThrow('repair attribution differs');
+  expect(
+    database
+      .query<GovernanceSqlRow, []>('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key')
+      .all(),
+  ).toEqual(plannedGovernance);
   expect(database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(
     retained,
   );

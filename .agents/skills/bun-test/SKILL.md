@@ -22,6 +22,9 @@ Reuse exact zero-count branch-arm lists as well as missing function IDs. Check
 their count against the same report's branch deficit and preserve explicit
 implicit-if range labels. Select causal cases from actual gaps; additional
 denial assertions alone need not increase Istanbul's visited-operand counts.
+Distinguish an absent table from an absent positive-attempt row in a populated
+table. Prefer an extra read in the existing real producer fixture, preserving
+its row oracle, over another setup or a fabricated empty success table.
 
 ## Load the current owners
 

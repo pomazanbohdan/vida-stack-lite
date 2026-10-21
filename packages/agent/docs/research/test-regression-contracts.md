@@ -371,6 +371,11 @@ and a peer RESERVED/UNKNOWN remains fenced. Check the continuation payload/diges
 governance and linked Host rows after success and refusal. Retain unresolved roots
 and the original failing reproduction. Configured recovery readers separately
 check original-only and recovered views, frozen return values and unchanged rows.
+Exercise missing positive-attempt receipts after their real table is populated,
+as well as missing tables with current Work. Reuse the existing producer fixtures
+and unchanged-row oracles; do not create an empty success table just for a branch.
+Frozen repair-plan retries preserve the stored plan for the same actor and
+reject changed attribution without changing Host, Journal or governance rows.
 
 The public delivered-work repair and qualified runtime continuation cases in
 `tests/delivered-work-continuation.test.ts` inject a native source-close failure
