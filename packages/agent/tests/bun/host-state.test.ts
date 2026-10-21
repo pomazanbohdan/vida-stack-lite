@@ -136,6 +136,7 @@ import { executeDocumentationClearOperation } from '../../src/documentation/clea
 import {
   assertCodexDesktopAdapterContract,
   HostStateStore,
+  checkedMaintenanceFence,
   openHostStateDatabase,
   inspectHostWorkspaceDatabase,
   runConsumerMigrationState,
@@ -10871,6 +10872,10 @@ test.each([
   'close-error',
   'close-undefined',
   'close-return',
+  'release-missing',
+  'release-digest',
+  'release-binding',
+  'release-status',
 ] as const)(
   'consumer migration wrapper %s preserves private workflow bytes and exact operation identity',
   async (mode) => {
@@ -11045,6 +11050,168 @@ test.each([
             ),
           ).toEqual(tripletBefore);
         }
+        if (
+          mode === 'release-missing' ||
+          mode === 'release-digest' ||
+          mode === 'release-binding' ||
+          mode === 'release-status'
+        ) {
+          const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+          const target = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+          const tripletBefore = ['', '-wal', '-shm'].map((suffix) =>
+            existsSync(workflowPath + suffix) ? readFileSync(workflowPath + suffix) : null,
+          );
+          const nativeRelease: unknown = Reflect.get(HostStateStore.prototype, 'releaseMaintenanceFence');
+          if (typeof nativeRelease !== 'function') throw new Error('Native maintenance release method is missing');
+          let releaseCalls = 0;
+          let releaseFailure: unknown;
+          const releaseSpy = spyOn(HostStateStore.prototype, 'releaseMaintenanceFence').mockImplementation(
+            async function (this: HostStateStore, receipt) {
+              if (this.workspaceId !== workspaceId || receipt.fence.binding.operation_id !== input.operationId)
+                return checkedMaintenanceFence(await Reflect.apply(nativeRelease, this, [receipt]));
+              releaseCalls++;
+              expect(releaseCalls).toBe(1);
+              const held = this.readMaintenanceFence();
+              expect(held?.status).toBe('held');
+              // This peer is an isolated fault injector, not public SQL admission or accepted authority.
+              const peer = new Database(target, { strict: true });
+              let restoreRow = () => {};
+              let faultFailure: { error: unknown } | undefined;
+              try {
+                const rows = peer.query<
+                  { row_id: number; workspace_id: string; operation_id: string; payload: string; digest: string },
+                  [string, string]
+                >(
+                  'SELECT rowid AS row_id,workspace_id,operation_id,payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?',
+                );
+                const original = requiredValue(rows.get(workspaceId, input.operationId), 'committed migration row');
+                const state = parseJsonRecord(original.payload);
+                const changedPayload =
+                  mode === 'release-digest'
+                    ? original.payload + ' '
+                    : mode === 'release-binding'
+                      ? canonicalJson({
+                          ...state,
+                          binding: {
+                            ...parseJsonRecord(canonicalJson(state.binding)),
+                            request_digest: '0'.repeat(64),
+                          },
+                        })
+                      : mode === 'release-status'
+                        ? canonicalJson({ ...state, status: 'fixture-unaccepted' })
+                        : original.payload;
+                const changedDigest =
+                  mode === 'release-binding' || mode === 'release-status'
+                    ? createHash('sha256').update(changedPayload).digest('hex')
+                    : original.digest;
+                const changedKey = mode === 'release-missing' ? input.operationId + '-hidden' : input.operationId;
+                const replace = peer.query(
+                  'UPDATE agent_host_consumer_migration SET operation_id=?,payload=?,digest=? WHERE rowid=? AND workspace_id=? AND operation_id=? AND payload=? AND digest=?',
+                );
+                const changed = replace.run(
+                  changedKey,
+                  changedPayload,
+                  changedDigest,
+                  original.row_id,
+                  workspaceId,
+                  input.operationId,
+                  original.payload,
+                  original.digest,
+                );
+                if (changed.changes === 1)
+                  restoreRow = () => {
+                    expect(
+                      replace.run(
+                        original.operation_id,
+                        original.payload,
+                        original.digest,
+                        original.row_id,
+                        workspaceId,
+                        changedKey,
+                        changedPayload,
+                        changedDigest,
+                      ).changes,
+                    ).toBe(1);
+                    expect(rows.get(workspaceId, input.operationId)).toEqual(original);
+                  };
+                expect(changed.changes).toBe(1);
+                expect(rows.get(workspaceId, input.operationId)).toEqual(
+                  mode === 'release-missing' ? null : { ...original, payload: changedPayload, digest: changedDigest },
+                );
+                releaseFailure = await rejectionReason(Reflect.apply(nativeRelease, this, [receipt]));
+                expect(() => {
+                  throw releaseFailure;
+                }).toThrow('trusted maintenance closure verification failed');
+                expect(this.readMaintenanceFence()).toEqual(held);
+                throw releaseFailure;
+              } catch (error) {
+                faultFailure = { error };
+                throw error;
+              } finally {
+                completeOwnedCleanup(
+                  [
+                    () => {
+                      restoreRow();
+                    },
+                    () => {
+                      peer.close(true);
+                    },
+                  ],
+                  faultFailure,
+                );
+              }
+            },
+          );
+          let wrapperFailure: { error: unknown } | undefined;
+          try {
+            const rejected = await rejectionReason(
+              runConsumerMigrationState({ ...input, mode: 'baseline' }, () => {
+                calls++;
+                return 'observed metadata callback';
+              }),
+            );
+            expect(releaseCalls).toBe(1);
+            expect(calls).toBe(1);
+            expect(rejected).toBe(releaseFailure);
+          } catch (error) {
+            wrapperFailure = { error };
+            throw error;
+          } finally {
+            completeOwnedCleanup(
+              [
+                () => {
+                  releaseSpy.mockRestore();
+                },
+              ],
+              wrapperFailure,
+            );
+          }
+          const reopened = openHostStateDatabase(root, path.relative(root, target), workspaceId);
+          let probeFailure: { error: unknown } | undefined;
+          try {
+            expect(new HostStateStore(reopened, workspaceId).readMaintenanceFence()).toMatchObject({
+              status: 'held',
+              binding: { operation_id: input.operationId },
+            });
+          } catch (error) {
+            probeFailure = { error };
+            throw error;
+          } finally {
+            completeOwnedCleanup(
+              [
+                () => {
+                  closeWorkspaceDatabaseWithAdmission(reopened);
+                },
+              ],
+              probeFailure,
+            );
+          }
+          expect(
+            ['', '-wal', '-shm'].map((suffix) =>
+              existsSync(workflowPath + suffix) ? readFileSync(workflowPath + suffix) : null,
+            ),
+          ).toEqual(tripletBefore);
+        }
         const run = async (phase: 'baseline' | 'restore', hasBackup: boolean) => {
           if (performance.now() >= deadline) throw new Error('Migration wrapper fixture exhausted its case deadline');
           const result = await runConsumerMigrationState({ ...input, mode: phase }, (files) => {
@@ -11067,7 +11234,7 @@ test.each([
             for (const suffix of ['', '-wal', '-shm']) expect(existsSync(workflowPath + suffix)).toBe(false);
           } else expect(readFileSync(workflowPath)).toEqual(requiredValue(workflowBefore, 'workflow byte preimage'));
         };
-        await run('baseline', mode !== 'close-return');
+        await run('baseline', mode !== 'close-return' && !mode.startsWith('release-'));
         await run('baseline', false);
         await run('restore', false);
         if (mode === 'baseline-restore') await run('restore', false);

@@ -45,6 +45,16 @@ are inert counters, so these controls perform no real consumer effects. Retain
 the existing Journal/history, interruption/retry, prepared-admission, foreign-row,
 UNKNOWN and aggregate-governance cases and their original limits.
 
+The wrapper's release-freshness variants use actual committed baseline state.
+One filtered public release wrapper moves its operation key, changes payload
+without digest, or changes binding/status with matching digest through a private
+peer connection. Delegate the real verifier and require closure refusal, held
+fence and unchanged workflow main/WAL/SHM. Restore exact rowid/key/payload/digest
+under CAS, close the peer, restore the wrapper and converge the same operation.
+Preserve the original refusal and cleanup errors. This component fault injector
+establishes no public SQL admission, consumer effect or native disk-failure proof.
+Keep the default5s case bound and the other wrapper matrix controls.
+
 ### Historical continuation retains actual completed Host attempts
 
 The existing Host historical-terminal continuation case opts into

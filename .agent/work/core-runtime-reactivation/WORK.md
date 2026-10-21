@@ -14,18 +14,18 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-e93198e497ccdf67311fd5744f9546567ad15e85, run
-d8a7ed78-9857-491e-b73e-1b4b3266f97c, attempt1143.
+a6e7fe03fa6235125003afcb46b4a1c00283a62b, run
+524959d5-8a48-4de6-b3a6-ce2b5c3da66c, attempt1145.
 Coverage remains BLOCKED/nonexact; the pending test additions are not
 measured. A historical maximum or projection row is not new-HEAD acceptance.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs324cases/4999assertions
-in163799.197023ms. Host and stopped-source children take156.56s and113.96s.
-Commit/rollback recovery take11107.75ms/13759.00ms under unchanged20s limits.
+unchanged boot/image and automatic publication. It runs324cases/5045assertions
+in174327.805014ms. Host and stopped-source children take166.47s and128.78s.
+Commit/rollback recovery take10146.11ms/15947.93ms under unchanged20s limits.
 These are measurements of this input, not a controlled performance comparison.
-The measured corrective packet adds1line/2statements/3branch arms with unchanged
-denominators. The report-only join retains22statement/200branch-arm gaps;
+The measured packet adds2lines/3statements/7branch arms with unchanged
+denominators. The report-only join retains19statement/193branch-arm gaps;
 it performs no new AST/Source scan/hash.
 
 ## Latest measurement custody
@@ -39,12 +39,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-9W0opA/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1170-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1170-scratch-parent.json and DIAG/remainder-v1170-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1170-cache-retirement-9W0opA/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-9W0opA-w9RuMs/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-1LuMa4 |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-U1pRqS/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1183-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1183-scratch-parent.json and DIAG/remainder-v1183-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1183-cache-retirement-U1pRqS/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-U1pRqS-uVTtfj/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-nngA2V |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -53,7 +53,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-4563095552bytes and retained tmpfs9295822848bytes available, both above the
+4492185600bytes and retained tmpfs9291096064bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -125,7 +125,7 @@ vida-corrective-artifact-retry-review-v1168.md. Review finds no semantic blocker
 The final changed pin passes strict122/configured lint and1/10assertion control
 in remainder-v1170-controls-RwpBx3; no other selected file or resource changes.
 
-### Current development packet
+### Measured adverse-input and history packet
 
 Three pure adverse-ledger inputs reuse the actual postqueue snapshot and typed
 policy callback operation: released target, absent predecessor and absent target.
@@ -139,7 +139,8 @@ These probes do not visit the private reservation helper or its own-ticket-null
 guard; the expectedLease-null path also remains unsupported by current callers.
 The Bun skill now explicitly distinguishes an empty missing-function group from
 remaining statement/branch gaps, avoiding another scan prompted by that confusion.
-No numeric gain is claimed for these pending bytes.
+These bytes are now measured under a6e7fe0 above; focused checks alone establish
+no numeric result.
 
 The same packet adds two public corrective-claim refusals using the actual issued
 authorization: remove only its matching Work reference, or change its generation
@@ -170,7 +171,32 @@ the extra unit attempt lacks an accepted Journal item. Preserve FAIL
 stored-history-v1180-YhJziO and /tmp/vida-initial-source-TSCMtk. Move the extra
 history to rollback, leaving the original commit/expiry proof intact; no product
 guard or deadline is weakened. This is a corrected fixture composition, not a
-reproduced product defect. Final input-bound coverage remains pending.
+reproduced product defect. The complete a6e7fe0 stage measures this packet.
+
+### Current migration release-freshness packet
+
+Four existing wrapper variants now exercise a missing persisted operation,
+stale payload digest, changed binding and unaccepted status after actual baseline
+commit but before the real release verifier. A workspace/operation-filtered public
+method wrapper delegates the original release; one owned peer connection injects
+only the selected row fault. Exact rowid/key/payload/digest CAS restores the real
+beforeimage before peer close and refusal propagation. Preserve the held fence,
+workflow triplet bytes, original error identity, prototype restoration and normal
+same-operation baseline/restore convergence. The first retry expects no backup
+because its original baseline committed. These are isolated component faults,
+not real consumer effects, public SQL admission or accepted authority.
+
+Strict149/configured zero-warning lint and4/168assertions pass2.40s overall,
+185.29–269.40ms per case under5s: migration-freshness-v1185-4Uz4Uc.
+The preceding v1184-drrMBe stops at configured no-unsafe-return lint after strict
+PASS; no runtime starts. The non-target delegation now narrows its native result
+through the existing exported checkedMaintenanceFence decoder, without casts or
+suppression. The complete affected wrapper matrix passes11/408assertions3.72s
+in migration-freshness-v1186-L2Tcr2, checking prototype/close seam coexistence.
+Blind current-byte review vida-migration-release-freshness-review-v1184.md finds
+no blocker after correcting its spy-placement description. The actual spy wraps
+the valid invocation before its callback; product release still follows commit.
+Final numeric coverage for these pending bytes is not yet measured.
 
 ### Three-hour audit:2026-10-21 01:40–04:40 UTC
 
@@ -218,7 +244,7 @@ walk or deletion is justified. Original failed roots and durable evidence stay.
 
 ### Next actions and unresolved prerequisites
 
-1. Publish the checked adverse-input, corrective authority and stored-Work packet.
+1. Qualify migration release-freshness probes against the current supported seam.
    Preserve exact GAPs for unsupported paths.
    Review the final diff, refresh the changed test pin once, run its narrow control
    and documentation check, then ordinary commit/push.
@@ -237,10 +263,6 @@ Keep these specific unresolved paths open:
 - Same-Work different-attempt/thread history remains a prerequisite GAP in
   vida-same-work-attempt-history-v1175.md; the bounded fixture lacks the admitted
   intake/producer required for a second native Journal. Do not fabricate it.
-- Migration release freshness proposal vida-migration-release-freshness-probes-v1177.md
-  remains unimplemented. A filtered public release wrapper and peer row fault may
-  reach fresh-verifier guards; peer admission/cleanup and5s timing need focused
-  qualification before acceptance. It is a component seam, not consumer proof.
 - The actual post-prewriter engine/Journal suffix retains its original5s setup
   timeout GAP and original roots/proposal; no larger or out-of-selection fixture.
 - A defensive producer-fence branch is unvisited by present internal callers.
@@ -257,8 +279,8 @@ Keep these specific unresolved paths open:
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
-| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage163.799s with both native exits0 and complete custody. |
-| Fully serial files | Supported fallback; latest concurrent child times sum270.52s. That sum is a planning quantity, not measured serial elapsed time or admission. |
+| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage174.328s with both native exits0 and complete custody. |
+| Fully serial files | Supported fallback; latest concurrent child times sum295.25s. That sum is a planning quantity, not measured serial elapsed time or admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |
 
