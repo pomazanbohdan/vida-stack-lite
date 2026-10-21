@@ -14,18 +14,18 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-7d2f4518919c7c8c87b6f494cba83cf35e036fda, run
-64dcf095-052b-4527-80b8-a16f1a5dfa0c, attempt1141.
+e93198e497ccdf67311fd5744f9546567ad15e85, run
+d8a7ed78-9857-491e-b73e-1b4b3266f97c, attempt1143.
 Coverage remains BLOCKED/nonexact; the pending test additions are not
 measured. A historical maximum or projection row is not new-HEAD acceptance.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs324cases/4977assertions
-in171672.525059ms. Host and stopped-source children take164.97s and119.97s.
-Commit/rollback recovery take12594.67ms/13014.58ms under unchanged20s limits.
+unchanged boot/image and automatic publication. It runs324cases/4999assertions
+in163799.197023ms. Host and stopped-source children take156.56s and113.96s.
+Commit/rollback recovery take11107.75ms/13759.00ms under unchanged20s limits.
 These are measurements of this input, not a controlled performance comparison.
-The measured migration packet adds1line/3statements/3branch arms with unchanged
-denominators. The report-only join retains24statement/203branch-arm gaps;
+The measured corrective packet adds1line/2statements/3branch arms with unchanged
+denominators. The report-only join retains22statement/200branch-arm gaps;
 it performs no new AST/Source scan/hash.
 
 ## Latest measurement custody
@@ -33,16 +33,19 @@ it performs no new AST/Source scan/hash.
 Reuse these original owners instead of transcribing their hashes and counters
 into several active documents. All paths below are retained local evidence;
 these locators grant no additional acceptance authority.
+Here DIAG is the exact directory
+/workspace/vida-stack-lite/packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/.
+It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-v5psQi/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1166-sdk-provider.json |
-| Admission and complete producer log | Same diagnostics root: remainder-v1166-scratch-parent.json and remainder-v1166-stage.log |
-| Qualified private-cache retirement | Same root: remainder-v1166-cache-retirement-v5psQi/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-v5psQi-wHvti6/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-VNlisF |
-| Current report-only zero-counter join | Same diagnostics root: host-uncovered-plan-current.json |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-9W0opA/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1170-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1170-scratch-parent.json and DIAG/remainder-v1170-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1170-cache-retirement-9W0opA/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-9W0opA-w9RuMs/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-1LuMa4 |
+| Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
 Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
@@ -50,7 +53,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-4630089728bytes and retained tmpfs9300549632bytes available, both above the
+4563095552bytes and retained tmpfs9295822848bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -99,7 +102,7 @@ The final exact pin passes strict122-file checks, configured zero-warning lint
 and1/10assertion control in remainder-v1166-controls-g10HS6. Root's complete-diff
 review retains serial cases, private roots and independent two-file processes.
 
-### Checked corrective-artifact retry awaiting its own measurement
+### Measured corrective-artifact retry
 
 The existing corrective authorization case now injects a native Journal-update
 fault after actual product artifact creation. Exact Host/Journal/recovery rows
@@ -114,15 +117,64 @@ bytes under conditional CAS. It does not claim a public version transition.
 Strict149/configured zero-warning lint and1PASS/105assertions pass in7.61s overall,
 5949.38ms case time under the unchanged20s limit. Diagnostics:
 corrective-artifact-retry-v1168-RzhECD. No new product defect or numeric gain is
-claimed. Blind research and final current-byte review are retained as
+claimed from focused checks. Its complete e93198e stage above now measures the
+packet, with4962.33ms for the exact case under20s. Blind research and final
+current-byte review are retained as
 vida-corrective-artifact-retry-v1167.md and
 vida-corrective-artifact-retry-review-v1168.md. Review finds no semantic blocker.
 The final changed pin passes strict122/configured lint and1/10assertion control
 in remainder-v1170-controls-RwpBx3; no other selected file or resource changes.
 
-### Three-hour audit:2026-10-21 01:02–04:02 UTC
+### Current development packet
 
-Git publication times are retained in audit-v1166-published-window.log; stage,
+Three pure adverse-ledger inputs reuse the actual postqueue snapshot and typed
+policy callback operation: released target, absent predecessor and absent target.
+Only cloned inputs enter the exported DTO builder; native rows, Journal, peer,
+prepared operation, absent Source root and normal queued retry stay unchanged.
+Strict149/configured zero-warning lint and1/118assertions pass2.44s overall,
+442.49ms case time within5s: task-source-adverse-ledgers-v1173-flqygf.
+Blind review vida-task-source-adverse-ledgers-review-v1172.md finds no blocker.
+Its earlier proposal is vida-task-source-negative-snapshot-contract-v1171.md.
+These probes do not visit the private reservation helper or its own-ticket-null
+guard; the expectedLease-null path also remains unsupported by current callers.
+The Bun skill now explicitly distinguishes an empty missing-function group from
+remaining statement/branch gaps, avoiding another scan prompted by that confusion.
+No numeric gain is claimed for these pending bytes.
+
+The same packet adds two public corrective-claim refusals using the actual issued
+authorization: remove only its matching Work reference, or change its generation
+and matching reference hash. Exact Host/Journal/recovery rows and artifact bytes
+remain the probe preimage; owned cleanup restores original bytes before the real
+successful claim. Strict149/configured zero-warning lint and1/130assertions pass
+8.35s overall,6545.95ms case time under20s:
+corrective-generation-v1179-LTHEEu. The preceding v1178-YaUr5O stops at three
+strict errors (nullable closure capture and readonly edits); no runtime starts.
+The corrected construction preserves immutable contract types without casts.
+Blind current-byte review vida-corrective-generation-review-v1179.md finds no
+blocker; proposal vida-corrective-generation-denials-v1176.md stays research.
+
+Completed-report recovery reuses one real readonly Host preparation in rollback
+mode, preserving it beside the completed writer after native rollback/retry.
+The existing conditional Work-row corruption helper checks the named continuity
+refusal and exact restoration. Native Host/Journal, separate recovery receipt row
+and healthy public receipt are checked. Both modes pass2/102assertions30.14s
+overall in stored-history-v1181-nPhC3P; final receipt-oracle strengthening passes
+rollback1/54assertions16.12s overall,14690.93ms case under20s in
+stored-history-v1182-s3HSEC. Strict149/configured lint pass for each.
+Blind review vida-stored-work-guard-review-v1181.md found the missing separate
+receipt-row oracle; its final disposition confirms the exact comparison resolves
+that finding. Proposal vida-stored-work-guard-matrix-v1174.md is retained.
+
+The first commit-mode composition fails later native expiry recovery because
+the extra unit attempt lacks an accepted Journal item. Preserve FAIL
+stored-history-v1180-YhJziO and /tmp/vida-initial-source-TSCMtk. Move the extra
+history to rollback, leaving the original commit/expiry proof intact; no product
+guard or deadline is weakened. This is a corrected fixture composition, not a
+reproduced product defect. Final input-bound coverage remains pending.
+
+### Three-hour audit:2026-10-21 01:40–04:40 UTC
+
+Git publication times are retained in audit-v1183-published-window.log; stage,
 focused and static receipts supply actual outcomes, not commit-message inference.
 Complete tool-call/token telemetry is unavailable. Confirmed fixes and checked
 improvements in this bounded publication window:
@@ -149,10 +201,27 @@ The preceding WORK had320lines and the strategy378lines, including stale
 next-actions/counts. No full tool-call/token telemetry exists; reduced text and
 duplicate update sites are directly observable, runtime savings are unmeasured.
 
+Script execution reuses the once-built function inventory and report-only
+zero-counter join; no additional full AST, scan or Source hash pass is needed.
+The absolute DIAG locator above corrects an observed review detour to a stage
+directory. Four complete accepted stages in this window take189.023s,169.953s,
+171.673s and163.799s under their own inputs; these are not controlled speedups.
+Batching the current three proof groups avoids a separate SDK/image/full stage
+per group. Static failures stop before runtime; only the newly strengthened
+rollback oracle is repeated after the two-mode check. No complete suite is
+repeated for this development packet. Full tool-call/token counts remain unknown.
+
+At04:33 UTC one filesystem observation finds4562128896durable bytes and
+9295822848tmpfs bytes available. Both exceed2147483648; existing inventories and
+terminal cache-retirement manifests remain sufficient. No additional broad disk
+walk or deletion is justified. Original failed roots and durable evidence stay.
+
 ### Next actions and unresolved prerequisites
 
-1. Publish the checked corrective-artifact retry packet through ordinary hooks after
-   document validation. Its focused checks, review and exact pin control are complete.
+1. Publish the checked adverse-input, corrective authority and stored-Work packet.
+   Preserve exact GAPs for unsupported paths.
+   Review the final diff, refresh the changed test pin once, run its narrow control
+   and documentation check, then ordinary commit/push.
 2. Reuse one matching SDK artifact, capture one immutable image and execute one
    selected-contour stage. Import its outcome once; preserve failure/UNKNOWN.
 3. Continue from that report's exact zero-counter geometry. Do not rerun unchanged
@@ -162,6 +231,16 @@ Keep these specific unresolved paths open:
 - Retained-report ownership reconciliation needs a qualified legacy split-state
   fixture. Current public report atomically commits Journal and Source release;
   report-then-reconcile cannot prove the older final delegation.
+  The bounded qualification in vida-retained-report-fixture-contract-v1169.md
+  keeps the selected recovery fixture's missing completed-callback evidence OPEN;
+  ordinary Host unit completion remains distinct from native writer evidence.
+- Same-Work different-attempt/thread history remains a prerequisite GAP in
+  vida-same-work-attempt-history-v1175.md; the bounded fixture lacks the admitted
+  intake/producer required for a second native Journal. Do not fabricate it.
+- Migration release freshness proposal vida-migration-release-freshness-probes-v1177.md
+  remains unimplemented. A filtered public release wrapper and peer row fault may
+  reach fresh-verifier guards; peer admission/cleanup and5s timing need focused
+  qualification before acceptance. It is a component seam, not consumer proof.
 - The actual post-prewriter engine/Journal suffix retains its original5s setup
   timeout GAP and original roots/proposal; no larger or out-of-selection fixture.
 - A defensive producer-fence branch is unvisited by present internal callers.
@@ -178,8 +257,8 @@ Keep these specific unresolved paths open:
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
-| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage171.673s with both native exits0 and complete custody. |
-| Fully serial files | Supported fallback; latest concurrent child times sum284.94s. That sum is a planning quantity, not measured serial elapsed time or admission. |
+| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage163.799s with both native exits0 and complete custody. |
+| Fully serial files | Supported fallback; latest concurrent child times sum270.52s. That sum is a planning quantity, not measured serial elapsed time or admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |
 

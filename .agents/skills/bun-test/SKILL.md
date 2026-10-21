@@ -22,9 +22,15 @@ Reuse exact zero-count branch-arm lists as well as missing function IDs. Check
 their count against the same report's branch deficit and preserve explicit
 implicit-if range labels. Select causal cases from actual gaps; additional
 denial assertions alone need not increase Istanbul's visited-operand counts.
+An empty missing-function group does not mean there are no uncovered statements
+or branch arms. Read each exact counter and its own retained gap list before
+classifying the contour or asking for another scan.
 Distinguish an absent table from an absent positive-attempt row in a populated
 table. Prefer an extra read in the existing real producer fixture, preserving
 its row oracle, over another setup or a fabricated empty success table.
+Before adding Host unit history to a composite, check later Journal acceptance
+requirements. A completed Host readonly result is not an accepted Journal item;
+keep that probe in a compatible existing case rather than weaken recovery.
 
 ## Load the current owners
 

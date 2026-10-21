@@ -96,6 +96,14 @@ identical resources, and one Journal revision bump without body/digest change.
 A stale retry must preserve exact rows. This exercises accepted-report recovery
 inside the same20s case; it executes neither archived UNKNOWN nor a writer argv.
 
+Only the rollback case adds a completed Host readonly preparation before writer
+issue. Preserve that non-target attempt through native rollback and healthy retry,
+then change only its result and matching digest in the persisted Work preimage.
+Require the completed-report continuity refusal, unchanged Host/Journal and
+recovery receipt rows, conditional exact restoration and healthy public reads.
+Keep the commit/expiry case's native writer history unchanged: a Host unit result
+without an accepted Journal item cannot satisfy expired-execution recovery.
+
 After observed TaskSource inspect, a separate proposal with distinct request and
 operation IDs may issue under current policy. Preserve inspection argv/no-policy/
 unchanged-lease checks before the proposal, then assert replacement ownership,

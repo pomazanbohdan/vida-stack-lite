@@ -1018,6 +1018,97 @@ test(
         requestDigest: canonicalJsonDigest({ fixture: 'corrective-claim', authorization: issued.authorization }),
         lease: after.work.lease,
       };
+      const authorizedWorkVersion = after.workVersion;
+      const authorizedWork = requiredValue(
+        authorizedRows.host.find((row) => row.kind === 'work' && row.digest === authorizedWorkVersion.digest),
+        'authorized corrective Work preimage',
+      );
+      const authorityIndex = after.work.lifecycle.references.findIndex(
+        (ref) => ref.path === issued.authorization.path && ref.sha256 === issued.authorization.sha256,
+      );
+      expect(authorityIndex).toBeGreaterThanOrEqual(0);
+      const replaceWork = f.database.query(
+        "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
+      );
+      const authorizedRecovery = recoveryRows();
+      for (const mode of ['missing-reference', 'different-generation'] as const) {
+        const probeAuthorityBytes = Buffer.from(
+          canonicalJson({ ...authority, correction_generation: authority.correction_generation + 1 }),
+        );
+        const probeWork = {
+          ...after.work,
+          lifecycle: {
+            ...after.work.lifecycle,
+            references:
+              mode === 'missing-reference'
+                ? after.work.lifecycle.references.filter((_, index) => index !== authorityIndex)
+                : after.work.lifecycle.references.map((ref, index) =>
+                    index === authorityIndex
+                      ? { ...ref, sha256: createHash('sha256').update(probeAuthorityBytes).digest('hex') }
+                      : ref,
+                  ),
+          },
+        };
+        const changedPayload = canonicalJson(probeWork),
+          changedDigest = canonicalJsonDigest(probeWork);
+        expect(
+          replaceWork.run(
+            changedPayload,
+            changedDigest,
+            f.store.workspaceId,
+            authorizedWork.id,
+            authorizedWork.revision,
+            authorizedWork.digest,
+          ).changes,
+        ).toBe(1);
+        let authorityFailure: { error: unknown } | undefined;
+        try {
+          if (mode === 'different-generation') writeFileSync(authorityPath, probeAuthorityBytes);
+          expect(() =>
+            f.store.claimWorkflowAttempt({
+              ...correctiveRequest,
+              expectedWork: { revision: authorizedWork.revision, digest: changedDigest },
+            }),
+          ).toThrow('current corrective assignment authority unavailable');
+          expect(readFixtureHostRows(f.database)).toEqual({
+            ...authorizedRows,
+            host: authorizedRows.host.map((row) =>
+              row === authorizedWork ? { ...row, payload: changedPayload, digest: changedDigest } : row,
+            ),
+          });
+          expect(recoveryRows()).toEqual(authorizedRecovery);
+          for (const artifact of retainedArtifacts)
+            expect(readFileSync(artifact.file)).toEqual(
+              mode === 'different-generation' && artifact.file === authorityPath ? probeAuthorityBytes : artifact.bytes,
+            );
+        } catch (error) {
+          authorityFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                if (mode === 'different-generation') writeFileSync(authorityPath, authorityBytes);
+              },
+              () => {
+                expect(
+                  replaceWork.run(
+                    authorizedWork.payload,
+                    authorizedWork.digest,
+                    f.store.workspaceId,
+                    authorizedWork.id,
+                    authorizedWork.revision,
+                    changedDigest,
+                  ).changes,
+                ).toBe(1);
+              },
+            ],
+            authorityFailure,
+          );
+        }
+        expect(readFixtureHostRows(f.database)).toEqual(authorizedRows);
+        for (const artifact of retainedArtifacts) expect(readFileSync(artifact.file)).toEqual(artifact.bytes);
+      }
       const claimed = f.store.claimWorkflowAttempt(correctiveRequest);
       expect(claimed.attempt.correction_generation).toBe(1);
       expect(claimed.attempt.correction_authorization).toEqual(issued.authorization);
@@ -3052,6 +3143,51 @@ test('task-source policy denials preserve preparation and queued retries preserv
         hostSnapshot: reserved,
       }),
     ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
+    const predecessorId = requiredLease(reserved.work).ticket_id;
+    // These snapshots are adverse pure inputs, never persisted or supplied as current Host authority.
+    const adverseLedgers: readonly { ledger: CoordinationLedger; message: string }[] = [
+      {
+        ledger: {
+          ...reserved.ledger,
+          tickets: reserved.ledger.tickets.map((entry) =>
+            entry.ticket_id === ticketId
+              ? {
+                  ...entry,
+                  status: 'released',
+                  claim_ids: [],
+                  active_resources: [],
+                  blocked_resources: [],
+                  expires_at: null,
+                }
+              : entry,
+          ),
+        },
+        message: 'TaskSource ticket is terminal or not ready for issue',
+      },
+      {
+        ledger: {
+          ...reserved.ledger,
+          tickets: reserved.ledger.tickets.filter((entry) => entry.ticket_id !== predecessorId),
+        },
+        message: 'task source mutation request is stale, same-root, or not a create proposal',
+      },
+      {
+        ledger: {
+          ...reserved.ledger,
+          tickets: reserved.ledger.tickets.filter((entry) => entry.ticket_id !== ticketId),
+        },
+        message: 'task source mutation request is stale, same-root, or not a create proposal',
+      },
+    ];
+    for (const adverse of adverseLedgers)
+      expect(() =>
+        createTaskSourceMutationPolicyRequest({
+          repositoryRoot: queuedPolicy.repositoryRoot,
+          operation: queuedPolicy.operation,
+          preparedStateVersion: queuedPolicy.stateVersion,
+          hostSnapshot: { ...reserved, ledger: adverse.ledger },
+        }),
+      ).toThrow(adverse.message);
     expect(readFixtureHostRows(f.database)).toEqual(queuedNativeBefore);
     expect(preparedRows.all()).toEqual(originalPreparedRows);
     expect(existsSync(sourceRoot)).toBe(false);
@@ -5916,6 +6052,9 @@ test.each(['rollback', 'commit'] as const)(
           throw new Error('Completed Source report fixture preparation exhausted its deadline');
         expect(prepared.receipt.status).toBe('initial_request_ready');
         expect(prepared.journal.state.items.every((item) => item.issue_id === null)).toBe(true);
+        const readonlyPreparation = mode === 'rollback' ? completeReadonlyFixtureHostPreparation(f) : undefined;
+        if (readonlyPreparation)
+          expect(initialSourceState(f).work.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
         if (peers) {
           const nativeBefore = initialSourceState(f);
           const nativeRows = readFixtureHostRows(initialSourceHostDatabase(f));
@@ -6097,6 +6236,33 @@ test.each(['rollback', 'commit'] as const)(
           expect(retried.status).toBe('completed_report_recovered');
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
           expect(host.readHostStateSnapshot(f.identity).workVersion).toEqual(retried.work_version);
+          const restored = initialSourceState(f);
+          const readonlyAttempt = requiredValue(readonlyPreparation, 'completed readonly preparation').attempt;
+          expect(readonlyAttempt.attempt_id).not.toBe(issued.hostAttemptId);
+          expect(restored.work.execution.assignment_attempts[0]).toEqual(readonlyAttempt);
+          expect(restored.work.execution.assignment_attempts).toHaveLength(2);
+          const recoveryReceiptRows = db.query(
+            'SELECT * FROM agent_host_completed_source_report_recovery WHERE workspace_id=? AND work_id=? AND attempt=1',
+          );
+          const recoveryReceiptBefore = recoveryReceiptRows.all(host.workspaceId, f.identity.work_id);
+          expect(recoveryReceiptBefore).toHaveLength(1);
+          expect(
+            restored.work.execution.assignment_attempts.find((attempt) => attempt.attempt_id === issued.hostAttemptId),
+          ).toMatchObject({
+            status: 'completed',
+            result: observation,
+            result_digest: canonicalJsonDigest(observation),
+          });
+          expectTerminalHostResultMutationDenied(
+            db,
+            host,
+            f.identity,
+            restored.work,
+            'completed Source report recovery binding history is not continuous',
+          );
+          expect(initialSourceState(f)).toEqual(restored);
+          expect(recoveryReceiptRows.all(host.workspaceId, f.identity.work_id)).toEqual(recoveryReceiptBefore);
+          expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
         } else {
           const persistedBefore = readFixtureHostRows(db);
           expect(() =>
