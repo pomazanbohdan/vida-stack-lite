@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 3432,
+  "revision": 3487,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-21T11:23:53.653Z",
+  "updated_at": "2026-10-21T12:11:12.166Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -82,7 +82,8 @@
       "capture-an-idea": "Writes a forward-looking idea down at once, with its rationale, its trigger and its place in the codebase, without gating the capture on questions.",
       "profile-the-working-style": "Derives a profile of how the user works from observed sessions and states the confidence of each dimension.",
       "automate-what-can-be-automated": "Set up and run everything the agent can do itself — commands, servers, databases, environment variables, tools, credentials — and leave only human judgement to the human.",
-      "scope-tool-reach": "Keeps a powerful capability in the role that needs it and out of the role that does not."
+      "scope-tool-reach": "Keeps a powerful capability in the role that needs it and out of the role that does not.",
+      "write-knowledge-documents": "Writes the documents of a knowledge corpus: the metadata, the body, the provenance, the links and the history that go with them."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -226,7 +227,13 @@
       "evidence-preservation": "The evidence of a run is copied into a durable place of its own before the working directory that produced it is removed.",
       "collision-free-naming": "An approach in which every named output slot (heading, flag, identifier) is unique across the installed set, so two producers cannot silently merge into one another.",
       "ownership-scoped-removal": "An approach in which a removal touches only the entries the component stamped as its own and leaves every other entry of the shared file untouched.",
-      "checkpoint-and-resume": "A run that cannot finish inside one turn leaves a committed, resumable half-state — the external job, its manifest and the handoff are on disk — so a later run picks the work up instead of repeating it, and the completion record is deferred until the deferred part is verified."
+      "checkpoint-and-resume": "A run that cannot finish inside one turn leaves a committed, resumable half-state — the external job, its manifest and the handoff are on disk — so a later run picks the work up instead of repeating it, and the completion record is deferred until the deferred part is verified.",
+      "permissive-conformance": "An approach in which the consumer tolerates what it does not know and rejects only what it cannot read.",
+      "trust-signals": "An approach in which trust is inferred from objective recorded signals instead of from a score that is stored.",
+      "provenance-record": "An approach in which the material a document derives from is recorded with the facts that let a consumer attribute and judge it.",
+      "cross-reference-linking": "An approach in which documents are related by links whose kind is stated in the prose around them.",
+      "attested-computation": "An approach in which a computed value is produced by a declared computation and checked by deterministic code against the receipt of the run.",
+      "portable-knowledge": "An approach in which the knowledge lives in plain files that any tool can read, diff and ship."
     }
   },
   "tag_aliases": {
@@ -353,6 +360,11 @@
       "instruction_id": "a-registry-listing-is-not-proof-that-a-package-is-safe",
       "path": "instructions/a-registry-listing-is-not-proof-that-a-package-is-safe.md",
       "sha256": "3d0058b65ec69622687780fff2baba47e7048875639e7970fc31825bb2d7dcea"
+    },
+    {
+      "instruction_id": "a-rejected-write-did-not-happen-read-it-again-and-retry",
+      "path": "instructions/a-rejected-write-did-not-happen-read-it-again-and-retry.md",
+      "sha256": "eafe6062b54d72b0551dda00343baf550fccb8b1d264f0abc865df0cc5db1b99"
     },
     {
       "instruction_id": "a-requirement-nobody-verified-is-unsatisfied",
@@ -1110,6 +1122,11 @@
       "sha256": "28a86800c536d8961edb2d3d59459b15c6256bee28da37c91fd26a68f7c58717"
     },
     {
+      "instruction_id": "attest-with-deterministic-code-not-a-model",
+      "path": "instructions/attest-with-deterministic-code-not-a-model.md",
+      "sha256": "c0bcdf945b6290441549974abf182feeb8245786fb63967e06d7abeb1732eb34"
+    },
+    {
       "instruction_id": "audit-against-general-standards-when-the-plan-is-missing",
       "path": "instructions/audit-against-general-standards-when-the-plan-is-missing.md",
       "sha256": "8b5071f1d6cd3dd20d1a14ca8f15dbfd7c724d32ce98bb2a7d229b109e3951e0"
@@ -1163,6 +1180,11 @@
       "instruction_id": "audit-the-state-before-you-act-on-the-report",
       "path": "instructions/audit-the-state-before-you-act-on-the-report.md",
       "sha256": "eb3fc02ebb5373bbfb014438f3e39d28a2523c93633bfddd83bf8789d2b06b6a"
+    },
+    {
+      "instruction_id": "augment-the-document-and-keep-every-heading",
+      "path": "instructions/augment-the-document-and-keep-every-heading.md",
+      "sha256": "dcc42f1ea60f33023032a4ae0744bc30feca8dbd51822fad50c087cd4fc98895"
     },
     {
       "instruction_id": "author-a-human-wizard",
@@ -1298,6 +1320,11 @@
       "instruction_id": "be-prescriptive-not-exploratory-in-the-research-output",
       "path": "instructions/be-prescriptive-not-exploratory-in-the-research-output.md",
       "sha256": "b04feea1701639dfd0c3e59c4029073753d432a1f94c014ae301590d32de3159"
+    },
+    {
+      "instruction_id": "bind-a-claim-to-a-source-with-a-matching-label",
+      "path": "instructions/bind-a-claim-to-a-source-with-a-matching-label.md",
+      "sha256": "50cc316fb0c5965e55684eebd0a4cc623d2c9b92346b7b9c4335cb2d7cc340f2"
     },
     {
       "instruction_id": "bind-a-recorded-decision-to-the-finding-not-the-id",
@@ -1575,6 +1602,11 @@
       "sha256": "6a3f735a43581f5f3900aaaf9c5845d7dd66ae004dbc4818ac62b0b97bc96997"
     },
     {
+      "instruction_id": "capture-the-concrete-expression-not-a-paraphrase",
+      "path": "instructions/capture-the-concrete-expression-not-a-paraphrase.md",
+      "sha256": "86233668096837ef2d3bc48d36f92298039165ea3781d500d93755aed709a5bb"
+    },
+    {
       "instruction_id": "capture-the-decisions-in-a-canonical-log",
       "path": "instructions/capture-the-decisions-in-a-canonical-log.md",
       "sha256": "92a42de1416ea196ba6a6d8d5000ac5cf0e5ba878957d2935e5d6aed8ec6ee93"
@@ -1608,6 +1640,11 @@
       "instruction_id": "capture-the-text-verbatim",
       "path": "instructions/capture-the-text-verbatim.md",
       "sha256": "fe9e78d0bf4ea68ef5fc5c71933c9fd2f0462176b6edf0356fdaa27b7d8a6416"
+    },
+    {
+      "instruction_id": "carry-every-key-into-a-replacement-record",
+      "path": "instructions/carry-every-key-into-a-replacement-record.md",
+      "sha256": "1b42299e899a4ac40dec8607a5deca8be2021f84dec4438c678944bbffb2c7d4"
     },
     {
       "instruction_id": "carry-every-verdict-forward",
@@ -1977,7 +2014,7 @@
     {
       "instruction_id": "choose-the-version-bump-by-consumer-impact",
       "path": "instructions/choose-the-version-bump-by-consumer-impact.md",
-      "sha256": "6c282895df5efebfe21edd30f8ef63bb72d530e84caadc0cc5d720139fba64a3"
+      "sha256": "c2618818014e6c1f9457706b01d142697e0cc5bbc646efe61340985e0b779086"
     },
     {
       "instruction_id": "choose-the-working-mode-for-the-design",
@@ -2217,7 +2254,7 @@
     {
       "instruction_id": "close-with-a-short-completion-summary",
       "path": "instructions/close-with-a-short-completion-summary.md",
-      "sha256": "0ed6d18de149d83df1ba9d9f7e5d0f01e5ee465f3ca90550994afbf12285d19e"
+      "sha256": "28f63a496d907e371bbec88c0d6b074ed941b59c660c6da9fb9de9c6861fc66e"
     },
     {
       "instruction_id": "cluster-ideas-into-distinct-directions",
@@ -2413,6 +2450,11 @@
       "instruction_id": "consult-guidance-before-acting",
       "path": "instructions/consult-guidance-before-acting.md",
       "sha256": "9fce1b42f860a582c48072796cc83e9bb8348797492ee84bb1d9ec4b6d6d6e6e"
+    },
+    {
+      "instruction_id": "consume-an-unknown-format-version-in-best-effort-mode",
+      "path": "instructions/consume-an-unknown-format-version-in-best-effort-mode.md",
+      "sha256": "bc7999dc63d78b44e296024a3e32cc55df4d73ce113064c9fc7638ae3a804078"
     },
     {
       "instruction_id": "consume-the-handoff-and-delete-it-after-the-resume",
@@ -2910,6 +2952,11 @@
       "sha256": "af9c08f75316f88a609ab50c507c68238e573a2a7560c5974751ce4c7ada3f2e"
     },
     {
+      "instruction_id": "derive-the-trust-tier-from-the-verifier",
+      "path": "instructions/derive-the-trust-tier-from-the-verifier.md",
+      "sha256": "64810ad35bf1617b2772a56bdd53a8eb7eb9a1b8ec329886282e26501776fbd0"
+    },
+    {
       "instruction_id": "derive-the-truths-the-artifacts-the-wiring-and-the-key-links",
       "path": "instructions/derive-the-truths-the-artifacts-the-wiring-and-the-key-links.md",
       "sha256": "175121a14a558c2d5a78d098ca75f6bb8b179e224c7c2f873fc6ce530df5a421"
@@ -2920,6 +2967,11 @@
       "sha256": "d9c5367ba3a529f28764ae37be582157584e6197f82a82117c6c5d8ef8931be6"
     },
     {
+      "instruction_id": "describe-a-concept-with-its-title-description-and-resource",
+      "path": "instructions/describe-a-concept-with-its-title-description-and-resource.md",
+      "sha256": "3761111a6b6cd5d7f198629330ea33df3d249ab8b901a587a5ce5b8109a3c8a5"
+    },
+    {
       "instruction_id": "describe-a-lens-by-what-it-diagnoses-and-prescribes",
       "path": "instructions/describe-a-lens-by-what-it-diagnoses-and-prescribes.md",
       "sha256": "cdfd107c7aa40623bec2f59564a84e090d06b64806283f7815bb4b49c4388335"
@@ -2928,6 +2980,11 @@
       "instruction_id": "describe-how-the-code-works-and-how-it-got-that-way",
       "path": "instructions/describe-how-the-code-works-and-how-it-got-that-way.md",
       "sha256": "93988f9cb607e621efb76ef3ad3cbd7329b7958b98dc461fb6b042dd521cc888"
+    },
+    {
+      "instruction_id": "describe-the-concept-by-its-grain-range-and-caveats",
+      "path": "instructions/describe-the-concept-by-its-grain-range-and-caveats.md",
+      "sha256": "3753e35e03410bc425be6f27e705bd9cc12bb20d67afa0c2b43182d55975d6c0"
     },
     {
       "instruction_id": "describe-the-current-state-only",
@@ -3198,6 +3255,11 @@
       "instruction_id": "do-not-invent-manual-steps-for-an-infrastructure-phase",
       "path": "instructions/do-not-invent-manual-steps-for-an-infrastructure-phase.md",
       "sha256": "10ee4b2cb431019432635eabe401ad952692564a55123e127f3d45922bf00975"
+    },
+    {
+      "instruction_id": "do-not-invent-the-structure-the-source-does-not-state",
+      "path": "instructions/do-not-invent-the-structure-the-source-does-not-state.md",
+      "sha256": "263f1b660e7fdb2fa1482d2d4707abd1b07bc9d29a654d0fbeb8f35f09cf804b"
     },
     {
       "instruction_id": "do-not-let-a-malformed-report-read-as-a-clean-one",
@@ -3730,6 +3792,11 @@
       "sha256": "9d737133b190bd44470ff2598830ec14a1f2cc95905713c33bc9abf667e01903"
     },
     {
+      "instruction_id": "favour-structured-markdown-over-freeform-prose",
+      "path": "instructions/favour-structured-markdown-over-freeform-prose.md",
+      "sha256": "1e1c36ce002a86aa914ef587c5487561d9342b332fdd18ddc77b7b521140dcfb"
+    },
+    {
       "instruction_id": "feed-ci-failures-back-into-the-work-loop",
       "path": "instructions/feed-ci-failures-back-into-the-work-loop.md",
       "sha256": "ff58a80d95a392fa3c4e122ab52bbae7c04f83dc8b1d52576fdc8890bad1abf1"
@@ -3888,6 +3955,11 @@
       "instruction_id": "follow-the-established-stack-and-say-when-you-deviate",
       "path": "instructions/follow-the-established-stack-and-say-when-you-deviate.md",
       "sha256": "02ad14e1076847307de2140b5aad945dcec1ae4605652f4472aa21e967bb36fc"
+    },
+    {
+      "instruction_id": "follow-the-high-value-links-out-of-a-seed-page",
+      "path": "instructions/follow-the-high-value-links-out-of-a-seed-page.md",
+      "sha256": "60cf8c4004dd4a3e86b18eea62ff6253de596dd31aeccb8619e22e979f18b071"
     },
     {
       "instruction_id": "follow-the-step-sequence-and-halt-at-checkpoints",
@@ -4068,6 +4140,11 @@
       "instruction_id": "give-an-overridden-item-a-status-of-its-own",
       "path": "instructions/give-an-overridden-item-a-status-of-its-own.md",
       "sha256": "36968b945f4c8537cd7179c7794eb913af22f47139c55025e611228336cc680b"
+    },
+    {
+      "instruction_id": "give-each-computation-its-own-trust-state",
+      "path": "instructions/give-each-computation-its-own-trust-state.md",
+      "sha256": "c9fe4f016b0d7fe99feb0bee4b3444fe797221ebc630dd5ae294df45d2cdf797"
     },
     {
       "instruction_id": "give-each-project-its-own-checkout-and-its-own-rules",
@@ -4563,6 +4640,11 @@
       "instruction_id": "infer-the-severity-from-the-users-words",
       "path": "instructions/infer-the-severity-from-the-users-words.md",
       "sha256": "f8663fe04c46f8cab41097ee2f7bc455a027899578318b7c9585618249045b48"
+    },
+    {
+      "instruction_id": "infer-trust-from-objective-signals-not-from-a-stored-score",
+      "path": "instructions/infer-trust-from-objective-signals-not-from-a-stored-score.md",
+      "sha256": "6548812ebed102a546cf6e5808c4d9f2e3905af4703e66cb622b44ba035a53fa"
     },
     {
       "instruction_id": "inherit-from-a-ui-system-and-specify-only-the-deltas",
@@ -5075,6 +5157,11 @@
       "sha256": "931bd971218579489e306e22a4237218d39491930c5aedbb652f046296063d43"
     },
     {
+      "instruction_id": "keep-the-author-and-the-verifier-apart",
+      "path": "instructions/keep-the-author-and-the-verifier-apart.md",
+      "sha256": "57eda8a5cb26fcdf4fea9083fd55b96c221c3a3386a976f97109858b2739761b"
+    },
+    {
       "instruction_id": "keep-the-bookkeeping-out-of-the-session",
       "path": "instructions/keep-the-bookkeeping-out-of-the-session.md",
       "sha256": "dd92252e485fb94ea674a91e3989577b82bd7244c3efb26b89498567e861e255"
@@ -5102,7 +5189,7 @@
     {
       "instruction_id": "keep-the-contents-and-the-index-in-sync",
       "path": "instructions/keep-the-contents-and-the-index-in-sync.md",
-      "sha256": "f6ed3aa89b1ee6605e1eb8079d19a31cf6d8af78dc6db7d4741ce94eb040f7bc"
+      "sha256": "6ef42b43cdeed40651dd4d30be0e94d3bcd580e5a8fe565280cee9d4bf681982"
     },
     {
       "instruction_id": "keep-the-core-sections-of-a-generated-report-frozen",
@@ -5118,6 +5205,11 @@
       "instruction_id": "keep-the-decision-record-even-when-the-gate-is-suppressed",
       "path": "instructions/keep-the-decision-record-even-when-the-gate-is-suppressed.md",
       "sha256": "4a57c8698aaa95ae42fefdce16ce18d95d1ac2e79a70687426c09eeb3e2e6214"
+    },
+    {
+      "instruction_id": "keep-the-definition-check-and-the-run-check-apart",
+      "path": "instructions/keep-the-definition-check-and-the-run-check-apart.md",
+      "sha256": "c189725940c7599cd635cc006936b0ac82a65dbbda76fc232ac1fdfcec2fa54e"
     },
     {
       "instruction_id": "keep-the-delegated-worker-out-of-the-shared-state",
@@ -5230,6 +5322,11 @@
       "sha256": "56ba08b063d234ea2fcaba58981985e071b4448cc9d416585addd9f062075440"
     },
     {
+      "instruction_id": "keep-the-knowledge-in-plain-files-so-it-diffs-and-reviews-like-code",
+      "path": "instructions/keep-the-knowledge-in-plain-files-so-it-diffs-and-reviews-like-code.md",
+      "sha256": "e574665d28f749f039b4f3f05fd01b3356e4af51b3486f62e633f527ed607bf7"
+    },
+    {
       "instruction_id": "keep-the-last-valid-artefact-when-a-regeneration-fails",
       "path": "instructions/keep-the-last-valid-artefact-when-a-regeneration-fails.md",
       "sha256": "e0006b37aa153bcef6639e9040dc821d9e939d5575947362681362d7f58afe1d"
@@ -5305,9 +5402,19 @@
       "sha256": "9d63ff3c769e40bacc42a25e0c820fb86df75cc07d0cc6b1fdc193dcf282d319"
     },
     {
+      "instruction_id": "keep-the-provenance-in-the-record-not-in-a-body-section",
+      "path": "instructions/keep-the-provenance-in-the-record-not-in-a-body-section.md",
+      "sha256": "3ed1535a50364dd305e140f67ff8a9692022914b63261828d41508735f699bb7"
+    },
+    {
       "instruction_id": "keep-the-quality-bar-as-a-rising-floor",
       "path": "instructions/keep-the-quality-bar-as-a-rising-floor.md",
       "sha256": "4eb19f2f2c5df172830e6a56531f94ff1cc1ed0aded4b8bd73983694fd87d93b"
+    },
+    {
+      "instruction_id": "keep-the-queryable-fields-in-frontmatter-and-the-prose-in-the-body",
+      "path": "instructions/keep-the-queryable-fields-in-frontmatter-and-the-prose-in-the-body.md",
+      "sha256": "53b9b93b15a26178fe53fe9d40fe4765fd71c71d231ea43b6cc58fdc4ab88b58"
     },
     {
       "instruction_id": "keep-the-rendered-view-a-view-not-a-second-source-of-truth",
@@ -5423,6 +5530,11 @@
       "instruction_id": "keep-writing-the-local-record-when-the-external-store-becomes-authoritative",
       "path": "instructions/keep-writing-the-local-record-when-the-external-store-becomes-authoritative.md",
       "sha256": "8ce8d30f8f773900a087244fecbd1ce40becbe5fe51e6cdf58df84c90c994c9e"
+    },
+    {
+      "instruction_id": "key-a-claim-to-the-source-id-not-to-its-position",
+      "path": "instructions/key-a-claim-to-the-source-id-not-to-its-position.md",
+      "sha256": "24713cbe5c6c397fa332fd9381b99044518a7e4a10ccd03e42276c7d3bb2d1e7"
     },
     {
       "instruction_id": "key-the-cache-on-every-input-that-changes-the-response",
@@ -5635,9 +5747,19 @@
       "sha256": "1ec124fd9299749ecf719883fff43d7ec7600565bba75af3b8a8080c39764a69"
     },
     {
+      "instruction_id": "link-every-new-reference-from-the-document-that-uses-it",
+      "path": "instructions/link-every-new-reference-from-the-document-that-uses-it.md",
+      "sha256": "9238dac0cc7e88b61dafffc3ed8dc6f699b197aeabafe26226e25d75399d4779"
+    },
+    {
       "instruction_id": "link-only-on-a-clear-confident-match",
       "path": "instructions/link-only-on-a-clear-confident-match.md",
       "sha256": "eb085cc5d74dd5458e7efe0b839665fc6b5be342e0481ca0b2303da28e3d0b25"
+    },
+    {
+      "instruction_id": "link-only-to-targets-you-have-seen",
+      "path": "instructions/link-only-to-targets-you-have-seen.md",
+      "sha256": "d2b84e16a43ae1f5b8c9cf0b72acca57e9ec7b86b357ea54d3377e53ba189a30"
     },
     {
       "instruction_id": "link-the-design-and-keep-the-criteria-functional",
@@ -5882,7 +6004,7 @@
     {
       "instruction_id": "make-every-file-reference-clickable",
       "path": "instructions/make-every-file-reference-clickable.md",
-      "sha256": "c4c1e871023b7f5d1a2781c187f4013251047fe303610a1f448c9a84a404ad72"
+      "sha256": "c7d3d17382a4dc2af9a98176775c09ef6c978f4d07a6f14fbba553bbbeed16d9"
     },
     {
       "instruction_id": "make-every-interactive-element-keyboard-accessible",
@@ -6050,6 +6172,11 @@
       "sha256": "961627463269c09a5f228514b09381b67542eccd22f7a268a25077e605cb0ed4"
     },
     {
+      "instruction_id": "mark-a-concept-with-its-lifecycle-status",
+      "path": "instructions/mark-a-concept-with-its-lifecycle-status.md",
+      "sha256": "472bec757ee012eb59778d745601ef107877fea62253ed33c4738da8dd1ff94a"
+    },
+    {
       "instruction_id": "mark-a-deliberate-stop-as-halted-so-dependants-are-blocked",
       "path": "instructions/mark-a-deliberate-stop-as-halted-so-dependants-are-blocked.md",
       "sha256": "27df5c8f5357da3c14174e4bca350fcf536b118c282a235be1f34a1a5f6a9154"
@@ -6093,6 +6220,11 @@
       "instruction_id": "mark-source-confidence-honestly",
       "path": "instructions/mark-source-confidence-honestly.md",
       "sha256": "3c9a430943d9499f467960ce1089186745329b57fafc785ba42e9450cf93a211"
+    },
+    {
+      "instruction_id": "mark-staleness-with-an-absolute-instant-not-a-relative-ttl",
+      "path": "instructions/mark-staleness-with-an-absolute-instant-not-a-relative-ttl.md",
+      "sha256": "abbd7ed416f49a7a6b7ed72dd30d26e4174ad7f7379beb5c38f2a3f32777e68a"
     },
     {
       "instruction_id": "mark-the-claim-the-repository-cannot-prove",
@@ -6245,6 +6377,11 @@
       "sha256": "6f7e2ad993be476492e698ce301c5d6670519234824b0fb39b085d905cfff4b6"
     },
     {
+      "instruction_id": "merge-the-lists-instead-of-replacing-them",
+      "path": "instructions/merge-the-lists-instead-of-replacing-them.md",
+      "sha256": "b06b81eae75fea22afd86dd1eb95acc67963d2c109c0044eacb9a8e3ce51be7c"
+    },
+    {
       "instruction_id": "merge-the-override-layers-by-field-kind",
       "path": "instructions/merge-the-override-layers-by-field-kind.md",
       "sha256": "78f0f399eadb356a2f4e62d6ad10b7ee07c69f48f07dbe3f8d37fdd9c1af00bd"
@@ -6315,6 +6452,11 @@
       "sha256": "886c796a38991a5eaf1ad5e34ae44ffdd77e67c13dfa3b00feaa840822c43005"
     },
     {
+      "instruction_id": "mint-a-reference-only-when-it-passes-the-gates",
+      "path": "instructions/mint-a-reference-only-when-it-passes-the-gates.md",
+      "sha256": "6e9e11a9937f9ff4ba5796eae3057c209078c3d42aabf77d167649effffe9dc4"
+    },
+    {
       "instruction_id": "mirror-the-closest-existing-analog",
       "path": "instructions/mirror-the-closest-existing-analog.md",
       "sha256": "667a0b3bc14eebb43491e2aa7a7f1ad1c590215061b3ec1cceae362ca8fca4db"
@@ -6380,6 +6522,16 @@
       "sha256": "ae6d417703faf0c3e692c2b94c7162d3bc062ac2dde14c67ff34a82a49197544"
     },
     {
+      "instruction_id": "name-the-actor-by-its-convention",
+      "path": "instructions/name-the-actor-by-its-convention.md",
+      "sha256": "3d4470b41e50f283af7a7979f3b52986008793dea74c10153871759527800c23"
+    },
+    {
+      "instruction_id": "name-the-actor-by-its-kind",
+      "path": "instructions/name-the-actor-by-its-kind.md",
+      "sha256": "f50b23bb2431fa46634abd35da097f3566e294e006e712d75989a30aba5b8eb4"
+    },
+    {
       "instruction_id": "name-the-analog-file-and-the-lines-to-copy-from",
       "path": "instructions/name-the-analog-file-and-the-lines-to-copy-from.md",
       "sha256": "f340b07ce606eb43b131c80c6e07f90fcb2e9a88ce6659949d84deb3f6ca8690"
@@ -6433,6 +6585,11 @@
       "instruction_id": "name-the-decision-the-research-serves",
       "path": "instructions/name-the-decision-the-research-serves.md",
       "sha256": "8d130c77a65b9795512743f586511b84924f8a8af236efd4c56e80a1c2f42d57"
+    },
+    {
+      "instruction_id": "name-the-derived-file-the-same-way-every-time",
+      "path": "instructions/name-the-derived-file-the-same-way-every-time.md",
+      "sha256": "9318bc157aeca16b7ce699c9f0ee64ec7177bb370b560d7c9522c9862458f55f"
     },
     {
       "instruction_id": "name-the-dropped-items-not-only-the-count",
@@ -6840,6 +6997,11 @@
       "sha256": "6fed279d9218f9168f01a90cdee7319ffe6499ec7e8f822ec1eef23e680cba8e"
     },
     {
+      "instruction_id": "never-reject-a-document-for-a-missing-optional-field",
+      "path": "instructions/never-reject-a-document-for-a-missing-optional-field.md",
+      "sha256": "c43a9b5587329b6e42f85e9f32d69d02e122b5ac27bad6ee3b08622ca60d864f"
+    },
+    {
       "instruction_id": "never-report-a-state-you-did-not-capture",
       "path": "instructions/never-report-a-state-you-did-not-capture.md",
       "sha256": "e9b5c327907fa1b1a2c720c29fd4620ffe544c4f4868e50db2232ad6ea9e2456"
@@ -7098,6 +7260,11 @@
       "instruction_id": "one-primary-next-action-with-the-alternatives-secondary",
       "path": "instructions/one-primary-next-action-with-the-alternatives-secondary.md",
       "sha256": "b4ee84b038a9c014e3ee9121c529df607ca36ef18020b389333bac1c3d9997b9"
+    },
+    {
+      "instruction_id": "one-write-call-carries-one-concept",
+      "path": "instructions/one-write-call-carries-one-concept.md",
+      "sha256": "6f254dcb80842d093010ba08d503d1555a287e2cd116e8de17b25adadcada4d1"
     },
     {
       "instruction_id": "only-an-executed-plan-can-resolve-a-gap",
@@ -8065,6 +8232,11 @@
       "sha256": "fe2dfc45be3f40de6c00dd7ce459da41cb50e27c9a55816f48b0598250eaa265"
     },
     {
+      "instruction_id": "read-the-new-field-and-fall-back-to-the-old-one",
+      "path": "instructions/read-the-new-field-and-fall-back-to-the-old-one.md",
+      "sha256": "a81d6c1fb6baa9f3935fdd913c2cb53d3eaba070501660043cdecd983e7304a0"
+    },
+    {
       "instruction_id": "read-the-project-history-not-its-snapshot",
       "path": "instructions/read-the-project-history-not-its-snapshot.md",
       "sha256": "0ba5778dca897e2c6353ade912a8587713c108bb1e09c5570152fe1c8f119c2f"
@@ -8240,6 +8412,11 @@
       "sha256": "ef7eaa00e45d4e482102b8b8ab59ea10c3a350963bb4b992141a58ed9b0f4065"
     },
     {
+      "instruction_id": "record-only-the-sources-you-actually-read",
+      "path": "instructions/record-only-the-sources-you-actually-read.md",
+      "sha256": "48d3a645fe952ced1801f6c0e7540498d0110016de85e5f389533fe8acce4d4c"
+    },
+    {
       "instruction_id": "record-only-what-changes-a-future-run",
       "path": "instructions/record-only-what-changes-a-future-run.md",
       "sha256": "4284f603ff237d61bcff0a9543a91eb8a53d0b09ff4f52ba11f088f3e34918b1"
@@ -8383,6 +8560,11 @@
       "instruction_id": "record-the-route-the-review-and-the-lenses-that-ran",
       "path": "instructions/record-the-route-the-review-and-the-lenses-that-ran.md",
       "sha256": "09a8b6e7780d34dc9b12127e0784049f3e46968a31082623cacc699d42e7a79c"
+    },
+    {
+      "instruction_id": "record-the-sources-a-concept-was-derived-from",
+      "path": "instructions/record-the-sources-a-concept-was-derived-from.md",
+      "sha256": "47cdec7a776e59040e3f906586e5396ef3875cfb7185997bd0891e1147ed20a3"
     },
     {
       "instruction_id": "record-the-stub-you-left-behind-instead-of-reporting-the-phase-as-complete",
@@ -8918,6 +9100,11 @@
       "instruction_id": "require-a-test-that-ran-for-every-matrix-row",
       "path": "instructions/require-a-test-that-ran-for-every-matrix-row.md",
       "sha256": "aef143403ba3cb124a4703bb8b3f21141118fda784af3f2818836948df72028c"
+    },
+    {
+      "instruction_id": "require-a-type-on-every-concept-document",
+      "path": "instructions/require-a-type-on-every-concept-document.md",
+      "sha256": "6c67200bc11f905664adf20bdce0b68e00b02191b642af678ebb15d8c36ae1d0"
     },
     {
       "instruction_id": "require-a-written-spec-before-building",
@@ -9915,6 +10102,11 @@
       "sha256": "d14b5b33e79561cbbab441f31a4b17e15a55149a9d08cc434407a7c2aeea0449"
     },
     {
+      "instruction_id": "separate-a-normalization-diff-from-a-translation-loss",
+      "path": "instructions/separate-a-normalization-diff-from-a-translation-loss.md",
+      "sha256": "119a5c34abb7555117bceb0b769026f77fde7c832658375c799ff715faf1c1c1"
+    },
+    {
       "instruction_id": "separate-a-painkiller-from-a-vitamin",
       "path": "instructions/separate-a-painkiller-from-a-vitamin.md",
       "sha256": "ac41e0d3f76ac746edeef1707c444c2df0eb64ff4ca255f09b7fa7c24404f3ad"
@@ -10550,6 +10742,11 @@
       "sha256": "9289c4f3bd0582dd707b33ebf063b5cde8e877dfe8881261a4dc87b1f251fa51"
     },
     {
+      "instruction_id": "state-the-kind-of-a-relationship-in-the-prose-not-in-the-link",
+      "path": "instructions/state-the-kind-of-a-relationship-in-the-prose-not-in-the-link.md",
+      "sha256": "a5c891012049eaec94cc319934da969dc791491e06beeaea305341985a4a2bfb"
+    },
+    {
       "instruction_id": "state-the-recurrence-guard-concretely-and-verify-it",
       "path": "instructions/state-the-recurrence-guard-concretely-and-verify-it.md",
       "sha256": "1bade4d2759b5042be80072881da2c39d01936776c7bd83be8ef0b64fe361fd0"
@@ -10810,6 +11007,11 @@
       "sha256": "88625b6d0ae3a6c90376aff54bb94ba3a846a960296d0178b34658386943acf3"
     },
     {
+      "instruction_id": "supply-only-the-parameter-values-never-the-computation",
+      "path": "instructions/supply-only-the-parameter-values-never-the-computation.md",
+      "sha256": "be85e8084020a36e8e511baefd3c924b4b14abc819668f039931035f61a30049"
+    },
+    {
       "instruction_id": "suppress-a-section-with-no-entries",
       "path": "instructions/suppress-a-section-with-no-entries.md",
       "sha256": "e7058de4cbaae913c576fb629777dfd2c1c9fa4209cae9b7ed65dd3264356ada"
@@ -10843,6 +11045,11 @@
       "instruction_id": "surface-promotion-candidates-without-promoting-them",
       "path": "instructions/surface-promotion-candidates-without-promoting-them.md",
       "sha256": "402f013b26dc053c40d310d3b5125484c72ef5b1436ab99739da876c7ccd3fee"
+    },
+    {
+      "instruction_id": "surface-the-attestation-verdict-instead-of-dropping-it",
+      "path": "instructions/surface-the-attestation-verdict-instead-of-dropping-it.md",
+      "sha256": "5cd8fb0c523d161e8733ca763ff2c184f1e5db5bb0d613d57bb2ad19eb79862e"
     },
     {
       "instruction_id": "surface-the-input-paths-and-let-the-user-confirm",
@@ -10893,6 +11100,16 @@
       "instruction_id": "synthesize-the-findings-instead-of-concatenating-them",
       "path": "instructions/synthesize-the-findings-instead-of-concatenating-them.md",
       "sha256": "d3a95d941b2d1b5b1ebf383763ff440d6ca826bb84ab1668aef40178cd6b6dc0"
+    },
+    {
+      "instruction_id": "synthesize-the-listing-when-the-corpus-has-none",
+      "path": "instructions/synthesize-the-listing-when-the-corpus-has-none.md",
+      "sha256": "a6e374748da8b23cb63bcae30ceb9ca4e6d6f5ed7094ce5910ca250804af2edc"
+    },
+    {
+      "instruction_id": "synthesize-the-tag-view-at-consumption-time",
+      "path": "instructions/synthesize-the-tag-view-at-consumption-time.md",
+      "sha256": "22db6057f8688ff417b930cf1656c9eb5bce9db7f3cc92e55a26731631b2a1f4"
     },
     {
       "instruction_id": "tag-each-structural-finding-with-a-disposition",
@@ -11057,7 +11274,7 @@
     {
       "instruction_id": "the-local-record-is-the-working-copy-the-remote-is-pulled-back",
       "path": "instructions/the-local-record-is-the-working-copy-the-remote-is-pulled-back.md",
-      "sha256": "df17eaa51ca2a74c95e958f8e136dc9c90b4cf1af16d13a7c92045bb06dfd504"
+      "sha256": "a4782aa95669b6f48c05546f0c0e0f08b74cac384640a8d370dad45d32545748"
     },
     {
       "instruction_id": "the-manifest-is-authoritative-over-the-heuristic",
@@ -11153,6 +11370,11 @@
       "instruction_id": "treat-a-broad-impact-change-as-behavioral",
       "path": "instructions/treat-a-broad-impact-change-as-behavioral.md",
       "sha256": "f1dd555968d4331466e27adcf4ddd8fdf59dbcba0437f94d6cbcb77c5f6b35f0"
+    },
+    {
+      "instruction_id": "treat-a-broken-cross-link-as-not-yet-written-knowledge",
+      "path": "instructions/treat-a-broken-cross-link-as-not-yet-written-knowledge.md",
+      "sha256": "3f1c8a89ee3efa344452e5c3128d7bfe909307e7969a7838acbbab9fcb5e8696"
     },
     {
       "instruction_id": "treat-a-check-that-could-not-look-as-no-verdict",
@@ -11285,6 +11507,11 @@
       "sha256": "ea51da782117b954c44b2973fb8b8990f8918f9207368126644bf3b2ccd1ae00"
     },
     {
+      "instruction_id": "treat-an-unknown-type-as-a-generic-concept",
+      "path": "instructions/treat-an-unknown-type-as-a-generic-concept.md",
+      "sha256": "1937e2c0d9778efd1a1feed62881c84982d63c6f66fb137b50b88e25513c1628"
+    },
+    {
       "instruction_id": "treat-an-unmarked-item-as-open",
       "path": "instructions/treat-an-unmarked-item-as-open.md",
       "sha256": "a8570c32e29db45d734e1fb4d47916a6c1f1db5254e4d0a749d49492c83047b7"
@@ -11403,6 +11630,11 @@
       "instruction_id": "treat-the-user-answer-as-data-when-you-pass-it-on",
       "path": "instructions/treat-the-user-answer-as-data-when-you-pass-it-on.md",
       "sha256": "75e5294e3f46019afe37c2b9bb250aee29b55f4ada18b98ebc47ca8a94305848"
+    },
+    {
+      "instruction_id": "treat-the-version-controlled-copy-as-authoritative-when-you-push-to-a-catalogue",
+      "path": "instructions/treat-the-version-controlled-copy-as-authoritative-when-you-push-to-a-catalogue.md",
+      "sha256": "3fadee537246448358400d90d17f3a86ee79754be73475101a1cf458e2766727"
     },
     {
       "instruction_id": "treat-your-own-code-as-foreign-when-debugging-it",
@@ -11553,6 +11785,11 @@
       "instruction_id": "use-one-error-format-per-interface",
       "path": "instructions/use-one-error-format-per-interface.md",
       "sha256": "61565b904e37ea43d5a946f327e961ae462a51d4a7c501b34e3cec26b1c013b4"
+    },
+    {
+      "instruction_id": "use-the-bundle-root-for-an-absolute-cross-link",
+      "path": "instructions/use-the-bundle-root-for-an-absolute-cross-link.md",
+      "sha256": "121200cd0f04f0cdc8e6609d33ab3d86b25815b90d1065d7214c5a1693df3874"
     },
     {
       "instruction_id": "use-the-design-systems-values",
@@ -12155,6 +12392,11 @@
       "sha256": "1f067e81d461dc6c3865671d545f09b931a829754f82398015f6c83ab76ee47f"
     },
     {
+      "instruction_id": "write-every-timestamp-as-an-iso-8601-datetime-with-an-offset",
+      "path": "instructions/write-every-timestamp-as-an-iso-8601-datetime-with-an-offset.md",
+      "sha256": "06e4d6a02425a13604b444fbc8b23ab8523a88242afa81dc4996aeec40d75b70"
+    },
+    {
       "instruction_id": "write-evidence-gated-program-plan",
       "path": "instructions/write-evidence-gated-program-plan.md",
       "sha256": "dc7a5d772287cefd9bc0f7aa96c4d73fe295caf48098314fcdf0f499ff81c749"
@@ -12292,12 +12534,17 @@
     {
       "instruction_id": "write-the-artifact-to-disk-and-return-only-the-confirmation",
       "path": "instructions/write-the-artifact-to-disk-and-return-only-the-confirmation.md",
-      "sha256": "9f64b1461adf21c20995bd19e5e34d15052cfbc744fbf0160ac2175e1be8dd27"
+      "sha256": "d9508a898a666a1111bdeae0a30379814063ca782b800bcbcfa7449064fc5c16"
     },
     {
       "instruction_id": "write-the-body-around-the-output",
       "path": "instructions/write-the-body-around-the-output.md",
       "sha256": "ffeae1d84602f2c6e18007879915f6041c121dc2b851d6f8ba0dd2d4ebd81e83"
+    },
+    {
+      "instruction_id": "write-the-body-concretely-and-without-narration",
+      "path": "instructions/write-the-body-concretely-and-without-narration.md",
+      "sha256": "9d833c1d36c35b1e87f24ec1b36d99615eb40305fde32124be518cb1a21af3bc"
     },
     {
       "instruction_id": "write-the-boundaries-as-two-explicit-lists",
@@ -12308,6 +12555,11 @@
       "instruction_id": "write-the-cases-before-the-skill",
       "path": "instructions/write-the-cases-before-the-skill.md",
       "sha256": "11f2d63c5edf763fed44fd93424b1c50319d9f36d7f848ae0731b6a48aeb4ec7"
+    },
+    {
+      "instruction_id": "write-the-change-log-newest-first-under-date-headings",
+      "path": "instructions/write-the-change-log-newest-first-under-date-headings.md",
+      "sha256": "9128d8c44224e1312bd0e2cc2754183591bed6d267f133875d5978e4a5941aee"
     },
     {
       "instruction_id": "write-the-checkpoint-so-the-human-can-act",

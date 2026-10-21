@@ -13,13 +13,14 @@ artifact_contract_required_data:
   - what the remote holds
   - the change written back into the local record
 artifact_contract_verified_by: what the remote holds was pulled back into the local record after every write and every query
-compatibility_excludes: []
+compatibility_excludes:
+  - treat-the-version-controlled-copy-as-authoritative-when-you-push-to-a-catalogue
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ticket/references/board.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/set-up-the-ticket-tree.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # The local record is the working copy, the remote is pulled back

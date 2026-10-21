@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-05-present.md
+  - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=src/reference_agent/prompts/web_ingestion_instruction.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Close with a short completion summary
@@ -43,3 +44,5 @@ Offer applicable next actions in one short line: when version control and a remo
 
 - create a pull request (and push first if needed)
 - or make another change
+
+End your session with one short sentence summarizing what you did: how many pages you fetched, how many docs you updated, how many references you minted.

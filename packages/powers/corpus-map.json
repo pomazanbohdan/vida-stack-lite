@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4669,
-  "updated_at": "2026-10-21T11:22:44.669Z",
+  "revision": 4812,
+  "updated_at": "2026-10-21T12:11:17.006Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -9187,7 +9187,8 @@
           "status": "split",
           "instruction_ids": [
             "do-not-inject-a-year-into-a-search-query",
-            "rate-the-confidence-per-claim-and-show-doubt-louder"
+            "rate-the-confidence-per-claim-and-show-doubt-louder",
+            "write-the-artifact-to-disk-and-return-only-the-confirmation"
           ]
         },
         "agents/gsd-research-synthesizer.compact.md": {
@@ -16144,6 +16145,427 @@
         "tests/qa/smell-acks/README.md": {
           "status": "rejected",
           "reason": "the test fixture or the expected output of the donor own test suite"
+        }
+      }
+    },
+    "open-knowledge-format": {
+      "source_revision": "ad30107c31c06aec8a7d5636e0d1058118604e6f",
+      "files": {
+        "SPEC.md": {
+          "status": "split",
+          "instruction_ids": [
+            "require-a-type-on-every-concept-document",
+            "treat-an-unknown-type-as-a-generic-concept",
+            "never-reject-a-document-for-a-missing-optional-field",
+            "describe-a-concept-with-its-title-description-and-resource",
+            "write-every-timestamp-as-an-iso-8601-datetime-with-an-offset",
+            "record-the-sources-a-concept-was-derived-from",
+            "infer-trust-from-objective-signals-not-from-a-stored-score",
+            "key-a-claim-to-the-source-id-not-to-its-position",
+            "keep-the-author-and-the-verifier-apart",
+            "derive-the-trust-tier-from-the-verifier",
+            "mark-a-concept-with-its-lifecycle-status",
+            "mark-staleness-with-an-absolute-instant-not-a-relative-ttl",
+            "name-the-actor-by-its-kind",
+            "use-the-bundle-root-for-an-absolute-cross-link",
+            "state-the-kind-of-a-relationship-in-the-prose-not-in-the-link",
+            "treat-a-broken-cross-link-as-not-yet-written-knowledge",
+            "synthesize-the-listing-when-the-corpus-has-none",
+            "write-the-change-log-newest-first-under-date-headings",
+            "give-each-computation-its-own-trust-state",
+            "supply-only-the-parameter-values-never-the-computation",
+            "attest-with-deterministic-code-not-a-model",
+            "keep-the-definition-check-and-the-run-check-apart",
+            "surface-the-attestation-verdict-instead-of-dropping-it",
+            "consume-an-unknown-format-version-in-best-effort-mode",
+            "read-the-new-field-and-fall-back-to-the-old-one",
+            "favour-structured-markdown-over-freeform-prose",
+            "synthesize-the-tag-view-at-consumption-time"
+          ]
+        },
+        "README.md": {
+          "status": "split",
+          "instruction_ids": [
+            "keep-the-queryable-fields-in-frontmatter-and-the-prose-in-the-body",
+            "keep-the-knowledge-in-plain-files-so-it-diffs-and-reviews-like-code"
+          ]
+        },
+        "connectors/gcp-knowledge-catalog.md": {
+          "status": "split",
+          "instruction_ids": [
+            "treat-the-version-controlled-copy-as-authoritative-when-you-push-to-a-catalogue",
+            "separate-a-normalization-diff-from-a-translation-loss"
+          ]
+        },
+        "src/reference_agent/prompts/web_ingestion_instruction.md": {
+          "status": "split",
+          "instruction_ids": [
+            "a-rejected-write-did-not-happen-read-it-again-and-retry",
+            "augment-the-document-and-keep-every-heading",
+            "capture-the-concrete-expression-not-a-paraphrase",
+            "carry-every-key-into-a-replacement-record",
+            "follow-the-high-value-links-out-of-a-seed-page",
+            "keep-the-provenance-in-the-record-not-in-a-body-section",
+            "link-every-new-reference-from-the-document-that-uses-it",
+            "merge-the-lists-instead-of-replacing-them",
+            "mint-a-reference-only-when-it-passes-the-gates",
+            "name-the-derived-file-the-same-way-every-time",
+            "one-write-call-carries-one-concept",
+            "record-only-the-sources-you-actually-read",
+            "close-with-a-short-completion-summary"
+          ]
+        },
+        "src/reference_agent/prompts/reference_instruction.md": {
+          "status": "split",
+          "instruction_ids": [
+            "augment-the-document-and-keep-every-heading",
+            "bind-a-claim-to-a-source-with-a-matching-label",
+            "describe-the-concept-by-its-grain-range-and-caveats",
+            "do-not-invent-the-structure-the-source-does-not-state",
+            "keep-the-provenance-in-the-record-not-in-a-body-section",
+            "link-only-to-targets-you-have-seen",
+            "name-the-actor-by-its-convention",
+            "record-only-the-sources-you-actually-read",
+            "write-the-body-concretely-and-without-narration",
+            "write-the-artifact-to-disk-and-return-only-the-confirmation",
+            "make-every-file-reference-clickable"
+          ]
+        },
+        "bundles/acme_retail/attesters/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `attesters`; it states no norm."
+        },
+        "bundles/acme_retail/computations/gross-margin-period.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: the computation of a fictional company (Acme Retail). The rule it demonstrates is mined from the specification (SPEC.md) by the other batch, not from the example."
+        },
+        "bundles/acme_retail/computations/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `computations`; it states no norm."
+        },
+        "bundles/acme_retail/computations/revenue-ytd.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: the computation of a fictional company (Acme Retail). The rule it demonstrates is mined from the specification (SPEC.md) by the other batch, not from the example."
+        },
+        "bundles/acme_retail/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example bundle acme_retail; it lists what the example contains and states no norm."
+        },
+        "bundles/acme_retail/log.md": {
+          "status": "rejected",
+          "reason": "the change log of the worked example bundle; the rule about the bundle log belongs to the specification, not to the example."
+        },
+        "bundles/acme_retail/metrics/gross-margin-legacy.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: the metric of a fictional company (Acme Retail). The rule it demonstrates is mined from the specification (SPEC.md) by the other batch, not from the example."
+        },
+        "bundles/acme_retail/metrics/gross-margin.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: the metric of a fictional company (Acme Retail). The rule it demonstrates is mined from the specification (SPEC.md) by the other batch, not from the example."
+        },
+        "bundles/acme_retail/metrics/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `metrics`; it states no norm."
+        },
+        "bundles/acme_retail/metrics/revenue.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: the metric of a fictional company (Acme Retail). The rule it demonstrates is mined from the specification (SPEC.md) by the other batch, not from the example."
+        },
+        "bundles/acme_retail/policies/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `policies`; it states no norm."
+        },
+        "bundles/acme_retail/policies/margin-standard.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: the policy of a fictional company (Acme Retail). The rule it demonstrates is mined from the specification (SPEC.md) by the other batch, not from the example."
+        },
+        "bundles/acme_retail/policies/revenue-recognition.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: the policy of a fictional company (Acme Retail). The rule it demonstrates is mined from the specification (SPEC.md) by the other batch, not from the example."
+        },
+        "bundles/acme_retail/skills/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `skills`; it states no norm."
+        },
+        "bundles/acme_retail/skills/run-on-bq.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: the skill of a fictional company (Acme Retail). The rule it demonstrates is mined from the specification (SPEC.md) by the other batch, not from the example."
+        },
+        "bundles/acme_retail/tables/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `tables`; it states no norm."
+        },
+        "bundles/acme_retail/tables/orders.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: the table of a fictional company (Acme Retail). The rule it demonstrates is mined from the specification (SPEC.md) by the other batch, not from the example."
+        },
+        "bundles/crypto_bitcoin/datasets/crypto_bitcoin.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a generated document for a public dataset. It states no norm of its own."
+        },
+        "bundles/crypto_bitcoin/datasets/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `datasets`; it states no norm."
+        },
+        "bundles/crypto_bitcoin/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example bundle crypto_bitcoin; it lists what the example contains and states no norm."
+        },
+        "bundles/crypto_bitcoin/references/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `references`; it states no norm."
+        },
+        "bundles/crypto_bitcoin/references/joins/blocks___transactions.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a join reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (one canonical file per pair, named by the sorted pair); the example states no norm of its own."
+        },
+        "bundles/crypto_bitcoin/references/joins/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `references/joins`; it states no norm."
+        },
+        "bundles/crypto_bitcoin/references/joins/inputs___transactions.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a join reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (one canonical file per pair, named by the sorted pair); the example states no norm of its own."
+        },
+        "bundles/crypto_bitcoin/references/joins/outputs___transactions.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a join reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (one canonical file per pair, named by the sorted pair); the example states no norm of its own."
+        },
+        "bundles/crypto_bitcoin/references/metrics/duplicate_transactions.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/crypto_bitcoin/references/metrics/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `references/metrics`; it states no norm."
+        },
+        "bundles/crypto_bitcoin/tables/blocks.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/crypto_bitcoin/tables/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `tables`; it states no norm."
+        },
+        "bundles/crypto_bitcoin/tables/inputs.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/crypto_bitcoin/tables/outputs.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/crypto_bitcoin/tables/transactions.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/ga4/datasets/ga4_obfuscated_sample_ecommerce.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a generated document for a public dataset. It states no norm of its own."
+        },
+        "bundles/ga4/datasets/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `datasets`; it states no norm."
+        },
+        "bundles/ga4/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example bundle ga4; it lists what the example contains and states no norm."
+        },
+        "bundles/ga4/references/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `references`; it states no norm."
+        },
+        "bundles/ga4/references/metrics/acquired_users.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/ga4/references/metrics/frequently_active_users.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/ga4/references/metrics/google_acquired_cohorts.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/ga4/references/metrics/highly_active_users.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/ga4/references/metrics/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `references/metrics`; it states no norm."
+        },
+        "bundles/ga4/references/metrics/n_day_active_users.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/ga4/references/metrics/n_day_inactive_users.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/ga4/references/metrics/purchasers.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/ga4/tables/events_.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/ga4/tables/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `tables`; it states no norm."
+        },
+        "bundles/stackoverflow/datasets/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `datasets`; it states no norm."
+        },
+        "bundles/stackoverflow/datasets/stackoverflow.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a generated document for a public dataset. It states no norm of its own."
+        },
+        "bundles/stackoverflow/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example bundle stackoverflow; it lists what the example contains and states no norm."
+        },
+        "bundles/stackoverflow/references/content_licenses.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a reference document of a public dataset. The gate it had to pass is mined from the specification, not from the example."
+        },
+        "bundles/stackoverflow/references/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `references`; it states no norm."
+        },
+        "bundles/stackoverflow/references/joins/comments__posts.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a join reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (one canonical file per pair, named by the sorted pair); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/references/joins/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `references/joins`; it states no norm."
+        },
+        "bundles/stackoverflow/references/joins/post_links__posts.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a join reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (one canonical file per pair, named by the sorted pair); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/references/joins/posts__votes.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a join reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (one canonical file per pair, named by the sorted pair); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/references/joins/posts_answers__posts_questions.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a join reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (one canonical file per pair, named by the sorted pair); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/references/metrics/accepted_answer_rate.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/references/metrics/bad_question_flag_ratio.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a metric reference of a public dataset. It demonstrates the rule mined from src/reference_agent/prompts/web_ingestion_instruction.md (the reference carries the concrete expression and the footnote that binds it to its source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/references/metrics/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `references/metrics`; it states no norm."
+        },
+        "bundles/stackoverflow/references/post_types.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a reference document of a public dataset. The gate it had to pass is mined from the specification, not from the example."
+        },
+        "bundles/stackoverflow/references/vote_types.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a reference document of a public dataset. The gate it had to pass is mined from the specification, not from the example."
+        },
+        "bundles/stackoverflow/tables/badges.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/comments.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/index.md": {
+          "status": "rejected",
+          "reason": "the auto-generated index of the worked example set `tables`; it states no norm."
+        },
+        "bundles/stackoverflow/tables/post_history.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/post_links.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/posts_answers.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/posts_moderator_nomination.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/posts_orphaned_tag_wiki.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/posts_privilege_wiki.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/posts_questions.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/posts_tag_wiki.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/posts_tag_wiki_excerpt.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/posts_wiki_placeholder.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/stackoverflow_posts.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/tags.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/users.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "bundles/stackoverflow/tables/votes.md": {
+          "status": "rejected",
+          "reason": "a worked example of the format: a table document of a public dataset. It demonstrates the rules mined from src/reference_agent/prompts/reference_instruction.md and web_ingestion_instruction.md (relative links, the `# Metrics` and `# Joins` back-links, the footnote that binds a claim to a source); the example states no norm of its own."
+        },
+        "samples/crypto_bitcoin/README.md": {
+          "status": "rejected",
+          "reason": "the runbook of one worked example of the donor (the crypto_bitcoin sample: install, credentials, command line); it states no norm and the format it produces is the specification's."
+        },
+        "samples/ga4_merch_store/README.md": {
+          "status": "rejected",
+          "reason": "the runbook of one worked example of the donor (the ga4_merch_store sample: install, credentials, command line); it states no norm and the format it produces is the specification's."
+        },
+        "samples/stackoverflow/README.md": {
+          "status": "rejected",
+          "reason": "the runbook of one worked example of the donor (the stackoverflow sample: install, credentials, command line); it states no norm and the format it produces is the specification's."
+        },
+        "CODE_OF_CONDUCT.md": {
+          "status": "rejected",
+          "reason": "the code of conduct of the donor repository; it states no rule for the work"
+        },
+        "CONTRIBUTING.md": {
+          "status": "rejected",
+          "reason": "the contribution guide of the donor repository, with its own review and release procedure"
+        },
+        "LICENSE.md": {
+          "status": "rejected",
+          "reason": "the licence text of the donor repository"
         }
       }
     }

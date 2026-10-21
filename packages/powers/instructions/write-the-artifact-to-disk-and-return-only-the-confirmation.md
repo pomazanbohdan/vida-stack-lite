@@ -21,8 +21,9 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-project-researcher.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-project-researcher.compact.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-executor.md
+  - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=src/reference_agent/prompts/reference_instruction.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write the artifact to disk and return only the confirmation
@@ -32,3 +33,6 @@ If writing still fails, surface the actual error in your return message.
 Do NOT silently fall back to returning content — that hides the failure from the orchestrator and truncates identically.
 Default: write the whole file in a single `Write` call.
 build the file incrementally so no single tool call carries the whole payload:
+Each invocation enriches exactly **one** concept and finishes by calling `write_concept_doc` exactly once.
+Do **not** print the document, the frontmatter, or the body in your reply — the only way to persist a concept is the `write_concept_doc` call.
+Do not call any tools after that.
