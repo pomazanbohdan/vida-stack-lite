@@ -128,6 +128,13 @@ original evidence and unchanged admission thresholds. Before inspecting or
 retiring Bun's default cache, give the diagnostic its own transpiler-cache path:
 otherwise Bun can write @t@ inside the cache under inspection. Keep that disposable
 cache separate from durable receipts; it grants no volatile evidence exception.
+Closed-fixture dependency deduplication must retain exact paths, bytes, modes and
+symlink targets, a verified independent restoration archive, and a per-path
+manifest. Use a protected closed donor, never mutable Source dependencies or the
+active host executable. Linked donor/candidate payloads stay protected; materialize
+independent files before future writable use. Inode sharing and timestamps change,
+including a candidate file's mtime taking the donor value; this does not reattest
+old runs or permit image mutation.
 
 Ordinary Vex queries refresh under its native single-writer lock after readiness.
 Auto-update runs at query time, not as a background watcher. Check its terminal

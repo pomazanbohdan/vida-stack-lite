@@ -18,25 +18,68 @@ Its original admission refusal remains in DIAG/remainder-v1499-retention-admissi
 the prior observations remain recoverable at
 a034e0d:.agent/work/core-runtime-reactivation/WORK.md. The unchanged
 floor2147483648 plus67108864archive reserve still requires2214592512bytes.
-Current default-cache retirement records2551259136available bytes; no threshold
-is lowered. DIAG/cleanup-v1524/default-bun-v1527-retirement.json owns the observation.
+The default-cache cleanup admits the next stage; subsequent closed-dependency
+deduplication restores further capacity without lowering a threshold.
+DIAG/cleanup-v1524/dependency-dedup/retirement.json records3611992064available bytes.
 
-The f9c0ace stage's non-cache scratch now has a durable archive with a complete
-tar comparison and SHA binding at
-/workspace/vida-functional-retention-yKpj7E-WkCTqN/archive.json.
-After forming its325313-byte archive,2550910976durable bytes remain available.
-All originals, the execution image and original reports remain in place.
-The current repair packet still needs publication, matching SDK/image readiness
-and fresh launch admission before another complete selected-contour stage.
-Cleanup and archival do not change numeric outcomes or reattest old measurements.
+The latest5350412 stage's non-cache scratch now has a durable archive with a
+complete tar comparison and SHA binding at
+/workspace/vida-functional-retention-afnEnK-VNkbbW/archive.json.
+After forming its324980-byte archive,3611430912durable bytes remain available.
+All original scratch, images and reports remain in place. Its private regenerable
+cache alone is retired under DIAG/remainder-v1532-cache-retirement-afnEnK.
+Fresh admission still applies before another producer. Cleanup and archival
+do not change numeric outcomes or reattest old measurements.
 
 Blind1498 studies the terminal Journal map arms1617/1 and1618/0. The original and
 corrected notes are retained under DIAG. Its singleton-wave proof is bound to
 the inspected task graph; it does not establish generic unreachability for every
 validated workflow graph. Root adds no disposition or accepted synthetic history.
-The existing7branch/2statement dispositions retain exact gap geometry and matching
-Source/test fingerprints in DIAG/remainder-v1499-objective-rebind.json. All other
-58arms remain open. No further suite or mutation producer is started.
+The existing7branch/2statement dispositions retain exact gap geometry and the
+unchanged selected Source fingerprint in DIAG/remainder-v1530-delta-and-objectives.json,
+which also binds the changed tests to the new report. All other56arms remain open.
+No mutation producer or unchanged full-suite retry is started.
+
+### Additional closed-dependency deduplication
+
+The owner's follow-up asks for further Cloud-aware cleanup. The managed runtime
+API reports a current connected/enforced environment. Its available tools expose
+status/network diagnostics, not a storage-resize operation; no current Cloud skill
+is listed. Root reuses the previously read runtime instructions and single disk
+inventory, without claiming an unavailable skill or starting another broad scan.
+
+One large closed stage's narrowed inventory reveals four contained controllers.
+Root retains suZT8G/controller as the fixed donor and qualifies only bun plus
+package/node_modules in qpVemo, AyF46R,4oHDOt and the previously inventoried
+home-cache ZZF2oB controller. Every selected tree matches all paths, kinds, modes,
+symlink targets and file bytes. The donor is hashed once; candidate bytes once.
+All initial regular-file inodes are private, outside the immutable measured image
+and live Source dependency root. Native stage closure and fresh current consumers
+are checked before each candidate; opaque visibility remains a refusal.
+
+Blind1531 conditionally approves with donor lifetime protection and restoration.
+Root first makes a separate donor archive, completes a full tar comparison and
+fsyncs its bytes before replacement. Each regular-file path has a recorded intent,
+same-directory staging/backup link, atomic replacement and per-path completion.
+Directories and symlink targets remain. All Source, configuration, observations,
+DBs, original logs/receipts and FAIL/TIMEOUT/UNKNOWN are unchanged. Only55076
+duplicate dependency-file names now share the protected donor inodes. Link count,
+ctime and directory timestamps change; a candidate mtime takes its donor value.
+Original timestamp values remain in the manifests; no timestamp preservation or
+old-run reattestation is claimed.
+
+DIAG/cleanup-v1524/dependency-dedup owns the exact roots, compressed equality
+inventories, independent review, restoration archive/digest and exclusive events.
+Its retirement.json records1221554176actual reclaimed bytes, separate from the
+archive's cost. Donor and candidates are retained evidence, never reusable writable
+fixtures; restore independent files from the verified archive before any future
+write or retirement of the donor. The first strict check catches a diagnostic
+array-narrowing error before mutation; its corrected strict check passes.
+
+The latest stage has already closed before this cleanup. Only its private cache
+is retired next; it yields215846912tmpfs bytes, not durable capacity. Complete
+non-cache scratch receives the verified durable archive recorded above. No broad
+scan, compiler, build/install or second numeric producer competes with cleanup.
 
 ### Detailed cleanup and three-hour execution audit
 
@@ -744,19 +787,22 @@ where copying/archive retention consumes the same space.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-f9c0ace199f904970bf25238123c815e2ef8b6d9, run
-22985d90-b004-47f2-81b9-feaa3ba743f6.
-F1125/1125,L4989/4989,S5323/5325,B5529/5594 leave2statement/65branch-arm gaps.
+5350412c5620423dbee9491779fc668537a1b9d7, run
+6a9bed81-7502-468d-b69e-9ac344672c78.
+F1125/1125,L4989/4989,S5323/5325,B5531/5594 leave2statement/63branch-arm gaps.
 F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The stage has parent/native exits0, full capture, closed process group,
 unchanged boot/image and automatic projection publication. All341cases and
-5999assertions pass in228240.751152ms. Host325/5672 takes220.75s;
-stopped-source16/327 takes135.82s. The previous220481.861301ms observation has
-the same selected Source/test fingerprints and different captured tooling.
-This is infrastructure qualification, not a controlled speed benchmark or new
-coverage. Both runs stay within unchanged300s coverage/330s stage budgets.
+6010assertions pass in203020.847775ms. Host325/5677 takes196.68s;
+stopped-source16/333 takes117.23s. The prior22985d90 stage takes228240.751152ms
+with different captured test/tool inputs; this is not a controlled speed benchmark.
+Both runs stay within unchanged300s coverage/330s stage budgets.
+The report-only geometry join confirms two new visits:723/0 at the initial
+continuation lineage read and1420/2 for the real no_effect predecessor.
+DIAG/remainder-v1530-delta-and-objectives.json binds both reports, unchanged
+Source fingerprint, changed test fingerprints and unchanged objective geometry.
 The operation owner reports execution_complete=true but retains numeric BLOCKED,
 report_complete=false and resource_safe_to_advance=false. Parent exit0 does not
 override those results. No unchanged full retry is launched.
@@ -774,7 +820,7 @@ objective-skip rule only after exact-counter disposition; remaining testable or
 undispositioned paths keep this same contour active. Do not repeat a full stage
 unchanged or fabricate history. Frozen/mutation stay deferred.
 
-The predecessor map is DIAG/host-uncovered-plan-pre-v1499.json; the current
+The predecessor map is DIAG/host-uncovered-plan-pre-v1530.json; the current
 map is refreshed once through the retained report-only join. The prior numeric,
 timing and retirement evidence remains in the
 [publishedaca52f0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/aca52f04331b9bc9fb99f8c3536e5118468b358b/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
@@ -784,14 +830,15 @@ the diagnostic255 maxima do not establish frozen-gate acceptance.
 ### Bound objective coverage dispositions
 
 The table retains its original62b2652b/aca52f0 proof and is rebound to the current
-22985d90/f9c0ace report's identical gap geometry and Source/test fingerprints in
-DIAG/remainder-v1499-objective-rebind.json. It binds the native execution
+6a9bed81/5350412 report's identical gap geometry and unchanged selected Source in
+DIAG/remainder-v1530-delta-and-objectives.json. That record separately binds the
+changed test fingerprints; no new skip is admitted. It binds the native execution
 receipts above. Source fingerprint is
 aaec43aea318e9ce3d193c1cfe424be656926988979a8582efa366fc785d976a;
 test fingerprint is
-fe8b68138505b185a7f7b86aa1d586c88009a29fd8519769b20b182027a7e68c.
-The report's original manifest, tool_inputs/config hashes and tool fingerprint
-ee194ba2641bfc9406f489fd8e46c854180fcbd6be1be6622f4f26a5ce55bf96
+212c26ad2760cdb4f64ad2e3e21aaca260c2ef8bfb6b35e967558b1853b79f6c.
+The report's original manifest binding, tool_inputs/config hashes and tool fingerprint
+9e0e932a5160786e9abe0e7c19e2314235222e297dd490b584678e8431c7d82d
 bind the checks without another hash pass. Independent blind1487 re-reads exact
 current counters and producers; DIAG/vida-objective-exact-history-v1487.md owns
 the detailed proof. Root accepts its two history dispositions. Independent1484
@@ -812,9 +859,9 @@ fallback, and a claimed fixture route does not prove the arm was visited.
 | HostStateStore.captureHistoricalTerminalSynthesisAndRelease | Branch1568 arm1 at17926:56–58 | Objective skip. The original #read validates the Work/ledger pair; every non-null lease must point to its active matching ticket. The local owner guard requires that lease, and the validated ticket schema requires exclusive_resources. The absent-ticket/resources fallback cannot follow those guards. Preserve it and reopen if pair/schema/producer validation changes. |
 | taskSourceReservationResources | Branch87 arm0 at1768:45–82, raw[0,71] | Native-Windows qualification GAP, not a contract-unreachable skip. Requires the real supported native target; do not mock platform or claim current Linux evidence qualifies it. |
 
-Both missing statements and7of65missing branch arms have reviewed objective
-dispositions. RawS5323/5325 andB5529/5594 remain unchanged and BLOCKED.
-The other58arms, including Windows, retain their exact gaps. This does not close
+Both missing statements and7of63missing branch arms have reviewed objective
+dispositions. RawS5323/5325 andB5531/5594 remain BLOCKED.
+The other56arms, including Windows, retain their exact gaps. This does not close
 the contour or open another while testable/undispositioned paths remain.
 No frozen-budget waiver, assertion-confirmed mutation kill or Runtime acceptance
 is inferred. Early1482/1483 studies used the predecessor before current binding;
@@ -828,7 +875,11 @@ In particular recoverExpiredLocalLease has input.verifyCurrent between its two
 lineage reads. Do not infer their equivalence, remove the second read or accept
 1498's skip solely from an assertion that no callback occurs. Supported negative
 routes and current/completed Journal map routes also need causal fixture checks;
-candidate recipes are not coverage. All other arms stay in the active contour.
+candidate recipes are not coverage. Blind1529 finds the existing queued peer has
+another Work identity; a same-Work public TaskSource queue needs genuine policy,
+Journal and conflicting-reservation setup. Its report remains an unresolved
+producer GAP in DIAG/vida-queued-handoff-v1529.md, not an objective skip.
+All other arms stay in the active contour.
 This cycle exposes two avoidable review steps:1482/1483 start against the
 predecessor before the fresh exact map exists, and1484 initially mistypes the
 image path. Neither missing metadata nor a mistyped path establishes a missing
@@ -848,18 +899,18 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-yKpj7E/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1497-sdk-provider.json and DIAG/remainder-v1497-sdk-verified.json |
-| Admission and complete producer log | DIAG/remainder-v1497-scratch-parent.json and DIAG/remainder-v1497-stage.log |
-| Previous private-cache disposition | DIAG/remainder-v1486-cache-retirement-ZMaBPU/manifest.json and retirement-events.jsonl |
-| Previous non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-ZMaBPU-LJoe0z/archive.json |
-| Current durable-retention admission | DIAG/remainder-v1499-retention-admission.json; BLOCKED_RESOURCE, no new archive |
-| Original retained scratch | /dev/shm/vida-quality-retained-Uwf5Wc |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-afnEnK/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1528-sdk-provider.json and DIAG/remainder-v1528-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1528-scratch-parent.json and DIAG/remainder-v1528-stage.log |
+| Current private-cache disposition | DIAG/remainder-v1532-cache-retirement-afnEnK/manifest.json and retirement-events.jsonl |
+| Current non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-afnEnK-VNkbbW/archive.json |
+| Current durable-retention capacity | DIAG/cleanup-v1524/dependency-dedup/retirement.json; resource GAP resolved, archive formed |
+| Original retained scratch | /dev/shm/vida-quality-retained-KObG4F |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
 and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
-The previous325170-byte durable archive excludes only that stage's declared private
+The current324980-byte durable archive excludes only that stage's declared private
 regenerable Bun cache, retired after closed custody and dependency qualification.
 The exact cache path,15243-entry inventory and exclusive events are retained;
 observed scratch gain215846912bytes is separate from durable-4096bytes.
@@ -870,9 +921,9 @@ history linked above; no shared dependency scan/hash is repeated.
 
 Both filesystems passed admission before the current launch; checkout and
 durable evidence share the overlay. The later retention observation and exact
-reserve GAP are owned by the current blocker above. Reuse the existing inventory;
+capacity are owned by the resolved resource blocker above. Reuse the existing inventory;
 do not add broad du/scan/hash or cleanup competing with numeric/build/install
-operations. Original evidence remains protected while retention is blocked.
+operations. Original evidence remains protected after retention qualification.
 
 ### Measured packets and regression custody
 
