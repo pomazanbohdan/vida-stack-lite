@@ -8961,6 +8961,8 @@ test('restored repair plan retry rejects a changed restored list without canonic
 });
 
 test('readonly canonical workspace inspection preserves populated governance and database bytes', async () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const deadline = performance.now() + 5_000;
   const original = commitHostState(fixture());
   const operation = reserveRequiredOperation(store, 'inspection', '1'.repeat(64), '2'.repeat(64));
   store.transitionOperation(operation, 'commit_unknown');
@@ -8978,7 +8980,66 @@ test('readonly canonical workspace inspection preserves populated governance and
   expect(database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(schema);
   expect(database.query<SqliteJournalModeRow, []>('PRAGMA journal_mode').get()).toEqual(journalMode);
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
+  const admissionSql = requiredValue(
+    requiredValue(
+      schema.find((row) => row.name === 'agent_host_admission_attempt'),
+      'admission table definition',
+    ).sql,
+    'admission table SQL',
+  );
+  expect(
+    database.query<ScalarCountRow, []>('SELECT COUNT(*) AS count FROM agent_host_admission_attempt').get()?.count,
+  ).toBe(0);
+  if (schema.some((row) => row.name === 'agent_host_consumer_migration'))
+    expect(database.query('SELECT * FROM agent_host_consumer_migration WHERE workspace_id=?').all(workspace)).toEqual(
+      [],
+    );
+  const rows = () => ({
+    host: database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all(),
+    governance: governanceRows(),
+  });
+  const originalRows = rows();
+  database.exec('DROP TABLE agent_host_admission_attempt');
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const variantBytes = await readFile(databasePath);
+    const variantSchema = database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all();
+    const withoutAdmissions = inspectHostWorkspaceDatabase(root, 'authority.db', workspace);
+    expect(withoutAdmissions.admission_attempts).toEqual([]);
+    expect(withoutAdmissions).toEqual(observed);
+    expect(await readFile(databasePath)).toEqual(variantBytes);
+    expect(database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(
+      variantSchema,
+    );
+    expect(database.query<SqliteJournalModeRow, []>('PRAGMA journal_mode').get()).toEqual(journalMode);
+    expect(rows()).toEqual(originalRows);
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          expect(
+            database
+              .query<SqliteNameRow, []>("SELECT name FROM sqlite_master WHERE name='agent_host_admission_attempt'")
+              .get(),
+          ).toBeNull();
+          database.exec(admissionSql);
+          expect(database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(
+            schema,
+          );
+          expect(rows()).toEqual(originalRows);
+        },
+      ],
+      primaryFailure,
+    );
+  }
+  expect(store.readHostStateSnapshot(identity)).toEqual(original);
   expect(() => inspectHostWorkspaceDatabase(root, 'missing.sqlite', workspace)).toThrow();
+  if (performance.now() >= deadline)
+    throw new Error('Readonly workspace inspection fixture exceeded its case deadline');
+  preserveHostFixtureRoot = false;
 });
 
 test('fresh terminal ownership inspection does not create a journal or infer missing issued evidence is settled', () => {

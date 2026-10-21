@@ -1944,8 +1944,8 @@ function assertTaskSourceOperationTableShape(database: Database, hasProjection: 
         .join(',') === [...expected].sort().join(',') &&
       columns.every((column) => column.type === (column.name === 'revision' ? 'INTEGER' : 'TEXT')) &&
       columns.filter((column) => column.name !== 'work_id').every((column) => BigInt(column.notnull) === 1n) &&
-      BigInt(columns.find((column) => column.name === 'workspace_id')?.pk ?? -1) === 1n &&
-      BigInt(columns.find((column) => column.name === 'operation_id')?.pk ?? -1) === 2n &&
+      BigInt(columns.find((column) => column.name === 'workspace_id')!.pk) === 1n &&
+      BigInt(columns.find((column) => column.name === 'operation_id')!.pk) === 2n &&
       columns
         .filter((column) => !['workspace_id', 'operation_id'].includes(column.name))
         .every((column) => BigInt(column.pk) === 0n),

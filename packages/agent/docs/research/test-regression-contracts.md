@@ -543,6 +543,16 @@ every producer fence, current-version check and deterministic rebuild fresh.
 
 ### Coordination history and expired recovery
 
+Readonly workspace inspection retains its existing populated governance case.
+For optional admission-table absence, first require zero admission rows and no
+consumer baseline, then drop only the known-empty fixture table. Require the
+same complete public observation, explicit empty admissions, unchanged variant
+database bytes/catalog, journal mode and native Host/governance rows. Restore
+only the saved exact table SQL while it remains absent; validate the original
+catalog/rows through owned cleanup preserving primary/restoration errors. Keep
+failure retention before setup and default5s. This models optional schema for
+readonly inspection without recreating old operational state.
+
 The Desktop adapter's exported unknown-input validator checks project ID shape,
 strict ordering and uniqueness using the actual opaque Host capability and full
 service closure. Keep its two-project positive identity-return oracle and
