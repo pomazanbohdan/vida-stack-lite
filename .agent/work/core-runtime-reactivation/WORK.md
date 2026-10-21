@@ -10,6 +10,82 @@ F/L/S/B100. Root owns Source integration, Git and the sole numeric producer.
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
 
+The owner's2026-10-21 instruction enlarges the current correction packet to all
+remaining bun-host-state gaps before the next full stage. Sourcec86cff9 already
+contains the focused-checked uncertain retirement path, but no new numeric run
+has started. Six blind Source-only studies cover the latest retained gap owners:
+TaskSource1382, stopped/retired1383, continuations1384, stored history/repair1385,
+producer fences1386 and recovery/assurance1387. Each writes only its named
+/tmp/vida-*-batch-v138{2,3,4,5,6,7}.md artifact. Root integrates Source, retains
+the outcomes and owns all focused checks/Git/final numbers. Each gap needs an
+actionable real producer or an exact documented blocker. No new full SDK/image
+or coverage stage until this batch is reconciled; no fabricated state or weakened
+guard, denominator exemption or budget change closes a gap.
+
+All six studies have returned. The five written reports and recovery join1391
+are copied once to DIAG under their original basenames. Producer-fence1386 lost
+its output write during a transient exec transport disconnect; Root retains its
+chat handoff as DIAG/vida-producer-fence-batch-v1386.md with explicit parent
+authorship. The shell later recovers on the same boot. API running/connected
+state alone was not treated as exec readiness. No numeric operation overlapped
+the disconnect or these studies. TaskSource history1395 and independent whole
+packet review1396 have returned. DIAG/vida-task-source-history-producer-v1395.md
+traces start-once/same-attempt resume and handle-preserving recovery/continuation:
+there is no supported same-Work second Journal or owner transfer for the two
+historical skip statements. Direct sync row insertion is not engine production.
+The missing own ticket violates validated Host/ledger integrity. The fourth
+statement is the internal unprechecked fence combination with no current caller.
+All six disjoint owner groups now have a disposition; genuine missing producers
+remain GAP, not newly authorized P2 transitions.
+
+The pending batch narrows prepareTaskSourceBindingOperation's local createResult
+to the two proven non-null callers and its sole prepared status. Public result
+shape, guards and persistence stay unchanged. This removes unused fallback
+logic; it is a denominator change, not newly executed coverage. The same local
+function/call sites remain for later frozen correspondence review.
+Tests add actual direct/recovered duplicate-issue refusals, prepare replay,
+TaskSource renewal callback refusal, historical receipt reads, recovered lookup,
+absent assurance delivery, disjoint uncertain peer preservation, optional
+migration maintenance generation, applied-approval quiescence and absent-Work
+abort refusal. The absent-Work token is an adversarial public DTO that must be
+rejected, never a claim of valid persisted authority.
+
+Root rejects unproved candidate premises: a reconciliation verifier alone cannot
+produce no_effect history without its exact bound decision reference; the readonly
+frontier helper preserves review_source_prewrite and cannot be passed directly
+to the develop_task writer-recovery helper. Recovery join1391 records that
+prerequisite. Simple rereads cannot cover a history sorter without its second
+real history record. Windows-only root normalization requires its platform's
+qualified evidence. Unreachable defensive paths retain their guards and exact
+GAPs, not fabricated rows, exemptions or erased counters.
+
+Static1388 stops on a nullable report binding;1389 then stops on an unawaitable
+Bun expectation lint.1390 passes static checks and four changed cases, but its
+two TaskSource cases pass an extra preparation-only verifyCurrent key to issue
+and fail at the earlier input guard.1392 uses the exact issue input shape and
+passes both historical modes plus the nested migration case3PASS/198assertions
+2.61s. Original1390 also shows the anchored filter omitted that nested migration
+case; it was not counted as observed before1392.
+1393 exposes two more test-premise defects: an expired not-yet-persisted report
+correctly fails before the rollback sentinel, and a simple abort fixture has no
+Journal table.1394 adds an explicit expired-report refusal with exact native
+beforeimages and restores the live clock before the original rollback control;
+the abort check reads its actual state table. These and the applied-approval gate
+pass3cases/57assertions9.27s. The earlier four passing cases are not rerun without
+new changes. Source84strict/lint0 and selected test153/149strict/lint0 pass.
+All attempts retain separate DIAG/all-gap-batch-v138{8-qr4bj7,9-1bSsep},
+v1390-YnvMdZ,v1392-JgBK51,v1393-NNhg8x,v1394-F0k6Ie namespaces and failed roots.
+Ten changed selected cases now have targeted PASS. No full-stage numbers or
+frozen/mutation acceptance are inferred from this pending packet.
+DIAG/vida-all-gap-final-v1396.md independently accepts the complete three-file
+Source/test diff. Root retains the exact reviewed diff in
+DIAG/all-gap-batch-v1396.patch. Both changed test pins are refreshed once in
+DIAG/remainder-v1397-test-pins.json; runner strict122/lint0 and the same two-file
+namespace control pass1case/10assertions280ms in
+DIAG/remainder-v1397-controls-0iFS5Z. The batch is ready for ordinary commit/push,
+one matching build-only SDK and one full selected-contour coverage stage. No
+mutation/frozen lane or other contour is scheduled.
+
 ### Latest complete measurement
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)

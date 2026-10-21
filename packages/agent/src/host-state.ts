@@ -8741,14 +8741,14 @@ export class HostStateStore {
       );
       return checked;
     };
-    const createResult = (status: 'prepared' | 'inspected' | 'not_found', stored: ReturnType<typeof readRecord>) =>
+    const createResult = (stored: NonNullable<ReturnType<typeof readRecord>>) =>
       snapshot({
         schema: 'TaskSourceBindingOperationResult/v1',
-        status,
+        status: 'prepared' as const,
         operation_id: request.operation_id,
         request_id: request.request_id,
-        operation: stored?.operation ?? null,
-        state_version: stored?.state_version ?? null,
+        operation: stored.operation,
+        state_version: stored.state_version,
       });
 
     return this.#transactionWithProducerFence(() => {
@@ -8767,7 +8767,7 @@ export class HostStateStore {
             sameJson(stored.operation.authority, authority),
           'task source operation retry changed or its current authority differs',
         );
-        return createResult('prepared', stored);
+        return createResult(stored);
       }
       const hasProjection = ensureTaskSourceOperationPreparationSchema(this.#database);
       const priorRequest = this.#database
@@ -8808,7 +8808,7 @@ export class HostStateStore {
         operationDigest,
         hasProjection,
       );
-      return createResult('prepared', {
+      return createResult({
         operation,
         state_version: { revision: operation.revision, digest: operationDigest },
       });

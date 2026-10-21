@@ -1278,6 +1278,26 @@ test(
       if (performance.now() >= deadline) throw new Error('Host assurance fixture exceeded the case deadline.');
       const journal = requiredValue(f.store.readWorkSessionJournal(f.identity), 'Completed assurance Journal');
       expect(f.store.readFinalAssurance(f.identity, 1)).toBeNull();
+      const unprepared = readPresentSnapshot(f.store, f.identity);
+      expect(() =>
+        f.store.commitFinalAssuranceDelivery({
+          identity: f.identity,
+          attempt: 1,
+          expected: unprepared.workVersion,
+          expectedWork: unprepared.workVersion,
+          expectedLedger: unprepared.ledgerVersion,
+          references: [],
+          documentationContext: {
+            repository_root: f.root,
+            repository_id: unprepared.work.binding.repository_id,
+            project_id: requiredValue(unprepared.work.binding.project_ids[0], 'Unprepared assurance project'),
+            work_id: f.identity.work_id,
+          },
+        }),
+      ).toThrow('state compare-and-swap conflict');
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(unprepared);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+      expect(f.store.readFinalAssurance(f.identity, 1)).toBeNull();
       let assurance = prepareFinalAssurance({
         root: f.root,
         config: f.config,
@@ -3097,6 +3117,7 @@ test.each(['direct', 'recovered-unknown'] as const)(
         };
         const pending = f.store.prepareTaskSourceBindingOperation(pendingInput);
         expect(pending.status).toBe('prepared');
+        expect(f.store.prepareTaskSourceBindingOperation(pendingInput)).toEqual(pending);
         expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toEqual(report.binding);
         expect(f.store.snapshotHistoricalTaskSourceSources(input)).toEqual(sourceScope);
         expect(f.store.inspectTaskSourceBindingOperation(pendingInput)).toEqual({ ...pending, status: 'inspected' });
@@ -3105,6 +3126,20 @@ test.each(['direct', 'recovered-unknown'] as const)(
           action: null,
           state_version: null,
           command_argv: null,
+        });
+        const actionRows = f.database.query(
+          'SELECT * FROM agent_host_task_source_binding_action ORDER BY operation_id',
+        );
+        const beforeDuplicateIssue = actionRows.all();
+        await expectRejection(
+          f.store.issueTaskSourceBindingOperation({ request: pendingInput.request, identity: pendingInput.identity }),
+          /this TaskSource attempt already has a reported observed binding/,
+        );
+        expect(actionRows.all()).toEqual(beforeDuplicateIssue);
+        expect(f.store.inspectTaskSourceBindingOperation(pendingInput)).toEqual({ ...pending, status: 'inspected' });
+        expect(f.store.inspectTaskSourceBindingAction(pendingInput)).toMatchObject({
+          status: 'prepared',
+          action: null,
         });
         expect(existsSync(pendingInput.request.source_root)).toBe(false);
         expect(readFixtureHostRows(f.database)).toEqual(beforeHealthyRead);
@@ -3244,6 +3279,32 @@ test.each(['direct', 'recovered-unknown'] as const)(
       expect(readFixtureHostRows(f.database)).toEqual(withPeerRows);
       expect(preparedPeerRows.all()).toEqual(withPeerPreparations);
       expect(existsSync(peerRoot)).toBe(false);
+      const renewalBefore = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+      const renewalJournal = requiredValue(f.store.readWorkSessionJournal(f.identity), 'TaskSource renewal journal');
+      const renewalLease = requiredValue(renewalBefore.work.lease, 'TaskSource renewal lease');
+      expect(() =>
+        f.store.renewActiveLocalLease({
+          identity: f.identity,
+          attempt: f.request.attempt,
+          nativeSessionHandle: f.request.thread_id,
+          generation: renewalLease.generation,
+          expectedWork: renewalBefore.workVersion,
+          expectedLedger: renewalBefore.ledgerVersion,
+          expectedJournal: renewalJournal.version,
+          expectedMaintenanceGeneration: renewalBefore.maintenanceGeneration,
+          verifyCurrent: (work, journal, sourceRoot) => {
+            expect(work).toEqual(renewalBefore.work);
+            expect(journal).toEqual(renewalJournal.state);
+            expect(sourceRoot).toBe(requiredValue(report.binding, 'Observed TaskSource binding').source_root);
+            throw new Error('controlled TaskSource renewal source verification refusal');
+          },
+        }),
+      ).toThrow('controlled TaskSource renewal source verification refusal');
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(renewalBefore);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(renewalJournal);
+      expect(readFixtureHostRows(f.database)).toEqual(withPeerRows);
+      expect(preparedPeerRows.all()).toEqual(withPeerPreparations);
+      expect(f.database.inTransaction).toBe(false);
       completed = true;
     } catch (error) {
       primaryFailure = { error };
@@ -4071,6 +4132,11 @@ test('trusted Host continuation atomically retains historical evidence and never
     const lookup = current.store.readDeliveredWorkContinuation(current.identity, 1);
     if (!lookup) throw new Error('Expected the persisted Host continuation lookup.');
     expect(lookup.receipt).toEqual(result.receipt);
+    const beforeReceiptRead = readFixtureHostRows(current.db);
+    const receiptRead = current.store.readDeliveredWorkContinuationReceipt(current.identity, 1);
+    expect(receiptRead).toEqual(result.receipt);
+    expect(Object.isFrozen(receiptRead)).toBe(true);
+    expect(readFixtureHostRows(current.db)).toEqual(beforeReceiptRead);
     expect(lookup.snapshot).toEqual(after);
     expect(lookup.journal).toEqual({ state: journalAfter.state, version: journalAfter.version });
     expect(lookup.action_status).toBe('unissued');
@@ -5231,6 +5297,12 @@ test('Host failed prewriter transition atomically retains failed reports and ori
       'configured recovered frontier view',
     );
     expect(recoveryView).toEqual({ original: input.receipt, recovery });
+    const recoveredLookup = requiredValue(
+      f.store.readDeliveredWorkContinuation(f.identity, 1),
+      'configured continuation after recovery',
+    );
+    expect(recoveredLookup.recovery).toEqual(recovery);
+    expect(Object.isFrozen(recoveredLookup)).toBe(true);
     expect(Object.isFrozen(recoveryView)).toBe(true);
     expect(f.store.readConfiguredFrontierRecoveryView(f.identity, 1)).toEqual(recoveryView);
     expect(readFixtureHostRows(f.db)).toEqual(recoveryViewRows);
@@ -6675,6 +6747,18 @@ test(
         });
         const before = initialSourceState(f);
         const nativeRows = readFixtureHostRows(db);
+        const liveReportTime = Date.now();
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        try {
+          expect(() => ledger.report(f.identity.work_id, 1, issued.journal.version, observation, source)).toThrow(
+            'completed writer lease is stale or an effect remains uncertain',
+          );
+          expect(readFixtureHostRows(db)).toEqual(nativeRows);
+          expect(initialSourceState(f)).toEqual(before);
+          expect(db.inTransaction).toBe(false);
+        } finally {
+          setSystemTime(new Date(liveReportTime));
+        }
         const priorRow = requiredValue(
           nativeRows.journal.find((row) => row.work_id === f.identity.work_id && row.attempt === 1),
           'legacy component Journal preimage',
@@ -15301,6 +15385,11 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     expect(replay.receipt.attempt).toEqual(completed.receipt.attempt);
     expect(replay.approval).toBeNull();
     expect(verifierCalls).toBe(2);
+    const terminal = readPresentSnapshot(store, identity);
+    const approvalsBeforeGate = governanceRows();
+    expect(store.openReconciliationGate(reconciliationBinding(terminal)).status).toBe('open');
+    expect(governanceRows()).toEqual(approvalsBeforeGate);
+    expect(store.readHostStateSnapshot(identity)).toEqual(terminal);
   });
 
   test('reserved protected attempt can be aborted after restart, but provider-entry uncertainty cannot', async () => {
@@ -15351,6 +15440,21 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     const initial = commitHostState(fixture());
     const first = store.claimWorkflowAttempt(attemptRequest(initial, 0));
     const second = store.claimWorkflowAttempt(attemptRequest(readPresentSnapshot(store, identity), 1));
+    const foreignIdentity = { ...identity, work_id: 'absent-unprotected-work' };
+    const foreignBefore = store.readHostStateSnapshot(foreignIdentity);
+    const stateRows = database.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id');
+    const rowsBeforeRefusal = stateRows.all();
+    expect(foreignBefore.work).toBeNull();
+    expect(() => store.abortUnstartedWorkflowAttempt({ ...first, identity: foreignIdentity })).toThrow(
+      'unstarted attempt binding invalid',
+    );
+    expect(stateRows.all()).toEqual(rowsBeforeRefusal);
+    expect(store.readHostStateSnapshot(foreignIdentity)).toEqual(foreignBefore);
+    expect(readPresentSnapshot(store, identity).work.execution.assignment_attempts).toEqual([
+      first.attempt,
+      second.attempt,
+    ]);
+    expect(database.inTransaction).toBe(false);
     const restored = store.abortUnstartedWorkflowAttempt(first);
     expect(requiredValue(restored.work, 'unprotected abort result').execution.assignment_attempts).toEqual([
       second.attempt,
@@ -15724,6 +15828,7 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       sourceSha256,
       migrationId: migration.migration_id,
       decisionPointer: 'WORK.md#typed-migration-decision',
+      expectedMaintenanceGeneration: imported.maintenanceGeneration,
     };
     const promote = next(imported);
     promote.nextWork.execution.status = 'active';

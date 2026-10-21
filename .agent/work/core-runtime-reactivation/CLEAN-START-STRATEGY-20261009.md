@@ -56,6 +56,12 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
 2. Group supported success/refusal/retry/restoration checks around existing real
    fixtures. Keep exact native beforeimages, owned cleanup and failed-root retention.
    Prefer a small added read/control over duplicated workflow or CLI setup.
+   Under the owner's2026-10-21 batch instruction, review every remaining gap in
+   the active contour before the next full stage. Partition bounded blind studies
+   by owning mechanism, integrate supported corrections together and record the
+   exact prerequisite for each blocked path. Run focused checks during repair.
+   Do not launch a full stage per individual candidate or pretend an unresolved
+   path is covered. Other contours and numeric lanes remain deferred.
 3. Run strict TypeScript and configured zero-warning lint first, then the exact
    edited test declarations. Reconcile case names with existing inventory/current
    declarations rather than a new AST pass. Diagnose causal failures; never loop
