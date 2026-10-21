@@ -8,21 +8,20 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `4e41dcc89a50653c80f849fcf9b56ccd3f234b29`, run `2b2122a8-2879-4034-9878-c6781e07a34d`: F1126/1126, L4956/4977, S5248/5308 and B5382/5626. Functions remain exact100%; lines/statements/branches remain nonexact. The189.925second stage has exit0, both native shards0, full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. The refreshed map has0missing functions,244exact zero-count branch arms and60statement entries, each deficit checked against the same report. Latest deltas are0F/+11L/+11S/+20B with unchanged denominators; no exclusions, budget transfer or scope reduction. WORK owns original failures, current image/SDK and retained custody/capacity.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `1296dc6920c7ced34cf2fd59b6512bbc0084bcf3`, run `c950e0e0-41fd-42cd-9b88-36d4daed503d`: F1126/1126, L4954/4974, S5250/5305 and B5389/5624. Functions remain exact100%; lines/statements/branches remain nonexact. The169.881second stage has315PASS, both native shards0, full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. The refreshed map has0missing functions,235exact zero-count branch arms and55statement entries, each deficit checked against the same report. Compared with4e41dcc, covered deltas are0F/-2L/+2S/+7B and denominators change0F/-3L/-3S/-2B because of the redundant private predecessor guard. No exclusion, budget transfer or scope reduction occurs. WORK owns original failures, current image/SDK and retained custody/capacity.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
-The later9d1c200 stage is FAIL before a complete numeric report. Host298PASS/1FAIL
+The earlier9d1c200 stage is FAIL before a complete numeric report. Host298PASS/1FAIL
 includes the completed Source report commit fixture exceeding20s during writer
 setup; stopped-source16PASS. Projection retains failed stage attempt1125 and WORK
-owns exact original custody. Do not replace the admitted4e41dcc counters with
-partial rows. Repair this setup/concurrency GAP before another complete stage;
+owns exact original custody. Partial rows never replace complete counters;
 the passing fresh functional phase diagnostic is not instrumented qualification.
 The subsequent CPU profile identifies canonical guard allocation/traversal.
 The reviewed boolean-guard correction preserves all checks and passes the complete
-canonical regression selection plus both native recovery cases under20s. Form
-one matching SDK/image and validate this candidate through the next complete
-selected-contour stage. Its full numeric and timeout qualification remain pending.
+canonical regression selection plus both native recovery cases under20s. The
+matching1296dc6 complete stage now passes both recovery cases within20s and
+publishes current numeric evidence. Keep the original failed attempt retained.
 
 ## Work sequence
 
@@ -42,7 +41,7 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 The owner's current instruction replaces one-function measurement packets with
 one coordinated pass, initially46missing functions and606branch arms. The first
-complete packet stages now leave0functions and244arms; continue the same contour
+complete packet stages now leave0functions and235arms; continue the same contour
 from its refreshed retained map, not the superseded starting counters. Superpowers
 `writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
 guide this plan. Keep this existing strategy as the plan owner; do not create a
@@ -59,7 +58,7 @@ remains positive-denominator exact F/L/S/B100 with complete execution and custod
 | Continuation and session producer | `packages/agent/src/host-state.ts`; existing configured-frontier/initial-source fixtures and selected Host test | Blind Luna research; Root writes. Reach genuine prewriter/engine suffix through current public operations; preserve original5s limits and retained timed-out proposals. |
 | Assurance, recovery and runtime rebind | Same Host Source/test; existing failed-final and completed-report fixtures; selected stopped-source case | Separate blind Luna research; Root writes. Reuse native VERIFY/correction/history states. A public90s out-of-selection case supplies neither counters nor timeout allowance. |
 | TaskSource, archive lookup, ownership and remaining validation | Selected Host/stopped tests and existing TaskSource fixture; current native Host/Journal beforeimages | Root writes. Exercise real predecessor chains, current corrective authorization, archive identity/refusal and unchanged-state oracles. No fabricated successful receipt or private-state activation. |
-| Complete branch accounting | Existing `host-uncovered-plan.ts` and current4e41dcc report; its function inventory/maps | Root owns the report-only join. Resolve the remaining244arms/60statement entries, including covered function owners and explicit navigation gaps; no new AST/Source scan/hash or narrowed gate. |
+| Complete branch accounting | Existing `host-uncovered-plan.ts` and current1296dc6 report; its function inventory/maps | Root owns the report-only join. Resolve the remaining235arms/55statement entries, including covered function owners and explicit navigation gaps; no new AST/Source scan/hash or narrowed gate. |
 
 - [x] Join the existing zero-counter map to its retained function geometry and
   account for every arm; record exact IDs/lines and fixture prerequisites.
@@ -203,15 +202,15 @@ Its scoped checks, blind review, exact pin, ordinary publication and one matchin
 SDK/image/stage are complete. All functions now execute; no claim extends to
 frozen qualification or whole-contour closure. The following observed-inspection
 predecessor and accepted-Source expiry packet is also measured: +11L/+11S/+20B.
-Continue from244zero arms,60statements and21uncovered lines, prioritizing current
-map routes in TaskSource queued ownership and absent/retained continuation readers.
+Continue from235zero arms,55statements and20uncovered lines, prioritizing current
+map routes in Source-backed TaskSource bindings and retained continuation readers.
 Reuse the statement geometry added to the same report-only join. Do not repeat
 closed capture/rebind/expiry setup or inspect-proposal transitions. Do not treat
 old Source15 coordinates as current geometry.
 
-For each group, the exact named Bun case must reach its intended public operation
-and assert its success, refusal and replay behavior before strict TypeScript/lint
-and final integration. Stop a proposed path if its genuine prerequisite cannot be
+For each group, run scoped strict TypeScript/lint before its exact named Bun case.
+The case must reach its intended public operation and assert success, refusal
+and replay behavior before final integration. Stop a proposed path if its genuine prerequisite cannot be
 established inside the existing bounds; record the exact dependency and continue
 resolving this same contour. Do not loop an unchanged focused failure or launch
 another full stage merely to reconfirm it. Final review checks the entire coupled

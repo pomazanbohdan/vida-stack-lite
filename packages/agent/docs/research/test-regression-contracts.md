@@ -127,6 +127,15 @@ all native rows and the schema catalog before healthy preparation continues.
 Continuation checks reuse the caller's already resolved predecessor from the
 same snapshot. Preserve each caller's prior/ticket/resource guards and the exact
 original Work reconstruction; the lookup simplification grants no new authority.
+The Source-backed historical binding fixture accepts a maintained snapshot of
+real private Host bytes while preserving default callers. Drive prepare/issue/
+observed report through public Host operations, using explicit cooperative Git
+observations. Inspect-only actions and an additional unissued preparation grant
+no current binding. After an observed proposal, differing task bytes still deny
+current reads; matching bytes return the exact binding without changing Host or
+Journal. Restore differing bytes even when a healthy-read assertion fails, retain
+the primary error and restoration failure together, and keep corrupted-history
+denials. This unit seam does not attest Git execution or Runtime acceptance.
 
 The separate configured-frontier suffix case remains unqualified. Its first
 bounded child timed out inside the existing default5s case; a fresh traced run

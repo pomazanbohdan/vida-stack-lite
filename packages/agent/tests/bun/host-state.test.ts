@@ -2461,7 +2461,11 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
 test('historical task-source snapshots select observed roots and fence corrupted retained evidence', async () => {
   const deadline = performance.now() + 5_000;
   preserveHostFixtureRoot = 'case failed or timed out';
+  mkdirSync(path.join(root, 'src'), { recursive: true });
+  writeFileSync(path.join(root, 'src/task.ts'), 'host');
+  const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['src/task.ts']);
   const f = createTaskSourceHostFixture({
+    sourceScope,
     configuredHost: { repositoryRoot: root, identity: { ...identity } },
     policyVerifier: async ({ request }) => trustedTaskSourcePolicyDecision(request),
   });
@@ -2469,9 +2473,7 @@ test('historical task-source snapshots select observed roots and fence corrupted
   let primaryFailure: { error: unknown } | undefined;
   try {
     const taskRoot = requiredValue(f.request.source_root, 'task source root');
-    mkdirSync(path.join(root, 'src'), { recursive: true });
     mkdirSync(path.join(taskRoot, 'src'), { recursive: true });
-    writeFileSync(path.join(root, 'src/task.ts'), 'host');
     writeFileSync(path.join(taskRoot, 'src/task.ts'), 'task');
     const input = {
       identity: f.identity,
@@ -2488,6 +2490,57 @@ test('historical task-source snapshots select observed roots and fence corrupted
     };
     const taskEntry = { ...hostEntry, sha256: createHash('sha256').update('task').digest('hex') };
     expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([hostEntry]);
+    const catalog = f.database.query('SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY type,name');
+    const beforeReadSchema = catalog.all();
+    expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toBeNull();
+    expect(catalog.all()).toEqual(beforeReadSchema);
+    const { branch_ref: _branch, ...inspectBase } = f.request;
+    const inspectRequest = {
+      ...inspectBase,
+      operation: 'inspect' as const,
+      operation_id: 'historical-source-inspect',
+      request_id: 'historical-source-inspect-request',
+      source_root: root,
+    };
+    const inspectInput = { request: inspectRequest, identity: f.identity };
+    f.store.prepareTaskSourceBindingOperation({ ...inspectInput, verifyCurrent: f.trustedVerifyCurrent });
+    expect((await f.store.issueTaskSourceBindingOperation(inspectInput)).status).toBe('issued');
+    const inspectVersion = requiredValue(
+      f.database
+        .query<StateVersion, [string]>(
+          'SELECT revision,digest FROM agent_host_task_source_binding_action WHERE operation_id=?',
+        )
+        .get(inspectRequest.operation_id),
+      'historical fixture inspection version',
+    );
+    const inspected = f.store.reportTaskSourceBindingOperation({
+      ...inspectInput,
+      expectedActionStateVersion: inspectVersion,
+      report: {
+        schema: 'TaskSourceBindingReport/v1',
+        operation: inspectRequest.operation,
+        operation_id: inspectRequest.operation_id,
+        request_id: inspectRequest.request_id,
+        report_id: 'cooperative-unit-host-inspected',
+        expected_host: inspectRequest.expected_host,
+        status: 'observed',
+        binding: createTaskSourceBinding({
+          request: inspectRequest,
+          source_scope: sourceScope,
+          canonical_host_common_dir: path.join(root, '.git'),
+          git: {
+            source_root: root,
+            common_dir: path.join(root, '.git'),
+            branch: 'main',
+            head: '1'.repeat(40),
+            cwd: root,
+          },
+        }),
+      },
+    });
+    expect(inspected.status).toBe('reported');
+    expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toBeNull();
+    expect(f.store.snapshotHistoricalTaskSourceSources(input)).toEqual(sourceScope);
     f.prepare();
     expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([hostEntry]);
     if (performance.now() >= deadline) throw new Error('TaskSource setup exhausted its case deadline.');
@@ -2545,6 +2598,56 @@ test('historical task-source snapshots select observed roots and fence corrupted
     expect(() => f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toThrow(
       'current task Source bytes differ from the durable Host journal scope',
     );
+    const beforeHealthyRead = readFixtureHostRows(f.database);
+    writeFileSync(path.join(taskRoot, 'src/task.ts'), 'host');
+    let healthyReadFailure: { error: unknown } | undefined;
+    try {
+      const current = presentSnapshot(reserved);
+      const pendingInput = {
+        identity: f.identity,
+        request: {
+          ...f.request,
+          operation_id: 'historical-source-unissued',
+          request_id: 'historical-source-unissued-request',
+          source_root: path.join(f.root, 'unissued-task-source'),
+          branch_ref: 'refs/heads/codex/unissued-task-source',
+          expected_host: {
+            ...f.request.expected_host,
+            work: current.workVersion,
+            ledger: current.ledgerVersion,
+            maintenance_generation: current.maintenanceGeneration,
+          },
+        },
+        verifyCurrent: f.trustedVerifyCurrent,
+      };
+      const pending = f.store.prepareTaskSourceBindingOperation(pendingInput);
+      expect(pending.status).toBe('prepared');
+      expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toEqual(report.binding);
+      expect(f.store.snapshotHistoricalTaskSourceSources(input)).toEqual(sourceScope);
+      expect(f.store.inspectTaskSourceBindingOperation(pendingInput)).toEqual({ ...pending, status: 'inspected' });
+      expect(f.store.inspectTaskSourceBindingAction(pendingInput)).toMatchObject({
+        status: 'prepared',
+        action: null,
+        state_version: null,
+        command_argv: null,
+      });
+      expect(existsSync(pendingInput.request.source_root)).toBe(false);
+      expect(readFixtureHostRows(f.database)).toEqual(beforeHealthyRead);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    } catch (error) {
+      healthyReadFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            writeFileSync(path.join(taskRoot, 'src/task.ts'), 'task');
+          },
+        ],
+        healthyReadFailure,
+      );
+    }
+    expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
     expect(readFileSync(path.join(root, 'src/task.ts'), 'utf8')).toBe('host');
     for (const [changed, reason] of [
       [{ attempt: 0 }, 'historical task source read context is invalid'],

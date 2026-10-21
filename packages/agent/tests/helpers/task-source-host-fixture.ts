@@ -50,13 +50,17 @@ function workAndLedger(
   configDigest: string,
   workspaceId: string,
   retainedResources: readonly string[],
+  suppliedSourceScope?: ScopedSourceSnapshot,
 ): WorkLedgerSeed {
   const resources = [resource, ...retainedResources].sort();
   const scopeBody: Omit<ScopedSourceSnapshot, 'digest'> = {
     schema: 'ScopedSourceSnapshot/v1',
     entries: [{ path: 'src/task.ts', exists: true, bytes: 3, sha256: '2'.repeat(64) }],
   };
-  const sourceScope: ScopedSourceSnapshot = { ...scopeBody, digest: canonicalJsonDigest(scopeBody) };
+  const sourceScope: ScopedSourceSnapshot = suppliedSourceScope ?? {
+    ...scopeBody,
+    digest: canonicalJsonDigest(scopeBody),
+  };
   const activeClaim: CoordinationClaim = {
     schema: 'WorkstreamClaim/v1',
     claim_id: 'claim-task-source-expiry',
@@ -193,6 +197,7 @@ function workAndLedger(
 }
 
 type FixtureOptions = {
+  readonly sourceScope?: ScopedSourceSnapshot;
   readonly expiresAt?: string;
   readonly retainedResources?: readonly string[];
   readonly policyVerifier?: TaskSourceMutationCheck;
@@ -207,6 +212,7 @@ type PeerReservation = {
 };
 
 export function createTaskSourceHostFixture({
+  sourceScope,
   expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(),
   retainedResources = [],
   policyVerifier,
@@ -235,7 +241,7 @@ export function createTaskSourceHostFixture({
       undefined,
       policyVerifier ? { verify: policyVerifier } : undefined,
     );
-    const seed = workAndLedger(expiresAt, identity, configDigest, workspaceId, retainedResources);
+    const seed = workAndLedger(expiresAt, identity, configDigest, workspaceId, retainedResources, sourceScope);
     const initial = store.compareAndSwapHostState({
       expectedWork: null,
       expectedLedger: null,
