@@ -103,6 +103,24 @@ unchanged prior report/Journal, exact issue retry and no Source directory creati
 The returned proposal argv is never executed; retain its issued, unobserved root
 even on PASS. No synthetic completion authorizes deleting that evidence.
 
+TaskSource FIFO promotion uses separate Work identities. Queue the target behind
+an active peer, release that idle peer with public suspension and current CAS,
+then queue a later Work with its own Journal and execution-only reservation.
+Promote the original ticket in place, preserving its sequence/resources; require
+one linked active claim and an unchanged later queued ticket without claims.
+Exact issue retry exposes no argv; retrying the later waiter changes no native
+rows. Retain every issued, unobserved root. The fixture's optional waiter scope
+matches its persisted Journal; default peer identities/resources stay unchanged.
+Two simultaneous queued proposals on one Work do not establish this contract:
+the original continuation requires exactly one Work revision advance.
+After an observed inspect creates the action table, inspecting a separately
+prepared proposal must still return prepared/null action/null argv without
+changing the earlier observation or Host ownership.
+
+Absent-Work continuation, recovery, historical capture and corrective-authorization
+readers return no authority without creating lazy tables or changing workspace
+rows. Compare both native schema and workspace beforeimages in the same case.
+
 The separate configured-frontier suffix case remains unqualified. Its first
 bounded child timed out inside the existing default5s case; a fresh traced run
 reached `beginSessionProducer` before its deadline. Both original roots and logs

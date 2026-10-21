@@ -12,7 +12,58 @@ remain deferred; their budgets and acceptance rules are unchanged.
 
 ### Current three-hour audit and migration preflight correction
 
-The00:40–00:45UTC observation reuses the current Source15 receipts, projection
+The01:45UTC audit reuses the current4e41dcc receipts, projection and exact map.
+Twelve published commits fall in the preceding three hours. The latest complete
+different-input stages take175.357s and189.925s; no controlled speedup, complete
+tool-call count or token telemetry is available. Static-first grouped causal
+checks remain selected over a full stage per assertion or additional numeric
+workers. A second read-only reviewer checks the bounded completed packet, never
+a second writer or producer. The new packet is not numerically qualified yet.
+
+The new absent-Work case passes12assertions without row/schema changes.
+The distinct-Work TaskSource FIFO group passes5cases/225assertions in2.62s;
+the promotion body takes433.61ms. Strict149-file and configured lint pass.
+The added prepared-action lookup after observed inspection passes1/30assertions
+in301.36ms with the same static checks. These targeted observations preserve
+default5s limits, not full coverage or a benchmark. No additional fixture is
+created for the prepared lookup. Existing peer admission now accepts an optional
+distinct Work identity and execution-only reservation; default callers preserve
+their original identity/resources. Its admitted scope matches the waiter's
+persisted Journal. Suspension and queued promotion use current public Host CAS;
+no accepted report or completed action is fabricated.
+
+Two development failures remain protected. The first queues two proposals on
+the same Work, then fails its exact one-revision continuation guard; this is an
+unsettled admission premise, not a confirmed product bug. The later distinct-Work
+fixture initially retains the peer-only scope while using the main Source
+Journal; the legitimate scope guard rejects it. Correcting the explicit waiter
+scope makes the supported cross-Work FIFO route pass without changing product
+guards. Logs are retained under `task-source-queue-promotion-v1131-ihFdEM` and
+`task-source-distinct-fifo-v1131-tMJkLO`; original roots Kw5uun/QfhPU5 remain.
+Passing controls are `task-source-distinct-fifo-v1132-yapuH6` and
+`task-source-prepared-inspection-v1132-HCihwr` in the same focused diagnostics
+root. Issued proposals and expected UNKNOWN roots remain retained even on PASS.
+The source-only independent route assessment is
+`/tmp/vida-task-source-multi-queue-assessment-v1131.md`; it proves no execution.
+Final blind review finds no FIFO or prepared-lookup blocker in current bytes.
+Its requested diff view is empty, so Root separately reviews the actual diff;
+do not call that independent diff attestation. Its additional missing-Work
+TaskSource prepare/inspect proposal is a separate scenario from the absent-Work
+continuation readers covered here and stays in the remaining-map queue.
+Both reviews, runner strict122-file/lint, exact two-file pin1/10assertions,
+documentation and diff checks are retained in `remainder-v1132-controls-yBM8n6`.
+
+One capacity observation covers checkout and retained evidence on the same
+overlay and scratch on tmpfs: durable5292335104bytes and tmpfs9342795776bytes
+free. Their unchanged2147483648-byte floor leaves3144851456/7195312128bytes.
+The previous closed-stage cache-retirement manifest and remaining-scratch archive
+are reused; no new dependency inventory, wide scan, hash or deletion is justified.
+No active numeric/build/install operation, stale private cache candidate or
+resource GAP is established. Exec-server briefly rejects an apply before process
+creation; a bounded pwd read recovers and the still-unlaunched check is then
+issued once. No already completed suite is repeated for that transport failure.
+
+The earlier00:40–00:45UTC observation reuses Source15 receipts, projection
 and map. Twelve published commits fall in the preceding three hours; the last
 three complete stages take175.228s,161.206s and186.306s on different inputs.
 No controlled speedup, complete tool-call count or token telemetry is available.

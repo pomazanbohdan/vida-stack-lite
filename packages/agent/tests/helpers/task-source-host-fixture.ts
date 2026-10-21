@@ -392,19 +392,24 @@ export function createTaskSourceHostFixture({
         };
         return rotated;
       },
-      seedPeerReservation(): PeerReservation {
-        const peerIdentity = { ...identity, work_id: 'task-source-peer' },
-          peerThread = 'thread-task-source-peer',
+      seedPeerReservation({
+        workId = 'task-source-peer',
+        executionOnly = false,
+      }: { readonly workId?: string; readonly executionOnly?: boolean } = {}): PeerReservation {
+        const peerIdentity = { ...identity, work_id: workId },
+          peerThread = 'thread-' + workId,
           sourceRoot = path.resolve(root, 'task-source'),
           rootKey = process.platform === 'win32' ? sourceRoot.toLocaleLowerCase('en-US') : sourceRoot,
+          implementationPaths = executionOnly ? seed.work.binding.implementation_paths : ['peer.ts'],
           peerResources = [
             'branch:' + request.branch_ref,
             'execution:' + peerIdentity.work_id,
-            'file:peer.ts',
+            ...implementationPaths.map((file) => 'file:' + file),
             'worktree:' + rootKey,
           ].sort(),
-          peerTicketId = 'ticket-task-source-peer',
-          peerClaimId = 'claim-task-source-peer',
+          claimedResources = executionOnly ? ['execution:' + workId] : peerResources,
+          peerTicketId = 'ticket-' + workId,
+          peerClaimId = 'claim-' + workId,
           now = new Date().toISOString(),
           expires = new Date(Date.now() + 30 * 60 * 1000).toISOString(),
           current = store.readHostStateSnapshot(identity);
@@ -414,20 +419,20 @@ export function createTaskSourceHostFixture({
           binding: {
             ...seed.work.binding,
             lifecycle_work_id: peerIdentity.work_id,
-            provider_work_item_id: 'external-task-source-peer',
-            implementation_paths: ['peer.ts'],
+            provider_work_item_id: 'external-' + workId,
+            implementation_paths: implementationPaths,
             allowed_resources: peerResources,
           },
           lifecycle: {
             ...seed.work.lifecycle,
             scope: {
               ...seed.work.lifecycle.scope,
-              allowed_paths: ['peer.ts'],
-              fingerprint_paths: ['peer.ts'],
-              implementation_paths: ['peer.ts'],
+              allowed_paths: implementationPaths,
+              fingerprint_paths: implementationPaths,
+              implementation_paths: implementationPaths,
             },
           },
-          execution: { ...seed.work.execution, run_id: 'run-task-source-peer' },
+          execution: { ...seed.work.execution, run_id: 'run-' + workId },
           lease: { ticket_id: peerTicketId, thread_id: peerThread, generation: 1 },
         };
         const peerTicket: CoordinationTicket = {
@@ -441,12 +446,12 @@ export function createTaskSourceHostFixture({
           source_revision: seed.sourceScope.digest,
           generation: 1,
           sequence: current.ledger.next_sequence,
-          contour_keys: ['tenant:tenant', 'project:tenant/agent', ...peerResources],
-          exclusive_resources: peerResources,
+          contour_keys: ['tenant:tenant', 'project:tenant/agent', ...claimedResources],
+          exclusive_resources: claimedResources,
           status: 'active',
           claim_ids: [peerClaimId],
           expires_at: expires,
-          active_resources: peerResources,
+          active_resources: claimedResources,
           blocked_resources: [],
           created_at: now,
         };
@@ -457,7 +462,7 @@ export function createTaskSourceHostFixture({
           work_id: peerIdentity.work_id,
           thread_id: peerThread,
           generation: 1,
-          resources: peerResources,
+          resources: claimedResources,
           lease_expires_at: expires,
           status: 'active',
           created_at: now,
@@ -481,7 +486,7 @@ export function createTaskSourceHostFixture({
           workspace_id: workspaceId,
           work_id: peerIdentity.work_id,
           attempt: 1,
-          run_id: 'run-task-source-peer',
+          run_id: 'run-' + workId,
           step_id: null,
           source_scope: seed.sourceScope,
           items: [],

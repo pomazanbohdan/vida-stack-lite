@@ -674,6 +674,32 @@ test('trusted host source entrypoint exposes host state without a test issuer', 
   expect('createTestTrustedHostLauncherCapability' in trustedHostSurface).toBe(false);
 });
 
+test('absent Work exposes no continuation or corrective authority and leaves storage unchanged', () => {
+  const before = store.readWorkspaceSnapshot();
+  expect(before.work).toEqual([]);
+  expect(before.ledger).toBeNull();
+  const catalog = database.query('SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY type,name');
+  const schemaBefore = catalog.all();
+  expect(store.readDeliveredWorkContinuation(identity, 1)).toBeNull();
+  expect(store.readDeliveredWorkContinuationReceipt(identity, 1)).toBeNull();
+  expect(store.readConfiguredFrontierRecoveryView(identity, 1)).toBeNull();
+  expect(store.readInitialSourceContinuationReceipt(identity, 1)).toBeNull();
+  expect(store.readFailedPrewriterRecoveryReceipt(identity, 1)).toBeNull();
+  expect(store.readCompletedSourceReportRecoveryReceipt(identity, 1)).toBeNull();
+  expect(store.readHistoricalTerminalSynthesisCapture(identity, 1, 'absent-action')).toBeNull();
+  expect(
+    store.retrieveCorrectiveAuthorization({
+      identity,
+      attempt: 1,
+      journal: { revision: 1, digest: '0'.repeat(64) },
+      stageIds: ['develop_task'],
+      userInstructionRef: 'fixture:absent-work-read',
+    }),
+  ).toBeNull();
+  expect(store.readWorkspaceSnapshot()).toEqual(before);
+  expect(catalog.all()).toEqual(schemaBefore);
+});
+
 // Real admission, writer completion and focused verdicts prepare the authorization boundary.
 test(
   'Host corrective authorization preserves all three CAS boundaries and only authorizes the failed closure',
@@ -2135,6 +2161,19 @@ test('task-source inspection preserves ownership and permits a distinct proposal
     };
     const proposalInput = { request: proposal, identity: f.identity };
     f.store.prepareTaskSourceBindingOperation({ ...proposalInput, verifyCurrent: f.trustedVerifyCurrent });
+    expect(f.store.inspectTaskSourceBindingAction({ ...proposalInput, verifyCurrent: f.trustedVerifyCurrent })).toEqual(
+      {
+        schema: 'TaskSourceBindingActionResult/v1',
+        status: 'prepared',
+        operation_id: proposal.operation_id,
+        request_id: proposal.request_id,
+        action: null,
+        state_version: null,
+        command_argv: null,
+      },
+    );
+    expect(inspectRow.get(request.operation_id)).toEqual(inspectBefore);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     const proposalIssue = await f.store.issueTaskSourceBindingOperation(proposalInput);
     expect(proposalIssue.status).toBe('issued');
     expect(proposalIssue.command_argv).not.toBeNull();
@@ -2841,6 +2880,155 @@ function assertHistoricalCaptureRefusals(
   }
   expect(store.readHostStateSnapshot(input.identity)).toEqual(active);
 }
+
+test('TaskSource promotes its earliest queued reservation after idle peer release while retaining the later waiter', async () => {
+  const deadline = performance.now() + 5_000;
+  const policy = mock(async ({ request }: { request: Parameters<typeof trustedTaskSourcePolicyDecision>[0] }) =>
+    trustedTaskSourcePolicyDecision(request),
+  );
+  const f = createTaskSourceHostFixture({ policyVerifier: policy });
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const peer = f.seedPeerReservation();
+    f.prepare();
+    const input = { request: f.request, identity: f.identity };
+    expect((await f.store.issueTaskSourceBindingOperation(input)).status).toBe('queued');
+    const queued = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    const firstTicketId = `task-source-ticket:${f.request.work_id}:${f.request.attempt}:${f.request.operation_id}`;
+    const firstTicketBefore = requiredValue(
+      queued.ledger.tickets.find((ticket) => ticket.ticket_id === firstTicketId),
+      'first queued ticket',
+    );
+    const peerBefore = presentSnapshot(f.store.readHostStateSnapshot(peer.identity));
+    expect(peer.journal.state.items).toEqual([]);
+    expect(peer.journal.state.completed).toEqual([]);
+    const released = presentSnapshot(
+      suspendLocalWork({
+        store: f.store,
+        identity: peer.identity,
+        journal: peer.journal,
+        expectedWork: peerBefore.workVersion,
+        expectedLedger: queued.ledgerVersion,
+        expectedMaintenanceGeneration: queued.maintenanceGeneration,
+        nativeSessionHandle: peer.thread_id,
+        userRequestPointer: 'fixture:release-idle-task-source-peer',
+        requestIntent: 'next_work',
+        documentationContext: {
+          repository_root: f.root,
+          repository_id: peer.identity.repository_id,
+          project_id: requiredValue(peer.identity.project_ids[0], 'peer project'),
+          work_id: peer.identity.work_id,
+        },
+      }),
+    );
+    expect(released.work.lease).toBeNull();
+    expect(released.work.execution.status).toBe('suspended');
+    expect(
+      released.ledger.tickets.find((ticket) => ticket.ticket_id === peerBefore.work.lease?.ticket_id),
+    ).toMatchObject({
+      status: 'released',
+      active_resources: [],
+      blocked_resources: [],
+      expires_at: null,
+    });
+    expect(
+      released.ledger.claims
+        .filter((claim) => claim.ticket_id === peerBefore.work.lease?.ticket_id)
+        .map((claim) => claim.status),
+    ).toEqual(['released']);
+    const waiter = f.seedPeerReservation({ workId: 'task-source-waiter', executionOnly: true });
+    const current = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    const waiterBefore = presentSnapshot(f.store.readHostStateSnapshot(waiter.identity));
+    expect(current.work).toEqual(queued.work);
+    const laterRequest = {
+      ...f.request,
+      operation_id: f.request.operation_id + '-later',
+      request_id: f.request.request_id + '-later',
+      work_id: waiter.identity.work_id,
+      thread_id: waiter.thread_id,
+      expected_host: {
+        ...f.request.expected_host,
+        work: waiterBefore.workVersion,
+        ledger: current.ledgerVersion,
+        journal: { attempt: 1, version: waiter.journal.version },
+        maintenance_generation: current.maintenanceGeneration,
+      },
+    };
+    const laterInput = { request: laterRequest, identity: waiter.identity };
+    f.store.prepareTaskSourceBindingOperation({ ...laterInput, verifyCurrent: f.trustedVerifyCurrent });
+    expect((await f.store.issueTaskSourceBindingOperation(laterInput)).status).toBe('queued');
+    const withWaiter = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    const waitingOwner = presentSnapshot(f.store.readHostStateSnapshot(waiter.identity));
+    const laterTicketId = `task-source-ticket:${laterRequest.work_id}:${laterRequest.attempt}:${laterRequest.operation_id}`;
+    const laterTicketBefore = requiredValue(
+      withWaiter.ledger.tickets.find((ticket) => ticket.ticket_id === laterTicketId),
+      'later queued ticket',
+    );
+    expect(laterTicketBefore.sequence).toBeGreaterThan(firstTicketBefore.sequence);
+    expect(laterTicketBefore.status).toBe('queued');
+    expect(laterTicketBefore.claim_ids).toEqual([]);
+    expect(withWaiter.work.lease).toEqual(queued.work.lease);
+    expect(withWaiter.ledger.tickets.find((ticket) => ticket.ticket_id === firstTicketId)).toEqual(firstTicketBefore);
+    const issued = await f.store.issueTaskSourceBindingOperation(input);
+    expect(issued.status).toBe('issued');
+    expect(issued.command_argv).not.toBeNull();
+    const after = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
+    expect(after.work.lease?.ticket_id).toBe(firstTicketId);
+    const promoted = requiredValue(
+      after.ledger.tickets.find((ticket) => ticket.ticket_id === firstTicketId),
+      'promoted first ticket',
+    );
+    expect(promoted).toMatchObject({
+      status: 'active',
+      sequence: firstTicketBefore.sequence,
+      exclusive_resources: firstTicketBefore.exclusive_resources,
+      active_resources: firstTicketBefore.exclusive_resources,
+      blocked_resources: [],
+    });
+    const claims = after.ledger.claims.filter((claim) => claim.ticket_id === firstTicketId);
+    expect(claims).toHaveLength(1);
+    expect(claims[0]).toMatchObject({ status: 'active', resources: promoted.exclusive_resources });
+    expect(promoted.claim_ids).toEqual([requiredValue(claims[0], 'promoted claim').claim_id]);
+    expect(after.ledger.tickets.find((ticket) => ticket.ticket_id === laterTicketId)).toEqual(laterTicketBefore);
+    expect(after.ledger.claims.filter((claim) => claim.ticket_id === laterTicketId)).toEqual([]);
+    expect(f.store.readHostStateSnapshot(peer.identity).work).toEqual(released.work);
+    expect(f.store.readHostStateSnapshot(waiter.identity).work).toEqual(waitingOwner.work);
+    expect(f.store.readWorkSessionJournal(waiter.identity)?.state).toEqual(waiter.journal.state);
+    expect(f.store.readWorkSessionJournal(peer.identity)?.state).toEqual(peer.journal.state);
+    expect(f.store.readWorkSessionJournal(f.identity)?.state).toEqual(f.journal);
+    expect(await f.store.issueTaskSourceBindingOperation(input)).toEqual({
+      ...issued,
+      status: 'already_issued',
+      command_argv: null,
+    });
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+    const nativeAfter = readFixtureHostRows(f.database);
+    expect(await f.store.issueTaskSourceBindingOperation(laterInput)).toMatchObject({
+      status: 'queued',
+      action: null,
+      state_version: null,
+      command_argv: null,
+    });
+    expect(readFixtureHostRows(f.database)).toEqual(nativeAfter);
+    expect(existsSync(requiredValue(f.request.source_root, 'proposed Source root'))).toBe(false);
+    expect(performance.now()).toBeLessThan(deadline);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(false, completed ? 'issued promoted proposal without observation; no replay' : 'failed or timed out');
+          if (performance.now() >= deadline) throw new Error('TaskSource promotion cleanup exhausted its deadline');
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
 
 test('trusted Host continuation atomically retains historical evidence and never reissues its review on retry', async () => {
   const deadline = performance.now() + 5_000;
