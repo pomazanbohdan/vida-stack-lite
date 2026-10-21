@@ -14,17 +14,18 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-94cd912af2ab32fbf7bc2b601dc8010976e996d5, run
-152c15e1-3bc2-4160-974b-1a64423b22e8, projection attempts1194.
-F1126/1126,L4979/4979,S5305/5309,B5511/5600 leave4statement/89branch-arm gaps.
+ffb1223fd52b7dc46f818c1e4875997f4986921a, run
+edf00c5c-f1f5-458e-bae6-8b0a89e3201f, projection attempts1196.
+F1126/1126,L4979/4979,S5305/5309,B5513/5600 leave4statement/87branch-arm gaps.
 F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. All336cases/5769assertions pass
-in187277.717794ms. Host and stopped-source children take180.02s and112.77s.
-Native guarded readonly refusal takes412.00ms and the expanded two-Work import
-105.84ms, under their unchanged5s default. Their packet gains five actual
+unchanged boot/image and automatic publication. All336cases/5775assertions pass
+in173313.46832500002ms. Host and stopped-source children take166.82s and106.08s.
+The completed readonly Host sibling gains two actual branch-arm visits versus
+94cd912, with unchanged production denominators. The preceding guarded readonly
+refusal and two-Work import packet gains five actual
 branch-arm visits versus1fc3483 with unchanged production denominators.
 The preceding pre-recovery public view gains one actual branch-arm visit versus
 185743a, also without denominator changes.
@@ -53,12 +54,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-TESKLU/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1369-sdk-provider.json and DIAG/remainder-v1369-sdk-verified.json |
-| Admission and complete producer log | DIAG/remainder-v1369-scratch-parent.json and DIAG/remainder-v1369-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1369-cache-retirement-TESKLU/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-TESKLU-UDyOaQ/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-Slgq1z |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-nBp018/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1376-sdk-provider.json and DIAG/remainder-v1376-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1376-scratch-parent.json and DIAG/remainder-v1376-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1376-cache-retirement-nBp018/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-nBp018-4VhfUA/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-1zlUAr |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -66,8 +67,8 @@ Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
 and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
-A postclosure archive/retirement observation records durable
-2733801472bytes and retained tmpfs9164263424bytes available, both above the
+A postclosure observation records2596298752durable bytes after archive and
+9159475200tmpfs bytes after retirement, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -343,7 +344,7 @@ produce a genuine prior readonly Host attempt before writer issue, without
 fabricated rows or extra provider effects. A proposal alone is not execution.
 
 The1370 study is retained in DIAG/vida-retired-prior-attempt-review-v1370.md.
-Root's pending stopped-source fixture change adds one public Host config-read
+The published stopped-source fixture change adds one public Host config-read
 claim/completion before writer issue, using an actual configured readonly stage
 and assignment. Its request/result describe the current config read, not an
 invented provider execution or retroactive reuse of a Journal observation.
@@ -354,12 +355,17 @@ destructured option and starts no runtime; corrected1372 passes strict129/lint0
 and1case/65assertions7.14s,5972.47ms native, under its unchanged exception.
 Exact logs are DIAG/retired-readonly-v137{1-kC8co0,2-aYoC5C}. Independent blind
 review DIAG/vida-retired-final-review-v1374.md accepts the current fixture and
-retirement oracles. Root separately reviews the actual pending diff; the worker
+retirement oracles. Root separately reviews the actual diff; the worker
 does not compare Git or re-attest runtime outcomes. The changed second-file pin
 is recorded once in DIAG/remainder-v1375-test-pin.json. Strict122/lint0 and the
 existing two-file namespace control pass1case/10assertions366ms in
-DIAG/remainder-v1375-controls-hMDNDo. These bytes are not numeric acceptance;
-the next operation is one matching build-only SDK and selected coverage stage.
+DIAG/remainder-v1375-controls-hMDNDo. Ordinary hooks pass formatting520/strict527
+and normal push publishesffb1223. Build-only SDK run39611591651 and the complete
+selected stage above pass. Publication/import and report-only map refresh occur
+once. The completed sibling gains two actual arms without changing denominators.
+The next bounded blind1377 study checks whether the public uncertain-attempt
+producer can precede an existing retirement case. No UNKNOWN is replayed and
+a proposed path does not establish runtime execution or coverage.
 
 The tsrs research decision is maintained in
 [test cost research](../../../packages/agent/docs/research/test-timeout-cost-20261013.md#tsrs-compiler-candidate--2026-10-21).
