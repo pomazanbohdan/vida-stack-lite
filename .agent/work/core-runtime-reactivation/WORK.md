@@ -14,18 +14,18 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-9cf336849d8871e1e84778e77b6e130f35459062, run
-73f7719e-9372-4367-95ec-7c722b46afa9, attempt1156.
+b934fabcbf1d038bcc18336a3cd21884d0180b3c, run
+c133f632-e35f-4c60-81ba-d2538cb4af72, attempt1158.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs330cases/5342assertions
-in151824.70097600002ms. Host and stopped-source children take145.81s and101.32s.
-Commit/rollback recovery take11831.28ms/11107.86ms under unchanged20s limits.
+unchanged boot/image and automatic publication. It runs330cases/5361assertions
+in177722.140487ms. Host and stopped-source children take169.31s and114.58s.
+Commit/rollback recovery take12948.89ms/11564.58ms under unchanged20s limits.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains11statement/168branch-arm gaps, no missing function
+The report-only join retains9statement/166branch-arm gaps, no missing function
 or line. The queued recovery callback is visited again. Denominators changed
 with actual Source corrections; do not report a raw counter delta as coverage
 gain. The join performs no new AST/Source scan/hash.
@@ -41,12 +41,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-2okkmD/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1231-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1231-scratch-parent.json and DIAG/remainder-v1231-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1231-cache-retirement-2okkmD/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-2okkmD-5duzQ3/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-qyj7dL |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-VweMBP/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1237-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1237-scratch-parent.json and DIAG/remainder-v1237-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1237-cache-retirement-VweMBP/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-VweMBP-j71Fsm/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-sC28qF |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -55,14 +55,14 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-4085903360bytes and retained tmpfs9261518848bytes available, both above the
+4017696768bytes and retained tmpfs9256792064bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
 
 ### Measured packets and regression custody
 
-The complete9cf3368 run above includes prepared-peer and adverse-ledger
+The completeb934fab run above includes prepared-peer and adverse-ledger
 controls, corrupt repair Journal refusals, migration body/close error custody,
 corrective artifact retries and unavailable-generation refusals, and non-target
 completed-report history. Source guards, accepted Journal requirements,
@@ -197,7 +197,7 @@ under its unchanged20s bound: terminal-null-v1229-72xTmC.
 The changed test pin is refreshed once. Strict122/configured lint0 and the
 existing shard-resource control pass1case/10assertions in370ms:
 remainder-v1231-controls-otEptr. Changed documentation links/headings pass.
-The complete bound stage now records F1126/1126, L4975/4975, S5294/5305 and
+The preceding complete9cf3368 stage records F1126/1126, L4975/4975, S5294/5305 and
 B5468/5636. The same production denominators gain3visited arms; the report-only
 join confirms the null-authorization branches at10509,10549 and10610 are no
 longer missing. No statement gain or full contour closure is claimed. This test
@@ -238,11 +238,54 @@ Host. Valid corrective-context repair admission remains a separate fixture GAP;
 the negative decoder control does not claim it. The exact changed test pin is
 refreshed once; strict122/configured lint0 and the existing two-shard resource
 control pass in remainder-v1237-controls-SlUENV.
-Numeric changes remain pending one complete bound stage.
+The completeb934fab stage above now confirms2additional statements and2arms
+with unchanged production denominators: S5296/5305 and B5470/5636. F/L stay100.
+Both children pass; the exact failed-wave and terminal cases take2318.90ms and
+4281.37ms. The report-only join runs once, with no new AST/Source scan/hash.
+Original SDK, image, logs, DBs and scratch remain; only the qualified private
+regenerable cache retires after observed closure. No unchanged suite repeats.
+
+### Checked planned-restore and execution-only progress packet
+
+Parameterize the existing terminal-result/completed-Journal correction repair
+case with applied and planned restoration. Applied retains apply/resume/restore;
+planned restores directly from its exact frozen plan. Both normalize the same
+real completed Host result, retain released Ledger and unchanged Journal, advance
+Work/Lifecycle revisions2or1, and preserve idempotent repeated restore.
+No new producer, shared helper or per-case timeout is added.
+
+The new Host-component case reuses the configured execution-only ticket/claim
+and public claimWorkflowAssignment. A benign paired Host CAS retains its started
+readonly attempt and lease, advances only required revisions, preserves governance
+and raw Journal rows, and leaves the same strict missing-Journal reader refusal.
+This is Host component proof, not kernel invocation, native issuance or Runtime.
+Proposal/final reviews: vida-nonfile-attempt-progress-review-v1238.md,
+vida-nonfile-attempt-progress-final-review-v1240.md and
+vida-planned-correction-restore-final-review-v1241.md.
+
+Initial strict149/lint0 and the3-case focused run are retained at
+progress-restore-v1239-N7AiwN. Both restoration modes pass277.51ms/136.67ms;
+the progress case fails before commit because its Journal reader correctly denies
+retained Host effects without Journal evidence. This is a test premise error.
+The original FAIL log remains. The case omitted its retention marker, so shared
+teardown removed that failed private root; original raw-fixture custody is GAP,
+not retrospectively recovered. Both modified cases now arm the existing marker
+before awaited setup and clear it only on success. Bun Test skill records this
+requirement; no generic cleanup owner or evidence gate is weakened.
+
+After the causal Journal-oracle correction, strict149/configured lint0 and only
+the changed execution-only case pass13assertions,2.10s overall/208.11ms case:
+progress-journal-v1242-3Pt4lt. Already passing restoration cases are not repeated.
+Numeric visits remain pending one complete bound stage. Previous measured images
+and all original SDK/receipts/FAIL logs remain unchanged.
+The changed test pin is refreshed once. Strict122/configured lint0 and the
+existing two-shard resource control pass1case/10assertions in
+remainder-v1243-controls-A4bjdx. Cases remain serial within each exact file;
+no shared dependency, process, timeout, resource or worker cap is changed.
 
 ### Next actions and unresolved prerequisites
 
-1. Select the next causal S/B packet from the current11statement/168arm gap list;
+1. Select the next causal S/B packet from the current9statement/166arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,
@@ -286,8 +329,8 @@ Keep these specific unresolved paths open:
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
-| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage151.825s with both native exits0 and complete custody. |
-| Fully serial files | Protocol fallback only; concurrent child times sum247.13s. That sum is a planning quantity, not measured serial elapsed time or current admission. |
+| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage177.722s with both native exits0 and complete custody. |
+| Fully serial files | Protocol fallback only; concurrent child times sum283.89s. That sum is a planning quantity, not measured serial elapsed time or current admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |
 

@@ -8099,106 +8099,117 @@ test('bundled work-state repair plans atomically, resumes exact postimages and r
   expect(store.repairRequestTransitionFields({ ...request, mode: 'restore' })).toEqual(restored);
 });
 
-test('correction-generation repair preserves terminal results and completed journal history through apply and restore', async () => {
-  const { seed, source } = await writerFixture();
-  commitHostState(seed);
-  const started = store.claimWorkflowAttempt(attemptRequest());
-  const completed = store.completeWorkflowAttempt(started, { terminal: 'observed Host fixture result' });
-  const terminal = readPresentSnapshot(store, identity);
-  const journal = completedRecoveryJournal(
-    'work',
-    requiredValue(terminal.work.execution.run_id, 'terminal repair run'),
-    source,
-  );
-  const raw = parseJsonRecord(canonicalJson(terminal.work));
-  const execution = recordAt(raw, 'execution');
-  const attempts = arrayAt(execution, 'assignment_attempts');
-  const attempt = firstOf(attempts, 'terminal repair attempt');
-  if (!isPlainRecord(attempt)) throw new Error('Terminal repair attempt is not a record.');
-  expect(Reflect.deleteProperty(attempt, 'correction_generation')).toBe(true);
-  expect(Reflect.deleteProperty(attempt, 'correction_authorization')).toBe(true);
-  raw.lease = null;
-  execution.status = 'suspended';
-  const releasedLedger: CoordinationLedger = {
-    ...terminal.ledger,
-    claims: terminal.ledger.claims.map((claim) => ({ ...claim, status: 'released' })),
-    tickets: terminal.ledger.tickets.map((ticket) => ({
-      ...ticket,
-      status: 'released',
-      active_resources: [],
-      blocked_resources: [],
-      expires_at: null,
-    })),
-  };
-  database
-    .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'")
-    .run(canonicalJson(raw), canonicalJsonDigest(raw));
-  database
-    .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
-    .run(canonicalJson(releasedLedger), canonicalJsonDigest(releasedLedger));
-  const retained = database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all();
-  const retainedJournal = database
-    .query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger')
-    .all();
-  expect(() => store.readHostStateSnapshot(identity)).toThrow('work record must match current WorkState/v1');
-  const request = { operationId: 'terminal-generation-repair' };
-  const inspected = store.repairCorrectionGeneration({ ...request, mode: 'inspect' });
-  expect(inspected.changed_work).toHaveLength(1);
-  expect(inspected.changed_journals).toBe(0);
-  expect(database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(
-    retained,
-  );
-  expect(database.query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(
-    retainedJournal,
-  );
-  const planned = store.repairCorrectionGeneration({
-    ...request,
-    mode: 'plan',
-    actor: 'fixture:terminal-repair-owner',
-  });
-  expect(planned.status).toBe('planned');
-  const plannedGovernance = database
-    .query<GovernanceSqlRow, []>('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key')
-    .all();
-  expect(
-    store.repairCorrectionGeneration({ ...request, mode: 'plan', actor: 'fixture:terminal-repair-owner' }),
-  ).toEqual(planned);
-  expect(() =>
-    store.repairCorrectionGeneration({ ...request, mode: 'plan', actor: 'fixture:foreign-repair-owner' }),
-  ).toThrow('repair attribution differs');
-  expect(
+test.each(['applied', 'planned'] as const)(
+  'correction-generation repair preserves terminal results and completed journal history through restore (%s)',
+  async (mode) => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const { seed, source } = await writerFixture();
+    commitHostState(seed);
+    const started = store.claimWorkflowAttempt(attemptRequest());
+    const completed = store.completeWorkflowAttempt(started, { terminal: 'observed Host fixture result' });
+    const terminal = readPresentSnapshot(store, identity);
+    const journal = completedRecoveryJournal(
+      'work',
+      requiredValue(terminal.work.execution.run_id, 'terminal repair run'),
+      source,
+    );
+    const raw = parseJsonRecord(canonicalJson(terminal.work));
+    const execution = recordAt(raw, 'execution');
+    const attempts = arrayAt(execution, 'assignment_attempts');
+    const attempt = firstOf(attempts, 'terminal repair attempt');
+    if (!isPlainRecord(attempt)) throw new Error('Terminal repair attempt is not a record.');
+    expect(Reflect.deleteProperty(attempt, 'correction_generation')).toBe(true);
+    expect(Reflect.deleteProperty(attempt, 'correction_authorization')).toBe(true);
+    raw.lease = null;
+    execution.status = 'suspended';
+    const releasedLedger: CoordinationLedger = {
+      ...terminal.ledger,
+      claims: terminal.ledger.claims.map((claim) => ({ ...claim, status: 'released' })),
+      tickets: terminal.ledger.tickets.map((ticket) => ({
+        ...ticket,
+        status: 'released',
+        active_resources: [],
+        blocked_resources: [],
+        expires_at: null,
+      })),
+    };
     database
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'")
+      .run(canonicalJson(raw), canonicalJsonDigest(raw));
+    database
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+      .run(canonicalJson(releasedLedger), canonicalJsonDigest(releasedLedger));
+    const retained = database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all();
+    const retainedJournal = database
+      .query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger')
+      .all();
+    expect(() => store.readHostStateSnapshot(identity)).toThrow('work record must match current WorkState/v1');
+    const request = { operationId: 'terminal-generation-repair' };
+    const inspected = store.repairCorrectionGeneration({ ...request, mode: 'inspect' });
+    expect(inspected.changed_work).toHaveLength(1);
+    expect(inspected.changed_journals).toBe(0);
+    expect(database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(
+      retained,
+    );
+    expect(database.query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(
+      retainedJournal,
+    );
+    const planned = store.repairCorrectionGeneration({
+      ...request,
+      mode: 'plan',
+      actor: 'fixture:terminal-repair-owner',
+    });
+    expect(planned.status).toBe('planned');
+    const plannedGovernance = database
       .query<GovernanceSqlRow, []>('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key')
-      .all(),
-  ).toEqual(plannedGovernance);
-  expect(database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(
-    retained,
-  );
-  expect(database.query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(
-    retainedJournal,
-  );
-  const applied = store.repairCorrectionGeneration({ ...request, mode: 'apply' });
-  expect(applied.status).toBe('applied');
-  const repaired = readPresentSnapshot(store, identity);
-  expect(repaired.work.execution.assignment_attempts).toEqual([completed.attempt]);
-  expect(repaired.work.execution.status).toBe('suspended');
-  expect(repaired.work.lease).toBeNull();
-  expect(repaired.ledger).toEqual(releasedLedger);
-  expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal.state);
-  expect(store.repairCorrectionGeneration({ ...request, mode: 'resume' })).toEqual(applied);
-  const restored = store.repairCorrectionGeneration({ ...request, mode: 'restore' });
-  expect(restored.status).toBe('restored');
-  const after = readPresentSnapshot(store, identity);
-  expect(after.work.execution).toEqual(repaired.work.execution);
-  expect(after.work.lease).toBeNull();
-  expect(after.work.revision).toBe(repaired.work.revision + 1);
-  expect(after.ledger).toEqual(releasedLedger);
-  expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal.state);
-  expect(database.query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(
-    retainedJournal,
-  );
-  expect(store.repairCorrectionGeneration({ ...request, mode: 'restore' })).toEqual(restored);
-});
+      .all();
+    expect(
+      store.repairCorrectionGeneration({ ...request, mode: 'plan', actor: 'fixture:terminal-repair-owner' }),
+    ).toEqual(planned);
+    expect(() =>
+      store.repairCorrectionGeneration({ ...request, mode: 'plan', actor: 'fixture:foreign-repair-owner' }),
+    ).toThrow('repair attribution differs');
+    expect(
+      database
+        .query<GovernanceSqlRow, []>(
+          'SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key',
+        )
+        .all(),
+    ).toEqual(plannedGovernance);
+    expect(database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(
+      retained,
+    );
+    expect(database.query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(
+      retainedJournal,
+    );
+    if (mode === 'applied') {
+      const applied = store.repairCorrectionGeneration({ ...request, mode: 'apply' });
+      expect(applied.status).toBe('applied');
+      const repaired = readPresentSnapshot(store, identity);
+      expect(repaired.work.execution.assignment_attempts).toEqual([completed.attempt]);
+      expect(repaired.work.execution.status).toBe('suspended');
+      expect(repaired.work.lease).toBeNull();
+      expect(repaired.ledger).toEqual(releasedLedger);
+      expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal.state);
+      expect(store.repairCorrectionGeneration({ ...request, mode: 'resume' })).toEqual(applied);
+    }
+    const restored = store.repairCorrectionGeneration({ ...request, mode: 'restore' });
+    expect(restored.status).toBe('restored');
+    const after = readPresentSnapshot(store, identity);
+    expect(after.work.execution).toEqual({ ...terminal.work.execution, status: 'suspended' });
+    expect(after.work.lease).toBeNull();
+    const revisionAdvance = mode === 'applied' ? 2 : 1;
+    expect(after.work.revision).toBe(terminal.work.revision + revisionAdvance);
+    expect(after.work.lifecycle.revision).toBe(terminal.work.lifecycle.revision + revisionAdvance);
+    expect(after.ledger).toEqual(releasedLedger);
+    expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal.state);
+    expect(database.query<SessionLedgerSqlRow, []>('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(
+      retainedJournal,
+    );
+    expect(store.repairCorrectionGeneration({ ...request, mode: 'restore' })).toEqual(restored);
+    preserveHostFixtureRoot = false;
+  },
+);
 
 function stripFixtureAssignmentAuthority(value: unknown): void {
   if (!isPlainRecord(value)) throw new Error('Assignment authority preimage is not a record.');
@@ -14804,6 +14815,41 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     expect(() => store.claimWorkflowAttempt({ ...attemptRequest(), requestDigest: '6'.repeat(64) })).toThrow(
       /request changed/,
     );
+  });
+
+  test('Host progress preserves an unresolved readonly attempt and its execution-only ownership', async () => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    const { seed } = await writerFixture();
+    const initial = commitHostState(seed);
+    expect(firstTicket(initial.ledger).exclusive_resources).toEqual(['execution:work']);
+    expect(firstClaim(initial.ledger).resources).toEqual(['execution:work']);
+    const started = store.claimWorkflowAssignment(protectedInvocation(initial), '5'.repeat(64));
+    expect(started.attempt.status).toBe('started');
+    const before = readPresentSnapshot(store, identity);
+    const journalRows = () =>
+      database
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'")
+        .get()
+        ? database
+            .query<SessionLedgerSqlRow, []>(
+              'SELECT * FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt',
+            )
+            .all()
+        : null;
+    const journal = journalRows();
+    expect(() => store.readWorkSessionJournal(identity)).toThrow('journal missing for retained host effects');
+    const approvals = governanceRows();
+    const advanced = commitHostState(next(before));
+    expect(advanced.work.execution.assignment_attempts).toEqual([started.attempt]);
+    expect(advanced.work.lease).toEqual(before.work.lease);
+    expect(advanced.work.revision).toBe(before.work.revision + 1);
+    expect(advanced.work.lifecycle.revision).toBe(before.work.lifecycle.revision + 1);
+    expect(advanced.ledger).toEqual({ ...before.ledger, revision: before.ledger.revision + 1 });
+    expect(readPresentSnapshot(store, identity)).toEqual(advanced);
+    expect(journalRows()).toEqual(journal);
+    expect(() => store.readWorkSessionJournal(identity)).toThrow('journal missing for retained host effects');
+    expect(governanceRows()).toEqual(approvals);
+    preserveHostFixtureRoot = false;
   });
 
   test('completion after expiry preserves unresolved file ownership until every result is terminal', () => {

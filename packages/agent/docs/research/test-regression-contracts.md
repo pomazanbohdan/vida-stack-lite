@@ -690,6 +690,12 @@ creates the real transition/receipt. Require a different successor code digest
 and exact reopen/retry/history preservation. This unit proof is fixture-only,
 with no installed runtime change or native endpoint qualification.
 
+Host-component progress may retain a started readonly attempt with an actual
+execution-only ticket and claim. Use public assignment admission, then a benign
+paired Host CAS. Preserve attempt, lease, governance and native Journal rows.
+The missing-Journal reader must still refuse retained effects before and after
+that commit; this fixture does not establish a kernel-issued action.
+
 Historical terminal continuation also carries a disjoint active peer through
 public Host CAS. Its execution-only ticket/claim is separate from its allowed
 file authority; preserve full peer state across native capture/continue/retry.
@@ -965,6 +971,10 @@ restore while retaining that exact Journal history and ledger. Terminal
 correction repair also preserves the actual completed Host attempt and released
 ownership through apply, resume and restore. These fixtures are distinct from
 the genuine issued-UNKNOWN repair above.
+For terminal correction repair, cover restore directly from planned and after
+apply. Both retain normalized terminal results and completed Journal history;
+Work and Lifecycle revisions advance once or twice respectively. Repeated
+restore must preserve the exact stored result without a further write.
 In that terminal fixture, inspect an explicit null reservation authorization
 without applying it. Preserve the real receipt and exact Host, Journal,
 governance and schema rows. Restore the original Journal bytes through identity,

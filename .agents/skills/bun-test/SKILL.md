@@ -95,6 +95,9 @@ new metric or currentness. Read the compact Markdown view for navigation rather
 than dumping a cumulative JSON snapshot into the agent context.
 Reserve a fresh exclusive diagnostic log for each attempt under TESTING's
 retention rule; a successful retry must not overwrite a prior failure.
+For a new or modified case using shared fixture teardown, set its existing
+failure-retention marker before the first awaited setup and clear it only on
+success. Capturing an execution image cannot preserve files the case deletes.
 Read the native exit receipt separately from the outer tool outcome. Diagnose a
 disagreement with an inert control before another expensive invocation, following
 TESTING's capture rule. Preserve both outcomes and require full producer custody
