@@ -6284,8 +6284,7 @@ export class HostStateStore {
           nextLedger,
         },
         undefined,
-        true,
-        true,
+        'producer-fenced',
       );
     }).immediate();
   }
@@ -9923,8 +9922,7 @@ export class HostStateStore {
             nextLedger,
           },
           undefined,
-          true,
-          true,
+          'producer-fenced',
           additions,
         );
         if (queued) return { status: 'queued' as const, action: null, state_version: null };
@@ -15534,8 +15532,7 @@ export class HostStateStore {
           verifyCurrent,
           stoppedSource: true,
         },
-        true,
-        true,
+        'producer-fenced',
       );
       const record = {
         schema: 'StoppedSourceCaptureReceipt/v1',
@@ -16014,8 +16011,7 @@ export class HostStateStore {
             nextLedger: { ...ledger, revision: ledger.revision + 1 },
           },
           { actionId: input.actionId, next: nextJournal, verifyCurrent, stoppedSource: true },
-          true,
-          true,
+          'producer-fenced',
         );
       const receipt = {
         schema: 'RetiredSourceCapture/v1',
@@ -17191,8 +17187,7 @@ export class HostStateStore {
           nextLedger,
         },
         undefined,
-        true,
-        true,
+        'producer-fenced',
         [],
         undefined,
         request,
@@ -17766,8 +17761,7 @@ export class HostStateStore {
             );
           },
         },
-        true,
-        true,
+        'producer-fenced',
         [],
         {
           receipt,
@@ -18073,8 +18067,7 @@ export class HostStateStore {
           nextLedger,
         },
         undefined,
-        true,
-        true,
+        'producer-fenced',
       );
       const receipt: HistoricalTerminalSynthesisCaptureReceipt = {
         schema: 'HistoricalTerminalSynthesisCustodyReceipt/v1',
@@ -18456,9 +18449,6 @@ export class HostStateStore {
       return this.#read(input.identity);
     }).immediate();
   }
-  #assertCommitProducerFence(internalTransaction: boolean, producerFenceChecked: boolean): void {
-    if (internalTransaction && !producerFenceChecked) this.assertSessionProducerWriteAllowed();
-  }
   #commitHostState(
     input: Parameters<HostStateStore['compareAndSwapHostState']>[0],
     terminalJournal?: {
@@ -18467,8 +18457,7 @@ export class HostStateStore {
       readonly verifyCurrent: () => void;
       readonly stoppedSource?: boolean;
     },
-    internalTransaction = false,
-    producerFenceChecked = false,
+    transactionMode?: 'producer-fenced',
     taskSourceResourceAdditions: readonly string[] = [],
     sourceReportRecoveryProjection?: {
       readonly receipt: CompletedSourceReportRecoveryReceipt;
@@ -18489,9 +18478,11 @@ export class HostStateStore {
       'foreign workspace state',
     );
     validatePair(work, ledger);
-    requireState(!this.#database.inTransaction || internalTransaction, 'nested host state transaction forbidden');
+    requireState(
+      !this.#database.inTransaction || transactionMode === 'producer-fenced',
+      'nested host state transaction forbidden',
+    );
     const commit = () => {
-      this.#assertCommitProducerFence(internalTransaction, producerFenceChecked);
       const before = this.#read(workIdentity(work));
       this.#assertMaintenanceGeneration(data.expectedMaintenanceGeneration);
       matchesExpected(before.workVersion, data.expectedWork);
@@ -18617,8 +18608,7 @@ export class HostStateStore {
         this.#validateProgress(before, projected, ledger, documentationContext, taskSourceResourceAdditions);
       } else if (sourceRetirementRequest) {
         requireState(
-          internalTransaction &&
-            producerFenceChecked &&
+          transactionMode === 'producer-fenced' &&
             !terminalJournal &&
             expectedSessionJournal &&
             taskSourceResourceAdditions.length === 0,
@@ -18674,6 +18664,6 @@ export class HostStateStore {
       }
       return this.#read(workIdentity(work));
     };
-    return internalTransaction ? commit() : this.#transactionWithProducerFence(commit).immediate();
+    return transactionMode === 'producer-fenced' ? commit() : this.#transactionWithProducerFence(commit).immediate();
   }
 }

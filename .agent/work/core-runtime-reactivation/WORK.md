@@ -10,6 +10,42 @@ F/L/S/B100. Root owns Source integration, Git and the sole numeric producer.
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
 
+### Three-hour execution audit and private commit-mode repair
+
+Root resumes the existing cycle from publishedd36bdce with a clean Source tree
+and no active numeric/build/install producer. The current report and gap map are
+reused; no AST/inventory/hash pass or second coverage cycle is started for analysis.
+Independent1452 approves replacing the private commit API's two booleans with
+the optional literal producer-fenced. All seven internal callers already enter
+the existing producer-fenced SQLite transaction; both public/default callers
+retain their owned transaction. The real producer check stays before SQL.
+The no-op assertCommitProducerFence helper is removed together with its unused
+internal/unchecked combination. This is a P1 signature simplification, not a
+new executed counter or weakened public fence. Later frozen correspondence must
+record that deleted private function explicitly, with no allowance transfer or
+budget change. DIAG/vida-commit-mode-design-v1452.md retains independent review.
+1453 passes Source84 strict/lint0 and six affected producer/UNKNOWN/recovery
+controls6PASS/160assertions15.21s in DIAG/commit-mode-v1453-cxfO3E. Unchanged test
+bytes retain the1449 pin; the following full stage requires a new matching SDK.
+
+The retained last full stage takes213894.698935ms with338PASS/5921assertions;
+the latest negative repair controls take30.54s for5PASS/177assertions. These are
+different scopes, not a comparative benchmark. A full stage per assertion would
+repeat image/SDK/setup and measurement work; its projected cost is an inference.
+Batching reviewed changes, static checks and affected named cases before one
+complete selected-contour stage is the chosen sequence. Independent read-only
+study can overlap Source repair, while multiple writers or numeric producers
+would add input/resource contention without measured benefit. No parallel
+coverage or speedup is claimed. Blind1454 checks the script/execution seams;
+Root remains the only writer and final numeric owner.
+
+The audit's single filesystem observation records checkout/durable evidence on
+the same overlay with2442104832bytes available, and scratch/dev/shm with
+8934051840bytes. Both exceed the unchanged2147483648byte floor. Reuse the existing
+retention inventories; the next launch still performs its required fresh admission.
+No unknown/shared path or protected receipt, SDK, image, database or failed root
+is removed. The retained scratch cache has not been newly qualified for retirement.
+
 ### Current negative-edge repair packet
 
 The resumed goal keeps this same contour and Root numeric owner.1444 independently
