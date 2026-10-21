@@ -39,6 +39,55 @@ The existing7branch/2statement dispositions retain exact gap geometry and matchi
 Source/test fingerprints in DIAG/remainder-v1499-objective-rebind.json. All other
 58arms remain open. No further suite or mutation producer is started.
 
+### Checked no-effect predecessor and continuation refusal packet
+
+Root resumes the same bun-host-state contour after a transient exec-server
+disconnect; boot identity remains89093463-dd07-4789-abcd-d15842df2ba2.
+Only Root integrates Source. Blind Luna1507/1508/1509 investigates separate
+remaining mechanisms;1517 reviews the coherent packet. Their proposals and
+reviews are retained in DIAG/repair-v1511. No second contour, full suite, index
+refresh, inventory or numeric producer is launched.
+
+The retired-source fixture now claims its actual unissued readonly engine action
+before in-process preparation. It writes bound LocalSessionNoEffectEvidence and
+WorkflowAttemptRecoveryDecision bytes, then uses the configured verifier and
+reconcileUnissuedLocalSessionAction for decision admission and retry CAS.
+The existing completed-readonly predecessor remains. The capture case checks
+all three attempts, preserves both predecessors, settles only the retired writer
+and retains its public retry/refusal assertions. The first proposed generic
+verifier/manual-CAS design is rejected, not published; its original failure,
+later focused PASS and independent BLOCK remain separate evidence. The accepted
+replacement also preserves both body and cleanup failures through the existing
+completeOwnedCleanup owner at this case boundary.
+
+The initial-Source continuation case adds a foreign-owner code-continuation
+refusal after its genuine persisted continuation. It asserts no endpoint proof
+call, unchanged native Host/receipt rows and a closed transaction. Its first
+attempt failed at request validation because the path array was unsorted; the
+original log and /tmp/vida-initial-source-F1CnW1 remain retained. The corrected
+request reaches the intended owner refusal. No installed-code adoption is claimed.
+
+Strict checks and zero-warning scoped lint pass before each focused run.
+host-focused-v1518.log records1PASS/75assertions in2423.54ms;
+retired-focused-v1519.log records1PASS/71assertions in6209.03ms under its existing
+60s exception. These distinct file inputs need no repeated full suite.
+The refreshed exact two-file pins pass the existing namespace/stale-binding
+control: pin-focused-v1521.log records1PASS/10assertions. The first tooling
+config used relative entrypoints and failed before runtime; tooling-strict-v1520.log
+is retained. The absolute-entrypoint retry passes123files. All logs above are
+under DIAG/repair-v1511, with separate exclusive paths. Blind1517's final review
+passes after resolving its body/cleanup finding; shared resource qualification
+remains bound to the maintained exact-pin owner below.
+
+Luna1508 traces its proposed deleted-lineage row through an earlier progress
+validator refusal; no speculative test or objective skip is admitted. Luna1507
+identifies no additional supported reader path; that is a GAP, not proof of
+unreachability. Current numeric counts and the7branch/2statement dispositions
+remain bound to the prior complete run. Potential new visits1420/2 and723/0
+remain unmeasured until a complete changed-input stage. The resume observation
+records2166988800available durable bytes,47603712below the unchanged archive
+requirement; no new image/stage or protected deletion is authorized by this packet.
+
 ### Qualified historical temporary cleanup
 
 The owner's cleanup request uses the existing inventories and two independent
@@ -1265,6 +1314,15 @@ receipts and exact case names; additions alone do not establish visited operands
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
+
+The current no-effect/continuation packet refreshes only the two existing test
+digests in focusedCoverageShardReview. Blind1517 verifies that the added
+reconciliation evidence, CAS and native row reads stay inside the owning fixture
+roots. No new shared clock, environment, module mock or concurrent case is added.
+The Host file retains the captured caller namespace; stopped-source retains the
+package .tmp namespace. The original namespace mapping and serial fallback remain
+unchanged. DIAG/repair-v1511 retains the independent review and exact-pin control;
+this resource review does not establish coverage or qualify other selections.
 
 [TESTING](../../../packages/agent/TESTING.md#parallel-testing-current-status-and-required-contract)
 and current focusedCoverageShardReview pins own eligibility and resource rules.

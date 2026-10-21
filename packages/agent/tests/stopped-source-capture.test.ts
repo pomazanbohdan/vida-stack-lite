@@ -23,6 +23,7 @@ import type { HostStateSnapshot, RetiredSourceCaptureRequest } from '../src/host
 import { sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
+import { reconcileUnissuedLocalSessionAction } from '../src/orchestration/local-session-reconciliation.ts';
 import { readAdmittedSessionIntake } from '../src/orchestration/admitted-session-execution.ts';
 import {
   openConfiguredMastraSessionLedger,
@@ -290,7 +291,12 @@ const writeJson = (root: string, file: string, value: unknown): void => {
 };
 
 type FixtureSetupClose = () => void | Promise<void>;
-type FixtureOptions = { writer?: boolean; earlierDisjointPeers?: boolean; readonlyHostPreparation?: boolean };
+type FixtureOptions = {
+  writer?: boolean;
+  earlierDisjointPeers?: boolean;
+  readonlyHostPreparation?: boolean;
+  unissuedNoEffectPreparation?: boolean;
+};
 
 async function fixture(options: FixtureOptions = {}, prepare: typeof buildFixture = buildFixture) {
   const closes: FixtureSetupClose[] = [];
@@ -311,7 +317,12 @@ async function fixture(options: FixtureOptions = {}, prepare: typeof buildFixtur
 }
 
 async function buildFixture(
-  { writer = true, earlierDisjointPeers = false, readonlyHostPreparation = false }: FixtureOptions,
+  {
+    writer = true,
+    earlierDisjointPeers = false,
+    readonlyHostPreparation = false,
+    unissuedNoEffectPreparation = false,
+  }: FixtureOptions,
   setupCloses: FixtureSetupClose[],
 ) {
   markPhase?.('fixture:start');
@@ -514,6 +525,105 @@ async function buildFixture(
   setupCloses.push(() => bridge.close());
   await bridge.start(source);
   const sync = () => currentJournal(ledger, 'stopped', 1);
+  if (unissuedNoEffectPreparation) {
+    const noEffectJournal = sync(),
+      item = at(noEffectJournal.state.items, 0, 'Initial unissued readonly action');
+    expect(item.issue_id).toBeNull();
+    expect(item.observation).toBeNull();
+    const stage = required(
+      config.workflows[item.request.workflow_id]?.stages.find((entry) => entry.id === item.request.stage_id),
+      'Configured unissued readonly stage',
+    );
+    const assignment = required(stage.assignments[item.request.assignment_index], 'Unissued readonly assignment'),
+      profile = config.agents.profiles[assignment.profile];
+    expect(profile?.mutation_scope).toBe('none');
+    const before = completeHost(store.readHostStateSnapshot(identity)),
+      sourceScope = required(noEffectJournal.state.source_scope, 'Unissued no-effect source snapshot'),
+      intent = {
+        fixture_only: true,
+        operation: 'read-current-config',
+        config_digest: before.work.binding.config_digest,
+        readonly_action_id: item.request.action_id,
+      },
+      started = store.claimWorkflowAttempt({
+        identity,
+        expectedWork: before.workVersion,
+        expectedLedger: before.ledgerVersion,
+        expectedMaintenanceGeneration: before.maintenanceGeneration,
+        stageId: item.request.stage_id,
+        assignmentIndex: item.request.assignment_index,
+        requestDigest: canonicalJsonDigest(intent),
+        lease: required(before.work.lease, 'Admitted unissued readonly lease'),
+      });
+    const proofPath = `.agent/work/${identity.work_id}/reconciliation/local-no-effect.json`,
+      decisionPath = `.agent/work/${identity.work_id}/reconciliation/recovery-decision.json`,
+      inspectedAt = new Date().toISOString(),
+      attempt = started.attempt,
+      proof = {
+        schema: 'LocalSessionNoEffectEvidence/v1',
+        work_id: identity.work_id,
+        attempt: noEffectJournal.state.attempt,
+        action_id: item.request.action_id,
+        host_attempt_id: attempt.attempt_id,
+        request_digest: attempt.request_digest,
+        workflow_id: item.request.workflow_id,
+        config_digest: runtimeConfigDigest(config),
+        scope_digest: before.work.binding.work_source_revision,
+        source_snapshot_digest: sourceScope.digest,
+        native_session_handle: attempt.lease.thread_id,
+        successor_session_handle: attempt.lease.thread_id,
+        ticket_id: attempt.lease.ticket_id,
+        lease_generation: attempt.lease.generation,
+        native_inspection_ref: 'fixture:no-provider-entry-before-in-process-preparation',
+        decision_path: decisionPath,
+        inspected_by: attempt.lease.thread_id,
+        inspected_at: inspectedAt,
+        finding: 'confirmed_not_invoked_and_quiescent',
+      } as const,
+      proofBytes = Buffer.from(JSON.stringify(proof)),
+      providerEvidence = {
+        schema: proof.schema,
+        path: proofPath,
+        sha256: createHash('sha256').update(proofBytes).digest('hex'),
+      },
+      decision = {
+        schema: 'WorkflowAttemptRecoveryDecision/v1',
+        work_id: identity.work_id,
+        work_item_id: before.work.binding.provider_work_item_id,
+        source_revision: before.work.binding.work_source_revision,
+        scope_id: before.work.binding.scope_id,
+        ac_ids: [...before.work.binding.ac_ids],
+        action_id: item.request.action_id,
+        host_attempt_id: attempt.attempt_id,
+        provider_evidence: providerEvidence,
+        outcome: 'no_effect',
+        retry_lease: {
+          ticket_id: attempt.lease.ticket_id,
+          thread_id: attempt.lease.thread_id,
+          generation: attempt.lease.generation + 1,
+        },
+        decided_by: attempt.lease.thread_id,
+        decided_at: inspectedAt,
+        reason: 'The fixture has not invoked its in-process preparation producer yet.',
+      } as const;
+    mkdirSync(path.dirname(path.join(root, proofPath)), { recursive: true });
+    writeFileSync(path.join(root, proofPath), proofBytes, { flag: 'wx' });
+    writeFileSync(path.join(root, decisionPath), JSON.stringify(decision), { flag: 'wx' });
+    const reconciled = await reconcileUnissuedLocalSessionAction({
+      root,
+      proofPath,
+      store,
+      identity,
+      journal: noEffectJournal,
+      configDigest: runtimeConfigDigest(config),
+    });
+    expect(
+      reconciled.work?.execution.assignment_attempts.find((entry) => entry.attempt_id === attempt.attempt_id),
+    ).toMatchObject({
+      status: 'no_effect',
+      reconciliation: { principal: 'trusted-local-session-no-effect', retry_lease: decision.retry_lease },
+    });
+  }
   const args = [
     '--project-root',
     root,
@@ -1304,19 +1414,39 @@ test(
 test(
   'retired Source capture settles only the issued failure and retries through its separate public route',
   async () => {
-    const f = await fixture({ earlierDisjointPeers: true, readonlyHostPreparation: true });
+    const f = await fixture({
+      earlierDisjointPeers: true,
+      readonlyHostPreparation: true,
+      unissuedNoEffectPreparation: true,
+    });
+    let bodyFailure: { error: unknown } | undefined;
     try {
       const readonlyPreparation = required(f.readonlyPreparation, 'Completed Host config read before writer issue');
       const request = f.retirementRequest();
       const originalHost = f.inspect();
       const originalJournal = currentJournal(f.ledger, 'stopped', 1);
       const original = completeHost(f.store.readHostStateSnapshot(f.identity));
-      expect(original.work.execution.assignment_attempts).toHaveLength(2);
+      expect(original.work.execution.assignment_attempts).toHaveLength(3);
       expect(
         original.work.execution.assignment_attempts.find(
           (entry) => entry.attempt_id === readonlyPreparation.attempt.attempt_id,
         ),
       ).toEqual(readonlyPreparation.attempt);
+      const noEffectAttempt = required(
+        original.work.execution.assignment_attempts.find((entry) => entry.status === 'no_effect'),
+        'Reconciled unissued readonly Host attempt',
+      );
+      expect(noEffectAttempt.reconciliation).toMatchObject({
+        principal: 'trusted-local-session-no-effect',
+        outcome: 'no_effect',
+        retry_lease: {
+          ...noEffectAttempt.lease,
+          generation: noEffectAttempt.lease.generation + 1,
+        },
+      });
+      expect(
+        original.ledger.tickets.find((entry) => entry.ticket_id === noEffectAttempt.lease.ticket_id),
+      ).toMatchObject({ generation: noEffectAttempt.reconciliation?.retry_lease?.generation });
       const targetTicket = required(
         original.ledger.tickets.find((ticket) => ticket.ticket_id === original.work.lease?.ticket_id),
         'Original Source ticket',
@@ -1511,7 +1641,7 @@ test(
         after.work.execution.assignment_attempts.filter(
           (entry) => entry.attempt_id !== retirement.attempt_receipt.attempt.attempt_id,
         ),
-      ).toEqual([readonlyPreparation.attempt]);
+      ).toEqual([noEffectAttempt, readonlyPreparation.attempt]);
       expect(
         after.work.execution.assignment_attempts.find(
           (entry) => entry.attempt_id === retirement.attempt_receipt.attempt.attempt_id,
@@ -1536,8 +1666,22 @@ test(
         terminalEvidence: { ...c.operation.terminalEvidence, source_turn_id: 'synthetic-changed-turn' },
       });
       await expectRejection(publicRun(args), 'original thread or interrupted turn differs');
+    } catch (error) {
+      bodyFailure = { error };
+      throw error;
     } finally {
-      await f.close();
+      try {
+        await f.close();
+      } catch (error) {
+        completeOwnedCleanup(
+          [
+            () => {
+              throw error;
+            },
+          ],
+          bodyFailure,
+        );
+      }
     }
   },
   60000,

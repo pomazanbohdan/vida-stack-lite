@@ -6971,6 +6971,42 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
         expect(store.readHostStateSnapshot(current.identity)).toEqual(after);
         expect(initialSourceJournal(current)).toEqual(journalAfter);
         expect(source).toEqual(snapshotDeclaredSources(requireSafeRepositoryAccess(current.root), current.documents));
+        const codeProof = mock(qualifiedRuntimeCodeEndpointFixture);
+        expect(() =>
+          store.commitQualifiedRuntimeCodeContinuation(
+            {
+              schema: 'QualifiedRuntimeCodeContinuationRequest/v1',
+              identity: current.identity,
+              attempt: 1,
+              nativeSessionHandle: request.nativeSessionHandle + '-foreign',
+              leaseGeneration: requiredLease(after.work).generation,
+              expectedWork: after.workVersion,
+              expectedLedger: after.ledgerVersion,
+              expectedJournal: journalAfter.version,
+              expectedMaintenanceGeneration: after.maintenanceGeneration,
+              originalSourceScopeDigest: after.work.binding.work_source_revision,
+              journalSourceScopeDigest: source.digest,
+              oldRuntimeCodeDigest: after.work.binding.runtime_code_digest,
+              currentRuntimeCodeDigest: canonicalJsonDigest('fixture-foreign-owner-code'),
+              oldRuntimeCodePaths: [...current.documents].sort(),
+              currentRuntimeCodePaths: [...current.documents].sort(),
+              oldManifestRef: '.agent/work/fixture-code/old-manifest.json',
+              oldManifestDigest: canonicalJsonDigest('fixture-old-manifest'),
+              oldInstallRef: '.agent/work/fixture-code/old-install.json',
+              currentManifestRef: '.agent/work/fixture-code/new-manifest.json',
+              currentManifestDigest: canonicalJsonDigest('fixture-new-manifest'),
+              currentInstallRef: '.agent/work/fixture-code/new-install.json',
+              systemUpdateRef: '.agent/work/fixture-code/new-install.json',
+              systemUpdateOperationId: 'fixture-foreign-owner-update',
+              nativeSelfAttestationDigest: canonicalJsonDigest('fixture-foreign-owner-attestation'),
+            },
+            codeProof,
+          ),
+        ).toThrow('qualified runtime code continuation: owner, Source, run or quiescence differs');
+        expect(codeProof).not.toHaveBeenCalled();
+        expect(readFixtureHostRows(fixtureDatabase)).toEqual(continuedRows);
+        expect(continuationRows.all(store.workspaceId, current.identity.work_id)).toEqual(continuationBefore);
+        expect(fixtureDatabase.inTransaction).toBe(false);
         peers.verifyUnchanged();
       });
       console.info(
