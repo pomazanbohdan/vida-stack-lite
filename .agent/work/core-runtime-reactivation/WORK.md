@@ -13,6 +13,46 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current checked continuation coverage packet
 
+The published1bd2a26 packet's first complete attempt does not produce a numeric
+report. Stage /workspace/contour-stage-j30nBj retains execution.json and
+publication-error.json; run e63b59a1-9649-4e81-960f-bd52bcf690b6 retains its original
+operation-outcome, supervisor and raw child logs in image
+/workspace/.vida-quality-inputs/4cbd14670144a3390fa68920f8fb6bbee25509a4/repository.
+Host records a repeated-no-effect setup failure at21779.81ms against its unchanged
+20s case limit, then reaches the shared child deadline and SIGKILL. Stopped-source
+has all16PASS. Parent exit1 at270786.369982ms has full capture, closed group and
+unchanged boot/image. The operation remains UNKNOWN, with no complete metrics or
+resourceSafeToAdvance. Its failed stage outcome is automatically projected once.
+
+The outer exec-server session disconnects while the original producer remains
+live. Root reconnects, observes the same boot and original workers, and starts no
+duplicate. The later stage receipt and DIAG/closed-processes-v1559.txt establish
+their observed closure. DIAG/stage-v1555-transport-interruption.json preserves
+the transport failure separately. Original failed scratch remains at
+/workspace/.vida-retained/coverage-1bd2a26-MGMcxT. No old UNKNOWN is resumed,
+relabelled or replayed; fresh regression uses repaired Source and new fixtures.
+
+The report-retry case unnecessarily continued into later planning, development
+and final-validation setup. Root reuses verifyNoEffectReport to stop at its actual
+assertion boundary. The callback explicitly performs the public Ledger report,
+then keeps every original no-effect lineage, released-rights and exact-retry
+assertion. The first extraction's active-versus-released failure remains in
+DIAG/repeated-no-effect-focused-v1560.log. Independent review catches late-cleanup
+retention: the helper now accepts the returned completion predicate and evaluates
+it after bridge/database close, preserving the original deadline through cleanup.
+Existing void callbacks retain their old behavior. The case asserts predicate use.
+DIAG/report-boundary-focused-v1566.log has2PASS/37assertions including the adjacent
+stale-root control; strict149, scoped lint and formatting pass under v1565 logs
+and Root's observed exit receipt static-v1565-outcome.json. Independent review is
+DIAG/blind-report-boundary-final-v1567.md. No budget or production Source changes.
+
+DIAG/native-comparison-v1559.json shows broader case-clock differences in both
+shards, but its partial run, changed inputs and scratch filesystem do not isolate
+a cause or establish a speedup. The next fresh stage returns to the already
+qualified private tmpfs-plus-durable-archive route with unchanged capacity floors.
+DIAG/blind-failed-stage-fixture-review-v1558.md reviews that resource route;
+original durable failed evidence is neither moved nor deleted.
+
 Root resumes from the relocated last report and existing zero-counter map;
 no old image or UNKNOWN operation is replayed. Blind Luna studies partition
 remaining counters by stored history, terminal capture and continuation owners
@@ -48,7 +88,9 @@ DIAG/blind-packet-review-v1549.md passes correctness and the unchanged resource
 scope. Root refreshes only the existing Host test pin; DIAG/pin-strict-v1550.log,
 DIAG/pin-lint-v1550.log and DIAG/pin-focused-v1551.log retain strict123-file PASS,
 zero typed lint diagnostics and1PASS/10assertions for exact two-file isolation.
-Publication and one matching SDK/image/complete contour stage remain pending.
+The packet is published as1bd2a26; its first failed stage and checked corrective
+fixture follow-up are recorded above. A matching corrective SDK/image/stage remains
+pending; historical metrics below are not refreshed by the failed attempt.
 Coverage gains are hypotheses until that complete report; raw denominators and
 the seven existing branch/two statement dispositions are unchanged.
 

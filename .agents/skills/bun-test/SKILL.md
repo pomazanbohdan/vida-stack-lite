@@ -74,6 +74,13 @@ retry lease through the public producer. A released ticket observed after the
 report does not show which ticket was current when that report was accepted.
 For a pre-report refusal, stop an opt-in fixture at that verified boundary instead
 of preparing unrelated later workflow stages; preserve normal failure retention.
+For completed-report retry assertions, the failed-final fixture's existing
+`verifyNoEffectReport` callback still precedes the Ledger report. Submit the actual
+observation through that public report owner before checking ownership release;
+then assert exact replay without continuing unrelated validation phases. Return
+the case's completion predicate when cleanup must retain a root after its deadline.
+The helper evaluates it after bridge/database closure. Check that the returned
+predicate is consumed; an early body success must not discard a late failed root.
 For a stored-history refusal beyond the generic Work validator, start with real
 different-slot attempts and change only the intended fixture row. Preserve the
 actual report reservation and observation. Keep corrupted-input evidence distinct

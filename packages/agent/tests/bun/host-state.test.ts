@@ -941,79 +941,71 @@ test(
   'completed Source report accepts repeated exact no-effect retries and replays the terminal observation',
   async () => {
     const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
-    const f = await createFailedFinalCorrectionFixture('failed', { noEffectRetry: 'same-slot', noEffectRetries: 2 });
-    let completed = false;
-    let primaryFailure: { error: unknown } | undefined;
-    try {
-      if (performance.now() >= deadline)
-        throw new Error('Repeated no-effect Source fixture exceeded its case deadline.');
-      const beforeReplay = f.store.readHostStateSnapshot(f.identity);
-      const journal = f.store.readWorkSessionJournal(f.identity);
-      if (!beforeReplay.work?.lease || !beforeReplay.ledger || !journal)
-        throw new Error('Repeated no-effect Source fixture lost its persisted Host or Journal state.');
-      const attempts = beforeReplay.work.execution.assignment_attempts;
-      const noEffectAttempts = attempts.filter((attempt) => attempt.status === 'no_effect');
-      expect(noEffectAttempts).toHaveLength(2);
-      const firstNoEffect = requiredValue(noEffectAttempts[0], 'first no-effect retry');
-      const secondNoEffect = requiredValue(noEffectAttempts[1], 'second no-effect retry');
-      const proofPaths = noEffectAttempts.map((attempt) => attempt.reconciliation?.provider_evidence?.path);
-      expect(proofPaths.every((proofPath) => typeof proofPath === 'string')).toBe(true);
-      expect(new Set(proofPaths).size).toBe(2);
-      expect(firstNoEffect.lease.generation).toBe(beforeReplay.ledger.open_generation);
-      expect(secondNoEffect.previous_attempt_id).toBe(firstNoEffect.attempt_id);
-      expect(secondNoEffect.lease.generation).toBe(firstNoEffect.lease.generation + 1);
-      const terminalAttempt = requiredValue(
-        attempts.find(
-          (attempt) => attempt.status === 'completed' && attempt.previous_attempt_id === secondNoEffect.attempt_id,
-        ),
-        'completed repeated retry',
-      );
-      expect(terminalAttempt.lease.generation).toBe(secondNoEffect.lease.generation + 1);
-      const noEffectTicketId = firstNoEffect.lease.ticket_id;
-      expect(terminalAttempt.lease.ticket_id).toBe(noEffectTicketId);
-      expect(noEffectAttempts.every((attempt) => attempt.lease.ticket_id === noEffectTicketId)).toBe(true);
-      const releasedFileTicket = beforeReplay.ledger.tickets.find((ticket) => ticket.ticket_id === noEffectTicketId);
-      expect(releasedFileTicket?.status).toBe('released');
-      const currentTicket = requiredValue(
-        beforeReplay.ledger.tickets.find((ticket) => ticket.ticket_id === beforeReplay.work!.lease!.ticket_id),
-        'current repeated retry execution ticket',
-      );
-      const currentClaim = beforeReplay.ledger.claims.find(
-        (claim) => claim.ticket_id === beforeReplay.work!.lease!.ticket_id && claim.status === 'active',
-      );
-      expect(beforeReplay.work.lease.generation).toBe(beforeReplay.ledger.open_generation);
-      expect(currentTicket).toMatchObject({ generation: beforeReplay.ledger.open_generation, status: 'active' });
-      expect(currentClaim).toMatchObject({ generation: beforeReplay.ledger.open_generation, status: 'active' });
-      expect(currentTicket.exclusive_resources).toEqual(['execution:' + f.identity.work_id]);
-      const terminalItem = [...journal.state.items, ...journal.state.completed.flatMap((wave) => wave.items)].find(
-        (item) => item.host_reservation?.receipt.attempt.attempt_id === terminalAttempt.attempt_id,
-      );
-      if (!terminalItem?.observation)
-        throw new Error('Repeated no-effect report has no retained terminal observation.');
-      const ledgerBeforeReplay = requiredValue(f.ledger.resume(f.identity.work_id, journal.attempt), 'retry Journal');
-      expect(ledgerBeforeReplay.version).toEqual(journal.version);
-      expect(ledgerBeforeReplay.state).toEqual(journal.state);
-      expect(f.ledger.report(f.identity.work_id, journal.attempt, journal.version, terminalItem.observation)).toEqual(
-        ledgerBeforeReplay,
-      );
-      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(beforeReplay);
-      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
-      if (performance.now() >= deadline)
-        throw new Error('Repeated no-effect Source fixture exceeded its case deadline.');
-      completed = true;
-    } catch (error) {
-      primaryFailure = { error };
-      throw error;
-    } finally {
-      completeOwnedCleanup(
-        [
-          () => {
-            f.close(() => completed && performance.now() < deadline);
-          },
-        ],
-        primaryFailure,
-      );
-    }
+    const cleanupCompleted = mock(() => performance.now() < deadline);
+    await createFailedFinalCorrectionFixture('failed', {
+      noEffectRetry: 'same-slot',
+      noEffectRetries: 2,
+      verifyNoEffectReport({ store: host, ledger, identity: owner, journal: pendingJournal, observation, source }) {
+        if (performance.now() >= deadline)
+          throw new Error('Repeated no-effect Source fixture exceeded its case deadline.');
+        ledger.report(owner.work_id, pendingJournal.state.attempt, pendingJournal.version, observation, source);
+        const beforeReplay = host.readHostStateSnapshot(owner);
+        const journal = host.readWorkSessionJournal(owner);
+        if (!beforeReplay.work?.lease || !beforeReplay.ledger || !journal)
+          throw new Error('Repeated no-effect Source fixture lost its persisted Host or Journal state.');
+        const attempts = beforeReplay.work.execution.assignment_attempts;
+        const noEffectAttempts = attempts.filter((attempt) => attempt.status === 'no_effect');
+        expect(noEffectAttempts).toHaveLength(2);
+        const firstNoEffect = requiredValue(noEffectAttempts[0], 'first no-effect retry');
+        const secondNoEffect = requiredValue(noEffectAttempts[1], 'second no-effect retry');
+        const proofPaths = noEffectAttempts.map((attempt) => attempt.reconciliation?.provider_evidence?.path);
+        expect(proofPaths.every((proofPath) => typeof proofPath === 'string')).toBe(true);
+        expect(new Set(proofPaths).size).toBe(2);
+        expect(firstNoEffect.lease.generation).toBe(beforeReplay.ledger.open_generation);
+        expect(secondNoEffect.previous_attempt_id).toBe(firstNoEffect.attempt_id);
+        expect(secondNoEffect.lease.generation).toBe(firstNoEffect.lease.generation + 1);
+        const terminalAttempt = requiredValue(
+          attempts.find(
+            (attempt) => attempt.status === 'completed' && attempt.previous_attempt_id === secondNoEffect.attempt_id,
+          ),
+          'completed repeated retry',
+        );
+        expect(terminalAttempt.lease.generation).toBe(secondNoEffect.lease.generation + 1);
+        const noEffectTicketId = firstNoEffect.lease.ticket_id;
+        expect(terminalAttempt.lease.ticket_id).toBe(noEffectTicketId);
+        expect(noEffectAttempts.every((attempt) => attempt.lease.ticket_id === noEffectTicketId)).toBe(true);
+        const releasedFileTicket = beforeReplay.ledger.tickets.find((ticket) => ticket.ticket_id === noEffectTicketId);
+        expect(releasedFileTicket?.status).toBe('released');
+        const currentTicket = requiredValue(
+          beforeReplay.ledger.tickets.find((ticket) => ticket.ticket_id === beforeReplay.work!.lease!.ticket_id),
+          'current repeated retry execution ticket',
+        );
+        const currentClaim = beforeReplay.ledger.claims.find(
+          (claim) => claim.ticket_id === beforeReplay.work!.lease!.ticket_id && claim.status === 'active',
+        );
+        expect(beforeReplay.work.lease.generation).toBe(beforeReplay.ledger.open_generation);
+        expect(currentTicket).toMatchObject({ generation: beforeReplay.ledger.open_generation, status: 'active' });
+        expect(currentClaim).toMatchObject({ generation: beforeReplay.ledger.open_generation, status: 'active' });
+        expect(currentTicket.exclusive_resources).toEqual(['execution:' + owner.work_id]);
+        const terminalItem = [...journal.state.items, ...journal.state.completed.flatMap((wave) => wave.items)].find(
+          (item) => item.host_reservation?.receipt.attempt.attempt_id === terminalAttempt.attempt_id,
+        );
+        if (!terminalItem?.observation)
+          throw new Error('Repeated no-effect report has no retained terminal observation.');
+        const ledgerBeforeReplay = requiredValue(ledger.resume(owner.work_id, journal.attempt), 'retry Journal');
+        expect(ledgerBeforeReplay.version).toEqual(journal.version);
+        expect(ledgerBeforeReplay.state).toEqual(journal.state);
+        expect(ledger.report(owner.work_id, journal.attempt, journal.version, terminalItem.observation)).toEqual(
+          ledgerBeforeReplay,
+        );
+        expect(host.readHostStateSnapshot(owner)).toEqual(beforeReplay);
+        expect(host.readWorkSessionJournal(owner)).toEqual(journal);
+        if (performance.now() >= deadline)
+          throw new Error('Repeated no-effect Source fixture exceeded its case deadline.');
+        return cleanupCompleted;
+      },
+    });
+    expect(cleanupCompleted).toHaveBeenCalledTimes(1);
   },
   failedFinalHostCaseTimeoutMs,
 );

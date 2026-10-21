@@ -116,8 +116,11 @@ taskset --cpu-list "$VIDA_VEX_CPU" vex search "retry recovery" --limit 10
 The first allowed CPU is discovered from /proc/self/status. taskset bounds ONNX
 threads; --jobs bounds parsing, not embedding batch size. Six GiB cgroup headroom
 is an admission margin, not a guaranteed maximum. Inspect current host memory
-before preparation. Preserve retained failed/UNKNOWN fixtures; future scratch
-uses disk-backed TMPDIR. Never overlap cold indexing with compilers/coverage.
+before preparation. Preserve retained failed/UNKNOWN fixtures. Numeric scratch
+uses TESTING's qualified private parent and unchanged storage admission. Fresh
+tmpfs scratch requires the existing durable verified archive after closure;
+never move original durable evidence into tmpfs to bypass admission.
+Never overlap cold indexing with compilers/coverage.
 
 For disk cleanup, retain one usage inventory and refine only selected candidates.
 OverlayFS apparent/allocated sizes can include immutable lower-layer files;

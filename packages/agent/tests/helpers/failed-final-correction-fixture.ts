@@ -86,7 +86,7 @@ interface FailedFinalCorrectionFixtureOptions {
     readonly observation: SessionBridgeObservation;
     readonly source: ScopedSourceSnapshot;
     readonly preparePeerAdmission: (id: string) => LocalWorkAdmissionInput;
-  }) => void;
+  }) => void | (() => boolean);
 }
 
 /** Write current, work-bound documentation and lifecycle inputs for a terminal failed-work correction. */
@@ -395,7 +395,7 @@ export async function createFailedFinalCorrectionFixture(
     const verifyReport = options?.verifyNoEffectReport;
     const finishAtReport = verifyReport
       ? async (observation: SessionBridgeObservation, currentSource: ScopedSourceSnapshot) => {
-          verifyReport({
+          const completed = verifyReport({
             database: fixture.database,
             store: host,
             ledger,
@@ -410,7 +410,7 @@ export async function createFailedFinalCorrectionFixture(
           });
           await bridge?.close();
           bridge = undefined;
-          close(true);
+          close(completed ?? true);
         }
       : undefined;
     let completeNoEffectRetry: ((observation: SessionBridgeObservation) => Promise<void>) | undefined;
