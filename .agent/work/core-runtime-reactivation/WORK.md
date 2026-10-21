@@ -38,7 +38,7 @@ statement is the internal unprechecked fence combination with no current caller.
 All six disjoint owner groups now have a disposition; genuine missing producers
 remain GAP, not newly authorized P2 transitions.
 
-The pending batch narrows prepareTaskSourceBindingOperation's local createResult
+The published batch narrows prepareTaskSourceBindingOperation's local createResult
 to the two proven non-null callers and its sole prepared status. Public result
 shape, guards and persistence stay unchanged. This removes unused fallback
 logic; it is a denominator change, not newly executed coverage. The same local
@@ -75,31 +75,38 @@ pass3cases/57assertions9.27s. The earlier four passing cases are not rerun witho
 new changes. Source84strict/lint0 and selected test153/149strict/lint0 pass.
 All attempts retain separate DIAG/all-gap-batch-v138{8-qr4bj7,9-1bSsep},
 v1390-YnvMdZ,v1392-JgBK51,v1393-NNhg8x,v1394-F0k6Ie namespaces and failed roots.
-Ten changed selected cases now have targeted PASS. No full-stage numbers or
-frozen/mutation acceptance are inferred from this pending packet.
+Ten changed selected cases have targeted PASS. Focused checks alone establish
+no full-stage numbers or frozen/mutation acceptance.
 DIAG/vida-all-gap-final-v1396.md independently accepts the complete three-file
 Source/test diff. Root retains the exact reviewed diff in
 DIAG/all-gap-batch-v1396.patch. Both changed test pins are refreshed once in
 DIAG/remainder-v1397-test-pins.json; runner strict122/lint0 and the same two-file
 namespace control pass1case/10assertions280ms in
-DIAG/remainder-v1397-controls-0iFS5Z. The batch is ready for ordinary commit/push,
-one matching build-only SDK and one full selected-contour coverage stage. No
-mutation/frozen lane or other contour is scheduled.
+DIAG/remainder-v1397-controls-0iFS5Z. Ordinary hooks pass formatting520/strict527
+and normal push publishesed1a21d. One matching build-only SDK run39618182204
+and full selected coverage stage complete below. Publication/import and
+report-only map refresh occur once. The predecessor gap map remains in
+DIAG/remainder-v1398-predecessor-gap-map.json. The batch gains14actual arm visits
+and removes two previously missing redundant fallbacks. Four total arms disappear,
+including two previously covered arms; these denominator changes are not new
+execution. No mutation/frozen lane or other contour is scheduled.
 
 ### Latest complete measurement
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-ffb1223fd52b7dc46f818c1e4875997f4986921a, run
-edf00c5c-f1f5-458e-bae6-8b0a89e3201f, projection attempts1196.
-F1126/1126,L4979/4979,S5305/5309,B5513/5600 leave4statement/87branch-arm gaps.
+ed1a21d5ea321ee5e4a4c01d016d253e5b3e9e39, run
+1009a6cc-44e1-4d71-8073-ae1db449c46c, projection attempts1198.
+F1126/1126,L4979/4979,S5305/5309,B5525/5596 leave4statement/71branch-arm gaps.
 F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. All336cases/5775assertions pass
-in173313.46832500002ms. Host and stopped-source children take166.82s and106.08s.
-The completed readonly Host sibling gains two actual branch-arm visits versus
+unchanged boot/image and automatic publication. All336cases/5842assertions pass
+in173808.25123ms. Host and stopped-source children take167.13s and113.31s.
+The joined batch gains14actual branch-arm visits versusffb1223 and removes two
+missing redundant fallbacks; total arms decrease by4, including two covered arms.
+The preceding completed readonly Host sibling gains two actual branch-arm visits versus
 94cd912, with unchanged production denominators. The preceding guarded readonly
 refusal and two-Work import packet gains five actual
 branch-arm visits versus1fc3483 with unchanged production denominators.
@@ -130,12 +137,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-nBp018/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1376-sdk-provider.json and DIAG/remainder-v1376-sdk-verified.json |
-| Admission and complete producer log | DIAG/remainder-v1376-scratch-parent.json and DIAG/remainder-v1376-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1376-cache-retirement-nBp018/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-nBp018-4VhfUA/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-1zlUAr |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-mNvG1h/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1398-sdk-provider.json and DIAG/remainder-v1398-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1398-scratch-parent.json and DIAG/remainder-v1398-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1398-cache-retirement-mNvG1h/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-mNvG1h-B2RQ91/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-OLk1wr |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -143,8 +150,8 @@ Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
 and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
-A postclosure observation records2596298752durable bytes after archive and
-9159475200tmpfs bytes after retirement, both above the
+A postclosure observation records2524045312durable bytes after archive and
+9154686976tmpfs bytes after retirement, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
