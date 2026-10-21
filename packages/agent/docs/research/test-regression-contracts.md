@@ -376,6 +376,14 @@ as well as missing tables with current Work. Reuse the existing producer fixture
 and unchanged-row oracles; do not create an empty success table just for a branch.
 Frozen repair-plan retries preserve the stored plan for the same actor and
 reject changed attribution without changing Host, Journal or governance rows.
+For malformed retained Journal controls, reuse the genuinely issued UNKNOWN
+fixture and change one persisted field with a matching digest and exact row CAS.
+Null receipt/attempt/item/container shapes must fail in the codec; nullable
+authorization must fail the issued-approval binding. Check all native rows,
+governance, continuation history and absence of a repair table before restoring
+the original Journal bytes through owned cleanup. Preserve the subsequent real
+apply/rollback/reopen/resume/restore sequence and original case budget. Such
+refusals neither settle UNKNOWN nor prove acceptance of malformed authority.
 
 TaskSource projection repair initializes absent storage through its public
 held-fence operation, preserving empty operation rows, exact receipt retry and

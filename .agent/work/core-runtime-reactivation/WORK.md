@@ -14,16 +14,19 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-9d2030064a34606df06c6eac1bbe5bda64511fed, run
-b737c34b-8148-4d0a-ab1f-3867aaea98ce, attempt1135.
+76f815979f47d008a16d7a40b18fe6ce445d9a07, run
+18275537-2ee0-4b13-b5a2-942fbf86d124, attempt1137.
 Coverage remains BLOCKED/nonexact; the pending test additions are not
 measured. A historical maximum or projection row is not new-HEAD acceptance.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs320cases/4754assertions
-in181817.361989ms. Host and stopped-source children take173.95s and139.06s.
-Commit/rollback recovery take16081.17ms/15872.82ms under unchanged20s limits.
+unchanged boot/image and automatic publication. It runs320cases/4762assertions
+in189023.348597ms. Host and stopped-source children take181.60s and133.04s.
+Commit/rollback recovery take15188.79ms/15419.36ms under unchanged20s limits.
 These are measurements of this input, not a controlled performance comparison.
+The measured TaskSource packet adds3statements/4branch arms with unchanged
+denominators. The report-only join retains28statement/210branch-arm gaps;
+it performs no new AST/Source scan/hash.
 
 ## Latest measurement custody
 
@@ -33,12 +36,12 @@ these locators grant no additional acceptance authority.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-h65eCZ/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1155-sdk-provider.json |
-| Admission and complete producer log | Same diagnostics root: remainder-v1155-scratch-parent.json and remainder-v1155-stage.log |
-| Qualified private-cache retirement | Same root: remainder-v1155-cache-retirement-h65eCZ/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-h65eCZ-qgewCN/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-kROlJY/scratch-TJM4t2 |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-rvtcc6/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1158-sdk-provider.json |
+| Admission and complete producer log | Same diagnostics root: remainder-v1158-scratch-parent.json and remainder-v1158-stage.log |
+| Qualified private-cache retirement | Same root: remainder-v1158-cache-retirement-rvtcc6/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-rvtcc6-1K0IGO/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-n3QEBm/scratch-qKQuDo |
 | Current report-only zero-counter join | Same diagnostics root: host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -46,13 +49,13 @@ Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
 and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
-A fresh filesystem-only observation after producer closure finds durable
-4830113792bytes and retained tmpfs9314729984bytes available, both above the
+A postclosure archive/retirement observation records durable
+4764053504bytes and retained tmpfs9310003200bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
 
-### Checked packet awaiting its own measurement
+### Measured TaskSource packet
 
 Two additions reuse existing TaskSource fixtures:
 - A foreign execution-only peer uses the helper's already-existing Journal and
@@ -77,6 +80,27 @@ checks5documents/25local links with0failures; diff whitespace checks pass.
 Independent documentation review finds no blocker and is retained as
 vida-current-docs-review-v1158.md. WORK/strategy now contain169/118lines before
 this control note, replacing the repeated historical and numeric update sites.
+Ordinary hooks and push publish76f8159; its complete bound measurement is above.
+
+### Checked repair-Journal packet awaiting its own measurement
+
+Six negative variants reuse the genuinely issued UNKNOWN writer/approval fixture:
+null receipt, null receipt attempt, null authorization, null item and null top-level
+items/completed. Each corrupt Journal has its exact matching digest and CAS;
+public repair inspection refuses at the expected parser/authorization boundary.
+Full Host/Journal, governance and continuation history remain unchanged, no repair
+table appears, and owned cleanup restores exact original bytes after every probe.
+The existing real apply/rollback/reopen/resume/restore sequence remains intact.
+This is corruption refusal, not a synthetic successful authority or UNKNOWN replay.
+
+Strict149-file checks and configured zero-warning lint pass; the exact case passes
+1/138assertions in12.08s overall,9939.55ms case time under the unchanged20s bound.
+Diagnostics: repair-journal-negatives-v1159-df9I0U. Bounded research and independent
+current-byte review are retained as vida-repair-journal-negative-routes-v1159.md
+and vida-repair-journal-negative-review-v1159.md. No numeric gain is claimed yet.
+The exact changed pin passes strict122-file/configured lint and1/10assertion
+control in remainder-v1160-controls-qIWtna. Root reviews the complete coupled
+diff before normal publication and one matching SDK/image stage.
 
 ### Current three-hour audit
 
@@ -131,8 +155,8 @@ Keep these specific unresolved paths open:
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
-| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage181.817s with both native exits0 and complete custody. |
-| Fully serial files | Supported fallback; latest concurrent child times sum313.01s. That sum is a planning quantity, not measured serial elapsed time or admission. |
+| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage189.023s with both native exits0 and complete custody. |
+| Fully serial files | Supported fallback; latest concurrent child times sum314.64s. That sum is a planning quantity, not measured serial elapsed time or admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |
 
@@ -169,7 +193,9 @@ replay, consumer effects or runtime/loader/DB cutover is authorized.
 
 ## Historical provenance
 
-The immutable9d20300 WORK linked above preserves preceding exact outcomes and
+The [published76f8159 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/76f815979f47d008a16d7a40b18fe6ce445d9a07/.agent/work/core-runtime-reactivation/WORK.md)
+preserves the preceding9d20300 observation and its custody. The immutable9d20300
+WORK linked above preserves earlier exact outcomes and
 their Git provenance, including the original9d1c200 failed stage and CPU profile.
 This compaction deletes no Git history, operational evidence or acceptance
 criterion. Historical next-actions do not become current instructions.

@@ -7572,6 +7572,82 @@ test(
         );
         const disjoint = 'file:fixture-disjoint-repair.ts';
         expect(owner.exclusive_resources).not.toContain(disjoint);
+        const retainedJournal = requiredValue(
+          retained.journal.find((row) => row.work_id === f.identity.work_id && row.attempt === 1),
+          'unknown repair Journal preimage',
+        );
+        const replaceJournal = db.query(
+          'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND revision=? AND digest=?',
+        );
+        for (const variant of [
+          { kind: 'receipt', message: 'receipt' },
+          { kind: 'receipt-attempt', message: 'attempt' },
+          { kind: 'authorization', message: 'interrupted repair issue, authorization, or owner binding differs' },
+          { kind: 'item', message: 'Mastra session ledger item shape is invalid' },
+          { kind: 'items', message: 'Mastra session ledger items are invalid' },
+          { kind: 'completed', message: 'Mastra completed waves are invalid' },
+        ]) {
+          const changed = parseJsonRecord(retainedJournal.payload);
+          if (variant.kind === 'items' || variant.kind === 'completed') changed[variant.kind] = null;
+          else {
+            const changedItems = arrayAt(changed, 'items');
+            if (variant.kind === 'item') changedItems[0] = null;
+            else {
+              const changedItem = firstOf(changedItems, 'unknown repair corrupted Journal item');
+              if (!isPlainRecord(changedItem)) throw new Error('Unknown repair Journal item is not a record');
+              const changedReservation = recordAt(changedItem, 'host_reservation');
+              if (variant.kind === 'receipt-attempt') recordAt(changedReservation, 'receipt').attempt = null;
+              else changedReservation[variant.kind] = null;
+            }
+          }
+          const payload = canonicalJson(changed),
+            digest = canonicalJsonDigest(changed);
+          expect(
+            replaceJournal.run(
+              payload,
+              digest,
+              host.workspaceId,
+              f.identity.work_id,
+              retainedJournal.revision,
+              retainedJournal.digest,
+            ).changes,
+          ).toBe(1);
+          let failure: { error: unknown } | undefined;
+          try {
+            expect(() => host.repairCorrectionGeneration({ ...request, mode: 'inspect' })).toThrow(variant.message);
+            expect(readFixtureHostRows(db)).toEqual({
+              ...retained,
+              journal: retained.journal.map((row) => (row === retainedJournal ? { ...row, payload, digest } : row)),
+            });
+            expect(governance()).toEqual(retainedGovernance);
+            expect(history()).toEqual(retainedHistory);
+            expect(
+              db.query("SELECT name FROM sqlite_master WHERE name='agent_host_work_state_repair'").get(),
+            ).toBeNull();
+          } catch (error) {
+            failure = { error };
+            throw error;
+          } finally {
+            completeOwnedCleanup(
+              [
+                () => {
+                  expect(
+                    replaceJournal.run(
+                      retainedJournal.payload,
+                      retainedJournal.digest,
+                      host.workspaceId,
+                      f.identity.work_id,
+                      retainedJournal.revision,
+                      digest,
+                    ).changes,
+                  ).toBe(1);
+                  expect(readFixtureHostRows(db)).toEqual(retained);
+                },
+              ],
+              failure,
+            );
+          }
+        }
         for (const variant of [
           { kind: 'earlier-disjoint', earlier: true, resource: disjoint, denied: false },
           { kind: 'earlier-overlap', earlier: true, resource: ownedFile, denied: true },
