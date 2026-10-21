@@ -25,7 +25,7 @@ export function createCompilerProject(
       rootDir,
       typeRoots: [path.join(packageRoot, 'node_modules/@types')],
     },
-    files: [...files],
+    files: files.map((file) => path.resolve(packageRoot, file)),
     include: [],
     exclude: [],
   };

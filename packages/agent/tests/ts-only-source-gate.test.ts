@@ -190,8 +190,10 @@ describe('TS-only maintained source gate', () => {
       'declare global { namespace JSX { interface IntrinsicElements { div: Record<string, unknown> } } }\nexport const view = <div />;\n',
     );
     const report = scanMaintainedSources(root);
-    const files = report.typescriptFiles.map((file) => path.resolve(root, file));
     const packageRoot = path.resolve(process.cwd());
+    const files = report.typescriptFiles.map((file, index) =>
+      index % 2 === 0 ? path.relative(packageRoot, path.resolve(root, file)) : path.resolve(root, file),
+    );
     const result = compileFiles(packageRoot, root, files);
 
     expect(result.error).toBeUndefined();

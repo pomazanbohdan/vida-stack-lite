@@ -119,6 +119,16 @@ is an admission margin, not a guaranteed maximum. Inspect current host memory
 before preparation. Preserve retained failed/UNKNOWN fixtures; future scratch
 uses disk-backed TMPDIR. Never overlap cold indexing with compilers/coverage.
 
+For disk cleanup, retain one usage inventory and refine only selected candidates.
+OverlayFS apparent/allocated sizes can include immutable lower-layer files;
+measure actual available bytes before and after retirement. Removing a visible
+lower-layer cache can reclaim nothing. Qualify exact cache ownership, external
+symlink dependencies and live/open/mapped consumers; preserve installed names,
+original evidence and unchanged admission thresholds. Before inspecting or
+retiring Bun's default cache, give the diagnostic its own transpiler-cache path:
+otherwise Bun can write @t@ inside the cache under inspection. Keep that disposable
+cache separate from durable receipts; it grants no volatile evidence exception.
+
 Ordinary Vex queries refresh under its native single-writer lock after readiness.
 Auto-update runs at query time, not as a background watcher. Check its terminal
 result and returned freshness; enabling it does not guarantee a successful refresh.

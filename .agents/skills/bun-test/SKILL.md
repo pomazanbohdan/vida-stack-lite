@@ -115,6 +115,11 @@ typecheck success. Runtime and declaration versions are independent. Use the
 selected Bun pin and manifest/lock declarations without embedding the current
 runtime version in tests. Keep build and install free of test suites.
 
+For scoped strict checks, use tooling/quality-current.ts's createCompilerProject.
+It resolves explicit package-relative entries against packageRoot and preserves
+absolute entries, so a generated config in another directory keeps the same
+compiler roots. Keep inherited strict options and ambient declarations intact.
+
 For full coverage SDK readiness, use the maintained coverage alias and its
 repository adapter. A Cloud artifact-storage403 may require the selected GitHub
 connector/uploaded-file transport bridge described in TESTING. Keep the actual

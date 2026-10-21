@@ -13,23 +13,22 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current retention resource blocker
 
-The reaper correction is published as f9c0ace. Its single complete selected
-coverage stage is recorded below. Durable-retention admission then refuses at
-19:23:05UTC; its original exit1 remains in DIAG/remainder-v1499-retention-admission.log.
-After the owner's cleanup request, the20:30:23UTC closeout records2168242176
-available durable bytes. The unchanged floor2147483648 plus67108864archive
-reserve requires2214592512bytes, leaving a46350336-byte GAP.
-DIAG/cleanup-v1505/closeout.json owns that current observation.
-No archive is created and no original evidence is removed.
-The current image and original scratch remain retained in their existing locations.
-Do not start another numeric producer until durable retention passes admission.
+The earlier durable-retention GAP is resolved by the detailed cleanup below.
+Its original admission refusal remains in DIAG/remainder-v1499-retention-admission.log;
+the prior observations remain recoverable at
+a034e0d:.agent/work/core-runtime-reactivation/WORK.md. The unchanged
+floor2147483648 plus67108864archive reserve still requires2214592512bytes.
+Current default-cache retirement records2551259136available bytes; no threshold
+is lowered. DIAG/cleanup-v1524/default-bun-v1527-retirement.json owns the observation.
 
-The confirmed cache and duplicate cleanup is recorded below. It does not close
-this durable GAP; no further durable candidate is qualified by current inventories.
-Source, Git history, SDK artifacts, prior images and original receipts remain
-protected. No broad scan, hash pass or deletion is repeated to lower the threshold.
-Additional durable capacity or a separately qualified disposable durable path is
-the next prerequisite. Resource pressure is not an objective coverage skip.
+The f9c0ace stage's non-cache scratch now has a durable archive with a complete
+tar comparison and SHA binding at
+/workspace/vida-functional-retention-yKpj7E-WkCTqN/archive.json.
+After forming its325313-byte archive,2550910976durable bytes remain available.
+All originals, the execution image and original reports remain in place.
+The current repair packet still needs publication, matching SDK/image readiness
+and fresh launch admission before another complete selected-contour stage.
+Cleanup and archival do not change numeric outcomes or reattest old measurements.
 
 Blind1498 studies the terminal Journal map arms1617/1 and1618/0. The original and
 corrected notes are retained under DIAG. Its singleton-wave proof is bound to
@@ -38,6 +37,58 @@ validated workflow graph. Root adds no disposition or accepted synthetic history
 The existing7branch/2statement dispositions retain exact gap geometry and matching
 Source/test fingerprints in DIAG/remainder-v1499-objective-rebind.json. All other
 58arms remain open. No further suite or mutation producer is started.
+
+### Detailed cleanup and three-hour execution audit
+
+The owner requests deeper disk analysis after a034e0d. Root observes no live
+test/build/install/index producer, preserves the clean Source base, and performs
+one serialized usage inventory of checkout, host caches and temporary roots.
+Only candidate subtrees receive a narrower follow-up. The usage command's three
+permission refusals under root-owned /var/cache remain in usage.stderr; those
+paths are not cleaned. Docker reports no images, containers, volumes or build
+cache. Original images, archived attachments, SDK inputs, failed fixtures and
+Git/history remain protected. The full inventory and operations live in
+DIAG/cleanup-v1524. Temporary mounts are distinct from durable overlay storage.
+
+Blind1525 independently classifies the two .vida-cloud download caches. Root
+records23371Bun-cache entries and98npm content-cache entries; reuses one2850-link
+inventory; verifies no external dependency, no active consumer and unchanged
+installed/sibling roots. Only bun-cache and npm-cache/_cacache are removed;
+npm _logs/_npx and all original setup evidence remain. This lower-layer OverlayFS
+retirement reclaims no durable space: retirement.json records-20480bytes, rather
+than promoting apparent cache size into freed capacity.
+
+The default /home/agent/.bun/install/cache is a separately qualified candidate.
+Root reuses the same link inventory and verifies every exact entry before removal;
+the866shared cache names are unlinked without removing any installed dependency
+name. Blind1525's extended review passes under those checks. The first attempt
+refuses a changed @t@ directory before any deletion: executing Bun itself writes
+its transpiler cache there. Its original refusal is retained. The corrected
+diagnostic uses a separate disposable transpiler-cache path, performs a fresh
+exact qualification, and records388866048actual reclaimed bytes. No durable
+evidence moves to tmpfs. Current archival/admission results are recorded above.
+
+The bounded18:43–21:43UTC audit reuses WORK, retained receipts and current
+projection. f9c0ace's reaper fix, a034e0d's reconciliation/owner controls and the
+earlier cleanup are already published work, not newly discovered fixes.
+Blind1526 finds one confirmed repeat-step cause: createCompilerProject preserves
+relative file names, so TypeScript resolves them under the generated config's
+temporary directory. repair-v1511/tooling-strict-v1520.log retains the actual
+three TS6053errors and zero checked files. The helper now resolves entries against
+packageRoot; absolute entries retain their behavior. The existing real compiler
+positive control mixes both forms, and the strict-nullability negative remains.
+Scoped strict/lint pass; compiler-project-test.log records2PASS/5assertions in120ms.
+No full suite or AST/inventory scan is added for this correction.
+
+Blind1526's code review passes. Its runner audit confirms stage stdout is already
+single-read/memoized and final admission still checks native terminal, capture,
+group closure and unchanged image/boot. No further capture/timeout patch is justified.
+Retain static-first grouped focused cases, one exact-pin refresh and one complete
+changed-input stage. Full-stage-per-assertion duplicates the measured228240.751152ms
+stage cost; it is rejected. The two pinned producers' clocks overlap, so their
+sum does not establish serial wall time or measured speedup. Wider pools are not
+qualified; token/tool-call savings are unmeasured. Reports and corrected read-path
+observations are retained under this cleanup namespace, with no new numeric claim.
 
 ### Checked no-effect predecessor and continuation refusal packet
 
