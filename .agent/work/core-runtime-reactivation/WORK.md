@@ -76,25 +76,25 @@ checked-in self-development fallback and makes no installed Runtime claim.
 
 ### Latest complete measurement
 
-Source7d81d65908b78bd1ba3560d3336a73c14556a055, run
-3befffc1-8e84-4c97-9835-4e06e11d319c, projection attempt1131.
+Source4eac3ecef9233c823e9184382ed668da5bf39043, run
+ae2d9cd9-c536-4355-a8d9-3ccc572356f3, projection attempt1133.
 
-| Counter | Covered / total | Covered delta fromda18a87 | Total delta |
+| Counter | Covered / total | Covered delta from7d81d65 | Total delta |
 | --- | --- | --- | --- |
 | Functions | 1126 / 1126 | 0 | 0 |
-| Lines | 4961 / 4974 | +6 | 0 |
-| Statements | 5261 / 5305 | +6 | 0 |
-| Branches | 5398 / 5624 | +3 | 0 |
+| Lines | 4963 / 4974 | +2 | 0 |
+| Statements | 5268 / 5305 | +7 | 0 |
+| Branches | 5404 / 5624 | +6 | 0 |
 
-No file, defensive contract or gate is excluded. Deficits improve from19/50/229
-to13lines/44statements/226branch arms. Functions stay exact100%. The refreshed
+No file, defensive contract or gate is excluded. Deficits improve from13/44/226
+to11lines/37statements/220branch arms. Functions stay exact100%. The refreshed
 host-uncovered-plan-current.json checks every zero statement/branch against the
 owning deficit and reports0missing functions. No new AST/Source scan/hash is used.
 
-Stage184697.475598ms, parent0, both native shards0, no signal/error/UNKNOWN,
-complete capture, closed group and unchanged boot/image. Host303PASS/4432assertions
-takes177.74s; stopped-source16PASS/296assertions takes129.57s. Total319PASS with
-4728assertions. Commit recovery15361.72ms and rollback12918.31ms fit their20s
+Stage168600.729313ms, parent0, both native shards0, no signal/error/UNKNOWN,
+complete capture, closed group and unchanged boot/image. Host303PASS/4442assertions
+takes161.19s; stopped-source16PASS/296assertions takes118.07s. Total319PASS with
+4738assertions. Commit recovery16548.06ms and rollback11328.94ms fit their20s
 bounds in this complete run. Coverage operation remains BLOCKED/nonexact.
 Diagnostic maxCC275/entryCRAP275 is not frozen qualification. Mutation is deferred.
 Historical exact16/45, local triples9/45 and separate data-only1 are not a current
@@ -102,34 +102,34 @@ global PASS or a newly closed contour.
 
 ## Latest measurement custody
 
-- Stage /workspace/contour-stage-4Hi0DX, Root session16231, observed exit0.
-- Image /workspace/.vida-quality-inputs/cf791685ff009c1d82adeeec1dbc7a2bff457e84/repository.
-- Tree168d3210b6ff8e941b74b388fc9472dcd164ee69.
-- Input 4a07f2ddcfb9b567dcb754c94b280ad9132d328b2feecf6722e5d184dd672d20.
-- Manifest SHA256 d7fe6d8ffe26a95b6d4731dc6b3e71a4585ce449ac81170acee499356126e965.
-- SDK CI39534864846, successful attempt1, artifact12316538619; name
-  vida-sdk-test-inputs-7d81d65908b78bd1ba3560d3336a73c14556a055-39534864846-1.
-- ZIP /workspace/vida-sdk-7d81d65-39534864846-1.zip, SHA256
-  22763369136a0eb6c152a439a9767c27e5be6e16dd1c04853131c077ce1ea562.
-- Admission remainder-v1145-scratch-parent.json and outcome remainder-v1145-stage.log
+- Stage /workspace/contour-stage-PTAOcv, Root session90098, observed exit0.
+- Image /workspace/.vida-quality-inputs/7ab830ea186e04476d65298970467215efe9cc8d/repository.
+- Tree25309f3afd83384c47f0a01817282db5e4e8f673.
+- Input ed14893d258af0f86e5cb817123b584d606bc17c4ff481c4de6de4631fa55169.
+- Manifest SHA256 cef58d96859b7a0749ef9cd9f1647a57ddc8b196c87728c42c3a9a59feccf5e8.
+- SDK CI39535812349, successful attempt1, artifact12317710008; name
+  vida-sdk-test-inputs-4eac3ecef9233c823e9184382ed668da5bf39043-39535812349-1.
+- ZIP /workspace/vida-sdk-4eac3ec-39535812349-1.zip, SHA256
+  896344b46c0c40f0644be2fd0feb82e2ed2574c6117292f3b70020a4e6d9da57.
+- Admission remainder-v1149-scratch-parent.json and outcome remainder-v1149-stage.log
   are in packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
-- Original scratch /dev/shm/vida-quality-retained-JXduyt remains retained.
-- Remaining scratch archive /workspace/vida-functional-retention-4Hi0DX-qbziB3/scratch.tar.gz,
-  317822bytes, full tar compare PASS, SHA256
-  5df2f0c9bbdf07b302d24c4f566cda7fa1dd577374e91cc1c6f6be17e316f4d5.
+- Original scratch /dev/shm/vida-quality-retained-lNg9ez remains retained.
+- Remaining scratch archive /workspace/vida-functional-retention-PTAOcv-k3QAMu/scratch.tar.gz,
+  317591bytes, full tar compare PASS, SHA256
+  354abd29918745e80b90198fc52079e34153281efad9fb661f9239544c8df913.
 
 Only the declared private regenerable Bun cache retires after observed terminal,
 group/live-owner and dependency checks. Manifest
-remainder-v1145-cache-retirement-4Hi0DX/manifest.json qualifies1/0skipped,
+remainder-v1149-cache-retirement-PTAOcv/manifest.json qualifies1/0skipped,
 178155793regular bytes; deletion reclaims215846912tmpfs bytes. Durable metadata
 costs4096bytes rather than reclaiming them. The existing shared-dependency link
 inventory is reused under Root's uninterrupted no-install fence. Original images,
 SDKs, journals, receipts, DBs, leases/attempts and FAIL/TIMEOUT/UNKNOWN are protected.
 
 Checkout and durable evidence share the overlay; scratch is retained host tmpfs.
-Admission durable5037531136/tmpfs9328910336bytes and archive durable
-4973473792→4973154304bytes remain above the unchanged2147483648floor.
-Final durable headroom2825670656bytes. No resource GAP, unknown-directory deletion,
+Admission durable4969689088/tmpfs9324183552bytes and archive durable
+4904710144→4904390656bytes remain above the unchanged2147483648floor.
+Final durable headroom2756907008bytes. No resource GAP, unknown-directory deletion,
 broad du/scan/hash, worktree or dependency consolidation is established.
 
 ### Current repair and execution order
@@ -168,7 +168,7 @@ retained as vida-continuation-reservation-review-v1143.md. The analogous ownRetr
 pattern search finds only this reservation owner. Its complete bound stage is
 recorded above; the preceding RED stays FAIL. No statistical speedup is claimed.
 
-The next packet adds absent positive-attempt receipt reads after the real table
+Source4eac3ec adds absent positive-attempt receipt reads after the real table
 has been populated, an absent-table frontier read with current Work, and exact
 same-owner/changed-owner frozen-plan retries. Existing fixture setup and row
 oracles remain; no new runtime state or success receipt is fabricated. Static149
@@ -182,8 +182,49 @@ owner case. A final selected-case reconciliation catches that omission. The
 mistyped v1148 filter fails with no selected tests; its log is retained, with no
 product failure inferred. The exact existing label then passes1/73 in3.37s,
 receipt-recovery-attempt-v1149-hBGGYv. No earlier group is replayed.
-Refresh only the changed test pin, complete ordinary hooks/commit/push, then form
-one matching SDK/image and run one complete selected-contour stage. Root
+
+The next packet covers empty TaskSource projection storage initialized by its
+public held-fence repair, exact persisted receipt retry, empty operation rows
+and no Work admission. It also checks protected assignment retries after a real
+native no-effect reconciliation: changed request denies, the exact authorized
+retry lease reaches the missing-approval-verifier denial, and Host/governance
+remain unchanged. The original v1150 control wrongly targeted the configuration's
+first stage rather than the retained component attempt and fails1case while the
+projection case passes. Its log/root /tmp/host-state-cOhrCt remain retained.
+Binding the component invocation's stage and permit to that actual attempt fixes
+the premise; it creates no kernel/provider/Runtime proof. Strict149 and configured
+zero-warning lint pass. Corrected1/24 passes1.91s; the final coherent group
+passes2/31 in1.77s, protected-projection-final-v1152-F91ujx. Blind review finds no blocker.
+Keep its disclosed read-only Git-status deviation in the original review; no
+Git mutation, concurrent hook or numeric producer existed at that observation.
+
+Bounded reconciliation research corrects its initial proposal: public writer
+report already commits the Journal and Source release atomically, and there is
+no public generic Journal CAS. Calling reconciliation after that report cannot
+prove its legacy retained-report delegation. Keep that existing branch OPEN for
+a qualified retained-legacy fixture; do not add a slow false-positive scenario.
+Vex incrementally refreshes6changed files/10789symbols for the caller lookup,
+then finds the actual report owner and existing direct-commit caller. This is
+navigation, not function or numeric proof. A repeated recovery read in the
+nontransactional continuation lookup is not cached across its freshness boundary.
+
+Queued TaskSource controls reuse the actual typed policy-callback input and
+native queued snapshot, changing only ephemeral expected Work revision/digest.
+Both stale variants reject and preserve all native rows, the original prepared
+operation and the absent Source root. The initial v1153 strict check correctly
+rejects spreading unknown preparation fields; no runtime case runs. Capturing
+the already typed actual callback avoids a cast or a second decoder. Strict149,
+zero-warning lint and1PASS/114assertions pass1.82s in
+task-source-stale-policy-v1154-fo1SPu. No successful policy/receipt is fabricated.
+The separate foreign-Work preparation idea still lacks a peer Journal prerequisite;
+keep it OPEN rather than inject a hand-authored operation. No numeric gain is
+claimed for the pending packet until its own complete stage. Final blind delta
+review finds no blocker; exact notes are retained in
+vida-component-retry-projection-review-v1152-final.md and the corrected bounded
+proposal in vida-task-source-remaining-controls-v1153.md.
+
+The three supported control groups are now batched. Refresh the exact test pin
+once, ordinary hooks/commit/push, one SDK/image and one selected-contour stage. Root
 keeps shared-file integration and final numbers. No second producer/writer,
 UNKNOWN replay, consumer effect or runtime/loader/DB cutover is permitted.
 
@@ -192,8 +233,8 @@ UNKNOWN replay, consumer effect or runtime/loader/DB cutover is permitted.
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first grouped causal cases, bounded read-only review, one SDK/image/stage | Selected; the actual cleanup type error prevents a wasted runtime run. |
-| Two reviewed serial-file children | Selected; current complete184.697s, both native exits0 with full custody. |
-| Fully serial files | Supported fallback; the current concurrent child times sum307.31s, a planning quantity, not measured serial wall time or admission. |
+| Two reviewed serial-file children | Selected; current complete168.601s, both native exits0 with full custody. |
+| Fully serial files | Supported fallback; the current concurrent child times sum279.26s, a planning quantity, not measured serial wall time or admission. |
 | Full stage after each assertion or unchanged timeout | Reject; profile and repair the causal owner before a changed-input complete stage. |
 | Wider pool, concurrent compilers/suites/cleanup/indexing | Unqualified and not selected; existing clocks, caps and one numeric owner remain. |
 
@@ -204,6 +245,16 @@ facts and custody are consolidated here; accepted policy remains with its owners
 and the exact preceding document remains in Git.
 
 ## Owners and acceptance boundaries
+
+### Bun-host-state focused shard resource review
+
+[TESTING](../../../packages/agent/TESTING.md#parallel-testing-current-status-and-required-contract)
+and the current `focusedCoverageShardReview` pins own the two-file pilot's
+eligibility and resource rules. The exact original engineering review remains in
+the [published resource review](https://github.com/pomazanbohdan/vida-stack-lite/blob/1296dc6920c7ced34cf2fd59b6512bbc0084bcf3/.agent/work/core-runtime-reactivation/WORK.md#bun-host-state-focused-shard-resource-review).
+Current Source-bound execution and capacity custody are recorded above; that
+historical review alone does not qualify changed inputs. This retained heading
+repairs the live TESTING link omitted during the earlier WORK compaction.
 
 [Sidecar](../../../AGENT.sidecar.md) owns Source and delegation policy;
 [TESTING](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle) owns
@@ -224,6 +275,11 @@ no suites. No archived state/leases/attempts/UNKNOWN replay, gate relaxation,
 loader/DB cutover or consumer effect is authorized by these records.
 
 ## Historical provenance
+
+The preceding7d81d65 measurement and its exact SDK/image, archive and resource
+bindings remain in the
+[4eac3ec WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/4eac3ecef9233c823e9184382ed668da5bf39043/.agent/work/core-runtime-reactivation/WORK.md).
+Original failures, scratch and receipts remain retained.
 
 The precedingda18a87 measurement, SDK/image, original scratch, cleanup manifest
 and archive bindings remain in the

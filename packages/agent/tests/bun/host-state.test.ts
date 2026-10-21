@@ -2854,6 +2854,29 @@ test('task-source policy denials preserve preparation and queued retries preserv
     expect(ticket.blocked_resources).toEqual(ticket.exclusive_resources);
     expect(ticket.blocked_resources).toContain(`branch:${f.request.branch_ref}`);
     for (const resource of retainedResources) expect(ticket.blocked_resources).toContain(resource);
+    const queuedNativeBefore = readFixtureHostRows(f.database);
+    const queuedPolicy = requiredValue(policy.mock.calls.at(-1)?.[0], 'native queued policy input');
+    // Pure stale policy inputs must not alter the real queued reservation or prepared operation.
+    for (const revision of [reserved.workVersion.revision, f.request.expected_host.work.revision]) {
+      const staleRequest = {
+        ...f.request,
+        expected_host: {
+          ...f.request.expected_host,
+          work: { revision, digest: '0'.repeat(64) },
+        },
+      };
+      expect(() =>
+        createTaskSourceMutationPolicyRequest({
+          repositoryRoot: queuedPolicy.repositoryRoot,
+          operation: { ...queuedPolicy.operation, request: staleRequest },
+          preparedStateVersion: queuedPolicy.stateVersion,
+          hostSnapshot: reserved,
+        }),
+      ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
+    }
+    expect(readFixtureHostRows(f.database)).toEqual(queuedNativeBefore);
+    expect(preparedRows.all()).toEqual(originalPreparedRows);
+    expect(existsSync(sourceRoot)).toBe(false);
     expect(reserved.ledger.tickets.find((item) => item.ticket_id === before.work.lease?.ticket_id)).toEqual(
       before.ledger.tickets.find((item) => item.ticket_id === before.work.lease?.ticket_id),
     );
@@ -10202,6 +10225,33 @@ const maintenanceStore = (handle = database) =>
 const workingStore = (handle = database) =>
   new HostStateStore(handle, workspace, undefined, undefined, undefined, maintenanceVerifier, root);
 
+test('TaskSource projection repair initializes absent storage under its exact held fence', async () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const checked = maintenanceStore();
+  expect(
+    database.query("SELECT name FROM sqlite_master WHERE name='agent_host_task_source_binding_operation'").get(),
+  ).toBeNull();
+  const receipt = checked.acquireMaintenanceFence(maintenanceBinding());
+  const before = database.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all();
+  const repaired = checked.repairTaskSourceBindingWorkProjection(receipt);
+  expect(repaired).toMatchObject({
+    schema: 'TaskSourceBindingWorkProjectionRepair/v1',
+    workspace_id: workspace,
+    operation_id: receipt.fence.binding.operation_id,
+    maintenance_generation: receipt.fence.generation,
+    maintenance_revision: receipt.fence.revision,
+  });
+  expect(database.query('SELECT * FROM agent_host_task_source_binding_operation').all()).toEqual([]);
+  expect(database.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all()).toEqual(before);
+  expect(checked.repairTaskSourceBindingWorkProjection(receipt)).toEqual(repaired);
+  expect(database.query('SELECT payload,digest FROM agent_host_task_source_projection_repair').all()).toEqual([
+    { payload: canonicalJson(repaired), digest: canonicalJsonDigest(repaired) },
+  ]);
+  await checked.releaseMaintenanceFence(receipt);
+  expect(checked.readHostStateSnapshot(identity).work).toBeNull();
+  preserveHostFixtureRoot = false;
+});
+
 test('TaskSource projection repair rolls back native faults and retries only its exact held fence and rows', async () => {
   const deadline = performance.now() + 5_000;
   preserveHostFixtureRoot = 'case failed or timed out';
@@ -12859,6 +12909,30 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     renew.nextWork.lease = requiredValue(request.retryLease, 'authorized retry lease');
     commitHostState(renew);
     const beforeRetry = readPresentSnapshot(store, identity);
+    const retryTemplate = protectedInvocation(beforeRetry);
+    // Bind this component invocation to the actual retained attempt, rather than the config's first stage.
+    // Both calls below must deny at the Host approval boundary without persisting a new attempt.
+    const retryInvocation: HostWorkflowAssignment = {
+      ...retryTemplate,
+      stage: { ...retryTemplate.stage, id: started.attempt.stage_id },
+      workContext: {
+        ...retryTemplate.workContext,
+        permit: { ...retryTemplate.workContext.permit, stage_id: started.attempt.stage_id },
+      },
+    };
+    const approvalsBeforeRetry = governanceRows();
+    await Promise.resolve(
+      expect(
+        store.claimWorkflowAssignmentWithApproval(retryInvocation, '6'.repeat(64), 'source.write', 'approvals'),
+      ).rejects.toThrow('attempt request changed'),
+    );
+    await Promise.resolve(
+      expect(
+        store.claimWorkflowAssignmentWithApproval(retryInvocation, '5'.repeat(64), 'source.write', 'approvals'),
+      ).rejects.toThrow('trusted workflow approval verifier required'),
+    );
+    expect(store.readHostStateSnapshot(identity)).toEqual(beforeRetry);
+    expect(governanceRows()).toEqual(approvalsBeforeRetry);
     const retry = store.claimWorkflowAttempt(attemptRequest(beforeRetry));
     expect(retry.attempt.previous_attempt_id).toBe(started.attempt.attempt_id);
     expect(retry.attempt.attempt_id).not.toBe(started.attempt.attempt_id);

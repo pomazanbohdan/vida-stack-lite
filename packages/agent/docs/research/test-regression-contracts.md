@@ -377,6 +377,21 @@ and unchanged-row oracles; do not create an empty success table just for a branc
 Frozen repair-plan retries preserve the stored plan for the same actor and
 reject changed attribution without changing Host, Journal or governance rows.
 
+TaskSource projection repair initializes absent storage through its public
+held-fence operation, preserving empty operation rows, exact receipt retry and
+no Work admission. Protected no-effect retry controls target the retained
+attempt's stage and current authorized retry lease; a changed digest conflicts
+and an exact retry without a trusted approval verifier denies without new rows.
+These are Host component seams, not kernel issuance or provider observations.
+Queued TaskSource stale-policy controls reuse the actual callback's typed
+prepared operation/CAS and native queued snapshot; change only ephemeral expected
+Work revision/digest and preserve native rows, prepared metadata and absent root.
+
+Current writer report atomically persists the Journal and releases Source
+ownership. It cannot create the older split state needed to test the final
+retained-report reconciliation delegation. That branch needs its own qualified
+legacy fixture; a subsequent current report/reconcile pair does not cover it.
+
 The public delivered-work repair and qualified runtime continuation cases in
 `tests/delivered-work-continuation.test.ts` inject a native source-close failure
 after a genuine plan-read/parse failure. Both causes must survive in order, and

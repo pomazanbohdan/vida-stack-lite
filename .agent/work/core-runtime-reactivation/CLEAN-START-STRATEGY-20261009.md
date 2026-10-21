@@ -8,13 +8,15 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `7d81d65908b78bd1ba3560d3336a73c14556a055`, run `3befffc1-8e84-4c97-9835-4e06e11d319c`: F1126/1126, L4961/4974, S5261/5305 and B5398/5624. Functions remain exact100%; lines/statements/branches remain nonexact. The184.697second stage has319PASS, both native shards0, full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. The refreshed map has0missing functions,226exact zero-count branch arms and44statement entries, each deficit checked against the same report. Compared withda18a87, covered deltas are0F/+6L/+6S/+3B with unchanged denominators. No exclusion, budget transfer or scope reduction occurs. WORK owns original failures, current image/SDK and retained custody/capacity.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `4eac3ecef9233c823e9184382ed668da5bf39043`, run `ae2d9cd9-c536-4355-a8d9-3ccc572356f3`: F1126/1126, L4963/4974, S5268/5305 and B5404/5624. Functions remain exact100%; lines/statements/branches remain nonexact. The168.601second stage has319PASS, both native shards0, full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. The refreshed map has0missing functions,220exact zero-count branch arms and37statement entries, each deficit checked against the same report. Compared with7d81d65, covered deltas are0F/+2L/+7S/+6B with unchanged denominators. No exclusion, budget transfer or scope reduction occurs. WORK owns original failures, current image/SDK and retained custody/capacity.
 
 The continuation-repair transaction-gap correction and its fresh two-connection
-APPLIED/RESERVED/UNKNOWN/changed-plan controls are measured above. Next packet:
-absent-attempt receipt reads after real table population, absent frontier-table
-reads with current Work, and exact/changed-actor frozen-plan retry controls.
-Reuse existing native fixtures and unchanged-row oracles. Publish the checked
+APPLIED/RESERVED/UNKNOWN/changed-plan controls and subsequent absent receipt/plan
+retry controls are measured above. Next packet groups empty TaskSource projection
+repair, protected no-effect retry denials, and queued TaskSource stale-policy
+inputs around existing native fixtures and unchanged-row oracles. Keep the
+retained-report ownership delegation OPEN until its legacy fixture is qualified;
+the current atomic report path cannot establish that older split state. Publish the checked
 packet normally, then form one SDK/image and measure the selected contour once.
 The original regression remains FAIL; focused PASS is not numeric qualification.
 
@@ -49,7 +51,7 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 The owner's current instruction replaces one-function measurement packets with
 one coordinated pass, initially46missing functions and606branch arms. The first
-complete packet stages now leave0functions and226arms; continue the same contour
+complete packet stages now leave0functions and220arms; continue the same contour
 from its refreshed retained map, not the superseded starting counters. Superpowers
 `writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
 guide this plan. Keep this existing strategy as the plan owner; do not create a
@@ -66,7 +68,7 @@ remains positive-denominator exact F/L/S/B100 with complete execution and custod
 | Continuation and session producer | `packages/agent/src/host-state.ts`; existing configured-frontier/initial-source fixtures and selected Host test | Blind Luna research; Root writes. Reach genuine prewriter/engine suffix through current public operations; preserve original5s limits and retained timed-out proposals. |
 | Assurance, recovery and runtime rebind | Same Host Source/test; existing failed-final and completed-report fixtures; selected stopped-source case | Separate blind Luna research; Root writes. Reuse native VERIFY/correction/history states. A public90s out-of-selection case supplies neither counters nor timeout allowance. |
 | TaskSource, archive lookup, ownership and remaining validation | Selected Host/stopped tests and existing TaskSource fixture; current native Host/Journal beforeimages | Root writes. Exercise real predecessor chains, current corrective authorization, archive identity/refusal and unchanged-state oracles. No fabricated successful receipt or private-state activation. |
-| Complete branch accounting | Existing `host-uncovered-plan.ts` and current7d81d65 report; its function inventory/maps | Root owns the report-only join. Resolve the remaining226arms/44statement entries, including covered function owners and explicit navigation gaps; no new AST/Source scan/hash or narrowed gate. |
+| Complete branch accounting | Existing `host-uncovered-plan.ts` and current4eac3ec report; its function inventory/maps | Root owns the report-only join. Resolve the remaining220arms/37statement entries, including covered function owners and explicit navigation gaps; no new AST/Source scan/hash or narrowed gate. |
 
 - [x] Join the existing zero-counter map to its retained function geometry and
   account for every arm; record exact IDs/lines and fixture prerequisites.

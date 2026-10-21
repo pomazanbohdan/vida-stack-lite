@@ -1938,6 +1938,9 @@ invocation where their existing resource
 and timeout contracts permit it. A pure input/schema check should precede an
 expensive fixture when it can resolve the same uncertainty. Reuse current results
 until another change or failure invalidates them.
+Reconcile each edited enclosing case with its exact selected declaration before
+launch. Similar family names can select a different unchanged case. Reuse the
+current inventory or selected declaration; do not add a full-suite AST pass.
 Verify each correction with focused cases, then perform one complete selected-contour
 coverage stage after the checked packet is integrated. Do not form another SDK/image
 or repeat the full stage for each assertion. Reuse read-only analysis while Root

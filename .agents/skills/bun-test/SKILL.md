@@ -186,6 +186,11 @@ regression risk. For callbacks passed to native APIs, follow TESTING's
 observe the real callback/arguments, delegate and restore the native operation,
 then assert its documented laws alongside public behavior. Keep that evidence
 distinct from coverage and mutation confirmation.
+When a maintained Host callback already exposes the validated operation and CAS,
+reuse that actual typed input for pure negative variants. A generic JSON-shaped
+preparation result still needs validation; do not spread unknown fields or cast
+them into authority. Preserve native beforeimages and scope the result to the
+component boundary actually exercised.
 
 SQLite catalog tests include legal user names that resemble the internal prefix,
 such as sqliteXledger and SQLiteXarchive. SQL LIKE treats underscore as a
