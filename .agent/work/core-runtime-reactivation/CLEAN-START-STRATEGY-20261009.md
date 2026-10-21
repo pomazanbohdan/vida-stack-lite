@@ -8,7 +8,7 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `15f3e6bf21b5ed22bfa8159de10d8ffb92a4ab6d`, run `6672c496-0e72-4ce7-a40e-079b3841e43e`: F1126/1128, L4928/4973, S5219/5304 and B5308/5641. It records309PASS/0FAIL,4441assertions in186.306seconds, with full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. Report-only inventory is2missing functions under2owners, all with exact retained map coordinates, plus333 exact zero-count branch arms. The packet adds2F/2L/2S/29B with unchanged denominators and no exclusions or budget changes. WORK retains image, SDK, custody, archive and capacity bindings.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `575959134d38069296586b121ac9ad1a2ddbff43`, run `8dd2ecc6-d756-46c7-96a3-15d88f3e7c76`: F1126/1126, L4945/4977, S5237/5308 and B5362/5626. Functions are exact100%; lines/statements/branches remain nonexact. The175.357second stage has exit0, both native shards0, full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. The refreshed map has0missing functions and264exact zero-count branch arms. Covered deltas are0F/+17L/+18S/+54B; retired closures and the restore-plan decoder change denominators -2F/+4L/+4S/-15B without exclusions, budget transfer or scope reduction. WORK owns original failures, current image/SDK and retained custody/capacity.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -30,7 +30,7 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 The owner's current instruction replaces one-function measurement packets with
 one coordinated pass, initially46missing functions and606branch arms. The first
-complete packet stages now leave2functions and333arms; continue the same contour
+complete packet stages now leave0functions and264arms; continue the same contour
 from its refreshed retained map, not the superseded starting counters. Superpowers
 `writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
 guide this plan. Keep this existing strategy as the plan owner; do not create a
@@ -47,7 +47,7 @@ remains positive-denominator exact F/L/S/B100 with complete execution and custod
 | Continuation and session producer | `packages/agent/src/host-state.ts`; existing configured-frontier/initial-source fixtures and selected Host test | Blind Luna research; Root writes. Reach genuine prewriter/engine suffix through current public operations; preserve original5s limits and retained timed-out proposals. |
 | Assurance, recovery and runtime rebind | Same Host Source/test; existing failed-final and completed-report fixtures; selected stopped-source case | Separate blind Luna research; Root writes. Reuse native VERIFY/correction/history states. A public90s out-of-selection case supplies neither counters nor timeout allowance. |
 | TaskSource, archive lookup, ownership and remaining validation | Selected Host/stopped tests and existing TaskSource fixture; current native Host/Journal beforeimages | Root writes. Exercise real predecessor chains, current corrective authorization, archive identity/refusal and unchanged-state oracles. No fabricated successful receipt or private-state activation. |
-| Complete branch accounting | Existing `host-uncovered-plan.ts` and retained4b8a387 report; its function inventory/maps | Root owns the report-only join. Assign all606arms, including already-covered function owners and explicit navigation gaps; no new AST/Source scan/hash or narrowed gate. |
+| Complete branch accounting | Existing `host-uncovered-plan.ts` and current5759591 report; its function inventory/maps | Root owns the report-only join. Resolve the remaining264arms, including covered function owners and explicit navigation gaps; no new AST/Source scan/hash or narrowed gate. |
 
 - [x] Join the existing zero-counter map to its retained function geometry and
   account for every arm; record exact IDs/lines and fixture prerequisites.
@@ -187,9 +187,12 @@ prefix, so remove its unreachable recovery-lookup exception rather than inventin
 a joined history fixture. Keep genuine terminal-result corruption denials.
 The same packet adds capture producer retry, same-owner queued capture and
 TaskSource inspect, and repairs reproduced migration preflight ordering defects.
-Complete scoped checks/review, refresh the exact Host pin once, publish, then use
-one matching SDK/image/stage. Source15's2missing functions/333arms stay the last
-measured inventory until that stage; focused PASS does not close those counters.
+Its scoped checks, blind review, exact pin, ordinary publication and one matching
+SDK/image/stage are complete. All functions now execute; no claim extends to
+frozen qualification or whole-contour closure. Continue from264zero arms and
+32uncovered lines, prioritizing current map routes in TaskSource issue, expired
+lease recovery and continuation readers. Do not repeat closed capture/rebind
+fixtures or treat Source15 coordinates as current geometry.
 
 For each group, the exact named Bun case must reach its intended public operation
 and assert its success, refusal and replay behavior before strict TypeScript/lint

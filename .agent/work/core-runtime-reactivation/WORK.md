@@ -19,7 +19,7 @@ No controlled speedup, complete tool-call count or token telemetry is available.
 Root keeps one writer and one producer; independent Luna work is read-only.
 No full suite, AST inventory, Source scan/hash or projection import is duplicated.
 
-The pending packet removes configured-frontier's redundant report-recovery scan
+The measured packet removes configured-frontier's redundant report-recovery scan
 and per-attempt predecessor lookup. Independent reader/producer proof establishes
 an exact terminal prefix; recovery only completes a started target. Shared exact
 result+digest corruption controls preserve the rejection. Retired callable roles
@@ -63,7 +63,8 @@ remaining blocker in that bounded scope. Reviews and controls are retained in
 `coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1127-controls-HGBHea`.
 The removed readRows map closure is retired; the new restore-plan decoder has
 its own correspondence and no transferred frozen complexity allowance. Numeric
-qualification is still pending the matching published-input stage.
+qualification comes from the matching published-input stage below; frozen
+complexity/CRAP remains unqualified.
 
 Capacity reuses the retained v1123 admission/inventory and the observed terminal
 functional retention receipt, not another broad du/scan/hash. Functional scratch
@@ -79,40 +80,42 @@ SDK/image/stage. Wider numeric pools, compiler/runtime overlap or a full stage p
 assertion have no demonstrated benefit and add resource competition. Keep the
 two reviewed serial-file children. Reuse exact map coordinates and one bounded
 Bun metadata read for logs rather than repeated shell path-discovery pipelines.
-The Source15 counters below remain the latest complete numbers until the new
-packet's own stage; no current-HEAD closure is claimed.
+The new stage below supersedes Source15 for coverage only. One later inert read
+was rejected before process creation by exec-server transport disconnection;
+the retained stage was not rerun. A bounded read recovered with unchanged boot.
+Provider status reports connected/running, current spec3241 and no failure; this
+does not diagnose the transport's root cause or establish a host restart.
 
-Latest complete measurement binds Source `15f3e6bf21b5ed22bfa8159de10d8ffb92a4ab6d` and run
-`6672c496-0e72-4ce7-a40e-079b3841e43e`, not later HEAD.
+Latest complete measurement binds Source `575959134d38069296586b121ac9ad1a2ddbff43` and run
+`8dd2ecc6-d756-46c7-96a3-15d88f3e7c76`, not later HEAD. The audit packet above
+is now measured; its original focused failures remain failures.
 
-| Counter | Covered / total | Covered delta from483c7e7 |
+| Counter | Covered / total | Covered delta from15f3e6b |
 | --- | --- | --- |
-| Functions | 1126 / 1128 | +2 |
-| Lines | 4928 / 4973 | +2 |
-| Statements | 5219 / 5304 | +2 |
-| Branches | 5308 / 5641 | +29 |
+| Functions | 1126 / 1126 | 0 |
+| Lines | 4945 / 4977 | +17 |
+| Statements | 5237 / 5308 | +18 |
+| Branches | 5362 / 5626 | +54 |
 
-309PASS/0FAIL,4441assertions,186305.915623ms elapsed.
-Host child:293PASS/4145assertions/177.15s. Stopped-source child:
-16PASS/296assertions/139.11s, contained cleanup complete. Exit0,
+The complete stage takes175357.055064ms. Both native shards exit0 without
+signal/error/UNKNOWN. Exit0,
 full capture, closed group, unchanged boot/image and published report hold.
-Operation remains **BLOCKED/nonexact**. Diagnostic maxCC279/entryCRAP279 is
+Operation remains **BLOCKED/nonexact**. Diagnostic maxCC275/entryCRAP275 is
 unqualified. Historical exact16/45, local triples9/45 and separate data-only1
 remain distinct measures, not a current global PASS. Different-input elapsed
 times do not establish a controlled speedup.
 
-All four denominators remain unchanged; no counter domain, exclusion or gate is
-narrowed. The report-only refresh now has2missing functions under2owners, down
-from4/3. Both have retained map-validated coordinates: the synthesis-correction
-runtime-rebind body and stored recovery-prior lookup. Ordinary readonly runtime
-rebind and historical lifecycle-reference mapping now execute. This does not
-imply branch or whole-contour closure.
-333 uncovered branch arms are now listed from the same
+Functions are exact100%. Source simplification retires three closures and adds
+the validated restore-plan decoder; no correspondence allowance is transferred.
+Total denominators change -2F/+4L/+4S/-15B; no exclusion, scope or gate is narrowed.
+The report-only refresh has0missing functions; native synthesis correction now
+executes. Lines, statements and branches remain nonexact, not whole-contour closure.
+264 uncovered branch arms are now listed from the same
 report, with exact deficit agreement and explicitly labeled implicit-if ranges.
 Reuse `host-uncovered-plan-current.json` in focused diagnostics.
 No duplicate AST, Source scan, hash pass, unchanged full suite, CRAP or mutation
 producer was run. The maintained projection automatically imports this run as
-attempt1120. Failed attempts1091 and1100 remain separately classified.
+attempt1122. Failed attempts1091 and1100 remain separately classified.
 
 The measured packet extends the existing TaskSource fixture with optional
 already allowed non-file resources; default callers still use the original file-only
@@ -528,27 +531,27 @@ The next actual producer still performs its maintained admission check.
 
 ## Latest measurement custody
 
-- Stage:`/workspace/contour-stage-DDWjVP`; exec51910, observed exit0.
-- Image:`/workspace/.vida-quality-inputs/ba83daff37b9b48272135e73d4461158a6cefbc1/repository`.
-- Tree:`2d07d72b56f0f382e7287e9ac90d325ec0141267`.
-- Input:`90450f2ffce50e980ca34f017f7fe098b1979bd84f51a86802d5eb6e428dde09`.
-- Image manifest SHA256:`f6ddc741aed70c7f9fcaff5b3bea131be79561ea253b533216b52cc2864ca123`.
-- SDK CI39519621171, successful attempt1, artifact12310057449.
-- SDK name:`vida-sdk-test-inputs-15f3e6bf21b5ed22bfa8159de10d8ffb92a4ab6d-39519621171-1`.
-- ZIP SHA256:`fa3b348abe069fc4799cd36d3a68336e63a970e98c2c69e3af6439a1ae40ec36`.
-- `remainder-v1123-stage.log` in focused diagnostics retains the complete outcome.
-- Original scratch:`/dev/shm/vida-quality-retained-uV9KDc`. After observed closure,
+- Stage:`/workspace/contour-stage-kDQ7uV`; exec3988, observed exit0.
+- Image:`/workspace/.vida-quality-inputs/7703dce23a5360cc083561abeba9aa70179309ca/repository`.
+- Tree:`f840fc0986547fa6b2a3f49e3327dda3169dbabb`.
+- Input:`420c1be6b8a96cadf812398c4ba084226fe4afb22f55d7755fe1afc5d87c85ce`.
+- Image manifest SHA256:`3b4a4af649ada084252628f735d96b286e9b7f52095e6ecc9246ddbb8b702b2a`.
+- SDK CI39524430458, successful attempt1, artifact12311979318.
+- SDK name:`vida-sdk-test-inputs-575959134d38069296586b121ac9ad1a2ddbff43-39524430458-1`.
+- ZIP SHA256:`fa272513c6f651cd6fdb9791b1da14c996351c009e741a1f23ae4b85b8cfa728`.
+- `remainder-v1127-stage.log` in focused diagnostics retains the complete outcome.
+- Original scratch:`/dev/shm/vida-quality-retained-u7ElxG`. After observed closure,
   only its qualified private regenerable Bun cache is retired; all other original
   scratch, fixtures, DBs and evidence remain.
-- Whole remaining scratch archive:`/workspace/vida-functional-retention-DDWjVP-ymNBuX/scratch.tar.gz`,
-  263002bytes, full tar compare PASS; SHA256`39bad737e7e645aaad581da29340130fc9871bfd04b2660a18fbeaa91420d563`.
+- Whole remaining scratch archive:`/workspace/vida-functional-retention-kDQ7uV-65anCU/scratch.tar.gz`,
+  261765bytes, full tar compare PASS; SHA256`ac2f8fcd6cda4bf37bc2a128237e1d69416ce9b5b746e756e828d9f19924815a`.
   Original create/compare logs and archive.json remain beside it; the original
   scratch remains intact apart from its separately retired regenerable cache.
-- Durable free before/after archive:5449805824/5449539584bytes;
-  unchanged2147483648floor leaves3302055936bytes headroom. No resource GAP.
+- Durable free before/after archive:5368823808/5368561664bytes;
+  unchanged2147483648floor leaves3221078016bytes headroom. No resource GAP.
 
 Cache retirement is receipted in
-`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1123-cache-retirement-DDWjVP`.
+`packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers/remainder-v1127-cache-retirement-kDQ7uV`.
 One exact private cache,178155793regular bytes,215846912tmpfs bytes reclaimed;
 4096bytes of durable metadata growth is not counted as reclamation. Closed
 custody, namespace, original Source, boot/image, no active owner and dependency
@@ -872,11 +875,11 @@ fallback remain unchanged. UNKNOWN remains fenced.
 
 | Combination | Evidence and decision |
 | --- | --- |
-| Root causal packet, static-first focused checks, independent review, one final SDK/image/stage | Selected. Latest Source15 run is186.306s; prior Source-bound runs retain distinct inputs. |
+| Root causal packet, static-first focused checks, independent review, one final SDK/image/stage | Selected. Latest Source5759591 run is175.357s; prior Source-bound runs retain distinct inputs. |
 | Full stage after each partial assertion edit | Reject. Latest malformed-plan packet added only1F/1L/1S/2B despite many assertions; plan from actual missing map locations. No extra unchanged stage is needed. |
 | Root writer plus bounded read-only Luna review/research | Selected during development only. Shared files retain one writer; workers close before numeric freeze. |
-| Two reviewed serial-file children | Keep current qualification and pins. Source15 child times177.15s and139.11s; full capture/group closure hold. |
-| Fully serial files | Supported fallback. Their316.26s sum is only a planning comparator, not measured serial wall time or admission. |
+| Two reviewed serial-file children | Keep current qualification and pins. Both latest shards exit0; full capture/group closure hold. |
+| Fully serial files | Supported fallback. Source15's316.26s child-time sum is only a prior planning comparator, not measured serial wall time or admission. |
 | Wider numeric pool or concurrent suites/cleanup/indexing | Unqualified and not selected. Existing caps, one producer and freeze remain unchanged. |
 
 The earlier three-hour audit's local qualifier namespace-overwrite correction,
