@@ -962,6 +962,11 @@ restore while retaining that exact Journal history and ledger. Terminal
 correction repair also preserves the actual completed Host attempt and released
 ownership through apply, resume and restore. These fixtures are distinct from
 the genuine issued-UNKNOWN repair above.
+In that terminal fixture, inspect an explicit null reservation authorization
+without applying it. Preserve the real receipt and exact Host, Journal,
+governance and schema rows. Restore the original Journal bytes through identity,
+revision, payload and digest CAS before continuing the normal repair lifecycle.
+This legacy reader control grants no authority or native producer qualification.
 Remove a required stored change and recompute its operation checksum in a
 fixture. The reader must deny the incomplete set. A matching checksum does not
 prove complete repair or permit an early plan/resume result.

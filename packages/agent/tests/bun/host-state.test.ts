@@ -8635,6 +8635,88 @@ test(
       expect(inspection.changed_journals).toBe(1);
       expect(rows()).toEqual(retainedRows);
       expect(journals()).toEqual(retainedJournals);
+      const unboundJournal = parseJsonRecord(canonicalJson(legacyJournal));
+      const unboundItems = [...arrayAt(unboundJournal, 'items')];
+      for (const wave of arrayAt(unboundJournal, 'completed')) {
+        if (!isPlainRecord(wave)) throw new Error('Terminal repair wave is not a record.');
+        unboundItems.push(...arrayAt(wave, 'items'));
+      }
+      const reservedItem = unboundItems.find((item) => isPlainRecord(item) && item.host_reservation);
+      if (!isPlainRecord(reservedItem)) throw new Error('Terminal repair reservation is missing.');
+      recordAt(reservedItem, 'host_reservation').authorization = null;
+      const retainedJournal = requiredValue(
+        retainedJournals.find((row) => row.work_id === f.identity.work_id && row.attempt === journal.state.attempt),
+        'terminal repair Journal row',
+      );
+      const unboundPayload = canonicalJson(unboundJournal),
+        unboundDigest = canonicalJsonDigest(unboundJournal);
+      const replaceJournal = f.database.query<never, SQLQueryBindings[]>(
+        'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND payload=? AND digest=?',
+      );
+      const governanceRows = () =>
+        f.database
+          .query<GovernanceSqlRow, []>(
+            'SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key',
+          )
+          .all();
+      const retainedGovernance = governanceRows();
+      const schema = f.database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all();
+      let unboundInstalled = false;
+      let inspectionFailure: { error: unknown } | undefined;
+      try {
+        const installed = replaceJournal.run(
+          unboundPayload,
+          unboundDigest,
+          retainedJournal.workspace_id,
+          retainedJournal.work_id,
+          retainedJournal.attempt,
+          retainedJournal.revision,
+          retainedJournal.payload,
+          retainedJournal.digest,
+        );
+        unboundInstalled = installed.changes === 1;
+        expect(installed.changes).toBe(1);
+        const unboundInspection = f.store.repairCorrectionGeneration({ ...request, mode: 'inspect' });
+        expect(unboundInspection.status).toBe('repairable_current_v1');
+        expect(unboundInspection.changed_work).toEqual(inspection.changed_work);
+        expect(unboundInspection.changed_journals).toBe(1);
+        expect(rows()).toEqual(retainedRows);
+        expect(journals()).toEqual(
+          retainedJournals.map((row) =>
+            row === retainedJournal ? { ...row, payload: unboundPayload, digest: unboundDigest } : row,
+          ),
+        );
+        expect(governanceRows()).toEqual(retainedGovernance);
+        expect(f.database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(
+          schema,
+        );
+        expect(f.database.inTransaction).toBe(false);
+      } catch (error) {
+        inspectionFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              if (unboundInstalled)
+                expect(
+                  replaceJournal.run(
+                    retainedJournal.payload,
+                    retainedJournal.digest,
+                    retainedJournal.workspace_id,
+                    retainedJournal.work_id,
+                    retainedJournal.attempt,
+                    retainedJournal.revision,
+                    unboundPayload,
+                    unboundDigest,
+                  ).changes,
+                ).toBe(1);
+              expect(journals()).toEqual(retainedJournals);
+            },
+          ],
+          inspectionFailure,
+        );
+      }
       const planned = f.store.repairCorrectionGeneration({
         ...request,
         mode: 'plan',

@@ -129,46 +129,76 @@ The changed Host test pin is refreshed once; stopped-Source pin is unchanged.
 Strict123/configured lint and1case/10assertions pass326ms in
 remainder-v1224-controls-Wg30WU. Changed documentation links/headings pass.
 
-### Three-hour audit:2026-10-21 02:29–05:29 UTC
+### Three-hour audit:2026-10-21 03:33:38–06:33:38 UTC
 
-Git publication times are retained in audit-v1209-published-window.log; stage,
-focused and static receipts supply actual outcomes, not commit-message inference.
-Complete tool-call/token telemetry is unavailable. Confirmed fixes and checked
-improvements in this bounded publication window:
-- Continuation repair rechecks an exact peer APPLIED operation before stale-row
-  inspection, after unchanged immediate maintenance/producer/reconciliation fences.
-  Two real connections reproduce the original failure and validate applied,
-  reserved, fresh interrupted UNKNOWN and changed-plan cases.
-- Existing producer fixtures cover absent positive-attempt receipts, exact frozen
-  plan retries, projection initialization, stale policy and corrective denials.
-- Four migration release variants prove fresh persisted-state validation and
-  healthy same-operation retry. Primary body and cleanup errors stay distinct.
-- Non-target completed-report history, corrupt repair Journals and optional
-  rebind inputs retain exact native row, rollback, ownership and retry oracles.
+The frozen window uses publication times in audit-v1230-published-window.log,
+joined to existing focused, static and stage receipts. It does not infer execution
+from commit messages. Complete tool-call/token telemetry is unavailable.
+The preceding audit remains in the
+[published3b7bfe1 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/3b7bfe151ccbb06030c9b224b04a53f513945fc3/.agent/work/core-runtime-reactivation/WORK.md).
 
-Exact preceding reproductions, failures, reviews, outcomes and custody are in the
-[published9d20300 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/9d2030064a34606df06c6eac1bbe5bda64511fed/.agent/work/core-runtime-reactivation/WORK.md)
-and its immutable provenance chain. Original failures stay FAIL, not kills.
+Two product defects were reproduced and corrected in this window:
+- A planned-only request-transition restore serialized applied revision images.
+  Repeated restore then refused its own completed result. The decoder now accepts
+  only the exact frozen planned or applied transform, and persistence retains
+  the chosen image. Original RED and focused GREEN are in
+  historical-planned-v1210-7x2zKA and planned-restore-fix-v1213-QHzMTk.
+- Historical continuation report reading accepted a false summary output_digest
+  after the outer Journal checksum was recomputed. Source now requires the same
+  canonical summary digest as the producer/configured reader. Original RED is
+  historical-digest-red-v1219-d6kMul; the current complete run qualifies the fix.
 
-Script execution reuses the once-built function inventory and report-only
-zero-counter join; no additional full AST, scan or Source hash pass is needed.
-Complete stages for a6e7fe0/cdefc9b/28cb28b take174.328s/190.749s/170.817s on
-different inputs; they are not controlled speedups. Each coherent packet gets
-one SDK/image/full stage. Static failures stop runtime; focused retries occur
-only after changed code or strengthened oracles. No extra full suite, AST or
-hash pass is justified by these results.
+Reservation-policy construction reuses its existing owner inside the original
+prefilter. Recovery setup is distributed between existing cases: rollback keeps
+an active peer, commit keeps active and queued peers, and full FIFO/TaskSource
+probes stay with the native legacy frontier. Exact foreign-peer preservation,
+current reopened handles and existing per-case bounds remain. The first moved
+setup lost a queued callback despite all cases passing; the retained map exposed
+it, and the next packet restored F/L100. This supports checking every counter,
+not treating process PASS as coverage closure.
 
-Two bounded readers misinterpreted a no-full-scan restriction as a ban on scoped
-text search or the declared checked-in lifecycle fallback. Their proposals lacked
-actual fixture bindings. Correct their current reports and clarify this boundary
-once in the Cloud reference instead of creating another fixture or policy lane.
-Worker preparation already reuses exact-equal instructions after fresh prepare.
-These are observed redundant steps/context, not measured token or speed gains.
-One raw minified projection diff emitted megabytes before transport truncation;
-the compact maintained projection shows the same changed observation directly.
-The Cloud reference now directs review to that owner or selected decoded records.
-The latest postclosure filesystem/custody observation above is reused; no broad
-walk or deletion is justified. Original failed roots and durable evidence stay.
+The04d8271 stage failed its rollback deadline in190143.92053ms. The changed
+b06c3e6 and245d2b0 stages complete in182880.056167ms and167719.669756ms.
+These different inputs do not establish controlled speedups. Existing original
+FAIL, roots and custody remain; no unchanged full suite or full AST/scan/hash
+pass is repeated for this audit. The execution-combinations table below compares
+supported sequencing and parallelism without claiming measured serial speed.
+
+The bounded runner review, vida-testing-evidence-cost-review-v1228.md, finds no
+new current output/report/timeout/custody defect. The retained failed stage has
+no attributable complete report; later complete stages publish through the
+existing exact-one guard. Repeated parsing of470stdout bytes is a negligible
+candidate without a measured benefit, so no extra parser abstraction is added.
+Captured output already caches its bounded disk read. SDK artifacts are verified
+once per changed packet; their original acquisition records remain authoritative.
+
+The once-only filesystem observation at06:34:58.158UTC is retained in
+audit-v1230-disk-observation.json: durable4152573952bytes and
+retained tmpfs9266245632bytes available, both above2147483648. No active producer
+was observed. Reuse the existing inventory and previous exact cache-retirement
+manifests; no additional deletion, broad walk or resource GAP is justified.
+
+### Checked terminal null-authorization packet
+
+Extend the existing genuine terminal correction-generation fixture with one
+inspect-only legacy Journal variant. Only its reservation authorization becomes
+explicitly null; the actual receipt, invocation and observation remain.
+Install and restore using exact identity/revision/payload/digest CAS. Require
+unchanged Host, variant Journal, governance, schema and closed transaction;
+join primary and restoration errors. Restore exact original bytes before the
+existing plan/atomic failure/apply/resume/restore lifecycle proceeds.
+No new fixture, public effect, authorization, deadline or production code is added.
+
+The independent proposal/final reviews are
+vida-terminal-null-authority-review-v1227.md and
+vida-terminal-null-authority-final-review-v1230.md. Strict149/configured lint0
+and the exact existing case pass41assertions in7.31s overall,5363.35ms case time,
+under its unchanged20s bound: terminal-null-v1229-72xTmC.
+The changed test pin is refreshed once. Strict122/configured lint0 and the
+existing shard-resource control pass1case/10assertions in370ms:
+remainder-v1231-controls-otEptr. Changed documentation links/headings pass.
+This is focused behavioral evidence; new visited-arm counts await one complete
+input-bound stage. The previous numeric Source remains unchanged until then.
 
 ### Next actions and unresolved prerequisites
 
@@ -185,7 +215,8 @@ Keep these specific unresolved paths open:
 - The selected old recovery construction's missing completed native callback in
   vida-retained-report-fixture-contract-v1169.md stays OPEN. The new synthetic
   component route above qualifies a different legacy input and cannot establish
-  actual writer execution/crash or Runtime acceptance. Numeric coverage is pending.
+  actual writer execution/crash or Runtime acceptance. Its component coverage is
+  included in the latest complete measurement; the native callback GAP remains.
 - Same-Work different-attempt/thread history remains a prerequisite GAP in
   vida-same-work-attempt-history-v1175.md; the bounded fixture lacks the admitted
   intake/producer required for a second native Journal. Do not fabricate it.
