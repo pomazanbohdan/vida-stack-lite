@@ -21,13 +21,14 @@ import {
   loadCorpus,
   loadDonorClones,
   mapReport,
+  pairAgreementReport,
   pairsReport,
   specsReport,
   type Report,
   type Section,
 } from './audit-report.ts';
 
-export type AuditCommand = 'map' | 'pairs' | 'fidelity' | 'specs';
+export type AuditCommand = 'map' | 'pairs' | 'pair-agreement' | 'fidelity' | 'specs';
 export type AuditOptions = {
   command: AuditCommand;
   root: string;
@@ -44,7 +45,7 @@ export type AuditOptions = {
 };
 export type CliOutput = { stdout: (text: string) => void; stderr: (text: string) => void };
 
-export const AUDIT_COMMANDS: AuditCommand[] = ['map', 'pairs', 'fidelity', 'specs'];
+export const AUDIT_COMMANDS: AuditCommand[] = ['map', 'pairs', 'pair-agreement', 'fidelity', 'specs'];
 export const DEFAULT_LIMIT = 20;
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const usage = [
@@ -175,6 +176,9 @@ export function buildReport(options: AuditOptions): Report {
   const corpus = loadCorpus(options.root);
   if (options.command === 'map') return mapReport(corpus);
   if (options.command === 'pairs') return pairsReport(corpus);
+  if (options.command === 'pair-agreement') {
+    return pairAgreementReport(corpus, resolve(options.root, 'docs/decisions/D12-declared-conflicts.md'));
+  }
   const clones = loadDonorClones(options.root);
   if (options.command === 'fidelity') return fidelityReport(corpus, clones, options.instruction);
   return specsReport(corpus, clones, specFiles(options));

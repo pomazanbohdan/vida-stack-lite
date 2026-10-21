@@ -19,7 +19,9 @@ import {
   loadCorpus,
   loadDonorClones,
   mapReport,
+  pairAgreementReport,
   pairsReport,
+  readDeclaredPairs,
   specsReport,
   tokenize,
 } from '../scripts/audit-report.ts';
@@ -275,7 +277,7 @@ describe('the pairs report', () => {
       instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-0'], patternTags: ['another-theme'] }),
     ]);
     const report = pairsReport(loadCorpus(corpus.root));
-    expect(report.sections.find((section) => section.name === 'without-shared-theme')?.rows)
+    expect(report.sections.find((section) => section.name === 'without-theme-tag')?.rows)
       .toEqual(['instruction-0 <-> instruction-1']);
   });
 
@@ -288,6 +290,16 @@ describe('the pairs report', () => {
     const report = pairsReport(loadCorpus(corpus.root));
     expect(report.sections.find((section) => section.name === 'pair')?.rows.map((row) => row.split(' ')[1]))
       .toEqual(['instruction-0', 'instruction-0']);
+  });
+
+  test('reports a pair that shares no pattern tag', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-1'], patternTags: ['test-first-development'] }),
+      instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-0'], patternTags: ['another-theme'] }),
+    ]);
+    const report = pairsReport(loadCorpus(corpus.root));
+    expect(report.sections.find((section) => section.name === 'without-theme-tag')?.rows)
+      .toEqual(['instruction-0 <-> instruction-1']);
   });
 });
 
@@ -499,6 +511,70 @@ describe('the specs report', () => {
   });
 });
 
+describe('the pair agreement report', () => {
+  const record = (rows: string[]): string => [
+    '# Decision',
+    '',
+    '| Pair | Shared tags |',
+    '|---|---|',
+    ...rows,
+    '',
+  ].join('\n');
+
+  test('reads the pairs the record lists', async () => {
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })]);
+    const file = join(corpus.root, 'D12.md');
+    await writeFile(file, record(['| `instruction-0` ↔ `instruction-1` | `theme-tag`, `topic-tag` |']));
+    expect(readDeclaredPairs(file)).toEqual([
+      { a: 'instruction-0', b: 'instruction-1', theme: ['theme-tag', 'topic-tag'] },
+    ]);
+  });
+
+  test('reports a pair the record does not list', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-1'] }),
+      instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-0'] }),
+    ]);
+    const file = join(corpus.root, 'D12.md');
+    await writeFile(file, record([]));
+    const report = pairAgreementReport(loadCorpus(corpus.root), file);
+    expect(report.sections.find((section) => section.name === 'declared-but-not-listed')?.rows)
+      .toEqual(['instruction-0 <-> instruction-1']);
+  });
+
+  test('reports a pair the record lists but the corpus does not declare', async () => {
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })]);
+    const file = join(corpus.root, 'D12.md');
+    await writeFile(file, record(['| `instruction-0` ↔ `instruction-9` | `theme-tag` |']));
+    const report = pairAgreementReport(loadCorpus(corpus.root), file);
+    expect(report.sections.find((section) => section.name === 'listed-but-not-declared')?.rows)
+      .toEqual(['instruction-0 <-> instruction-9']);
+  });
+
+  test('reports a theme tag the sides do not share', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-1'], patternTags: ['test-first-development'] }),
+      instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-0'], patternTags: ['test-first-development'] }),
+    ]);
+    const file = join(corpus.root, 'D12.md');
+    await writeFile(file, record(['| `instruction-0` ↔ `instruction-1` | `a-theme-the-sides-do-not-share` |']));
+    const report = pairAgreementReport(loadCorpus(corpus.root), file);
+    expect(report.sections.find((section) => section.name === 'theme-not-shared')?.rows.join())
+      .toContain('a-theme-the-sides-do-not-share');
+  });
+
+  test('reports nothing when the record and the corpus agree', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: 'A body.', excludes: ['instruction-1'], patternTags: ['test-first-development'] }),
+      instruction({ id: 'instruction-1', body: 'A body.', excludes: ['instruction-0'], patternTags: ['test-first-development'] }),
+    ]);
+    const file = join(corpus.root, 'D12.md');
+    await writeFile(file, record(['| `instruction-0` ↔ `instruction-1` | `test-first-development` |']));
+    const report = pairAgreementReport(loadCorpus(corpus.root), file);
+    expect(report.counters.find((counter) => counter.label === 'findings')?.value).toBe('0');
+  });
+});
+
 describe('rendering', () => {
   const report = {
     command: 'map' as const,
@@ -602,6 +678,17 @@ describe('the CLI', () => {
     })).toBe(0);
     expect(stdout.join('')).toContain('== audit fidelity ==');
     expect(stdout.join('')).toContain('divergent-line');
+  });
+
+  test('writes the report of the pair-agreement command', async () => {
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })]);
+    await mkdir(join(corpus.root, 'docs', 'decisions'), { recursive: true });
+    await writeFile(join(corpus.root, 'docs', 'decisions', 'D12-declared-conflicts.md'), '# Decision\n\n| Pair | Shared tags |\n|---|---|\n');
+    const stdout: string[] = [];
+    expect(runAuditCli(['pair-agreement', '--root', corpus.root], {
+      stdout: (text) => stdout.push(text), stderr: () => {},
+    })).toBe(0);
+    expect(stdout.join('')).toContain('== audit pair-agreement ==');
   });
 
   test('writes the report of the specs command', async () => {

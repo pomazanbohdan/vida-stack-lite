@@ -253,21 +253,34 @@ export function mapReport(corpus: CorpusView): Report {
   return report;
 }
 
-/** An opposing pair is declared mutually and carries one shared theme tag (D12). */
-export function pairsReport(corpus: CorpusView): Report {
+/**
+ * An opposing pair is declared mutually and carries one shared theme tag (D12).
+ *
+ * Which tag is the pair's THEME is a judgement the decision record makes: D12
+ * section 4 states that the record's table "lists every pair the corpus
+ * currently declares" and names the theme tag of each. A carrier count cannot
+ * decide it — the corpus names `migration-strategy`, carried by seven
+ * instructions, as the theme of one pair. What the corpus itself can decide is
+ * mechanical: the pair is declared in both directions, the two sides share a
+ * pattern tag, and the record's table agrees with the corpus.
+ */
+export function pairsReport(corpus: CorpusView, decisionRecord?: string): Report {
   const carriers = new Map<string, number>();
   for (const instruction of corpus.instructions.values()) {
     for (const tag of instruction.patternTags) carriers.set(tag, (carriers.get(tag) ?? 0) + 1);
   }
 
-  const pairs = new Map<string, { a: string; b: string; mutual: boolean }>();
+  const pairs = new Map<string, { a: string; b: string; mutual: boolean; shared: string[] }>();
   for (const instruction of corpus.instructions.values()) {
     for (const other of instruction.excludes) {
       const [a, b] = [instruction.id, other].sort();
       if (a === undefined || b === undefined) continue;
       const mutual = instruction.excludes.includes(other)
         && (corpus.instructions.get(other)?.excludes.includes(instruction.id) ?? false);
-      pairs.set(`${a}|${b}`, { a, b, mutual });
+      const left = corpus.instructions.get(a);
+      const right = corpus.instructions.get(b);
+      const shared = (left?.patternTags ?? []).filter((tag) => (right?.patternTags ?? []).includes(tag));
+      pairs.set(`${a}|${b}`, { a, b, mutual, shared });
     }
   }
 
@@ -278,15 +291,12 @@ export function pairsReport(corpus: CorpusView): Report {
     if (left.a !== right.a) return left.a < right.a ? -1 : 1;
     return left.b < right.b ? -1 : 1;
   })) {
-    const left = corpus.instructions.get(entry.a);
-    const right = corpus.instructions.get(entry.b);
-    const shared = (left?.patternTags ?? []).filter((tag) => (right?.patternTags ?? []).includes(tag));
-    const sharedText = shared.length === 0
+    const sharedText = entry.shared.length === 0
       ? 'NONE'
-      : shared.map((tag) => `${tag}(${String(carriers.get(tag) ?? 0)})`).join(', ');
+      : entry.shared.map((tag) => `${tag}(${String(carriers.get(tag) ?? 0)})`).join(', ');
     rows.push(`${entry.mutual ? 'mutual' : 'ONE-WAY'} ${entry.a} <-> ${entry.b} | shared: ${sharedText}`);
     if (!entry.mutual) oneWay.push(`${entry.a} <-> ${entry.b}`);
-    if (shared.length === 0) withoutTheme.push(`${entry.a} <-> ${entry.b}`);
+    if (entry.shared.length === 0) withoutTheme.push(`${entry.a} <-> ${entry.b}`);
   }
 
   const report: Report = {
@@ -298,8 +308,84 @@ export function pairsReport(corpus: CorpusView): Report {
     ],
     sections: [
       { name: 'one-way', kind: 'finding', rows: oneWay.sort() },
-      { name: 'without-shared-theme', kind: 'finding', rows: withoutTheme.sort() },
+      { name: 'without-theme-tag', kind: 'finding', rows: withoutTheme.sort() },
       { name: 'pair', kind: 'info', rows },
+    ],
+  };
+  report.counters.push({ label: 'findings', value: String(countFindings(report)) });
+  return report;
+}
+
+/**
+ * The pairs the D12 decision record's table lists, with the theme tag it
+ * names for each.
+ *
+ * D12 section 4 states that the table "lists every pair the corpus currently
+ * declares — it is regenerated from the instructions, so a pair that is added
+ * or removed is visible here". The table is therefore the record of which tag
+ * is a pair's theme, and the corpus can check that it agrees.
+ */
+export type DeclaredPair = { a: string; b: string; theme: string[] };
+
+export function readDeclaredPairs(decisionRecord: string): DeclaredPair[] {
+  const pairs: DeclaredPair[] = [];
+  for (const line of readFileSync(decisionRecord, 'utf8').split('\n')) {
+    const match = /^\| `([^`]+)` . `([^`]+)` \| ([^|]+) \|$/.exec(line);
+    if (match === null) continue;
+    const a = (match[1] ?? '').trim();
+    const b = (match[2] ?? '').trim();
+    const theme = (match[3] ?? '').split(',').map((tag) => tag.trim().replace(/`/g, '')).filter(Boolean);
+    pairs.push({ a, b, theme });
+  }
+  return pairs;
+}
+
+/**
+ * The declared pairs of the corpus and the pairs the decision record lists.
+ *
+ * A pair that the corpus declares and the record does not list is a pair the
+ * record is missing; a pair the record lists and the corpus does not declare
+ * is a pair the corpus lost. A theme tag the record names that the two sides
+ * do not share is a theme the corpus does not carry.
+ */
+export function pairAgreementReport(corpus: CorpusView, decisionRecord: string): Report {
+  const declared = new Map<string, string[]>();
+  for (const instruction of corpus.instructions.values()) {
+    for (const other of instruction.excludes) {
+      const [a, b] = [instruction.id, other].sort();
+      if (a === undefined || b === undefined) continue;
+      const left = corpus.instructions.get(a);
+      const right = corpus.instructions.get(b);
+      const shared = (left?.patternTags ?? []).filter((tag) => (right?.patternTags ?? []).includes(tag));
+      declared.set(`${a}|${b}`, shared);
+    }
+  }
+  const listed = readDeclaredPairs(decisionRecord);
+  const listedKeys = new Set(listed.map((pair) => [pair.a, pair.b].sort().join('|')));
+
+  const notListed: string[] = [];
+  const notDeclared: string[] = [];
+  const themeNotShared: string[] = [];
+  for (const key of declared.keys()) if (!listedKeys.has(key)) notListed.push(key.split('|').join(' <-> '));
+  for (const pair of listed) {
+    const key = [pair.a, pair.b].sort().join('|');
+    const shared = declared.get(key);
+    if (shared === undefined) { notDeclared.push(`${pair.a} <-> ${pair.b}`); continue; }
+    for (const theme of pair.theme) {
+      if (!shared.includes(theme)) themeNotShared.push(`${pair.a} <-> ${pair.b} | the record names ${theme}, the sides do not share it`);
+    }
+  }
+
+  const report: Report = {
+    command: 'pair-agreement',
+    counters: [
+      { label: 'pairs the corpus declares', value: String(declared.size) },
+      { label: 'pairs the record lists', value: String(listed.length) },
+    ],
+    sections: [
+      { name: 'declared-but-not-listed', kind: 'finding', rows: notListed.sort() },
+      { name: 'listed-but-not-declared', kind: 'finding', rows: notDeclared.sort() },
+      { name: 'theme-not-shared', kind: 'finding', rows: themeNotShared.sort() },
     ],
   };
   report.counters.push({ label: 'findings', value: String(countFindings(report)) });
