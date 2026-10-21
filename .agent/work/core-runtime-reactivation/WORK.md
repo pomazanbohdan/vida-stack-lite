@@ -382,6 +382,30 @@ states excluded by earlier guards in the existing fixtures; keep those open in
 vida-capture-gaps-review-v1256.md rather than forge accepted authority or repeat
 expensive setup. No numeric result is inferred from either static review.
 
+### Checked adapter and admission retry packet
+
+Extend two existing inexpensive cases without new engine or Journal setup.
+The Desktop adapter contract accepts a sorted two-project set and refuses
+nonarray, empty, duplicate and reversed project IDs. Reuse the real opaque Host
+capability and services; direct calls to the exported unknown-input validator
+replace unnecessary Reflect.apply wrappers. This proves structural validation,
+not project registration or authorization. The prepared-admission case repeats
+its actual record in the same maintenance generation, then refuses a changed
+request digest. Exact native admission/Host/governance/catalog snapshots remain;
+the existing no-Work restore still refuses before its filesystem callback.
+Both cases arm retention before setup and preserve their default5s bound.
+
+Strict149/configured zero-warning lint and2cases/19assertions pass2.72s overall,
+237.29ms/195.17ms case times, in adapter-admission-v1264-q0OsDC. The bounded blind
+contract review is vida-adapter-admission-review-v1263.md; final candidate review
+vida-adapter-admission-final-review-v1265.md finds no cleanup or boundary issue.
+Refresh the changed Host test pin once; strict122/configured lint0 and the
+existing two-file resource control pass1case/10assertions in346ms:
+remainder-v1266-controls-HH0skP. Changed documentation links/headings pass.
+Current-input numerical confirmation needs one matching complete stage; previous
+accepted numbers remain bound to526ca2e. No production Source, dependency,
+schema, timeout, budget or frozen callable is changed.
+
 ### Next actions and unresolved prerequisites
 
 1. Select the next causal S/B packet from the current8statement/149arm gap list;

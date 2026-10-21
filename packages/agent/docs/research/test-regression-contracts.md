@@ -543,6 +543,20 @@ every producer fence, current-version check and deterministic rebuild fresh.
 
 ### Coordination history and expired recovery
 
+The Desktop adapter's exported unknown-input validator checks project ID shape,
+strict ordering and uniqueness using the actual opaque Host capability and full
+service closure. Keep its two-project positive identity-return oracle and
+nonarray/empty/duplicate/reversed refusals in the existing contract case. This
+is structural validation, not project registration or authorization.
+
+The existing prepared-admission migration fixture repeats the same actual
+recordAdmissionAttempt in its current maintenance generation, then refuses the
+same identity with a changed request digest. Require one exact native admission
+row and unchanged admission/Host/governance/catalog snapshots through both
+paths. Keep the original no-Work restore refusal before the file callback;
+do not create a Journal to use an incompatible row helper. Arm retention before
+setup and preserve the default5s bound. No external consumer effect is tested.
+
 The existing assured ReleaseBatch Host-CAS fixture covers accepted, feedback and
 rejected decisions with distinct native case names. Preserve its actual frozen
 contour and assurance operation; first persist the ready batch, then retain it

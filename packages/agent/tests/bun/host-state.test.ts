@@ -7522,6 +7522,8 @@ test('native recovery review rechecks context and preserves its exact reservatio
   preserveHostFixtureRoot = false;
 });
 test('Codex Desktop adapter contract binds identity, digests, opaque host capability and service closure', () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const deadline = performance.now() + 5_000;
   const contract = {
     schema: 'CodexDesktopAdapterContract/v1',
     issuer: 'codex-desktop',
@@ -7551,22 +7553,25 @@ test('Codex Desktop adapter contract binds identity, digests, opaque host capabi
     },
   } satisfies ReturnType<typeof assertCodexDesktopAdapterContract>;
   expect(assertCodexDesktopAdapterContract(contract)).toBe(contract);
-  expect(() => {
-    Reflect.apply(assertCodexDesktopAdapterContract, undefined, [{ ...contract, host_capability: {} }]);
-  }).toThrow(/opaque SQLite capability/);
-  expect(() => {
-    Reflect.apply(assertCodexDesktopAdapterContract, undefined, [{ ...contract, thread_id: '' }]);
-  }).toThrow(/identity or digest binding/);
-  expect(() => {
-    Reflect.apply(assertCodexDesktopAdapterContract, undefined, [
-      { ...contract, issuer_attestation_digest: 'not-a-digest' },
-    ]);
-  }).toThrow(/identity or digest binding/);
-  expect(() => {
-    Reflect.apply(assertCodexDesktopAdapterContract, undefined, [
-      { ...contract, services: { ...contract.services, cas_writer: null } },
-    ]);
-  }).toThrow(/service closure/);
+  const multipleProjects = { ...contract, project_ids: ['project-a', 'project-b'] };
+  expect(assertCodexDesktopAdapterContract(multipleProjects)).toBe(multipleProjects);
+  for (const projectIds of [null, 'project', [], ['project', 'project'], ['project-b', 'project-a']])
+    expect(() => assertCodexDesktopAdapterContract({ ...contract, project_ids: projectIds })).toThrow(
+      'Desktop adapter identity or digest binding invalid',
+    );
+  expect(() => assertCodexDesktopAdapterContract({ ...contract, host_capability: {} })).toThrow(
+    /opaque SQLite capability/,
+  );
+  expect(() => assertCodexDesktopAdapterContract({ ...contract, thread_id: '' })).toThrow(/identity or digest binding/);
+  expect(() => assertCodexDesktopAdapterContract({ ...contract, issuer_attestation_digest: 'not-a-digest' })).toThrow(
+    /identity or digest binding/,
+  );
+  expect(() =>
+    assertCodexDesktopAdapterContract({ ...contract, services: { ...contract.services, cas_writer: null } }),
+  ).toThrow(/service closure/);
+  expect(contract.project_ids).toEqual(['project']);
+  if (performance.now() >= deadline) throw new Error('Desktop adapter contract fixture exceeded its case deadline');
+  preserveHostFixtureRoot = false;
 });
 test('trusted host composition rejects missing governance before loading project configuration', async () => {
   const launcher = createTestTrustedHostLauncherCapability({
@@ -12185,12 +12190,39 @@ test('consumer migration archives individually bounded governance rows beyond th
 });
 
 test('consumer migration restore refuses a prepared admission even when no WorkState was created', async () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  const deadline = performance.now() + 5_000;
   const migration = maintenanceStore(),
     binding = maintenanceBinding();
   const first = migration.acquireMaintenanceFence(binding);
   migration.consumerMigrationState(first, 'baseline', () => undefined);
   await migration.releaseMaintenanceFence(first);
-  migration.recordAdmissionAttempt('failed-before-work', 1, { minimum_valid_identity: 'fixture' });
+  const request = { minimum_valid_identity: 'fixture' };
+  migration.recordAdmissionAttempt('failed-before-work', 1, request);
+  const rows = () => ({
+    admissions: database
+      .query('SELECT * FROM agent_host_admission_attempt ORDER BY workspace_id,generation,work_id,attempt')
+      .all(),
+    host: database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all(),
+    governance: governanceRows(),
+    schema: database.query('SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY type,name').all(),
+  });
+  const beforeRetry = rows();
+  expect(beforeRetry.admissions).toEqual([
+    {
+      workspace_id: workspace,
+      generation: first.fence.generation,
+      work_id: 'failed-before-work',
+      attempt: 1,
+      request_digest: canonicalJsonDigest(request),
+    },
+  ]);
+  migration.recordAdmissionAttempt('failed-before-work', 1, request);
+  expect(rows()).toEqual(beforeRetry);
+  expect(() =>
+    migration.recordAdmissionAttempt('failed-before-work', 1, { minimum_valid_identity: 'changed' }),
+  ).toThrow('admission attempt retry differs');
+  expect(rows()).toEqual(beforeRetry);
   const second = migration.acquireMaintenanceFence(binding);
   let called = false;
   expect(() =>
@@ -12200,6 +12232,8 @@ test('consumer migration restore refuses a prepared admission even when no WorkS
   ).toThrow(/new admission/);
   expect(called).toBe(false);
   expect(migration.readWorkspaceSnapshot().work).toHaveLength(0);
+  if (performance.now() >= deadline) throw new Error('Admission retry fixture exceeded its case deadline');
+  preserveHostFixtureRoot = false;
 });
 
 test('consumer migration rejects issued unknown journals before baseline filesystem effects', () => {
