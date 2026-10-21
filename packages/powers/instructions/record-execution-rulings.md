@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/executing-plans/SKILL.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Record every ruling in the ledger
@@ -32,7 +32,7 @@ Rule on each conflict a row surfaces with the spec as the binding authority, and
 A plan with no reachable spec gets a ledger note saying so — rulings made without one are provisional.
 The ruling is carried, not remembered: later tasks that touch the same interface read it from the ledger.
 A wrong ruling costs rework your human partner can see and undo; a session parked on a question costs their whole day and buys nothing.
-Before you delete anything, collect every ledger line containing `Ruling:` into your final message under "Rulings I made", in the order you made them, each with what it costs if wrong.
+Before you delete anything, collect every ledger line containing `Ruling:` into your final message under "Rulings I made", in the order you made them, each with what it costs if wrong, and every `minor (deferred)` line under "Deferred minors".
 Both lists are exhaustive.
 Rulings, not stalls.
 Final: Ruling: <finding> — <why the code stands> — <cost if wrong>.

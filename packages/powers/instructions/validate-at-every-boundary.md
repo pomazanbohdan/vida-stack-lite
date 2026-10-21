@@ -22,7 +22,7 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-boundary-discipline/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/rendered-skill/shape.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Validate at every boundary
@@ -35,6 +35,8 @@ Business logic validation ensures that data makes sense for this operation.
 Environment guards prevent dangerous operations in specific contexts.
 Debug instrumentation captures context for forensics.
 Trace the data flow: where the bad value originated and where it is used. Map every checkpoint the data passes through. Add validation at each layer. Test each layer by trying to bypass the previous one.
+
+Apply when wiring validation, error handling, or framework adapters.
 Place validation, type narrowing, and error handling at system boundaries: command-line arguments, configuration files, external APIs, and network protocols.
 Inside the system, trust the types, propagate errors, and do not re-validate.
 Expose domain concepts across the boundary, not the boundary's private representation.

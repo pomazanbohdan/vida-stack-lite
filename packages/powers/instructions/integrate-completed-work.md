@@ -15,11 +15,12 @@ artifact_contract_required_data:
   - environment state
 artifact_contract_verified_by: the full test suite passes after integration
 compatibility_excludes: []
-compatibility_requires: []
+compatibility_requires:
+  - clean-up-integration-workspace
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/finishing-a-development-branch/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Integrate completed work under control
@@ -38,5 +39,5 @@ Do not assume they obviously want it merged.
 Execute only the chosen option.
 If tests fail on the merged result, stop and leave the worktree and branch in place.
 Nothing has been pushed, so the merge is local and recoverable.
-Once the merged result is green, clean up the worktree and delete the branch.
+Once the merged result is green, delete the branch.
 A failing merged result stops everything.

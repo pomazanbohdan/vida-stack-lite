@@ -21,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/autonomous-development-loops.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-plan.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Stop and escalate when the task is over your head
@@ -45,6 +45,8 @@ On blocked completion, the workflow records the final status and a blocking cond
 Handle `blocked` as a routing signal, not just a failure signal
 A blocked plan halts every later dispatch of its ticket.
 In practice, `blocked` usually means the workflow ran into a situation where unattended execution would be unsafe. That is often the point where a higher-level orchestrator, another workflow, or a human should take over.
+- **Rules 1-3** (bugs, missing critical, blockers): auto-fix, test, verify, track as deviations
+- **Rule 4** (architectural changes): STOP, present decision to user, await approval
 **Scope boundary**: do not auto-fix pre-existing issues unrelated to current task
 **Fix attempt limit**: max 3 retries per deviation before escalating
 **Priority**: Rule 4 (STOP) > Rules 1-3 (auto) > unsure → Rule 4

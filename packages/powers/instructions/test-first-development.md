@@ -23,7 +23,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-phase.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/execute-mvp-tdd.md
 status: active
-revision: 5
+revision: 6
 ---
 
 # Write the test before the implementation
@@ -33,7 +33,14 @@ Violating the letter of the rules is violating the spirit of the rules.
 Use it for new features, bug fixes, refactoring, and behavior changes.
 Ask the human partner before skipping it for a throwaway prototype, generated code, or a configuration file.
 The iron law: no production code without a failing test first.
-Wrote code before the test? Delete it. Start over. Do not keep it as reference, do not adapt it while writing tests, and do not look at it.
+Write code before the test? Delete it.
+Start over.
+No exceptions.
+Don't keep it as "reference".
+Don't "adapt" it while writing tests.
+Don't look at it.
+Delete means delete.
+Implement fresh from tests. Period.
 Red: write one minimal test showing what should happen. One behavior, a clear name, and real code, with mocks only when unavoidable.
 Verify red: run the test and confirm that it fails, not errors, for the expected reason, because the feature is missing rather than because of a typo.
 If the test passes immediately, it tests existing behavior. Fix the test.
@@ -47,13 +54,21 @@ When a failing test is impractical because the path needs broad harness setup, b
 Prefer no new test over a bad test. A bad test tests mostly mocks, encodes implementation details, depends on timing or unrelated global state, needs expensive infrastructure for a small fix, or would be deleted right after proving the fix.
 Do not change tests to match a wrong implementation. Do not weaken existing assertions unless the expected behavior genuinely changed and the reason is clear.
 Report the evidence, not just the outcome: the failing-before check and its failure, the passing-after run, and any nearby validation.
-Task-scoped enforcement runs inside plan execution (immediately before each implementation step)
-TDD GATE TRIPPED: missing RED commit for
-Pure doc-only / config-only / test-only tasks return `is_behavior_adding=false` and are exempt.
-refuse to mark the phase complete and present
-Phase blocked:
-TDD plan(s) violate the RED→GREEN gate sequence under TDD.
-self-attestation cannot substitute for machine validation
+Code before test is a red flag.
+Test after implementation is a red flag.
+Test passes immediately is a red flag.
+Can't explain why the test failed is a red flag.
+Rationalizing "just this once" is a red flag.
+All of these mean: delete code and start over with TDD.
+Task-scoped enforcement runs inside plan execution, immediately before each implementation step.
+For each task gated by TDD, the executor MUST verify (before running the implementation step):
+- A failing-test commit exists.
+- The test was actually red — INTENTIONALLY.
+- No implementation commit yet.
+If any check fails, the gate trips.
+An `INVALID_RED` verdict, unsupported format, or failed semantic assessment trips this gate; self-attestation cannot substitute for machine validation.
 A `RED:` prefix or `(RED)` tag in the commit message is not evidence.
-Halt before running the task's implementation step.
+Pure documentation, configuration, or test-only tasks are skipped by this gate even when both modes are active.
+The executor MUST halt before running the task's implementation step.
 Do NOT roll back any prior commits in the same wave.
+Under TDD mode, if any TDD plan is missing a RED or GREEN commit, the executor MUST refuse to mark the phase complete.

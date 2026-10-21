@@ -21,21 +21,20 @@ compatibility_requires:
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/finishing-a-development-branch/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Show the owner the options for finishing the work
 Check the tests before showing the menu.
 Report the failures and stop: the menu comes after a green suite.
 Detect the environment: normal repo, named-branch worktree, or detached HEAD.
-A normal repo gets the standard three options.
-A named-branch worktree gets the standard three options.
-A detached HEAD gets two options, with no merge.
-Present exactly: merge back locally.
-Present exactly: push and create a pull request.
-Present exactly: keep the branch as-is, to handle later.
-Present the menu exactly as written, concise, with every option coming from the list.
+**Normal repo and named-branch worktree — present exactly these 3 options:**
+1. Merge back to <base-branch> locally
+2. Push and create a Pull Request
+3. Keep the branch as-is (I'll handle it later)
+**Detached HEAD — present exactly these 2 options:**
+1. Push as new branch and create a Pull Request
+2. Keep as-is (I'll handle it later)
+Present the menu exactly as written — concise, with every option coming from the list above.
 Discarding the work happens only in response to an explicit request.
-Wait for their answer.
-The integration decision is theirs.
-Integration is your human partner's decision. Present the menu and wait.
+Wait for their answer; the integration decision is theirs.

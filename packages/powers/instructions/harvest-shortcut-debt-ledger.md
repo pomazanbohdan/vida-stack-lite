@@ -17,13 +17,14 @@ artifact_contract_required_data:
   - count with no trigger
 artifact_contract_verified_by: every marker appears once with its ceiling and upgrade trigger
 compatibility_excludes: []
-compatibility_requires: []
+compatibility_requires:
+  - treat-declared-shortcut-as-decision
 provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.openclaw/skills/ponytail-debt/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.opencode/command/ponytail-debt.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-debt/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Harvest deferred simplifications into one debt ledger
@@ -36,9 +37,5 @@ The comment prefix keeps prose that merely mentions the convention out of the le
 Skip hits that are not a deferral, like a note about a keyboard shortcut.
 One row per marker, grouped by file.
 A row carries the location, what was simplified, the ceiling named, and the upgrade trigger.
-Flag the rot risk: any marker comment that names no upgrade path or trigger gets a `no-trigger` tag.
-Those are the ones that silently rot.
 End with the count of markers and how many have no trigger.
 Nothing found: no shortcut debt, clean ledger.
-Reads and reports only, changes nothing.
-To persist it, ask and it writes the ledger to a file.

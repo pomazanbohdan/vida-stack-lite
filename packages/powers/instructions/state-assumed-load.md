@@ -21,17 +21,14 @@ compatibility_requires: []
 provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.openclaw/skills/ponytail-audit/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.openclaw/skills/ponytail-review/SKILL.md
-  - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.opencode/command/ponytail-audit.md
-  - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.opencode/command/ponytail-review.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-audit/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # State the load you assumed
 Find the expected load in the repo (README, deploy config): one person running a script, or many users and processes at once.
-For an audit, find the expected load the same way: one person running a script, or many users and processes at once.
 Judge scale against that, and say which load you assumed.
 Start the report with the load you assumed.
 A break at the expected load is a must fix.

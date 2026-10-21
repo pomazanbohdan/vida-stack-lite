@@ -28,9 +28,8 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.opencode/command/ponytail-review.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-audit/SKILL.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/SKILL.md
 status: active
-revision: 6
+revision: 7
 ---
 
 # Present findings by impact in a fixed shape
@@ -49,5 +48,3 @@ What this is: what the code is and what it does.
 Problem: the input or situation that leads to a wrong result.
 Fix: the smallest fix that works.
 If we skip it: what goes wrong when the finding is left.
-
-Surface findings tiered, never dumped. Lead with a one-sentence gate verdict, then walk Critical + Important findings; Minor findings roll into a single tail ("plus N more in {file}"). Read the full review file only when the user drills into a specific finding. Per finding: autofix, discuss, defer to open items, or ignore.

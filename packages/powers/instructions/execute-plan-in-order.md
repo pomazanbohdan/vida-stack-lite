@@ -23,7 +23,7 @@ provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/implement/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=.claude/commands/build.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Execute the plan task by task in order
@@ -45,9 +45,4 @@ Four things stop you, and only these: an irreversible or destructive operation; 
 For those, stop and ask.
 If the user passes a ticket reference, fetch it from the issue tracker and state its title before starting. If the reference is ambiguous, ask.
 Call the test-driven loop where possible, at pre-agreed seams. Run typechecking regularly, single test files regularly, and the full test suite once at the end. Once done, run the code review to review the work. Commit your work to the current branch.
-Stop and ask the user (do not push through) when:
-- a test can't be made to pass or the build breaks without an obvious fix
-- the spec is ambiguous, or a task needs a decision the spec doesn't cover
-- a task is high-risk or irreversible — auth/permission changes, destructive data migrations, payments, deletions, deploys, anything touching secrets, **or anything you can't undo with `git revert`**
-- get explicit sign-off before continuing
 Summarize at the end: tasks completed, tests added, commits made, and anything skipped, flagged, or left for the user.

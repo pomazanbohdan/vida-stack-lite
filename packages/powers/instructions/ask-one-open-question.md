@@ -19,10 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/SKILL.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/in-chat-techniques.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/explore.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Ask one open question at a time
@@ -48,7 +47,6 @@ Do not read the territory out as questions.
 One prompt per message while in dialogue; no multiple-choice menus.
 Don't stack questions into a wall or hand a menu that invites lazy picking — both pull the user out of generating.
 The only exceptions are the two up-front *process* choices (the stance, and the technique flow): *how* to run is theirs to pick; *what* to ideate never is.
-Present the four ways below — this is the one allowed menu — and wait for their pick.
 Questions should probe: constraints, tradeoffs, users, scope, dependencies, risks
 Listen for signals: "or" / "versus" / "tradeoff" indicate competing priorities worth exploring
 Reflect back what you hear to confirm understanding before moving forward

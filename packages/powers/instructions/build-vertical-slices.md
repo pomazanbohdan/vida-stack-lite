@@ -22,7 +22,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/performance-optimization/SKILL.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/planner-mvp-mode.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Build vertical slices
@@ -47,8 +47,6 @@ Slice 4: Delete a task (delete + API + UI + confirmation)
     → Tests pass, full CRUD complete
 ```
 Each slice delivers working end-to-end functionality.
-Instead of building all the database, then all the API, then all the UI — build one complete feature path at a time:
-Each vertical slice delivers working, testable functionality.
 
 **Core Rule**
 **Decompose by feature slice, not by technical layer.** Every task must move the user-facing capability forward. After each task, a real user can click through more of the feature than they could before.

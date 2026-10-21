@@ -21,7 +21,7 @@ provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-03-implement.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Keep a per-plan ledger as the recovery map
@@ -29,7 +29,7 @@ Each plan owns a workspace, home to every artifact for THIS plan: ledger, briefs
 Create the ledger with its identity as the first line: `# SDD ledger — plan: <plan file path>`.
 Check for this plan's ledger at `<workspace>/progress.md`.
 A ledger whose first line names a different plan file is another plan's progress: leave it in place and start your own, fresh.
-Record BASE (`git rev-parse HEAD`) before dispatching — the review package and fix-round diffs need it.
+Record BASE (`git rev-parse HEAD`) before dispatching — the review package and fix-round diffs need it. If the recorded base already holds a value (resumed run), preserve it — never overwrite it.
 Append the completion line to the ledger in the same message as your other bookkeeping: `Task <N>: complete (commits <base7>..<head7>, review clean)`.
 After each round, append to the ledger: `Task <N>: fix round <R>/5 (<X> addressed, <Y> open — <finding one-liners>; commits <a7>..<b7>)`.
 Record Minor findings in the progress ledger as you go: `Task <N>: minor (deferred): <one-liner>`.
@@ -40,9 +40,3 @@ Sibling directories belong to other plans; leave them alone.
 Delete this plan's workspace only when the final review is clean and its fixes are committed — the git history is the record now.
 Before you delete anything, collect every ledger line containing `Ruling:` into your final message.
 A ruling that dies with the workspace was a decision made in secret.
-
-Whenever this workflow captures or records a version-control revision, obtain the full canonical identifier directly from version control and preserve it verbatim.
-
-Capture the baseline revision (current HEAD, or `NO_VCS` if version control is unavailable) before making any changes.
-
-If the recorded base already holds a value (resumed run), preserve it — never overwrite it.

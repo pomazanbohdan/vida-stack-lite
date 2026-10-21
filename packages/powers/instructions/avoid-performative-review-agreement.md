@@ -1,7 +1,7 @@
 ---
 instruction_id: avoid-performative-review-agreement
 title: "Answer review feedback with work, not praise"
-summary: "Verify each point against the codebase before implementing, then answer with a change, a technical argument, or a specific question."
+summary: "Answer correct feedback with a short factual fix, and push back with technical reasoning instead of praise or apology."
 capability_tags:
   - apply-review-feedback
 pattern_tags:
@@ -15,21 +15,15 @@ artifact_contract_required_data:
   - evidence
 artifact_contract_verified_by: "each response states a change or evidence, not praise"
 compatibility_excludes: []
-compatibility_requires: []
+compatibility_requires:
+  - apply-code-review
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/receiving-code-review/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Answer review feedback with work, not praise
-Code review requires technical evaluation, not emotional performance.
-Verify before implementing. Ask before assuming. Technical correctness over social comfort.
-Read the complete feedback without reacting.
-Restate the requirement in your own words, or ask.
-Check the feedback against codebase reality.
-Decide whether it is technically sound for THIS codebase.
-Respond with a technical acknowledgment or reasoned pushback.
 Never say "You're absolutely right!"
 Never say "Great point!" or "Excellent feedback!" — that is performative.
 Never say "Let me implement that now" before verification.

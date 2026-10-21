@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 3496,
+  "revision": 3525,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-21T12:18:05.435Z",
+  "updated_at": "2026-10-21T14:56:51.369Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -829,7 +829,7 @@
     {
       "instruction_id": "apply-code-review",
       "path": "instructions/apply-code-review.md",
-      "sha256": "b6fc6d05bafed2a4c90a8deb4c7867b6a68ccf75c335b197e3bea45b6067aebc"
+      "sha256": "4f8b48174942dc146bfcded316260d95c667b2c042ba1c892b7187dee066e770"
     },
     {
       "instruction_id": "apply-the-clear-fixes-and-surface-only-what-needs-the-user",
@@ -934,7 +934,7 @@
     {
       "instruction_id": "ask-one-open-question",
       "path": "instructions/ask-one-open-question.md",
-      "sha256": "352bc1c1148b8a1877acea965378731294bb34d19dfa69e47d32e2ea0cda7072"
+      "sha256": "224aea0ad01fd64a55d8f75a5a21b073eb6b627abc6cbab4ff28bbfbd7c3cf1a"
     },
     {
       "instruction_id": "ask-one-question-with-a-guess",
@@ -1219,7 +1219,7 @@
     {
       "instruction_id": "automate-enforceable-rules",
       "path": "instructions/automate-enforceable-rules.md",
-      "sha256": "10fd057fbd6236a3d0342ff5734e68ec66fa56669d0179a8b5b7cfdb6089114f"
+      "sha256": "7f0545c3bc2c3e55b0039cfa57058cedc98c56c109cd5f4fd80efde7e6205e4e"
     },
     {
       "instruction_id": "automate-everything-the-agent-can-automate-before-a-checkpoint",
@@ -1239,7 +1239,7 @@
     {
       "instruction_id": "avoid-performative-review-agreement",
       "path": "instructions/avoid-performative-review-agreement.md",
-      "sha256": "935dafeab3dfd3ffc834e61f279686878579b5efb0a8eeb4943eac8b7b4fd3ff"
+      "sha256": "67f3d5a3d03f4b91355256c509238af252bd1224f249a253ac677091420989fc"
     },
     {
       "instruction_id": "avoid-the-generic-ai-look",
@@ -1534,7 +1534,7 @@
     {
       "instruction_id": "build-vertical-slices",
       "path": "instructions/build-vertical-slices.md",
-      "sha256": "2bf328647be38238c3510e59de831433b1ef5ef6fe63667ffa9ac56684f43674"
+      "sha256": "68405355f184ce1b13e2e52466c2c3b2f11791bf02737119b8929fac75c241f1"
     },
     {
       "instruction_id": "cache-only-what-is-expensive-and-re-read",
@@ -2099,12 +2099,12 @@
     {
       "instruction_id": "classify-and-state-review-verdict",
       "path": "instructions/classify-and-state-review-verdict.md",
-      "sha256": "7abe314cfa21a43db862b05f362045071a282ee9586a20b8896803937a70149d"
+      "sha256": "b685b7d788205ef999bed70e590bca783278689dab9bd68957a46f3f48070767"
     },
     {
       "instruction_id": "classify-each-changed-file-by-test-tier",
       "path": "instructions/classify-each-changed-file-by-test-tier.md",
-      "sha256": "1250fd58bf3073ebc7dee7940ee5aa19211c246a8ba2f87968128375b1c03d4a"
+      "sha256": "91a2a8726b401bab4171700e5e4cffe8ca94b9599bc5496553ae5f3919bb6541"
     },
     {
       "instruction_id": "classify-each-commit-by-what-it-touches",
@@ -2829,7 +2829,7 @@
     {
       "instruction_id": "delegate-subagent-work",
       "path": "instructions/delegate-subagent-work.md",
-      "sha256": "30fd8770aaf6c22804c7e982c34ffc5f06db5b791fb08103018059a90e97f461"
+      "sha256": "65f33d909ab3577dba7e6c3d3a0a7ee97e97db79c976f4aeadf2c1db66135880"
     },
     {
       "instruction_id": "delegate-the-derivation-without-delegating-the-verdict",
@@ -3519,7 +3519,7 @@
     {
       "instruction_id": "escalate-blocked-work",
       "path": "instructions/escalate-blocked-work.md",
-      "sha256": "9c12a30e293b06129d8b7b531391e4d2f77cbf2183e79734e4fb5631be932356"
+      "sha256": "cfaa8f0daa5dd526b0c9b2f004942f7f96e0adf657dd927350befe33ea5e3c29"
     },
     {
       "instruction_id": "escalate-only-what-the-agent-cannot-do",
@@ -3624,7 +3624,7 @@
     {
       "instruction_id": "execute-plan-in-order",
       "path": "instructions/execute-plan-in-order.md",
-      "sha256": "d2ed584edf6014f7178cadbe2c10d8cb591f32bc057a8c2db810613099cd917f"
+      "sha256": "1ba7a421af5c0de5a8434a40d7940e88f002ceea188d880c1d71b5a8bb626c11"
     },
     {
       "instruction_id": "exercise-the-changed-flows-end-to-end",
@@ -4004,7 +4004,7 @@
     {
       "instruction_id": "format-quality-findings",
       "path": "instructions/format-quality-findings.md",
-      "sha256": "227a346e9124d9be965b9477c7c5c3cc8bd71ff18f3a08438b9f98c1b102ed77"
+      "sha256": "be308222af5f2d8082ff8e58d96c047d295946249644ad91b0ab99f99c32f89a"
     },
     {
       "instruction_id": "forward-only-the-arguments-the-target-accepts",
@@ -4529,7 +4529,7 @@
     {
       "instruction_id": "harvest-shortcut-debt-ledger",
       "path": "instructions/harvest-shortcut-debt-ledger.md",
-      "sha256": "aec53fcdbbf453498bac142d5997cdc7c187d4e885eb7e97fd15f9711cdfe4c8"
+      "sha256": "49401f58ed8acd972eb4facf3e934d8ba219c0d52c645acfb26eeaa58c4c9412"
     },
     {
       "instruction_id": "hash-passwords-with-a-slow-hash",
@@ -4714,7 +4714,7 @@
     {
       "instruction_id": "integrate-completed-work",
       "path": "instructions/integrate-completed-work.md",
-      "sha256": "f9f3a45eaf6409b9adb80a4f22c015d394202080c07c9583f527431fbcf61197"
+      "sha256": "8e60ba71111d1aaf0efe0a868fea65c57f2adcbd0e82e7a1c77ac66376aff0ce"
     },
     {
       "instruction_id": "inventory-the-evidence-before-you-analyse-it",
@@ -5094,7 +5094,7 @@
     {
       "instruction_id": "keep-review-read-only",
       "path": "instructions/keep-review-read-only.md",
-      "sha256": "10ba15f89c862c2493e9a4ef6ae5a9a195e8cd2ed4b4d3f84b7b129854693909"
+      "sha256": "34333c85108b930e2c2cae9592845663d7af0d260b4036eb2f960c9c7dd298a3"
     },
     {
       "instruction_id": "keep-review-sections-unique-so-outputs-do-not-false-merge",
@@ -5919,12 +5919,12 @@
     {
       "instruction_id": "maintain-plan-ledger",
       "path": "instructions/maintain-plan-ledger.md",
-      "sha256": "9d3378e571cc4ec4eff72a988cf5cb3dae89297e1f99734106582cac453a3e35"
+      "sha256": "1943cdb5a19dc9c638edc93e97eff20e340bd59edc87786ab4de32c87627e2bc"
     },
     {
       "instruction_id": "maintain-verification-harness-against-drift",
       "path": "instructions/maintain-verification-harness-against-drift.md",
-      "sha256": "4a2473669f0ddee2ed3adcaca13f0d1567fdcfbdd0d6ba093a724401040376bf"
+      "sha256": "4efe5d735f65b7be2ce562580a96c769f892ad65726276ef95267b3db898a040"
     },
     {
       "instruction_id": "make-a-checkpoint-a-verification-or-a-decision",
@@ -7304,7 +7304,7 @@
     {
       "instruction_id": "optimize-guidance-triggers",
       "path": "instructions/optimize-guidance-triggers.md",
-      "sha256": "6e84837fad8a7f686a36b3ae3bdf309ea130c27633c66401f4ab3b096a4388c4"
+      "sha256": "a2add3a8a117ad46eab5a8b3af755d4ba42d1ea822ad7a4ee7644d4e3e17f5a1"
     },
     {
       "instruction_id": "order-the-aggregate-by-selection-not-by-completion",
@@ -7524,7 +7524,7 @@
     {
       "instruction_id": "plan-a-feature-unless-a-constraint-blocks-it",
       "path": "instructions/plan-a-feature-unless-a-constraint-blocks-it.md",
-      "sha256": "f6dcccc049c1b9f41148b90c2a2ca784dd1c5052a02ca5cf08d3e9a1ad95488f"
+      "sha256": "632c1fdcb7582eb121b6c3af00d4f7e0f5cd551f1d26caa629cbfd7a78243118"
     },
     {
       "instruction_id": "plan-for-an-inherited-codebase-without-a-documentation-pass",
@@ -7609,12 +7609,12 @@
     {
       "instruction_id": "present-impact-without-invented-baseline",
       "path": "instructions/present-impact-without-invented-baseline.md",
-      "sha256": "c39d0e65d647348fc33c4c404d2025ed1cfbff16f530eea81c01eca6f06e6a14"
+      "sha256": "fd8ce4116dcf3dbbe3920807e6db1501c81d562d7a4880e1a2fddd30b629a4ac"
     },
     {
       "instruction_id": "present-integration-options",
       "path": "instructions/present-integration-options.md",
-      "sha256": "f2622b2a89ba173d64f0649b0b1d2ee1b30b8217c4f24b9966735116c21dd817"
+      "sha256": "beda3206a05bdb060f9caddfc716a3b5cda5d809fda048a697837185a1fc21a8"
     },
     {
       "instruction_id": "present-the-fewest-options-and-list-every-action",
@@ -8009,7 +8009,7 @@
     {
       "instruction_id": "rate-the-decision-by-the-cost-of-undoing-it",
       "path": "instructions/rate-the-decision-by-the-cost-of-undoing-it.md",
-      "sha256": "07d79f9c8393c531c5e52c36fc1f909f26763fbf6577c6ea8b00c06b70ba34c5"
+      "sha256": "e3732c6c32b6195c8c4b78c792de6ba8ac8d664511e7b36b98a952b85fc5bdd3"
     },
     {
       "instruction_id": "rate-the-reversibility-of-a-decision",
@@ -8389,7 +8389,7 @@
     {
       "instruction_id": "record-execution-rulings",
       "path": "instructions/record-execution-rulings.md",
-      "sha256": "c042008c7d0ed7328a253948a5b78411eb88453a7ca4866bde1b3ff0c9cab7c7"
+      "sha256": "348c4a3e3a06aa99bb9e65392061ea089ef8dd054a5daaac8c4878ad05e097ef"
     },
     {
       "instruction_id": "record-learning-when-understanding-is-shown",
@@ -10664,7 +10664,7 @@
     {
       "instruction_id": "state-assumed-load",
       "path": "instructions/state-assumed-load.md",
-      "sha256": "5b01acebb6b28f0f4aae63183513b801d977ac128a2010d7923a414015c0999b"
+      "sha256": "295facdeb5779ec9da54a52adc12b08405b5063443b0d81968ab4b1a6c8c733a"
     },
     {
       "instruction_id": "state-complexity-as-impact-surface-and-risk",
@@ -11214,7 +11214,7 @@
     {
       "instruction_id": "test-first-development",
       "path": "instructions/test-first-development.md",
-      "sha256": "618ab5c7aa282cf7b5bcbd568df0c515ce26e1890d57a850e06c3e776a9ef48c"
+      "sha256": "168bea2dbaf75b44050aedfffc6b3fced86564782e2fcbc9be058f8207fba058"
     },
     {
       "instruction_id": "test-for-durable-differentiation",
@@ -11849,7 +11849,7 @@
     {
       "instruction_id": "validate-at-every-boundary",
       "path": "instructions/validate-at-every-boundary.md",
-      "sha256": "20cc5f08a16bfacd7c4ec967222fc0dba5e37035bee6f891f4d3d5d645d53f19"
+      "sha256": "0c7df46729c699690c5a282a08cc0fc0ee384af01e15e13c2611224848815859"
     },
     {
       "instruction_id": "validate-at-system-boundaries",
@@ -11934,7 +11934,7 @@
     {
       "instruction_id": "verify-before-completion",
       "path": "instructions/verify-before-completion.md",
-      "sha256": "c39ef86534f36768d68bf4d895e696065187d9b6e997f9f7be3a2fb341f7abd4"
+      "sha256": "597b1a9b91ee459ea99c1b81ea3aaece4b5b6f4d97c13b979acd1c24f1b73c0a"
     },
     {
       "instruction_id": "verify-behaviour-at-runtime-not-only-at-compile",
@@ -12369,7 +12369,7 @@
     {
       "instruction_id": "write-directive-rules",
       "path": "instructions/write-directive-rules.md",
-      "sha256": "e846ce37707757bd92cd8d73849d0bb2d6baa1fb9e92af7d554ded67d711902a"
+      "sha256": "c85e6ee3e4d0b5cb042ed0625063eee445e1113d54aad2d3cdd604aec997183d"
     },
     {
       "instruction_id": "write-each-requirement-as-current-target-acceptance",
@@ -12414,7 +12414,7 @@
     {
       "instruction_id": "write-implementation-plan",
       "path": "instructions/write-implementation-plan.md",
-      "sha256": "53873262f9c8d7ff82ad27b76991fbf9ccfda56e5644ab308e94b95ddf7abdf8"
+      "sha256": "e49119090ad8cdded5818096fdfce03739796e4f83eea5e634ef12444d3cbaa4"
     },
     {
       "instruction_id": "write-machine-parseable-intel-with-a-file-path-on-every-claim",
@@ -12474,7 +12474,7 @@
     {
       "instruction_id": "write-report-in-plain-language",
       "path": "instructions/write-report-in-plain-language.md",
-      "sha256": "39b238279856a6e9b8e2890631836c9743f73fc41a6862f27a45daf1c95391be"
+      "sha256": "2385d268320df9968eaa358e79935f96f652dc0a74c1ff7b086a8480eb64e2d3"
     },
     {
       "instruction_id": "write-root-relative-paths-in-the-plan-body",

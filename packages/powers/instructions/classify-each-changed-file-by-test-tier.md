@@ -13,13 +13,13 @@ artifact_contract_required_data:
   - the class of each file
   - the reason for the class
   - the confirmation of the user
-artifact_contract_verified_by: every changed file carries a class that was confirmed by reading the file
+artifact_contract_verified_by: every changed file carries a class that was confirmed by reading the file and the classification was presented to the user and approved before any test was written
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/add-tests.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Classify each changed file by test tier
@@ -53,3 +53,9 @@ Migrations: database migrations, schema changes
 Simple CRUD: basic create/read/update/delete with no business logic
 Type definitions: records, DTOs, interfaces with no logic
 Read each file to verify classification. Don't classify based on filename alone.
+Present the classification to the user for confirmation before proceeding:
+- "Approve and generate test plan"
+- "Adjust classification (I'll specify changes)"
+- "Cancel"
+If user selects "Adjust classification": apply their changes and re-present.
+If user selects "Cancel": exit gracefully.

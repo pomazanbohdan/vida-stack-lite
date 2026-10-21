@@ -23,12 +23,11 @@ provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/writing-skills/anthropic-best-practices.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/writing-for-agents/SKILL.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-toolsmith/help/craft-description.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/canon.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/lenses/lens-trigger.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/theory-of-project-context.md
 status: active
-revision: 4
+revision: 5
 ---
 
 # Describe triggering conditions in the guidance
@@ -56,4 +55,3 @@ Nothing on what it does before the `Use when`, or first person ("I help you"): M
 Procedure in the description: steps or flow the body should own. Minor; the model can skip the body and improvise.
 "When to use" text in the body: an overview saying when the skill applies, trigger phrases under a heading. Minor; the model never sees it when choosing.
 Pointers out of it must name a trigger the agent can observe — a path, a file type, a concrete task — never one it must judge.
-In a test over a 709-page wiki, agents skipped the index and guessed page paths from the question instead.

@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4825,
-  "updated_at": "2026-10-21T12:18:47.547Z",
+  "revision": 4829,
+  "updated_at": "2026-10-21T14:56:51.337Z",
   "donors": {
     "superpowers": {
       "source_revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
@@ -2575,7 +2575,8 @@
             "size-the-connection-pool-under-the-ceiling",
             "split-the-bundle-and-lazy-load-heavy-features",
             "start-from-the-symptom-to-choose-the-measurement",
-            "state-one-invalidation-strategy-and-the-staleness-window"
+            "state-one-invalidation-strategy-and-the-staleness-window",
+            "build-vertical-slices"
           ]
         },
         "skills/deprecation-and-migration/SKILL.md": {
@@ -2982,7 +2983,8 @@
             "write-the-spec-with-the-core-areas",
             "reframe-vague-requirements-as-success-criteria",
             "stop-after-saving-the-spec",
-            "keep-the-spec-current"
+            "keep-the-spec-current",
+            "write-implementation-plan"
           ]
         },
         "references/definition-of-done.md": {
@@ -3601,7 +3603,8 @@
             "re-check-a-research-claim-against-the-current-code",
             "score-the-risk-by-the-impact-if-the-change-is-wrong",
             "check-the-plan-against-the-readiness-standard",
-            "annotate-the-code-map-with-what-to-reuse-and-what-not-to-change"
+            "annotate-the-code-map-with-what-to-reuse-and-what-not-to-change",
+            "write-implementation-plan"
           ]
         },
         "skills/bmad-build-auto/step-04-review.md": {
@@ -4961,7 +4964,8 @@
             "keep-acceptance-criteria-out-of-the-matrix",
             "write-acceptance-criteria-as-given-when-then",
             "keep-the-implementation-notes-append-only",
-            "record-the-amendment-with-its-trigger-and-its-keep-instructions"
+            "record-the-amendment-with-its-trigger-and-its-keep-instructions",
+            "write-implementation-plan"
           ]
         },
         "skills/bmad-build-auto/review-prompts/verification-gap.md": {
@@ -7843,7 +7847,8 @@
             "constrain-the-filler-to-the-tests",
             "audit-the-behaviour-matrix-against-the-tests",
             "make-operations-idempotent",
-            "commit-each-verified-increment"
+            "commit-each-verified-increment",
+            "delegate-subagent-work"
           ]
         },
         "gsd-core/workflows/verify-work.md": {
@@ -8097,12 +8102,9 @@
           ]
         },
         "gsd-core/references/execute-mvp-tdd.md": {
-          "status": "merged",
+          "status": "converted",
           "instruction_ids": [
             "test-first-development"
-          ],
-          "contributed_sources": [
-            "gsd-core:gsd-core/references/execute-mvp-tdd.md"
           ]
         },
         "gsd-core/references/execute-phase-between-wave-reset.md": {
@@ -8386,14 +8388,11 @@
           ]
         },
         "gsd-core/references/planner-mvp-mode.md": {
-          "status": "merged",
+          "status": "split",
           "instruction_ids": [
             "build-vertical-slices",
             "record-the-deferred-scope-so-later-phases-do-not-re-litigate-it",
             "require-each-task-to-move-the-user-facing-capability-forward"
-          ],
-          "contributed_sources": [
-            "gsd-core/references/planner-mvp-mode.md"
           ]
         },
         "gsd-core/references/planner-preconditions.md": {

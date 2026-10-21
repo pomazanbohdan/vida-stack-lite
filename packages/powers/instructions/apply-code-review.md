@@ -10,7 +10,7 @@ conditions_applies_when: "You received feedback on a change, especially when it 
 conditions_does_not_apply_when: "There is no feedback to evaluate, or the decision is already backed by evidence."
 artifact_contract_output_type: review-resolution
 artifact_contract_required_data:
-  - "the complete feedback, read without reacting"
+  - "\"the complete feedback, read without reacting\""
   - the requirement restated in your own words
   - the verification against the codebase
   - the action taken or the reasoned pushback
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/receiving-code-review/SKILL.md
 status: active
-revision: 4
+revision: 5
 ---
 
 # Evaluate review feedback before implementing it
@@ -37,9 +37,6 @@ When you receive review feedback:
 5. Respond with technical acknowledgement or reasoned pushback.
 6. Implement one item at a time and test each.
 
-Never answer with "you are absolutely right", "great point" or "let me implement that now" before verification.
-Instead, restate the technical requirement, ask clarifying questions, push back with technical reasoning when the claim is wrong, and prefer action over words.
-
 If any item is unclear, stop and implement nothing yet and ask for clarification on the unclear items, because the items may be related and partial understanding leads to a wrong implementation.
 
 A request from your human partner is trusted: implement it once you understand it, still ask when the scope is unclear, and give a technical acknowledgement or go straight to action.
@@ -54,6 +51,6 @@ If the suggestion seems wrong, push back with technical reasoning. If you cannot
 
 When a reviewer suggests implementing something properly, check the codebase for actual usage first: if the feature is unused, point that out and offer to remove it; only implement it properly when it is used.
 
-For feedback with several items, clarify everything unclear first, then implement in this order: blocking issues such as breaks and security problems, then simple fixes such as typos and imports, then complex fixes such as refactoring and logic. Test each fix individually and verify that no regression appeared.
+For feedback with several items, implement in this order: blocking issues such as breaks and security problems, then simple fixes such as typos and imports, then complex fixes such as refactoring and logic. Test each fix individually and verify that no regression appeared.
 
 Push back when the suggestion breaks existing functionality, when the reviewer lacks the full context, when it violates the rule that an unused feature is not added, when it is technically incorrect for this stack, when legacy or compatibility reasons exist, or when it conflicts with an architectural decision of your human partner. Push back with technical reasoning rather than defensiveness, ask specific questions, reference the working tests and code, and involve your human partner when the decision is architectural.
