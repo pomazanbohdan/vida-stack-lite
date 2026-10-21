@@ -205,6 +205,41 @@ takes4152.47ms in the complete stage. Original earlier measurements stay bound
 to their own Source and image. SDK formation is build-only; normal commit/push
 and hooks pass. No second numeric producer or repeat suite is used.
 
+### Checked archive-reader and malformed-context packet
+
+The existing failed-prewriter transition fixture now reads its actual archived
+report, refuses a foreign issue, and returns null for an explicitly absent
+action and attempt. Exact Host/Journal/full archive rows and original continuation
+payload remain. No second fixture, recovery producer or deadline is added.
+The existing terminal generation repair CAS loop also inspects a malformed
+non-null corrective execution context. Its schema refuses before planning;
+exact Host/Journal/governance/schema and transaction state remain, and original
+Journal bytes are conditionally restored with primary/cleanup error custody.
+This refusal supplies no accepted authority or positive corrective-context proof.
+
+The failed-wave case passes83assertions in3.26s overall,1743.29ms case time:
+failed-archive-v1235-0hZ2f7. After the terminal-case-only change, strict149 and
+configured zero-warning lint pass; that exact terminal case passes50assertions
+in8.53s overall,6070.98ms under its unchanged20s bound:
+archive-repair-v1236-YvCSpx. The unchanged failed-wave case is not repeated.
+No production Source, schema, fixture setup or shared helper changes.
+
+The archive review is vida-failed-archive-reader-review-v1233.md. Its initial
+read raced Root integration; the corrected report distinguishes uncommitted
+working test bytes from the old measured map, without a false evidence mismatch.
+For subsequent proposal-only readers, pass the existing immutable image path
+and commit explicitly; review lanes name the current integrated patch instead.
+A separate proposal to inspect immediately after corrective authorization was
+rejected before runtime: its active claims violate the earlier repair guard.
+The malformed-context control uses the already released terminal fixture.
+The corrected context review, vida-repair-corrective-context-review-v1234.md,
+also finds the active authorization fixture has a different engine run ID from
+Host. Valid corrective-context repair admission remains a separate fixture GAP;
+the negative decoder control does not claim it. The exact changed test pin is
+refreshed once; strict122/configured lint0 and the existing two-shard resource
+control pass in remainder-v1237-controls-SlUENV.
+Numeric changes remain pending one complete bound stage.
+
 ### Next actions and unresolved prerequisites
 
 1. Select the next causal S/B packet from the current11statement/168arm gap list;

@@ -836,6 +836,9 @@ run identity and completed prefix. Check that Host, engine, packet and admission
 readers join the original receipt with the explicit recovery view. Reject a
 changed archived report or invalid successor state. Status and exact retry
 return the stored result without reissuing an uncertain effect.
+In the existing post-transition fixture, read the archived report, reject a
+foreign issue, and return null for a demonstrably absent action or attempt.
+Preserve exact native Host, Journal and archive rows plus the original receipt.
 Inject a journal SQL failure after receipt and Host writes. The transaction must
 restore all three beforeimages and leave no recovery receipt. Reject a failed or
 asynchronous current-proof callback. The callback sees frozen request data.
@@ -967,6 +970,9 @@ without applying it. Preserve the real receipt and exact Host, Journal,
 governance and schema rows. Restore the original Journal bytes through identity,
 revision, payload and digest CAS before continuing the normal repair lifecycle.
 This legacy reader control grants no authority or native producer qualification.
+Use the same CAS/restoration control to reject a malformed non-null corrective
+execution context before repair planning. This proves schema refusal, not valid
+corrective-context admission or recovered execution rights.
 Remove a required stored change and recompute its operation checksum in a
 fixture. The reader must deny the incomplete set. A matching checksum does not
 prove complete repair or permit an early plan/resume result.

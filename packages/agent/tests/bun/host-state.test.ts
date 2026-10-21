@@ -4854,6 +4854,36 @@ test('Host failed prewriter transition atomically retains failed reports and ori
     expect(Object.isFrozen(recoveryView)).toBe(true);
     expect(f.store.readConfiguredFrontierRecoveryView(f.identity, 1)).toEqual(recoveryView);
     expect(readFixtureHostRows(f.db)).toEqual(recoveryViewRows);
+    const archiveRows = f.db.query(
+      'SELECT * FROM agent_host_failed_prewriter_recovery ORDER BY workspace_id,work_id,attempt,recovery_id',
+    );
+    const retainedArchive = archiveRows.all();
+    expect(retainedArchive).toHaveLength(1);
+    const archivedItem = requiredValue(
+      recovery.prior_journal.items.find((item) => item.observation !== null),
+      'failed-wave archived report item',
+    );
+    const archivedObservation = requiredValue(archivedItem.observation, 'failed-wave archived observation');
+    expect(f.store.findArchivedReportedObservation(f.identity.work_id, 1, archivedObservation)).toEqual(archivedItem);
+    expect(() =>
+      f.store.findArchivedReportedObservation(f.identity.work_id, 1, {
+        ...archivedObservation,
+        issue_id: archivedObservation.issue_id + ':foreign',
+      }),
+    ).toThrow('archived failed prewriter report retry differs');
+    expect(readFixtureHostRows(f.db)).toEqual(recoveryViewRows);
+    expect(archiveRows.all()).toEqual(retainedArchive);
+    const missingAction = '0'.repeat(64);
+    expect(recovery.prior_journal.items.every((item) => item.request.action_id !== missingAction)).toBe(true);
+    expect(
+      f.store.findArchivedReportedObservation(f.identity.work_id, 1, {
+        ...archivedObservation,
+        action_id: missingAction,
+      }),
+    ).toBeNull();
+    expect(f.store.findArchivedReportedObservation(f.identity.work_id, 2, archivedObservation)).toBeNull();
+    expect(readFixtureHostRows(f.db)).toEqual(recoveryViewRows);
+    expect(archiveRows.all()).toEqual(retainedArchive);
     expect(recovery.request).toEqual(request);
     expect(recovery.prior_work).toEqual(before.work);
     expect(recovery.prior_ledger).toEqual(before.ledger);
@@ -8648,8 +8678,6 @@ test(
         retainedJournals.find((row) => row.work_id === f.identity.work_id && row.attempt === journal.state.attempt),
         'terminal repair Journal row',
       );
-      const unboundPayload = canonicalJson(unboundJournal),
-        unboundDigest = canonicalJsonDigest(unboundJournal);
       const replaceJournal = f.database.query<never, SQLQueryBindings[]>(
         'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND payload=? AND digest=?',
       );
@@ -8661,61 +8689,74 @@ test(
           .all();
       const retainedGovernance = governanceRows();
       const schema = f.database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all();
-      let unboundInstalled = false;
-      let inspectionFailure: { error: unknown } | undefined;
-      try {
-        const installed = replaceJournal.run(
-          unboundPayload,
-          unboundDigest,
-          retainedJournal.workspace_id,
-          retainedJournal.work_id,
-          retainedJournal.attempt,
-          retainedJournal.revision,
-          retainedJournal.payload,
-          retainedJournal.digest,
-        );
-        unboundInstalled = installed.changes === 1;
-        expect(installed.changes).toBe(1);
-        const unboundInspection = f.store.repairCorrectionGeneration({ ...request, mode: 'inspect' });
-        expect(unboundInspection.status).toBe('repairable_current_v1');
-        expect(unboundInspection.changed_work).toEqual(inspection.changed_work);
-        expect(unboundInspection.changed_journals).toBe(1);
-        expect(rows()).toEqual(retainedRows);
-        expect(journals()).toEqual(
-          retainedJournals.map((row) =>
-            row === retainedJournal ? { ...row, payload: unboundPayload, digest: unboundDigest } : row,
-          ),
-        );
-        expect(governanceRows()).toEqual(retainedGovernance);
-        expect(f.database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(
-          schema,
-        );
-        expect(f.database.inTransaction).toBe(false);
-      } catch (error) {
-        inspectionFailure = { error };
-        throw error;
-      } finally {
-        completeOwnedCleanup(
-          [
-            () => {
-              if (unboundInstalled)
-                expect(
-                  replaceJournal.run(
-                    retainedJournal.payload,
-                    retainedJournal.digest,
-                    retainedJournal.workspace_id,
-                    retainedJournal.work_id,
-                    retainedJournal.attempt,
-                    retainedJournal.revision,
-                    unboundPayload,
-                    unboundDigest,
-                  ).changes,
-                ).toBe(1);
-              expect(journals()).toEqual(retainedJournals);
-            },
-          ],
-          inspectionFailure,
-        );
+      for (const candidate of [
+        unboundJournal,
+        { ...unboundJournal, corrective_execution: { schema: 'InvalidFixtureExecution/v1' } },
+      ]) {
+        const unboundPayload = canonicalJson(candidate),
+          unboundDigest = canonicalJsonDigest(candidate);
+        let unboundInstalled = false;
+        let inspectionFailure: { error: unknown } | undefined;
+        try {
+          const installed = replaceJournal.run(
+            unboundPayload,
+            unboundDigest,
+            retainedJournal.workspace_id,
+            retainedJournal.work_id,
+            retainedJournal.attempt,
+            retainedJournal.revision,
+            retainedJournal.payload,
+            retainedJournal.digest,
+          );
+          unboundInstalled = installed.changes === 1;
+          expect(installed.changes).toBe(1);
+          if (candidate === unboundJournal) {
+            const unboundInspection = f.store.repairCorrectionGeneration({ ...request, mode: 'inspect' });
+            expect(unboundInspection.status).toBe('repairable_current_v1');
+            expect(unboundInspection.changed_work).toEqual(inspection.changed_work);
+            expect(unboundInspection.changed_journals).toBe(1);
+          } else {
+            expect(() => f.store.repairCorrectionGeneration({ ...request, mode: 'inspect' })).toThrow(
+              'CorrectiveExecution/v1',
+            );
+          }
+          expect(rows()).toEqual(retainedRows);
+          expect(journals()).toEqual(
+            retainedJournals.map((row) =>
+              row === retainedJournal ? { ...row, payload: unboundPayload, digest: unboundDigest } : row,
+            ),
+          );
+          expect(governanceRows()).toEqual(retainedGovernance);
+          expect(
+            f.database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all(),
+          ).toEqual(schema);
+          expect(f.database.inTransaction).toBe(false);
+        } catch (error) {
+          inspectionFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                if (unboundInstalled)
+                  expect(
+                    replaceJournal.run(
+                      retainedJournal.payload,
+                      retainedJournal.digest,
+                      retainedJournal.workspace_id,
+                      retainedJournal.work_id,
+                      retainedJournal.attempt,
+                      retainedJournal.revision,
+                      unboundPayload,
+                      unboundDigest,
+                    ).changes,
+                  ).toBe(1);
+                expect(journals()).toEqual(retainedJournals);
+              },
+            ],
+            inspectionFailure,
+          );
+        }
       }
       const planned = f.store.repairCorrectionGeneration({
         ...request,
