@@ -290,7 +290,7 @@ const writeJson = (root: string, file: string, value: unknown): void => {
 };
 
 type FixtureSetupClose = () => void | Promise<void>;
-type FixtureOptions = { writer?: boolean; earlierDisjointPeers?: boolean };
+type FixtureOptions = { writer?: boolean; earlierDisjointPeers?: boolean; readonlyHostPreparation?: boolean };
 
 async function fixture(options: FixtureOptions = {}, prepare: typeof buildFixture = buildFixture) {
   const closes: FixtureSetupClose[] = [];
@@ -311,7 +311,7 @@ async function fixture(options: FixtureOptions = {}, prepare: typeof buildFixtur
 }
 
 async function buildFixture(
-  { writer = true, earlierDisjointPeers = false }: FixtureOptions,
+  { writer = true, earlierDisjointPeers = false, readonlyHostPreparation = false }: FixtureOptions,
   setupCloses: FixtureSetupClose[],
 ) {
   markPhase?.('fixture:start');
@@ -557,6 +557,48 @@ async function buildFixture(
     at(journal.state.completed, 0, 'Completed readonly wave').items[0]?.observation,
     'Completed readonly observation',
   );
+  let readonlyPreparation: ReturnType<typeof store.completeWorkflowAttempt> | undefined;
+  if (readonlyHostPreparation) {
+    if (!writer) throw new Error('Readonly Host preparation requires the subsequent writer fixture');
+    const priorItem = required(
+      journal.state.completed.flatMap((wave) => wave.items).find((item) => item.observation !== null),
+      'Completed readonly action before writer issue',
+    );
+    const stage = required(
+      config.workflows[priorItem.request.workflow_id]?.stages.find((entry) => entry.id === priorItem.request.stage_id),
+      'Configured readonly preparation stage',
+    );
+    const assignment = required(
+      stage.assignments[priorItem.request.assignment_index],
+      'Readonly preparation assignment',
+    );
+    expect(config.agents.profiles[assignment.profile]?.mutation_scope).toBe('none');
+    const before = completeHost(store.readHostStateSnapshot(identity));
+    const intent = {
+      fixture_only: true,
+      operation: 'read-current-config',
+      config_digest: before.work.binding.config_digest,
+      readonly_action_id: priorItem.request.action_id,
+    };
+    const preparation = store.claimWorkflowAttempt({
+      identity,
+      expectedWork: before.workVersion,
+      expectedLedger: before.ledgerVersion,
+      expectedMaintenanceGeneration: before.maintenanceGeneration,
+      stageId: priorItem.request.stage_id,
+      assignmentIndex: priorItem.request.assignment_index,
+      requestDigest: canonicalJsonDigest(intent),
+      lease: required(before.work.lease, 'Admitted readonly preparation lease'),
+    });
+    const result = { ...intent, config_digest: runtimeConfigDigest(loadRuntimeConfig(root)) };
+    expect(result.config_digest).toBe(intent.config_digest);
+    readonlyPreparation = store.completeWorkflowAttempt(preparation, result);
+    expect(readonlyPreparation.attempt).toMatchObject({
+      status: 'completed',
+      result,
+      result_digest: canonicalJsonDigest(result),
+    });
+  }
   let reservation: WorkflowReservation | undefined;
   if (writer) {
     markPhase?.('fixture:issue-wave');
@@ -1094,6 +1136,7 @@ async function buildFixture(
     source,
     reservation,
     readonlyObservation,
+    readonlyPreparation,
     inspect,
     ddl,
     close,
@@ -1261,12 +1304,19 @@ test(
 test(
   'retired Source capture settles only the issued failure and retries through its separate public route',
   async () => {
-    const f = await fixture({ earlierDisjointPeers: true });
+    const f = await fixture({ earlierDisjointPeers: true, readonlyHostPreparation: true });
     try {
+      const readonlyPreparation = required(f.readonlyPreparation, 'Completed Host config read before writer issue');
       const request = f.retirementRequest();
       const originalHost = f.inspect();
       const originalJournal = currentJournal(f.ledger, 'stopped', 1);
       const original = completeHost(f.store.readHostStateSnapshot(f.identity));
+      expect(original.work.execution.assignment_attempts).toHaveLength(2);
+      expect(
+        original.work.execution.assignment_attempts.find(
+          (entry) => entry.attempt_id === readonlyPreparation.attempt.attempt_id,
+        ),
+      ).toEqual(readonlyPreparation.attempt);
       const targetTicket = required(
         original.ledger.tickets.find((ticket) => ticket.ticket_id === original.work.lease?.ticket_id),
         'Original Source ticket',
@@ -1457,7 +1507,16 @@ test(
         journal = currentJournal(f.ledger, 'stopped', 1);
       expect(after.work.lease).toBeNull();
       expect(after.work.execution.status).toBe('suspended');
-      expect(at(after.work.execution.assignment_attempts, 0, 'Captured attempt')).toMatchObject({
+      expect(
+        after.work.execution.assignment_attempts.filter(
+          (entry) => entry.attempt_id !== retirement.attempt_receipt.attempt.attempt_id,
+        ),
+      ).toEqual([readonlyPreparation.attempt]);
+      expect(
+        after.work.execution.assignment_attempts.find(
+          (entry) => entry.attempt_id === retirement.attempt_receipt.attempt.attempt_id,
+        ),
+      ).toMatchObject({
         status: 'completed',
         result: c.operation.observation,
       });
