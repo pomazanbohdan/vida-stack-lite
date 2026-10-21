@@ -1861,6 +1861,29 @@ test('task-source preparation and inspection persist one retry-stable operation 
   let primaryFailure: { error: unknown } | undefined;
   try {
     const input = { request: f.request, identity: f.identity, verifyCurrent: f.trustedVerifyCurrent };
+    const absentIdentity = { ...f.identity, work_id: 'task-source-absent-work' };
+    const verifyAbsent = mock(f.trustedVerifyCurrent);
+    const absentInput = {
+      request: { ...f.request, work_id: absentIdentity.work_id },
+      identity: absentIdentity,
+      verifyCurrent: verifyAbsent,
+    };
+    const catalog = f.database.query('SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY type,name');
+    const catalogBefore = catalog.all();
+    const nativeBefore = readFixtureHostRows(f.database);
+    expect(() => f.store.prepareTaskSourceBindingOperation(absentInput)).toThrow(
+      'task source preparation Host work is missing',
+    );
+    expect(() => f.store.inspectTaskSourceBindingOperation(absentInput)).toThrow(
+      'task source inspection Host work is missing',
+    );
+    expect(() => f.store.inspectTaskSourceBindingAction(absentInput)).toThrow(
+      'task source inspection Host work is missing',
+    );
+    expect(verifyAbsent).not.toHaveBeenCalled();
+    expect(readFixtureHostRows(f.database)).toEqual(nativeBefore);
+    expect(catalog.all()).toEqual(catalogBefore);
+    expect(existsSync(requiredValue(f.request.source_root, 'TaskSource proposed root'))).toBe(false);
     const before = f.store.readHostStateSnapshot(f.identity);
     const journalBefore = f.store.readWorkSessionJournal(f.identity);
     expect(f.store.inspectTaskSourceBindingOperation(input)).toEqual({

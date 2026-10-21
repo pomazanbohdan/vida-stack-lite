@@ -120,6 +120,13 @@ changing the earlier observation or Host ownership.
 Absent-Work continuation, recovery, historical capture and corrective-authorization
 readers return no authority without creating lazy tables or changing workspace
 rows. Compare both native schema and workspace beforeimages in the same case.
+TaskSource prepare, operation inspection and action inspection likewise reject
+an absent Work before the trusted verifier or lazy table creation. Exercise this
+with a distinct missing identity in the existing preparation fixture, comparing
+all native rows and the schema catalog before healthy preparation continues.
+Continuation checks reuse the caller's already resolved predecessor from the
+same snapshot. Preserve each caller's prior/ticket/resource guards and the exact
+original Work reconstruction; the lookup simplification grants no new authority.
 
 The separate configured-frontier suffix case remains unqualified. Its first
 bounded child timed out inside the existing default5s case; a fresh traced run

@@ -12,6 +12,34 @@ remain deferred; their budgets and acceptance rules are unchanged.
 
 ### Current three-hour audit and migration preflight correction
 
+The next checked Source packet removes a confirmed repeated TaskSource
+predecessor lookup: all three callers already resolve a non-null predecessor
+from the same snapshot/request before checking canonical Work reconstruction.
+Pass that value into `taskSourceExpectedWorkMatches`; delete its unused resources
+argument and redundant internal null guard. Caller guards, predicate order,
+revision/digest reconstruction, ownership, authorization, CAS and UNKNOWN remain.
+No callable moves or frozen allowance transfer occurs. The independent review's
+additional filter/sort proposal is not implemented; its claim that removing
+those closures would preserve every callable is incorrect. Root keeps that
+selection algorithm unchanged rather than accepting the unsupported claim.
+
+The same existing preparation fixture now denies absent Work for prepare,
+operation inspect and action inspect before verifier/lazy tables. Native rows,
+schema and absent Source effect are unchanged; no extra fixture setup is added.
+Static149-file/lint pass; the affected group passes5/246assertions in2.97s,
+retained in `task-source-prior-reuse-v1133-imZVcv`. These are functional results,
+not measured coverage or a claimed fix of the distinct recovery timeout.
+Its independent diagnosis finds no supported setup deletion or reuse from the
+current evidence. It did not load the lifecycle because no installed runtime
+exists; Root has loaded the checked-in self-development fallback. Root keeps
+the genuine lineage/freshness checks and current deadlines. A bounded deeper
+setup phase observation is the next prerequisite; no unchanged full-stage retry
+or larger timeout is authorized by a standalone PASS.
+The Source publication call loses exec-server transport after staging but before
+an observed commit. Root verifies unchanged boot/HEAD and no live Git/hook owner,
+preserves the staged payload and resumes only ordinary commit with a fresh log.
+A transport launch rejection alone is not proof that no earlier command ran.
+
 Published packet `9d1c20098d33b1c93630662b15470394ad71eeaf` passes ordinary
 hooks520format/527strict and push. Its new complete stage is **FAIL**, not a
 coverage gain: run`aa316fa2-e888-4b0a-9672-ceea1daa1f50`, stage

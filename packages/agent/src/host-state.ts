@@ -1147,14 +1147,7 @@ export function createTaskSourceMutationPolicyRequest(input: {
     if (prior) {
       const reservation = taskSourceReservationResources(repositoryRoot, request, work, prior);
       taskSourceTicketMatches(hostSnapshot.ledger, work, request, reservation.resources);
-      reservationMatches = taskSourceExpectedWorkMatches(
-        work,
-        hostSnapshot.ledger,
-        request,
-        reservation.resources,
-        reservation.added,
-        reservationTicket,
-      );
+      reservationMatches = taskSourceExpectedWorkMatches(work, prior, request, reservation.added, reservationTicket);
     }
   }
   const expectedWorkMatches =
@@ -2544,9 +2537,8 @@ function taskSourceTicketMatches(
 }
 function taskSourceExpectedWorkMatches(
   work: WorkState,
-  ledger: CoordinationLedger,
+  prior: CoordinationTicket,
   request: TaskSourceBindingRequest,
-  resources: readonly string[],
   addedResources: readonly string[],
   ticket: CoordinationTicket,
 ): boolean {
@@ -2554,8 +2546,6 @@ function taskSourceExpectedWorkMatches(
   if (work.revision === expected.revision && canonicalJsonDigest(work) === expected.digest) return true;
   const revisionDelta = work.revision - expected.revision;
   if (ticket.status === 'queued' ? revisionDelta !== 1 : revisionDelta < 1 || revisionDelta > 2) return false;
-  const prior = taskSourcePriorTicket(ledger, work, request);
-  if (!prior) return false;
   const expectedLease =
     ticket.status === 'queued'
       ? work.lease
@@ -2593,11 +2583,7 @@ function taskSourceReservationForRequest(
   if (!prior) return null;
   const resources = taskSourceReservationResources(repositoryRoot, request, host.work, prior),
     ticket = taskSourceTicketMatches(host.ledger, host.work, request, resources.resources);
-  if (
-    !ticket ||
-    !taskSourceExpectedWorkMatches(host.work, host.ledger, request, resources.resources, resources.added, ticket)
-  )
-    return null;
+  if (!ticket || !taskSourceExpectedWorkMatches(host.work, prior, request, resources.added, ticket)) return null;
   return { prior, ticket, resources };
 }
 function validateReferences(refs: readonly ContractReference[]): void {
@@ -9798,14 +9784,7 @@ export class HostStateStore {
         if (existingTicket) {
           taskSourceTicketMatches(current.ledger!, current.work, request, reservation.resources);
           requireState(
-            taskSourceExpectedWorkMatches(
-              current.work,
-              current.ledger!,
-              request,
-              reservation.resources,
-              reservation.added,
-              existingTicket,
-            ),
+            taskSourceExpectedWorkMatches(current.work, prior, request, reservation.added, existingTicket),
             'TaskSource reservation is not a continuation of its original Work scope',
           );
         }
