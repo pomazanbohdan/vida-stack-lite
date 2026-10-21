@@ -301,6 +301,20 @@ removal. Thread review vida-tasksource-thread-change-review-v1323.md confirms
 renewal/recovery preserve the owner; foreign read handles refuse before the
 different-attempt skip. Keep that prerequisite GAP and no fabricated authority.
 
+The next read-only recovery-view control reuses the existing genuine writer
+commit case before its controlled Source effect. Require exact current Work,
+Ledger, versions, issued Journal and original continuation receipt, with absent
+frontier/recovery receipts and unchanged native rows and closed transaction.
+No extra fixture, writer issue or fabricated recovery authority is introduced.
+Strict149/lint0 and that exact case pass71assertions14.36s,12489.50ms native, in
+DIAG/recovery-view-v1353-ubJ3gl. All original positive recovery and ownership
+assertions remain. Independent blind Source review
+DIAG/vida-frontier-gap-review-v1352.md finds no blocking issue in that block.
+Final changed-test binding is recorded once in DIAG/remainder-v1354-test-pin.json.
+Strict122/lint0 and the existing two-file namespace control pass1case/10assertions
+368ms in DIAG/remainder-v1354-controls-xKl15U. This focused result is not new
+numeric acceptance; normal publication and matching full stage remain.
+
 1. Select the next causal S/B packet from the current4statement/95arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
@@ -312,6 +326,10 @@ different-attempt skip. Keep that prerequisite GAP and no fabricated authority.
    Do not rerun unchanged groups or start another contour before full F/L/S/B100.
 
 Keep these specific unresolved paths open:
+- The readonly frontier's five missing item/stage/assignment/profile arms have
+  no supported producer in the bounded current fixture path. The1352 Source
+  review distinguishes schema reachability from an eligible public frontier.
+  Keep the guards and exact GAP; no direct persisted-row constructor or waiver.
 - The restored-result fallback has no supported omission route: the decoder
   requires and validates the restored list, and terminal retries check raw state.
   DIAG/vida-restored-result-cache-review-v1341.md retains that GAP. Removing the

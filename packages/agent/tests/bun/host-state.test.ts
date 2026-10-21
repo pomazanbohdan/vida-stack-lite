@@ -6853,6 +6853,20 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
         const host = initialSourceHostStore(f);
         const db = initialSourceHostDatabase(f);
         const before = initialSourceState(f);
+        if (mode === 'commit') {
+          const persistedBefore = readFixtureHostRows(db);
+          const recoveryState = host.readCompletedSourceReportRecoveryState(f.identity, 1);
+          expect(recoveryState.host.work).toEqual(before.work);
+          expect(recoveryState.host.ledger).toEqual(before.ledger);
+          expect(recoveryState.host.workVersion).toEqual(before.workVersion);
+          expect(recoveryState.host.ledgerVersion).toEqual(before.ledgerVersion);
+          expect(recoveryState.journal).toEqual({ state: issued.journal.state, version: issued.journal.version });
+          expect(recoveryState.initialReceipt).toEqual(prepared.receipt);
+          expect(recoveryState.frontierReceipt).toBeNull();
+          expect(recoveryState.recoveryReceipt).toBeNull();
+          expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+          expect(db.inTransaction).toBe(false);
+        }
         expect(
           before.work.execution.assignment_attempts.find((attempt) => attempt.attempt_id === issued.hostAttemptId),
         ).toMatchObject({ status: 'started', result: null, result_digest: null });
