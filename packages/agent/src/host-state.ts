@@ -10661,7 +10661,9 @@ export class HostStateStore {
               );
               if (!needsNormalization) return [];
               const normalized = normalizeJournal(before);
-              return canonicalJson(normalized) === canonicalJson(before) ? [] : [{ row, before, after: normalized }];
+              // Missing authority pairs necessarily change the image; retain its canonical admission limits.
+              assertCanonicalJsonValue(normalized);
+              return [{ row, before, after: normalized }];
             });
       const workChanges = states.flatMap(({ row, before, current }) =>
         canonicalJson(before) === canonicalJson(current)

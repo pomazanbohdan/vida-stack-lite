@@ -184,6 +184,11 @@ existing both-legacy case. Capture governance/history before that first phase
 so an inspection defect cannot become the later expected beforeimage.
 
 When repeated verifier reads protect a precommit freshness boundary, retain them.
+Before removing an impossible canonical-equality comparison, retain any canonical
+admission it performed on the transformed postimage. Added fields can cross a
+node/byte limit even when the preimage fits. Reuse the existing value validator
+when only validation is needed; unchanged-state and real migration controls
+must still preserve raw CAS dependencies and issued/UNKNOWN semantics.
 Reuse the genuine fixture and change one owned input between the initial proof
 and final recheck; assert the intended denial, exact restoration and unchanged
 Host/Journal/receipt state. Preserve primary and restoration failures through the

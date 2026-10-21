@@ -14,24 +14,28 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-130936feaccba9c7331a472c6175aaa873fce238, run
-58320f8a-c332-4f52-b4e8-5924c978b267, projection attempts1186.
+3ebe8cfe3c7250155da3759782c3303d00e1da33, run
+a3b6b26d-2bc3-4685-b018-40ca36235505, projection attempts1188.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs336cases/5716assertions
-in190358.324033ms. Host and stopped-source children take182.84s and112.59s.
-The expanded UNKNOWN repair case takes9385.34ms and the runtime-history omission
-case5570.61ms, both within their unchanged20s limits. On the preceding301f0e7 input,
+unchanged boot/image and automatic publication. It runs336cases/5743assertions
+in168823.694408ms. Host and stopped-source children take161.82s and107.39s.
+The expanded UNKNOWN repair case takes8131.09ms and the runtime-history omission
+case4927.50ms, both within their unchanged20s limits. Absent-lease refusal takes
+40.21ms. Different inputs and scheduling do not establish a controlled speedup.
+On the preceding301f0e7 input,
 rollback recovery takes11285.36ms, terminal-history10513.03ms and commit14353.91ms,
 inside their unchanged20s bounds. Their setup/body durations are respectively
 8534.562180/2681.446340ms,8226.978271/2233.735166ms and9936.795345/4320.610447ms.
 The preceding rollback timeout does not recur in this complete instrumented run.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains4statement/102branch-arm gaps, no missing function
-or line: F1126/1126,L4978/4978,S5304/5308,B5500/5602. Mixed/current Journal
+The report-only join retains4statement/96branch-arm gaps, no missing function
+or line: F1126/1126,L4978/4978,S5304/5308,B5506/5602. Actual configured renewal
+and malformed raw lease refusals gain six actual arm visits versus130936f with
+unchanged denominators. Mixed/current Journal
 inspection and null-scope peer preparation gain one actual arm visit versus
 9808afa with unchanged denominators. Do not infer gains from assertion counts
 or a nearby repeated predicate. Runtime-history omission
@@ -78,12 +82,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-1uELV7/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1337-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1337-scratch-parent.json and DIAG/remainder-v1337-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1337-cache-retirement-1uELV7/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-1uELV7-hELXnm/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-rbT4ga |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-3pGPgc/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1346-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1346-scratch-parent.json and DIAG/remainder-v1346-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1346-cache-retirement-3pGPgc/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-3pGPgc-fpNdma/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-uBGUKT |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -92,7 +96,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3006976000bytes and retained tmpfs9183416320bytes available, both above the
+2937536512bytes and retained tmpfs9178628096bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -491,8 +495,9 @@ the assigned case; Root checks current bytes and the actual configured lint0,
 so makes no unrelated deletion. This review is Source-only and did not inspect
 the native logs independently. The final shared pin is sealed once in
 remainder-v1345-test-pin.json; runner strict122/lint0 and the existing two-file
-namespace control pass in remainder-v1345-controls-Bmjmyc. Ordinary publication
-and one matching selected-contour stage remain next; no numeric gain claimed yet.
+namespace control pass in remainder-v1345-controls-Bmjmyc. Ordinary hooks pass
+format520/strict527 and normal push publishes3ebe8cf. Its one matching complete
+stage and six actual arm gains are recorded above.
 
 The related serializer study vida-restored-result-cache-review-v1341.md finds
 no positive missing-restored seam: the decoder requires and validates the frozen
@@ -501,7 +506,34 @@ denial probe. The actual10781 expression is restored-list fallback; the nearby
 10654 normalization predicate is a different counter. Review hypotheses need
 the exact retained Source expression before numeric claims.
 
-1. Select the next causal S/B packet from the current4statement/102arm gap list;
+The next P1 packet removes redundant Journal serialization in that same repair
+owner. Independent1347 proof at vida-normalized-journal-comparison-review-v1347.md
+establishes that a decoded legacy pair must add own0/null fields, so its normalized
+canonical image cannot equal the preimage. Keep needsNormalization, the full
+normalizer, every issued-action/authorization/owner/CAS/frozen-plan check and raw
+beforeimages. Replace only the impossible equality/filter with direct inclusion,
+while calling the existing assertCanonicalJsonValue on the normalized postimage
+at the same boundary. Its added fields can cross canonical budgets even when the
+preimage fits: a bare return would be unsafe. The existing validator shares the
+same root depth, node/byte limits and descriptor/value checks, without emitting an
+unused canonical string. The earlier preimage digest remains checked.
+This removes two unused full serializations and one repeated preimage traversal;
+it is a static cost argument, not a measured runtime speedup. No callable is
+retired or new helper introduced; frozen correspondence/budgets remain pending
+under their original rules. Any removed expression arm is a denominator change,
+not newly executed code. Reuse existing mixed/current, genuine UNKNOWN and genuine
+terminal repair cases; no duplicate scenario or benchmark lane. Test bytes and
+their final pin stay unchanged. Static and affected checks precede publication.
+Implementation matches that bounded proof: existing normalized canonical value
+validation replaces the unused equality serialization, and no other repair guard
+or transform changes. Strict149/Source lint0 pass and all four exact existing
+UNKNOWN/terminal/restore cases pass289assertions15.88s in
+journal-normalization-v1348-5qTnBh. Current/mixed zero-change inspection remains
+inside the genuine UNKNOWN case; terminal/current raw dependencies and aggregate
+cleanup remain checked. Test bytes/pin are unchanged, so no rehash, repin or
+duplicate namespace control. Shared final hook and matching full stage remain.
+
+1. Select the next causal S/B packet from the current4statement/96arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,

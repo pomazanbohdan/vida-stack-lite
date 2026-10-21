@@ -463,6 +463,14 @@ the original Journal bytes through owned cleanup. Preserve the subsequent real
 apply/rollback/reopen/resume/restore sequence and original case budget. Such
 refusals neither settle UNKNOWN nor prove acceptance of malformed authority.
 
+Journal change detection keeps canonical admission on the normalized postimage,
+including limits crossed by the newly explicit authority fields. A validated
+preimage is insufficient. Current Journals remain raw CAS dependencies without
+being normalized; legacy Journals retain their complete issued-action checks and
+raw beforeimages. Existing mixed-state inspection requires zero changed Journals,
+while genuine terminal and UNKNOWN repair require one. Reuse those controls when
+simplifying redundant comparison/serialization; keep all restore/retry oracles.
+
 The same UNKNOWN repair fixture also admits a disjoint peer with its own declared
 intake through public admission. Its actual configured bridge prepares a nonempty
 suspended first wave with its supported initial null Source scope; close that
