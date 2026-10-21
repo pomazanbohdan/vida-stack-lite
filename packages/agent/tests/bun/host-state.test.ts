@@ -3745,6 +3745,78 @@ test('trusted Host continuation atomically retains historical evidence and never
     expect(peerAfter.workVersion).toEqual(requiredValue(peer.snapshot.workVersion, 'Original disjoint peer version'));
     expect(peerAfter.ledger.tickets.find((item) => item.ticket_id === peer.ticket.ticket_id)).toEqual(peer.ticket);
     expect(peerAfter.ledger.claims.filter((item) => item.ticket_id === peer.ticket.ticket_id)).toEqual([peer.claim]);
+    const journalRow = requiredValue(
+      current.db
+        .query<RevisionPayloadDigestSqlRow, [string, string]>(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=1',
+        )
+        .get(current.workspaceId, current.identity.work_id),
+      'historical continuation Journal beforeimage',
+    );
+    const reviewItem = firstOf(journalAfter.state.items, 'historical continuation review item');
+    const issuedItem = { ...reviewItem, issue_id: '71e62a38-b44b-470e-b732-81cefbaf983a' };
+    const summary = 'Controlled historical review fixture; no executor effect.';
+    const reportedItem = {
+      ...issuedItem,
+      observation: parseSessionBridgeObservation({
+        schema: 'VidaSessionObservation/v1',
+        action_id: issuedItem.request.action_id,
+        issue_id: issuedItem.issue_id,
+        agent_id: 'fixture:historical-reviewer',
+        tool_call_ref: 'fixture:cooperative-historical-result',
+        status: 'reported_complete',
+        summary,
+        output_digest: canonicalJsonDigest(summary),
+        evidence_refs: ['fixture:historical-review-evidence'],
+      }),
+    };
+    for (const variant of [
+      { item: issuedItem, status: 'issued' },
+      { item: reportedItem, status: 'reported' },
+    ] as const) {
+      const journal = { ...journalAfter.state, items: [variant.item] };
+      withFrontierJournalFixture(current, journalRow, journal, (version) => {
+        const controlledRows = readFixtureHostRows(current.db);
+        const observed = requiredValue(
+          current.store.readDeliveredWorkContinuation(current.identity, 1),
+          'controlled historical lookup',
+        );
+        expect(observed).toEqual({
+          ...lookup,
+          journal: { state: journal, version },
+          item: variant.item,
+          items: [variant.item],
+          item_statuses: [variant.status],
+          action_status: variant.status,
+        });
+        expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(observed);
+        expect(readFixtureHostRows(current.db)).toEqual(controlledRows);
+        expect(receiptRows.get()).toEqual(receiptRow);
+      });
+      expect(readFixtureHostRows(current.db)).toEqual(persistedRows);
+      expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(lookup);
+    }
+    for (const item of [
+      { ...issuedItem, issue_id: '' },
+      { ...reportedItem, observation: { ...reportedItem.observation, action_id: '0'.repeat(64) } },
+      {
+        ...reportedItem,
+        observation: { ...reportedItem.observation, issue_id: '1727e065-c8d6-4db1-b942-7d22388e7954' },
+      },
+    ]) {
+      withFrontierJournalFixture(current, journalRow, { ...journalAfter.state, items: [item] }, () => {
+        const controlledRows = readFixtureHostRows(current.db);
+        expect(() => current.store.readDeliveredWorkContinuation(current.identity, 1)).toThrow(
+          'delivered-work continuation review issuance is malformed',
+        );
+        expect(current.db.inTransaction).toBe(false);
+        expect(readFixtureHostRows(current.db)).toEqual(controlledRows);
+        expect(receiptRows.get()).toEqual(receiptRow);
+      });
+      expect(readFixtureHostRows(current.db)).toEqual(persistedRows);
+      expect(current.store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(lookup);
+    }
+    expect(await current.store.continueDeliveredWork(request)).toEqual(retry);
     expect(
       current.db.query('UPDATE agent_host_delivered_work_continuation SET digest=?').run('0'.repeat(64)).changes,
     ).toBe(1);
@@ -4937,42 +5009,49 @@ function completeReadonlyFixtureHostPreparation(
   return completed;
 }
 
-function admitDisjointInitialSourcePeers(current: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>) {
+function admitDisjointInitialSourcePeers(
+  current: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>,
+  includeQueuedPeer = true,
+) {
   const store = initialSourceHostStore(current);
   const peerPath = 'docs/PEER.md';
   writeFileSync(path.join(current.root, peerPath), 'Disjoint peer source\n');
-  const peers = ['initial-peer-owner', 'initial-peer-waiter'].map((id) => {
-    const peerInput = current.preparePeerAdmission(id, [peerPath]);
-    const peerAdmission = presentSnapshot(admitLocalSessionWork(peerInput).host);
-    const peerIdentity = { ...current.identity, work_id: id };
-    const acquire = () =>
-      acquireLocalSourceWriterLease({
-        repositoryRoot: current.root,
-        config: current.config,
-        store,
-        identity: peerIdentity,
-        nativeSessionHandle: peerInput.nativeSessionHandle,
-        stageId: 'develop_task',
-        assignmentIndex: 0,
-        expectedWork: peerAdmission.workVersion,
-        expectedLedger: peerAdmission.ledgerVersion,
-      });
-    if (id === 'initial-peer-owner') acquire();
-    else expect(acquire).toThrow('queued behind an earlier exclusive resource');
-    const peer = presentSnapshot(store.readHostStateSnapshot(peerIdentity));
-    return { identity: peerIdentity, work: peer.work, version: peer.workVersion };
-  });
+  const peers = (includeQueuedPeer ? ['initial-peer-owner', 'initial-peer-waiter'] : ['initial-peer-owner']).map(
+    (id) => {
+      const peerInput = current.preparePeerAdmission(id, [peerPath]);
+      const peerAdmission = presentSnapshot(admitLocalSessionWork(peerInput).host);
+      const peerIdentity = { ...current.identity, work_id: id };
+      const acquire = () =>
+        acquireLocalSourceWriterLease({
+          repositoryRoot: current.root,
+          config: current.config,
+          store,
+          identity: peerIdentity,
+          nativeSessionHandle: peerInput.nativeSessionHandle,
+          stageId: 'develop_task',
+          assignmentIndex: 0,
+          expectedWork: peerAdmission.workVersion,
+          expectedLedger: peerAdmission.ledgerVersion,
+        });
+      if (id === 'initial-peer-owner') acquire();
+      else expect(acquire).toThrow('queued behind an earlier exclusive resource');
+      const peer = presentSnapshot(store.readHostStateSnapshot(peerIdentity));
+      return { identity: peerIdentity, work: peer.work, version: peer.workVersion };
+    },
+  );
   const peerLedger = presentSnapshot(store.readHostStateSnapshot(current.identity)).ledger;
   const activePeer = requiredValue(
     peerLedger.tickets.find((ticket) => ticket.work_id === 'initial-peer-owner' && ticket.status === 'active'),
     'Disjoint active initial-source peer',
   );
-  const queuedPeer = requiredValue(
-    peerLedger.tickets.find((ticket) => ticket.work_id === 'initial-peer-waiter' && ticket.status === 'queued'),
-    'Disjoint queued initial-source peer',
-  );
+  const queuedPeer = includeQueuedPeer
+    ? requiredValue(
+        peerLedger.tickets.find((ticket) => ticket.work_id === 'initial-peer-waiter' && ticket.status === 'queued'),
+        'Disjoint queued initial-source peer',
+      )
+    : null;
   expect(activePeer.active_resources).toContain('file:' + peerPath);
-  expect(queuedPeer.exclusive_resources).toContain('file:' + peerPath);
+  if (queuedPeer) expect(queuedPeer.exclusive_resources).toContain('file:' + peerPath);
   expect(activePeer.exclusive_resources.length).toBeGreaterThan(0);
   expect(
     peerLedger.claims.find((claim) => claim.ticket_id === activePeer.ticket_id && claim.status === 'active')?.resources,
@@ -5563,6 +5642,60 @@ test(
         );
         const readonlyPreparation = completeReadonlyFixtureHostPreparation(current);
         const peers = admitDisjointInitialSourcePeers(current);
+        {
+          const nativeBefore = initialSourceState(current);
+          const db = initialSourceHostDatabase(current);
+          const nativeRows = readFixtureHostRows(db);
+          const project = loadProjectSetContext(
+            current.root,
+            current.config,
+            current.identity.repository_id,
+            current.identity.project_ids,
+          );
+          const request: TaskSourceBindingRequest = {
+            schema: 'TaskSourceBindingRequest/v1',
+            operation: 'inspect',
+            operation_id: 'host-earlier-fifo-inspect',
+            request_id: 'host-earlier-fifo-request',
+            expected_host: {
+              work: nativeBefore.workVersion,
+              ledger: nativeBefore.ledgerVersion,
+              journal: { attempt: 1, version: nativeBefore.journalVersion },
+              maintenance_generation: nativeBefore.maintenanceGeneration,
+            },
+            work_id: current.identity.work_id,
+            attempt: 1,
+            thread_id: admission.nativeSessionHandle,
+            repository_id: current.identity.repository_id,
+            project_ids: current.identity.project_ids,
+            canonical_host_root: current.root,
+            config_digest: runtimeConfigDigest(current.config),
+            project_context_digest: project.project_context_digest,
+          };
+          const sourceAuthorizationDigest = createHash('sha256')
+            .update(readFileSync(path.join(current.root, current.sourceAuthorizationPath)))
+            .digest('hex');
+          const verifyCurrent: Parameters<HostStateStore['prepareTaskSourceBindingOperation']>[0]['verifyCurrent'] = ({
+            work,
+            ledger,
+            journal,
+          }) => {
+            expect(work).toEqual(nativeBefore.work);
+            expect(ledger).toEqual(nativeBefore.ledger);
+            expect(journal).toEqual(nativeBefore.journal);
+            return {
+              source_authorization_sha256: sourceAuthorizationDigest,
+              source_scope_digest: work.binding.work_source_revision,
+            };
+          };
+          const input = { request, identity: current.identity, verifyCurrent };
+          const preparation = host.prepareTaskSourceBindingOperation(input);
+          expect(preparation.status).toBe('prepared');
+          expect(host.prepareTaskSourceBindingOperation(input)).toEqual(preparation);
+          expect(readFixtureHostRows(db)).toEqual(nativeRows);
+          expect(host.inspectTaskSourceBindingOperation(input)).toEqual({ ...preparation, status: 'inspected' });
+          expect(readFixtureHostRows(db)).toEqual(nativeRows);
+        }
         const executionOnly = presentSnapshot(host.readHostStateSnapshot(current.identity));
         acquireLocalSourceWriterLease({
           repositoryRoot: current.root,
@@ -5577,6 +5710,15 @@ test(
           expectedSessionJournal: { attempt: 1, version: prepared.version },
         });
         const before = presentSnapshot(host.readHostStateSnapshot(current.identity));
+        const originalTicket = requiredValue(
+          before.ledger.tickets.find((ticket) => ticket.ticket_id === before.work.lease?.ticket_id),
+          'Genuine frontier Source ticket',
+        );
+        const queuedTicket = requiredValue(peers.queuedTicket, 'Genuine frontier queued peer ticket');
+        expect(queuedTicket.sequence).toBeLessThan(originalTicket.sequence);
+        expect(
+          queuedTicket.exclusive_resources.some((resource) => originalTicket.exclusive_resources.includes(resource)),
+        ).toBe(false);
         const journal = initialSourceJournal(current);
         expect(before.work.lifecycle.phase).toBe('INTAKE');
         expect(before.work.lifecycle.risk).toBe('low');
@@ -6312,7 +6454,7 @@ test.each(['rollback', 'commit'] as const)(
         fixture = f;
         if (performance.now() >= deadline)
           throw new Error('Completed Source report fixture setup exhausted its deadline');
-        const peers = mode === 'rollback' ? admitDisjointInitialSourcePeers(f) : undefined;
+        const peers = mode === 'rollback' ? admitDisjointInitialSourcePeers(f, false) : undefined;
         setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
         clockHeld = true;
         const prepared = await prepareInitialSourceFrontier(f, 'writer');
@@ -6323,56 +6465,6 @@ test.each(['rollback', 'commit'] as const)(
         const readonlyPreparation = mode === 'rollback' ? completeReadonlyFixtureHostPreparation(f) : undefined;
         if (readonlyPreparation)
           expect(initialSourceState(f).work.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
-        if (peers) {
-          const nativeBefore = initialSourceState(f);
-          const nativeRows = readFixtureHostRows(initialSourceHostDatabase(f));
-          const admission = requiredValue(f.input, 'Earlier FIFO native admission');
-          const project = loadProjectSetContext(f.root, f.config, f.identity.repository_id, f.identity.project_ids);
-          const request: TaskSourceBindingRequest = {
-            schema: 'TaskSourceBindingRequest/v1',
-            operation: 'inspect',
-            operation_id: 'host-earlier-fifo-inspect',
-            request_id: 'host-earlier-fifo-request',
-            expected_host: {
-              work: nativeBefore.workVersion,
-              ledger: nativeBefore.ledgerVersion,
-              journal: { attempt: 1, version: nativeBefore.journalVersion },
-              maintenance_generation: nativeBefore.maintenanceGeneration,
-            },
-            work_id: f.identity.work_id,
-            attempt: 1,
-            thread_id: admission.nativeSessionHandle,
-            repository_id: f.identity.repository_id,
-            project_ids: f.identity.project_ids,
-            canonical_host_root: f.root,
-            config_digest: runtimeConfigDigest(f.config),
-            project_context_digest: project.project_context_digest,
-          };
-          const sourceAuthorizationDigest = createHash('sha256')
-            .update(readFileSync(path.join(f.root, f.sourceAuthorizationPath)))
-            .digest('hex');
-          const verifyCurrent: Parameters<HostStateStore['prepareTaskSourceBindingOperation']>[0]['verifyCurrent'] = ({
-            work,
-            ledger,
-            journal,
-          }) => {
-            expect(work).toEqual(nativeBefore.work);
-            expect(ledger).toEqual(nativeBefore.ledger);
-            expect(journal).toEqual(nativeBefore.journal);
-            return {
-              source_authorization_sha256: sourceAuthorizationDigest,
-              source_scope_digest: work.binding.work_source_revision,
-            };
-          };
-          const host = initialSourceHostStore(f);
-          const input = { request, identity: f.identity, verifyCurrent };
-          const preparation = host.prepareTaskSourceBindingOperation(input);
-          expect(preparation.status).toBe('prepared');
-          expect(host.prepareTaskSourceBindingOperation(input)).toEqual(preparation);
-          expect(readFixtureHostRows(initialSourceHostDatabase(f))).toEqual(nativeRows);
-          expect(host.inspectTaskSourceBindingOperation(input)).toEqual({ ...preparation, status: 'inspected' });
-          expect(readFixtureHostRows(initialSourceHostDatabase(f))).toEqual(nativeRows);
-        }
         const issued = await issueInitialSourceFixtureWriter(f);
         const readyAt = performance.now();
         if (readyAt >= deadline) throw new Error('Completed Source report fixture reservation exhausted its deadline');
@@ -6381,18 +6473,6 @@ test.each(['rollback', 'commit'] as const)(
         const host = initialSourceHostStore(f);
         const db = initialSourceHostDatabase(f);
         const before = initialSourceState(f);
-        if (peers) {
-          const originalTicket = requiredValue(
-            before.ledger.tickets.find((ticket) => ticket.ticket_id === before.work.lease?.ticket_id),
-            'Completed Source report original ticket',
-          );
-          expect(peers.queuedTicket.sequence).toBeLessThan(originalTicket.sequence);
-          expect(
-            peers.queuedTicket.exclusive_resources.some((resource) =>
-              originalTicket.exclusive_resources.includes(resource),
-            ),
-          ).toBe(false);
-        }
         expect(
           before.work.execution.assignment_attempts.find((attempt) => attempt.attempt_id === issued.hostAttemptId),
         ).toMatchObject({ status: 'started', result: null, result_digest: null });
@@ -7854,6 +7934,79 @@ test('bundled work-state repair plans atomically, resumes exact postimages and r
     journals: [{ work_id: 'work', attempt: journal.state.attempt, version: journal.version }],
   });
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
+  const cancelledRequest = { operationId: 'fixture-repair-cancel' };
+  const cancelledPlan = store.repairRequestTransitionFields({
+    ...cancelledRequest,
+    mode: 'plan',
+    actor: 'fixture-owner',
+  });
+  expect(cancelledPlan.status).toBe('planned');
+  expect(readFixtureHostRows(database)).toEqual(retained);
+  const cancelled = store.repairRequestTransitionFields({ ...cancelledRequest, mode: 'restore' });
+  expect(cancelled.status).toBe('restored');
+  expect(readFixtureHostRows(database)).toEqual(retained);
+  expect(store.readHostStateSnapshot(identity)).toEqual(original);
+  expect(store.repairRequestTransitionFields({ ...cancelledRequest, mode: 'restore' })).toEqual(cancelled);
+  expect(readFixtureHostRows(database)).toEqual(retained);
+  const cancelledRow = requiredValue(
+    database
+      .query<{ payload: string; digest: string }, [string, string]>(
+        'SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?',
+      )
+      .get(store.workspaceId, cancelledRequest.operationId),
+    'cancelled repair persisted postimage',
+  );
+  const changedRestore = parseJsonRecord(cancelledRow.payload);
+  const changedWork = firstOf(arrayAt(changedRestore, 'restored'), 'restored Work beforeimage');
+  if (!isPlainRecord(changedWork)) throw new Error('Restored Work is not a record.');
+  changedWork.revision = original.work.revision + 1;
+  const changedRestorePayload = canonicalJson(changedRestore),
+    changedRestoreDigest = canonicalJsonDigest(changedRestore);
+  const updateCancelled = database.query(
+    'UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND payload=? AND digest=?',
+  );
+  let restoreProbeFailure: { error: unknown } | undefined;
+  let restoreProbeInstalled = false;
+  try {
+    restoreProbeInstalled =
+      updateCancelled.run(
+        changedRestorePayload,
+        changedRestoreDigest,
+        store.workspaceId,
+        cancelledRequest.operationId,
+        cancelledRow.payload,
+        cancelledRow.digest,
+      ).changes === 1;
+    expect(restoreProbeInstalled).toBe(true);
+    expect(() => store.repairRequestTransitionFields({ ...cancelledRequest, mode: 'restore' })).toThrow(
+      'repair restored list differs from its frozen changes',
+    );
+    expect(database.inTransaction).toBe(false);
+    expect(readFixtureHostRows(database)).toEqual(retained);
+  } catch (error) {
+    restoreProbeFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          if (restoreProbeInstalled)
+            expect(
+              updateCancelled.run(
+                cancelledRow.payload,
+                cancelledRow.digest,
+                store.workspaceId,
+                cancelledRequest.operationId,
+                changedRestorePayload,
+                changedRestoreDigest,
+              ).changes,
+            ).toBe(1);
+        },
+      ],
+      restoreProbeFailure,
+    );
+  }
+  expect(store.repairRequestTransitionFields({ ...cancelledRequest, mode: 'restore' })).toEqual(cancelled);
   const plannedRows = database.query<PayloadSqlRow, []>('SELECT * FROM agent_host_work_state_repair').all();
   expect(
     database
@@ -7893,6 +8046,12 @@ test('bundled work-state repair plans atomically, resumes exact postimages and r
   const after = readPresentSnapshot(store, identity);
   expect(Object.hasOwn(after.work, 'request_transition')).toBe(false);
   expect(after.work.revision).toBe(saved.work.revision + 1);
+  expect(after.work.lifecycle.revision).toBe(saved.work.lifecycle.revision + 1);
+  expect(after.work).toEqual({
+    ...original.work,
+    revision: after.work.revision,
+    lifecycle: { ...original.work.lifecycle, revision: after.work.lifecycle.revision },
+  });
   expect(after.work.lifecycle.phase).toBe(original.work.lifecycle.phase);
   expect(after.work.lifecycle.assurance).toEqual(original.work.lifecycle.assurance);
   expect(after.ledger).toEqual(original.ledger);

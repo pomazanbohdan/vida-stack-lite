@@ -4,6 +4,19 @@ This reference holds detailed, scenario-specific regression contracts that are t
 
 ## Required agent regressions
 
+### Request-transition repair retains its actual restored postimage
+
+Reuse the existing work-state repair case for both planned cancellation and
+applied restoration. Planned cancellation preserves exact Work/Journal bytes
+and revisions; a repeated restore returns the identical persisted operation.
+An applied restore retains the original Work except its required advancing
+Work/lifecycle revisions. Keep the original stale dependency CAS refusal.
+Change only the fixture's stored restored list to neither valid frozen transform,
+recompute its digest, require the owning refusal and closed transaction with
+unchanged Host/Journal, conditionally restore the exact row and retry normally.
+Old contradictory v1 records remain fail-closed; this is no state replay or
+authority to infer whether a historical application happened.
+
 ### Exact terminal history and native synthesis correction
 
 Configured-frontier receipts require an exact terminal attempt prefix. Report
@@ -120,6 +133,24 @@ Require the completed-report continuity refusal, unchanged Host/Journal and
 recovery receipt rows, conditional exact restoration and healthy public reads.
 Keep the commit/expiry case's native writer history unchanged: a Host unit result
 without an accepted Journal item cannot satisfy expired-execution recovery.
+Rollback retains an actual active disjoint peer and its exact Work/ticket/claim/
+file preservation oracle. The existing native legacy frontier case owns the
+full active/queued peer pair, earlier nonoverlapping FIFO assertion and TaskSource
+prepare/retry/inspect no-effect probe. Reuse its setup rather than duplicate that
+independent proof inside the long recovery body. Both keep their existing20s bounds.
+
+Historical continuation lookup reuses the existing Journal CAS/restoration owner
+for controlled issued/reported states, empty issue ID and mismatched observation
+action/issue IDs. Preserve complete lookup, native rows, separate immutable
+receipt, original unissued lookup and healthy continuation retry. These synthetic
+Journal inputs test the reader; they do not attest executor or reviewer effects.
+
+Retired Source capture's existing real later-writer fixture rejects its sole
+Journal witness with an altered stored digest. Save exact raw Host/Journal rows
+while the digest is invalid, require the owning missing-terminal-evidence refusal,
+closed transaction and unchanged rows/schema, then conditionally restore the row.
+The original workspace/Journal checks and healthy capture/retry follow. This is
+a negative missing-valid-witness proof, not a positive unrelated-row skip.
 
 A separate synthetic legacy Source reconciliation component case reuses the
 Initial Source builder and existing20s composite bound: admission, issuance,

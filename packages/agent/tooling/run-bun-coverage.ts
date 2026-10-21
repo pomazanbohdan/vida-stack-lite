@@ -163,11 +163,11 @@ export function focusedCoverageShardReview(
     ? [
         {
           path: 'tests/bun/host-state.test.ts',
-          sha256: '0b3540cd02956944c4d76f374d3398c6aaf53ed8a955fa147962e73c9bc04357',
+          sha256: '3a2c323a0c79896fc4b6229f9f589feca08d48be3a4baae20f42899eb229cb3a',
         },
         {
           path: 'tests/stopped-source-capture.test.ts',
-          sha256: '9d632819c5dfd3906e0277fd83496b295bc5ae53c5c5d248a8352d5ce944ca31',
+          sha256: 'cf780178a392b1e0ce54feac0b84a6cee4e315cc8de73e1db2e55583763e7a0e',
         },
       ]
     : mainRuntimeCoreShardTests;

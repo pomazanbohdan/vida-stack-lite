@@ -10729,16 +10729,21 @@ export class HostStateStore {
         work_changes: typeof workChanges;
         journal_changes: typeof journalChanges;
         post_bindings?: unknown;
+        restored?: readonly (typeof workChanges)[number]['before'][];
       };
       const payloadDigest = (payload: string): string => createHash('sha256').update(payload).digest('hex');
       if (stored) requireState(payloadDigest(stored.payload) === stored.digest, 'repair operation checksum differs');
       const rawOperation = stored ? parseStoredRecord(stored.payload, 'stored repair operation') : null;
-      const restoredWorks = (changes: Operation['work_changes']) =>
-        changes.map((change) => ({
-          ...change.before,
-          revision: change.after.revision + 1,
-          lifecycle: { ...change.before.lifecycle, revision: change.after.lifecycle.revision + 1 },
-        }));
+      const restoredWorks = (changes: Operation['work_changes'], applied = true) =>
+        changes.map((change) =>
+          applied
+            ? {
+                ...change.before,
+                revision: change.after.revision + 1,
+                lifecycle: { ...change.before.lifecycle, revision: change.after.lifecycle.revision + 1 },
+              }
+            : change.before,
+        );
       const serialize = (value: Operation): unknown =>
         kind === 'correction-generation'
           ? value
@@ -10763,7 +10768,7 @@ export class HostStateStore {
               })),
               ...(value.status === 'restored'
                 ? {
-                    restored: restoredWorks(value.work_changes),
+                    restored: value.restored ?? restoredWorks(value.work_changes),
                   }
                 : {}),
             };
@@ -10874,11 +10879,16 @@ export class HostStateStore {
           journal_changes: [],
           ...(Object.hasOwn(rawOperation, 'post_bindings') ? { post_bindings: rawOperation.post_bindings } : {}),
         };
-        if (kind === 'request-transition' && status === 'restored')
+        if (kind === 'request-transition' && status === 'restored') {
+          const plannedRestored = restoredWorks(changedWorks, false),
+            appliedRestored = restoredWorks(changedWorks);
+          const restoredBeforeApply = sameJson(rawOperation.restored, plannedRestored);
           requireState(
-            sameJson(rawOperation.restored, restoredWorks(changedWorks)),
+            restoredBeforeApply || sameJson(rawOperation.restored, appliedRestored),
             'repair restored list differs from its frozen changes',
           );
+          operation.restored = restoredBeforeApply ? plannedRestored : appliedRestored;
+        }
         if (kind === 'correction-generation')
           operation.journal_changes = storedArray(rawOperation.journal_changes, 'repair journal changes').map(
             (candidate) => {
@@ -11136,6 +11146,9 @@ export class HostStateStore {
         ...operation,
         status: restoring ? ('restored' as const) : ('applied' as const),
         post_bindings: post,
+        ...(restoring && kind === 'request-transition'
+          ? { restored: restoredWorks(operation.work_changes, operation.status === 'applied') }
+          : {}),
       };
       const payload = operationPayload(next);
       const saved = this.#database

@@ -25,6 +25,9 @@ denial assertions alone need not increase Istanbul's visited-operand counts.
 An empty missing-function group does not mean there are no uncovered statements
 or branch arms. Read each exact counter and its own retained gap list before
 classifying the contour or asking for another scan.
+Before declaring a fixture absent, inspect every test path in the contour's
+existing selection. A missing direct call in one selected file is not a contour
+prerequisite GAP; another selected file may own the real producer and fixture.
 Distinguish an absent table from an absent positive-attempt row in a populated
 table. Prefer an extra read in the existing real producer fixture, preserving
 its row oracle, over another setup or a fabricated empty success table.

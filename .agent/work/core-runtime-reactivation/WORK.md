@@ -71,44 +71,67 @@ locators remain in the
 [published28cb28b WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/28cb28b0faaebd33aa2c573aa764ee6138fa7fc6/.agent/work/core-runtime-reactivation/WORK.md).
 This replaces completed narratives, not evidence or accepted criteria.
 
-### Current reservation reuse and legacy reconciliation packet
+### Latest failed execution
 
-The TaskSource policy builder reuses taskSourceReservationForRequest inside its
-existing Work/Ledger/target-ticket prefilter. It removes five duplicated Source
-lines without a new callable, DB read or authority. Unconditional reuse would
-change no-ticket error priority and is deliberately excluded. The suspected
-resource-mismatch admission bug is refuted: the existing matcher throws for a
-present mismatched ticket. Independent static review is
-vida-policy-reservation-owner-review-v1198.md. Strict149/configured zero-warning
-lint and all11TaskSource cases/438assertions pass3.42s in
-policy-reservation-owner-v1199-H3tR5Q. Future numeric denominators may shrink from
-real deduplication; do not treat denominator changes as new visited paths.
+Published04d8271781b5bbb9448ffad0866c07ac37065855 includes reservation-owner reuse
+and the separately qualified synthetic legacy reconciliation case. Exact focused
+checks, reviews and boundaries remain in its
+[published WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/04d8271781b5bbb9448ffad0866c07ac37065855/.agent/work/core-runtime-reactivation/WORK.md).
+Its one full stage, /workspace/contour-stage-xHClZ6, fails in190143.92053ms:
+rollback recovery setup15902.354621ms/body5022.494047ms exceeds its20s bound.
+Host has313PASS/1FAIL; stopped Source has16PASS. Complete capture, closed group,
+same boot/image and native exit1 are observed; original failed root remains in
+the bound image/scratch. No new coverage metrics are accepted from this run.
+Use DIAG/remainder-v1209-stage.log, SDK-provider/scratch-parent JSON siblings and
+execution.json for original custody. Projection records the failed outcome.
 
-One separately named synthetic legacy component case reuses the existing Initial
-Source builder and20s composite bound. It completes the actual public Host unit
-reservation, captures the public report-generated Journal candidate, runs its
-real verifier and aborts the atomic transaction. Exact rows/state and closed
-transaction prove rollback. A conditional fixture-only legacy Journal split then
-drives public reconciliation with that captured verifier. Foreign owner and live
-Source drift refuse without native row changes; healthy reconciliation preserves
-nonlease Work/history, releases original file claims, creates only an execution
-handoff and retries without writes. Synthetic authorization/observation is not
-native writer execution, a real producer crash, Runtime or consumer acceptance.
+After observed closure, remainder-v1209-cache-retirement-xHClZ6/manifest.json
+qualifies1private cache/0skipped and reclaims215846912tmpfs bytes. The remaining
+scratch archive /workspace/vida-functional-retention-xHClZ6-eRiTYn/archive.json
+passes full tar compare; original /dev/shm/vida-quality-retained-qkuBjH remains.
+Postarchive durable4291043328/tmpfs9275699200available exceed2147483648.
+No image, DB, SDK, original log, failure or shared dependency is deleted.
 
-Strict149/configured lint and1case/29assertions pass10.46s overall,8826.70ms case
-in legacy-reconcile-v1202-T0Mo5Q. Original v1201-F7tWeD lint failure is retained;
-the typed claim oracle replaces an unsafe matcher without suppression.
-vida-component-legacy-reconcile-review-v1208.md finds no blocking mismatch in
-the strengthened current bytes. It does not independently rerun Root's checks.
-Final exact numeric coverage for this packet remains pending.
-The refreshed exact test pin passes its strict123-file closure, configured lint
-and1case/10assertions in remainder-v1209-controls-q0g1n4. Documentation links
-and heading checks pass. These controls do not qualify the pending numeric run.
+### Current repair, reader and budget packet
 
-The preceding absent-attempt, optional-rebind and compact worker-preparation
-changes are measured in28cb28b; their exact focused checks and refuted missing
-contour-seed proposal remain in its published WORK and original diagnostics.
-No-file-resource unresolved attempts remain a fixture prerequisite GAP.
+A real product bug is reproduced in historical-planned-v1210-7x2zKA: repeated
+restore of a planned unapplied request-transition repair throws restored repair
+changed. The serializer incorrectly records post-apply revisions although the
+writer preserves the original Work. Source now records the actual planned or
+applied frozen target, validates only those exact transforms and preserves the
+recorded postimage on retry. No new public schema, DB read or authority is added.
+Malformed restored-image refusal, operation/row CAS and current-state checks stay.
+Contradictory pre-fix v1 records remain fail-closed; their shape cannot distinguish
+an old serializer bug from subsequent Work drift. No historical state is repaired
+or replayed. Review vida-planned-restore-fix-review-v1213.md finds no blocker.
+
+The existing historical continuation case adds controlled issued/reported reader
+states and malformed empty issue/action/issue-link refusals through the maintained
+Journal CAS/restore helper. Native rows, immutable receipt, lookup and healthy
+retry remain exact. No actual reviewer effect is claimed. The existing retired
+Source case corrupts only its real later writer's sole Journal digest, requires
+the missing-valid-terminal-evidence refusal and restores its exact row before
+healthy capture. It is a negative witness check, not a positive unrelated-row skip.
+Strict153/configured zero-warning lint and5cases/367assertions pass13.64s in
+repair-witness-v1214-NY3hmp. The stopped case takes10119.15ms under its unchanged
+existing60s bound. No extra fixture/root or timeout increase is introduced.
+
+Recovery keeps an actual active disjoint peer and its existing unchanged-row/
+ticket/claim/file oracle. The helper's queued second peer is omitted only there;
+the full pair, earlier nonoverlapping FIFO assertion and exact TaskSource probe
+move into the existing native legacy frontier case. Readonly history, actual
+writer reservation, rollback trigger, receipt/CAS and healthy retry remain.
+Strict149/configured lint and3cases/155assertions pass16.48s overall in
+rollback-scope-v1216-jpZPap: rollback11335.04ms, setup8534.697532ms/body2711.360907ms;
+frontier3457.17ms. This isolated run is not a controlled full-stage speedup.
+Keep original v1215-99U2a3 static failure; it launches no runtime. The review's
+original claim that recovery lacked peers.verifyUnchanged was incorrect; final
+vida-rollback-scope-review-v1217.md verifies the preserved oracle and finds no
+blocker. Final exact coverage for the changed Source/tests remains pending.
+Both changed test pins are refreshed once. Their strict123-file closure,
+configured lint and1case/10assertions pass326ms in
+remainder-v1218-controls-iBEFy3. Changed documentation checks5documents/24links
+with no failures. These are static/control evidence, not numeric closure.
 
 ### Three-hour audit:2026-10-21 02:29–05:29 UTC
 
@@ -153,7 +176,8 @@ walk or deletion is justified. Original failed roots and durable evidence stay.
 
 ### Next actions and unresolved prerequisites
 
-1. Publish checked reservation-owner reuse and synthetic legacy reconciliation.
+1. Publish checked planned-restore correction, reader/witness controls and the
+   narrowed recovery/frontier setup.
    Preserve exact GAPs for unsupported paths.
    Review the final diff, refresh the changed test pin once, run its narrow control
    and documentation check, then ordinary commit/push.
@@ -180,6 +204,11 @@ Keep these specific unresolved paths open:
   historical-normalization admission and must not be bypassed or reordered.
 - An unrelated producer interleaved at the exact continuation reservation gap
   remains untested; sequential producer controls are distinct evidence.
+- Missing/null release resources cannot reach the retired-capture fallback after
+  current Ledger schema validation. Keep that defensive-arm architecture GAP;
+  do not fabricate invalid accepted state. The corrected fixture study is
+  vida-retired-capture-gap-matrix-v1211.md. Its prior fixture-absence claim was
+  limited to one file; the existing second selected file owns the real fixture.
 
 ### Execution combinations
 

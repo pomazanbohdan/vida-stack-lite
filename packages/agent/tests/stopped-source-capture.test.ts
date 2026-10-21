@@ -1619,6 +1619,70 @@ test(
         expect(f.ddl()).toEqual(ddlBefore);
       }
       const db = f.ledger.sessionProducerBinding().database;
+      const laterJournalRow = required(
+        db
+          .query<{ revision: number; payload: string; digest: string }, [string, string]>(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=1',
+          )
+          .get(f.workspace, overlap.identity.work_id),
+        'Later writer original Journal witness',
+      );
+      const invalidDigest = '0'.repeat(64);
+      expect(laterJournalRow.digest).not.toBe(invalidDigest);
+      const updateLaterDigest = db.query(
+        'UPDATE agent_host_mastra_session_ledger SET digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND revision=? AND payload=? AND digest=?',
+      );
+      let witnessFailure: { error: unknown } | undefined;
+      let witnessChanged = false;
+      try {
+        witnessChanged =
+          updateLaterDigest.run(
+            invalidDigest,
+            f.workspace,
+            overlap.identity.work_id,
+            laterJournalRow.revision,
+            laterJournalRow.payload,
+            laterJournalRow.digest,
+          ).changes === 1;
+        expect(witnessChanged).toBe(true);
+        const hostRows = db.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all();
+        const journalRows = db
+          .query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt')
+          .all();
+        expect(() => f.store.captureRetiredSourceObservation(request)).toThrow(
+          'later Source grant lacks its exact terminal Host and Journal evidence',
+        );
+        expect(db.inTransaction).toBe(false);
+        expect(db.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all()).toEqual(hostRows);
+        expect(
+          db.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt').all(),
+        ).toEqual(journalRows);
+        expect(f.ddl()).toEqual(ddlBefore);
+      } catch (error) {
+        witnessFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              if (witnessChanged)
+                expect(
+                  updateLaterDigest.run(
+                    laterJournalRow.digest,
+                    f.workspace,
+                    overlap.identity.work_id,
+                    laterJournalRow.revision,
+                    laterJournalRow.payload,
+                    invalidDigest,
+                  ).changes,
+                ).toBe(1);
+            },
+          ],
+          witnessFailure,
+        );
+      }
+      expect(f.inspect()).toEqual(releasedBefore);
+      expect(currentJournal(f.ledger, 'stopped', 1)).toEqual(journalBefore);
       const ledgerRow = required(
         db
           .query<{ revision: number; payload: string; digest: string }, [string]>(

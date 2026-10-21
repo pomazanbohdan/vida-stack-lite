@@ -2367,7 +2367,12 @@ journal mode. This projection is evidence, not a second status store. The same k
 `--repair-id ID`; `plan` also records `--actor STRING` as attribution. The
 current bounded repair normalizes an absent optional `request_transition` to
 null using frozen preimages, postimages and dependency versions in one atomic
-transaction. Restore changes only its owned field with advancing revisions;
+transaction. Restoring an applied repair changes only its owned field with
+advancing revisions. Cancelling a planned, unapplied repair retains exact Work
+bytes and revisions. Its restored receipt records that actual postimage; exact
+retry requires the current Work to match it and the frozen transformation.
+Contradictory old v1 restored images fail closed; their shape alone cannot prove
+whether application occurred. In both cases,
 pending, reserved or uncertain native effects remain guarded. This work-state
 repair does not establish general consumer configuration/storage migration.
 
