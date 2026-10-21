@@ -12,6 +12,50 @@ remain deferred; their budgets and acceptance rules are unchanged.
 
 ### Current three-hour audit and migration preflight correction
 
+Published packet `9d1c20098d33b1c93630662b15470394ad71eeaf` passes ordinary
+hooks520format/527strict and push. Its new complete stage is **FAIL**, not a
+coverage gain: run`aa316fa2-e888-4b0a-9672-ceea1daa1f50`, stage
+`/workspace/contour-stage-6ePkSA`, elapsed204481.59332ms, native parent1,
+full capture/closed group/unchanged boot and image. Host shard298PASS/1FAIL,
+4305assertions and198.57s; stopped-source shard16PASS/296assertions and146.05s.
+The completed Source report commit case exceeds its unchanged20s limit at
+26796.52ms before recovery, after writer reservation; rollback passes15830.48ms.
+The producer operation is FAIL, execution/report incomplete, never a partial PASS.
+No complete numeric report exists. Automatic projection records stage attempt1125;
+last admitted exact counters remain bound to4e41dcc below, not9d1c200 or HEAD.
+Original failure fixture `vida-initial-source-5SOL8a`, native logs, DBs and image
+remain protected. The parent stage itself did not time out.
+
+SDK CI39529367455 succeeds at attempt1; artifact12314332322 binds the full Source
+in `vida-sdk-test-inputs-9d1c20098d33b1c93630662b15470394ad71eeaf-39529367455-1`.
+Retained ZIP`/workspace/vida-sdk-9d1c200-39529367455-1.zip` has SHA256
+`46dbbf67785d6a76084f51abf21bdb6754a8c8f6312316e3f780bea97f92ef15`.
+Image`/workspace/.vida-quality-inputs/37bf07bf9671f56069eb581a1330f94338e6d284/repository`
+binds tree`c9ee41a2d78f3e8e40ccfb3f00789f98acb1c81d`, input
+`9d5aa0c28c775c6979cc2926a9ffb401731e9693b03315e041089fa63bcf75f2`,
+manifestSHA`19f1b490811fbdb11bbc584a62f3fb30bcdebaff5131ff6905ff89064dc113a7`.
+Scratch admission is `remainder-v1132-scratch-parent.json`; stage log is
+`remainder-v1132-stage.log` in focused diagnostics. No full retry or new map join
+follows this failure. A fresh single-case phase diagnostic passes1/50assertions
+in16276.28ms, setup10983.45899ms/body5219.647962ms. Its complete writer-phase
+trace is `.tmp/initial-source-phase-v1133-ZDSFWU/writer.jsonl`; native log is
+`completed-source-reservation-phase-v1133-sDUUnz/focused.log`. This fresh functional
+timing neither qualifies instrumented concurrency nor erases the original timeout.
+The next repair must explain/reduce the observed setup cost without raising limits
+or removing real lineage, guards, assertions or UNKNOWN retention.
+
+Only the closed stage's declared private regenerable Bun cache is retired after
+terminal/group/live-owner/dependency checks:178155793regular bytes,
+215846912tmpfs bytes reclaimed, durable metadata costs4096bytes. The existing
+shared-dependency link inventory is reused under the uninterrupted no-install
+fence; no broad rescan. Manifest`remainder-v1132-cache-retirement-6ePkSA/manifest.json`
+qualifies1candidate/0skipped. Remaining scratch
+`/dev/shm/vida-quality-retained-gbXqGZ` is fully tar-compared to retained archive
+`/workspace/vida-functional-retention-6ePkSA-aMPG7Z/scratch.tar.gz`,321471bytes,
+SHA256`788cb9936ca51d7b9c4bb86e9474eb1d7c3c8d826caef9490c255f935657467e`.
+Original scratch and all failures remain. Archive durable free5234327552→5234003968
+stays3086520320above the unchanged2147483648floor. No resource GAP is established.
+
 The01:45UTC audit reuses the current4e41dcc receipts, projection and exact map.
 Twelve published commits fall in the preceding three hours. The latest complete
 different-input stages take175.357s and189.925s; no controlled speedup, complete

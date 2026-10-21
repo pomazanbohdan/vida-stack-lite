@@ -12,6 +12,13 @@ The active contour is `bun-host-state`. Its latest complete observation binds So
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
+The later9d1c200 stage is FAIL before a complete numeric report. Host298PASS/1FAIL
+includes the completed Source report commit fixture exceeding20s during writer
+setup; stopped-source16PASS. Projection retains failed stage attempt1125 and WORK
+owns exact original custody. Do not replace the admitted4e41dcc counters with
+partial rows. Repair this setup/concurrency GAP before another complete stage;
+the passing fresh functional phase diagnostic is not instrumented qualification.
+
 ## Work sequence
 
 ### 1. Preserve document ownership
