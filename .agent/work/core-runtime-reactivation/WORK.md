@@ -19,8 +19,9 @@ backlog and Bun-test technique now reference it. A queue skip keeps raw counts,
 denominators and BLOCKED numeric status intact. It is neither exact100 nor a
 frozen/mutation waiver. The two TaskSource history prerequisites have fresh blind
 review1470 in addition to1395's producer trace. Native Windows normalization needs
-its real target. These are candidates for bound objective disposition after the
-next complete report; no blanket exception covers the remaining65arms.
+its real target. Exact independent1487 disposition now skips only the two
+producer-impossible history paths below. The Windows arm remains a native-target
+GAP; no blanket exception covers the other missing arms.
 
 Blind1471 finds no safe extra sibling-action capture or expired-recovery fixture
 in its selected scope;1472 proposes a missing-initial-receipt refusal and a
@@ -66,8 +67,9 @@ Root refreshes the changed Host test pin once after final formatting to
 DIAG/remainder-v1477-test-pin.json retains its predecessor and unchanged sibling.
 DIAG/history-pin-v1477-HEn1Vf passes tooling122 strict/lint0 and the namespace
 control1PASS/10assertions373ms. No full stage starts per helper or failed candidate.
-The numerical observation below still bindsf90f60b
-until this reviewed packet has ordinary publication and its matching SDK/image.
+Ordinary hooks pass formatting520/strict527 and normal push publishesaca52f0.
+CI39649654570 forms the matching SDK without suites. The complete1481 stage
+qualifies those bytes below, without further helper-level full retries.
 
 ### Three-hour execution audit and private commit-mode repair
 
@@ -487,46 +489,99 @@ where copying/archive retention consumes the same space.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-f90f60bdfe0e08ae29761860f2670ff04f1878d3, run
-4da4447c-25f2-4cd4-b8dc-9f4eec03955a.
-F1125/1125,L4991/4991,S5323/5325,B5538/5603 leave2statement/65branch-arm gaps.
+aca52f04331b9bc9fb99f8c3536e5118468b358b, run
+62b2652b-6f62-40f3-8629-159f04e36b2d.
+F1125/1125,L4989/4989,S5323/5325,B5529/5594 leave2statement/65branch-arm gaps.
 F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. All341cases/5990assertions pass
-in190896.208148ms. Host325/5663 takes184.26s; stopped-source16/327 takes107.25s.
-The preceding complete341-case observation took202470.503798ms under different
+unchanged boot/image and automatic publication. All341cases/5999assertions pass
+in220481.861301ms. Host325/5672 takes213.59s; stopped-source16/327 takes125.50s.
+The preceding complete341-case observation took190896.208148ms under different
 Source and tests; this is not a controlled speed benchmark. Both stay within unchanged
 300s coverage/330s stage budgets. No unchanged full retry is launched.
 
-The graph helper remains fully exercised. Relative to1461, the TaskSource lookup
-consolidation removes1duplicate function/2lines/3statements and leaves the branch
-denominator unchanged. The common return preserves its missing-ticket refusal;
-the coalesced old statement is a denominator change, not new execution. One more
-arm is now visited, reducing the deficit66to65. The earlier graph visits and
-private commit-mode correspondence remain in the published predecessor record.
+Relative to1467, shared historical predicates remove2lines/9branch arms from the
+denominators; functions and statements retain their denominators. Both remaining
+deficits are unchanged. This is equivalent consolidation, not evidence of new
+visits or exact coverage. The completed-report corruption refusal adds9assertions
+and restores original history. The graph helper remains fully exercised.
 No simplification grants new accepted history, rights or UNKNOWN replay.
 
-The two remaining statement locations are current#resolveTaskSourceBinding:9210
-and snapshotHistoricalTaskSourceSources:9398. They skip reported history from a
+The two remaining statement locations are current#resolveTaskSourceBinding:9201
+and snapshotHistoricalTaskSourceSources:9389. They skip reported history from a
 different attempt or thread. DIAG/vida-task-source-history-producer-v1395.md traces
 the genuine producer prerequisite: bridge start is once per Work, resume keeps
 the same attempt, and existing continuation/recovery preserves its handle.
 That report's old own-ticket prerequisite is superseded by1463's equivalent
 lookup consolidation; only the two historical-producer GAPs remain applicable.
 Creating Journal/action rows directly would not supply a native producer. Keep
-those historical guards, all65missing arms and exact acceptance OPEN;
-do not repeat a full stage unchanged, fabricate history or open another contour.
-The next packet needs a supported producer or independently reviewed equivalent
-contract correction before another numeric launch. Frozen/mutation stay deferred.
+those historical guards and raw exact acceptance OPEN. Use the owner's new
+objective-skip rule only after exact-counter disposition; remaining testable or
+undispositioned paths keep this same contour active. Do not repeat a full stage
+unchanged or fabricate history. Frozen/mutation stay deferred.
 
-The predecessor map is DIAG/remainder-v1467-predecessor-gap-map.json; the current
+The predecessor map is DIAG/remainder-v1481-predecessor-gap-map.json; the current
 map is refreshed once through the retained report-only join. The prior numeric,
 timing and retirement evidence remains in the
-[publishedf90f60b WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/f90f60bdfe0e08ae29761860f2670ff04f1878d3/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
+[publishedaca52f0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/aca52f04331b9bc9fb99f8c3536e5118468b358b/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
 No new AST/Source scan/hash is used for this join. Frozen CC/CRAP remains deferred;
-the diagnostic273 maxima do not establish frozen-gate acceptance.
+the diagnostic255 maxima do not establish frozen-gate acceptance.
+
+### Bound objective coverage dispositions
+
+The table binds the62b2652b report, aca52f0 Source/image and native execution
+receipts above. Source fingerprint is
+aaec43aea318e9ce3d193c1cfe424be656926988979a8582efa366fc785d976a;
+test fingerprint is
+fe8b68138505b185a7f7b86aa1d586c88009a29fd8519769b20b182027a7e68c.
+The report's original manifest, tool_inputs/config hashes and tool fingerprint
+1dc9c5d410753cddf3c762635f7c5941661ab905f013536dbc3c9e2ed6b1fae1
+bind the checks without another hash pass. Independent blind1487 re-reads exact
+current counters and producers; DIAG/vida-objective-exact-history-v1487.md owns
+the detailed proof. Root accepts its two history dispositions. Independent1484
+also classifies continuation/repair arms; Root verifies and accepts only the
+three dominated fallbacks recorded below from that report, retained as
+DIAG/vida-objective-continuation-v1484.md. Other proposed objectives remain
+candidates: a later refusal alone does not prevent execution of an earlier
+fallback, and a claimed fixture route does not prove the arm was visited.
+
+| Function in src/host-state.ts | Exact zero counters | Disposition and prerequisite |
+| --- | --- | --- |
+| HostStateStore.#resolveTaskSourceBinding | Statement2663 at9201:80–89; branch785 arm0 at9201:6–89, raw[0,8] | Objective skip. Reaching continue requires valid reported same-Work history from another attempt or native owner. Current bridge start is once per Work-bound run, resume preserves attempt, and supported renew/recovery/continuation preserves owner. No supported same-Work new-attempt or owner-transfer producer exists. Keep integrity checks and guard; reopen when that producer/contract changes. |
+| HostStateStore.snapshotHistoricalTaskSourceSources | Statement2718 at9389:51–60; branch809 arm0 at9389:12–60, raw[0,18] | Objective skip. Requires a genuine second same-Work attempt Journal retaining the first attempt's observed TaskSource action. Current bridge cannot produce that transition; direct ledger sync or edited retained history is not engine-backed evidence. Keep guard and reopen when the supported producer/contract changes. |
+| HostStateStore.#repairWorkAuthority | Branch965 arm1 at10795:48–81 | Objective skip. The restored request-transition serializer's nullish fallback is dominated by restored-list validation/assignment on decoded operations, and by explicit restoredWorks assignment on the live restored-status producer. Invalid absent/null persisted lists fail before serialization. Preserve fallback; reopen on a changed restored producer/decoder. |
+| HostStateStore.authorizeCorrectiveExecution | Branch1301 arm1 at14289:91–93 | Objective skip. selectCorrectiveEvidence already requires each returned failed item to resolve to a configured test or eligible validate stage before the later stage-kind lookup. Thus its missing-stage empty-string operand cannot execute for returned evidence. Preserve refusal and reopen if the selector/producer contract changes. |
+| HostStateStore.authorizeCorrectiveExecution | Branch1303 arm1 at14300:93–95 | Objective skip. The ancestor worklist starts with those verified stage IDs and expands only configured required_after IDs. The bound validated workflow requires prerequisites to match existing predecessor edges. No absent stage or absent required_after reaches this fallback. Preserve it and reopen if config/closure/producer validation changes. |
+| HostStateStore.captureRetiredSourceObservation | Branch1432 arm1 at15860:62–64 | Objective skip. The original ledger passes checkedLedger before the matching release-operation lookup. The coordination schema requires release.resources and its validator requires nonempty resources; the lookup first filters kind===release. Missing resources is rejected before the fallback. Preserve it and reopen if schema/decoder/producer validation changes. |
+| HostStateStore.captureHistoricalTerminalSynthesisAndRelease | Branch1568 arm1 at17926:56–58 | Objective skip. The original #read validates the Work/ledger pair; every non-null lease must point to its active matching ticket. The local owner guard requires that lease, and the validated ticket schema requires exclusive_resources. The absent-ticket/resources fallback cannot follow those guards. Preserve it and reopen if pair/schema/producer validation changes. |
+| taskSourceReservationResources | Branch87 arm0 at1768:45–82, raw[0,71] | Native-Windows qualification GAP, not a contract-unreachable skip. Requires the real supported native target; do not mock platform or claim current Linux evidence qualifies it. |
+
+Both missing statements and7of65missing branch arms have reviewed objective
+dispositions. RawS5323/5325 andB5529/5594 remain unchanged and BLOCKED.
+The other58arms, including Windows, retain their exact gaps. This does not close
+the contour or open another while testable/undispositioned paths remain.
+No frozen-budget waiver, assertion-confirmed mutation kill or Runtime acceptance
+is inferred. Early1482/1483 studies used the predecessor before current binding;
+their generic candidate routes do not establish an exact disposition. Retain
+their reports without treating rows=[] as absence of missing branch arms.
+Current-counter1488 reviews the actual20capture/lease arms, correcting1483's
+21-arm header overcount without changing the65-arm total. Its report is retained
+as DIAG/vida-objective-exact-capture-v1488.md; Root accepts only the two schema/pair
+proofs above. Its remaining proposed objectives need further producer/guard proof.
+In particular recoverExpiredLocalLease has input.verifyCurrent between its two
+lineage reads. Do not infer their equivalence, remove the second read or accept
+1498's skip solely from an assertion that no callback occurs. Supported negative
+routes and current/completed Journal map routes also need causal fixture checks;
+candidate recipes are not coverage. All other arms stay in the active contour.
+This cycle exposes two avoidable review steps:1482/1483 start against the
+predecessor before the fresh exact map exists, and1484 initially mistypes the
+image path. Neither missing metadata nor a mistyped path establishes a missing
+environment. Bun-test technique now requires the current map before exact-counter
+disposition, distinguishes its three counter collections, and resolves the report
+path from its owner instead of transcribing image IDs. Producer-only research can
+still overlap a run; no numeric/AST/hash producer is repeated to repair this intake.
 
 ## Latest measurement custody
 
@@ -539,17 +594,17 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-iFeKx3/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1467-sdk-provider.json and DIAG/remainder-v1467-sdk-verified.json |
-| Admission and complete producer log | DIAG/remainder-v1467-scratch-parent.json and DIAG/remainder-v1467-stage.log |
-| Private-cache disposition | DIAG/remainder-v1468-cache-retirement-iFeKx3/manifest.json and retirement-events.jsonl |
-| Non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-iFeKx3-iOAMIv/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-4Nlvz4 |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-ZMaBPU/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1481-sdk-provider.json and DIAG/remainder-v1481-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1481-scratch-parent.json and DIAG/remainder-v1481-stage.log |
+| Private-cache disposition | DIAG/remainder-v1486-cache-retirement-ZMaBPU/manifest.json and retirement-events.jsonl |
+| Non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-ZMaBPU-LJoe0z/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-Iy6Wx3 |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
 and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
-The324751-byte durable archive excludes only this stage's declared private
+The325170-byte durable archive excludes only this stage's declared private
 regenerable Bun cache, retired after closed custody and dependency qualification.
 The exact cache path,15243-entry inventory and exclusive events are retained;
 observed scratch gain215846912bytes is separate from durable-4096bytes.
@@ -558,7 +613,7 @@ with their originals; its digest is computed once. This is custody, not a space
 gain or reattestation. Prior qualified cache retirement stays in the published
 history linked above; no shared dependency scan/hash is repeated.
 
-A postclosure observation records2307710976durable bytes after archive, above the
+A postclosure observation records2236084224durable bytes after archive, above the
 unchanged2147483648floor. Both filesystems passed admission before launch;
 checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
