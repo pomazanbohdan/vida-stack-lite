@@ -2352,15 +2352,61 @@ test('historical task-source snapshots select observed roots and fence corrupted
 test('task-source policy denials preserve preparation and queued retries preserve native FIFO', async () => {
   const deadline = performance.now() + 5_000;
   const denial = new Error('fixture trusted policy denied');
-  let mode: 'throw' | 'deny' | 'invalid' | 'allow' = 'throw';
+  type PolicyDecision = Awaited<ReturnType<typeof trustedTaskSourcePolicyDecision>>;
+  const invalidModes = [
+    'null',
+    'scalar',
+    'extra',
+    'operation',
+    'request',
+    'hash',
+    'authorization',
+    'deny',
+    'edictum-operation',
+    'edictum-hash',
+    'edictum-evaluation',
+    'edictum-action',
+    'cas',
+    'preflight',
+    'source-format',
+    'source-mismatch',
+  ] as const;
+  const invalidDecisions: Record<(typeof invalidModes)[number], (allowed: PolicyDecision) => unknown> = {
+    null: () => null,
+    scalar: () => 'not a policy decision',
+    extra: (allowed) => ({ ...allowed, unexpected: true }),
+    operation: (allowed) => ({ ...allowed, operation_id: allowed.operation_id + '-foreign' }),
+    request: (allowed) => ({ ...allowed, request_id: allowed.request_id + '-foreign' }),
+    hash: (allowed) => ({ ...allowed, operation_hash: '0'.repeat(64) }),
+    authorization: (allowed) => ({ ...allowed, authorization: undefined }),
+    deny: (allowed) => ({ ...allowed, authorization: { decision: 'deny', diagnostics: [] } }),
+    'edictum-operation': (allowed) => ({ ...allowed, edictum_operation: undefined }),
+    'edictum-hash': (allowed) => ({
+      ...allowed,
+      edictum_operation: { ...allowed.edictum_operation, operation_hash: '0'.repeat(64) },
+    }),
+    'edictum-evaluation': (allowed) => ({ ...allowed, edictum_evaluation: undefined }),
+    'edictum-action': (allowed) => ({
+      ...allowed,
+      edictum_evaluation: { ...allowed.edictum_evaluation, action: 'deny' },
+    }),
+    cas: (allowed) => ({
+      ...allowed,
+      prepared_record_cas: { ...allowed.prepared_record_cas, operation_id: 'foreign-operation' },
+    }),
+    preflight: (allowed) => ({ ...allowed, preflight_evidence_digest: 'invalid' }),
+    'source-format': (allowed) => ({ ...allowed, source_authorization_sha256: 'invalid' }),
+    'source-mismatch': (allowed) => ({ ...allowed, source_authorization_sha256: 'd'.repeat(64) }),
+  };
+  let mode: 'throw' | 'allow' | (typeof invalidModes)[number] = 'throw';
   const policy = mock(
     async ({ request }: Parameters<NonNullable<ConstructorParameters<typeof HostStateStore>[8]>['verify']>[0]) => {
       if (mode === 'throw') throw denial;
       const allowed = trustedTaskSourcePolicyDecision(request);
       if (mode === 'allow') return allowed;
-      return mode === 'deny'
-        ? { ...allowed, authorization: { decision: 'deny' as const, diagnostics: [] } }
-        : { ...allowed, source_authorization_sha256: 'd'.repeat(64) };
+      // Deliberately violate the provider's static return contract at its runtime
+      // trust boundary; Host must reject the actual malformed bytes/shape.
+      return invalidDecisions[mode](allowed) as PolicyDecision;
     },
   );
   const retainedResources = ['execution:task-source-expiry', 'branch:refs/heads/accepted-source'];
@@ -2373,16 +2419,25 @@ test('task-source policy denials preserve preparation and queued retries preserv
     const before = presentSnapshot(f.store.readHostStateSnapshot(f.identity));
     const peerBefore = presentSnapshot(f.store.readHostStateSnapshot(peer.identity));
     const journalBefore = f.store.readWorkSessionJournal(f.identity);
-    for (const value of ['throw', 'deny', 'invalid'] as const) {
+    const nativeBefore = readFixtureHostRows(f.database);
+    const preparedRows = f.database.query(
+      'SELECT * FROM agent_host_task_source_binding_operation ORDER BY operation_id',
+    );
+    const originalPreparedRows = preparedRows.all();
+    const sourceRoot = path.resolve(requiredValue(f.request.source_root, 'Proposed TaskSource root'));
+    expect(existsSync(sourceRoot)).toBe(false);
+    for (const value of ['throw', ...invalidModes] as const) {
       mode = value;
       await Promise.resolve(
         expect(f.store.issueTaskSourceBindingOperation({ request: f.request, identity: f.identity })).rejects.toThrow(
           value === 'throw' ? denial : 'task source mutation policy evidence is invalid or denied',
         ),
       );
-      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
-      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
-      expect(f.prepare()).toEqual(prepared);
+      // Exact validated native beforeimages cover Work, ledger and Journal
+      // without re-decoding their full histories for every policy alternative.
+      expect(readFixtureHostRows(f.database)).toEqual(nativeBefore);
+      expect(preparedRows.all()).toEqual(originalPreparedRows);
+      expect(existsSync(sourceRoot)).toBe(false);
       expect(
         f.database
           .query(
@@ -2391,7 +2446,10 @@ test('task-source policy denials preserve preparation and queued retries preserv
           .all(),
       ).toEqual([]);
     }
-    expect(policy).toHaveBeenCalledTimes(3);
+    expect(policy).toHaveBeenCalledTimes(invalidModes.length + 1);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+    expect(f.prepare()).toEqual(prepared);
     mode = 'allow';
     const queued = await f.store.issueTaskSourceBindingOperation({ request: f.request, identity: f.identity });
     expect(queued).toEqual({
@@ -2430,7 +2488,7 @@ test('task-source policy denials preserve preparation and queued retries preserv
     expect(f.store.readHostStateSnapshot(peer.identity).work).toEqual(peerBefore.work);
     expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
     expect(await f.store.issueTaskSourceBindingOperation({ request: f.request, identity: f.identity })).toEqual(queued);
-    expect(policy).toHaveBeenCalledTimes(5);
+    expect(policy).toHaveBeenCalledTimes(invalidModes.length + 3);
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
     expect(f.store.readHostStateSnapshot(peer.identity).work).toEqual(peerBefore.work);
     expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
@@ -2460,6 +2518,118 @@ test('task-source policy denials preserve preparation and queued retries preserv
   }
 });
 
+function assertHistoricalCaptureRefusals(
+  input: Parameters<HostStateStore['captureHistoricalTerminalSynthesisAndRelease']>[0],
+  store: HostStateStore,
+  database: Database,
+): void {
+  const active = presentSnapshot(store.readHostStateSnapshot(input.identity));
+  const nextWork = requiredValue(input.nextWork, 'Historical owner release Work');
+  const nextLedger = requiredValue(input.nextLedger, 'Historical owner release ledger');
+  const terminal = requiredValue(nextLedger.operations.at(-1), 'Historical release operation');
+  const firstPredecessor = requiredValue(input.provenance.predecessor_refs[0], 'Historical predecessor');
+  const before = readFixtureHostRows(database);
+  const schema = database.query('SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name');
+  const schemaBefore = schema.all();
+  const requestError = 'historical synthesis custody request invalid';
+  const provenanceError = 'historical synthesis provenance invalid';
+  const ownerError = 'historical synthesis custody requires one exact active original owner release';
+  const releaseError = 'historical synthesis custody release operation is incomplete';
+  const variants: readonly [Partial<typeof input>, string][] = [
+    [{ attempt: 0 }, requestError],
+    [{ actionId: '' }, requestError],
+    [{ issueId: '' }, requestError],
+    [{ nativeSessionHandle: '' }, requestError],
+    [{ userRequestPointer: '' }, requestError],
+    [{ userRequestPointer: 'fixture:\ncontrol' }, requestError],
+    [{ provenance: { ...input.provenance, followup_ref: '' } }, provenanceError],
+    [{ provenance: { ...input.provenance, original_actor_id: '' } }, provenanceError],
+    [{ provenance: { ...input.provenance, denial_message: '' } }, provenanceError],
+    [{ provenance: { ...input.provenance, predecessor_refs: [] } }, provenanceError],
+    [{ provenance: { ...input.provenance, predecessor_refs: [firstPredecessor, firstPredecessor] } }, provenanceError],
+    [
+      {
+        provenance: {
+          ...input.provenance,
+          predecessor_refs: [firstPredecessor, { result_id: 'distinct-invalid-digest', digest: 'invalid' }],
+        },
+      },
+      provenanceError,
+    ],
+    [
+      { expectedWork: { ...input.expectedWork, revision: input.expectedWork.revision + 1 } },
+      'state compare-and-swap conflict',
+    ],
+    [
+      { expectedLedger: { ...input.expectedLedger, revision: input.expectedLedger.revision + 1 } },
+      'state compare-and-swap conflict',
+    ],
+    [
+      { expectedMaintenanceGeneration: input.expectedMaintenanceGeneration + 1 },
+      'maintenance generation is stale or missing',
+    ],
+    [{ nativeSessionHandle: input.nativeSessionHandle + '-foreign' }, ownerError],
+    [{ nextWork: { ...nextWork, lease: active.work.lease } }, ownerError],
+    [{ nextWork: { ...nextWork, execution: { ...nextWork.execution, status: 'active' } } }, ownerError],
+    [{ nextWork: { ...nextWork, revision: nextWork.revision + 1 } }, ownerError],
+    [{ nextWork: { ...nextWork, binding: { ...nextWork.binding, config_digest: '0'.repeat(64) } } }, ownerError],
+    [{ nextWork: { ...nextWork, execution: { ...nextWork.execution, assignment_attempts: [] } } }, ownerError],
+    [{ nextLedger: { ...nextLedger, revision: nextLedger.revision + 1 } }, ownerError],
+    [
+      {
+        nextLedger: {
+          ...nextLedger,
+          tickets: nextLedger.tickets.filter((entry) => entry.ticket_id !== terminal.ticket_id),
+        },
+      },
+      releaseError,
+    ],
+    [
+      {
+        nextLedger: {
+          ...nextLedger,
+          claims: nextLedger.claims.filter((entry) => entry.ticket_id !== terminal.ticket_id),
+        },
+      },
+      releaseError,
+    ],
+    [{ nextLedger: { ...nextLedger, operations: nextLedger.operations.slice(0, -1) } }, releaseError],
+    [
+      {
+        nextLedger: {
+          ...nextLedger,
+          operations: [
+            ...nextLedger.operations.slice(0, -1),
+            { ...terminal, decision_pointer: 'fixture:foreign-release' },
+          ],
+        },
+      },
+      releaseError,
+    ],
+    [
+      { nextWork: { ...nextWork, lifecycle: { ...nextWork.lifecycle, next_action: 'foreign lifecycle afterimage' } } },
+      releaseError,
+    ],
+    [
+      { expectedJournal: { ...input.expectedJournal, revision: input.expectedJournal.revision + 1 } },
+      'historical synthesis custody Journal CAS differs',
+    ],
+  ];
+  const { nextWork: _nextWork, ...withoutWork } = input;
+  const { nextLedger: _nextLedger, ...withoutLedger } = input;
+  const requests: readonly [typeof input, string][] = [
+    [withoutWork, ownerError],
+    [withoutLedger, ownerError],
+    ...variants.map(([change, message]): [typeof input, string] => [{ ...input, ...change }, message]),
+  ];
+  for (const [request, message] of requests) {
+    expect(() => store.captureHistoricalTerminalSynthesisAndRelease(request)).toThrow(message);
+    expect(readFixtureHostRows(database)).toEqual(before);
+    expect(schema.all()).toEqual(schemaBefore);
+  }
+  expect(store.readHostStateSnapshot(input.identity)).toEqual(active);
+}
+
 test('trusted Host continuation atomically retains historical evidence and never reissues its review on retry', async () => {
   const deadline = performance.now() + 5_000;
   const fixtureRoot = mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-'));
@@ -2474,11 +2644,41 @@ test('trusted Host continuation atomically retains historical evidence and never
   try {
     // Maintained trusted-caller fixture; this does not establish external approval or Runtime acceptance.
     configRoot = continuationFixtureRepositoryRoot();
-    const current = await continuationFixture({ root: fixtureRoot, completedAttempt: true, disjointPeer: true });
+    const current = await continuationFixture({
+      root: fixtureRoot,
+      completedAttempt: true,
+      disjointPeer: true,
+      lifecycleScopeReference: true,
+      beforeCapture: assertHistoricalCaptureRefusals,
+    });
     f = current;
     if (performance.now() >= deadline) throw new Error('Host continuation fixture exhausted its case deadline.');
     const request = continuationRequestFor(f);
     const before = presentSnapshot(current.store.readHostStateSnapshot(current.identity));
+    const scopeBytes = requiredValue(current.scopeBytes, 'Backed historical implementation scope');
+    const scopeFile = path.join(current.root, '.agent/scope.json');
+    expect(readFileSync(scopeFile, 'utf8')).toBe(scopeBytes);
+    expect(before.work.binding.scope_contract_digest).toBe(createHash('sha256').update(scopeBytes).digest('hex'));
+    expect(before.work.contracts.scope.sha256).toBe(before.work.binding.scope_contract_digest);
+    expect(before.work.lifecycle.references).toEqual([
+      {
+        schema: 'LifecycleArtifactReference/v1',
+        kind: 'implementation_scope',
+        artifact_schema: 'ImplementationScope/v1',
+        record_id: before.work.binding.scope_id,
+        path: '.agent/scope.json',
+        sha256: before.work.binding.scope_contract_digest,
+        source_revision: before.work.binding.work_source_revision,
+        scope_id: before.work.binding.scope_id,
+        ac_ids: before.work.binding.ac_ids,
+        generation: null,
+        implementation_fingerprint: null,
+        delivery_cycle_id: null,
+        principal: null,
+        decision: null,
+        disposition: 'current',
+      },
+    ]);
     expect(before.work.execution.assignment_attempts).toHaveLength(1);
     expect(before.work.execution.assignment_attempts[0]).toMatchObject({
       status: 'completed',
@@ -2586,6 +2786,15 @@ test('trusted Host continuation atomically retains historical evidence and never
       schema_digest: request.targetSchemaDigest,
     });
     expect(after.work.execution.status).toBe('active');
+    expect(after.work.lifecycle.source_revision).toBe(request.currentSourceScope.digest);
+    expect(after.work.lifecycle.references).toEqual(
+      before.work.lifecycle.references.map((reference) => ({
+        ...reference,
+        source_revision: request.currentSourceScope.digest,
+        disposition: 'retired',
+      })),
+    );
+    expect(readFileSync(scopeFile, 'utf8')).toBe(scopeBytes);
     expect(after.work.execution.assignment_attempts).toEqual(before.work.execution.assignment_attempts);
     expect(after.work.lease?.thread_id).toBe(current.threadId);
     expect(result.receipt).toMatchObject({
@@ -3678,9 +3887,11 @@ function admitDisjointInitialSourcePeers(current: Awaited<ReturnType<typeof crea
   };
 }
 
-test('native readonly dispatch repair retains its issued UNKNOWN through deterministic intent and exact retry', async () => {
+async function withReadonlyDispatchHostFixture(
+  body: (current: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>, deadline: number) => Promise<void>,
+): Promise<void> {
   const deadline = performance.now() + 5_000;
-  let f: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+  let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
   let ownedRoot: string | undefined;
   await withInitialSourceCleanup(
     async () => {
@@ -3691,154 +3902,297 @@ test('native readonly dispatch repair retains its issued UNKNOWN through determi
           console.info('Readonly dispatch Host fixture root: ' + root);
         },
       });
-      f = current;
-      const store = initialSourceHostStore(current);
-      const ledger = initialSourceHostLedger(current);
-      const unissued = initialSourceJournal(current);
-      expect(current.config.agents.profiles.researcher?.egress_policy).toBe('none');
-      expect(unissued.state.items).toHaveLength(1);
-      const issued = ledger.issueWave(current.identity.work_id, 1, unissued.version);
-      const item = requiredValue(issued.state.items[0], 'Issued readonly dispatch item');
-      const issueId = requiredValue(item.issue_id, 'Issued readonly dispatch identity');
-      expect(issued.resume_status).toBe('issued_outcome_uncertain');
-      expect(item.observation).toBeNull();
-      expect(item.host_reservation).toBeUndefined();
-      const before = presentSnapshot(store.readHostStateSnapshot(current.identity));
-      suspendHistoricalOwnerWork({
-        store,
-        identity: current.identity,
-        journal: issued,
-        expectedWork: before.workVersion,
-        expectedLedger: before.ledgerVersion,
-        expectedMaintenanceGeneration: before.maintenanceGeneration,
-        nativeSessionHandle: requiredValue(current.input, 'Readonly dispatch admission').nativeSessionHandle,
-        userRequestPointer: 'fixture:pause-unknown-readonly',
-        requestIntent: 'linked_correction',
-        predicate: 'unknown_readonly',
-        config: current.config,
-        documentationContext: {
-          repository_root: current.root,
-          repository_id: current.identity.repository_id,
-          project_id: 'sample',
-          work_id: current.identity.work_id,
-        },
-      });
-      const paused = presentSnapshot(store.readHostStateSnapshot(current.identity));
-      const journal = initialSourceJournal(current);
-      expect(paused.work.lease).toBeNull();
-      expect(paused.work.execution.status).toBe('suspended');
-      expect(journal).toEqual(issued);
-      const plan = buildReadOnlyDispatchRepairPlan({
-        repositoryRoot: current.root,
-        config: current.config,
-        workspaceId: store.workspaceId,
-        projectIds: current.identity.project_ids,
-        workId: current.identity.work_id,
-        attempt: 1,
-        actionId: item.request.action_id,
-        issueId,
-        nativeHandle: requiredValue(current.input, 'Readonly dispatch admission').nativeSessionHandle,
-        repairId: 'fixture-native-readonly-repair',
-        actor: 'fixture-readonly-operator',
-        timestamp: new Date().toISOString(),
-        snapshot: store.readWorkSessionSnapshot(current.identity),
-      });
-      const db = initialSourceHostDatabase(current);
-      const persistedBefore = readFixtureHostRows(db);
-      const repairRows = () =>
-        db
-          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_readonly_dispatch_repair'")
-          .get() === null
-          ? []
-          : db.query('SELECT generation,payload,digest FROM agent_host_readonly_dispatch_repair').all();
-      expect(repairRows()).toEqual([]);
-      for (const [denied, error] of [
-        [
-          { ...plan, work_version: { ...plan.work_version, revision: plan.work_version.revision + 1 } },
-          'state compare-and-swap conflict',
-        ],
-        [
-          { ...plan, ledger_version: { ...plan.ledger_version, revision: plan.ledger_version.revision + 1 } },
-          'state compare-and-swap conflict',
-        ],
-        [
-          { ...plan, mastra_version: { ...plan.mastra_version, revision: plan.mastra_version.revision + 1 } },
-          'state compare-and-swap conflict',
-        ],
-        [
-          { ...plan, maintenance_generation: plan.maintenance_generation + 1 },
-          'maintenance generation is stale or missing',
-        ],
-        [
-          { ...plan, config_digest: '0'.repeat(64) },
-          'read-only dispatch repair plan is stale or differs from deterministic current state',
-        ],
-      ] as const) {
-        expect(() => store.commitReadOnlyDispatchRepair(denied)).toThrow(error);
-        expect(readFixtureHostRows(db)).toEqual(persistedBefore);
-        expect(repairRows()).toEqual([]);
-      }
-      expect(() => db.transaction(() => store.commitReadOnlyDispatchRepair(plan)).deferred()).toThrow(
-        'nested read-only dispatch repair transaction forbidden',
-      );
-      expect(readFixtureHostRows(db)).toEqual(persistedBefore);
-      expect(repairRows()).toEqual([]);
-      expect(store.commitReadOnlyDispatchRepair(plan)).toEqual(plan);
-      expect(store.commitReadOnlyDispatchRepair(plan)).toEqual(plan);
-      const rows = db.query('SELECT generation,payload,digest FROM agent_host_readonly_dispatch_repair');
-      const originalRows = [{ generation: 1, payload: canonicalJson(plan), digest: plan.digest }];
-      expect(rows.all()).toEqual(originalRows);
-      for (const corrupted of [
-        { column: 'payload', value: 'conflicting payload' },
-        { column: 'digest', value: 'conflicting digest' },
-        { column: 'payload', value: new Uint8Array([0]) },
-        { column: 'digest', value: new Uint8Array([0]) },
-      ] as const) {
-        let primaryFailure: { error: unknown } | undefined;
-        try {
-          expect(
-            db.query(`UPDATE agent_host_readonly_dispatch_repair SET ${corrupted.column}=?`).run(corrupted.value)
-              .changes,
-          ).toBe(1);
-          const conflictingRows = rows.all();
-          expect(() => store.commitReadOnlyDispatchRepair(plan)).toThrow(
-            'existing read-only dispatch repair generation differs',
-          );
-          expect(rows.all()).toEqual(conflictingRows);
-          expect(readFixtureHostRows(db)).toEqual(persistedBefore);
-        } catch (error) {
-          primaryFailure = { error };
-          throw error;
-        } finally {
-          completeOwnedCleanup(
-            [
-              () => {
-                expect(
-                  db
-                    .query('UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=?')
-                    .run(canonicalJson(plan), plan.digest).changes,
-                ).toBe(1);
-              },
-            ],
-            primaryFailure,
-          );
-        }
-      }
-      expect(rows.all()).toEqual(originalRows);
-      expect(plan).toMatchObject({ prior_outcome: 'unknown', replacement_generation: 1, status: 'prepared' });
-      expect(plan.prior_issue_id).toBe(issueId);
-      expect(plan.replacement_issue_id).not.toBe(issueId);
-      expect(store.readHostStateSnapshot(current.identity)).toEqual(paused);
-      expect(initialSourceJournal(current)).toEqual(journal);
-      expect(initialSourceJournal(current).state.items[0]).toEqual(item);
+      fixture = current;
+      if (performance.now() >= deadline) throw new Error('Readonly dispatch fixture setup exhausted its deadline');
+      await body(current, deadline);
       expect(performance.now()).toBeLessThan(deadline);
     },
     async () => {
-      if (f) await f.close();
+      if (fixture) await fixture.close();
       if (ownedRoot) console.info('Retained issued UNKNOWN readonly dispatch fixture: ' + ownedRoot);
     },
     'Readonly dispatch Host fixture',
   );
+}
+
+function pauseReadonlyDispatchHostFixture(current: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>) {
+  const store = initialSourceHostStore(current);
+  const ledger = initialSourceHostLedger(current);
+  const unissued = initialSourceJournal(current);
+  expect(current.config.agents.profiles.researcher?.egress_policy).toBe('none');
+  expect(unissued.state.items).toHaveLength(1);
+  const issued = ledger.issueWave(current.identity.work_id, 1, unissued.version);
+  const item = requiredValue(issued.state.items[0], 'Issued readonly dispatch item');
+  const issueId = requiredValue(item.issue_id, 'Issued readonly dispatch identity');
+  expect(issued.resume_status).toBe('issued_outcome_uncertain');
+  expect(item.observation).toBeNull();
+  expect(item.host_reservation).toBeUndefined();
+  const before = presentSnapshot(store.readHostStateSnapshot(current.identity));
+  suspendHistoricalOwnerWork({
+    store,
+    identity: current.identity,
+    journal: issued,
+    expectedWork: before.workVersion,
+    expectedLedger: before.ledgerVersion,
+    expectedMaintenanceGeneration: before.maintenanceGeneration,
+    nativeSessionHandle: requiredValue(current.input, 'Readonly dispatch admission').nativeSessionHandle,
+    userRequestPointer: 'fixture:pause-unknown-readonly',
+    requestIntent: 'linked_correction',
+    predicate: 'unknown_readonly',
+    config: current.config,
+    documentationContext: {
+      repository_root: current.root,
+      repository_id: current.identity.repository_id,
+      project_id: 'sample',
+      work_id: current.identity.work_id,
+    },
+  });
+  const paused = presentSnapshot(store.readHostStateSnapshot(current.identity));
+  const journal = initialSourceJournal(current);
+  expect(paused.work.lease).toBeNull();
+  expect(paused.work.execution.status).toBe('suspended');
+  expect(journal).toEqual(issued);
+  const plan = buildReadOnlyDispatchRepairPlan({
+    repositoryRoot: current.root,
+    config: current.config,
+    workspaceId: store.workspaceId,
+    projectIds: current.identity.project_ids,
+    workId: current.identity.work_id,
+    attempt: 1,
+    actionId: item.request.action_id,
+    issueId,
+    nativeHandle: requiredValue(current.input, 'Readonly dispatch admission').nativeSessionHandle,
+    repairId: 'fixture-native-readonly-repair',
+    actor: 'fixture-readonly-operator',
+    timestamp: new Date().toISOString(),
+    snapshot: store.readWorkSessionSnapshot(current.identity),
+  });
+  const db = initialSourceHostDatabase(current);
+  return { store, ledger, item, issueId, paused, journal, plan, db };
+}
+
+test('native readonly dispatch repair retains its issued UNKNOWN through deterministic intent and exact retry', async () => {
+  await withReadonlyDispatchHostFixture(async (current, deadline) => {
+    const { store, item, issueId, paused, journal, plan, db } = pauseReadonlyDispatchHostFixture(current);
+    const persistedBefore = readFixtureHostRows(db);
+    const repairRows = () =>
+      db
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_readonly_dispatch_repair'")
+        .get() === null
+        ? []
+        : db.query('SELECT generation,payload,digest FROM agent_host_readonly_dispatch_repair').all();
+    expect(repairRows()).toEqual([]);
+    for (const [denied, error] of [
+      [
+        { ...plan, work_version: { ...plan.work_version, revision: plan.work_version.revision + 1 } },
+        'state compare-and-swap conflict',
+      ],
+      [
+        { ...plan, ledger_version: { ...plan.ledger_version, revision: plan.ledger_version.revision + 1 } },
+        'state compare-and-swap conflict',
+      ],
+      [
+        { ...plan, mastra_version: { ...plan.mastra_version, revision: plan.mastra_version.revision + 1 } },
+        'state compare-and-swap conflict',
+      ],
+      [
+        { ...plan, maintenance_generation: plan.maintenance_generation + 1 },
+        'maintenance generation is stale or missing',
+      ],
+      [
+        { ...plan, config_digest: '0'.repeat(64) },
+        'read-only dispatch repair plan is stale or differs from deterministic current state',
+      ],
+    ] as const) {
+      expect(() => store.commitReadOnlyDispatchRepair(denied)).toThrow(error);
+      expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+      expect(repairRows()).toEqual([]);
+    }
+    expect(() => db.transaction(() => store.commitReadOnlyDispatchRepair(plan)).deferred()).toThrow(
+      'nested read-only dispatch repair transaction forbidden',
+    );
+    expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+    expect(repairRows()).toEqual([]);
+    expect(store.commitReadOnlyDispatchRepair(plan)).toEqual(plan);
+    expect(store.commitReadOnlyDispatchRepair(plan)).toEqual(plan);
+    const rows = db.query('SELECT generation,payload,digest FROM agent_host_readonly_dispatch_repair');
+    const originalRows = [{ generation: 1, payload: canonicalJson(plan), digest: plan.digest }];
+    expect(rows.all()).toEqual(originalRows);
+    for (const corrupted of [
+      { column: 'payload', value: 'conflicting payload' },
+      { column: 'digest', value: 'conflicting digest' },
+      { column: 'payload', value: new Uint8Array([0]) },
+      { column: 'digest', value: new Uint8Array([0]) },
+    ] as const) {
+      let primaryFailure: { error: unknown } | undefined;
+      try {
+        expect(
+          db.query(`UPDATE agent_host_readonly_dispatch_repair SET ${corrupted.column}=?`).run(corrupted.value).changes,
+        ).toBe(1);
+        const conflictingRows = rows.all();
+        expect(() => store.commitReadOnlyDispatchRepair(plan)).toThrow(
+          'existing read-only dispatch repair generation differs',
+        );
+        expect(rows.all()).toEqual(conflictingRows);
+        expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+      } catch (error) {
+        primaryFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              expect(
+                db
+                  .query('UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=?')
+                  .run(canonicalJson(plan), plan.digest).changes,
+              ).toBe(1);
+            },
+          ],
+          primaryFailure,
+        );
+      }
+    }
+    expect(rows.all()).toEqual(originalRows);
+    expect(plan).toMatchObject({ prior_outcome: 'unknown', replacement_generation: 1, status: 'prepared' });
+    expect(plan.prior_issue_id).toBe(issueId);
+    expect(plan.replacement_issue_id).not.toBe(issueId);
+    expect(store.readHostStateSnapshot(current.identity)).toEqual(paused);
+    expect(initialSourceJournal(current)).toEqual(journal);
+    expect(initialSourceJournal(current).state.items[0]).toEqual(item);
+    expect(performance.now()).toBeLessThan(deadline);
+  });
+});
+
+test('native readonly replacement runtime rebind retires only its admitted source approval and retains UNKNOWN history', async () => {
+  await withReadonlyDispatchHostFixture(async (current, deadline) => {
+    const { store, ledger, item, issueId, paused, journal, plan, db } = pauseReadonlyDispatchHostFixture(current);
+    expect(store.commitReadOnlyDispatchRepair(plan)).toEqual(plan);
+    // Activate only the prepared replacement; the original issued UNKNOWN stays
+    // in its immutable repair/activation history and is never reissued.
+    const activation = ledger.activateReadOnlyReplacement(
+      current.identity.work_id,
+      1,
+      journal.version,
+      item.request.action_id,
+    );
+    expect(activation.dispatch.prior_issue_id).toBe(issueId);
+    expect(activation.dispatch.issue_id).toBe(plan.replacement_issue_id);
+    expect(activation.snapshot.state.items[0]).toEqual({ ...item, issue_id: plan.replacement_issue_id });
+    expect(store.readHostStateSnapshot(current.identity)).toEqual(paused);
+    const resumed = resumePausedLocalWork({
+      store,
+      ledger,
+      identity: current.identity,
+      attempt: 1,
+      expectedWork: paused.workVersion,
+      expectedLedger: paused.ledgerVersion,
+      expectedJournal: activation.snapshot.version,
+      nativeSessionHandle: requiredValue(current.input, 'Readonly dispatch admission').nativeSessionHandle,
+      configDigest: paused.work.binding.config_digest,
+      sourceDigest: paused.work.binding.work_source_revision,
+    });
+    expect(resumed.status).toBe('resumed');
+    const active = presentSnapshot(store.readHostStateSnapshot(current.identity));
+    const approvals = active.work.lifecycle.references.filter(
+      (reference) => reference.kind === 'execution_approval' && reference.disposition === 'current',
+    );
+    expect(approvals).toHaveLength(1);
+    expect(approvals[0]).toMatchObject({
+      artifact_schema: 'LocalSourceWriteAuthorization/v1',
+      generation: null,
+      implementation_fingerprint: null,
+      decision: 'approved',
+    });
+    const principal = 'fixture:readonly-runtime-rebind';
+    // Host consistency proof only, not attestation of installed runtime bytes.
+    const verifier: RuntimeCodeRebindVerifier = {
+      principal,
+      verify: (request) => ({
+        schema: 'VidaRuntimeCodeRebindAuthorization/v1',
+        request_digest: canonicalJsonDigest(request),
+        principal,
+        forward_operation_id: request.forwardOperationId,
+        parent_manifest_digest: request.parentManifestDigest,
+        successor_manifest_digest: request.successorManifestDigest,
+        owner_no_call_pointer: request.ownerNoCallPointer!,
+      }),
+    };
+    const checked = new HostStateStore(
+      db,
+      store.workspaceId,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      current.root,
+      verifier,
+    );
+    const rebind: RuntimeCodeRebindRequest = {
+      identity: current.identity,
+      attempt: 1,
+      actionId: item.request.action_id,
+      issueId: activation.dispatch.issue_id,
+      nativeSessionHandle: requiredValue(active.work.lease, 'Resumed readonly owner').thread_id,
+      expectedWork: active.workVersion,
+      expectedLedger: active.ledgerVersion,
+      expectedJournal: activation.snapshot.version,
+      expectedMaintenanceGeneration: active.maintenanceGeneration,
+      oldRuntimeCodeDigest: active.work.binding.runtime_code_digest,
+      newRuntimeCodeDigest: canonicalJsonDigest('fixture:readonly-runtime-successor'),
+      forwardOperationId: 'fixture:readonly-runtime-forward',
+      parentManifestDigest: canonicalJsonDigest('fixture:readonly-runtime-parent-manifest'),
+      successorManifestDigest: canonicalJsonDigest('fixture:readonly-runtime-successor-manifest'),
+      ownerNoCallPointer: 'fixture:replacement-not-dispatched',
+    };
+    const activeRows = readFixtureHostRows(db);
+    await expectRejection(
+      checked.rebindRuntimeCode({ ...rebind, issueId: randomUUID() }),
+      'runtime-code rebind issued read-only action changed',
+    );
+    expect(readFixtureHostRows(db)).toEqual(activeRows);
+    expect(initialSourceJournal(current)).toEqual(activation.snapshot);
+    const rebound = presentSnapshot(await checked.rebindRuntimeCode(rebind));
+    expect(rebound.work.binding).toEqual({
+      ...active.work.binding,
+      runtime_code_digest: rebind.newRuntimeCodeDigest,
+      runtime_source_revision: rebind.newRuntimeCodeDigest,
+    });
+    expect(rebound.work.lifecycle.references).toEqual(
+      active.work.lifecycle.references.map((reference) =>
+        approvals.some((approval) => approval.record_id === reference.record_id)
+          ? { ...reference, disposition: 'retired' }
+          : reference,
+      ),
+    );
+    expect(rebound.work.execution).toEqual(active.work.execution);
+    expect(rebound.work.lease).toEqual(active.work.lease);
+    expect(rebound.ledger).toEqual(active.ledger);
+    const rebindRow = requiredValue(
+      db
+        .query<{ payload: string; digest: string }, []>('SELECT payload,digest FROM agent_host_runtime_code_rebind')
+        .get(),
+      'Readonly runtime rebind receipt',
+    );
+    const rebindReceipt = parseJsonRecord(rebindRow.payload);
+    expect(canonicalJsonDigest(rebindReceipt)).toBe(rebindRow.digest);
+    expect(rebindReceipt).toMatchObject({
+      request: rebind,
+      retired_execution_approval_ids: approvals.map((reference) => reference.record_id),
+      binding_history: { original_work: active.work, original_journal: activation.snapshot.state },
+    });
+    expect(db.query('SELECT generation,payload,digest FROM agent_host_readonly_dispatch_repair').all()).toEqual([
+      { generation: 1, payload: canonicalJson(plan), digest: plan.digest },
+    ]);
+    expect(ledger.replacementDispatch(current.identity.work_id, 1, item.request.action_id)).toEqual(
+      activation.dispatch,
+    );
+    expect(initialSourceJournal(current)).toEqual(activation.snapshot);
+    expect(checked.readHostStateSnapshot(current.identity)).toEqual(rebound);
+    await expectRejection(checked.rebindRuntimeCode(rebind), 'state compare-and-swap conflict');
+    expect(checked.readHostStateSnapshot(current.identity)).toEqual(rebound);
+    expect(performance.now()).toBeLessThan(deadline);
+  });
 });
 
 test(

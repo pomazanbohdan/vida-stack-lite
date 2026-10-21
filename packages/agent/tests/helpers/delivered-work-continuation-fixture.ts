@@ -1,5 +1,6 @@
 import { Database } from 'bun:sqlite';
-import { copyFileSync, mkdtempSync, mkdirSync, rmSync, realpathSync, lstatSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, mkdirSync, rmSync, realpathSync, lstatSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,6 +16,7 @@ import type {
   WorkState,
 } from '../../src/host-state.ts';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
+import { validateImplementationScope } from '../../src/contracts/implementation-scope.ts';
 import { loadRuntimeConfig } from '../../src/config/runtime-config.ts';
 import type { AgentRuntimeConfig } from '../../src/config/runtime-config.ts';
 import { compareScopedSourceSnapshots } from '../../src/orchestration/scoped-source-snapshot.ts';
@@ -36,6 +38,12 @@ type ContinuationFixtureOptions = {
   uncertain?: boolean;
   completedAttempt?: boolean;
   disjointPeer?: boolean;
+  lifecycleScopeReference?: boolean;
+  beforeCapture?: (
+    request: Parameters<HostStateStore['captureHistoricalTerminalSynthesisAndRelease']>[0],
+    store: HostStateStore,
+    database: Database,
+  ) => void;
   root?: string;
   config?: AgentRuntimeConfig;
   identity?: WorkIdentity;
@@ -357,8 +365,36 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
   const maintenance = store.acquireMaintenanceFence(maintenanceBinding);
   await store.releaseMaintenanceFence(maintenance);
   const originalSource =
-      suppliedOriginalSource ?? sourceScope([{ path: 'src/task.ts', exists: true, bytes: 4, sha256: '1'.repeat(64) }]),
-    binding: WorkState['binding'] = {
+    suppliedOriginalSource ?? sourceScope([{ path: 'src/task.ts', exists: true, bytes: 4, sha256: '1'.repeat(64) }]);
+  // Admit real scope metadata, not an approval or a successful historical receipt.
+  const scopeArtifact = options.lifecycleScopeReference
+    ? {
+        schema: 'ImplementationScope/v1',
+        scope_id: 'scope-fixture',
+        work_id: identity.work_id,
+        source_revision: originalSource.digest,
+        ac_ids: ['AC-1'],
+        allowed_paths: ['src/task.ts'],
+        implementation_paths: ['src/task.ts'],
+        documentation_paths: [],
+        changed_symbols: [],
+        non_goals: ['No reviewer approval or Runtime acceptance'],
+        acceptance_trace: ['AC-1'],
+        behavior_trace: ['historical-continuation'],
+        test_trace: ['host-state.test.ts'],
+        diagnostic_trace: ['fixture-only-scope-reference'],
+        attribution: { thread_id: threadId, pointer: 'WORK.md#accepted-request' },
+        owner: 'fixture',
+        created_at: new Date().toISOString(),
+      }
+    : null;
+  const scopeBytes = scopeArtifact === null ? null : canonicalJson(scopeArtifact);
+  if (scopeArtifact !== null && scopeBytes !== null) {
+    if (!validateImplementationScope(scopeArtifact)) throw new Error('Invalid fixture implementation scope');
+    mkdirSync(path.join(root, '.agent'), { recursive: true });
+    writeFileSync(path.join(root, '.agent/scope.json'), scopeBytes, { flag: 'wx' });
+  }
+  const binding: WorkState['binding'] = {
       repository_id: identity.repository_id,
       project_ids: [...identity.project_ids],
       integrations_digest: identity.integrations_digest,
@@ -369,7 +405,8 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
       work_item_digest: workItemDigest,
       work_source_revision: originalSource.digest,
       scope_id: 'scope-fixture',
-      scope_contract_digest: 'e'.repeat(64),
+      scope_contract_digest:
+        scopeBytes === null ? 'e'.repeat(64) : createHash('sha256').update(scopeBytes).digest('hex'),
       acceptance_manifest_digest: 'f'.repeat(64),
       ac_ids: ['AC-1'],
       implementation_paths: ['src/task.ts'],
@@ -414,6 +451,31 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
       blocked_resources: [],
       created_at: now,
     };
+  const lifecycle: WorkState['lifecycle'] = {
+    ...lifecycleFor(binding),
+    references:
+      scopeArtifact === null
+        ? []
+        : [
+            {
+              schema: 'LifecycleArtifactReference/v1',
+              kind: 'implementation_scope',
+              artifact_schema: 'ImplementationScope/v1',
+              record_id: binding.scope_id,
+              path: '.agent/scope.json',
+              sha256: binding.scope_contract_digest,
+              source_revision: originalSource.digest,
+              scope_id: binding.scope_id,
+              ac_ids: binding.ac_ids,
+              generation: null,
+              implementation_fingerprint: null,
+              delivery_cycle_id: null,
+              principal: null,
+              decision: null,
+              disposition: 'current',
+            },
+          ],
+  };
   store.compareAndSwapHostState({
     expectedWork: null,
     expectedLedger: null,
@@ -440,7 +502,7 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
         status: 'active',
         assignment_attempts: [],
       },
-      lifecycle: lifecycleFor(binding),
+      lifecycle,
       artifacts: intakeArtifacts,
     },
     nextLedger: {
@@ -713,14 +775,16 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
           { result_id: 'result-2', digest: '7'.repeat(64) },
         ],
       },
-    },
-    capture = store.captureHistoricalTerminalSynthesisAndRelease(captureInput).receipt;
+    };
+  options.beforeCapture?.(captureInput, store, db);
+  const capture = store.captureHistoricalTerminalSynthesisAndRelease(captureInput).receipt;
   return {
     root,
     db,
     store,
     identity,
     originalSource,
+    scopeBytes,
     capture,
     captureInput,
     principal,

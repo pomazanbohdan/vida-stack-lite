@@ -613,6 +613,11 @@ test, not to the whole file, phase or pool. Keep case exceptions and aggregate
 child, cleanup and report budgets separate. Do not raise a timeout to make a
 result pass.
 
+Split independently testable proof groups before increasing a case's scope beyond
+its bound. Reuse one fixture builder with independent roots per named case; do not
+carry live state between ordered tests. Keep the original timeout evidence and
+all prerequisite transitions, refusal checks and cleanup ownership.
+
 A justified composite-case exception needs the dependent contract and measured
 phase costs, not only an overrun. Preserve its freshness/CAS checks and document
 the exception in TESTING. Reuse one snapshot for adjacent work/ledger assertions

@@ -15,6 +15,16 @@ Host/Journal after stale CAS denial, exact history retention after continuation,
 persisted lookup and an idempotent retry with one receipt and no reissued action.
 This is fresh fixture evidence, not replay or Runtime acceptance.
 
+The optional implementation-scope reference is backed by schema-validated,
+canonical bytes written before initial Host admission. Bind its exact SHA to
+Work, contract and current lifecycle reference. A Source-changing continuation
+retires/rebases that reference while preserving the original artifact bytes and
+the prior Work in its receipt. It grants no approval. Before the original capture,
+the optional refusal callback checks malformed provenance, omitted release images,
+stale Work/Ledger/Journal/generation, changed owner/history and release operations.
+Every refusal preserves exact native Host/Journal rows and the complete SQLite
+catalog; then the original valid capture and continuation still succeed.
+
 Reuse the helper's exact `captureInput` to check the persisted request-bound read:
 same request returns the receipt and released snapshot; missing action returns
 null; nested, changed-body and post-continuation reads deny without altering
@@ -392,6 +402,18 @@ receipt columns. Restore exact original rows with primary/cleanup error retentio
 The original issue remains uncertain and unchanged; retain its fresh fixture
 even on PASS. This tests Host intent persistence, not active-caller authentication
 or replacement dispatch/execution.
+
+A separate native readonly-replacement case reuses the paused-fixture builder
+with its own private root and default5s deadline. Activate only the prepared
+replacement through the ledger owner, resume through the supported lease owner,
+and rebind its exact uncalled replacement issue through Host. The injected
+runtime verifier and successor digest are consistency-only unit inputs. Require
+the real admitted scope approval, its exact retirement IDs, unchanged execution,
+lease and ledger, exact generated receipt/history, preserved original UNKNOWN
+repair/activation/Journal and unchanged state after wrong issue or stale retry.
+No external replacement call, Source effect or installed-code attestation occurs.
+Retain both fixtures even on PASS. The independently isolated cases share setup
+code, never a live root or ordered cross-test state.
 
 The configured-frontier Host consumer case creates a task-only legacy graph
 before fresh admission, runs actual synthesis and acquires its implementation

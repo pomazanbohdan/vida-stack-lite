@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date: 2026-10-20. This document owns the current execution order for core runtime reactivation. [WORK.md](WORK.md) owns current observations and evidence. The existing backlog owns stable task IDs and priority boundaries.
+Status date: 2026-10-21. This document owns the current execution order for core runtime reactivation. [WORK.md](WORK.md) owns current observations and evidence. The existing backlog owns stable task IDs and priority boundaries.
 
 ## Objective
 
@@ -173,6 +173,14 @@ remaining callbacks and362arms. First add an actual backed implementation-scope
 reference to the historical continuation fixture, then resolve genuine synthesis
 correction/current approval and joined recovery-history prerequisites. A fixture
 proposal or failed prerequisite does not establish coverage or a product defect.
+
+The next checked packet combines that backed scope reference and capture-refusal
+matrix with ordinary readonly replacement runtime rebind, real approval retirement
+and a broader TaskSource policy-result denial matrix. Independent default5s cases
+share builders and keep separate roots; preserve the original combined-case
+timeout. Root publishes the coherent packet, forms matching SDK inputs and
+measures once. Then resolve the native research/synthesis-correction and composed
+frontier/report-recovery prerequisites from the refreshed map, never seeded success.
 
 For each group, the exact named Bun case must reach its intended public operation
 and assert its success, refusal and replay behavior before strict TypeScript/lint

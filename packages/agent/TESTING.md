@@ -1938,6 +1938,12 @@ or repeat the full stage for each assertion. Reuse read-only analysis while Root
 implements; keep extra writers and other contours closed. Projected coverage gains
 remain hypotheses until the complete report records them.
 
+If an expanded composite exceeds its case bound, first separate independent proof
+groups into named cases with independent roots and the same existing per-test
+bound. Reuse the fixture builder and cleanup owner, never live state between
+ordered tests. Retain the original timeout and qualify each new case; splitting
+does not permit omitting prerequisite transitions or assertions.
+
 Check reader preconditions before choosing an unchanged-state oracle. Ordinary
 Host/Journal readers must still deny a held maintenance fence. Use exact native
 row/schema beforeimages within that fenced fixture, and check supported public

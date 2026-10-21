@@ -1,6 +1,6 @@
 # Core runtime reactivation work
 
-Status date:2026-10-20. Current execution and evidence only. Historical records
+Status date:2026-10-21. Current execution and evidence only. Historical records
 do not authorize state replay, Runtime cutover or global acceptance.
 
 ## Current sequential F/L/S/B cycle
@@ -76,6 +76,52 @@ for this same private root and shared ledger scope; its exact pin control passes
 No numeric gain or product defect is claimed from the focused PASS.
 
 ### Whole remaining-contour packet
+
+The v1120/v1122 packet adds a schema-valid, byte-backed implementation-scope
+reference to the historical continuation admission. Actual hash/contract/Work
+bindings agree; continuation retires/rebases its metadata while preserving the
+artifact bytes and original receipt beforeimage. Thirty independent capture
+refusals cover request/provenance, omitted release images, stale CAS/generation,
+owner/history and release-operation afterimages. Each preserves native rows and
+the SQLite catalog before the original successful capture/continuation/retry.
+Strict148-file TypeScript/lint and178assertions pass in0.815s under5s in
+`capture-cas-v1122-OeoYxG`. Original exact-optional-property compiler failure
+remains in`capture-matrix-v1121-KMa8Db`; corrected omission controls remove the
+actual optional member rather than writing undefined.
+
+The ordinary readonly runtime rebind now uses actual native issue, same-owner
+pause, deterministic repair, replacement activation and public lease resume.
+Its real admitted approval is retired with exact receipt IDs; execution, lease,
+ledger and original UNKNOWN repair/activation/Journal history remain. Wrong issue
+and stale retry reject without changes. External runtime proof is a labeled
+fixture-only consistency seam, not installed-code attestation. The initial
+combined case exceeds5s at7.274s; its failure and original root
+`vida-initial-source-RPbvid` remain retained. Independent repair and rebind cases
+share setup code with separate fresh roots and the unchanged5s bound. Final
+strict148-file TypeScript/lint and2cases/95assertions pass in5.32s total;
+individual cases2.137s/1.716s. This different-input observation is no controlled
+speedup claim. Logs remain in`readonly-split-v1121-ZHaEdp`; both UNKNOWN roots
+stay retained even on PASS. The same rule is reconciled into TESTING and bun-test.
+
+TaskSource policy refusals now exercise sixteen malformed provider alternatives
+plus the original thrown error. Exact native Work/ledger/Journal and prepared
+rows replace repeated full public decodes per alternative; absent action/claim
+tables and absent Source root are checked each time. Public beforeimages are
+rechecked before the original healthy queued/retry path. Focused109assertions
+pass0.587s under5s, strict148-file TypeScript/lint in
+`policy-matrix-v1121-mR98sw`. No command executes and no new product defect is
+inferred. Blind correctness/resource reviews find no blocker. The historical
+case also incorporates their stale Work/Ledger/generation suggestion.
+
+Only the changed Host resource pin is refreshed; stopped-source bytes and the
+same private serial resource scope remain. Numeric gains are pending until the
+packet's matching SDK/image/full stage. The two remaining fixture research
+dependencies are genuine configured-frontier plus report-recovery history, and
+activated synthesis correction with admitted research predecessors. No private
+successful history, typed approval or outcome is fabricated to satisfy them.
+One hash command fails before process creation because exec transport disconnects;
+the subsequent bounded observation confirms the same boot and retained Source,
+then the first actual hash succeeds. No missing command result is called PASS.
 
 The v1117/v1118 packet reproduces a product defect: readonly frontier code
 adoption rejects a genuine completed Host preparation with `attempt assignment
