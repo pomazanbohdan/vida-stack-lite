@@ -22,13 +22,21 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/context-budget.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/execute-phase-context-guard.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Adjust the behaviour to the context degradation signals
+
 Quality degrades gradually before panic thresholds fire. Watch for these early signals:
-Increasing vagueness -- agent starts using phrases like "appropriate handling" or "standard patterns" instead of specific code.
-Skipped steps -- agent omits protocol steps it would normally follow.
-Economize. Frontmatter-only reads, minimal inlining, warn user about budget.
-Checkpoint progress immediately. No new reads unless critical.
+
+Silent partial completion -- agent claims task is done but implementation is incomplete. Self-check catches file existence but not semantic completeness. Always verify agent output meets the plan's must_haves, not just that files exist.
+
+Increasing vagueness -- agent starts using phrases like "appropriate handling" or "standard patterns" instead of specific code. This indicates context pressure even before budget warnings fire.
+
+Skipped steps -- agent omits protocol steps it would normally follow. If an agent's success criteria has 8 items but it only reports 5, suspect context pressure.
+
+DEGRADING (50-70%): Economize. Frontmatter-only reads, minimal inlining, warn user about budget. Emit warning, continue.
+
+POOR (70%+): Emergency mode. Checkpoint progress immediately. No new reads unless critical. `warn`: emit warning + recommend the pause-work checkpoint. `auto`: invoke the pause-work checkpoint before the next wave. `off`: proceed anyway.
+
 The guard is heuristic — no programmatic context-percentage API exists. Use your assessment of degradation signals, not a fixed token count.

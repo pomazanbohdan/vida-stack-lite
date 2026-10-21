@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 3574,
+  "revision": 3576,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-21T21:04:49.008Z",
+  "updated_at": "2026-10-21T21:29:23.995Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -488,7 +488,7 @@
     {
       "instruction_id": "adjust-the-behaviour-to-the-context-degradation-signals",
       "path": "instructions/adjust-the-behaviour-to-the-context-degradation-signals.md",
-      "sha256": "82c2d6763979f278fa10f0b88d27b9922def3a2fc5e82b2e5533eea67e0c392f"
+      "sha256": "66e3385d8a3757adf4c9be4ea6a45e2df68bacf1c46baec3f47ab46244a2f005"
     },
     {
       "instruction_id": "admit-a-new-condition-only-with-a-consumer-and-a-computable-fact",
@@ -6333,7 +6333,7 @@
     {
       "instruction_id": "measure-the-context-and-start-a-fresh-session-before-it-degrades",
       "path": "instructions/measure-the-context-and-start-a-fresh-session-before-it-degrades.md",
-      "sha256": "dc689099f7f0ad4c796ea359a2a35c57c216a5b49fbb4aeec1096880d5e03e1e"
+      "sha256": "93bae67b35b70380834aa094cfab6108c6e8e12978aa8fea9f11c230bb3a44cc"
     },
     {
       "instruction_id": "measure-the-number-instead-of-believing-the-stale-document",

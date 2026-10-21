@@ -22,11 +22,15 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=commands/gsd/health.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=skills/gsd-health/SKILL.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Measure the context and start a fresh session before it degrades
+
 The workflow asks for the model's tokensUsed + contextWindow
-`< 60%` | healthy | no action — context is comfortable
-`60% – 70%` | warning | recommend a fresh session instead of continuing
-`≥ 70%` | critical | reasoning quality may degrade past the fracture point
+
+| Utilization | State | Action |
+|---|---|---|
+| `< 60%` | healthy | no action — context is comfortable |
+| `60% – 70%` | warning | recommend a fresh session instead of continuing |
+| `≥ 70%` | critical | reasoning quality may degrade past the fracture point |
