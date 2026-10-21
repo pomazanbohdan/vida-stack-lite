@@ -472,6 +472,13 @@ Work or version is not this control, and the stale snapshot grants no authority.
 
 ## Run focused checks safely
 
+For a deterministic SQLite race, interpose at a committed transaction boundary
+on one fixture connection and run the peer's public operations on another.
+Bun's returned transaction mode properties can be readonly: wrap its callable
+and modes instead of assigning to `.deferred`. Restore the exact original
+property descriptor and close the connection through owned cleanup. A seam error
+is not the product regression; retain it separately from the actual RED/GREEN.
+
 Follow [TESTING's rolling contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle)
 with exactly one active contour. Keep Root as the sole final-check and numeric
 owner. Select the next contour only after the active contour has accepted exact

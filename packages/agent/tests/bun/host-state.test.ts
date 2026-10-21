@@ -3542,6 +3542,15 @@ test('configured continuation lookup exposes the complete prewriter wave and eac
       f.store.readDeliveredWorkContinuation(f.identity, 1),
       'configured continuation before lookup',
     );
+    const beforeViewRows = readFixtureHostRows(f.db);
+    const beforeView = requiredValue(
+      f.store.readConfiguredFrontierRecoveryView(f.identity, 1),
+      'configured original recovery view',
+    );
+    expect(beforeView).toEqual({ original: input.receipt, recovery: null });
+    expect(Object.isFrozen(beforeView)).toBe(true);
+    expect(f.store.readConfiguredFrontierRecoveryView(f.identity, 1)).toEqual(beforeView);
+    expect(readFixtureHostRows(f.db)).toEqual(beforeViewRows);
     const beforeJournal = requiredValue(before.journal, 'configured continuation journal');
     const beforeItem = requiredValue(before.item, 'configured continuation item');
     const beforeLedger = requiredValue(before.snapshot.ledger, 'configured continuation ledger');
@@ -3929,6 +3938,161 @@ test('configured continuation digest repair preserves linked state, fences nativ
   preserveHostFixtureRoot = false;
 });
 
+test.each(['applied', 'reserved', 'unknown', 'different-plan'] as const)(
+  'configured continuation repair serializes peer %s between reservation transactions',
+  async (peerState) => {
+    preserveHostFixtureRoot = 'case failed or timed out';
+    await withConfiguredFrontierHostFixture((f, { workspaceId, input }) => {
+      seedFrontierHostFixture(f, input);
+      const beforeRows = readFixtureHostRows(f.db);
+      expect(
+        f.db
+          .query(
+            'UPDATE agent_host_delivered_work_continuation SET digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
+          )
+          .run('0'.repeat(64), workspaceId, f.identity.work_id).changes,
+      ).toBe(1);
+      const inspection = f.store.inspectDeliveredWorkContinuationRepair(
+        f.identity,
+        1,
+        input.receipt.request.action.request.action_id,
+      );
+      const body = {
+        schema: 'DeliveredWorkContinuationIntegrityRepairPlan/v1',
+        branch: 'configured_frontier',
+        repair_id: 'host-frontier-peer-apply',
+        actor: 'fixture:repair-owner',
+        timestamp: new Date().toISOString(),
+        inspection,
+      };
+      const plan = { ...body, digest: canonicalJsonDigest(body) };
+      const peerDb = new Database(f.db.filename, { strict: true });
+      const transactionDescriptor = Object.getOwnPropertyDescriptor(peerDb, 'transaction');
+      const originalTransaction = peerDb.transaction.bind(peerDb);
+      let interleaved = false;
+      let applied: ReturnType<HostStateStore['reserveDeliveredWorkContinuationRepair']> | undefined;
+      const governance = () =>
+        f.db
+          .query<GovernanceSqlRow, []>(
+            'SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key',
+          )
+          .all();
+      let afterPeer: GovernanceSqlRow[] | undefined;
+      let primaryFailure: { error: unknown } | undefined;
+      try {
+        const peer = new HostStateStore(peerDb, workspaceId, undefined, undefined, undefined, undefined, f.root);
+        // Interpose only after A's real deferred read commits, before its immediate writer begins.
+        // B uses the other real connection and the public reserve/apply operations.
+        peerDb.transaction = <Args extends unknown[], Result>(callback: (...args: Args) => Result) => {
+          const pending = originalTransaction(callback);
+          const deferred = (...args: Args) => {
+            const result = pending.deferred(...args);
+            if (!interleaved) {
+              interleaved = true;
+              expect(result).toBeNull();
+              expect(peerDb.inTransaction).toBe(false);
+              const changedBody = { ...body, actor: 'fixture:other-repair-owner' };
+              const peerPlan =
+                peerState === 'different-plan' ? { ...changedBody, digest: canonicalJsonDigest(changedBody) } : plan;
+              const reserved = f.store.reserveDeliveredWorkContinuationRepair(peerPlan);
+              expect(reserved.status).toBe('reserved');
+              if (peerState === 'unknown') {
+                f.db.exec(
+                  "CREATE TEMP TRIGGER interrupt_peer_repair BEFORE UPDATE OF digest ON agent_host_delivered_work_continuation BEGIN SELECT RAISE(ABORT, 'controlled peer repair interruption'); END",
+                );
+                let applyFailure: { error: unknown } | undefined;
+                try {
+                  expect(() => f.store.applyDeliveredWorkContinuationRepair(peerPlan)).toThrow(
+                    'controlled peer repair interruption',
+                  );
+                } catch (error) {
+                  applyFailure = { error };
+                  throw error;
+                } finally {
+                  completeOwnedCleanup(
+                    [
+                      () => {
+                        f.db.exec('DROP TRIGGER interrupt_peer_repair');
+                      },
+                    ],
+                    applyFailure,
+                  );
+                }
+              } else if (peerState !== 'reserved') {
+                expect(f.store.applyDeliveredWorkContinuationRepair(peerPlan)).toEqual({
+                  status: 'applied',
+                  digest: inspection.row.after_digest,
+                });
+              }
+              applied = f.store.reserveDeliveredWorkContinuationRepair(peerPlan);
+              expect(applied.status).toBe(
+                peerState === 'unknown' ? 'commit_unknown' : peerState === 'reserved' ? 'reserved' : 'applied',
+              );
+              expect(applied.fencing_token).toBe(reserved.fencing_token);
+              afterPeer = governance();
+            }
+            return result;
+          };
+          return Object.assign((...args: Args) => pending(...args), {
+            deferred,
+            immediate: pending.immediate,
+            exclusive: pending.exclusive,
+          });
+        };
+        if (peerState === 'applied') {
+          const reservation = peer.reserveDeliveredWorkContinuationRepair(plan);
+          expect(reservation).toEqual(requiredValue(applied, 'peer applied reservation'));
+          expect(peer.applyDeliveredWorkContinuationRepair(plan)).toEqual({
+            status: 'already_applied',
+            digest: inspection.row.after_digest,
+          });
+          expect(f.store.readDeliveredWorkContinuation(f.identity, 1)?.receipt).toEqual(input.receipt);
+        } else {
+          expect(() => peer.reserveDeliveredWorkContinuationRepair(plan)).toThrow(
+            peerState === 'different-plan'
+              ? 'delivered-work continuation repair retry differs'
+              : 'delivered-work continuation repair is pending or unknown',
+          );
+        }
+        expect(interleaved).toBe(true);
+        expect(governance()).toEqual(requiredValue(afterPeer, 'peer governance afterimage'));
+        expect(readFixtureHostRows(f.db)).toEqual(beforeRows);
+        expect(
+          f.db
+            .query<{ payload: string; digest: string }, [string, string]>(
+              'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
+            )
+            .get(workspaceId, f.identity.work_id),
+        ).toEqual({
+          payload: inspection.row.payload,
+          digest:
+            peerState === 'applied' || peerState === 'different-plan'
+              ? inspection.row.after_digest
+              : inspection.row.before_digest,
+        });
+      } catch (error) {
+        primaryFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              if (transactionDescriptor) Object.defineProperty(peerDb, 'transaction', transactionDescriptor);
+              else if (!Reflect.deleteProperty(peerDb, 'transaction'))
+                throw new Error('Could not restore peer transaction boundary');
+            },
+            () => {
+              peerDb.close();
+            },
+          ],
+          primaryFailure,
+        );
+      }
+    });
+    preserveHostFixtureRoot = false;
+  },
+);
+
 test('failed prewriter owner recovery atomically reacquires full resources without changing reports, bindings or the original receipt', async () => {
   preserveHostFixtureRoot = 'case failed or timed out';
   await withConfiguredFrontierHostFixture((f, { workspaceId, input }) => {
@@ -4252,6 +4416,15 @@ test('Host failed prewriter transition atomically retains failed reports and ori
       f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1),
       'failed-wave recovery receipt',
     );
+    const recoveryViewRows = readFixtureHostRows(f.db);
+    const recoveryView = requiredValue(
+      f.store.readConfiguredFrontierRecoveryView(f.identity, 1),
+      'configured recovered frontier view',
+    );
+    expect(recoveryView).toEqual({ original: input.receipt, recovery });
+    expect(Object.isFrozen(recoveryView)).toBe(true);
+    expect(f.store.readConfiguredFrontierRecoveryView(f.identity, 1)).toEqual(recoveryView);
+    expect(readFixtureHostRows(f.db)).toEqual(recoveryViewRows);
     expect(recovery.request).toEqual(request);
     expect(recovery.prior_work).toEqual(before.work);
     expect(recovery.prior_ledger).toEqual(before.ledger);

@@ -8,7 +8,14 @@ Complete the approved Pstack implementation with current, bound Source, package 
 
 ## Current state
 
-The active contour is `bun-host-state`. Its latest complete observation binds Source `1296dc6920c7ced34cf2fd59b6512bbc0084bcf3`, run `c950e0e0-41fd-42cd-9b88-36d4daed503d`: F1126/1126, L4954/4974, S5250/5305 and B5389/5624. Functions remain exact100%; lines/statements/branches remain nonexact. The169.881second stage has315PASS, both native shards0, full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. The refreshed map has0missing functions,235exact zero-count branch arms and55statement entries, each deficit checked against the same report. Compared with4e41dcc, covered deltas are0F/-2L/+2S/+7B and denominators change0F/-3L/-3S/-2B because of the redundant private predecessor guard. No exclusion, budget transfer or scope reduction occurs. WORK owns original failures, current image/SDK and retained custody/capacity.
+The active contour is `bun-host-state`. Its latest complete observation binds Source `da18a879843b6931d564e85c9772300b6f0127ad`, run `87b97002-39de-4255-8ae7-20da3ed47126`: F1126/1126, L4955/4974, S5255/5305 and B5395/5624. Functions remain exact100%; lines/statements/branches remain nonexact. The171.863second stage has315PASS, both native shards0, full capture, closed group and unchanged image. It remains BLOCKED/nonexact, not later-HEAD qualification. The refreshed map has0missing functions,229exact zero-count branch arms and50statement entries, each deficit checked against the same report. Compared with1296dc6, covered deltas are0F/+1L/+5S/+6B with unchanged denominators. No exclusion, budget transfer or scope reduction occurs. WORK owns original failures, current image/SDK and retained custody/capacity.
+
+Next packet: finish the reproduced continuation-repair transaction-gap correction
+and its fresh two-connection APPLIED/RESERVED/UNKNOWN/changed-plan controls, plus
+configured recovery-view read coverage. Preserve the immediate producer and
+maintenance fences and exact apply CAS/afterimage validation. Publish the checked
+packet normally, then form one SDK/image and measure the selected contour once.
+The original regression remains FAIL; focused PASS is not numeric qualification.
 
 Historical exact coverage remains 16/45 contours. It is not a current global pass. Frozen complexity and CRAP qualification and mutation remain deferred and unqualified. The handwritten Source migration to TypeScript is complete. Native loader activation, one-database disk cutover and whole-runtime qualification remain open. No Runtime acceptance is established.
 
@@ -41,7 +48,7 @@ Root is the sole Source integrator, Git owner and numeric producer. Repairs and 
 
 The owner's current instruction replaces one-function measurement packets with
 one coordinated pass, initially46missing functions and606branch arms. The first
-complete packet stages now leave0functions and235arms; continue the same contour
+complete packet stages now leave0functions and229arms; continue the same contour
 from its refreshed retained map, not the superseded starting counters. Superpowers
 `writing-plans` and `dispatching-parallel-agents`, plus Pstack domain modeling,
 guide this plan. Keep this existing strategy as the plan owner; do not create a
@@ -58,7 +65,7 @@ remains positive-denominator exact F/L/S/B100 with complete execution and custod
 | Continuation and session producer | `packages/agent/src/host-state.ts`; existing configured-frontier/initial-source fixtures and selected Host test | Blind Luna research; Root writes. Reach genuine prewriter/engine suffix through current public operations; preserve original5s limits and retained timed-out proposals. |
 | Assurance, recovery and runtime rebind | Same Host Source/test; existing failed-final and completed-report fixtures; selected stopped-source case | Separate blind Luna research; Root writes. Reuse native VERIFY/correction/history states. A public90s out-of-selection case supplies neither counters nor timeout allowance. |
 | TaskSource, archive lookup, ownership and remaining validation | Selected Host/stopped tests and existing TaskSource fixture; current native Host/Journal beforeimages | Root writes. Exercise real predecessor chains, current corrective authorization, archive identity/refusal and unchanged-state oracles. No fabricated successful receipt or private-state activation. |
-| Complete branch accounting | Existing `host-uncovered-plan.ts` and current1296dc6 report; its function inventory/maps | Root owns the report-only join. Resolve the remaining235arms/55statement entries, including covered function owners and explicit navigation gaps; no new AST/Source scan/hash or narrowed gate. |
+| Complete branch accounting | Existing `host-uncovered-plan.ts` and currentda18a87 report; its function inventory/maps | Root owns the report-only join. Resolve the remaining229arms/50statement entries, including covered function owners and explicit navigation gaps; no new AST/Source scan/hash or narrowed gate. |
 
 - [x] Join the existing zero-counter map to its retained function geometry and
   account for every arm; record exact IDs/lines and fixture prerequisites.

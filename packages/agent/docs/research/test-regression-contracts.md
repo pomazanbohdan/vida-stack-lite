@@ -361,6 +361,17 @@ Successor admission and eligible predecessor release use one immediate work/shar
 
 Use the strict current v1 contracts. Ship and qualify a functional bundle-owned repair before changing active artifacts or readers. Check dependency drift, atomic application boundaries, interruption, exact resume and owned-field restore. Preserve monotonic versions. Caller fields do not create approval or new rights.
 
+Continuation digest repair must recognize an exact peer APPLIED operation after
+its empty deferred reservation read and before its immediate writer transaction.
+Use two connections to the same fresh fixture database and public reserve/apply
+operations at that boundary; do not insert a synthetic APPLIED record. Preserve
+the immediate producer, maintenance and pending-repair fences before the recheck.
+An exact completed retry returns the retained operation; a changed plan conflicts,
+and a peer RESERVED/UNKNOWN remains fenced. Check the continuation payload/digest,
+governance and linked Host rows after success and refusal. Retain unresolved roots
+and the original failing reproduction. Configured recovery readers separately
+check original-only and recovered views, frozen return values and unchanged rows.
+
 The public delivered-work repair and qualified runtime continuation cases in
 `tests/delivered-work-continuation.test.ts` inject a native source-close failure
 after a genuine plan-read/parse failure. Both causes must survive in order, and

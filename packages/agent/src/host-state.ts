@@ -13087,12 +13087,7 @@ export class HostStateStore {
       // The shared immediate writer gate serializes this reservation with every producer.
       // Recheck explicitly before recording RESERVED so an active/UNKNOWN producer cannot race it.
       this.#assertNoPendingSessionProducer();
-      const current = this.#inspectDeliveredWorkContinuationRepairInTransaction(
-        plan.inspection.identity,
-        plan.inspection.attempt,
-        plan.inspection.action_id,
-      );
-      requireState(sameJson(current, plan.inspection), 'delivered-work continuation repair beforeimage changed');
+      // A peer may have applied this exact plan since the deferred read; resolve it before stale-row inspection.
       const existing = this.#governanceRead(deliveredContinuationRepairStore, 'operation', operationKey);
       if (existing) {
         const operation = existing.record as OperationReservation;
@@ -13100,6 +13095,12 @@ export class HostStateStore {
         requireState(operation.status === 'applied', 'repair is already reserved or UNKNOWN; resume that exact plan');
         return snapshot(operation);
       }
+      const current = this.#inspectDeliveredWorkContinuationRepairInTransaction(
+        plan.inspection.identity,
+        plan.inspection.attempt,
+        plan.inspection.action_id,
+      );
+      requireState(sameJson(current, plan.inspection), 'delivered-work continuation repair beforeimage changed');
       this.#governanceGeneration(deliveredContinuationRepairStore, true);
       const record: OperationReservation = {
         schema: 'OperationReservation/v1',
