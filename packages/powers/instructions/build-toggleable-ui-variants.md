@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/prototype/UI.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/sketch.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Build toggleable UI variants
@@ -74,3 +75,6 @@ The full set of variants is the primary source, so it lands on the throwaway bra
 - **Sharing too much code between variants.** A shared `<Header>` is fine; a shared `<Layout>` defeats the point. Each variant should be free to throw out the layout.
 - **Wiring variants to real mutations.** Read-only prototypes are fine. If a variant needs to mutate, point it at a stub: the question is "what should this look like", not "does the backend work".
 - **Promoting the prototype directly to production.** The variant code was written under prototype constraints (no tests, minimal error handling). Rewrite it properly when you fold it in.
+All variants preserved (winner marked, not others deleted).
+First round — dramatic differences: 2-3 meaningfully different approaches.
+Subsequent rounds — refinements: Subtler variations within the chosen direction.

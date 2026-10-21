@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-advanced-elicitation/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/mvp-phase.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Never change the work without acceptance
@@ -29,3 +30,5 @@ Reject — drop the proposal entirely.
 Never change the work unless the user accepts the proposal.
 If they reject it, drop the proposal entirely.
 Any other reply is instruction to follow.
+
+Refuse to convert a unit that is already under way or finished: the change would invalidate the plans and summaries that already exist, and it needs an explicit override.

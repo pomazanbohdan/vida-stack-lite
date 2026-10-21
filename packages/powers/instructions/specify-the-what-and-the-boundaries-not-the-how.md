@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/plan-template.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/define-requirements-and-a-specification.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/spec-phase.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Specify the what and the boundaries, not the how
@@ -31,3 +32,4 @@ Cohesive cross-layer changes (DB+BE+UI) stay in ONE file.
 Two tiers: Always = invariant rules. Never = out of scope + forbidden approaches.
 The PRD describes capabilities, not implementation: features grouped, with functional requirements under stable IDs and non-functional requirements in their own section.
 Technical choices go to `addendum.md`.
+Do NOT ask about HOW to implement

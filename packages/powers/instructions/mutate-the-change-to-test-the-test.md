@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/code-review-and-quality/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=TESTING-STANDARDS.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Prove the test by mutating the change
@@ -32,3 +33,7 @@ Answer the last question by experiment, not by reading. Invert one condition the
 - Do they test behavior (not implementation details)?
 - Are edge cases covered?
 - Do tests have descriptive names?
+A surviving mutant is a concrete specification of missing coverage.
+Treat it as a failing test, not as a metric.
+The default threshold is **80 % mutation score** (killed / total mutants in the changed scope).
+PRs that drop below this threshold must either add tests that kill the surviving mutants or add the specific path to the mutation configuration with a documented reason.

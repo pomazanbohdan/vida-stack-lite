@@ -21,8 +21,10 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/diagnosing-superpowers/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/codebase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/stated-failing-direction.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/verify-command-path-grounding.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Report the evidence without prescribing a fix
@@ -42,3 +44,7 @@ Approval gates: no issue or comment before they approve the exact text.
 Do not attribute intent to the implementer.
 Describe what the code is; the reader decides what to change.
 It states what the code shares, never what to change.
+It reports, it never prescribes.
+A prescribed statement would be copied verbatim and carry zero information — reproducing the original defect one level up.
+The payload carries the target that failed and what was missing; there is deliberately no `suggestion` field.
+Choosing the replacement is the planner's job — and the planner now has the prior phase's proven command to reach for.

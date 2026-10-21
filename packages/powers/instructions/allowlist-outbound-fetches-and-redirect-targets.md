@@ -18,11 +18,15 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/security-checklist.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/capability-trust-model.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Allowlist outbound fetches and redirect targets
 URLs validated before redirect (prevent open redirect)
 Server-side URL fetches allowlisted; private/reserved IPs blocked (prevent SSRF)
 SSRF | Validate/allowlist URLs, restrict outbound requests
+- **loopback, link-local, and unspecified hosts** — `127.0.0.0/8`, `169.254.0.0/16` (which contains the cloud metadata addresses), `0.0.0.0/8`, `::1`, `fe80::/10`, `::`, their IPv4-mapped IPv6 spellings, and `localhost`/`*.localhost` names. No legitimate capability install fetches these.
+- **plaintext `http://` URLs** — the transport is `https`-only; an `http://` tarball spec still *classifies* (so an internal-mirror workflow fails with a clear, named reason instead of a raw protocol error) but never fetches.
+- Deliberate limits: RFC1918 private ranges (`10/8`, `172.16/12`, `192.168/16`) are **not** denied — an internal https mirror is a legitimate install source, and the denylist is not an allowlist.

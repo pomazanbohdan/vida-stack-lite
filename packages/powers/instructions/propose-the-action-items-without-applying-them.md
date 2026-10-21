@@ -20,8 +20,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-retrospective/references/acceptance-verdict.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-retrospective/workflow.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/mvp-phase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/complexity-triggered-refactor.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Propose the action items without applying them
@@ -29,3 +31,8 @@ Compile fix-now findings and process lessons into specific, owned action items. 
 Two kinds are *proposed, not applied* in this version:
 - **Remediation** — code fixes are written up as action items (or story-shaped work) for the normal dev loop to execute later. The retrospective does not run the dev loop itself.
 - **Spec reconciliation** — where the as-built diverges from the spec, propose the reconciliation as an action item with the evidence attached. The human applies it to the project contract; an uncertain interpretation is never written into the spec automatically.
+
+When a split leaves further units, list them as the exact commands the user can run afterwards; do not create them - the user keeps control of the numbering.
+Advisory by default: the proposal is informational only, never edits code, and never blocks.
+The anchor is set the first time a function is observed and moves only when the proposal is dispositioned via `refactor accept` or `refactor decline` — never when the score alone improves
+naming the exact remediation, so this enforcement gap is never silent.

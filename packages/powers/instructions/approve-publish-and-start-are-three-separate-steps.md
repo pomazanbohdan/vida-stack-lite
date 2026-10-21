@@ -20,8 +20,10 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ticket/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ticket/references/ticket.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ticket/references/board.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/complete-milestone/steps/git-tag.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/cleanup.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Approve, publish, and start as three separate steps
@@ -30,3 +32,5 @@ A reply approves what was presented; publication and starting work are approved 
 None of these changes status or assignee: preserve identity and any existing `status`, `tracker_status`, and assignee.
 Approving a breakdown records it in the epic's `tickets.toml`; it does not start work.
 On a tracker the ticket stays in the tree until it is published, a separate approval, per `board.md`.
+Creating the tag locally and pushing it to the remote are two separate steps: the push carries its own question.
+A distinct action gets its own explicit question and must not be silently folded into another approval.

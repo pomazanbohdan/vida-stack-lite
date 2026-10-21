@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/orchestration-patterns.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/spike-wrap-up.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Add a pattern only after two real uses
@@ -30,3 +31,5 @@ Add a new entry only after:
 3. You can explain why an existing pattern wouldn't have worked
 4. You can describe its anti-pattern shadow (what people will mistakenly build instead)
 Premature catalog entries become aspirational documentation that no one follows.
+Only include patterns that appeared in 2+ spikes or were explicitly chosen by the user.
+Remove entries contradicted by newer spikes.

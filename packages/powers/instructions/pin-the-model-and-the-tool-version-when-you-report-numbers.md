@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=evals/README.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/cross-ai-peer-review.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Pin the model and the tool version when you report numbers
@@ -33,3 +34,6 @@ a test-first skill
 fired in 2 of 7 runs on the test-first prompt, so read `Δ` and the report rather than the exit code, or pass the threshold the CI example in the docs does.
 In one run the review skill did not fire and the reply still used its severity taxonomy as headings, which no baseline run did in nine; the loaded skill descriptions may shape the reply even without an invocation.
 Phrasing matters, and the description is the lever.
+The fix records the model *and its provenance*.
+Provenance is what makes the value trustworthy
+A recorded `unknown` is a real answer — a wrong model name attributed to a review would be worse than none.

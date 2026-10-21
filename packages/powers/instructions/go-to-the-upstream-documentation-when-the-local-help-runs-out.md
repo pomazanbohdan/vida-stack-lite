@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-core-tools/help/help.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/research-documentation-lookup.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Go to the upstream documentation when the local help runs out
@@ -27,3 +28,5 @@ This document, its topic files, and the installed skills cannot answer,
 fetch the documentation site
 and follow the pages relevant to the question.
 The source repository it links to is the final authority on how anything actually behaves.
+
+Do not skip documentation lookups because MCP tools are unavailable - the CLI fallback works and produces equivalent output.

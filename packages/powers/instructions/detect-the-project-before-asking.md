@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=.claude/commands/constraints.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project/steps/codebase-map-offer.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Detect the project before you ask
@@ -30,3 +31,5 @@ revision: 1
    - Block or warn when a check fails mid-task
    - Target numbers, or measure today's values and hold them
    - Slowest check tolerated before handing work back
+
+When the working directory already holds code, say so and offer to map it before the initialisation continues - a map the user does not want is skipped, not forced.

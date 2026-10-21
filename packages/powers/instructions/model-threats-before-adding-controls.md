@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/security-checklist.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/security-enforcement.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Model the threats before adding controls
@@ -30,3 +31,5 @@ Assets named (credentials, PII, payment data, admin actions, money movement)
 STRIDE run per boundary (Spoofing, Tampering, Repudiation, Info disclosure, DoS, Elevation)
 Abuse cases written next to use cases ("how would I misuse this?")
 Insecure Design | Threat modeling, spec-driven development
+System MUST perform threat-model-anchored verification (not blind scanning)
+System MUST block phase advancement based on configurable severity threshold

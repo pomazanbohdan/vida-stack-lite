@@ -1,7 +1,7 @@
 ---
 instruction_id: never-present-an-unmeasured-metric
 title: Never present an unmeasured metric
-summary: "Never print a performance number that no run produced: mark it not measured, label every value with its source and call static findings potential impact."
+summary: "Never print a performance number that no run produced: mark it not measured, label every value with its source, call static findings potential impact, and never emit a count that was not measured in this session."
 capability_tags:
   - measure-performance
 pattern_tags:
@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=agents/web-performance-auditor.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/planner-antipatterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Never present an unmeasured metric
@@ -46,3 +47,5 @@ Scan source code directly for structural anti-patterns.
 
 ## Deep mode (activated when tool artifacts or live measurement are available)
 In Deep mode, always state which artifacts were provided and which fields remain unmeasured.
+
+Never emit `grep '714 tests'` or `grep '52 test files'` unless you ran the count command in this session. Model-recalled counts are stale from training.

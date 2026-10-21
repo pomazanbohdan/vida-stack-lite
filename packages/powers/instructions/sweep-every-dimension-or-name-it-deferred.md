@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-architecture/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-architecture/references/reviewer-gate.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/reference/opencode-v2-verification-matrix.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Sweep every dimension or name it deferred
@@ -29,3 +30,6 @@ Sweep the breadth the altitude owns — every structural dimension is decided, d
 a whole dimension left silent (e.g. the operational/environmental envelope: deployment & environments, infra/provider strategy, operations) is the failure, not a clean spine.
 every dimension the altitude owns is decided, deferred, or an open question — a whole dimension left silent is a finding, especially the operational/environmental envelope (deployment & environments, infra/provider strategy, operations) a domain-focused draft skips.
 No placeholders; never invent to fill a gap.
+- **Implemented** (rows B9, B10, C2) | Needed only tool, session and shell events the plugin already receives.
+- **Not applicable** | It blocks a GSD executor dispatch that omits harness-managed worktree isolation. OpenCode's descriptor declares `dispatch.isolation: orchestrator-worktree`, so GSD manages the worktree and the guard would never act.
+- **Waived** | 2.x keeps the `lsp` setting but runs no language servers and exposes no LSP tools; there is nothing to wire.

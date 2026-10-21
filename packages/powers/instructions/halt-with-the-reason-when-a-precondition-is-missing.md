@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/checklist.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/planner-preconditions.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Halt with the reason when a precondition is missing
@@ -31,3 +32,5 @@ HALT: "Cannot proceed to proposal without complete impact analysis"
 HALT: "Must have explicit approval before implementing changes"
 HALT: "Must clearly define who will execute the proposed changes"
 HALT: "Need access to a PRD or a spec to assess change impact. Please ensure one is accessible. Architecture and UI/UX will be used if available."
+
+**Unmet** | STOP - return a checkpoint reporting `**Gate:** blocking-human` with `**Blocked by:** Precondition not met: <precondition text>`. Do NOT partial-commit the task. Unmet preconditions are NEVER auto-approved - a missing prerequisite is not a verification step a human can rubber-stamp, it is a fact the executor cannot establish on its own.

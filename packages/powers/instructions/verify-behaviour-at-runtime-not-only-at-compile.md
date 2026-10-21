@@ -18,11 +18,16 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/definition-of-done.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-verifier.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Verify the behaviour at runtime, not only at compile time
 Code runs and behaves as intended, verified at runtime, not just compiled or typechecked
 Existing tests still pass; no regressions introduced
 "It's done, I just haven't run it yet": unverified work is not done.
+
+A truth is *behavior-dependent* when its correctness hinges on runtime behavior grep/presence checks cannot see — a **state transition** or a **cancellation / cleanup / ordering invariant**
+**Presence is not behavior.**
+Never let symbol presence alone produce a VERIFIED on a behavior-dependent truth.

@@ -20,8 +20,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/checklist.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/ingest-docs.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/inbox.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Get explicit approval before applying the change
@@ -34,3 +36,8 @@ Return to appropriate step to address concerns
 Present complete proposal to user
 Get clear yes/no approval for proceeding
 Document approval and any conditions
+
+Approval for one step is not approval for the next: approval to classify the material is not approval to write the deliverable. Show the exact destinations and require an explicit choice.
+The absence of findings is not authorization to write.
+Without an explicit opt-in, report only - take no action on what you reviewed.
+Confirm with the user before closing anything.

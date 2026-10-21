@@ -17,11 +17,14 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/review-prompts/verification-gap.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-security-auditor.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Report the other findings separately
 Report genuine problems you noticed while tracing verification, even if they are not verification gaps. Put them under `Other findings` in the output.
 This permits reporting what you already reached, not extra hunting.
 A claim that code misbehaves is a defect, not a gap — it goes under `Other findings` for standard triage, however you found it.
+
+For each `threat_flag` in SUMMARY.md `## Threat Flags`: if maps to existing threat ID → informational. If no mapping → log as `unregistered_flag` in the structured return (not a blocker).

@@ -18,8 +18,11 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/assets/prd-template.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/assets/prd-validation-checklist.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-milestone.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/nyquist-validation.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Give every requirement a testable consequence
@@ -27,3 +30,10 @@ FRs with at least one testable consequence per FR — verifiable condition, meas
 "System handles X gracefully," "reasonable performance," "user-friendly" — flag every one.
 For non-functional sections (UX, performance, security): bounds, not adjectives.
 This is the dimension downstream story creation will lean on hardest. Be unforgiving here.
+
+A good requirement is specific and testable, user-centric, atomic - one capability per requirement - and independent of the other requirements.
+Reject the vague ones: "Handle authentication" becomes "User can log in with email and password and stay logged in across sessions".
+Map automated test coverage to phase requirements before any code is written.
+System MUST map each requirement to a specific test command
+System MUST identify Wave 0 tasks (test scaffolding needed before implementation)
+ensures a feedback signal exists for every requirement

@@ -17,8 +17,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/security-and-hardening/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/profile-user.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Collect personal data only against a stated purpose
@@ -29,3 +30,7 @@ The cheapest data to protect, breach, and comply over is the data you never coll
 "Might be useful later" is latent breach scope, not a purpose.
 Keep PII out of telemetry.
 Make region a configurable policy, not a hardcoded assumption.
+Reads session files locally (read-only, nothing modified)
+Analyzes message patterns (not content meaning)
+Nothing is sent to external services
+Sensitive content (API keys, passwords) is automatically excluded

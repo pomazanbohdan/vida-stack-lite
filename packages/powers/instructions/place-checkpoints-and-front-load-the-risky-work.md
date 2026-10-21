@@ -1,7 +1,7 @@
 ---
 instruction_id: place-checkpoints-and-front-load-the-risky-work
 title: Place checkpoints and front-load the risky work
-summary: "Order the tasks so each leaves the system working, put a verification checkpoint every two or three tasks, and put the high-risk tasks first."
+summary: "Arrange tasks so that dependencies are satisfied, each task leaves the system working, the verification checkpoints sit at the right cadence and the high-risk tasks are early."
 capability_tags:
   - plan-implementation
 pattern_tags:
@@ -10,16 +10,18 @@ conditions_applies_when: A plan has several tasks to execute in order.
 conditions_does_not_apply_when: The plan is a single task.
 artifact_contract_output_type: checkpoint-plan
 artifact_contract_required_data:
+  - the task order
   - the checkpoints
-  - the tasks before each checkpoint
-  - the high-risk tasks
+  - the high-risk tasks placed first
 artifact_contract_verified_by: a checkpoint exists after every two or three tasks and the highest-risk task comes first
-compatibility_excludes: []
+compatibility_excludes:
+  - put-one-checkpoint-at-the-end-of-the-meaningful-work
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/planning-and-task-breakdown/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/planner-antipatterns.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Place checkpoints and front-load the risky work

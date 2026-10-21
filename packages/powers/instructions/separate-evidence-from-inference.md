@@ -20,8 +20,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/why/references/epistemics.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/milestone-summary.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/claim-provenance-tagging.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Separate evidence from inference
@@ -41,3 +43,10 @@ When evidence contradicts, surface both sources with citations and let the user 
 Do not cite code as evidence for its own intent.
 Before delivering, check that every claim has a citation or moves to an inference or hypothesis, and that its phrasing matches its tier.
 The output has a section for what is not known. If no gaps are mentioned, treat that as suspicious.
+
+Answer follow-up questions from the artefacts you already loaded and stay grounded in what was actually built, not in what might have been.
+Researcher MUST mark claims with source evidence references
+Assumptions MUST be logged separately from sourced claims
+System MUST distinguish between evidenced facts and inferred assumptions
+Each claim is annotated with its source (file path, documentation, API response)
+Assumptions without direct evidence are logged in a distinct section

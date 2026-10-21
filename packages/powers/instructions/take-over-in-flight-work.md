@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/ketchup/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/session-pickup.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Take over in-flight work
@@ -39,3 +40,5 @@ Verify the inherited claims against the original goal on the real artifact.
 A passing prior self-report is not the proof.
 Run the existing checks before any edit.
 Report where the prior agent stopped, what you inherited versus redid, the resume point, and the outcome.
+
+If the initialisation was interrupted, keep the artefacts that already landed, skip the steps that would recreate them, and continue from the first missing artefact in order. Do not error and do not send the user back to the start.

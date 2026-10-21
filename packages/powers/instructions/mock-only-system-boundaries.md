@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/tdd/mocking.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/testing-patterns.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=TESTING-STANDARDS.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Mock only system boundaries
@@ -39,3 +40,8 @@ Don't mock:
 - Validation functions
 - Pure functions
 - Anything you control
+Complete mocks.
+When mocking a dependency, mock only the dependency — not the SUT behavior itself.
+A mock that returns a hardcoded value from inside the function under test is a pass-always test in disguise.
+External I/O (filesystem, network, clock) is the appropriate scope for mocking.
+Business logic inside the SUT is not mocked; it is exercised.

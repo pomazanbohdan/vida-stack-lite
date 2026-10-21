@@ -18,10 +18,12 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-eval/references/self-improvement.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/debugger-philosophy.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Change one thing per round
 Keep the change small enough that the next eval can attribute the delta to it; a round that rewrites five things at once cannot tell you which one moved the score.
 A round that improves the score and breaks nothing else is kept; a round that regresses any mode is reverted before the next round, because an applied change that made things worse is not a base to build on.
+Change one variable: Make one change, test, observe, document, repeat. Multiple changes = no idea what mattered.

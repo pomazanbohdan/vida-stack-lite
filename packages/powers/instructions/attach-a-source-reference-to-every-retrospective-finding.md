@@ -18,10 +18,12 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-retrospective/workflow.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/extract-learnings.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Attach a source reference to every retrospective finding
 Every finding you report carries a source reference (file, line, commit, or log).
 A claim you cannot point at — an invented root cause, a pattern the diff does not actually show — is not a finding. Drop it.
+Every extracted learning must have source attribution back to the originating artifact

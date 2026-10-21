@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=agents/test-engineer.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=TESTING-STANDARDS.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Cover the scenario classes
@@ -32,3 +33,6 @@ For every function or component:
 | Boundary values | Min, max, zero, negative |
 | Error paths | Invalid input, network failure, timeout |
 | Concurrency | Rapid repeated calls, out-of-order responses |
+For every behavioral contract, at least one test must exercise an input that the SUT should reject or handle differently from the happy path.
+Examples: missing required argument, value at boundary + 1, hostile input.
+Apply the cases relevant to the changed surface.

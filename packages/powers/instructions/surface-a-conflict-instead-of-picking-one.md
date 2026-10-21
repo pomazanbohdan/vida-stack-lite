@@ -19,8 +19,11 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/context-engineering/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-spec/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/ingest-docs.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-phase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/profile-user.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Surface a conflict instead of picking one side
@@ -45,3 +48,10 @@ C) Ask — this seems like an intentional decision I shouldn't override
 Silent confusion | Agent guesses when it should ask | Surface ambiguity explicitly using the confusion management patterns above
 
 When two currently-live sources or companions disagree on the same field, or an either/or never got resolved, surface it to the user rather than silently choosing — the resolution is itself a new run log entry.
+
+Never merge competing variants into a combined criterion - preserve every variant for the user to resolve.
+The fix hint is ONE non-binding example route: a smaller or different mechanism reaching the same property resolves it — say which.
+if a hint would contradict one, or the property is unreachable without breaking one, return
+with the conflict and the alternatives rather than applying or working around it.
+Keep the dominant rating in the rating field.
+Add a context note to the dimension's summary describing the split

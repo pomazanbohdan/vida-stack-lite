@@ -17,8 +17,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/orchestration-patterns.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-phase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-review-convergence.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep the orchestration depth at one level
@@ -35,3 +37,5 @@ revision: 1
 - Debugging becomes a multi-level investigation
 - The leaf personas lose context to multiple summarization steps
 **What to do instead:** keep the orchestration depth at most 1 (slash command → personas). The merge happens in the main agent.
+This keeps the auto-advance chain flat — each phase runs at the same nesting level rather than spawning deeper Task agents.
+Run plan-phase inline (do NOT wrap it in a nested agent) — the orchestrator runs at the top level, where the planning step can still spawn the planner and the checker one level down.

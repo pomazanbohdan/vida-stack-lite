@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/git-workflow-and-versioning/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/test-completed-work.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/pr-branch.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Report the change and what you left alone
@@ -44,3 +45,4 @@ POTENTIAL CONCERNS:
 This pattern catches wrong assumptions early and gives reviewers a clear map of the change. The "DIDN'T TOUCH" section is especially important — it shows you exercised scope discipline and didn't go on an unsolicited renovation.
 Report in chat — what is covered, what is not and why, any bugs, and the command that runs the new tests.
 A report in chat; no summary file
+Report the paths that are neither transient nor structural, so the user can choose the strict mode knowingly.

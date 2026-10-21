@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/doubt-driven-development/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/stall-detection-in-plan-phase.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Bound the doubt loop
@@ -42,3 +43,6 @@ If 3 cycles is "obviously insufficient" because the artifact is large: the artif
 - Re-spawning fresh-context on an unchanged artifact (you'll get the same findings; you're stalling)
 - Looping >3 cycles without escalating to the user
 - Skipping doubt under time pressure on a high-stakes decision
+Revision loop MUST detect identical plan output across consecutive iterations
+On stall detection, system MUST escalate strategy before retrying
+Maximum stall retries MUST be bounded (capped at the existing max 3 iterations)

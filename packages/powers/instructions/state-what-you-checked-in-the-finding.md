@@ -20,8 +20,9 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/review-prompts/verification-gap.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-review/references/lens-verification-gap.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/finish-an-epic.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/few-shot-examples/verifier.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # State what you checked in the finding
@@ -35,3 +36,5 @@ Verify the Demonstration would not make any test you checked fail, or that the a
 Explain why the test misses the bug using what the test sets up and checks.
 Every finding carries a source reference: a file, a line, a commit, a log. A claim it can't point at doesn't make the report.
 It won't invent a root cause or a pattern the code doesn't back up.
+No individual must-have is listed or checked. No file paths, no line numbers, no grep output, no level-by-level breakdown.
+The verifier restated the must-haves as passing without showing any evidence.

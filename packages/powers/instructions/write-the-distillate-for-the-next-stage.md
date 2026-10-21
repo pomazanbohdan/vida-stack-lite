@@ -20,8 +20,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prfaq/references/verdict.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/explore-and-validate-an-idea.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/add-todo.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/check-todos.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Write the distillate for the next stage
@@ -43,3 +45,5 @@ The Verdict findings (especially "needs more heat" and "cracks") as actionable i
   "open_questions": ["unresolved items from FAQs"]
 }
 If it reads like a document, it is too long.
+The captured item carries enough context to be understood weeks later, without the original conversation.
+Replace the rendered section wholesale with the literal value; do not reformat, re-wrap, re-order, or hand-edit the bullets.

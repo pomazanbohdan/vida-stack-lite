@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/approaches/eval-loop.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/spike.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Compare the arms and read the delta
@@ -35,3 +36,5 @@ Read the transcripts, not just the grades.
 Change one thing, with its why, and cut any line whose removal did not change results.
 A variant run
 says whether the change, not chance, moved the score.
+**comparison** — same question, different approaches.
+Build back-to-back, then head-to-head comparison.

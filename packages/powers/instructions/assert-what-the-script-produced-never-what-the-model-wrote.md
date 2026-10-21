@@ -21,8 +21,9 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/lenses/standards.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/lenses/lens-determinism.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=AGENTS.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/design/verifier-reach.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Assert what the script produced, never what the model wrote
@@ -33,3 +34,4 @@ Stdlib first, a graceful fallback when an optional import is absent.
 No model ids or time estimates anywhere in a skill.
 Automated tests assert outcomes produced by deterministic code.
 Do not write automated tests for LLM output or for static source text.
+- **Do** keep CI honest: test the **contract** the verifier consumes (parse/validate, projection round-trip, fail-closed guards), never assert the model's judgment as green. A test that grades the model's judgment is vacuous.

@@ -18,8 +18,11 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/debugging-and-error-recovery/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/embeddable-orchestration-system.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/reference/host-integration-interface.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/security-model.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Degrade gracefully under failure
@@ -50,3 +53,6 @@ function renderChart(data: ChartData[]) {
   }
 }
 ```
+- A host declares the interface version it targets; the engine negotiates down to `min(host, engine)` rather than refusing to talk. A host newer than the running engine gets a warning, not a crash — its declared axes beyond the engine's version are simply not trusted.
+- A negotiated concurrency limit degrades to `1` (strictly sequential) on anything other than a positive safe integer (missing, an undocumented value, zero, negative, fractional, an unsafe integer, or a non-numeric type).
+- A caller may decide how to degrade on rejection, never whether a path is contained.

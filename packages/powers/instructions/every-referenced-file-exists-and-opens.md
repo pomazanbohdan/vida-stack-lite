@@ -19,11 +19,14 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ticket/references/validate-checks.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/set-and-maintain-project-context.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/planner-reachability-check.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Every referenced file exists and opens
 Every file or link referenced exists and opens; no unfilled placeholder; every assumption is marked.
 It checks every path a line names
 and reads your `package.json`, `Makefile`, and CI config — not to copy the scripts, since an agent reads those directly, but to know what they already answer so the block adds only the right commands to use, the corrections, and the caveats.
+Planner MUST validate that each plan step references reachable files and APIs
+Unreachable steps MUST be flagged during planning, not discovered during execution

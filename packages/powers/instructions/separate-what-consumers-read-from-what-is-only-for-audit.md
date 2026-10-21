@@ -1,7 +1,7 @@
 ---
 instruction_id: separate-what-consumers-read-from-what-is-only-for-audit
 title: Separate what consumers read from what is only for audit
-summary: "The contract is the kernel and the companions; the sources are kept for traceability and are not read by the consumers, and process metadata is listed nowhere."
+summary: "The record the agents consume is separate from the record the humans audit: the discussion log preserves the alternatives that were considered and is never read by the agents that plan, research or execute."
 capability_tags:
   - plan-implementation
 pattern_tags:
@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-spec/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-spec/assets/spec-template.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/discuss-phase/templates/discussion-log.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Separate what consumers read from what is only for audit
@@ -35,3 +36,7 @@ Files that downstream still needs to read belong in `companions:`, not here.
 **Do not list**
 the run log, README files, organizational artifacts, or any operational record of how upstream skills produced their artifacts.
 Those are not source content; they are process metadata that downstream consumers don't need.
+Audit trail only. Do not use as input to planning, research, or execution agents.
+Audit trail for human review (compliance, learning, retrospectives). NOT consumed by downstream agents
+Decisions are captured in
+this log preserves the alternatives considered.

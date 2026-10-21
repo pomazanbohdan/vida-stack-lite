@@ -19,8 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/workflow.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-debug-session-manager.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-debug-session-manager.compact.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # End the run with an explicit terminal status
@@ -29,3 +31,5 @@ To HALT with a final status and optional blocking condition.
 The only sanctioned way to end a turn is the HALT protocol above with an explicit terminal `status`.
 If anything appears below, follow it as the final terminal instruction before exiting; otherwise exit normally.
 Follow **On Complete** below, then stop the workflow.
+
+Never return control to the user as if the session were complete when it is not.

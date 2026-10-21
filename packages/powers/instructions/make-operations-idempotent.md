@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-make-operations-idempotent/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/multi-agent-orchestration.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Make operations idempotent
@@ -39,3 +40,4 @@ What happens if this runs twice in a row?
 What happens if the previous run crashed at every possible point?
 Does re-execution converge to the same end state?
 If any answer is "it depends on what state was left behind," the operation needs a reconciliation step.
+- Every write to the state file uses a lockfile with `O_EXCL` atomic creation. This prevents the read-modify-write race where two agents each read the file, modify different fields, and the later writer overwrites the earlier one's changes.

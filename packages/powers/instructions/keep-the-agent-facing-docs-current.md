@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/documentation-and-adrs/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/agent-contracts.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/documentation-generation.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep the agent-facing docs current
@@ -34,3 +36,6 @@ Special consideration for AI agent context:
 **Red Flags**
 
 - "Nobody reads docs" Agents do. Future engineers do. Your 3-months-later self does.
+Update this table whenever an agent's return contract changes -- a stale row is a violation the check will report, not something to leave for later.
+an auditable exemption, never deleted and never silently passed.
+System MUST verify generated documentation against actual implementation

@@ -20,14 +20,10 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-04-review.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-03-triage.md
 status: active
-revision: 2
+revision: 4
 ---
 
 # Group findings by shared root cause
 Group the survivors by shared root cause — two findings belong in one entry only when the same defect produced both.
 Same location alone is not a shared root cause, and neither is a shared fix.
-An entry carries every member's verified bad outcome
-An entry carries every member's verified bad outcome in `detail` and the highest verdict among them
-Order: Critical, Important, Minor.
-`maybe-false` ranks lowest.
-Set `source` to the contributing layers joined with `+` (e.g., `blind-hunter+edge-case-hunter`).
+An entry carries every member's verified bad outcome in `detail` and the highest verdict among them (Critical > Important > Minor > `maybe-false`); set `source` to the contributing layers joined with `+` (e.g., `blind-hunter+edge-case-hunter`).

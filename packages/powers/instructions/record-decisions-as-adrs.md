@@ -24,8 +24,9 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/codebase.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/finish-an-epic.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/plain-skill/assets/sample-skill/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/adr/README.md
 status: active
-revision: 3
+revision: 4
 ---
 
 # Record decisions as ADRs
@@ -64,3 +65,24 @@ An uncertain interpretation never gets written into a spec on its own.
 Decision records (ADRs) are written beside the code they govern only when you approve each one, and committing them is up to you.
 Each option gets one line on why it lost.
 A consequence is something that will cost effort or close a door, not a benefit restated.
+### ADR status vocabulary
+Every ADR declares one status from a canonical vocabulary:
+| Status | Means | Obligation |
+|--------|-------|------------|
+| `Accepted` | Decided and in force. Cite it. | — |
+| `Proposed` | Decided in principle, not ratified. Do not cite as settled. | If the work has demonstrably shipped, ratify it — do not leave the label lying. |
+| `Superseded` | A specific newer ADR replaced this decision. | **Must name the successor as a file link.** |
+| `Retired` | What this ADR decided no longer exists at all, and no single ADR replaced it. | Say what was removed and when. |
+| `Legacy` | Frozen historical record, kept for provenance; not a pattern to follow. | Say why it is frozen. |
+Prose may follow the token; both the bullet form and the table form are accepted.
+`Supersedes` / `Superseded by` — the target is *replaced*. Its status becomes `Superseded`.
+`Subsumes` / `Subsumed by` — the target *still holds*, but a broader ADR now frames it. Its status is **unchanged**; it becomes a component of the larger decision.
+If A declares either relation toward B, **B must record the reciprocal.**
+A one-way pointer is the failure this corpus actually suffered.
+Only an `Accepted` ADR is owed the back-link.
+A `Proposed` ADR's claim is **prospective**: it has not taken effect, so its target is not marked.
+On ratification, the check begins demanding the back-links.
+A **separate** ADR that amends another is the same relation as Supersedes/Subsumes and follows the same rule: if A declares `**Amends:** [ADR-B]`, B **must** carry the reciprocal `**Amended by:** [ADR-A]` in the same PR.
+The id in the title must match the filename's prefix.
+If the H1 ends in a bracket holding a status token, it must name the **same** status as the `Status` field.
+Cross-references to other ADRs are file links, never bare ids.

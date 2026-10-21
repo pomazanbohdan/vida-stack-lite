@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/definition-of-done.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/security/baseline.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Review security, observability and rollback before ship
@@ -29,3 +30,6 @@ Observability in place for new critical paths (logs, metrics, traces)
 Rollback path exists for anything risky
 The human has reviewed and approved before merge or deploy
 "Done" declared before human review on changes that need it.
+- All CI checks pass on the release branch
+- The version bump is consistent with the semver policy
+- The changelog entry is present

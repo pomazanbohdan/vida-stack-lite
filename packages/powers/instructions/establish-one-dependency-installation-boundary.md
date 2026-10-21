@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/security-and-hardening/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/contributing/bootstrap.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Establish one dependency installation boundary
@@ -28,3 +29,5 @@ revision: 1
 Use the workspace root that owns the lockfile, or an independent nested project only when it is outside that workspace.
 Corroborate `packageManager` (when present), the lockfile, and CI; stop on disagreement or competing lockfiles.
 Pin the manager version.
+- A version manager ensures you can switch Node versions per project without polluting your global install.
+- This project ships a `.nvmrc` file at the root — any of the tools above will read it.

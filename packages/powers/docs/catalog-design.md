@@ -373,6 +373,12 @@ proposals that the existing vocabulary does not cover are put to the owner.
 In the donor `addy-skills` this reduced 134 proposals to 71 (24 capability +
 47 pattern); 63 found an existing counterpart.
 
+**The owner is no longer asked about the tags** (owner decision, 2026-10-21): the
+mapping pass runs first, and a tag that is genuinely needed and genuinely unique
+is **created by the agent** — the vocabulary grows where the work needs a word it
+does not have. What the owner still decides is the corpus itself, not the
+vocabulary that routes it.
+
 The vocabulary is also the **terminology authority for merging**: the terms of a merged
 instruction are taken from the vocabulary; a new term enters the batch proposal rather than
 being introduced "as it comes out". Groups and the active alternative are not in the vocabulary but in the methodological

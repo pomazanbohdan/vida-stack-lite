@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-project-context/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/ingest-docs.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Ask only what no scan can answer
@@ -31,3 +32,5 @@ Never hand the user a selection problem a scan created.
 A mistake this session made and caught is observed evidence — offer it.
 Batches of at most eight; fewer is better.
 A batch yielding nothing new means write.
+
+Derive every field the sources already answer and ask only for the ones they do not - one at a time, as a minimal question set, not an interrogation.

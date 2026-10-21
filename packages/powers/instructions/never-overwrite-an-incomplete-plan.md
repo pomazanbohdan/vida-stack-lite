@@ -19,8 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/planning-and-task-breakdown/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=.claude/commands/plan.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/add-todo.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/check-todos.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Never overwrite an incomplete plan
@@ -35,3 +37,5 @@ The same rule applies to an external task list target: never bulk-close or delet
 
 Save the plan to tasks/plan.md and task list to tasks/todo.md.
 If tasks/plan.md or tasks/todo.md already exists with unchecked tasks for different work, stop and ask before writing — never silently overwrite an incomplete plan.
+If the read that would produce the new content failed or returned an unusable value, do NOT touch the existing content - leave it exactly as-is and continue to the next step.
+A partial or malformed result must never overwrite a good existing section.

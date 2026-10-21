@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-method/help/prototyping.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/spike.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Spike to learn, then throw the spike away
@@ -42,3 +43,6 @@ If it grows mid-task, stop, say so, and step up a size.
 Ask the user to decide this on purpose.
 The outcome to avoid is a prototype that becomes the real product with nobody deciding it should, and with no spec.
 prototype code written to learn fast seldom meets the codebase's standards
+Never declare VALIDATED after a single happy-path test.
+Document the investigation trail, not just the conclusion.
+Do not rush to a verdict. A spike that says "VALIDATED — it works" with no nuance is almost always incomplete.

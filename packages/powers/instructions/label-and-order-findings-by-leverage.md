@@ -1,7 +1,7 @@
 ---
 instruction_id: label-and-order-findings-by-leverage
 title: Label every finding and order it by leverage
-summary: Give each review comment a severity label and put the findings that matter first.
+summary: "Give each review comment a severity label and put the findings that matter first. The labels are the corpus scale — Critical, Important, Minor — mapped from the donor own labels."
 capability_tags:
   - define-output-format
 pattern_tags:
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/code-review-and-quality/SKILL.md
 status: active
-revision: 2
+revision: 4
 ---
 
 # Label every finding and order it by leverage

@@ -18,8 +18,9 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/spec-driven-development/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/using-agent-skills/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/list-phase-assumptions.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Surface your assumptions before building
@@ -41,3 +42,8 @@ The spec's entire purpose is to surface misunderstandings *before* code gets wri
 
 - Starting to write code without any written requirements
 - Asking "should I just start building?" before clarifying what "done" means
+
+Surface the assumptions across five areas: the technical approach, the implementation order, the scope boundaries (in, out and ambiguous), the risk areas and the dependencies.
+Mark each assumption with its confidence: fairly confident, assuming, or unclear.
+This is an analysis of what you think, not an intake of what the user knows - it produces no file and only a conversation.
+Ask whether the assumptions are accurate, and fold the corrections into the understanding before continuing.

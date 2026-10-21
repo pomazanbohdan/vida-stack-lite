@@ -18,9 +18,11 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-04-review.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/complete-milestone/detail/elaboration.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Carry forward a finding that was already triaged
 Same location and same claim as a logged row, and the code there still reads as the row describes: keep the row's verdict and route, write the row again with `carried` in front of the evidence, skip verification, and never patch or defer it again.
+Acknowledging is verdict-preserving and self-invalidating: it never rewrites the artifact own status field, and the suppression it grants lapses automatically the moment the artifact observed state changes again.

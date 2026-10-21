@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/debugging-and-error-recovery/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/quota-and-rate-limit-failure-classification.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Triage the failure by kind
@@ -69,3 +70,6 @@ Runtime error:
 └── Unexpected behavior (no error)
     └── Add logging at key points, verify data at each step
 ```
+Treat provider quota and rate-limit failures as wait-and-resume conditions, not normal executor failures.
+Quota failures MUST NOT offer immediate retry as the primary recovery.
+Non-quota failures MUST continue through the normal execution failure path.

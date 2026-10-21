@@ -21,8 +21,12 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prfaq/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prfaq/references/customer-faq.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prfaq/references/internal-faq.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/manager.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project/steps/auto-mode-detection.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project/steps/auto-mode-config.md
 status: active
-revision: 1
+revision: 3
 ---
 
 # Run without asking and record the gaps
@@ -46,3 +50,13 @@ Flag high-risk areas and unknowns prominently.
 Creative tools default off in headless. Caller can override; artifacts land in `.working/` and are not promoted unless the caller signals.
 `intent` — "create", "update", or "validate". If absent, infer from the artifact set.
 End with the JSON response. `intent` reflects detected intent. Omit keys for artifacts not produced.
+
+An unattended run needs its input up front: without the document, return an error with the usage instead of starting the work.
+In an unattended run, decide autonomously from the project context. If you hit a blocker, record it and stop.
+Never work around a permission or access error - let it fail so it can be surfaced with resolution hints.
+Auto mode requires an idea document — either:
+Auto-include all table stakes features (users expect these)
+Include features explicitly mentioned in provided document
+Auto-defer differentiators not mentioned in document
+Requirements approval: Auto-approve
+Roadmap approval: Auto-approve

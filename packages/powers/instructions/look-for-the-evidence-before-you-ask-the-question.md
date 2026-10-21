@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/build-a-change.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/spec-phase.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Look for the evidence before you ask the question
@@ -28,3 +29,6 @@ When something is unclear, it looks for evidence first — only what the reposit
 It does not have to be tidy. A ramble, a voice dump, a half-formed thought, an issue link, a file, or a ticket from the tree all work — anything the model can turn into a concrete goal.
 Answer open questions carefully when they appear.
 A wrong call there is the most expensive kind of mistake to find later.
+Scout the codebase BEFORE the first question — grounded questions only.
+Grep the codebase for code/files relevant to this phase goal.
+Confirm your current state synthesis internally. Do not present it to the user yet — you'll use it to ask precise, grounded questions.

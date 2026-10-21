@@ -18,9 +18,15 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=agents/security-auditor.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/capability-trust-model.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Map the trust boundaries before the findings
 Start from trust boundaries — where untrusted data enters — and reason about each with STRIDE before enumerating findings
+- The barrier is not a technical wall. It is:
+- **Consent** — you explicitly approved the executable surfaces this capability declares before they ran.
+- **Integrity** — the bundle you consented to is the bundle that ran (SHA verified).
+- **Reversibility** — `gsd capability remove <id>` removes exactly what the ledger recorded, including entries in shared config files, leaving no orphaned state.
+- These three things together mean: you know what you installed, you got what you were shown, and you can undo it completely. They do not guarantee the content is safe.

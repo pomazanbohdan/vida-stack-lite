@@ -20,8 +20,10 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/bug-fix.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=automations/benny/skills/reproduce-and-fix-issues/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/debug.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-debugger.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Reproduce the defect before fixing it
@@ -45,3 +47,10 @@ Unit tests show branch behavior, not bug absence.
 Stage the commits so the failing reproduction lands before the fix in history.
 Skip the failing-test-first cadence when the test would be expensive, integration-heavy, or unclear.
 Paste the failing-then-passing reproduction output verbatim.
+Gather the symptom fields before investigating: expected behavior, actual behavior, error messages, timeline, reproduction.
+A value the user already supplied is shown back and confirmed instead of being asked again.
+Golden rule: If you can't reproduce the bug, you can't verify it's fixed.
+Before fixing: Document exact steps to reproduce
+After fixing: Execute the same steps exactly
+Test edge cases: Related scenarios
+Solution: Revert fix. If bug comes back, you've verified fix addressed it.

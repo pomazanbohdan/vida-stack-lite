@@ -22,7 +22,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/checklist.md
 status: active
-revision: 2
+revision: 4
 ---
 
 # Evaluate every path forward before recommending one

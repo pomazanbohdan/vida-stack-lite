@@ -19,11 +19,13 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/systematic-debugging/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/systematic-debugging/root-cause-tracing.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/debugger-philosophy.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-debugger.md
 status: active
-revision: 5
+revision: 6
 ---
 
-# Debug systematically, do not guess
+# Find the root cause of the failure
 
 No fix before the root cause.
 
@@ -41,3 +43,12 @@ If you cannot find the root cause, say so explicitly and continue investigating 
 When the cause is environmental, timing-dependent or external: document what you investigated, implement the appropriate handling such as a retry, a timeout or an error message, and add monitoring or logging for a future investigation. But 95% of the "no root cause" cases are an incomplete investigation.
 
 After a deep investigation, propose an always-on signal that would have caught the failure earlier, and add it.
+Complete reading: Read entire functions, not just "relevant" lines. Read imports, config, tests. Skimming misses crucial details.
+A good hypothesis can be proven wrong. If you can't design an experiment to disprove it, it's not useful.
+The difference: Specificity. Good hypotheses make specific, testable claims.
+One hypothesis at a time. If you change three things and it works, you don't know which one fixed it.
+Understand the mechanism? Not just "what fails" but "why it fails"
+Reproduce reliably? Either always reproduces, or you understand trigger conditions
+Have evidence, not just theory? You've observed directly, not guessing
+Ruled out alternatives? Evidence contradicts other hypotheses
+Don't act if: "I think it might be X" or "Let me try changing Y and see"

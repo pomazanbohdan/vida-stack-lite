@@ -18,10 +18,15 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ticket/references/ticket.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/autonomous-smart-discuss.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Ask only what is unsettled and offer a default
 A ticket starts from what is known: what exists when it is done, how it will be verified, what must not change, and what is already decided.
 Ask only what remains unsettled, offering a default for each, then draft into the ticket tree.
+Read project-level and prior phase context to avoid re-asking decided questions.
+Check prior_decisions — skip grey areas already decided in prior phases.
+Pre-select a recommended answer based on: prior decisions (consistency), codebase patterns (reuse), domain conventions (standard approaches)
+Generate 1-2 alternatives per question

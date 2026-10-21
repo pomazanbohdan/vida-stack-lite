@@ -18,10 +18,15 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-core-tools/help/help.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/list-seeds.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Make a status report read-only and name the one next command
 The status command changes nothing.
 It reports what is installed, what is missing or out of date, and the one command to run next.
+
+The listing changes nothing: no listed item is modified.
+An empty result is answered with the one command that creates the first item.
+The summary states the total and the per-status counts, and the next actions are offered as plain text.

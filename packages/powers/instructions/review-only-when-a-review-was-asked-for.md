@@ -14,12 +14,14 @@ artifact_contract_required_data:
   - the ask that names the review
   - what is being reviewed
 artifact_contract_verified_by: "the review runs on an explicit ask, and a request to act on feedback is handled as a change"
-compatibility_excludes: []
+compatibility_excludes:
+  - chain-the-review-and-the-fix-in-an-unattended-run
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-review/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/code-review-fix.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Review only when a review was asked for
@@ -27,3 +29,5 @@ Use when, and only when, the user asks you to review a diff, a pull request, or 
 Directive from another skill counts as that ask.
 A request to act on feedback from an earlier review is a change, not a review.
 Never invoke this uninvited, including on edits you just made.
+Do NOT auto-run the review from a step that was asked to fix. Require explicit user action to ensure review intent is clear.
+An unattended run is the declared exception: it chains the review and the fix by itself.

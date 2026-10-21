@@ -25,8 +25,11 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/index.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/start-in-an-existing-codebase.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/build-a-change.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/reference/plan-md.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/the-phase-loop.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/context-engineering.md
 status: active
-revision: 4
+revision: 5
 ---
 
 # Size and gate the work
@@ -54,3 +57,6 @@ Larger work adds shared context around that unit and repeats it; it does not swi
 Every path runs the same loop.
 Bigger work enters it earlier and goes round it more often; it does not become a different way of delivering.
 Too little planning costs one implementation run: the implementer looks at the code first, and stops to ask when it cannot settle the intent. Too much planning costs documents nobody reads.
+- **5 — Scope Sanity** | Plans stay within context budget: 2–3 tasks per plan (4 = warning, 5+ = Critical), ≤ 8–10 files per plan (15+ = Critical).
+- When in doubt, split. A smaller phase completes faster, verifies more confidently, and makes it easier to course-correct if a design decision turns out to be wrong.
+- if the task could be fully specified in a single, short prompt and completed in one agent turn without further clarification, skip the phase loop.

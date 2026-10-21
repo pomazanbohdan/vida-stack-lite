@@ -18,11 +18,14 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-core-tools/help/customization.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project/steps/auto-mode-config.md
 status: active
-revision: 2
+revision: 4
 ---
 
 # Never let the setup overwrite an existing answer
 The setup never changes an existing value.
 To change an answer, edit its key in the file
 it reports for it.
+
+Ask a follow-up question only when the previous answer implies it; if the user cancels that follow-up, leave the existing value unchanged.

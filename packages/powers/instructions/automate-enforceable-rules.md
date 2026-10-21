@@ -22,8 +22,10 @@ provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/retro/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-method/help/preparing-a-repo-for-agents.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/theory-of-project-context.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/contributing/adding-a-portability-rule.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/bin/lib/vendor/README.md
 status: active
-revision: 4
+revision: 5
 ---
 
 # Automate rules that can be checked mechanically
@@ -49,3 +51,6 @@ Classify the violation first: a **mechanical** one (a fixed syntactic pattern, a
 For a style rule a linter, hook, or CI check can enforce, the skill proposes the check.
 Style rules an agent should self-enforce
 The skill proposes the check instead, and a check that lands deletes its line.
+- one mechanism, AST-based ESLint rules using the parsers already in the stack, hard-fail with zero escape hatches, no ratchet/grandfathering.
+- An unrecognized legitimate shape is fixed by teaching the helper/rule, never by annotation. This is the discipline that keeps the rules honest as the codebase grows.
+- It is table-driven (`VENDORED` in that script) — adding a vendored package means adding a row, not another hardcoded check block (ADR-3473 §8.3, "one implementation per rule").

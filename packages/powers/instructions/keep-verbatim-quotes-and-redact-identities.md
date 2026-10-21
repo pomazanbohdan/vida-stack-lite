@@ -17,10 +17,14 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/types/user-voice.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/forensics.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep the verbatim quotes and redact the identities
 keep verbatim quotes, redacted — user words carry evidence paraphrase destroys
 but usernames, handles, emails, and identifying links never enter the report or the working notes
+Replace absolute paths with relative paths (strip `$HOME` prefix)
+Remove any API keys, tokens, or credentials found in git diff output
+Truncate large diffs to first 50 lines

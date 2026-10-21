@@ -18,11 +18,14 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/autonomous/steps/converge-fail-fast.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Honour an explicit choice and infer only the rest
 **Forwarded activation:** if a caller invoked you with a stated intent, research type, or pre-resolved customization fields
 - honor them verbatim — skip your own inference for those values and resolve only the rest.
 Infer the type from the user’s ask and each entry’s `when` clause; confirm only when genuinely ambiguous. An explicit type (argument, shim, menu) wins without discussion.
+An explicit flag on the command line overrides the configuration gate for that run.
+Do not attempt to set the gate on the operator behalf, and do not downgrade to the non-converge path: silently changing the plan-review contract is the outcome this step must never produce.

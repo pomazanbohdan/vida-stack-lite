@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/workflow.md
 status: active
-revision: 2
+revision: 4
 ---
 
 # Do the workflow preflight before the first step
@@ -30,6 +30,6 @@ Stop and name the wrong value.
 Run each of these in order before step 1
 (_None._ means skip)
 Hold every entry below as fact for the whole run.
-Entries prefixed `file:` are paths or globs under the project root to read
+Entries prefixed `file:` are paths or globs under the project root to read under the project root to read under the project root to read
 The rest are facts verbatim
-Then run each of these in order.
+Then run each of these in order...

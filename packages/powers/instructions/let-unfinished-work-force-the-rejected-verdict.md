@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-retrospective/references/acceptance-verdict.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/verification-debt-tracking.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Let unfinished work force the rejected verdict
@@ -29,3 +30,6 @@ Three hard rules:
 1. A human decision always overrides the machine verdict.
 2. An epic that fails its criteria with **no** human decision is recorded as **not accepted** — never as silently accepted.
 3. A non-empty `pending_tickets` list makes the machine verdict **rejected**, including in headless mode.
+Prevents `status: complete` when tests are still pending, blocked, or skipped without reason.
+New test result type for tests blocked by external dependencies (server, physical device, release build, third-party services). Categorized separately from skipped tests.
+scans ALL phases in the current milestone for outstanding items (pending, skipped, blocked, human_needed, gaps_found)

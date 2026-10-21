@@ -29,8 +29,9 @@ provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/tdd/SKILL.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/tdd/tests.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/test-driven-development/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=TESTING-STANDARDS.md
 status: active
-revision: 6
+revision: 7
 ---
 
 # Write tests that catch a specific break
@@ -57,3 +58,11 @@ Tests verify behavior through public interfaces, not implementation details. Cod
 **Implementation-coupled** tests mock internal collaborators, test private methods, or verify through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed.
 
 Use snapshots sparingly and review every change.
+Exercise real code, not source or output text.
+Tests call exported functions or run the CLI and parse structured output.
+They do not `readFileSync` a source file and assert on its text content.
+They do not assert on raw stdout/stderr strings beyond exit-code confirmation.
+Test the claimed path.
+The test name describes a behavior.
+The test body must exercise that behavior through the implementation path, not through a mock that replaces the entire SUT.
+If the test name says "acquireLock expires after TTL," the test must call `acquireLock` (not a hand-rolled stub that does nothing) and assert that a lock acquired at time T is expired at time T + TTL + 1ms.

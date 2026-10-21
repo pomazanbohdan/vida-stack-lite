@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/interview-me/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/ingest-docs.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/sketch.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Require an explicit yes to confirm the intent
@@ -32,3 +34,7 @@ The gate is an explicit "yes." The following are **not** yes:
 - Silence followed by "okay let's start." → The user has given up on the interview, not converged. Stop and ask whether you've missed something.
 
 If they correct you, fold the correction in and restate. Loop until you get an explicit yes.
+
+Never infer the positive choice from an ambiguous answer: re-ask once, and if the answer is still ambiguous, treat it as a refusal.
+When you have enough signal, ask: "I think I have a good sense of the direction. Ready for me to sketch, or want to keep discussing?"
+Only proceed when the user says go.

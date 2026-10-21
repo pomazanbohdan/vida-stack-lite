@@ -20,8 +20,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/references/bugbot-triage.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/code-review-pipeline.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Triage automated review findings without blind trust
@@ -45,3 +46,6 @@ Record repeatable noise patterns with confidence, skip conditions, do-not-skip b
 Use candidate for one or two examples, recurring after multiple real dismissals, and strong only when the pattern is narrow, repeatedly verified, and low-risk.
 Fix the root cause rather than disabling the rule.
 Re-run the rule after the fix and confirm no recurrence.
+External findings are unverified corroborating evidence
+independently re-verifies every claim against the actual source before writing it to `REVIEW.md`, so there remains exactly one `REVIEW.md` schema regardless of how many lanes ran.
+An explicitly requested lane that is unavailable or fails is reported as a warning, never silently dropped and never a raw-CLI fallback.

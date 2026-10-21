@@ -22,8 +22,9 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/memory-agent/assets/intake-capability-template.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/memory-agent/shape.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/memory-agent/assets/first-breath-template.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/reference/context-md.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Keep a record by subject and replace what is no longer true
@@ -41,3 +42,5 @@ Ask before distilling only when the material's date, area or owner is not in it.
 A recording is transcribed first, with the tool the owner has, and the transcript is the raw file.
 Clean up seed text — scan your memory files for any remaining `{...}` placeholder instructions from the templates.
 Don't leave template scaffolding in your living files.
+- It is never edited by hand during normal operation — the workflow writes it and downstream agents read it as a sealed source of truth.
+- Ideas that arose in discussion but belong in other phases. Preserved so they are not lost.

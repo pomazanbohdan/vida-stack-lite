@@ -20,8 +20,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/plan-template.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-03-implement.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/validate-phase.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Audit the behaviour matrix against the tests
@@ -30,3 +31,7 @@ revision: 1
 |----------|--------------|---------------------------|----------------|
 
 If `{plan_file}`'s `<frozen-after-approval>` block contains an I/O & Edge-Case Matrix, verify every matrix row is covered by at least one test that verifies its expected behavior, and that each covering test ran and passed in the verification output. A covering test that exists but did not run — unregistered, filtered out, skipped, or disabled — counts as missing. If a test disagrees with the matrix, never edit the expectation to match the code: fix the code, or if the matrix row itself is ambiguous, HALT and ask the human. Fix any other audit failure before proceeding.
+COVERED — Test exists, targets behavior, runs green
+PARTIAL — Test exists, failing or incomplete
+MISSING — No test found
+Match each requirement to existing tests by filename, imports, test descriptions. Record: requirement → test_file → status.

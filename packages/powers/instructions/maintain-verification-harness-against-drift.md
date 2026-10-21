@@ -19,8 +19,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/maintain-verification-skill/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/reference/capability-matrix.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=examples/dynamic-context-management/README.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Maintain the verification harness against drift
@@ -45,3 +47,7 @@ A doctor failure caused by skill drift is drift: fix it under the edit scope and
 Triage: a wrong or missing user-facing description is documentation drift; working behavior the harness cannot drive is a harness gap; broken app behavior is a product gap, recorded for the user and kept out of this change.
 For changed, re-read every changed file first, then ship one change of proven corrections. For clean or blocked, ship nothing and report the outcome and the coverage honestly.
 Keep concise run notes in a scratch location and do not commit them.
+- **Generated file — do not edit by hand.**
+- kept honest by a drift guard (`tests/capability-matrix-sync.test.cjs` runs `--check`). Any manual edit is overwritten on the next generation run.
+- `scripts/lint-example-parser-parity.cjs` (wired into `npm run lint:ci`) asserting this example and production agree.
+- drift-guard a generated index

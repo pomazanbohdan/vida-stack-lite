@@ -1,7 +1,7 @@
 ---
 instruction_id: check-the-five-quality-axes
 title: Check the change on five quality axes
-summary: "Evaluate every change on correctness, readability, architecture, security and performance before it merges."
+summary: "Evaluate every change on correctness, readability, architecture, security and performance before it merges. The severity labels in the gate are the corpus scale, mapped from the donor own."
 capability_tags:
   - review-code
 pattern_tags:
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/code-review-and-quality/SKILL.md
 status: active
-revision: 2
+revision: 4
 ---
 
 # Check the change on five quality axes

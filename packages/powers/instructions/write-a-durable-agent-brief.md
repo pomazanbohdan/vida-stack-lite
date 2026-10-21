@@ -20,8 +20,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/triage/AGENT-BRIEF.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/spike-wrap-up.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Write a durable agent brief
@@ -40,3 +41,5 @@ Describe **what** the system should do, not **how** to implement it. The agent w
 The agent needs to know when it's done. Every agent brief must have concrete, testable acceptance criteria. Each criterion should be independently verifiable.
 ## Explicit scope boundaries
 State what is out of scope. This prevents the agent from gold-plating or making assumptions about adjacent features.
+write a reference file at `references/[feature-area-name].md` as an **implementation blueprint** — it should read like a recipe, not a research paper.
+A future build session should be able to follow this and build the feature correctly without re-spiking anything.

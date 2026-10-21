@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/security-and-hardening/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/security-and-hardening/references/hardening-patterns.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/security/baseline.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Rotate a leaked secret before you purge the history
@@ -28,3 +29,5 @@ revision: 1
 **If a secret is ever committed, rotate it.**
 Deleting the line or rewriting history is not enough — assume it's compromised the moment it reaches a remote.
 Revoke and reissue the key first, then purge it from history.
+- Immediately revoke the exposed credential in the issuing service (GitHub, npm, cloud, etc.)
+- Rotate all credentials that shared the same scope as the exposed one

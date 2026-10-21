@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-toolsmith/help/how-to-add-to-module.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-phase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/add-or-update-a-host-integration.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Change the source, not the installed copy
@@ -27,3 +29,8 @@ a skill written into the installed copy is overwritten by the next update, so bu
 Do not add to the installed method record; the next update overwrites it.
 Make your own module with your own prefix
 whose skills require or recommend the method skills they build on
+Every path you write into the plan:
+must name git-tracked source, never a gitignored install/runtime mirror
+executor edits to a mirror die on the next capability sync.
+Re-verify inherited paths: fix a mirror path, never inherit.
+If a runtime installs somewhere the descriptor cannot express, fix the descriptor; do not edit the snippet by hand — the next sync overwrites it.

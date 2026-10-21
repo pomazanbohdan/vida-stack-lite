@@ -1,7 +1,7 @@
 ---
 instruction_id: triage-audit-findings-by-reachability
 title: Triage audit findings by reachability
-summary: "Run the native audit against the committed lockfile, judge the Critical and Important findings by whether the vulnerable code is reachable, and never apply a forced fix blindly."
+summary: "Run the native audit against the committed lockfile, judge the findings by whether the vulnerable code is reachable, and never apply a forced fix blindly. The severity labels are the corpus scale, mapped from the donor own."
 capability_tags:
   - manage-dependency-supply-chain
 pattern_tags:
@@ -21,7 +21,7 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/security-and-hardening/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/security-and-hardening/references/hardening-patterns.md
 status: active
-revision: 2
+revision: 4
 ---
 
 # Triage audit findings by reachability

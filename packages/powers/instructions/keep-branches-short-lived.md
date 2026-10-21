@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/git-workflow-and-versioning/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/quick.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep branches short-lived
@@ -45,3 +46,7 @@ refactor/<short-description>  → refactor/auth-module
 ```
 
 Long-lived branches that diverge significantly from main
+must fork off the project's default branch (`origin/HEAD`), not off whatever HEAD happens to be checked out — otherwise consecutive quick tasks compound on top of each other and stay unpushed
+already exists locally, reuse it as-is so resumed work is not rebased
+Resolve the remote/network issue and retry.
+All quick-task commits for this run stay on that branch. User handles merge/rebase afterward.

@@ -17,8 +17,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-eval/references/grader.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/uat-passed-predicate.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/spec-phase-prohibition-probe.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Fail the assertion when the evidence is uncertain
@@ -29,3 +31,7 @@ Fail when no evidence is found, the evidence contradicts the expectation, or the
 existence alone never passes a content claim.
 Cite the evidence every time by quoting a line, naming a file with its path, or pointing to a tool call by its index and arguments.
 No silent defaults. If a file or the transcript genuinely cannot be read, mark the affected expectations failed with that as the evidence rather than guessing.
+Returns `passed: true` only when at least one check exists AND all checks pass AND no blockers — fail-closed, no vacuous pass.
+A heading block with no column-0 `result:` line emits `result:'missing'` (blocker); test items are never silently dropped.
+A well-formed but unwired `test`-tier prohibition MUST fail closed at verify time — never a silent pass.
+a partial, invalid, or absent descriptor falls through to the producer's existing fail-closed locate, never a silent green.

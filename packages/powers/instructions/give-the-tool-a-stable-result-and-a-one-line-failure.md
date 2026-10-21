@@ -20,8 +20,9 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/script-utility/shape.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/script-utility/assets/SKILL-template.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/plain-skill/shape.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=scripts/changeset/README.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Give the tool a stable result and a one-line failure
@@ -32,3 +33,5 @@ On failure it exits non-zero with a one-line reason on stderr, so the agent repo
 A non-zero exit prints one line on stderr saying why. Report that line to the user; do not do the job by hand instead.
 No network calls and no model ids baked in.
 A script handles its own errors and says whether the agent runs it or reads it.
+- `extract` resolves to one of three exit codes. The output shape depends on whether `--json` is passed.
+- A `no releases found in range` notice on stderr.

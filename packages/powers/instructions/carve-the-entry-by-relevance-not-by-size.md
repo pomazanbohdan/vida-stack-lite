@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-toolsmith/help/craft-progressive-disclosure.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-toolsmith/help/shape-plain-skill.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/project-skills-discovery.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Carve the entry by relevance, not by size
@@ -39,3 +40,5 @@ Cut what a capable model would do unasked.
 Instructions for exotic cases are paid on every run and the case is paid only when it occurs.
 A plain skill's entry aims near 800 tokens, an agent's near 1,200.
 A complex workflow is the right size at any total when each branch sits in its own file and loads only when reached; the same workflow loaded whole is too big at half the size.
+
+Read the index of each project skill, then load only the specific rule files the current task needs; never load a whole large rules file - it costs significant context.

@@ -20,8 +20,10 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/test-driven-development/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/tdd/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-phase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/execute-mvp-tdd.md
 status: active
-revision: 4
+revision: 5
 ---
 
 # Write the test before the implementation
@@ -45,3 +47,13 @@ When a failing test is impractical because the path needs broad harness setup, b
 Prefer no new test over a bad test. A bad test tests mostly mocks, encodes implementation details, depends on timing or unrelated global state, needs expensive infrastructure for a small fix, or would be deleted right after proving the fix.
 Do not change tests to match a wrong implementation. Do not weaken existing assertions unless the expected behavior genuinely changed and the reason is clear.
 Report the evidence, not just the outcome: the failing-before check and its failure, the passing-after run, and any nearby validation.
+Task-scoped enforcement runs inside plan execution (immediately before each implementation step)
+TDD GATE TRIPPED: missing RED commit for
+Pure doc-only / config-only / test-only tasks return `is_behavior_adding=false` and are exempt.
+refuse to mark the phase complete and present
+Phase blocked:
+TDD plan(s) violate the RED→GREEN gate sequence under TDD.
+self-attestation cannot substitute for machine validation
+A `RED:` prefix or `(RED)` tag in the commit message is not evidence.
+Halt before running the task's implementation step.
+Do NOT roll back any prior commits in the same wave.

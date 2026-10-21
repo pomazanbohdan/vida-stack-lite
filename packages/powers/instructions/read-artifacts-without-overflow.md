@@ -19,8 +19,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/diagnosing-superpowers/references/context-safety.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-ui-checker.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Read large artifacts without overflowing context
@@ -38,3 +39,5 @@ Apply them to the source in front of you.
 Narrow anything over 500 characters.
 If a command returns more than 500 characters for one record, tighten the field or the slice.
 Read-only: never modify, move, or delete a session file.
+
+**Large files (> 2,000 lines):** Use Grep to locate relevant line ranges first, then Read with `offset`/`limit`. Never reload the whole file for a second dimension.

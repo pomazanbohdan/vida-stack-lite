@@ -18,8 +18,13 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/audit-fix.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/audit-milestone.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/code-review.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/code-review-fix.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/diagnose-issues.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Wait for workers in bounded stretches
@@ -37,3 +42,5 @@ Record the implementer's agent identity from the dispatch result.
 A real session's dispatch hit 42k chars of which 99% was pasted history.
 A dispatch prompt describes one task, not the session's history.
 Never dispatch multiple implementation subagents in parallel (conflicts).
+While the worker owns the task, do not touch the task: do not read more files, edit code, or run tests related to this task while the subagent is active. Wait for the subagent to return its result.
+This prevents duplicate work and conflicting edits.

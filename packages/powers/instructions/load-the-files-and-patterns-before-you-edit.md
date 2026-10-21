@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/context-engineering/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-plan.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-phase.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Load the files and the patterns before you edit
@@ -37,3 +39,8 @@ Missing examples | Agent invents a new style instead of following yours | Includ
 Agent invents APIs or imports that don't exist
 
 Agent re-implements utilities that already exist in the codebase
+**MANDATORY read_first gate:** If the task has a `<read_first>` field (or the resolved content carries one), you MUST read every listed file BEFORE making any edits. This is not optional.
+Do not skip files because you "already know" what's in them — read them. The read_first files establish ground truth for the task.
+Files the executor MUST read before touching anything.
+The file being modified (so executor sees current state, not assumptions)
+Any file whose patterns, signatures, types, or conventions must be replicated or respected

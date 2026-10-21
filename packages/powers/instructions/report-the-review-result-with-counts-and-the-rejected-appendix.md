@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-03-triage.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-04-present.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/code-review-pipeline.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Report the review result with counts and the rejected appendix
@@ -35,3 +36,6 @@ Each `decision-needed` entry carries its options and the recommended one and is 
 Each `patch` entry carries its location and the fix.
 If `plan_file` is set, add: `Findings written to {plan_file}.`
 Otherwise add: `Findings are listed above. No plan was provided, so nothing was persisted.`
+If the review's `total:` exceeds the number of findings whose headings the gate could parse, the shortfall is stated — on the console and as an `unparsed:` key in the ledger's frontmatter.
+A finding the gate cannot record is the one a human most needs to see, so it is never dropped silently.
+the gate has no trustworthy number to reconcile against and withholds the key rather than reporting a figure derived from one

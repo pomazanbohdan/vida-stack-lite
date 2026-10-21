@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/git-workflow-and-versioning/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/version-a-capability.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=VERSIONING.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Choose the version bump by consumer impact
@@ -39,3 +41,21 @@ The number is a promise, so make the code match it. A "patch" that changes behav
 "It's just a small fix, bump the patch" | Check what consumers can observe. A behavior change they relied on is a major, whatever the diff size.
 
 A breaking change shipped under a minor or patch version bump
+| Backwards-compatible bug fixes or minor prompt improvements | **patch** (0.0.x) | Fix a typo in an agent instruction; tighten a hook condition. |
+| New extension point, new skill, or new config key — existing consumers unaffected | **minor** (0.x.0) | Add a new optional config key. |
+| Breaking change to the hook contract, removal of a skill or config key, change of `id` | **major** (x.0.0) | Rename a hook extension point; remove a skill consumers depend on. |
+Concretely:
+| Increment | When | Examples |
+|-----------|------|----------|
+| **PATCH** | Bug fixes, typo corrections, test additions | A config corruption fix |
+| **MINOR** | Non-breaking enhancements, new commands, new runtime support | A new workflow command |
+| **MAJOR** | Breaking changes to config format, CLI flags, or runtime API; new features that alter existing behavior | Removing a command, changing a config schema |
+Branch names map to commit types:
+| Branch prefix | Commit type | Version bump |
+|--------------|-------------|-------------|
+| `fix/` | `fix:` | PATCH |
+| `feat/` | `feat:` | MINOR |
+| `hotfix/` | `fix:` | PATCH (immediate) |
+| `chore/` | `chore:` | none |
+| `docs/` | `docs:` | none |
+| `refactor/` | `refactor:` | none |

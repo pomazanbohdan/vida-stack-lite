@@ -23,8 +23,9 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/types/market.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/types/technical.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/types/user-voice.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/research-verification-protocol.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Corroborate load-bearing claims with a second, independent source
@@ -45,3 +46,5 @@ Two-source classes: version/compatibility claims; performance or scale numbers a
 
 ### User-Voice Research Pack
 Two-source classes: any prevalence claim ("most users…", "the top complaint is…") — two independent communities, not two threads in the same one.
+
+**Single Source Reliance** - Trap: Relying on a single source for critical claims. Prevention: Require multiple sources: official docs (primary), release notes (currency), additional source (verification).

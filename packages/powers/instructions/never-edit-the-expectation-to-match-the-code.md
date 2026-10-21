@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-03-implement.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/test-completed-work.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/contributing/cross-platform-portability-rules.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Never edit the expectation to match the code
@@ -28,3 +29,5 @@ If a test disagrees with the matrix, never edit the expectation to match the cod
 If the audit cannot otherwise be satisfied, HALT with status `blocked` and blocking condition `matrix test audit failed`.
 Run the new tests twice. A real bug is reported, and its test is kept as a known failure.
 No test is loosened to make it pass.
+- **Fix: normalize the ACTUAL operand to POSIX before comparing** — this is idempotent on POSIX (a no-op when there are no backslashes) and *reveals* a malformed return rather than masking it:
+- Do **not** instead wrap the *expected* literal in `path.join(...)` to match the platform separator — that passes everywhere but masks a wrong backslash-on-POSIX return (both sides wrong together).

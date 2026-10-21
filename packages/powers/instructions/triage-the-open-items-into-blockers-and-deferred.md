@@ -19,11 +19,13 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/assets/prd-validation-checklist.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/audit-uat.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Triage the open items into blockers and deferred
 Triage open items. All Open Questions, `[ASSUMPTION]` tags, `[NOTE FOR PM]` callouts.
 Phase-blockers (would make the PRD unsafe for UX/architecture/epics) surfaced one at a time and resolved; non-blockers deferred with owner + revisit condition
 If phase-blocker count is high, flag it.
+An outstanding item does not stop mattering because its phase belongs to an already-archived milestone.

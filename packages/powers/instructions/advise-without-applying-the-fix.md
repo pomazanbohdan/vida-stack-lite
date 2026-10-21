@@ -20,8 +20,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/modes/review.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/progress.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Advise without applying the fix
@@ -32,3 +33,5 @@ Write the same list as markdown
 so the user can work from it later; no other format.
 Offer the edit mode
 for the findings the user wants applied; apply none unasked.
+This is a WARNING, not a blocker — routing proceeds normally.
+The debt is visible so the user can make an informed choice.

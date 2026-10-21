@@ -19,8 +19,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/worktree-cleanup.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-phase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/quick-batch.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Prune worktrees with safety gates
@@ -42,3 +44,6 @@ Branch refs survive, so no commits are lost.
 Confirm with free disk space and re-list.
 This is the one pass that deletes user state with no code review to catch a slip, so the gates above are the review.
 Report the space reclaimed, the worktrees pruned, and a one-line reason for each held back.
+Do not recreate or truncate it here.
+If the helper reports a blocked cleanup, resolve the reported manifest entry and rerun the same command. Do not fall back to broad worktree discovery.
+sweep orphaned worktrees before dispatching anything

@@ -20,8 +20,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/git-workflow-and-versioning/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-plan.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Run the pre-commit checks
@@ -46,3 +47,6 @@ npx tsc --noEmit
 ```
 
 Automate this with git hooks:
+Hooks should run so issues surface at the introducing commit, and silent bypass violates the project guidance.
+Do NOT use `--no-verify` by default
+Budget 1-2 retry cycles per commit

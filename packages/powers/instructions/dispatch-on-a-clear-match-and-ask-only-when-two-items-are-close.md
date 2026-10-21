@@ -1,7 +1,7 @@
 ---
 instruction_id: dispatch-on-a-clear-match-and-ask-only-when-two-items-are-close
 title: "Dispatch on a clear match, and ask only when two items are close"
-summary: "A clear match dispatches straight away; a question is asked only when two items are genuinely close, and it is one short question."
+summary: "When more than one route fits, the user is offered the top two or three of them instead of a single pick."
 capability_tags:
   - delegate-subagent-tasks
 pattern_tags:
@@ -21,8 +21,9 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-agent-dev/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-agent-pm/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-agent-ux-designer/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/do.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Dispatch on a clear match, and ask only when two items are close
@@ -31,3 +32,6 @@ revision: 1
 Dispatch on a clear match by invoking the item's `skill` or executing its `prompt`.
 Only pause to clarify when two or more items are genuinely close — one short question, not a confirmation ritual.
 When nothing on the menu fits, just continue the conversation; chat, clarifying questions, and help are always fair game.
+If the text could reasonably match multiple routes,
+ask the user
+with the top 2-3 options.

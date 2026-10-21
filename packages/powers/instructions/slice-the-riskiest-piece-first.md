@@ -17,8 +17,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/incremental-implementation/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/spike.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Slice the riskiest piece first
@@ -32,3 +33,4 @@ Slice 3: Add offline support and reconnection
 ```
 
 If Slice 1 fails, you discover it before investing in Slices 2 and 3.
+Order by risk — most likely to kill the idea runs first.

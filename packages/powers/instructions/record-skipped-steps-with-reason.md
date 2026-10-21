@@ -20,8 +20,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=docs/guide/10-recipes-and-pitfalls.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/contributing/bootstrap.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Record a skipped step with its reason
@@ -40,3 +41,5 @@ A vague finish condition gives the loop nothing to check, so give a command or a
 Name each skip with what it leaves unproven.
 A skip that changes confidence in the result is stated as such.
 The report never reads as complete when a step is skipped.
+- **Exception (ADR/doc-only PRs):** if the diff is documentation-only (for example `docs/adr/*.md`, `docs/**/*.md`, `README*.md`) and contains no executable-code or test changes, the cross-platform run is optional.
+- When using the doc-only exception, note it explicitly in the PR body.

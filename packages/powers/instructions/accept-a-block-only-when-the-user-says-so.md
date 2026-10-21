@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-walkthrough/workflow.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-walkthrough/step-02-narrative.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/hard-stop-safety-gates-in-gsd-progress-next.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Accept a block only when the user says so
@@ -28,3 +29,6 @@ Guide a human review of a target, one block at a time. They may stop to inspect,
 Keep track of which blocks the user has called done. A block or the review as a whole is done only when the user says it is.
 Use unchecked boxes for unvisited, in-progress, or reopened blocks, labeling their state; check a block when the user indicates they are satisfied with it.
 Work performed on a block does not itself mean it is accepted.
+MUST track consecutive same-step calls
+On repeated same-step, system MUST present a hard stop gate to the user
+User MUST explicitly confirm to continue past a hard stop gate

@@ -20,8 +20,9 @@ provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/executing-plans/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-01-clarify-and-route.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/resume.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-phase/steps/chunked-planning-mode.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Resume from the ledger, not from memory
@@ -50,3 +51,4 @@ For `dropped`, say the work was dropped and HALT.
 Read the record in full — the one time you read it.
 Frontmatter restores topic, goal, status, and mode: reload that mode's frame and hold it again.
 Reconstruct the picture, then reflect back where things stand to re-establish shared state before continuing.
+A rerun resumes from the last committed unit and skips the ones that were already committed.

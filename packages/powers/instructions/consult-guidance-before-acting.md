@@ -18,8 +18,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/using-superpowers/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=capabilities/research/fragments/plan-pre.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Check for applicable guidance before acting
@@ -38,3 +39,5 @@ If a skill applies to your task, you do not have a choice. You must use it.
 "The skill is overkill" is a red flag: simple things become complex, so use it.
 User instructions take precedence over skills, which in turn override default behavior.
 Only skip skill workflows or instructions when your human partner has explicitly told you to.
+- **Project instructions:** Read ./CLAUDE.md or ./.claude/CLAUDE.md if either exists; follow project-specific guidelines.
+- **Project skills:** Check .claude/skills/ or .agents/skills/ directory if either exists. Read SKILL.md files and account for project skill patterns.

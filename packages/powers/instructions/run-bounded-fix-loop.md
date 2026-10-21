@@ -15,13 +15,15 @@ artifact_contract_required_data:
   - scoped re-review
   - ruling
 artifact_contract_verified_by: a scoped re-review of each fix round
-compatibility_excludes: []
+compatibility_excludes:
+  - start-a-fresh-agent-for-each-revision-round
 compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/SKILL.md
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/re-review-prompt.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/revision-loop.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Bound the fix loop at five rounds

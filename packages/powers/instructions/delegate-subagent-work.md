@@ -22,8 +22,13 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-guard-the-context-window/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-04-review.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/finalize.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/map-codebase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/ui-phase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/ui-review.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/validate-phase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/verify-work.md
 status: active
-revision: 5
+revision: 6
 ---
 
 # Delegate subagent work
@@ -47,3 +52,8 @@ When no subagent tool exists, execute the plan inline and keep the same review g
 Re-engage the implementation subagent — the same one, addressed by the name or id its launch returned; a fresh launch is not re-engagement.
 Spawn one per requested artifact, telling it only: the spec below, the path of the canonical record (its sole source — read it in full), the output path, and "return ONLY the written file path."
 This keeps the heavy generation out of the main thread and proves the record is genuinely the canonical source.
+
+Let the worker write the deliverable itself and return only the confirmation and the counts - never the artefact content, so the orchestrator context stays small.
+When the delegation tool is unavailable, do the work in the current context instead of substituting a tool that cannot do the job.
+After calling Agent() above, stop working on this task immediately. Do not read more files, edit code, or run tests related to this task while the subagent is active. Wait for the subagent to return its result.
+This prevents duplicate work, conflicting edits, and wasted context. Only resume when the subagent result is available.

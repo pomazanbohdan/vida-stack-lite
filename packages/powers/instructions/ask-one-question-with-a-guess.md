@@ -19,8 +19,9 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/interview-me/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/discover.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/sketch.md
 status: active
-revision: 2
+revision: 3
 ---
 
 # Ask one question at a time, each with a guess
@@ -50,3 +51,4 @@ Wait for the user to react before asking the next question.
 The risk here is a polite user agreeing with your guess to be agreeable. Mitigate by being visibly willing to be wrong, and occasionally guess in a direction you expect the user to push back on.
 
 One or two questions at a time, in whatever order the gaps call for, each with the answer you would infer so the user can just confirm. A user who arrives with a hardened idea or says they want to move fast gets a confirmation and a read-back, not an interview.
+After each answer, briefly reflect what you heard and how it shapes your thinking.

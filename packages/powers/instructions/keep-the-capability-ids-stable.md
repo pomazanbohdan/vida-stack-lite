@@ -18,8 +18,10 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-spec/SKILL.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/insert-phase.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/take-over-a-capability-or-eos.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep the capability ids stable
@@ -29,3 +31,7 @@ A second invocation with the same
 slug
 lands at the existing spec folder and updates in place, preserving capability IDs.
 Same slug = same folder.
+
+When work has to be inserted into the middle of a planned sequence, give it a sub-number so the existing numbering stays intact. Never renumber the existing units and never modify the unit you inserted after.
+**Keep the `id`.** Consent is stored per `(realpath(projectRoot), capability id)`. Changing the `id` re-prompts consent in every project that has the capability installed, and orphans the old update path.
+With no transfer or rename tooling, `id` continuity is manual, and an `id` change is a hard break for every installed consumer — a consent re-prompt, a broken update path, and an orphaned ledger entry.

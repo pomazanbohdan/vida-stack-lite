@@ -23,8 +23,9 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/architect/references/rationale-template.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=docs/guide/09-make-it-yours.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/security/baseline.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep a decision trail
@@ -47,3 +48,4 @@ Phrase open questions and risks as questions, not assertions, so the human's ans
 Name the first thing to build against the sketch in one sentence.
 When the usage and the sketch diverge, reconcile the sketch to the usage, not the reverse.
 The caller's experience is the spec; the types serve it.
+- Issue describes: which control, why the exception is needed, proposed compensating control

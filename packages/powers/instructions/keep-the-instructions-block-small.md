@@ -17,8 +17,9 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-method/help/project-context.md
+  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/agent-skills-bootstrap.md
 status: active
-revision: 1
+revision: 2
 ---
 
 # Keep the instructions block small
@@ -29,3 +30,5 @@ Agents often skip context they must choose to fetch, so rules that must hold sta
 Repo overviews, directory trees, stack lists, commands the obvious guess gets right, pasted code, history, and plans.
 Product intent belongs in a spec
 A scan finding alone becomes a question to the user.
+Loading a second copy wastes context on runtimes where orchestrator-side injection also runs
+The guard is what keeps the two seams from doubling the block.
