@@ -1340,7 +1340,10 @@ inspection proves no TaskSource action exists for this Work.
 The finite historical settled-writer release reads the exact original attempt's
 reported root without requiring a current execution lease or current config.
 It verifies protected action/preparation/report pairs, original owner or release,
-workspace and scope. Uncertain or ambiguous bindings deny. The existing caller
+workspace and scope. Uncertain or ambiguous bindings deny. The historical reader
+validates both retained reports and their own digests when an observed recovery
+follows UNKNOWN, including the unknown-to-observed status relation. The observed
+report does not replace or excuse corruption in the original report. The existing caller
 still compares current scoped bytes with the retained postimage before release
 and exact retry. This read grants no current execution or Source rights.
 

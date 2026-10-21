@@ -2678,310 +2678,388 @@ test('task-source issued and UNKNOWN actions retain reservations without exposin
   }
 });
 
-test('historical task-source snapshots select observed roots and fence corrupted retained evidence', async () => {
-  const deadline = performance.now() + 5_000;
-  preserveHostFixtureRoot = 'case failed or timed out';
-  mkdirSync(path.join(root, 'src'), { recursive: true });
-  writeFileSync(path.join(root, 'src/task.ts'), 'host');
-  const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['src/task.ts']);
-  const f = createTaskSourceHostFixture({
-    sourceScope,
-    configuredHost: { repositoryRoot: root, identity: { ...identity } },
-    policyVerifier: async ({ request }) => trustedTaskSourcePolicyDecision(request),
-  });
-  let completed = false;
-  let primaryFailure: { error: unknown } | undefined;
-  try {
-    const taskRoot = requiredValue(f.request.source_root, 'task source root');
-    mkdirSync(path.join(taskRoot, 'src'), { recursive: true });
-    writeFileSync(path.join(taskRoot, 'src/task.ts'), 'task');
-    const input = {
-      identity: f.identity,
-      threadId: f.request.thread_id,
-      attempt: 1,
-      canonicalHostRoot: root,
-      paths: ['src/task.ts'],
-    };
-    const hostEntry = {
-      path: 'src/task.ts',
-      exists: true,
-      bytes: 4,
-      sha256: createHash('sha256').update('host').digest('hex'),
-    };
-    const taskEntry = { ...hostEntry, sha256: createHash('sha256').update('task').digest('hex') };
-    expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([hostEntry]);
-    const catalog = f.database.query('SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY type,name');
-    const beforeReadSchema = catalog.all();
-    expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toBeNull();
-    expect(catalog.all()).toEqual(beforeReadSchema);
-    const { branch_ref: _branch, ...inspectBase } = f.request;
-    const inspectRequest = {
-      ...inspectBase,
-      operation: 'inspect' as const,
-      operation_id: 'historical-source-inspect',
-      request_id: 'historical-source-inspect-request',
-      source_root: root,
-    };
-    const inspectInput = { request: inspectRequest, identity: f.identity };
-    f.store.prepareTaskSourceBindingOperation({ ...inspectInput, verifyCurrent: f.trustedVerifyCurrent });
-    expect((await f.store.issueTaskSourceBindingOperation(inspectInput)).status).toBe('issued');
-    const inspectVersion = requiredValue(
-      f.database
-        .query<StateVersion, [string]>(
-          'SELECT revision,digest FROM agent_host_task_source_binding_action WHERE operation_id=?',
-        )
-        .get(inspectRequest.operation_id),
-      'historical fixture inspection version',
-    );
-    const inspected = f.store.reportTaskSourceBindingOperation({
-      ...inspectInput,
-      expectedActionStateVersion: inspectVersion,
-      report: {
+test.each(['direct', 'recovered-unknown'] as const)(
+  'historical task-source snapshots select observed roots and fence corrupted retained evidence (%s)',
+  async (reportMode) => {
+    const deadline = performance.now() + 5_000;
+    preserveHostFixtureRoot = 'case failed or timed out';
+    mkdirSync(path.join(root, 'src'), { recursive: true });
+    writeFileSync(path.join(root, 'src/task.ts'), 'host');
+    const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['src/task.ts']);
+    const f = createTaskSourceHostFixture({
+      sourceScope,
+      configuredHost: { repositoryRoot: root, identity: { ...identity } },
+      policyVerifier: async ({ request }) => trustedTaskSourcePolicyDecision(request),
+    });
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      const taskRoot = requiredValue(f.request.source_root, 'task source root');
+      mkdirSync(path.join(taskRoot, 'src'), { recursive: true });
+      writeFileSync(path.join(taskRoot, 'src/task.ts'), 'task');
+      const input = {
+        identity: f.identity,
+        threadId: f.request.thread_id,
+        attempt: 1,
+        canonicalHostRoot: root,
+        paths: ['src/task.ts'],
+      };
+      const hostEntry = {
+        path: 'src/task.ts',
+        exists: true,
+        bytes: 4,
+        sha256: createHash('sha256').update('host').digest('hex'),
+      };
+      const taskEntry = { ...hostEntry, sha256: createHash('sha256').update('task').digest('hex') };
+      expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([hostEntry]);
+      const catalog = f.database.query('SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY type,name');
+      const beforeReadSchema = catalog.all();
+      expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toBeNull();
+      expect(catalog.all()).toEqual(beforeReadSchema);
+      const { branch_ref: _branch, ...inspectBase } = f.request;
+      const inspectRequest = {
+        ...inspectBase,
+        operation: 'inspect' as const,
+        operation_id: 'historical-source-inspect',
+        request_id: 'historical-source-inspect-request',
+        source_root: root,
+      };
+      const inspectInput = { request: inspectRequest, identity: f.identity };
+      f.store.prepareTaskSourceBindingOperation({ ...inspectInput, verifyCurrent: f.trustedVerifyCurrent });
+      expect((await f.store.issueTaskSourceBindingOperation(inspectInput)).status).toBe('issued');
+      const inspectVersion = requiredValue(
+        f.database
+          .query<StateVersion, [string]>(
+            'SELECT revision,digest FROM agent_host_task_source_binding_action WHERE operation_id=?',
+          )
+          .get(inspectRequest.operation_id),
+        'historical fixture inspection version',
+      );
+      const inspected = f.store.reportTaskSourceBindingOperation({
+        ...inspectInput,
+        expectedActionStateVersion: inspectVersion,
+        report: {
+          schema: 'TaskSourceBindingReport/v1',
+          operation: inspectRequest.operation,
+          operation_id: inspectRequest.operation_id,
+          request_id: inspectRequest.request_id,
+          report_id: 'cooperative-unit-host-inspected',
+          expected_host: inspectRequest.expected_host,
+          status: 'observed',
+          binding: createTaskSourceBinding({
+            request: inspectRequest,
+            source_scope: sourceScope,
+            canonical_host_common_dir: path.join(root, '.git'),
+            git: {
+              source_root: root,
+              common_dir: path.join(root, '.git'),
+              branch: 'main',
+              head: '1'.repeat(40),
+              cwd: root,
+            },
+          }),
+        },
+      });
+      expect(inspected.status).toBe('reported');
+      expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toBeNull();
+      expect(f.store.snapshotHistoricalTaskSourceSources(input)).toEqual(sourceScope);
+      f.prepare();
+      expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([hostEntry]);
+      if (performance.now() >= deadline) throw new Error('TaskSource setup exhausted its case deadline.');
+      const issued = await f.store.issueTaskSourceBindingOperation({ request: f.request, identity: f.identity });
+      const issuedVersion = issued.state_version;
+      if (
+        !isPlainRecord(issuedVersion) ||
+        typeof issuedVersion.revision !== 'number' ||
+        typeof issuedVersion.digest !== 'string'
+      )
+        throw new Error('Expected issued TaskSource CAS.');
+      let version = { revision: issuedVersion.revision, digest: issuedVersion.digest };
+      expect(issued.status).toBe('issued');
+      const reserved = f.store.readHostStateSnapshot(f.identity);
+      const journalBefore = f.store.readWorkSessionJournal(f.identity);
+      expect(() => f.store.snapshotHistoricalTaskSourceSources(input)).toThrow(
+        'historical task source effect remains issued or unknown',
+      );
+      const unknownReport: TaskSourceBindingReport | null =
+        reportMode === 'recovered-unknown'
+          ? {
+              schema: 'TaskSourceBindingReport/v1',
+              operation: f.request.operation,
+              operation_id: f.request.operation_id,
+              request_id: f.request.request_id,
+              report_id: 'cooperative-unit-pending-observation',
+              expected_host: f.request.expected_host,
+              status: 'unknown',
+              binding: null,
+              reason: 'fresh fixture observation pending; no command executed',
+            }
+          : null;
+      if (unknownReport) {
+        const uncertain = f.store.reportTaskSourceBindingOperation({
+          request: f.request,
+          identity: f.identity,
+          expectedActionStateVersion: version,
+          report: unknownReport,
+        });
+        const uncertainVersion = requiredValue(
+          f.database
+            .query<StateVersion, [string]>(
+              'SELECT revision,digest FROM agent_host_task_source_binding_action WHERE operation_id=?',
+            )
+            .get(f.request.operation_id),
+          'fresh unknown action version',
+        );
+        expect(uncertain).toMatchObject({
+          status: 'unknown',
+          command_argv: null,
+          state_version: uncertainVersion,
+          action: { report: unknownReport, recovery_report: null },
+        });
+        expect(uncertainVersion).toEqual({
+          revision: version.revision + 1,
+          digest: canonicalJsonDigest(uncertain.action),
+        });
+        expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
+        expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+        expect(() => f.store.snapshotHistoricalTaskSourceSources(input)).toThrow(
+          'historical task source effect remains issued or unknown',
+        );
+        version = uncertainVersion;
+      }
+      const report: TaskSourceBindingReport = {
         schema: 'TaskSourceBindingReport/v1',
-        operation: inspectRequest.operation,
-        operation_id: inspectRequest.operation_id,
-        request_id: inspectRequest.request_id,
-        report_id: 'cooperative-unit-host-inspected',
-        expected_host: inspectRequest.expected_host,
+        operation: f.request.operation,
+        operation_id: f.request.operation_id,
+        request_id: f.request.request_id,
+        report_id: 'cooperative-unit-observed',
+        expected_host: f.request.expected_host,
         status: 'observed',
         binding: createTaskSourceBinding({
-          request: inspectRequest,
-          source_scope: sourceScope,
+          request: f.request,
+          source_scope: requiredValue(f.journal.source_scope, 'journal scope'),
           canonical_host_common_dir: path.join(root, '.git'),
           git: {
-            source_root: root,
+            source_root: taskRoot,
             common_dir: path.join(root, '.git'),
-            branch: 'main',
+            branch: 'codex/task-source',
             head: '1'.repeat(40),
-            cwd: root,
+            cwd: taskRoot,
           },
         }),
-      },
-    });
-    expect(inspected.status).toBe('reported');
-    expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toBeNull();
-    expect(f.store.snapshotHistoricalTaskSourceSources(input)).toEqual(sourceScope);
-    f.prepare();
-    expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([hostEntry]);
-    if (performance.now() >= deadline) throw new Error('TaskSource setup exhausted its case deadline.');
-    const issued = await f.store.issueTaskSourceBindingOperation({ request: f.request, identity: f.identity });
-    const issuedVersion = issued.state_version;
-    if (
-      !isPlainRecord(issuedVersion) ||
-      typeof issuedVersion.revision !== 'number' ||
-      typeof issuedVersion.digest !== 'string'
-    )
-      throw new Error('Expected issued TaskSource CAS.');
-    const version = { revision: issuedVersion.revision, digest: issuedVersion.digest };
-    expect(issued.status).toBe('issued');
-    const reserved = f.store.readHostStateSnapshot(f.identity);
-    const journalBefore = f.store.readWorkSessionJournal(f.identity);
-    expect(() => f.store.snapshotHistoricalTaskSourceSources(input)).toThrow(
-      'historical task source effect remains issued or unknown',
-    );
-    const report: TaskSourceBindingReport = {
-      schema: 'TaskSourceBindingReport/v1',
-      operation: f.request.operation,
-      operation_id: f.request.operation_id,
-      request_id: f.request.request_id,
-      report_id: 'cooperative-unit-observed',
-      expected_host: f.request.expected_host,
-      status: 'observed',
-      binding: createTaskSourceBinding({
-        request: f.request,
-        source_scope: requiredValue(f.journal.source_scope, 'journal scope'),
-        canonical_host_common_dir: path.join(root, '.git'),
-        git: {
-          source_root: taskRoot,
-          common_dir: path.join(root, '.git'),
-          branch: 'codex/task-source',
-          head: '1'.repeat(40),
-          cwd: taskRoot,
-        },
-      }),
-    };
-    const reportInput = { request: f.request, identity: f.identity, expectedActionStateVersion: version, report };
-    expect(() =>
-      f.store.reportTaskSourceBindingOperation({
-        ...reportInput,
-        expectedActionStateVersion: { ...version, revision: version.revision + 1 },
-      }),
-    ).toThrow('task source report action CAS is stale');
-    const observed = f.store.reportTaskSourceBindingOperation(reportInput);
-    expect(observed).toMatchObject({
-      status: 'reported',
-      command_argv: null,
-      action: { status: 'reported', report, revision: version.revision + 1 },
-    });
-    expect(f.store.reportTaskSourceBindingOperation(reportInput)).toEqual(observed);
-    expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
-    expect(() => f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toThrow(
-      'current task Source bytes differ from the durable Host journal scope',
-    );
-    const beforeHealthyRead = readFixtureHostRows(f.database);
-    writeFileSync(path.join(taskRoot, 'src/task.ts'), 'host');
-    let healthyReadFailure: { error: unknown } | undefined;
-    try {
-      const current = presentSnapshot(reserved);
-      const pendingInput = {
-        identity: f.identity,
-        request: {
-          ...f.request,
-          operation_id: 'historical-source-unissued',
-          request_id: 'historical-source-unissued-request',
-          source_root: path.join(f.root, 'unissued-task-source'),
-          branch_ref: 'refs/heads/codex/unissued-task-source',
-          expected_host: {
-            ...f.request.expected_host,
-            work: current.workVersion,
-            ledger: current.ledgerVersion,
-            maintenance_generation: current.maintenanceGeneration,
-          },
-        },
-        verifyCurrent: f.trustedVerifyCurrent,
       };
-      const pending = f.store.prepareTaskSourceBindingOperation(pendingInput);
-      expect(pending.status).toBe('prepared');
-      expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toEqual(report.binding);
-      expect(f.store.snapshotHistoricalTaskSourceSources(input)).toEqual(sourceScope);
-      expect(f.store.inspectTaskSourceBindingOperation(pendingInput)).toEqual({ ...pending, status: 'inspected' });
-      expect(f.store.inspectTaskSourceBindingAction(pendingInput)).toMatchObject({
-        status: 'prepared',
-        action: null,
-        state_version: null,
+      const reportInput = { request: f.request, identity: f.identity, expectedActionStateVersion: version, report };
+      expect(() =>
+        f.store.reportTaskSourceBindingOperation({
+          ...reportInput,
+          expectedActionStateVersion: { ...version, revision: version.revision + 1 },
+        }),
+      ).toThrow('task source report action CAS is stale');
+      const observed = f.store.reportTaskSourceBindingOperation(reportInput);
+      expect(observed).toMatchObject({
+        status: 'reported',
         command_argv: null,
+        action: {
+          status: 'reported',
+          report: unknownReport ?? report,
+          recovery_report: unknownReport ? report : null,
+          revision: version.revision + 1,
+        },
       });
-      expect(existsSync(pendingInput.request.source_root)).toBe(false);
-      expect(readFixtureHostRows(f.database)).toEqual(beforeHealthyRead);
+      expect(f.store.reportTaskSourceBindingOperation(reportInput)).toEqual(observed);
+      expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
+      expect(() => f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toThrow(
+        'current task Source bytes differ from the durable Host journal scope',
+      );
+      const beforeHealthyRead = readFixtureHostRows(f.database);
+      writeFileSync(path.join(taskRoot, 'src/task.ts'), 'host');
+      let healthyReadFailure: { error: unknown } | undefined;
+      try {
+        const current = presentSnapshot(reserved);
+        const pendingInput = {
+          identity: f.identity,
+          request: {
+            ...f.request,
+            operation_id: 'historical-source-unissued',
+            request_id: 'historical-source-unissued-request',
+            source_root: path.join(f.root, 'unissued-task-source'),
+            branch_ref: 'refs/heads/codex/unissued-task-source',
+            expected_host: {
+              ...f.request.expected_host,
+              work: current.workVersion,
+              ledger: current.ledgerVersion,
+              maintenance_generation: current.maintenanceGeneration,
+            },
+          },
+          verifyCurrent: f.trustedVerifyCurrent,
+        };
+        const pending = f.store.prepareTaskSourceBindingOperation(pendingInput);
+        expect(pending.status).toBe('prepared');
+        expect(f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toEqual(report.binding);
+        expect(f.store.snapshotHistoricalTaskSourceSources(input)).toEqual(sourceScope);
+        expect(f.store.inspectTaskSourceBindingOperation(pendingInput)).toEqual({ ...pending, status: 'inspected' });
+        expect(f.store.inspectTaskSourceBindingAction(pendingInput)).toMatchObject({
+          status: 'prepared',
+          action: null,
+          state_version: null,
+          command_argv: null,
+        });
+        expect(existsSync(pendingInput.request.source_root)).toBe(false);
+        expect(readFixtureHostRows(f.database)).toEqual(beforeHealthyRead);
+        expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+      } catch (error) {
+        healthyReadFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              writeFileSync(path.join(taskRoot, 'src/task.ts'), 'task');
+            },
+          ],
+          healthyReadFailure,
+        );
+      }
+      expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
+      expect(readFileSync(path.join(root, 'src/task.ts'), 'utf8')).toBe('host');
+      for (const [changed, reason] of [
+        [{ attempt: 0 }, 'historical task source read context is invalid'],
+        [{ canonicalHostRoot: taskRoot }, 'historical task source canonical Host root differs'],
+        [{ threadId: 'foreign-owner' }, 'historical task source original owner differs'],
+        [{ paths: [] }, 'historical task source paths differ from original fingerprint scope'],
+        [{ attempt: 2 }, 'historical task source original journal is missing or changed'],
+      ] as const) {
+        expect(() => f.store.snapshotHistoricalTaskSourceSources({ ...input, ...changed })).toThrow(reason);
+        expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
+      }
+      expect(() => f.database.transaction(() => f.store.snapshotHistoricalTaskSourceSources(input)).deferred()).toThrow(
+        'historical task source read context is invalid',
+      );
+      const actionRow = requiredValue(
+        f.database
+          .query<{ payload: string; digest: string }, [string]>(
+            'SELECT payload,digest FROM agent_host_task_source_binding_action WHERE operation_id=?',
+          )
+          .get(f.request.operation_id),
+        'retained action',
+      );
+      const updateAction = f.database.query(
+        'UPDATE agent_host_task_source_binding_action SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest=?',
+      );
+      for (const [patch, reason] of [
+        [{ revision: 90 }, 'historical task source action/preparation integrity differs'],
+        [{ created_at: 'not-a-date' }, 'historical task source action/preparation integrity differs'],
+        [{ status: 'unknown' }, 'historical task source effect remains issued or unknown'],
+        [{ report_digest: '0'.repeat(64) }, 'historical task source has no valid retained observed result'],
+        ...(unknownReport
+          ? ([
+              [
+                { recovery_report_digest: '0'.repeat(64) },
+                'historical task source has no valid retained observed result',
+              ],
+              [
+                { report, report_digest: canonicalJsonDigest(report) },
+                'historical task source effect remains issued or unknown',
+              ],
+            ] as const)
+          : []),
+      ] as const) {
+        const changed = { ...parseJsonRecord(actionRow.payload), ...patch };
+        const changedDigest = canonicalJsonDigest(changed);
+        expect(
+          updateAction.run(
+            canonicalJson(changed),
+            changedDigest,
+            f.store.workspaceId,
+            f.request.operation_id,
+            actionRow.digest,
+          ).changes,
+        ).toBe(1);
+        let mutationFailure: { error: unknown } | undefined;
+        try {
+          expect(() => f.store.snapshotHistoricalTaskSourceSources(input)).toThrow(reason);
+          expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
+        } catch (error) {
+          mutationFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                expect(
+                  updateAction.run(
+                    actionRow.payload,
+                    actionRow.digest,
+                    f.store.workspaceId,
+                    f.request.operation_id,
+                    changedDigest,
+                  ).changes,
+                ).toBe(1);
+              },
+            ],
+            mutationFailure,
+          );
+        }
+        expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
+      }
       expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
+      expect(f.store.reportTaskSourceBindingOperation(reportInput)).toEqual(observed);
+      const peer = f.seedPeerReservation({ workId: 'historical-source-peer', executionOnly: true });
+      const peerHost = presentSnapshot(peer.host);
+      const peerRoot = path.join(f.root, 'foreign-unissued-task-source');
+      const peerRequest: TaskSourceBindingRequest = {
+        ...f.request,
+        operation_id: 'foreign-source-prepared',
+        request_id: 'foreign-source-prepared-request',
+        work_id: peer.identity.work_id,
+        thread_id: peer.thread_id,
+        source_root: peerRoot,
+        branch_ref: 'refs/heads/codex/foreign-unissued-source',
+        expected_host: {
+          work: peerHost.workVersion,
+          ledger: peerHost.ledgerVersion,
+          journal: { attempt: 1, version: peer.journal.version },
+          maintenance_generation: peerHost.maintenanceGeneration,
+        },
+      };
+      const peerPrepared = f.store.prepareTaskSourceBindingOperation({
+        request: peerRequest,
+        identity: peer.identity,
+        verifyCurrent: f.trustedVerifyCurrent,
+      });
+      expect(peerPrepared.status).toBe('prepared');
+      const withPeerRows = readFixtureHostRows(f.database);
+      const preparedPeerRows = f.database.query(
+        'SELECT * FROM agent_host_task_source_binding_operation ORDER BY operation_id',
+      );
+      const withPeerPreparations = preparedPeerRows.all();
+      expect(f.store.readCurrentTaskSourceBinding(peer.identity, peer.thread_id, 1)).toBeNull();
+      expect(() => f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toThrow(
+        'current task Source bytes differ from the durable Host journal scope',
+      );
+      expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
+      expect(readFixtureHostRows(f.database)).toEqual(withPeerRows);
+      expect(preparedPeerRows.all()).toEqual(withPeerPreparations);
+      expect(existsSync(peerRoot)).toBe(false);
+      completed = true;
     } catch (error) {
-      healthyReadFailure = { error };
+      primaryFailure = { error };
       throw error;
     } finally {
       completeOwnedCleanup(
         [
           () => {
-            writeFileSync(path.join(taskRoot, 'src/task.ts'), 'task');
+            f.close(() => completed && performance.now() < deadline);
+            if (performance.now() >= deadline) throw new Error('TaskSource fixture exhausted its case deadline.');
           },
         ],
-        healthyReadFailure,
+        primaryFailure,
       );
+      if (completed) preserveHostFixtureRoot = false;
     }
-    expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
-    expect(readFileSync(path.join(root, 'src/task.ts'), 'utf8')).toBe('host');
-    for (const [changed, reason] of [
-      [{ attempt: 0 }, 'historical task source read context is invalid'],
-      [{ canonicalHostRoot: taskRoot }, 'historical task source canonical Host root differs'],
-      [{ threadId: 'foreign-owner' }, 'historical task source original owner differs'],
-      [{ paths: [] }, 'historical task source paths differ from original fingerprint scope'],
-      [{ attempt: 2 }, 'historical task source original journal is missing or changed'],
-    ] as const) {
-      expect(() => f.store.snapshotHistoricalTaskSourceSources({ ...input, ...changed })).toThrow(reason);
-      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
-    }
-    expect(() => f.database.transaction(() => f.store.snapshotHistoricalTaskSourceSources(input)).deferred()).toThrow(
-      'historical task source read context is invalid',
-    );
-    const actionRow = requiredValue(
-      f.database
-        .query<{ payload: string; digest: string }, [string]>(
-          'SELECT payload,digest FROM agent_host_task_source_binding_action WHERE operation_id=?',
-        )
-        .get(f.request.operation_id),
-      'retained action',
-    );
-    const updateAction = f.database.query(
-      'UPDATE agent_host_task_source_binding_action SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest=?',
-    );
-    for (const [patch, reason] of [
-      [{ revision: 90 }, 'historical task source action/preparation integrity differs'],
-      [{ status: 'unknown' }, 'historical task source effect remains issued or unknown'],
-      [{ report_digest: '0'.repeat(64) }, 'historical task source has no valid retained observed result'],
-    ] as const) {
-      const changed = { ...parseJsonRecord(actionRow.payload), ...patch };
-      const changedDigest = canonicalJsonDigest(changed);
-      expect(
-        updateAction.run(
-          canonicalJson(changed),
-          changedDigest,
-          f.store.workspaceId,
-          f.request.operation_id,
-          actionRow.digest,
-        ).changes,
-      ).toBe(1);
-      try {
-        expect(() => f.store.snapshotHistoricalTaskSourceSources(input)).toThrow(reason);
-        expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
-      } finally {
-        expect(
-          updateAction.run(
-            actionRow.payload,
-            actionRow.digest,
-            f.store.workspaceId,
-            f.request.operation_id,
-            changedDigest,
-          ).changes,
-        ).toBe(1);
-      }
-      expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
-    }
-    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
-    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
-    expect(f.store.reportTaskSourceBindingOperation(reportInput)).toEqual(observed);
-    const peer = f.seedPeerReservation({ workId: 'historical-source-peer', executionOnly: true });
-    const peerHost = presentSnapshot(peer.host);
-    const peerRoot = path.join(f.root, 'foreign-unissued-task-source');
-    const peerRequest: TaskSourceBindingRequest = {
-      ...f.request,
-      operation_id: 'foreign-source-prepared',
-      request_id: 'foreign-source-prepared-request',
-      work_id: peer.identity.work_id,
-      thread_id: peer.thread_id,
-      source_root: peerRoot,
-      branch_ref: 'refs/heads/codex/foreign-unissued-source',
-      expected_host: {
-        work: peerHost.workVersion,
-        ledger: peerHost.ledgerVersion,
-        journal: { attempt: 1, version: peer.journal.version },
-        maintenance_generation: peerHost.maintenanceGeneration,
-      },
-    };
-    const peerPrepared = f.store.prepareTaskSourceBindingOperation({
-      request: peerRequest,
-      identity: peer.identity,
-      verifyCurrent: f.trustedVerifyCurrent,
-    });
-    expect(peerPrepared.status).toBe('prepared');
-    const withPeerRows = readFixtureHostRows(f.database);
-    const preparedPeerRows = f.database.query(
-      'SELECT * FROM agent_host_task_source_binding_operation ORDER BY operation_id',
-    );
-    const withPeerPreparations = preparedPeerRows.all();
-    expect(f.store.readCurrentTaskSourceBinding(peer.identity, peer.thread_id, 1)).toBeNull();
-    expect(() => f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toThrow(
-      'current task Source bytes differ from the durable Host journal scope',
-    );
-    expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
-    expect(readFixtureHostRows(f.database)).toEqual(withPeerRows);
-    expect(preparedPeerRows.all()).toEqual(withPeerPreparations);
-    expect(existsSync(peerRoot)).toBe(false);
-    completed = true;
-  } catch (error) {
-    primaryFailure = { error };
-    throw error;
-  } finally {
-    completeOwnedCleanup(
-      [
-        () => {
-          f.close(() => completed && performance.now() < deadline);
-          if (performance.now() >= deadline) throw new Error('TaskSource fixture exhausted its case deadline.');
-        },
-      ],
-      primaryFailure,
-    );
-    if (completed) preserveHostFixtureRoot = false;
-  }
-});
+  },
+);
 
 test('task-source policy denials preserve preparation and queued retries preserve native FIFO', async () => {
   const deadline = performance.now() + 5_000;
@@ -3171,11 +3249,41 @@ test('task-source policy denials preserve preparation and queued retries preserv
     );
     expect(Reflect.deleteProperty(malformedPredecessor, 'ticket_id')).toBe(true);
     expect(Object.hasOwn(malformedPredecessor, 'ticket_id')).toBe(false);
-    for (const hostSnapshot of [
-      { ...reserved, work: null },
-      { ...reserved, ledger: null },
-      { ...reserved, work: { ...reserved.work, lease: null }, ledger: malformedLedger },
-    ]) {
+    const stalePolicyMessage = 'task source mutation request is stale, same-root, or not a create proposal';
+    const adverseHosts: {
+      hostSnapshot: Parameters<typeof createTaskSourceMutationPolicyRequest>[0]['hostSnapshot'];
+      message: string;
+    }[] = [
+      { hostSnapshot: { ...reserved, work: null }, message: stalePolicyMessage },
+      { hostSnapshot: { ...reserved, ledger: null }, message: stalePolicyMessage },
+      {
+        hostSnapshot: { ...reserved, work: { ...reserved.work, lease: null }, ledger: malformedLedger },
+        message: stalePolicyMessage,
+      },
+    ];
+    for (const key of ['repository_id', 'project_ids', 'integrations_digest'] as const) {
+      const binding = clone(reserved.work.binding);
+      expect(Reflect.deleteProperty(binding, key)).toBe(true);
+      expect(Object.hasOwn(binding, key)).toBe(false);
+      adverseHosts.push({
+        hostSnapshot: { ...reserved, work: { ...reserved.work, binding } },
+        message: key === 'project_ids' ? 'work identity project ids invalid' : 'work identity invalid',
+      });
+    }
+    const projectIds = requiredValue(reserved.work.binding.project_ids, 'queued Work project IDs');
+    const foreignProject = 'zz-foreign-project';
+    expect(projectIds).not.toContain(foreignProject);
+    adverseHosts.push({
+      hostSnapshot: {
+        ...reserved,
+        work: {
+          ...reserved.work,
+          binding: { ...reserved.work.binding, project_ids: [...projectIds, foreignProject].sort() },
+        },
+      },
+      message: 'TaskSource coordination ticket differs from its exact request',
+    });
+    for (const { hostSnapshot, message } of adverseHosts) {
       expect(() =>
         createTaskSourceMutationPolicyRequest({
           repositoryRoot: queuedPolicy.repositoryRoot,
@@ -3183,7 +3291,7 @@ test('task-source policy denials preserve preparation and queued retries preserv
           preparedStateVersion: queuedPolicy.stateVersion,
           hostSnapshot,
         }),
-      ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
+      ).toThrow(message);
     }
     expect(() =>
       createTaskSourceMutationPolicyRequest({

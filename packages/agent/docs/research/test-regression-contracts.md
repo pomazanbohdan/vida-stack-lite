@@ -491,6 +491,11 @@ retain the actual own queued ticket and never persist these DTOs or claim valid
 Host authority. The existing file-backed readonly fixture separately requires
 empty qualified-code history on a real no-Work workspace in number/bigint modes,
 with the full open-to-close database bytes and catalog preserved.
+The same pure refusal matrix removes each Work identity field individually,
+proves actual deletion and checks its domain refusal. A sorted project list with
+one extra project must fail exact ticket identity matching. Retain the real
+queued lease and ticket; do not apply own-ticket predecessor filtering to this
+direct lease-lookup route or change Source behavior to fit a guessed message.
 An exact current Work version with a mismatching prepared-record revision is a
 separate pure CAS denial. A foreign execution-only peer may use the existing
 fixture's real Journal and public preparation; preparation alone creates neither
@@ -498,6 +503,17 @@ an action nor a Source root. Check its absent current binding alongside the
 original Work's drift denial and historical snapshot, preserving all native and
 prepared rows. Fixture verifier callbacks remain component seams, not external
 authorization or provider-execution proof.
+
+Historical TaskSource snapshots cover direct observed reporting and a fresh
+UNKNOWN followed by observed recovery in separate real fixtures. Issue only once;
+report recovery through the supported CAS API without reissuing the effect.
+Require refusal while UNKNOWN and preserve the original unknown report after
+recovery. Check each retained report's own digest and the unknown-to-observed
+status relation, even when the outer action digest is correct. Corrupt original
+and recovery digests separately, and test a digest-correct invalid report pair
+and malformed action timestamp. Restore exact action bytes conditionally through
+owned cleanup, preserving both the primary assertion and restoration failure.
+These component scenarios do not establish provider execution or Runtime proof.
 
 Current writer report atomically persists the Journal and releases Source
 ownership. It cannot create the older split state needed to test the final

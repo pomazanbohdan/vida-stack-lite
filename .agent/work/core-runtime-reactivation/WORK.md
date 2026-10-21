@@ -14,24 +14,24 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-a529007812bde119a039b19e28f9dbb2e1d502a5, run
-59dfa7c0-e726-4dd0-add4-c107013960da, projection attempts1172.
+01b8928b0c17dd338a0a05df41ce19868abcd768, run
+e2c69efe-c3f6-4efe-b1fb-e400657105e6, projection attempts1174.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs335cases/5541assertions
-in196928.724641ms. Host and stopped-source children take188.16s and123.17s.
-Rollback recovery takes12337.44ms, terminal-history10124.52ms and commit12079.02ms,
+unchanged boot/image and automatic publication. It runs335cases/5548assertions
+in174812.594014ms. Host and stopped-source children take168.49s and109.33s.
+Rollback recovery takes8834.61ms, terminal-history8763.46ms and commit10709.76ms,
 all inside unchanged20s bounds. Their setup/body durations are respectively
-9256.918487/3026.542764ms,7825.871673/2249.529752ms and7707.553005/4281.043660ms.
+6965.571170/1814.840164ms,6984.826513/1733.587878ms and7197.192711/3442.764500ms.
 The preceding rollback timeout does not recur in this complete instrumented run.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains6statement/137branch-arm gaps, no missing function
-or line: F1126/1126,L4975/4975,S5299/5305,B5485/5622. Compared with the preceding
-complete6513817 report, the empty frozen-contour refusal and omitted-resource
-stale reconstruction each gain one statement and one branch-arm visit, with
+The report-only join retains5statement/134branch-arm gaps, no missing function
+or line: F1126/1126,L4975/4975,S5300/5305,B5488/5622. Compared with the preceding
+completea529007 report, malformed-lease refusal, absent-Host DTOs and real empty
+qualified-code history gain one statement and three branch-arm visits, with
 unchanged production denominators. In the preceding complete6425ed6 comparison,
 three native bigint budget arms gain visits with unchanged denominators.
 boundedInspectionInteger has no missing arms. In the preceding simplification,
@@ -57,12 +57,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-uZAelC/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1289-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1289-scratch-parent.json and DIAG/remainder-v1289-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1289-cache-retirement-uZAelC/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-uZAelC-dUCKoi/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-jSxL50 |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-GJOkoJ/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1294-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1294-scratch-parent.json and DIAG/remainder-v1294-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1294-cache-retirement-GJOkoJ/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-GJOkoJ-gsbY7d/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-2hGyf1 |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -71,7 +71,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3487600640bytes and retained tmpfs9216626688bytes available, both above the
+3419303936bytes and retained tmpfs9211899904bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -266,12 +266,84 @@ absent-lease-v1292-dAjvl2. The malformed TaskSource case takes304.64ms. Keep the
 current complete a529007 measurement separate from these pending test bytes.
 Changed test pin refreshed once in remainder-v1293-test-pin.json. Strict122/lint0
 and the two-file resource control pass1case/10assertions293ms in
-remainder-v1293-controls-qLRO2P. Ordinary publication and one matching full stage
-are next; exact new statement/arm visitation remains pending.
+remainder-v1293-controls-qLRO2P. Ordinary hooks pass formatting520/strict527 and
+01b8928 is published. Its complete bound stage confirms the three new arms and
+expected-lease refusal statement; raw custody, exact counts and cache retirement
+remain with the current owners above. It qualifies no future test bytes.
+
+### Checked malformed identity DTO matrix
+
+Keep one typed adverse-Host matrix in the existing queued-policy case. Add cloned
+Work bindings missing repository_id, project_ids or integrations_digest, proving
+each property deletion and exact identity refusal. Add an ordered actual project
+list plus one unique foreign project; require exact TaskSource ticket mismatch.
+No DTO is persisted. Native Host/prepared rows, Source absence, actual lease,
+ticket, peer, Journal, positive queued retry and default5s remain unchanged.
+
+The original blind review vida-identity-dto-review-v1295.md correctly traces the
+three missing fields, but predicts a stale-request error for the foreign project
+by applying own-ticket predecessor filtering to the direct lease-lookup route.
+Root retains the original review and rejects that prediction: the actual public
+case passes the exact ticket-mismatch assertion without any Source change.
+Strict149/lint0 and1case/140assertions pass2.01s,366.44ms native, in
+identity-dto-v1296-WEQC8g. Review suggestions do not authorize reordering a
+production guard merely to change this oracle. Source identities and budgets
+remain unchanged; its new nullish/project-order arm visits are pending numeric
+confirmation. This matrix is included in the report-pair packet below; refresh
+its combined test pin once and use one matching stage.
+
+### Confirmed historical TaskSource report-pair correction
+
+B/S trace: settled-writer historical reads must validate protected preparation,
+action and report pairs before returning an original root. Fresh public CAS
+UNKNOWN-to-observed recovery reproduced a P0 consistency defect: historical
+snapshot accepted a corrupt original report_digest when the outer action digest
+was recomputed and the effective recovery report remained valid. The current
+reader's shared validator correctly rejects this inconsistency.
+
+Retain RED tasksource-pair-red-v1298-EIuZ9z/test.log and original fixture
+/tmp/host-state-zAva7s. Direct observed passes, recovered-unknown fails its exact
+refusal because the public reader returns a snapshot:1PASS/1FAIL,115assertions,
+2.41s. No archival UNKNOWN is replayed and the effect is issued only once.
+
+Historical reading now reuses validateTaskSourceActionPair and its already
+validated reports, with historical diagnostics. Both report digests, timestamps
+and status relation are checked; the weaker duplicate validation is removed.
+No added SQL, Source scan or effective-report reparse/hash. All current callers
+retain their normal diagnostics, expected-request binding, CAS, owner, Journal,
+scope, physical root and authorization fences. No callable is retired. Frozen
+correspondence and budgets remain deferred; this is not frozen acceptance.
+
+Strict149/configured lint0 and4cases/310assertions pass2.82s in
+tasksource-pair-green-v1299-0N8Cze, including existing UNKNOWN retention and queued
+policy cases. Final controls add malformed created_at, recovery-report digest
+corruption and a digest-correct invalid observed/observed pair. Strict149/lint0
+and both historical modes pass147assertions/2.65s in
+tasksource-pair-controls-v1301-L5tYOB,608.02/473.34ms native. Exact row restoration
+uses the existing owned-cleanup contract to retain both primary and cleanup
+errors. No new per-case exception or budget increase.
+
+Blind Source-only reviews vida-tasksource-report-pair-review-v1297.md and
+vida-tasksource-pair-final-review-v1300.md identify the defect and accept the
+shared correction. The final reviewer resolved relative log paths against a
+fixture and could not inspect them; Root inspected the actual absolute DIAG
+logs. Do not relabel that review as independent runtime verification. The Bun
+Test skill now requires absolute reviewer evidence locators and checking both
+retained reports. Changed test pin is refreshed once in remainder-v1302-test-pin.json.
+Strict122/lint0 and the two-file resource control pass1case/10assertions300ms
+in remainder-v1302-controls-SC0CHL; changed-document links/headings pass. Fetch
+finds HEAD and origin/main identical. Ordinary hooks/push and one matching
+complete stage are next. Source changes alter geometry/denominators; do not present
+removed duplicate terms as newly executed paths.
+
+At10:34UTC one filesystem observation finds durable3415465984bytes and retained
+tmpfs9211899904bytes available, above the unchanged2147483648floor. No numeric,
+build or install producer is active. The existing inventory and completed
+retirement manifests suffice; no further safe cleanup is identified here.
 
 ### Next actions and unresolved prerequisites
 
-1. Select the next causal S/B packet from the current6statement/137arm gap list;
+1. Select the next causal S/B packet from the current5statement/134arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,
@@ -304,18 +376,18 @@ Keep these specific unresolved paths open:
   do not fabricate invalid accepted state. The corrected fixture study is
   vida-retired-capture-gap-matrix-v1211.md. Its prior fixture-absence claim was
   limited to one file; the existing second selected file owns the real fixture.
-- TaskSource's queued expected-lease refusal is dominated on schema-valid state,
-  but its exported builder can receive malformed DTOs before its final refusal.
-  Keep the guard; supported-path unreachability does not justify removing it.
-  Review vida-tasksource-lease-dominance-review-v1225.md is static only and does
-  not prove a new authorization defect or a runnable coverage case.
+- TaskSource's queued expected-lease refusal remains guarded on schema-valid
+  state. Malformed pure DTO refusals now have public proof and the latest complete
+  measurement visits its statement; preserve the guard and do not treat these
+  negative DTOs as valid stored authority. The earlier dominance review alone
+  established neither a defect nor numeric execution.
 
 ### Execution combinations
 
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
-| Two reviewed serial-file children | Selected under the exact pins. Reuse the latest complete measurement above; the later timeout remains a separate failed attempt. |
+| Two reviewed serial-file children | Selected under the exact pins. Reuse the latest complete measurement above; the preceding timeout remains a separate failed attempt. |
 | Fully serial files | Protocol fallback only. Concurrent child durations do not establish serial wall time or admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |

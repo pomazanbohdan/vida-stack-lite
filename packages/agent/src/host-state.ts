@@ -2379,14 +2379,34 @@ function assertTaskSourceJournalScopeWithinWork(scope: ScopedSourceSnapshot, wor
     'task source current journal scope exceeds the active Work scope',
   );
 }
+const taskSourceActionPairDiagnostics = Object.freeze({
+  preparation: 'task source action preparation integrity differs',
+  request: 'task source action request identity or digest differs from its preparation row',
+  action: 'task source action/preparation row binding differs',
+  missingReport: 'task source action has a digest without its report',
+  report: 'task source action report integrity differs',
+  status: 'task source action status differs from its retained report pair',
+});
+type TaskSourceActionPairDiagnostics = Readonly<Record<keyof typeof taskSourceActionPairDiagnostics, string>>;
+const historicalTaskSourceActionPairDiagnostics: TaskSourceActionPairDiagnostics = Object.freeze({
+  preparation: 'historical task source action/preparation integrity differs',
+  request: 'historical task source action/preparation integrity differs',
+  action: 'historical task source action/preparation integrity differs',
+  missingReport: 'historical task source has no valid retained observed result',
+  report: 'historical task source has no valid retained observed result',
+  status: 'historical task source effect remains issued or unknown',
+});
 function validateTaskSourceActionPair(
   operationRow: TaskSourceOperationRow,
   actionRow: TaskSourceActionRow,
+  diagnostics: TaskSourceActionPairDiagnostics,
   expectedRequest?: TaskSourceBindingRequest,
 ): {
   readonly operation: Readonly<Record<string, unknown>>;
   readonly request: TaskSourceBindingRequest;
   readonly action: Readonly<Record<string, unknown>>;
+  readonly report: ReturnType<typeof validateTaskSourceBindingExchange> | null;
+  readonly recoveryReport: ReturnType<typeof validateTaskSourceBindingExchange> | null;
 } {
   const operation = operationRow.value as Record<string, unknown>;
   requireState(
@@ -2401,7 +2421,7 @@ function validateTaskSourceActionPair(
       operation.request_id === operationRow.request_id &&
       operation.request_digest === operationRow.request_digest &&
       canonicalJsonDigest(operation) === operationRow.digest,
-    'task source action preparation integrity differs',
+    diagnostics.preparation,
   );
   const request = validateTaskSourceBindingRequest(operation.request);
   requireState(
@@ -2410,7 +2430,7 @@ function validateTaskSourceActionPair(
       canonicalJsonDigest(request) === operationRow.request_digest &&
       sameJson(operation.request, request) &&
       (expectedRequest === undefined || sameJson(request, validateTaskSourceBindingRequest(expectedRequest))),
-    'task source action request identity or digest differs from its preparation row',
+    diagnostics.request,
   );
   const action = actionRow.value as Record<string, unknown>;
   requireState(
@@ -2432,15 +2452,15 @@ function validateTaskSourceActionPair(
       (action.updated_at === null ||
         (typeof action.updated_at === 'string' && Number.isFinite(Date.parse(action.updated_at)))) &&
       ['issued', 'reported', 'unknown'].includes(String(action.status)),
-    'task source action/preparation row binding differs',
+    diagnostics.action,
   );
   const checkedReport = (candidate: unknown, digest: unknown) => {
     if (candidate === null) {
-      requireState(digest === null, 'task source action has a digest without its report');
+      requireState(digest === null, diagnostics.missingReport);
       return null;
     }
     const report = validateTaskSourceBindingExchange(request, candidate);
-    requireState(digest === canonicalJsonDigest(report), 'task source action report integrity differs');
+    requireState(digest === canonicalJsonDigest(report), diagnostics.report);
     return report;
   };
   const report = checkedReport(action.report, action.report_digest),
@@ -2453,9 +2473,9 @@ function validateTaskSourceActionPair(
         : recoveryReport !== null
           ? report?.status === 'unknown' && recoveryReport.status === 'observed'
           : report?.status === 'observed',
-    'task source action status differs from its retained report pair',
+    diagnostics.status,
   );
-  return { operation, request, action };
+  return { operation, request, action, report, recoveryReport };
 }
 function taskSourcePriorTicket(
   ledger: CoordinationLedger,
@@ -9028,7 +9048,12 @@ export class HostStateStore {
       'agent_host_task_source_binding_operation',
     ) as TaskSourceOperationRow | null;
     requireState(operationRow, 'task source recovery action has no prepared operation');
-    const pair = validateTaskSourceActionPair(operationRow, actionRow as TaskSourceActionRow, input.request),
+    const pair = validateTaskSourceActionPair(
+        operationRow,
+        actionRow as TaskSourceActionRow,
+        taskSourceActionPairDiagnostics,
+        input.request,
+      ),
       action = pair.action;
     return snapshot({
       schema: 'TaskSourceBindingActionResult/v1',
@@ -9147,7 +9172,7 @@ export class HostStateStore {
         ['operation_id', 'request_id', 'revision', 'digest', 'payload', 'raw_payload_bytes'],
         'agent_host_task_source_binding_action',
       ) as unknown as TaskSourceActionRow;
-      const pair = validateTaskSourceActionPair(operationRow, actionRow),
+      const pair = validateTaskSourceActionPair(operationRow, actionRow, taskSourceActionPairDiagnostics),
         action = pair.action;
       if (request.operation === 'inspect') continue;
       if (action.status === 'issued' || action.status === 'unknown') {
@@ -9326,37 +9351,26 @@ export class HostStateStore {
             if (request.work_id !== input.identity.work_id || pair.action_payload === null) continue;
             const action = JSON.parse(pair.action_payload) as Record<string, unknown>;
             requireState(
-              Object.keys(operation).sort().join(',') ===
-                'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
-                operation.schema === 'TaskSourceBindingOperation/v1' &&
-                operation.status === 'prepared' &&
-                operation.operation_id === pair.operation_id &&
-                operation.revision === pair.revision &&
-                operation.request_id === pair.request_id &&
-                operation.request_digest === pair.request_digest &&
-                canonicalJsonDigest(operation) === pair.digest &&
-                canonicalJsonDigest(request) === pair.request_digest &&
-                request.operation_id === pair.operation_id &&
-                request.request_id === pair.request_id &&
-                Object.keys(action).sort().join(',') ===
-                  'command_argv,created_at,issue_id,operation_digest,operation_id,policy_decision,prepared_state_version,recovery_report,recovery_report_digest,report,report_digest,request_id,revision,schema,status,updated_at' &&
-                action.schema === 'TaskSourceBindingAction/v1' &&
-                action.operation_id === pair.operation_id &&
-                action.request_id === pair.request_id &&
-                action.revision === pair.action_revision &&
-                canonicalJsonDigest(action) === pair.action_digest &&
-                action.operation_digest === pair.digest &&
-                sameJson(action.prepared_state_version, { revision: pair.revision, digest: pair.digest }),
+              pair.action_revision !== null && pair.action_digest !== null,
               'historical task source action/preparation integrity differs',
+            );
+            const checked = validateTaskSourceActionPair(
+              { ...pair, value: operation },
+              {
+                operation_id: pair.operation_id,
+                request_id: pair.request_id,
+                revision: pair.action_revision,
+                payload: pair.action_payload,
+                digest: pair.action_digest,
+                value: action,
+              },
+              historicalTaskSourceActionPairDiagnostics,
             );
             if (request.operation === 'inspect') continue;
             requireState(action.status === 'reported', 'historical task source effect remains issued or unknown');
-            const report = validateTaskSourceBindingExchange(request, action.recovery_report ?? action.report);
+            const report = (checked.recoveryReport ?? checked.report)!;
             requireState(
-              report.status === 'observed' &&
-                report.binding !== null &&
-                canonicalJsonDigest(report) ===
-                  (action.recovery_report !== null ? action.recovery_report_digest : action.report_digest),
+              report.status === 'observed' && report.binding !== null,
               'historical task source has no valid retained observed result',
             );
             if (request.attempt !== input.attempt) continue;
@@ -9475,7 +9489,7 @@ export class HostStateStore {
         'agent_host_task_source_binding_operation',
       ) as TaskSourceOperationRow | null;
       requireState(operationRow, 'task source action has no prepared operation');
-      const pair = validateTaskSourceActionPair(operationRow, actionRow);
+      const pair = validateTaskSourceActionPair(operationRow, actionRow, taskSourceActionPairDiagnostics);
       return {
         action: pair.action,
         operation: pair.operation,
@@ -9974,7 +9988,12 @@ export class HostStateStore {
         'agent_host_task_source_binding_operation',
       ) as TaskSourceOperationRow | null;
       requireState(operationRow, 'task source report has no prepared operation');
-      const action = validateTaskSourceActionPair(operationRow, actionRow, request).action,
+      const action = validateTaskSourceActionPair(
+          operationRow,
+          actionRow,
+          taskSourceActionPairDiagnostics,
+          request,
+        ).action,
         reportDigest = canonicalJsonDigest(report);
       if (
         (action.status === 'reported' && action.report_digest === reportDigest) ||

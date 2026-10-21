@@ -32,6 +32,9 @@ the guard and exercise the public refusal when the preceding contract allows it.
 Distinguish validated stored state from a public builder's unvalidated DTO input.
 Keep malformed negative DTOs outside persistence and authority; require the
 public refusal and exact native beforeimages, not an accepted fabricated state.
+For UNKNOWN recovery, check the original and effective report's own integrity
+and their status relation. An outer payload digest or a valid effective report
+alone does not prove that both retained reports are consistent.
 Before declaring a fixture absent, inspect every test path in the contour's
 existing selection. A missing direct call in one selected file is not a contour
 prerequisite GAP; another selected file may own the real producer and fixture.
@@ -102,6 +105,10 @@ new metric or currentness. Read the compact Markdown view for navigation rather
 than dumping a cumulative JSON snapshot into the agent context.
 Reserve a fresh exclusive diagnostic log for each attempt under TESTING's
 retention rule; a successful retry must not overwrite a prior failure.
+Give reviewers absolute evidence paths anchored to the repository, not a fixture's
+working directory. Missing evidence at a mistaken relative path is not a reason
+to repeat the producer; resolve its retained locator and distinguish static review
+from independently inspected runtime evidence.
 For a new or modified case using shared fixture teardown, set its existing
 failure-retention marker before the first awaited setup and clear it only on
 success. Capturing an execution image cannot preserve files the case deletes.
