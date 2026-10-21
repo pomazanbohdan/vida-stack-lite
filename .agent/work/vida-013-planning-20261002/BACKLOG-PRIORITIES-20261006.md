@@ -7,6 +7,10 @@ Current preparation and terminal measurements are maintained once in
 [WORK.md](../core-runtime-reactivation/WORK.md) and its linked generated contour
 projection. Earlier role, test and timing counts are dated evidence, not current
 acceptance. Complete numeric qualification and runtime cutover remain open.
+The current P0 packet corrects completed Source report admission after exact
+same-ticket no-effect retries, preserving the distinct ledger epoch and peer
+fences. WORK owns the focused current/repeated/stale-root evidence and remaining
+producer gaps; this does not close the complete contour or native delivery.
 
 ## Priority rules
 

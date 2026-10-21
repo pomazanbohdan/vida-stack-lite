@@ -163,8 +163,109 @@ root and logs remain retained. DIAG/vida-noeffect-diagnosis-v1410.md and
 DIAG/vida-retry-generation-contract-v1411.md own the two independent conclusions.
 Blind Luna1416 prepares a bounded host-state.ts proposal only in
 /workspace/vida-retry-epoch-source-v1416-KaRvWW; Root alone may integrate/check it.
+The checked test packet is normally committed/pushed as204a7e2, with ordinary
+format520/strict527 hooks and fetch showing no divergent remote commits.
+DIAG/remainder-v1417-publication-f7QXvZ owns documentation, fetch, commit and push
+logs. This publication does not change the numeric Source/run binding below.
+Independent blind Luna1418 identifies actual public regression producers for
+the retry epoch contract, including cross-slot ticket use and any genuine
+global rebind. Root has not applied1416's first Source draft: it unnecessarily
+tightens generic historical retry acceptance and adds inline complexity to the
+original report method. Follow-up1419 preserves that draft and prepares a smaller
+pure provenance proof without changing the existing generic newer-fence contract
+or frozen ceilings. All proposals remain isolated/unvalidated until Root review.
 No full SDK/image/stage starts before that supported correction or exact blocker
 is reconciled with this packet.
+
+### Three-hour audit and follow-up
+
+The12:44–15:44UTC audit reuses the existing receipts, inventory and projection.
+Script correction1fc3483 already preserves SDK readiness's native command cause;
+do not implement it again. Independent1421 finds no additional confirmed defect
+in that command boundary or contour-stage capture/publication: captured stdout
+is cached, terminal/capture/group/image admission precedes publication, and
+projection errors retain the original cause. Its report is retained in DIAG.
+No new full suite, AST inventory, Source hash pass or numeric import is needed.
+
+| Admissible sequence | Assessment |
+| --- | --- |
+| Root performs analysis, repair and focused checks serially, then one full stage | Smallest coordination cost; stalls independent producer investigation behind the integrator. No controlled timing comparison is available. |
+| Three bounded blind readers prepare disjoint findings/proposals while Root integrates and checks serially | Selected for the remaining dependencies. Keeps one writer/numeric owner and reuses passed unchanged cases and fixture setup. |
+| Six bounded readers partition a broad all-gap map, with the same single integration/check lane | Used for the preceding broad packet; its completed stage is below. More seats are unjustified once only a few dependent mechanisms remain. No measured speedup or token saving is claimed. |
+
+Static-before-runtime catches the nullable decision and wrong-project mistakes
+without starting expensive cases. Review catches missing Host completion and
+vacuous optional-value assertions before the opt-in run, then adds the missing
+Journal revision/digest oracle. The failed run identifies the retry/global epoch
+conflict; it is not retried unchanged or hidden by a later PASS. Current logs
+provide case/stage elapsed observations, not complete tool-call/token accounting
+or a controlled concurrency benchmark. No such totals are invented.
+
+The Source proposal's pure lease graph replaces repeated history scans/numeric
+generation iteration and duplicate map lookups with bounded retained-attempt
+processing. Root keeps the finite iteration bound but shares the final epoch
+comparison after the missing-parent break, avoiding a separate dead tail
+statement. Generic retry validation remains unchanged. Review1420 accepts the
+provenance contract; the helper is prospective callable correspondence, not a
+new frozen baseline or increased ceiling. Follow-up1422 passes Source84 and
+test149 strict/lint0, plus four named cases397assertions39.59s in
+DIAG/retry-epoch-v1422-aIDHse. The original no-effect failure is now GREEN,
+including corrective authorization; normal final-assurance, legacy rollback and
+completed-report recovery controls pass. This is focused component evidence,
+not numeric closure or an external provider inspection.
+
+Root integrates1423's bounded repeated-retry proposal, correcting its Host versus
+ledger Journal shape comparison and requiring concrete attempts/tickets before
+assertions. Static1425 catches a void-return cleanup callback before runtime;
+1426 passes the repeated retry and corrective authorization cases2PASS/184assertions
+20.17s in DIAG/retry-repeat-v1426-t009Um. Independent1427 approves the graph,
+fixture and assertions; its two added explanatory option comments are removed.
+
+Blind1424 initially mistakes the later released synthesis ticket for an absent
+report path. Root checks the actual public report dispatcher: any completed Host
+reservation enters commitCompletedSourceReport, including this initial synthesis
+with genuinely acquired file ownership. The corrected design uses a real unstarted
+execution-only peer admitted through admitLocalSessionWork, then two current public
+Host CAS transitions to ready/frozen. Local retry remains generation2 while the
+peer freeze advances the global epoch1->2. No fabricated Journal/history or new
+engine transition is introduced. A typed opt-in pre-report observer ends this
+negative fixture before unrelated prewriter/final-validation preparation; successful
+verification closes its bridge and owned root, while any failure retains the root.
+The native denial preserves exact Host, peer and Journal revision/digest/state.
+1428 passes within the default5s case budget. Additional active/live/quiescent
+oracles isolate epoch provenance from expiry or uncertain-effect rejection.
+Static1430 catches the expected-ticket nullable comparison before execution;
+Root requires that actual ticket. Final1431 passes test149 strict/lint0 and all
+three changed cases3PASS/201assertions19.77s in DIAG/retry-packet-v1431-KZuoxf.
+No per-case/stage/resource budget, generic retry validator or frozen ceiling changes.
+The different-slot ticket-wide producer remains an explicit test prerequisite GAP;
+the reviewed graph supports it structurally, but same-slot proof is not relabelled.
+Independent1429 approves the actual stale-root public producer, beforeimages,
+observer typing and owned success/failure cleanup. Its report is retained in DIAG.
+Root refreshes the Host test pin once after final formatting;1432 passes runner122
+strict/lint0 and the two-file namespace control1PASS/10assertions326ms in
+DIAG/retry-controls-v1432-gm9ZJN. Terminal1416/1423 proposal copies and every draft
+are fully tar-compared into DIAG/worker-retirement-v1433-LONDrH before retirement;
+retention.json records base/owners/paths and retirement.json records free bytes
+before/after. No disk gain or reattestation is claimed. Runtime databases, failed
+roots, SDKs and original numeric evidence remain untouched.
+
+The renewed13:05–16:05UTC audit attaches to this same cycle and reuses the earlier
+script review/resources rather than rescanning. It finds no additional confirmed
+runner defect beyond the already-published native command-cause correction.
+The current correction is a reproduced Host report defect, plus test-authoring
+repairs and early phase reuse. These native timings are case observations, not
+a controlled speedup comparison or complete tool-call/token measurement. One Root
+integration/static/focused lane plus bounded independent proposal/review readers
+remains preferable to broad repeated scans or another full numeric writer.
+
+DIAG/audit-20261021-154415-resources.json reuses the one filesystem observation:
+checkout and durable evidence share a device; durable and retained scratch both
+exceed the unchanged2147483648-byte floor. Only terminal owned preparation copies
+are retired after byte/mode or full tar comparison. Original databases, SDKs,
+measured image, FAIL/TIMEOUT/UNKNOWN and raw receipts remain protected. No broad
+du/scan/hash or dependency deduplication is launched; no cleanup gain is claimed
+where copying/archive retention consumes the same space.
 
 ### Latest complete measurement
 
@@ -610,15 +711,9 @@ DIAG/sdk-command-cause-v1358-PNMaO7. This Source repair supplies diagnostics,
 not credentials. Ordinary hooks pass formatting520/strict527 and normal push
 publishes1fc3483. The push receipt is DIAG/sdk-command-cause-v1358-push.log.
 
-1. Select the next causal S/B packet from the current4statement/89arm gap list;
-   keep the same contour and preserve its qualified F/L paths. Bind every test
-   filter alternative before launch; reuse actual fixtures and retained geometry.
-2. Check changed behavior statically and with its direct named callers, review,
-   refresh test pins only when their bytes change, then publish through ordinary
-   hooks/push.
-3. Use one matching SDK/image/full selected-contour stage for that coherent
-   packet. Import once, preserve all failures and qualify exact terminal custody.
-   Do not rerun unchanged groups or start another contour before full F/L/S/B100.
+That packet is complete. Current execution follows the
+[current follow-up packet](#current-follow-up-packet); these dated observations
+do not select a second run or supersede the latest bound gap map.
 
 Keep these specific unresolved paths open:
 - A configured-frontier recovery view with nonempty qualified runtime history

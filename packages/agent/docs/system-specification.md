@@ -2057,6 +2057,14 @@ An unresolved or malformed Source binding denies renewal without state changes.
 Generic CAS cannot release or transfer file ownership while any retained
 assignment is started or uncertain. Existing terminal completion or trusted
 no-effect reconciliation settles that fence without granting new rights.
+An authorized same-ticket no-effect retry advances that ticket's lease fence,
+not the ledger admission epoch. A completed Source report traces exact retained
+retry-lease edges across that ticket's assignment slots to the current ledger
+epoch. Numeric equality of the current lease and epoch cannot admit a chain
+rooted in an older epoch. The report releases the file ticket at its current
+fence and creates the distinct execution-only ticket, claim and Work lease at
+the ledger's current admission epoch. It does not advance the global epoch,
+change peer rights or settle started/uncertain effects.
 Local-session composition binds workflow attempts, governance capability and
 the reconciliation verifier principal to the same admitted HostStateStore.
 A completed reconciliation receipt returned by that store must retain its

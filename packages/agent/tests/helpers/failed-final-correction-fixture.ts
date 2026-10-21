@@ -6,13 +6,27 @@ import { createAutomaticWorkAdmissionFixture } from './automatic-work-admission-
 import { fixtureInitializationTemplates } from './runtime-initialization-fixture.js';
 import { runPrewriterFixtureInProcess } from './public-prewriter-fixture.js';
 import { runWithInitialSourceTiming } from './initial-source-run-timing-diagnostic.js';
-import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../../src/orchestration/local-work-admission.js';
+import {
+  admitLocalSessionWork,
+  acquireLocalSourceWriterLease,
+  type LocalWorkAdmissionInput,
+} from '../../src/orchestration/local-work-admission.js';
 import { runtimeConfigDigest } from '../../src/config/runtime-config.js';
-import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.js';
+import { snapshotDeclaredSources, type ScopedSourceSnapshot } from '../../src/orchestration/scoped-source-snapshot.js';
 import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.js';
 import { HostStateStore, type HostStateSnapshot, type WorkIdentity, type WorkState } from '../../src/host-state.js';
 import { executeDocumentationClearOperation } from '../../src/documentation/clear.js';
 import { MastraSessionBridge } from '../../src/orchestration/mastra-session-bridge.js';
+import {
+  createLocalSessionReconciliationVerifier,
+  reconcileUnissuedLocalSessionAction,
+} from '../../src/orchestration/local-session-reconciliation.js';
+import { openAdmittedSessionExecution } from '../../src/orchestration/admitted-session-execution.js';
+import {
+  completeWorkflowAssignmentForSession,
+  prepareWorkflowExecution,
+  reserveWorkflowAssignmentForSession,
+} from '../../src/runtime-kernel.js';
 import {
   MastraSessionLedger,
   type MastraSessionLedgerSnapshot,
@@ -57,6 +71,21 @@ export interface FailedFinalCorrectionFixture {
   readonly plannedHost: HostStateSnapshot | null;
   readonly preparationPath: string;
   close(completed: boolean | (() => boolean)): void;
+}
+
+interface FailedFinalCorrectionFixtureOptions {
+  readonly preparationInputs?: false;
+  readonly noEffectSibling?: boolean;
+  readonly noEffectRetries?: number;
+  readonly verifyInitialNoEffectReport?: (input: {
+    readonly store: HostStateStore;
+    readonly ledger: MastraSessionLedger;
+    readonly identity: WorkIdentity;
+    readonly journal: MastraSessionLedgerSnapshot;
+    readonly observation: SessionBridgeObservation;
+    readonly source: ScopedSourceSnapshot;
+    readonly preparePeerAdmission: (id: string) => LocalWorkAdmissionInput;
+  }) => void;
 }
 
 /** Write current, work-bound documentation and lifecycle inputs for a terminal failed-work correction. */
@@ -187,15 +216,34 @@ export async function reportFailedFinalValidatorWave(input: {
 /** Build a real failed final-validation state through admission, Host CAS and persisted Journal report APIs. */
 export function createFailedFinalCorrectionFixture(
   outcome: FinalCorrectionOutcome,
-  options: { readonly preparationInputs: false },
+  options: FailedFinalCorrectionFixtureOptions & {
+    readonly noEffectSibling: true;
+    readonly verifyInitialNoEffectReport: NonNullable<
+      FailedFinalCorrectionFixtureOptions['verifyInitialNoEffectReport']
+    >;
+  },
+): Promise<void>;
+export function createFailedFinalCorrectionFixture(
+  outcome: FinalCorrectionOutcome,
+  options: Omit<FailedFinalCorrectionFixtureOptions, 'verifyInitialNoEffectReport'> & {
+    readonly preparationInputs: false;
+    readonly verifyInitialNoEffectReport?: never;
+  },
 ): Promise<Omit<FailedFinalCorrectionFixture, 'preparationPath'>>;
+export function createFailedFinalCorrectionFixture(
+  outcome: FinalCorrectionOutcome,
+  options: Omit<FailedFinalCorrectionFixtureOptions, 'preparationInputs' | 'verifyInitialNoEffectReport'> & {
+    readonly preparationInputs?: never;
+    readonly verifyInitialNoEffectReport?: never;
+  },
+): Promise<FailedFinalCorrectionFixture>;
 export function createFailedFinalCorrectionFixture(
   outcome?: FinalCorrectionOutcome,
 ): Promise<FailedFinalCorrectionFixture>;
 export async function createFailedFinalCorrectionFixture(
   outcome: FinalCorrectionOutcome = 'failed',
-  options?: { readonly preparationInputs: false },
-): Promise<Omit<FailedFinalCorrectionFixture, 'preparationPath'> | FailedFinalCorrectionFixture> {
+  options?: FailedFinalCorrectionFixtureOptions,
+): Promise<Omit<FailedFinalCorrectionFixture, 'preparationPath'> | FailedFinalCorrectionFixture | void> {
   const fixture = createAutomaticWorkAdmissionFixture(true, true);
   const validatorsPass = outcome !== 'failed',
     testerPasses = outcome === 'passing';
@@ -313,7 +361,7 @@ export async function createFailedFinalCorrectionFixture(
       host = new HostStateStore(
         fixture.database,
         fixture.store.workspaceId,
-        undefined,
+        options?.noEffectSibling ? createLocalSessionReconciliationVerifier(fixture.root) : undefined,
         undefined,
         undefined,
         undefined,
@@ -345,7 +393,132 @@ export async function createFailedFinalCorrectionFixture(
     });
     await bridge.start(source);
     let journal = sync();
-    journal = requireSnapshot(ledger.issueWave(id, 1, journal.version));
+    let completeNoEffectRetry: ((observation: SessionBridgeObservation) => Promise<void>) | undefined;
+    if (options?.noEffectSibling) {
+      if (
+        journal.state.items.length !== 1 ||
+        journal.state.items[0]?.issue_id !== null ||
+        journal.state.items[0]?.observation !== null
+      )
+        throw new Error('No-effect fixture requires the current unissued initial synthesis item');
+      const item = journal.state.items[0]!;
+      const reserveCurrentItem = async () => {
+        const execution = await openAdmittedSessionExecution(fixture.root, host, 'sample', id);
+        const capability = execution.composition.workflowExecutionCapability;
+        if (!capability) throw new Error('No-effect fixture workflow capability is unavailable');
+        const prepared = await prepareWorkflowExecution(capability, {
+          repositoryRoot: fixture.root,
+          configDigest: runtimeConfigDigest(fixture.config),
+          teamId: 'default-development',
+          workItemId: id,
+        });
+        const reservation = await reserveWorkflowAssignmentForSession(capability, {
+          repositoryRoot: fixture.root,
+          configDigest: runtimeConfigDigest(fixture.config),
+          teamId: 'default-development',
+          workflowId: item.request.workflow_id,
+          stageId: item.request.stage_id,
+          assignmentIndex: item.request.assignment_index,
+          workItemId: id,
+          workItemDigest: prepared.workItemDigest,
+          workContextDigest: prepared.workContextDigest,
+          input: { bindings_manifest_ref: item.request.bindings_manifest_ref },
+        });
+        if (reservation.approvalAction !== null || reservation.authorization !== null)
+          throw new Error('No-effect fixture action unexpectedly entered an approval effect');
+        return reservation;
+      };
+      const retryCount = options.noEffectRetries ?? 1;
+      if (!Number.isSafeInteger(retryCount) || retryCount < 1 || retryCount > 3)
+        throw new Error('No-effect fixture retry count must be between one and three');
+      let reservation = await reserveCurrentItem();
+      for (let retryIndex = 0; retryIndex < retryCount; retryIndex += 1) {
+        const noEffectAttempt = reservation.receipt.attempt;
+        const hostBeforeProof = host.readHostStateSnapshot(identity);
+        const boundWork = requireWork(hostBeforeProof);
+        if (!boundWork.lease || !journal.state.source_scope)
+          throw new Error('No-effect fixture has no current lease or Journal source binding');
+        const inspectedAt = new Date().toISOString();
+        const proofSuffix = String(retryIndex + 1);
+        const decisionPath = `.agent/work/${id}/local-no-effect-decision-${proofSuffix}.json`;
+        const proofPath = `.agent/work/${id}/local-no-effect-evidence-${proofSuffix}.json`;
+        const proof = {
+          schema: 'LocalSessionNoEffectEvidence/v1',
+          work_id: id,
+          attempt: 1,
+          action_id: item.request.action_id,
+          host_attempt_id: noEffectAttempt.attempt_id,
+          request_digest: noEffectAttempt.request_digest,
+          workflow_id: item.request.workflow_id,
+          config_digest: runtimeConfigDigest(fixture.config),
+          scope_digest: boundWork.binding.work_source_revision,
+          source_snapshot_digest: journal.state.source_scope.digest,
+          native_session_handle: noEffectAttempt.lease.thread_id,
+          successor_session_handle: noEffectAttempt.lease.thread_id,
+          ticket_id: noEffectAttempt.lease.ticket_id,
+          lease_generation: noEffectAttempt.lease.generation,
+          native_inspection_ref: 'fixture:no-provider-entry-after-local-reservation',
+          decision_path: decisionPath,
+          inspected_by: noEffectAttempt.lease.thread_id,
+          inspected_at: inspectedAt,
+          finding: 'confirmed_not_invoked_and_quiescent',
+        };
+        const proofBytes = Buffer.from(JSON.stringify(proof));
+        const providerEvidence = {
+          schema: proof.schema,
+          path: proofPath,
+          sha256: createHash('sha256').update(proofBytes).digest('hex'),
+        };
+        const decision = {
+          schema: 'WorkflowAttemptRecoveryDecision/v1',
+          work_id: id,
+          work_item_id: boundWork.binding.provider_work_item_id,
+          source_revision: boundWork.binding.work_source_revision,
+          scope_id: boundWork.binding.scope_id,
+          ac_ids: [...boundWork.binding.ac_ids],
+          action_id: item.request.action_id,
+          host_attempt_id: noEffectAttempt.attempt_id,
+          provider_evidence: providerEvidence,
+          outcome: 'no_effect',
+          retry_lease: {
+            ticket_id: noEffectAttempt.lease.ticket_id,
+            thread_id: noEffectAttempt.lease.thread_id,
+            generation: noEffectAttempt.lease.generation + 1,
+          },
+          decided_by: noEffectAttempt.lease.thread_id,
+          decided_at: inspectedAt,
+          reason: 'This fixture made no provider call after the approval-free local reservation.',
+        };
+        writeFileSync(path.join(fixture.root, proofPath), proofBytes);
+        writeFileSync(path.join(fixture.root, decisionPath), JSON.stringify(decision));
+        await reconcileUnissuedLocalSessionAction({
+          root: fixture.root,
+          proofPath,
+          store: host,
+          identity,
+          journal,
+          configDigest: runtimeConfigDigest(fixture.config),
+        });
+        const retryReservation = await reserveCurrentItem();
+        if (
+          retryReservation.receipt.attempt.previous_attempt_id !== noEffectAttempt.attempt_id ||
+          retryReservation.receipt.attempt.request_digest !== noEffectAttempt.request_digest ||
+          retryReservation.receipt.attempt.lease.generation !== noEffectAttempt.lease.generation + 1
+        )
+          throw new Error('No-effect fixture retry differs from the exact current-action fence');
+        reservation = retryReservation;
+      }
+      const finalRetryReservation = reservation;
+      completeNoEffectRetry = async (observation) => {
+        const execution = await openAdmittedSessionExecution(fixture.root, host, 'sample', id);
+        const capability = execution.composition.workflowExecutionCapability;
+        if (!capability) throw new Error('No-effect fixture retry completion capability is unavailable');
+        await completeWorkflowAssignmentForSession(capability, finalRetryReservation, observation);
+      };
+      journal = requireSnapshot(
+        ledger.issueWave(id, 1, journal.version, { [item.request.action_id]: finalRetryReservation }),
+      );
+    } else journal = requireSnapshot(ledger.issueWave(id, 1, journal.version));
     const suspendedStepId = journal.state.step_id;
     if (suspendedStepId === null) throw new Error('Initial fixture workflow has no suspended synthesis step');
     const suspendedObservations: SessionBridgeObservation[] = [];
@@ -362,7 +535,37 @@ export async function createFailedFinalCorrectionFixture(
         summary,
         output_digest: canonicalJsonDigest(summary),
         evidence_refs: [],
+        ...(item.host_reservation
+          ? {
+              host_attempt_id: item.host_reservation.receipt.attempt.attempt_id,
+              changed_paths: [],
+            }
+          : {}),
       };
+      if (
+        item.host_reservation &&
+        completeNoEffectRetry &&
+        item.request.action_id === journal.state.items[0]?.request.action_id
+      )
+        await completeNoEffectRetry(observation);
+      if (options?.verifyInitialNoEffectReport) {
+        options.verifyInitialNoEffectReport({
+          store: host,
+          ledger,
+          identity,
+          journal,
+          observation,
+          source,
+          preparePeerAdmission: (peerId) => ({
+            ...fixture.prepare(peerId, 'fixture:disjoint-admission-epoch', 'peer-session'),
+            store: host,
+          }),
+        });
+        await bridge.close();
+        bridge = undefined;
+        close(true);
+        return;
+      }
       journal = requireSnapshot(ledger.report(id, 1, journal.version, observation, source));
       suspendedObservations.push(observation);
     }

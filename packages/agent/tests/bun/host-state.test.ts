@@ -739,12 +739,175 @@ test('absent Work exposes no continuation or corrective authority and leaves sto
   expect(catalog.all()).toEqual(schemaBefore);
 });
 
+test('completed Source report rejects a stale retry root even when its current fence equals the admission epoch', async () => {
+  await createFailedFinalCorrectionFixture('failed', {
+    noEffectSibling: true,
+    verifyInitialNoEffectReport({
+      store: host,
+      ledger,
+      identity: owner,
+      journal,
+      observation,
+      source,
+      preparePeerAdmission,
+    }) {
+      const original = readPresentSnapshot(host, owner);
+      const originalLease = requiredLease(original.work);
+      const noEffect = requiredValue(
+        original.work.execution.assignment_attempts.find((attempt) => attempt.status === 'no_effect'),
+        'stale-root no-effect predecessor',
+      );
+      expect(noEffect.lease.ticket_id).toBe(originalLease.ticket_id);
+      expect(noEffect.lease.generation).toBe(original.ledger.open_generation);
+      expect(originalLease.generation).toBe(original.ledger.open_generation + 1);
+      const peerId = owner.work_id + '-peer';
+      admitLocalSessionWork(preparePeerAdmission(peerId));
+      const peerIdentity = { ...owner, work_id: peerId };
+      const peer = readPresentSnapshot(host, peerIdentity);
+      const peerTicketId = requiredLease(peer.work).ticket_id;
+      const ready = next(peer);
+      ready.nextWork.lease = null;
+      requiredValue(
+        ready.nextLedger.tickets.find((ticket) => ticket.ticket_id === peerTicketId),
+        'peer ticket',
+      ).status = 'ready_for_handoff';
+      const saved = commitHostStateOn(host, ready);
+      const freeze = next(saved);
+      const contour = {
+        schema: 'ReleaseContour/v1',
+        contour_id: peerId,
+        generation: saved.ledger.open_generation,
+        work_ids: [peerId],
+        ticket_ids: [peerTicketId],
+        frozen: true,
+        created_at: new Date().toISOString(),
+      };
+      freeze.nextLedger.contours.push({ ...contour, contour_digest: canonicalJsonDigest(contour) });
+      freeze.nextLedger.open_generation += 1;
+      commitHostStateOn(host, freeze);
+      const before = readPresentSnapshot(host, owner);
+      const peerBefore = host.readHostStateSnapshot(peerIdentity);
+      const journalBefore = requiredValue(host.readWorkSessionJournal(owner), 'stale-root current Journal');
+      expect(before.work).toEqual(original.work);
+      expect(before.workVersion).toEqual(original.workVersion);
+      expect(before.ledger.open_generation).toBe(originalLease.generation);
+      expect(requiredLease(before.work)).toEqual(originalLease);
+      const currentTicket = requiredValue(
+        before.ledger.tickets.find((ticket) => ticket.ticket_id === originalLease.ticket_id),
+        'stale-root active ticket',
+      );
+      expect(currentTicket).toEqual(
+        requiredValue(
+          original.ledger.tickets.find((ticket) => ticket.ticket_id === originalLease.ticket_id),
+          'original retry ticket',
+        ),
+      );
+      expect(currentTicket.status).toBe('active');
+      expect(currentTicket.generation).toBe(before.ledger.open_generation);
+      expect(Date.parse(requiredValue(currentTicket.expires_at, 'stale-root live ticket expiry'))).toBeGreaterThan(
+        Date.now(),
+      );
+      expect(
+        before.work.execution.assignment_attempts.some((attempt) => ['started', 'uncertain'].includes(attempt.status)),
+      ).toBe(false);
+      expect(journalBefore.version).toEqual(journal.version);
+      expect(() => ledger.report(owner.work_id, 1, journal.version, observation, source)).toThrow(
+        'completed writer lease is stale or an effect remains uncertain',
+      );
+      expect(host.readHostStateSnapshot(owner)).toEqual(before);
+      expect(host.readHostStateSnapshot(peerIdentity)).toEqual(peerBefore);
+      expect(host.readWorkSessionJournal(owner)).toEqual(journalBefore);
+    },
+  });
+});
+
+test(
+  'completed Source report accepts repeated exact no-effect retries and replays the terminal observation',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    const f = await createFailedFinalCorrectionFixture('failed', { noEffectSibling: true, noEffectRetries: 2 });
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      if (performance.now() >= deadline)
+        throw new Error('Repeated no-effect Source fixture exceeded its case deadline.');
+      const beforeReplay = f.store.readHostStateSnapshot(f.identity);
+      const journal = f.store.readWorkSessionJournal(f.identity);
+      if (!beforeReplay.work?.lease || !beforeReplay.ledger || !journal)
+        throw new Error('Repeated no-effect Source fixture lost its persisted Host or Journal state.');
+      const attempts = beforeReplay.work.execution.assignment_attempts;
+      const noEffectAttempts = attempts.filter((attempt) => attempt.status === 'no_effect');
+      expect(noEffectAttempts).toHaveLength(2);
+      const firstNoEffect = requiredValue(noEffectAttempts[0], 'first no-effect retry');
+      const secondNoEffect = requiredValue(noEffectAttempts[1], 'second no-effect retry');
+      const proofPaths = noEffectAttempts.map((attempt) => attempt.reconciliation?.provider_evidence?.path);
+      expect(proofPaths.every((proofPath) => typeof proofPath === 'string')).toBe(true);
+      expect(new Set(proofPaths).size).toBe(2);
+      expect(firstNoEffect.lease.generation).toBe(beforeReplay.ledger.open_generation);
+      expect(secondNoEffect.previous_attempt_id).toBe(firstNoEffect.attempt_id);
+      expect(secondNoEffect.lease.generation).toBe(firstNoEffect.lease.generation + 1);
+      const terminalAttempt = requiredValue(
+        attempts.find(
+          (attempt) => attempt.status === 'completed' && attempt.previous_attempt_id === secondNoEffect.attempt_id,
+        ),
+        'completed repeated retry',
+      );
+      expect(terminalAttempt.lease.generation).toBe(secondNoEffect.lease.generation + 1);
+      const noEffectTicketId = firstNoEffect.lease.ticket_id;
+      expect(terminalAttempt.lease.ticket_id).toBe(noEffectTicketId);
+      expect(noEffectAttempts.every((attempt) => attempt.lease.ticket_id === noEffectTicketId)).toBe(true);
+      const releasedFileTicket = beforeReplay.ledger.tickets.find((ticket) => ticket.ticket_id === noEffectTicketId);
+      expect(releasedFileTicket?.status).toBe('released');
+      const currentTicket = requiredValue(
+        beforeReplay.ledger.tickets.find((ticket) => ticket.ticket_id === beforeReplay.work!.lease!.ticket_id),
+        'current repeated retry execution ticket',
+      );
+      const currentClaim = beforeReplay.ledger.claims.find(
+        (claim) => claim.ticket_id === beforeReplay.work!.lease!.ticket_id && claim.status === 'active',
+      );
+      expect(beforeReplay.work.lease.generation).toBe(beforeReplay.ledger.open_generation);
+      expect(currentTicket).toMatchObject({ generation: beforeReplay.ledger.open_generation, status: 'active' });
+      expect(currentClaim).toMatchObject({ generation: beforeReplay.ledger.open_generation, status: 'active' });
+      expect(currentTicket.exclusive_resources).toEqual(['execution:' + f.identity.work_id]);
+      const terminalItem = [...journal.state.items, ...journal.state.completed.flatMap((wave) => wave.items)].find(
+        (item) => item.host_reservation?.receipt.attempt.attempt_id === terminalAttempt.attempt_id,
+      );
+      if (!terminalItem?.observation)
+        throw new Error('Repeated no-effect report has no retained terminal observation.');
+      const ledgerBeforeReplay = requiredValue(f.ledger.resume(f.identity.work_id, journal.attempt), 'retry Journal');
+      expect(ledgerBeforeReplay.version).toEqual(journal.version);
+      expect(ledgerBeforeReplay.state).toEqual(journal.state);
+      expect(f.ledger.report(f.identity.work_id, journal.attempt, journal.version, terminalItem.observation)).toEqual(
+        ledgerBeforeReplay,
+      );
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(beforeReplay);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+      if (performance.now() >= deadline)
+        throw new Error('Repeated no-effect Source fixture exceeded its case deadline.');
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            f.close(() => completed && performance.now() < deadline);
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  },
+  failedFinalHostCaseTimeoutMs,
+);
+
 // Real admission, writer completion and focused verdicts prepare the authorization boundary.
 test(
   'Host corrective authorization preserves all three CAS boundaries and only authorizes the failed closure',
   async () => {
     const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
-    const f = await createFailedFinalCorrectionFixture();
+    const f = await createFailedFinalCorrectionFixture('failed', { noEffectSibling: true });
     let completed = false;
     let primaryFailure: { error: unknown } | undefined;
     try {
@@ -768,6 +931,58 @@ test(
         !journal
       )
         throw new Error('Prepared corrective Host fixture is incomplete.');
+      const noEffectAttempts = before.work.execution.assignment_attempts.filter(
+        (attempt) => attempt.status === 'no_effect',
+      );
+      expect(noEffectAttempts).toHaveLength(1);
+      const noEffect = noEffectAttempts[0];
+      if (!noEffect?.reconciliation || noEffect.result !== null || noEffect.result_digest !== null)
+        throw new Error('Corrective fixture has no terminal no-effect sibling.');
+      expect(noEffect.reconciliation.outcome).toBe('no_effect');
+      expect(noEffect.reconciliation.retry_lease).toEqual({
+        ticket_id: noEffect.lease.ticket_id,
+        thread_id: noEffect.lease.thread_id,
+        generation: noEffect.lease.generation + 1,
+      });
+      const noEffectDecisionRef = noEffect.reconciliation.decision;
+      const noEffectProviderEvidence = noEffect.reconciliation.provider_evidence;
+      if (!noEffectDecisionRef || !noEffectProviderEvidence)
+        throw new Error('No-effect reconciliation lost its operational evidence references.');
+      expect(before.work.contracts.decisions).toContainEqual(noEffectDecisionRef);
+      const noEffectDecisionBytes = readFileSync(path.join(f.root, noEffectDecisionRef.path));
+      const noEffectDecision = parseJsonRecord(noEffectDecisionBytes.toString('utf8'));
+      expect(createHash('sha256').update(noEffectDecisionBytes).digest('hex')).toBe(noEffectDecisionRef.sha256);
+      expect(noEffectDecision.provider_evidence).toEqual(noEffectProviderEvidence);
+      expect(
+        createHash('sha256')
+          .update(readFileSync(path.join(f.root, noEffectProviderEvidence.path)))
+          .digest('hex'),
+      ).toBe(noEffectProviderEvidence.sha256);
+      const journalItems = [...journal.state.items, ...journal.state.completed.flatMap((wave) => wave.items)];
+      if (typeof noEffectDecision.action_id !== 'string')
+        throw new Error('No-effect decision action identity is malformed.');
+      const retriedSibling = requiredValue(
+        journalItems.find((item) => item.request.action_id === noEffectDecision.action_id),
+        'completed no-effect retry Journal item',
+      );
+      expect(retriedSibling.issue_id).not.toBeNull();
+      expect(retriedSibling.observation?.status).toBe('reported_complete');
+      expect(retriedSibling.host_reservation?.receipt.attempt.attempt_id).not.toBe(noEffect.attempt_id);
+      const originalWriter = requiredValue(
+        journalItems.find(
+          (item) => item.request.stage_id === 'develop_task' && item.observation?.status === 'reported_complete',
+        ),
+        'original completed writer Journal item',
+      );
+      expect(originalWriter.host_reservation).toBeDefined();
+      expect(originalWriter.observation?.host_attempt_id).toBe(
+        originalWriter.host_reservation?.receipt.attempt.attempt_id,
+      );
+      expect(
+        before.work.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === originalWriter.host_reservation?.receipt.attempt.attempt_id,
+        )?.status,
+      ).toBe('completed');
       const request = {
         identity: f.identity,
         attempt: 1,
@@ -778,6 +993,7 @@ test(
         userInstructionRef: 'fixture:host-corrective-owner',
         config: f.config,
       };
+      expect(request.stageIds).not.toContain(noEffect.stage_id);
       const lookup = {
         identity: f.identity,
         attempt: request.attempt,

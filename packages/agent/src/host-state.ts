@@ -1235,6 +1235,31 @@ export function completedSourceJournalObservationMatches(
   );
 }
 
+function completedSourceTicketEpochMatches(
+  attempts: readonly AssignmentAttempt[],
+  currentLease: AssignmentAttempt['lease'],
+  openGeneration: number,
+): boolean {
+  const ticketId = currentLease.ticket_id;
+  const predecessorByRetryLease = new Map<string, AssignmentAttempt['lease'] | null>();
+  for (const attempt of attempts) {
+    if (attempt.lease.ticket_id !== ticketId || attempt.status !== 'no_effect') continue;
+    const retryLease = attempt.reconciliation!.retry_lease!;
+    const key = canonicalJson(retryLease);
+    const predecessor = predecessorByRetryLease.get(key);
+    if (predecessor === undefined) predecessorByRetryLease.set(key, attempt.lease);
+    else if (!sameJson(predecessor, attempt.lease)) predecessorByRetryLease.set(key, null);
+  }
+  let origin = currentLease;
+  for (let remaining = attempts.length; remaining > 0; remaining -= 1) {
+    const predecessor = predecessorByRetryLease.get(canonicalJson(origin));
+    if (predecessor === undefined) break;
+    if (!predecessor || predecessor.generation + 1 !== origin.generation) return false;
+    origin = predecessor;
+  }
+  return origin.generation === openGeneration;
+}
+
 function buildCompletedSourceReportExecutionOnlyHandoff(
   ledger: CoordinationLedger,
   prior: CoordinationTicket,
@@ -1267,6 +1292,7 @@ function buildCompletedSourceReportExecutionOnlyHandoff(
       ...prior,
       ticket_id: ticketId,
       sequence: ledger.next_sequence,
+      generation: ledger.open_generation,
       contour_keys: [...new Set([...prior.contour_keys.filter((key) => !key.startsWith('file:')), ...resources])],
       exclusive_resources: resources,
       active_resources: resources,
@@ -1281,7 +1307,7 @@ function buildCompletedSourceReportExecutionOnlyHandoff(
       ticket_id: ticketId,
       work_id: prior.work_id,
       thread_id: prior.thread_id,
-      generation: prior.generation,
+      generation: ledger.open_generation,
       resources,
       lease_expires_at: expiry,
       status: 'active',
@@ -17281,7 +17307,7 @@ export class HostStateStore {
       prior &&
         sameJson(completed.lease, work.lease) &&
         prior.status === 'active' &&
-        prior.generation === ledger.open_generation &&
+        completedSourceTicketEpochMatches(work.execution.assignment_attempts, work.lease, ledger.open_generation) &&
         prior.thread_id === work.lease.thread_id &&
         prior.generation === work.lease.generation &&
         prior.expires_at !== null &&
@@ -17313,7 +17339,7 @@ export class HostStateStore {
           lease: {
             ticket_id: handoff.executionTicket.ticket_id,
             thread_id: prior.thread_id,
-            generation: prior.generation,
+            generation: handoff.executionTicket.generation,
           },
         },
         nextLedger: handoff.nextLedger,
