@@ -586,6 +586,11 @@ Journal-table absence and governance on denial and stale retry; compare the full
 successful Work/Ledger and decoded Host. This fixture never creates a Journal or
 executes a release/deployment effect. Arm failure retention before setup and keep
 the existing default5s bound.
+Before the positive freeze, use the same genuine ready predecessor to refuse a
+new digest-correct frozen-contour proposal with empty ticket/work lists. Preserve
+exact Host rows, explicitly absent Journal and governance, a closed transaction
+and the decoded predecessor. The schema/reference checks permit empty lists;
+the progress seed guard must remain and provide the exact domain denial.
 
 The retired-source capture case pairs the active overlapping-writer denial
 with a genuine active disjoint peer admitted through the same fixture's public

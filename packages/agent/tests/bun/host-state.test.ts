@@ -16633,11 +16633,34 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     (decision) => {
       preserveHostFixtureRoot = 'case failed or timed out';
       const deadline = performance.now() + 5_000;
+      const rows = () => ({
+        host: database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all(),
+        journalSchema: database
+          .query<SqliteNameRow, []>("SELECT name FROM sqlite_master WHERE name='agent_host_mastra_session_ledger'")
+          .all(),
+      });
       const initial = commitHostState(fixture());
       const ready = next(initial);
       ready.nextWork.lease = null;
       firstTicket(ready.nextLedger).status = 'ready_for_handoff';
       const readySaved = commitHostState(ready);
+
+      const emptyFreeze = next(readySaved);
+      const { contour_digest: _emptyDigest, ...emptyContour } = frozenContour(emptyFreeze.nextLedger);
+      emptyContour.ticket_ids = [];
+      emptyContour.work_ids = [];
+      emptyFreeze.nextLedger.contours.push({ ...emptyContour, contour_digest: canonicalJsonDigest(emptyContour) });
+      emptyFreeze.nextLedger.open_generation++;
+      const readyRows = rows();
+      expect(readyRows.journalSchema).toEqual([]);
+      const readyGovernance = governanceRows();
+      expect(() => commitHostState(emptyFreeze)).toThrow(
+        'open generation requires one frozen prior-generation contour',
+      );
+      expect(rows()).toEqual(readyRows);
+      expect(governanceRows()).toEqual(readyGovernance);
+      expect(database.inTransaction).toBe(false);
+      expect(store.readHostStateSnapshot(identity)).toEqual(readySaved);
 
       const freeze = next(readySaved);
       const contour = frozenContour(freeze.nextLedger);
@@ -16693,12 +16716,6 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       const build = next(assured);
       build.nextLedger.batches.push(batch);
       const built = commitHostState(build);
-      const rows = () => ({
-        host: database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all(),
-        journalSchema: database
-          .query<SqliteNameRow, []>("SELECT name FROM sqlite_master WHERE name='agent_host_mastra_session_ledger'")
-          .all(),
-      });
       const journalBefore = rows().journalSchema;
       expect(journalBefore).toEqual([]);
       const governanceBefore = governanceRows();

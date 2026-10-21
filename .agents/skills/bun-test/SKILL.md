@@ -25,6 +25,10 @@ denial assertions alone need not increase Istanbul's visited-operand counts.
 An empty missing-function group does not mean there are no uncovered statements
 or branch arms. Read each exact counter and its own retained gap list before
 classifying the contour or asking for another scan.
+Before removing a guard as dominated, verify the exact schema's minimum list
+length and the validator's empty-list semantics. Reference checks using `every`
+can pass an empty list without proving that a later lookup has a seed. Preserve
+the guard and exercise the public refusal when the preceding contract allows it.
 Before declaring a fixture absent, inspect every test path in the contour's
 existing selection. A missing direct call in one selected file is not a contour
 prerequisite GAP; another selected file may own the real producer and fixture.
