@@ -1022,6 +1022,21 @@ unresolved file ownership during generic CAS, and asynchronous proof rejection
 before writes. Windows replacement checks include hardlinks and same-byte target,
 staging and result substitution. Git hook checks retain unrelated index entries.
 
+Configured-Host same-owner renewal reuses the genuinely issued UNKNOWN repair
+fixture. Advance its already-held clock without waiting while the original
+lease is still live; require a later future expiry, canonical Host Source-root
+callback, exact Work/execution/lease identity and only the specified ledger
+expiry/timestamp/revision changes. Journal bytes and digest stay identical while
+its revision advances once. Governance and initial-source history do not change.
+Subsequent repair uses the fresh post-renewal CAS and preserves the original
+UNKNOWN reservation and commit_unknown approval. Keep the existing20s bound.
+
+The absent-Work case separately supplies an explicitly malformed raw SDK DTO
+through bound-method Reflect.apply, without casting or weakening nonnull version
+types. Renewal and expired recovery must refuse before verifier or Journal lookup,
+leaving native Host rows, workspace and catalog identical with a closed transaction.
+This is untyped runtime refusal, not nullable API support or accepted lease state.
+
 `native-delivery-evidence-repair.test.ts` covers the fixed stale qualification
 reset. It checks the original uninstalled operation and archive, review, reverse,
 scope and CLEAR bytes and directory membership, complete protected dependency

@@ -698,6 +698,43 @@ test('absent Work exposes no continuation or corrective authority and leaves sto
       userInstructionRef: 'fixture:absent-work-read',
     }),
   ).toBeNull();
+  const hostRows = database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id');
+  const absentRows = hostRows.all();
+  let leaseVerifications = 0;
+  // Raw runtime DTOs deliberately violate the nonnull TypeScript version contract.
+  const malformedLeaseRequest = {
+    identity,
+    attempt: 1,
+    nativeSessionHandle: 'absent-owner',
+    generation: 1,
+    expectedWork: null,
+    expectedLedger: null,
+    expectedJournal: { revision: 1, digest: '0'.repeat(64) },
+    expectedMaintenanceGeneration: store.readHostStateSnapshot(identity).maintenanceGeneration,
+    verifyCurrent: () => {
+      leaseVerifications++;
+      throw new Error('Absent Work must not reach a lease verifier');
+    },
+  };
+  for (const variant of [
+    {
+      invoke: store.renewActiveLocalLease.bind(store),
+      message: 'lease renewal owner, fencing identity or live expiry differs',
+    },
+    {
+      invoke: store.recoverExpiredLocalLease.bind(store),
+      message: 'expired lease recovery owner, fencing identity or live expiry differs',
+    },
+  ]) {
+    expect(() => {
+      Reflect.apply(variant.invoke, undefined, [malformedLeaseRequest]);
+    }).toThrow(variant.message);
+    expect(leaseVerifications).toBe(0);
+    expect(hostRows.all()).toEqual(absentRows);
+    expect(store.readWorkspaceSnapshot()).toEqual(before);
+    expect(catalog.all()).toEqual(schemaBefore);
+    expect(database.inTransaction).toBe(false);
+  }
   expect(store.readWorkspaceSnapshot()).toEqual(before);
   expect(catalog.all()).toEqual(schemaBefore);
 });
@@ -8578,6 +8615,87 @@ test(
         if (performance.now() >= deadline) throw new Error('Unknown repair reservation exceeded its case deadline');
         const host = initialSourceHostStore(f);
         let db = initialSourceHostDatabase(f);
+        const governance = () =>
+          db.query('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key').all();
+        const history = () =>
+          db
+            .query<{ payload: string; digest: string }, [string, string]>(
+              'SELECT payload,digest FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
+            )
+            .get(host.workspaceId, f.identity.work_id);
+        const renewalBefore = readPresentSnapshot(host, f.identity);
+        const renewalJournal = requiredValue(host.readWorkSessionJournal(f.identity), 'Renewal native Journal');
+        const renewalRows = readFixtureHostRows(db);
+        const renewalGovernance = governance();
+        const renewalHistory = history();
+        if (!renewalHistory) throw new Error('Renewal native initial Source history is missing');
+        const renewalLease = requiredLease(renewalBefore.work);
+        const renewalTicket = requiredValue(
+          renewalBefore.ledger.tickets.find((ticket) => ticket.ticket_id === renewalLease.ticket_id),
+          'original renewal owner ticket',
+        );
+        const priorExpiry = requiredValue(renewalTicket.expires_at, 'original renewal owner expiry');
+        const renewalAt = Date.now() + 1000;
+        expect(Date.parse(priorExpiry)).toBeGreaterThan(renewalAt);
+        setSystemTime(new Date(renewalAt));
+        let renewalProofs = 0;
+        const renewed = presentSnapshot(
+          host.renewActiveLocalLease({
+            identity: f.identity,
+            attempt: 1,
+            nativeSessionHandle: renewalLease.thread_id,
+            generation: renewalLease.generation,
+            expectedWork: renewalBefore.workVersion,
+            expectedLedger: renewalBefore.ledgerVersion,
+            expectedJournal: renewalJournal.version,
+            expectedMaintenanceGeneration: renewalBefore.maintenanceGeneration,
+            verifyCurrent: (work, currentJournal, sourceRoot) => {
+              renewalProofs++;
+              expect(work).toEqual(renewalBefore.work);
+              expect(currentJournal).toEqual(renewalJournal.state);
+              expect(sourceRoot).toBe(f.root);
+            },
+          }),
+        );
+        expect(renewalProofs).toBe(1);
+        expect(renewed.work).toEqual({
+          ...renewalBefore.work,
+          revision: renewalBefore.work.revision + 1,
+          lifecycle: { ...renewalBefore.work.lifecycle, revision: renewalBefore.work.lifecycle.revision + 1 },
+        });
+        expect(renewed.ledger.revision).toBe(renewalBefore.ledger.revision + 1);
+        const renewedTicket = requiredValue(
+          renewed.ledger.tickets.find((ticket) => ticket.ticket_id === renewalLease.ticket_id),
+          'renewed original owner ticket',
+        );
+        const renewedExpiry = requiredValue(renewedTicket.expires_at, 'renewed original owner expiry');
+        expect(Date.parse(renewedExpiry)).toBeGreaterThan(Date.now());
+        expect(Date.parse(renewedExpiry)).toBeGreaterThan(Date.parse(priorExpiry));
+        expect(renewed.ledger).toEqual({
+          ...renewalBefore.ledger,
+          revision: renewalBefore.ledger.revision + 1,
+          tickets: renewalBefore.ledger.tickets.map((ticket) =>
+            ticket.ticket_id === renewalLease.ticket_id ? { ...ticket, expires_at: renewedExpiry } : ticket,
+          ),
+          claims: renewalBefore.ledger.claims.map((claim) =>
+            claim.ticket_id === renewalLease.ticket_id && claim.status === 'active'
+              ? { ...claim, lease_expires_at: renewedExpiry, renewed_at: new Date(renewalAt).toISOString() }
+              : claim,
+          ),
+        });
+        expect(host.readWorkSessionJournal(f.identity)).toEqual({
+          ...renewalJournal,
+          version: { ...renewalJournal.version, revision: renewalJournal.version.revision + 1 },
+        });
+        expect(readFixtureHostRows(db).journal).toEqual(
+          renewalRows.journal.map((row) =>
+            row.work_id === f.identity.work_id && row.attempt === 1 ? { ...row, revision: row.revision + 1 } : row,
+          ),
+        );
+        expect(governance()).toEqual(renewalGovernance);
+        expect(history()).toEqual(renewalHistory);
+        expect(db.inTransaction).toBe(false);
+        if (performance.now() >= deadline) throw new Error('Unknown repair renewal exceeded its case deadline');
         const peerPath = 'docs/PEER.md';
         writeFileSync(path.join(f.root, peerPath), 'Disjoint peer source\n');
         const peerInput = f.preparePeerAdmission('initial-peer-journal', [peerPath]);
@@ -8672,16 +8790,8 @@ test(
         const rawReservation = recordAt(rawItem, 'host_reservation');
         stripFixtureAssignmentAuthority(recordAt(rawReservation, 'receipt').attempt);
         stripFixtureAssignmentAuthority(recordAt(recordAt(rawReservation, 'authorization'), 'receipt').attempt);
-        const governance = () =>
-          db.query('SELECT * FROM agent_host_governance ORDER BY workspace_id,store_id,kind,record_key').all();
         const retainedGovernance = governance();
         expect(retainedGovernance.length).toBeGreaterThan(0);
-        const history = () =>
-          db
-            .query<{ payload: string; digest: string }, [string, string]>(
-              'SELECT payload,digest FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
-            )
-            .get(host.workspaceId, f.identity.work_id);
         const retainedHistory = history();
         if (!retainedHistory) throw new Error('Unknown repair native initial Source history is missing');
         const request = { operationId: 'native-unknown-authority-repair' };

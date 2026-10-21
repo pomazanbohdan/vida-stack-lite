@@ -22,6 +22,8 @@ Reuse exact zero-count branch-arm lists as well as missing function IDs. Check
 their count against the same report's branch deficit and preserve explicit
 implicit-if range labels. Select causal cases from actual gaps; additional
 denial assertions alone need not increase Istanbul's visited-operand counts.
+Check the actual Source expression at each retained zero-arm location; a nearby
+repeated predicate or shared function owner does not identify that counter.
 An empty missing-function group does not mean there are no uncovered statements
 or branch arms. Read each exact counter and its own retained gap list before
 classifying the contour or asking for another scan.
@@ -32,6 +34,11 @@ the guard and exercise the public refusal when the preceding contract allows it.
 Distinguish validated stored state from a public builder's unvalidated DTO input.
 Keep malformed negative DTOs outside persistence and authority; require the
 public refusal and exact native beforeimages, not an accepted fabricated state.
+For untyped SDK runtime refusal, an explicitly malformed raw DTO can use the
+existing bound-method `Reflect.apply` convention. Keep nonnull TypeScript API
+contracts intact, discard the result, and prove the verifier was never called,
+native rows/schema stayed unchanged and the transaction closed. Do not cast the
+DTO into valid input or use a snapshot helper that needs an absent Journal table.
 An omitted compatibility/history field in a corrupted current receipt can prove
 a fail-closed reader path. Preserve exact guarded restoration and label that
 negative evidence honestly; it does not establish genuine legacy acceptance.

@@ -14,24 +14,27 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-9808afa9ff9e565ec3c85adc62a6fa75c753218f, run
-57b2fbd5-56f2-4bc9-b973-7952f5492638, projection attempts1184.
+130936feaccba9c7331a472c6175aaa873fce238, run
+58320f8a-c332-4f52-b4e8-5924c978b267, projection attempts1186.
 F/L are exact100; S/B remain BLOCKED/nonexact. A historical maximum or
 projection row is not new-HEAD acceptance. Documentation-only checkpoints do
 not relabel the original Source/image binding or require a duplicate suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs336cases/5706assertions
-in187868.966638ms. Host and stopped-source children take181.37s and121.52s.
-The expanded UNKNOWN repair case takes14567.02ms and the runtime-history omission
-case5075.78ms, both within their unchanged20s limits. On the preceding301f0e7 input,
+unchanged boot/image and automatic publication. It runs336cases/5716assertions
+in190358.324033ms. Host and stopped-source children take182.84s and112.59s.
+The expanded UNKNOWN repair case takes9385.34ms and the runtime-history omission
+case5570.61ms, both within their unchanged20s limits. On the preceding301f0e7 input,
 rollback recovery takes11285.36ms, terminal-history10513.03ms and commit14353.91ms,
 inside their unchanged20s bounds. Their setup/body durations are respectively
 8534.562180/2681.446340ms,8226.978271/2233.735166ms and9936.795345/4320.610447ms.
 The preceding rollback timeout does not recur in this complete instrumented run.
 These are measurements of this input, not a controlled performance comparison.
-The report-only join retains4statement/103branch-arm gaps, no missing function
-or line: F1126/1126,L4978/4978,S5304/5308,B5499/5602. Runtime-history omission
+The report-only join retains4statement/102branch-arm gaps, no missing function
+or line: F1126/1126,L4978/4978,S5304/5308,B5500/5602. Mixed/current Journal
+inspection and null-scope peer preparation gain one actual arm visit versus
+9808afa with unchanged denominators. Do not infer gains from assertion counts
+or a nearby repeated predicate. Runtime-history omission
 and the real foreign Journal gain one statement and four actual arm visits versus
 301f0e7 with unchanged denominators. runtimeBindingHistoryRecords now has no
 missing arms. Real corrective start and
@@ -75,12 +78,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-4196h5/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1331-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1331-scratch-parent.json and DIAG/remainder-v1331-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1331-cache-retirement-4196h5/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-4196h5-Ws4ofO/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-OPP3QY |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-1uELV7/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1337-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1337-scratch-parent.json and DIAG/remainder-v1337-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1337-cache-retirement-1uELV7/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-1uELV7-hELXnm/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-rbT4ga |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -89,7 +92,7 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-3074359296bytes and retained tmpfs9188204544bytes available, both above the
+3006976000bytes and retained tmpfs9183416320bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
@@ -447,17 +450,58 @@ configured lint0 and1case/173assertions pass9.95s,8517.98ms native, in
 current-journal-v1333-c1vdmx. All original oracles and20s limit remain. The earlier
 case's governance/history closures move before the new inspect phase, preventing
 an inspection side effect from becoming an expected later beforeimage. Numeric
-qualification remains pending; standalone timing is not a controlled speedup.
+qualification is recorded in the complete130936f stage above; standalone timing
+is not a controlled speedup.
 Final blind1334 review at vida-peer-null-scope-final-review-v1334.md finds no
 actionable defect in null-scope preparation, identity, no-issue and cleanup guards;
 it reads Root's focused evidence without executing checks. The null Journal
 snapshot does not clear the Work's source binding or qualify a Source effect.
 Final pin is sealed once at remainder-v1335-test-pin.json. Runner strict122,
 configured lint0 and the existing namespace control pass in
-remainder-v1335-controls-01LKlP. Publish through ordinary hooks and use one matching
-SDK/image/stage for these related mixed/current Journal states.
+remainder-v1335-controls-01LKlP. Ordinary hooks pass format520/strict527 and normal
+push publishes130936f. Its matching SDK/image/stage is retained above.
 
-1. Select the next causal S/B packet from the current4statement/103arm gap list;
+The next configured-Host lease packet reuses that same genuine UNKNOWN fixture.
+Read current Work/Ledger/Journal CAS, advance the already-held clock by1s without
+waiting, and renew through the public same-owner API. Require a genuinely later
+future expiry, unchanged lease identity/execution/UNKNOWN item, exact native Journal
+payload/digest with one revision advance, callback snapshots and canonical Source
+root, and unchanged governance/initial-source history. Later repair uses fresh
+post-renewal versions. Blind1336 study is retained in
+vida-bound-host-renewal-review-v1336.md. The first held-clock probe passes in
+bound-renewal-v1338-ScftQs,1case/186assertions11.36s. The stronger elapsed-clock
+variant passes strict149/lint0 and1case/188assertions14.50s,12909.63ms native, in
+bound-renewal-v1339-BDvznG. No new setup, effect replay or larger case budget.
+
+Blind1340 adjudicates the distinct untyped runtime boundary in
+vida-unadmitted-lease-dto-review-v1340.md. The absent-Work case now supplies a
+clearly malformed raw DTO through the existing bound-method Reflect.apply seam,
+with null versions that remain invalid under the unchanged TypeScript contract.
+Both public lease methods must refuse at the owner guard with zero verifier calls,
+unchanged native Host rows/workspace/catalog and closed transactions. No accepted
+state or fabricated Journal. Root uses the existing Host-only query instead of
+the review's suggested snapshot helper, which requires the absent Journal table.
+1342 strict149 passes but configured lint rejects two unbound method references;
+runtime is unattempted. Bind those methods without suppression, then1344 passes
+strict149/lint0 and1case/25assertions1.57s,95.20ms native, in
+absent-lease-v1344-0yrhYg. Original1342 logs remain.
+Final blind1343 review at vida-lease-pair-final-review-v1343.md finds no blocking
+ownership/CAS/UNKNOWN issue. Its unused-completed suggestion is not present in
+the assigned case; Root checks current bytes and the actual configured lint0,
+so makes no unrelated deletion. This review is Source-only and did not inspect
+the native logs independently. The final shared pin is sealed once in
+remainder-v1345-test-pin.json; runner strict122/lint0 and the existing two-file
+namespace control pass in remainder-v1345-controls-Bmjmyc. Ordinary publication
+and one matching selected-contour stage remain next; no numeric gain claimed yet.
+
+The related serializer study vida-restored-result-cache-review-v1341.md finds
+no positive missing-restored seam: the decoder requires and validates the frozen
+restored list before serialization. Keep that exact GAP and add no redundant
+denial probe. The actual10781 expression is restored-list fallback; the nearby
+10654 normalization predicate is a different counter. Review hypotheses need
+the exact retained Source expression before numeric claims.
+
+1. Select the next causal S/B packet from the current4statement/102arm gap list;
    keep the same contour and preserve its qualified F/L paths. Bind every test
    filter alternative before launch; reuse actual fixtures and retained geometry.
 2. Check changed behavior statically and with its direct named callers, review,
