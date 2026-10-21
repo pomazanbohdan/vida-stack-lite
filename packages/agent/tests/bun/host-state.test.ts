@@ -741,7 +741,7 @@ test('absent Work exposes no continuation or corrective authority and leaves sto
 
 test('completed Source report rejects a stale retry root even when its current fence equals the admission epoch', async () => {
   await createFailedFinalCorrectionFixture('failed', {
-    noEffectSibling: true,
+    noEffectRetry: 'same-slot',
     verifyInitialNoEffectReport({
       store: host,
       ledger,
@@ -825,7 +825,7 @@ test(
   'completed Source report accepts repeated exact no-effect retries and replays the terminal observation',
   async () => {
     const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
-    const f = await createFailedFinalCorrectionFixture('failed', { noEffectSibling: true, noEffectRetries: 2 });
+    const f = await createFailedFinalCorrectionFixture('failed', { noEffectRetry: 'same-slot', noEffectRetries: 2 });
     let completed = false;
     let primaryFailure: { error: unknown } | undefined;
     try {
@@ -907,7 +907,7 @@ test(
   'Host corrective authorization preserves all three CAS boundaries and only authorizes the failed closure',
   async () => {
     const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
-    const f = await createFailedFinalCorrectionFixture('failed', { noEffectSibling: true });
+    const f = await createFailedFinalCorrectionFixture('failed', { noEffectRetry: 'next-writer' });
     let completed = false;
     let primaryFailure: { error: unknown } | undefined;
     try {
@@ -967,7 +967,7 @@ test(
       );
       expect(retriedSibling.issue_id).not.toBeNull();
       expect(retriedSibling.observation?.status).toBe('reported_complete');
-      expect(retriedSibling.host_reservation?.receipt.attempt.attempt_id).not.toBe(noEffect.attempt_id);
+      expect(retriedSibling.host_reservation).toBeUndefined();
       const originalWriter = requiredValue(
         journalItems.find(
           (item) => item.request.stage_id === 'develop_task' && item.observation?.status === 'reported_complete',
@@ -978,11 +978,18 @@ test(
       expect(originalWriter.observation?.host_attempt_id).toBe(
         originalWriter.host_reservation?.receipt.attempt.attempt_id,
       );
-      expect(
+      const originalWriterAttempt = requiredValue(
         before.work.execution.assignment_attempts.find(
           (attempt) => attempt.attempt_id === originalWriter.host_reservation?.receipt.attempt.attempt_id,
-        )?.status,
-      ).toBe('completed');
+        ),
+        'completed different-slot writer attempt',
+      );
+      expect(originalWriterAttempt.status).toBe('completed');
+      expect(originalWriterAttempt.previous_attempt_id).toBeNull();
+      expect(originalWriterAttempt.stage_id).not.toBe(noEffect.stage_id);
+      expect(originalWriterAttempt.lease).toEqual(
+        requiredValue(noEffect.reconciliation.retry_lease, 'next-slot retry lease'),
+      );
       const request = {
         identity: f.identity,
         attempt: 1,

@@ -238,8 +238,8 @@ Static1430 catches the expected-ticket nullable comparison before execution;
 Root requires that actual ticket. Final1431 passes test149 strict/lint0 and all
 three changed cases3PASS/201assertions19.77s in DIAG/retry-packet-v1431-KZuoxf.
 No per-case/stage/resource budget, generic retry validator or frozen ceiling changes.
-The different-slot ticket-wide producer remains an explicit test prerequisite GAP;
-the reviewed graph supports it structurally, but same-slot proof is not relabelled.
+The different-slot ticket-wide producer is investigated separately below;
+same-slot proof is not relabelled as that producer's evidence.
 Independent1429 approves the actual stale-root public producer, beforeimages,
 observer typing and owned success/failure cleanup. Its report is retained in DIAG.
 Root refreshes the Host test pin once after final formatting;1432 passes runner122
@@ -249,6 +249,33 @@ are fully tar-compared into DIAG/worker-retirement-v1433-LONDrH before retiremen
 retention.json records base/owners/paths and retirement.json records free bytes
 before/after. No disk gain or reattestation is claimed. Runtime databases, failed
 roots, SDKs and original numeric evidence remain untouched.
+
+The packet is normally committed/pushed ase1ad268 with format520/strict527 hooks;
+DIAG/retry-publication-v1434-UQavpb retains terminal commit/push and clean Source
+observations. No SDK/image/stage started for that intermediate Source while Root
+resolves the remaining different-slot producer. The earlier blind premise was too
+narrow: after a real unissued action is reconciled no_effect, its ordinary
+unreserved synthesis report advances the configured workflow without releasing
+the file ticket. The later actual CLI writer uses that exact retry lease on a
+different stage and has null previous_attempt_id. This uses no synthetic accepted
+history, private export, database patch or new engine transition.
+Root replaces the fixture's boolean with a two-case noEffectRetry enum and shares
+the same evidence/reconciliation producer. The existing corrective authorization
+case selects next-writer and adds exact lease/slot/predecessor assertions;1435
+passes test149 strict/lint0 and1PASS/168assertions8.72s in
+DIAG/cross-slot-v1435-Fy7Oyw.1437 rechecks only the changed shared fixture's
+same-slot positive and stale-root controls2PASS/36assertions11.38s in
+DIAG/cross-slot-controls-v1437-LfW0Iv. The untouched Source/static and default
+final-assurance controls are reused. This closes that focused producer GAP;
+numeric coverage, frozen correspondence and mutation remain unclaimed.
+Independent1436 approves the real different-slot CLI sequence and fixture-owned
+no-provider-entry evidence, without claiming external provider attestation or
+Runtime acceptance. Root retains its report in DIAG, updates the Bun-test skill's
+dispatcher/early-phase technique, and refreshes the changed test pin once.
+1438 passes runner122 strict/lint0 and the namespace control1PASS/10assertions314ms
+in DIAG/cross-slot-controls-v1438-WBLsyk. Source code and its prior checks remain
+unchanged frome1ad268; only the stronger fixture/test bindings need a new complete
+selected-contour measurement after ordinary publication.
 
 The renewed13:05–16:05UTC audit attaches to this same cycle and reuses the earlier
 script review/resources rather than rescanning. It finds no additional confirmed

@@ -75,7 +75,7 @@ export interface FailedFinalCorrectionFixture {
 
 interface FailedFinalCorrectionFixtureOptions {
   readonly preparationInputs?: false;
-  readonly noEffectSibling?: boolean;
+  readonly noEffectRetry?: 'same-slot' | 'next-writer';
   readonly noEffectRetries?: number;
   readonly verifyInitialNoEffectReport?: (input: {
     readonly store: HostStateStore;
@@ -217,7 +217,7 @@ export async function reportFailedFinalValidatorWave(input: {
 export function createFailedFinalCorrectionFixture(
   outcome: FinalCorrectionOutcome,
   options: FailedFinalCorrectionFixtureOptions & {
-    readonly noEffectSibling: true;
+    readonly noEffectRetry: 'same-slot';
     readonly verifyInitialNoEffectReport: NonNullable<
       FailedFinalCorrectionFixtureOptions['verifyInitialNoEffectReport']
     >;
@@ -361,7 +361,7 @@ export async function createFailedFinalCorrectionFixture(
       host = new HostStateStore(
         fixture.database,
         fixture.store.workspaceId,
-        options?.noEffectSibling ? createLocalSessionReconciliationVerifier(fixture.root) : undefined,
+        options?.noEffectRetry ? createLocalSessionReconciliationVerifier(fixture.root) : undefined,
         undefined,
         undefined,
         undefined,
@@ -394,7 +394,7 @@ export async function createFailedFinalCorrectionFixture(
     await bridge.start(source);
     let journal = sync();
     let completeNoEffectRetry: ((observation: SessionBridgeObservation) => Promise<void>) | undefined;
-    if (options?.noEffectSibling) {
+    if (options?.noEffectRetry) {
       if (
         journal.state.items.length !== 1 ||
         journal.state.items[0]?.issue_id !== null ||
@@ -499,6 +499,7 @@ export async function createFailedFinalCorrectionFixture(
           journal,
           configDigest: runtimeConfigDigest(fixture.config),
         });
+        if (options.noEffectRetry === 'next-writer' && retryIndex + 1 === retryCount) break;
         const retryReservation = await reserveCurrentItem();
         if (
           retryReservation.receipt.attempt.previous_attempt_id !== noEffectAttempt.attempt_id ||
@@ -508,16 +509,18 @@ export async function createFailedFinalCorrectionFixture(
           throw new Error('No-effect fixture retry differs from the exact current-action fence');
         reservation = retryReservation;
       }
-      const finalRetryReservation = reservation;
-      completeNoEffectRetry = async (observation) => {
-        const execution = await openAdmittedSessionExecution(fixture.root, host, 'sample', id);
-        const capability = execution.composition.workflowExecutionCapability;
-        if (!capability) throw new Error('No-effect fixture retry completion capability is unavailable');
-        await completeWorkflowAssignmentForSession(capability, finalRetryReservation, observation);
-      };
-      journal = requireSnapshot(
-        ledger.issueWave(id, 1, journal.version, { [item.request.action_id]: finalRetryReservation }),
-      );
+      if (options.noEffectRetry === 'same-slot') {
+        const finalRetryReservation = reservation;
+        completeNoEffectRetry = async (observation) => {
+          const execution = await openAdmittedSessionExecution(fixture.root, host, 'sample', id);
+          const capability = execution.composition.workflowExecutionCapability;
+          if (!capability) throw new Error('No-effect fixture retry completion capability is unavailable');
+          await completeWorkflowAssignmentForSession(capability, finalRetryReservation, observation);
+        };
+        journal = requireSnapshot(
+          ledger.issueWave(id, 1, journal.version, { [item.request.action_id]: finalRetryReservation }),
+        );
+      } else journal = requireSnapshot(ledger.issueWave(id, 1, journal.version));
     } else journal = requireSnapshot(ledger.issueWave(id, 1, journal.version));
     const suspendedStepId = journal.state.step_id;
     if (suspendedStepId === null) throw new Error('Initial fixture workflow has no suspended synthesis step');

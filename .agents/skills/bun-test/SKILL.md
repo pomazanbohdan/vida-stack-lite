@@ -48,6 +48,15 @@ alone does not prove that both retained reports are consistent.
 Before declaring a fixture absent, inspect every test path in the contour's
 existing selection. A missing direct call in one selected file is not a contour
 prerequisite GAP; another selected file may own the real producer and fixture.
+Trace the actual report dispatcher rather than infer it from a stage's role.
+A synthesis item with a real Host reservation can enter the completed Source
+report boundary. Conversely, a reconciled unissued action can resume through its
+ordinary unreserved report and leave the exact ticket fence for a later writer.
+Prove that later writer's different slot, null predecessor and exact retained
+retry lease through the public producer. A released ticket observed after the
+report does not show which ticket was current when that report was accepted.
+For a pre-report refusal, stop an opt-in fixture at that verified boundary instead
+of preparing unrelated later workflow stages; preserve normal failure retention.
 After moving proof setup between cases, check the next report for lost closure
 and branch visits even when every case passes. Preserve required queued/active
 states in compatible existing cases and keep their original per-case bounds.
