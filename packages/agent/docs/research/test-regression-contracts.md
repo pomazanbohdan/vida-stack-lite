@@ -907,6 +907,15 @@ both snapshot/open denials, unchanged operation rows and exact snapshot restore.
 Release-retarget checks use inert data. Cover same operation/version, bounded release-field changes, pointer absence, sealed archive/log custody, active/failed/UNKNOWN/install-started denial, admission/worker exclusion, planning reservation and source/path/archive drift. Check known-phase interruption, lost ACK and legitimate later worker progress. Local logs cannot replace trusted delivery evidence.
 
 Consumer migration keeps canonical DB/WAL/SHM paths and a consistent backup. Partition work children. Restore semantic beforeimages under maintenance/CAS with synchronous idempotent callbacks. Deny inflight or UNKNOWN state before callbacks. Exact retry receives no new initial backup. Keep the fence through interrupted restore.
+The public wrapper also accepts absent workflow storage without creating a
+workflow triplet. Reuse its existing case matrix for a throwing callback followed
+by exact normal retry. For close faults, reuse the filename-filtered native-close
+component seam and existing retained-close owner: capture exactly one receiver,
+check transaction/operation-row rollback or commit, restore the spy before retrying
+close, preserve workflow triplet bytes, then prove same-operation convergence.
+Assert exact nested error identities and order for body Error, thrown undefined
+and successful body outcomes. Carry assertion failures through owned cleanup.
+Keep5s cases and distinguish this component proof from a native disk failure.
 
 The first admitted new-work attempt closes rollback, even if preparation fails. Initialization alone does not. A cutoff witness and current bindings must prove that boundary. Verify writer/verifier integrity against the same persisted JSON bytes. Do not claim that filesystem and SQL effects are jointly atomic.
 

@@ -7586,9 +7586,11 @@ test(
           { kind: 'item', message: 'Mastra session ledger item shape is invalid' },
           { kind: 'items', message: 'Mastra session ledger items are invalid' },
           { kind: 'completed', message: 'Mastra completed waves are invalid' },
+          { kind: 'completed-wave', message: 'Mastra completed wave shape is invalid' },
         ]) {
           const changed = parseJsonRecord(retainedJournal.payload);
           if (variant.kind === 'items' || variant.kind === 'completed') changed[variant.kind] = null;
+          else if (variant.kind === 'completed-wave') arrayAt(changed, 'completed').push(null);
           else {
             const changedItems = arrayAt(changed, 'items');
             if (variant.kind === 'item') changedItems[0] = null;
@@ -10568,7 +10570,15 @@ test('TaskSource projection repair rolls back native faults and retries only its
   preserveHostFixtureRoot = false;
 });
 
-test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
+test.each([
+  'baseline-restore',
+  'callback-retry',
+  'inflight-denial',
+  'absent-workflow',
+  'close-error',
+  'close-undefined',
+  'close-return',
+] as const)(
   'consumer migration wrapper %s preserves private workflow bytes and exact operation identity',
   async (mode) => {
     const deadline = performance.now() + 5_000;
@@ -10586,20 +10596,22 @@ test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
         });
         const config = loadRuntimeConfig(root);
         const workflowPath = sessionBridgeDatabasePath(root, config);
-        mkdirSync(path.dirname(workflowPath), { recursive: true });
-        // Controlled terminal JSON rows exercise the wrapper's classifier, not a real engine run.
-        const workflow = new Database(workflowPath, { strict: true });
-        try {
-          workflow.exec('CREATE TABLE mastra_workflow_snapshot (snapshot TEXT NOT NULL)');
-          const insert = workflow.query('INSERT INTO mastra_workflow_snapshot VALUES (?)');
-          for (const status of mode === 'inflight-denial'
-            ? ['running']
-            : ['success', 'failed', 'suspended', 'canceled'])
-            insert.run(JSON.stringify({ status, fixture_only: 'terminal-workflow-classification' }));
-        } finally {
-          workflow.close(true);
+        if (mode !== 'absent-workflow') {
+          mkdirSync(path.dirname(workflowPath), { recursive: true });
+          // Controlled terminal JSON rows exercise the wrapper's classifier, not a real engine run.
+          const workflow = new Database(workflowPath, { strict: true });
+          try {
+            workflow.exec('CREATE TABLE mastra_workflow_snapshot (snapshot TEXT NOT NULL)');
+            const insert = workflow.query('INSERT INTO mastra_workflow_snapshot VALUES (?)');
+            for (const status of mode === 'inflight-denial'
+              ? ['running']
+              : ['success', 'failed', 'suspended', 'canceled'])
+              insert.run(JSON.stringify({ status, fixture_only: 'terminal-workflow-classification' }));
+          } finally {
+            workflow.close(true);
+          }
         }
-        const workflowBefore = readFileSync(workflowPath);
+        const workflowBefore = mode === 'absent-workflow' ? null : readFileSync(workflowPath);
         const input = {
           repositoryRoot: root,
           operationId: 'fixture-native-migration',
@@ -10619,6 +10631,18 @@ test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
           expect(calls).toBe(0);
           expect(existsSync(path.join(root, config.control.work_root, 'session-handoff.v1.sqlite'))).toBe(false);
         }
+        if (mode === 'absent-workflow') {
+          const failure = new Error('fixture absent-workflow callback failure');
+          const rejected = await rejectionReason(
+            runConsumerMigrationState({ ...input, mode: 'baseline' }, () => {
+              calls++;
+              throw failure;
+            }),
+          );
+          expect(rejected).toBe(failure);
+          expect(calls).toBe(1);
+          for (const suffix of ['', '-wal', '-shm']) expect(existsSync(workflowPath + suffix)).toBe(false);
+        }
         if (mode === 'inflight-denial') {
           expectedInflight = true;
           const rejected = await rejectionReason(
@@ -10631,7 +10655,7 @@ test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
             throw rejected;
           }).toThrow('consumer workflow run remains unknown or inflight');
           expect(calls).toBe(0);
-          expect(readFileSync(workflowPath)).toEqual(workflowBefore);
+          expect(readFileSync(workflowPath)).toEqual(requiredValue(workflowBefore, 'workflow byte preimage'));
           if (performance.now() >= deadline) throw new Error('Migration inflight denial exhausted its deadline');
           completed = true;
           return;
@@ -10646,7 +10670,87 @@ test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
           );
           expect(rejected).toBe(failure);
           expect(calls).toBe(1);
-          expect(readFileSync(workflowPath)).toEqual(workflowBefore);
+          expect(readFileSync(workflowPath)).toEqual(requiredValue(workflowBefore, 'workflow byte preimage'));
+        }
+        if (mode === 'close-error' || mode === 'close-undefined' || mode === 'close-return') {
+          const primary = mode === 'close-error' ? new Error('fixture migration body failure') : undefined;
+          const closeFailure = new Error('fixture migration native close failure');
+          const nativeClose: unknown = Reflect.get(Database.prototype, 'close');
+          if (typeof nativeClose !== 'function') throw new Error('Native SQLite close method is missing.');
+          const target = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+          const tripletBefore = ['', '-wal', '-shm'].map((suffix) =>
+            existsSync(workflowPath + suffix) ? readFileSync(workflowPath + suffix) : null,
+          );
+          let closeCalls = 0;
+          const retainedHandles = new Set<Database>();
+          let restore = () => {};
+          let rejected: unknown;
+          let probeFailure: { error: unknown } | undefined;
+          try {
+            rejected = await rejectionReason(
+              runConsumerMigrationState({ ...input, mode: 'baseline' }, () => {
+                calls++;
+                const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+                  this: Database,
+                  ...args: Parameters<Database['close']>
+                ) {
+                  if (this.filename === target) {
+                    retainedHandles.add(this);
+                    closeCalls++;
+                    throw closeFailure;
+                  }
+                  Reflect.apply(nativeClose, this, args);
+                });
+                restore = () => closeSpy.mockRestore();
+                if (mode !== 'close-return') throw primary;
+                return 'observed metadata callback';
+              }),
+            );
+            expect(retainedHandles.size).toBe(1);
+            const retained = firstOf([...retainedHandles], 'migration database retained for close retry');
+            expect(retained.inTransaction).toBe(false);
+            expect(
+              retained
+                .query('SELECT operation_id FROM agent_host_consumer_migration WHERE operation_id=?')
+                .all(input.operationId),
+            ).toEqual(mode === 'close-return' ? [{ operation_id: input.operationId }] : []);
+          } catch (error) {
+            probeFailure = { error };
+            throw error;
+          } finally {
+            completeOwnedCleanup(
+              [
+                () => {
+                  restore();
+                },
+                () => {
+                  retryPendingWorkspaceDatabaseCloses();
+                },
+              ],
+              probeFailure,
+            );
+          }
+          expect(closeCalls).toBe(1);
+          expect(calls).toBe(1);
+          expect(rejected).toBeInstanceOf(AggregateError);
+          if (!(rejected instanceof AggregateError)) throw new Error('Migration did not retain its close failure');
+          if (mode === 'close-return') {
+            expect(rejected.errors).toHaveLength(1);
+            expect(rejected.errors[0]).toBe(closeFailure);
+          } else {
+            expect(rejected.errors).toHaveLength(2);
+            expect(rejected.errors[0]).toBe(primary);
+            const cleanup: unknown = rejected.errors[1];
+            expect(cleanup).toBeInstanceOf(AggregateError);
+            if (!(cleanup instanceof AggregateError)) throw new Error('Migration close failure is missing');
+            expect(cleanup.errors).toHaveLength(1);
+            expect(cleanup.errors[0]).toBe(closeFailure);
+          }
+          expect(
+            ['', '-wal', '-shm'].map((suffix) =>
+              existsSync(workflowPath + suffix) ? readFileSync(workflowPath + suffix) : null,
+            ),
+          ).toEqual(tripletBefore);
         }
         const run = async (phase: 'baseline' | 'restore', hasBackup: boolean) => {
           if (performance.now() >= deadline) throw new Error('Migration wrapper fixture exhausted its case deadline');
@@ -10666,9 +10770,11 @@ test.each(['baseline-restore', 'callback-retry', 'inflight-denial'] as const)(
             status: phase === 'baseline' ? 'baseline' : 'restored',
             result: calls,
           });
-          expect(readFileSync(workflowPath)).toEqual(workflowBefore);
+          if (mode === 'absent-workflow') {
+            for (const suffix of ['', '-wal', '-shm']) expect(existsSync(workflowPath + suffix)).toBe(false);
+          } else expect(readFileSync(workflowPath)).toEqual(requiredValue(workflowBefore, 'workflow byte preimage'));
         };
-        await run('baseline', true);
+        await run('baseline', mode !== 'close-return');
         await run('baseline', false);
         await run('restore', false);
         if (mode === 'baseline-restore') await run('restore', false);
