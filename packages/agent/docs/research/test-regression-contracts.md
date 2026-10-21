@@ -386,6 +386,13 @@ These are Host component seams, not kernel issuance or provider observations.
 Queued TaskSource stale-policy controls reuse the actual callback's typed
 prepared operation/CAS and native queued snapshot; change only ephemeral expected
 Work revision/digest and preserve native rows, prepared metadata and absent root.
+An exact current Work version with a mismatching prepared-record revision is a
+separate pure CAS denial. A foreign execution-only peer may use the existing
+fixture's real Journal and public preparation; preparation alone creates neither
+an action nor a Source root. Check its absent current binding alongside the
+original Work's drift denial and historical snapshot, preserving all native and
+prepared rows. Fixture verifier callbacks remain component seams, not external
+authorization or provider-execution proof.
 
 Current writer report atomically persists the Journal and releases Source
 ownership. It cannot create the older split state needed to test the final

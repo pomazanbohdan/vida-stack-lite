@@ -2708,6 +2708,43 @@ test('historical task-source snapshots select observed roots and fence corrupted
     expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBefore);
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(reserved);
     expect(f.store.reportTaskSourceBindingOperation(reportInput)).toEqual(observed);
+    const peer = f.seedPeerReservation({ workId: 'historical-source-peer', executionOnly: true });
+    const peerHost = presentSnapshot(peer.host);
+    const peerRoot = path.join(f.root, 'foreign-unissued-task-source');
+    const peerRequest: TaskSourceBindingRequest = {
+      ...f.request,
+      operation_id: 'foreign-source-prepared',
+      request_id: 'foreign-source-prepared-request',
+      work_id: peer.identity.work_id,
+      thread_id: peer.thread_id,
+      source_root: peerRoot,
+      branch_ref: 'refs/heads/codex/foreign-unissued-source',
+      expected_host: {
+        work: peerHost.workVersion,
+        ledger: peerHost.ledgerVersion,
+        journal: { attempt: 1, version: peer.journal.version },
+        maintenance_generation: peerHost.maintenanceGeneration,
+      },
+    };
+    const peerPrepared = f.store.prepareTaskSourceBindingOperation({
+      request: peerRequest,
+      identity: peer.identity,
+      verifyCurrent: f.trustedVerifyCurrent,
+    });
+    expect(peerPrepared.status).toBe('prepared');
+    const withPeerRows = readFixtureHostRows(f.database);
+    const preparedPeerRows = f.database.query(
+      'SELECT * FROM agent_host_task_source_binding_operation ORDER BY operation_id',
+    );
+    const withPeerPreparations = preparedPeerRows.all();
+    expect(f.store.readCurrentTaskSourceBinding(peer.identity, peer.thread_id, 1)).toBeNull();
+    expect(() => f.store.readCurrentTaskSourceBinding(f.identity, f.request.thread_id, 1)).toThrow(
+      'current task Source bytes differ from the durable Host journal scope',
+    );
+    expect(f.store.snapshotHistoricalTaskSourceSources(input).entries).toEqual([taskEntry]);
+    expect(readFixtureHostRows(f.database)).toEqual(withPeerRows);
+    expect(preparedPeerRows.all()).toEqual(withPeerPreparations);
+    expect(existsSync(peerRoot)).toBe(false);
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -2874,6 +2911,20 @@ test('task-source policy denials preserve preparation and queued retries preserv
         }),
       ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
     }
+    expect(() =>
+      createTaskSourceMutationPolicyRequest({
+        repositoryRoot: queuedPolicy.repositoryRoot,
+        operation: {
+          ...queuedPolicy.operation,
+          request: {
+            ...f.request,
+            expected_host: { ...f.request.expected_host, work: reserved.workVersion },
+          },
+        },
+        preparedStateVersion: { ...queuedPolicy.stateVersion, revision: queuedPolicy.stateVersion.revision + 1 },
+        hostSnapshot: reserved,
+      }),
+    ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
     expect(readFixtureHostRows(f.database)).toEqual(queuedNativeBefore);
     expect(preparedRows.all()).toEqual(originalPreparedRows);
     expect(existsSync(sourceRoot)).toBe(false);

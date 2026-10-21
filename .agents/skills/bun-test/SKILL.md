@@ -191,6 +191,12 @@ reuse that actual typed input for pure negative variants. A generic JSON-shaped
 preparation result still needs validation; do not spread unknown fields or cast
 them into authority. Preserve native beforeimages and scope the result to the
 component boundary actually exercised.
+Before declaring a peer fixture prerequisite missing, inspect its existing
+builder: Host admission and Journal initialization may already be present.
+Reuse that state through public preparation, then distinguish prepared metadata,
+issued actions and observed effects. Preserve both native rows and preparation
+rows across read-only controls; do not manufacture a successful action to cover
+an absent-binding path.
 
 SQLite catalog tests include legal user names that resemble the internal prefix,
 such as sqliteXledger and SQLiteXarchive. SQL LIKE treats underscore as a
