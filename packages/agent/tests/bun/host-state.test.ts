@@ -7296,6 +7296,112 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
           const recoveredRows = readFixtureHostRows(initialSourceHostDatabase(f));
           expect(() => reopened.recoverExpiredLocalLease(expiredRequest)).toThrow('state compare-and-swap conflict');
           expect(readFixtureHostRows(initialSourceHostDatabase(f))).toEqual(recoveredRows);
+
+          const renewalBefore = initialSourceState(f);
+          const renewalJournal = initialSourceJournal(f);
+          const renewalOwner = requiredLease(renewalBefore.work);
+          const renewalTicket = requiredValue(
+            renewalBefore.ledger.tickets.find((ticket) => ticket.ticket_id === renewalOwner.ticket_id),
+            'Accepted-report renewal ticket',
+          );
+          const completedWriter = requiredValue(
+            renewalBefore.work.execution.assignment_attempts.find(
+              (attempt) => attempt.attempt_id === issued.hostAttemptId,
+            ),
+            'Accepted-report completed writer',
+          );
+          expect(completedWriter).toMatchObject({
+            status: 'completed',
+            result: observation,
+            result_digest: canonicalJsonDigest(observation),
+          });
+          expect(renewalJournal.state).toEqual(acceptedJournal.state);
+          expect(
+            renewalJournal.state.items.some(
+              (item) => item.host_reservation?.receipt.attempt.attempt_id === issued.hostAttemptId,
+            ),
+          ).toBe(true);
+          const renewalAt = Date.now() + 1_000;
+          expect(
+            Date.parse(requiredValue(renewalTicket.expires_at, 'Accepted-report renewal ticket expiry')),
+          ).toBeGreaterThan(renewalAt);
+          setSystemTime(new Date(renewalAt));
+          let renewalVerifierCalls = 0;
+          const renewed = presentSnapshot(
+            reopened.renewActiveLocalLease({
+              identity: f.identity,
+              attempt: 1,
+              nativeSessionHandle: renewalOwner.thread_id,
+              generation: renewalOwner.generation,
+              expectedWork: renewalBefore.workVersion,
+              expectedLedger: renewalBefore.ledgerVersion,
+              expectedJournal: renewalJournal.version,
+              expectedMaintenanceGeneration: renewalBefore.maintenanceGeneration,
+              verifyCurrent: (work, journal, sourceRoot) => {
+                renewalVerifierCalls += 1;
+                expect(work).toEqual(renewalBefore.work);
+                expect(journal).toEqual(renewalJournal.state);
+                expect(sourceRoot).toBe(f.root);
+              },
+            }),
+          );
+          expect(renewalVerifierCalls).toBe(1);
+          expect(renewed.work.revision).toBe(renewalBefore.work.revision + 1);
+          expect(renewed.work.lifecycle.revision).toBe(renewalBefore.work.lifecycle.revision + 1);
+          expect(renewed.work.execution.assignment_attempts).toEqual(renewalBefore.work.execution.assignment_attempts);
+          expect(renewed.ledger.revision).toBe(renewalBefore.ledger.revision + 1);
+          const renewedJournal = initialSourceJournal(f);
+          expect(renewedJournal.state).toEqual(renewalJournal.state);
+          expect(renewedJournal.version).toEqual({
+            revision: renewalJournal.version.revision + 1,
+            digest: renewalJournal.version.digest,
+          });
+          const renewedOwner = requiredLease(renewed.work);
+          const renewedTicket = requiredValue(
+            renewed.ledger.tickets.find((ticket) => ticket.ticket_id === renewedOwner.ticket_id),
+            'Accepted-report renewed ticket',
+          );
+          expect(renewedOwner).toEqual(renewalOwner);
+          expect(
+            Date.parse(requiredValue(renewedTicket.expires_at, 'Accepted-report renewed ticket expiry')),
+          ).toBeGreaterThan(Date.parse(requiredValue(renewalTicket.expires_at, 'Accepted-report prior ticket expiry')));
+
+          const successorId = 'initial-source-successor';
+          const successorSeed = f.preparePeerAdmission(successorId, ['docs/PEER.md']);
+          const predecessorOwner = renewedOwner.thread_id;
+          const successorScopePath = path.join(f.root, successorSeed.scopePath);
+          const successorScope = parseJsonRecord(readFileSync(successorScopePath, 'utf8'));
+          recordAt(successorScope, 'attribution').thread_id = predecessorOwner;
+          writeFileSync(successorScopePath, canonicalJson(successorScope) + '\n');
+          const successorAuthorizationPath = requiredValue(
+            successorSeed.sourceAuthorizationPath,
+            'successor Source authorization path',
+          );
+          const successorAuthorization = parseJsonRecord(
+            readFileSync(path.join(f.root, successorAuthorizationPath), 'utf8'),
+          );
+          successorAuthorization.native_session_handle = predecessorOwner;
+          writeFileSync(path.join(f.root, successorAuthorizationPath), canonicalJson(successorAuthorization) + '\n');
+          const successorSeedForOwner = { ...successorSeed, store: reopened, nativeSessionHandle: predecessorOwner };
+          const predecessorJournalBeforeAdmission = initialSourceJournal(f);
+          const predecessorWorkBeforeAdmission = initialSourceState(f).work;
+          const reservedItems = [
+            ...predecessorJournalBeforeAdmission.state.items,
+            ...predecessorJournalBeforeAdmission.state.completed.flatMap((wave) => wave.items),
+          ].filter((item) => item.host_reservation !== undefined);
+          expect(
+            reservedItems.some((item) => item.host_reservation?.receipt.attempt.attempt_id === issued.hostAttemptId),
+          ).toBe(true);
+          const successorAdmission = admitLocalSessionWork(successorSeedForOwner);
+          expect(successorAdmission.host.work?.request_transition?.predecessor_work_ids).toEqual([f.identity.work_id]);
+          const absorbed = presentSnapshot(reopened.readHostStateSnapshot(f.identity));
+          expect(absorbed.work.request_transition?.successor_work_id).toBe(successorId);
+          expect(absorbed.work.execution.assignment_attempts).toEqual(
+            predecessorWorkBeforeAdmission.execution.assignment_attempts,
+          );
+          expect(initialSourceJournal(f)).toEqual(predecessorJournalBeforeAdmission);
+          expect(absorbed.work.execution.status).toBe('suspended');
+          expect(absorbed.work.lease).toBeNull();
         }
         peers.verifyUnchanged();
         console.info(
@@ -8391,10 +8497,21 @@ test('successor admission atomically releases predecessor rights and rejects cha
   expect(store.readHostStateSnapshot(identity)).toEqual(first);
   expect(store.readHostStateSnapshot({ ...identity, work_id: 'successor' }).work).toBeNull();
   store.completeWorkflowAttempt(attempt, { summary: 'Original retained implementation result.' });
-  first = readPresentSnapshot(store, identity);
+  const completedPredecessor = readPresentSnapshot(store, identity);
+  const gate = store.openReconciliationGate(reconciliationBinding(completedPredecessor));
+  expect(gate.status).toBe('open');
+  first = commitHostState(next(completedPredecessor));
+  expect(store.readReconciliationGate()).toMatchObject({
+    status: 'closed',
+    binding: gate.binding,
+    closed_work_version: first.workVersion,
+    closed_ledger_version: first.ledgerVersion,
+  });
+  expect(store.readWorkSessionJournal(identity)?.state).toEqual(journal);
   request = {
     ...request,
     expectedLedger: first.ledgerVersion,
+    nextLedger: { ...request.nextLedger, revision: first.ledger.revision + 1 },
     predecessors: request.predecessors.map((entry) => ({ ...entry, expectedWork: first.workVersion })),
   };
   const firstPredecessor = request.predecessors[0];

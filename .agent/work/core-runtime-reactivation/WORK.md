@@ -10,16 +10,16 @@ F/L/S/B100. Root owns Source integration, Git and the sole numeric producer.
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
 
-The owner's2026-10-21 instruction enlarges the current correction packet to all
-remaining bun-host-state gaps before the next full stage. Sourcec86cff9 already
-contains the focused-checked uncertain retirement path, but no new numeric run
-has started. Six blind Source-only studies cover the latest retained gap owners:
+The owner's2026-10-21 instruction requires reviewing all remaining bun-host-state
+gaps before the next full stage. The publisheded1a21d packet includes the
+focused-checked uncertain retirement path fromc86cff9 and the six blind
+Source-only studies covering the preceding retained gap owners:
 TaskSource1382, stopped/retired1383, continuations1384, stored history/repair1385,
 producer fences1386 and recovery/assurance1387. Each writes only its named
 /tmp/vida-*-batch-v138{2,3,4,5,6,7}.md artifact. Root integrates Source, retains
 the outcomes and owns all focused checks/Git/final numbers. Each gap needs an
-actionable real producer or an exact documented blocker. No new full SDK/image
-or coverage stage until this batch is reconciled; no fabricated state or weakened
+actionable real producer or an exact documented blocker. The completed measurement
+and current follow-up packet are recorded below. No fabricated state or weakened
 guard, denominator exemption or budget change closes a gap.
 
 All six studies have returned. The five written reports and recovery join1391
@@ -90,6 +90,81 @@ DIAG/remainder-v1398-predecessor-gap-map.json. The batch gains14actual arm visit
 and removes two previously missing redundant fallbacks. Four total arms disappear,
 including two previously covered arms; these denominator changes are not new
 execution. No mutation/frozen lane or other contour is scheduled.
+
+### Current follow-up packet
+
+The owner's renewed analysis/partition instruction keeps this same contour and
+numeric owner. Reports1399 and1400 recommend retaining the TaskSource readers
+and producer-fence guard: proposed shared projections or capability plumbing
+remove no live work and would complicate distinct validation rules. Report1401
+identifies the original failed-final store's missing verifier and absence of a
+current unissued action after completion. These three Source-only reports are
+retained in DIAG under their original basenames; they establish no coverage.
+
+Three independent Luna tasks partition proposals againstb211bdb in ordinary
+isolated output directories, without canonical writes or duplicated checks.
+1403 prepares opt-in no-effect setup and the first corrective-authorization case.
+1404 returns a supported completed-report recovery -> live renewal -> successor
+proposal, integrated by Root and focused-PASS. Root corrects its journal
+observation to use the real Journal reader, not fields absent from HostStateSnapshot.
+The normalized repair receipt mismatch still has no supported producer.
+1405 confirms the current code-workflow validator requires one develop assignment;
+whole-wave issuance cannot supply an inert unissued sibling, and a pending target
+cannot already belong to completed history. No speculative patch is integrated.
+Both terminal preparation directories are byte/mode-compared into
+DIAG/worker-preparation-v1404-v1405 and retired under its retention.json and
+retirement.json manifests. Durable free bytes are unchanged; this is custody
+cleanup, not a claimed resource gain. No fabricated accepted history, alternative
+store bypass or new engine transition is permitted.
+Root's pending closed-gate successor path has strict149/lint0 and1PASS/33assertions
+in DIAG/closed-gate-successor-v1402-Axx2Nl. Independent review1406 approves the exact
+DIAG/closed-gate-successor-v1402.patch; its report is retained in DIAG.
+The packet has no numeric result. The changed Host test pin is refreshed once
+in DIAG/remainder-v1414-test-pin.json. Runner strict122/lint0 and the existing
+two-file namespace control pass1case/10assertions305ms in
+DIAG/remainder-v1415-controls-RRujf9. An earlier1414 invocation selected the wrong
+Source tsconfig and stopped before lint/runtime; its93import/declaration
+diagnostics remain in DIAG/remainder-v1414-controls-M5OXzP. The corrected command
+uses the maintained tooling/tsconfig.json, without changing either config.
+
+Static1408 stops on an un-narrowed nullable decision reference; Root moves the
+assertion after the existing reference guard.1409 passes strict149/lint0 and
+executes all three selected cases: completed-report renewal/successor PASS,
+unchanged default final-assurance PASS, opt-in no-effect FAIL. The failure is
+not a timeout. DIAG/remainder-v1409-aLjCmT retains2PASS/1FAIL/199total assertions
+and the full22.79s result. Original failed root/tmp/vida-absorption-BaUzbe remains
+protected. Root reads its native database readonly once: current lease/ticket/
+claim generation2, ledger.open_generation1, original attempt no_effect and retry
+completed, no unresolved Host attempt. The Source report guard requires ticket
+and open generations to match. Diagnosis1410 finds no public fixture sequencing
+repair preserving the exact retry lease. Independent contract review1411 confirms
+the supported same-ticket retry contract conflicts with report/new-ticket epoch
+checks. Broader Runtime impact is conditional, not established by this
+synthesis-with-file-rights fixture.
+
+Root withdraws that failed opt-in from canonical Source, preserving its exact
+corrected diff in DIAG/noeffect-v1410-parent-unvalidated.patch and all worker
+drafts. The successful renewal/successor and closed-gate additions remain.
+Review1412 requires preserving the full predecessor Journal version/digest after
+successor admission, not merely its state. Root corrects that assertion;1413
+passes strict149/lint0 and the changed commit-mode case1PASS/94assertions13.61s
+in DIAG/remainder-v1413-BWml60. The unchanged default case's1409 PASS is reused.
+No report guard or generation policy is relaxed, and no failed fixture is replayed.
+Resolve the generation contract before treating this candidate as a supported
+no-effect coverage path. Review1411 recommends exact retry-chain provenance rooted
+at the current global epoch and new execution-ticket/claim/Work lease at that
+epoch. Root additionally requires a stale-root denial when its numeric retry
+generation happens to equal a newer global epoch; equality alone must not bypass
+chain provenance. Global generation/peer fencing and existing new-ticket checks
+remain unchanged until this coordinated correction has its own proof.
+The terminal no-effect preparation directory is fully archived and tar-compared
+in DIAG/noeffect-v1410-retention before retirement. Its original failed runtime
+root and logs remain retained. DIAG/vida-noeffect-diagnosis-v1410.md and
+DIAG/vida-retry-generation-contract-v1411.md own the two independent conclusions.
+Blind Luna1416 prepares a bounded host-state.ts proposal only in
+/workspace/vida-retry-epoch-source-v1416-KaRvWW; Root alone may integrate/check it.
+No full SDK/image/stage starts before that supported correction or exact blocker
+is reconciled with this packet.
 
 ### Latest complete measurement
 
