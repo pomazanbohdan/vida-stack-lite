@@ -235,7 +235,7 @@ export function useNormalConfigEndpointProof(input: { receipt: ConfiguredFrontie
 }
 
 export function withFrontierJournalFixture(
-  f: Awaited<ReturnType<typeof continuationFixture>>,
+  f: Pick<Awaited<ReturnType<typeof continuationFixture>>, 'db' | 'workspaceId' | 'identity' | 'root'>,
   before: { readonly revision: number; readonly payload: string; readonly digest: string },
   journal: MastraSessionLedgerState,
   action: (version: StateVersion) => undefined,

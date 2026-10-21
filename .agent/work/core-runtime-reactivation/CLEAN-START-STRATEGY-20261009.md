@@ -21,9 +21,11 @@ deferred. TypeScript Source migration is complete; runtime qualification remains
 open. Installation, focused PASS and published code do not establish acceptance.
 
 The latest selected stage is complete and its non-cache scratch has verified
-durable archival. WORK records the qualified cache cleanup that restores current
-retention capacity. Preserve the current image, original scratch and all evidence;
-the next producer still needs fresh admission under the unchanged floor/reserve.
+durable archival. The owner's subsequent exact-path cleanup retires its original
+image; WORK owns the retained last-report/receipt relocation and custody limit.
+Regenerate the next image through the sole producer with fresh admission under
+the unchanged floor/reserve. Retired paths and historical numbers grant no fresh
+qualification; protect remaining evidence outside the explicit cleanup scope.
 
 ## Work sequence
 

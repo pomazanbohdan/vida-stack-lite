@@ -11,6 +11,47 @@ F/L/S/B100 or complete reviewed objective-gap disposition under the owner's
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
 
+### Current checked continuation coverage packet
+
+Root resumes from the relocated last report and existing zero-counter map;
+no old image or UNKNOWN operation is replayed. Blind Luna studies partition
+remaining counters by stored history, terminal capture and continuation owners
+under DIAG/blind-{history-gaps-v1536,terminal-gaps-v1537,remaining-proofs-v1545}.md.
+Their candidates are not dispositions. In particular, an acceptance guard does
+not make its earlier evaluated refusal path untestable; the terminal study gets
+a separate counterexample review before any objective skip is accepted.
+
+The checked packet adds the configured-frontier foreign-owner code-adoption
+refusal and shares its typed request builder with the initial-source refusal.
+Both require no endpoint-verifier call and unchanged native Host/Journal rows.
+The genuine readonly frontier case now temporarily empties its Journal items,
+asserts the public readonly refusal before verification, and restores the exact
+CAS-bound row through the existing shared cleanup owner. Its fixture parameter
+type now names only the four fields that owner actually uses. This is corrupted
+input refusal, not an accepted history or new authority.
+
+The native code-only component case also performs a second public adoption using
+its already prepared successor request. It checks both ordered immutable receipts,
+successive Work revisions, unchanged ledger/Journal and exact retries of both
+historical requests without another endpoint observation. The trusted endpoint
+fixture remains component evidence, not installation or Runtime acceptance.
+
+Strict149-file TypeScript and scoped zero-warning typed lint pass under
+DIAG/host-{strict,lint,format}-v1547.log. Focused evidence is
+DIAG/host-focused-v1541.log:2PASS/154assertions;
+DIAG/host-frontier-focused-v1544.log:1PASS/59assertions; and
+DIAG/host-code-history-v1548.log:1PASS/84assertions.
+The original missing type import and diagnostic lint-helper path failures stay
+in their exclusive earlier logs. No timeout is raised; the readonly case keeps
+its existing20s exception, other cases the default5s. Independent blind review
+DIAG/blind-packet-review-v1549.md passes correctness and the unchanged resource
+scope. Root refreshes only the existing Host test pin; DIAG/pin-strict-v1550.log,
+DIAG/pin-lint-v1550.log and DIAG/pin-focused-v1551.log retain strict123-file PASS,
+zero typed lint diagnostics and1PASS/10assertions for exact two-file isolation.
+Publication and one matching SDK/image/complete contour stage remain pending.
+Coverage gains are hypotheses until that complete report; raw denominators and
+the seven existing branch/two statement dispositions are unchanged.
+
 ### Current retention resource blocker
 
 The owner's later explicit deletion order supersedes the earlier image/archive
@@ -1443,6 +1484,12 @@ receipts and exact case names; additions alone do not establish visited operands
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
+
+The current continuation packet has independent blind correctness/resource PASS
+in DIAG/blind-packet-review-v1549.md. Only the Host file's exact digest changes;
+selected files, namespace/resource rows, shared hooks, clocks and serial fallback
+stay unchanged. The shared Journal-fixture owner changes only its parameter type.
+The pin control passes before publication; no review or pin grants numeric closure.
 
 The current no-effect/continuation packet refreshes only the two existing test
 digests in focusedCoverageShardReview. Blind1517 verifies that the added

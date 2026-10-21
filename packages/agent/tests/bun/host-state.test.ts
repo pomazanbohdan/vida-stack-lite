@@ -194,6 +194,7 @@ import {
   MastraSessionLedger,
   openConfiguredMastraSessionLedger,
   mastraLedgerStatus,
+  type MastraSessionLedgerState,
 } from '../../src/orchestration/persistent-session-handoff.ts';
 import {
   computeEdictumWorkflowApprovalEvidenceDigest,
@@ -426,6 +427,41 @@ function presentSnapshot(snapshot: HostSnapshot): PresentHostSnapshot {
     ledger,
     workVersion,
     ledgerVersion,
+  };
+}
+
+function foreignOwnerRuntimeCodeRequest(
+  workIdentity: WorkIdentity,
+  current: PresentHostSnapshot,
+  journal: { readonly version: StateVersion; readonly state: MastraSessionLedgerState },
+): Parameters<HostStateStore['commitQualifiedRuntimeCodeContinuation']>[0] {
+  const source = requiredValue(journal.state.source_scope, 'foreign-owner code request Source');
+  const codePaths = source.entries.map((entry) => entry.path).sort();
+  return {
+    schema: 'QualifiedRuntimeCodeContinuationRequest/v1',
+    identity: workIdentity,
+    attempt: journal.state.attempt,
+    nativeSessionHandle: requiredLease(current.work).thread_id + '-foreign',
+    leaseGeneration: requiredLease(current.work).generation,
+    expectedWork: current.workVersion,
+    expectedLedger: current.ledgerVersion,
+    expectedJournal: journal.version,
+    expectedMaintenanceGeneration: current.maintenanceGeneration,
+    originalSourceScopeDigest: current.work.binding.work_source_revision,
+    journalSourceScopeDigest: source.digest,
+    oldRuntimeCodeDigest: current.work.binding.runtime_code_digest,
+    currentRuntimeCodeDigest: canonicalJsonDigest('fixture-foreign-owner-code'),
+    oldRuntimeCodePaths: codePaths,
+    currentRuntimeCodePaths: codePaths,
+    oldManifestRef: '.agent/work/fixture-code/old-manifest.json',
+    oldManifestDigest: canonicalJsonDigest('fixture-old-manifest'),
+    oldInstallRef: '.agent/work/fixture-code/old-install.json',
+    currentManifestRef: '.agent/work/fixture-code/new-manifest.json',
+    currentManifestDigest: canonicalJsonDigest('fixture-new-manifest'),
+    currentInstallRef: '.agent/work/fixture-code/new-install.json',
+    systemUpdateRef: '.agent/work/fixture-code/new-install.json',
+    systemUpdateOperationId: 'fixture-foreign-owner-update',
+    nativeSelfAttestationDigest: canonicalJsonDigest('fixture-foreign-owner-attestation'),
   };
 }
 
@@ -4729,6 +4765,17 @@ test('configured continuation lookup exposes the complete prewriter wave and eac
     expect(f.store.readConfiguredFrontierRecoveryView(f.identity, 1)).toEqual(beforeView);
     expect(readFixtureHostRows(f.db)).toEqual(beforeViewRows);
     const beforeJournal = requiredValue(before.journal, 'configured continuation journal');
+    const codeProof = mock(qualifiedRuntimeCodeEndpointFixture);
+    expect(() =>
+      f.store.commitQualifiedRuntimeCodeContinuation(
+        foreignOwnerRuntimeCodeRequest(f.identity, presentSnapshot(before.snapshot), beforeJournal),
+        codeProof,
+      ),
+    ).toThrow('qualified runtime code continuation: owner, Source, run or quiescence differs');
+    expect(codeProof).not.toHaveBeenCalled();
+    expect(readFixtureHostRows(f.db)).toEqual(beforeViewRows);
+    expect(f.store.readConfiguredFrontierRecoveryView(f.identity, 1)).toEqual(beforeView);
+    expect(f.db.inTransaction).toBe(false);
     const beforeItem = requiredValue(before.item, 'configured continuation item');
     const beforeLedger = requiredValue(before.snapshot.ledger, 'configured continuation ledger');
     const beforeTicket = requiredValue(beforeLedger.tickets[0], 'configured continuation ticket');
@@ -6974,32 +7021,7 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
         const codeProof = mock(qualifiedRuntimeCodeEndpointFixture);
         expect(() =>
           store.commitQualifiedRuntimeCodeContinuation(
-            {
-              schema: 'QualifiedRuntimeCodeContinuationRequest/v1',
-              identity: current.identity,
-              attempt: 1,
-              nativeSessionHandle: request.nativeSessionHandle + '-foreign',
-              leaseGeneration: requiredLease(after.work).generation,
-              expectedWork: after.workVersion,
-              expectedLedger: after.ledgerVersion,
-              expectedJournal: journalAfter.version,
-              expectedMaintenanceGeneration: after.maintenanceGeneration,
-              originalSourceScopeDigest: after.work.binding.work_source_revision,
-              journalSourceScopeDigest: source.digest,
-              oldRuntimeCodeDigest: after.work.binding.runtime_code_digest,
-              currentRuntimeCodeDigest: canonicalJsonDigest('fixture-foreign-owner-code'),
-              oldRuntimeCodePaths: [...current.documents].sort(),
-              currentRuntimeCodePaths: [...current.documents].sort(),
-              oldManifestRef: '.agent/work/fixture-code/old-manifest.json',
-              oldManifestDigest: canonicalJsonDigest('fixture-old-manifest'),
-              oldInstallRef: '.agent/work/fixture-code/old-install.json',
-              currentManifestRef: '.agent/work/fixture-code/new-manifest.json',
-              currentManifestDigest: canonicalJsonDigest('fixture-new-manifest'),
-              currentInstallRef: '.agent/work/fixture-code/new-install.json',
-              systemUpdateRef: '.agent/work/fixture-code/new-install.json',
-              systemUpdateOperationId: 'fixture-foreign-owner-update',
-              nativeSelfAttestationDigest: canonicalJsonDigest('fixture-foreign-owner-attestation'),
-            },
+            foreignOwnerRuntimeCodeRequest(current.identity, after, journalAfter),
             codeProof,
           ),
         ).toThrow('qualified runtime code continuation: owner, Source, run or quiescence differs');
@@ -7872,6 +7894,29 @@ test(
           verifierCalls++;
           return verify(candidate, state);
         };
+        const journalRow = requiredValue(
+          db
+            .query<RevisionPayloadDigestSqlRow, [string, string]>(
+              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=1',
+            )
+            .get(host.workspaceId, f.identity.work_id),
+          'readonly frontier native Journal',
+        );
+        withFrontierJournalFixture(
+          { db, workspaceId: host.workspaceId, identity: f.identity, root: f.root },
+          journalRow,
+          { ...prepared.journal.state, items: [] },
+          (expectedJournal) => {
+            const corruptRows = readFixtureHostRows(db);
+            expect(() =>
+              host.commitReadOnlyFrontierRuntimeCode({ ...request, expectedJournal }, checkedVerify),
+            ).toThrow('frontier action is not configured readonly');
+            expect(verifierCalls).toBe(0);
+            expect(readFixtureHostRows(db)).toEqual(corruptRows);
+            expect(db.inTransaction).toBe(false);
+          },
+        );
+        expect(readFixtureHostRows(db)).toEqual(persistedBefore);
         expect(() =>
           host.commitReadOnlyFrontierRuntimeCode(
             { ...request, expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 } },
@@ -8257,6 +8302,36 @@ test('native code-only continuation fences stale proofs and rolls back before ex
   expect(readFileSync(planPath, 'utf8')).toBe('successor prepared plan\n');
   expect(readFixtureHostRows(database)).toEqual(afterRows);
   expect(guarded.readQualifiedRuntimeCodeContinuations(identity, 1)).toEqual([receipt]);
+  const nextReceipt = guarded.commitQualifiedRuntimeCodeContinuation(nextPlanRequest, verify);
+  const next = presentSnapshot(guarded.readHostStateSnapshot(identity));
+  expect(proofCalls).toBe(4);
+  expect(nextReceipt).toMatchObject({
+    status: 'adopted',
+    rights_granted: false,
+    accepted_result: false,
+    runtime_acceptance: false,
+  });
+  expect(next.work.binding.runtime_code_digest).toBe(nextPlanRequest.currentRuntimeCodeDigest);
+  expect(next.workVersion).toEqual(nextReceipt.work_version);
+  expect(next.workVersion.revision).toBe(receipt.work_version.revision + 1);
+  expect(next.ledger).toEqual(initial.ledger);
+  expect(next.ledgerVersion).toEqual(initial.ledgerVersion);
+  expect(readFixtureHostRows(database).journal).toEqual(rows.journal);
+  expect(guarded.readQualifiedRuntimeCodeContinuations(identity, 1)).toEqual([receipt, nextReceipt]);
+  const nextRows = readFixtureHostRows(database);
+  for (const [retry, expected] of [
+    [request, receipt],
+    [nextPlanRequest, nextReceipt],
+  ] as const) {
+    expect(
+      guarded.commitQualifiedRuntimeCodeContinuation(retry, () => {
+        throw new Error('committed history retry must not reobserve endpoints');
+      }),
+    ).toEqual(expected);
+    expect(readFixtureHostRows(database)).toEqual(nextRows);
+  }
+  expect(proofCalls).toBe(4);
+  expect(guarded.readQualifiedRuntimeCodeContinuations(identity, 1)).toEqual([receipt, nextReceipt]);
   if (performance.now() >= deadline) throw new Error('Native code-only continuation exhausted its case deadline');
   preserveHostFixtureRoot = false;
 });
