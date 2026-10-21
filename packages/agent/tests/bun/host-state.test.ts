@@ -3770,6 +3770,8 @@ test('trusted Host continuation atomically retains historical evidence and never
         evidence_refs: ['fixture:historical-review-evidence'],
       }),
     };
+    const originalReportDigest = reportedItem.observation.output_digest;
+    const changedReportDigest = (originalReportDigest.startsWith('0') ? '1' : '0') + originalReportDigest.slice(1);
     for (const variant of [
       { item: issuedItem, status: 'issued' },
       { item: reportedItem, status: 'reported' },
@@ -3803,6 +3805,7 @@ test('trusted Host continuation atomically retains historical evidence and never
         ...reportedItem,
         observation: { ...reportedItem.observation, issue_id: '1727e065-c8d6-4db1-b942-7d22388e7954' },
       },
+      { ...reportedItem, observation: { ...reportedItem.observation, output_digest: changedReportDigest } },
     ]) {
       withFrontierJournalFixture(current, journalRow, { ...journalAfter.state, items: [item] }, () => {
         const controlledRows = readFixtureHostRows(current.db);
@@ -5056,14 +5059,15 @@ function admitDisjointInitialSourcePeers(
   expect(
     peerLedger.claims.find((claim) => claim.ticket_id === activePeer.ticket_id && claim.status === 'active')?.resources,
   ).toEqual(activePeer.active_resources);
-  const peerRows = initialSourceHostDatabase(current).query<HostStateSqlRow, []>(
-    "SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state WHERE kind='work' ORDER BY workspace_id,id",
+  const peerRows = () =>
+    initialSourceHostDatabase(current)
+      .query<HostStateSqlRow, []>(
+        "SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state WHERE kind='work' ORDER BY workspace_id,id",
+      )
+      .all();
+  const originalPeerRows = peerRows().filter((row) =>
+    peers.some((peer) => row.digest === peer.version.digest && row.revision === peer.version.revision),
   );
-  const originalPeerRows = peerRows
-    .all()
-    .filter((row) =>
-      peers.some((peer) => row.digest === peer.version.digest && row.revision === peer.version.revision),
-    );
   expect(originalPeerRows).toHaveLength(peers.length);
   const peerIds = new Set(originalPeerRows.map((row) => row.id));
   const peerWorkIds = new Set(peers.map((peer) => peer.identity.work_id));
@@ -5073,8 +5077,10 @@ function admitDisjointInitialSourcePeers(
     queuedTicket: queuedPeer,
     verifyUnchanged() {
       // These exact bytes/versions were validated by the public admission above.
-      expect(peerRows.all().filter((row) => peerIds.has(row.id))).toEqual(originalPeerRows);
-      const retainedLedger = presentSnapshot(store.readHostStateSnapshot(current.identity)).ledger;
+      expect(peerRows().filter((row) => peerIds.has(row.id))).toEqual(originalPeerRows);
+      const retainedLedger = presentSnapshot(
+        initialSourceHostStore(current).readHostStateSnapshot(current.identity),
+      ).ledger;
       expect(retainedLedger.tickets.filter((ticket) => peerWorkIds.has(ticket.work_id))).toEqual(peerTickets);
       expect(retainedLedger.claims.filter((claim) => peerWorkIds.has(claim.work_id))).toEqual(peerClaims);
       expect(readFileSync(path.join(current.root, peerPath), 'utf8')).toBe('Disjoint peer source\n');
@@ -6454,7 +6460,7 @@ test.each(['rollback', 'commit'] as const)(
         fixture = f;
         if (performance.now() >= deadline)
           throw new Error('Completed Source report fixture setup exhausted its deadline');
-        const peers = mode === 'rollback' ? admitDisjointInitialSourcePeers(f, false) : undefined;
+        const peers = admitDisjointInitialSourcePeers(f, mode === 'commit');
         setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
         clockHeld = true;
         const prepared = await prepareInitialSourceFrontier(f, 'writer');
@@ -6656,7 +6662,10 @@ test.each(['rollback', 'commit'] as const)(
           });
           expect(
             after.ledger.claims.some(
-              (claim) => claim.status === 'active' && claim.resources.some((resource) => resource.startsWith('file:')),
+              (claim) =>
+                claim.work_id === f.identity.work_id &&
+                claim.status === 'active' &&
+                claim.resources.some((resource) => resource.startsWith('file:')),
             ),
           ).toBe(false);
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(receipt);
@@ -6755,7 +6764,7 @@ test.each(['rollback', 'commit'] as const)(
           expect(() => reopened.recoverExpiredLocalLease(expiredRequest)).toThrow('state compare-and-swap conflict');
           expect(readFixtureHostRows(initialSourceHostDatabase(f))).toEqual(recoveredRows);
         }
-        peers?.verifyUnchanged();
+        peers.verifyUnchanged();
         console.info(
           JSON.stringify({
             fixture: 'completed-source-report-host',

@@ -14,19 +14,22 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-28cb28b0faaebd33aa2c573aa764ee6138fa7fc6, run
-5c496e25-8ca8-426d-b259-66c1d482644a, attempt1149.
+b06c3e646a832968da64ed5e7b805dcdcd236731, run
+3631119f-b314-4784-97d3-90396c44e283, attempt1152.
 Coverage remains BLOCKED/nonexact; the pending test additions are not
 measured. A historical maximum or projection row is not new-HEAD acceptance.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. It runs329cases/5232assertions
-in170816.697319ms. Host and stopped-source children take163.13s and120.70s.
-Commit/rollback recovery take10590.71ms/14493.94ms under unchanged20s limits.
+unchanged boot/image and automatic publication. It runs330cases/5315assertions
+in182880.056167ms. Host and stopped-source children take175.49s and131.47s.
+Commit/rollback recovery take11643.83ms/14048.78ms under unchanged20s limits.
 These are measurements of this input, not a controlled performance comparison.
-The measured packet adds3statements/6branch arms with unchanged
-denominators. The report-only join retains14statement/185branch-arm gaps;
-it performs no new AST/Source scan/hash.
+The report-only join retains1function/12statement/173branch-arm gaps.
+One line is uncovered. Denominators changed with the reservation deduplication
+and real restore correction; do not report a raw counter delta as coverage gain.
+The recovery setup move also lost one previously visited queued-resource callback;
+the current repair below addresses that observed regression. The join
+performs no new AST/Source scan/hash.
 
 ## Latest measurement custody
 
@@ -39,12 +42,12 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-U11nyN/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1195-sdk-provider.json |
-| Admission and complete producer log | DIAG/remainder-v1195-scratch-parent.json and DIAG/remainder-v1195-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1195-cache-retirement-U11nyN/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-U11nyN-ONj0My/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-ylGmW3 |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-EsfaqZ/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1218-sdk-provider.json |
+| Admission and complete producer log | DIAG/remainder-v1218-scratch-parent.json and DIAG/remainder-v1218-stage.log |
+| Qualified private-cache retirement | DIAG/remainder-v1218-cache-retirement-EsfaqZ/manifest.json |
+| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-EsfaqZ-H4A5IA/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-vL1cDZ |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
 The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
@@ -53,14 +56,14 @@ and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
 Archive creation/compare preserves its original; it does not re-attest an old run.
 
 A postclosure archive/retirement observation records durable
-4355153920bytes and retained tmpfs9281642496bytes available, both above the
+4219691008bytes and retained tmpfs9270972416bytes available, both above the
 unchanged2147483648floor. Checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
 
 ### Measured packets and regression custody
 
-The complete28cb28b run above includes prepared-peer and adverse-ledger
+The complete b06c3e6 run above includes prepared-peer and adverse-ledger
 controls, corrupt repair Journal refusals, migration body/close error custody,
 corrective artifact retries and unavailable-generation refusals, and non-target
 completed-report history. Source guards, accepted Journal requirements,
@@ -68,7 +71,7 @@ conditional restoration and ordinary positive retries remain unchanged.
 The maintained regression contracts own these obligations. Detailed focused
 outcomes, original failures, independent reviews and preceding measurement
 locators remain in the
-[published28cb28b WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/28cb28b0faaebd33aa2c573aa764ee6138fa7fc6/.agent/work/core-runtime-reactivation/WORK.md).
+[published b06c3e6 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/b06c3e646a832968da64ed5e7b805dcdcd236731/.agent/work/core-runtime-reactivation/WORK.md).
 This replaces completed narratives, not evidence or accepted criteria.
 
 ### Latest failed execution
@@ -92,46 +95,40 @@ passes full tar compare; original /dev/shm/vida-quality-retained-qkuBjH remains.
 Postarchive durable4291043328/tmpfs9275699200available exceed2147483648.
 No image, DB, SDK, original log, failure or shared dependency is deleted.
 
-### Current repair, reader and budget packet
+### Current digest-integrity and queued-peer packet
 
-A real product bug is reproduced in historical-planned-v1210-7x2zKA: repeated
-restore of a planned unapplied request-transition repair throws restored repair
-changed. The serializer incorrectly records post-apply revisions although the
-writer preserves the original Work. Source now records the actual planned or
-applied frozen target, validates only those exact transforms and preserves the
-recorded postimage on retry. No new public schema, DB read or authority is added.
-Malformed restored-image refusal, operation/row CAS and current-state checks stay.
-Contradictory pre-fix v1 records remain fail-closed; their shape cannot distinguish
-an old serializer bug from subsequent Work drift. No historical state is repaired
-or replayed. Review vida-planned-restore-fix-review-v1213.md finds no blocker.
+The historical continuation reader accepts a structurally valid observation with
+a false summary output_digest after its Journal row digest is recomputed. The
+public report producer and configured reader reject that input. RED is retained
+in historical-digest-red-v1219-d6kMul; the controlled caller is returned reported
+instead of refused. Source adds the same canonical summary-digest check beside
+the existing action/issue binding. No new producer, rights or API is added.
+vida-historical-report-digest-review-v1219.md binds the existing contract.
 
-The existing historical continuation case adds controlled issued/reported reader
-states and malformed empty issue/action/issue-link refusals through the maintained
-Journal CAS/restore helper. Native rows, immutable receipt, lookup and healthy
-retry remain exact. No actual reviewer effect is claimed. The existing retired
-Source case corrupts only its real later writer's sole Journal digest, requires
-the missing-valid-terminal-evidence refusal and restores its exact row before
-healthy capture. It is a negative witness check, not a positive unrelated-row skip.
-Strict153/configured zero-warning lint and5cases/367assertions pass13.64s in
-repair-witness-v1214-NY3hmp. The stopped case takes10119.15ms under its unchanged
-existing60s bound. No extra fixture/root or timeout increase is introduced.
+The previous numeric report identifies the lost recovery callback exactly at
+image Source17522. Distribute peers between existing cases: rollback keeps one
+actual active peer; commit now keeps both active and queued peers, so the public
+recovery evaluates the queued-resource predicate. Full FIFO/TaskSource probes
+remain with the native legacy frontier. No fixture or deadline is added.
+The commit's original workspace-wide no-file-claims oracle was overbroad once
+a genuine foreign active peer was present. Retain its original refusal in
+digest-recovery-v1220-rpGCqa; scope release to the current Work and require exact
+peer preservation. The helper resolves the fixture's current DB/store after
+real close/reopen, preserving byte oracles without closed prepared handles.
+vida-recovery-peer-reopen-review-v1223.md finds no blocking mismatch.
 
-Recovery keeps an actual active disjoint peer and its existing unchanged-row/
-ticket/claim/file oracle. The helper's queued second peer is omitted only there;
-the full pair, earlier nonoverlapping FIFO assertion and exact TaskSource probe
-move into the existing native legacy frontier case. Readonly history, actual
-writer reservation, rollback trigger, receipt/CAS and healthy retry remain.
-Strict149/configured lint and3cases/155assertions pass16.48s overall in
-rollback-scope-v1216-jpZPap: rollback11335.04ms, setup8534.697532ms/body2711.360907ms;
-frontier3457.17ms. This isolated run is not a controlled full-stage speedup.
-Keep original v1215-99U2a3 static failure; it launches no runtime. The review's
-original claim that recovery lacked peers.verifyUnchanged was incorrect; final
-vida-rollback-scope-review-v1217.md verifies the preserved oracle and finds no
-blocker. Final exact coverage for the changed Source/tests remains pending.
-Both changed test pins are refreshed once. Their strict123-file closure,
-configured lint and1case/10assertions pass326ms in
-remainder-v1218-controls-iBEFy3. Changed documentation checks5documents/24links
-with no failures. These are static/control evidence, not numeric closure.
+Strict149/configured zero-warning lint and5cases/479assertions pass30.65s in
+digest-recovery-v1221-02inv6. Rollback11199.33ms/commit12354.85ms fit existing20s.
+The remaining readonly-frontier helper caller passes1case/53assertions6.59s
+overall,5016.62ms under its existing20s bound in peer-reopen-caller-v1222-SFJjLi.
+The first grouped regex used an absent alias for that caller; the exact declared
+case was then checked alone, reusing unchanged strict/lint proof. No passing
+group was repeated. Future groups must bind every alternative to declarations.
+Original failures and retained roots stay unchanged. Final exact coverage for
+these Source/test bytes remains pending.
+The changed Host test pin is refreshed once; stopped-Source pin is unchanged.
+Strict123/configured lint and1case/10assertions pass326ms in
+remainder-v1224-controls-Wg30WU. Changed documentation links/headings pass.
 
 ### Three-hour audit:2026-10-21 02:29–05:29 UTC
 
@@ -176,8 +173,8 @@ walk or deletion is justified. Original failed roots and durable evidence stay.
 
 ### Next actions and unresolved prerequisites
 
-1. Publish checked planned-restore correction, reader/witness controls and the
-   narrowed recovery/frontier setup.
+1. Publish checked historical digest-integrity correction and mode-specific
+   recovery peers with post-reopen verification.
    Preserve exact GAPs for unsupported paths.
    Review the final diff, refresh the changed test pin once, run its narrow control
    and documentation check, then ordinary commit/push.
@@ -215,8 +212,8 @@ Keep these specific unresolved paths open:
 | Combination | Evidence and decision |
 | --- | --- |
 | Static-first causal group, bounded independent read-only review, one SDK/image/stage | Selected. Actual type errors stop runtime before costly fixture setup. |
-| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage170.817s with both native exits0 and complete custody. |
-| Fully serial files | Protocol fallback only; concurrent child times sum283.83s. That sum is a planning quantity, not measured serial elapsed time or current admission. |
+| Two reviewed serial-file children | Selected under the exact pins. Latest complete stage182.880s with both native exits0 and complete custody. |
+| Fully serial files | Protocol fallback only; concurrent child times sum306.96s. That sum is a planning quantity, not measured serial elapsed time or current admission. |
 | Full stage per assertion or unchanged failure | Reject. Resolve the causal premise/owner, then measure changed coherent inputs once. |
 | Wider test pools or competing compilers/index/cleanup | Unqualified. Keep current clocks, worker/memory caps and sole numeric owner. |
 

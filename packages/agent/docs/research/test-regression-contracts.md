@@ -138,10 +138,16 @@ file preservation oracle. The existing native legacy frontier case owns the
 full active/queued peer pair, earlier nonoverlapping FIFO assertion and TaskSource
 prepare/retry/inspect no-effect probe. Reuse its setup rather than duplicate that
 independent proof inside the long recovery body. Both keep their existing20s bounds.
+Commit recovery retains both peers so its queued-resource predicate executes;
+rollback retains the active peer. Assert absence of the recovering Work's active
+file claims while preserving foreign peer claims. Peer verification resolves
+the current fixture DB/store after an actual reopen, retaining original row,
+ticket, claim and file beforeimages rather than closed prepared handles.
 
 Historical continuation lookup reuses the existing Journal CAS/restoration owner
 for controlled issued/reported states, empty issue ID and mismatched observation
-action/issue IDs. Preserve complete lookup, native rows, separate immutable
+action/issue IDs or summary digest. The digest-only corruption must be valid hex
+and guaranteed different from the actual summary digest. Preserve complete lookup, native rows, separate immutable
 receipt, original unissued lookup and healthy continuation retry. These synthetic
 Journal inputs test the reader; they do not attest executor or reviewer effects.
 

@@ -14048,7 +14048,8 @@ export class HostStateStore {
             item.issue_id.length > 0 &&
             (item.observation === null ||
               (item.observation.action_id === receipt.request.action.request.action_id &&
-                item.observation.issue_id === item.issue_id)),
+                item.observation.issue_id === item.issue_id &&
+                item.observation.output_digest === canonicalJsonDigest(item.observation.summary))),
       'delivered-work continuation review issuance is malformed',
     );
     const frozenItem = snapshot(item);

@@ -1854,6 +1854,8 @@ those native phases and the current Journal; it still requires active review,
 the original owner lease, exact resources, FIFO, binding and report custody.
 Historical terminal-review lookup remains restricted to INTAKE. Planning progress
 does not grant Source execution or permit an engine/Journal suffix mismatch.
+Both lookup branches require a retained observation's output digest to match
+its canonical summary digest, as required by the public report producer.
 
 After a Source change, the verified continuation history preserves the exact
 original scope, acceptance and execution-approval references, admission Source

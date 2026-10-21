@@ -28,6 +28,9 @@ classifying the contour or asking for another scan.
 Before declaring a fixture absent, inspect every test path in the contour's
 existing selection. A missing direct call in one selected file is not a contour
 prerequisite GAP; another selected file may own the real producer and fixture.
+After moving proof setup between cases, check the next report for lost closure
+and branch visits even when every case passes. Preserve required queued/active
+states in compatible existing cases and keep their original per-case bounds.
 Distinguish an absent table from an absent positive-attempt row in a populated
 table. Prefer an extra read in the existing real producer fixture, preserving
 its row oracle, over another setup or a fabricated empty success table.
@@ -37,6 +40,8 @@ keep that probe in a compatible existing case rather than weaken recovery.
 Use descriptive string labels for parameterized proof cases and check the
 expanded native names. Boolean inputs with `%s` can retain identical literal
 labels on the selected Bun; distinct assertions alone do not give distinct names.
+Bind every alternative of a grouped test-name filter to its exact declaration;
+several passing alternatives can otherwise hide one absent alias.
 
 ## Load the current owners
 
