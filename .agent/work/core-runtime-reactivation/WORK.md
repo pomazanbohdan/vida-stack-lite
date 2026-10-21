@@ -17,12 +17,26 @@ Published9c39452 completes its sole full selected-contour stage with341PASS and
 6234assertions, exit0, complete capture, closed process group and unchanged
 boot/image. DIAG/gap-delta-v1611.json confirms17new branch visits, no lost arm,
 unchanged selected Source and exact unchanged geometry for all14objective branches
-and both objective statements. S/B remain numerically BLOCKED;29branch arms
-remain undispositioned. Retained scratch has a verified durable archive below.
+and both objective statements. S/B remain numerically BLOCKED;28branch arms
+remain undispositioned after the additional1185proof below. Retained scratch
+has a verified durable archive below.
 The next bounded proposal is DIAG/context-evolution-proposal-v1608.md: use an
 actual accepted-document change to make configured-continuation context checks
 necessary, then investigate the exact verifier-to-transaction Journal race.
-It is unintegrated and unmeasured; this same contour remains active.
+Its current-byte implementation now passes strict149/scoped lint and the one
+native selected case: DIAG/context-focused-v1618.log has1PASS/119assertions,
+4648.63ms case/6.11s command/native exit0. It keeps old engine reconstruction
+bound to the original scope and successor projection/report/resume bound to the
+actually edited accepted-document scope. The explicit derived-run inequality
+prevents the old-context disjunct from hiding configured-continuation checks.
+The exact Journal deletion occurs in the typed verifier after first inspection;
+the transactional recheck refuses, leaves Host/receipt state unchanged, and
+guarded cleanup restores the exact absent row before the original success/retry.
+Independent DIAG/context-packet-review-v1619.md accepts correctness and unchanged
+resource scope. Root refreshes only the Host test pin; DIAG/pin-strict-v1620.log
+has123-file PASS, pin-lint-v1620.log exits0 with zero diagnostics and
+pin-focused-v1620.log has1PASS/10assertions. Publication and numeric qualification
+are pending. No new numeric gain is claimed.
 
 The next current-byte packet adds public stale-owner/refusal and projection
 rollback controls in the existing two selected files. Host reuses its genuine
@@ -213,7 +227,7 @@ validated workflow graph. Root adds no disposition or accepted synthetic history
 The existing7branch/2statement dispositions retain their unchanged Source proof.
 The current DIAG/gap-delta-v1575.json checks the original branch geometry, binds
 new test inputs and adds the independently reviewed684/1 disposition. The other
-29branch arms remain undispositioned after17new visits and six further independently reviewed
+28branch arms remain undispositioned after17new visits and seven further independently reviewed
 preceding-guard dispositions below, including the native-Windows GAP.
 No mutation producer or unchanged full-suite retry is started.
 
@@ -1039,17 +1053,20 @@ fallback, and a claimed fixture route does not prove the arm was visited.
 | HostStateStore.importReconciledHostState | Branch684 arm1 at7858:40–41 | Objective skip. The literal zero is the equality fallback. The same identityKey(workIdentity(state)) values are rejected as duplicates before sorting, so valid compared identities are distinct. Negative duplicate imports fail before this arm. Independent proof is DIAG/blind-sort-counterexample-v1556.md; preserve the comparator and reopen if identity/validation/sort ownership changes. |
 | HostStateStore.#resolveTaskSourceBinding | Branch771 arm1 at9145 | Objective skip. Both public caller routes require Work before this lookup; #read validates that every Work has a schema-checked workspace Ledger. The absent-ledger claims fallback therefore follows an earlier refusal. Independent exact-counter proof: DIAG/owner-fallback-proofs-v1577.md. |
 | HostStateStore.commitReadOnlyFrontierRuntimeCode | Branch1188 arm1 at13380 | Objective skip. readState requires Work through #read; validatePair requires its Ledger, whose schema requires claims. An absent ledger/claims value is refused before ownerClaims. This does not skip1190/1191, whose absent-ticket/claim arms are separately exercised after supported suspension. Independent proof: DIAG/owner-fallback-proofs-v1577.md and host-negative-controls-review-v1594.md. |
+| HostStateStore.commitReadOnlyFrontierRuntimeCode | Branch1185 arm1 at13371:78–80 | Objective skip. stage begins with item &&, so an absent item makes stage absent and optional computed access skips evaluating the index. When evaluated, the item's request has already passed parseSessionBridgeRequest with required integer nonnegative assignment_index, so the nullish literal-1 cannot execute. Independent exact schema/guard proof: DIAG/context-packet-review-v1619.md. Root accepts this as an objective disposition; the review's phrase not a candidate does not remove this actual zero counter or change its denominator. |
 | HostStateStore.readCompletedSourceReportRecoveryReceipt | Branch1212 arm1 at13674 | Objective skip. #read/checkedStoredWork validates the retained Work's initial-source ancestry before this conditional. The actual missing-initial-row control fails at lifecycle artifact authority validation before the target. Independent proof: DIAG/owner-fallback-proofs-v1577.md. |
 | HostStateStore.recoverExpiredLocalLease | Branch1483 arm1 at16710 | Objective skip. Entry #read validates the stored Work and initial-source ancestry before the first recovery-lineage conditional. A missing original receipt is refused before this arm. Independent proof: DIAG/owner-fallback-proofs-v1577.md. |
 | HostStateStore.recoverExpiredLocalLease | Branch1498 arm1 at16890 | Objective skip. After verifyCurrent, #validateProgress calls #admissionHistory and checkedStoredWork before the second initial-receipt read. The exact callback-delete control is refused there and SQLite rolls back. No callback/await follows that check before the second read; the immediate transaction excludes another writer. Keep both rereads and guards. Independent current-byte proof: DIAG/host-negative-controls-review-v1594.md; focused native evidence: host-negative-focused-v1593.log. |
 | HostStateStore.commitCompletedSourceReportRecovery | Branch1550 arm1 at17566 | Objective skip. The first-commit #read validates initial-source Work ancestry before the conditional; a retained retry returns earlier. A missing original receipt cannot reach this arm through either route. Independent proof: DIAG/owner-fallback-proofs-v1577.md. |
 | taskSourceReservationResources | Branch87 arm0 at1768:45–82 | Native-Windows qualification GAP, not a contract-unreachable skip. Requires the real supported native target; do not mock platform or claim current Linux evidence qualifies it. |
 
-Both missing statements and14of43missing branch arms have reviewed objective
+Both missing statements and15of43missing branch arms have reviewed objective
 dispositions. RawS5323/5325 andB5551/5594 remain BLOCKED.
-The other29arms, including Windows, retain their exact gaps. The six added
+The other28arms, including Windows, retain their exact gaps. The six added
 dispositions bind the exact current map and unchanged selected Source above;
 gap-delta-v1575.json retains its original eight-disposition result unchanged.
+The later1185/1 proof binds the same current map and unchanged Source separately;
+gap-delta-v1611.json retains its original14-disposition result unchanged.
 Reopen each additional skip if its producer, decoder or preceding guard changes.
 This does not close
 the contour or open another while testable/undispositioned paths remain.

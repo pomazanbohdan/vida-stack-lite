@@ -6668,6 +6668,10 @@ test(
         const targetConfig = loadRuntimeConfig(current.root);
         const targetConfigDigest = runtimeConfigDigest(targetConfig);
         expect(targetConfigDigest).not.toBe(before.work.binding.config_digest);
+        const evolvedSource = changeOneAcceptedDocument(current);
+        const authorizedSourceChanges = compareScopedSourceSnapshots(source, evolvedSource);
+        expect(authorizedSourceChanges.map((change) => change.path)).toEqual([current.documents[1]]);
+        expect(evolvedSource.digest).not.toBe(source.digest);
         const project = loadProjectSetContext(
           current.root,
           targetConfig,
@@ -6678,14 +6682,15 @@ test(
           engine,
           journal: journal.state,
           targetConfigDigest,
-          currentSourceScope: source,
+          currentSourceScope: evolvedSource,
         });
         const requests = projectConfiguredPrewriterContinuationRequests({
           ...engineBinding,
           config: targetConfig,
+          context: { ...engineBinding.context, scope_digest: evolvedSource.digest },
           engine,
           journal: journal.state,
-          currentSourceScope: source,
+          currentSourceScope: evolvedSource,
           lifecycleRisk: paused.work.lifecycle.risk,
         });
         expect(requests.map((item) => item.role)).toEqual(['source-planner']);
@@ -6707,27 +6712,38 @@ test(
           targetRuntimeCodeDigest: canonicalJsonDigest('fixture-only-current-runtime-endpoint'),
           targetSchemaDigest: paused.work.binding.schema_digest,
           targetProjectContextDigest: project.project_context_digest,
-          currentSourceScope: source,
-          authorizedSourceChanges: [],
+          currentSourceScope: evolvedSource,
+          authorizedSourceChanges,
           action,
           originalRequestPointer: 'fixture:planned-frontier-continuation',
         };
         // Only the external transition-verifier input is synthetic. Host/Journal/engine history is native.
         const request = { ...unsigned, sourceTransition: normalConfigEndpointProof(unsigned) };
         const principal = 'fixture:host-continuation-verifier';
-        let permitContinuation = false;
-        const verify = mock((candidate: DeliveredWorkContinuationRequest, _state: HostStateSnapshot) =>
-          permitContinuation
-            ? {
-                schema: 'VidaDeliveredWorkContinuationAuthorization/v1' as const,
-                request_digest: canonicalJsonDigest(candidate),
-                principal,
-                transition_digest: candidate.sourceTransition.transition_digest,
-                action_digest: canonicalJsonDigest(candidate.action),
-              }
-            : null,
-        );
         const db = initialSourceHostDatabase(current);
+        let permitContinuation = false;
+        let removeJournalOnVerify: SessionLedgerSqlRow | undefined;
+        const verify = mock((candidate: DeliveredWorkContinuationRequest, _state: HostStateSnapshot) => {
+          if (!permitContinuation) return null;
+          if (removeJournalOnVerify) {
+            const row = removeJournalOnVerify;
+            removeJournalOnVerify = undefined;
+            expect(
+              db
+                .query(
+                  'DELETE FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND payload=? AND digest=?',
+                )
+                .run(row.workspace_id, row.work_id, row.attempt, row.revision, row.payload, row.digest).changes,
+            ).toBe(1);
+          }
+          return {
+            schema: 'VidaDeliveredWorkContinuationAuthorization/v1' as const,
+            request_digest: canonicalJsonDigest(candidate),
+            principal,
+            transition_digest: candidate.sourceTransition.transition_digest,
+            action_digest: canonicalJsonDigest(candidate.action),
+          };
+        });
         const store = new HostStateStore(
           db,
           host.workspaceId,
@@ -6759,6 +6775,65 @@ test(
         expect(readFixtureHostRows(db)).toEqual(persistedBefore);
         expect(receiptTable.all()).toEqual(receiptTableBefore);
         permitContinuation = true;
+        const removedJournal = requiredValue(
+          persistedBefore.journal.find(
+            (row) =>
+              row.workspace_id === host.workspaceId && row.work_id === current.identity.work_id && row.attempt === 1,
+          ),
+          'Verifier race original Journal',
+        );
+        const journalRow = () =>
+          db
+            .query<SessionLedgerSqlRow, [string, string, number]>(
+              'SELECT * FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+            )
+            .get(removedJournal.workspace_id, removedJournal.work_id, removedJournal.attempt);
+        let journalRaceFailure: { error: unknown } | undefined;
+        try {
+          removeJournalOnVerify = removedJournal;
+          await expectRejection(
+            store.continueDeliveredWork(request),
+            'original unissued frontier Work, Journal or owner differs',
+          );
+          expect(removeJournalOnVerify).toBeUndefined();
+          expect(verify).toHaveBeenCalledTimes(2);
+          expect(db.inTransaction).toBe(false);
+          expect(journalRow()).toBeNull();
+          expect(readFixtureHostRows(db).host).toEqual(persistedBefore.host);
+          expect(receiptTable.all()).toEqual(receiptTableBefore);
+        } catch (error) {
+          journalRaceFailure = { error };
+          throw error;
+        } finally {
+          removeJournalOnVerify = undefined;
+          completeOwnedCleanup(
+            [
+              () => {
+                if (journalRow() === null)
+                  expect(
+                    db
+                      .query(
+                        'INSERT INTO agent_host_mastra_session_ledger (workspace_id,work_id,attempt,revision,payload,digest) SELECT ?,?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?)',
+                      )
+                      .run(
+                        removedJournal.workspace_id,
+                        removedJournal.work_id,
+                        removedJournal.attempt,
+                        removedJournal.revision,
+                        removedJournal.payload,
+                        removedJournal.digest,
+                        removedJournal.workspace_id,
+                        removedJournal.work_id,
+                        removedJournal.attempt,
+                      ).changes,
+                  ).toBe(1);
+                expect(journalRow()).toEqual(removedJournal);
+                expect(readFixtureHostRows(db)).toEqual(persistedBefore);
+              },
+            ],
+            journalRaceFailure,
+          );
+        }
         const result = await store.continueDeliveredWork(request);
         expect(result.status).toBe('continued');
         expect(result.receipt.prior_work).toEqual(paused.work);
@@ -6783,7 +6858,7 @@ test(
           requests.map((request) => ({ request, issue_id: null, observation: null })),
         );
         expect(result.receipt.successor_journal.completed).toEqual(journal.state.completed);
-        expect(verify).toHaveBeenCalledTimes(2);
+        expect(verify).toHaveBeenCalledTimes(3);
         expect(verify).toHaveBeenCalledWith(request, paused);
         const after = readFixtureHostRows(db);
         const retry = await store.continueDeliveredWork(request);
@@ -6798,7 +6873,7 @@ test(
         expect(lookup.items.map((item) => item.request)).toEqual([...requests]);
         expect(lookup.receipt).toEqual(result.receipt);
         expect(readFixtureHostRows(db)).toEqual(after);
-        expect(verify).toHaveBeenCalledTimes(2);
+        expect(verify).toHaveBeenCalledTimes(3);
         const continuationOwner = presentSnapshot(lookup.snapshot);
         const currentLedger = new MastraSessionLedger(db, host.workspaceId, targetConfig, current.root, store);
         const continuationJournal = requiredValue(
@@ -6838,13 +6913,17 @@ test(
           },
         );
         expect(store.readDeliveredWorkContinuation(current.identity, 1)).toEqual(lookup);
+        const continuationContext = { ...admission.context, scope_digest: evolvedSource.digest };
+        expect(continuationOwner.work.execution.run_id).not.toBe(
+          sessionBridgeRunId(host.workspaceId, continuationContext, paused.work.binding.workflow_id),
+        );
         continuationBridge = await MastraSessionBridge.open({
           repositoryRoot: current.root,
           config: targetConfig,
           ledger: currentLedger,
           projectIds: current.identity.project_ids,
           selection: admission.selection,
-          context: { ...admission.context, scope_digest: source.digest },
+          context: continuationContext,
           workflowId: paused.work.binding.workflow_id,
           workspaceId: host.workspaceId,
           configuredFrontier: { identity: current.identity, attempt: 1 },
@@ -6883,7 +6962,7 @@ test(
               output_digest: canonicalJsonDigest(summary),
               evidence_refs: preparation.evidence_refs,
             },
-            source,
+            evolvedSource,
           );
         }
         const reportedLookup = requiredValue(
@@ -6896,7 +6975,7 @@ test(
         const observations = reported.state.items.map((item) =>
           requiredValue(item.observation, 'Native reviewer result'),
         );
-        const advanced = await continuationBridge.resume(reviewerStep, observations, source);
+        const advanced = await continuationBridge.resume(reviewerStep, observations, evolvedSource);
         const advancedJournal = requiredValue(
           currentLedger.resume(current.identity.work_id, 1),
           'Native developer suffix',

@@ -66,6 +66,13 @@ After a configuration continuation, use the Journal owner bound to that current
 configuration. A ledger facade retained from preparation still checks its old
 config and can reject before the intended test boundary. Reuse the current facade
 already needed by the subsequent positive control.
+For continuation-context coverage, keep the retained engine's original context
+and project successor requests with the actual evolved Source scope. Assert that
+the new context derives a different run identity before opening the real bridge;
+an unchanged scope can short-circuit the compatibility route under test.
+At an awaited verifier-to-transaction boundary, a deliberate exact-row deletion
+can test the later native recheck. Restore only the captured absent key with
+guarded insertion and compare every original column before the success control.
 For stale-owner reader tests, suspend through the actual public producer and
 restore only the observed changed fixture rows with exact post-suspension CAS.
 Check the producer's full predicate: an unissued current item does not mean its
