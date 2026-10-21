@@ -298,35 +298,32 @@ where copying/archive retention consumes the same space.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-ed1a21d5ea321ee5e4a4c01d016d253e5b3e9e39, run
-1009a6cc-44e1-4d71-8073-ae1db449c46c, projection attempts1198.
-F1126/1126,L4979/4979,S5305/5309,B5525/5596 leave4statement/71branch-arm gaps.
-F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
+5e5f5fb3320ef477f6b0d28fa18d51c35b2f3bcb, run
+410ef9e0-2742-4a8e-937a-d7eced7572b6.
+F1127/1127,L4994/4995,S5324/5331,B5539/5610 leave1line/7statement/71branch-arm gaps.
+F is exact100; L/S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The complete stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic publication. All336cases/5842assertions pass
-in173808.25123ms. Host and stopped-source children take167.13s and113.31s.
-The joined batch gains14actual branch-arm visits versusffb1223 and removes two
-missing redundant fallbacks; total arms decrease by4, including two covered arms.
-The preceding completed readonly Host sibling gains two actual branch-arm visits versus
-94cd912, with unchanged production denominators. The preceding guarded readonly
-refusal and two-Work import packet gains five actual
-branch-arm visits versus1fc3483 with unchanged production denominators.
-The preceding pre-recovery public view gains one actual branch-arm visit versus
-185743a, also without denominator changes.
-Different inputs and scheduling do not establish a controlled speedup.
+unchanged boot/image and automatic publication. All338cases/5921assertions pass
+in213894.698935ms. Host322/5594 takes205.55s; stopped-source16/327 takes130.32s.
+The preceding complete336-case observation took173.81s under different Source
+and tests; this is not a controlled speed benchmark. Both stay within unchanged
+300s coverage/330s stage budgets. No unchanged full retry is launched.
 
-Three preceding test packets gain one statement and eleven actual branch-arm
-visits versus301f0e7 with unchanged production denominators: runtime-history
-omission and real foreign Journal gain4arms, mixed/current Journal and null-scope
-peer gain1, configured renewal and raw malformed lease refusals gain6.
-The185743a simplification then adds one covered line/statement and removes two
-arms, one previously covered and one missing. Removing the impossible normalized
-Journal equality is a denominator change, not newly executed code.
-Earlier measurements, timing diagnoses and original failure custody remain in
-the [published185743a WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/185743a0f32f04a7e4d0ee58a9a0e98696fd2623/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
-The join performs no new AST/Source scan/hash. Frozen CC/CRAP remains deferred;
+The retained map owner deficits decrease by1 for authorizeCorrectiveExecution,
+2 for admitSuccessorWork and1 for renewActiveLocalLease. The new provenance helper
+adds4missing branch arms and3missing statements, including the one missing line;
+the four earlier statement gaps remain. Total branch deficit therefore stays71.
+This is owner-counter accounting, not an invented exact counter correspondence
+or denominator-based completion. The security fix is not withdrawn to recover
+the old line percentage. Blind1441 reviews only its negative-edge test producers;
+unreachable/corrupted-history premises stay separate from genuine acceptance.
+The predecessor map is DIAG/remainder-v1440-predecessor-gap-map.json; the current
+map is refreshed once through the retained report-only join. Earlier numeric,
+timing and retirement evidence remains in the
+[published5e5f5fb WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/5e5f5fb3320ef477f6b0d28fa18d51c35b2f3bcb/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
+No new AST/Source scan/hash is used for this join. Frozen CC/CRAP remains deferred;
 the diagnostic273 maxima do not establish frozen-gate acceptance.
 
 ## Latest measurement custody
@@ -340,22 +337,25 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-mNvG1h/execution.json, launch.json and publication.json |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1398-sdk-provider.json and DIAG/remainder-v1398-sdk-verified.json |
-| Admission and complete producer log | DIAG/remainder-v1398-scratch-parent.json and DIAG/remainder-v1398-stage.log |
-| Qualified private-cache retirement | DIAG/remainder-v1398-cache-retirement-mNvG1h/manifest.json |
-| Remaining scratch archive and full-compare result | /workspace/vida-functional-retention-mNvG1h-B2RQ91/archive.json |
-| Original retained scratch | /dev/shm/vida-quality-retained-OLk1wr |
+| Source/image/input, launch, native outcome and capture | /workspace/contour-stage-DfKEwa/execution.json, launch.json and publication.json |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/remainder-v1440-sdk-provider.json and DIAG/remainder-v1440-sdk-verified.json |
+| Admission and complete producer log | DIAG/remainder-v1440-scratch-parent.json and DIAG/remainder-v1440-stage.log |
+| Private-cache disposition | Retained unchanged; exact excluded path in the archive manifest below |
+| Non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-DfKEwa-VHDtpV/archive.json |
+| Original retained scratch | /dev/shm/vida-quality-retained-87AHkZ |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
-The latest retirement qualifies1cache/0skipped and reclaims215846912tmpfs bytes.
 Original scratch, immutable image, SDK, DBs, journals, receipts, leases/attempts
 and FAIL/TIMEOUT/UNKNOWN remain. No worktree or shared dependency is removed.
-Archive creation/compare preserves its original; it does not re-attest an old run.
+The324722-byte durable archive excludes only this stage's declared private
+regenerable Bun cache, which also remains present. All archived entries compare
+with their originals; its digest is computed once. This is custody, not a space
+gain or reattestation. Prior qualified cache retirement stays in the published
+history linked above; no shared dependency scan/hash is repeated.
 
-A postclosure observation records2524045312durable bytes after archive and
-9154686976tmpfs bytes after retirement, both above the
-unchanged2147483648floor. Checkout and durable evidence share the overlay.
+A postclosure observation records2445701120durable bytes after archive, above the
+unchanged2147483648floor. Both filesystems passed admission before launch;
+checkout and durable evidence share the overlay.
 No resource GAP is established. Reuse the existing inventory; do not add broad
 du/scan/hash or cleanup competing with numeric/build/install operations.
 
