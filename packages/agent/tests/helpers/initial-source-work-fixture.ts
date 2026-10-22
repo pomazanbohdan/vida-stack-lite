@@ -655,8 +655,12 @@ export function initialRequest(f: InitialWorkFixture): InitialSourceContinuation
   };
 }
 
-export function expiredOwnerTime(f: InitialWorkFixture): number {
-  const before = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
+export function expiredOwnerTime(
+  f: InitialWorkFixture,
+  before: Pick<InitialSourceContinuationState, 'work' | 'ledger'> = completeHostState(
+    hostStore(f).readHostStateSnapshot(f.identity),
+  ),
+): number {
   const owner = before.ledger.tickets.find((ticket) => ticket.ticket_id === workLease(before.work).ticket_id);
   if (!owner || typeof owner.expires_at !== 'string')
     throw new Error('Initial Source fixture owner lease is unavailable');

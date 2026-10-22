@@ -1045,6 +1045,59 @@ disposition, distinguishes its three counter collections, and resolves the repor
 path from its owner instead of transcribing image IDs. Producer-only research can
 still overlap a run; no numeric/AST/hash producer is repeated to repair this intake.
 
+### Three-hour audit:2026-10-22 00:36–03:36 UTC and checked follow-up
+
+The actual window contains7d7182b, bfad910 andc06f764. Their maintenance
+fixture and shared receipt custody changes are already integrated. Root reuses
+the original receipts, report-only gap map and projection; no competing numeric/
+build/install producer was observed. DIAG/resource-v1705.json records the same
+boot,26,227,769,344 durable and7,360,876,544 scratch available bytes. Both exceed
+the unchanged combined2,214,592,512-byte admission floor and archive reserve.
+
+Blind Luna1706 confirmed diagnostic cleanup defects: syncing copied evidence
+only after deletion and stale hardcoded image/stage locators. Root's v1707
+revision resolves the latest report/single qualified stage, syncs copied files,
+directories and relocation manifest before removal, and handles all-absent roots
+before target-dependent inspection. Existing identity/owner/fd/maps/cwd/mount/
+link/custody checks remain fail-closed. Strict3files and independent review pass;
+Root observed native cleanup exit0 and a separate all-absent no-op exit0.
+DIAG/user-delete-v1707 owns exact intent, qualification, relocation, events and
+result. Only .vida-quality-inputs and contour-stage-8sK3dH/ZFdnyU were removed;
+.vida-retained was absent. Durable free bytes increased26,227,687,424 ->
+26,333,282,304:105,594,880 reclaimed,77.97% free. The latest necessary original
+report/manifest/terminal receipts/raw logs remain outside retired roots. Source,
+SDK, Git, outside scratch/archive and failed fixtures remain protected. No
+schedule change, new numeric qualification, UNKNOWN replay or fence release.
+
+Root adds accepted-report -> real-engine resume -> next unissued wave -> expired
+lease recovery, and a terminal-authorization fallback negative inside the existing
+repair CAS/restoration fixture. Targets1486/3 and937/4 remain unmeasured.
+The combined prototype exceeded20s; split cases retain their existing20s bound
+and original peer controls.1712 passes3cases/89assertions39.63s. Review1716
+required isolated Journal CAS and full rights assertions;1720 accepts these and
+the four-case contract. Expanded1719 timed out20.48s, retaining its original root.
+Root reuses the fresh continuation's Journal and passes its same-boundary Host
+snapshot to expiredOwnerTime, removing two redundant reads; default callers
+retain fresh reads.1721 passes strict149/lint0 and1case/38assertions16.69s,
+native15.02s. Timing variation is not a controlled speedup. Repair1713 catches
+unknown narrowing statically;1714 catches an invalid foreign ID before the
+intended guard. Both remain preserved. Corrected1715 passes strict149/lint0,
+1case/64assertions6.83s. These are fixture corrections, no confirmed new product bug.
+
+| Execution combination | Decision and evidence limit |
+| --- | --- |
+| Full stage and SDK/image after every assertion | Rejected: repeats setup/publication before dependent fixes settle; no controlled timing estimate. |
+| Bounded readers; Root static -> affected cases -> coherent pin/publication/SDK/one full stage | Selected. Reuses receipts and unchanged checks, no new AST/scan/hash; sole Source/numeric writer. |
+| Concurrent Host tests, cleanup and numeric producers | Rejected: global clocks/resources and capture custody compete; safe savings unmeasured. |
+
+Focused checks use package cwd/preloads/seed; accidental repository-root1710
+remains separate. Final independent1722 accepts snapshot freshness and the whole
+changed fixture packet.1724 refreshes the Host test pin once; tooling strict123/
+lint0 and the existing two-file namespace control pass1case/10assertions.
+Documentation1723 checks6documents/75links with no failures; diff check passes.
+Fetch shows no divergent remote commits. This packet awaits ordinary publication
+and its one complete stage. Other contours, frozen CRAP/mutation and cutover stay deferred.
+
 ## Latest measurement custody
 
 Reuse these original owners instead of transcribing their hashes and counters
@@ -1056,17 +1109,17 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Retained stage/input, launch, native outcome and once-only publication | /workspace/contour-stage-ZFdnyU/{execution,launch,publication}.json; new stage after retirement |
-| Latest report and original input identities | DIAG/host-uncovered-plan-current.json resolves the new original report and adjacent manifest/process/shard/image metadata; predecessor subset remains relocated |
+| Retained stage/input, launch, native outcome and once-only publication | DIAG/user-delete-v1707/latest-evidence/; original /workspace/contour-stage-ZFdnyU and image locators retired |
+| Latest report and original input identities | DIAG/host-uncovered-plan-current.json resolves DIAG/user-delete-v1707/latest-evidence/focused-coverage.json and adjacent manifest/process/shard/image metadata |
 | SDK archive, CI and acquisition identity | DIAG/sdk-v1699.json; maintained readiness owner checks the actual ZIP/CI join once |
 | Admission, scratch qualification and complete producer log | DIAG/user-delete-v1686/result.json, DIAG/scratch-v1699.txt and DIAG/stage-v1699.log |
 | Verified durable non-cache scratch archive | /workspace/vida-functional-retention-ZFdnyU-GB8zOL/archive.json; owns exact bytes/hash, original root, excluded cache, full comparison and before/after capacity |
 | Predecessor relocation and explicit cleanup | DIAG/user-delete-v1535/{relocation,result}.json and events.jsonl; predecessor image retired |
-| Renewed exact-path retirement and current report relocation | DIAG/user-delete-v1686/{qualification,relocation,current-map-relocation,result}.json and events.jsonl; original locators retired |
+| Renewed exact-path retirement and current report relocation | DIAG/user-delete-v1707/{qualification,relocation,current-map-relocation,result}.json and events.jsonl; original locators retired |
 
-Thebfad immutable image and stage are formed after the completed exact-path retirement.
-Their original report/receipts, scratch, SDK and archive remain; the predecessor's
-image/stage locators remain retired with their selected outside evidence subset.
+Thebfad immutable image and stage are now retired under the renewed exact-path order.
+Their selected original report/receipts and outside scratch, SDK and archive remain;
+the predecessor's image/stage locators also remain retired with their outside subset.
 The archive excludes only its declared private regenerable cache, whose original
 remains retained. Full tar comparison and fsync are custody, not a cleanup gain
 or reattestation. Retired historical inputs retain their original explicit GAP.

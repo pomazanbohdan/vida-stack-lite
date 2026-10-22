@@ -110,8 +110,8 @@ closed transaction and unchanged Journal, drop the trigger through owned cleanup
 then perform healthy admission. The cooperative report grants no provider or
 Runtime acceptance. All cases keep the default5s deadline and private root.
 
-Completed Source report recovery separates rollback, terminal-history integrity
-and commit into three independent20s cases. Each forms its own native fixture.
+Completed Source report recovery separates rollback, terminal-history integrity,
+commit and next-wave expiry into four independent20s cases. Each forms its own native fixture.
 Commit checks stale CAS and live-owner refusal before expiry, then healthy
 commit and exact retry; rollback checks the native Journal abort, exact preserved
 rows, cleanup and healthy same-fixture retry. This balances their independent
@@ -145,6 +145,20 @@ rollback and terminal-history retain the active peer. Assert absence of the reco
 file claims while preserving foreign peer claims. Peer verification resolves
 the current fixture DB/store after an actual reopen, retaining original row,
 ticket, claim and file beforeimages rather than closed prepared handles.
+
+Next-wave keeps the real bridge open after accepted report recovery and resumes
+the engine with that report. Require the writer in completed history and a real
+nonempty unissued next wave before expiry recovery. It omits unrelated peer setup;
+the other three cases retain their peer controls. An isolated stale Journal
+version with current Work/Ledger must refuse before verification and preserve
+exact native rows, recovery receipts and closed transaction state. The actual
+Journal is never mutated, so no compensating restoration is needed. Healthy
+recovery then preserves binding, execution, artifacts, Journal body/digest and
+receipt, with one Journal revision bump. The old ticket/claim becomes read_only/
+recovered; the replacement is linked to exactly one active claim with identical
+execution-only resources, same thread and current open generation. A stale
+whole-request retry must leave rows unchanged. Neither case establishes installed
+Runtime acceptance or executes an archived writer/UNKNOWN outcome.
 
 Historical continuation lookup reuses the existing Journal CAS/restoration owner
 for controlled issued/reported states, empty issue ID and mismatched observation

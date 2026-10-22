@@ -55,6 +55,16 @@ for Edictum's precondition, postcondition and session-rule evaluation.
 Mastra loop stopping rules do not have the same meaning as separate denied
 attempt, executed call and per-tool counters.
 
+Verified2026-10-22: the suspend/resume reference above and Bun's
+[writing tests](https://bun.com/docs/test/writing-tests) resolve successfully
+(DIAG/official-research-v1717.json and official-bun-research-v1718.json in the
+current WORK diagnostic directory). Bun documents the per-test timeout argument;
+the older /docs/test/timeouts URL returned404. Apply the existing20s recovery
+case bound, preserve original timeout evidence and split independent proof
+groups. VIDA's next-wave fixture resumes the actual retained engine with its
+accepted report; Host-only preparation does not create accepted Journal history.
+These references do not qualify a fixture endpoint as an installed runtime.
+
 Actual VIDA use is concentrated in `src/governance/edictum-boundary.ts`:
 
 - `createConfiguredEdictumWorkflow` provides the read-evidence and pending-write

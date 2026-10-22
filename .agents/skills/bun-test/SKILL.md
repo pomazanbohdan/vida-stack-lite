@@ -83,6 +83,11 @@ retained engine context, not just compatible receipt types. Code-only adoption
 requires sole execution-only ownership; a configured frontier may hold file
 claims. An initial-source successor may preserve an engine's original input
 context. Do not weaken those guards to make a fixture composition pass.
+For real post-report engine progression, use the actual package endpoint and keep
+the bridge open. A Host-only readonly preparation is not an accepted Journal item;
+retain that history proof in its existing case and keep the separate next-wave
+case bound to real completed Journal observations. Omit unrelated peer setup only
+from that independent case, preserving the peer controls in their original cases.
 A checksummed stored receipt can reach a history operand before its structural
 validator. Trace actual evaluation order before proposing an objective skip;
 exercise a refused, exact-CAS-restored corrupted row when that path is reachable.
@@ -174,6 +179,11 @@ Resolve the repository root. Read `AGENTS.md` and `AGENT.sidecar.md`, then the
 scripts. Read only the linked regression sections relevant to the change. These
 owners define scope, authorization, custody and commands; this skill does not
 replace them.
+
+Anchor direct focused invocations to the package root as well as the test path.
+The root checkout's Bun invocation can omit the package configuration, preloads
+and seed. Preserve that observation, then use the declared package profile for
+the affected check; do not interpret the profile change as a code speedup.
 
 Check the executing Bun against `.bun-version`. Availability of a newer release
 is not qualification. Bun executing TypeScript does not establish strict

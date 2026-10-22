@@ -54,6 +54,12 @@ Qualification must reject an existing output namespace before scanning or writin
 Create new inventories/events exclusively; a completed retirement manifest cannot
 be overwritten by another qualification. Preserve the original qualifier used by
 past evidence when fixing a retained diagnostic script.
+For explicitly authorized execution-image retirement, resolve the latest report
+from its current owner and one freshly qualified stage. Do not reuse fixed locators
+from a prior retirement. Sync copied files, created directories and the relocation
+manifest before deleting any original. Readback equality alone does not establish
+durability. An entirely absent target set records a no-op before process/dependency
+inspection; present targets retain every ownership and dependency check.
 Reuse the current inventory; do not rescan attachments after every stage. Reuse
 one captured gitless image for compatible coverage/frozen/mutation lanes at the
 same published inputs. Read-only reviews use existing Source, without another worktree.
@@ -1939,6 +1945,10 @@ invocation where their existing resource
 and timeout contracts permit it. A pure input/schema check should precede an
 expensive fixture when it can resolve the same uncertainty. Reuse current results
 until another change or failure invalidates them.
+Run direct Agent focused checks from `packages/agent`, so its Bun configuration,
+preloads and seed apply. A repository-root invocation with a package test path
+does not select that profile; preserve it separately and do not compare its timing
+as a qualified package-profile result.
 Reconcile each edited enclosing case with its exact selected declaration before
 launch. Similar family names can select a different unchanged case. Reuse the
 current inventory or selected declaration; do not add a full-suite AST pass.

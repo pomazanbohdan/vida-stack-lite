@@ -78,6 +78,9 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
    edited test declarations. Reconcile case names with existing inventory/current
    declarations rather than a new AST pass. Diagnose causal failures; never loop
    an unchanged setup timeout or mistake a filtered-out case for validation.
+   Within one unchanged fixture boundary, reuse the typed snapshot already
+   returned by its owner for Journal and expiry assertions. Read fresh state
+   after a transition; never reuse a preimage across a mutation or verifier.
 4. Review the whole coherent current-byte packet, including resources. Refresh
    each changed exact test pin once. Run its narrow control and documentation check.
    Root commits through ordinary hooks and performs a normal push.

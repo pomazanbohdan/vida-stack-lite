@@ -7645,7 +7645,7 @@ test(
   failedFinalHostCaseTimeoutMs,
 );
 
-test.each(['rollback', 'terminal-history', 'commit'] as const)(
+test.each(['rollback', 'terminal-history', 'commit', 'next-wave'] as const)(
   'completed Source report Host recovery %s preserves genuine writer lineage',
   async (mode) => {
     const started = performance.now();
@@ -7674,9 +7674,10 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
         expect(prepared.receipt.status).toBe('initial_request_ready');
         expect(prepared.journal.state.items.every((item) => item.issue_id === null)).toBe(true);
         const preparedAt = performance.now();
-        const peers = admitDisjointInitialSourcePeers(f, mode === 'commit');
+        const peers = mode === 'next-wave' ? undefined : admitDisjointInitialSourcePeers(f, mode === 'commit');
         const peersReadyAt = performance.now();
-        const readonlyPreparation = mode !== 'commit' ? completeReadonlyFixtureHostPreparation(f) : undefined;
+        const readonlyPreparation =
+          mode === 'rollback' || mode === 'terminal-history' ? completeReadonlyFixtureHostPreparation(f) : undefined;
         if (readonlyPreparation)
           expect(initialSourceState(f).work.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
         const issued = await issueInitialSourceFixtureWriter(f);
@@ -7750,7 +7751,7 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
         };
         // Only the external new-runtime proof is controlled; Host creates its own transition history.
         const recovery: typeof nativeRecovery =
-          mode !== 'rollback'
+          mode === 'commit' || mode === 'terminal-history'
             ? {
                 ...nativeRecovery,
                 request: { ...nativeRecovery.request, ...controlledEndpoint },
@@ -7815,11 +7816,14 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
           const restored = initialSourceState(f);
           expect(restored.workVersion).toEqual(retried.work_version);
-          const readonlyAttempt = requiredValue(readonlyPreparation, 'completed readonly preparation').attempt;
-          expect(readonlyAttempt.attempt_id).not.toBe(issued.hostAttemptId);
-          expect(restored.work.execution.assignment_attempts[0]).toEqual(readonlyAttempt);
-          expect(restored.work.execution.assignment_attempts).toHaveLength(2);
+          expect(restored.work.execution.assignment_attempts).toHaveLength(readonlyPreparation ? 2 : 1);
+          if (readonlyPreparation) {
+            const readonlyAttempt = readonlyPreparation.attempt;
+            expect(readonlyAttempt.attempt_id).not.toBe(issued.hostAttemptId);
+            expect(restored.work.execution.assignment_attempts[0]).toEqual(readonlyAttempt);
+          }
           if (mode === 'terminal-history') {
+            const readonlyAttempt = requiredValue(readonlyPreparation, 'completed readonly preparation').attempt;
             expect(retried.record.successor_work.binding.runtime_code_digest).not.toBe(
               retried.record.prior_work.binding.runtime_code_digest,
             );
@@ -7849,6 +7853,129 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
             expect(initialSourceState(f)).toEqual(restored);
             expect(recoveryReceiptRows.all(host.workspaceId, f.identity.work_id)).toEqual(recoveryReceiptBefore);
             expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
+          }
+          if (mode === 'next-wave') {
+            await requiredValue(f.bridge, 'Retained writer engine').resume(
+              requiredValue(restored.journal.step_id, 'Accepted writer step'),
+              [observation],
+              sourceAfter,
+            );
+            const advanced = initialSourceState(f);
+            const advancedJournal = { state: advanced.journal, version: advanced.journalVersion };
+            expect(advancedJournal.state.completed.flatMap((wave) => wave.items)).toContainEqual(
+              requiredValue(restored.journal.items[0], 'Accepted writer item'),
+            );
+            expect(advancedJournal.state.items.length).toBeGreaterThan(0);
+            expect(
+              advancedJournal.state.items.every(
+                (item) => item.issue_id === null && item.observation === null && item.host_reservation === undefined,
+              ),
+            ).toBe(true);
+            const lease = requiredLease(advanced.work);
+            expect(advanced.ledger.tickets.find((ticket) => ticket.ticket_id === lease.ticket_id)).toMatchObject({
+              status: 'active',
+              exclusive_resources: ['execution:' + f.identity.work_id],
+              active_resources: ['execution:' + f.identity.work_id],
+            });
+            const priorClaim = requiredValue(
+              advanced.ledger.claims.find((claim) => claim.ticket_id === lease.ticket_id && claim.status === 'active'),
+              'Next-wave expired claim',
+            );
+            expect(priorClaim).toMatchObject({
+              resources: ['execution:' + f.identity.work_id],
+              thread_id: lease.thread_id,
+              generation: lease.generation,
+            });
+            expect(
+              advanced.ledger.claims.some(
+                (claim) =>
+                  claim.work_id === f.identity.work_id &&
+                  claim.status === 'active' &&
+                  claim.resources.some((resource) => resource.startsWith('file:')),
+              ),
+            ).toBe(false);
+            setSystemTime(new Date(initialSourceExpiredOwnerTime(f, advanced)));
+            const expiryRequest = {
+              identity: f.identity,
+              attempt: 1,
+              nativeSessionHandle: lease.thread_id,
+              generation: lease.generation,
+              expectedWork: advanced.workVersion,
+              expectedLedger: advanced.ledgerVersion,
+              expectedJournal: advancedJournal.version,
+              expectedMaintenanceGeneration: advanced.maintenanceGeneration,
+              verifyCurrent: (work, journal, sourceRoot) => {
+                expect(work).toEqual(advanced.work);
+                expect(journal).toEqual(advancedJournal.state);
+                expect(sourceRoot).toBe(f.root);
+                return {
+                  runtimeCodeDigest: work.binding.runtime_code_digest,
+                  authorityPointer: 'fixture:post-report-wave-expiry',
+                };
+              },
+            } satisfies Parameters<HostStateStore['recoverExpiredLocalLease']>[0];
+            const rowsBeforeRecovery = readFixtureHostRows(db);
+            expect(() =>
+              host.recoverExpiredLocalLease({
+                ...expiryRequest,
+                expectedJournal: { ...advancedJournal.version, revision: advancedJournal.version.revision + 1 },
+                verifyCurrent: () => {
+                  throw new Error('Journal CAS refusal must precede verification');
+                },
+              }),
+            ).toThrow('expired lease recovery journal CAS changed');
+            expect(readFixtureHostRows(db)).toEqual(rowsBeforeRecovery);
+            expect(recoveryReceiptRows.all(host.workspaceId, f.identity.work_id)).toEqual(recoveryReceiptBefore);
+            expect(db.inTransaction).toBe(false);
+            const recovered = presentSnapshot(host.recoverExpiredLocalLease(expiryRequest));
+            const renewedLease = requiredLease(recovered.work);
+            expect(renewedLease.ticket_id).not.toBe(lease.ticket_id);
+            expect(renewedLease.thread_id).toBe(lease.thread_id);
+            expect(renewedLease.generation).toBe(advanced.ledger.open_generation);
+            expect(recovered.work.execution).toEqual(advanced.work.execution);
+            expect(recovered.work.artifacts).toEqual(advanced.work.artifacts);
+            expect(recovered.work.binding).toEqual(advanced.work.binding);
+            expect(recovered.ledger.tickets.find((ticket) => ticket.ticket_id === lease.ticket_id)).toMatchObject({
+              status: 'read_only',
+              active_resources: [],
+            });
+            expect(recovered.ledger.claims.find((claim) => claim.claim_id === priorClaim.claim_id)).toEqual({
+              ...priorClaim,
+              status: 'recovered',
+            });
+            const replacementClaims = recovered.ledger.claims.filter(
+              (claim) => claim.ticket_id === renewedLease.ticket_id,
+            );
+            expect(replacementClaims).toHaveLength(1);
+            expect(replacementClaims[0]).toMatchObject({
+              status: 'active',
+              resources: priorClaim.resources,
+              thread_id: renewedLease.thread_id,
+              generation: renewedLease.generation,
+            });
+            expect(
+              recovered.ledger.tickets.find((ticket) => ticket.ticket_id === renewedLease.ticket_id),
+            ).toMatchObject({
+              status: 'active',
+              exclusive_resources: priorClaim.resources,
+              active_resources: priorClaim.resources,
+              claim_ids: [requiredValue(replacementClaims[0], 'Next-wave replacement claim').claim_id],
+            });
+            expect(initialSourceJournal(f)).toMatchObject({
+              state: advancedJournal.state,
+              version: { revision: advancedJournal.version.revision + 1, digest: advancedJournal.version.digest },
+            });
+            expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
+            const recoveredRows = readFixtureHostRows(db);
+            expect(() =>
+              host.recoverExpiredLocalLease({
+                ...expiryRequest,
+                verifyCurrent: () => {
+                  throw new Error('stale recovery must not call its verifier');
+                },
+              }),
+            ).toThrow('state compare-and-swap conflict');
+            expect(readFixtureHostRows(db)).toEqual(recoveredRows);
           }
         } else {
           const persistedBefore = readFixtureHostRows(db);
@@ -8227,7 +8354,7 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
           expect(absorbed.work.execution.status).toBe('suspended');
           expect(absorbed.work.lease).toBeNull();
         }
-        peers.verifyUnchanged();
+        peers?.verifyUnchanged();
         console.info(
           JSON.stringify({
             fixture: 'completed-source-report-host',
@@ -10418,9 +10545,46 @@ test(
           .all();
       const retainedGovernance = governanceRows();
       const schema = f.database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all();
+      const terminalAuthorizationJournal = parseJsonRecord(canonicalJson(legacyJournal));
+      const terminalItems = [...arrayAt(terminalAuthorizationJournal, 'items')];
+      for (const wave of arrayAt(terminalAuthorizationJournal, 'completed')) {
+        if (!isPlainRecord(wave)) throw new Error('Terminal authorization wave is not a record.');
+        terminalItems.push(...arrayAt(wave, 'items'));
+      }
+      const terminalItem = terminalItems.find((item) => {
+        if (!isPlainRecord(item) || !item.host_reservation || !isPlainRecord(item.observation)) return false;
+        const observation = item.observation;
+        return (
+          observation.status === 'reported_complete' &&
+          before.work.execution.assignment_attempts.some(
+            (attempt) => attempt.status === 'completed' && attempt.attempt_id === observation.host_attempt_id,
+          )
+        );
+      });
+      if (!isPlainRecord(terminalItem)) throw new Error('Genuine terminal reservation is missing.');
+      const terminalObservation = recordAt(terminalItem, 'observation');
+      const completedAttempt = requiredValue(
+        before.work.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === terminalObservation.host_attempt_id,
+        ),
+        'Genuine completed Host attempt',
+      );
+      expect(completedAttempt.result).toEqual(terminalObservation);
+      expect(completedAttempt.result_digest).toBe(canonicalJsonDigest(terminalObservation));
+      const terminalReservation = recordAt(terminalItem, 'host_reservation');
+      expect(recordAt(recordAt(recordAt(terminalReservation, 'authorization'), 'receipt'), 'attempt')).toMatchObject({
+        status: 'started',
+        result: null,
+        result_digest: null,
+      });
+      const legacyCompletedAttempt = parseJsonRecord(canonicalJson(completedAttempt));
+      stripFixtureAssignmentAuthority(legacyCompletedAttempt);
+      recordAt(terminalReservation, 'receipt').attempt = legacyCompletedAttempt;
+      terminalObservation.host_attempt_id = canonicalJsonDigest({ foreign_attempt: completedAttempt.attempt_id });
       for (const candidate of [
         unboundJournal,
         { ...unboundJournal, corrective_execution: { schema: 'InvalidFixtureExecution/v1' } },
+        terminalAuthorizationJournal,
       ]) {
         const unboundPayload = canonicalJson(candidate),
           unboundDigest = canonicalJsonDigest(candidate);
@@ -10444,6 +10608,10 @@ test(
             expect(unboundInspection.status).toBe('repairable_current_v1');
             expect(unboundInspection.changed_work).toEqual(inspection.changed_work);
             expect(unboundInspection.changed_journals).toBe(1);
+          } else if (candidate === terminalAuthorizationJournal) {
+            expect(() => f.store.repairCorrectionGeneration({ ...request, mode: 'inspect' })).toThrow(
+              'repair reservation is not an exact terminal or retained unknown Host attempt',
+            );
           } else {
             expect(() => f.store.repairCorrectionGeneration({ ...request, mode: 'inspect' })).toThrow(
               'CorrectiveExecution/v1',
