@@ -126,11 +126,13 @@ remain sequential under the one execution owner.
 
 The active session-handoff packet fixes the reproduced empty-risk-list compiler
 block and checks the two handoff files with the existing workflow-contract
-controls. Its first full coverage stage waits for the remaining supported
-Host-reservation, replacement-report, normalization, config-drift and insertion-
-race families identified in WORK. Do not disposition those as untestable merely
-because their producer fixtures need more work. Reuse the existing Host/repair/
-research producers rather than manufacturing accepted rows or broadening suites.
+controls. The supported Host-reservation, replacement-report, normalization,
+config-drift and insertion-race families identified in WORK are now implemented
+and pass focused checks and independent review. Publish this coherent packet,
+then execute one complete selected-contour coverage stage. Use its retained
+counter maps for the next batch; do not infer exact closure from focused PASS.
+Reuse the existing Host/repair/research producers rather than manufacturing
+accepted rows or broadening suites.
 
 The1811timeout adds a bounded reporting correction. Freeze new tooling role
 assertCoverageShardOutcomesKnown at maxCC3; it rejects observed UNKNOWN shard

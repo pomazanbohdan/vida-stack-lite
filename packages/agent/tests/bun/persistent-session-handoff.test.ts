@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, setSystemTime, spyOn, test } from 'bun:test';
+import { writeFileSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Database } from 'bun:sqlite';
-import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
+import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import type { WorkItemSelection } from '../../src/config/runtime-config.ts';
 import { HostStateStore, openHostStateDatabase, type WorkIdentity } from '../../src/host-state.ts';
@@ -12,7 +13,20 @@ import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-re
 import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
 import { configuredTestContext } from '../configured-context.ts';
-import { expectReturned } from '../helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectReturned, rejectionReason } from '../helpers/expect-rejection.ts';
+import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
+import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.ts';
+import {
+  createInitialSourceWorkFixture,
+  prepareInitialSourceFrontier,
+  issueInitialSourceFixtureWriter,
+  expiredOwnerTime as initialSourceExpiredOwnerTime,
+  withInitialSourceCleanup,
+  hostStore as initialSourceHostStore,
+  hostLedger as initialSourceHostLedger,
+  hostDatabase as initialSourceHostDatabase,
+  type InitialWorkFixture,
+} from '../helpers/initial-source-work-fixture.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import type {
   MastraLedgerItem,
@@ -23,6 +37,7 @@ import type {
 import {
   buildSessionBridgeRequest,
   sessionBridgeRunId,
+  parseSessionBridgeObservation,
   type SessionBridgeObservation,
   type SessionBridgeRequest,
 } from '../../src/orchestration/mastra-session-bridge-contract.ts';
@@ -45,6 +60,11 @@ import {
 import { sessionActionsForWave } from '../../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../../src/orchestration/workflow-plan.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
+import {
+  pauseReadonlyDispatchHostFixture,
+  withReadonlyDispatchHostFixture,
+} from '../helpers/readonly-dispatch-host-fixture.ts';
+import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
 
 const { repositoryRoot: root, config } = configuredTestContext();
 const workspaceId = 'a'.repeat(64);
@@ -197,31 +217,45 @@ function bridgeRequest({
   };
 }
 
-function actualFocusedValidatorRequests(workId: string): {
+function actualFocusedValidatorRequests(
+  workId: string,
+  input: {
+    readonly repositoryRoot: string;
+    readonly config: ReturnType<typeof loadRuntimeConfig>;
+    readonly workspaceId: string;
+  } = { repositoryRoot: root, config, workspaceId },
+): {
   readonly requestContext: SessionHandoffContext;
   readonly runId: string;
   readonly waveIndex: number;
   readonly requests: SessionBridgeRequest[];
 } {
   const workflowId = 'task_execution';
-  const selected = selection('task', workflowId);
+  const { repositoryRoot: requestRoot, config: requestConfig, workspaceId: requestWorkspaceId } = input;
+  const selected = selection('task', workflowId, requestConfig);
   const requestContext = { ...context, work_id: workId };
-  const compiled = compileDevelopmentWorkflow(config, selected.team, workflowId, selected.risk_flags);
+  const compiled = compileDevelopmentWorkflow(requestConfig, selected.team, workflowId, selected.risk_flags);
   const waveIndex = compiled.waves.findIndex((wave) => wave.some((stage) => stage.id === 'validate_focused'));
   if (waveIndex < 0) throw new Error('focused validator wave is not configured');
-  const actions = sessionActionsForWave(config, selected, requestContext, workflowId, waveIndex, []);
-  const runId = sessionBridgeRunId(workspaceId, requestContext, workflowId);
+  const actions = sessionActionsForWave(requestConfig, selected, requestContext, workflowId, waveIndex, []);
+  const runId = sessionBridgeRunId(requestWorkspaceId, requestContext, workflowId);
   const requests = actions
     .filter((action) => action.stage_id === 'validate_focused')
     .map((action) =>
       buildSessionBridgeRequest({
         runId,
         workflowId,
-        configDigest: runtimeConfigDigest(config),
+        configDigest: runtimeConfigDigest(requestConfig),
         context: requestContext,
         waveIndex,
         action,
-        configuredContext: configuredContextForStage(root, config, workflowId, action.stage_id, requestContext),
+        configuredContext: configuredContextForStage(
+          requestRoot,
+          requestConfig,
+          workflowId,
+          action.stage_id,
+          requestContext,
+        ),
         priorResults: [],
       }),
     );
@@ -308,6 +342,48 @@ async function configuredFactoryFixture(name: string): Promise<string> {
   const repositoryRoot = await makeFreshRepository(`session-handoff-${name}-`);
   scratch = repositoryRoot;
   return repositoryRoot;
+}
+
+async function withAdmittedHandoffFixture(
+  body: (fixture: InitialWorkFixture) => void | Promise<void>,
+  options: Parameters<typeof createInitialSourceWorkFixture>[0] & { readonly holdExpiredOwnerClock?: boolean } = {},
+  timeoutMs: 5_000 | 20_000 = 5_000,
+): Promise<void> {
+  const deadline = performance.now() + timeoutMs;
+  caseDeadline = deadline;
+  let fixture: InitialWorkFixture | undefined, ownedRoot: string | undefined;
+  const { holdExpiredOwnerClock = false, ...fixtureOptions } = options;
+  let clockHeld = false;
+  await withInitialSourceCleanup(
+    async () => {
+      fixture = await expectAsyncReturned(() =>
+        createInitialSourceWorkFixture({
+          ...fixtureOptions,
+          onRoot: (allocated) => {
+            ownedRoot = allocated;
+            console.info('Admitted handoff fixture root: ' + allocated);
+          },
+        }),
+      );
+      if (performance.now() >= deadline) throw new Error('Admitted handoff setup exhausted its deadline');
+      if (holdExpiredOwnerClock) {
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(fixture)));
+        clockHeld = true;
+      }
+      await body(fixture);
+      expect(performance.now()).toBeLessThan(deadline);
+    },
+    async () => {
+      try {
+        if (fixture) await fixture.close();
+      } finally {
+        if (clockHeld) setSystemTime();
+        if (ownedRoot) console.info('Retained admitted handoff fixture: ' + ownedRoot);
+      }
+      if (performance.now() >= deadline) throw new Error('Admitted handoff cleanup exhausted its deadline');
+    },
+    'Admitted handoff fixture',
+  );
 }
 
 function combinedConstructorAndCloseFailure(
@@ -685,6 +761,114 @@ describe('persistent advisory session handoff', () => {
     );
     await writeFile(configPath, originalConfig);
     expect(expectReturned(() => active.resume(context.work_id, context.attempt))).toEqual(prepared);
+    retainScratch = false;
+  });
+
+  test.each(['identical', 'foreign-scope', 'foreign-selection'] as const)(
+    'prepare-or-resume reconciles a native insert race with %s winner binding',
+    async (kind) => {
+      caseDeadline = performance.now() + 5_000;
+      scratch = await mkdtemp(path.join(tmpdir(), 'session-insert-race-'));
+      retainScratch = true;
+      const winner = store(),
+        contender = store();
+      const selected = selection('research', 'information_research');
+      const winnerSelection = kind === 'foreign-selection' ? selection('task', 'task_execution') : selected;
+      const winnerContext = kind === 'foreign-scope' ? { ...context, scope_digest: 'c'.repeat(64) } : context;
+      const originalPrepare = contender.prepare.bind(contender);
+      const barrier = spyOn(contender, 'prepare').mockImplementationOnce((requestedSelection, requestedContext) => {
+        expectReturned(() => winner.prepare(winnerSelection, winnerContext));
+        return originalPrepare(requestedSelection, requestedContext);
+      });
+      let failure: { error: unknown } | undefined;
+      try {
+        if (kind === 'identical') {
+          const result = expectReturned(() => contender.prepareOrResume(selected, context));
+          expect(result.created).toBe(false);
+          expect(result.snapshot).toEqual(
+            requiredPersistentSnapshot(expectReturned(() => winner.resume(context.work_id, context.attempt))),
+          );
+        } else {
+          expect(() => contender.prepareOrResume(selected, context)).toThrow('differs from persisted binding');
+        }
+        expect(barrier).toHaveBeenCalledTimes(1);
+        const winning = requiredPersistentSnapshot(
+          expectReturned(() => winner.resume(context.work_id, context.attempt)),
+        );
+        expect(winning.state.handoff.context).toEqual(winnerContext);
+        expect(winning.state.handoff.selection).toEqual(winnerSelection);
+        expect(expectReturned(() => contender.resume(context.work_id, context.attempt))).toEqual(winning);
+        expect(winning.version.revision).toBe(1);
+      } catch (error) {
+        failure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              barrier.mockRestore();
+            },
+          ],
+          failure,
+        );
+      }
+      retainScratch = false;
+    },
+  );
+
+  test('configured Mastra ledger refuses drift and preserves its exact journal until config restoration', async () => {
+    caseDeadline = performance.now() + 5_000;
+    scratch = await makeFreshRepository('mastra-config-drift-', {
+      onRoot: (allocated) => {
+        scratch = allocated;
+        retainScratch = true;
+      },
+    });
+    const localConfig = loadRuntimeConfig(scratch);
+    const localWorkspaceId = deriveWorkspaceId(localConfig.repository.repository_id, scratch);
+    const fixture = actualFocusedValidatorRequests('mastra-config-drift', {
+      repositoryRoot: scratch,
+      config: localConfig,
+      workspaceId: localWorkspaceId,
+    });
+    const instance = expectReturned(() => openConfiguredMastraSessionLedger(scratchPath()));
+    mastraLedgers.push(instance);
+    const before = expectReturned(() =>
+      instance.sync('mastra-config-drift', 1, fixture.runId, 'validate_focused', fixture.requests),
+    );
+    const database = instance.sessionProducerBinding().database;
+    const row = () =>
+      database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(localWorkspaceId, 'mastra-config-drift', 1);
+    const originalRow = row();
+    const configPath = path.join(scratch, 'agent-runtime.config.v1.yaml');
+    const originalConfig = await readFile(configPath, 'utf8');
+    const changedConfig = originalConfig.replace(/^  work_root: \.agent\/work$/mu, '  work_root: .agent/work-drift');
+    if (changedConfig === originalConfig) throw new Error('Fixture work root replacement did not match');
+    let failure: { error: unknown } | undefined;
+    try {
+      writeFileSync(configPath, changedConfig);
+      expect(() => instance.issueWave('mastra-config-drift', 1, before.version)).toThrow(
+        'Mastra session root configuration changed during attempt',
+      );
+      expect(row()).toEqual(originalRow);
+    } catch (error) {
+      failure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            writeFileSync(configPath, originalConfig);
+          },
+        ],
+        failure,
+      );
+    }
+    expect(expectReturned(() => instance.resume('mastra-config-drift', 1))).toEqual(before);
     retainScratch = false;
   });
 
@@ -1087,6 +1271,329 @@ describe('durable Mastra research exposure and invocation identity', () => {
       ),
     ).toThrow(/outside an allowed read-only slot batch/);
   });
+});
+
+test('completed Host source report binds its actual scoped changes and preserves exact retries', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      await expectAsyncReturned(() => prepareInitialSourceFrontier(fixture, 'writer'));
+      const issued = await expectAsyncReturned(() => issueInitialSourceFixtureWriter(fixture));
+      const host = initialSourceHostStore(fixture),
+        ledger = initialSourceHostLedger(fixture);
+      const item = issued.journal.state.items[0],
+        reservation = item?.host_reservation;
+      if (!item || !reservation) throw new Error('Native writer reservation is missing');
+      const changedPath = fixture.documents[0],
+        file = path.join(fixture.root, changedPath);
+      await writeFile(file, Buffer.concat([await readFile(file), Buffer.from('controlled source result\n')]));
+      const sourceAfter = snapshotDeclaredSources(requireSafeRepositoryAccess(fixture.root), fixture.documents);
+      const summary = 'Controlled fixture Source result';
+      const observation = expectReturned(() =>
+        parseSessionBridgeObservation({
+          schema: 'VidaSessionObservation/v1',
+          action_id: item.request.action_id,
+          issue_id: item.issue_id,
+          host_attempt_id: reservation.receipt.attempt.attempt_id,
+          changed_paths: [changedPath],
+          agent_id: 'fixture:host-source-writer',
+          tool_call_ref: 'fixture:host-source-report',
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: ['fixture://host-source-report'],
+        }),
+      );
+      expectReturned(() => host.completeWorkflowAttempt(reservation.receipt, observation));
+      const before = {
+        host: host.readHostStateSnapshot(fixture.identity),
+        journal: ledger.resume(fixture.identity.work_id, 1),
+      };
+      expect(() =>
+        ledger.report(fixture.identity.work_id, 1, issued.journal.version, observation, {
+          ...sourceAfter,
+          digest: 'f'.repeat(64),
+        }),
+      ).toThrow();
+      expect(host.readHostStateSnapshot(fixture.identity)).toEqual(before.host);
+      expect(ledger.resume(fixture.identity.work_id, 1)).toEqual(before.journal);
+      expect(initialSourceHostDatabase(fixture).inTransaction).toBe(false);
+      const accepted = expectReturned(() =>
+        ledger.report(fixture.identity.work_id, 1, issued.journal.version, observation, sourceAfter),
+      );
+      expect(accepted.state.source_scope).toEqual(sourceAfter);
+      expect(accepted.state.items[0]?.host_reservation).toEqual(reservation);
+      expect(accepted.state.items[0]?.observation).toEqual(observation);
+      const after = host.readHostStateSnapshot(fixture.identity);
+      expect(
+        after.work?.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === reservation.receipt.attempt.attempt_id,
+        ),
+      ).toMatchObject({ status: 'completed', result: observation, result_digest: canonicalJsonDigest(observation) });
+      expect(expectReturned(() => ledger.report(fixture.identity.work_id, 1, accepted.version, observation))).toEqual(
+        accepted,
+      );
+      expect(() =>
+        ledger.report(
+          fixture.identity.work_id,
+          1,
+          accepted.version,
+          {
+            ...observation,
+            summary: 'changed report',
+            output_digest: canonicalJsonDigest('changed report'),
+          },
+          sourceAfter,
+        ),
+      ).toThrow('retry differs');
+      expect(host.readHostStateSnapshot(fixture.identity)).toEqual(after);
+      expect(ledger.resume(fixture.identity.work_id, 1)).toEqual(accepted);
+    },
+    { holdExpiredOwnerClock: true },
+    20_000,
+  );
+}, 20_000);
+
+test('failed Host report preserves the uncertain source reservation and rejects a foreign attempt', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      await expectAsyncReturned(() => prepareInitialSourceFrontier(fixture, 'writer'));
+      const issued = await expectAsyncReturned(() => issueInitialSourceFixtureWriter(fixture));
+      const host = initialSourceHostStore(fixture),
+        ledger = initialSourceHostLedger(fixture);
+      const item = issued.journal.state.items[0],
+        reservation = item?.host_reservation;
+      if (!item || !reservation) throw new Error('Native writer reservation is missing');
+      expectReturned(() => host.markWorkflowAttemptUncertain(reservation.receipt));
+      const summary = 'Writer outcome remains uncertain';
+      const observation = expectReturned(() =>
+        parseSessionBridgeObservation({
+          schema: 'VidaSessionObservation/v1',
+          action_id: item.request.action_id,
+          issue_id: item.issue_id,
+          host_attempt_id: reservation.receipt.attempt.attempt_id,
+          agent_id: 'fixture:host-source-writer',
+          tool_call_ref: 'fixture:uncertain-source-report',
+          status: 'reported_failed',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: ['fixture://uncertain-source-report'],
+        }),
+      );
+      const before = {
+        host: host.readHostStateSnapshot(fixture.identity),
+        journal: ledger.resume(fixture.identity.work_id, 1),
+      };
+      expect(() =>
+        ledger.report(fixture.identity.work_id, 1, issued.journal.version, {
+          ...observation,
+          host_attempt_id: '0'.repeat(64),
+        }),
+      ).toThrow('host attempt identity differs');
+      expect(host.readHostStateSnapshot(fixture.identity)).toEqual(before.host);
+      expect(ledger.resume(fixture.identity.work_id, 1)).toEqual(before.journal);
+      const reported = expectReturned(() =>
+        ledger.report(fixture.identity.work_id, 1, issued.journal.version, observation),
+      );
+      expect(reported.resume_status).toBe('blocked');
+      expect(reported.state.items[0]?.observation).toEqual(observation);
+      expect(reported.state.items[0]?.host_reservation).toEqual(reservation);
+      const retained = host.readHostStateSnapshot(fixture.identity);
+      expect(
+        retained.work?.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === reservation.receipt.attempt.attempt_id,
+        ),
+      ).toMatchObject({ status: 'uncertain', result: null, result_digest: null });
+      expect(expectReturned(() => ledger.report(fixture.identity.work_id, 1, reported.version, observation))).toEqual(
+        reported,
+      );
+      expect(host.readHostStateSnapshot(fixture.identity)).toEqual(retained);
+    },
+    { holdExpiredOwnerClock: true },
+    20_000,
+  );
+}, 20_000);
+
+test('readonly replacement report atomically binds raw and projected observations to its prepared dispatch', async () => {
+  await withReadonlyDispatchHostFixture(async (fixture, deadline) => {
+    const { store, ledger, item, plan, journal, db } = pauseReadonlyDispatchHostFixture(fixture);
+    expect(expectReturned(() => store.commitReadOnlyDispatchRepair(plan))).toEqual(plan);
+    const activated = expectReturned(() =>
+      ledger.activateReadOnlyReplacement(fixture.identity.work_id, 1, journal.version, item.request.action_id),
+    );
+    const source = journal.state.source_scope;
+    if (!source) throw new Error('Prepared readonly source scope is missing');
+    const summary = 'Cooperative replacement report';
+    const raw = expectReturned(() =>
+      parseSessionBridgeObservation({
+        schema: 'VidaSessionObservation/v1',
+        action_id: activated.dispatch.dispatch_action_id,
+        issue_id: activated.dispatch.issue_id,
+        agent_id: 'fixture:replacement',
+        tool_call_ref: 'fixture:replacement-report',
+        status: 'reported_complete',
+        summary,
+        output_digest: canonicalJsonDigest(summary),
+        evidence_refs: [],
+      }),
+    );
+    const rows = () => ({
+      host: db.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all(),
+      journal: db.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt').all(),
+      plan: db.query('SELECT * FROM agent_host_readonly_dispatch_repair').all(),
+      activation: db.query('SELECT * FROM agent_host_readonly_dispatch_activation').all(),
+      schema: db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all(),
+    });
+    const before = rows();
+    expect(() =>
+      ledger.reportReadOnlyReplacement(fixture.identity.work_id, 1, activated.snapshot.version, raw, {
+        ...source,
+        digest: '0'.repeat(64),
+      }),
+    ).toThrow('replacement current issue or source binding changed');
+    expect(rows()).toEqual(before);
+    expect(() =>
+      ledger.reportReadOnlyReplacement(
+        fixture.identity.work_id + '-foreign',
+        1,
+        activated.snapshot.version,
+        raw,
+        source,
+      ),
+    ).toThrow('replacement report CAS version changed');
+    expect(rows()).toEqual(before);
+    const reported = expectReturned(() =>
+      ledger.reportReadOnlyReplacement(fixture.identity.work_id, 1, activated.snapshot.version, raw, source),
+    );
+    const projected = { ...raw, action_id: item.request.action_id };
+    expect(reported.state.items[0]?.observation).toEqual(projected);
+    expect(reported.state.items[0]?.issue_id).toBe(plan.replacement_issue_id);
+    const row = db
+      .query<{ payload: string; digest: string }, [string, string, number, string]>(
+        'SELECT payload,digest FROM agent_host_readonly_dispatch_outcome WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=?',
+      )
+      .get(store.workspaceId, fixture.identity.work_id, 1, item.request.action_id);
+    if (!row) throw new Error('Readonly replacement outcome is missing');
+    const outcome: unknown = JSON.parse(row.payload);
+    if (!isPlainRecord(outcome)) throw new Error('Readonly replacement outcome is not a record');
+    expect(canonicalJsonDigest(outcome)).toBe(row.digest);
+    expect(outcome).toEqual({
+      schema: 'VidaReadOnlyDispatchOutcome/v1',
+      plan_digest: plan.digest,
+      dispatch_action_id: activated.dispatch.dispatch_action_id,
+      logical_action_id: item.request.action_id,
+      issue_id: plan.replacement_issue_id,
+      raw_observation: raw,
+      projected_observation_digest: canonicalJsonDigest(projected),
+    });
+    const after = rows();
+    expect(after.host).toEqual(before.host);
+    expect(after.plan).toEqual(before.plan);
+    expect(after.activation).toEqual(before.activation);
+    expect(performance.now()).toBeLessThan(deadline);
+  });
+});
+
+test('native research normalization reserves only the observed plan and survives a closed-ledger reopen', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      const ledger = initialSourceHostLedger(fixture),
+        host = initialSourceHostStore(fixture),
+        db = initialSourceHostDatabase(fixture);
+      let reservations = 0;
+      const checkpoint = new Error('Native research normalization checkpoint reached');
+      const stopped = await rejectionReason(
+        prepareNativeUnnormalizedSynthesis(fixture, {
+          stopBeforeSynthesisReport: true,
+          normalizeResearch: ({ journal, request, plan }) => {
+            const before = {
+              host: host.readHostStateSnapshot(fixture.identity),
+              journal: ledger.resume(fixture.identity.work_id, 1),
+            };
+            const row = () =>
+              db
+                .query(
+                  'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+                )
+                .get(host.workspaceId, fixture.identity.work_id, 1);
+            const beforeRow = row();
+            const { digest, ...body } = plan;
+            void digest;
+            const wrongBody = { ...body, observation_digest: '0'.repeat(64) };
+            expect(() =>
+              ledger.reserveResearchNormalization(fixture.identity.work_id, 1, journal.version, request.action_id, {
+                ...wrongBody,
+                digest: canonicalJsonDigest(wrongBody),
+              }),
+            ).toThrow('normalization plan differs from observation');
+            expect(row()).toEqual(beforeRow);
+            const unobserved = journal.state.items.find((entry) => entry.observation === null);
+            expect(journal.state.items).toHaveLength(2);
+            if (!unobserved) throw new Error('Native normalization fixture has no unobserved sibling');
+            expect(() =>
+              ledger.reserveResearchNormalization(
+                fixture.identity.work_id,
+                1,
+                journal.version,
+                unobserved.request.action_id,
+                plan,
+              ),
+            ).toThrow('normalization needs one observed activated action');
+            expect(row()).toEqual(beforeRow);
+            expect(host.readHostStateSnapshot(fixture.identity)).toEqual(before.host);
+            expect(ledger.resume(fixture.identity.work_id, 1)).toEqual(before.journal);
+            const reserved = expectReturned(() =>
+              ledger.reserveResearchNormalization(
+                fixture.identity.work_id,
+                1,
+                journal.version,
+                request.action_id,
+                plan,
+              ),
+            );
+            expect(reserved.version.revision).toBe(journal.version.revision + 1);
+            expect(
+              reserved.state.items.find((entry) => entry.request.action_id === request.action_id)
+                ?.research_normalization,
+            ).toEqual(plan);
+            expect(reserved.state.items.filter((entry) => entry.request.action_id !== request.action_id)).toEqual(
+              journal.state.items.filter((entry) => entry.request.action_id !== request.action_id),
+            );
+            const afterRow = row();
+            expect(() =>
+              ledger.reserveResearchNormalization(
+                fixture.identity.work_id,
+                1,
+                reserved.version,
+                request.action_id,
+                plan,
+              ),
+            ).toThrow('normalization needs one observed activated action');
+            expect(row()).toEqual(afterRow);
+            expect(expectReturned(() => ledger.resume(fixture.identity.work_id, 1))).toEqual(reserved);
+            expect(host.readHostStateSnapshot(fixture.identity)).toEqual(before.host);
+            reservations++;
+            throw checkpoint;
+          },
+        }),
+      );
+      expect(stopped).toBe(checkpoint);
+      expect(reservations).toBe(1);
+      const beforeClose = expectReturned(() => ledger.resume(fixture.identity.work_id, 1));
+      await expectAsyncReturned(() => fixture.close());
+      let reopened: MastraSessionLedger | undefined;
+      await withInitialSourceCleanup(
+        () => {
+          reopened = expectReturned(() => openConfiguredMastraSessionLedger(fixture.root));
+          expect(expectReturned(() => reopened?.resume(fixture.identity.work_id, 1))).toEqual(beforeClose);
+        },
+        () => {
+          if (reopened) reopened.close();
+        },
+        'Research normalization reopened ledger',
+      );
+    },
+    { cooperativeSynthesis: true, researchSynthesis: true, researchAssignments: 2 },
+  );
 });
 
 describe('Mastra configured-wave ledger projections', () => {

@@ -69,7 +69,7 @@ focused verification. These implemented TEST013 repairs do not close global gate
 
 The former multi-contour slot assignments and daily image/envelope/admission
 mutation narratives are retained in the [published testing history](https://github.com/pomazanbohdan/vida-stack-lite/blob/55024fb75697286f96d6f1be91b53af90cc1dc69/.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md#test-acceptance-boundary).
-They do not authorize active lanes. Current execution is the single bun-host-state
+They do not authorize active lanes. Current execution is the single bun-session-handoff
 coverage cycle until exact F/L/S/B100 or complete objective-gap disposition;
 the strategy owns order and WORK owns its
 input-bound outcomes and next packet. Frozen and mutation work stay deferred.

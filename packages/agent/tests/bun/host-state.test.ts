@@ -30,7 +30,6 @@ import {
   runSynthesisFixtureInProcess,
 } from '../helpers/public-prewriter-fixture.ts';
 import { bindControlledRuntimeInitialization } from '../helpers/controlled-runtime-initialization-fixture.ts';
-import { buildReadOnlyDispatchRepairPlan } from '../../src/orchestration/read-only-dispatch-repair.ts';
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
 import {
   createTaskSourceHostFixture,
@@ -85,6 +84,10 @@ import {
 } from '../helpers/initial-source-work-fixture.ts';
 import { createCompletedSourceReportRecoveryFixture } from '../helpers/completed-source-report-recovery-fixture.ts';
 import { runtimePackageBeforeimageFixture } from '../helpers/runtime-package-beforeimage-fixture.ts';
+import {
+  pauseReadonlyDispatchHostFixture,
+  withReadonlyDispatchHostFixture,
+} from '../helpers/readonly-dispatch-host-fixture.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import {
   prepareLifecycleForCorrection,
@@ -185,7 +188,6 @@ import {
   captureHistoricalTerminalSynthesisOwnerWork,
   suspendLocalWork,
   suspendCompletedReadOnlyWork,
-  suspendHistoricalOwnerWork,
 } from '../../src/orchestration/suspend-local-work.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../../src/orchestration/local-work-admission.ts';
 import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-local-work.ts';
@@ -7021,90 +7023,6 @@ function admitDisjointInitialSourcePeers(
       expect(readFileSync(path.join(current.root, peerPath), 'utf8')).toBe('Disjoint peer source\n');
     },
   };
-}
-
-async function withReadonlyDispatchHostFixture(
-  body: (current: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>, deadline: number) => Promise<void>,
-): Promise<void> {
-  const deadline = performance.now() + 5_000;
-  let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
-  let ownedRoot: string | undefined;
-  await withInitialSourceCleanup(
-    async () => {
-      const current = await createInitialSourceWorkFixture({
-        cooperativeSynthesis: true,
-        onRoot: (root) => {
-          ownedRoot = root;
-          console.info('Readonly dispatch Host fixture root: ' + root);
-        },
-      });
-      fixture = current;
-      if (performance.now() >= deadline) throw new Error('Readonly dispatch fixture setup exhausted its deadline');
-      await body(current, deadline);
-      expect(performance.now()).toBeLessThan(deadline);
-    },
-    async () => {
-      if (fixture) await fixture.close();
-      if (ownedRoot) console.info('Retained issued UNKNOWN readonly dispatch fixture: ' + ownedRoot);
-    },
-    'Readonly dispatch Host fixture',
-  );
-}
-
-function pauseReadonlyDispatchHostFixture(current: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>) {
-  const store = initialSourceHostStore(current);
-  const ledger = initialSourceHostLedger(current);
-  const unissued = initialSourceJournal(current);
-  expect(current.config.agents.profiles.researcher?.egress_policy).toBe('none');
-  expect(unissued.state.items).toHaveLength(1);
-  const issued = ledger.issueWave(current.identity.work_id, 1, unissued.version);
-  const item = requiredValue(issued.state.items[0], 'Issued readonly dispatch item');
-  const issueId = requiredValue(item.issue_id, 'Issued readonly dispatch identity');
-  expect(issued.resume_status).toBe('issued_outcome_uncertain');
-  expect(item.observation).toBeNull();
-  expect(item.host_reservation).toBeUndefined();
-  const before = presentSnapshot(store.readHostStateSnapshot(current.identity));
-  suspendHistoricalOwnerWork({
-    store,
-    identity: current.identity,
-    journal: issued,
-    expectedWork: before.workVersion,
-    expectedLedger: before.ledgerVersion,
-    expectedMaintenanceGeneration: before.maintenanceGeneration,
-    nativeSessionHandle: requiredValue(current.input, 'Readonly dispatch admission').nativeSessionHandle,
-    userRequestPointer: 'fixture:pause-unknown-readonly',
-    requestIntent: 'linked_correction',
-    predicate: 'unknown_readonly',
-    config: current.config,
-    documentationContext: {
-      repository_root: current.root,
-      repository_id: current.identity.repository_id,
-      project_id: 'sample',
-      work_id: current.identity.work_id,
-    },
-  });
-  const paused = presentSnapshot(store.readHostStateSnapshot(current.identity));
-  const journal = initialSourceJournal(current);
-  expect(paused.work.lease).toBeNull();
-  expect(paused.work.execution.status).toBe('suspended');
-  expect(journal).toEqual(issued);
-  const plan = buildReadOnlyDispatchRepairPlan({
-    repositoryRoot: current.root,
-    config: current.config,
-    workspaceId: store.workspaceId,
-    projectIds: current.identity.project_ids,
-    workId: current.identity.work_id,
-    attempt: 1,
-    actionId: item.request.action_id,
-    issueId,
-    nativeHandle: requiredValue(current.input, 'Readonly dispatch admission').nativeSessionHandle,
-    repairId: 'fixture-native-readonly-repair',
-    actor: 'fixture-readonly-operator',
-    timestamp: new Date().toISOString(),
-    snapshot: store.readWorkSessionSnapshot(current.identity),
-  });
-  const db = initialSourceHostDatabase(current);
-  return { store, ledger, item, issueId, paused, journal, plan, db };
 }
 
 test('native readonly dispatch repair retains its issued UNKNOWN through deterministic intent and exact retry', async () => {

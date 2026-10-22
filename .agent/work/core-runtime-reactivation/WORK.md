@@ -49,12 +49,36 @@ strict95, scoped zero-warning lint and all70affected cases across the two
 handoff files plus the existing workflow-contract file:724assertions,10.01s.
 Earlier scoped1932/1937/1939 controls are retained; no second full stage runs.
 
-Current session-handoff coverage remains pending. Before its first full stage,
-finish the remaining1930 producer-backed families: reserved Host reports,
-replacement reports, observed-research normalization, configured-Mastra drift
-and the real insert-race path. They are supported prerequisites, not objective
-skips. Prior session report image locators are retired and their counters are
-historical navigation only; no new inventory or synthetic current maximum.
+The remaining1930 producer-backed families are now implemented and checked:
+reserved Host success/failure reports, replacement reports, observed-research
+normalization reservation, configured-Mastra drift and native insertion races.
+The new shared readonly-dispatch fixture replaces the Host-local copy; it keeps
+issued UNKNOWN roots, the native pause/repair sequence and the5s deadline through
+owned close. The research helper's optional checkpoint preserves its default
+record/artifact/synthesis path. The selected case checks the actual observed-plan
+reservation and exact reopened ledger, not artifact normalization or tool origin.
+Both research items must exist; the unobserved sibling must refuse. Native
+Host reports keep the existing20s exception and restore the expired-owner clock
+after owned cleanup. No production code changes in this correction packet.
+
+DIAG/session-controls-v1950.log retains both regressed-renewal-clock failures;
+1951 retains the import error and1953 the unused-import lint failure.1954 retains
+the wrong research-fixture prerequisite;1955 retains the5s timeout from running
+unneeded downstream synthesis.1957 stops at the checked reservation with an
+identity-asserted checkpoint, passing without raising the deadline. All failed
+fixture roots and original logs remain.1958 passes the three unchanged-default
+Host helper controls:129assertions,8.29s. No full Host suite is repeated.
+Independent DIAG/handoff-batch-review-v1956.md accepts the producer boundaries
+and identifies the sibling-existence assertion, now fixed. Root also checks
+unchanged Host state after successful reservation and duplicate refusal.
+
+DIAG/session-controls-v1959.log passes scoped strict/lint, all78affected cases
+across the two handoff files and existing workflow-contract file:811assertions,
+32.98s. The separate exact Host resource-pin control passes1case/10assertions.
+The changed Host pin is refreshed once; stopped-source bytes remain unchanged.
+Current session-handoff full coverage remains pending until the sole stage below.
+Prior session report image locators are retired and their counters are historical
+navigation only; no new inventory or synthetic current maximum.
 
 The10:49UTC continuation audits the preceding three hours through published Git
 packets and existing stages, without another suite, inventory or disk scan.

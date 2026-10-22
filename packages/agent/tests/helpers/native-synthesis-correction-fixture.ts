@@ -49,7 +49,17 @@ function observed(
  */
 export async function prepareNativeUnnormalizedSynthesis(
   f: InitialWorkFixture,
-  { stopBeforeSynthesisReport = false }: { readonly stopBeforeSynthesisReport?: boolean } = {},
+  {
+    stopBeforeSynthesisReport = false,
+    normalizeResearch,
+  }: {
+    readonly stopBeforeSynthesisReport?: boolean;
+    readonly normalizeResearch?: (input: {
+      readonly journal: ReturnType<typeof currentJournal>;
+      readonly request: SessionBridgeRequest;
+      readonly plan: Awaited<ReturnType<typeof prepareObservedResearchRecord>>;
+    }) => ReturnType<typeof currentJournal>;
+  } = {},
 ) {
   const store = hostStore(f);
   const ledger = hostLedger(f);
@@ -207,13 +217,9 @@ export async function prepareNativeUnnormalizedSynthesis(
       host_state: store,
       readCurrent,
     });
-    journal = ledger.reserveResearchNormalization(
-      f.identity.work_id,
-      1,
-      journal.version,
-      research.request.action_id,
-      plan,
-    );
+    journal = normalizeResearch
+      ? normalizeResearch({ journal, request: research.request, plan })
+      : ledger.reserveResearchNormalization(f.identity.work_id, 1, journal.version, research.request.action_id, plan);
     await recordObservedResearchResultAsync({
       root: f.root,
       result,
