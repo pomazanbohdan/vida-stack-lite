@@ -1,4 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
+import { spyOn } from 'bun:test';
+import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
@@ -67,13 +69,16 @@ export interface FailedFinalCorrectionFixture {
   readonly database: ReturnType<typeof createAutomaticWorkAdmissionFixture>['database'];
   readonly identity: WorkIdentity;
   readonly journal: MastraSessionLedgerSnapshot;
+  readonly admittedHost: HostStateSnapshot;
   readonly tracedHost: HostStateSnapshot | null;
+  readonly tracedPlanHost: HostStateSnapshot | null;
   readonly plannedHost: HostStateSnapshot | null;
   readonly preparationPath: string;
   close(completed: boolean | (() => boolean)): void;
 }
 
 interface FailedFinalCorrectionFixtureOptions {
+  readonly capturePlanningTrace?: boolean;
   readonly preparationInputs?: false;
   readonly noEffectRetry?: 'same-slot' | 'next-writer' | 'two-slots';
   readonly noEffectRetries?: number;
@@ -607,18 +612,42 @@ export async function createFailedFinalCorrectionFixture(
       });
     }
     if (options?.noEffectRetry === 'two-slots') await reconcileCurrentUnissuedItem(1, false);
-    journal = await runPrewriterFixtureInProcess(
-      {
-        args,
-        publicRun,
-        sync,
-        repositoryRoot: fixture.root,
-        workId: id,
-        attempt: 1,
-        work,
-      },
-      { ledger, bridge, source },
-    );
+    let tracedPlanHost: HostStateSnapshot | null = null;
+    const projectPlanning = host.projectLifecycleTransition.bind(host);
+    const planningObserver = options?.capturePlanningTrace
+      ? spyOn(host, 'projectLifecycleTransition').mockImplementation((...args) => {
+          if (args[1] === 'PLAN') tracedPlanHost = host.readHostStateSnapshot(identity);
+          return projectPlanning(...args);
+        })
+      : undefined;
+    let planningFailure: { readonly error: unknown } | undefined;
+    try {
+      journal = await runPrewriterFixtureInProcess(
+        {
+          args,
+          publicRun,
+          sync,
+          repositoryRoot: fixture.root,
+          workId: id,
+          attempt: 1,
+          work,
+        },
+        { ledger, bridge, source },
+      );
+    } catch (error) {
+      planningFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            planningObserver?.mockRestore();
+            return undefined;
+          },
+        ],
+        planningFailure,
+      );
+    }
     const plannedHost = !testerPasses ? host.readHostStateSnapshot(identity) : null;
 
     const issuedWriter = requireRecord(
@@ -814,7 +843,9 @@ export async function createFailedFinalCorrectionFixture(
       database: fixture.database,
       identity,
       journal,
+      admittedHost: admitted.host,
       tracedHost,
+      tracedPlanHost,
       plannedHost,
       close,
     };

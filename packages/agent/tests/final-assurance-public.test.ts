@@ -32,6 +32,7 @@ import {
   finalAssuranceReceiptReferences,
   prepareFinalAssurance,
   prepareLifecycleForCorrection,
+  finalAssurancePreparationSchema,
   readCorrectivePlanningJournal,
   validateWorkSessionBindingAndReturnCorrectiveAuthority,
 } from '../src/orchestration/final-assurance.ts';
@@ -46,6 +47,7 @@ import type {
   SessionBridgeRequest,
 } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import { createFailedFinalCorrectionFixture } from './helpers/failed-final-correction-fixture.ts';
+import { nativeDatabaseSnapshotReader } from './helpers/native-database-snapshot.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 type MutableAdmissionInput = Omit<
   LocalWorkAdmissionInput,
@@ -739,10 +741,14 @@ test('public final assurance commits three synthetic review reverse pairs at a r
       originalSource = readFileSync(sourceFile);
     writeFileSync(sourceFile, 'Synthetic source drift');
     const beforeDriftDenial = f.store.readHostStateSnapshot(identity);
+    const beforeDriftAssurance = f.store.readFinalAssurance(identity, 1);
+    const nativeRows = nativeDatabaseSnapshotReader(f.database);
+    const beforeDriftRows = nativeRows();
     denied(withVersion(originalVersion, '--prepare-assurance', preparation));
     const afterDriftDenial = f.store.readHostStateSnapshot(identity);
-    expect(afterDriftDenial.work).toEqual(beforeDriftDenial.work);
-    expect(afterDriftDenial.ledger).toEqual(beforeDriftDenial.ledger);
+    expect(afterDriftDenial).toEqual(beforeDriftDenial);
+    expect(f.store.readFinalAssurance(identity, 1)).toEqual(beforeDriftAssurance);
+    expect(nativeRows()).toEqual(beforeDriftRows);
     writeFileSync(sourceFile, originalSource);
 
     const retainedReferences = currentWork(f.store.readHostStateSnapshot(identity)).lifecycle.references;
@@ -1078,9 +1084,43 @@ test('direct Source preparation recovers interrupted packet publication from the
       journal: { ...journal, resume_status: mastraLedgerStatus(journal.state) },
       preparationPath: f.preparationPath,
     };
+    const rows = nativeDatabaseSnapshotReader(f.database);
+    const projectPlanTransition = f.store.projectLifecycleTransition.bind(f.store);
+    const planInterruption = new Error('Controlled interruption after preparation references and before EXECUTE.');
+    const planBoundary = spyOn(f.store, 'projectLifecycleTransition').mockImplementation((...args) => {
+      if (args[1] === 'EXECUTE') throw planInterruption;
+      return projectPlanTransition(...args);
+    });
+    let planFailure: { error: unknown } | undefined;
+    try {
+      assert.throws(
+        () => prepareFinalAssurance(preparation),
+        (error: unknown) => error === planInterruption,
+      );
+    } catch (error) {
+      planFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            planBoundary.mockRestore();
+            return undefined;
+          },
+        ],
+        planFailure,
+      );
+    }
+    const plannedHost = f.store.readHostStateSnapshot(f.identity);
+    expect(currentWork(plannedHost).lifecycle.phase).toBe('PLAN');
+    expect(currentWork(plannedHost).lifecycle.seal).toBeNull();
+    expect(f.store.readFinalAssurance(f.identity, 1)).toBeNull();
+    const plannedRows = rows();
+    let beforeExecuteRetry: ReturnType<typeof rows> | undefined;
     const projectTransition = f.store.projectLifecycleTransition.bind(f.store),
       sealInterruption = new Error('Controlled interruption after implementation seal publication.'),
       transition = spyOn(f.store, 'projectLifecycleTransition').mockImplementation((work, target, action, context) => {
+        if (target === 'EXECUTE') beforeExecuteRetry = rows();
         if (target === 'VERIFY') throw sealInterruption;
         return projectTransition(work, target, action, context);
       });
@@ -1106,6 +1146,7 @@ test('direct Source preparation recovers interrupted packet publication from the
     }
     const sealedHost = f.store.readHostStateSnapshot(f.identity),
       sealedWork = currentWork(sealedHost);
+    expect(beforeExecuteRetry).toEqual(plannedRows);
     expect(sealedWork.lifecycle.phase).toBe('EXECUTE');
     expect(sealedWork.lifecycle.seal?.implementation_fingerprint).toBe(journal.state.source_scope.digest);
     expect(
@@ -1199,7 +1240,7 @@ test.each([
 ] as const)(
   'failed final correction preparation consumes persisted Host and CAS-bound failed Journal evidence: %s',
   async (outcome, failedStage, expectedFailedCount) => {
-    const f = await createFailedFinalCorrectionFixture(outcome);
+    const f = await createFailedFinalCorrectionFixture(outcome, { capturePlanningTrace: true });
     let completed = false;
     let bodyFailure: { error: unknown } | undefined;
     try {
@@ -1213,11 +1254,14 @@ test.each([
       };
       assert.ok(f.tracedHost);
       assert.ok(f.plannedHost);
+      assert.ok(f.tracedPlanHost);
+      expect(currentWork(f.admittedHost).lifecycle.phase).toBe('INTAKE');
       expect(currentWork(f.tracedHost).lifecycle.phase).toBe('TRACE');
+      expect(currentWork(f.tracedPlanHost).lifecycle.phase).toBe('TRACE');
       expect(currentWork(f.plannedHost).lifecycle.phase).toBe('PLAN');
       const beforeRace = f.store.readHostStateSnapshot(f.identity),
         journalBeforeRace = f.store.readWorkSessionJournal(f.identity);
-      for (const staleHost of [f.tracedHost, f.plannedHost]) {
+      for (const staleHost of [f.admittedHost, f.tracedHost, f.plannedHost]) {
         expect(staleHost.workVersion).not.toEqual(beforeRace.workVersion);
         const staleRead = spyOn(f.store, 'readHostStateSnapshot').mockReturnValueOnce(staleHost);
         let raceFailure: { error: unknown } | undefined;
@@ -1240,6 +1284,59 @@ test.each([
         expect(f.store.readHostStateSnapshot(f.identity)).toEqual(beforeRace);
         expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBeforeRace);
       }
+      const tracedPlan = currentWork(f.tracedPlanHost).lifecycle.references.find(
+        (reference) => reference.kind === 'source_plan' && reference.disposition === 'current',
+      );
+      assert.ok(tracedPlan);
+      const currentPreparation: unknown = JSON.parse(readFileSync(path.join(f.root, f.preparationPath), 'utf8'));
+      const nativePlanPreparation = finalAssurancePreparationSchema.parse(currentPreparation);
+      const staleTracePreparationPath = `.agent/work/${f.identity.work_id}/negative-stale-trace-preparation.json`;
+      writeFileSync(
+        path.join(f.root, staleTracePreparationPath),
+        JSON.stringify({
+          ...nativePlanPreparation,
+          prerequisites: nativePlanPreparation.prerequisites.map((entry) =>
+            entry.kind === 'source_plan' ? { ...entry, path: tracedPlan.path } : entry,
+          ),
+        }),
+        { flag: 'wx' },
+      );
+      const beforeTraceRows = nativeDatabaseSnapshotReader(f.database);
+      const traceRows = beforeTraceRows();
+      const staleTraceRead = spyOn(f.store, 'readHostStateSnapshot').mockReturnValueOnce(f.tracedPlanHost);
+      const projectTrace = f.store.projectLifecycleTransition.bind(f.store);
+      let attemptedTraceTarget: string | undefined;
+      const traceTransition = spyOn(f.store, 'projectLifecycleTransition').mockImplementation((...args) => {
+        attemptedTraceTarget = args[1];
+        return projectTrace(...args);
+      });
+      let staleTraceFailure: { readonly error: unknown } | undefined;
+      try {
+        expect(() =>
+          prepareLifecycleForCorrection({ ...preparation, preparationPath: staleTracePreparationPath }),
+        ).toThrow('state compare-and-swap conflict');
+      } catch (error) {
+        staleTraceFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              staleTraceRead.mockRestore();
+              return undefined;
+            },
+            () => {
+              traceTransition.mockRestore();
+              return undefined;
+            },
+          ],
+          staleTraceFailure,
+        );
+      }
+      expect(attemptedTraceTarget).toBe('PLAN');
+      expect(beforeTraceRows()).toEqual(traceRows);
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(beforeRace);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBeforeRace);
       const prepared = expectReturned(() => prepareLifecycleForCorrection(preparation));
       const persisted = f.store.readHostStateSnapshot(f.identity),
         currentJournal = f.store.readWorkSessionJournal(f.identity),
@@ -1310,6 +1407,43 @@ test.each([
       assert.equal(canonicalJson(originalPlanning), canonicalJson(f.journal.state));
       expect(originalPlanning.corrective_execution ?? null).toBeNull();
       expect(originalPlanning.run_id).toBe(authorizedWork.execution.run_id);
+      const originalRecovery = authorizedWork.lifecycle.references.find(
+        (reference) => reference.kind === 'recovery' && reference.artifact_schema === 'CorrectiveExecutionRecovery/v1',
+      );
+      assert.ok(originalRecovery);
+      const recoveryBytes = readFileSync(path.join(f.root, originalRecovery.path));
+      expect(createHash('sha256').update(recoveryBytes).digest('hex')).toBe(originalRecovery.sha256);
+      const recoveryInput: unknown = JSON.parse(recoveryBytes.toString('utf8'));
+      const recoveryHeader = z
+        .object({ generation: z.literal(1) })
+        .passthrough()
+        .parse(recoveryInput);
+      const foreignGenerationBytes = Buffer.from(JSON.stringify({ ...recoveryHeader, generation: 2 }));
+      const foreignGenerationPath = `.agent/work/${f.identity.work_id}/negative-generation-recovery.json`;
+      writeFileSync(path.join(f.root, foreignGenerationPath), foreignGenerationBytes, { flag: 'wx' });
+      const foreignGenerationWork: WorkState = {
+        ...authorizedWork,
+        lifecycle: {
+          ...authorizedWork.lifecycle,
+          references: authorizedWork.lifecycle.references.map((reference) =>
+            reference === originalRecovery
+              ? {
+                  ...reference,
+                  path: foreignGenerationPath,
+                  sha256: createHash('sha256').update(foreignGenerationBytes).digest('hex'),
+                }
+              : reference,
+          ),
+        },
+      };
+      const recoveryRows = nativeDatabaseSnapshotReader(f.database);
+      const beforeForeignGeneration = recoveryRows();
+      expect(() => readCorrectivePlanningJournal(f.root, foreignGenerationWork, correctiveJournal)).toThrow(
+        'immutable original planning recovery missing',
+      );
+      expect(recoveryRows()).toEqual(beforeForeignGeneration);
+      expect(readFileSync(path.join(f.root, originalRecovery.path))).toEqual(recoveryBytes);
+      expect(readCorrectivePlanningJournal(f.root, authorizedWork, correctiveJournal)).toEqual(originalPlanning);
       expect(() =>
         readCorrectivePlanningJournal(
           f.root,

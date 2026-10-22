@@ -8,13 +8,145 @@ import {
   validateFinalAssuranceProgress,
   configuredReadonlyAssignment,
   eligibleReadonlyRelinquishment,
+  settledSessionItems,
   type FinalAssurancePacket,
   type FinalAssuranceState,
 } from '../src/orchestration/final-assurance.ts';
 import type { AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 import { configuredTestContext } from './configured-context.ts';
-import type { SessionBridgeRequest } from '../src/orchestration/mastra-session-bridge-contract.ts';
+import type {
+  SessionBridgeObservation,
+  SessionBridgeRequest,
+} from '../src/orchestration/mastra-session-bridge-contract.ts';
+import type { MastraLedgerItem, MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
 import { expectReturned } from './helpers/expect-rejection.ts';
+
+function settledRequest(actionId: string): SessionBridgeRequest {
+  return {
+    schema: 'VidaSessionRequest/v1',
+    run_id: 'settled-session-run',
+    workflow_id: 'task_execution',
+    wave_index: 0,
+    action_id: actionId,
+    assignment_index: 0,
+    stage_id: 'develop_task',
+    role: 'developer',
+    config_digest: 'a'.repeat(64),
+    scope_digest: 'b'.repeat(64),
+    bindings_manifest_ref: 'c'.repeat(64),
+  };
+}
+
+function inertItem(actionId: string): MastraLedgerItem {
+  return { request: settledRequest(actionId), issue_id: null, observation: null };
+}
+
+function terminalItem(actionId: string, status: SessionBridgeObservation['status']): MastraLedgerItem {
+  const issueId = '123e4567-e89b-42d3-a456-426614174000';
+  return {
+    request: settledRequest(actionId),
+    issue_id: issueId,
+    observation: {
+      schema: 'VidaSessionObservation/v1',
+      action_id: actionId,
+      issue_id: issueId,
+      agent_id: 'settled-session-fixture',
+      tool_call_ref: 'local:settled-session-fixture',
+      status,
+      summary: 'Typed terminal ledger fixture.',
+      output_digest: 'd'.repeat(64),
+      evidence_refs: [],
+    },
+  };
+}
+
+function settledJournal(
+  items: readonly MastraLedgerItem[],
+  completed: MastraSessionLedgerState['completed'] = [],
+): MastraSessionLedgerState {
+  return {
+    schema: 'MastraSessionLedger/v1',
+    workspace_id: 'settled-session-workspace',
+    work_id: 'settled-session-work',
+    attempt: 1,
+    run_id: 'settled-session-run',
+    step_id: null,
+    items,
+    completed,
+  };
+}
+
+test('settled session items preserve terminal history and require current items to be terminal or inert', () => {
+  const firstInert = inertItem('1'.repeat(64));
+  const secondInert = inertItem('2'.repeat(64));
+  const onlyInert = settledJournal([firstInert, secondInert]);
+  expect(settledSessionItems(onlyInert)).toEqual({ observed: [], inert: [firstInert, secondInert] });
+
+  const completedFailure = terminalItem('3'.repeat(64), 'reported_failed');
+  const currentInert = inertItem('4'.repeat(64));
+  const withHistory = settledJournal([currentInert], [{ step_id: 'completed-wave', items: [completedFailure] }]);
+  expect(settledSessionItems(withHistory)).toEqual({
+    observed: [completedFailure],
+    inert: [currentInert],
+  });
+
+  const matchingAction = terminalItem('5'.repeat(64), 'reported_complete');
+  const mismatchedAction: MastraLedgerItem = {
+    ...matchingAction,
+    observation: { ...matchingAction.observation!, action_id: '6'.repeat(64) },
+  };
+  const unobservedIssued: MastraLedgerItem = {
+    request: settledRequest('7'.repeat(64)),
+    issue_id: '223e4567-e89b-42d3-a456-426614174000',
+    observation: null,
+  };
+  const matchingIssue = terminalItem('8'.repeat(64), 'reported_complete');
+  const mismatchedIssue: MastraLedgerItem = {
+    ...matchingIssue,
+    observation: { ...matchingIssue.observation!, issue_id: '323e4567-e89b-42d3-a456-426614174000' },
+  };
+
+  const pendingNormalization: NonNullable<MastraLedgerItem['research_normalization']> = {
+    schema: 'ObservedResearchRecordPlan/v1',
+    binding: {
+      work_id: 'settled-session-work',
+      attempt: 1,
+      run_id: 'settled-session-run',
+      action_id: '9'.repeat(64),
+      issue_id: '423e4567-e89b-42d3-a456-426614174000',
+      scope_id: 'settled-session-scope',
+      scope_digest: 'b'.repeat(64),
+      source_revision: 'settled-session-source',
+      source_scope_digest: 'b'.repeat(64),
+      config_digest: 'a'.repeat(64),
+      maintenance_generation: 1,
+      lease_ticket_id: 'settled-session-ticket',
+      lease_thread_id: 'settled-session-thread',
+      lease_generation: 1,
+    },
+    observation_digest: 'a'.repeat(64),
+    result_digest: 'b'.repeat(64),
+    record_path: 'research/result.json',
+    record_pre_sha256: null,
+    record_sha256: 'c'.repeat(64),
+    changelog_path: 'research/CHANGELOG.md',
+    changelog_pre_sha256: null,
+    changelog_sha256: 'd'.repeat(64),
+    before_digest: null,
+    digest: 'e'.repeat(64),
+  };
+  const pendingMetadata: MastraLedgerItem = {
+    ...inertItem('9'.repeat(64)),
+    research_normalization: pendingNormalization,
+  };
+
+  for (const item of [mismatchedAction, mismatchedIssue, unobservedIssued, pendingMetadata]) {
+    const journal = settledJournal([item]);
+    const before = structuredClone(journal);
+    expect(() => settledSessionItems(journal)).toThrow('session journal has unfinished issued effects');
+    expect(journal).toEqual(before);
+  }
+});
 
 test('settled validator inspection permits test.read without granting unknown or executable capabilities', () => {
   const request = {

@@ -823,6 +823,64 @@ by this documentation compaction.
 
 ## Latest measurement custody
 
+### Current final-assurance baseline
+
+Stage2312 /workspace/contour-stage-pDtreJ completes on
+Source8699db119b19ecaf98d33cd16744940e3add8138,
+rund2e4297b-07d2-4f82-adf9-7b5ee35834aa. Elapsed71653.98518ms, exit0,
+no timeout/signal/spawn error, complete capture, closed producer/group and
+unchanged boot/image. Native14PASS/0FAIL/377assertions in67.03s. Raw
+**F95/95 L324/325 S361/364 B295/305** remains BLOCKED/nonexact. This first
+current baseline replaces missing retired-attachments navigation; it does not
+replay an archived attempt. No second producer runs.
+Image /workspace/.vida-quality-inputs/098a99111ee4803c3a898224703c41b40c42b94b/repository
+has manifest9755eac1abe10b6a85487e3d46213115094780fc996aba657a952c82b8542d7c.
+Map2314 binds Source845ab12971fb10130413360970e1e53e3330a1d3d7b331bac61c769d9f59604d
+and testsc9bc47dc9c0d17d492f4a398e702bddeb6c0813334310abfd708b29798b179db.
+2314 verifies/fsyncs the10240-byte non-cache scratch archive at
+/workspace/vida-functional-retention-pDtreJ-bMnhja/archive.json; originals remain.
+The automatic projection import preserves its unqualified BLOCKED outcome.
+
+The repair packet groups pure settled/inert Journal controls, a complete native
+source-drift no-write oracle and an interrupted preparation-reference retry.
+2320 scoped strict134/configured lint pass.2321 passes3cases/209assertions in67.50s:
+the full native source-drift afterimage is unchanged and the real PLAN-reference
+append followed by interrupted EXECUTE transition retries without another append
+write.2324 strict/lint and2failed-correction cases/135assertions in18.64s pass.
+The new recovery control copies genuine generation1 bytes into a separate
+invalid-generation artifact and supplies a nonpersisted negative Work input;
+the reader rejects missing original planning while all native rows and original
+recovery bytes remain unchanged. This is not native generation2 history.
+2322 independently supports that negative control.
+2323 independently approves the seal-null fallback at719/key70/1 for an objective
+skip under all included-kind callers and the native seal invariant. Earlier
+INTAKE/TRACE impossibility hypotheses are withdrawn:2326 adds genuine stale
+admission/planner snapshots and preserves their old CAS versions for denial
+controls, with the actual completed Journal. The planner snapshot is observed
+before its real native PLAN transition; no phase or accepted Journal is edited.
+An alternate caller preparation references the real native Source plan so its
+retry reaches the later transition before the expected CAS conflict.
+Optional capture adds no read to ordinary helper callers.2326 strict/lint and
+both affected cases pass157assertions in19.20s.2325 independently approves the
+actual controls and their custody; it claims no unrun counter visits.
+All raw counters remain unchanged until the combined complete report;
+focused checks do not establish numeric closure.2317's earlier hypotheses remain
+research rather than accepted unreachability. Existing
+final-assurance-gap-plan.md concerns HostState callbacks of another contour and
+does not identify this Source owner's counters.
+
+An environment-context refresh interrupted the earlier bounded workers before
+their outputs. Root observed the managed environment running with current
+enforced network policy, preserved canonical local changes and reused the closed
+baseline/logs. The current worker pool has only the replacement bounded lanes.
+2318's isolated unit proposal is integrated after comparing the canonical test
+to its exact base; its metadata-refusal limitations are not missing-counter
+claims.2317 wrote its note to root DIAG by mistake; Root relocates the exact file
+to the declared diagnostic owner and removes only that now-empty created folder.
+No protected evidence or execution tree is deleted.
+
+### Earlier failed session measurement
+
 Stage1982 /workspace/contour-stage-2HmXYQ terminates on Source8ea93f0ce7c4e4a0911bad45dda001bff287c381,
 run d5eb08f9-215a-4c7a-90e0-444c5307461f. Elapsed37954.422807ms, exit1,
 no signal/timeout/spawn error, complete capture, closed group and unchanged

@@ -117,6 +117,16 @@ supplied-snapshot boundary. Arming after the resolver's first native Journal
 read targets its later policy reread. Keep both actual peers and obtain one
 fresh successful reservation after the refusals. Do not infer either boundary
 from a raw total count of Host or lineage reads.
+For early-phase stale controls, retain actual admission and intermediate planner
+snapshots with their original CAS versions; do not construct a different phase.
+A retry preparation should reference the actual native planner artifact when
+testing the transition after reference reuse. Assert the attempted transition
+and complete unchanged native state after CAS refuses. This checks stale-input
+denial, not successful preparation of a fresh earlier-phase Work.
+Keep copied wrong-generation recovery artifacts as negative input at new owned
+paths. Validate the genuine current authority, preserve original recovery bytes
+and native rows, and require missing-original-planning refusal. Such a control
+does not establish a native later correction generation or accepted history.
 An active same-work TaskSource proposal creates a native binding checkpoint,
 but its issued UNKNOWN action still blocks Source-root resolution. Preserve and
 test that refusal; do not synthesize a no-effect report to reach later policy.
