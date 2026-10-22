@@ -818,7 +818,10 @@ type ContinuationRequestOptions = {
 };
 
 export function continuationRequestFor(
-  f: Awaited<ReturnType<typeof continuationFixture>>,
+  f: Pick<
+    Awaited<ReturnType<typeof continuationFixture>>,
+    'store' | 'identity' | 'capture' | 'db' | 'workspaceId' | 'priorConfigDigest' | 'threadId' | 'originalSource'
+  >,
   options: ContinuationRequestOptions = {},
 ): ContinuationRequest {
   const state = f.store.readHostStateSnapshot(f.identity);

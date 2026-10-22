@@ -177,6 +177,7 @@ import {
   type SessionAgentAction,
 } from '../../src/orchestration/session-handoff.ts';
 import {
+  captureHistoricalTerminalSynthesisOwnerWork,
   suspendLocalWork,
   suspendCompletedReadOnlyWork,
   suspendHistoricalOwnerWork,
@@ -4968,7 +4969,293 @@ function capturedPendingActivation(item: MastraSessionLedgerState['items'][numbe
   return { use: activation.activationUse, plan: activation.activationPlan };
 }
 
-test('captured pending synthesis continues only as a retained review without inventing a completed observation', async () => {
+test('captured native research predecessors remain completed through historical review continuation', async () => {
+  let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+  await withInitialSourceCleanup(
+    async () => {
+      const f = await createInitialSourceWorkFixture({
+        cooperativeSynthesis: true,
+        researchSynthesis: true,
+        researchAssignments: 2,
+        beforeAdmission: async ({ database, store, config }) => {
+          const projectIds = config.projects.map((project) => project.project_id).sort();
+          const maintenance = new HostStateStore(database, store.workspaceId, undefined, undefined, undefined, {
+            ...maintenanceVerifier,
+            projectIds,
+          });
+          const receipt = maintenance.acquireMaintenanceFence({ ...maintenanceBinding(), project_ids: projectIds });
+          await maintenance.releaseMaintenanceFence(receipt);
+        },
+      });
+      fixture = f;
+      const prepared = await prepareNativeUnnormalizedSynthesis(f, { stopBeforeSynthesisReport: true });
+      const host = initialSourceHostStore(f);
+      const before = presentSnapshot(host.readHostStateSnapshot(f.identity));
+      const admission = requiredValue(f.input, 'Captured research admission');
+      const item = prepared.originalItem;
+      const issueId = requiredValue(item.issue_id, 'Captured research synthesis issue');
+      expect(prepared.predecessors).toHaveLength(2);
+      expect(prepared.journal.state.completed.flatMap((wave) => wave.items)).toHaveLength(2);
+      expect(item.observation).toBeNull();
+      captureHistoricalTerminalSynthesisOwnerWork({
+        store: host,
+        identity: f.identity,
+        journal: prepared.journal,
+        expectedWork: before.workVersion,
+        expectedLedger: before.ledgerVersion,
+        expectedMaintenanceGeneration: before.maintenanceGeneration,
+        nativeSessionHandle: admission.nativeSessionHandle,
+        userRequestPointer: 'fixture:captured-native-research-review',
+        requestIntent: 'linked_correction',
+        config: f.config,
+        predicate: 'terminal_synthesis_unaccepted',
+        documentationContext: {
+          repository_root: f.root,
+          repository_id: f.identity.repository_id,
+          project_id: firstOf(f.identity.project_ids, 'Captured research project'),
+          work_id: f.identity.work_id,
+        },
+        capture: {
+          actionId: item.request.action_id,
+          issueId,
+          bodyBytes: Buffer.from(canonicalJson(prepared.synthesisReport)),
+          provenance: {
+            schema: 'HistoricalTerminalSynthesisProvenance/v1',
+            body_ref: '.tmp/native-synthesis-body.json',
+            input_ref: '.tmp/native-synthesis-input.json',
+            report_ref: '.tmp/native-synthesis-report.json',
+            followup_ref: prepared.synthesisReport.tool_call_ref,
+            original_actor_id: prepared.synthesisReport.agent_id,
+            denial_status: 'blocked',
+            denial_code: 'GAP-VIDA-RUN-EXECUTION-001',
+            denial_message: 'Controlled Host capture component; no public CLI denial is claimed.',
+            denial_reason_gap: 'GAP-VIDA-RUN-EXECUTION-001',
+            input_bytes_base64: Buffer.from('{}').toString('base64'),
+            report_bytes_base64: Buffer.from('{}').toString('base64'),
+            predecessor_refs: prepared.predecessors.map((result) => ({
+              result_id: result.result_id,
+              digest: result.digest,
+            })),
+          },
+        },
+      });
+      const capture = requiredValue(
+        host.readHistoricalTerminalSynthesisCapture(f.identity, 1, item.request.action_id),
+        'Captured native research receipt',
+      );
+      const principal = 'fixture:captured-research-source-transition';
+      const artifact = requiredValue(
+        before.work.artifacts.find((entry) => entry.schema === 'ResearchResult/v1'),
+        'Native predecessor artifact',
+      );
+      const recordPath = path.join(f.root, artifact.path);
+      const originalRecord = readFileSync(recordPath);
+      const changedRecord = Buffer.concat([originalRecord, Buffer.from('\n')]);
+      let changeDuringAuthorization = false;
+      const verifier: import('../../src/orchestration/delivered-work-continuation.ts').DeliveredWorkContinuationVerifier =
+        {
+          principal,
+          verify: (request) => {
+            if (changeDuringAuthorization) writeFileSync(recordPath, changedRecord);
+            return {
+              schema: 'VidaDeliveredWorkContinuationAuthorization/v1',
+              request_digest: canonicalJsonDigest(request),
+              principal,
+              transition_digest: request.sourceTransition.transition_digest,
+              action_digest: canonicalJsonDigest(request.action),
+            };
+          },
+        };
+      const trusted = new HostStateStore(
+        requiredValue(f.database, 'Captured research database'),
+        before.work.workspace_id,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        f.root,
+        undefined,
+        undefined,
+        verifier,
+      );
+      const request = continuationRequestFor(
+        {
+          store: trusted,
+          identity: f.identity,
+          capture,
+          db: requiredValue(f.database, 'Captured research request database'),
+          workspaceId: before.work.workspace_id,
+          priorConfigDigest: before.work.binding.config_digest,
+          threadId: admission.nativeSessionHandle,
+          originalSource: f.originalSource,
+        },
+        { currentSourceScope: f.originalSource },
+      );
+      const database = requiredValue(f.database, 'Native predecessor refusal database');
+      const originalRows = readFixtureHostRows(database);
+      const originalDdl = database.query('SELECT name,sql FROM sqlite_master ORDER BY name').all();
+      const originalJournal = trusted.readWorkSessionJournal(f.identity);
+      for (const when of ['before-authorization', 'during-authorization']) {
+        let primaryFailure: { error: unknown } | undefined;
+        try {
+          if (when === 'before-authorization') writeFileSync(recordPath, changedRecord);
+          changeDuringAuthorization = when === 'during-authorization';
+          await expectRejection(trusted.continueDeliveredWork(request), /admitted predecessor bytes changed/);
+        } catch (error) {
+          primaryFailure = { error };
+          throw error;
+        } finally {
+          changeDuringAuthorization = false;
+          completeOwnedCleanup(
+            [
+              () => {
+                expect(readFileSync(recordPath)).toEqual(changedRecord);
+                writeFileSync(recordPath, originalRecord);
+              },
+            ],
+            primaryFailure,
+          );
+        }
+        expect(readFixtureHostRows(database)).toEqual(originalRows);
+        expect(database.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(originalDdl);
+        expect(trusted.readWorkSessionJournal(f.identity)).toEqual(originalJournal);
+        expect(trusted.readHistoricalTerminalSynthesisCapture(f.identity, 1, item.request.action_id)).toEqual(capture);
+        expect(database.inTransaction).toBe(false);
+      }
+      const withoutRoot = new HostStateStore(
+        database,
+        before.work.workspace_id,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        verifier,
+      );
+      await expectRejection(withoutRoot.continueDeliveredWork(request), /requires its bound repository/);
+      expect(readFixtureHostRows(database)).toEqual(originalRows);
+      const result = await trusted.continueDeliveredWork(request);
+      expect(result.receipt.prior_journal).toEqual(prepared.journal.state);
+      expect(result.receipt.successor_journal.completed).toEqual(prepared.journal.state.completed);
+      expect(result.receipt.successor_journal.research_wave_exposure).toBe('possible');
+      expect(trusted.readDeliveredWorkContinuationReceipt(f.identity, 1)).toEqual(result.receipt);
+      const receiptQuery = database.query<{ payload: string; digest: string }, [string, string]>(
+        'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=?',
+      );
+      const savedReceipt = requiredValue(
+        receiptQuery.get(before.work.workspace_id, f.identity.work_id),
+        'Native continuation receipt row',
+      );
+      const replaceDigest = database.query(
+        'UPDATE agent_host_delivered_work_continuation SET digest=? WHERE workspace_id=? AND work_id=? AND digest=?',
+      );
+      const staleDigest = '0'.repeat(64);
+      const rowsBeforeRepair = readFixtureHostRows(database);
+      expect(
+        replaceDigest.run(staleDigest, before.work.workspace_id, f.identity.work_id, savedReceipt.digest).changes,
+      ).toBe(1);
+      let repairFailure: { error: unknown } | undefined;
+      try {
+        const repair = trusted.inspectDeliveredWorkContinuationRepair(f.identity, 1, item.request.action_id);
+        expect(repair.row).toEqual({
+          payload: savedReceipt.payload,
+          before_digest: staleDigest,
+          after_digest: savedReceipt.digest,
+        });
+        expect(repair.journal.state.research_wave_exposure).toBe('possible');
+        expect(readFixtureHostRows(database)).toEqual(rowsBeforeRepair);
+        expect(receiptQuery.get(before.work.workspace_id, f.identity.work_id)).toEqual({
+          payload: savedReceipt.payload,
+          digest: staleDigest,
+        });
+      } catch (error) {
+        repairFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              expect(
+                replaceDigest.run(savedReceipt.digest, before.work.workspace_id, f.identity.work_id, staleDigest)
+                  .changes,
+              ).toBe(1);
+              expect(receiptQuery.get(before.work.workspace_id, f.identity.work_id)).toEqual(savedReceipt);
+            },
+          ],
+          repairFailure,
+        );
+      }
+      withTemporaryFixtureReceipt(
+        database,
+        'agent_host_delivered_work_continuation',
+        before.work.workspace_id,
+        f.identity.work_id,
+        (changed) => {
+          const successor = recordAt(changed, 'successor_journal');
+          successor.completed = [];
+          recordAt(changed, 'journal_version').digest = canonicalJsonDigest(successor);
+        },
+        () =>
+          expect(() => trusted.readHostStateSnapshot(f.identity)).toThrow(
+            'historical continuation completed prefix or captured pending issue differs',
+          ),
+      );
+      let historyFailure: { error: unknown } | undefined;
+      withTemporaryFixtureReceipt(
+        database,
+        'agent_host_delivered_work_continuation',
+        before.work.workspace_id,
+        f.identity.work_id,
+        (changed) => {
+          const prior = recordAt(changed, 'prior_journal');
+          prior.completed = [];
+          const priorDigest = canonicalJsonDigest(prior);
+          recordAt(changed, 'prior_journal_version').digest = priorDigest;
+          const request = recordAt(changed, 'request');
+          recordAt(request, 'expectedJournal').digest = priorDigest;
+          changed.request_digest = canonicalJsonDigest(request);
+          recordAt(changed, 'authorization').request_digest = changed.request_digest;
+          const successor = recordAt(changed, 'successor_journal');
+          successor.completed = [];
+          recordAt(changed, 'journal_version').digest = canonicalJsonDigest(successor);
+        },
+        () =>
+          expect(() => trusted.readHostStateSnapshot(f.identity)).toThrow(
+            'captured research predecessor set is not exact',
+          ),
+      );
+      try {
+        writeFileSync(recordPath, changedRecord);
+        expect(trusted.readDeliveredWorkContinuationReceipt(f.identity, 1)).toEqual(result.receipt);
+      } catch (error) {
+        historyFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              expect(readFileSync(recordPath)).toEqual(changedRecord);
+              writeFileSync(recordPath, originalRecord);
+            },
+          ],
+          historyFailure,
+        );
+      }
+      expect((await trusted.continueDeliveredWork(request)).receipt).toEqual(result.receipt);
+    },
+    async () => {
+      if (fixture) {
+        await fixture.close();
+        console.info('Retained captured native research fixture; no replay: ' + fixture.root);
+      }
+    },
+    'Captured native research continuation fixture',
+  );
+}, 20_000);
+
+test('captured pending synthesis refuses detached predecessor refs without changing native state', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-'));
   retainContinuationFixtureRoot(root);
   let primaryFailure: { error: unknown } | undefined;
@@ -4989,33 +5276,12 @@ test('captured pending synthesis continues only as a retained review without inv
       request: { action_id: f.capture.action_id, stage_id: 'synthesize_task' },
     });
     const request = continuationRequestFor(f);
-    const result = await f.store.continueDeliveredWork(request);
-    const after = requiredValue(f.store.readWorkSessionJournal(f.identity), 'Continued review Journal');
-    expect(result.receipt.prior_journal).toEqual(before.state);
-    expect(result.receipt.historical_capture).toEqual(f.capture);
-    expect(after.state.completed).toEqual(before.state.completed);
-    expect(after.state.items).toEqual([{ request: request.action.request, issue_id: null, observation: null }]);
-    expect(result.receipt).toMatchObject({ rights_granted: false, accepted_result: false, runtime_acceptance: false });
-    expect(f.store.readDeliveredWorkContinuationReceipt(f.identity, 1)).toEqual(result.receipt);
-    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)?.action_status).toBe('unissued');
-    withTemporaryFixtureReceipt(
-      f.db,
-      'agent_host_delivered_work_continuation',
-      f.workspaceId,
-      f.identity.work_id,
-      (changed) => {
-        const successor = recordAt(changed, 'successor_journal');
-        successor.completed = [{ step_id: before.state.step_id, items: before.state.items }];
-        recordAt(changed, 'journal_version').digest = canonicalJsonDigest(successor);
-      },
-      () =>
-        expect(() => f.store.readHostStateSnapshot(f.identity)).toThrow(
-          'historical continuation completed prefix or captured pending issue differs',
-        ),
-    );
-    expect(f.store.readDeliveredWorkContinuationReceipt(f.identity, 1)).toEqual(result.receipt);
-    expect((await f.store.continueDeliveredWork(request)).receipt).toEqual(result.receipt);
-    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(after);
+    const rows = readFixtureHostRows(f.db);
+    await expectRejection(f.store.continueDeliveredWork(request), /captured research predecessor set is not exact/);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(before);
+    expect(readFixtureHostRows(f.db)).toEqual(rows);
+    expect(f.store.readDeliveredWorkContinuationReceipt(f.identity, 1)).toBeNull();
+    expect(f.db.inTransaction).toBe(false);
   } catch (error) {
     primaryFailure = { error };
     throw error;
@@ -5031,63 +5297,68 @@ test('captured pending synthesis continues only as a retained review without inv
   }
 });
 
-test.each(['wrong-issue', 'wrong-stage', 'foreign-activation', 'unissued-sibling', 'pending-sibling'] as const)(
-  'captured pending synthesis refuses %s without changing native state',
-  async (variant) => {
-    const root = mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-'));
-    retainContinuationFixtureRoot(root);
-    let primaryFailure: { error: unknown } | undefined;
-    try {
-      const f = await continuationFixture({
-        root,
-        capturedPending: true,
-        journalItemsBeforeCapture: (items) => {
-          const item = firstOf(items, 'Captured pending fixture item');
-          if (variant === 'wrong-issue') return [{ ...item, issue_id: '22222222-2222-4222-8222-222222222222' }];
-          if (variant === 'wrong-stage') return [{ ...item, request: { ...item.request, stage_id: 'synthesize' } }];
-          if (variant === 'foreign-activation') {
-            const activation = capturedPendingActivation(item);
-            const { digest: _digest, ...original } = activation.plan;
-            const plan = { ...original, binding: { ...original.binding, work_id: 'foreign-work' } };
-            return [
-              { ...item, research_activation: { ...activation, plan: { ...plan, digest: canonicalJsonDigest(plan) } } },
-            ];
-          }
+test.each([
+  'wrong-issue',
+  'wrong-stage',
+  'absent-activation',
+  'foreign-activation',
+  'unissued-sibling',
+  'pending-sibling',
+] as const)('captured pending synthesis refuses %s without changing native state', async (variant) => {
+  const root = mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-'));
+  retainContinuationFixtureRoot(root);
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const f = await continuationFixture({
+      root,
+      capturedPending: true,
+      journalItemsBeforeCapture: (items) => {
+        const item = firstOf(items, 'Captured pending fixture item');
+        if (variant === 'absent-activation') return items;
+        if (variant === 'wrong-issue') return [{ ...item, issue_id: '22222222-2222-4222-8222-222222222222' }];
+        if (variant === 'wrong-stage') return [{ ...item, request: { ...item.request, stage_id: 'synthesize' } }];
+        if (variant === 'foreign-activation') {
+          const activation = capturedPendingActivation(item);
+          const { digest: _digest, ...original } = activation.plan;
+          const plan = { ...original, binding: { ...original.binding, work_id: 'foreign-work' } };
           return [
-            item,
-            {
-              ...item,
-              request: { ...item.request, action_id: '9'.repeat(64) },
-              issue_id: variant === 'pending-sibling' ? '22222222-2222-4222-8222-222222222222' : null,
-            },
+            { ...item, research_activation: { ...activation, plan: { ...plan, digest: canonicalJsonDigest(plan) } } },
           ];
-        },
-      });
-      const request = continuationRequestFor(f);
-      const rows = readFixtureHostRows(f.db);
-      const journal = f.store.readWorkSessionJournal(f.identity);
-      const capture = f.store.readHistoricalTerminalSynthesisCapture(f.identity, 1, f.capture.action_id);
-      await expectRejection(f.store.continueDeliveredWork(request), /unresolved outcome/);
-      expect(readFixtureHostRows(f.db)).toEqual(rows);
-      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
-      expect(f.store.readHistoricalTerminalSynthesisCapture(f.identity, 1, f.capture.action_id)).toEqual(capture);
-      expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toBeNull();
-      expect(f.db.inTransaction).toBe(false);
-    } catch (error) {
-      primaryFailure = { error };
-      throw error;
-    } finally {
-      completeOwnedCleanup(
-        [
-          () => {
-            cleanupContinuationFixtures();
+        }
+        return [
+          item,
+          {
+            ...item,
+            request: { ...item.request, action_id: '9'.repeat(64) },
+            issue_id: variant === 'pending-sibling' ? '22222222-2222-4222-8222-222222222222' : null,
           },
-        ],
-        primaryFailure,
-      );
-    }
-  },
-);
+        ];
+      },
+    });
+    const request = continuationRequestFor(f);
+    const rows = readFixtureHostRows(f.db);
+    const journal = f.store.readWorkSessionJournal(f.identity);
+    const capture = f.store.readHistoricalTerminalSynthesisCapture(f.identity, 1, f.capture.action_id);
+    await expectRejection(f.store.continueDeliveredWork(request), /unresolved outcome/);
+    expect(readFixtureHostRows(f.db)).toEqual(rows);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+    expect(f.store.readHistoricalTerminalSynthesisCapture(f.identity, 1, f.capture.action_id)).toEqual(capture);
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toBeNull();
+    expect(f.db.inTransaction).toBe(false);
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          cleanupContinuationFixtures();
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
 
 test('historical capture releases its original owner while preserving the same-owner queue and denying continuation', async () => {
   const deadline = performance.now() + 5_000;

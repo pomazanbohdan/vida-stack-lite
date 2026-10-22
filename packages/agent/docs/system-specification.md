@@ -1759,7 +1759,19 @@ proof deny. A historical terminal capture may cross its own maintenance
 acquisition only when the verified held receipt binds capture generation plus
 one to the held and current generation. Unfenced checks retain exact equality.
 
-Original-task continuation remains separate from receipt adoption. It binds
+Original-task continuation remains separate from receipt adoption. The historical
+terminal review exception binds captured pending synthesis to its two distinct
+admitted research predecessors. Original completed
+observations, activation and normalization bindings, Work artifacts and capture
+refs must agree. The bound repository verifies canonical record bytes both
+before authorization and after authorization under the producer fence.
+Historical receipt reads validate retained facts and the exact completed prefix
+without depending on mutable old files. The original research exposure marker
+is preserved. Only the exact captured pending item permits that marker during
+historical continuation; ordinary engine exposure guards remain unchanged.
+Continuation grants no execution or acceptance rights.
+
+Original-task continuation binds
 the accepted configuration and installed-runtime transition through fresh
 Work, Ledger, Journal and maintenance CAS. It preserves the original owner,
 attempt, scope, acceptance and history. Only the exact original released

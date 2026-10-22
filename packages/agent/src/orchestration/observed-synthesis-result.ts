@@ -20,6 +20,7 @@ import {
 } from '../research-decision.js';
 import type { LocalWorkAdmissionInput } from './local-work-admission.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
+import { validateResearchJournalItem } from './mastra-session-ledger-codec.js';
 import {
   parseSessionBridgeObservation,
   type SessionBridgeObservation,
@@ -81,6 +82,138 @@ export interface ObservedSynthesisResultInput {
   readonly researchResults: readonly ResearchResult[];
 }
 
+type ResearchJournalItem = MastraSessionLedgerSnapshot['state']['items'][number];
+type CapturedResearchReference = { readonly result_id: string; readonly digest: string };
+
+function admittedResearchArtifactForItem(work: WorkState, item: ResearchJournalItem) {
+  const plan = item.research_normalization;
+  return (
+    plan &&
+    work.artifacts.find(
+      (entry) =>
+        entry.schema === 'ResearchResult/v1' &&
+        entry.stage_id === item.request.stage_id &&
+        entry.path === plan.record_path &&
+        entry.sha256 === plan.record_sha256,
+    )
+  );
+}
+
+function readAdmittedResearchResult(
+  access: ReturnType<typeof requireSafeRepositoryAccess>,
+  work: WorkState,
+  item: MastraSessionLedgerSnapshot['state']['items'][number],
+): ResearchResult {
+  const plan = item.research_normalization;
+  const artifact = admittedResearchArtifactForItem(work, item);
+  requireSynthesis(
+    plan &&
+      artifact &&
+      item.research_activation &&
+      plan.binding.action_id === item.request.action_id &&
+      plan.binding.issue_id === item.issue_id &&
+      plan.observation_digest === canonicalJsonDigest(item.observation),
+    'research predecessor has no exact admitted canonical artifact',
+  );
+  const bytes = access.readBytes(artifact.path, 'synthesis admitted research result');
+  requireSynthesis(
+    bytes.length <= 64 * 1024 && sha256(bytes) === artifact.sha256,
+    'admitted predecessor bytes changed',
+  );
+  const result = validateResearchResult(JSON.parse(bytes.toString('utf8')));
+  requireSynthesis(
+    result.result_id === artifact.artifact_id &&
+      result.digest === plan.result_digest &&
+      result.work_item_id === work.binding.lifecycle_work_id &&
+      result.source_revision === work.binding.work_source_revision &&
+      result.scope_id === work.binding.scope_id &&
+      canonicalJsonDigest(result.ac_ids) === canonicalJsonDigest(work.binding.ac_ids),
+    'admitted predecessor is foreign or stale',
+  );
+  return result;
+}
+
+function capturedResearchRequestMatches(item: ResearchJournalItem, work: WorkState): boolean {
+  return (
+    item.request.workflow_id === work.binding.workflow_id &&
+    item.request.run_id === work.execution.run_id &&
+    item.request.config_digest === work.binding.config_digest &&
+    item.request.scope_digest === work.binding.work_source_revision
+  );
+}
+
+function capturedResearchObservationMatches(item: ResearchJournalItem): boolean {
+  const observation = item.observation;
+  return (
+    observation !== null &&
+    observation.status === 'reported_complete' &&
+    item.issue_id !== null &&
+    observation.issue_id === item.issue_id &&
+    observation.action_id === item.request.action_id &&
+    item.host_reservation === undefined
+  );
+}
+
+function capturedResearchPredecessorId(
+  item: ResearchJournalItem,
+  input: {
+    readonly journal: MastraSessionLedgerSnapshot['state'];
+    readonly work: WorkState;
+    readonly refs: readonly CapturedResearchReference[];
+  },
+): string {
+  requireSynthesis(
+    capturedResearchRequestMatches(item, input.work) &&
+      capturedResearchObservationMatches(item) &&
+      validateResearchJournalItem(item, input.journal),
+    'captured research predecessor observation or binding differs',
+  );
+  const plan = item.research_normalization;
+  const artifact = admittedResearchArtifactForItem(input.work, item);
+  requireSynthesis(
+    plan?.schema === 'ObservedResearchRecordPlan/v1' && artifact && item.research_activation,
+    'captured research predecessor has no admitted normalization',
+  );
+  const ref = input.refs.find((entry) => entry.result_id === artifact.artifact_id);
+  requireSynthesis(ref?.digest === plan.result_digest, 'captured research predecessor reference differs');
+  return artifact.artifact_id;
+}
+
+/** Stored capture history binds admitted predecessor facts; it does not replay their write plans. */
+export function capturedResearchPredecessors(input: {
+  readonly journal: MastraSessionLedgerSnapshot['state'];
+  readonly work: WorkState;
+  readonly refs: readonly CapturedResearchReference[];
+  readonly required: boolean;
+}): ReadonlySet<ResearchJournalItem> {
+  const items = input.journal.completed
+    .flatMap((wave) => wave.items)
+    .filter((item) => item.research_activation !== undefined || item.research_normalization !== undefined);
+  if (items.length === 0 && !input.required) return new Set();
+  requireSynthesis(
+    items.length === 2 && input.refs.length === 2 && new Set(input.refs.map((ref) => ref.result_id)).size === 2,
+    'captured research predecessor set is not exact',
+  );
+  const matched = new Set<string>();
+  for (const item of items) {
+    const resultId = capturedResearchPredecessorId(item, input);
+    requireSynthesis(!matched.has(resultId), 'captured research predecessor reference differs');
+    matched.add(resultId);
+  }
+  return new Set(items);
+}
+
+/** Current effects additionally verify the admitted canonical records through the bound repository. */
+export function assertCapturedResearchPredecessorRecords(
+  repositoryRoot: string,
+  work: WorkState,
+  items: ReadonlySet<ResearchJournalItem>,
+): void {
+  if (items.size === 0) return;
+  const access = requireSafeRepositoryAccess(repositoryRoot);
+  for (const item of items) readAdmittedResearchResult(access, work, item);
+}
+
 /** Reconstruct the exact completed predecessor set from the journal and admitted artifacts. */
 export function admittedResearchResultsForSynthesis(input: {
   readonly repositoryRoot: string;
@@ -112,43 +245,7 @@ export function admittedResearchResultsForSynthesis(input: {
     'configured predecessor research set is incomplete or mismatched',
   );
   const access = requireSafeRepositoryAccess(input.repositoryRoot);
-  const results = items.map((item) => {
-    const plan = item.research_normalization;
-    const artifact =
-      plan &&
-      input.work.artifacts.find(
-        (entry) =>
-          entry.schema === 'ResearchResult/v1' &&
-          entry.stage_id === item.request.stage_id &&
-          entry.path === plan.record_path &&
-          entry.sha256 === plan.record_sha256,
-      );
-    requireSynthesis(
-      plan &&
-        artifact &&
-        item.research_activation &&
-        plan.binding.action_id === item.request.action_id &&
-        plan.binding.issue_id === item.issue_id &&
-        plan.observation_digest === canonicalJsonDigest(item.observation),
-      'research predecessor has no exact admitted canonical artifact',
-    );
-    const bytes = access.readBytes(artifact.path, 'synthesis admitted research result');
-    requireSynthesis(
-      bytes.length <= 64 * 1024 && sha256(bytes) === artifact.sha256,
-      'admitted predecessor bytes changed',
-    );
-    const result = validateResearchResult(JSON.parse(bytes.toString('utf8')));
-    requireSynthesis(
-      result.result_id === artifact.artifact_id &&
-        result.digest === plan.result_digest &&
-        result.work_item_id === input.work.binding.lifecycle_work_id &&
-        result.source_revision === input.work.binding.work_source_revision &&
-        result.scope_id === input.work.binding.scope_id &&
-        canonicalJsonDigest(result.ac_ids) === canonicalJsonDigest(input.work.binding.ac_ids),
-      'admitted predecessor is foreign or stale',
-    );
-    return result;
-  });
+  const results = items.map((item) => readAdmittedResearchResult(access, input.work, item));
   requireSynthesis(
     new Set(results.map((result) => result.result_id)).size === results.length,
     'admitted predecessor result IDs are duplicate',

@@ -114,6 +114,10 @@ import {
   validateResearchJournalItem,
 } from './orchestration/mastra-session-ledger-codec.js';
 import {
+  capturedResearchPredecessors,
+  assertCapturedResearchPredecessorRecords,
+} from './orchestration/observed-synthesis-result.js';
+import {
   buildReadOnlyDispatchRepairPlan,
   type ReadOnlyDispatchRepairPlan,
 } from './orchestration/read-only-dispatch-repair.js';
@@ -1562,10 +1566,38 @@ function historicalCapturedPendingItem(
   if (!capture || journal.items.length !== 1) return null;
   const item = journal.items[0]!;
   if (!historicalCapturedPendingRequestMatches(item, work, capture)) return null;
+  if (!item.research_activation) return null;
   if (!validateResearchJournalItem(item, journal)) return null;
   if (journal.completed.some((wave) => wave.items.some((prior) => prior.request.action_id === capture.action_id)))
     return null;
   return item;
+}
+function historicalJournalExposureMatches(
+  journal: MastraSessionLedgerState,
+  work: WorkState,
+  capture: HistoricalTerminalSynthesisCaptureReceipt,
+): boolean {
+  return journal.research_wave_exposure === undefined || historicalCapturedPendingItem(journal, work, capture) !== null;
+}
+function verifiedCapturedContinuationPredecessors(
+  repositoryRoot: string | undefined,
+  journal: MastraSessionLedgerState,
+  work: WorkState,
+  capture: HistoricalTerminalSynthesisCaptureReceipt | null,
+  capturedItem: MastraLedgerItem | null,
+): ReadonlySet<MastraLedgerItem> | undefined {
+  if (!capture) return undefined;
+  const items = capturedResearchPredecessors({
+    journal,
+    work,
+    refs: capture.provenance.predecessor_refs,
+    required: capturedItem !== null,
+  });
+  if (items.size > 0) {
+    requireState(repositoryRoot, 'captured research continuation requires its bound repository');
+    assertCapturedResearchPredecessorRecords(repositoryRoot, work, items);
+  }
+  return items;
 }
 function unresolvedContinuationItem(item: MastraLedgerItem): boolean {
   return (
@@ -1578,11 +1610,14 @@ function unresolvedContinuationItem(item: MastraLedgerItem): boolean {
 function continuationHasUnresolvedItems(
   journal: MastraSessionLedgerState,
   capturedItem: MastraLedgerItem | null,
+  completedPredecessors?: ReadonlySet<MastraLedgerItem>,
 ): boolean {
   return [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].some((item) =>
     item === capturedItem
       ? item.host_reservation !== undefined || item.research_normalization !== undefined
-      : unresolvedContinuationItem(item),
+      : completedPredecessors?.has(item)
+        ? item.host_reservation !== undefined
+        : unresolvedContinuationItem(item),
   );
 }
 function historicalContinuationCompleted(
@@ -1596,11 +1631,22 @@ function historicalContinuationCompleted(
     ...(journal.items.length > 0 && journal.step_id ? [{ step_id: journal.step_id, items: journal.items }] : []),
   ];
 }
-function assertHistoricalContinuationJournal(receipt: DeliveredWorkContinuationReceipt): void {
+function assertHistoricalContinuationJournal(
+  receipt: DeliveredWorkContinuationReceipt,
+  capture: HistoricalTerminalSynthesisCaptureReceipt,
+): void {
   const prior = receipt.prior_journal;
   const capturedItem = historicalCapturedPendingItem(prior, receipt.prior_work, receipt.historical_capture);
+  const completedPredecessors = capturedResearchPredecessors({
+    journal: prior,
+    work: receipt.prior_work,
+    refs: capture.provenance.predecessor_refs,
+    required: capturedItem !== null,
+  });
   requireState(
-    !continuationHasUnresolvedItems(prior, capturedItem) &&
+    !continuationHasUnresolvedItems(prior, capturedItem, completedPredecessors) &&
+      historicalJournalExposureMatches(prior, receipt.prior_work, capture) &&
+      receipt.successor_journal.research_wave_exposure === prior.research_wave_exposure &&
       sameJson(
         receipt.successor_journal.completed,
         historicalContinuationCompleted(prior, receipt.prior_work, receipt.historical_capture),
@@ -4090,7 +4136,7 @@ function checkedStoredWork(
           receipt.authorization.principal.trim().length > 0,
         'delivered-work continuation binding history is not continuous',
       );
-      assertHistoricalContinuationJournal(receipt);
+      assertHistoricalContinuationJournal(receipt, capture);
       for (const attempt of original.execution.assignment_attempts) {
         const current = candidate.execution.assignment_attempts.find(
           (entry) => entry.attempt_id === attempt.attempt_id,
@@ -12783,7 +12829,7 @@ export class HostStateStore {
             journal.run_id === work.execution.run_id &&
             journal.source_scope?.digest === work.binding.work_source_revision &&
             journal.corrective_execution == null &&
-            journal.research_wave_exposure === undefined &&
+            historicalJournalExposureMatches(journal, work, capture) &&
             input.action.workflow_id === work.binding.workflow_id &&
             input.action.request.workflow_id === work.binding.workflow_id &&
             input.action.request.run_id === work.execution.run_id &&
@@ -12812,7 +12858,12 @@ export class HostStateStore {
           ),
         'current task Source scope is not the exact authorized beforeimage bridge',
       );
-      const unresolved = continuationHasUnresolvedItems(journal, historicalCapturedPendingItem(journal, work, capture));
+      const capturedItem = historicalCapturedPendingItem(journal, work, capture);
+      const unresolved = continuationHasUnresolvedItems(
+        journal,
+        capturedItem,
+        verifiedCapturedContinuationPredecessors(this.#repositoryRoot, journal, work, capture, capturedItem),
+      );
       requireState(!unresolved, 'issued or reserved action has an unresolved outcome and cannot be reissued');
       if (action.kind === 'configured_frontier') {
         contract.validateConfiguredFrontierOwnerRelease({
@@ -13316,7 +13367,7 @@ export class HostStateStore {
           journalRow.digest === receipt.journal_version.digest &&
           sameJson(journal, receipt.successor_journal) &&
           journal.corrective_execution == null &&
-          journal.research_wave_exposure === undefined &&
+          journal.research_wave_exposure === receipt.prior_journal.research_wave_exposure &&
           journal.items.length === 1 &&
           journal.items[0]?.request.action_id === receipt.request.action.request.action_id &&
           journal.items[0]?.issue_id === null &&

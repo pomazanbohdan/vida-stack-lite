@@ -21,6 +21,13 @@ preserves the completed prefix and installs one unissued review. Include foreign
 issue, activation and sibling refusals plus exact retry and restored receipt
 corruption. A trusted Host component fixture is not public CLI qualification;
 trace whether a cited CLI case is positive or denial-only before reusing it.
+For a native multi-assignment research wave, configure the assignments before
+admission, activate the whole wave before exposure, and retain each actual
+normalization and artifact admission. Use distinct action-bound tool-call refs
+and topics. A captured pending continuation needs both exact admitted
+predecessors. Test changed record bytes before and during authorization, missing
+repository binding, detached refs, retained exposure and pure history reads.
+Do not replace that positive path with a component fixture containing only refs.
 
 For uncovered-function navigation, reuse the report's retained `istanbul_key`
 and `body_location` when present and matched to its bound Source map. The

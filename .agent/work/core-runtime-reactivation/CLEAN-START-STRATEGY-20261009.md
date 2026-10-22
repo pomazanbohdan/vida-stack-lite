@@ -244,6 +244,30 @@ No focused PASS, historical maximum or coverage milestone closes later gates.
 
 ## Priority boundary
 
+1841/1855 extend the same historical-capture packet, not a second contour.
+The actual native two-research fixture must seed configuration before admission,
+activate its complete issued wave before exposure, and report/normalize/admit
+each distinct action before one real bridge advance. Preserve original roots
+on every refusal; never rewrite the captured pending observation or history.
+Reuse observed-synthesis-result.ts for both ordinary synthesis and capture-bound
+predecessors. Move its existing canonical-record map callback into
+readAdmittedResearchResult and its artifact join into
+admittedResearchArtifactForItem with original correspondence/budgets retained.
+Freeze new capturedResearchRequestMatches, capturedResearchObservationMatches,
+capturedResearchPredecessors, capturedResearchPredecessorId and assertCapturedResearchPredecessorRecords,
+including new selector/identity callbacks, at CC/CRAP10/10. Host glue
+verifiedCapturedContinuationPredecessors and historicalJournalExposureMatches
+has the same prospective10/10 ceiling. Preserve all old callable ceilings.
+Only exact two distinct captured refs, completed reported observations, validated
+activation/normalization and original admitted Work artifacts may qualify.
+Live continuation rereads the existing canonical record bytes before/after its
+awaited authorization. Persisted history binds prior stored facts and the exact
+completed prefix without requiring mutable old files or target config forever.
+The native exposure marker stays retained; any exposure exception is conditional
+on the exact captured pending item and independent plan review. All other pending,
+reservation, normalization and UNKNOWN fences stay. Root batches the remaining
+case changes, static/focused checks and review before a single full contour run.
+
 1820's independent plan review accepts a narrow historical-terminal P0 repair.
 Freeze historicalCapturedPendingRequestMatches, historicalCapturedPendingItem
 (including its completed-wave predicates), unresolvedContinuationItem,

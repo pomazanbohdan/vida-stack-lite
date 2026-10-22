@@ -13,6 +13,45 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current measured repair packet
 
+The current repair batch completes the genuine two-research historical
+capture component reproduction and canonical-record proof. The regular synthesis
+owner now shares its existing artifact join and record verifier with the narrow
+capture-bound predecessor selector. Original callable correspondence and budgets
+remain; the plan freezes new roles at10/10. Live continuation checks canonical
+bytes before and after awaited authorization. History validates stored facts
+without rereading mutable files. Native research exposure remains retained and
+only the exact activated captured pending item qualifies for its exception.
+The repair inspector requires the receipt-bound exposure marker too.
+
+Blind1858 found that the empty predecessor shortcut could admit detached refs
+through the new pending exception. Root requires two predecessors for that route
+and replaces the earlier synthetic positive with an unchanged-state refusal.
+Legacy already-observed history retains its old route without that exception.
+1862 focused checks pass11cases/380assertions in14.34s, with strict153PASS.
+The genuine compound case has an explicit20s bound for two real normalizations,
+engine advance, capture and continuation/refusal checks; defaults and existing
+case limits remain unchanged. It also checks repair inspection, exact retry,
+receipt corruption and independent record changes after receipt persistence.
+This is Host component evidence, not public CLI or live collaboration acceptance.
+The separate1840 public capture exact-resume control passes1case/21assertions.
+
+Blind1859 identifies the remaining genuine frontier/history prerequisites as a
+fixture dependency, not objective unreachability. Existing Host-only endpoint
+proofs cannot attest native manifests/installations or the running native
+package. The supported public producer needs those actual endpoint artifacts.
+No Runtime adoption, install, cutover or forged endpoint is introduced for
+coverage. These branches stay OPEN. Blind1862 finds no blocker within this
+implementation scope;1863 finds no comment/style defects. Root reviewed both
+reports. The final selected test bytes have one refreshed review pin; eligibility
+passes1case/10assertions, tooling strict128 and scoped lint pass. Full stage
+remains pending publication and the matching SDK artifact. No local focused
+result is new numeric qualification.
+
+The one current resource observation reports26010243072available bytes on
+workspace/retained and6473224192on scratch, above floor plus reserve2214592512.
+No cleanup, broad disk scan or duplicate producer was started for this batch.
+Earlier retained images and receipts still supply current proof dependencies.
+
 Published9e9c2804882b9030d89c54c28a82643b174f47a6 passes the ordinary commit
 hook (Knip0, format522, strict529) and ordinary push. CI39740965171/attempt1
 forms SDK inputs only; artifact12409390650 is658809bytes, digest

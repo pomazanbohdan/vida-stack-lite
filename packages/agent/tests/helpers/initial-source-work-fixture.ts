@@ -144,6 +144,7 @@ export async function createInitialSourceWorkFixture({
   cooperativeSynthesis = false,
   legacyTaskFrontier = false,
   researchSynthesis = false,
+  researchAssignments = 1,
 }: {
   readonly parentRoot?: string;
   readonly onRoot?: (root: string) => void;
@@ -155,6 +156,7 @@ export async function createInitialSourceWorkFixture({
   readonly cooperativeSynthesis?: boolean;
   readonly legacyTaskFrontier?: boolean;
   readonly researchSynthesis?: boolean;
+  readonly researchAssignments?: 1 | 2;
 } = {}): Promise<InitialWorkFixture> {
   const fixtureBase = parentRoot === undefined ? tmpdir() : assertOwnedFixtureParent(parentRoot);
   const root = mkdtempSync(path.join(fixtureBase, parentRoot === undefined ? 'vida-initial-source-' : 'case-'));
@@ -230,8 +232,14 @@ export async function createInitialSourceWorkFixture({
               {
                 id: 'research_parallel',
                 kind: 'research',
-                mode: 'single',
-                assignments: [{ role: 'requirements-researcher', profile: 'researcher', contour: 'requirements' }],
+                mode: researchAssignments === 2 ? 'parallel' : 'single',
+                assignments:
+                  researchAssignments === 2
+                    ? [
+                        { role: 'requirements-researcher', profile: 'researcher', contour: 'requirements' },
+                        { role: 'security-data-researcher', profile: 'researcher', contour: 'security_data' },
+                      ]
+                    : [{ role: 'requirements-researcher', profile: 'researcher', contour: 'requirements' }],
                 consumes: ['WorkItem/v1'],
                 produces: ['ResearchResult/v1'],
                 required_after: [],
