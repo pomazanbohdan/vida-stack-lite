@@ -56,7 +56,7 @@ creator and parser owners retain their original decisions; new witness decisions
 live in three named private helpers. Frozen baselines are untouched.2100 final
 strict197/lint and11cases/222assertions pass in18.29s, followed serially by the
 two Host controls/175assertions in15.87s. No second numeric contour starts.
-Stage2124 below supplies this packet's bound numeric result. A shared Host/receipt Source change invalidates its dependent
+Stage2148 below supplies the latest bound numeric result. A shared Host/receipt Source change invalidates its dependent
 old qualification; the focused controls do not reattest the other contours.
 
 Published cf7a4944f4b1e8715553883953a6600ef78e05ff passes2102 ordinary hooks
@@ -149,9 +149,11 @@ callback-order controls pass4cases/32assertions in1.60s.2143's additional cleanu
 change passes strict144/lint and24affected cases in143ms. Earlier2135 runner-mock
 failures remain retained; the mocks now exercise SDK preparation inside capture
 after the early typecheck and verify the actual supplied byte map.2142 actionlint
-and documentation-link checks pass. Publication and one current selected stage
-using internal SDK readiness are next; no numeric closure is claimed by these
-checks. This dependency repair precedes the key30 fixture experiment; no second
+and documentation-link checks pass. Published6a41e3d0a4a45956cdd2a39eb34fea38deffa58e
+passes2146 ordinary hooks (format526/strict533/Knip), and2147 normal push matches
+origin/main with a clean Source tree. Stage2148 then verifies the internal SDK
+path below; the component checks alone claim no numeric closure. This dependency
+repair precedes the key30 fixture experiment; no second
 contour starts and no budget or frozen/mutation gate changes.
 
 2144 bounds retirement to the two completed Source-only worker patch roots
@@ -445,37 +447,41 @@ original scratch, native run manifest, raw logs and failure custody stay.
 
 ### Latest completed session measurement custody
 
-Stage2124 /workspace/contour-stage-90KkpC completes on
-Source b2306473d8f431b9222b7235901f3c49b4ddbc38,
-run8df80db9-4968-42b5-a3fb-f1e6376a51b0. Elapsed84467.598537ms,
+Stage2148 /workspace/contour-stage-J2xHwi completes on
+Source6a41e3d0a4a45956cdd2a39eb34fea38deffa58e,
+run751a578f-00ce-4341-a16e-3ab967f2a09f. Elapsed94677.545892ms,
 exit0, no timeout/signal/spawn error, complete capture, closed producer/group,
-unchanged boot/image. Native88PASS/0FAIL/1157assertions in78.72s.
+unchanged boot/image. Native88PASS/0FAIL/1157assertions in87.85s.
 Raw **F275/275 L857/862 S936/943 B752/764** remains BLOCKED/nonexact.
-The real corrective writer and TaskSource cases visit keys23/38: two more
-branch arms than2079, with unchanged selected Source and denominators. Twelve
+Counts and selected Source/tests match2124; the internal build repair changes
+the harness, not the coverage numerator or denominator. Twelve
 branch arms remain, three with accepted dispositions and nine OPEN; seven
 statements remain, one with the key28 throw disposition. Five lines remain
 raw uncovered; no line exclusion or adjusted denominator is introduced.
 MaxCC/entryCRAP29 is diagnostic only; frozen/mutation remain deferred.
 The sole stage imports once; historical exact count17/46 stays unchanged.
-Image /workspace/.vida-quality-inputs/c06b7ac211c6e9e515799c25d4132a2c770f935f/repository
-has manifest SHA2561b799b9447a7b1bdf770ed202262b2725ff35e21519b183ba3a2bfb95b056c2c.
+Image /workspace/.vida-quality-inputs/7aaf115332cccbafef083a428fbb06beeeb5a5b0/repository
+has manifest SHA25654d425a1ca8228765a013d037c43c05408e38d9ca7c6665f53ac371be376f34d.
 Focused report and native run manifest remain under its packages/agent/coverage/bun-unified;
-raw stdout/stderr remain in the stage.2125 verifies and fsyncs the10762240-byte
+raw stdout/stderr remain in the stage.2149 verifies and fsyncs the10762240-byte
 non-cache scratch archive at
-/workspace/vida-functional-retention-90KkpC-yatZuq/archive.json.
+/workspace/vida-functional-retention-J2xHwi-n6UNz8/archive.json.
 Original image/scratch/receipts/raw logs remain unchanged. Source fingerprint
 91a8a4c11222e70d47231932e09fc607d34967b8d3b93ab38832f01a372ff2ed is unchanged;
 tests fingerprint773a2d7a2109f60cd69ac05e61bbaf3144e64b2bfa7feb830c22fb0b826611e5
-binds this report. Map2125 reuses its complete retained geometry/counters without
-another inventory, AST or hash pass. Previous2079 custody, map2080 and its archive
-remain in [published b230647 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/b2306473d8f431b9222b7235901f3c49b4ddbc38/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-session-measurement-custody).
+binds this report. Map2149 reuses its complete retained geometry/counters without
+another inventory, AST or hash pass. The stage's one actual captured SDK formation
+runs locally, with no archive override or CI prerequisite. Its complete command,
+logs and terminal receipt are coverage/sdk-test-inputs/build-IwW7rf; the child
+exits0 with complete capture and observed process/group closure under269911ms
+remaining allowance. No test suite runs within that build. Prior2124 custody,
+map2125 and its archive remain in [published6a41e3d WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/6a41e3d0a4a45956cdd2a39eb34fea38deffa58e/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-session-measurement-custody).
 
 #### Current session objective disposition extension
 
 The two earlier branch dispositions below retain their identical selected
-Source/counter geometry in2125. Root additionally accepts key28/arm0 and its
-throw statement73, persistent-session-handoff.ts311, bound to the same2124
+Source/counter geometry in2149. Root additionally accepts key28/arm0 and its
+throw statement73, persistent-session-handoff.ts311, rebound to the current2148
 report/run, Source/test fingerprints and config-bearing image manifest above.
 The exact expression is `if (!assignment) throw new Error('Source preflight Host assignment is not configured')`.
 It requires a missing indexed assignment after the outer verifier admitted
