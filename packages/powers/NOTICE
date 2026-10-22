@@ -1,0 +1,37 @@
+Vida Powers — third-party notices and attribution
+=================================================
+
+This package, Vida Powers, incorporates material derived from the following
+donor repositories. Each donor is listed with its donor id, license, license
+file in the donor's source tree, and the pinned revision (head_sha) from
+packages/powers/donors.yaml.
+
+  donor id               license      license file      pinned revision (head_sha)
+  ---------------------  -----------  ----------------  ------------------------------------------
+  superpowers            MIT          LICENSE           bb92a77741419a4ab5f06e711a283343f1ada0c3
+  bmad-method            MIT          LICENSE           cfba3ff5f982c1809e060606e399f55ebd7bce5e
+  matt-skills            MIT          LICENSE           49dd158d1076134a641b33efb035946536778336
+  addy-skills            MIT          LICENSE           aeac41d4d005999432bb7312f7ff06383a91d59d
+  pstack                 MIT          pstack/LICENSE    2f8377461fd533f5af782e1fd643783b1067b847
+  gsd-core               MIT          LICENSE           19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005
+  ponytail               MIT          LICENSE           6f1c2bfff0c837d268929a7c4e490918eb4fab29
+  open-knowledge-format  Apache-2.0   LICENSE.md        ad30107c31c06aec8a7d5636e0d1058118604e6f
+
+Apache-2.0 donor: open-knowledge-format
+---------------------------------------
+
+The donor "open-knowledge-format" is the GoogleCloudPlatform Open Knowledge
+Format repository (https://github.com/GoogleCloudPlatform/open-knowledge-format),
+pinned at revision ad30107c31c06aec8a7d5636e0d1058118604e6f, licensed under
+the Apache License, Version 2.0.
+
+The Apache License, Version 2.0 requires that any NOTICE file distributed
+with the original work be reproduced. The original work's LICENSE.md is the
+verbatim Apache-2.0 text and carries no copyright line; its README.md carries
+no copyright line either. The original work ships no NOTICE file, so there is
+none to reproduce. This NOTICE file therefore records the attribution above
+and states that no NOTICE file was present in the original work.
+
+The MIT-licensed donors above each ship their own LICENSE file; those license
+texts are not reproduced here, and the pinned revisions above make the
+attribution resolvable.

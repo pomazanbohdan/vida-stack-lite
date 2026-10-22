@@ -21,12 +21,12 @@ sources:
   title: Vida Powers — business requirements
 - id: decisions
   resource: /decisions/index.md
-  title: Accepted decisions D1–D11
+  title: Accepted decisions D1–D13 (and D4b)
 - id: next-actions
   resource: /next-actions.md
   title: Vida Powers — next actions within packages/powers
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '7'
+revision: '8'
 ---
 
 # 1. Why and for whom
@@ -97,37 +97,56 @@ from the catalog; a change of a rule in one place changes it for everyone.
 packages/powers/
   skills/
     vp-mode/
-      SKILL.md                    ← the main orchestration skill (host convention)
+      SKILL.md                    ← the main orchestration skill (host convention) — step E, not yet created
       scripts/
         schema.ts                 ← validator of a limited JSON Schema subset
         frontmatter.ts            ← parser of a limited YAML subset
-        catalog.ts                ← operations tags/search/get/compose (+ CLI)
+        catalog.ts                ← operations tags/search/get/compose
+        catalog-cli.ts            ← the CLI of the operations
     vp-setup/
       SKILL.md                    ← auxiliary setup skill
       scripts/
         setup.ts
+        cli.ts
   instructions/                   ← canonical instructions: flat, .md + metadata
     test-first-development.md
-    define-acceptance-criteria.md
+    accept-a-block-only-when-the-user-says-so.md
     …
   scripts/                        ← product support tools (as with the donors)
     check-okf.ts                  ← already exists (moved from tooling/)
     check-corpus.ts               ← corpus validation
     validate-donors.ts            ← moved from .tmp
-    convert.ts                    ← donor converter (step D)
+    convert.ts                    ← donor converter (step D) — the single writer of the corpus
+    audit.ts                      ← corpus audit CLI (read-only)
+    audit-report.ts               ← the report engine the audit CLI drives
+    definitions.ts                ← duplicate BR/SR/AC/NFR definition checker
   config/
     vpcatalog.v1.schema.json      ← schema of catalog.json
     vpcorpusmap.v1.schema.json     ← schema of the processing map (SR-66)
     vpinstruction.v1.schema.json   ← schema of the instruction frontmatter (§5)
+    vpmethodologyprofile.v1.schema.json ← schema of the source methodology profile (D8, D10)
     vpeffectiveprofile.v1.schema.json ← schema of the effective profile for compose
+    methodology-profile.json      ← the source profile instance (D10); `compose` receives the resolved profile
   docs/                           ← OKF bundle (this design is part of the bundle)
   tests/
-    catalog.test.ts  frontmatter.test.ts  check-corpus.test.ts  catalog-cli.test.ts
-    fixtures/{valid,invalid-tag,missing-provenance,conflicting}/
+    catalog.test.ts  frontmatter.test.ts  schema.test.ts  check-corpus.test.ts
+    catalog-cli.test.ts  convert.test.ts  audit.test.ts  definitions.test.ts
+    donors-manifest.test.ts  setup.test.ts
+    fixtures/catalog/             ← a minimal catalog (alpha, beta, conflict-mode,
+                                     disabled-mode, gamma, guidance) with its own
+                                     `catalog.json` and the two schemas it needs
   catalog.json                    ← catalog identity + tag vocabulary + aliases
   corpus-map.json                 ← processing map: donor + file → converted/split/merged/rejected
   package.json  bunfig.toml  tsconfig.json  .bun-version
 ```
+
+**The source profile and the resolved profile.** `VPMethodologyProfile/v1` is the
+**source** profile (`config/vpmethodologyprofile.v1.schema.json` — the schema,
+`config/methodology-profile.json` — the instance, D8/D10). `VPEffectiveProfile/v1`
+(`config/vpeffectiveprofile.v1.schema.json`) is the **resolved** profile that the host
+passes to `compose` (§7). The two are different artifacts: the source carries the
+declared groups and their alternatives, the resolved one carries the active
+alternative.
 
 **Rules**
 
@@ -140,7 +159,8 @@ packages/powers/
   name itself, by the repository convention.
 - Skill scripts — in `skills/<skill>/scripts/`; product support tooling — in
   `scripts/` at the root of the package (like `scripts/` in superpowers).
-- Per-host manifests (`.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`) —
+- Per-host manifests (`.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`,
+  `.agents/plugins/`) —
   stage E; **the plugin root = the package root**, i.e. the payload = `skills/` +
   `instructions/` + `catalog.json` (+ `config/` for dev tools). The operations
   find the catalog without a separate installation.
@@ -294,24 +314,30 @@ every instruction of the corpus has an entry in the map, and every map entry poi
 instruction — otherwise a validation error. The inventory (phase 1) stays in `.tmp`:
 it is deterministic from the pinned clone and reproducible.
 
-**Volume of candidates (measured in the clones from `donors.yaml`)**
+**Volume of candidates (the records of the processing map `corpus-map.json`; the
+clones are pinned in `donors.yaml`)** — the `.md` column is the number of carrier
+`.md` files of the donor that the map records, the `SKILL.md` column is the share of
+them that are skill files.
 
 | Donor | `.md` | SKILL.md | Comment |
 |---|---|---|---|
-| superpowers | 65 | 15 | + 45 additional `.md` in the skills |
-| ponytail | 60 | 12 | MVP pair |
-| BMAD | 327 | — | workflows/agents |
-| matt-skills | 132 | — | |
-| addy-skills | 113 | — | |
-| pstack (in cursor/plugins) | 430 | — | our donor is only the `pstack/` subdirectory (169 tracked files — this is `content_file_count` in `donors.yaml`; 430 — the whole monorepo) |
-| GSD | 1815 | — | mostly docs, not methodology |
+| superpowers | 120 | 15 | |
+| ponytail | 60 | 13 | |
+| BMAD | 327 | 40 | workflows/agents |
+| matt-skills | 132 | 38 | |
+| addy-skills | 113 | 25 | |
+| pstack (in cursor/plugins) | 134 | 58 | our donor is only the `pstack/` subdirectory (169 tracked files — this is `content_file_count` in `donors.yaml`; the monorepo itself holds 947) |
+| GSD | 1815 | 72 | mostly docs, not methodology |
+| open-knowledge-format | 89 | 0 | document format; the rules of the format are the norms |
 
-MVP = superpowers + ponytail: ≈ 125 candidate files → roughly 25–40
-instructions; the final number is set by the exit criteria of step D.
+All 8 donors: **2790 carrier files → 2510 instructions**. The exit criteria of step D
+are applied to every donor; the MVP pair (superpowers + ponytail) is a part of the
+corpus, not its limit. The catalog has no limit on the number of records — the
+measured state is in `catalog.json` and `corpus-map.json`.
 
 **What is not transferred** (research §4.1): execution engines, tracker integrations,
 donor state journals. Filtering happens at phase 2, and every rejection is recorded with a
-reason in the selection report.
+reason in the processing map.
 # 6. Format of `catalog.json`
 
 ```json
@@ -363,6 +389,9 @@ is not approved all at once for the whole corpus — batch approval happens at
 the completion of processing each donor or phase. The seed corpus (superpowers + ponytail):
 12 capability tags, 11 pattern tags, 1 alias — approved in a single pass
 on 2026-10-20. Subsequent donors produce their own packages.
+
+**The current vocabulary** (measured 2026-10-22): the dictionary holds **78 capability
+and 157 pattern tags** (1 alias).
 
 **Before the package proposal — the mapping pass** (owner decision, 2026-10-20):
 every proposed tag is first compared with the vocabulary that already exists.
@@ -529,6 +558,26 @@ the instructions are delivered to the executor.
 - Validation is performed before committing changes to `instructions/` (a manual command or
   a hook — at the owner's discretion).
 
+**The second verification surface — the corpus audit CLI.** `audit.ts` (a dev tool in
+`scripts/`, with the report engine in `audit-report.ts`) reads the corpus and reports
+what the validator does not state as an error:
+
+| Command | What it reports |
+|---|---|
+| `map` | the processing map and the instruction provenance name each other (SR-66): a claim the map does not record, a map record no provenance names, a rejected record that a provenance cites, a merged record whose target is unknown |
+| `pairs` | a declared opposing pair is mutual and carries one shared theme pattern tag (D12): a one-way exclusion, a pair without a theme, a pair that shares no pattern tag |
+| `pair-agreement` | the table of the D12 decision record and the pairs the corpus declares are the same pairs (D12): a pair the record does not list, a pair the record lists but the corpus does not declare |
+| `pair-table` | every declared pair with its theme tag — the rows of the D12 table, regenerated from the corpus |
+| `fidelity` | an instruction body carries the donor's own text (D11, SR-77): a body line whose token run is not found in a declared donor file is reported **for review** — the review, not the count, decides |
+| `specs` | a repair specification is consistent with the corpus it will be written into: the donor, the path, the tags, the compatibility targets and the body text |
+
+**The read-only invariant.** The converter (`scripts/convert.ts`) stays the **single
+writer** of `instructions/`, `catalog.json` and `corpus-map.json`; the audit **only
+reads**. The audit writes no corpus file — it writes its report to the terminal or to
+the file of `--out <file>`. A finding of an audit report is not a defect of the corpus
+until a reviewer has decided on it (the `fidelity` report in particular), and the
+counters of a report — not the exit status of the command — are the evidence.
+
 # 10. Tests and gates
 
 Commands: `bun run --cwd packages/powers test` (fast cycle), `test:coverage`
@@ -538,12 +587,19 @@ Commands: `bun run --cwd packages/powers test` (fast cycle), `test:coverage`
 |---|---|
 | `frontmatter.test.ts` | the parser: scalars, YAML blocks, comments, empty values, non-ASCII, format errors |
 | `catalog.test.ts` | the rules of §5; search does not return `content`; alias → canonical tag; `get` on an unknown/disabled ID; compose: required + dependencies + a conflict without a profile + rejection of an inactive alternative by the profile + a direct `excludes` + output order; `disabled` is not in search |
-| `check-corpus.test.ts` | `check-corpus` on fixtures: unknown tag, missing provenance, unknown `requires`, duplicate ID, incompatible license, an instruction without a map entry, a map entry pointing to a missing instruction |
+| `check-corpus.test.ts` | `check-corpus` on the synthetic corpus that the test builds itself: unknown tag, missing provenance, unknown `requires`, duplicate ID, incompatible license, an instruction without a map entry, a map entry pointing to a missing instruction; the `catalog.json` manifest ↔ disk: a file outside the manifest, an entry without a file, a mismatched `sha256` (AC-42); the source methodology profiles against schema, corpus, pattern tags and decisions |
 | `catalog-cli.test.ts` | CLI: JSON on stdout, a code on stderr, a non-zero exit, catalog lookup relative to the file |
-| `catalog-manifest.test.ts` | the `catalog.json` manifest ↔ disk: a file outside the manifest, an entry without a file, a mismatched `sha256` (AC-42) |
+| `schema.test.ts` | the JSON Schema subset validator and the production schemas of `config/` (catalog, instruction, source profile, effective profile, corpus map) |
+| `convert.test.ts` | the converter: the specification is parsed and rendered, the instruction + the digest entry + the map record are written, the writes are idempotent, a removal recomputes the affected records |
+| `audit.test.ts` | the audit CLI: the argument parsing, the bounded output (`--limit`, `--offset`, `--filter`, `--summary`, `--all`, `--json`, `--out`) and every report — `map`, `pairs`, `pair-agreement`, `pair-table`, `fidelity`, `specs` |
+| `definitions.test.ts` | the normative ids (BR/SR/AC/NFR) are defined exactly once in the bundle |
+| `donors-manifest.test.ts` | `donors.yaml`: seven methodology donors and one format reference, unique ids, the content path of pstack, the not-cloned runtime repository |
+| `setup.test.ts` | `vp-setup`: the carrier detection, the managed block of the profile, the resolution of the selections and the verification ladder, the CLI |
 
-Fixtures — minimal catalogs: `valid/`, `invalid-tag/`, `missing-provenance/`,
-`conflicting/`.
+Fixtures — a minimal catalog: `tests/fixtures/catalog/` (`alpha.md`, `beta.md`,
+`conflict-mode.md`, `disabled-mode.md`, `gamma.md`, `guidance.md`) with its own
+`catalog.json` and the two schemas it needs. The synthetic corpus fixtures of
+`check-corpus` are built inside the test file itself.
 
 # 11. Commands
 
@@ -553,9 +609,34 @@ bun run --cwd packages/powers test:coverage                     # coverage (thre
 bun run --cwd packages/powers typecheck                         # type checking
 bun packages/powers/scripts/check-corpus.ts                     # corpus validation
 bun packages/powers/scripts/check-okf.ts                        # OKF compatibility of the bundle
-bun packages/powers/skills/vp-mode/scripts/catalog.ts tags     # manual check of the operations
+bun packages/powers/scripts/audit.ts map --summary              # corpus audit (read-only)
+bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts tags  # manual check of the operations
 bun run --cwd packages/agent lint:knip:pinned                   # repository lint gate
 ```
+
+**The corpus audit CLI** — one command per report, one option set for every command:
+
+```sh
+bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs> [options]
+```
+
+| Option | Meaning |
+|---|---|
+| `--root <dir>` | the corpus root (default — the package root) |
+| `--limit <n>` | rows per section (default 20) |
+| `--offset <n>` | rows skipped before the first shown row |
+| `--filter <text>` | only the rows that contain the text |
+| `--summary` | the counters only, no rows |
+| `--all` | every row, without a limit |
+| `--json` | the report as JSON |
+| `--out <file>` | the whole report is written to the file; the terminal shows the counters |
+| `--instruction <id>` | the fidelity report is limited to one instruction |
+| `--spec <file>` | a specification to verify (repeatable) |
+| `--spec-dir <dir>` | every specification in the directory (repeatable) |
+
+The converter (`scripts/convert.ts`) remains the **single writer** of the corpus; the
+audit **only reads**. The audit exits 0 even when a report holds findings — the
+counters of the report are the evidence.
 
 # 12. Accepted decisions (and by whom)
 
@@ -598,13 +679,13 @@ the digest.
 | CAT-D1 | The project layer of instructions (overlay) | Deferred: v1 canonical |
 | CAT-D2 | Semantic `decision.evaluate` in VP | Deferred: v1 deterministic; the D5 protocol is ready |
 | CAT-D3 | The digest link of instructions | **Resolved 2026-10-19:** the digest in `catalog.json` (corpus listing), generated by `convert.ts` |
-| CAT-D4 | Language of the instructions | v1 — the product language |
+| CAT-D4 | Language of the instructions | **Resolved 2026-10-20:** the product language is the decision **D11** (`docs/decisions/D11-product-language.md`, `stable`): the documentation is in English, and the body of an instruction is the donor's original text. The normative clause is **SR-77** (§5, §9) |
 | CAT-D5 | Catalog hierarchy (subdirectories) | v1 — flat |
 | CAT-D6 | CRAP/mutation gate for VP | Deferred: a new dependency is needed (Stryker) — requires owner consent |
 | CAT-D7 | Whether VP has its own `index.md`/corpus navigation | Deferred: the bundle index already exists; the corpus is navigated by search |
-| CAT-D8 | Who approves the tag vocabulary and groups | The mechanism is resolved: the owner, in a batch pass; the specific tags — at stage D |
-| CAT-D9 | How many instructions is enough for the MVP | Deferred to step D: exit criteria |
-| CAT-D10 | Where the selection and merging report is stored | Deferred to step D: a step report, not the corpus |
+| CAT-D8 | Who approves the tag vocabulary and groups | **Resolved 2026-10-21:** the owner approves the corpus, not the vocabulary — the mapping pass runs first and a genuinely new, unique tag is created by the agent (§6) |
+| CAT-D9 | How many instructions is enough for the MVP | **Resolved 2026-10-21:** the exit criteria of step D are applied to all 8 donors — 2790 carrier files → 2510 instructions (the MVP pair was closed 2026-10-20) |
+| CAT-D10 | Where the selection and merging report is stored | **Resolved 2026-10-19:** the report **is** the corpus — the processing map `corpus-map.json` (`VPCorpusMap/v1`, SR-66); the rejections are recorded in the map, not in a separate report (§5a) |
 
 # 14. Synchronization of normative documents (within this work item)
 
@@ -630,18 +711,37 @@ the digest.
 | §6.2 `artifact_contract` | the `artifact_contract_*` fields |
 | §9.2 stable names | `instructions/<id>.md` |
 
-# 16. What is left to the builder
+# 16. What is left to build
 
-- The exact code and order of the frontmatter parser (the subset: scalars, YAML blocks,
-  comments, empty values, non-ASCII).
-- The module structure of `catalog.ts` (functions, types, exports) and the exact CLI protocol
-  (flags, stdout/stderr, exit codes).
-- The format and error codes of `check-corpus.ts`.
-- The exact set of seed instructions (5–8) from research/SR — to check the rules, aliases
-  and group conflicts.
-- The structure of the tests and fixtures.
-- Whether `frontmatter.ts` remains a separate file (the author's decision: yes — it is needed by
-  `check-corpus.ts` too).
+The design is implemented: the corpus holds 2510 instructions from 8 donors, the
+operations, the converter, the validator and the audit CLI exist and are covered by
+the test suite. What is left is not inside this design any more — it is the next
+steps of the product.
+
+- **Step E4 — the orchestration skill** `skills/vp-mode/SKILL.md`: the main entry of
+  the skill (request → `catalog.search` → `catalog.compose` → bundle → execution or
+  delegation), the bundle boundary enforced **in the code** (≤ 20 instructions, ≤ 64 KB
+  of text — SR-58/AC-26), the mandatory Agent Fallback with its materialization and a
+  negotiation request for an unresolved policy group. The tooling under
+  `skills/vp-mode/scripts/` exists; the `SKILL.md` does not.
+- **Step E5 — the delivery channels**: `config/vppluginmanifest.v1.schema.json`, the
+  four per-host manifests and `marketplace.json`. **Gated on an owner decision** — who
+  owns the manifests: the package build (which writes them) or this stage (which
+  writes their inputs). None of them exists yet.
+- **Step F — the Work Items and the findings**: `docs/work/` and the findings JSONL.
+  No task plan exists for the step; the plan is written and validated at its start.
+- **Step G — the runtime request**: one request document for D3 and D8 in
+  `docs/requests/`. No task plan exists for the step either.
+- **The four owner decisions that are open** (`.agent/work/vp-next-steps/WORK.md`,
+  "The open items that are not this work"):
+  1. the ADR status vocabulary (R1) — `DEPRECATED` needs a decision;
+  2. the profile group of the context-degradation pair — with the mutual exclusion, a
+     `curate-context` compose that matches both sides hard-fails, and no group gives
+     the user a way to choose;
+  3. the `approval-policy` marker — it is carried by instructions that are not in the
+     group; it identifies a topic rather than the group, and the owner must decide
+     whether the marker and the group are one thing;
+  4. the wording of D12 §4 — the owner may reword it.
 
 
 

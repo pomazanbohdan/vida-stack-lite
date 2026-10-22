@@ -16,7 +16,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept and architectural baseline
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '3'
+revision: '4'
 ---
 
 Each criterion: **ID**, condition, **binding to an SR**, **evidence**, **type**, **state**.
@@ -99,6 +99,8 @@ the current scope (recorded as a GAP, not as passed).
 | AC-40 | A nested subtask adds no external stages and does not bypass gates; a specialist request grants it no new authority | SR-74 | manual check of the delegation tree | manual | open |
 | AC-41 | `vp-setup` preserves third-party instructions and the current source map; only the managed VP block is updated | SR-75 | setup test on a fixture with third-party content | auto | open |
 | AC-42 | The catalog manifest is consistent with the disk: each file in `instructions/` is listed in `catalog.json` with a `sha256`; a file outside the manifest, an entry without a file and a mismatching digest are errors | SR-76 | manifest-to-corpus consistency test | auto | open |
+| AC-43 | Every declared opposing pair is declared in both directions and carries one dedicated theme pattern tag, and the table of the D12 decision record lists every declared pair | SR-14 | audit report: `audit.ts pairs` and `audit.ts pair-agreement` (22 declared, 22 listed, findings: 0) | auto | open |
+| AC-44 | An instruction that states a finding severity uses the canonical scale — Critical, Important, Minor — and keeps the criteria of each level; a risk scale, an effort scale and a status vocabulary keep the donor's own labels | SR-78 | vocabulary scan of the corpus + donor review | auto | open |
 
 ## What we do not prove
 

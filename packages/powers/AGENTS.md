@@ -16,7 +16,7 @@ materialization of results in two modes (Standalone / Runtime).
 |---|---|---|
 | 1 | `docs/next-actions.md` | Current scope, order and gates of work |
 | 2 | `docs/research/vida-powers-product-research.md` | B-level: product concept (source of truth) |
-| 3 | `docs/decisions/index.md` | Accepted decisions D1–D9 with grounds |
+| 3 | `docs/decisions/index.md` | Accepted decisions D1–D13 (and D4b) with grounds |
 | 4 | `docs/implementation-plan.md` | Roadmap of stages 0–9 and quality gates |
 | 5 | `docs/system-specification.md` (after step B) | S-level: observable behavior |
 | 6 | repository `AGENT.sidecar.md` | Placement, owners, policy, verification gates |
@@ -122,15 +122,15 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | Path | Responsibility | Step |
 |---|---|---|
 | `docs/` | The product OKF bundle: research, canonical documents, decision records, next-actions, Work Items, runtime requests | B, F, G |
-| `docs/decisions/` | Accepted decisions (one decision — one concept) | D1–D9 |
+| `docs/decisions/` | Accepted decisions (one decision — one concept) | D1–D13 (and D4b) |
 | `docs/work/` | VP Work Items: stable ID, AC, evidence, relations | F |
 | `docs/requests/` | Runtime requests to the agent maintainer | G |
-| `config/` | VP schemas: `VPCatalog/v1` (catalog manifest), `VPInstruction/v1` (instruction frontmatter), `VPEffectiveProfile/v1` (the resolved profile for `compose`; the source one is `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (processing map) | C |
+| `config/` | VP schemas: `VPCatalog/v1` (catalog manifest), `VPInstruction/v1` (instruction frontmatter), `VPEffectiveProfile/v1` (the resolved profile for `compose`; the source one is `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (processing map); plus the source profile instance `config/methodology-profile.json` (`VPMethodologyProfile/v1`, D8/D10) | C, E |
 | `instructions/` | canonical instructions: `.md` + metadata, flat | D |
 | `corpus-map.json` | corpus processing map: donor + file → converted/split/merged/rejected | D |
 | `skills/vp-mode/`, `skills/vp-setup/` | Skills (orchestration, setup) together with their `scripts/` — catalog and setup tooling; shipped in the plugin | C, D, E |
-| `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | Per-host plugin and marketplace manifests | E |
-| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts` | C, D |
+| `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | Per-host plugin and marketplace manifests (planned in step E — not yet created) | E |
+| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker) | C, D |
 | `skills/*/scripts/` | Tooling shipped in the skills (catalog, setup) | C, D, E |
 | `tests/` | Tests of the VP harness | A–F |
 | `donors.yaml` | Donor manifest: exact revisions, licenses, counters | existing |
@@ -188,6 +188,10 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | D7 | `vp-setup` — environment-driven initialization: instruction file / runtime config / project config |
 | D8 | `VPMethodologyProfile/v1` — a VP schema; the carrier depends on the environment |
 | D9 | Current scope — only `packages/powers`; root registration is deferred |
+| D10 | Policy choices, executor ladder, managed block: opposing approval policies are alternatives of one group the user chooses at setup; the verification ladder is other provider family → other model of the same provider → blind agent on the same model (setup records available models); the managed block carries a JSON payload so no YAML parser is needed; setup hooks are deferred with a condition |
+| D11 | Product language: documentation in English, instructions from the donor originals |
+| D12 | Opposing instructions are declared, not narrowed away |
+| D13 | One canonical severity scale: Critical / Important / Minor |
 
 ## 8. Known risks and GAPs
 

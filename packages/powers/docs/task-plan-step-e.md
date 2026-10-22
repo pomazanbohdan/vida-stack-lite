@@ -27,7 +27,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T19:30:00Z' }
-revision: '3'
+revision: '4'
 ---
 
 **Goal:** complete the core of the product — the declaration of policies, environment-driven
@@ -62,7 +62,8 @@ AC-25, AC-28, AC-41), `docs/decisions/D4-delivery-channels.md`,
 ## Task E1 — Source methodology profile: who, which groups, which alternatives
 
 **Files:** create `config/vpmethodologyprofile.v1.schema.json`,
-`config/methodology-profile.json`; test `tests/methodology-profile.test.ts`.
+`config/methodology-profile.json`; validation lives in `tests/check-corpus.test.ts`
+(no dedicated `tests/methodology-profile.test.ts` was created).
 
 - **Why:** setup must ask the user about **approval policies**, and for this
   a declaration is needed: which groups exist, which of them are a user decision,
@@ -102,7 +103,8 @@ AC-25, AC-28, AC-41), `docs/decisions/D4-delivery-channels.md`,
 ## Task E2 — Effective profile: decisions, flow level, verification lanes
 
 **Files:** **update** `config/vpeffectiveprofile.v1.schema.json` (the schema exists from step C
-and is already used by `catalog-cli`); test `tests/effective-profile.test.ts`.
+and is already used by `catalog-cli`); no dedicated `tests/effective-profile.test.ts`
+was created.
 
 - **Content** (`VPEffectiveProfile/v1`):
   - `groups`: `{ <group id>: { active: <alternative id>, alternatives: [...] } }` —
@@ -211,6 +213,16 @@ the marketplace listing.
 - The manifests are schema-valid ✓; the payload is not duplicated (D4b) ✓.
 - A new AC: "the per-host manifests and the marketplace description are schema-valid and do not duplicate
   the payload" — a **proposal** (owner approval).
+
+## Execution progress
+
+| Task | Status | Evidence |
+|---|---|---|
+| E1. Source methodology profile | **closed** | `config/vpmethodologyprofile.v1.schema.json`, `config/methodology-profile.json`; validation lives in `tests/check-corpus.test.ts` (no dedicated `tests/methodology-profile.test.ts` was created) |
+| E2. Effective profile | **closed** | `config/vpeffectiveprofile.v1.schema.json`; used by `catalog-cli` (no dedicated `tests/effective-profile.test.ts` was created) |
+| E3. `vp-setup` | **closed** | `skills/vp-setup/SKILL.md`, `skills/vp-setup/scripts/setup.ts`, `skills/vp-setup/scripts/cli.ts`, `tests/setup.test.ts` |
+| E4. `vp-mode` | **not started** | `skills/vp-mode/SKILL.md` does not exist; the tooling exists (`catalog.ts`, `catalog-cli.ts`, `frontmatter.ts`, `schema.ts`) |
+| E5. Per-host manifests and marketplace | **not started** | no `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, no `marketplace.json`, no `config/vppluginmanifest.v1.schema.json` |
 
 ## Outside this plan
 

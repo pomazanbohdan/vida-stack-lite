@@ -12,7 +12,7 @@ the layer between the Codex host and the agent).
 | [Research — product concept](docs/research/vida-powers-product-research.md) | B-level: why the product exists, which boundaries it has, which behavior rules it follows |
 | [Implementation plan](docs/implementation-plan.md) | Roadmap of stages 0–9, gates, risks |
 | [Next actions](docs/next-actions.md) | Current scope within the catalog: A0 → A → B → C → D → E → F → G |
-| [Decisions D1–D9](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
+| [Decisions D1–D13 (and D4b)](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
 | [AGENTS.md](AGENTS.md) | Instructions for the agents developing VP |
 | [Donor manifest](donors.yaml) | Exact revisions of 8 donor repositories, licenses, file counters |
 
@@ -127,21 +127,21 @@ permissions or security gates). An inheritance conflict is a question for the ow
 "last loaded wins".
 
 **One schema, different carriers:** Runtime — a section in `.vida/project.yaml`; Standalone —
-the same section in a managed YAML block of the project instruction file; the host layer —
-in the project config file.
+the same section in a managed block (JSON payload) of the project instruction file; the host layer —
+in the project config file. The setup hooks are deferred (D10).
 
 ## 6. Skills and initialization
 
 | Skill | Role |
 |---|---|
 | `vp-mode` | **The main orchestration skill.** The single working entry point: request → instruction selection → bundle → execution or delegation |
-| `vp-setup` | **Auxiliary setup skill.** Detects projects, idempotently writes the configuration, configures the available hooks, verifies activation |
+| `vp-setup` | **Auxiliary setup skill.** Detects projects, idempotently writes the configuration (managed block holds a JSON payload), verifies activation; setup hooks are deferred (D10) |
 
 `vp-setup` initializes by environment:
 
 | Environment | Where it writes the configuration |
 |---|---|
-| Standalone (without the agent runtime) | A managed YAML block in the project `AGENTS.md` (or `CLAUDE.md`, if `AGENTS.md` is absent) |
+| Standalone (without the agent runtime) | A managed block (JSON payload) in the project `AGENTS.md` (or `CLAUDE.md`, if `AGENTS.md` is absent) |
 | Agent delivery without host systems | The config file of the agent runtime |
 | Host layer (e.g. Codex) | The project config file assembled from the layer templates |
 
@@ -186,8 +186,8 @@ packages/powers/
   config/                       VP schemas (VPCatalog/v1, VPInstruction/v1, VPEffectiveProfile/v1, VPCorpusMap/v1)
   instructions/                 canonical instructions: .md + metadata, flat
   skills/                       vp-mode, vp-setup (+ their scripts/)
-  .codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/   per-host manifests
-  scripts/                      product support: check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts, audit.ts
+  (.codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/ — planned in step E; not yet created)   per-host manifests
+  scripts/                      product support: check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts, audit.ts, audit-report.ts, definitions.ts
   catalog.json                  catalog identity, tag vocabulary, aliases, corpus listing with sha256
   corpus-map.json               processing map: donor + file → converted/split/merged/rejected
   tests/                        harness tests
@@ -236,11 +236,11 @@ counters. `--json` emits the report as JSON.
 | Step | Content | Status |
 |---|---|---|
 | A0 | Risk check for the agent lint gate | **closed** — the gate returns `{"issues":[]}`, exit 0 |
-| A | Product skeleton and harness (Bun package, tests) | **closed** — 13/13 tests, typecheck exit 0 |
+| A | Product skeleton and harness (Bun package, tests) | **closed** — 326 tests pass (0 fail), typecheck exit 0 |
 | B | Canonical product documents (BR/SR/AC + matrix) | **closed** |
-| C | `VPCatalog/v1`, `VPMethodologyProfile/v1`, `catalog.*` operations, `decision.evaluate` | plan |
-| D | Vertical slice of the corpus: superpowers → ponytail → the rest | plan |
-| E | `vp-mode`/`vp-setup` skills, per-host manifests, marketplace | plan |
+| C | `VPCatalog/v1`, `VPMethodologyProfile/v1`, `catalog.*` operations, `decision.evaluate` | **closed 2026-10-20**: the schemas, the `catalog.*` operations, `decision.evaluate` and the CLI exist and are tested |
+| D | Full corpus from all eight donors | **closed**: 2510 instructions from 8 donors, 2790 map records, the map and the provenance reconciled (`audit map` → 0 findings) |
+| E | `vp-mode`/`vp-setup` skills, per-host manifests, marketplace | **in progress**: E1–E3 closed (the profile schemas, `vp-setup`); E4 (`skills/vp-mode/SKILL.md`) and E5 (the per-host manifests, the marketplace) not started |
 | F | Work Items, findings (Standalone), `artifact_contract` | plan |
 | G | Runtime request (D3 + D8) as a document | plan |
 
@@ -248,21 +248,22 @@ In detail — in [docs/next-actions.md](docs/next-actions.md).
 
 ## 12. Status and deferred items
 
-**Done:** product concept (research), roadmap, catalog design, ten decision
-records (D1–D9 and D4b), an OKF bundle with a validator, a donor manifest with 8
+**Done:** product concept (research), roadmap, catalog design, fourteen decision
+records (D1–D9, D4b and D10–D13), an OKF bundle with a validator, a donor manifest with 8
 fixed snapshots (7 methodological donors and Open Knowledge Format).
 
 **Deferred outside the current scope:** registration in the shared root files of the
 repository; the D3+D8 runtime request; the `.vida/*` cutover; marketplace publication;
 the Runtime mode of VP in general.
 
-**Status:** `research_status: finalized`; implementation: steps A0, A and B are closed —
-the next step is C (catalog and scripts).
+**Status:** `research_status: finalized`; implementation: steps A0, A, B, C and D are closed —
+the corpus is 2510 instructions from 8 donors; step E is in progress (E1–E3 closed).
 
 ## 13. Source licenses
 
 The VP corpus originates from seven donor projects (Superpowers, BMAD Method, Matt
 Pocock Skills, Addy Osmani Agent Skills, Cursor pstack, GSD Core, Ponytail) and
 Open Knowledge Format v0.2. Licenses: MIT × 7, Apache-2.0 (OKF). Exact revisions
-and license attributes — in `donors.yaml`; the NOTICE text for Apache-2.0 must be
-added during conversion (step D).
+and license attributes — in `donors.yaml`; the package `NOTICE` lists each donor ID,
+license, license file and pinned revision, including the Open Knowledge Format
+attribution. Legal review of all donor-license obligations remains open.

@@ -17,9 +17,9 @@ sources:
   title: Vida Powers — business requirements
 - id: decisions
   resource: /decisions/index.md
-  title: Accepted decisions D1–D11
+  title: Accepted decisions D1–D13 (and D4b)
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '3'
+revision: '4'
 ---
 
 S-level: **what VP does, observably**. The B-level — `business-requirements.md`,
@@ -36,6 +36,7 @@ normative behavior.
 - **SR-05.** Each tag has a description in the catalog vocabulary; a tag without a description — a validation error.
 - **SR-06.** Mandatory fields: `conditions`, `artifact_contract`, `compatibility` (`excludes`, `requires`), `provenance` — a **list of sources** (donor, license, revision, path); an instruction may have several sources after merging duplicates. The other composite fields are encoded by flat prefixed keys (`conditions_applies_when`, `artifact_contract_output_type`, `compatibility_excludes` and so on) — without nested maps; the source list — as lines `donor=…; license=…; revision=…; path=…`. Additionally permitted are the **optional** fields `roles[]` and `products[]` — carriers of the search dimensions by role and by product (SR-10, SR-70); an absence or an empty list means "applicable to any role/product".
 - **SR-07.** `provenance` is mandatory and has at least one source. Each source — a line `donor=…; license=…; revision=…; path=…`; the license and the revision come from the donors manifest, and `revision` **must equal** `donors.yaml[donor].head_sha`. Without provenance an instruction is not accepted. Merging duplicates preserves all sources in one instruction, selects the better terminology and raises `revision`.
+- **SR-77.** The body of a corpus instruction is the normative text of its donor in the original language, reduced to an atomic norm. Only these edits are permitted: cutting the parts that are not relevant to the norm, merging duplicated sentences, replacing donor names with neutral ones, moving the binding to the norm, and adding an explicit step that states what is considered done. A translation, an invented rule, a weakened strictness, an added requirement the donor does not have and a dropped constraint are defects. The fidelity of a body to its donor is checked by the corpus audit (`scripts/audit.ts fidelity`): a body line whose token run is not found in a declared donor file is reported for review, and the review — not the count — decides. (D11)
 - **SR-08.** `artifact_contract` is mandatory. For instructions that produce a result, `artifact_contract_output_type` and `artifact_contract_verified_by` are non-empty, `artifact_contract_required_data` may be empty. For guidance instructions, `artifact_contract_output_type` = `none`, `artifact_contract_required_data` is empty.
 
 ## 2. Catalog operations
@@ -97,6 +98,7 @@ normative behavior.
 - **SR-45.** Deduplication: identity → deterministic search (ID, fingerprint, context, provenance) → semantic candidates → equivalence check (reproduction, context, evidence). A location match or a high score is insufficient; ambiguity is not merged; a repeated delivery creates no event.
 - **SR-46.** The history is append-only: primary observations are not deleted, a merge is a separate event.
 - **SR-47.** `findings` in a research document are research statements, not entries of the defect registry.
+- **SR-78.** The severity of a finding is expressed on one scale across the corpus: Critical, Important, Minor. An instruction that states a finding severity uses these three labels and keeps the criteria of each level. A risk scale, an effort scale and a status vocabulary keep the donor's own labels. (D13)
 
 ## 9. Join and Lifecycle Scope
 
@@ -128,7 +130,6 @@ normative behavior.
 - **SR-64.** VP dev tools run under the project runtime (Bun) and may use Bun-specific APIs.
 - **SR-65.** One canonical owner per document and contract; parallel copies of normative text are forbidden.
 
----
 ---
 
 ## 13. Requirements added by the round 3 validation

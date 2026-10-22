@@ -14,9 +14,9 @@ sources:
   title: Vida Powers — product concept and architectural baseline
 - id: decisions
   resource: /decisions/index.md
-  title: Accepted decisions D1–D11
+  title: Accepted decisions D1–D13 (and D4b)
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '3'
+revision: '4'
 ---
 
 # 1. Purpose
@@ -92,9 +92,7 @@ rules, instructions and boundaries.
 
 # 5. Methodology policy
 
-- **BR-13.** The methodology is determined by the product. The selection groups (testing,
-  review, architecture, delivery) are independent of one another; alternatives in one
-  group are mutually exclusive, additions are compatible.
+- **BR-13.** The methodology is determined by the product. The selection groups (testing, review, architecture, delivery, approval-policy) are independent of one another; alternatives in one group are mutually exclusive, additions are compatible.
 - **BR-14.** Profile inheritance is explicit and selective: a separate group or a separate
   methodology of another product. Implicit full inheritance through a shared repository
   is not applied. An inheritance conflict — a question to the owner, not the rule
@@ -152,8 +150,8 @@ rules, instructions and boundaries.
 
 | ID | Question | State |
 |---|---|---|
-| BR-Q1 | Which exact tags and groups form the initial set of the profile? | Depends on step C (catalog) and D (corpus) |
-| BR-Q2 | Which set of instructions is considered minimally sufficient for the first version? | Depends on the exit criteria of step D |
+| BR-Q1 | Which exact tags and groups form the initial set of the profile? | **Resolved 2026-10-22:** the groups and their alternatives are declared in `packages/powers/config/methodology-profile.json` (D10, `packages/powers/docs/decisions/D10-policy-choices-and-model-inventory.md`). |
+| BR-Q2 | Which set of instructions is considered minimally sufficient for the first version? | **Resolved 2026-10-22:** applying the owner's step D coverage criterion in `packages/powers/docs/task-plan-step-d.md` (an instruction covers both actions and behaviour; donor skills/files are split into atomic instructions; templates and prompts into rules) produced a corpus of 2510 instructions from 8 donors. The count does not establish minimal sufficiency. |
 | BR-Q3 | Who actually holds the role "Vida Powers owner"? | **Resolved 2026-10-19:** the role is performed by the repository owner; the unit of registration is the **role**, not the person, so a handover is possible without rewriting the ownership map (D2). |
 
 ---

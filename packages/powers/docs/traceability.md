@@ -25,7 +25,7 @@ sources:
   resource: /catalog-design.md
   title: Vida Powers — instruction catalog design
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '3'
+revision: '4'
 ---
 
 ## Research → BR → SR → AC
@@ -80,6 +80,10 @@ the list of technically open questions (closed by stages, not by the specificati
 | D7 environment-driven initialization | BR-20; SR-57, SR-59; AC-25 |
 | D8 one profile schema, carrier per environment | SR-33; AC-19 |
 | D9 scope only in `packages/powers` | BR-23; registration in root — a deferred dependency |
+| D10 approval-policy group, executor ladder and managed JSON payload | SR-25, SR-26, SR-33; AC-15, AC-19, AC-25, AC-41 |
+| D11 product language: English documentation, donor-original instructions | SR-77; corpus audit and human review (no separate AC) |
+| D12 opposing instructions are declared, not narrowed | SR-14; AC-43; audit evidence: `audit.ts pairs` and `audit.ts pair-agreement` |
+| D13 one canonical finding-severity scale | SR-78; AC-44 |
 
 ## Deferred decisions (CAT-D) → SR/AC
 
@@ -92,9 +96,9 @@ the list of technically open questions (closed by stages, not by the specificati
 | CAT-D5 | Catalog hierarchy | v1 — flat | — |
 | CAT-D6 | CRAP/mutation gate for VP | deferred (a new dependency) | — |
 | CAT-D7 | Corpus navigation | bundle index | SR-73 |
-| CAT-D8 | Approval of the tag vocabulary | owner, in a batch pass | — |
-| CAT-D9 | Scope of the MVP corpus | stage D (exit criteria) | — |
-| CAT-D10 | Selection report | in the processing map | SR-66 |
+| CAT-D8 | Approval of the tag vocabulary | resolved: mapping pass runs first; agent creates a genuinely new unique tag | — |
+| CAT-D9 | Scope of the MVP corpus | resolved: step D is closed; its exit criteria were applied to all eight donors | — |
+| CAT-D10 | Selection report | resolved: the processing map is the corpus (`corpus-map.json`, `VPCorpusMap/v1`) | SR-66 |
 
 ## Coverage
 
@@ -103,33 +107,9 @@ S-specification have a binding to BR and AC. Clauses without a separate automate
 semantic check: their verification is closed by the gates of the respective stage
 (Stage 2/4/5/7) or by human review (AC with the type `manual`).
 
-**S-specification clauses without a separate AC** (verified programmatically): SR-02, SR-08, SR-09,
+**S-specification clauses without a separate AC** (maintained by reading the S-specification and acceptance document): SR-02, SR-08, SR-09,
 SR-17, SR-19, SR-27, SR-32, SR-34, SR-35, SR-36, SR-39, SR-40, SR-42, SR-44, SR-46, SR-47,
-SR-48, SR-49, SR-50, SR-51, SR-52, SR-55, SR-60, SR-61, SR-64, SR-65. Reason: these are rules
-of configuration, schemas, runtime requests or semantic conditions that are closed by the gates
-of stages Stage 2/4/5/7 or by human review, not by an automated test.
-
-**S-specification clauses without a separate AC** (verified programmatically): SR-02, SR-08, SR-09,
-SR-17, SR-19, SR-27, SR-32, SR-34, SR-35, SR-36, SR-39, SR-40, SR-42, SR-44, SR-46, SR-47,
-SR-48, SR-49, SR-50, SR-51, SR-52, SR-55, SR-60, SR-61, SR-64, SR-65. Reason: these are rules
-of configuration, schemas, runtime requests or semantic conditions that are closed by the gates
-of stages Stage 2/4/5/7 or by human review, not by an automated test.
-
-**S-specification clauses without a separate AC** (verified programmatically): SR-02, SR-08, SR-09,
-SR-17, SR-19, SR-27, SR-32, SR-34, SR-35, SR-36, SR-39, SR-40, SR-42, SR-44, SR-46, SR-47,
-SR-48, SR-49, SR-50, SR-51, SR-52, SR-55, SR-60, SR-61, SR-64, SR-65. Reason: these are rules
-of configuration, schemas, runtime requests or semantic conditions that are closed by the gates
-of stages Stage 2/4/5/7 or by human review, not by an automated test.
-
-**S-specification clauses without a separate AC** (verified programmatically): SR-02, SR-08, SR-09,
-SR-17, SR-19, SR-27, SR-32, SR-34, SR-35, SR-36, SR-39, SR-40, SR-42, SR-44, SR-46, SR-47,
-SR-48, SR-49, SR-50, SR-51, SR-52, SR-55, SR-60, SR-61, SR-64, SR-65. Reason: these are rules
-of configuration, schemas, runtime requests or semantic conditions that are closed by the gates
-of stages Stage 2/4/5/7 or by human review, not by an automated test.
-
-**S-specification clauses without a separate AC** (verified programmatically): SR-02, SR-08, SR-09,
-SR-17, SR-19, SR-27, SR-32, SR-34, SR-35, SR-36, SR-39, SR-40, SR-42, SR-44, SR-46, SR-47,
-SR-48, SR-49, SR-50, SR-51, SR-52, SR-55, SR-60, SR-61, SR-64, SR-65. Reason: these are rules
+SR-48, SR-49, SR-50, SR-51, SR-52, SR-55, SR-60, SR-61, SR-64, SR-65, SR-77. Reason: these are rules
 of configuration, schemas, runtime requests or semantic conditions that are closed by the gates
 of stages Stage 2/4/5/7 or by human review, not by an automated test.
 

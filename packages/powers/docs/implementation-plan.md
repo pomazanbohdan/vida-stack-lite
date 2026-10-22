@@ -29,7 +29,7 @@ generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:01:10Z' 
 verified:
 - { by: deepseek/deepseek-flash, at: '2026-10-19T13:36:34Z' }
 - { by: opencode/glm-5.3-flash-free, at: '2026-10-19T13:59:31Z' }
-revision: '3'
+revision: '4'
 ---
 
 # Vida Powers — implementation plan
@@ -38,8 +38,8 @@ Owner: the Vida Powers product owner. Class: **derived execution roadmap** —
 the order of work and gates, not a normative specification and not permission for mutations.
 
 Sources of truth: research `docs/research/vida-powers-product-research.md` (B-level) →
-future `business-requirements.md` / `system-specification.md` / `acceptance.md`
-of the product (S-level) → implementation and evidence (C-level).
+the product's S-level documents (`business-requirements.md`, `system-specification.md`
+and `acceptance.md`) → implementation and evidence (C-level).
 
 **Goal:** turn the finalized VP concept into an implemented, qualified
 product with a canonical instruction corpus, a single entry point, materialization of
@@ -65,7 +65,7 @@ the S-documents that Stage 1 creates.
 schema, decision D8 added), six minor, the remainder of a DAG contradiction (R-12) and
 four research coverage gaps. See §1a.
 
-**Currency.** Last significant change: 2026-10-19. `stale_after` = 2026-11-19 —
+**Currency.** Last significant change: 2026-10-22: all eight donors are processed (2790 carrier files → 2510 instructions), the package `NOTICE` is present, and decisions D10–D13 are recorded. `stale_after` = 2026-11-19 —
 after this date the plan is considered stale and needs review. The independent
 verification of round 2 concerned rev 2; rev 2.1 applied its remarks, so
 independent verification of rev 2.1 remains a **GAP**. Runtime acceptance is not
@@ -237,7 +237,7 @@ the baseline, by analogy with `packages/agent` (`test:coverage` +
 **Role:** product owner + Root (shared files). **Estimate:** S. **Work item:** VP-0.
 
 Work:
-- Decision records (a separate artifact, research §7.2) for D1, D2, D3, D4, D5, D6, D7, D8;
+- Decision records (a separate artifact, research §7.2) for D1–D9, D4b and D10–D13;
   stored in `packages/powers/docs/decisions/` as OKF concepts of type `Decision`.
   D1 — **recorded** (`docs/decisions/D1-product-placement.md`). D3, D4 and D8 — before
   Stage 1, because Stage 1 fixes the S-contracts, and Stage 4 needs the defined place of the
@@ -270,7 +270,7 @@ AC:
 - `bun run --cwd packages/agent test:pinned` → exit 0 (the doc-policy test passes
   after extending `canonical_roots`).
 - `bun packages/powers/scripts/check-okf.ts` → exit 0 (the bundle conforms to OKF v0.2).
-- Each of D1–D8 has a Decision record with the owner, date, options and reason.
+- Each of D1–D9, D4b and D10–D13 has a Decision record with the owner, date, options and reason.
 - `git ls-files packages/powers` shows the registered files; `packages/powers/docs`
   is present in `canonical_roots`.
 
@@ -382,18 +382,19 @@ Dependencies: Stage 1.
 **Role:** separate donor lanes + a Root integrator. **Estimate:** L (the largest). **Work item:** VP-3. **Requires:** Stage 2.
 
 Scope boundaries (mandatory before the start):
-- **MVP corpus:** superpowers + ponytail in full, then matt-skills, addy-skills,
-  BMAD, pstack, GSD — in turn with exit criteria. The MVP goal: a fixed number of
-  instructions (approved in the task plan) + full coverage of the capability tags of the
-  lifecycle (research §5).
+- **Corpus:** all eight donors — superpowers, ponytail, matt-skills, addy-skills,
+  bmad-method, pstack, gsd-core and open-knowledge-format — were processed against the
+  same exit criteria: 2790 carrier files → 2510 instructions. The MVP pair is a subset
+  of that corpus. The owner's maximum-coverage criterion is recorded in
+  `task-plan-step-d.md`; 2510 is its result, not a sufficiency threshold.
 - **Exit criteria per donor:** inventory → atomic instructions → tags → dedup →
   conflicts → `artifact_contract` → provenance; a signed coverage report.
 - **Exclusion list:** donor execution engines, tracker integrations, state journals,
   monolithic prompts are not transferred (research §4.1).
 - **The converter** is a maintained, tested TS tool under Bun, not a one-off
   procedure; it has its own tests.
-- **A license/NOTICE manifest** for every donor (MIT × 7, Apache-2.0 for OKF with
-  a mandatory NOTICE text).
+- **The package `NOTICE`** lists every donor's ID, license, license file and pinned
+  revision; it records the Apache-2.0 attribution for Open Knowledge Format.
 - **Shards:** every donor writes its own output shard; the integrator — Root; the corpus
   digest is computed after integration, not during parallel work.
 
@@ -411,7 +412,7 @@ AC:
   "discarded" duplicates remain.
 - Instructions that produce a result have an `artifact_contract`.
 - The converter has tests; `bun run --cwd packages/powers test:coverage` — exit 0.
-- A license/NOTICE manifest is present for every donor.
+- **Gate met (2026-10-22):** `packages/powers/NOTICE` lists all eight donors and records the Open Knowledge Format attribution. Legal review of all donor-license obligations remains open in `docs/traceability.md`.
 
 Evidence: inventories, coverage reports, the corpus digest, converter tests, sampling
 of human verification (at least 10% of instructions, no fewer than 30 units — the size
@@ -675,8 +676,9 @@ Stage 7b — after the storage GAP is closed, outside VP.
 
 Critical path: 0 → 1 → 2 → 3 → 4 → 5 → 7a → 7b (the longest chain; Stage 6
 depends on 1, 2, 3, so it does not enter the chain up to 7a). The narrowest point is Stage 2
-(the corpus, the methodology and the Router depend on it). The longest work is Stage 3
-(7 donors); parallelization — by donor with shards and one integrator (Root).
+(the corpus, the methodology and the Router depend on it). The longest work was Stage 3,
+which processed all 8 donors (2790 carrier files → 2510 instructions) by donor shards
+under one integrator (Root).
 
 ---
 
@@ -700,8 +702,9 @@ Commands from `packages/agent/TESTING.md` (executed from `packages/agent`):
 
 For the VP product, Stage 2 creates its own harness with parallel scripts
 (`bun run --cwd packages/powers test|typecheck|format:check|test:coverage`).
-Before Stage 2 VP has no code, so its gates do not apply — the documents
-are checked by the doc check, and the config — by `test:config:pinned`.
+VP has code, including its harness, schemas, catalog model, converter, validator,
+audit CLI and skill scripts; its product gates apply alongside the repository gates.
+The documentation check covers the documents, and `test:config:pinned` checks the config.
 
 Rules: the mutation gate (`test:mutation:pinned`) is launched only with a separate
 manual authorization; the current coverage campaign of the repository is not stopped;
@@ -732,7 +735,7 @@ outside the delivery lane.
   is issued as a separate runtime-owned work item with its own owner.
 - The plan does not create a second scheduler, DAG compiler, ledger or state store.
 - The plan does not define "Jeff" and does not tie VP to a vendor API.
-- The plan does not launch the conversion of the corpus and does not claim that it has been performed.
+- The plan does not launch the conversion of the corpus.
 - The research document remains the single B-source; the S-contracts appear in
   Stage 1 and keep the research as a source.
 - Every stage before execution has its own task-level plan (bite-sized steps, exact
