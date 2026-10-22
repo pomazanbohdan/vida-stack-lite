@@ -6528,6 +6528,16 @@ test(
       async () => {
         const current = await createInitialSourceWorkFixture({
           legacyTaskFrontier: true,
+          beforeAdmission: async ({ database, store, config }) => {
+            const projectIds = config.projects.map((project) => project.project_id).sort();
+            const maintenance = new HostStateStore(database, store.workspaceId, undefined, undefined, undefined, {
+              ...maintenanceVerifier,
+              projectIds,
+            });
+            const receipt = maintenance.acquireMaintenanceFence({ ...maintenanceBinding(), project_ids: projectIds });
+            await maintenance.releaseMaintenanceFence(receipt);
+            expect(store.readMaintenanceFence()?.status).toBe('released');
+          },
           onRoot: (root) => {
             ownedRoot = root;
             console.info('Genuine legacy frontier Host fixture root: ' + root);
@@ -6792,8 +6802,14 @@ test(
           "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'",
         );
         const receiptTableBefore = receiptTable.all();
-        await expectRejection(store.continueDeliveredWork(request), 'continuation authorization fields are invalid');
+        const closedDeliveryRequest = { ...request, sourceTransition: seed.sourceTransition };
+        expect(closedDeliveryRequest.sourceTransition.status).toBe('closed_config_transition_proven');
+        await expectRejection(
+          store.continueDeliveredWork(closedDeliveryRequest),
+          'continuation authorization fields are invalid',
+        );
         expect(verify).toHaveBeenCalledTimes(1);
+        expect(verify).toHaveBeenCalledWith(closedDeliveryRequest, paused);
         expect(readFixtureHostRows(db)).toEqual(persistedBefore);
         expect(receiptTable.all()).toEqual(receiptTableBefore);
         permitContinuation = true;

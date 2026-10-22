@@ -66,6 +66,11 @@ After a configuration continuation, use the Journal owner bound to that current
 configuration. A ledger facade retained from preparation still checks its old
 config and can reject before the intended test boundary. Reuse the current facade
 already needed by the subsequent positive control.
+After a genuine maintenance acquire/release before fixture admission, reopen the
+configured ledger before creating Work or its bridge. Its opened generation is
+immutable; releasing the fence does not refresh an existing handle. Keep this
+setup optional so ordinary fixtures do not add an await or reopen. Preserve the
+failed stale-generation fixture and exercise the original positive path afterward.
 For continuation-context coverage, keep the retained engine's original context
 and project successor requests with the actual evolved Source scope. Assert that
 the new context derives a different run identity before opening the real bridge;

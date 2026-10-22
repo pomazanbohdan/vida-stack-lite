@@ -140,12 +140,18 @@ export function assertOwnedFixtureParent(root: string) {
 export async function createInitialSourceWorkFixture({
   parentRoot,
   onRoot,
+  beforeAdmission,
   cooperativeSynthesis = false,
   legacyTaskFrontier = false,
   researchSynthesis = false,
 }: {
   readonly parentRoot?: string;
   readonly onRoot?: (root: string) => void;
+  readonly beforeAdmission?: (state: {
+    readonly database: BunDatabase;
+    readonly store: HostStateStore;
+    readonly config: AgentRuntimeConfig;
+  }) => void | Promise<void>;
   readonly cooperativeSynthesis?: boolean;
   readonly legacyTaskFrontier?: boolean;
   readonly researchSynthesis?: boolean;
@@ -253,6 +259,12 @@ export async function createInitialSourceWorkFixture({
     const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
     ledger = openConfiguredMastraSessionLedger(root);
     database = ledger.sessionProducerBinding().database;
+    if (beforeAdmission) {
+      await beforeAdmission({ database, store: ledger.hostState, config });
+      ledger.close();
+      ledger = openConfiguredMastraSessionLedger(root);
+      database = ledger.sessionProducerBinding().database;
+    }
     const store = ledger.hostState;
     const id = 'initial-' + randomUUID();
     const nativeSessionHandle = 'initial-thread-' + randomUUID();

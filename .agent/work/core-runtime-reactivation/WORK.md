@@ -13,6 +13,16 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current checked continuation coverage packet
 
+The next packet adds a genuine public maintenance acquire/release before the
+legacy frontier's Work admission, then reopens the generation-bound Journal
+owner. Its closed-transition negative request now reaches the verifier and
+retains exact Host/receipt beforeimages before the original success controls.
+DIAG/released-fence-focused-v1683.log has1PASS/131assertions,4966.97ms native
+case and6.45s command; strict149 and scoped lint pass. The original stale-handle
+failure and retained root stay in released-fence-focused-v1682.log. Independent
+DIAG/maintenance-generation-review-v1684.md accepts the current helper and test.
+This is behavioral evidence only;1121/1 remains unmeasured for these new inputs.
+
 Published5bd4870 completes its sole selected-contour stage with341PASS and
 6277assertions, full capture, closed process group and unchanged boot/image.
 DIAG/gap-delta-v1676.json confirms253/1 newly visited, no lost arm and unchanged
@@ -63,6 +73,44 @@ Original failed/UNKNOWN observations retain their identities and custody.
 
 ### Reporting simplification
 
+#### Three-hour execution audit2026-10-22
+
+DIAG/three-hour-audit-v1687.json joins the existing seven stage receipts and Git
+window without a new AST, inventory, hash or suite pass. Six successful terminal
+stages and one original failed/UNKNOWN attempt remain separate. Different test
+inputs prevent a controlled speedup claim. Latest measured shard times are
+202.96s and134.43s, with211.05s parent elapsed; their337.39s sum is only a serial
+scheduling estimate. There is no measured one-minute full-contour route.
+
+| Order and concurrency | Decision and evidence |
+| --- | --- |
+| Full stage per proposed assertion | Reject: failed composition probes need only their exact case; no additional full run resolves an already observed prerequisite refusal. |
+| Static, exact edited cases, reviewed packet, one two-file stage | Keep: current strict/lint and native refusal/success controls precede publication; existing pinned isolated shards share one capture/report owner. |
+| More simultaneous contours or parallel cases inside Host | Defer: violates this sequential phase or shares clock/SQLite state; no compatible resource declaration or measured speedup justifies it. |
+| Root integration plus bounded blind producer research | Keep: independent studies reuse Source/maps while Root owns all writes and numeric work; no extra index/build/compiler/suite. |
+
+The script contour already retains terminal status, signal, timeout, full output
+capture, parent/group closure and operation completeness separately. Current
+exit0/BLOCKED is correctly preserved; no new status wrapper or duplicate suite is
+needed. Reporting now resolves its existing owners, avoiding manual repeated
+hash tables. Exact retirement uses one no-follow inventory and one dependency
+view per qualification, preserves failed qualification and byte-exact selected
+logs, and never deletes through external symlinks. The two empty fixture Git
+markers are not canonical history. POSIX
+[unlink semantics](https://pubs.opengroup.org/onlinepubs/9799919799/functions/unlink.html)
+confirm link removal does not delete surviving linked contents; the current
+qualification finds zero hardlinked files and retains the old donor archive.
+
+The test-writing contour's confirmed defect is fixture setup order after a real
+maintenance generation change. Reopening the existing configured ledger fixes
+that stale-handle prerequisite without weakening its guard or adding another
+ordinary-path setup. The explicit option is unused elsewhere; analogous current
+configuration handle reuse is already covered by the Bun skill. All previous
+rejected compositions remain failures, never visits or objective skips. Closed
+transition authorization remains the only new measured candidate for the next
+selected stage. The remaining mixed-wave and post-report studies keep their
+exact producer prerequisites OPEN; no speculative production change is made.
+
 WORK now keeps the correction decision, current delta and exact custody selectors.
 The generated projection owns raw metrics, the retained comparison owns counter
 geometry and reviewed-disposition counts, and the stage/SDK/archive manifests own
@@ -73,6 +121,27 @@ original retained evidence. Future documentation-only reconciliation reuses the
 unchanged report and never repeats a suite.
 
 ### Current retention resource blocker
+
+The owner's renewed2026-10-22 request retires the two exact hidden roots and
+seven direct contour-stage directories after observed terminal parent/group and
+child capture, same boot, no live consumers/mounts/dependent symlinks, and a single
+no-follow inventory. DIAG/user-delete-v1686/{qualification,intent,relocation,result}.json
+and exclusive events.jsonl own the exact paths and before/after bytes. Nine roots
+are removed;599285760bytes are reclaimed, with26361868288bytes available (78.06%).
+The unchanged2214592512-byte floor/reserve is satisfied. The prior qualified
+donor restoration archive remains outside the targets; regular files are only
+unlinked, never rewritten or chmodded. No automation schedule changes.
+
+The latest necessary report, manifest, process/shard receipts, image identity
+and stage/raw logs are retained under DIAG/user-delete-v1686/latest-evidence.
+The compact terminal evidence for all seven retired runs, including the original
+UNKNOWN outcome, remains in retired-terminal-evidence. The current gap-map alias
+changes only its report locator; current-map-relocation.json records both paths.
+The original report bytes, historical numbers and UNKNOWN fences are unchanged.
+Old image/stage locators are retired and cannot establish current qualification.
+The first qualification attempt v1685 stops before deletion at two empty fixture
+.git marker directories. Bounded inspection finds no Git metadata there; v1686
+permits only empty markers, retaining the original refusal and canonical Git.
 
 The owner's later explicit deletion order supersedes the earlier image/archive
 retention observations below for `/workspace/.vida-quality-inputs`,
@@ -982,14 +1051,16 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Retained stage/input, launch, native outcome and once-only publication | /workspace/contour-stage-SYIJAs/{execution,launch,publication}.json |
-| Current report, immutable image and Source/test identities | DIAG/host-uncovered-plan-current.json; its report field resolves the original report and adjacent run manifest/process/shard logs |
+| Retained stage/input, launch, native outcome and once-only publication | DIAG/user-delete-v1686/latest-evidence/stage/{execution,launch,publication}.json; original stage retired |
+| Latest report and original input identities | DIAG/host-uncovered-plan-current.json resolves the byte-exact relocated report; DIAG/user-delete-v1686/latest-evidence owns manifest/process/shard/image metadata; original image retired |
 | SDK archive, CI and acquisition identity | DIAG/sdk-v1674.json; maintained readiness owner checks the actual ZIP/CI join once |
 | Admission, scratch qualification and complete producer log | DIAG/storage-v1673.txt, DIAG/scratch-v1673.txt and DIAG/stage-v1675.log |
 | Verified durable non-cache scratch archive | /workspace/vida-functional-retention-SYIJAs-2AoHzH/archive.json; owns exact bytes/hash, original root, excluded cache, full comparison and before/after capacity |
 | Predecessor relocation and explicit cleanup | DIAG/user-delete-v1535/{relocation,result}.json and events.jsonl; predecessor image retired |
+| Renewed exact-path retirement and current report relocation | DIAG/user-delete-v1686/{qualification,relocation,current-map-relocation,result}.json and events.jsonl; original locators retired |
 
-The current immutable image, scratch, SDK and original receipts remain unchanged.
+The latest immutable image and stage are retired by the owner's explicit scope.
+The retained report/receipt subset, outside scratch, SDK and archive remain.
 The archive excludes only its declared private regenerable cache, whose original
 remains retained. Full tar comparison and fsync are custody, not a cleanup gain
 or reattestation. Retired historical inputs retain their original explicit GAP.
