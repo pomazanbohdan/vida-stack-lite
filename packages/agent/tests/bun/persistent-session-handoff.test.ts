@@ -73,6 +73,7 @@ import {
 import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
 import { createPrewriterPreparationObservation } from '../helpers/public-prewriter-fixture.ts';
 import { nativeDatabaseSnapshotReader } from '../helpers/native-database-snapshot.ts';
+import { prepareQueuedInitialSourceTaskSource } from '../helpers/queued-initial-source-tasksource-fixture.ts';
 import { admitLocalSessionWork } from '../../src/orchestration/local-work-admission.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { prepareLifecycleForCorrection } from '../../src/orchestration/final-assurance.ts';
@@ -2002,6 +2003,51 @@ test('configured TaskSource proposal binds real admitted policy evidence before 
       }).toThrow('task source action outcome remains unknown; Source root resolution is blocked');
       expect(nativeRows()).toEqual(beforeWriter);
       expect(pendingTaskSource.get(host.workspaceId, request.operation_id)).toEqual(originalAction);
+    },
+    { holdExpiredOwnerClock: true },
+    20_000,
+  );
+}, 20_000);
+
+test('queued TaskSource history carries a native checkpoint through configured writer approval without replaying actions', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      await prepareInitialSourceFrontier(fixture, 'writer');
+      const prepared = await prepareQueuedInitialSourceTaskSource(fixture);
+      const host = initialSourceHostStore(fixture);
+      const before = host.readHostStateSnapshot(fixture.identity);
+      requireHostState(before);
+      const lineage = host.readInitialSourceContinuationLineageView(fixture.identity, 1);
+      if (!lineage?.bindingCheckpoint) throw new Error('Queued TaskSource transition has no native checkpoint');
+      expect(lineage.bindingCheckpoint).toEqual({
+        schema: 'InitialSourceBindingCheckpoint/v1',
+        continuation_id: lineage.receipt.continuation_id,
+        request_digest: lineage.receipt.request_digest,
+        work_version: before.workVersion,
+        boundary_binding_digest: canonicalJsonDigest(lineage.receipt.successor_work.binding),
+      });
+      const peer = host.readHostStateSnapshot(prepared.peerIdentity);
+      requireHostState(peer);
+      const actions = prepared.db.query<Record<string, unknown>, [string, string]>(
+        'SELECT * FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+      );
+      const peerAction = actions.get(host.workspaceId, prepared.peerIssued.request.operation_id);
+      if (!peerAction) throw new Error('Native queued TaskSource peer has no original issued action');
+      expect(actions.get(host.workspaceId, prepared.queued.request.operation_id)).toBeNull();
+      const writer = await expectAsyncReturned(() => issueInitialSourceFixtureWriter(fixture));
+      expect(writer.journal.state.items[0]?.issue_id).toBe(writer.writer.issue_id);
+      expect(writer.journal.state.items[0]?.host_reservation?.receipt.attempt.attempt_id).toBe(writer.hostAttemptId);
+      expect(writer.journal.state.items[0]?.observation).toBeNull();
+      expect(actions.get(host.workspaceId, prepared.queued.request.operation_id)).toBeNull();
+      expect(actions.get(host.workspaceId, prepared.peerIssued.request.operation_id)).toEqual(peerAction);
+      const retainedPeer = host.readHostStateSnapshot(prepared.peerIdentity);
+      expect(retainedPeer.work).toEqual(peer.work);
+      expect(retainedPeer.workVersion).toEqual(peer.workVersion);
+      const after = host.readHostStateSnapshot(fixture.identity);
+      requireHostState(after);
+      expect(
+        host.readInitialSourceContinuationLineageView(fixture.identity, 1)?.bindingCheckpoint?.work_version,
+      ).toEqual(after.workVersion);
     },
     { holdExpiredOwnerClock: true },
     20_000,

@@ -89,6 +89,10 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
    Within one unchanged fixture boundary, reuse the typed snapshot already
    returned by its owner for Journal and expiry assertions. Read fresh state
    after a transition; never reuse a preimage across a mutation or verifier.
+   For the shared queued TaskSource preparation, verify the old Host wrapper
+   and the new configured handoff caller in separate bounded child processes;
+   retain failed attempts and use the already qualified retained scratch route.
+   Keep this focused regression control separate from the sole selected stage.
 4. Review the whole coherent current-byte packet, including resources. Refresh
    each changed exact test pin once. Run its narrow control and documentation check.
    Root commits through ordinary hooks and performs a normal push.

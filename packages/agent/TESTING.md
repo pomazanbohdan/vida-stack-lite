@@ -3024,6 +3024,14 @@ shared helper definitions reusable while registering each file's hooks locally.
 Qualify this with two explicit test files in one serial child, checking that both
 files receive setup/cleanup; a one-file pass is insufficient.
 
+For queued Initial Source TaskSource setup, reuse
+`tests/helpers/queued-initial-source-tasksource-fixture.ts`. Its separate native
+policy adapter shares the owned database without replacing the configured
+writer verifier. Keep each caller's assertions and hook registration local.
+A queued own request has no issued action; a peer's issued UNKNOWN action must
+remain unchanged while the configured writer is reserved. Never clear that
+action to obtain a positive checkpoint path.
+
 Route every asynchronous fixture operation, including preparation and recovery,
 through its existing pending-call owner. While a call remains unresolved, retain
 its root and the shared PATH/native-runtime/mock state it may still consume.

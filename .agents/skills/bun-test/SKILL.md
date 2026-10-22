@@ -13,6 +13,13 @@ owns commands, timeouts, evidence gates and accepted policy. Its
 owns detailed scenario-specific requirements. Read both before changing an
 affected owner.
 
+For Initial Source binding-checkpoint paths, reuse the queued TaskSource fixture
+named in TESTING's shared-helper contract. An issued same-work action remains
+UNKNOWN and correctly blocks writer resolution; queueing behind a real peer
+can create the checkpoint without an own action. Preserve the peer's issued
+action and use the original configured writer verifier for the positive path.
+Do not manufacture a checkpoint or settle UNKNOWN merely to reach a counter.
+
 For historical terminal capture, preserve the original issued item's null
 observation and exact receipt-bound Journal. Seed component prerequisites before
 persistence and capture; do not rewrite the captured Journal into a completed

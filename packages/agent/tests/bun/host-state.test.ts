@@ -26,7 +26,6 @@ import { createHistoricalResearchActivationFixture } from '../helpers/historical
 import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
 import {
   createPrewriterPreparationObservation,
-  runPreparationFixtureInProcess,
   runSynthesisFixtureInProcess,
 } from '../helpers/public-prewriter-fixture.ts';
 import { bindControlledRuntimeInitialization } from '../helpers/controlled-runtime-initialization-fixture.ts';
@@ -82,6 +81,7 @@ import {
   issueInitialSourceFixtureWriter,
   expiredOwnerTime as initialSourceExpiredOwnerTime,
 } from '../helpers/initial-source-work-fixture.ts';
+import { prepareQueuedInitialSourceTaskSource } from '../helpers/queued-initial-source-tasksource-fixture.ts';
 import { createCompletedSourceReportRecoveryFixture } from '../helpers/completed-source-report-recovery-fixture.ts';
 import { runtimePackageBeforeimageFixture } from '../helpers/runtime-package-beforeimage-fixture.ts';
 import {
@@ -6555,167 +6555,8 @@ function completeReadonlyFixtureHostPreparation(
 }
 
 async function prepareSameWorkQueuedTaskSource(f: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>) {
-  const db = initialSourceHostDatabase(f);
-  const host = new HostStateStore(
-    db,
-    initialSourceHostStore(f).workspaceId,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    f.root,
-    undefined,
-    {
-      verify: async ({ request, hostSnapshot }) => {
-        const reference = requiredValue(
-          hostSnapshot.work?.lifecycle.references.find(
-            (ref) =>
-              ref.kind === 'execution_approval' &&
-              ref.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
-              ref.decision === 'approved' &&
-              ref.disposition === 'current',
-          ),
-          'Peer Source authorization',
-        );
-        return {
-          ...trustedTaskSourcePolicyDecision(request),
-          source_authorization_reference: reference,
-          source_authorization_sha256: reference.sha256,
-        };
-      },
-    },
-  );
-  const peerPath = 'docs/PEER.md';
-  writeFileSync(path.join(f.root, peerPath), 'Disjoint public TaskSource peer\n');
-  const peerId = 'queued-source-peer';
-  const peerInput = f.preparePeerAdmission(peerId, [peerPath]);
-  const intakePath = '.agent/work/' + peerId + '/local-session-intake.json';
-  writeFileSync(
-    path.join(f.root, intakePath),
-    canonicalJson({
-      schema: 'VidaLocalSessionIntake/v1',
-      work_item: peerInput.workItem,
-      native_session_handle: peerInput.nativeSessionHandle,
-      scope_path: peerInput.scopePath,
-      acceptance_path: peerInput.acceptancePath,
-      source_authorization_path: peerInput.sourceAuthorizationPath,
-      runtime_code_paths: peerInput.runtimeCodePaths,
-      route: peerInput.route,
-      risk: peerInput.risk,
-      change_kind: peerInput.changeKind,
-    }),
-  );
-  const admitted = admitLocalSessionWork({ ...peerInput, intakePath });
-  const peerIdentity = { ...f.identity, work_id: peerId };
-  let peerBridge: MastraSessionBridge | undefined;
-  await withInitialSourceCleanup(
-    async () => {
-      const bridge = await MastraSessionBridge.open({
-        repositoryRoot: f.root,
-        config: f.config,
-        ledger: initialSourceHostLedger(f),
-        projectIds: f.identity.project_ids,
-        selection: peerInput.selection,
-        context: peerInput.context,
-        workflowId: 'task_execution',
-        workspaceId: host.workspaceId,
-      });
-      peerBridge = bridge;
-      await bridge.start(admitted.source);
-      await runPreparationFixtureInProcess(
-        {
-          args: [],
-          publicRun: () => {
-            throw new Error('Peer fixture must not run the public CLI');
-          },
-          sync: () => requiredValue(initialSourceHostLedger(f).resume(peerId, 1), 'Peer Journal'),
-          repositoryRoot: f.root,
-          workId: peerId,
-          attempt: 1,
-          work: requiredValue(admitted.host.work, 'Admitted peer'),
-        },
-        { ledger: initialSourceHostLedger(f), bridge, source: admitted.source },
-      );
-    },
-    async () => {
-      if (peerBridge) await peerBridge.close();
-    },
-    'Queued TaskSource peer bridge cleanup',
-  );
-  const targetBefore = initialSourceState(f);
-  acquireLocalSourceWriterLease({
-    repositoryRoot: f.root,
-    config: f.config,
-    store: host,
-    identity: f.identity,
-    nativeSessionHandle: requiredLease(targetBefore.work).thread_id,
-    stageId: 'develop_task',
-    assignmentIndex: 0,
-    expectedWork: targetBefore.workVersion,
-    expectedLedger: targetBefore.ledgerVersion,
-    expectedSessionJournal: { attempt: 1, version: targetBefore.journalVersion },
-  });
-  const branchRef = 'refs/heads/fixture-same-work-queued';
-  const sourceRoot = f.root + '-unexecuted-proposal';
-  const project = loadProjectSetContext(f.root, f.config, f.identity.repository_id, f.identity.project_ids);
-  const issueFor = async (
-    identity: WorkIdentity,
-    authorizationPath: string,
-    proposal = { suffix: '', branchRef, sourceRoot },
-  ) => {
-    const current = presentSnapshot(host.readHostStateSnapshot(identity));
-    const journal = requiredValue(host.readWorkSessionJournal(identity), 'TaskSource owner Journal');
-    const request: TaskSourceBindingRequest = {
-      schema: 'TaskSourceBindingRequest/v1',
-      operation: 'propose-create',
-      operation_id: 'queued-source-' + identity.work_id + proposal.suffix,
-      request_id: 'queued-source-request-' + identity.work_id + proposal.suffix,
-      branch_ref: proposal.branchRef,
-      source_root: proposal.sourceRoot,
-      expected_host: {
-        work: current.workVersion,
-        ledger: current.ledgerVersion,
-        journal: { attempt: 1, version: journal.version },
-        maintenance_generation: current.maintenanceGeneration,
-      },
-      work_id: identity.work_id,
-      attempt: 1,
-      thread_id: requiredLease(current.work).thread_id,
-      repository_id: identity.repository_id,
-      project_ids: identity.project_ids,
-      canonical_host_root: f.root,
-      config_digest: runtimeConfigDigest(f.config),
-      project_context_digest: project.project_context_digest,
-    };
-    const sourceAuthorizationDigest = createHash('sha256')
-      .update(readFileSync(path.join(f.root, authorizationPath)))
-      .digest('hex');
-    const prepared = host.prepareTaskSourceBindingOperation({
-      request,
-      identity,
-      verifyCurrent: (state) => {
-        expect(state.work).toEqual(current.work);
-        expect(state.ledger).toEqual(current.ledger);
-        expect(state.journal).toEqual(journal.state);
-        return {
-          source_authorization_sha256: sourceAuthorizationDigest,
-          source_scope_digest: current.work.binding.work_source_revision,
-        };
-      },
-    });
-    expect(prepared.status).toBe('prepared');
-    return { request, journal, result: await host.issueTaskSourceBindingOperation({ request, identity }) };
-  };
-  expect(
-    db.query("SELECT name FROM sqlite_master WHERE name='agent_host_task_source_resource_transition'").get(),
-  ).toBeNull();
-  const peerIssued = await issueFor(
-    peerIdentity,
-    requiredValue(peerInput.sourceAuthorizationPath, 'Peer authorization path'),
-  );
-  expect(peerIssued.result.status).toBe('issued');
-  const queued = await issueFor(f.identity, f.sourceAuthorizationPath);
-  expect(queued.result).toMatchObject({ status: 'queued', action: null, state_version: null, command_argv: null });
+  const { db, host, peerIdentity, peerIssued, queued, sourceRoot, branchRef, issueFor } =
+    await prepareQueuedInitialSourceTaskSource(f);
   const target = presentSnapshot(host.readHostStateSnapshot(f.identity));
   const resourceRows = db
     .query<{ payload: string; digest: string }, [string, string]>(

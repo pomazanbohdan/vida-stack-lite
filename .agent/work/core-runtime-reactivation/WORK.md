@@ -17,6 +17,57 @@ or numeric producer is active. Complete the selected contour before another.
 
 ### Current measured repair packet
 
+#### Three-hour audit and queued checkpoint packet (2026-10-22 12:45–15:45 UTC)
+
+Reuse of retained reports and six published commits identifies the already fixed
+SDK transitive-input classification (ae68767), native snapshot assertions, peer
+races and synthesis controls. Do not implement those fixes again. Complete
+stages1988/2030/2053 measure successive changed packets, not unchanged repeats:
+F274/275 L851/862 S928/943 B736/766 progresses to the2053 values below.25295ca
+removes two unreachable arms explicitly; those are not newly visited counters.
+SDK/job admission refusals retain their original evidence and no producer claim.
+No additional confirmed capture/timeout/reporting-script defect was found in
+this bounded reuse; this is not an audit of every script or session tool call.
+
+The queued TaskSource setup now has one typed shared owner,
+tests/helpers/queued-initial-source-tasksource-fixture.ts. The original Host
+wrapper retains all corruption, checkpoint, unsupported-boundary and peer
+controls. The new handoff case reaches configured writer approval with a real
+checkpoint and a queued own request having no action. The peer's original
+issued UNKNOWN action remains unchanged; no writer argv executes.2066 retains
+a proposal syntax failure before runtime.2067/2068 strict197 and zero-warning
+lint pass after correction. Root refreshes the Host test pin once from final bytes.
+
+| Order and process composition | Evidence and decision |
+| --- | --- |
+| Static, then affected files in one disk-backed child |2068 fails both20s fixture bounds. Host setup17.154s/body2.848s; retain both roots and the later handoff timeout.|
+| Static, then separate Host and handoff/control children on qualified retained scratch |2070 passes2cases/32assertions in12.28s, handoff10.144s.2071 passes1case/159assertions in16.36s, Host14.601s with setup11.676s/body2.824s. Use this focused composition.|
+| Concurrent heavy fixtures or a full stage per assertion |Not qualified: shared package/process resources and duplicated formation/capture. Keep one final selected stage.|
+
+Elapsed observations are not a controlled benchmark: backing filesystem and
+module histories differ, so no causal speedup is established. Original2068 FAIL
+remains FAIL. No budgets change. No full AST/hash pass or token-count reconstruction
+was added. The shared helper avoids copying setup without caching mutable Host
+or Journal authority or carrying a preimage across a transition.
+
+One refreshed disk observation gives durable25,419,010,048 available bytes and
+scratch5,771,759,616, above the unchanged2,214,592,512 floor plus reserve.
+Inventory1707/audit1977 supplies historical target classification. Current
+images/stages and unresolved donor/custody dependencies remain protected: no
+deletion qualified, zero bytes reclaimed and no locators retired in this audit.
+Do not repeat broad scans or add a cleanup automation.
+
+Blind review2072 accepts the source semantics and reconciles2070/2071. It
+retracts2069's unsupported stale-pin inference: Root's final Host digest equals
+the maintained pin, and the eligibility control passes. Original review2069 and
+FAIL2068 remain retained.2073 documentation check passes4documents/61links.
+Pstack's Laziness Protocol selects the existing native setup as the shared
+owner instead of introducing another fixture framework.
+
+2053 remains the numeric result until the coherent reviewed packet is published,
+formed and measured once. Remaining configured-only continuation, corrective
+planning and consistency guards remain OPEN under their existing studies.
+
 Published ec4304baf28e3cf49d1726fc419fd65f766a80a6 contains the reviewed peer,
 legacy synthesis and refused-corruption controls.2049 normal hooks pass
 format525/strict532/Knip;2050 ordinary push matches origin/main. CI39801951618,
