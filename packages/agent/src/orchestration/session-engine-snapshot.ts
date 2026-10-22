@@ -1335,6 +1335,7 @@ export function readInitialSourceContinuationSessionEngineSnapshot(
       frontierCodeRebind,
       completedSourceReportRecovery,
       hostSnapshot.runtimeCodeContinuations,
+      hostSnapshot.initialSourceBindingCheckpoints?.find((value) => value.continuation_id === receipt.continuation_id),
     );
   }
   if (completedSourceReportRecovery) {

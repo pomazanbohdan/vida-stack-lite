@@ -150,6 +150,12 @@ then assert exact replay without continuing unrelated validation phases. Return
 the case's completion predicate when cleanup must retain a root after its deadline.
 The helper evaluates it after bridge/database closure. Check that the returned
 predicate is consumed; an early body success must not discard a late failed root.
+For a composed Host lineage read, reuse its atomic view and captured versions.
+Do not rebuild the join from separate readers or serialize already validated
+large receipts under a smaller generic byte limit. A test-only policy adapter
+on the same DB must preserve the original store's workflow verifier; keep it as
+a separate view when it only prepares/issues TaskSource metadata. Follow
+TESTING's native resource-history rollback and checkpoint controls.
 For a stored-history refusal beyond the generic Work validator, start with real
 different-slot attempts and change only the intended fixture row. Preserve the
 actual report reservation and observation. Keep corrupted-input evidence distinct

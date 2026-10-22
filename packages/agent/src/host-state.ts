@@ -186,6 +186,7 @@ import {
 } from './orchestration/completed-source-report-recovery.js';
 import {
   resolveTaskSourceRoot,
+  taskSourceResourcePair,
   taskSourceGitArgv,
   validateTaskSourceBindingExchange,
   validateTaskSourceBinding,
@@ -194,6 +195,14 @@ import {
   type TaskSourceBinding,
   type TaskSourceBindingRequest,
 } from './orchestration/task-source-binding.js';
+import {
+  createTaskSourceResourceTransitionReceipt,
+  taskSourceReservationLedger,
+  parseTaskSourceResourceTransitionReceipt,
+  rewindTaskSourceResourceBinding,
+  validateJoinedPreparedTaskSourceOperation,
+  type TaskSourceResourceTransitionReceipt,
+} from './orchestration/task-source-resource-transition.js';
 import type {
   TaskSourceMutationPolicyDecision,
   TaskSourceMutationPolicyRequest,
@@ -204,7 +213,10 @@ import type {
   DeliveredWorkContinuationVerifier,
 } from './orchestration/delivered-work-continuation.js';
 import { projectConfiguredPrewriterContinuationRequests } from './orchestration/delivered-work-continuation.js';
-import { validateInitialSourceContinuationLineage } from './orchestration/admitted-development-packet.js';
+import {
+  validateInitialSourceContinuationLineage,
+  type InitialSourceContinuationLineageView,
+} from './orchestration/admitted-development-packet.js';
 import {
   projectQualifiedRuntimeCodeAncestor,
   runtimeCodeContinuationProtectedWorkDigest,
@@ -1071,6 +1083,17 @@ interface RuntimeCodeRebindReceipt extends RuntimeCodeRebindAuthorization {
   readonly request: RuntimeCodeRebindRequest;
   readonly binding_history?: RuntimeCodeRebindHistory;
 }
+export interface InitialSourceBindingCheckpoint {
+  readonly schema: 'InitialSourceBindingCheckpoint/v1';
+  readonly continuation_id: string;
+  readonly request_digest: string;
+  readonly work_version: StateVersion;
+  readonly boundary_binding_digest: string;
+}
+interface InitialSourceBindingCheckpointCollector {
+  readonly workVersion: StateVersion;
+  readonly values: InitialSourceBindingCheckpoint[];
+}
 export interface HostStateSnapshot {
   readonly work: WorkState | null;
   readonly ledger: CoordinationLedger | null;
@@ -1078,6 +1101,7 @@ export interface HostStateSnapshot {
   readonly ledgerVersion: StateVersion | null;
   readonly maintenanceGeneration: number;
   readonly runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[];
+  readonly initialSourceBindingCheckpoints?: readonly InitialSourceBindingCheckpoint[];
 }
 export interface WorkSessionJournalSnapshot {
   readonly attempt: number;
@@ -1760,13 +1784,8 @@ function taskSourceReservationResources(
   work: WorkState,
   prior: CoordinationTicket,
 ): { readonly sourceRoot: string; readonly added: readonly string[]; readonly resources: readonly string[] } {
-  requireState(
-    request.operation !== 'inspect' && request.source_root !== undefined && request.branch_ref !== undefined,
-    'TaskSource resource reservation requires an explicit branch and Source root',
-  );
   const sourceRoot = resolveTaskSourceRoot(repositoryRoot, request.source_root),
-    rootKey = process.platform === 'win32' ? sourceRoot.toLocaleLowerCase('en-US') : sourceRoot,
-    added = [`branch:${request.branch_ref}`, `worktree:${rootKey}`].sort(),
+    added = taskSourceResourcePair(repositoryRoot, request),
     logical = work.binding.implementation_paths.map((relative) => `file:${relative}`),
     retained = prior.exclusive_resources.filter(
       (resource) => !resource.startsWith('file:') && !added.includes(resource),
@@ -2669,6 +2688,7 @@ interface ContinuationAdmissionHistory {
   readonly artifacts: readonly WorkArtifactReference[];
 }
 type StoredWorkHistoryRecord =
+  | { readonly kind: 'task-source-resource'; readonly receipt: TaskSourceResourceTransitionReceipt }
   | { readonly kind: 'runtime'; readonly receipt: RuntimeCodeRebindReceipt }
   | { readonly kind: 'failed-prewriter'; readonly receipt: FailedPrewriterRecoveryReceipt }
   | { readonly kind: 'continuation'; readonly receipt: DeliveredWorkContinuationReceipt }
@@ -3188,13 +3208,254 @@ function failedPrewriterHistoryRecords(
   }
   return records;
 }
+const taskSourceResourceTransitionTable = 'agent_host_task_source_resource_transition';
+const taskSourceResourceTransitionSchema =
+  'CREATE TABLE agent_host_task_source_resource_transition (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,operation_id TEXT NOT NULL,successor_work_revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,successor_work_revision),UNIQUE(workspace_id,operation_id))';
+interface TaskSourceResourceHistoryRow {
+  readonly operation_id: string;
+  readonly successor_work_revision: number;
+  readonly payload: string;
+  readonly digest: string;
+  readonly prepared_workspace_id: string | null;
+  readonly prepared_operation_id: string | null;
+  readonly prepared_work_id: string | null;
+  readonly prepared_has_work_projection: number;
+  readonly prepared_payload: string | null;
+  readonly prepared_digest: string | null;
+  readonly prepared_revision: number | null;
+  readonly prepared_request_id: string | null;
+  readonly prepared_request_digest: string | null;
+}
+function assertTaskSourceResourceHistorySchema(database: Database): void {
+  const row = database
+    .query<{ sql: string }, []>(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_resource_transition'",
+    )
+    .get();
+  requireState(row?.sql === taskSourceResourceTransitionSchema, 'TaskSource resource history schema differs');
+}
+function readTaskSourceResourceHistoryRows(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+): TaskSourceResourceHistoryRow[] {
+  const read = () => {
+    assertTaskSourceResourceHistorySchema(database);
+    const projected = Boolean(
+      database
+        .query("SELECT name FROM pragma_table_info('agent_host_task_source_binding_operation') WHERE name='work_id'")
+        .get(),
+    );
+    const workProjection = projected ? 'p.work_id' : 'NULL';
+    const totals = database
+      .query<{ rows: number; bytes: number; maximum: number }, [string, string]>(
+        'SELECT COUNT(*) AS rows,COALESCE(SUM(length(CAST(r.payload AS BLOB))+COALESCE(length(CAST(p.payload AS BLOB)),0)),0) AS bytes,COALESCE(MAX(MAX(length(CAST(r.payload AS BLOB)),COALESCE(length(CAST(p.payload AS BLOB)),0))),0) AS maximum FROM agent_host_task_source_resource_transition r LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=r.workspace_id AND p.operation_id=r.operation_id WHERE r.workspace_id=? AND r.work_id=?',
+      )
+      .get(workspaceId, workId);
+    requireState(totals, 'TaskSource resource history statistics unavailable');
+    boundedInspectionInteger(totals.rows, workspaceInspectionMaxRows);
+    boundedInspectionInteger(totals.bytes, workspaceInspectionMaxBytes);
+    boundedInspectionInteger(totals.maximum, MAX_CANONICAL_BYTES);
+    return database
+      .query<TaskSourceResourceHistoryRow, [string, string, number]>(
+        'SELECT r.operation_id,r.successor_work_revision,r.payload,r.digest,p.workspace_id AS prepared_workspace_id,p.operation_id AS prepared_operation_id,' +
+          workProjection +
+          ' AS prepared_work_id,' +
+          Number(projected) +
+          ' AS prepared_has_work_projection,p.payload AS prepared_payload,p.digest AS prepared_digest,p.revision AS prepared_revision,p.request_id AS prepared_request_id,p.request_digest AS prepared_request_digest FROM agent_host_task_source_resource_transition r LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=r.workspace_id AND p.operation_id=r.operation_id WHERE r.workspace_id=? AND r.work_id=? ORDER BY r.successor_work_revision DESC LIMIT ?',
+      )
+      .all(workspaceId, workId, workspaceInspectionMaxRows);
+  };
+  return database.inTransaction ? read() : database.transaction(read).deferred();
+}
+function taskSourceResourceHistoryRow(
+  row: TaskSourceResourceHistoryRow,
+  workspaceId: string,
+  workId: string,
+): StoredWorkHistoryRecord {
+  const receipt = parseTaskSourceResourceTransitionReceipt(JSON.parse(row.payload));
+  requireState(
+    row.payload === canonicalJson(receipt) &&
+      row.digest === canonicalJsonDigest(receipt) &&
+      receipt.workspace_id === workspaceId &&
+      receipt.request.work_id === workId &&
+      receipt.request.operation_id === row.operation_id &&
+      receipt.successor_work_version.revision === row.successor_work_revision,
+    'TaskSource resource history checksum or identity differs',
+  );
+  taskSourceResourcePreparedProof(receipt, row);
+  return { kind: 'task-source-resource', receipt };
+}
+function taskSourceResourceHistoryRecords(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  availableTables: ReadonlySet<string>,
+): StoredWorkHistoryRecord[] {
+  if (!availableTables.has(taskSourceResourceTransitionTable)) return [];
+  return readTaskSourceResourceHistoryRows(database, workspaceId, workId).map((row) =>
+    taskSourceResourceHistoryRow(row, workspaceId, workId),
+  );
+}
+function writeTaskSourceResourceHistory(
+  database: Database,
+  receipt: TaskSourceResourceTransitionReceipt | undefined,
+  cache?: StoredWorkHistoryReadCache,
+): void {
+  if (!receipt) return;
+  requireState(database.inTransaction, 'TaskSource resource history requires the Host transaction');
+  if (
+    !database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+      .get(taskSourceResourceTransitionTable)
+  )
+    database.exec(taskSourceResourceTransitionSchema);
+  assertTaskSourceResourceHistorySchema(database);
+  const changed = database
+    .query(
+      'INSERT INTO agent_host_task_source_resource_transition (workspace_id,work_id,operation_id,successor_work_revision,payload,digest) VALUES(?,?,?,?,?,?)',
+    )
+    .run(
+      receipt.workspace_id,
+      receipt.request.work_id,
+      receipt.request.operation_id,
+      receipt.successor_work_version.revision,
+      canonicalJson(receipt),
+      canonicalJsonDigest(receipt),
+    );
+  requireState(changed.changes === 1, 'TaskSource resource history insertion differs');
+  cache?.delete(canonicalJson([receipt.workspace_id, receipt.request.work_id]));
+  if (cache) delete cache.availableTables;
+}
+type PendingWorkHistoryReceipt =
+  | RuntimeCodeRebindReceipt
+  | DeliveredWorkContinuationReceipt
+  | FailedPrewriterRecoveryReceipt
+  | TaskSourceResourceTransitionReceipt;
+function pendingWorkHistoryRecord(receipt: PendingWorkHistoryReceipt): StoredWorkHistoryRecord {
+  switch (receipt.schema) {
+    case 'FailedPrewriterRecoveryReceipt/v1':
+      return { kind: 'failed-prewriter', receipt };
+    case 'VidaRuntimeCodeRebindAuthorization/v1':
+      return { kind: 'runtime', receipt };
+    case 'TaskSourceResourceTransitionReceipt/v1':
+      return { kind: 'task-source-resource', receipt };
+    case 'DeliveredWorkContinuationReceipt/v1':
+      return { kind: 'continuation', receipt };
+  }
+}
+function storedWorkHistoryRevision(record: StoredWorkHistoryRecord): number {
+  switch (record.kind) {
+    case 'qualified-runtime-code':
+    case 'continuation':
+      return record.receipt.request.expectedWork.revision;
+    case 'initial-frontier-code':
+    case 'completed-source-report-recovery':
+      return record.receipt.record.prior_work_version.revision;
+    case 'failed-prewriter':
+    case 'initial-source':
+    case 'runtime':
+    case 'task-source-resource':
+      return record.receipt.prior_work_version.revision;
+  }
+}
+function assertTaskSourceResourcePendingBoundary(
+  receipt: PendingWorkHistoryReceipt | undefined,
+  records: readonly StoredWorkHistoryRecord[],
+): void {
+  if (receipt?.schema !== 'TaskSourceResourceTransitionReceipt/v1') return;
+  for (const record of records)
+    requireState(
+      record.kind === 'initial-source' || record.kind === 'task-source-resource',
+      'TaskSource resource extension continuation boundary is not qualified',
+    );
+}
+function assertTaskSourceResourceHistoryOrder(records: readonly StoredWorkHistoryRecord[]): boolean {
+  const counts = new Map<number, number>();
+  for (const record of records) {
+    const revision = storedWorkHistoryRevision(record);
+    counts.set(revision, (counts.get(revision) ?? 0) + 1);
+  }
+  let hasResources = false;
+  for (const record of records) {
+    if (record.kind !== 'task-source-resource') continue;
+    hasResources = true;
+    requireState(
+      counts.get(storedWorkHistoryRevision(record)) === 1,
+      'TaskSource resource history prior revision is ambiguous',
+    );
+  }
+  return hasResources;
+}
+function taskSourceResourcePreparedProof(
+  receipt: TaskSourceResourceTransitionReceipt,
+  row: TaskSourceResourceHistoryRow,
+) {
+  requireState(
+    row.prepared_has_work_projection === 0 || row.prepared_has_work_projection === 1,
+    'TaskSource preparation projection flag differs',
+  );
+  const proof = {
+    workspace_id: row.prepared_workspace_id,
+    operation_id: row.prepared_operation_id,
+    ...(row.prepared_has_work_projection === 1 ? { work_id: row.prepared_work_id } : {}),
+    request_id: row.prepared_request_id,
+    request_digest: row.prepared_request_digest,
+    revision: row.prepared_revision,
+    payload: row.prepared_payload,
+    digest: row.prepared_digest,
+  };
+  return validateJoinedPreparedTaskSourceOperation(receipt, proof);
+}
+function taskSourceResourcePendingPreparation(database: Database, receipt?: TaskSourceResourceTransitionReceipt) {
+  if (!receipt) return undefined;
+  requireState(database.inTransaction, 'TaskSource pending provenance requires the issuing transaction');
+  const projected = Boolean(
+    database
+      .query("SELECT name FROM pragma_table_info('agent_host_task_source_binding_operation') WHERE name='work_id'")
+      .get(),
+  );
+  const row = database
+    .query<TaskSourceResourceHistoryRow, [string, string]>(
+      'SELECT workspace_id AS prepared_workspace_id,operation_id AS prepared_operation_id,' +
+        (projected ? 'work_id' : 'NULL') +
+        ' AS prepared_work_id,' +
+        Number(projected) +
+        ' AS prepared_has_work_projection,revision AS prepared_revision,digest AS prepared_digest,request_id AS prepared_request_id,request_digest AS prepared_request_digest,CASE WHEN length(CAST(payload AS BLOB))<=8388608 THEN payload ELSE NULL END AS prepared_payload FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+    )
+    .get(receipt.workspace_id, receipt.request.operation_id);
+  requireState(row, 'TaskSource resource preparation is missing');
+  return taskSourceResourcePreparedProof(receipt, row);
+}
+function assertTaskSourceResourceCommit(
+  receipt: TaskSourceResourceTransitionReceipt | undefined,
+  operation: ReturnType<typeof taskSourceResourcePendingPreparation>,
+  before: HostStateSnapshot,
+  nextWork: WorkState,
+  nextLedger: CoordinationLedger,
+  additions: readonly string[],
+): void {
+  if (!receipt) return;
+  requireState(operation, 'TaskSource resource commit preparation is missing');
+  const rebuilt = createTaskSourceResourceTransitionReceipt({
+    request: receipt.request,
+    prepared_state_version: receipt.prepared_state_version,
+    authority: operation.operation.authority,
+    before,
+    nextWork,
+    nextLedger,
+    additions,
+  });
+  requireState(sameJson(rebuilt, receipt), 'TaskSource resource commit preimage or postimage differs');
+}
+
 function storedWorkHistoryTables(database: Database, cache?: StoredWorkHistoryReadCache): ReadonlySet<string> {
   if (cache?.availableTables) return cache.availableTables;
   const availableTables = new Set(
     (
       database
         .query(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('agent_host_qualified_runtime_code_continuation','agent_host_runtime_code_rebind','agent_host_delivered_work_continuation','agent_host_initial_source_continuation','agent_host_initial_source_frontier_code_rebind','agent_host_completed_source_report_recovery','agent_host_failed_prewriter_recovery')",
+          "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('agent_host_qualified_runtime_code_continuation','agent_host_runtime_code_rebind','agent_host_delivered_work_continuation','agent_host_initial_source_continuation','agent_host_initial_source_frontier_code_rebind','agent_host_completed_source_report_recovery','agent_host_failed_prewriter_recovery','agent_host_task_source_resource_transition')",
         )
         .all() as { name: string }[]
     ).map((row) => row.name),
@@ -3220,6 +3481,7 @@ function loadStoredWorkHistory(
   );
   return {
     records: [
+      ...taskSourceResourceHistoryRecords(database, workspaceId, workId, availableTables),
       ...runtimeBindingHistoryRecords(database, workspaceId, workId, availableTables),
       ...deliveredContinuationHistoryRecords(database, workspaceId, workId, repairOverlay, availableTables),
       ...initialSourceContinuationHistoryRecords(database, workspaceId, workId, availableTables),
@@ -3263,11 +3525,12 @@ function checkedStoredWork(
   database: Database,
   workspaceId: string,
   value: unknown,
-  pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt | FailedPrewriterRecoveryReceipt,
+  pendingReceipt?: PendingWorkHistoryReceipt,
   continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
   observeAdmissionHistory?: (history: ContinuationAdmissionHistory) => void,
   validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
   historyReadCache?: StoredWorkHistoryReadCache,
+  bindingCheckpoints?: InitialSourceBindingCheckpointCollector,
 ): WorkState {
   const candidate = value as WorkState,
     bindings = new Map<string, WorkState['binding']>(),
@@ -3281,32 +3544,18 @@ function checkedStoredWork(
     validatedQualifiedRuntimeCodeContinuations,
     historyReadCache,
   );
+  assertTaskSourceResourcePendingBoundary(pendingReceipt, history.records);
   const records: StoredWorkHistoryRecord[] = [...history.records],
     qualifiedRuntimeCodeContinuations = history.qualifiedRuntimeCodeContinuations;
-  if (pendingReceipt) {
-    records.push(
-      pendingReceipt.schema === 'FailedPrewriterRecoveryReceipt/v1'
-        ? { kind: 'failed-prewriter', receipt: pendingReceipt }
-        : pendingReceipt.schema === 'VidaRuntimeCodeRebindAuthorization/v1'
-          ? { kind: 'runtime', receipt: pendingReceipt }
-          : { kind: 'continuation', receipt: pendingReceipt },
-    );
-  }
-  records.sort((a, b) => {
-    const revision = (record: (typeof records)[number]) =>
-      record.kind === 'qualified-runtime-code'
-        ? record.receipt.request.expectedWork.revision
-        : record.kind === 'continuation'
-          ? record.receipt.request.expectedWork.revision
-          : record.kind === 'initial-frontier-code'
-            ? record.receipt.record.prior_work_version.revision
-            : record.kind === 'completed-source-report-recovery'
-              ? record.receipt.record.prior_work_version.revision
-              : record.receipt.prior_work_version.revision;
-    return revision(b) - revision(a);
-  });
+  if (pendingReceipt) records.push(pendingWorkHistoryRecord(pendingReceipt));
+  const hasResourceHistory = assertTaskSourceResourceHistoryOrder(records);
+  records.sort((a, b) => storedWorkHistoryRevision(b) - storedWorkHistoryRevision(a));
   let expected = candidate.binding;
   for (const record of records) {
+    if (record.kind === 'task-source-resource') {
+      expected = rewindTaskSourceResourceBinding(candidate, expected, record.receipt);
+      continue;
+    }
     if (record.kind === 'qualified-runtime-code') {
       const receipt = validateQualifiedRuntimeCodeContinuationReceipt(record.receipt),
         request = receipt.request;
@@ -3592,6 +3841,7 @@ function checkedStoredWork(
           sameJson(successor.execution.assignment_attempts, original.execution.assignment_attempts),
         'initial Source continuation binding history is not continuous',
       );
+      captureInitialSourceBindingCheckpoint(bindingCheckpoints, hasResourceHistory, candidate, receipt, expected);
       for (const reference of original.lifecycle.references) {
         if (
           matchesHistoricalAdmissionReference(original.binding, reference) &&
@@ -3974,6 +4224,45 @@ function validatePair(work: WorkState | null, ledger: CoordinationLedger | null)
 }
 function sameJson(left: unknown, right: unknown, encode = canonicalJson): boolean {
   return encode(left) === encode(right);
+}
+function captureInitialSourceBindingCheckpoint(
+  collector: InitialSourceBindingCheckpointCollector | undefined,
+  enabled: boolean,
+  work: WorkState,
+  receipt: InitialSourceContinuationReceipt,
+  binding: WorkState['binding'],
+): void {
+  if (!collector || !enabled) return;
+  requireState(work.revision === collector.workVersion.revision, 'initial Source checkpoint Work version differs');
+  collector.values.push({
+    schema: 'InitialSourceBindingCheckpoint/v1',
+    continuation_id: receipt.continuation_id,
+    request_digest: receipt.request_digest,
+    work_version: collector.workVersion,
+    boundary_binding_digest: canonicalJsonDigest(binding),
+  });
+}
+function workSnapshotHistory(
+  runtimeCodeContinuations: readonly QualifiedRuntimeCodeContinuationReceipt[],
+  checkpoints?: readonly InitialSourceBindingCheckpoint[],
+) {
+  return { runtimeCodeContinuations, ...(checkpoints?.length ? { initialSourceBindingCheckpoints: checkpoints } : {}) };
+}
+function initialSourceCheckpointMatches(
+  work: WorkState,
+  receipt: InitialSourceContinuationReceipt,
+  checkpoints?: readonly InitialSourceBindingCheckpoint[],
+  workVersion?: StateVersion | null,
+): boolean {
+  const checkpoint = checkpoints?.find((value) => value.continuation_id === receipt.continuation_id);
+  if (!checkpoint) return sameInitialSourceBindingOutsideRuntimeCode(work.binding, receipt.successor_work.binding);
+  return sameJson(checkpoint, {
+    schema: 'InitialSourceBindingCheckpoint/v1',
+    continuation_id: receipt.continuation_id,
+    request_digest: receipt.request_digest,
+    work_version: workVersion ?? version(work),
+    boundary_binding_digest: canonicalJsonDigest(receipt.successor_work.binding),
+  });
 }
 function sameInitialSourceBindingOutsideRuntimeCode(
   current: WorkState['binding'],
@@ -4693,6 +4982,8 @@ const workspaceInspectionTables = [
   'agent_host_mastra_session_ledger',
   'agent_host_governance',
   'agent_host_admission_attempt',
+  'agent_host_task_source_binding_operation',
+  'agent_host_task_source_resource_transition',
 ] as const;
 type WorkspaceInspectionTable = (typeof workspaceInspectionTables)[number];
 const workspaceInspectionMaxRows = 10_000;
@@ -6460,6 +6751,9 @@ export class HostStateStore {
         ),
         this.#readCompletedSourceReportRecoveryReceiptRow(identity, input.context.attempt),
         host.runtimeCodeContinuations,
+        host.initialSourceBindingCheckpoints?.find(
+          (value) => value.continuation_id === initialContinuation.continuation_id,
+        ),
       );
       requireState(
         initialContinuation.request.currentSourceScope.digest === input.context.scope_digest &&
@@ -8020,9 +8314,10 @@ export class HostStateStore {
   }
   #checkedWork(
     value: unknown,
-    pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt | FailedPrewriterRecoveryReceipt,
+    pendingReceipt?: PendingWorkHistoryReceipt,
     continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
     validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
+    bindingCheckpoints?: InitialSourceBindingCheckpointCollector,
   ): WorkState {
     return checkedStoredWork(
       this.#database,
@@ -8033,15 +8328,16 @@ export class HostStateStore {
       undefined,
       validatedQualifiedRuntimeCodeContinuations,
       this.#storedWorkHistoryReadCache,
+      bindingCheckpoints,
     );
   }
-  #admissionHistory(work: WorkState): ContinuationAdmissionHistory {
+  #admissionHistory(work: WorkState, pendingReceipt?: PendingWorkHistoryReceipt): ContinuationAdmissionHistory {
     let history: ContinuationAdmissionHistory = { references: [], artifacts: [] };
     checkedStoredWork(
       this.#database,
       this.#workspaceId,
       work,
-      undefined,
+      pendingReceipt,
       undefined,
       (value) => {
         history = value;
@@ -8085,6 +8381,7 @@ export class HostStateStore {
     ledger: CoordinationLedger,
     documentationContext?: DocumentationVerificationContext,
     taskSourceResourceAdditions: readonly string[] = [],
+    pendingReceipt?: TaskSourceResourceTransitionReceipt,
   ): void {
     validateProgress(
       before,
@@ -8092,17 +8389,24 @@ export class HostStateStore {
       ledger,
       documentationContext,
       taskSourceResourceAdditions,
-      this.#admissionHistory(work).references,
+      this.#admissionHistory(work, pendingReceipt).references,
     );
   }
   #decodeStoredStateRow(
     row: WorkspaceStateSqlRow,
     continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
     validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
+    bindingCheckpoints?: InitialSourceBindingCheckpointCollector,
   ): WorkState | CoordinationLedger {
     const value =
       row.kind === 'work'
-        ? this.#checkedWork(row.value, undefined, continuationRepairOverlay, validatedQualifiedRuntimeCodeContinuations)
+        ? this.#checkedWork(
+            row.value,
+            undefined,
+            continuationRepairOverlay,
+            validatedQualifiedRuntimeCodeContinuations,
+            bindingCheckpoints,
+          )
         : checkedLedger(row.value);
     requireState(
       value.workspace_id === this.#workspaceId && value.revision === row.revision,
@@ -8127,6 +8431,7 @@ export class HostStateStore {
     readonly work: WorkState | null;
     readonly workVersion: StateVersion | null;
     readonly runtimeCodeContinuations: readonly QualifiedRuntimeCodeContinuationReceipt[];
+    readonly initialSourceBindingCheckpoints?: readonly InitialSourceBindingCheckpoint[];
   } {
     const row = readWorkspaceStateSqlRow(this.#database, this.#workspaceId, 'work', identityKey(identity));
     if (!row) return { work: null, workVersion: null, runtimeCodeContinuations: [] };
@@ -8139,8 +8444,18 @@ export class HostStateStore {
         ? storedWorkHistoryTables(this.#database, this.#storedWorkHistoryReadCache)
         : undefined,
     );
+    const bindingCheckpoints: InitialSourceBindingCheckpointCollector = {
+      workVersion: { revision: row.revision, digest: row.digest },
+      values: [],
+    };
     return {
-      work: this.#decodeStoredStateRow(row, continuationRepairOverlay, runtimeCodeContinuations) as WorkState,
+      work: this.#decodeStoredStateRow(
+        row,
+        continuationRepairOverlay,
+        runtimeCodeContinuations,
+        bindingCheckpoints,
+      ) as WorkState,
+      initialSourceBindingCheckpoints: bindingCheckpoints.values,
       workVersion: { revision: row.revision, digest: row.digest },
       runtimeCodeContinuations,
     };
@@ -8167,7 +8482,10 @@ export class HostStateStore {
     );
     this.#assertDatabaseSupport();
     if (!allowHeldMaintenance) this.#assertMaintenanceAvailable();
-    const { work, workVersion, runtimeCodeContinuations } = this.#readWorkState(identity, continuationRepairOverlay),
+    const { work, workVersion, runtimeCodeContinuations, initialSourceBindingCheckpoints } = this.#readWorkState(
+        identity,
+        continuationRepairOverlay,
+      ),
       { ledger, version: ledgerVersion } = this.#readLedgerState();
     requireState(
       work || !ledger?.tickets.some((ticket) => identityKey(ticketIdentity(ticket)) === identityKey(identity)),
@@ -8182,7 +8500,7 @@ export class HostStateStore {
       maintenanceGeneration: this.#maintenanceGeneration(),
       ...(work
         ? {
-            runtimeCodeContinuations,
+            ...workSnapshotHistory(runtimeCodeContinuations, initialSourceBindingCheckpoints),
           }
         : {}),
     });
@@ -9839,68 +10157,9 @@ export class HostStateStore {
             lifecycle: { ...current.work!.lifecycle, revision: current.work!.lifecycle.revision + 1 },
             lease: queued ? current.work!.lease : { ticket_id: ticketId, thread_id: request.thread_id, generation },
           };
-        const releasedPrior: CoordinationTicket = {
-          ...prior,
-          status: 'released',
-          active_resources: [],
-          blocked_resources: [],
-          expires_at: null,
-        };
-        const nextTickets = current.ledger!.tickets.map((ticket) =>
-          ticket.ticket_id === ticketId
-            ? sourceTicket
-            : !queued && ticket.ticket_id === prior.ticket_id
-              ? releasedPrior
-              : ticket,
+        const nextLedger = checkedLedger(
+          taskSourceReservationLedger(current.ledger!, prior, sourceTicket, claimId, request.source_root!, now),
         );
-        if (!existingTicket) nextTickets.push(sourceTicket);
-        const nextClaims = current.ledger!.claims.map((claim) =>
-          !queued && claim.ticket_id === prior.ticket_id && claim.status === 'active'
-            ? { ...claim, status: 'released' as const, renewed_at: now }
-            : claim,
-        );
-        if (!queued)
-          nextClaims.push({
-            schema: 'WorkstreamClaim/v1',
-            claim_id: claimId,
-            ticket_id: ticketId,
-            work_id: request.work_id,
-            thread_id: request.thread_id,
-            generation,
-            resources: [...reservation.resources],
-            lease_expires_at: expiry!,
-            status: 'active',
-            created_at: now,
-            renewed_at: now,
-          });
-        const nextOperations = !queued
-          ? [
-              ...current.ledger!.operations,
-              {
-                schema: 'CoordinationOperation/v1',
-                operation_id: 'task-source-release-' + ticketId,
-                kind: 'release',
-                ticket_id: prior.ticket_id,
-                work_id: prior.work_id,
-                thread_id: prior.thread_id,
-                source_revision: prior.source_revision,
-                resources: [...prior.exclusive_resources],
-                from_ledger_revision: current.ledger!.revision,
-                to_ledger_revision: current.ledger!.revision + 1,
-                decided_by: request.thread_id,
-                decision_pointer: request.source_root!,
-                created_at: now,
-              },
-            ]
-          : current.ledger!.operations;
-        const nextLedger = checkedLedger({
-          ...current.ledger!,
-          revision: current.ledger!.revision + 1,
-          next_sequence: current.ledger!.next_sequence + Number(!existingTicket),
-          tickets: nextTickets,
-          claims: nextClaims,
-          operations: nextOperations,
-        });
         this.#commitHostState(
           {
             expectedWork: current.workVersion,
@@ -9912,6 +10171,17 @@ export class HostStateStore {
           undefined,
           'producer-fenced',
           additions,
+          undefined,
+          undefined,
+          createTaskSourceResourceTransitionReceipt({
+            request,
+            prepared_state_version: prepared.state_version,
+            authority: prepared.operation.authority,
+            before: current,
+            nextWork,
+            nextLedger,
+            additions,
+          }),
         );
         if (queued) return { status: 'queued' as const, action: null, state_version: null };
       }
@@ -13718,6 +13988,53 @@ export class HostStateStore {
     if (state.recoveryReceipt) validateCompletedSourceReportRecoveryLineage(state);
     return Object.freeze(state);
   }
+  readInitialSourceContinuationLineageView(
+    identity: WorkIdentity,
+    attempt: number,
+  ): InitialSourceContinuationLineageView | null {
+    requireState(
+      Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
+      'initial Source lineage view requires a valid nonnested attempt',
+    );
+    return this.#database
+      .transaction(() =>
+        this.#withStoredWorkHistoryReadCache(() => {
+          const host = this.#read(identity),
+            receipt = this.#readInitialSourceContinuationReceipt(identity, attempt, host);
+          if (!receipt) return null;
+          const frontierCodeRebind = this.#readInitialSourceFrontierCodeRebindReceipt(
+              identity,
+              attempt,
+              receipt.continuation_id,
+              host,
+            ),
+            completedSourceReportRecovery = this.#readCompletedSourceReportRecoveryReceiptRow(identity, attempt),
+            checkpoint = host.initialSourceBindingCheckpoints?.find(
+              (value) => value.continuation_id === receipt.continuation_id,
+            );
+          if (completedSourceReportRecovery) {
+            const journal = this.#readWorkSessionJournal(identity, host.work);
+            requireState(journal, 'completed Source lineage requires its current Journal');
+            validateCompletedSourceReportRecoveryLineage({
+              host,
+              journal,
+              initialReceipt: receipt,
+              frontierReceipt: frontierCodeRebind,
+              recoveryReceipt: completedSourceReportRecovery,
+            });
+          }
+          // Members were validated/frozen by their owners; preserve their separate byte limits.
+          return Object.freeze({
+            receipt,
+            frontierCodeRebind,
+            completedSourceReportRecovery,
+            runtimeCodeContinuations: host.runtimeCodeContinuations ?? [],
+            ...(checkpoint ? { bindingCheckpoint: checkpoint } : {}),
+          });
+        }),
+      )
+      .deferred();
+  }
   readInitialSourceContinuationReceipt(
     identity: WorkIdentity,
     attempt: number,
@@ -13750,7 +14067,12 @@ export class HostStateStore {
     requireState(
       row.attempt === attempt &&
         sameJson(receipt.request.identity, identity) &&
-        sameInitialSourceBindingOutsideRuntimeCode(current.work.binding, receipt.successor_work.binding) &&
+        initialSourceCheckpointMatches(
+          current.work,
+          receipt,
+          current.initialSourceBindingCheckpoints,
+          current.workVersion,
+        ) &&
         sameJson(current.work.contracts, receipt.prior_work.contracts) &&
         current.work.execution.run_id === receipt.prior_work.execution.run_id,
       'initial Source continuation receipt or current Work lineage differs',
@@ -18449,6 +18771,7 @@ export class HostStateStore {
       readonly progressWork: WorkState;
     },
     sourceRetirementRequest?: InterruptedSourceRetirementRequest,
+    resourceTransition?: TaskSourceResourceTransitionReceipt,
   ): HostStateSnapshot {
     const { documentationContext, expectedSessionJournal, ...stateInput } = input;
     const data = snapshotHostComponents(stateInput);
@@ -18456,7 +18779,8 @@ export class HostStateStore {
       Object.keys(data).length === (data.expectedMaintenanceGeneration === undefined ? 4 : 5),
       'host state transaction fields invalid',
     );
-    const work = this.#checkedWork(data.nextWork),
+    const resourcePreparation = taskSourceResourcePendingPreparation(this.#database, resourceTransition);
+    const work = this.#checkedWork(data.nextWork, resourceTransition),
       ledger = checkedLedger(data.nextLedger);
     requireState(
       work.workspace_id === this.#workspaceId && ledger.workspace_id === this.#workspaceId,
@@ -18469,6 +18793,14 @@ export class HostStateStore {
     );
     const commit = () => {
       const before = this.#read(workIdentity(work));
+      assertTaskSourceResourceCommit(
+        resourceTransition,
+        resourcePreparation,
+        before,
+        work,
+        ledger,
+        taskSourceResourceAdditions,
+      );
       this.#assertMaintenanceGeneration(data.expectedMaintenanceGeneration);
       matchesExpected(before.workVersion, data.expectedWork);
       matchesExpected(before.ledgerVersion, data.expectedLedger);
@@ -18601,7 +18933,15 @@ export class HostStateStore {
         );
         const projected = interruptedSourceRetirementProgress(before, work, ledger, sourceRetirementRequest);
         this.#validateProgress(before, projected.work, projected.ledger, documentationContext);
-      } else this.#validateProgress(before, work, ledger, documentationContext, taskSourceResourceAdditions);
+      } else
+        this.#validateProgress(
+          before,
+          work,
+          ledger,
+          documentationContext,
+          taskSourceResourceAdditions,
+          resourceTransition,
+        );
       if (work.lease) {
         const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id)!;
         requireState(
@@ -18628,6 +18968,7 @@ export class HostStateStore {
                 .run(...values, expected.revision, expected.digest);
         requireState(result.changes === 1, 'state write did not change exactly one row');
       }
+      writeTaskSourceResourceHistory(this.#database, resourceTransition, this.#storedWorkHistoryReadCache);
       this.#onReconciledWorkWrite(workIdentity(work), before.workVersion, version(work)!);
       if (terminalJournal && canonicalJsonDigest(terminalJournal.next) !== expectedSessionJournal?.version.digest) {
         requireState(expectedSessionJournal, 'terminal writer journal CAS is required');

@@ -65,6 +65,13 @@ function requireString(value: unknown, label: string): string {
   return value;
 }
 
+function recoveryJournalItem(journal: CompletedSourceReportRecoveryRequest['nextJournal'], actionId: string) {
+  return (
+    journal.items.find((item) => item.request.action_id === actionId) ??
+    journal.completed.flatMap((wave) => wave.items).find((item) => item.request.action_id === actionId)
+  );
+}
+
 export function createCompletedSourceReportRecoveryFixture(
   f: RecoveryReportFixtureContext,
   writer: RecoveryWriterAction,
@@ -232,9 +239,7 @@ export function createCompletedSourceReportRecoveryFixture(
       initial.request.nativeSessionHandle !== candidate.nativeSessionHandle
     )
       throw new Error('fixture endpoint callback: initial/frontier receipt or original owner changed');
-    const sourceReservation = state.journal.state.items.find(
-        (item) => item.request.action_id === candidate.actionId,
-      )?.host_reservation,
+    const sourceReservation = recoveryJournalItem(state.journal.state, candidate.actionId)?.host_reservation,
       sourceAuthorizationRef = initial.request.sourceAuthorizationReference;
     if (
       !sourceReservation ||
@@ -243,9 +248,8 @@ export function createCompletedSourceReportRecoveryFixture(
         candidate.originalSourceAuthorizationDigest ||
       state.host.work?.binding.work_source_revision !== candidate.originalSourceScopeDigest ||
       candidate.nextJournal.source_scope?.digest !== candidate.evolvedJournalSourceScopeDigest ||
-      canonicalJsonDigest(
-        candidate.nextJournal.items.find((item) => item.request.action_id === candidate.actionId)?.observation,
-      ) !== candidate.reportDigest
+      canonicalJsonDigest(recoveryJournalItem(candidate.nextJournal, candidate.actionId)?.observation) !==
+        candidate.reportDigest
     )
       throw new Error('fixture endpoint callback: original Source reservation or permission changed');
     const sourceNow = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents),

@@ -111,7 +111,8 @@ then perform healthy admission. The cooperative report grants no provider or
 Runtime acceptance. All cases keep the default5s deadline and private root.
 
 Completed Source report recovery separates rollback, terminal-history integrity,
-commit and next-wave expiry into four independent20s cases. Each forms its own native fixture.
+commit, next-wave expiry and queued-ticket release into five independent20s cases.
+Each forms its own native fixture.
 Commit checks stale CAS and live-owner refusal before expiry, then healthy
 commit and exact retry; rollback checks the native Journal abort, exact preserved
 rows, cleanup and healthy same-fixture retry. This balances their independent
@@ -159,6 +160,19 @@ recovered; the replacement is linked to exactly one active claim with identical
 execution-only resources, same thread and current open generation. A stale
 whole-request retry must leave rows unchanged. Neither case establishes installed
 Runtime acceptance or executes an archived writer/UNKNOWN outcome.
+
+Queued-ticket prepares a genuine same-DB active TaskSource peer and target queue,
+then uses the original trusted writer store for report recovery. Require queued
+target release and exact foreign Work/ticket/claim/Journal/operation/action and
+resource-receipt preservation. Corrupt only private fixture rows through exact
+conditional restoration; distinguish absent, checksum and rehashed provenance.
+A fresh admitted DB connection must read the restored history. The atomic lineage
+view binds its checkpoint to current Work and original receipt. Bare, stale,
+foreign, altered-digest/version and unknown-key proofs refuse without writes.
+The short TaskSource FIFO case asserts one unchanged receipt through queue retry,
+promotion and issued retry. The separate default5s native Ledger/late-action
+abort control proves state/receipt/schema rollback before healthy retry; its
+late trigger verifies that the receipt existed before rejecting the action.
 
 Historical continuation lookup reuses the existing Journal CAS/restoration owner
 for controlled issued/reported states, empty issue ID and mismatched observation

@@ -3277,6 +3277,15 @@ method. Raw SQLite `.close()` does not release the paired storage-admission
 gate lease. Keep the source-close then gate-close order and retain failed or
 uncertain fixtures under their existing custody owner.
 
+For TaskSource resource-history regressions, keep request/preparation, native
+Work/Ledger CAS and receipt persistence in the same workspace DB. Use native
+Ledger and late action faults to prove rollback, then a healthy exact retry.
+Read immutable initial-source lineage through its atomic Host view. A checkpoint
+is trusted Host read output bound to the current Work and receipt; it is not
+public ingress or writer authorization. Test absent, stale, foreign and corrupt
+proofs without weakening the original bare-receipt join. Use the maintained
+awaited rejection helper before inspecting or closing the fixture.
+
 Failed native closes retain the exact handle and its existing cleanup strategy
 in the shared workspace close owner. Both reader and exclusive admission retry
 that custody before opening a new owner. Closing immediately expires ordinary

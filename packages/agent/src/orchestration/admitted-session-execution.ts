@@ -109,6 +109,7 @@ export function assertAdmittedRuntimeCodeCurrent(
       initialView?.frontierCodeRebind,
       completedRecovery,
       initialView?.runtimeCodeContinuations,
+      initialView?.bindingCheckpoint,
     );
     if (completedRecovery) {
       validateCompletedSourceReportRecoveryCurrentWorkJoin(

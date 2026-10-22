@@ -177,6 +177,12 @@ function sourcePreflightContinuation(
   return initial ?? configured;
 }
 
+function sourcePreflightContinuationHistory(view: InitialSourceContinuationLineageView) {
+  return {
+    ...(view.runtimeCodeContinuations ? { runtimeCodeContinuations: view.runtimeCodeContinuations } : {}),
+    ...(view.bindingCheckpoint ? { bindingCheckpoint: view.bindingCheckpoint } : {}),
+  };
+}
 function sourcePreflightContinuationDigest(view: AcceptedSourceContinuation | null): string {
   if (view === null) return canonicalJsonDigest(null);
   if ('receipt' in view) {
@@ -185,7 +191,7 @@ function sourcePreflightContinuationDigest(view: AcceptedSourceContinuation | nu
         initialReceipt: initialSourceContinuationRecord(view.receipt).digest,
         frontierCodeRebind: view.frontierCodeRebind?.record_digest ?? null,
         completedSourceReportRecovery: view.completedSourceReportRecovery?.record_digest ?? null,
-        ...(view.runtimeCodeContinuations ? { runtimeCodeContinuations: view.runtimeCodeContinuations } : {}),
+        ...sourcePreflightContinuationHistory(view),
       },
       0,
       (value, depth, key) =>

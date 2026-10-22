@@ -12,7 +12,13 @@ import {
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { coordinationLedgerDigest } from '../contracts/envelopes.js';
-import type { HostStateSnapshot, HostStateStore, WorkIdentity, WorkState } from '../host-state.js';
+import type {
+  HostStateSnapshot,
+  HostStateStore,
+  WorkIdentity,
+  WorkState,
+  InitialSourceBindingCheckpoint,
+} from '../host-state.js';
 import { completedSourceJournalObservationMatches } from '../host-state.js';
 import {
   projectQualifiedRuntimeCodeAncestor,
@@ -108,6 +114,7 @@ export interface AdmittedDevelopmentPacketInput {
         HostStateStore,
         | 'readDeliveredWorkContinuationReceipt'
         | 'readFailedPrewriterRecoveryReceipt'
+        | 'readInitialSourceContinuationLineageView'
         | 'readInitialSourceContinuationReceipt'
         | 'readInitialSourceFrontierCodeRebindReceipt'
         | 'readCompletedSourceReportRecoveryReceipt'
@@ -130,6 +137,7 @@ function requirePacket(condition: unknown, message: string): asserts condition {
 
 export interface InitialSourceContinuationLineageView {
   readonly receipt: InitialSourceContinuationReceipt;
+  readonly bindingCheckpoint?: InitialSourceBindingCheckpoint;
   readonly frontierCodeRebind: InitialSourceFrontierCodeRebindReceipt | null;
   readonly completedSourceReportRecovery: CompletedSourceReportRecoveryReceipt | null;
   readonly runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[];
@@ -187,6 +195,8 @@ export function isInitialSourceContinuationLineageView(value: unknown): value is
     [
       'completedSourceReportRecovery,frontierCodeRebind,receipt',
       'completedSourceReportRecovery,frontierCodeRebind,receipt,runtimeCodeContinuations',
+      'bindingCheckpoint,completedSourceReportRecovery,frontierCodeRebind,receipt',
+      'bindingCheckpoint,completedSourceReportRecovery,frontierCodeRebind,receipt,runtimeCodeContinuations',
     ].includes(Object.keys(value).sort().join(',')) &&
     (value.runtimeCodeContinuations === undefined || Array.isArray(value.runtimeCodeContinuations)) &&
     isInitialSourceContinuationReceipt(value.receipt) &&
@@ -213,6 +223,7 @@ export function readInitialSourceContinuationLineageView(
   sourceStore: Partial<
     Pick<
       HostStateStore,
+      | 'readInitialSourceContinuationLineageView'
       | 'readInitialSourceContinuationReceipt'
       | 'readInitialSourceFrontierCodeRebindReceipt'
       | 'readCompletedSourceReportRecoveryReceipt'
@@ -222,6 +233,8 @@ export function readInitialSourceContinuationLineageView(
   identity: WorkIdentity,
   attempt: number,
 ): InitialSourceContinuationLineageView | null {
+  if (sourceStore.readInitialSourceContinuationLineageView)
+    return sourceStore.readInitialSourceContinuationLineageView(identity, attempt);
   const readInitial = sourceStore.readInitialSourceContinuationReceipt;
   if (!readInitial) return null;
   const initial = readInitial.call(sourceStore, identity, attempt);
@@ -328,6 +341,36 @@ function validateInitialSourceFrontierCodeRebindJoin(
   return receipt;
 }
 
+/** A Host-validated read checkpoint proves only this exact current-to-initial resource join. */
+function initialSourceCurrentBindingMatches(
+  currentWork: WorkState,
+  projectedWork: WorkState,
+  receipt: InitialSourceContinuationReceipt,
+  checkpoint?: InitialSourceBindingCheckpoint,
+): boolean {
+  if (!checkpoint)
+    return samePacket(
+      initialContinuationBindingCore(receipt.prior_work.binding),
+      initialContinuationBindingCore(projectedWork.binding),
+    );
+  requirePacket(
+    samePacket(checkpoint, {
+      schema: 'InitialSourceBindingCheckpoint/v1',
+      continuation_id: receipt.continuation_id,
+      request_digest: receipt.request_digest,
+      work_version: { revision: currentWork.revision, digest: canonicalJsonDigest(currentWork) },
+      boundary_binding_digest: canonicalJsonDigest(receipt.successor_work.binding),
+    }),
+    'initial Source binding checkpoint is stale, foreign or corrupt',
+  );
+  return samePacket(
+    initialContinuationBindingCore(receipt.prior_work.binding),
+    initialContinuationBindingCore({
+      ...projectedWork.binding,
+      allowed_resources: receipt.successor_work.binding.allowed_resources,
+    }),
+  );
+}
 /** Validate the receipt lineage while retaining the original contract, intake and permission bytes. */
 export function validateInitialSourceContinuationLineage(
   work: WorkState,
@@ -336,6 +379,7 @@ export function validateInitialSourceContinuationLineage(
   frontierCodeRebindValue?: unknown,
   completedSourceReportRecoveryValue?: unknown,
   runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
+  bindingCheckpoint?: InitialSourceBindingCheckpoint,
 ): InitialSourceContinuationReceipt {
   const currentWork = work;
   const receipt = validateInitialSourceContinuationReceipt(value);
@@ -424,7 +468,7 @@ export function validateInitialSourceContinuationLineage(
       request.nativeSessionHandle === successor.lease?.thread_id &&
       request.nativeSessionHandle === work.lease?.thread_id &&
       samePacket(initialContinuationBindingCore(original.binding), initialContinuationBindingCore(successor.binding)) &&
-      samePacket(initialContinuationBindingCore(original.binding), initialContinuationBindingCore(work.binding)) &&
+      initialSourceCurrentBindingMatches(currentWork, work, receipt, bindingCheckpoint) &&
       request.priorRuntimeCodeDigest === original.binding.runtime_code_digest &&
       request.currentRuntimeCodeDigest === successor.binding.runtime_code_digest &&
       request.currentRuntimeCodeDigest === successor.binding.runtime_source_revision &&
@@ -574,6 +618,7 @@ export function acceptedSourceAuthorizationRevision(
         initial.frontierCodeRebind,
         initial.completedSourceReportRecovery,
         initial.runtimeCodeContinuations,
+        initial.bindingCheckpoint,
       ).prior_work.binding.work_source_revision
     : continuation && 'original' in continuation && 'recovery' in continuation
       ? acceptedContractSourceRevision(work, { state: journalValue as MastraSessionLedgerState }, continuation)
@@ -603,6 +648,7 @@ export function acceptedContractSourceRevision(
       initial.frontierCodeRebind,
       initial.completedSourceReportRecovery,
       initial.runtimeCodeContinuations,
+      initial.bindingCheckpoint,
     );
     return receipt.prior_work.binding.work_source_revision;
   }

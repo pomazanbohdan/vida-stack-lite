@@ -117,6 +117,13 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
       report: 'mutation-bun-service-operation-custody.json',
     },
     {
+      name: 'bun-task-source-resource-transition',
+      environment: 'bun',
+      sources: ['src/orchestration/task-source-resource-transition.ts'],
+      tests: ['tests/bun/task-source-resource-transition.test.ts'],
+      report: 'mutation-bun-task-source-resource-transition.json',
+    },
+    {
       name: 'bun-host-state',
       environment: 'bun',
       sources: ['src/host-state.ts', 'src/trusted-host.ts', 'src/contracts/work-state-schema.ts'],

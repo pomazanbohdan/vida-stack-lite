@@ -105,7 +105,103 @@ admission floor. No concurrent compilers, installs, indexing, broad cleanup or
 other numeric producer competes with final measurement. Concurrent child sums
 are planning quantities, not serial wall-time proof.
 
+Dispatch bounded blind reviews with exact absolute Source and diagnostic paths,
+one artifact destination and a short result. Reuse a ready typed proposal;
+do not ask for repeated prose or ambiguous nested diagnostic directories.
+Root stops on the first failed static check before launching its focused tests.
+Research/review may run alongside Root edits; compilers and numeric producers
+remain sequential under the one execution owner.
+
 ### Current remaining work groups
+
+The confirmed TaskSource resource-history defect takes P0 precedence over the
+queued-handoff coverage recipe (WORK1751–1754). Before implementation, freeze
+the private transition roles: exact shape/version/resource validation, canonical
+construction, pure binding rewind, bounded history-row read, atomic row write,
+and pending-history dispatch. Each new callable, including nested callbacks,
+must have complexity and CRAP ceilings <=10 under the unchanged new-function
+policy. Existing callable ceilings and baseline correspondence stay unchanged;
+extract the existing pending dispatch if necessary to keep its enclosing owner
+within its original ceiling. Independent review must accept the roles and
+cohesive invariants before Source edits; no candidate-derived allowance.
+
+Use a compact exact request/prepared-authority/ticket/binding/version receipt
+inside the existing workspace DB. Preserve both the initial checkedWork and
+validateProgress/admissionHistory checks with pending provenance; persist only
+after both state CAS writes and before the final read, in the same transaction.
+Invalidate only that Work's history entry and stale table discovery. Inspect/read
+must not create schema. Include physical evidence in the existing fixed row/byte
+inspection limits. No missing legacy beforeimage may be inferred or replayed;
+unproven rows remain fenced. Verify queued and active addition, no-op/promotion,
+reopen, bad/missing/foreign receipt, exact rollback/CAS and foreign-peer preservation
+before the one complete selected-contour stage.
+
+Resolve the1755 review blockers before Source work: embed the complete validated
+TaskSource request in the compact receipt and join its exact persisted prepared
+operation; verify that row's checksum/version/request/authority binding. Retain
+one prepared-operation StateVersion, not a duplicate digest field. Derive the
+canonical branch/worktree pair from the request and prove the precise set
+difference on binding rewind. Read this Work's receipt/preparation join under one
+read snapshot with a Work-key aggregate admission before payload materialization,
+then one bounded fetch under the existing10,000-row/64-MiB limits. No workspace
+scan, second full inventory or hash pass. Reject authoritative future/orphan
+receipts; do not silently filter them by candidate revision. Insertion after both
+state CAS writes eliminates the supposed need for such a filter before the
+commit's original-state read. All malformed or missing provenance remains fenced.
+
+1756 supersedes the unvalidated1753 proposal: its future-history filtering and
+duplicate prepared digest are withdrawn. Freeze the new Host callable roles at
+CC/CRAP10/10: assertTaskSourceResourceHistorySchema,
+readTaskSourceResourceHistoryRows (including its read callback),
+taskSourceResourceHistoryRow, taskSourceResourceHistoryRecords (including its
+projection callback), writeTaskSourceResourceHistory,
+assertTaskSourceResourceHistoryOrder, pendingWorkHistoryRecord and
+storedWorkHistoryRevision. The last two extract the existing dispatch/revision
+roles without resetting their baseline correspondence. Read-side schema checks
+and prepared joins stay inside the same snapshot. Select the exact stored
+prepared workspace/operation IDs; validate work_id when its existing projection
+column is present, and always validate the embedded request's Work identity.
+An O(n) guard rejects equal prior revisions involving a resource receipt across
+the combined history, before sorting. The pending/final transaction uses the
+same prepared-row proof as persisted history, with the final actual pre/post
+versions rechecked before CAS. Implementation review and numeric budgets remain
+separate acceptance steps; this planned ceiling is not a measured PASS.
+
+The adapted pure module uses Ajv for structural schemas and freezes these
+cohesive callable roles at10/10: reject, same, checkedInput, stateVersion,
+workVersion, ledgerVersion, expectedTicketResources, issuanceTicket,
+validateLivePair, createTaskSourceResourceTransitionReceipt,
+parseTaskSourceResourceTransitionReceipt, rewindTaskSourceResourceBinding and
+validateJoinedPreparedTaskSourceOperation. Its Host glue additionally freezes
+taskSourceResourcePreparedProof, taskSourceResourcePendingPreparation and
+assertTaskSourceResourceCommit at10/10. taskSourceResourcePair moves the existing
+canonical branch/worktree derivation into the maintained TaskSource owner for
+both reservation and history. No original callable gets a larger budget or a
+reset identity. Register the new private Source in its own contour; preserve the
+existing host-state Source selection and record its separate pending coverage.
+
+1764's reviewed propagation uses a read-only initial-binding checkpoint emitted
+by the existing mixed-history validator after its exact boundary check. Freeze
+captureInitialSourceBindingCheckpoint, workSnapshotHistory,
+initialSourceCheckpointMatches (and selection callback), the atomic
+HostStateStore.readInitialSourceContinuationLineageView (and its callbacks),
+initialSourceCurrentBindingMatches and sourcePreflightContinuationHistory at10/10.
+Bind the checkpoint to the exact current Work version and receipt; it is trusted
+Host read output, never public ingress or writer authorization. The atomic view
+reuses one Host snapshot instead of four independently repeated history reads.
+Keep configured/runtime protected joins strict until their exact ordering is
+qualified. Legacy preflight digests stay identical when the checkpoint is absent.
+Freeze uniqueTicket and taskSourceReservationLedger (including its projections)
+at10/10: one maintained reservation recipe serves issuance and exact Ledger
+postimage validation. Do not duplicate that recipe or accept unrelated Ledger
+changes. This shared extraction retains the original projection correspondence.
+
+Freeze assertTaskSourceResourcePendingBoundary at10/10. Only a new pending
+resource extension accepts base history or initial-source/resource records;
+other retained continuations refuse before CAS/action with an explicit GAP.
+This preserves previously blocked configured/frontier/runtime/recovery orderings
+until their own genuine proof, rather than returning unreadable queued/issued
+state. It does not filter persisted history or weaken any existing validator.
 
 | Group | Dependency and acceptance |
 | --- | --- |

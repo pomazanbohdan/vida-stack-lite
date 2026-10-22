@@ -13,11 +13,20 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current checked continuation coverage packet
 
+Current Source contains a reviewed P0 TaskSource/history correction and focused
+tests; complete numeric qualification awaits one new published SDK/image/stage.
+The complete numbers below remain bound to9112866, not this changed Source.
+The new private transition Source has its own registered contour; the existing
+host-state Source selection is unchanged.
+
 Published9112866 completes its sole selected-contour stage with342PASS and
 6348assertions, full capture, closed process group and unchanged boot/image.
 DIAG/gap-delta-v1729.json confirms937/4 and1486/3 newly visited, no lost arm,
 unchanged Source and all15reviewed objective branch geometries. Twenty-seven
-raw branch gaps remain,12undispositioned including native Windows. Raw S/B stay
+raw branch gaps remain in that image.1740 subsequently accepts Windows87/0 as
+an objective skip for its Linux-bound execution only:16reviewed dispositions and
+11undispositioned, without changing raw counts. Native Windows qualification
+remains OPEN. Raw S/B stay
 BLOCKED; exact F/L remain100. Stage252891.191805ms; Host326/5857 takes243.15s,
 stopped-source16/491 takes129.29s. execution_complete=true, report_complete=false,
 resource_safe_to_advance=false. These observed metrics belong to the bound image,
@@ -46,6 +55,125 @@ checks and reviews one coherent packet before the next complete contour run.
 A queued foreign peer is not the target Work; use actual same-database branch/
 worktree reservations. Do not fabricate queued rows, accepted siblings or runtime
 history, or classify a search failure as an objective skip.
+
+The continued batch now has two checked refused-history controls.1737 passes
+strict149/lint0 and the native legacy-frontier case1PASS/146assertions10.38s
+(7.49s native): configured predecessor scope schema and intake ID corruption
+take the non-admission collectors before lifecycle authority refuses. Exact
+receipt/request/authorization digests are rebound only in the negative row;
+shared receipt CAS restores it before healthy public reads. Independent1740
+accepts that refusal order.1743 passes strict149/lint0 and rollback1PASS/
+43assertions12.84s (11.24s native). Two exact Journal corruptions respectively
+move the genuine unobserved writer to completed (real immutable-prefix refusal
+after one verifier call), and duplicate a genuine readonly item into current
+with a different changedPaths request (source-diff refusal before verification).
+The common owner preserves Host/Journal/schema/governance/receipt beforeimages,
+closed transactions, reverse CAS and original rollback/healthy retry.1746 accepts
+both; no Source guard or accepted engine history is changed. The shared report
+fixture now uses one current-first lookup across current/completed items for
+reservation and observation binding, matching the actual Host/CLI lookup.
+1738's absent lazy table and1739's current-only lookup failure are preserved;
+1741/1743 correct their fixture assumptions. These four prospective arm visits
+remain unmeasured; the changed pin is deliberately pending the coherent packet.
+
+The proposed1223 public writer extension is withdrawn after1748's genuine
+admitted-runtime refusal. Its controlled future digest differs from executing
+package bytes; the closed continuation also requires distinct prior/target
+runtime digests, so substituting the unchanged digest is invalid. Failed logs,
+root, exact removed fragment and helper diff remain in DIAG.1749 corrects the
+earlier1730/1735/1745 feasibility claim. No guard is weakened; the real endpoint
+prerequisite remains OPEN with1204/7-8 and1553/0.1742 proves that an unmodified
+known-terminal capture also rejects empty-current Journal/request corruption
+at the first inspect, before1144; this alone grants no objective skip.
+
+The same-database queued producer compiles after1750's Journal snapshot-type
+correction.1751 passes strict149/lint0 but its target issue reproduces a product
+defect: after the disjoint peer's public TaskSource issue succeeds, adding the
+target's branch/worktree allowed_resources fails initial-source binding history
+inside #checkedWork before the existing narrow validateProgress addition check.
+The outer transaction rolls back; original FAIL/root remains retained. This
+also affects active additions and other retained binding histories, so bypassing
+the ancestry comparison or changing only the queue would be incomplete.
+The canonical queued-ticket case is now a focused PASS; numeric closure still
+requires the next published-image measurement.
+
+1752 proposes one compact typed resource-transition receipt in the SAME workspace
+DB, atomically bound to exact Work/Ledger CAS, prepared request/authority, ticket
+and prior/successor binding digests. No full Work/Ledger copies, new database,
+fabricated action, argv execution, schema/loader cutover or UNKNOWN replay.
+1753 prepares the bounded private contract/glue proposal;1754 independently
+checks its safety and simpler alternatives. Root remains sole writer. Freeze
+reviewed new-function roles/ceilings in the existing plan before implementation;
+existing frozen ceilings cannot increase. Pending and persisted reads must both
+replay only exact proven additions, in revision order, and invalidate any scoped
+history cache after receipt insertion. Complete supported corrections before
+the next pin refresh, ordinary publication/SDK and single full contour stage.
+
+1781 now passes7targeted Host cases/463assertions in47.45s, including real
+same-Work queue, native writer/report recovery, exact target release and peer
+preservation; queued promotion/retry retains one immutable resource receipt.
+The queue case has missing/corrupt/rehashed receipt and prepared-row refusals,
+exact conditional restoration, fresh DB connection admission, stale/foreign/
+unknown-key checkpoint refusals and bare-receipt denial.1780 passes the separate
+atomic fault control1case/33assertions in1.50s: native Ledger abort and a late
+action-insert abort after the receipt exists roll back Work/Ledger/receipt/schema;
+healthy exact retry then succeeds. The case stays within5s, recovery within20s.
+
+The P0 fix records compact exact resource provenance in the same workspace DB.
+The prepared request/authority and Work/Ledger CAS remain exact; no command is
+executed, no issued peer effect resolved, and no original lineage guard removed.
+1763 exposed the next duplicate initial-lineage refusal after queue admission;
+the existing mixed-history validator now emits a current-Work/receipt-bound
+checkpoint only after that boundary's full proof. The atomic lineage view reuses
+one Host snapshot and individually validated receipt owners instead of repeated
+history reads or serializing the composed envelope under a smaller byte limit.
+Bare views retain their strict path; the checkpoint is trusted Host read output,
+not public ingress or writer authorization.1767's test adapter also lost its
+original workflow verifier; it now keeps the original store and uses a separate
+same-DB TaskSource view. All original failed roots/logs remain retained.
+
+One maintained Ledger recipe now serves queued/active/promotion issuance and
+exact receipt postimage validation; unrelated Ledger changes refuse.1783 reviews
+that extraction,1769 the checkpoint, and the final SQL review accepts bounded
+snapshot reads, legacy/projected preparation joins, physical workspace budgets,
+atomic persistence and targeted cache invalidation.1782 reuses the standard AST
+inventory for the changed scope:43reviewed roles, maximumCC9, none over10.
+This is static evidence, not frozen correspondence/CRAP or coverage qualification.
+Configured-frontier/runtime-protected joins remain strict pending their genuine
+endpoint/ordering proof. No general runtime unblock or consumer effect is claimed.
+
+The current audit is DIAG/three-hour-audit-v1784.json. It joins the two commits,
+the sole complete bound stage and targeted receipts in its actual three-hour
+window. Older1687 below is historical. No controlled speedup, total tool-call/
+token count or current numeric result is invented. DIAG/resource-v1756.json
+observes26,252,812,288durable and7,140,241,408scratch bytes available; the unchanged
+floor plus reserve is2,214,592,512.1707's qualified cleanup manifest is reused;
+no new broad disk scan or competing cleanup ran. Final pin/publication/stage
+and generated-projection reconciliation remain the next owned steps.
+
+The final safety review fences a new resource addition before CAS/action when
+persisted history contains an unqualified configured/frontier/runtime/recovery
+ordering. Base and initial-source/resource-only histories are supported; other
+validators and persisted-history reads stay exact. This prevents metadata
+acceptance ahead of downstream lineage support. These orderings remain GAPs.
+
+The new queued-peer and atomic-fault probes inherited successful-fixture deletion
+despite leaving issued/unobserved TaskSource proposals. Their earlier PASS logs
+remain functional observations, but those successful probe DB roots were removed
+and no longer provide full unresolved-proposal custody. Their results were never
+promoted to current numeric/Runtime qualification. The cleanup owners now retain
+these roots even on PASS, preserving deadline/close checks; fresh qualified
+controls and the next stage must retain their original DBs. No old attempt is
+replayed or classified as resolved. Original FAIL/UNKNOWN roots outside those
+new successful probes were not removed.
+
+1787 completes the corrected fresh controls:2PASS/177assertions in12.77s,
+including the pre-CAS unsupported-history refusal. Both issued/unobserved fixture
+roots remain retained at /tmp/vida-initial-source-ktF9fI and
+/tmp/vida-task-source-coordination-D2Vk3f; native completion is0. Strict152 and
+scoped type-aware lint pass, and resource-final-review-v1787.md records the blind
+review's narrow acceptance and unsupported-ordering limits. These focused results
+do not replace the pending complete F/L/S/B measurement.
 
 Earlier checked packets, original failures, reviews and rejected compositions
 remain in [published9112866 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/9112866e081ff3de8cb01c4358f2c5e9cbe0b87f/.agent/work/core-runtime-reactivation/WORK.md#current-checked-continuation-coverage-packet).
@@ -998,7 +1126,7 @@ fallback, and a claimed fixture route does not prove the arm was visited.
 | HostStateStore.recoverExpiredLocalLease | Branch1483 arm1 at16710 | Objective skip. Entry #read validates the stored Work and initial-source ancestry before the first recovery-lineage conditional. A missing original receipt is refused before this arm. Independent proof: DIAG/owner-fallback-proofs-v1577.md. |
 | HostStateStore.recoverExpiredLocalLease | Branch1498 arm1 at16890 | Objective skip. After verifyCurrent, #validateProgress calls #admissionHistory and checkedStoredWork before the second initial-receipt read. The exact callback-delete control is refused there and SQLite rolls back. No callback/await follows that check before the second read; the immediate transaction excludes another writer. Keep both rereads and guards. Independent current-byte proof: DIAG/host-negative-controls-review-v1594.md; focused native evidence: host-negative-focused-v1593.log. |
 | HostStateStore.commitCompletedSourceReportRecovery | Branch1550 arm1 at17566 | Objective skip. The first-commit #read validates initial-source Work ancestry before the conditional; a retained retry returns earlier. A missing original receipt cannot reach this arm through either route. Independent proof: DIAG/owner-fallback-proofs-v1577.md. |
-| taskSourceReservationResources | Branch87 arm0 at1768:45–82 | Native-Windows qualification GAP, not a contract-unreachable skip. Requires the real supported native target; do not mock platform or claim current Linux evidence qualifies it. |
+| taskSourceReservationResources | Branch87 arm0 at1768:45–82 | Objective skip for the current Linux-bound report, independently reviewed in DIAG/frontier-collector-review-v1740.md. The process.platform win32 arm requires the real native target; Windows qualification remains OPEN. No platform mock, global dead-path claim or changed denominator. Reopen on a native Windows run. |
 
 The accepted dispositions leave every raw counter and denominator unchanged.
 The generated projection owns raw values; the current exact-geometry delta owns

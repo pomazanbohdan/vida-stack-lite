@@ -1320,6 +1320,20 @@ FIFO and CAS before issuing a create or adopt action. The session executes the
 fixed Git arguments and reports the actual result. An uncertain result retains
 the same operation for inspection without automatic reissue. Missing Host state
 denies before creating a directory, branch, worktree or task-local database.
+When reservation extends the Work's allowed branch/worktree resources, its
+compact transition receipt is committed in that same workspace DB transaction
+with the exact Work/Ledger CAS. It binds the validated request, prepared operation
+and authority, exact added resources and before/after versions. Queued reservation
+creates no action; promotion and retry retain the original transition receipt.
+History reads verify the exact preparation join and binding rewind under bounded
+snapshot reads. Missing or corrupt ancestry stays fenced; current tickets cannot
+reconstruct an absent beforeimage. Reads create no schema.
+
+Initial-source lineage uses the existing mixed-history proof to bind a read
+checkpoint to the current Work version and exact original receipt boundary.
+Its atomic Host view preserves the original authorization and bare-receipt
+checks. The checkpoint is trusted composition output, not public ingress,
+writer authority, command execution evidence or Runtime acceptance.
 Before transferring claims or issuing another mutation, the final Host
 transaction checks retained action/preparation pairs. An issued or unknown
 mutation for the same Work blocks a distinct mutation, including a later

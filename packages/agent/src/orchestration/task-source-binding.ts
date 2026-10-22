@@ -381,6 +381,17 @@ export function resolveTaskSourceRoot(canonicalHostRoot: string, sourceRoot?: st
   return sourceRoot === undefined ? host : canonicalAbsolutePath(sourceRoot, 'task source root');
 }
 
+/** The exact branch/worktree resources shared by reservation and retained history. */
+export function taskSourceResourcePair(repositoryRoot: string, request: TaskSourceBindingRequest): readonly string[] {
+  requireBinding(
+    request.operation !== 'inspect' && request.source_root !== undefined && request.branch_ref !== undefined,
+    'TaskSource resource reservation requires an explicit branch and Source root',
+  );
+  const sourceRoot = resolveTaskSourceRoot(repositoryRoot, request.source_root),
+    rootKey = process.platform === 'win32' ? sourceRoot.toLocaleLowerCase('en-US') : sourceRoot;
+  return [`branch:${request.branch_ref}`, `worktree:${rootKey}`].sort();
+}
+
 /** Resolve source-file access from a typed Host binding; null preserves canonical-root behavior. */
 export function resolveTaskSourceFileRoot(input: {
   readonly canonicalHostRoot: string;
