@@ -534,6 +534,62 @@ function parseJsonRecord(source: string): Record<string, unknown> {
   return parsed;
 }
 
+function withTemporaryFixtureReceipt(
+  db: Database,
+  table: 'agent_host_delivered_work_continuation' | 'agent_host_initial_source_continuation',
+  workspaceId: string,
+  workId: string,
+  mutate: (receipt: Record<string, unknown>) => void,
+  verify: () => void,
+): void {
+  const row = () =>
+    db
+      .query<{ payload: string; digest: string }, [string, string]>(
+        `SELECT payload,digest FROM ${table} WHERE workspace_id=? AND work_id=? AND attempt=1`,
+      )
+      .get(workspaceId, workId);
+  const original = requiredValue(row(), 'Native receipt before corruption');
+  const before = readFixtureHostRows(db);
+  const ddl = db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all();
+  const changed = parseJsonRecord(original.payload);
+  mutate(changed);
+  const payload = canonicalJson(changed),
+    digest = canonicalJsonDigest(changed);
+  const replace = db.query(
+    `UPDATE ${table} SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND payload=? AND digest=?`,
+  );
+  let installed = false;
+  let failure: { error: unknown } | undefined;
+  try {
+    installed = replace.run(payload, digest, workspaceId, workId, original.payload, original.digest).changes === 1;
+    expect(installed).toBe(true);
+    verify();
+    expect(readFixtureHostRows(db)).toEqual(before);
+    expect(row()).toEqual({ payload, digest });
+    expect(db.inTransaction).toBe(false);
+    expect(db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(ddl);
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          if (installed)
+            expect(replace.run(original.payload, original.digest, workspaceId, workId, payload, digest).changes).toBe(
+              1,
+            );
+          expect(row()).toEqual(original);
+          expect(readFixtureHostRows(db)).toEqual(before);
+          expect(db.inTransaction).toBe(false);
+          expect(db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(ddl);
+        },
+      ],
+      failure,
+    );
+  }
+}
+
 function parseMaintenanceRow(source: string): MaintenanceSqlRow {
   const parsed = parseJsonRecord(source);
   if (typeof parsed.revision !== 'number' || typeof parsed.payload !== 'string' || typeof parsed.digest !== 'string')
@@ -6878,68 +6934,20 @@ test(
         expect(result.receipt.prior_ledger).toEqual(paused.ledger);
         expect(result.receipt.prior_journal).toEqual(journal.state);
         expect(result.snapshot.work?.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
-        {
-          const receiptRow = () =>
-            db
-              .query<{ payload: string; digest: string }, [string, string]>(
-                'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
-              )
-              .get(host.workspaceId, current.identity.work_id);
-          const original = requiredValue(receiptRow(), 'Native continuation receipt before corruption');
-          const retained = readFixtureHostRows(db);
-          const changed = parseJsonRecord(original.payload);
-          recordAt(changed, 'prior_journal').source_scope = null;
-          const payload = canonicalJson(changed);
-          const digest = canonicalJsonDigest(changed);
-          const replace = db.query(
-            'UPDATE agent_host_delivered_work_continuation SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND payload=? AND digest=?',
-          );
-          let failure: { error: unknown } | undefined;
-          let installed = false;
-          try {
-            installed =
-              replace.run(
-                payload,
-                digest,
-                host.workspaceId,
-                current.identity.work_id,
-                original.payload,
-                original.digest,
-              ).changes === 1;
-            expect(installed).toBe(true);
+        withTemporaryFixtureReceipt(
+          db,
+          'agent_host_delivered_work_continuation',
+          host.workspaceId,
+          current.identity.work_id,
+          (changed) => {
+            recordAt(changed, 'prior_journal').source_scope = null;
+          },
+          () =>
             expect(() => store.readHostStateSnapshot(current.identity)).toThrow(
               'original, current or authorized Source scope is invalid',
-            );
-            expect(readFixtureHostRows(db)).toEqual(retained);
-            expect(receiptRow()).toEqual({ payload, digest });
-            expect(db.inTransaction).toBe(false);
-          } catch (error) {
-            failure = { error };
-            throw error;
-          } finally {
-            completeOwnedCleanup(
-              [
-                () => {
-                  if (installed)
-                    expect(
-                      replace.run(
-                        original.payload,
-                        original.digest,
-                        host.workspaceId,
-                        current.identity.work_id,
-                        payload,
-                        digest,
-                      ).changes,
-                    ).toBe(1);
-                  expect(receiptRow()).toEqual(original);
-                  expect(readFixtureHostRows(db)).toEqual(retained);
-                },
-              ],
-              failure,
-            );
-          }
-          expect(store.readHostStateSnapshot(current.identity)).toEqual(result.snapshot);
-        }
+            ),
+        );
+        expect(store.readHostStateSnapshot(current.identity)).toEqual(result.snapshot);
         expectTerminalHostResultMutationDenied(
           db,
           store,
@@ -7304,6 +7312,34 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
         );
         const continuationBefore = continuationRows.all(store.workspaceId, current.identity.work_id);
         expect(continuationBefore).toHaveLength(1);
+        withTemporaryFixtureReceipt(
+          fixtureDatabase,
+          'agent_host_initial_source_continuation',
+          store.workspaceId,
+          current.identity.work_id,
+          (changed) => {
+            const prior = recordAt(changed, 'prior_work'),
+              successor = recordAt(changed, 'successor_work');
+            for (const work of [prior, successor]) {
+              const reference = arrayAt(recordAt(work, 'lifecycle'), 'references').find(
+                (entry) => isPlainRecord(entry) && entry.kind === 'implementation_scope',
+              );
+              if (!isPlainRecord(reference)) throw new Error('Native implementation scope reference is missing');
+              reference.artifact_schema = 'Evidence/v1';
+            }
+            const priorDigest = canonicalJsonDigest(prior);
+            recordAt(changed, 'prior_work_version').digest = priorDigest;
+            recordAt(recordAt(changed, 'request'), 'expectedWork').digest = priorDigest;
+            recordAt(changed, 'work_version').digest = canonicalJsonDigest(successor);
+            changed.request_digest = canonicalJsonDigest(changed.request);
+          },
+          () =>
+            expect(() => store.readHostStateSnapshot(current.identity)).toThrow(
+              'lifecycle artifact authority binding differs from current work',
+            ),
+        );
+        expect(store.readHostStateSnapshot(current.identity)).toEqual(after);
+        expect(continuationRows.all(store.workspaceId, current.identity.work_id)).toEqual(continuationBefore);
         expect(() =>
           store.continueInitialSource(
             {

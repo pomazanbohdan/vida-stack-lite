@@ -86,6 +86,12 @@ context. Do not weaken those guards to make a fixture composition pass.
 A checksummed stored receipt can reach a history operand before its structural
 validator. Trace actual evaluation order before proposing an objective skip;
 exercise a refused, exact-CAS-restored corrupted row when that path is reachable.
+Do not assume a receipt validator checks lifecycle authority merely because it
+checks lineage. A refused historical-reference probe may need the original and
+successor arrays changed equally and their existing Work/request digests rebound.
+Require the later authority refusal, exact Host/Journal/DDL beforeimages and
+guarded receipt restoration. Reuse the two-table typed fixture owner for this
+corruption and the delivered-Journal probe; never accept the altered history.
 For recovery history, a real prior readonly attempt alone does not bypass a
 transaction-local projection shortcut. Use the supported changed runtime proof
 and assert both preserved history and the changed binding; distinguish the
