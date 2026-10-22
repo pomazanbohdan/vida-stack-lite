@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date:2026-10-21. This document owns execution order.
+Status date:2026-10-22. This document owns execution order.
 [WORK](WORK.md) owns decisions and evidence locators; the existing
 [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable IDs.
 
@@ -12,7 +12,11 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The active contour is **bun-host-state**. Its latest bound numeric observations
+The active contour is **bun-task-source-resource-transition**. The preceding
+bun-host-state coverage cycle has completed its testable gaps and has current
+independent dispositions for all20remaining branch arms,3statements and1line.
+It is skipped with objective gaps, not exact100 or numeric PASS. The exact proof
+table and remaining qualification are in WORK. Its latest bound observations
 remain in the sole generated [CONTOUR-STATUS](CONTOUR-STATUS.md), with exact
 Source/run/custody and pending checked bytes in [WORK](WORK.md#latest-measurement-custody).
 It remains BLOCKED/nonexact. Do not copy changing counts into this plan or combine
@@ -40,10 +44,12 @@ existing owner, preserving resolvable historical Git references and live anchors
 
 ### 2. Continue one contour at a time
 
-Finish the complete selected bun-host-state positive-denominator exact F/L/S/B100,
+Finish the complete selected contour's positive-denominator exact F/L/S/B100,
 or disposition every remaining path under the owner's2026-10-21
 [objective-skip amendment](../../../packages/agent/TESTING.md#objective-coverage-skips),
-before choosing another contour. Preserve selection, denial/retry/restoration
+before choosing another contour. The completed Host disposition permits the
+current queue advance only; reopen it when its supported producer/contract changes.
+Preserve selection, denial/retry/restoration
 assertions, CAS, ownership, authorization and UNKNOWN semantics. Keep a blocked
 contour active while testable or undispositioned paths remain. An objective skip
 permits queue progression while its true counts and numeric GAP remain visible.
