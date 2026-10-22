@@ -73,6 +73,7 @@ import {
 import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
 import { createPrewriterPreparationObservation } from '../helpers/public-prewriter-fixture.ts';
 import { nativeDatabaseSnapshotReader } from '../helpers/native-database-snapshot.ts';
+import { admitLocalSessionWork } from '../../src/orchestration/local-work-admission.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { prepareLifecycleForCorrection } from '../../src/orchestration/final-assurance.ts';
 import { MastraSessionBridge } from '../../src/orchestration/mastra-session-bridge.ts';
@@ -1095,26 +1096,32 @@ describe('durable Mastra research exposure and invocation identity', () => {
     expect(() => instance.issueWave(workId, 1, exposed.version)).toThrow(/already issued/);
   });
 
-  test('adopts only a legacy wave with at least one unprepared research action and no observed effect', async () => {
-    scratch = await mkdtemp(path.join(tmpdir(), 'mastra-legacy-recovery-'));
-    const { database, instance, workId } = mastraLedger('legacy-recovery');
-    const request = bridgeRequest({
-      actionId: '9'.repeat(64),
-      workflowId: 'information_research_light',
-      stageId: 'research_parallel',
-      assignmentIndex: 0,
-    });
-    const issueId = '66666666-6666-4666-8666-666666666666';
-    seedMastraLedger(database, mastraState(workId, [request], [{ request, issue_id: issueId, observation: null }]));
-    const legacy = requiredMastraSnapshot(instance.resume(workId, 1));
-    const recovered = instance.beginLegacyResearchPreparationRecovery(workId, 1, legacy.version);
-    expect(recovered.state.research_wave_exposure).toBe('preparing');
-    expect(mastraItemAt(recovered, 0).issue_id).toBe(issueId);
-    expect(mastraItemAt(recovered, 0).observation).toBeNull();
-    expect(() => instance.beginLegacyResearchPreparationRecovery(workId, 1, recovered.version)).toThrow(
-      /unmarked journal/,
-    );
-  });
+  test.each(['research_parallel', 'synthesize_research'])(
+    'adopts a seeded legacy %s wave only with incomplete activation and no observed effect',
+    async (stageId) => {
+      scratch = await mkdtemp(path.join(tmpdir(), 'mastra-legacy-recovery-'));
+      const { database, instance, workId } = mastraLedger('legacy-recovery');
+      const request = bridgeRequest({
+        actionId: '9'.repeat(64),
+        workflowId: 'information_research_light',
+        stageId,
+        assignmentIndex: 0,
+      });
+      const issueId = '66666666-6666-4666-8666-666666666666';
+      seedMastraLedger(database, mastraState(workId, [request], [{ request, issue_id: issueId, observation: null }]));
+      const legacy = requiredMastraSnapshot(instance.resume(workId, 1));
+      const recovered = instance.beginLegacyResearchPreparationRecovery(workId, 1, legacy.version);
+      expect(recovered.state.research_wave_exposure).toBe('preparing');
+      expect(mastraItemAt(recovered, 0).issue_id).toBe(issueId);
+      expect(mastraItemAt(recovered, 0).observation).toBeNull();
+      expect(recovered.state.items).toEqual(legacy.state.items);
+      expect(recovered.version.revision).toBe(legacy.version.revision + 1);
+      expect(() => instance.beginLegacyResearchPreparationRecovery(workId, 1, recovered.version)).toThrow(
+        /unmarked journal/,
+      );
+      expect(instance.resume(workId, 1)).toEqual(recovered);
+    },
+  );
 
   test('allows one invocation for actual focused validator requests with distinct action-bound manifests', async () => {
     scratch = await mkdtemp(path.join(tmpdir(), 'mastra-batch-report-'));
@@ -1798,6 +1805,109 @@ test('configured writer preflight refuses disappeared Host or Journal and change
   );
 }, 20_000);
 
+test('configured writer preflight refuses peer admission across snapshot and policy boundaries before fresh reservation', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      await prepareInitialSourceFrontier(fixture, 'writer');
+      const host = initialSourceHostStore(fixture),
+        ledger = initialSourceHostLedger(fixture),
+        database = initialSourceHostDatabase(fixture);
+      const nativeRows = nativeDatabaseSnapshotReader(database);
+      const claim = host.claimWorkflowAssignmentWithApproval.bind(host);
+      const readHost = host.readHostStateSnapshot.bind(host);
+      const readLineage = host.readInitialSourceContinuationLineageView.bind(host);
+      const lookup = ledger.currentSnapshot.bind(ledger);
+      for (const phase of ['snapshot', 'policy'] as const) {
+        const peerPath = 'docs/PEER-' + phase + '.md',
+          peerId = 'session-' + phase + '-peer';
+        await writeFile(path.join(fixture.root, peerPath), 'Disjoint native policy peer\n');
+        const peerInput = fixture.preparePeerAdmission(peerId, [peerPath]);
+        let peerAdmission: ReturnType<typeof admitLocalSessionWork> | undefined;
+        let postAdmission: ReturnType<typeof nativeRows> | undefined;
+        let beforeAdmission: ReturnType<typeof readHost> | undefined;
+        let afterAdmission: ReturnType<typeof readHost> | undefined;
+        let journalReads = 0,
+          lineageReads = 0,
+          armed = false,
+          rereadLineageCompleted = false;
+        const boundary = spyOn(host, 'claimWorkflowAssignmentWithApproval').mockImplementationOnce(async (...args) => {
+          beforeAdmission = readHost(fixture.identity);
+          const lineageBoundary = spyOn(host, 'readInitialSourceContinuationLineageView').mockImplementation(
+            (...input) => {
+              const actual = readLineage(...input);
+              lineageReads++;
+              if (phase === 'snapshot' && lineageReads === 1) armed = true;
+              if (journalReads >= 2) rereadLineageCompleted = true;
+              return actual;
+            },
+          );
+          const journalBoundary = spyOn(ledger, 'currentSnapshot').mockImplementation((...input) => {
+            const actual = lookup(...input);
+            journalReads++;
+            if (phase === 'policy' && journalReads === 1) armed = true;
+            return actual;
+          });
+          const hostBoundary = spyOn(host, 'readHostStateSnapshot').mockImplementation((identity) => {
+            if (armed) {
+              armed = false;
+              peerAdmission = admitLocalSessionWork(peerInput);
+              postAdmission = nativeRows();
+              afterAdmission = readHost(fixture.identity);
+            }
+            return readHost(identity);
+          });
+          return withInitialSourceCleanup(
+            () => claim(...args),
+            () =>
+              completeOwnedCleanup([
+                () => {
+                  hostBoundary.mockRestore();
+                  return undefined;
+                },
+                () => {
+                  lineageBoundary.mockRestore();
+                  return undefined;
+                },
+                () => {
+                  journalBoundary.mockRestore();
+                  return undefined;
+                },
+              ]),
+            'Native peer-admission policy observer restoration',
+          );
+        });
+        await withInitialSourceCleanup(
+          async () => {
+            const denial = await rejectionReason(issueInitialSourceFixtureWriter(fixture));
+            expect(() => {
+              throw denial;
+            }).toThrow('workflow approval denied');
+            expect(boundary).toHaveBeenCalledTimes(1);
+            expect(journalReads).toBe(phase === 'policy' ? 2 : 1);
+            expect(rereadLineageCompleted).toBe(phase === 'policy');
+            expect(peerAdmission?.host.work?.binding.lifecycle_work_id).toBe(peerId);
+            if (!beforeAdmission || !afterAdmission || !postAdmission)
+              throw new Error('Native peer admission and Host reread did not complete');
+            expect(beforeAdmission.work?.binding.lifecycle_work_id).toBe(fixture.identity.work_id);
+            expect(afterAdmission.work).toEqual(beforeAdmission.work);
+            expect(afterAdmission.ledgerVersion).not.toEqual(beforeAdmission.ledgerVersion);
+            expect(nativeRows()).toEqual(postAdmission);
+            expect(database.inTransaction).toBe(false);
+          },
+          () => boundary.mockRestore(),
+          'Native peer-admission configured writer claim observer restoration',
+        );
+      }
+      const issued = await expectAsyncReturned(() => issueInitialSourceFixtureWriter(fixture));
+      expect(issued.journal.state.items[0]?.host_reservation?.receipt.attempt.attempt_id).toBe(issued.hostAttemptId);
+      expect(issued.journal.state.items[0]?.observation).toBeNull();
+      expect(issued.journal.state.items[0]?.issue_id).toBe(issued.writer.issue_id);
+    },
+    { holdExpiredOwnerClock: true },
+    20_000,
+  );
+}, 20_000);
+
 test('configured TaskSource proposal binds real admitted policy evidence before issuing its inert argv', async () => {
   await withAdmittedHandoffFixture(
     async (fixture) => {
@@ -1932,11 +2042,7 @@ test('native synthesis correction preserves admitted predecessors and refuses ch
         original_item: prepared.originalItem,
       };
       const correction = { ...body, digest: canonicalJsonDigest(body) };
-      const rows = () => ({
-        host: db.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all(),
-        journal: db.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt').all(),
-        schema: db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all(),
-      });
+      const rows = nativeDatabaseSnapshotReader(db);
       const preimage = rows();
       for (const changed of [
         { ...body, workspace_id: '0'.repeat(64) },
@@ -2008,6 +2114,38 @@ test('native synthesis correction preserves admitted predecessors and refuses ch
           ).toBe(1);
         },
         'Missing native synthesis owner refusal and exact restoration',
+      );
+      expect(rows()).toEqual(preimage);
+      const originalArtifact = paused.work.artifacts.find((artifact) => artifact.schema === 'ResearchResult/v1');
+      if (!originalArtifact) throw new Error('Native synthesis correction has no real research artifact');
+      const corruptedOwner = canonicalJson({
+        ...paused.work,
+        artifacts: paused.work.artifacts.map((artifact) =>
+          artifact === originalArtifact
+            ? { ...artifact, schema: 'ResearchSynthesis/v1', stage_id: prepared.originalItem.request.stage_id }
+            : artifact,
+        ),
+      });
+      const replaceOwnerPayload = (next: string, expected: string) =>
+        db
+          .query(
+            "UPDATE agent_host_state SET payload=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=? AND payload=?",
+          )
+          .run(next, host.workspaceId, ownerRow.id, ownerRow.revision, ownerRow.digest, expected).changes;
+      await withInitialSourceCleanup(
+        () => {
+          expect(replaceOwnerPayload(corruptedOwner, ownerRow.payload)).toBe(1);
+          const corrupted = rows();
+          expect(() => ledger.correctObservedSynthesis(correction)).toThrow(
+            'synthesis correction owner, artifacts or coordination CAS changed',
+          );
+          expect(rows()).toEqual(corrupted);
+          expect(db.inTransaction).toBe(false);
+        },
+        () => {
+          expect(replaceOwnerPayload(ownerRow.payload, corruptedOwner)).toBe(1);
+        },
+        'Corrupted native artifact schema/stage refusal and exact payload restoration',
       );
       expect(rows()).toEqual(preimage);
       const corrected = expectReturned(() => ledger.correctObservedSynthesis(correction));

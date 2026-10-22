@@ -64,6 +64,12 @@ Record actual native reads before asserting denial; an orphan coordination
 ticket can reject a missing Work before the intended resolver guard. In a
 test-owned Host-disappearance fault, remove the exact Work/coordination pair
 atomically and restore both exact rows. Keep the native reader's guard intact.
+For a real peer-admission race, follow TESTING's post-transition snapshot rule.
+The approval caller reads lineage before the resolver; arming there tests the
+supplied-snapshot boundary. Arming after the resolver's first native Journal
+read targets its later policy reread. Keep both actual peers and obtain one
+fresh successful reservation after the refusals. Do not infer either boundary
+from a raw total count of Host or lineage reads.
 Before extending a code-workflow fixture, inspect the loader's complete stage
 and profile predicates. Its pre-development validation permits only the exact
 configured prewriter. For an observed/pending peer wave, select the existing

@@ -17,12 +17,91 @@ or numeric producer is active. Complete the selected contour before another.
 
 ### Current measured repair packet
 
+Published25295ca238ca4b16df0f1f0c524da88d8719a382 closes the snapshot/preflight
+packet below.2026 normal hooks pass format525/strict532/Knip;2027 ordinary push
+matches origin/main with a clean tree. SDK CI39794258216/attempt1 completes
+successfully after the temporary nonterminal-workflow observation2029. Its
+artifact12432092873 is retained as /workspace/vida-sdk-25295ca-39794258216-1.zip;
+the single readiness owner validates its identity/digest before stage2030.
+The approved connector transport reuses the known CLI-redirect limitation,
+avoiding another failed pre-producer download. No freshness predicate changes.
+
+Stage2030 below records all275functions visited, with7lines,9statements and
+19branch arms still open. Map2031 reuses that report's geometry/counters once.
+Blind2032/2033/2034 partition continuation, policy and residual predicates.
+Root rejects2032's missing-fixture-only skip for configured continuation and
+its mistaken statement29 identification: line200 is the configured-view digest,
+not the SHA at198. Key8 also remains open: the existing frontier has no binding
+checkpoint. The always-array history and loader-enforced security-risk fallback
+have source-backed disposition candidates; they are not numeric PASS.
+
+The next packet uses real disjoint peer admission to exercise both supplied-Host
+snapshot drift and mid-policy reread drift, retaining the actual accepted peers
+instead of deleting them to restore an old world.2035's nullable snapshot type
+error stops before runtime.2036 retains a failed observer premise: arming on
+the first lineage read lands before resolver evidence, not during policy, and
+the expected2reads are actually4.2037 arms after the actual first Journal read,
+observes a completed current lineage reread, refuses with all native rows equal
+to the post-admission baseline, then obtains a fresh genuine reservation.
+Scoped strict196/lint and1case/15assertions pass in14.91s, case13.378s under
+its unchanged20s exception.2038 preserves an earlier Host CAS refusal: the second
+public Host read is still before the approval verifier.2039 instead arms the
+snapshot probe after the verifier's first real lineage read. Both boundary
+probes and one fresh successful reservation now share a single fixture:
+strict196/lint and1case/26assertions pass in17.52s, case14.850s under the same20s.
+Actual native peers remain admitted; denied claims preserve the complete
+post-admission schema/rows. This is controlled local evidence, not provider or
+consumer Runtime acceptance.
+
+2040 strict196/lint pass, but a leaf-only anchored pattern selects zero nested
+legacy cases and fails explicitly.2041 corrects only that invocation; both
+declared research_parallel and synthesize_research component legacy cases pass:
+2cases/14assertions in1.99s, case115.53/111.62ms under5s. They preserve exact
+issued items, increment the Journal revision once and refuse the second adopt
+without writes. These are explicitly seeded component legacy inputs, not genuine
+old operational history, external effects or UNKNOWN replay.2042's guessed Bun
+filtering documentation route returns404; the skill's maintained official
+runtime-behavior route is retrieved in2043. Native2041 supplies the exact expanded
+nested names; no failed zero-selection invocation is counted as testing.
+
+2045 replaces the synthesis case's selected-table oracle with the same complete
+native snapshot helper. It changes only schema/stage metadata on an existing
+real research artifact in a refused raw Work-row corruption, preserving the
+original checksum. The predicate inspects that artifact before its later CAS/
+checksum guard; the row is never accepted as valid history. Exact payload CAS
+restoration precedes the original successful correction. Strict196/lint and
+1case/85assertions pass in5.73s, case4.155s. This refusal exercises a stored-input
+boundary, not an accepted prior synthesis producer. No second full coverage
+stage has run for this correction packet.
+
+Blind2044 accepts the peer and component legacy controls and independently
+confirms the two exact objective dispositions below. These do not complete the
+contour: every other residual counter remains OPEN until checked or separately
+disposed.2047 confirms the additional refused synthesis artifact corruption
+reaches the intended pre-checksum guard, preserves all native rows and restores
+only its exact owned payload before the genuine positive control. No blocker
+remains in the reviewed correction packet; further counts need one new stage.
+
+#### Session objective dispositions bound to report2030
+
+Run a712875c-dc90-4bef-b8c4-e8b4d3950aec and map2031 bind
+Source91a8a4c11222e70d47231932e09fc607d34967b8d3b93ab38832f01a372ff2ed,
+tests a4eef5a874f4f99d1d9343e6dba33311a28302172d77bc5e6b616c7126b299ae
+and the config-bearing immutable image manifest343603cab225ae752a896f8489a33e50864593236d407a7116f4c8e9c4bb075b.
+Raw counts and BLOCKED outcome remain unchanged. Neither entry waives frozen
+CC/CRAP, correspondence, mutation or native qualification.
+
+| Exact counter and owner | Causal prerequisite and current contract | Review and remaining qualification |
+| --- | --- | --- |
+| persistent-session-handoff.ts sourcePreflightContinuationHistory, key7/arm1,178:102–104 | The `runtimeCodeContinuations ? ... : {}` alternate requires a falsy value. Both private digest callers obtain concrete native Host lineage; its reader always returns `host.runtimeCodeContinuations ?? []`, including a truthy empty array. A partial compatibility reader elsewhere does not supply this private native route. | DIAG/session-boundaries-review-v2044.md independently confirms the native reader/caller chain. Objective skip only; reopen if either caller or reader admits an omitted/falsy history. No fabricated partial-reader acceptance. |
+| workflow-plan.ts configuredReadOnlySourcePrewriter, key12/arm1,99:61–63 | `securityPrewriter?.risk_flags ?? []` requires a missing security assignment/list. Source workflow compilation accepts only branded, frozen successfully loaded config, whose strict prewriter validation requires the ordered security role and four exact risk flags. Malformed config fails before this private helper. | DIAG/session-residual-research-v2034.md and session-boundaries-review-v2044.md independently trace load/brand/compiler predicates. Objective skip only; reopen on changed loader/compiler contracts. No fallback deletion, excluded file or changed denominator. |
+
 Published94c3f6f8d13d87119cfddc415c239de9b5895c1a includes the checked history,
 peer, cooperative and archive controls below.2009 passes normal format524,
 strict531 and remaining hooks;2010 ordinary push reaches origin/main with the
 same commit and a clean Source tree. No new numeric qualification follows it.
 
-The current packet freezes three configured-writer refusal probes, their
+The published25295ca packet groups three configured-writer refusal probes, their
 same-request positive control, one complete native snapshot helper and the
 private digest simplification.2011 static errors and2012 await-thenable lint
 stop before runtime.2013/2015 prove Journal removal and changed authorization
@@ -57,8 +136,8 @@ scoped strict195 and lint;2019 independently confirms the two-callsite proof.
 No function is renamed, split or added to production, and no frozen budget is
 changed. Old source-map counters remain bound to their original Source; the next
 complete selected stage owns the changed denominator and refreshed gap map.
-Freeze this checked packet before final review/publication, then run that one
-matching SDK/image/stage. Further producer candidates wait for its fresh map.
+Stage2030 measures this complete checked packet through one matching SDK/image.
+Its fresh map, rather than predicted coverage gains, selects the next corrections.
 
 Blind2024 finds no snapshot implementation blocker, but requests an explicit
 empty-table/schema-only regression.2025 adds that assertion before inserting
@@ -382,6 +461,28 @@ remain immutable. DIAG/session-retention-v1983.log binds its verified/fsynced
 original scratch, native run manifest, raw logs and failure custody stay.
 
 ### Latest completed session measurement custody
+
+Stage2030 /workspace/contour-stage-DGwNEd completes on
+Source25295ca238ca4b16df0f1f0c524da88d8719a382,
+run a712875c-dc90-4bef-b8c4-e8b4d3950aec. Elapsed57250.194269ms,
+exit0, no timeout/signal/spawn error, complete capture, closed producer/group,
+unchanged boot/image. Native84PASS/0FAIL/1039assertions in51.97s.
+Raw **F275/275 L855/862 S934/943 B745/764** remains BLOCKED/nonexact.
+MaxCC/entryCRAP29 is diagnostic only; frozen/mutation remain deferred.
+The sole stage imports once; historical exact count stays17/46. Map2031 reuses
+retained Source geometry/counters:0functions,7lines,9statements and19branch arms.
+The Source simplification removes two unreachable branch arms from the former
+766denominator; do not represent that removal as newly visited counters.
+Image /workspace/.vida-quality-inputs/4ae4107bc10a3fa139f2c412695f23277f6de66f/repository
+has manifest SHA256343603cab225ae752a896f8489a33e50864593236d407a7116f4c8e9c4bb075b.
+Its focused report and native manifest remain under packages/agent/coverage/bun-unified;
+raw stdout/stderr remain in the stage. DIAG/session-retention-v2031.log binds
+the verified/fsynced7086080-byte scratch archive at
+/workspace/vida-functional-retention-DGwNEd-NxIVe3/archive.json.
+Original image, scratch, receipts and raw logs remain unchanged. These figures
+describe their captured inputs, not subsequent unmeasured test edits.
+
+### Preceding completed session measurement custody
 
 Stage1988 /workspace/contour-stage-Gearny completes on
 Sourceae68767848271be852f446af77b8cb7e3b138cb2,

@@ -1984,6 +1984,13 @@ declared scope. Do not broaden them into a full-database claim.
 When production catches observer exceptions, record the observer's actual
 inputs, native results and completion flag, then assert outside that catch.
 A caught test assertion must not masquerade as the expected policy denial.
+For concurrent-drift controls, use an actual supported fixture transition and
+record the native snapshot after that transition. A refused reservation must
+preserve that new state, including genuine peer admissions; do not delete the
+peers to recreate an older world. Distinguish the approval caller's captured
+snapshot from the resolver's initial evidence and its later policy reread.
+Check the actual intervening reader order before arming an observer, then prove
+a fresh request succeeds after the refusal without executing writer argv.
 
 The owner's2026-10-21 amendment retains sequential F/L/S/B work and allows
 reviewed objective skips before opening the next contour. During this phase run focused
