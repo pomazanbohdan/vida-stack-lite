@@ -46,8 +46,12 @@ An empty missing-function group does not mean there are no uncovered statements
 or branch arms. Read each exact counter and its own retained gap list before
 classifying the contour or asking for another scan.
 For the report-only gap map, `rows` contains missing functions; use `branch_gaps`
-and `statement_gaps` for their own counters. Start an exact-counter disposition
-review after the current complete report has refreshed that map. Earlier producer
+and `statement_gaps` for their own counters. Read the map file, not its producer's
+stdout summary. Pass an explicit
+output path to the existing mapper; if it already wrote the current map before
+an observer fails, recover that file instead of rerunning the report producer.
+Start an exact-counter disposition review after the current complete report has
+refreshed that map. Earlier producer
 research remains provisional. Resolve the report path from the map's `report`
 or the stage's `publication.json`; do not retype long execution-image identifiers
 or infer staleness from an optional absent commit field.

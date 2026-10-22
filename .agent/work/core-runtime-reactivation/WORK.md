@@ -11,7 +11,54 @@ F/L/S/B100 or complete reviewed objective-gap disposition under the owner's
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
 
-### Current repair packet after the incomplete8f8 run
+### Current measured repair packet
+
+Published9e9c2804882b9030d89c54c28a82643b174f47a6 passes the ordinary commit
+hook (Knip0, format522, strict529) and ordinary push. CI39740965171/attempt1
+forms SDK inputs only; artifact12409390650 is658809bytes, digest
+ada9c2316cdc5d7eab984b14f2d7b15972e8dde187309f5437efb9ace439b922.
+The sole stage1834 at /workspace/contour-stage-CRgeuR completes in225297.329414ms,
+exit0, no timeout/signal/spawn error, full capture, closed group and unchanged
+boot/image. Run cdce85d8-4d5a-4cc9-b12e-18a32092f085 records334Host PASS/6124assertions
+and16stopped-source PASS/491assertions. Exact raw F1151/1153 L5088/5089
+S5438/5443 B5633/5657 remain BLOCKED. This is within the unchanged stage/coverage
+budgets, not a controlled speedup benchmark or frozen/mutation PASS.
+The stage owns the one projection update; no duplicate import was run.
+
+Image b88c8e429c52796d8dfe019f1ba2178ea8c3631d has manifest digest
+dea725e3a364429c06598a81b1ab2eabc94fb63c8803637f47a54e9a1b128a7e.
+The compared/fsynced484379byte non-cache scratch archive is
+/workspace/vida-functional-retention-CRgeuR-ke3etm/archive.json; originals remain
+unchanged. It preserves bytes, not power-loss or Runtime acceptance qualification.
+DIAG/host-uncovered-plan-v1836.json is the current report-bound map. Its producer
+stdout is a compact summary, not the map: the first1836wrapper mistakenly parsed
+that summary as a map after the producer had already written current.json.
+The summary/error are retained; the actual map was copied once without rerunning
+the report/AST producer. Future calls name the map output explicitly.
+
+The old checkpoint producer callback is now visited. Both missing functions and
+three missing statements belong to the new historical captured-item completed
+prefix check.1838 rebinds all17earlier reviewed objective branch arms using exact
+unchanged callable bytes and relative geometry; raw counts stay unchanged and
+current transitive review remains separate. Seven remaining branch arms include
+the new historical prefix checks, optional resource-history cache cleanup, and
+the existing genuine runtime/frontier/recovery prerequisites. No new objective
+skip is inferred from an unexecuted producer.
+
+Blind1835 independently confirms the next P0 boundary. The actual public capture
+requires two admitted completed research predecessors; their metadata remains
+in completed history and the ordinary unresolved predicate still refuses it.
+Refs/write plans alone cannot establish completed normalization. Reuse the
+existing admittedResearchResultsForSynthesis owner, which checks original Work
+artifacts and actual canonical record bytes, before designing any narrow
+completed-predecessor exemption. An existing positive public capture case is in
+tests/runtime-config-rebind.test.ts, unlike the separate denial-only capture
+test file reviewed earlier. It prepares typed pre-capture fixture observations;
+it is not live collaboration evidence. The missing original-config/canonical
+record proof at Host continuation and full nonempty-prefix reproduction remain
+OPEN. Do not widen the guard or claim public-route unblock from the component fix.
+
+### Preserved incomplete8f8 run and correction evidence
 
 The8f8d4ebb5acf2d62d4872e0eccb372afe37eba8c packet was published normally.
 Its sole SDK stage1811 at /workspace/contour-stage-HwNK5D binds run
@@ -93,7 +140,7 @@ the failed connector. Existing configured-frontier/recovery/initial-source paths
 remain on their own strict unresolved guards; no analogous capture exception is
 authorized for them. Final numeric qualification of this changed packet is pending.
 
-### Latest complete continuation coverage packet
+### Earlier complete continuation coverage packet
 
 Published0d04c1ff5bb94d1cc86d4227815490f0344535fd contains the reviewed P0
 TaskSource/history correction. Ordinary commit hooks pass Knip, formatting522
@@ -112,8 +159,8 @@ Image manifest d9a2033d80ce379aa5c8d1deb05c1bfbd85b656f093c8db3590983b595f3b4ac
 is retained at /workspace/.vida-quality-inputs/1f7e3566fbfca309b68f061d9d8a92705895162e/repository/.quality-image.json.
 Original non-cache scratch has a compared/fsynced424652byte archive at
 /workspace/vida-functional-retention-J3T5VB-udjQtv/archive.json; originals remain.
-Map DIAG/host-uncovered-plan-v1792.json is the current map, also atomically
-published through host-uncovered-plan-current.json. Changed Source requires
+Map DIAG/host-uncovered-plan-v1792.json belongs to that earlier input.1836 now
+owns the current map. Changed Source requires
 current geometry review; old ordinal dispositions are not copied into this run.
 Four blind bounded Luna research lanes partition the same active contour into
 checkpoint/view, resource SQL/cache, historical objective geometry and remaining
