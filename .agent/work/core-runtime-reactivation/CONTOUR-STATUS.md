@@ -4,7 +4,7 @@
 
 Derived, non-gating view of owner-issued reports. WORK remains the decision owner. Values are recorded observations, not a new acceptance authority.
 
-Historical contours with exact F/L/S/B coverage: **16/46**.
+Historical contours with exact F/L/S/B coverage: **17/46**.
 Historical same-coverage-run coverage + scoped frozen CRAP pairs: **14/46**.
 Historical complete coverage + assertion-confirmed mutation pair closures: **9/46**; static contours: **1**.
 Separate same-coverage-run local triples with scoped frozen CRAP: **9/46**.
@@ -31,7 +31,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-exports | unknown | unknown | unknown | not imported | N/A: static exports | unknown | open / unknown |
 | bun-fs-safe-attestation | 0/0 · 4/4 · 4/4 · 0/0 | N/A: no callable functions (coverage inventory) | 7/7 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-service-operation-custody | 59/59 · 236/236 · 243/243 · 121/121 | 9 / 9 | 681/681 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
-| bun-task-source-resource-transition | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-task-source-resource-transition | 18/18 · 123/123 · 135/135 · 65/65 | 8 / 8 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-host-state | 1157/1157 · 5107/5108 · 5463/5466 · 5661/5681 | 254 / 254 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-session-handoff | 198/277 · 533/877 · 593/959 · 408/791 | 29 / 870 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-runtime-facade | 23/23 · 89/89 · 103/103 · 96/96 | 9 / 9 | 311/311 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
@@ -662,6 +662,21 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | 478f78b7-0365-4478-b251-a06437c620a7 | d94eb49cedc5c5457ed99d1946054a1b103cc567 | 2026-10-19T11:34:59.308Z | focused-diagnostic; owner accepted locally; selection bound | 59/59 · 236/236 · 243/243 · 121/121 | /workspace/.vida-quality-inputs/4560cc16a44400d2ab992c42c66e8d1030459d00/repository/packages/agent/coverage/bun-unified/diagnostics/478f78b7-0365-4478-b251-a06437c620a7.focused-coverage.json |
 | coverage-outcome | 6826e103-03c4-4a6a-8445-9ad4f14e9d76 | 34e1020544b3d384d67151cb703c1723440edfc1 | 2026-10-19T20:32:39.206Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/.vida-quality-inputs/fafe6c9ad36041eb65763498125ee962565ba89c/repository/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/6826e103-03c4-4a6a-8445-9ad4f14e9d76.json |
 | coverage | 6826e103-03c4-4a6a-8445-9ad4f14e9d76 | 34e1020544b3d384d67151cb703c1723440edfc1 | 2026-10-19T20:32:39.206Z | focused-diagnostic; owner accepted locally; selection bound | 59/59 · 236/236 · 243/243 · 121/121 | /workspace/.vida-quality-inputs/fafe6c9ad36041eb65763498125ee962565ba89c/repository/packages/agent/coverage/bun-unified/diagnostics/6826e103-03c4-4a6a-8445-9ad4f14e9d76.focused-coverage.json |
+
+Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
+
+### bun-task-source-resource-transition
+
+Historical complete local closure: not recorded.
+Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
+Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
+Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
+
+| Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
+| --- | --- | --- | --- | --- | --- | --- |
+| coverage-outcome | a41e7363-a950-4fd4-8255-02329fb4ca78 | a38b77816ba1fa3ecae54c9d43ea55c1cb316542 | 2026-10-22T10:53:00.562Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/.vida-quality-inputs/5704be532c3691fcb375269c0dde8b95b040bfee/repository/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/a41e7363-a950-4fd4-8255-02329fb4ca78.json |
+| coverage | a41e7363-a950-4fd4-8255-02329fb4ca78 | a38b77816ba1fa3ecae54c9d43ea55c1cb316542 | 2026-10-22T10:53:00.562Z | focused-diagnostic; owner accepted locally; selection bound | 18/18 · 123/123 · 135/135 · 65/65 | /workspace/.vida-quality-inputs/5704be532c3691fcb375269c0dde8b95b040bfee/repository/packages/agent/coverage/bun-unified/diagnostics/a41e7363-a950-4fd4-8255-02329fb4ca78.focused-coverage.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

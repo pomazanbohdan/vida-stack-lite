@@ -12,7 +12,9 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The active contour is **bun-task-source-resource-transition**. The preceding
+The active contour is **bun-session-handoff**. TaskSource resource transition
+has completed exact F/L/S/B in stage1926; frozen/mutation remain deferred.
+The preceding
 bun-host-state coverage cycle has completed its testable gaps and has current
 independent dispositions for all20remaining branch arms,3statements and1line.
 It is skipped with objective gaps, not exact100 or numeric PASS. The exact proof
@@ -92,7 +94,7 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
    Root commits through ordinary hooks and performs a normal push.
 5. Let `selectedTestsRequireSdkArtifacts` and the maintained readiness owner
    select whether a matching build-only SDK artifact is needed. Verify an
-   acquisition once when required; the current TaskSource transition selection
+   acquisition once when required; the TaskSource transition selection
    needs none. Capture one immutable image and keep installed dependencies
    unchanged while producers depend on them.
 6. Execute one complete selected-contour coverage stage and import once through

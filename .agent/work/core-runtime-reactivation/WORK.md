@@ -6,8 +6,9 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-task-source-resource-transition only**, using its
-existing registry. The preceding bun-host-state coverage cycle has completed
+The active contour is **bun-session-handoff only**, using its existing registry.
+TaskSource resource transition completes exact F/L/S/B in stage1926 below;
+no second contour producer overlaps it. The preceding bun-host-state coverage cycle has completed
 all testable gaps and reviewed every residual objective counter under the owner's
 2026-10-21 amendment. It is skipped with objective gaps, not exact100 or numeric
 PASS. Its frozen correspondence/complexity/CRAP and mutation remain deferred with
@@ -45,8 +46,10 @@ revision/binding and ticket-order DTOs; strict154/lint and the2affected cases/
 finds two missing constructor variations.1923 adds a valid-shaped foreign
 authority scope and an altered issuance Source revision, then passes strict154,
 scoped lint and the affected constructor case. No Source defect is established.
-All review findings are resolved before the first full contour stage, pending
-publication and its numeric report.
+All review findings are resolved before the first full contour stage.
+Publication a38b77816ba1fa3ecae54c9d43ea55c1cb316542 passes normal
+format523/strict530/Knip0 hooks and an ordinary push. The stage below closes this
+coverage packet; frozen/mutation and global qualification remain separate.
 The Bun skill now follows TESTING's objective-skip rule. The plan delegates SDK
 readiness to its maintained selector; this contour requires no SDK artifact.
 This removes an unnecessary CI/download prerequisite, with no measured speedup
@@ -90,6 +93,34 @@ Normal hooks pass format523/strict530/Knip0 and ordinary push for both packets.
 No hook bypass, budget increase, runtime installation or consumer effect occurs.
 
 ## Latest measurement custody
+
+Stage1926 /workspace/contour-stage-5ljGSl completes on Sourcea38b77816ba1fa3ecae54c9d43ea55c1cb316542,
+run a41e7363-a950-4fd4-8255-02329fb4ca78. Elapsed5745.881669ms, exit0,
+no timeout/signal/spawn error, complete capture, closed producer/group and
+unchanged boot/image. All9cases/154assertions pass in1.97s with exact
+**F18/18 L123/123 S135/135 B65/65**. MaxCC/entryCRAP8 is diagnostic only.
+Its broader operation remains BLOCKED for unqualified gates; raw exact coverage
+does not grant a frozen/mutation or Runtime acceptance claim.
+
+Image /workspace/.vida-quality-inputs/5704be532c3691fcb375269c0dde8b95b040bfee/repository
+has manifest SHA25638c8ed41afef4250c4d10d9347cb6194f60a1a20ca51fb90b4a72995b7018a8e.
+The package coverage/bun-unified/diagnostics/a41e7363-a950-4fd4-8255-02329fb4ca78.focused-coverage.json
+and native runs/a41e7363-a950-4fd4-8255-02329fb4ca78/manifest.json bind its inputs.
+Raw stage stdout/stderr and execution.json retain terminal custody. The stage
+imports once; generated projection now records17/46historical exact coverage
+contours, without asserting global freshness or changing frozen/mutation totals.
+SDK readiness correctly skips this selection, with no artifact acquisition.
+
+The serial run uses its maintained v2 manifest, not sharded v3.1927's auxiliary
+archive diagnostic rejects that legitimate serial schema before any copy;
+1928 corrects only its manifest-version guard to accept the two maintained
+versions, preserving all closure/boot/image/scratch/run checks. Strict2 passes.
+Original v1905 script and refusal log remain under DIAG. The corrected archive
+compares and fsyncs1208320bytes at /workspace/vida-functional-retention-5ljGSl-w7zD8B/archive.json;
+original /dev/shm/vida-quality-retained-EnNfYP/scratch-AhCgxZ stays unchanged.
+This is byte retention only; it does not qualify power-loss durability.
+
+### Preceding Host measurement custody
 
 The sole completed stage1902 is /workspace/contour-stage-0MrHPd, run
 c0a7f484-1c05-4679-8c8c-56d76e702f97, selected Source4e97a725eb2435beff7615d3f932a44e5aa81852.
