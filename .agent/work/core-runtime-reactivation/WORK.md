@@ -10,7 +10,9 @@ The active contour is **bun-session-handoff-v2 only**, continuing the same repai
 lane with the shared reference classifier explicitly included. The predecessor
 bun-session-handoff retains its original three-Source scope in the retired
 registry. Its receipts and frozen ceilings remain unchanged.
-The next repair packet is based on published1680449984b7b805dc883a33ed9044eb8db2e691.
+The current checked retirement packet is published as
+9ec2b7079e78dba0ab0a74cec4a44cbabdad1fbc. Its complete2270 outcome is below.
+The earlier2242 preparation was based on1680449984b7b805dc883a33ed9044eb8db2e691.
 The2242 throughput checkpoint investigated a supported native lease-race witness
 and the exact producer prerequisites for the remaining four arms, with no
 unchanged full rerun or new contour.2242 assigned native Luna the lease proposal
@@ -93,10 +95,10 @@ effects. Its review supersedes2250's incorrect later-reread timing premise and
 outer verifier before the resolver's first Host read; it proves no assertCurrent
 reread.2265 reuses the shared reference classifier, parses each child receipt
 once, and groups the new case with the existing identity-transfer control:
-strict149/configured lint and2PASS/0FAIL/64assertions in12.15s. Root will publish
-this reviewed packet before one changed-input complete stage. Counter25/0
-remains numerically OPEN until that attributable report; other OPEN producer
-proofs16/17/29/34 and accepted dispositions7/21/27 remain unchanged.
+strict149/configured lint and2PASS/0FAIL/64assertions in12.15s. Root published
+this reviewed packet before one changed-input complete stage. That2270 report
+now confirms counter25/0 and statement65; other OPEN producer proofs16/17/29/34
+and accepted dispositions7/21/27 remain unchanged.
 2267's ordinary hook identifies the dynamically selected child as an unused file.
 Root registers that exact executable in Knip's maintained child-entry list;
 no ignore, file exclusion or hook bypass is introduced. The failed hook remains
@@ -813,41 +815,46 @@ original scratch, native run manifest, raw logs and failure custody stay.
 
 ### Latest completed session measurement custody
 
-Stage2237 /workspace/contour-stage-sEVDLP completes the active
-bun-session-handoff-v2 scope on Sourceb738758256a88430aafda1f3966382663e952e4d,
-run1f68e366-efed-4077-a751-8ca667673c0f. Elapsed92784.002915ms, exit0,
+Stage2270 /workspace/contour-stage-cRqvGD completes the active
+bun-session-handoff-v2 scope on Source9ec2b7079e78dba0ab0a74cec4a44cbabdad1fbc,
+run4347c928-1897-49d0-b391-9503a138a6ec. Elapsed93067.334151ms, exit0,
 no signal/timeout/spawn error, complete capture and observed producer/group
-termination, unchanged boot/image. Native91PASS/0FAIL/1215assertions in86.77s.
-Raw **F276/276 L860/863 S939/944 B752/760** remains BLOCKED/nonexact.
-The added helper is fully included; changed denominators reflect the reviewed
-deduplication and new Source scope, not newly visited missing native guards.
+termination, unchanged boot/image. Native92PASS/0FAIL/1253assertions in87.72s.
+Raw **F276/276 L861/863 S940/944 B753/760** remains BLOCKED/nonexact.
+The actual retirement regression covers branch25/0 and statement65/line302,
+adding one line, statement and branch relative to2237 with unchanged denominators.
 MaxCC/entryCRAP29 remains diagnostic only. Frozen correspondence/CRAP and
 assertion-confirmed mutation stay deferred with unchanged original ceilings.
 The original retired contour's observations remain intact; active executable
 count stays46 and historical exact coverage stays17/46. No contour is newly closed.
 
-Image /workspace/.vida-quality-inputs/51b5e8d0d5bc24f7fbdd34e9e6cbdd9e4a6e14dc/repository
-has manifest SHA256fa99367b82d609dd3a0ba06f564261685f9aed12f8d72ac8f843b4931ffad284.
+Image /workspace/.vida-quality-inputs/6e6529a404bb5491fb6cf39062a01f4b7dfa3c1f/repository
+has manifest SHA256914d847394a35b934fc79e97533b5bfc9cf280f991fa93416a535937197d73d1.
 The focused report and native manifest remain under its packages/agent/coverage/bun-unified;
-raw stdout/stderr and execution receipts stay in the stage.2238 verifies/fsyncs
-the12369920-byte non-cache scratch archive at
-/workspace/vida-functional-retention-sEVDLP-WaDJ7g/archive.json. Originals remain
+raw stdout/stderr and execution receipts stay in the stage.2272 verifies/fsyncs
+the13230080-byte non-cache scratch archive at
+/workspace/vida-functional-retention-cRqvGD-zTh4ny/archive.json. Originals remain
 unchanged. Source fingerprint
 ba68fb63849ac81844d26365c228a810a696276839c88a4bff88038ad8138ba9
 and tests fingerprint
-ff9e6025a53a8aadb75f6739b2e946116772eb1fb9ac38db3d2622e4801f0527
-bind map2238. Branch/statement geometry exactly matches map2226; the Source
-fingerprint is equal and test selection fingerprint differs with the successor
-label. No old number is promoted, no additional inventory/AST/hash pass or
+2f8ed06a15d753229f1ca810808f584694ed3ae2927e1c34bc5b9af764255cd0
+bind map2272. Source fingerprint remains equal to2237; only the retired-reference
+branch and throw leave the gap list. The changed test fingerprint binds the
+new case/helper. No old number is promoted, no additional inventory/AST/hash pass or
 manual metric import is performed, and no unchanged full stage follows it.
+The preceding2237 report/custody remains at /workspace/contour-stage-sEVDLP,
+its retained archive and map2238; its exact published description is preserved
+in9ec2b7079e78dba0ab0a74cec4a44cbabdad1fbc at this WORK path.
+2268 ordinary hooks pass Knip/format528/strict535 and2269 ordinary push matches
+origin/main. The2270 producer imports its complete paired report exactly once.
 
 #### Current successor objective dispositions and open counters
 
-All rows below bind the2237 report/run, manifest and Source/test fingerprints
+All rows below bind the2270 report/run, manifest and Source/test fingerprints
 above, in persistent-session-handoff.ts. Independent2222 rechecks the three
 predecessor causal arguments against the equivalent current classifier and its
-unchanged native callers. Root rebinds their exact expressions through map2238;
-all remaining source branches are retained and the raw deficit is8arms/5statements.
+unchanged native callers. Root rebinds their exact expressions through map2272;
+all remaining source branches are retained and the raw deficit is7arms/4statements.
 
 | Branch / arm | Line | Statement | Disposition and prerequisite |
 | --- | --- | --- | --- |
@@ -855,22 +862,26 @@ all remaining source branches are retained and the raw deficit is8arms/5statemen
 | 16 / 1 | 228 | none | OPEN: single-project fallback. Ordinary admission is single-project; broader trusted Host binding reachability remains unresolved by2221. |
 | 17 / 0 | 229 | 39 | OPEN: single-project refusal, same2221 prerequisite. |
 | 21 / 0 | 249 | 53 at255 | Objective skip: supported admission validates schema/ID and immutable intake/item digest; earlier identity join rejects a distinct admitted identity. Reviews2163/2164/2185/2222. |
-| 25 / 0 | 301 | 65 at302 | OPEN: reference cardinality. Need a supported reference-set transition that passes every preceding fresh read;2222 supplies no native witness. |
 | 27 / 0 | 308 | 73 | Objective skip: outer assignment verification and the earlier packet/config-digest join bind the same immutable loaded configuration before lookup. Reviews2111/2115/2185/2222. |
 | 29 / 0 | 340 | 85 at349 | OPEN: trusted capability/principal refusal;2223's supported successor-lease race is a design hypothesis until its actual predecessor/read ordering is proved. |
 | 34 / 1 | 430 | none | OPEN: TaskSource single-project fallback, same2221 prerequisite. |
 
-Thus3arms/2statements retain objective dispositions and5arms/3statements remain
-OPEN, with3raw lines uncovered. The three skips do not close this contour or
+Thus3arms/2statements retain objective dispositions and4arms/2statements remain
+OPEN, with2raw lines uncovered. The three skips do not close this contour or
 change any count/denominator. Reopen them when their native producer, identity,
 admission/intake, continuation-view or config/assignment contract changes.
 2222's prose incorrectly calls old key26 an adjacent WorkItem guard; Root uses
 its causal analysis only. Retained maps2209/2226/2238 identify that expression as
 the reference-cardinality check, now key25; no false mapping is adopted.
 The withdrawn historical workflow-plan fallback disposition stays withdrawn.
-Next work remains the five OPEN guards through ordinary supported native
+Next work remains the four OPEN guards through ordinary supported native
 producers. Earlier denials, fabricated accepted history, report relabeling and
 an unchanged suite retry cannot resolve their prerequisite GAPs.
+Bounded blind2271 examines a new Source-only route through a fresh public Host
+CAS and configured approval claim before any Journal requirement. It does not
+rewrite existing singleton Work or assume that a component fixture establishes
+native CLI admission. Root will inspect its concrete first-guard proof before
+any new test. TaskSource's native Journal prerequisite stays separate.
 
 ### Predecessor session measurement custody at2208
 

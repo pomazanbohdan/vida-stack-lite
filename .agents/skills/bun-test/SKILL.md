@@ -84,6 +84,8 @@ history after `mockRestore` is not a durable observation. Complete real synthesi
 prerequisites before choosing a later readonly frontier for a negative writer
 request. Check the actual admitted packet after a native transition, outside
 the verifier's catch. A generic approval denial alone cannot identify its guard.
+Register a child launched through a computed path in the maintained Knip entry
+list before publication. Name the exact executable; do not ignore unused files.
 Record actual native reads before asserting denial; an orphan coordination
 ticket can reject a missing Work before the intended resolver guard. In a
 test-owned Host-disappearance fault, remove the exact Work/coordination pair
