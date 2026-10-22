@@ -33,11 +33,38 @@ principal-race proposals remain explicitly unvalidated at
 /workspace/vida-session-principal-patch-f5PRBA. They are not integrated or run.
 Their reviews retain the precise unresolved prerequisites; no skip or coverage
 gain is assigned to those proposals. Their delegated preparation/review lanes
-have terminated.2210/2211 now compare two bounded ordinary validation designs,
-read-only, while Root reconciles2208. They have no Source or numeric ownership.
-Root completes the accepted regression's review and normal publication before
-the sole complete selected-contour stage. Existing cleanup deferral/custody
+have terminated.2210/2211 independently reject moving native guards into pure
+helpers merely to visit their counters. Both support deduplicating only the
+identical four-field reference classifier; no guard or error ordering changes.
+Existing cleanup deferral/custody
 applies to these preserved patch copies; no removal or freed bytes are claimed.
+
+The next bounded packet extracts isCurrentLocalSourceAuthorizationReference
+into src/orchestration/local-source-authorization-reference.ts. Its facts are
+kind, disposition, decision and artifact_schema. The three previous inline
+filters in local-source-authorization.ts and the two persistent-session-handoff.ts
+resolvers now retain their filter closures and call that same predicate.
+All cardinality, revision, project, assignment and capability checks remain in
+their original callers. Lifecycle current() is not equivalent: it additionally
+filters source_revision. The extraction changes no authorization contract.
+The new helper is explicitly included in bun-session-handoff.sources; the
+affected local-source-authorization.ts caller remains owned by bun-cli-run and
+is not newly numerically qualified. Correspondence is three existing filter
+closures to the same closures plus one extracted pure function. Frozen
+correspondence/CRAP remain deferred; no baseline or denominator is excluded.
+
+Independent2215 accepts this exact packet, with its unit-case scope limited to
+classification of input facts.2216 format, scoped strict148 and zero-warning
+lint pass;2217 internal SDK readiness completes.2218 groups the predicate case,
+the configured writer identity-transfer refusal and configured TaskSource
+continuation refusal in one package-profile invocation:3PASS/0FAIL/58assertions
+in12.66s. Native fixture bodies take3.738s and7.172s under their existing20s
+bounds; the default remains5s. Existing snapshots and retained failed attempts
+are unchanged. Root will publish the checked packet before one complete stage.
+Previous2208 remains evidence for its original inputs only. The extraction
+changes production Source and coverage geometry, so its remaining counter map
+and objective dispositions require comparison and independent review before
+rebinding; no old count is promoted and no missing native guard is called covered.
 
 2186 prepares the key18 identity-transfer case in the Source-only patch copy
 /workspace/vida-session-identity-patch-B4h6GL. Independent2188 rejects two initial

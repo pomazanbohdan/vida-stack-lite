@@ -1,4 +1,5 @@
 import { coordinationLedgerDigest } from '../contracts/envelopes.js';
+import { isCurrentLocalSourceAuthorizationReference } from './local-source-authorization-reference.js';
 export { validateResearchJournalItem } from './mastra-session-ledger-codec.js';
 import { parseMastraSessionLedgerState, validateResearchJournalItem } from './mastra-session-ledger-codec.js';
 import { canonicalJsonAtDepth, canonicalJsonComponents } from '../contracts/canonical-json-core.js';
@@ -294,12 +295,8 @@ function sourceWritePreflightResolver(
         reference,
         bytes: access.readBytes(reference.path, 'source preflight lifecycle preparation'),
       }));
-    const localAuthorizations = work.lifecycle.references.filter(
-      (reference) =>
-        reference.kind === 'execution_approval' &&
-        reference.disposition === 'current' &&
-        reference.decision === 'approved' &&
-        reference.artifact_schema === 'LocalSourceWriteAuthorization/v1',
+    const localAuthorizations = work.lifecycle.references.filter((reference) =>
+      isCurrentLocalSourceAuthorizationReference(reference),
     );
     if (localAuthorizations.length !== 1)
       throw new Error('Source preflight requires one current local scoped human authorization');
@@ -497,12 +494,8 @@ function taskSourceMutationPolicyResolver(
           reference.disposition === 'current',
       )
       .map((reference) => ({ reference, bytes: access.readBytes(reference.path, 'task-source policy preparation') }));
-    const authorizationReferences = work.lifecycle.references.filter(
-      (reference) =>
-        reference.kind === 'execution_approval' &&
-        reference.disposition === 'current' &&
-        reference.decision === 'approved' &&
-        reference.artifact_schema === 'LocalSourceWriteAuthorization/v1',
+    const authorizationReferences = work.lifecycle.references.filter((reference) =>
+      isCurrentLocalSourceAuthorizationReference(reference),
     );
     requireState(
       authorizationReferences.length === 1,

@@ -134,6 +134,7 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
       name: 'bun-session-handoff',
       environment: 'bun',
       sources: [
+        'src/orchestration/local-source-authorization-reference.ts',
         'src/orchestration/persistent-session-handoff.ts',
         'src/orchestration/session-handoff.ts',
         'src/orchestration/workflow-plan.ts',

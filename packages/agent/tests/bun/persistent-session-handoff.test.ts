@@ -101,6 +101,7 @@ import { openAdmittedSessionExecution } from '../../src/orchestration/admitted-s
 import * as admittedSessionExecution from '../../src/orchestration/admitted-session-execution.ts';
 import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } from '../../src/runtime-kernel.ts';
 import { parseTaskSourceResourceTransitionReceipt } from '../../src/orchestration/task-source-resource-transition.ts';
+import { isCurrentLocalSourceAuthorizationReference } from '../../src/orchestration/local-source-authorization-reference.ts';
 
 const { repositoryRoot: root, config } = configuredTestContext();
 const workspaceId = 'a'.repeat(64);
@@ -1936,6 +1937,27 @@ test('configured writer preflight refuses peer admission across snapshot and pol
     20_000,
   );
 }, 20_000);
+
+test('local Source reference classification requires each current approved declaration field', () => {
+  type Facts = Parameters<typeof isCurrentLocalSourceAuthorizationReference>[0];
+  const reference: Facts = {
+    kind: 'execution_approval',
+    disposition: 'current',
+    decision: 'approved',
+    artifact_schema: 'LocalSourceWriteAuthorization/v1',
+  };
+  expect(isCurrentLocalSourceAuthorizationReference(reference)).toBe(true);
+  const rejected: readonly Facts[] = [
+    { ...reference, kind: 'implementation_scope' },
+    { ...reference, disposition: 'retired' },
+    { ...reference, disposition: 'consumed' },
+    { ...reference, decision: 'rejected' },
+    { ...reference, artifact_schema: 'WorkflowAttemptRecoveryDecision/v1' },
+  ];
+  for (const facts of rejected) expect(isCurrentLocalSourceAuthorizationReference(facts)).toBe(false);
+  const historicalScope = { ...reference, source_revision: 'historical-scope' };
+  expect(isCurrentLocalSourceAuthorizationReference(historicalScope)).toBe(true);
+});
 
 test('configured writer preflight refuses a serialized identity transfer between captured and admitted reads', async () => {
   await withAdmittedHandoffFixture(

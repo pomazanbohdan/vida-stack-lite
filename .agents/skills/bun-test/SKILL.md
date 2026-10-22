@@ -386,6 +386,13 @@ failure evidence and all other retained scratch. Reuse the latest inventory.
 
 ## Design a regression
 
+For a shared reference classifier, test the matching facts and vary each field
+independently. Keep caller cardinality, revision and policy checks in their
+original order. Lifecycle `current()` also filters `source_revision`, so it is
+not interchangeable with a four-field approval classifier. Register a new
+production helper in the selected contour's Source set; unit coverage of that
+helper does not establish coverage of its callers' native refusal guards.
+
 Pair overlapping-owner refusal with an active disjoint-owner control through
 the fixture's existing public admission. Require nonempty ticket resources and
 exact agreement with its active claim. Keep current

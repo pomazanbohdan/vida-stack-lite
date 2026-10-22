@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import z from 'zod';
+import { isCurrentLocalSourceAuthorizationReference } from './local-source-authorization-reference.js';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
@@ -79,13 +80,7 @@ export function createLocalSourceWriteApprovalVerifier(
       const initialContinuation = journal
         ? readInitialSourceContinuationLineageView(store, request.identity, journal.attempt)
         : null;
-      const references = work.lifecycle.references.filter(
-        (item) =>
-          item.kind === 'execution_approval' &&
-          item.disposition === 'current' &&
-          item.decision === 'approved' &&
-          item.artifact_schema === 'LocalSourceWriteAuthorization/v1',
-      );
+      const references = work.lifecycle.references.filter((item) => isCurrentLocalSourceAuthorizationReference(item));
       if (references.length !== 1) return null;
       const reference = references[0]!;
       let authorizationSourceRevision: string;
