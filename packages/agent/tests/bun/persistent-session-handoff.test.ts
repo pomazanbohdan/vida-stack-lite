@@ -3,6 +3,7 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { link, lstat, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { stringify as stringifyYaml } from 'yaml';
 import path from 'node:path';
 import { Database } from 'bun:sqlite';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
@@ -97,6 +98,7 @@ import { normalConfigEndpointProof } from '../helpers/configured-frontier-host-f
 import { requestFixture as continuationRequestSeed } from '../helpers/delivered-work-continuation-fixture.ts';
 import { runtimePackageBeforeimageFixture } from '../helpers/runtime-package-beforeimage-fixture.ts';
 import { openAdmittedSessionExecution } from '../../src/orchestration/admitted-session-execution.ts';
+import * as admittedSessionExecution from '../../src/orchestration/admitted-session-execution.ts';
 import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } from '../../src/runtime-kernel.ts';
 import { parseTaskSourceResourceTransitionReceipt } from '../../src/orchestration/task-source-resource-transition.ts';
 
@@ -1931,6 +1933,213 @@ test('configured writer preflight refuses peer admission across snapshot and pol
       expect(issued.journal.state.items[0]?.issue_id).toBe(issued.writer.issue_id);
     },
     { holdExpiredOwnerClock: true },
+    20_000,
+  );
+}, 20_000);
+
+test('configured writer preflight refuses a serialized identity transfer between captured and admitted reads', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      const preparationOwner = initialSourceHostStore(fixture).readHostStateSnapshot(fixture.identity);
+      requireHostState(preparationOwner);
+      if (!fixture.bridge) throw new Error('Identity transfer fixture has no native bridge');
+      await bindControlledRuntimeInitialization(fixture.root, fixture.config, initialSourceHostStore(fixture));
+      await runSynthesisFixtureInProcess(
+        {
+          args: [],
+          publicRun: () => {
+            throw new Error('Identity transfer fixture must use its native preparation owner');
+          },
+          sync: () => initialSourceJournal(fixture),
+          repositoryRoot: fixture.root,
+          workId: fixture.identity.work_id,
+          attempt: 1,
+          work: preparationOwner.work,
+        },
+        { ledger: initialSourceHostLedger(fixture), bridge: fixture.bridge, source: fixture.originalSource },
+      );
+      const host = initialSourceHostStore(fixture),
+        database = initialSourceHostDatabase(fixture),
+        nativeRows = nativeDatabaseSnapshotReader(database),
+        admission = initialSourceAdmissionInput(fixture),
+        readHost = host.readHostStateSnapshot.bind(host),
+        readLineage = host.readInitialSourceContinuationLineageView.bind(host),
+        claim = host.claimWorkflowAssignmentWithApproval.bind(host);
+      const originalAuthorizationBytes = await readFile(path.join(fixture.root, fixture.sourceAuthorizationPath));
+      const originalRawIntakeBytes = await readFile(path.join(fixture.root, fixture.rawIntakePath));
+      const canonicalIntakePath = path.join(
+        fixture.root,
+        '.agent/work/' + fixture.identity.work_id + '/local-session-intake.v1.json',
+      );
+      const originalCanonicalIntakeBytes = await readFile(canonicalIntakePath);
+      const originalJournal = initialSourceJournal(fixture);
+      const originalJournalRows = nativeRows().tables.agent_host_mastra_session_ledger;
+      const originalLineage = host.readInitialSourceContinuationLineageView(
+        fixture.identity,
+        originalJournal.state.attempt,
+      );
+      let resolverAState: ReturnType<typeof readHost> | undefined;
+      let admittedBState: ReturnType<typeof readHost> | undefined;
+      let admittedBIdentity: WorkIdentity | undefined;
+      let bAdmission: ReturnType<typeof admitLocalSessionWork> | undefined;
+      let postAdmissionRows: ReturnType<typeof nativeRows> | undefined;
+      let lineageReads = 0;
+      let armed = false;
+      let transitionCompleted = false;
+      let transitionFailure: { readonly error: unknown } | undefined;
+      let returnedAdmittedIdentity: WorkIdentity | undefined;
+      const readAdmitted = admittedSessionExecution.readAdmittedSessionExecutionContext;
+
+      const boundary = spyOn(host, 'claimWorkflowAssignmentWithApproval').mockImplementationOnce(async (...args) => {
+        const admittedBoundary = spyOn(
+          admittedSessionExecution,
+          'readAdmittedSessionExecutionContext',
+        ).mockImplementation((...input) => {
+          const actual = readAdmitted(...input);
+          if (transitionCompleted) returnedAdmittedIdentity = actual.identity;
+          return actual;
+        });
+        const lineageBoundary = spyOn(host, 'readInitialSourceContinuationLineageView').mockImplementation(
+          (...input) => {
+            const actual = readLineage(...input);
+            lineageReads++;
+            if (lineageReads === 1) armed = true;
+            return actual;
+          },
+        );
+        const hostBoundary = spyOn(host, 'readHostStateSnapshot').mockImplementation((identity) => {
+          const actual = readHost(identity);
+          if (armed && canonicalJsonDigest(identity) === canonicalJsonDigest(fixture.identity)) {
+            armed = false;
+            resolverAState = actual;
+            try {
+              if (!actual.work || !actual.workVersion || !actual.ledgerVersion)
+                throw new Error('Resolver did not capture native active Work A before the transition');
+              const journal = initialSourceJournal(fixture);
+              suspendLocalWork({
+                store: host,
+                identity: fixture.identity,
+                journal,
+                expectedWork: actual.workVersion,
+                expectedLedger: actual.ledgerVersion,
+                expectedMaintenanceGeneration: actual.maintenanceGeneration,
+                nativeSessionHandle: admission.nativeSessionHandle,
+                userRequestPointer: 'user:initial-source-regression',
+                requestIntent: 'linked_correction',
+                config: fixture.config,
+                documentationContext: {
+                  repository_root: fixture.root,
+                  repository_id: fixture.identity.repository_id,
+                  project_id: 'sample',
+                  work_id: fixture.identity.work_id,
+                },
+              });
+
+              const configPath = path.join(fixture.root, 'agent-runtime.config.v1.yaml');
+              writeFileSync(
+                configPath,
+                stringifyYaml({
+                  ...fixture.config,
+                  integrations: {
+                    ...fixture.config.integrations,
+                    providers: fixture.config.integrations.providers.map((provider) => ({
+                      ...provider,
+                      namespace: provider.namespace + '-identity-b',
+                    })),
+                  },
+                }),
+              );
+              const changedConfig = loadRuntimeConfig(fixture.root);
+              const freshAdmission = { ...admission, config: changedConfig };
+              delete freshAdmission.sourceAuthorizationPath;
+              bAdmission = admitLocalSessionWork(freshAdmission);
+              const workB = bAdmission.host.work;
+              if (!workB) throw new Error('Native admission did not create active Work B');
+              admittedBIdentity = {
+                repository_id: workB.binding.repository_id,
+                project_ids: workB.binding.project_ids,
+                integrations_digest: workB.binding.integrations_digest,
+                work_id: fixture.identity.work_id,
+              };
+              postAdmissionRows = nativeRows();
+              transitionCompleted = true;
+            } catch (error) {
+              transitionFailure = { error };
+              throw error;
+            }
+          } else if (admittedBIdentity && canonicalJsonDigest(identity) === canonicalJsonDigest(admittedBIdentity)) {
+            admittedBState = actual;
+          }
+          return actual;
+        });
+        return withInitialSourceCleanup(
+          () => claim(...args),
+          () =>
+            completeOwnedCleanup([
+              () => {
+                admittedBoundary.mockRestore();
+                return undefined;
+              },
+              () => {
+                hostBoundary.mockRestore();
+                return undefined;
+              },
+              () => {
+                lineageBoundary.mockRestore();
+                return undefined;
+              },
+            ]),
+          'Native serialized identity transfer observer restoration',
+        );
+      });
+
+      await withInitialSourceCleanup(
+        async () => {
+          const denial = await rejectionReason(issueInitialSourceFixtureWriter(fixture));
+          if (transitionFailure) throw transitionFailure.error;
+          expect(() => {
+            throw denial;
+          }).toThrow('workflow approval denied');
+          expect(boundary).toHaveBeenCalledTimes(1);
+          expect(lineageReads).toBeGreaterThan(0);
+          expect(transitionCompleted).toBe(true);
+          expect(resolverAState?.work?.binding.lifecycle_work_id).toBe(fixture.identity.work_id);
+          expect(resolverAState?.work?.execution.status).toBe('active');
+          expect(bAdmission?.host.work?.binding.lifecycle_work_id).toBe(fixture.identity.work_id);
+          expect(admittedBIdentity?.integrations_digest).not.toBe(fixture.identity.integrations_digest);
+          expect(admittedBIdentity?.repository_id).toBe(fixture.identity.repository_id);
+          expect(admittedBIdentity?.project_ids).toEqual(fixture.identity.project_ids);
+          expect(admittedBIdentity?.work_id).toBe(fixture.identity.work_id);
+          expect(returnedAdmittedIdentity).toEqual(admittedBIdentity);
+          expect(admittedBState?.work?.binding.integrations_digest).toBe(admittedBIdentity?.integrations_digest);
+          expect(admittedBState?.work?.execution.status).toBe('active');
+          expect(admittedBState?.work?.lease).toBeDefined();
+          if (!postAdmissionRows) throw new Error('Native post-admission database snapshot was not captured');
+          expect(nativeRows()).toEqual(postAdmissionRows);
+          expect(
+            host
+              .readHostStateSnapshot(fixture.identity)
+              .work?.lifecycle.references.filter((reference) => reference.kind === 'execution_approval'),
+          ).toEqual(
+            resolverAState?.work?.lifecycle.references.filter((reference) => reference.kind === 'execution_approval'),
+          );
+          expect(nativeRows().tables.agent_host_mastra_session_ledger).toEqual(originalJournalRows);
+          expect(() => initialSourceJournal(fixture)).toThrow('root configuration changed during attempt');
+          expect(
+            host.readInitialSourceContinuationLineageView(fixture.identity, originalJournal.state.attempt),
+          ).toEqual(originalLineage);
+          expect(await readFile(path.join(fixture.root, fixture.sourceAuthorizationPath))).toEqual(
+            originalAuthorizationBytes,
+          );
+          expect(await readFile(path.join(fixture.root, fixture.rawIntakePath))).toEqual(originalRawIntakeBytes);
+          expect(await readFile(canonicalIntakePath)).toEqual(originalCanonicalIntakeBytes);
+          expect(database.inTransaction).toBe(false);
+        },
+        () => boundary.mockRestore(),
+        'Native serialized identity transfer claim observer restoration',
+      );
+    },
+    { legacyTaskFrontier: true },
     20_000,
   );
 }, 20_000);

@@ -153,6 +153,15 @@ After a configuration continuation, use the Journal owner bound to that current
 configuration. A ledger facade retained from preparation still checks its old
 config and can reject before the intended test boundary. Reuse the current facade
 already needed by the subsequent positive control.
+For a configuration-race refusal, keep the old facade's freshness check. Compare
+the exact native Journal rows when the deliberate configuration change makes
+that facade reject, and assert its rejection separately. A completed native
+admitted-context read proves more than observing its first Host lookup.
+For an identity-transfer regression, use a fresh live preparation whose Source
+still matches its accepted scope. Initial-source continuation retains protected
+original scope and intake; those bytes cannot simply be reused for a fresh
+identity after Source changes. Exclusive ownership rules out simultaneous
+claims, but does not rule out a supported suspension followed by fresh admission.
 After a genuine maintenance acquire/release before fixture admission, reopen the
 configured ledger before creating Work or its bridge. Its opened generation is
 immutable; releasing the fence does not refresh an existing handle. Keep this

@@ -15,6 +15,54 @@ PASS. Its frozen correspondence/complexity/CRAP and mutation remain deferred wit
 their original budgets and assertion-confirmed Killed100 rules. No second writer
 or numeric producer is active. Complete the selected contour before another.
 
+The owner's current batch instruction assigns independent native Luna readers
+to all remaining groups before another complete stage:2182 covers project and
+admitted-identity guards16/17/18/35,2183 the current authorization count26,
+2184 trusted capability/principal guard30, and2185 independently rechecks the
+accepted dispositions7/21/28 against map2181. Root integrates all justified
+repairs, then runs scoped static and affected controls before one complete
+selected-contour stage. A recipe is a hypothesis until its native control passes;
+an unresolved prerequisite remains OPEN. No other contour, mutation producer,
+parallel suite, worktree or canonical writer starts.
+
+The owner's subsequent approach change limits this packet to the ordinary
+native identity-transfer regression below. The project, authorization-rebind and
+principal-race proposals remain explicitly unvalidated at
+/workspace/vida-session-project-patch-DP61vK,
+/workspace/vida-session-authorization-patch-CmwIwo and
+/workspace/vida-session-principal-patch-f5PRBA. They are not integrated or run.
+Their reviews retain the precise unresolved prerequisites; no skip or coverage
+gain is assigned to those proposals. All delegated lanes have terminated.
+Root completes the accepted regression's review and normal publication before
+the sole complete selected-contour stage. Existing cleanup deferral/custody
+applies to these preserved patch copies; no removal or freed bytes are claimed.
+
+2186 prepares the key18 identity-transfer case in the Source-only patch copy
+/workspace/vida-session-identity-patch-B4h6GL. Independent2188 rejects two initial
+oracle errors before qualification. Root uses the actual admitted-context export
+as an observer, records its completed native return and checks it outside the
+production denial catch.2191 retains the exact-optional-property type failure;
+the B admission omits Source authorization rather than creating or rewriting one.
+2193 retains a clock-regression setup error.2196 exposes the stronger causal
+constraint: the initial-source continuation changes Source while preserving old
+protected scope/acceptance, so a new identity cannot simply reuse that admission.
+Root instead uses the maintained live legacy synthesis flow without changing any
+Source document.2199 reaches the native B admission/context and18assertions, then
+the old Mastra reader correctly rejects changed root configuration. The final
+oracle compares original native Journal rows, keeps that reader refusal explicit,
+and preserves A's approval reference plus authorization/raw/canonical intake bytes.
+2200 strict146/zero-warning lint pass; the named case passes1/26assertions in5.68s,
+body4.223s under the unchanged20s fixture bound. Full native database/schema rows
+after intentional B admission remain unchanged by the denial. A remains suspended,
+B is actually admitted with the same repository/project/work ID and a different
+integration digest, and no writer action executes. All original failed roots/logs
+and proposals remain retained. No new full coverage result is claimed yet.
+Independent2188 accepts the final bounded regression.2203 repeats strict146,
+zero-warning lint and the changed documentation check, all passing. The exact
+no-write assertions cover native tables/schema, original Journal, approval
+reference and declaration/intake files; the fixture deliberately changes its
+integration configuration, so this is not a configuration-preservation claim.
+
 2162/2163 resume the remaining counter studies from map2149. Root rejects
 two first-draft premise errors: key5 counts evaluation of the RHS even when
 initial is null, and the complete-snapshot equality check follows key26 rather
@@ -101,7 +149,7 @@ creator and parser owners retain their original decisions; new witness decisions
 live in three named private helpers. Frozen baselines are untouched.2100 final
 strict197/lint and11cases/222assertions pass in18.29s, followed serially by the
 two Host controls/175assertions in15.87s. No second numeric contour starts.
-Stage2148 below supplies the latest bound numeric result. A shared Host/receipt Source change invalidates its dependent
+Stage2180 below supplies the latest bound numeric result. A shared Host/receipt Source change invalidates its dependent
 old qualification; the focused controls do not reattest the other contours.
 
 Published cf7a4944f4b1e8715553883953a6600ef78e05ff passes2102 ordinary hooks
@@ -492,7 +540,14 @@ The same dispositions remain applicable without promoting historical counters.
 | Exact counter and owner | Causal prerequisite and current contract | Review and remaining qualification |
 | --- | --- | --- |
 | persistent-session-handoff.ts sourcePreflightContinuationHistory, key7/arm1,178:102–104 | The `runtimeCodeContinuations ? ... : {}` alternate requires a falsy value. Both private digest callers obtain concrete native Host lineage; its reader always returns `host.runtimeCodeContinuations ?? []`, including a truthy empty array. A partial compatibility reader elsewhere does not supply this private native route. | DIAG/session-boundaries-review-v2044.md independently confirms the native reader/caller chain. Objective skip only; reopen if either caller or reader admits an omitted/falsy history. No fabricated partial-reader acceptance. |
-| workflow-plan.ts configuredReadOnlySourcePrewriter, key12/arm1,99:61–63 | `securityPrewriter?.risk_flags ?? []` requires a missing security assignment/list. Source workflow compilation accepts only branded, frozen successfully loaded config, whose strict prewriter validation requires the ordered security role and four exact risk flags. Malformed config fails before this private helper. | DIAG/session-residual-research-v2034.md and session-boundaries-review-v2044.md independently trace load/brand/compiler predicates. Objective skip only; reopen on changed loader/compiler contracts. No fallback deletion, excluded file or changed denominator. |
+
+The former workflow-plan key12/arm1 disposition is withdrawn.2180 records seven
+visits to its unchanged `securityPrewriter?.risk_flags ?? []` fallback.2185
+identifies the missed supported producer: validated legacy TaskSource workflows
+may omit review_source_prewrite entirely. Mandatory checks apply when that stage
+exists; they do not prove its existence. The new configured-continuation case
+uses the maintained legacyTaskFrontier fixture. Keep the historical reviews as
+provenance, not an active skip; neither raw coverage nor denominators are edited.
 
 The preceding history, snapshot and private-digest packets, their failed premises,
 review resolutions and exact DIAG locators are preserved in the
@@ -556,41 +611,41 @@ original scratch, native run manifest, raw logs and failure custody stay.
 
 ### Latest completed session measurement custody
 
-Stage2148 /workspace/contour-stage-J2xHwi completes on
-Source6a41e3d0a4a45956cdd2a39eb34fea38deffa58e,
-run751a578f-00ce-4341-a16e-3ab967f2a09f. Elapsed94677.545892ms,
+Stage2180 /workspace/contour-stage-AcxKtE completes on
+Source19c396e5a1e229d643d1f1a53f621037d7c84f57,
+runc99ddfc7-6252-483b-b25b-ec396f4043e3. Elapsed79298.74131699999ms,
 exit0, no timeout/signal/spawn error, complete capture, closed producer/group,
-unchanged boot/image. Native88PASS/0FAIL/1157assertions in87.85s.
-Raw **F275/275 L857/862 S936/943 B752/764** remains BLOCKED/nonexact.
-Counts and selected Source/tests match2124; the internal build repair changes
-the harness, not the coverage numerator or denominator. Twelve
-branch arms remain, four with accepted dispositions and eight OPEN; seven
-statements remain, two with the key21/key28 throw dispositions. Five lines remain
+unchanged boot/image. Native89PASS/0FAIL/1182assertions in74.58s.
+Raw **F275/275 L858/862 S937/943 B755/764** remains BLOCKED/nonexact.
+The configured TaskSource refusal adds1line,1statement and3branches relative
+to2148 with unchanged denominators. Nine branch arms remain, three with prior
+accepted dispositions and six OPEN pending2182–2185; six statements remain,
+two with the key21/key28 throw dispositions. Four lines remain
 raw uncovered; no line exclusion or adjusted denominator is introduced.
 MaxCC/entryCRAP29 is diagnostic only; frozen/mutation remain deferred.
 The sole stage imports once; historical exact count17/46 stays unchanged.
-Image /workspace/.vida-quality-inputs/7aaf115332cccbafef083a428fbb06beeeb5a5b0/repository
-has manifest SHA25654d425a1ca8228765a013d037c43c05408e38d9ca7c6665f53ac371be376f34d.
+Image /workspace/.vida-quality-inputs/0dc09c1be2108e3fae5a6b4315cc463c6f970d26/repository
+has manifest SHA256a9808db3776e33236bff986f0506114c8074bb487d9d1ad35c440a0a61903413.
 Focused report and native run manifest remain under its packages/agent/coverage/bun-unified;
-raw stdout/stderr remain in the stage.2149 verifies and fsyncs the10762240-byte
+raw stdout/stderr remain in the stage.2181 verifies and fsyncs the11653120-byte
 non-cache scratch archive at
-/workspace/vida-functional-retention-J2xHwi-n6UNz8/archive.json.
+/workspace/vida-functional-retention-AcxKtE-A2qMEd/archive.json.
 Original image/scratch/receipts/raw logs remain unchanged. Source fingerprint
 91a8a4c11222e70d47231932e09fc607d34967b8d3b93ab38832f01a372ff2ed is unchanged;
-tests fingerprint773a2d7a2109f60cd69ac05e61bbaf3144e64b2bfa7feb830c22fb0b826611e5
-binds this report. Map2149 reuses its complete retained geometry/counters without
-another inventory, AST or hash pass. The stage's one actual captured SDK formation
-runs locally, with no archive override or CI prerequisite. Its complete command,
-logs and terminal receipt are coverage/sdk-test-inputs/build-IwW7rf; the child
-exits0 with complete capture and observed process/group closure under269911ms
-remaining allowance. No test suite runs within that build. Prior2124 custody,
-map2125 and its archive remain in [published6a41e3d WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/6a41e3d0a4a45956cdd2a39eb34fea38deffa58e/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-session-measurement-custody).
+tests fingerprintc354e10a2370a772a79aafb167ac8603adb69d65afe60f34e562264c45b28b32
+binds this report. Map2181 reuses its complete retained geometry/counters without
+another inventory, AST or hash pass. The shared internal SDK owner runs before
+image admission, with no archive override or CI prerequisite. Previous2148
+custody and SDK formation remain in [published19c396e WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/19c396e5a1e229d643d1f1a53f621037d7c84f57/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-session-measurement-custody).
 
 #### Current session objective disposition extension
 
-The two earlier branch dispositions below retain their identical selected
-Source/counter geometry in2149. Root additionally accepts key28/arm0 and its
-throw statement73, persistent-session-handoff.ts311, rebound to the current2148
+The retained history disposition and key21/key28 retain their identical selected
+Source/counter geometry in map2181. Independent2185 rechecks all three against
+run c99ddfc7-6252-483b-b25b-ec396f4043e3, its Source/test fingerprints and
+config-bearing image manifest above. No historical workflow-plan skip is carried.
+Root accepts key28/arm0 and its
+throw statement73, persistent-session-handoff.ts311, rebound to the current2180
 report/run, Source/test fingerprints and config-bearing image manifest above.
 The exact expression is `if (!assignment) throw new Error('Source preflight Host assignment is not configured')`.
 It requires a missing indexed assignment after the outer verifier admitted
@@ -607,8 +662,8 @@ It grants no frozen/mutation waiver or Runtime acceptance.
 
 2163 and independent2164 establish the same-identity WorkItem invariant for
 key21/arm0 and throw statement53 at persistent-session-handoff.ts248–254.
-Root accepts their objective disposition, bound to run751a578f-00ce-4341-a16e-3ab967f2a09f,
-map2149, exact Source/test fingerprints and manifest above.2166 directly compares
+Root accepts their objective disposition, rebound by2185 to run c99ddfc7-6252-483b-b25b-ec396f4043e3,
+map2181, exact Source/test fingerprints and manifest above.2166 directly compares
 the ten selected prerequisite/config/test files with that image's original bytes;
 all match, without another inventory/AST/hash pass. The exact comparison receipt
 is DIAG/session-workitem-byte-join-v2166.json. This is no fresh numeric run.
