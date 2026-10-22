@@ -73,9 +73,31 @@ Stage2079 below is the sole actual full run for this packet. It visits the real
 checkpoint arm8/0: **F275/275 L857/862 S936/943 B750/764**, one more branch than
 2053, with unchanged Source/denominators. Fourteen branch arms remain, including
 the two reviewed objective dispositions; twelve are OPEN. No contour closes.
-Map2080 reuses its complete report without another scan/hash. Blind2081 studies
-the configured-only native continuation producer for keys5/10. Corrective
-planning and consistency guards remain under their existing studies.
+Map2080 reuses its complete report without another scan/hash. The outcome and
+projection publish normally as5ab3587c04b087547128337e3a529f2f843c54c0;
+2082 hooks pass format526/strict533/Knip,2083 push matches origin/main.
+
+Blind2081 completes the configured-only producer trace. Native
+HostStateStore.continueDeliveredWork creates the real configured-frontier view;
+the existing Host integration case stops before production writer preflight.
+Next compose its genuine unissued continuation with openConfiguredMastraSessionLedger
+and claimWorkflowAssignmentWithApproval('source.write'), retaining current
+authorization, lease, Journal and unchanged original receipt. A configured view
+with no initial receipt reaches keys5/10; no mocked view or failed-prewriter
+recovery is needed. This is a source-backed next experiment, not numeric proof.
+The exact producer trace is DIAG/session-configured-continuation-producer-v2081.md.
+
+Blind2084 keeps project guards16/17/35 OPEN. Current admission supplies a singleton
+project set and fresh keyed reads reject project drift before these guards, but
+generic persisted identity contracts allow multiple projects. The bounded trace
+does not establish whether a valid multi-project persistent local-session producer
+exists. Key17/arm0 is the taken missing-project refusal, regardless of the draft's
+"false arm" wording. Do not manufacture accepted Host rows, remove defensive
+guards or promote this incomplete proof into an objective skip. Its exact study
+is DIAG/session-single-project-guards-v2084.md. Corrective planning and remaining
+consistency guards stay under their existing studies. No second producer starts.
+
+#### Preceding measured repair packet (ec4304b)
 
 Published ec4304baf28e3cf49d1726fc419fd65f766a80a6 contains the reviewed peer,
 legacy synthesis and refused-corruption controls.2049 normal hooks pass
@@ -87,8 +109,8 @@ the same exact attempt-jobs endpoint reports terminal success,2053 completes
 the sole actual coverage producer. Neither failure is a partial suite or kill.
 
 The preceding2053 bound values are **F275/275 L857/862 S936/943 B749/764**: five lines,
-seven statements and fifteen branch arms remain. Two arms have the objective
-dispositions below; the other thirteen remain OPEN. Map2054 reuses the complete
+seven statements and fifteen branch arms remained. Two arms had the objective
+dispositions below; the other thirteen remained OPEN. Map2054 reuses the complete
 report without another AST/scan/hash pass. Blind2055 studies native authorization
 count corruption and2056 studies the real binding-checkpoint producer. No second
 contour or numeric writer is active. Keep configured-only continuation, corrective
