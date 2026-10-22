@@ -51,7 +51,23 @@ deadline. Failure, pending cleanup or expiry retains the root.1979 passes
 strict194/lint and the affected case/15assertions in11.88s; Root confirms its
 exact success root is absent afterward. Other issued UNKNOWN fixture owners
 remain retained under their different contracts. Prior receipts are reused for
-unchanged cases. The coherent packet is ready for the next full selected stage.
+unchanged cases. Published8ea93f0ce7c4e4a0911bad45dda001bff287c381 passes
+normal format524/strict531/Knip hooks and ordinary push. Stage1982 below then
+finds the missing transitive SDK-consumer classification. Its full native FAIL
+is retained; partial cases do not update the latest numeric counters.
+
+The confirmed runner-input defect is fixed at the existing single
+selectedTestsRequireSdkArtifacts owner: both native Host and persistent handoff
+files require current SDK inputs because their failed-final helper calls the
+public launcher. The bounded analogous-call search finds those two native files
+and the already admitted final-assurance public caller. No broader test suite or
+new dependency resolver is introduced. The capture fixture derives its import
+relative to the selected test's directory, supporting nested paths instead of a
+root-only literal.1983 preserves the failed test fixture's relative-import
+assumption.1984 passes strict195/lint and both capture regressions:46assertions,
+356ms. TESTING and the Bun skill now identify this transitive caller boundary.
+The next image must use a current published SDK formation through maintained
+readiness. No exports fence, freshness check or image is modified to bypass it.
 
 The active session-handoff packet reproduces a valid-loaded-config P0. Explicit
 empty stage/assignment risk lists were truthy and filtered out the required
@@ -197,6 +213,22 @@ Normal hooks pass format523/strict530/Knip0 and ordinary push for both packets.
 No hook bypass, budget increase, runtime installation or consumer effect occurs.
 
 ## Latest measurement custody
+
+Stage1982 /workspace/contour-stage-2HmXYQ terminates on Source8ea93f0ce7c4e4a0911bad45dda001bff287c381,
+run d5eb08f9-215a-4c7a-90e0-444c5307461f. Elapsed37954.422807ms, exit1,
+no signal/timeout/spawn error, complete capture, closed group and unchanged
+boot/image. Native77PASS/1FAIL/911assertions in33.14s is incomplete qualification.
+The corrective helper reaches assertRuntimePackageExports through bin/run.ts,
+but its image lacks SDK exports because the selector omitted this test file.
+The final missing-report refusal preserves this original error. The stage
+publishes its failed outcome once; no partial coverage is imported.
+Image /workspace/.vida-quality-inputs/780672f0d0de48f65fc0cc4205e6f7d1a55d7a7d/repository
+and manifest0bd57148d7c793f11356594fa19d283da147475af34f1a3b10cb9debbf8ac6d8
+remain immutable. DIAG/session-retention-v1983.log binds its verified/fsynced
+5427200-byte archive at /workspace/vida-functional-retention-2HmXYQ-vzqjEn/archive.json;
+original scratch, native run manifest, raw logs and failure custody stay.
+
+### Latest completed session measurement custody
 
 Stage1962 /workspace/contour-stage-PzOCkt completes on Sourcea0dac7675d627a31cf7cc761d2c495a4f05872c3,
 run5d526101-0cb5-490d-a7d2-aa4aa6879545. Elapsed27843.661303ms, exit0,

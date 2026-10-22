@@ -3405,8 +3405,10 @@ Source-only fixtures exclude the exact generated `dist/standalone` directory. Ke
 The paused-replacement launcher enters the public export-completeness guard even
 when invoked through bin/run.ts. Its SDK dist remains mandatory. Use the shared
 selectedTestsRequireSdkArtifacts owner for capture, freshness, restoration and
-preparation eligibility; it includes both compatibility and paused-replacement
-tests. A missing SDK formation receipt is a prerequisite gap, not permission to
+preparation eligibility; it includes compatibility, paused-replacement and native
+Host/handoff fixtures that reach the public launcher transitively. Add a newly
+introduced launcher consumer at that single owner and qualify its captured
+formation inputs before the selected contour runs. A missing SDK formation receipt is a prerequisite gap, not permission to
 omit dist or fabricate exports. Pure selections still avoid SDK preparation.
 That launcher's package TESTING.md is also fixture data. Capture it through the
 existing bounded fixture-data owner, bind freshness and reject missing bytes;

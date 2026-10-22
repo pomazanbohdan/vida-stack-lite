@@ -249,6 +249,9 @@ to determine SDK dependency. Reuse selectedTestsRequireSdkArtifacts: public
 run/controller fixtures can require the SDK export-completeness fence even when
 they execute Source directly. Follow the actual guard and positive caller path;
 a negative case that exits before that guard is not an SDK consumer by import alone.
+Native Host/corrective helpers can reach that same guard. Add their selected test
+file to the maintained selector and check the SDK capture projection, including
+nested test paths; do not infer Source-only execution from its directory.
 A selection without SDK-dependent tests does not capture dist or need separate
 artifact preparation. Keep automatic CI
 formation and all freshness checks for selections that actually consume the SDK.

@@ -828,6 +828,8 @@ function qualityToolInputPaths(
 }
 
 const sdkArtifactTestPaths = [
+  'tests/bun/host-state.test.ts',
+  'tests/bun/persistent-session-handoff.test.ts',
   'tests/sdk-package-compatibility.test.ts',
   'tests/paused-replacement-entrypoint.test.ts',
   'tests/automatic-work-absorption.test.ts',

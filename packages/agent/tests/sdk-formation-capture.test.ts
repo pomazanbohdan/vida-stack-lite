@@ -62,6 +62,8 @@ describe('SDK formation capture projection', () => {
     ['focused-config-rebind', 'tests/runtime-config-rebind.test.ts'],
     ['focused-source-config-rebind', 'tests/runtime-config-rebind-source.test.ts'],
     ['focused-scoped-source', 'tests/scoped-source-snapshot.test.ts'],
+    ['focused-native-host', 'tests/bun/host-state.test.ts'],
+    ['focused-native-handoff', 'tests/bun/persistent-session-handoff.test.ts'],
   ] as const)(
     'joins %s quality capture to SDK formation without another input read and rejects stale artifacts',
     async (mode, sdkTest) => {
@@ -82,7 +84,10 @@ describe('SDK formation capture projection', () => {
       write('bin/cli-metadata.ts', 'export const inert = true;\n');
       write('tests/sdk-package-compatibility.test.ts', "import '../bin/cli-metadata.ts';\n");
       write('tests/paused-replacement-entrypoint.test.ts', "import '../bin/cli-metadata.ts';\n");
-      write(sdkTest, "import '../bin/cli-metadata.ts';\n");
+      write(
+        sdkTest,
+        `import ${JSON.stringify(path.posix.relative(path.posix.dirname(sdkTest), 'bin/cli-metadata.ts'))};\n`,
+      );
       write('TESTING.md', '# Captured launcher fixture contract\n');
       write('templates/inert.yaml', 'inert: true\n');
       write('instructions/inert.md', 'inert\n');
