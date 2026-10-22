@@ -92,6 +92,12 @@ completed history is empty. Preserve the original positive path after restoratio
 A callback that removes lineage may be rejected by intermediate progress/admission
 validation before a later reread. Assert the observed refusal and rollback, and
 trace that earlier guard before claiming either a branch visit or an objective skip.
+For a collector's false arm, inspect nonmatching entries as well as duplicates.
+A valid public append can create an old-binding artifact that a proposed successor
+must reject later. Use real copied artifact bytes and its public Host CAS, require
+the refused transaction to preserve its beforeimages, then restore only exact
+changed fixture rows before the original success control. This is refusal
+coverage, never an accepted manufactured continuation or an objective skip.
 For malformed sibling projection controls, reuse parser-valid research fixture
 fields, register its root with the enclosing failure-retention owner, and keep
 invalid history inside a refused or explicitly fault-aborted transaction. Compare

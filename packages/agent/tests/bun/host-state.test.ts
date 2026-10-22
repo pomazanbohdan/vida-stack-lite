@@ -289,7 +289,7 @@ function readFixtureHostRows(db: Database) {
   };
 }
 
-function withSuspendedFixtureOwner(db: Database, suspend: () => void, verify: () => void): void {
+function withTemporaryFixtureHostState(db: Database, suspend: () => void, verify: () => void): void {
   const before = readFixtureHostRows(db);
   const ddl = db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all();
   let suspended: ReturnType<typeof readFixtureHostRows> | undefined;
@@ -6965,7 +6965,7 @@ test(
           'Current configured continuation Journal',
         );
         expect(continuationJournal).toMatchObject(lookup.journal);
-        withSuspendedFixtureOwner(
+        withTemporaryFixtureHostState(
           db,
           () => {
             suspendLocalWork({
@@ -7135,6 +7135,48 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
       expect(request.currentSourceScope).toEqual(source);
       expect(request.currentInitialRequest.stage_id).toBe('synthesize_task');
       expect(store.readInitialSourceContinuationReceipt(current.identity, 1)).toBeNull();
+      const admissionSnapshot = requiredValue(
+        before.work.artifacts.find((artifact) => artifact.artifact_id === 'admission-source-snapshot'),
+        'Initial Source admission snapshot',
+      );
+      const extraSnapshot = {
+        ...admissionSnapshot,
+        artifact_id: 'fixture-secondary-admission-snapshot',
+        path: '.agent/secondary-admission-snapshot.v1.json',
+      };
+      writeFileSync(
+        path.join(current.root, extraSnapshot.path),
+        readFileSync(path.join(current.root, admissionSnapshot.path)),
+      );
+      withTemporaryFixtureHostState(
+        fixtureDatabase,
+        () => {
+          const appended = presentSnapshot(
+            store.compareAndSwapHostState({
+              expectedWork: before.workVersion,
+              expectedLedger: before.ledgerVersion,
+              expectedMaintenanceGeneration: before.maintenanceGeneration,
+              nextWork: {
+                ...before.work,
+                revision: before.work.revision + 1,
+                lifecycle: { ...before.work.lifecycle, revision: before.work.lifecycle.revision + 1 },
+                artifacts: [...before.work.artifacts, extraSnapshot],
+              },
+              nextLedger: { ...before.ledger, revision: before.ledger.revision + 1 },
+            }),
+          );
+          expect(appended.work.artifacts).toEqual([...before.work.artifacts, extraSnapshot]);
+        },
+        () => {
+          const adverseRequest = initialSourceRequest(current);
+          withExpiredInitialSourceOwner(current, () => {
+            expect(() =>
+              store.continueInitialSource(adverseRequest, (state) => initialSourceProof(current, state)),
+            ).toThrow('artifact reference has foreign authority binding');
+          });
+        },
+      );
+      expect(store.readHostStateSnapshot(current.identity)).toEqual(before);
       withExpiredInitialSourceOwner(current, () => {
         let verifications = 0;
         const verifyCurrent: Parameters<HostStateStore['continueInitialSource']>[1] = (state) => {
@@ -8207,7 +8249,7 @@ test(
         const frontierBefore = initialSourceState(f);
         const suspendedRequest = frontierCodeRequest(f);
         const suspendedVerifier = mock(trustedHostFixtureVerifier(f, fixtureFrontierProof(suspendedRequest)));
-        withSuspendedFixtureOwner(
+        withTemporaryFixtureHostState(
           initialSourceHostDatabase(f),
           () => {
             suspendLocalWork({
