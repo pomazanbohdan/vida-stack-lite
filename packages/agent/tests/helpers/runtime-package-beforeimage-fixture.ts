@@ -54,7 +54,7 @@ export function runtimePackageBeforeimageFixture(parent: string, bundle: string,
     access,
     before,
     current,
-    async bindBeforeimage<T>(body: () => Promise<T>): Promise<T> {
+    async bindBeforeimage<T>(body: (restore: () => void) => Promise<T>): Promise<T> {
       const snapshotSpy = spyOn(sourceSnapshots, 'snapshotRuntimePackageSources').mockImplementation(
         (reader, selectedBundle, selectedPaths) => {
           if (
@@ -67,9 +67,15 @@ export function runtimePackageBeforeimageFixture(parent: string, bundle: string,
           return before;
         },
       );
+      let restored = false;
+      const restore = () => {
+        if (restored) return;
+        snapshotSpy.mockRestore();
+        restored = true;
+      };
       let failure: { error: unknown } | undefined;
       try {
-        return await body();
+        return await body(restore);
       } catch (error) {
         failure = { error };
         throw error;
@@ -77,7 +83,7 @@ export function runtimePackageBeforeimageFixture(parent: string, bundle: string,
         completeOwnedCleanup(
           [
             () => {
-              snapshotSpy.mockRestore();
+              restore();
             },
           ],
           failure,

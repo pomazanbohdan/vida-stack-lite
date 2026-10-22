@@ -48,6 +48,10 @@ It supplies an actual captured old snapshot as controlled input and restores the
 snapshot spy before the current-package frontier and recovery checks. Unchanged
 resources keep their verified reader. Do not replace package-root guards, install
 the copied resource, insert qualified history rows, or claim native qualification.
+Its scoped callback receives an idempotent restore operation for a case that
+must finish old-bound native setup before opening the current-package reader.
+Configured normal endpoints require distinct old/current runtime digests; use
+the captured old resource and current snapshot, not equal digest placeholders.
 Keep the prior resource reader bound on the old endpoint verifier and preserve
 the report recovery's exact frontier/runtime digest join.
 

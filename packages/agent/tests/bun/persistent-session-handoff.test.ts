@@ -16,7 +16,10 @@ import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
 import { configuredTestContext } from '../configured-context.ts';
 import { expectAsyncReturned, expectReturned, rejectionReason } from '../helpers/expect-rejection.ts';
 import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
-import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.ts';
+import {
+  compareScopedSourceSnapshots,
+  snapshotDeclaredSources,
+} from '../../src/orchestration/scoped-source-snapshot.ts';
 import {
   createInitialSourceWorkFixture,
   prepareInitialSourceFrontier,
@@ -28,6 +31,8 @@ import {
   hostDatabase as initialSourceHostDatabase,
   type InitialWorkFixture,
   admittedInput as initialSourceAdmissionInput,
+  currentJournal as initialSourceJournal,
+  changeOneAcceptedDocument,
 } from '../helpers/initial-source-work-fixture.ts';
 import { requireHostState } from '../helpers/task-source-host-fixture.ts';
 import { suspendLocalWork } from '../../src/orchestration/suspend-local-work.ts';
@@ -71,13 +76,26 @@ import {
   withReadonlyDispatchHostFixture,
 } from '../helpers/readonly-dispatch-host-fixture.ts';
 import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
-import { createPrewriterPreparationObservation } from '../helpers/public-prewriter-fixture.ts';
+import {
+  createPrewriterPreparationObservation,
+  runSynthesisFixtureInProcess,
+} from '../helpers/public-prewriter-fixture.ts';
 import { nativeDatabaseSnapshotReader } from '../helpers/native-database-snapshot.ts';
 import { prepareQueuedInitialSourceTaskSource } from '../helpers/queued-initial-source-tasksource-fixture.ts';
 import { acquireLocalSourceWriterLease, admitLocalSessionWork } from '../../src/orchestration/local-work-admission.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { prepareLifecycleForCorrection } from '../../src/orchestration/final-assurance.ts';
 import { MastraSessionBridge } from '../../src/orchestration/mastra-session-bridge.ts';
+import { bindControlledRuntimeInitialization } from '../helpers/controlled-runtime-initialization-fixture.ts';
+import { readRetainedUnissuedSessionEngineSnapshot } from '../../src/orchestration/session-engine-snapshot.ts';
+import {
+  projectConfiguredFrontierContinuationAction,
+  projectConfiguredPrewriterContinuationRequests,
+  type DeliveredWorkContinuationRequest,
+} from '../../src/orchestration/delivered-work-continuation.ts';
+import { normalConfigEndpointProof } from '../helpers/configured-frontier-host-fixture.ts';
+import { requestFixture as continuationRequestSeed } from '../helpers/delivered-work-continuation-fixture.ts';
+import { runtimePackageBeforeimageFixture } from '../helpers/runtime-package-beforeimage-fixture.ts';
 import { openAdmittedSessionExecution } from '../../src/orchestration/admitted-session-execution.ts';
 import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } from '../../src/runtime-kernel.ts';
 import { parseTaskSourceResourceTransitionReceipt } from '../../src/orchestration/task-source-resource-transition.ts';
@@ -129,6 +147,11 @@ function requiredMastraSnapshot(snapshot: MastraSessionLedgerSnapshot | null): M
 function requiredPersistentSnapshot(snapshot: PersistentSessionSnapshot | null): PersistentSessionSnapshot {
   if (snapshot === null) throw new Error('persistent session handoff snapshot is missing');
   return snapshot;
+}
+
+function requiredValue<T>(value: T | null | undefined, label: string): T {
+  if (value === null || value === undefined) throw new Error(label + ' is missing');
+  return value;
 }
 
 function store(): PersistentSessionHandoffStore {
@@ -1910,6 +1933,373 @@ test('configured writer preflight refuses peer admission across snapshot and pol
     { holdExpiredOwnerClock: true },
     20_000,
   );
+}, 20_000);
+
+test('configured native continuation reaches the retained TaskSource authorization refusal without writes', async () => {
+  const beforeimage = runtimePackageBeforeimageFixture(tmpdir(), 'vida-agent', (allocated) => {
+    console.info('Configured continuation retained package beforeimage: ' + allocated);
+  });
+  await beforeimage.bindBeforeimage(async (restorePackage) => {
+    await withAdmittedHandoffFixture(
+      async (fixture) => {
+        let continuationLedger: MastraSessionLedger | undefined;
+        await withInitialSourceCleanup(
+          async () => {
+            const host = initialSourceHostStore(fixture);
+            const admission = initialSourceAdmissionInput(fixture);
+            const retainedAuthorization = await readFile(path.join(fixture.root, fixture.sourceAuthorizationPath));
+            await bindControlledRuntimeInitialization(fixture.root, fixture.config, host);
+            await runSynthesisFixtureInProcess(
+              {
+                args: [],
+                publicRun: () => {
+                  throw new Error('Native continuation fixture must not enter public CLI');
+                },
+                sync: () => initialSourceJournal(fixture),
+                repositoryRoot: fixture.root,
+                workId: fixture.identity.work_id,
+                attempt: 1,
+                work: (() => {
+                  const state = host.readHostStateSnapshot(fixture.identity);
+                  requireHostState(state);
+                  return state.work;
+                })(),
+              },
+              {
+                ledger: initialSourceHostLedger(fixture),
+                bridge: fixture.bridge!,
+                source: fixture.originalSource,
+              },
+            );
+            const preparationOwner = host.readHostStateSnapshot(fixture.identity);
+            requireHostState(preparationOwner);
+            const journal = requiredMastraSnapshot(initialSourceJournal(fixture));
+            expect(journal.state.items).toHaveLength(1);
+            expect(journal.state.items[0]).toMatchObject({ issue_id: null, observation: null });
+            acquireLocalSourceWriterLease({
+              repositoryRoot: fixture.root,
+              config: fixture.config,
+              store: host,
+              identity: fixture.identity,
+              nativeSessionHandle: admission.nativeSessionHandle,
+              stageId: 'develop_task',
+              assignmentIndex: 0,
+              expectedWork: preparationOwner.workVersion,
+              expectedLedger: preparationOwner.ledgerVersion,
+              expectedSessionJournal: { attempt: 1, version: journal.version },
+            });
+            const before = host.readHostStateSnapshot(fixture.identity);
+            requireHostState(before);
+            const source = requiredValue(journal.state.source_scope, 'Native continuation Source');
+            const engineBinding = {
+              repositoryRoot: fixture.root,
+              config: fixture.config,
+              selection: admission.selection,
+              context: { ...admission.context, scope_digest: source.digest },
+              workflowId: before.work.binding.workflow_id,
+              runId: requiredValue(before.work.execution.run_id, 'Native continuation run'),
+            };
+            const engine = readRetainedUnissuedSessionEngineSnapshot(engineBinding, {
+              work: before.work,
+              journal: journal.state,
+            });
+            suspendLocalWork({
+              store: host,
+              identity: fixture.identity,
+              journal,
+              expectedWork: before.workVersion,
+              expectedLedger: before.ledgerVersion,
+              expectedMaintenanceGeneration: before.maintenanceGeneration,
+              nativeSessionHandle: admission.nativeSessionHandle,
+              userRequestPointer: 'fixture:configured-native-tasksource-continuation',
+              requestIntent: 'linked_correction',
+              config: fixture.config,
+              documentationContext: {
+                repository_root: fixture.root,
+                repository_id: fixture.identity.repository_id,
+                project_id: 'sample',
+                work_id: fixture.identity.work_id,
+              },
+            });
+            const paused = host.readHostStateSnapshot(fixture.identity);
+            requireHostState(paused);
+            restorePackage();
+            const configPath = path.join(fixture.root, 'agent-runtime.config.v1.yaml');
+            writeFileSync(configPath, fixture.currentConfigBytes);
+            const targetConfig = loadRuntimeConfig(fixture.root);
+            const targetConfigDigest = runtimeConfigDigest(targetConfig);
+            const evolvedSource = changeOneAcceptedDocument(fixture);
+            const authorizedSourceChanges = compareScopedSourceSnapshots(source, evolvedSource);
+            const project = loadProjectSetContext(
+              fixture.root,
+              targetConfig,
+              fixture.identity.repository_id,
+              fixture.identity.project_ids,
+            );
+            const action = projectConfiguredFrontierContinuationAction({
+              engine,
+              journal: journal.state,
+              targetConfigDigest,
+              currentSourceScope: evolvedSource,
+            });
+            const requests = projectConfiguredPrewriterContinuationRequests({
+              ...engineBinding,
+              config: targetConfig,
+              context: { ...engineBinding.context, scope_digest: evolvedSource.digest },
+              engine,
+              journal: journal.state,
+              currentSourceScope: evolvedSource,
+              lifecycleRisk: paused.work.lifecycle.risk,
+            });
+            expect(requests.map((item) => item.role)).toEqual(['source-planner']);
+            const seed = continuationRequestSeed({
+              priorConfigDigest: paused.work.binding.config_digest,
+              targetConfigDigest,
+              projectIds: fixture.identity.project_ids,
+              workspaceId: host.workspaceId,
+            });
+            const unsigned: DeliveredWorkContinuationRequest = {
+              ...seed,
+              identity: fixture.identity,
+              nativeSessionHandle: admission.nativeSessionHandle,
+              expectedWork: paused.workVersion,
+              expectedLedger: paused.ledgerVersion,
+              expectedJournal: journal.version,
+              expectedMaintenanceGeneration: paused.maintenanceGeneration,
+              priorRuntimeCodeDigest: paused.work.binding.runtime_code_digest,
+              targetRuntimeCodeDigest: beforeimage.current.digest,
+              targetSchemaDigest: paused.work.binding.schema_digest,
+              targetProjectContextDigest: project.project_context_digest,
+              currentSourceScope: evolvedSource,
+              authorizedSourceChanges,
+              action,
+              originalRequestPointer: 'fixture:configured-native-tasksource-continuation',
+            };
+            const request = { ...unsigned, sourceTransition: normalConfigEndpointProof(unsigned) };
+            const db = initialSourceHostDatabase(fixture);
+            const principal = 'fixture:configured-native-tasksource-continuation';
+            const continuationStore = new HostStateStore(
+              db,
+              host.workspaceId,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              fixture.root,
+              undefined,
+              undefined,
+              {
+                principal,
+                verify: (candidate) =>
+                  canonicalJsonDigest(candidate) === canonicalJsonDigest(request)
+                    ? {
+                        schema: 'VidaDeliveredWorkContinuationAuthorization/v1',
+                        request_digest: canonicalJsonDigest(candidate),
+                        principal,
+                        transition_digest: candidate.sourceTransition.transition_digest,
+                        action_digest: canonicalJsonDigest(candidate.action),
+                      }
+                    : null,
+              },
+            );
+            const continued = await continuationStore.continueDeliveredWork(request);
+            expect(continued.status).toBe('continued');
+            expect(continued.receipt.rights_granted).toBe(false);
+            expect(before.work.binding.runtime_code_digest).toBe(beforeimage.before.digest);
+            expect(continued.snapshot.work?.binding.runtime_code_digest).toBe(beforeimage.current.digest);
+
+            continuationLedger = openConfiguredMastraSessionLedger(fixture.root);
+            const continuationContext = { ...admission.context, scope_digest: evolvedSource.digest };
+            const bridge = await MastraSessionBridge.open({
+              repositoryRoot: fixture.root,
+              config: targetConfig,
+              ledger: continuationLedger,
+              projectIds: fixture.identity.project_ids,
+              selection: admission.selection,
+              context: continuationContext,
+              workflowId: paused.work.binding.workflow_id,
+              workspaceId: host.workspaceId,
+              configuredFrontier: { identity: fixture.identity, attempt: 1 },
+            });
+            await withInitialSourceCleanup(
+              async () => {
+                const currentJournal = requiredMastraSnapshot(continuationLedger!.resume(fixture.identity.work_id, 1));
+                const stepId = requiredValue(currentJournal.state.step_id, 'Native continuation planner step');
+                let issued = continuationLedger!.issueWave(fixture.identity.work_id, 1, currentJournal.version);
+                for (const item of issued.state.items) {
+                  const preparation = createPrewriterPreparationObservation(
+                    { request: item.request, issue_id: requiredValue(item.issue_id, 'Continuation planner issue') },
+                    {
+                      work: requiredValue(
+                        continuationLedger!.hostState.readHostStateSnapshot(fixture.identity).work,
+                        'Continuation planner Work',
+                      ),
+                      workId: fixture.identity.work_id,
+                    },
+                    1,
+                  );
+                  const summary = JSON.stringify(preparation);
+                  issued = continuationLedger!.report(
+                    fixture.identity.work_id,
+                    1,
+                    issued.version,
+                    {
+                      schema: 'VidaSessionObservation/v1',
+                      action_id: item.request.action_id,
+                      issue_id: requiredValue(item.issue_id, 'Continuation planner report issue'),
+                      agent_id: preparation.observer_id,
+                      tool_call_ref: 'fixture:configured-continuation-planner-' + item.issue_id,
+                      status: 'reported_complete',
+                      summary,
+                      output_digest: canonicalJsonDigest(summary),
+                      evidence_refs: preparation.evidence_refs,
+                    },
+                    evolvedSource,
+                  );
+                }
+                const observations = issued.state.items.map((item) =>
+                  requiredValue(item.observation, 'Continuation planner observation'),
+                );
+                await bridge.resume(stepId, observations, evolvedSource);
+              },
+              () => bridge.close(),
+              'Configured TaskSource continuation bridge cleanup',
+            );
+
+            const configured = continuationLedger;
+            expect(configured.hostState.readInitialSourceContinuationLineageView(fixture.identity, 1)).toBeNull();
+            expect(
+              canonicalJson(
+                configured.hostState.readConfiguredFrontierRecoveryView(fixture.identity, 1)?.original ?? null,
+              ),
+            ).toBe(canonicalJson(continued.receipt));
+            const owner = configured.hostState.readHostStateSnapshot(fixture.identity);
+            requireHostState(owner);
+            const developerJournal = requiredMastraSnapshot(configured.resume(fixture.identity.work_id, 1));
+            expect(developerJournal.state.items.map((item) => item.request.stage_id)).toEqual(['develop_task']);
+            expect(
+              developerJournal.state.items.every((item) => item.issue_id === null && item.observation === null),
+            ).toBe(true);
+            const developer = developerJournal.state.items[0]!;
+            acquireLocalSourceWriterLease({
+              repositoryRoot: fixture.root,
+              config: targetConfig,
+              store: configured.hostState,
+              identity: fixture.identity,
+              nativeSessionHandle: admission.nativeSessionHandle,
+              stageId: developer.request.stage_id,
+              assignmentIndex: developer.request.assignment_index,
+              expectedWork: owner.workVersion,
+              expectedLedger: owner.ledgerVersion,
+              expectedSessionJournal: { attempt: 1, version: developerJournal.version },
+            });
+            const taskSourceOwner = configured.hostState.readHostStateSnapshot(fixture.identity);
+            requireHostState(taskSourceOwner);
+            const projectContext = loadProjectContext(
+              fixture.root,
+              targetConfig,
+              fixture.identity.repository_id,
+              'sample',
+            );
+            const taskSourceRequest: TaskSourceBindingRequest = {
+              schema: 'TaskSourceBindingRequest/v1',
+              operation: 'propose-create',
+              operation_id: 'fixture-configured-continuation-old-authorization',
+              request_id: 'fixture-configured-continuation-old-authorization-request',
+              branch_ref: 'refs/heads/codex/configured-continuation-old-authorization',
+              expected_host: {
+                work: taskSourceOwner.workVersion,
+                ledger: taskSourceOwner.ledgerVersion,
+                journal: { attempt: 1, version: developerJournal.version },
+                maintenance_generation: taskSourceOwner.maintenanceGeneration,
+              },
+              work_id: fixture.identity.work_id,
+              attempt: 1,
+              thread_id: admission.nativeSessionHandle,
+              repository_id: fixture.identity.repository_id,
+              project_ids: fixture.identity.project_ids,
+              canonical_host_root: fixture.root,
+              source_root: path.join(fixture.root, '.tmp', 'configured-continuation-task-source'),
+              config_digest: runtimeConfigDigest(targetConfig),
+              project_context_digest: projectContext.project_context_digest,
+            };
+            const authorizationSha = createHash('sha256')
+              .update(await readFile(path.join(fixture.root, fixture.sourceAuthorizationPath)))
+              .digest('hex');
+            const preparation = expectReturned(() =>
+              configured.hostState.prepareTaskSourceBindingOperation({
+                request: taskSourceRequest,
+                identity: fixture.identity,
+                verifyCurrent: ({ journal: current }) => {
+                  if (!current.source_scope) throw new Error('Continued TaskSource Journal has no Source scope');
+                  return {
+                    source_authorization_sha256: authorizationSha,
+                    source_scope_digest: current.source_scope.digest,
+                  };
+                },
+              }),
+            );
+            expect(preparation.status).toBe('prepared');
+            const readRows = nativeDatabaseSnapshotReader(db);
+            const beforeRefusal = readRows();
+            const beforeJournal = configured.resume(fixture.identity.work_id, 1);
+            const beforeSource = snapshotDeclaredSources(requireSafeRepositoryAccess(fixture.root), fixture.documents);
+            const authorizationPath = path.join(fixture.root, fixture.sourceAuthorizationPath);
+            const beforeAuthorization = await readFile(authorizationPath);
+            expect(beforeAuthorization).toEqual(retainedAuthorization);
+            const readContinuation = configured.hostState.readConfiguredFrontierRecoveryView.bind(configured.hostState);
+            let nativeContinuationReads = 0;
+            const continuationObserver = spyOn(
+              configured.hostState,
+              'readConfiguredFrontierRecoveryView',
+            ).mockImplementation((...args) => {
+              const view = readContinuation(...args);
+              if (view && canonicalJsonDigest(view.original) === canonicalJsonDigest(continued.receipt))
+                nativeContinuationReads++;
+              return view;
+            });
+            const refusal = await withInitialSourceCleanup(
+              () =>
+                rejectionReason(
+                  configured.hostState.issueTaskSourceBindingOperation({
+                    request: taskSourceRequest,
+                    identity: fixture.identity,
+                  }),
+                ),
+              () => continuationObserver.mockRestore(),
+              'Configured continuation native read observer restoration',
+            );
+            expect(() => {
+              throw refusal;
+            }).toThrow('current scoped human Source permission does not authorize this task-source operation');
+            expect(nativeContinuationReads).toBeGreaterThanOrEqual(2);
+            expect(readRows()).toEqual(beforeRefusal);
+            expect(configured.resume(fixture.identity.work_id, 1)).toEqual(beforeJournal);
+            expect(
+              db
+                .query(
+                  "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
+                )
+                .all(),
+            ).toEqual([]);
+            expect(snapshotDeclaredSources(requireSafeRepositoryAccess(fixture.root), fixture.documents)).toEqual(
+              beforeSource,
+            );
+            expect(await readFile(authorizationPath)).toEqual(beforeAuthorization);
+            expect(configured.hostState.readDeliveredWorkContinuationReceipt(fixture.identity, 1)).toEqual(
+              continued.receipt,
+            );
+            expect(db.inTransaction).toBe(false);
+            expect(configured.sessionProducerBinding().database.inTransaction).toBe(false);
+          },
+          () => continuationLedger?.close(),
+          'Configured native TaskSource continuation ledger cleanup',
+        );
+      },
+      { legacyTaskFrontier: true },
+      20_000,
+    );
+  });
 }, 20_000);
 
 test('configured TaskSource proposal binds real admitted policy evidence before issuing its inert argv', async () => {

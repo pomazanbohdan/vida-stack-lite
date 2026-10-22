@@ -15,6 +15,51 @@ PASS. Its frozen correspondence/complexity/CRAP and mutation remain deferred wit
 their original budgets and assertion-confirmed Killed100 rules. No second writer
 or numeric producer is active. Complete the selected contour before another.
 
+2162/2163 resume the remaining counter studies from map2149. Root rejects
+two first-draft premise errors: key5 counts evaluation of the RHS even when
+initial is null, and the complete-snapshot equality check follows key26 rather
+than dominating it. Both research notes are corrected; neither false argument
+creates an objective skip. The TaskSource caller performs assertCurrent before
+its later retained-authorization policy refusal, unlike the Source writer's
+outer verifier.2165 prepares one isolated native configured-continuation denial
+case from existing owners. Root compares the exact file against8eb3498 before
+integration, preserves the worker proposal at
+/workspace/vida-session-configured-patch-ZrYEVG and owns all subsequent edits.
+No second contour or numeric
+producer starts, no Source authorization is rewritten, and no action executes.
+
+2167 catches the proposal's synchronous TaskSource preparation being passed to
+an async expectation; Root uses its actual synchronous owner.2170 retains an
+invalid expired-clock premise before real legacy synthesis. The corrected live
+clock reaches2171's normal-endpoint validator, which requires distinct old/current
+runtime digests. Root reuses runtimePackageBeforeimageFixture: its single changed
+resource is explicit old-package test data, never installed or executed. The old
+snapshot is restored before native continuation to the actual current package;
+the callback's restore is idempotent and finally remains the cleanup owner.
+No package-root guard or authority reader is replaced. The native external
+transition verifier is controlled and exact-request-bound, as in the existing
+Host fixture; it grants no Source/Runtime right.
+
+2172 reaches the genuine retained-authorization denial but retains a wrong
+expected string.2173 catches a typed broad/narrow receipt comparison; canonical
+JSON equality keeps exact values without a type assertion.2174 proves the
+intended denial, native continuation rereads and complete database equality, then
+catches an oracle assuming the refused action table exists. Root checks native
+sqlite_master absence instead. The other two action-table reads in this test
+contour follow successful issue and retain their existing precondition.
+2176 final strict146/zero-warning lint pass; the new named case passes1/25assertions
+in9.11s (body7.419s) under its existing20s native-fixture bound. It preserves the
+original Source authorization bytes, Journal, continuation receipt, every native
+row/schema and transaction closure, with no action table created. Its observer
+returns actual configured views and checks completion outside the production catch.
+Independent2175 accepts the final case and helper's zero-argument caller
+compatibility.2177 separately verifies the existing Host frontier-history caller:
+1PASS/15assertions in20.44s including module startup, within its per-case bound.
+No coverage gain is claimed before the sole complete stage. Original failed
+roots/logs and successful fixture/beforeimage data remain retained; no unchanged
+full stage has been repeated. The owned terminal patch copy remains deferred
+under2144's uninspectable-process reference prerequisite; no bytes are reclaimed.
+
 ### Current measured repair packet
 
 #### Corrective policy and TaskSource terminal-history repair
@@ -519,8 +564,8 @@ unchanged boot/image. Native88PASS/0FAIL/1157assertions in87.85s.
 Raw **F275/275 L857/862 S936/943 B752/764** remains BLOCKED/nonexact.
 Counts and selected Source/tests match2124; the internal build repair changes
 the harness, not the coverage numerator or denominator. Twelve
-branch arms remain, three with accepted dispositions and nine OPEN; seven
-statements remain, one with the key28 throw disposition. Five lines remain
+branch arms remain, four with accepted dispositions and eight OPEN; seven
+statements remain, two with the key21/key28 throw dispositions. Five lines remain
 raw uncovered; no line exclusion or adjusted denominator is introduced.
 MaxCC/entryCRAP29 is diagnostic only; frozen/mutation remain deferred.
 The sole stage imports once; historical exact count17/46 stays unchanged.
@@ -558,8 +603,30 @@ including the packet-builder check omitted by the first draft. No accepted
 native producer can reach the missing assignment under those contracts.
 This objective skip changes neither the raw zero counters nor BLOCKED outcome;
 reopen on changed verifier, config loader/digest, packet join or resolver caller.
-It grants no frozen/mutation waiver or Runtime acceptance. Other guard candidates
-remain OPEN for the reasons recorded above.
+It grants no frozen/mutation waiver or Runtime acceptance.
+
+2163 and independent2164 establish the same-identity WorkItem invariant for
+key21/arm0 and throw statement53 at persistent-session-handoff.ts248–254.
+Root accepts their objective disposition, bound to run751a578f-00ce-4341-a16e-3ab967f2a09f,
+map2149, exact Source/test fingerprints and manifest above.2166 directly compares
+the ten selected prerequisite/config/test files with that image's original bytes;
+all match, without another inventory/AST/hash pass. The exact comparison receipt
+is DIAG/session-workitem-byte-join-v2166.json. This is no fresh numeric run.
+The guard18 identity join rejects a different admitted identity before key21.
+For the same key, native admission validates WorkItem schema/ID and binds its
+canonical digest; retry validates the original item and intake bytes. Ordinary
+Host progression preserves the full binding except exact allowed-resource
+additions; dedicated Source/config/runtime/history transitions preserve the
+WorkItem digest. A distinct successor has a distinct Work ID, while successor
+retry preserves the existing binding. The fresh reader checks the protected
+intake hash and its item's digest against that same immutable binding. Therefore
+missing/malformed/wrong-ID/digest-different admitted data cannot pass those
+prerequisites under supported native producers. The later packet builder is not
+used as a predecessor proof. No schema, guard, denominator or result is changed;
+reopen on changed admission, identity, intake or native binding-transition rules.
+Key26 remains OPEN: its count check precedes snapshot comparison, and INTAKE
+runtime-code rebind can retire approvals. Its fresh runtime/intake prerequisites
+still need a supported fixture trace; no forged state or automatic skip follows.
 
 ### Previous completed session measurement custody
 
