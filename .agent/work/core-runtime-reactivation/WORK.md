@@ -13,6 +13,74 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current measured repair packet
 
+The unpublished packet1870–1891 revisits the four Host fixture prerequisites.
+1859's missing native evidence remains a limit on native qualification, but is
+not a ban on the maintained trusted Host component endpoint seam.1869 provides
+a producer-only unit sequence. The first correctly owned configured attempt
+reaches the real execution-only ownership guard and refuses its retained Source
+claims. That failure is preserved;1872 turns it into a no-effect regression and
+passes2cases/86assertions with strict153. No qualified history row is fabricated.
+
+1871 identifies the exact frontier/report digest join that invalidates simply
+rebinding to a fictitious code digest and restoring it later. The new package
+beforeimage helper stores one changed kernel resource as data, uses the current
+verified reader for all other resources, and captures the actual old snapshot.
+A scoped snapshot spy supplies that controlled initial package input and restores
+before the real Host frontier commit to the actual current package digest.
+The old resource is never executed or installed. The root/package-resource guard
+is preserved;1874's attempted access substitution refused that guard and was
+replaced by this narrower snapshot-input seam. All failed fixture roots remain.
+
+1878's frontier-history case passes15assertions/16.35s, strict154 and scoped lint.
+It carries the producer-created frontier receipt through actual writer reservation,
+controlled fixture Source output, completed-report recovery and receipt reads.
+The existing20s recovery-case bound stays. Beforeimage setup copies one resource,
+not an entire runtime tree, and the new case omits unrelated peer admission.
+Earlier1876/1877results near20s and all failures are retained, not relabeled as
+speedup measurements. Full numerical closure is pending batched review, final
+selection pin/publication and one matching SDK stage.1879's independent review
+finds a setup-failure custody gap in the new beforeimage helper. Its root is now
+registered and logged immediately after allocation, before any resource write.
+The callback is required; failed roots remain retained.1880's two unchanged
+frontier controls pass188assertions. No new full run yet.
+
+The existing native legacy frontier fixture supplies the actual execution-only
+owner before Source promotion, so it now produces two qualified code receipts
+through the real Host producer and the maintained typed component endpoint seam.
+1882 reproduces a product defect after a settled Host attempt: code adoption
+rewinds Work binding but loses that attempt's original binding. Independent1883
+accepts optional immutable prior-Work custody joined to exact CAS, shared Work
+schema, protected digest and terminal-only history. New receipts preserve it;
+old rows/envelopes remain unchanged. Descending history restores per-attempt
+bindings and rejects altered terminal results. The test includes an actual
+completed attempt between the two code adoptions.
+
+1884 then reproduces a second product defect. Configured-frontier readers apply
+the successor's protected binding to valid code history preceding the transition.
+Independent1885 reviews the boundary design. The shared projection now validates
+the entire ordered prefix against immutable prior Work and the suffix against
+its successor, retaining owner/attempt/endpoint checks. Configured Host, packet,
+engine and failed-prewriter consumers pass that boundary. An earlier adoption
+does not override the configured successor endpoint. All failed reproductions
+and roots remain retained.1889's early corruption oracle correctly hit the
+stronger exact-current-version digest guard; the terminal-history control now
+runs after a real intervening completed attempt.1890's one-attempt expected
+array was updated to include that actual second producer result.
+
+1891 scoped strict154 and lint pass. Four focused cases pass284assertions in31.91s,
+including frontier-history16.48s and configured-history12.63s, each within its
+unchanged20s compound-case limit. Invalid prior Work, terminal-result corruption,
+reordered/foreign-owner code history and the no-attempt legacy envelope have
+controls. These remain component proofs, not native installation qualification.
+Independent1891 finds no correctness/security blocker. Its retained-beforeimage
+failure directory is intentional custody, already registered/logged rather than
+silently leaked.1893 passes final strict154/tooling128, scoped lint, the two
+recovery cases/138assertions and exact-pin eligibility1case/10assertions. The
+shared recovery projection now checks global order/owner before partitioning
+around recovery too. Root refreshed the sole changed Host test pin once after
+the complete assertion group; stopped-source bytes remain unchanged. Ordinary
+publication and one matching SDK/image/stage remain pending.
+
 The current repair batch completes the genuine two-research historical
 capture component reproduction and canonical-record proof. The regular synthesis
 owner now shares its existing artifact join and record verifier with the narrow
@@ -73,8 +141,8 @@ not the rebind alone. Three other retained defensive arms have1855review;
 the four real frontier/history prerequisite branches remain OPEN under1859.
 Raw counters are unchanged by dispositions and the contour is not closed.
 
-The one current resource observation reports26010243072available bytes on
-workspace/retained and6473224192on scratch, above floor plus reserve2214592512.
+The one current resource observation reports25916473344available bytes on
+workspace/retained and6249443328on scratch, above floor plus reserve2214592512.
 No cleanup, broad disk scan or duplicate producer was started for this batch.
 Earlier retained images and receipts still supply current proof dependencies.
 
@@ -1930,6 +1998,33 @@ Keep these specific unresolved paths open:
   established neither a defect nor numeric execution.
 
 ### Execution combinations
+
+The2026-10-22 06:45–09:45UTC audit reuses the two complete retained stages,
+published Source packets and existing gap maps. Blind1886 inspects the bounded
+stage/capture/report owners and finds no confirmed useful runner-cost defect.
+Streams are already captured/hashed once, stdout is read once and memoized,
+and the stage performs one projection import. Two in-memory scans of470stdout
+bytes have different attribution contracts; combining them has no demonstrated
+benefit. The review missed the existing absolute DIAG/stage-v1866.log locator;
+Root verifies its2141-byte file directly rather than rerunning the producer.
+One accidental read-only broad rg lookup by that reviewer is disclosed and not
+repeated. No additional inventory, AST/hash pass or full suite is added.
+
+Test-authoring corrections replace a whole runtime-tree copy with one inert
+changed-resource overlay, reuse the existing genuine execution-only fixture,
+and batch the two reproduced product corrections before measurement. Changed
+test oracles preserve actual produced attempt cardinality and the stronger
+current-version digest refusal. These are verified correctness/operation-count
+changes; no controlled time, tool-call or token reduction is claimed.
+Static-first grouped controls plus bounded independent readers and one stage
+remain selected. A full run per edit would repeat unchanged setup; fully serial
+files lack a matched wall-time measurement, and wider pools lack qualification.
+The existing two-file child arrangement, case limits and resource floors stay.
+Cleanup reuses1707's inventory. Current images still support the owner-body
+rebind chain and latest bound reports, so the exact hidden roots and dependent
+contour-stage directories are deferred. Nothing was deleted and no schedule
+or second automation was created. A new retained map can retire dependencies
+only after their custody/dependency checks, never by loss of historical files.
 
 The09:35–12:38UTC audit reuses the retained script-cost review, native receipts,
 gap map and Source packets instead of another suite/AST/hash inventory. Stage

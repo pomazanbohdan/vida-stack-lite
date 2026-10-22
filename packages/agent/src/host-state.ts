@@ -227,6 +227,7 @@ import {
 import {
   projectQualifiedRuntimeCodeAncestor,
   runtimeCodeContinuationProtectedWorkDigest,
+  qualifiedRuntimeTerminalCustody,
   validateQualifiedRuntimeCodeContinuationReceipt,
   validateQualifiedRuntimeCodeContinuationRequest,
   validateQualifiedRuntimeCodeContinuationState,
@@ -238,6 +239,7 @@ import {
 import { validateFailedPrewriterRecoveryBasis } from './orchestration/failed-prewriter-recovery.js';
 import {
   validateFailedPrewriterRecoveryReceipt,
+  projectConfiguredRuntimeCodeAncestor,
   projectRecoveryRuntimeCodeAncestor,
   validateFailedPrewriterTransitionRequest,
   failedPrewriterRecoveryRecord,
@@ -3640,6 +3642,28 @@ function cachedStoredWorkHistory(
   if (canCache) cache!.set(key, freezeJsonValue({ ...history, records: [...history.records] }));
   return history;
 }
+function retainQualifiedTerminalBindings(
+  candidate: WorkState,
+  receipt: QualifiedRuntimeCodeContinuationReceipt,
+  priorBinding: WorkState['binding'],
+  bindings: Map<string, WorkState['binding']>,
+): void {
+  const prior = receipt.prior_work;
+  if (!prior) return;
+  requireState(
+    prior.workspace_id === candidate.workspace_id &&
+      sameJson(prior.binding, priorBinding) &&
+      prior.execution.run_id === candidate.execution.run_id &&
+      prior.execution.input_digest === candidate.execution.input_digest,
+    'qualified code prior Work binding differs',
+  );
+  for (const attempt of prior.execution.assignment_attempts) {
+    const current = candidate.execution.assignment_attempts.find((entry) => entry.attempt_id === attempt.attempt_id);
+    requireState(current && sameJson(current, attempt), 'qualified code terminal assignment history differs');
+    bindings.set(attempt.attempt_id, prior.binding);
+  }
+}
+
 function checkedStoredWork(
   database: Database,
   workspaceId: string,
@@ -3690,11 +3714,13 @@ function checkedStoredWork(
             canonicalJsonDigest(candidate) === receipt.work_version.digest),
         'qualified runtime code binding history is not continuous',
       );
-      expected = {
+      const priorBinding = {
         ...expected,
         runtime_code_digest: request.oldRuntimeCodeDigest,
         runtime_source_revision: request.oldRuntimeCodeDigest,
       };
+      retainQualifiedTerminalBindings(candidate, receipt, priorBinding, bindings);
+      expected = priorBinding;
       continue;
     }
     if (record.kind === 'failed-prewriter') {
@@ -8789,6 +8815,7 @@ export class HostStateStore {
         request_digest: requestId,
         endpoint_proof: currentProof,
         protected_work_digest: runtimeCodeContinuationProtectedWorkDigest(work),
+        ...qualifiedRuntimeTerminalCustody(work),
         work_version: { revision: next.revision, digest: canonicalJsonDigest(next) },
         status: 'adopted',
         rights_granted: false,
@@ -14259,6 +14286,7 @@ export class HostStateStore {
             current.runtimeCodeContinuations,
             recovery?.work_version.revision ?? receipt.work_version.revision,
             recovery,
+            action.kind === 'configured_frontier' ? (receipt as ConfiguredFrontierReceipt) : undefined,
           ).binding,
           recovery?.successor_work.binding ?? receipt.successor_binding,
         ) &&
@@ -14309,6 +14337,7 @@ export class HostStateStore {
             current.runtimeCodeContinuations,
             bindingRecovery?.work_version.revision ?? receipt.work_version.revision,
             bindingRecovery,
+            receipt.request.action.kind === 'configured_frontier' ? (receipt as ConfiguredFrontierReceipt) : undefined,
           ).binding,
           bindingRecovery?.successor_work.binding ?? receipt.successor_binding,
         ),
@@ -16671,10 +16700,10 @@ export class HostStateStore {
         now = Date.now();
       validateFailedPrewriterRecoveryBasis({
         original: original as ConfiguredFrontierReceipt,
-        work: projectQualifiedRuntimeCodeAncestor(
+        work: projectConfiguredRuntimeCodeAncestor(
           work,
           before.runtimeCodeContinuations,
-          original.work_version.revision,
+          original as ConfiguredFrontierReceipt,
         ),
         ledger,
         journal,
@@ -16915,10 +16944,10 @@ export class HostStateStore {
         now = Date.now();
       validateFailedPrewriterRecoveryBasis({
         original: original as ConfiguredFrontierReceipt,
-        work: projectQualifiedRuntimeCodeAncestor(
+        work: projectConfiguredRuntimeCodeAncestor(
           work,
           before.runtimeCodeContinuations,
-          original.work_version.revision,
+          original as ConfiguredFrontierReceipt,
         ),
         ledger,
         journal,

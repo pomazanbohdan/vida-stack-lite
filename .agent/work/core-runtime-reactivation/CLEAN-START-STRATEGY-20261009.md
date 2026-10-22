@@ -244,6 +244,33 @@ No focused PASS, historical maximum or coverage milestone closes later gates.
 
 ## Priority boundary
 
+1869 rechecks the remaining Host endpoint prerequisite before another full run.
+The existing typed trusted endpoint seam may prove Host component lineage through
+production commit methods, with exact current owner/CAS/config/source and chained
+endpoint references. It does not attest native installation or public CLI effects.
+The earlier foreign-owner denial proves only that refusal, not impossibility of
+a correctly owned component request. Do not insert qualified history rows or
+relax the verifier. Batch the supported Host controls and review before measuring.
+
+1882 reproduces a P0 in that composition: qualified code adoption permits settled
+Host attempts but its receipt cannot restore their original assignment binding.
+Retain the exact prior Work on new qualified receipts with terminal attempts,
+joined to request.expectedWork digest/revision and the protected binding. Preserve
+the legacy exact receipt shape when no prior Work is present. Validate the shared
+Work schema and terminal-only status, then bind immutable retained attempts while
+rewinding checkedStoredWork. Reject changes to their body or original binding.
+Freeze new qualifiedRuntimeTerminalCustody, qualifiedRuntimeReceiptKeys,
+qualifiedPriorRuntimeMatches, assertQualifiedRuntimePriorWork and
+retainQualifiedTerminalBindings at CC/CRAP10/10, including their predicates.
+1884 also reproduces a configured-frontier projection defect when valid code
+history precedes the configuration transition. Freeze the new
+projectConfiguredRuntimeCodeAncestor, assertConfiguredCodeHistoryBoundary and configuredRuntimeCodeEndpoint
+roles and their predicates at10/10. Validate the entire ordered history against
+the configured receipt's prior/successor Work rather than dropping the prefix.
+Pass that boundary through all configured consumers, including failed-prewriter
+recovery validation. Existing callable budgets stay.
+Independent1883 reviews this bounded design before the product correction.
+
 1841/1855 extend the same historical-capture packet, not a second contour.
 The actual native two-research fixture must seed configuration before admission,
 activate its complete issued wave before exposure, and report/normalize/admit

@@ -10,6 +10,7 @@ import {
 import { canonicalJsonComponents } from '../contracts/canonical-json-core.js';
 import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
+import { validateWorkState } from '../contracts/work-state-schema.js';
 
 export function qualifiedRuntimeCodeHistoryJson(value: unknown, depth = 0): string {
   if (!Array.isArray(value)) throw new Error('qualified runtime code history must be an array');
@@ -72,6 +73,7 @@ export interface QualifiedRuntimeCodeContinuationReceipt {
   readonly request_digest: string;
   readonly endpoint_proof: QualifiedRuntimeCodeEndpoints;
   readonly protected_work_digest: string;
+  readonly prior_work?: WorkState;
   readonly work_version: StateVersion;
   readonly status: 'adopted';
   readonly rights_granted: false;
@@ -304,13 +306,51 @@ export function runtimeCodeContinuationProtectedWorkDigest(work: WorkState): str
     authority: work.lifecycle.references.filter((ref) => ref.artifact_schema === 'LocalSourceWriteAuthorization/v1'),
   });
 }
+
+export function qualifiedRuntimeTerminalCustody(
+  work: WorkState,
+): { readonly prior_work: WorkState } | Record<string, never> {
+  return work.execution.assignment_attempts.length > 0 ? { prior_work: work } : {};
+}
+
+function qualifiedRuntimeReceiptKeys(value: unknown): readonly string[] {
+  return isPlainRecord(value) && Object.hasOwn(value, 'prior_work') ? [...receiptKeys, 'prior_work'] : receiptKeys;
+}
+
+function qualifiedPriorRuntimeMatches(work: WorkState, request: QualifiedRuntimeCodeContinuationRequest): boolean {
+  return (
+    work.binding.runtime_code_digest === request.oldRuntimeCodeDigest &&
+    work.binding.runtime_source_revision === request.oldRuntimeCodeDigest &&
+    work.lifecycle.config_binding.runtime_code_digest === request.oldRuntimeCodeDigest
+  );
+}
+
+function assertQualifiedRuntimePriorWork(
+  receipt: QualifiedRuntimeCodeContinuationReceipt,
+  request: QualifiedRuntimeCodeContinuationRequest,
+): void {
+  if (!Object.hasOwn(receipt, 'prior_work')) return;
+  const prior = receipt.prior_work;
+  requireContinuation(validateWorkState(prior), 'qualified prior Work schema differs');
+  requireContinuation(
+    prior.revision === request.expectedWork.revision &&
+      canonicalJsonDigest(prior) === request.expectedWork.digest &&
+      runtimeCodeContinuationProtectedWorkDigest(prior) === receipt.protected_work_digest &&
+      qualifiedPriorRuntimeMatches(prior, request) &&
+      prior.execution.assignment_attempts.length > 0 &&
+      prior.execution.assignment_attempts.every((attempt) => ['completed', 'no_effect'].includes(attempt.status)),
+    'qualified prior Work custody or terminal history differs',
+  );
+}
+
 export function validateQualifiedRuntimeCodeContinuationReceipt(
   value: unknown,
 ): QualifiedRuntimeCodeContinuationReceipt {
-  exact(value, receiptKeys);
+  exact(value, qualifiedRuntimeReceiptKeys(value));
   const receipt = value as unknown as QualifiedRuntimeCodeContinuationReceipt;
   const request = validateQualifiedRuntimeCodeContinuationRequest(receipt.request);
   validateQualifiedRuntimeCodeEndpoints(receipt.endpoint_proof, request);
+  assertQualifiedRuntimePriorWork(receipt, request);
   requireContinuation(
     receipt.schema === 'QualifiedRuntimeCodeContinuationReceipt/v1' &&
       receipt.request_digest === canonicalJsonDigest(request) &&

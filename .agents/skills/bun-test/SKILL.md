@@ -28,6 +28,13 @@ and topics. A captured pending continuation needs both exact admitted
 predecessors. Test changed record bytes before and during authorization, missing
 repository binding, detached refs, retained exposure and pure history reads.
 Do not replace that positive path with a component fixture containing only refs.
+For Host package-transition tests, reuse the single-resource beforeimage fixture.
+It supplies an actual captured old snapshot as controlled input and restores the
+snapshot spy before the current-package frontier and recovery checks. Unchanged
+resources keep their verified reader. Do not replace package-root guards, install
+the copied resource, insert qualified history rows, or claim native qualification.
+Keep the prior resource reader bound on the old endpoint verifier and preserve
+the report recovery's exact frontier/runtime digest join.
 
 For uncovered-function navigation, reuse the report's retained `istanbul_key`
 and `body_location` when present and matched to its bound Source map. The

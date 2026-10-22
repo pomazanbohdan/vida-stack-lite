@@ -2812,11 +2812,28 @@ current code against the authenticated adoption history. Exact retry returns
 the stored receipt. Plan/apply returns current versions and one next action;
 it never reissues an action or grants Source rights or Runtime acceptance.
 
+New receipts with settled assignment attempts retain the exact prior Work,
+bound to the request's Work CAS and protected digest. Every retained attempt
+must be completed or no-effect and remain byte-identical in later Work.
+During descending history validation, earlier receipts restore the original
+binding of older attempts; attempts completed between code adoptions retain
+their corresponding intermediate binding. A present invalid prior Work is
+rejected. Receipts without this field keep their existing strict envelope;
+history is never rewritten to add custody retroactively.
+
 Use the immutable receipt's Work revision as the code-history anchor. A code
 adoption at that revision belongs to the receipt's current binding. Later
 adoptions do not change its historical binding. Validate the complete ordered
 history before selecting the ancestor; a revision anchor is not a waiver of
 identity, protected Work or endpoint continuity.
+
+A configured-frontier transition also separates code-history segments. Validate
+the complete ordered prefix against its immutable prior Work and the suffix
+against its successor. Bind both segments to the same attempt and native owner,
+and reject a code adoption at the transition's own revision. An adoption before
+the transition cannot replace the successor's runtime endpoint. All configured
+Host, packet and engine readers carry this receipt boundary; filtering out old
+history without validating it is forbidden.
 
 A supported failed-prewriter Source recovery separates two code-history segments.
 Validate earlier adoptions against its exact prior Work and later adoptions

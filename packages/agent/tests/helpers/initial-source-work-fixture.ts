@@ -36,7 +36,11 @@ import {
 } from '../../src/orchestration/local-work-admission.ts';
 import { openAdmittedSessionExecution } from '../../src/orchestration/admitted-session-execution.ts';
 import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } from '../../src/runtime-kernel.ts';
-import { runPreparationFixtureInProcess, runSynthesisFixtureInProcess } from './public-prewriter-fixture.ts';
+import {
+  runPreparationFixtureInProcess,
+  runSynthesisFixtureInProcess,
+  runPrewriterFixtureInProcess,
+} from './public-prewriter-fixture.ts';
 import { bindControlledRuntimeInitialization } from './controlled-runtime-initialization-fixture.ts';
 import type {
   InitialSourceFrontierCodeRebindRequest,
@@ -716,17 +720,7 @@ export async function prepareInitialSourceFrontier(f: InitialWorkFixture, fronti
   await bindControlledRuntimeInitialization(f.root, f.config, hostStore(f));
   const prepare = frontier === 'readonly' ? runSynthesisFixtureInProcess : runPreparationFixtureInProcess;
   const journal = await prepare(
-    {
-      args: [],
-      publicRun: () => {
-        throw new Error('Native preparation fixture must not enter the public CLI');
-      },
-      sync: () => currentJournal(f),
-      repositoryRoot: f.root,
-      workId: f.identity.work_id,
-      attempt: 1,
-      work: continuationState(f).work,
-    },
+    initialSourcePreparationInput(f),
     { ledger: hostLedger(f), bridge: hostBridge(f), source },
     initialSourcePhases.enabled
       ? async <T>(phase: string, operation: () => T | Promise<T>): Promise<Awaited<T>> => {
@@ -742,6 +736,30 @@ export async function prepareInitialSourceFrontier(f: InitialWorkFixture, fronti
       : undefined,
   );
   return { receipt, journal };
+}
+
+function initialSourcePreparationInput(f: InitialWorkFixture) {
+  return {
+    args: [],
+    publicRun: () => {
+      throw new Error('Native preparation fixture must not enter the public CLI');
+    },
+    sync: () => currentJournal(f),
+    repositoryRoot: f.root,
+    workId: f.identity.work_id,
+    attempt: 1,
+    work: continuationState(f).work,
+  };
+}
+
+export async function advanceInitialSourcePrewriterFixture(f: InitialWorkFixture) {
+  const source = currentJournal(f).state.source_scope;
+  if (!source) throw new Error('Initial Source prewriter fixture Source is unavailable');
+  return runPrewriterFixtureInProcess(initialSourcePreparationInput(f), {
+    ledger: hostLedger(f),
+    bridge: hostBridge(f),
+    source,
+  });
 }
 
 /** Obtain the actual admitted opaque capability and Host reservation; execute no writer argv. */
@@ -899,6 +917,7 @@ export function fixtureFrontierProof(
 export function trustedHostFixtureVerifier(
   f: InitialWorkFixture,
   proof: InitialSourceFrontierCodeRebindVerifiedCurrent,
+  priorRuntimeAccess: Parameters<typeof snapshotRuntimePackageSources>[0] = runtimePackageAccess(),
 ): InitialSourceFrontierCodeRebindVerifyCurrent {
   return (request, state) => {
     const initial = state.initialReceipt;
@@ -914,8 +933,8 @@ export function trustedHostFixtureVerifier(
     if (source.digest !== request.sourceScopeDigest)
       throw new Error('fixture Host verifier: current Source scope changed');
     if (
-      snapshotRuntimePackageSources(runtimePackageAccess(), f.config.runtime.bundle, request.runtimeCodePaths)
-        .digest !== request.oldRuntimeCodeDigest
+      snapshotRuntimePackageSources(priorRuntimeAccess, f.config.runtime.bundle, request.runtimeCodePaths).digest !==
+      request.oldRuntimeCodeDigest
     )
       throw new Error('fixture Host verifier: prior runtime code changed');
     const authorization = initial.request.sourceAuthorizationReference;

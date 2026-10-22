@@ -661,6 +661,7 @@ export function acceptedContractSourceRevision(
     view.runtimeCodeContinuations,
     recovery?.work_version.revision ?? original.work_version.revision,
     recovery,
+    original,
   );
   requirePacket(
     original.attempt === ledger.state.attempt &&

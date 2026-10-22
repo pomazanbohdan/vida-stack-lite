@@ -11,6 +11,8 @@ import {
 import { seedOriginalFrontierEngine } from '../helpers/original-frontier-engine-fixture.ts';
 import { executionBudget } from '../../bin/bun.ts';
 import type { FailedPrewriterTransitionRequest } from '../../src/orchestration/failed-prewriter-transition.ts';
+import { projectRecoveryRuntimeCodeAncestor } from '../../src/orchestration/failed-prewriter-transition.ts';
+import { validateQualifiedRuntimeCodeContinuationReceipt } from '../../src/orchestration/qualified-runtime-code-continuation.ts';
 import { expectHistorySnapshotAfterOwner } from '../helpers/ledger-cache-observer.ts';
 import { afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test, setSystemTime } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
@@ -74,6 +76,7 @@ import {
   withExpiredOwner as withExpiredInitialSourceOwner,
   continuationState as initialSourceState,
   prepareInitialSourceFrontier,
+  advanceInitialSourcePrewriterFixture,
   frontierCodeRequest,
   fixtureFrontierProof,
   trustedHostFixtureVerifier,
@@ -81,6 +84,7 @@ import {
   expiredOwnerTime as initialSourceExpiredOwnerTime,
 } from '../helpers/initial-source-work-fixture.ts';
 import { createCompletedSourceReportRecoveryFixture } from '../helpers/completed-source-report-recovery-fixture.ts';
+import { runtimePackageBeforeimageFixture } from '../helpers/runtime-package-beforeimage-fixture.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 import {
   prepareLifecycleForCorrection,
@@ -162,6 +166,7 @@ import {
   assertProjectUpgradeInactive,
   loadRuntimeConfig,
   runtimeConfigDigest,
+  runtimePackageCodePaths,
 } from '../../src/config/runtime-config.ts';
 import { PROJECT_UPGRADE_OPERATION_PATH, sessionBridgeDatabaseRelativePath } from '../../src/config/project-paths.ts';
 import type { FlowIntent, WorkItemKind } from '../../src/config/runtime-config.ts';
@@ -501,10 +506,11 @@ function presentSnapshot(snapshot: HostSnapshot): PresentHostSnapshot {
   };
 }
 
-function foreignOwnerRuntimeCodeRequest(
+function runtimeCodeFixtureRequest(
   workIdentity: WorkIdentity,
   current: PresentHostSnapshot,
   journal: { readonly version: StateVersion; readonly state: MastraSessionLedgerState },
+  owner: 'current' | 'foreign' = 'foreign',
 ): Parameters<HostStateStore['commitQualifiedRuntimeCodeContinuation']>[0] {
   const source = requiredValue(journal.state.source_scope, 'foreign-owner code request Source');
   const codePaths = source.entries.map((entry) => entry.path).sort();
@@ -512,7 +518,7 @@ function foreignOwnerRuntimeCodeRequest(
     schema: 'QualifiedRuntimeCodeContinuationRequest/v1',
     identity: workIdentity,
     attempt: journal.state.attempt,
-    nativeSessionHandle: requiredLease(current.work).thread_id + '-foreign',
+    nativeSessionHandle: requiredLease(current.work).thread_id + (owner === 'foreign' ? '-foreign' : ''),
     leaseGeneration: requiredLease(current.work).generation,
     expectedWork: current.workVersion,
     expectedLedger: current.ledgerVersion,
@@ -5443,7 +5449,7 @@ test('configured continuation lookup exposes the complete prewriter wave and eac
     const codeProof = mock(qualifiedRuntimeCodeEndpointFixture);
     expect(() =>
       f.store.commitQualifiedRuntimeCodeContinuation(
-        foreignOwnerRuntimeCodeRequest(f.identity, presentSnapshot(before.snapshot), beforeJournal),
+        runtimeCodeFixtureRequest(f.identity, presentSnapshot(before.snapshot), beforeJournal),
         codeProof,
       ),
     ).toThrow('qualified runtime code continuation: owner, Source, run or quiescence differs');
@@ -5609,6 +5615,33 @@ test('configured continuation lookup exposes the complete prewriter wave and eac
     expect(ledger.report(f.identity.work_id, 1, current.version, observation, source)).toEqual(current);
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(planned);
     expect(current.resume_status).toBe('issued_outcome_uncertain');
+  });
+  preserveHostFixtureRoot = false;
+});
+
+test('configured code adoption refuses retained Source ownership before endpoint verification', async () => {
+  preserveHostFixtureRoot = 'case failed or timed out';
+  await withConfiguredFrontierHostFixture((f, { input }) => {
+    bindFrontierContractReferences(input);
+    seedFrontierHostFixture(f, input);
+    const original = requiredValue(
+      f.store.readConfiguredFrontierRecoveryView(f.identity, 1),
+      'Configured component lineage',
+    );
+    const before = readPresentSnapshot(f.store, f.identity);
+    const journal = requiredValue(f.store.readWorkSessionJournal(f.identity), 'Configured component Journal');
+    const request = runtimeCodeFixtureRequest(f.identity, before, journal, 'current');
+    const rows = readFixtureHostRows(f.db);
+    const verifier = mock(qualifiedRuntimeCodeEndpointFixture);
+    expect(() => f.store.commitQualifiedRuntimeCodeContinuation(request, verifier)).toThrow(
+      'sole execution-only ownership differs',
+    );
+    expect(verifier).not.toHaveBeenCalled();
+    expect(readFixtureHostRows(f.db)).toEqual(rows);
+    expect(f.store.readConfiguredFrontierRecoveryView(f.identity, 1)).toEqual(original);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.db.inTransaction).toBe(false);
   });
   preserveHostFixtureRoot = false;
 });
@@ -7614,7 +7647,99 @@ test(
           expect(host.inspectTaskSourceBindingOperation(input)).toEqual({ ...preparation, status: 'inspected' });
           expect(readFixtureHostRows(db)).toEqual(nativeRows);
         }
+        const codeOrigin = presentSnapshot(host.readHostStateSnapshot(current.identity));
+        const codeJournal = initialSourceJournal(current);
+        const codePaths = [...runtimePackageCodePaths(current.config.runtime.bundle)].sort();
+        const firstCodeRequest = {
+          ...runtimeCodeFixtureRequest(current.identity, codeOrigin, codeJournal, 'current'),
+          oldRuntimeCodePaths: codePaths,
+          currentRuntimeCodePaths: codePaths,
+        };
+        const firstCode = host.commitQualifiedRuntimeCodeContinuation(
+          firstCodeRequest,
+          qualifiedRuntimeCodeEndpointFixture,
+        );
+        const betweenCodePreparation = completeReadonlyFixtureHostPreparation(current, 'fixture_readonly_between_code');
+        const firstCodeState = presentSnapshot(host.readHostStateSnapshot(current.identity));
+        expect(firstCode.prior_work).toEqual(codeOrigin.work);
+        expect(Object.isFrozen(firstCode.prior_work)).toBe(true);
+        expectTerminalHostResultMutationDenied(
+          initialSourceHostDatabase(current),
+          host,
+          current.identity,
+          firstCodeState.work,
+          'qualified code terminal assignment history differs',
+        );
+        const priorWorkRefusals: readonly ((receipt: Record<string, unknown>) => void)[] = [
+          (receipt) => {
+            receipt.prior_work = null;
+          },
+          (receipt) => {
+            recordAt(receipt, 'prior_work').revision = 1;
+          },
+          (receipt) => {
+            recordAt(recordAt(receipt, 'prior_work'), 'binding').config_digest = canonicalJsonDigest('foreign config');
+          },
+          (receipt) => {
+            const prior = recordAt(receipt, 'prior_work');
+            const attempt = requiredValue(
+              arrayAt(recordAt(prior, 'execution'), 'assignment_attempts')[0],
+              'Terminal attempt',
+            );
+            if (!isPlainRecord(attempt)) throw new Error('Terminal attempt fixture is malformed');
+            attempt.status = 'uncertain';
+            const request = recordAt(receipt, 'request');
+            recordAt(request, 'expectedWork').digest = canonicalJsonDigest(prior);
+            receipt.request_digest = canonicalJsonDigest(request);
+          },
+          (receipt) => {
+            const prior = recordAt(receipt, 'prior_work');
+            recordAt(prior, 'execution').assignment_attempts = [];
+            const request = recordAt(receipt, 'request');
+            recordAt(request, 'expectedWork').digest = canonicalJsonDigest(prior);
+            receipt.request_digest = canonicalJsonDigest(request);
+          },
+          (receipt) => {
+            const prior = recordAt(receipt, 'prior_work');
+            recordAt(prior, 'binding').runtime_code_digest = canonicalJsonDigest('foreign old code');
+            const request = recordAt(receipt, 'request');
+            recordAt(request, 'expectedWork').digest = canonicalJsonDigest(prior);
+            receipt.request_digest = canonicalJsonDigest(request);
+          },
+        ];
+        for (const mutate of priorWorkRefusals) {
+          const changed = parseJsonRecord(canonicalJson(firstCode));
+          mutate(changed);
+          expect(() => validateQualifiedRuntimeCodeContinuationReceipt(changed)).toThrow('qualified prior Work');
+        }
+        const restoredCodeRequest = {
+          ...runtimeCodeFixtureRequest(current.identity, firstCodeState, codeJournal, 'current'),
+          oldRuntimeCodePaths: codePaths,
+          currentRuntimeCodePaths: codePaths,
+          currentRuntimeCodeDigest: codeOrigin.work.binding.runtime_code_digest,
+          oldManifestRef: firstCodeRequest.currentManifestRef,
+          oldManifestDigest: firstCodeRequest.currentManifestDigest,
+          oldInstallRef: firstCodeRequest.currentInstallRef,
+          currentManifestRef: '.agent/work/fixture-code/restored-manifest.json',
+          currentManifestDigest: canonicalJsonDigest('fixture-restored-manifest'),
+          currentInstallRef: '.agent/work/fixture-code/restored-install.json',
+          systemUpdateRef: '.agent/work/fixture-code/restored-install.json',
+          systemUpdateOperationId: 'fixture-restored-runtime-code',
+        };
+        const restoredCode = host.commitQualifiedRuntimeCodeContinuation(
+          restoredCodeRequest,
+          qualifiedRuntimeCodeEndpointFixture,
+        );
+        expect(restoredCode.runtime_acceptance).toBe(false);
+        expect(restoredCode.rights_granted).toBe(false);
+        expect(initialSourceJournal(current)).toEqual(codeJournal);
         const executionOnly = presentSnapshot(host.readHostStateSnapshot(current.identity));
+        expect(executionOnly.work.execution.assignment_attempts).toEqual([
+          readonlyPreparation.attempt,
+          betweenCodePreparation.attempt,
+        ]);
+        expect(executionOnly.work.binding).toEqual(codeOrigin.work.binding);
+        expect(executionOnly.ledger).toEqual(codeOrigin.ledger);
         acquireLocalSourceWriterLease({
           repositoryRoot: current.root,
           config: current.config,
@@ -7870,7 +7995,10 @@ test(
         expect(result.receipt.prior_work).toEqual(paused.work);
         expect(result.receipt.prior_ledger).toEqual(paused.ledger);
         expect(result.receipt.prior_journal).toEqual(journal.state);
-        expect(result.snapshot.work?.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
+        expect(result.snapshot.work?.execution.assignment_attempts).toEqual([
+          readonlyPreparation.attempt,
+          betweenCodePreparation.attempt,
+        ]);
         withTemporaryFixtureReceipt(
           db,
           'agent_host_delivered_work_continuation',
@@ -7932,6 +8060,47 @@ test(
           runtime_acceptance: false,
         });
         expect(result.snapshot.work?.lifecycle.phase).toBe('INTAKE');
+        const codeViewRows = readFixtureHostRows(db);
+        const codeView = requiredValue(
+          store.readConfiguredFrontierRecoveryView(current.identity, 1),
+          'Configured lineage after produced code history',
+        );
+        expect(codeView.runtimeCodeContinuations).toEqual([firstCode, restoredCode]);
+        expect(canonicalJson(codeView.original)).toBe(canonicalJson(result.receipt));
+        expect(codeView.recovery).toBeNull();
+        expect(readFixtureHostRows(db)).toEqual(codeViewRows);
+        const projected = projectRecoveryRuntimeCodeAncestor(
+          requiredValue(result.snapshot.work, 'Configured code successor'),
+          codeView.runtimeCodeContinuations,
+          codeView.original.work_version.revision,
+          null,
+          codeView.original,
+        );
+        expect(projected.binding).toEqual(codeView.original.successor_binding);
+        const reversedHistory = [
+          ...requiredValue(codeView.runtimeCodeContinuations, 'Produced code history'),
+        ].reverse();
+        expect(() =>
+          projectRecoveryRuntimeCodeAncestor(
+            requiredValue(result.snapshot.work, 'Configured code successor'),
+            reversedHistory,
+            codeView.original.work_version.revision,
+            null,
+            codeView.original,
+          ),
+        ).toThrow('configured code history order, owner or transition boundary differs');
+        const foreignCode = clone(firstCode);
+        foreignCode.request.nativeSessionHandle += '-foreign';
+        foreignCode.request_digest = canonicalJsonDigest(foreignCode.request);
+        expect(() =>
+          projectRecoveryRuntimeCodeAncestor(
+            requiredValue(result.snapshot.work, 'Configured code successor'),
+            [foreignCode, restoredCode],
+            codeView.original.work_version.revision,
+            null,
+            codeView.original,
+          ),
+        ).toThrow('configured code history order, owner or transition boundary differs');
         expect(result.snapshot.work?.binding.config_digest).toBe(targetConfigDigest);
         expect(result.receipt.successor_journal.items).toEqual(
           requests.map((request) => ({ request, issue_id: null, observation: null })),
@@ -8342,7 +8511,7 @@ test('initial Source Host continuation uses genuine unissued engine state and pe
         const codeProof = mock(qualifiedRuntimeCodeEndpointFixture);
         expect(() =>
           store.commitQualifiedRuntimeCodeContinuation(
-            foreignOwnerRuntimeCodeRequest(current.identity, after, journalAfter),
+            runtimeCodeFixtureRequest(current.identity, after, journalAfter),
             codeProof,
           ),
         ).toThrow('qualified runtime code continuation: owner, Source, run or quiescence differs');
@@ -8616,37 +8785,59 @@ test(
   failedFinalHostCaseTimeoutMs,
 );
 
-test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket'] as const)(
+test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket', 'frontier-history'] as const)(
   'completed Source report Host recovery %s preserves genuine writer lineage',
   async (mode) => {
     const started = performance.now();
     const deadline = started + failedFinalHostCaseTimeoutMs;
     let rootOwned: string | undefined;
     let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let packageBeforeimage: ReturnType<typeof runtimePackageBeforeimageFixture> | undefined;
+    let packageBeforeimageRoot: string | undefined;
     let completed = false;
     let clockHeld = false;
     await withInitialSourceCleanup(
       async () => {
-        const f = await createInitialSourceWorkFixture({
-          onRoot: (created) => {
-            rootOwned = created;
-            console.info('Completed Source report Host fixture root: ' + created);
-          },
-        });
-        fixture = f;
-        const admittedAt = performance.now();
-        if (performance.now() >= deadline)
-          throw new Error('Completed Source report fixture setup exhausted its deadline');
-        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
-        clockHeld = true;
-        const prepared = await prepareInitialSourceFrontier(f, 'writer');
+        const initialize = async () => {
+          const f = await createInitialSourceWorkFixture({
+            onRoot: (created) => {
+              rootOwned = created;
+              console.info('Completed Source report Host fixture root: ' + created);
+            },
+          });
+          fixture = f;
+          const admittedAt = performance.now();
+          if (performance.now() >= deadline)
+            throw new Error('Completed Source report fixture setup exhausted its deadline');
+          setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+          clockHeld = true;
+          const prepared = await prepareInitialSourceFrontier(f, packageBeforeimage ? 'readonly' : 'writer');
+          return { f, prepared, admittedAt };
+        };
+        if (mode === 'frontier-history')
+          packageBeforeimage = runtimePackageBeforeimageFixture(tmpdir(), 'vida-agent', (created) => {
+            packageBeforeimageRoot = created;
+            console.info('Host runtime beforeimage data: ' + created);
+          });
+        const { f, prepared, admittedAt } = packageBeforeimage
+          ? await packageBeforeimage.bindBeforeimage(initialize)
+          : await initialize();
+        let frontierReceipt: ReturnType<HostStateStore['commitReadOnlyFrontierRuntimeCode']> | null = null;
+        if (packageBeforeimage) {
+          const request = { ...frontierCodeRequest(f), newRuntimeCodeDigest: packageBeforeimage.current.digest };
+          expect(request.oldRuntimeCodeDigest).toBe(packageBeforeimage.before.digest);
+          const proof = trustedHostFixtureVerifier(f, fixtureFrontierProof(request), packageBeforeimage.access);
+          frontierReceipt = initialSourceHostStore(f).commitReadOnlyFrontierRuntimeCode(request, proof);
+          expect(frontierReceipt.current_runtime_code_digest).toBe(packageBeforeimage.current.digest);
+          await advanceInitialSourcePrewriterFixture(f);
+        }
         if (performance.now() >= deadline)
           throw new Error('Completed Source report fixture preparation exhausted its deadline');
         expect(prepared.receipt.status).toBe('initial_request_ready');
         expect(prepared.journal.state.items.every((item) => item.issue_id === null)).toBe(true);
         const preparedAt = performance.now();
         const peers =
-          mode === 'next-wave' || mode === 'queued-ticket'
+          mode === 'next-wave' || mode === 'queued-ticket' || mode === 'frontier-history'
             ? undefined
             : admitDisjointInitialSourcePeers(f, mode === 'commit');
         const queuedSource = mode === 'queued-ticket' ? await prepareSameWorkQueuedTaskSource(f) : undefined;
@@ -8732,7 +8923,7 @@ test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket
           observation,
           sourceBefore,
           sourceAfter,
-          null,
+          frontierReceipt,
           reportPath,
         );
         const controlledEndpoint = {
@@ -8907,6 +9098,13 @@ test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket
           const retried = host.commitCompletedSourceReportRecovery(recovery.request, recovery.verifyCurrent);
           expect(retried.status).toBe('completed_report_recovered');
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
+          if (frontierReceipt) {
+            expect(
+              host.readInitialSourceFrontierCodeRebindReceipt(f.identity, 1, prepared.receipt.continuation_id),
+            ).toEqual(frontierReceipt);
+            expect(retried.record.request.frontierReceiptId).toBe(frontierReceipt.original_receipt_id);
+            expect(retried.record.request.frontierRequestDigest).toBe(frontierReceipt.record.request_digest);
+          }
           const restored = initialSourceState(f);
           if (queuedSource) {
             const rowsBeforeLineageRead = readFixtureHostRows(db);
@@ -9517,6 +9715,7 @@ test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket
       },
       'Completed Source report Host fixture',
     );
+    if (packageBeforeimageRoot) await rm(packageBeforeimageRoot, { recursive: true, force: true });
   },
   failedFinalHostCaseTimeoutMs,
 );
@@ -9937,6 +10136,7 @@ test('native code-only continuation fences stale proofs and rolls back before ex
     runtime_acceptance: false,
   });
   expect(Object.isFrozen(receipt)).toBe(true);
+  expect(Object.hasOwn(receipt, 'prior_work')).toBe(false);
   expect(after.work).toEqual({
     ...initial.work,
     revision: initial.work.revision + 1,

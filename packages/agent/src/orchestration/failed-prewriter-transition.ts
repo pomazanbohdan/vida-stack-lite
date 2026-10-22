@@ -35,6 +35,7 @@ import {
 import {
   deliveredWorkContinuationRecord,
   serializeDeliveredWorkContinuationReceipt,
+  validateConfiguredFrontierReceiptStructure,
   type ConfiguredFrontierReceipt,
 } from './delivered-work-continuation-repair.js';
 
@@ -285,10 +286,10 @@ export function validateFailedPrewriterRecoveryReceipt(
     );
   validateFailedPrewriterRecoveryBasis({
     original: receipt.original,
-    work: projectQualifiedRuntimeCodeAncestor(
+    work: projectConfiguredRuntimeCodeAncestor(
       receipt.prior_work,
       runtimeCodeContinuations?.filter((entry) => entry.work_version.revision < receipt.work_version.revision),
-      receipt.original.work_version.revision,
+      receipt.original,
     ),
     ledger: receipt.prior_ledger,
     journal: receipt.prior_journal,
@@ -454,25 +455,86 @@ export function validateFailedPrewriterRecoveryReceipt(
   return receipt;
 }
 
+function assertConfiguredCodeHistoryBoundary(
+  work: WorkState,
+  history: readonly QualifiedRuntimeCodeContinuationReceipt[],
+  original: ConfiguredFrontierReceipt,
+): void {
+  const revision = original.work_version.revision;
+  requireTransition(work.revision >= revision, 'configured code history predates its transition');
+  let priorRevision = 0;
+  for (const receipt of history) {
+    requireTransition(
+      receipt.work_version.revision > priorRevision &&
+        receipt.work_version.revision !== revision &&
+        receipt.request.attempt === original.attempt &&
+        receipt.request.nativeSessionHandle === original.request.nativeSessionHandle,
+      'configured code history order, owner or transition boundary differs',
+    );
+    priorRevision = receipt.work_version.revision;
+  }
+}
+
+export function projectConfiguredRuntimeCodeAncestor(
+  work: WorkState,
+  values: readonly QualifiedRuntimeCodeContinuationReceipt[] | undefined,
+  original: ConfiguredFrontierReceipt,
+): WorkState {
+  validateConfiguredFrontierReceiptStructure({ receipt: original });
+  const history = (values ?? []).map(validateQualifiedRuntimeCodeContinuationReceipt),
+    revision = original.work_version.revision;
+  assertConfiguredCodeHistoryBoundary(work, history, original);
+  projectQualifiedRuntimeCodeAncestor(
+    original.prior_work,
+    history.filter((receipt) => receipt.work_version.revision < revision),
+  );
+  const projected = projectQualifiedRuntimeCodeAncestor(
+    work,
+    history.filter((receipt) => receipt.work_version.revision > revision),
+    revision,
+  );
+  validateLifecycleReferencePreservation(original.successor_work.lifecycle.references, projected.lifecycle.references);
+  requireTransition(
+    same(projected.binding, original.successor_work.binding) &&
+      runtimeCodeContinuationProtectedWorkDigest(projected) ===
+        runtimeCodeContinuationProtectedWorkDigest(original.successor_work),
+    'configured code history does not preserve its successor',
+  );
+  return projected;
+}
+
 export function projectRecoveryRuntimeCodeAncestor(
   work: WorkState,
   values: readonly QualifiedRuntimeCodeContinuationReceipt[] | undefined,
   anchorWorkRevision: number,
   sourceRecovery?: FailedPrewriterRecoveryReceipt | null,
+  original?: ConfiguredFrontierReceipt,
 ): WorkState {
-  if (!sourceRecovery) return projectQualifiedRuntimeCodeAncestor(work, values, anchorWorkRevision);
+  if (!sourceRecovery) {
+    if (!original) return projectQualifiedRuntimeCodeAncestor(work, values, anchorWorkRevision);
+    requireTransition(anchorWorkRevision === original.work_version.revision, 'configured code anchor differs');
+    return projectConfiguredRuntimeCodeAncestor(work, values, original);
+  }
   const recovery = validateFailedPrewriterRecoveryReceipt(sourceRecovery, values),
     revision = recovery.work_version.revision,
     history = (values ?? []).map(validateQualifiedRuntimeCodeContinuationReceipt);
+  assertConfiguredCodeHistoryBoundary(work, history, recovery.original);
   requireTransition(
     anchorWorkRevision === revision &&
       work.revision >= revision &&
       !history.some((receipt) => receipt.work_version.revision === revision),
     'code history overlaps the Source recovery revision',
   );
-  projectQualifiedRuntimeCodeAncestor(
+  requireTransition(
+    !original ||
+      serializeDeliveredWorkContinuationReceipt(original) ===
+        serializeDeliveredWorkContinuationReceipt(recovery.original),
+    'code history recovery original differs',
+  );
+  projectConfiguredRuntimeCodeAncestor(
     recovery.prior_work,
     history.filter((receipt) => receipt.work_version.revision < revision),
+    recovery.original,
   );
   const projected = projectQualifiedRuntimeCodeAncestor(
     work,
@@ -487,6 +549,12 @@ export function projectRecoveryRuntimeCodeAncestor(
     'code history does not preserve the Source recovery successor',
   );
   return projected;
+}
+
+function configuredRuntimeCodeEndpoint(base: WorkState, adopted: QualifiedRuntimeCodeContinuationReceipt): string {
+  return adopted.work_version.revision > base.revision
+    ? adopted.request.currentRuntimeCodeDigest
+    : base.binding.runtime_code_digest;
 }
 
 export function effectiveConfiguredFrontier(view: ConfiguredFrontierRecoveryView): {
@@ -506,19 +574,20 @@ export function effectiveConfiguredFrontier(view: ConfiguredFrontierRecoveryView
   const adopted = view.runtimeCodeContinuations?.at(-1);
   let currentBinding = recovery?.successor_work.binding ?? view.original.successor_binding;
   if (adopted) {
+    const code = configuredRuntimeCodeEndpoint(base, adopted);
     const projected = {
       ...base,
       revision: Math.max(base.revision, adopted.work_version.revision),
       binding: {
         ...base.binding,
-        runtime_code_digest: adopted.request.currentRuntimeCodeDigest,
-        runtime_source_revision: adopted.request.currentRuntimeCodeDigest,
+        runtime_code_digest: code,
+        runtime_source_revision: code,
       },
       lifecycle: {
         ...base.lifecycle,
         config_binding: {
           ...base.lifecycle.config_binding,
-          runtime_code_digest: adopted.request.currentRuntimeCodeDigest,
+          runtime_code_digest: code,
         },
       },
     };
@@ -529,6 +598,7 @@ export function effectiveConfiguredFrontier(view: ConfiguredFrontierRecoveryView
           view.runtimeCodeContinuations,
           recovery?.work_version.revision ?? view.original.work_version.revision,
           recovery,
+          view.original,
         ).binding,
         base.binding,
       ),

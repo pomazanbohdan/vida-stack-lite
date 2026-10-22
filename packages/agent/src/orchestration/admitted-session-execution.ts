@@ -170,6 +170,7 @@ export function assertAdmittedRuntimeCodeCurrent(
             host.runtimeCodeContinuations,
             recovery?.work_version.revision ?? receipt.work_version.revision,
             recovery,
+            receipt as ConfiguredFrontierReceipt,
           ).binding.runtime_code_digest &&
         request.targetConfigDigest === runtimeConfigDigest(config) &&
         request.targetConfigDigest === work.binding.config_digest &&
