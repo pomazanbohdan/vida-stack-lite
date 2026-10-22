@@ -1,5 +1,11 @@
+import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-local-work.ts';
+import { boundedSpawnSync, executionBudget, pinnedEnvironment, readPin } from '../../bin/bun.ts';
+import { requireSynchronousChildSuccess } from '../helpers/synchronous-child-outcome.ts';
+import { buildAdmittedDevelopmentPacket } from '../../src/orchestration/admitted-development-packet.ts';
+import { readLocalSourceWriteAuthorization } from '../../src/orchestration/local-source-authorization.ts';
 import { afterEach, describe, expect, setSystemTime, spyOn, test } from 'bun:test';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { link, lstat, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -9,7 +15,12 @@ import { Database } from 'bun:sqlite';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import type { WorkItemSelection } from '../../src/config/runtime-config.ts';
-import { HostStateStore, openHostStateDatabase, type WorkIdentity } from '../../src/host-state.ts';
+import {
+  HostStateStore,
+  openHostStateDatabase,
+  type RuntimeCodeRebindRequest,
+  type WorkIdentity,
+} from '../../src/host-state.ts';
 import { loadProjectContext, loadProjectSetContext } from '../../src/config/project-context.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
@@ -97,9 +108,17 @@ import {
 import { normalConfigEndpointProof } from '../helpers/configured-frontier-host-fixture.ts';
 import { requestFixture as continuationRequestSeed } from '../helpers/delivered-work-continuation-fixture.ts';
 import { runtimePackageBeforeimageFixture } from '../helpers/runtime-package-beforeimage-fixture.ts';
-import { openAdmittedSessionExecution } from '../../src/orchestration/admitted-session-execution.ts';
+import {
+  openAdmittedSessionExecution,
+  readAdmittedSessionExecutionContext,
+} from '../../src/orchestration/admitted-session-execution.ts';
 import * as admittedSessionExecution from '../../src/orchestration/admitted-session-execution.ts';
-import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } from '../../src/runtime-kernel.ts';
+import {
+  dispatchWorkflowAssignment,
+  prepareWorkflowExecution,
+  reserveWorkflowAssignmentForSession,
+  type WorkflowAssignmentRequest,
+} from '../../src/runtime-kernel.ts';
 import { parseTaskSourceResourceTransitionReceipt } from '../../src/orchestration/task-source-resource-transition.ts';
 import { isCurrentLocalSourceAuthorizationReference } from '../../src/orchestration/local-source-authorization-reference.ts';
 
@@ -3376,6 +3395,465 @@ test('Mastra readers bind native maintenance generations and reject corrupted fe
   expect(performance.now()).toBeLessThan(caseDeadline);
   retainScratch = false;
 });
+
+test('native source approval refusal observes the retired authorization after real runtime rebind', async () => {
+  const beforeimage = runtimePackageBeforeimageFixture(tmpdir(), 'vida-agent', (allocated) => {
+    console.info('Session authorization rebind package beforeimage: ' + allocated);
+  });
+  await beforeimage.bindBeforeimage(async (restorePackage) => {
+    await withAdmittedHandoffFixture(
+      async (fixture) => {
+        const deadline = requiredValue(caseDeadline, 'Retirement fixture deadline');
+        const preparation = initialSourceHostStore(fixture).readHostStateSnapshot(fixture.identity);
+        requireHostState(preparation);
+        if (!fixture.bridge) throw new Error('Retirement fixture has no native bridge');
+        await bindControlledRuntimeInitialization(fixture.root, fixture.config, initialSourceHostStore(fixture));
+        await runSynthesisFixtureInProcess(
+          {
+            args: [],
+            publicRun: () => {
+              throw new Error('Retirement fixture must use its preparation owner');
+            },
+            sync: () => initialSourceJournal(fixture),
+            repositoryRoot: fixture.root,
+            workId: fixture.identity.work_id,
+            attempt: 1,
+            work: preparation.work,
+          },
+          { ledger: initialSourceHostLedger(fixture), bridge: fixture.bridge, source: fixture.originalSource },
+        );
+        const { store, ledger, item, journal, plan, db } = pauseReadonlyDispatchHostFixture(fixture);
+        expect(store.commitReadOnlyDispatchRepair(plan)).toEqual(plan);
+        const activated = ledger.activateReadOnlyReplacement(
+          fixture.identity.work_id,
+          1,
+          journal.version,
+          item.request.action_id,
+        );
+        const paused = store.readHostStateSnapshot(fixture.identity);
+        requireHostState(paused);
+        const resumed = expectReturned(() =>
+          resumePausedLocalWork({
+            store,
+            ledger,
+            identity: fixture.identity,
+            attempt: 1,
+            expectedWork: paused.workVersion,
+            expectedLedger: paused.ledgerVersion,
+            expectedJournal: activated.snapshot.version,
+            nativeSessionHandle: initialSourceAdmissionInput(fixture).nativeSessionHandle,
+            configDigest: paused.work.binding.config_digest,
+            sourceDigest: paused.work.binding.work_source_revision,
+          }),
+        );
+        expect(resumed.status).toBe('resumed');
+        const resumedHost = store.readHostStateSnapshot(fixture.identity);
+        requireHostState(resumedHost);
+        acquireLocalSourceWriterLease({
+          repositoryRoot: fixture.root,
+          config: fixture.config,
+          store,
+          identity: fixture.identity,
+          nativeSessionHandle: initialSourceAdmissionInput(fixture).nativeSessionHandle,
+          stageId: 'develop_task',
+          assignmentIndex: 0,
+          expectedWork: resumedHost.workVersion,
+          expectedLedger: resumedHost.ledgerVersion,
+          expectedSessionJournal: { attempt: 1, version: activated.snapshot.version },
+        });
+        const active = store.readHostStateSnapshot(fixture.identity);
+        requireHostState(active);
+        expect(active.work.binding.runtime_code_digest).toBe(beforeimage.before.digest);
+        expect(beforeimage.current.digest).not.toBe(beforeimage.before.digest);
+        const initialAuthorizations = active.work.lifecycle.references.filter(
+          isCurrentLocalSourceAuthorizationReference,
+        );
+        expect(initialAuthorizations).toHaveLength(1);
+        const initialAuthorization = requiredValue(initialAuthorizations[0], 'Original local authorization');
+
+        const authorizationBytes = readFileSync(path.join(fixture.root, fixture.sourceAuthorizationPath));
+        const { authorization } = readLocalSourceWriteAuthorization(fixture.root, fixture.sourceAuthorizationPath);
+        const stageId = 'develop_task';
+        const stage = fixture.config.workflows.task_execution?.stages.find((entry) => entry.id === stageId);
+        if (!stage) throw new Error('Configured source-writing stage is unavailable');
+        const assignmentIndex = stage.assignments.findIndex(
+          (assignment) => fixture.config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source',
+        );
+        expect(assignmentIndex).toBeGreaterThanOrEqual(0);
+        expect(authorization.stage_ids).toContain(stageId);
+
+        const rebind: RuntimeCodeRebindRequest = {
+          identity: fixture.identity,
+          attempt: 1,
+          actionId: item.request.action_id,
+          issueId: activated.dispatch.issue_id,
+          nativeSessionHandle: requiredValue(active.work.lease, 'Resumed readonly owner').thread_id,
+          expectedWork: active.workVersion,
+          expectedLedger: active.ledgerVersion,
+          expectedJournal: activated.snapshot.version,
+          expectedMaintenanceGeneration: active.maintenanceGeneration,
+          oldRuntimeCodeDigest: beforeimage.before.digest,
+          newRuntimeCodeDigest: beforeimage.current.digest,
+          forwardOperationId: 'fixture:session-authorization-count-rebind',
+          parentManifestDigest: beforeimage.before.digest,
+          successorManifestDigest: beforeimage.current.digest,
+          ownerNoCallPointer: 'fixture:activated-readonly-replacement-not-dispatched',
+        };
+        const rebindInputPath = path.join(fixture.root, '.agent', 'session-authorization-rebind.json');
+        writeFileSync(rebindInputPath, JSON.stringify({ repositoryRoot: fixture.root, request: rebind }));
+        const nativeRows = nativeDatabaseSnapshotReader(db);
+        const executionBefore = active.work.execution;
+        const packageRoot = path.resolve(import.meta.dir, '../..');
+        expect(process.versions.bun).toBe(readPin(packageRoot));
+        const childPath = path.join(packageRoot, 'tests', 'helpers', 'session-authorization-rebind-child.ts');
+        const childArgs = [
+          '--no-env-file',
+          '--no-install',
+          '--config=' + path.join(packageRoot, 'bunfig.toml'),
+          childPath,
+          rebindInputPath,
+        ];
+        let armed = false;
+        let lineageReads = 0;
+        let outerVerifierLineageObserved = false;
+        let childRuns = 0;
+        let claimCalls = 0;
+        let admittedContextValidated = false;
+        let packetValidated = false;
+        let afterTransition: ReturnType<typeof nativeRows> | undefined;
+        let transitionedSnapshot: ReturnType<typeof store.readHostStateSnapshot> | undefined;
+        let childResult:
+          | {
+              marker: 'SESSION_AUTHORIZATION_REBIND_DONE';
+              result?: {
+                authCount: number;
+                journalVersion: unknown;
+                runtimeCodeDigest: string;
+                receiptDigest: string;
+                retiredExecutionApprovalIds: string[];
+                workVersion: unknown;
+                ledgerVersion: unknown;
+              };
+            }
+          | undefined;
+        const claim = store.claimWorkflowAssignmentWithApproval.bind(store);
+        const claimBoundary = spyOn(store, 'claimWorkflowAssignmentWithApproval').mockImplementationOnce(
+          async (...args) => {
+            claimCalls++;
+            const readLineage = store.readInitialSourceContinuationLineageView.bind(store);
+            const readHost = store.readHostStateSnapshot.bind(store);
+            const lineageBoundary = spyOn(store, 'readInitialSourceContinuationLineageView').mockImplementation(
+              (...lineageArgs) => {
+                const actual = readLineage(...lineageArgs);
+                lineageReads++;
+                if (lineageReads === 1) {
+                  armed = true;
+                  outerVerifierLineageObserved = true;
+                }
+                return actual;
+              },
+            );
+            const hostBoundary = spyOn(store, 'readHostStateSnapshot').mockImplementation((identity) => {
+              if (armed && canonicalJsonDigest(identity) === canonicalJsonDigest(fixture.identity)) {
+                armed = false;
+                restorePackage();
+                childRuns++;
+                const childDiagnosticPath = path.join(
+                  fixture.root,
+                  '.agent',
+                  'session-authorization-rebind-child-result.json',
+                );
+                const diagnostic = {
+                  command: process.execPath,
+                  cwd: packageRoot,
+                  args: childArgs,
+                  status: null as number | null,
+                  signal: null as NodeJS.Signals | null,
+                  error: null as unknown,
+                  stdout: '',
+                  stderr: '',
+                  elapsedMs: null as number | null,
+                  childElapsedMs: null as number | null,
+                  timedOut: null as boolean | null,
+                  timeoutMs: null as number | null,
+                  cleanupTimeoutMs: null as number | null,
+                  cleanupAttempted: null as boolean | null,
+                  cleanupOutcome: null as string | null | undefined,
+                  cleanupStatus: null as number | null | undefined,
+                  cleanupErrorCode: null as string | null | undefined,
+                  cleanupElapsedMs: null as number | null,
+                };
+                let child: ReturnType<typeof boundedSpawnSync>;
+                try {
+                  child = boundedSpawnSync(
+                    spawnSync,
+                    process.execPath,
+                    childArgs,
+                    {
+                      cwd: packageRoot,
+                      encoding: 'utf8',
+                      env: pinnedEnvironment(process.execPath, process.env, packageRoot),
+                      windowsHide: true,
+                      maxBuffer: 16_384,
+                      budget: executionBudget(Math.min(3_000, Math.floor(deadline - performance.now())), 0, deadline),
+                    },
+                    'session authorization Host rebind child',
+                  );
+                  Object.assign(diagnostic, {
+                    status: child.status,
+                    signal: child.signal,
+                    error:
+                      child.error === undefined
+                        ? null
+                        : {
+                            name: child.error.name,
+                            message: child.error.message,
+                            code: (child.error as NodeJS.ErrnoException).code,
+                            errno: (child.error as NodeJS.ErrnoException).errno,
+                            syscall: (child.error as NodeJS.ErrnoException).syscall,
+                          },
+                    stdout: String(child.stdout ?? ''),
+                    stderr: String(child.stderr ?? ''),
+                    elapsedMs: child.elapsedMs ?? null,
+                    childElapsedMs: child.childElapsedMs ?? null,
+                    timedOut: child.timedOut ?? null,
+                    timeoutMs: child.timeoutMs ?? null,
+                    cleanupTimeoutMs: child.cleanupTimeoutMs ?? null,
+                    cleanupAttempted: child.cleanupAttempted ?? null,
+                    cleanupOutcome: child.cleanupOutcome,
+                    cleanupStatus: child.cleanupStatus,
+                    cleanupErrorCode: child.cleanupErrorCode,
+                    cleanupElapsedMs: child.cleanupElapsedMs ?? null,
+                  });
+                } catch (error) {
+                  diagnostic.error =
+                    error instanceof Error ? { name: error.name, message: error.message } : { thrown: String(error) };
+                  writeFileSync(childDiagnosticPath, JSON.stringify(diagnostic, null, 2) + '\n');
+                  throw error;
+                }
+                writeFileSync(childDiagnosticPath, JSON.stringify(diagnostic, null, 2) + '\n');
+                if (child.error || child.signal || !Number.isInteger(child.status))
+                  throw new Error(
+                    `Session authorization child outcome unknown: status=${String(child.status)}; ` +
+                      `signal=${String(child.signal)}; error=${String(child.error)}; ` +
+                      String(child.stdout ?? '') +
+                      String(child.stderr ?? ''),
+                  );
+                requireSynchronousChildSuccess(child, 'SESSION_AUTHORIZATION_REBIND_DONE');
+                const lines = String(child.stdout ?? '')
+                  .trim()
+                  .split(/\r?\n/u);
+                const parsedChildResult: unknown = JSON.parse(lines[lines.length - 1]!);
+                if (
+                  !isPlainRecord(parsedChildResult) ||
+                  Object.keys(parsedChildResult).length !== 2 ||
+                  parsedChildResult.marker !== 'SESSION_AUTHORIZATION_REBIND_DONE' ||
+                  !isPlainRecord(parsedChildResult.result) ||
+                  Object.keys(parsedChildResult.result).length !== 7 ||
+                  !Array.isArray(parsedChildResult.result.retiredExecutionApprovalIds) ||
+                  !parsedChildResult.result.retiredExecutionApprovalIds.every(
+                    (id: unknown) => typeof id === 'string',
+                  ) ||
+                  parsedChildResult.result.authCount !== 0 ||
+                  parsedChildResult.result.runtimeCodeDigest !== beforeimage.current.digest ||
+                  typeof parsedChildResult.result.receiptDigest !== 'string' ||
+                  !/^[a-f0-9]{64}$/u.test(parsedChildResult.result.receiptDigest)
+                )
+                  throw new Error('Session authorization child completion payload is malformed');
+                for (const field of ['workVersion', 'ledgerVersion', 'journalVersion'] as const) {
+                  const version = parsedChildResult.result[field];
+                  if (
+                    !isPlainRecord(version) ||
+                    !Number.isSafeInteger(version.revision) ||
+                    typeof version.digest !== 'string' ||
+                    !/^[a-f0-9]{64}$/u.test(version.digest)
+                  )
+                    throw new Error(`Session authorization child ${field} is malformed`);
+                }
+                childResult = {
+                  marker: 'SESSION_AUTHORIZATION_REBIND_DONE',
+                  result: {
+                    authCount: 0,
+                    journalVersion: parsedChildResult.result.journalVersion,
+                    runtimeCodeDigest: parsedChildResult.result.runtimeCodeDigest,
+                    receiptDigest: parsedChildResult.result.receiptDigest,
+                    retiredExecutionApprovalIds: parsedChildResult.result.retiredExecutionApprovalIds,
+                    workVersion: parsedChildResult.result.workVersion,
+                    ledgerVersion: parsedChildResult.result.ledgerVersion,
+                  },
+                };
+              }
+              const actual = readHost(identity);
+              if (
+                childRuns === 1 &&
+                transitionedSnapshot === undefined &&
+                canonicalJsonDigest(identity) === canonicalJsonDigest(fixture.identity)
+              ) {
+                transitionedSnapshot = actual;
+                afterTransition = nativeRows();
+                requireHostState(actual);
+                readAdmittedSessionExecutionContext(fixture.root, store, 'sample', fixture.identity.work_id);
+                admittedContextValidated = true;
+                const admittedInput = initialSourceAdmissionInput(fixture);
+                const access = requireSafeRepositoryAccess(fixture.root);
+                const currentJournal = ledger.currentSnapshot(fixture.identity.work_id);
+                if (!currentJournal) throw new Error('Post-rebind admitted Journal is unavailable');
+                buildAdmittedDevelopmentPacket({
+                  repositoryRoot: fixture.root,
+                  config: fixture.config,
+                  host: actual,
+                  sourceStore: store,
+                  ledger: currentJournal,
+                  workItem: admittedInput.workItem,
+                  selection: admittedInput.selection,
+                  scopeBytes: access.readBytes(actual.work.contracts.scope.path, 'test post-rebind scope'),
+                  acceptanceBytes: access.readBytes(
+                    actual.work.contracts.acceptance.path,
+                    'test post-rebind acceptance',
+                  ),
+                  configuredContext: null,
+                });
+                packetValidated = true;
+              }
+              return actual;
+            });
+            let claimBoundaryFailure: { readonly error: unknown } | undefined;
+            try {
+              return await claim(...args);
+            } catch (error) {
+              claimBoundaryFailure = { error };
+              throw error;
+            } finally {
+              completeOwnedCleanup(
+                [
+                  () => {
+                    hostBoundary.mockRestore();
+                    return undefined;
+                  },
+                  () => {
+                    lineageBoundary.mockRestore();
+                    return undefined;
+                  },
+                ],
+                claimBoundaryFailure,
+              );
+            }
+          },
+        );
+        const admitted = await openAdmittedSessionExecution(fixture.root, store, 'sample', fixture.identity.work_id);
+        const capability = requiredValue(
+          admitted.composition.workflowExecutionCapability,
+          'Native admitted workflow capability',
+        );
+        const prepared = await prepareWorkflowExecution(capability, {
+          repositoryRoot: fixture.root,
+          configDigest: runtimeConfigDigest(fixture.config),
+          teamId: 'default-development',
+          workItemId: fixture.identity.work_id,
+        });
+        expect(prepared.workflowId).toBe('task_execution');
+        const workflowRequest: WorkflowAssignmentRequest = {
+          repositoryRoot: fixture.root,
+          configDigest: runtimeConfigDigest(fixture.config),
+          teamId: 'default-development',
+          workflowId: prepared.workflowId,
+          stageId,
+          assignmentIndex,
+          workItemId: fixture.identity.work_id,
+          workItemDigest: prepared.workItemDigest,
+          workContextDigest: prepared.workContextDigest,
+          input: { work_item_id: fixture.identity.work_id, stage_outputs: {} },
+        };
+        let denial: unknown;
+        let claimFailure: { readonly error: unknown } | undefined;
+        try {
+          denial = await rejectionReason(dispatchWorkflowAssignment(capability, workflowRequest));
+        } catch (error) {
+          claimFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                claimBoundary.mockRestore();
+                return undefined;
+              },
+            ],
+            claimFailure,
+          );
+        }
+        writeFileSync(
+          path.join(fixture.root, '.agent', 'session-authorization-observer-result.json'),
+          JSON.stringify(
+            {
+              claimCalls,
+              lineageReads,
+              childRuns,
+              admittedContextValidated,
+              packetValidated,
+              denial: denial instanceof Error ? denial.message : String(denial),
+            },
+            null,
+            2,
+          ) + '\n',
+        );
+        expect(() => {
+          throw denial;
+        }).toThrow('workflow approval denied');
+        expect(claimCalls).toBe(1);
+        expect(outerVerifierLineageObserved).toBe(true);
+        expect(lineageReads).toBeGreaterThanOrEqual(1);
+        expect(childRuns).toBe(1);
+        expect(admittedContextValidated).toBe(true);
+        expect(packetValidated).toBe(true);
+        expect(childResult).toMatchObject({
+          marker: 'SESSION_AUTHORIZATION_REBIND_DONE',
+          result: { authCount: 0, runtimeCodeDigest: beforeimage.current.digest },
+        });
+        expect(childResult?.result?.retiredExecutionApprovalIds).toEqual([initialAuthorization.record_id]);
+        expect(childResult?.result?.receiptDigest).toMatch(/^[a-f0-9]{64}$/u);
+        if (!transitionedSnapshot || !afterTransition)
+          throw new Error('Native rebind child did not produce a complete Host/database afterimage');
+        requireHostState(transitionedSnapshot);
+        expect(childResult?.result?.workVersion).toEqual(transitionedSnapshot.workVersion);
+        expect(childResult?.result?.ledgerVersion).toEqual(transitionedSnapshot.ledgerVersion);
+        expect(childResult?.result?.journalVersion).toEqual(activated.snapshot.version);
+        expect(
+          transitionedSnapshot.work.lifecycle.references.filter(
+            (reference) =>
+              reference.kind === 'execution_approval' &&
+              reference.disposition === 'current' &&
+              reference.decision === 'approved' &&
+              reference.artifact_schema === 'LocalSourceWriteAuthorization/v1',
+          ),
+        ).toHaveLength(0);
+        expect(transitionedSnapshot.work.execution).toEqual(executionBefore);
+        expect(initialSourceJournal(fixture)).toEqual(activated.snapshot);
+        expect(readFileSync(path.join(fixture.root, fixture.sourceAuthorizationPath))).toEqual(authorizationBytes);
+        expect(nativeRows()).toEqual(afterTransition);
+        expect(db.inTransaction).toBe(false);
+      },
+      {
+        cooperativeSynthesis: true,
+        configure: (configured) => {
+          const architect = configured.agents.profiles.architect;
+          if (!architect) throw new Error('Retirement fixture needs its configured architect');
+          return {
+            ...configured,
+            agents: {
+              ...configured.agents,
+              profiles: {
+                ...configured.agents.profiles,
+                architect: { ...architect, egress_policy: 'none' },
+              },
+            },
+          };
+        },
+      },
+      20_000,
+    );
+  });
+}, 20_000);
 
 test('readonly replacement report atomically binds raw and projected observations to its prepared dispatch', async () => {
   await withReadonlyDispatchHostFixture(async (fixture, deadline) => {

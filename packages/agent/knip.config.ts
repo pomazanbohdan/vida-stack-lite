@@ -43,6 +43,7 @@ const config = {
         // Fault injection is loaded by test children through explicit --preload paths.
         'tests/helpers/clean-stat-fault-preload.ts',
         'tests/helpers/project-upgrade-stop-preload.ts',
+        'tests/helpers/session-authorization-rebind-child.ts',
         // Lifecycle fault children import this fixture API inside generated Bun tests.
         'tests/helpers/runtime-config-rebind-fixture.ts',
         // The preload reads this template to create per-test assertion adapters.

@@ -79,6 +79,11 @@ requires a truthy `left`; `right` may be false. In `left || right`, a falsy
 before declaring a required pair of states impossible.
 For a complete native no-write oracle and observers inside production catch
 boundaries, use [TESTING's contour rules](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle).
+Capture observer calls in an owned counter before restoring a Bun spy; its call
+history after `mockRestore` is not a durable observation. Complete real synthesis
+prerequisites before choosing a later readonly frontier for a negative writer
+request. Check the actual admitted packet after a native transition, outside
+the verifier's catch. A generic approval denial alone cannot identify its guard.
 Record actual native reads before asserting denial; an orphan coordination
 ticket can reject a missing Work before the intended resolver guard. In a
 test-owned Host-disappearance fault, remove the exact Work/coordination pair

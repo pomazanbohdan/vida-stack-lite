@@ -11,9 +11,9 @@ lane with the shared reference classifier explicitly included. The predecessor
 bun-session-handoff retains its original three-Source scope in the retired
 registry. Its receipts and frozen ceilings remain unchanged.
 The next repair packet is based on published1680449984b7b805dc883a33ed9044eb8db2e691.
-Throughput checkpoint: prioritize a supported native lease-race witness, then
-resolve the exact producer prerequisites for the remaining four arms; no
-unchanged full rerun or new contour.2242 assigns native Luna the lease proposal
+The2242 throughput checkpoint investigated a supported native lease-race witness
+and the exact producer prerequisites for the remaining four arms, with no
+unchanged full rerun or new contour.2242 assigned native Luna the lease proposal
 in /workspace/vida-session-lease-patch-Kz7Uww, reference-set transitions and the
 specific multi-project configured ingress gap as disjoint lanes. Root owns all
 integration/checks/Git and will group only justified repairs before the next
@@ -62,6 +62,72 @@ causal path and apply only the bounded test/helper diff before targeted static
 and native controls. The proposal remains unintegrated and unrun at this
 checkpoint; it grants no operational rebind/cutover, consumer effect or new
 Source authority. The review explicitly corrects its initial wrong-path reads.
+
+The completed preflight packet is published as
+c8d4f048c73f6169c7f5b0089becb1197ef63e60.2253 ordinary hooks pass format527
+and strict534;2254 ordinary push matches origin/main.2252 retains the harmless
+ignored-parent git-add diagnostic; every selected tracked file was staged and
+the subsequent ordinary commit completed. No hook was bypassed.
+
+Root's2255-2265 packet integrates only the bounded retirement case/helper from
+the preserved proposal, retaining all intervening identity and other tests.
+2255 scoped static rejects a wrong resume import and optional synchronous-child
+fields;2256 corrects those and passes strict149/configured lint.2257's native
+failure observes a missing exact file lease.2258 acquires it through the real
+same-owner CAS but2258/2259 incorrectly inspect spy history after restoration.
+2260 replaces that assertion with an owned counter and durably records actual
+claim1/lineage3/child1/admitted-context success, but packet failure. These original
+logs/roots remain retained; none is a coverage result or an UNKNOWN replay.
+2261 uses the existing admitted fixture's20s bound, completes actual synthesis
+through its maintained producer, and narrows architect egress before admission.
+The original handle and actual paused/repair/replacement/resume transitions
+remain. No writer argv executes and the readonly observation remains null.
+The explicit rebind uses only the fresh isolated Host database and inert package
+beforeimage data. Its receipt names exactly the original sole approval ID.
+The child verifier binds the parsed request; native Journal/auth bytes/execution
+and full database/schema afterimage remain unchanged by the denied reservation.
+2261 passes1case/38assertions in6.67s.2262 independently approves this corrected
+path, distinguishing fresh readonly-owner admission from unresolved writer
+effects. Its review supersedes2250's incorrect later-reread timing premise and
+2257's concern for the older incomplete fixture. The actual observer arms in the
+outer verifier before the resolver's first Host read; it proves no assertCurrent
+reread.2265 reuses the shared reference classifier, parses each child receipt
+once, and groups the new case with the existing identity-transfer control:
+strict149/configured lint and2PASS/0FAIL/64assertions in12.15s. Root will publish
+this reviewed packet before one changed-input complete stage. Counter25/0
+remains numerically OPEN until that attributable report; other OPEN producer
+proofs16/17/29/34 and accepted dispositions7/21/27 remain unchanged.
+2267's ordinary hook identifies the dynamically selected child as an unused file.
+Root registers that exact executable in Knip's maintained child-entry list;
+no ignore, file exclusion or hook bypass is introduced. The failed hook remains
+in DIAG/session-retirement-commit-v2267.log; it produced no commit.
+
+Three-hour audit2265 reuses the retained2225/2237 stage outcomes,2248 and2265
+targeted logs, current projection and Git history instead of another suite or
+AST/hash inventory. Confirmed script repairs are immutable contour-scope
+versioning, early strict snapshot validation before SDK/image setup, and shared
+authorization classification. The owned SDK validation-buffer reuse8f03ed4 is
+outside the latest rolling three-hour boundary; do not count it again. Measured
+complete stages2225/2237 take91.31/92.78s with different bound inputs; this is
+not a controlled speed comparison. Select one coherent packet, static/lint,
+grouped affected controls, ordinary publication and one stage. Reject a full
+stage after each failed fixture:2257-2260 isolate causal failures in4.13-6.53s
+including process setup. Keep one writer/numeric producer plus one bounded
+independent reader; parallel suites/extra contour writers have no qualified
+safety or speed evidence. Complete tool-call/token totals and a comparative
+parallelism benchmark are unavailable, so no savings percentage is claimed.
+
+Disk2264 reuses inventory1707/audit1977/retirement2144 and observes each mounted
+filesystem once in its successful report: checkout/retained24,943,607,808available
+bytes, scratch5,673,287,680, above the unchanged2GiB stage floor and prior audit's
+2GiB+64MiB margin.2263 preserves an initial diagnostic failure classifying native
+ENOENT as a plain record;2264 corrects that without deletion. The22 exact cleanup
+candidates are in DIAG/three-hour-disk-audit-v2264.json. /proc/117 and /proc/168
+remain unreadable, and current image/report/donor dependencies remain protected.
+Deletion is deferred before broad mount/link/scan qualification; no tree is
+removed, no old locator retired, and zero bytes reclaimed. No storage GAP or
+schedule change follows. No second automation, worktree or numeric cycle starts.
+
 TaskSource resource transition completes exact F/L/S/B in stage1926 below;
 no second contour producer overlaps it. The preceding bun-host-state coverage cycle has completed
 all testable gaps and reviewed every residual objective counter under the owner's
