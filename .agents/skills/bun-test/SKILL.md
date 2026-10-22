@@ -733,7 +733,9 @@ is not the product regression; retain it separately from the actual RED/GREEN.
 Follow [TESTING's rolling contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle)
 with exactly one active contour. Keep Root as the sole final-check and numeric
 owner. Select the next contour only after the active contour has accepted exact
-F/L/S/B100. A prepared patch or partial diagnostic proves no milestone. This
+F/L/S/B100 or every remaining counter has a reviewed objective skip under
+TESTING. A skip permits queue progression while raw counts and BLOCKED remain;
+it grants no numeric PASS or frozen/mutation waiver. A prepared patch or partial diagnostic proves no milestone. This
 strategy does not activate parallel numeric producers or coverage shards.
 
 Use the stage command for the active contour:

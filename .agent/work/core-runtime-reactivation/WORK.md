@@ -16,6 +16,42 @@ or numeric producer is active. Complete the selected contour before another.
 
 ### Current measured repair packet
 
+The10:49UTC continuation audits the preceding three hours through published Git
+packets and existing stages, without another suite, inventory or disk scan.
+DIAG/test-script-audit-v1916.md independently finds no confirmed runner/capture/
+report defect. Its identified inventory walks serve input admission; no measured
+evidence justifies deleting them. It confirms the single memoized stdout read
+and single report publication. Missing-report refusal after1896 preserves the
+native failure, not a partial PASS. Its absent archive-v1905.json locator is
+non-authoritative; current retention is the exact archive manifest below.
+
+The current TaskSource test packet expands one case into nine independent named
+cases with a shared typed fixture builder. It covers native active/queued/adopt
+issue, retained single-resource addition and released history; detached
+constructor/parser/join/rewind refusal matrices; pure queued-ticket promotion;
+and native rollback/unchanged-state/exact retry. Detached values never become
+accepted history. Both-resources-present/no-additions and queued promotion remain
+pure helper checks, not native producer acceptance claims. All issued unobserved
+roots are retained; no operation is replayed under a new ID.
+1915's missing returned-value wrappers and post-cleanup deadline check are fixed.
+Prepared JSON is decoded once per proof group as unknown and shape-checked,
+replacing unsafe casts/coercion. Typed element assertions replace unsafe generic
+array matchers.1917 retains two unknown-request type errors;1918 retains three
+matcher lint diagnostics, neither launches runtime cases.1919 passes strict154,
+scoped zero-warning type-aware lint and9cases/148assertions in2.43s, all under
+the unchanged5s per-case deadline.1922 adds fractional revision, successor Ledger
+revision/binding and ticket-order DTOs; strict154/lint and the2affected cases/
+44assertions pass in1.496s. Independent DIAG/task-source-final-review-v1920.md
+finds two missing constructor variations.1923 adds a valid-shaped foreign
+authority scope and an altered issuance Source revision, then passes strict154,
+scoped lint and the affected constructor case. No Source defect is established.
+All review findings are resolved before the first full contour stage, pending
+publication and its numeric report.
+The Bun skill now follows TESTING's objective-skip rule. The plan delegates SDK
+readiness to its maintained selector; this contour requires no SDK artifact.
+This removes an unnecessary CI/download prerequisite, with no measured speedup
+claim. Source implementation is unchanged in this test packet.
+
 Published b828812b63683aa5f395efe6beb5f8214aefa598 corrects two reproduced P0s.
 Qualified code adoption now preserves the prior binding of settled Host attempts
 through immutable prior-Work custody joined to exact Work CAS, shared schema,

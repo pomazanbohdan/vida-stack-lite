@@ -90,9 +90,11 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
 4. Review the whole coherent current-byte packet, including resources. Refresh
    each changed exact test pin once. Run its narrow control and documentation check.
    Root commits through ordinary hooks and performs a normal push.
-5. Obtain one matching build-only SDK artifact, verify its actual acquisition
-   identity once and capture one immutable execution image. Keep installed
-   dependencies unchanged while producers depend on them.
+5. Let `selectedTestsRequireSdkArtifacts` and the maintained readiness owner
+   select whether a matching build-only SDK artifact is needed. Verify an
+   acquisition once when required; the current TaskSource transition selection
+   needs none. Capture one immutable image and keep installed dependencies
+   unchanged while producers depend on them.
 6. Execute one complete selected-contour coverage stage and import once through
    its maintained projection. Read native terminal/capture/group/image custody
    before accepting numbers. Preserve every FAIL/TIMEOUT/UNKNOWN.
@@ -126,12 +128,12 @@ outcomes immediately after terminal receipts, before the reporting-budget check.
 It changes no deadline, custody flag, count or assertion-failure diagnostics.
 Use the existing native timeout/signal/unattempted custody cases for verification.
 
-The current Host packet reuses one synchronous issuing-transaction history cache
+The implemented Host packet reuses one synchronous issuing-transaction history cache
 after policy verification, invalidating its Work and table metadata on receipt
 insertion. Projected-schema fixtures form storage under empty-DB maintenance and
 reopen before creating Work; ordinary fixtures use the same synchronous seed.
-Collect exact producer controls and independent prerequisite reviews before one
-pin refresh, ordinary commit/push, matching SDK and complete Host coverage stage.
+Its completed producer controls, reviews, publication, SDK and Host stage are
+recorded in WORK. Do not repeat them as pending steps in the TaskSource contour.
 Reuse bound callable bytes/relative geometry for unchanged owners after a file
 edit, with current transitive guard review; never copy historical counter IDs or
 promote their old measurements. Unsupported runtime/capture producer prerequisites
