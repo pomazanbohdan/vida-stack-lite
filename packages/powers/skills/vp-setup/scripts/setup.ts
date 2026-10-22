@@ -8,7 +8,7 @@ export type ModelInventory = { providers: { id: string; models: { id: string; fa
 export type SetupOptions = { root: string; carrier?: Carrier; inventoryPath?: string; selections?: Record<string,string>; flowLevel?: 'full'|'medium'|'light'; dryRun?: boolean; now?: () => string };
 type MethodologyProfile = { groups: { id: string; user_decision: boolean; default?: string; alternatives: { id: string }[] }[] };
 type LanePolicy = 'independent-provider' | 'independent-model' | 'blind-same-model';
-export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }>; flow_level?: 'full'|'medium'|'light'; verification: { available_models: { provider: string; model: string; family: string; roles: ('main'|'agent')[]; available: boolean }[]; lane_assignment: { lane: string; provider: string; model: string; blind: boolean }[]; lane_policy: LanePolicy; limitations: string }; unresolvedGroups: string[]; limitations: string[] };
+export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }>; unresolved_groups: Record<string, string[]>; flow_level?: 'full'|'medium'|'light'; verification: { available_models: { provider: string; model: string; family: string; roles: ('main'|'agent')[]; available: boolean }[]; lane_assignment: { lane: string; provider: string; model: string; blind: boolean }[]; lane_policy: LanePolicy; limitations: string }; unresolvedGroups: string[]; limitations: string[] };
 
 const begin = '<!-- vida-powers:profile:begin -->';
 const end = '<!-- vida-powers:profile:end -->';
@@ -35,12 +35,13 @@ function available(inventory: ModelInventory): { provider: string; model: string
 export function resolveProfile(sourceProfile: MethodologyProfile, options: { selections: Record<string,string>; flowLevel?: 'full'|'medium'|'light'; inventory: ModelInventory }): EffectiveProfile {
   const groups: EffectiveProfile['groups'] = {};
   const unresolvedGroups: string[] = [];
+  const unresolved_groups: EffectiveProfile['unresolved_groups'] = {};
   for (const group of sourceProfile.groups) {
     const selected = options.selections[group.id];
     if (!group.user_decision && selected !== undefined) throw new Error(`invalid selection ${selected} for product-policy group ${group.id}; product policy declares ${String(group.default)}`);
     const chosen = group.user_decision ? selected : group.default;
-    if (chosen === undefined) { unresolvedGroups.push(group.id); continue; }
     const alternativeIds = group.alternatives.map((alternative) => alternative.id);
+    if (chosen === undefined) { unresolvedGroups.push(group.id); unresolved_groups[group.id] = alternativeIds; continue; }
     if (!alternativeIds.includes(chosen)) throw new Error(`invalid alternative ${chosen} for group ${group.id}`);
     groups[group.id] = { active: chosen, alternatives: alternativeIds };
   }
@@ -70,7 +71,7 @@ export function resolveProfile(sourceProfile: MethodologyProfile, options: { sel
     { lane: 'execute', provider: executor.provider, model: executor.model, blind: false },
     { lane: 'verify', provider: verificationModel?.provider ?? executor.provider, model: verificationModel?.model ?? executor.model, blind },
   ];
-  const result: EffectiveProfile = { schema: 'VPEffectiveProfile/v1', groups, verification: { available_models: models, lane_assignment, lane_policy, limitations }, unresolvedGroups, limitations: [...(unresolvedGroups.length > 0 ? [`Unresolved groups: ${unresolvedGroups.join(', ')}.`] : []), limitations] };
+  const result: EffectiveProfile = { schema: 'VPEffectiveProfile/v1', groups, unresolved_groups, verification: { available_models: models, lane_assignment, lane_policy, limitations }, unresolvedGroups, limitations: [...(unresolvedGroups.length > 0 ? [`Unresolved groups: ${unresolvedGroups.join(', ')}.`] : []), limitations] };
   if (options.flowLevel !== undefined) result.flow_level = options.flowLevel;
   return result;
 }

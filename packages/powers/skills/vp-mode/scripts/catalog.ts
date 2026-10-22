@@ -1,12 +1,15 @@
 import { createHash } from 'node:crypto';
+import { Buffer } from 'node:buffer';
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from './frontmatter.ts';
 import { FrontmatterError } from './frontmatter.ts';
 import { validateAgainstSchema } from './schema.ts';
 import type { Schema } from './schema.ts';
 
-export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED';
+export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED' | 'CATALOG_BUNDLE_LIMIT_EXCEEDED';
 
 export class CatalogError extends Error {
   readonly code: CatalogErrorCode;
@@ -42,13 +45,16 @@ export type SearchQuery = { capability_tags?: string[]; pattern_tags?: string[];
 export type DecisionRequest = { operation: string; product?: string; context?: string; tags?: string[]; candidates: string[] };
 export type DecisionFallbackReason = 'no-candidates' | 'unknown-candidate' | 'candidate-not-allowed' | 'invalid-format';
 export type DecisionResult = { selected: string[]; score: number; rationale: string; provider: 'catalog' | 'agent'; fallback: boolean; fallbackReason: DecisionFallbackReason | null };
-export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }> };
+export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }>; unresolved_groups?: Record<string, string[]> };
 export type ComposeQuery = SearchQuery & { required_ids?: string[]; profile?: EffectiveProfile; role?: string; task_contract?: string; effective_methodology?: string; work_scope?: string; materialization_requirements?: string[]; artifact_references?: string[] };
 export type ComposedInstruction = { instruction_id: string; title: string; summary: string; content: string; capability_tags: string[]; pattern_tags: string[]; artifact_contract: Instruction['artifact_contract']; provenance: Provenance[]; selection_reason: 'matched' | 'dependency' | 'required' };
 export type ComposedBundle = { catalog_id: string; catalog_revision: number; tag_dictionary: Catalog['tag_dictionary']; instructions: ComposedInstruction[]; role: string; task_contract: string; effective_methodology: string; work_scope: string; materialization_requirements: string[]; artifact_references: string[] };
 
 const instructionSchemaName = 'vpinstruction.v1.schema.json';
 const catalogSchemaName = 'vpcatalog.v1.schema.json';
+type CanonicalMethodologyGroup = { id: string; alternatives: string[]; user_decision: boolean };
+type CanonicalMethodologyProfile = { schema: 'VPMethodologyProfile/v1'; groups: { id: string; user_decision: boolean; alternatives: { id: string }[] }[] };
+let canonicalMethodologyGroups: CanonicalMethodologyGroup[] | undefined;
 
 function compareNames(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
@@ -70,6 +76,64 @@ export async function readSchema(directory: string, name: string): Promise<Schem
   } catch (error) {
     throw invalid(`${name} is malformed JSON`, { error: error instanceof Error ? error.message : String(error) });
   }
+}
+
+function loadCanonicalMethodologyGroups(): CanonicalMethodologyGroup[] {
+  if (canonicalMethodologyGroups !== undefined) return canonicalMethodologyGroups;
+  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
+  const profilePath = join(packageRoot, 'config', 'methodology-profile.json');
+  const schemaPath = join(packageRoot, 'config', 'vpmethodologyprofile.v1.schema.json');
+  let profileText: string;
+  let schemaText: string;
+  try {
+    profileText = readFileSync(profilePath, 'utf8');
+    schemaText = readFileSync(schemaPath, 'utf8');
+  } catch (error) {
+    throw invalid('cannot read canonical methodology profile or schema', {
+      profile_path: profilePath,
+      schema_path: schemaPath,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  let profileValue: unknown;
+  let schema: Schema;
+  try {
+    profileValue = JSON.parse(profileText) as unknown;
+  } catch (error) {
+    throw invalid('canonical methodology profile is malformed JSON', {
+      path: profilePath,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  try {
+    schema = JSON.parse(schemaText) as Schema;
+  } catch (error) {
+    throw invalid('canonical methodology profile schema is malformed JSON', {
+      path: schemaPath,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  const schemaErrors = validateAgainstSchema(profileValue, schema);
+  if (schemaErrors.length > 0) throw invalid('canonical methodology profile schema validation failed', { path: profilePath, schemaErrors });
+  const profile = profileValue as CanonicalMethodologyProfile;
+  const groupIds = new Set<string>();
+  const alternativeOwners = new Map<string, string>();
+  const groups = profile.groups.map((group): CanonicalMethodologyGroup => {
+    if (groupIds.has(group.id)) throw invalid('canonical methodology profile has duplicate groups', { group: group.id });
+    groupIds.add(group.id);
+    const alternatives = group.alternatives.map((alternative) => alternative.id);
+    if (new Set(alternatives).size !== alternatives.length) throw invalid('canonical methodology profile has duplicate alternatives', { group: group.id, alternatives });
+    for (const alternative of alternatives) {
+      const previous = alternativeOwners.get(alternative);
+      if (previous !== undefined && previous !== group.id) {
+        throw invalid('canonical methodology profile alternative belongs to multiple groups', { alternative, groups: [previous, group.id] });
+      }
+      alternativeOwners.set(alternative, group.id);
+    }
+    return { id: group.id, alternatives, user_decision: group.user_decision };
+  });
+  canonicalMethodologyGroups = groups;
+  return groups;
 }
 
 export async function loadCatalog(catalogPath: string): Promise<Catalog> {
@@ -340,10 +404,152 @@ function profileConflictFor(instruction: Instruction, profile: EffectiveProfile 
   return undefined;
 }
 
+function unresolvedProfileConflictFor(instruction: Instruction, profile: EffectiveProfile | undefined): { group: string; alternatives: string[] } | undefined {
+  if (profile === undefined) return undefined;
+  for (const [group, alternatives] of Object.entries(profile.unresolved_groups ?? {})) {
+    if (instruction.pattern_tags.some((tag) => alternatives.includes(tag))) return { group, alternatives };
+  }
+  return undefined;
+}
+
+function requireProfileResolution(
+  conflict: { group: string; alternatives: string[] },
+  context: { instruction_id?: string; dependency_id?: string; requiring_instruction_id?: string },
+): never {
+  throw new CatalogError(
+    'CATALOG_PROFILE_CONFLICT',
+    `policy group ${conflict.group} is unresolved; request a user choice before composing`,
+    { group: conflict.group, resolution_required: true, alternatives: conflict.alternatives, ...context },
+  );
+}
+
+function sameAlternatives(actual: string[], expected: string[]): boolean {
+  if (actual.length !== expected.length) return false;
+  const actualSorted = [...actual].sort(compareNames);
+  const expectedSorted = [...expected].sort(compareNames);
+  return actualSorted.every((tag, index) => tag === expectedSorted[index]);
+}
+
+function requireCanonicalProfileRefresh(group: string, expected: string[], actual: string[], details: Record<string, unknown> = {}): never {
+  throw new CatalogError(
+    'CATALOG_PROFILE_CONFLICT',
+    `effective profile does not contain the current alternatives for ${group}; refresh it with vp-setup`,
+    {
+      group,
+      expected_alternatives: expected,
+      actual_alternatives: actual,
+      resolution_required: true,
+      profile_refresh_required: true,
+      ...details,
+    },
+  );
+}
+
 function validateProfile(profile: EffectiveProfile | undefined): void {
   if (profile === undefined) return;
+  if (profile.unresolved_groups === undefined) {
+    throw new CatalogError('CATALOG_PROFILE_CONFLICT', 'effective profile is missing unresolved-group state; refresh it with vp-setup', {
+      resolution_required: true,
+      profile_refresh_required: true,
+    });
+  }
   for (const [group, choice] of Object.entries(profile.groups)) {
     if (!choice.alternatives.includes(choice.active)) throw new CatalogError('CATALOG_PROFILE_CONFLICT', `active profile pattern is not an alternative in ${group}`, { group, active: choice.active });
+  }
+  for (const [group, alternatives] of Object.entries(profile.unresolved_groups ?? {})) {
+    if (profile.groups[group] !== undefined || !Array.isArray(alternatives) || alternatives.length === 0
+      || alternatives.some((tag) => typeof tag !== 'string' || tag.length === 0)
+      || new Set(alternatives).size !== alternatives.length) {
+      throw new CatalogError('CATALOG_PROFILE_CONFLICT', `unresolved profile group is invalid: ${group}`, { group });
+    }
+  }
+
+  const canonicalGroups = loadCanonicalMethodologyGroups();
+  const canonicalById = new Map(canonicalGroups.map((group) => [group.id, group]));
+  for (const [groupId, choice] of Object.entries(profile.groups)) {
+    const canonical = canonicalById.get(groupId);
+    if (canonical !== undefined) {
+      if (!sameAlternatives(choice.alternatives, canonical.alternatives)) {
+        requireCanonicalProfileRefresh(groupId, canonical.alternatives, choice.alternatives);
+      }
+    }
+  }
+  for (const [groupId, alternatives] of Object.entries(profile.unresolved_groups)) {
+    const canonical = canonicalById.get(groupId);
+    if (canonical !== undefined) {
+      if (!sameAlternatives(alternatives, canonical.alternatives)) {
+        requireCanonicalProfileRefresh(groupId, canonical.alternatives, alternatives);
+      }
+    }
+  }
+}
+
+function validateCanonicalPolicySelection(
+  selected: Map<string, { instruction: Instruction; reason: ComposedInstruction['selection_reason'] }>,
+  profile: EffectiveProfile | undefined,
+): void {
+  const canonicalGroups = loadCanonicalMethodologyGroups();
+  const alternativesByTag = new Map<string, CanonicalMethodologyGroup>();
+  for (const group of canonicalGroups) {
+    for (const alternative of group.alternatives) alternativesByTag.set(alternative, group);
+  }
+  const selectedByGroup = new Map<string, { group: CanonicalMethodologyGroup; alternatives: Set<string>; instructionIds: Set<string> }>();
+  for (const { instruction } of selected.values()) {
+    for (const tag of instruction.pattern_tags) {
+      const group = alternativesByTag.get(tag);
+      if (group === undefined) continue;
+      let entry = selectedByGroup.get(group.id);
+      if (entry === undefined) {
+        entry = { group, alternatives: new Set<string>(), instructionIds: new Set<string>() };
+        selectedByGroup.set(group.id, entry);
+      }
+      entry.alternatives.add(tag);
+      entry.instructionIds.add(instruction.instruction_id);
+    }
+  }
+  for (const [groupId, entry] of selectedByGroup) {
+    const matchingResolved = profile === undefined
+      ? undefined
+      : Object.values(profile.groups).find((choice) => sameAlternatives(choice.alternatives, entry.group.alternatives));
+    const matchingUnresolved = profile === undefined
+      ? undefined
+      : Object.values(profile.unresolved_groups ?? {}).find((alternatives) => sameAlternatives(alternatives, entry.group.alternatives));
+    if (profile !== undefined && entry.group.user_decision && matchingResolved === undefined && matchingUnresolved === undefined) {
+      requireCanonicalProfileRefresh(groupId, entry.group.alternatives, [], {
+        instruction_ids: [...entry.instructionIds].sort(compareNames),
+      });
+    }
+    if (entry.alternatives.size <= 1) continue;
+    if (entry.alternatives.size > 1) {
+      if (profile === undefined) {
+        throw new CatalogError(
+          'CATALOG_PROFILE_CONFLICT',
+          `conflicting alternatives in ${groupId} require an effective profile from vp-setup`,
+          {
+            group: groupId,
+            alternatives: entry.group.alternatives,
+            selected_alternatives: [...entry.alternatives].sort(compareNames),
+            instruction_ids: [...entry.instructionIds].sort(compareNames),
+            resolution_required: true,
+            profile_required: true,
+            profile_refresh_required: true,
+          },
+        );
+      }
+      if (matchingUnresolved !== undefined) requireProfileResolution({ group: groupId, alternatives: matchingUnresolved }, {});
+      if (matchingResolved === undefined) {
+        requireCanonicalProfileRefresh(groupId, entry.group.alternatives, [], {
+          instruction_ids: [...entry.instructionIds].sort(compareNames),
+        });
+      }
+      throw new CatalogError('CATALOG_PROFILE_CONFLICT', `conflicting alternatives remain selected in ${groupId}`, {
+        group: groupId,
+        alternatives: entry.group.alternatives,
+        selected_alternatives: [...entry.alternatives].sort(compareNames),
+        instruction_ids: [...entry.instructionIds].sort(compareNames),
+        resolution_required: true,
+      });
+    }
   }
 }
 
@@ -379,10 +585,16 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Instr
   }
   for (const id of query.required_ids ?? []) {
     const instruction = instructions.get(id);
+    const unresolvedConflict = instruction === undefined ? undefined : unresolvedProfileConflictFor(instruction, query.profile);
+    if (unresolvedConflict !== undefined) requireProfileResolution(unresolvedConflict, { instruction_id: id });
     const conflict = instruction === undefined ? undefined : profileConflictFor(instruction, query.profile);
     if (conflict !== undefined) throw new CatalogError('CATALOG_PROFILE_CONFLICT', `required instruction ${id} conflicts with profile ${conflict.group}`, { ...conflict, instruction_id: id });
   }
-  for (const item of [...selected.values()]) if (item.reason === 'matched' && profileDrops(item.instruction, query)) selected.delete(item.instruction.instruction_id);
+  for (const item of [...selected.values()]) {
+    const unresolvedConflict = unresolvedProfileConflictFor(item.instruction, query.profile);
+    if (unresolvedConflict !== undefined) requireProfileResolution(unresolvedConflict, { instruction_id: item.instruction.instruction_id });
+    if (item.reason === 'matched' && profileDrops(item.instruction, query)) selected.delete(item.instruction.instruction_id);
+  }
   const pending = [...selected.values()].map((item) => item.instruction);
   for (let index = 0; index < pending.length; index += 1) {
     const instruction = pending[index];
@@ -391,10 +603,14 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Instr
       const dependency = instructions.get(dependencyId);
       if (dependency === undefined) throw new CatalogError('CATALOG_DEPENDENCY_MISSING', `dependency ${dependencyId} required by ${instruction.instruction_id} is missing`, { instruction_id: instruction.instruction_id, dependency_id: dependencyId });
       if (dependency.status === 'disabled') throw new CatalogError('CATALOG_DEPENDENCY_DISABLED', `dependency ${dependencyId} required by ${instruction.instruction_id} is disabled`, { instruction_id: instruction.instruction_id, dependency_id: dependencyId });
+      const unresolvedConflict = unresolvedProfileConflictFor(dependency, query.profile);
+      if (unresolvedConflict !== undefined) requireProfileResolution(unresolvedConflict, { dependency_id: dependencyId, requiring_instruction_id: instruction.instruction_id });
       const profileConflict = profileConflictFor(dependency, query.profile);
       if (profileConflict !== undefined) {
         const active = [...instructions.values()].find((candidate) => candidate.status === 'active' && candidate.pattern_tags.includes(profileConflict.active));
         if (active === undefined) throw new CatalogError('CATALOG_PROFILE_CONFLICT', `active profile pattern ${profileConflict.active} has no instruction in ${profileConflict.group}`, { ...profileConflict, dependency_id: dependencyId, requiring_instruction_id: instruction.instruction_id });
+        const unresolvedActiveConflict = unresolvedProfileConflictFor(active, query.profile);
+        if (unresolvedActiveConflict !== undefined) requireProfileResolution(unresolvedActiveConflict, { dependency_id: active.instruction_id, requiring_instruction_id: instruction.instruction_id });
         if (!selected.has(active.instruction_id)) {
           addSelected(selected, active, 'dependency');
           pending.push(active);
@@ -405,6 +621,7 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Instr
       }
     }
   }
+  validateCanonicalPolicySelection(selected, query.profile);
   checkExcludes(selected);
   const composed = [...selected.values()]
     .sort((left, right) => compareNames(left.instruction.instruction_id, right.instruction.instruction_id))
@@ -419,6 +636,15 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Instr
       provenance: instruction.provenance,
       selection_reason: reason,
     }));
+  const instructionTextBytes = composed.reduce((total, instruction) => total + Buffer.byteLength(instruction.content, 'utf8'), 0);
+  if (composed.length > 20 || instructionTextBytes > 64_000) {
+    throw new CatalogError('CATALOG_BUNDLE_LIMIT_EXCEEDED', 'composed bundle exceeds the session instruction limit', {
+      instruction_count: composed.length,
+      max_instructions: 20,
+      instruction_text_bytes: instructionTextBytes,
+      max_instruction_text_bytes: 64_000,
+    });
+  }
   return {
     catalog_id: catalog.catalog_id,
     catalog_revision: catalog.revision,

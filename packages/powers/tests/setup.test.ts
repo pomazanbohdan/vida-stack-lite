@@ -4,12 +4,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
 import { detectCarrier, profileBlock, readInventory, resolveProfile, runCli, runSetup, upsertProfile } from '../skills/vp-setup/scripts/setup.ts';
 import type { EffectiveProfile, ModelInventory } from '../skills/vp-setup/scripts/setup.ts';
 
 const script = fileURLToPath(new URL('../skills/vp-setup/scripts/cli.ts', import.meta.url));
 const source = JSON.parse(await readFile(new URL('../config/methodology-profile.json', import.meta.url), 'utf8')) as { groups: { id: string; user_decision: boolean; default?: string; alternatives: { id: string }[] }[] };
-const profile: EffectiveProfile = { schema: 'VPEffectiveProfile/v1', groups: { 'approval-policy': { active: 'approval-policy-gate', alternatives: ['approval-policy-proceed', 'approval-policy-gate'] } }, flow_level: 'medium', verification: { available_models: [], lane_assignment: [], lane_policy: 'blind-same-model', limitations: 'blind same model' }, unresolvedGroups: [], limitations: [] };
+const effectiveProfileSchema: Schema = JSON.parse(await readFile(new URL('../config/vpeffectiveprofile.v1.schema.json', import.meta.url), 'utf8'));
+const profile: EffectiveProfile = { schema: 'VPEffectiveProfile/v1', groups: { 'approval-policy': { active: 'approval-policy-gate', alternatives: ['approval-policy-proceed', 'approval-policy-gate'] } }, unresolved_groups: {}, flow_level: 'medium', verification: { available_models: [], lane_assignment: [], lane_policy: 'blind-same-model', limitations: 'blind same model' }, unresolvedGroups: [], limitations: [] };
 const inventory: ModelInventory = { providers: [{ id: 'p1', models: [{ id: 'm1', family: 'f1', roles: ['main', 'agent'], available: true }] }] };
 
 async function temp(): Promise<string> { return mkdtemp(join(tmpdir(), 'vp-setup-')); }
@@ -45,7 +47,8 @@ describe('vp-setup', () => {
     expect(block).toContain('```json');
     expect(block).toContain('<!-- vida-powers:profile:end -->');
     const parsed = JSON.parse(block.split('```json\n')[1]?.split('\n```')[0] ?? 'null') as Record<string, unknown>;
-    expect(parsed).toEqual({ schema: profile.schema, groups: profile.groups, flow_level: profile.flow_level, verification: profile.verification });
+    expect(parsed).toEqual({ schema: profile.schema, groups: profile.groups, unresolved_groups: profile.unresolved_groups, flow_level: profile.flow_level, verification: profile.verification });
+    expect(validateAgainstSchema(parsed, effectiveProfileSchema)).toEqual([]);
   });
 
   test('inserts, compares parsed profile, preserves foreign bytes, and changes only managed block', async () => {
@@ -110,6 +113,7 @@ describe('vp-setup', () => {
     expect(unresolved.groups.architecture?.active).toBe('structural-design');
     expect(unresolved.groups.delivery?.active).toBe('plan-execution');
     expect(unresolved.unresolvedGroups).toEqual(['approval-policy']);
+    expect(unresolved.unresolved_groups).toEqual({ 'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'] });
     const complete = resolveProfile(source as never, { selections: { 'approval-policy': 'approval-policy-gate' }, inventory });
     expect(complete.unresolvedGroups).toEqual([]);
     expect(Object.keys(complete.groups)).toHaveLength(5);
@@ -157,6 +161,32 @@ describe('vp-setup', () => {
       expect(host.carrier).toBe('host-shim');
       expect(host.changed).toBe(true);
       await expect(readFile(join(root, 'vida-project-profile.json'), 'utf8')).rejects.toThrow();
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
+  test('persists unresolved approval-policy alternatives in every carrier', async () => {
+    const root = await temp();
+    const inventoryPath = join(root, 'empty.json');
+    const expected = { 'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'] };
+    try {
+      await writeFile(inventoryPath, '{"providers":[]}');
+      const standalone = await runSetup({ root, carrier: 'standalone', inventoryPath });
+      const standaloneText = await readFile(standalone.path, 'utf8');
+      const standalonePayload = standaloneText.split('```json\n')[1]?.split('\n```')[0] ?? 'null';
+      const standaloneProfile = JSON.parse(standalonePayload);
+      expect(standaloneProfile.unresolved_groups).toEqual(expected);
+      expect(validateAgainstSchema(standaloneProfile, effectiveProfileSchema)).toEqual([]);
+
+      const runtime = await runSetup({ root, carrier: 'runtime', inventoryPath });
+      const runtimeProfile = JSON.parse(await readFile(runtime.path, 'utf8'));
+      expect(runtimeProfile.unresolved_groups).toEqual(expected);
+      expect(validateAgainstSchema(runtimeProfile, effectiveProfileSchema)).toEqual([]);
+
+      const host = await runSetup({ root, carrier: 'host-shim', inventoryPath });
+      const hostProfile = JSON.parse(await readFile(host.path, 'utf8'));
+      expect(hostProfile.unresolved_groups).toEqual(expected);
+      expect(validateAgainstSchema(hostProfile, effectiveProfileSchema)).toEqual([]);
+      expect(validateAgainstSchema({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: { 'approval-policy': ['not a pattern tag'] } }, effectiveProfileSchema)).not.toEqual([]);
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 

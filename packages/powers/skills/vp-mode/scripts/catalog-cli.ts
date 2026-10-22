@@ -109,7 +109,7 @@ function commaList(flags: Map<string, string[]>, name: string): string[] | undef
   return values;
 }
 
-async function profileAt(path: string | undefined, catalogDirectory: string): Promise<ComposeQuery['profile']> {
+async function profileAt(path: string | undefined): Promise<ComposeQuery['profile']> {
   if (path === undefined) return undefined;
   let text: string;
   try {
@@ -123,7 +123,7 @@ async function profileAt(path: string | undefined, catalogDirectory: string): Pr
   } catch (error) {
     throw invalid('profile JSON is malformed', { path, error: error instanceof Error ? error.message : String(error) });
   }
-  const schema = await readSchema(catalogDirectory, 'vpeffectiveprofile.v1.schema.json');
+  const schema = await readSchema(dirname(defaultCatalogPath(import.meta.url)), 'vpeffectiveprofile.v1.schema.json');
   const schemaErrors = validateAgainstSchema(profile, schema);
   if (schemaErrors.length > 0) throw new CatalogError('CATALOG_INVALID', 'profile schema validation failed', { schemaErrors });
   return profile as ComposeQuery['profile'];
@@ -154,7 +154,7 @@ async function dispatch(command: Command, flags: Map<string, string[]>, catalogP
     case 'get':
       return { instruction: catalogGet(catalog, instructions, required(flags, '--id')) };
     case 'compose': {
-      const profile = await profileAt(one(flags, '--profile'), dirname(resolve(catalogPath)));
+      const profile = await profileAt(one(flags, '--profile'));
       const query: ComposeQuery = {};
       const capabilityTags = commaList(flags, '--capability');
       const patternTags = commaList(flags, '--pattern');

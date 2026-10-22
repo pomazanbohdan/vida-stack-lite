@@ -27,7 +27,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T19:30:00Z' }
-revision: '5'
+revision: '14'
 ---
 
 **Goal:** complete the core of the product — the declaration of policies, environment-driven
@@ -174,9 +174,8 @@ test `tests/setup.test.ts`.
 
 ## Task E4 — `vp-mode`: orchestration
 
-**Files:** create `skills/vp-mode/SKILL.md`; the tooling already exists in
-`skills/vp-mode/scripts/` (`catalog.ts`, `catalog-cli.ts`, `frontmatter.ts`,
-`schema.ts`).
+**Files:** `skills/vp-mode/SKILL.md` and the tooling in `skills/vp-mode/scripts/`
+(`catalog.ts`, `catalog-cli.ts`, `frontmatter.ts`, `schema.ts`) are implemented.
 
 - A single main entry (D4): accepts a request in ordinary language → `catalog.search` →
   `catalog.compose` → bundle (role, task contract, effective methodology, Work
@@ -191,28 +190,72 @@ test `tests/setup.test.ts`.
 - **Agent Fallback is mandatory** (SR-18): unavailability, timeout, API error,
   malformed format, unknown candidate ID, insufficient confidence → the main
   agent; materialization: the source of the decision, the selected IDs, the fallback reason ✓ (SR-20).
-- **Bundle boundaries** (SR-58, AC-26): the bundle ≤ 20 instructions and ≤ 64 KB of text —
-  recorded in the contract of SKILL.md and verified in a test ✓.
+- **Bundle boundaries** (SR-58, AC-26): at most 20 instructions and 64,000 UTF-8 bytes
+  summed over selected `content` only, after profile filtering, active-alternative replacement
+  and full transitive dependency closure. `1 KB` = 1,000 bytes; the tag dictionary,
+  JSON/envelope, metadata and execution context are excluded. Overflow rejects the whole result
+  with `CATALOG_BUNDLE_LIMIT_EXCEEDED`; it never trims or returns a partial bundle.
 - Materialization per `artifact_contract` ✓ (invariant 7).
 
 ## Task E5 — Delivery channels: per-host manifests and the marketplace
 
-**Files:** `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`,
-`.agents/plugins/`, `marketplace.json`; create the manifest schemas
-`config/vppluginmanifest.v1.schema.json` (per-host manifest) and reuse it for
-the marketplace listing.
+**E5a outputs:** .codex-plugin/, .claude-plugin/, .cursor-plugin/, .agents/plugins/,
+and the portable package-root plugin.json; the package-local generator reads
+config/plugin-manifest-inputs.json, validates it with config/vppluginmanifest.v1.schema.json,
+and produces only selected schema-validated manifest files. E5b's approved Muse and
+Antigravity native formation targets are separate; .47 owns their exact file/schema/build contract.
 
-- `packages/powers` — the marketplace owner (D4b): `marketplace.json` with
-  `source: "./"` ✓; the per-host manifests list the shipped skills
-  (`vp-mode`, `vp-setup`) and the instruction catalog ✓.
-- Layout: **per-host** `marketplace.json` and `plugin.json` in their own directory
-  (`.claude-plugin/`, `.cursor-plugin/`, `.codex-plugin/`, `.agents/plugins/`) —
-  per the D4b pattern; the package description for the marketplace — at the root of the package (`source: "./"`) ✓.
-  The package build generates these manifests. E5 supplies the schema and metadata inputs
-  and implements the generator under the owner's authorization dated 2026-10-22.
-- The generated manifests must validate against the schema and must not duplicate the payload (D4b).
-- A new AC: "the per-host manifests and the marketplace description are schema-valid and do not duplicate
-  the payload" — a **proposal** (owner approval).
+- `packages/powers` remains the marketplace owner (D4b). `catalog.json` remains
+  the canonical corpus listing, accessed through CLI/SKILL; no catalog copy or
+  vendor-specific catalog field is emitted.
+- The portable root `plugin.json` has no `skills` or `catalog` field and relies
+  on standard `skills/` discovery. Codex compatibility `plugin.json` uses the
+  scaffold shape `skills: "./skills/"`. Claude and Cursor plugin manifests list
+  exactly `./skills/vp-mode/` and `./skills/vp-setup/`. The generator checks
+  these selected host resources are rooted regular `SKILL.md` files before a
+  write or successful check; it never copies skill payload.
+- Claude marketplace output includes the package description at top level.
+  Selected-target metadata remains optional except where that host format
+  requires it; public-release metadata remains a separate D4b gate.
+
+### E5 target status
+
+This is the canonical E5a/E5b status table. Other documents link here.
+
+| Target | Current status | Mapping or output | Basis and remaining gap |
+|---|---|---|---|
+| Portable root | `format-mapped` | Root `plugin.json`; standard `skills/` discovery; no `skills` or `catalog` field | Fixture/schema proof only; no package outputs or host install in this packet |
+| Codex | `host-verified` (historical D4b status) | `.codex-plugin/plugin.json` uses `skills: "./skills/"`; `.agents/plugins/marketplace.json` uses local source `./` | This packet proves source format/fixtures only; no new host qualification |
+| Claude | `format-mapped` | `.claude-plugin/plugin.json` lists the two shipped skill paths; marketplace includes package description | Official format mapping + fixture/schema proof; no host qualification |
+| Cursor | `format-mapped` | `.cursor-plugin/plugin.json` lists the two current shipped skill paths | Explicit bounded inventory; adding a shipped skill requires updating mapping, schema, tests and goldens; no future discovery claim |
+| Muse / root marketplace | Local fixture formed; catalog blocked | Muse package manifest and plugin payload in the `.54` scratch fixture; root marketplace output withheld | `.54` CLI fixture build/check exited 0 over 5,233 scratch outputs; Muse and Antigravity each map 2,615 files with equal paths, bytes and SHA-256. Muse catalog is `MANIFEST_MUSE_CATALOG_NOT_READY`: first-party digest proof is absent. `marketplaceWritten` is false. Production input/output and host acceptance are absent. See [Muse marketplace docs](https://meta-models.github.io/muse-code-sdk/next/guides/plugins/concepts/marketplaces-and-updates/) and [compatibility docs](https://meta-models.github.io/muse-code-sdk/next/guides/plugins/concepts/compatibility/). |
+| Antigravity | Local plugin-root fixture formed | Root `plugin.json` and plugin payload in the `.54` scratch fixture; install destination remains separate | `.54` validated the `name` and `description` manifest shape and matched the 2,615-file payload map to Muse by path, bytes and SHA-256. Production input/output, host acceptance and publication are absent. Antigravity requires `plugin.json` at the plugin root; its published schema allows only `name` and `description` with `additionalProperties: false` while the example includes `$schema`, so parser tolerance is unverified. See [Antigravity docs](https://antigravity.google/docs/plugins) and [Agent Plugins schema](https://agent-plugins.org/schemas/1.0.0/plugin.schema.json). |
+| Devin | Docs-declared fallback documented; no Devin-specific output | Manifest precedence is `.devin-plugin/plugin.json` → `.claude-plugin/plugin.json` → root `plugin.json`; current Claude and portable artifacts provide documented fallbacks | [Devin CLI plugin docs](https://docs.devin.ai/cli/extensibility/plugins/overview) define these fallbacks. This is format mapping only; no Devin host installation or acceptance is claimed. |
+| Kimi | Import/translation documented; native target deferred | Plugin Builder imports `.codex-plugin/plugin.json`, `.claude-plugin/plugin.json`, generic root `plugin.json`, and `plugins.json` / `marketplace.json` indexes, then converts to `kimi.plugin.json` | [Kimi Plugin Builder docs](https://www.kimi.ai/help/plugins-and-skills/create) document the import flow; it does not require this package to emit a Kimi-native manifest. No host acceptance is claimed. |
+
+The owner layout choice is resolved: Muse uses a root marketplace with the plugin nested under `plugins/vida-powers/`; Antigravity uses a separate compatible plugin root. D4b remains the business owner. D10 §5's prior universal `source: "."` layout is superseded for these two targets only; its historical record is retained. The earlier .47/.50 plan-review status is historical. `.54` formed local fixtures from the canonical source: 5,233 scratch outputs, with equal 2,615-file Muse and Antigravity path/byte/SHA-256 maps. Fixture build/check exited 0 and recorded zero additional writes or removals; the source inventory was unchanged. The Muse catalog remains blocked as `MANIFEST_MUSE_CATALOG_NOT_READY`: Muse docs require `package_sha256` from the install command but do not specify the exact digest algorithm or a test vector, and the `.54` Source receipt fingerprint is not the Muse digest. `marketplaceWritten` is false. The production check exits 1 with `MANIFEST_INPUT_MISSING`; production input/output are absent. No host installation, publication or Runtime acceptance is claimed. `.60` full-package tests passed 411/411 with one Windows skip and typecheck passed 29 files; coverage exited 1 at 466/467 functions and 3,865/3,874 lines, and Knip exited 1 on one `attrib` external-binary issue. Full Step E gates and a fresh M31 review remain open.
+
+E5a's bounded builder/schema/fixture code is independently READY after the .46 repair.
+Luna R4 .49 closed I3: check compares present outputs with the ownership ledger; a present
+output without a matching ledger digest returns MANIFEST_OUTPUT_CONFLICT, while an initially
+absent output remains MANIFEST_OUTPUT_MISSING. Missing, drifted and stale outputs remain
+distinct, with read-only file-byte and direct-directory-membership snapshots. The review
+confirmed I1 (Codex skills string) and I2 (rooted regular SKILL.md guards) and found no new
+scoped blocker. All 19 current inputs match the .46 post-state. Stable hashes: builder
+5190c935cc88bce9d5cdf3a158c2de9d24a940c13aa066dccf9ce03b55a54901; tests
+82f10a1b08b8548d4ddd3e465b404e6e8c6b291cb5a68a843ef5d44f70535649; schema
+543e4588daa1315b9894b1d5fa729e70c3f91196059b876fcddd2ba57cf705d1. The .46 RED test hash
+84fce27743c358285f879399881779bd2298f4d58f71fa23482e889d2fd29eab differs from the final
+test hash; named cases and assertion lines match, so RED is scenario-level, not byte-identical
+whole-test proof. GREEN: 28 pass / 0 fail / 202 assertions. The 28-file typecheck passed and
+was reviewed, not rerun by .49. Full Step E gates remain pending. M31 R3's endpoint was
+unavailable and the DeepSeek free quota was exhausted; neither returned an external verdict.
+Production inputs/outputs, host installation, public release and Runtime acceptance remain
+open. No local .49 raw review packet was present; the READY verdict is attributed to the
+owner's handoff.
+The rollback fault-injection test uses the Windows read-only attribute and is
+explicitly skipped on non-Windows hosts; this Windows run executes that test,
+but no cross-platform injected-failure proof is claimed.
 
 ## Execution progress
 
@@ -221,8 +264,8 @@ the marketplace listing.
 | E1. Source methodology profile | **closed** | `config/vpmethodologyprofile.v1.schema.json`, `config/methodology-profile.json`; validation lives in `tests/check-corpus.test.ts` (no dedicated `tests/methodology-profile.test.ts` was created) |
 | E2. Effective profile | **closed** | `config/vpeffectiveprofile.v1.schema.json`; used by `catalog-cli` (no dedicated `tests/effective-profile.test.ts` was created) |
 | E3. `vp-setup` | **closed** | `skills/vp-setup/SKILL.md`, `skills/vp-setup/scripts/setup.ts`, `skills/vp-setup/scripts/cli.ts`, `tests/setup.test.ts` |
-| E4. `vp-mode` | **not started** | `skills/vp-mode/SKILL.md` does not exist; the tooling exists (`catalog.ts`, `catalog-cli.ts`, `frontmatter.ts`, `schema.ts`) |
-| E5. Per-host manifests and marketplace | **not started** | no `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, no `marketplace.json`, no `config/vppluginmanifest.v1.schema.json`; generator scope authorized 2026-10-22, implementation pending |
+| E4. `vp-mode` | **implemented; numeric evidence baseline independently READY** | `.38` records Bun/Node setup and compose smoke checks, 54 focused tests, 28-file typecheck, and 2,510 catalog-payload hash matches. The independent `.65` M3.1 review marks `.62` repair CODE+EVIDENCE READY with no code blocker; it is not a package PASS. The `.70` M3.1 review marks `.67` READY as a numeric evidence baseline (0 Critical/Important, 2 Minor receipt-wording findings); `.67` itself remains `NOT_CLOSED` with `packagePass: false`. Tests, typecheck, Knip, corpus/audits, donor validation, OKF and Markdown gates bind to the `.67` bytes. Coverage has no statement counter, so no separate 100% statement-coverage claim is made; branches 0/0 are uninstrumented. Exact counts are in WORK and `.67`. Deno unavailable |
+| E5. Per-host manifests and marketplace | **E5a bounded code READY; E5b production qualification open** | `.49` READY, I1/I2/I3 closed; `.54` fixture build/check exited 0 over 5,233 scratch outputs with equal 2,615-file Muse/Antigravity path/byte/SHA maps; Muse catalog is `MANIFEST_MUSE_CATALOG_NOT_READY`. `.67` native fixture count is 2,617 package files plus one fixture-only input; its parity is bound only to `.67` bytes. `.69` focused OKF and Markdown checks pass; final native fixture parity after `.69` docs is pending. The `.65` review is not E5b approval; `.70` validates numeric evidence only. `.67` remains `NOT_CLOSED`; production input and first-party Muse digest proof are unavailable. Production outputs, host installation, publication and public metadata, legal review, and Runtime acceptance remain open |
 
 ## Outside this plan
 
@@ -249,5 +292,6 @@ the marketplace listing.
    when deno appears, the criterion is supplemented ✓.
 8. A repeated run of `vp-setup` → an **empty diff** (AC-25); third-party content in
    `AGENTS.md`/`CLAUDE.md` is preserved (AC-41).
-9. The per-host manifests and `marketplace.json` are schema-valid.
+9. Selected host formats use their supported skill field shapes and resolve required rooted `SKILL.md` resources; `catalog.json` remains the sole corpus listing; generated manifests validate against their schema (AC-45).
 10. An entry in `docs/log.md` (OKF §9) about each change of the step.
+11. Generation changes only ledger-owned, digest-matching files; foreign or modified targets conflict before writes; check preflights the ownership ledger, transaction state and required skills without writes; failed transactions roll back or fence future writes (AC-46).

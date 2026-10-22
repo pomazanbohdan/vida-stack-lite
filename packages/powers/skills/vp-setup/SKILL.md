@@ -2,6 +2,8 @@
 
 `vp-setup` initializes the project-owned Vida Powers profile. Run it when installing Vida Powers in a project, when a user changes a methodology choice, or when the available-model inventory changes. Run `bun skills/vp-setup/scripts/cli.ts --root <dir> [options]`. The shipped `scripts/setup.ts` detects a carrier without modifying files during detection, reads the JSON methodology profile and model inventory, resolves explicit choices, derives verification lanes, and writes the effective profile.
 
+Profiles written before `unresolved_groups` existed must be refreshed with `vp-setup` before `catalog.compose`.
+
 ## Inputs and writes
 
 - Model inventory is JSON supplied with `--inventory` or `VP_MODEL_INVENTORY`. Missing inventory is treated as empty and recorded as a limitation; malformed inventory is an error. Model IDs are copied exactly from the inventory.
@@ -30,7 +32,7 @@ Only text between these markers is owned by this skill. The JSON is parsed direc
     <!-- vida-powers:profile:begin -->
 
     ```json
-    { "schema": "VPEffectiveProfile/v1", "groups": {} }
+    { "schema": "VPEffectiveProfile/v1", "groups": {}, "unresolved_groups": {} }
     ```
 
     <!-- vida-powers:profile:end -->

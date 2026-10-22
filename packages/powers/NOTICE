@@ -16,6 +16,7 @@ packages/powers/donors.yaml.
   gsd-core               MIT          LICENSE           19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005
   ponytail               MIT          LICENSE           6f1c2bfff0c837d268929a7c4e490918eb4fab29
   open-knowledge-format  Apache-2.0   LICENSE.md        ad30107c31c06aec8a7d5636e0d1058118604e6f
+  wondelai-skills        MIT          LICENSE           c172996495bed0fcd26896a9416b2093fd7073f0
 
 Apache-2.0 donor: open-knowledge-format
 ---------------------------------------
@@ -37,3 +38,15 @@ work. Legal clearance remains open.
 The MIT-licensed donors above each ship their own LICENSE file; those license
 texts are not reproduced here, and the pinned revisions above make the
 attribution resolvable.
+
+Registered donor without incorporated material: wondelai-skills
+------------------------------------------------------------
+
+The donor "wondelai-skills" is the Wondel.ai Agent Skills repository
+(https://github.com/wondelai/skills), pinned at revision
+c172996495bed0fcd26896a9416b2093fd7073f0, licensed under the MIT License
+(Copyright (c) 2025 Wondel.ai sp. z o.o.). It is registered in
+packages/powers/donors.yaml with a pinned snapshot, and its attribution is
+recorded here in advance. No material from it is incorporated into the corpus
+yet: the selection phase has not run, and no instruction carries this donor.
+The license text is not reproduced here, as for the other MIT-licensed donors.

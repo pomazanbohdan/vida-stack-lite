@@ -19,6 +19,14 @@
         }
       }
     },
+    "unresolved_groups": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)+$" }
+      }
+    },
     "flow_level": { "enum": ["full", "medium", "light"] },
     "verification": {
       "type": "object", "additionalProperties": false,

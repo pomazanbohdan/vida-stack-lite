@@ -29,7 +29,7 @@ sources:
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
 relation: refines D4
-revision: '1'
+revision: '3'
 ---
 
 # Decision
@@ -92,6 +92,27 @@ with a limitation, not an equal PASS.
 - D5 (Decision Provider), D7 (consumer layout), D8 (profile schema) do not change.
 - Stage 5: per-host manifests and the mirror publication pattern are added.
 - Stage 8: the host matrix distinguishing `verified` / `declared`.
+
+## Owner layout update — 2026-10-22
+
+The repository owner approved two target-specific native layouts from the single
+`packages/powers` Source: Muse uses a root `marketplace.json` with the package nested
+under `plugins/vida-powers/`; Antigravity uses a separate compatible plugin-root
+manifest. This supersedes the universal `source: "./"` assumption for these two
+targets only. At the time of this layout update, the .47 plan was complete and the .50
+review was in progress; native formation had not started. The historic
+Codex `host-verified` status remains a D4b record and is not a current install result.
+No host installation or public release is authorized by this layout decision.
+
+**Formation status — 2026-10-22.** The `.54` receipt records 5,233 local fixture outputs
+from the canonical Source. The Muse and Antigravity payload maps each cover 2,615
+files and match by path, byte length, and SHA-256. The fixture CLI build/check exited
+0 with no writes or removals, and the Source inventory stayed unchanged. Muse
+marketplace formation remains blocked with `MANIFEST_MUSE_CATALOG_NOT_READY` because
+first-party digest proof is absent. The default production check returns
+`MANIFEST_INPUT_MISSING`; production inputs and outputs remain absent. No host
+installation, public release, or Runtime acceptance is claimed. Receipt:
+`../../../../.tmp/panel/native-formations-implementation-20261022-54/final-handoff.json`.
 
 # Authority
 

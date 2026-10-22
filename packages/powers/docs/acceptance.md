@@ -16,7 +16,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept and architectural baseline
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '5'
+revision: '11'
 ---
 
 Each criterion: **ID**, condition, **binding to an SR**, **evidence**, **type**, **state**.
@@ -45,38 +45,38 @@ the current scope (recorded as a GAP, not as passed).
 
 | ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-10 | The deterministic `decision.evaluate` returns a shortlist; each refusal trigger (no candidates, unknown candidate ID, candidate outside the admissible, malformed format) returns the refusal reason while preserving scope, policy and validation | SR-16, SR-18 | refusal test table | auto | open |
-| AC-11 | The decision result contains the identification of the source, the selected IDs and the refusal reason; the reason is not empty | SR-20 | decision materialization test | auto | open |
+| AC-10 | Current v1 `decision.evaluate` has exactly four refusal triggers: no candidates → no-candidates, unknown candidate ID → unknown-candidate, candidate outside the admissible set → candidate-not-allowed, malformed format → invalid-format; each preserves scope, policy and validation. applicability-unresolved is introduced only with SR-82 and is not current E4 behavior | SR-16, SR-18, SR-82 | Current refusal table; future applicability refusal fixture | auto | open |
+| AC-11 | The decision result contains the source, selected IDs and non-empty refusal reason. After SR-82 is implemented, applicability-unresolved also materializes the unresolved context and reason | SR-20, SR-82 | Decision materialization test; future unresolved-context test | auto | open |
 | AC-12 | The threshold is applied only to a calibrated operation; an uncalibrated operation returns the uncalibrated marker; v1 has no semantic scoring — it is performed by the skill | SR-21, D5 | calibration test | auto | open |
-| AC-13 | Routing returns the selected LLM, the formed agents from the bundle (role, task contract, methodology, scope, materialization requirements, artifacts) and the flow level | SR-22, SR-23 | routing test | auto | open |
-| AC-14 | Routing creates no execution graph of its own: the result contains no stage plan of its own | SR-24 | absence-of-graph test | auto | open |
+| AC-13 | Routing returns the selected LLM, the formed agents from the bundle (role, task contract, methodology, scope, materialization requirements, artifacts) and the flow level | SR-22, SR-23 | `vp-mode/SKILL.md` + `.38` Bun/Node compose smoke; final integrated evidence pending | auto | open |
+| AC-14 | Routing creates no execution graph of its own: the result contains no stage plan of its own | SR-24 | `tests/skill-contract.test.ts`; final integrated evidence pending | auto | open |
 
 ## Methodology profile
 
 | ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-15 | An inheritance conflict between two alternatives stops the choice and formulates a question to the owner; the "last one wins" rule is not applied; groups and alternatives come from the profile | SR-25, SR-28 | profile conflict test | auto | open |
+| AC-15 | An inheritance conflict between two alternatives stops the choice and formulates a question to the owner; the "last one wins" rule is not applied; groups and alternatives come from the profile | SR-25, SR-28 | .38 tests cover canonical effective-profile validation/refresh, valid unresolved-choice negotiation with alternatives/no bundle, and stale profile refresh; Stage 4 inheritance and override resolution remain open | auto | open |
 | AC-16 | A task-scoped override is recorded, passed to child agents and does not change the permanent profile, other products, permissions or security gates | SR-29 | override test | auto | open |
 | AC-17 | The semantics of an instruction does not change under the same ID; a change of behavior requires a new pattern ID | SR-30 | identity test | auto | open |
 | AC-18 | The `Light` level does not skip mandatory AC, materialization and mandatory gates | SR-31 | depth profile test | auto | open |
-| AC-19 | The same profile section is read from three carriers (`.vida/project.yaml`, a managed block with a JSON payload in the YAML carrier (`AGENTS.md` or `CLAUDE.md`), and the project config file) with the same result | SR-33 | carrier test | auto | open |
+| AC-19 | The same profile section is read with the same semantics from the Runtime target `.vida/project.yaml` after cutover, the Standalone managed block, and the host-shim project config | SR-33 | Standalone/host-shim persistence has focused E4 evidence; the Agent currently reads `agent-runtime.config.v1.yaml` with no VP profile reader; `.vida/vp-profile.json` and `vida-project-profile.json` are bridge exports, not Runtime reads | auto | open |
 
 ## Materialization, findings, scope
 
 | ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-20 | Every content operation leaves an artifact per `artifact_contract` or an explicitly recorded update of an existing one | SR-37, SR-38 | materialization test | auto | open |
-| AC-21 | The presence/format/digest check and the semantic check are different operations; closing an AC requires both | SR-41 | checks test | auto | open |
-| AC-22 | A repeated delivery of the same message creates no new event in the findings register; a confirmed duplicate is linked to the canonical `finding_id` while preserving the new evidence | SR-45 | dedup case table | auto | open |
-| AC-23 | A finding that goes beyond the Work Scope is recorded as a blocker with a permission request; the scope is not expanded | SR-53, SR-54 | scope test | auto | open |
-| AC-24 | Creating a finding does not authorize a fix | SR-43 | finding↔work link test | auto | open |
+| AC-20 | Every content operation leaves an artifact per `artifact_contract` or an explicitly recorded update of an existing one | SR-37, SR-38 | Human Work Items exist; artifact materialization and index proof remain open | auto | open |
+| AC-21 | The presence/format/digest check and the semantic check are different operations; closing an AC requires both | SR-41 | No complete presence/format/digest plus semantic-check receipt; remains open | auto | open |
+| AC-22 | A repeated delivery of the same message creates no new event in the findings register; a confirmed duplicate is linked to the canonical `finding_id` while preserving the new evidence | SR-45 | `.35` focused tests prove deterministic replay, separate same-fingerprint observations, and explicit evidence-bearing merge; semantic candidate generation/equivalence are unverified | auto | partial |
+| AC-23 | A finding that goes beyond the Work Scope is recorded as a blocker with a permission request; the scope is not expanded | SR-53, SR-54 | `.35` test preserves caller-supplied blocker/request text; writer does not detect out-of-scope input or enforce permission policy | auto | open |
+| AC-24 | Creating a finding does not authorize a fix | SR-43 | `.35/findings-green-final.txt`: `preserves an out-of-scope blocker and its permission request without authorizing a fix` passes | auto | verified (component) |
 
 ## Operational rules and formats
 
 | ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
 | AC-25 | A repeated `vp-setup` on unchanged input yields an empty diff; setup changes no file of the installed agent package | SR-56, SR-57 | idempotency test + read-only check | auto | open |
-| AC-26 | Bootstrap does not load the whole corpus: the bundle is limited to ≤ 20 instructions and ≤ 64 KB of total text | SR-58 | bundle measurement before handover | auto | open |
+| AC-26 | Bootstrap does not load the whole corpus: the current E4 bundle contains at most 20 instructions and 64,000 UTF-8 bytes summed over selected `content` only after profile filtering, active-alternative replacement, and full required/transitive dependency closure; 1 KB is 1,000 bytes; the tag dictionary, JSON/envelope, instruction metadata, and execution context are excluded; overflow rejects the whole result. Future selected resource payload bytes share this cap under AC-55; the 20 limit still counts instructions only | SR-58, SR-87 | .38: 54 focused tests, Bun 1.4.3 and Node 24.16 setup/compose smoke checks, 2,510 payload hash matches, and 28-file typecheck; Deno unavailable; full Step E gates remain pending; AC-55 resource tests not run | auto | open |
 | AC-27 | The absence of a host capability is marked as a limitation, not as a completed check | SR-59 | host matrix | manual | open |
 | AC-28 | The same script shipped in the skills runs without a build under `node`, `bun` and `deno`; it contains no Bun-specific APIs | SR-63 | run under three runtimes + static check | auto | open |
 | AC-29 | `compose` with an effective profile discards instructions with an inactive group alternative; without a profile — an error on a direct `compatibility_excludes` pair | SR-26, SR-28, SR-14 | compose test with and without a profile | auto | open |
@@ -101,13 +101,32 @@ the current scope (recorded as a GAP, not as passed).
 | AC-42 | The catalog manifest is consistent with the disk: each file in `instructions/` is listed in `catalog.json` with a `sha256`; a file outside the manifest, an entry without a file and a mismatching digest are errors | SR-76 | manifest-to-corpus consistency test | auto | open |
 | AC-43 | Every declared opposing pair is declared in both directions and carries one dedicated theme pattern tag, and the table of the D12 decision record lists every declared pair | SR-14 | audit report: `audit.ts pairs` and `audit.ts pair-agreement` (22 declared, 22 listed, findings: 0) | auto | open |
 | AC-44 | An instruction that states a finding severity uses the canonical scale — Critical, Important, Minor — and keeps the criteria of each level; a risk scale, an effort scale and a status vocabulary keep the donor's own labels | SR-78 | vocabulary scan of the corpus + donor review | auto | open |
+| AC-45 | Selected host manifests use supported skill field shapes (Codex `"./skills/"`; Claude/Cursor the two shipped skill paths), validate rooted `SKILL.md` resources before write/check, keep portable root discovery standard, and leave `catalog.json` as the sole corpus listing without copied payload or vendor field | SR-79; [E5 target status](task-plan-step-e.md#e5-target-status) | `.39` verified the Codex `skills` string and rooted regular `SKILL.md` resources. `.54` fixture build/check exited 0 over 5,233 scratch outputs; Muse/Antigravity 2,615-file path/byte/SHA maps match. Muse catalog is `MANIFEST_MUSE_CATALOG_NOT_READY`, marketplace output was withheld, and the default production check fails closed on absent input; no production output or host acceptance is proved | auto | verified (component) |
+| AC-46 | Manifest writes change only matching ledger-owned files, reject foreign or modified targets before effects, prune only proven-owned stale files, and recover coherently from observed write failure; read-only check rejects invalid ledger, retained transaction state, and present outputs without matching ledger digests; missing, drifted and stale results remain distinct, and the byte set plus direct-directory membership do not change | SR-80 | `.46` GREEN: 28 pass / 0 fail / 202 assertions; Luna R4 `.49` independently marked bounded E5a code READY and I3 closed. `.54` fixture build/check exited 0, recorded zero additional writes/removals and an unchanged source inventory. `.60` full tests passed 411 with one Windows skip; typecheck passed 29 files; coverage exited 1 at 466/467 functions and 3,865/3,874 lines, and Knip exited 1 on one external-binary `attrib` issue. Full Step E gates, production inputs/outputs and host acceptance remain open | auto | verified (component) |
+
+## Accepted phased content scope (D14, D15)
+
+The criteria below are future gates. They do not change the current E4 acceptance record or prove implementation.
+
+| ID | Condition | SR | Evidence | Type | State |
+|---|---|---|---|---|---|
+| AC-47 | The engineering/UX pack admits only reviewed, rights-cleared candidates within D14; general methodology remains in the same catalog and excluded domains stay out | SR-81 | Candidate disposition map, source review, and rights evidence | manual | open |
+| AC-48 | Each framework-, platform-, accessibility-, or standards-dependent instruction has structured applicability facts and retains the source applicability label; unparsed version labels do not match | SR-82 | Schema validation and applicability fixtures | auto | open |
+| AC-49 | Missing, unknown, malformed, or conflicting required applicability context produces no selected rule, returns applicability-unresolved, and records the unresolved context; the code is absent from current E4 behavior | SR-16, SR-20, SR-82 | Applicability refusal table and materialization test | auto | open |
+| AC-50 | Each accepted CSV-derived instruction binds its meaning review to exact source rows and cells; identical duplicates retain every locator or are rejected with a reason | SR-84, SR-85 | Cell-level map and human semantic-fidelity review | manual | open |
+| AC-51 | The development intake parser handles strict UTF-8, quoted commas and quoted newlines; empty and duplicate headers fail; formula-like cell text remains inert | SR-85 | Parser edge-case tests, including inert formula-like values | auto | open |
+| AC-52 | A typed reference record has a stable exact ID, type, schema version, provenance and digest; the same catalog reader retrieves only the requested ID and errors on an unknown ID | SR-83 | Resource schema and exact-ID positive/negative tests | auto | open |
+| AC-53 | The processing map covers every selected CSV row; row identity survives reorder, changes when a cell changes, keeps a separate raw-file digest, and never uses a line number | SR-84 | Map consistency and identity tests | auto | open |
+| AC-54 | Resource reads reject traversal, symlinks, digest mismatch, invalid schema/type, unsupported encoding and excess size, and return only selected IDs as untrusted source data | SR-86 | Reader boundary and negative tests | auto | open |
+| AC-55 | Resource content counts toward the shared 64,000-byte cap as canonical UTF-8 JSON; the 20 limit counts instructions only; overflow returns no partial result | SR-58, SR-87 | Mixed instruction/resource size-boundary tests | auto | open |
 
 ## What we do not prove
 
 | Topic | Why | State |
 |---|---|---|
 | VP Runtime acceptance | requires product registration and a runtime request (D3, D8) | gap |
-| Qualification on real hosts (other than Codex) | requires access to the hosts | gap |
+| Qualification on real hosts | this packet proves formats and fixtures only; Codex `host-verified` is the historical D4b status, with no new host install/run; Claude and Cursor have no runtime qualification | gap |
+| Cross-platform injected rollback failure | the existing write-failure injection depends on Windows `attrib`; non-Windows runs explicitly skip it | gap |
 | Marketplace installation | requires a public Git repository | gap |
 | Data of real users | ethical and legal constraints; out of scope | gap |
 | Legal opinion on donor licenses | requires a specialist; within VP — attribution only | gap |

@@ -1,7 +1,7 @@
 ---
 type: Implementation Plan
 title: Vida Powers — implementation plan
-description: The order of stages, gates and acceptance criteria for the implementation of Vida Powers — from product registration and canonical documents to corpus conversion, the Router, materialization, Runtime integration and Standalone mode.
+description: The order of stages, gates and acceptance criteria for Vida Powers, including the accepted and separately gated D14/D15 content extension.
 status: draft
 stale_after: '2026-11-19T00:00:00Z'
 tags:
@@ -29,7 +29,7 @@ generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:01:10Z' 
 verified:
 - { by: deepseek/deepseek-flash, at: '2026-10-19T13:36:34Z' }
 - { by: opencode/glm-5.3-flash-free, at: '2026-10-19T13:59:31Z' }
-revision: '5'
+revision: '10'
 ---
 
 # Vida Powers — implementation plan
@@ -420,6 +420,8 @@ is approved in the stage's task plan).
 
 Dependencies: Stage 2.
 
+Stage 3 is closed for its eight pinned donor entries. D14/D15 do not reopen that completed pass or raise the measured 2510-instruction result; selected content extensions have their own Step H gates and map/version requirements.
+
 ---
 
 ### Stage 4 — Methodology policy of the product
@@ -499,9 +501,37 @@ Work:
   publication — through the existing Source catalog mirror pattern; installation through
   `codex plugin marketplace add <git-url>`. Codex — the verified first host; the rest
   of the hosts — declared support with a marked limitation.
-- The package build generates the per-host plugin manifests and `marketplace.json` from
-  E5's schema and metadata inputs. E5 includes the generator, authorized by the owner on
-  2026-10-22; implementation and outputs remain pending.
+- The package build generates selected per-host plugin manifests from E5's schema and
+  metadata inputs. The builder/schema/fixtures are implemented; the `.45` independent
+  review found an open read-only ownership-digest parity gap assigned to the bounded `.46`
+  code repair. Production inputs/outputs and final Step E gates remain pending.
+
+**Status and layout addendum — 2026-10-22:** `.49` independently marked the bounded
+E5a code READY and closed I3; the `.45` ownership-digest gap was repaired in `.46`.
+The owner approved Muse's root `marketplace.json` with the plugin nested under
+`plugins/vida-powers/`, plus a separate compatible Antigravity plugin root, both from
+the canonical `packages/powers` Source. This target-specific layout supersedes the
+universal `source: "./"` assumption for Muse and Antigravity only; D4b and D10 retain
+the dated supersession note. The earlier `.47` proposal / `.50` review-running
+statement is a historical snapshot from before `.54` formation.
+
+**Current `.54` / `.60` status — 2026-10-22:** `.54` formed 5,233 local scratch
+outputs; Muse and Antigravity each map 2,615 files with identical paths, byte counts
+and SHA-256 values. Fixture build/check exited 0 with zero additional writes or
+removals and an unchanged source inventory. The Muse catalog remains blocked as
+`MANIFEST_MUSE_CATALOG_NOT_READY`: docs require `package_sha256` from the install
+command but do not specify the digest algorithm or a test vector, and the Source
+receipt fingerprint is not that digest. `marketplaceWritten` is false. The default
+production check exits 1 with `MANIFEST_INPUT_MISSING`; production inputs and outputs
+are absent. No host installation, public release or Runtime acceptance is claimed.
+`.60` full-package tests passed 411 with one Windows skip and typecheck passed 29
+files; coverage exited 1 at 466/467 functions and 3,865/3,874 lines, and Knip exited
+1 on one external-binary `attrib` issue. The `.65` review is present at
+`.tmp/panel/final-gate-repair-validate-m31-20261022-65/REVIEW.md` (21,927 bytes,
+SHA-256 `0797f85116ba9a7a37daeff6d80611add144691f8899e634bd300af23b7cc658`). It marks
+the `.62` repair CODE+EVIDENCE READY with no code blocker, not a package PASS or E5b
+approval. The `.67` package evidence and `.70` review state are recorded in
+[Step H](task-plan-step-h.md); `.67` remains `NOT_CLOSED` with `packagePass: false`.
 
 AC:
 - Re-running `vp-setup` on an unchanged input → an empty diff (test) **for
@@ -585,6 +615,10 @@ the approved goal and scope; VP does not compile its own graph. Selective Join:
 `blocking`/`non-blocking`; non-blocking does not make a subtask independent. Scope-First:
 a violation → a blocker, not a silent expansion.
 
+D8 keeps `.vida/project.yaml` as the Runtime profile target after cutover. The current Agent
+reads `agent-runtime.config.v1.yaml`, which has no VP profile section; `vp-setup` JSON exports
+are bridge materializations, not a Runtime reader. AC-19 remains open.
+
 **7b — the target storage** (after closing the storage-admission GAP on the side of the
 runtime owner): migration of findings/work operations into `workspace.v1.sqlite`
 without a second database.
@@ -643,10 +677,15 @@ Dependencies: Stage 5, 6, D4.
 
 ---
 
-### Stage 9 — outside scope (by a separate decision)
-Domain packs (§11), the future UI on top of the VIDA API (§9.3), external synchronization
-of issue trackers (§8.3). The marketplace channel **is in scope** (D4, Stage 5).
-Each of the items — with its own decision about the scope.
+### Stage 9 — deferred scope after D14/D15
+The bounded engineering/UX pack and selected typed reference families are accepted for phased work in Step H, but are not yet admitted or implemented. Business, marketing and other unresearched domains, the future UI on top of the VIDA API (§9.3), and external synchronization of issue trackers (§8.3) remain outside scope and require separate decisions. The marketplace channel remains in scope (D4, Stage 5).
+
+### Stage 10 — D14/D15 bounded content extension
+**Role:** product owner, source integrator, schema/catalog implementer, and independent reviewers. **Estimate:** L overall; H0 S, H1 L, H2 L, H3 M. **Work item:** Step H task plan. **Requires:** H0 closeout in [Step H](task-plan-step-h.md), Stage 2 and Stage 3; source admission and rights clearance for each donor remain separate prerequisites.
+
+Use the phased gates in [task plan Step H](task-plan-step-h.md): H0 freezes and reviews current E4 evidence; H1 evaluates a rights-cleared Wondelai general-method subset through the existing Markdown pipeline; H2 adds bounded engineering/UX instructions, structured applicability and development-only CSV row/cell mapping; H3 later adds selected typed JSON resources to the same catalog by exact ID. H2 preserves the four current v1 refusal reasons and adds applicability-unresolved only when that future behavior is implemented. H3 preserves the 20-instruction cap and shares the 64,000-byte budget with selected canonical JSON resource payloads.
+
+Stage 10 does not claim source admission, legal clearance, conversions, implementation, or Runtime acceptance. Each phase needs its own hash-bound M3.1 contract review, implementation review, focused and full required gates, source/fidelity receipts, and B/S/AC reconciliation. No phase is marked complete by estimated totals.
 
 ---
 
@@ -665,6 +704,8 @@ Stage 0 ──► Stage 1 ──► Stage 2 ──► Stage 3 ──► Stage 4 
 Stage 7b — after the storage GAP is closed, outside VP.
 ```
 
+Stage 10 follows its own H0 → H1 → H2 → H3 sequence after Stage 2/3 and current-core closeout; it is not on the Runtime Stage 7b critical path.
+
 | Stage | Dependencies | Estimate | External dependencies |
 |---|---|---|---|
 | 0 | — | S | owner decisions D1–D8 |
@@ -677,6 +718,7 @@ Stage 7b — after the storage GAP is closed, outside VP.
 | 7a | 5, 6 | L | — |
 | 7b | 7a | M | storage-admission GAP (runtime track) |
 | 8 | 5, 6 | M | D4; real hosts |
+| 10 | 2, 3, H0 then H1 → H2 → H3 | L | owner source admission and rights clearance per input family |
 
 Critical path: 0 → 1 → 2 → 3 → 4 → 5 → 7a → 7b (the longest chain; Stage 6
 depends on 1, 2, 3, so it does not enter the chain up to 7a). The narrowest point is Stage 2

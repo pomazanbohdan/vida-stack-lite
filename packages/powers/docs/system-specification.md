@@ -19,7 +19,7 @@ sources:
   resource: /decisions/index.md
   title: Accepted decisions D1–D13 (and D4b)
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '5'
+revision: '9'
 ---
 
 S-level: **what VP does, observably**. The B-level — `business-requirements.md`,
@@ -67,14 +67,14 @@ normative behavior.
 ## 5. Methodology profile
 
 - **SR-25.** The profile (`VPMethodologyProfile/v1`): selection groups (`testing-sequence`, `review-strategy`, `architecture`, `delivery`, `approval-policy`), active alternatives, compatible additions, conditional dependencies. The groups and their alternatives are declared by the **profile**; an instruction binds to a group through its `pattern_tags`, and **each alternative has its own pattern tag** (the shared group tag is a search marker, not an alternative). The resolved (effective) profile — `VPEffectiveProfile/v1` (D10). Groups with a product policy have an **explicitly declared** active alternative in the source profile (`default`); for groups where the choice is made by the user, `default` is forbidden (D10 §1).
-- **SR-26.** The groups are independent; alternatives in one group are mutually exclusive (`test-first-development` ↔ `test-after-development`), `risk-based-testing` — a compatible addition.
+- **SR-26.** The groups are independent; alternatives in one group are mutually exclusive. The current user-choice `approval-policy` alternatives are `approval-policy-proceed` and `approval-policy-gate`; compatible additions are admitted only where the profile declares them.
 - **SR-27.** Inheritance is explicit and selective by stable IDs; implicit full inheritance through a shared repository is not applied.
 - **SR-28.** A local override has priority over the inherited one without repeated confirmation; two contradictory inherited alternatives → a block with a request to the owner.
 - **SR-29.** A task-scoped override is a one-off agreed exception for a task and a product: it is recorded, passed to child agents; it does not change the permanent profile, other products, permissions or security gates.
 - **SR-30.** Live Inheritance: references to stable IDs without version pinning; a change of behavior = a **new pattern ID**, not a substitution under the same ID.
 - **SR-31.** The flow level, applicability and requirement level (`required`/`conditional`/`optional`) are separate properties. `Light` does not skip mandatory AC, materialization and mandatory gates; `Full` does not mean performing all stages.
 - **SR-32.** The roles (Researcher, Analyst, Decision Reviewer, Requirements Specialist, Test Designer, Implementer, Automation Tester, Manual/UI Tester, Independent Reviewer, Verifier) are formed as needed; the requirement level of a role ≠ actual participation. Independent verification is not replaced by the author's self-review.
-- **SR-33.** One profile schema — different carriers: Runtime → a section in `.vida/project.yaml`; Standalone → the same section in a managed block with a JSON payload in `AGENTS.md` or `CLAUDE.md` (the YAML carrier); host shim → the project config file.
+- **SR-33.** One profile schema — different carriers: Runtime → a section in `.vida/project.yaml` after the approved cutover (D8); Standalone → the same section in a managed block with a JSON payload in `AGENTS.md` or `CLAUDE.md` (the YAML carrier); host shim → the project config file.
 
 ## 6. Two forms of an instruction
 
@@ -118,7 +118,7 @@ normative behavior.
 
 - **SR-56.** `vp-setup` is idempotent: a repeated run on unchanged input creates no duplicate blocks, hooks, entries or canonical documents.
 - **SR-57.** `vp-setup` does not change files of the installed agent package; the root `AGENTS.md` of the agent is generated from the package template and is not edited.
-- **SR-58.** Bootstrap passes minimal rules, the product identity, references to the methodology and current artifacts; the whole corpus is not loaded into the session — only the bundle enters the session, limited to **≤ 20 instructions and ≤ 64 KB** of total text.
+- **SR-58.** Bootstrap passes minimal rules, product identity, methodology and current-artifact references; the whole corpus is not loaded into the session. The composed bundle contains at most **20 instructions** and **64,000 UTF-8 bytes**, inclusive. Measure the sum of each selected instruction's `content` bytes after profile filtering, active-alternative substitution, and full required/transitive dependency closure. `1 KB` means 1,000 bytes. Exclude the tag dictionary, JSON/envelope, instruction metadata, and execution context. Overflow returns `CATALOG_BUNDLE_LIMIT_EXCEEDED` for the whole result; never trim or return a partial bundle.
 - **SR-59.** Activation verification: the start of a session, recovery after compaction, the context of a delegated agent. The absence of a host capability is a **limitation**, not an equivalent check. `vp-setup` preserves third-party instructions and the current source map (SR-75).
 - **SR-60.** A new or changed hook hash requires native review; a trust entry is not synthesized — a trust GAP is recorded, not bypassed.
 - **SR-61.** Recovery after compaction restores the pointers and the state, rather than repeating completed content actions.
@@ -183,7 +183,48 @@ the existing numbering.
   instruction — `instruction_id`, `path` and the `sha256` of the content. A file in `instructions/` that is
   not in the manifest, a file in the manifest that is not on disk, and a digest mismatch —
   errors. The manifest is written only by the converter (the single writer); runtime scripts only read.
+- **SR-79.** Delivery manifests declare the shipped `vp-mode` and `vp-setup` skills through each selected
+  host's supported field shape: Codex compatibility `plugin.json` uses `skills: "./skills/"`; Claude and
+  Cursor list `./skills/vp-mode/` and `./skills/vp-setup/`; Claude marketplace output includes the package
+  description at top level. Before a host write or successful check, the
+  builder verifies both `SKILL.md` resources are regular files rooted in the package and rejects missing
+  paths or symlink traversal. The portable root manifest has no `skills` field and relies on standard
+  `skills/` discovery. The `catalog.json` remains the canonical corpus listing, accessed through the CLI
+  and skill; manifests do not copy the catalog or add a vendor-specific catalog field. Local generation
+  requires only metadata required by selected host formats and never fabricates missing values. D4b's
+  owner-supplied public-release metadata remains a separate publication gate. Current target status and
+  deferred E5b gaps are recorded in `task-plan-step-e.md#e5-target-status`.
+- **SR-80.** Manifest generation owns only files recorded in its package-local ownership ledger and
+  whose current SHA-256 matches the recorded digest. It regenerates or prunes only proven-owned files;
+  foreign or modified targets conflict before writes. Check mode reconciles ledger digests against present
+  outputs: a present output without a ledger entry or with a mismatched digest returns
+  `MANIFEST_OUTPUT_CONFLICT`; an initially absent expected output remains `MANIFEST_OUTPUT_MISSING`.
+  Missing, drifted and stale outputs remain distinct. Check mode snapshots file bytes and direct-directory
+  membership, performs read-only path, skill, ledger and transaction preflight, and rejects corrupt
+  ownership or retained transaction state without changing that snapshot. Writes are staged and
+  recoverable; an unresolved transaction fences later writes until reconciled.
 
 ---
 
 **Synchronization with research.** An S change that changes the intent entails an update of research (§7.1) and an impact assessment on decisions, requirements, tasks and checks (§7.6).
+
+## 14. Accepted phased content scope (D14, D15)
+
+The clauses below define future work. They do not change current E4 behavior or prove donor admission, rights clearance, implementation, or Runtime acceptance.
+
+- **SR-81.** D14 permits one bounded engineering and UX instruction pack covering named frameworks, runtimes, platforms, accessibility needs, and targeted standards. General methodology remains in the same canonical instruction catalog. Business, marketing, and other unresearched domains remain out of scope. A candidate is admitted only after source review and applicable rights clearance.
+- **SR-82.** An instruction with domain-dependent applicability carries structured facts for framework or package identity, declared version range, runtime, target platform, standard identifier, standard version, and conformance level where relevant. Preserve the donor's original applicability label. Parse version labels under a defined rule before matching; an unparsed label never matches automatically. Distinguish applicable, inapplicable, and unresolved. Missing, conflicting, or unknown required context yields no applicable selection and the visible refusal reason applicability-unresolved. This filter is independent of compatibility dependencies and opposing-instruction rules.
+- **SR-83.** D15 permits only typed palette, font-pairing, style, icon-list, and standards-checklist records. An actionable rule is an instruction; reference data remains a typed record with a stable resource ID, resource type, schema version, revision, provenance, source locator, and content digest. Exact-ID retrieval uses catalog.resource.get through the existing catalog and portable reader. Search returns metadata only; reference records are not automatically retrieved, activated, or included wholesale. The canonical catalog manifest remains the single listing; adding resources requires an explicit versioned manifest/schema migration and does not create a second catalog or activation path.
+- **SR-84.** The future processing map accounts for every selected carrier file and every candidate CSV row. Each source unit has a stable identity and an explicit disposition: one or more instruction IDs, one or more resource IDs, merged with retained source locators, or rejected with a reason. Row identity uses a donor entity ID and source key where available; otherwise it binds the canonical source path and a digest of ordered parsed headers and cell values. Keep a separate raw-file digest. Do not use line numbers, trim, case-fold, or Unicode-normalize cell content when computing source identity. Reordering rows leaves identity stable; editing a cell changes its content digest. An identical duplicate is merged with every locator retained or rejected with a reason.
+- **SR-85.** CSV parsing is a development-only intake operation over pinned, allowlisted sources. It accepts strict UTF-8, quoted commas, and quoted newlines; empty or duplicate headers are errors. Formula-like or command-like cell values remain inert. The map binds each instruction to its exact source rows and cells and records cell roles. Fidelity review checks meaning, original language, strictness, negation, units, applicability, severity, and exceptions against those cells; token matches elsewhere in the file are not evidence. A human review decides semantic fidelity.
+- **SR-86.** The shipped resource reader uses only portable standard APIs and validates canonical containment, rejects symlink traversal, verifies content digests, schema and record type, encoding and size, and marks retrieved text as untrusted source data. It reads only explicitly selected resource IDs; a diagnostic read of one ID is not a qualified composed session bundle. The original CSV and unselected rows are never injected as assets.
+- **SR-87.** When resource retrieval is implemented, the existing 64,000 UTF-8 byte cap applies to the sum of selected instruction content and selected resource payloads serialized as canonical UTF-8 JSON. The limit of 20 applies to instructions only. Resource metadata, outer JSON envelope, and execution context remain excluded. Overflow rejects the entire result without truncation or partial output.
+
+### Existing clause clarifications
+- **Interpretation of SR-16 and SR-20.** Current v1 refusal triggers remain exactly four: no candidates, unknown candidate ID, candidate outside the admissible set, and malformed format; the current codes are no-candidates, unknown-candidate, candidate-not-allowed, and invalid-format. The fifth code applicability-unresolved is a future extension for SR-82 only. Once that phase is implemented, SR-20 also materializes this reason and the unresolved context; it is not a current E4 behavior.
+- **Interpretation of SR-58.** The current 20-instruction / 64,000-byte contract remains. After D15 retrieval is implemented, the 20 cap still counts instructions only and the 64,000-byte sum also counts selected canonical UTF-8 JSON resource payloads. Overflow still rejects the whole result.
+- **Interpretation of SR-62 through SR-64.** Shipped readers consume JSON, typed JSON records, and Markdown frontmatter; they never read CSV. Only pinned-source development intake may parse CSV, using the project runtime. Shipped skill code stays dependency-free and portable under Bun, Node, and Deno; Bun-specific APIs remain limited to development tools.
+- **Interpretation of SR-70.** The future application filter is structured framework/package identity, version range, runtime, platform, standard identifier and version, and conformance level where relevant. It preserves source labels and never infers an unparsed range.
+- **Interpretation of SR-73.** Resource bodies are not copied into the generic derived full-text index; typed resources are selected by exact ID and only metadata may appear in search.
+- **Interpretation of SR-76.** catalog.json remains the single canonical listing. A versioned schema migration adds typed resource entries to that manifest before resource code; no second catalog is allowed.
+- **Interpretation of SR-77.** CSV-derived instructions bind fidelity evidence to exact source rows and cells under SR-85. A token match elsewhere in a file cannot stand in for source-cell proof.

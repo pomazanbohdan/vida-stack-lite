@@ -16,10 +16,10 @@ vida:
   product: vida-powers
   parent_project: vida-agent-system
   kind: product-research
-  revision: 3
+  revision: 4
   research_status: finalized
   implementation_status: not-started
-  updated_at: '2026-10-19T14:01:10Z'
+  updated_at: '2026-10-22T12:45:00Z'
   runtime_source_commit: bb4345e107f9aee30db1c856075ac9556a7aa8a1
   validation_scope: conversation-consistency
   verification_scope: reconciliation of the research statements with the current Source during two independent review rounds; this is not runtime acceptance
@@ -90,13 +90,13 @@ verified:
 
 ## 1. Purpose and scope
 
-**Vida Powers (VP)** is a portable agent plugin with a canonical catalog of atomic methodological instructions, semantic selection of the needed knowledge, dynamic specialization of agents and rules for materializing results. The plugin must work standalone in compatible AI hosts and, when the VIDA Agent Runtime is present, integrate with its existing execution management.
+**Vida Powers (VP)** is a portable agent plugin with one canonical catalog of atomic methodological instructions, bounded engineering/UX guidance, and selected typed reference records. It selects relevant knowledge, specializes agents, and defines how they materialize results. The plugin must work standalone in compatible AI hosts and, when the VIDA Agent Runtime is present, integrate with its existing execution management.
 
-The initial methodological coverage is the full work lifecycle, with in-depth sources for software development, research, task definition and decision-making. The architecture must not be limited to development: research, decision-making, work with business processes, marketing, documentation and other domains are added as separate instruction packages.
+The initial methodology covers the full work lifecycle. D14 accepts one bounded engineering/UX pack covering framework, runtime, platform, accessibility, and targeted standards guidance. D15 accepts selected typed reference data in a later phase. General methodology remains in the same catalog. Business, marketing, and other unresearched domain packs remain out of scope. D14 and D15 set product scope; they do not admit a donor or approve rights, schemas, implementation, or Runtime acceptance.
 
 Work starts from any state: a vague idea, a question, a research request, an accepted decision, a document, a defect, a ready task, a fragment of an implementation or a request for verification. **Finishing research does not mean starting implementation.** No automatic transition to a new scope of work happens without the corresponding authority.
 
-**Document status:** finalized current research and agreed concept. This is not proof of code readiness, not an approved low-level schema and not permission for changes in the source repository.
+**Document status:** finalized current research and agreed concept. D14 and D15 are accepted scope decisions. This is not proof that new content was admitted or implemented, not an approved low-level schema, and not Runtime acceptance.
 
 VP is an autonomous installable plugin: ordinary use does not require installing the VIDA Agent Runtime. The shared canonical base is suitable both for Standalone and for use by the agent system. Packaging and distribution through a marketplace remain a target capability; the specific channels and the verified host support belong to the implementation stage.
 
@@ -327,7 +327,7 @@ The main document keeps **only the current finalized content**. The body contain
 
 The metadata holds the identity, `updated_at`, sources, the required currency attributes and, when needed, revision/provenance. A **separate linked change log / audit artifact** records the content change, the date, the executor and the reason; this log is not mixed with the thematic research.
 
-If the research opens a fundamentally **new separate topic**, a new research document is created. If it leads to a decision, a **separate Decision artifact** is issued.
+If the research opens a fundamentally **new separate topic**, a new research document is created. If it leads to a decision, a **separate Decision artifact** is issued. D14 and D15 record the accepted scope limits for this same product topic; they do not create a second research owner.
 
 ### 7.2 Decisions
 
@@ -357,7 +357,9 @@ The history includes **meaningful changes and results**: creation/update of rese
 
 Documents are updated, verified, approved and become stale according to their type and owner. Content lifecycle, verification status and approval/authority are independent dimensions: a technically verified specification may still await business approval, and an outdated source does not automatically revoke an accepted decision.
 
-A source update triggers an assessment of the impact on the related decisions, requirements, tasks and checks. The need for a re-review is marked explicitly; dependent artifacts are not rewritten without permission and without establishing the relevance of the change. History belongs to separate linked change records/evidence, while the living normative document describes the current state without historical comments.
+A source update triggers an assessment of the impact on the related decisions, requirements, tasks and checks. The need for a re-review is marked explicitly; dependent artifacts are not rewritten without permission and without establishing the relevance of the change. D14 and D15 set business scope only. Donor admission, rights review, implementation, and Runtime acceptance each need their own evidence. History belongs to separate linked change records/evidence, while the living normative document describes the current state without historical comments.
+
+For donor sizing, the estimates in `DECISION-r2.md` are attributed to the M3.1 R2 review. Its 1,434 CSV rows and 391 candidate Markdown files are different source units. Merge, rejection, and new-ID ranges are estimates for review planning, not delivered counts. The listed reference categories total 4,331; the reported 4,523 is not a verified total.
 
 The rule "one topic — one research" applies within a defined product and a meaningful contour. The same name in two products does not force mixing different sources and scopes. Shared research can have one owner and references from several products instead of copies.
 ## 8. Scope, write authority and Findings
@@ -488,7 +490,7 @@ Artifacts keep the ID, source/scope/work binding, revision or digest and referen
 
 ## 11. Domains and instruction packages
 
-Future domain extensions (`software-engineering`, `marketing`, `business-operations`, `research` etc.) are **domain packs** that add and refine atomic instructions, tags, roles and materialization guidance. They do **not** introduce a new workflow engine, scheduler, source-of-truth or their own universal Task system.
+D14 accepts a bounded software engineering and UX guidance pack. It covers framework, runtime, platform, accessibility, and targeted standards rules. D15 adds only selected typed reference families. Business, marketing, and other unresearched domains remain outside the accepted scope. The broader domain-pack model below describes possible future work and does not approve those domains.
 
 Universal operations — Research, Decision, Define, Execute, Verify — receive domain specializations. For example, software QA → unit/API/E2E/manual; marketing QA → fact-checking, compliance with the brief and analytical labels; business QA → process scenarios and KPIs. The necessary evidence is determined by the properties of the final result.
 
@@ -506,7 +508,7 @@ A domain pack adds new instructions and specializations to the same semantic bas
 As a result of a review, the cause is distinguished: a local implementation defect → scoped correction; a plan defect → correction of the allowed remainder of the work; an intent gap/missing permission → human loop; a third-party problem → Finding. Replanning does not repeat completed side effects and does not rewrite accepted evidence. Only actions for which a need, boundaries and a safe way of re-execution are defined are repeated.
 ## 13. Limits of the current research and the next work in the IDE
 
-**Conceptual foundation:** an autonomous VP plugin, one main orchestration skill `vp-mode` and an auxiliary `vp-setup`; canonical atomic instructions and two dimensions of tags; product methodologies, selective inheritance and task-scoped overrides; Live Inheritance and Risk-Adaptive Updates; metadata-first selection and a Decision Provider with Agent Fallback; hybrid roles, recursive subtasks and Selective Join; Scope-First, centralized Findings and Hybrid Deduplication; the full lifecycle of arbitrary work, Light/Medium/Full, artifact-first; living research, separate decisions and new tasks for new changes; a flat Wiki, different storage/ownership boundaries of Standalone and Runtime; the absence of an own VP workflow engine.
+**Conceptual foundation:** an autonomous VP plugin, one main orchestration skill `vp-mode` and an auxiliary `vp-setup`; canonical atomic instructions and two dimensions of tags; bounded engineering/UX guidance and selected typed reference data under D14 and D15; product methodologies, selective inheritance and task-scoped overrides; Live Inheritance and Risk-Adaptive Updates; metadata-first selection and a Decision Provider with Agent Fallback; hybrid roles, recursive subtasks and Selective Join; Scope-First, centralized Findings and Hybrid Deduplication; the full lifecycle of arbitrary work, Light/Medium/Full, artifact-first; living research, separate decisions and new tasks for new changes; a flat Wiki, different storage/ownership boundaries of Standalone and Runtime; the absence of an own VP workflow engine.
 
 **Technically open until the implementation phase:** detailed low-level VP schemas, a verified host compatibility matrix, the exact adapter APIs, migrations of the current contracts, the correctness of concurrent writing in specific hosts, validation of the chosen runtime integration points, MVP sequencing/evaluation. These questions **do not block the completion of the product research**.
 
@@ -514,7 +516,7 @@ In the IDE: first review the **current** tree/code and the normative VIDA docume
 
 Development happens incrementally in a working IDE, not as a simultaneous implementation of all subsystems in cloud research. Donor conversion is a separate meaningful cycle: inventory of the material, extraction of instructions, tagging, matching of identical techniques, accounting for conflicts, binding of materialization contracts, provenance and verification of the resulting corpus. This is the content of subsequent work, not the launch of conversion by this document.
 
-The future UI on top of the VIDA API, integration implementation, marketplace distribution and domain packs are not considered already created. External synchronization is deferred; detailed portability guarantees remain open until verification on hosts. The specific low-level schemas, APIs and migrations do not need to be re-agreed as fundamental principles — they are worked out in practice within the recorded concept.
+The bounded pack and resource families are accepted for phased work but are not implemented or admitted. The future UI on the VIDA API, Runtime integration, marketplace publication and other domain packs are not considered created. External synchronization is deferred; detailed portability guarantees remain open until verification on hosts. Low-level schemas, APIs and migrations remain open for the Step H contract and its independent review.
 
 ## 14. Sources and principles of use
 
@@ -534,7 +536,7 @@ Donor and framework references are sources of techniques, not a right to change 
 
 ## Currency and verification
 
-Last significant change: 2026-10-19 — the document was converted to Open Knowledge Format v0.2 frontmatter; the content of the concept did not change. Currency rule: `stale_after` = 2027-01-19, after this date the document is considered stale and needs review; a research source changes only the part of the source to which the evidence is bound.
+Last significant change: 2026-10-22 — the research reflects the owner decisions D14 and D15 and the phased implementation boundary. Currency rule: `stale_after` = 2027-01-19, after this date the document is considered stale and needs review; a research source changes only the part of the source to which the evidence is bound.
 
 Verified: consistency of the statements with the current Source by two independent review agents on 2026-10-19 (round 1 — `deepseek/deepseek-flash`, round 2 — `opencode/glm-5.3-flash-free`). The verification covered reconciliation of the concept with the Source, the coverage of §1–14 and consistency with its own §7.1/§7.5. This is confirmation of consistency, not runtime acceptance.
 

@@ -1,0 +1,14 @@
+{
+  "schema": "VPPluginManifestInputs/v1",
+  "targets": ["portable", "codex", "claude", "cursor"],
+  "metadata": {
+    "contact": {
+      "name": "Fixture Maintainer",
+      "email": "fixture@example.invalid"
+    },
+    "license": "FIXTURE-ONLY",
+    "privacyPolicyUrl": "https://example.invalid/privacy",
+    "termsOfServiceUrl": "https://example.invalid/terms",
+    "category": "Fixture Category"
+  }
+}

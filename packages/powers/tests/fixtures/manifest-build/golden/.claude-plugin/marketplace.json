@@ -1,0 +1,17 @@
+{
+  "description": "Synthetic manifest fixture; never production metadata.",
+  "name": "fixture-plugin",
+  "owner": {
+    "email": "fixture@example.invalid",
+    "name": "Fixture Maintainer"
+  },
+  "plugins": [
+    {
+      "description": "Synthetic manifest fixture; never production metadata.",
+      "license": "FIXTURE-ONLY",
+      "name": "fixture-plugin",
+      "source": "./",
+      "version": "0.0.0-fixture"
+    }
+  ]
+}

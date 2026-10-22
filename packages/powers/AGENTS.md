@@ -16,8 +16,8 @@ materialization of results in two modes (Standalone / Runtime).
 |---|---|---|
 | 1 | `docs/next-actions.md` | Current scope, order and gates of work |
 | 2 | `docs/research/vida-powers-product-research.md` | B-level: product concept (source of truth) |
-| 3 | `docs/decisions/index.md` | Accepted decisions D1–D13 (and D4b) with grounds |
-| 4 | `docs/implementation-plan.md` | Roadmap of stages 0–9 and quality gates |
+| 3 | `docs/decisions/index.md` | Accepted decisions D1–D15 (and D4b) with grounds |
+| 4 | `docs/implementation-plan.md` | Roadmap of stages 0–10 and quality gates |
 | 5 | `docs/system-specification.md` (after step B) | S-level: observable behavior |
 | 6 | repository `AGENT.sidecar.md` | Placement, owners, policy, verification gates |
 
@@ -122,20 +122,46 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | Path | Responsibility | Step |
 |---|---|---|
 | `docs/` | The product OKF bundle: research, canonical documents, decision records, next-actions, Work Items, runtime requests | B, F, G |
-| `docs/decisions/` | Accepted decisions (one decision — one concept) | D1–D13 (and D4b) |
+| `docs/decisions/` | Accepted decisions (one decision — one concept) | D1–D15 (and D4b) |
 | `docs/work/` | VP Work Items: stable ID, AC, evidence, relations | F |
 | `docs/requests/` | Runtime requests to the agent maintainer | G |
-| `config/` | VP schemas: `VPCatalog/v1` (catalog manifest), `VPInstruction/v1` (instruction frontmatter), `VPEffectiveProfile/v1` (the resolved profile for `compose`; the source one is `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (processing map); plus the source profile instance `config/methodology-profile.json` (`VPMethodologyProfile/v1`, D8/D10) | C, E |
+| `config/` | VP schemas: `VPCatalog/v1` (catalog manifest), `VPInstruction/v1` (instruction frontmatter), `VPEffectiveProfile/v1` (the resolved profile for `compose`; the source one is `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (processing map), `VPPluginManifestInputs/v1` (`vppluginmanifest.v1.schema.json`, E5); plus the source profile instance `config/methodology-profile.json` (`VPMethodologyProfile/v1`, D8/D10) | C, E |
 | `instructions/` | canonical instructions: `.md` + metadata, flat | D |
 | `corpus-map.json` | corpus processing map: donor + file → converted/split/merged/rejected | D |
 | `skills/vp-mode/`, `skills/vp-setup/` | Skills (orchestration, setup) together with their `scripts/` — catalog and setup tooling; shipped in the plugin | C, D, E |
-| `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | Per-host plugin and marketplace manifests (planned in step E — not yet created) | E |
-| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker) | C, D |
+| `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | E5a selected host manifests generated from explicit package inputs; production inputs/outputs are absent | E |
+| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5) | C, D, E |
 | `skills/*/scripts/` | Tooling shipped in the skills (catalog, setup) | C, D, E |
 | `tests/` | Tests of the VP harness | A–F |
 | `donors.yaml` | Donor manifest: exact revisions, licenses, counters | existing |
 | `package.json` | VP package manifest: knip sees `packages/powers` as a workspace only with a `package.json` | A |
 | `.tmp/` | Scratch: donor clones, one-off scripts. **Ignored by Git** | D |
+
+Approved E5b targets: Muse root `marketplace.json` with `plugins/vida-powers/`, plus a
+separate Antigravity plugin root. The `.54` fixture formed the Muse package manifest and
+plugin payload and the Antigravity root `plugin.json` and payload. Muse's root marketplace
+output was withheld because first-party catalog digest proof is absent. Production inputs
+and outputs remain absent. The `.65` review is present at
+`.tmp/panel/final-gate-repair-validate-m31-20261022-65/REVIEW.md` (21,927 bytes,
+SHA-256 `0797f85116ba9a7a37daeff6d80611add144691f8899e634bd300af23b7cc658`). It marks
+`.62` repair CODE+EVIDENCE READY with no code blocker. It is not a package PASS or E5b
+approval. The `.67` numeric receipt remains `overall: NOT_CLOSED` and `packagePass: false`.
+The independent `.70` review marks its numeric evidence baseline READY (0 Critical, 0 Important,
+2 Minor receipt-wording findings); this is not package, product, release, or Runtime acceptance.
+The `.67` fixture count is 2,617 package files plus one fixture-only input, not 2,618 package
+files. No separate 100% statement-coverage claim is made because Bun emitted no statement
+counter; branches 0/0 are uninstrumented. Host installation and acceptance, public metadata and
+publication, legal clearance, and Runtime acceptance remain open. These are approved targets
+or formed fixtures, not production outputs or host acceptance.
+H0 documentation acceptance and final native fixture parity on the eight `.69` Markdown paths
+remain open.
+
+The effective profile schema `config/vpeffectiveprofile.v1.schema.json` is package-owned.
+The `vp-mode` CLI accepts it through `--profile`; for Standalone, extract the fenced JSON
+between the exact managed markers into a temporary `.json` file, unchanged. Refresh a
+legacy profile with `vp-setup` before interpreting it as a user-choice request. Unresolved
+policy returns canonical alternatives and no bundle; the selected profile is mandatory
+for a resolved session bundle.
 
 ## 6. Invariants — do not violate
 
@@ -192,6 +218,8 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | D11 | Product language: documentation in English, instructions from the donor originals |
 | D12 | Opposing instructions are declared, not narrowed away |
 | D13 | One canonical severity scale: Critical / Important / Minor |
+| D14 | One bounded engineering/UX instruction pack; unresearched domains stay out of scope |
+| D15 | Selected typed resources use exact-ID retrieval through the same catalog in a later phase |
 
 ## 8. Known risks and GAPs
 

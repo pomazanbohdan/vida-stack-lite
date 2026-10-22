@@ -3,18 +3,23 @@
 **A portable agent plugin with a canonical instruction corpus, a single
 orchestration skill and materialization of results.**
 
-It lives in `packages/powers/` — the third product of this repository next to
-`packages/agent` (Vida Agent, runtime) and `packages/plugin` (Vida Codex,
+It lives in `packages/powers/` alongside the repository's two registered product
+roots: `packages/agent` (Vida Agent, runtime) and `packages/plugin` (Vida Codex,
 the layer between the Codex host and the agent).
+
+D14 and D15 accept a bounded engineering/UX pack and selected typed reference data
+for phased work. No new content is admitted or implemented by those scope decisions;
+donor rights review and Runtime acceptance remain separate gates.
 
 | Document | What it is about |
 |---|---|
 | [Research — product concept](docs/research/vida-powers-product-research.md) | B-level: why the product exists, which boundaries it has, which behavior rules it follows |
-| [Implementation plan](docs/implementation-plan.md) | Roadmap of stages 0–9, gates, risks |
-| [Next actions](docs/next-actions.md) | Current scope within the catalog: A0 → A → B → C → D → E → F → G |
-| [Decisions D1–D13 (and D4b)](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
+| [Implementation plan](docs/implementation-plan.md) | Roadmap of stages 0–10, gates, risks |
+| [Step H plan](docs/task-plan-step-h.md) | H0–H3 gates for the accepted D14/D15 scope; implementation has not started |
+| [Next actions](docs/next-actions.md) | Current scope within the catalog: A0 → A → B → C → D → E → F → G → H |
+| [Decisions D1–D15 (and D4b)](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
 | [AGENTS.md](AGENTS.md) | Instructions for the agents developing VP |
-| [Donor manifest](donors.yaml) | Exact revisions of 8 donor repositories, licenses, file counters |
+| [Donor manifest](donors.yaml) | Eight processed donors plus Wondelai registered-not-processed; rights review remains open |
 
 ---
 
@@ -130,6 +135,28 @@ permissions or security gates). An inheritance conflict is a question for the ow
 the same section in a managed block (JSON payload) of the project instruction file; the host layer —
 in the project config file. The setup hooks are deferred (D10).
 
+**Profile and compose contract (SR-58, AC-15, AC-26):** the package-owned
+`config/vpeffectiveprofile.v1.schema.json` validates the effective profile. A missing
+user-choice state or stale canonical alternatives returns `CATALOG_PROFILE_CONFLICT`
+with `profile_refresh_required: true`; refresh the profile with `vp-setup` before
+asking the user. A valid unresolved group returns its canonical alternatives with
+`resolution_required: true` and no bundle. A direct compose without `--profile` is
+diagnostic-only, not a resolved session bundle.
+
+From `packages/powers/`, the current CLI is
+`bun skills/vp-mode/scripts/catalog-cli.ts compose --required <instruction-id> --profile <effective-profile.json>`.
+For Standalone, extract the fenced JSON payload between the managed profile markers
+in `AGENTS.md` or `CLAUDE.md` unchanged into an owned temporary `.json` file and pass
+that path to `--profile`. Refresh a legacy profile first with `vp-setup`. The CLI
+loads the package-owned profile schema and uses an explicit `node:buffer` import for
+UTF-8 byte accounting of the bundle limit.
+
+The final bundle contains at most 20 instructions and 64,000 UTF-8 bytes summed over
+selected `content` only, after profile filtering, active-alternative replacement and
+full transitive dependency closure. `1 KB` is 1,000 bytes; dictionaries, envelopes,
+metadata and execution context are excluded. Overflow rejects the whole bundle with
+`CATALOG_BUNDLE_LIMIT_EXCEEDED`; it never trims or returns a partial bundle.
+
 ## 6. Skills and initialization
 
 | Skill | Role |
@@ -147,14 +174,46 @@ in the project config file. The setup hooks are deferred (D10).
 
 ## 7. Delivery channels
 
-1. **A separate VP plugin** — per-host manifests (`.codex-plugin/`,
-   `.claude-plugin/`, `.cursor-plugin/`, `.muse-plugin/`, …), skills, a hook, own
-   scripts; installation through `vp-setup`.
+1. **A separate VP plugin.** E5a defines selected per-host manifests (`.codex-plugin/`,
+   `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`), skills, a hook, and
+   its own scripts. E5b targets a Muse root `marketplace.json` with the package under
+   `plugins/vida-powers/`, plus a separate Antigravity plugin root. The `.54` fixture
+   formed the Muse package manifest and payload and the Antigravity root `plugin.json`
+   and payload; it withheld the Muse marketplace output. Production inputs and outputs
+   remain absent. The host marketplace owns plugin installation once a
+   qualified artifact is available (D4b). After installation, `vp-setup` writes
+   local project profile files only (SR-57). It does not install the plugin or
+   modify files in the installed agent package. The current source tree provides
+   a CLI and local setup instructions. No public marketplace artifact or
+   production marketplace-install receipt appears in the current evidence.
 2. **A build into the agent delivery package** — VP instructions travel into the native delivery
    together with the extended instruction registry; the canonical copy remains in VP, and
    in the package — a generated artifact with a Source link.
-3. **Marketplace** — `packages/powers` is itself the marketplace owner; Codex —
-   the verified first host, the rest — declared support with a marked limitation.
+3. **Marketplace** — `packages/powers` is itself the marketplace owner. D4b names
+   Codex as the first verified host and records declared support for other hosts. Current
+   generator evidence maps Claude and Cursor formats. Muse targets a root `marketplace.json`
+   with `plugins/vida-powers/`; Antigravity targets a separate plugin root. The `.54`
+   fixture formed the Muse package manifest and payload and the Antigravity root
+   `plugin.json` and payload. It withheld the Muse marketplace output because first-party
+   catalog digest proof is missing. The fixture run had 5,233 scratch outputs; the Muse
+   and Antigravity payload maps each had 2,615 files and matched by source path, byte
+   length, and SHA-256. Its CLI build/check exited 0 with no writes or removals. Muse
+   catalog formation remains blocked by missing first-party digest proof
+   (`MANIFEST_MUSE_CATALOG_NOT_READY`). Production inputs and outputs remain absent;
+   no host installation, publication, or Runtime acceptance is claimed. Devin/Kimi
+   native outputs remain deferred.
+
+### Build and check manifest outputs
+
+`bun run --cwd packages/powers build:manifests` writes the selected host manifests.
+`bun run --cwd packages/powers check:manifests` checks outputs without writing.
+The builder reads `config/vppluginmanifest.v1.schema.json` and
+`config/plugin-manifest-inputs.json`. If schema validation succeeds but the input
+file is absent, it returns `MANIFEST_INPUT_MISSING`. Run fixture checks against an
+isolated package root with `bun scripts/build-manifests.ts --check --root <package-root>`
+from the package directory. The production input file and host outputs are currently
+absent. Local metadata requirements depend on the selected host format. Public-release
+metadata remains unresolved.
 
 ## 8. Materialization, Work Items, findings
 
@@ -183,11 +242,12 @@ packages/powers/
   README.md                     this file
   donors.yaml                   donor manifest (revisions, licenses, counters)
   docs/                         OKF bundle (index.md, log.md, research/, decisions/, work/, requests/)
-  config/                       VP schemas (VPCatalog/v1, VPInstruction/v1, VPMethodologyProfile/v1, VPEffectiveProfile/v1, VPCorpusMap/v1); source profile: `config/methodology-profile.json`
+  config/                       VP schemas (VPCatalog/v1, VPInstruction/v1, VPMethodologyProfile/v1, VPEffectiveProfile/v1, VPCorpusMap/v1, VPPluginManifestInputs/v1); source profile: `config/methodology-profile.json`
   instructions/                 canonical instructions: .md + metadata, flat
   skills/                       vp-mode, vp-setup (+ their scripts/)
-  (.codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/ — planned in step E; not yet created)   per-host manifests
-  scripts/                      product support: check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts, audit.ts, audit-report.ts, definitions.ts
+  (.codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/)     selected E5a host outputs; none generated from production inputs
+  E5b target roots (planned production outputs): Muse root `marketplace.json` with `plugins/vida-powers/`; separate Antigravity plugin root. The Muse package manifest/payload and Antigravity root `plugin.json`/payload fixtures are formed; the Muse marketplace output is withheld and production inputs/outputs remain absent
+  scripts/                      product support, including build-manifests.ts, check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts, audit.ts, audit-report.ts, definitions.ts
   catalog.json                  catalog identity, tag vocabulary, aliases, corpus listing with sha256
   corpus-map.json               processing map: donor + file → converted/split/merged/rejected
   tests/                        harness tests
@@ -240,27 +300,45 @@ counters. `--json` emits the report as JSON.
 | B | Canonical product documents (BR/SR/AC + matrix) | **closed** |
 | C | `VPCatalog/v1`, `VPMethodologyProfile/v1`, `catalog.*` operations, `decision.evaluate` | **closed 2026-10-20**: the schemas, the `catalog.*` operations, `decision.evaluate` and the CLI exist and are tested |
 | D | Full corpus from all eight donors | **closed**: 2510 instructions from 8 donors, 2790 map records, the map and the provenance reconciled (`audit map` → 0 findings) |
-| E | `vp-mode`/`vp-setup` skills, per-host manifests, marketplace | **in progress**: E1–E3 closed (the profile schemas, `vp-setup`); E4's `vp-mode` SKILL is open and under review; E5's manifest schema, metadata inputs and owner-authorized package-build generator (2026-10-22) remain pending implementation. The package build will generate the per-host manifests and `marketplace.json`; outputs remain pending |
-| F | Work Items, findings (Standalone), `artifact_contract` | plan |
-| G | Runtime request (D3 + D8) as a document | plan |
+| E | `vp-mode`/`vp-setup` skills, per-host manifests, marketplace | **in progress**: E1–E3 closed; E4 implemented; E5a code component READY; E5b production qualification open. The `.65` M3.1 review marks `.62` repair CODE+EVIDENCE READY with no code blocker. The `.70` M3.1 review marks `.67` READY as an evidence baseline (0 Critical/Important, 2 Minor receipt-wording findings); `.67` remains `NOT_CLOSED` with `packagePass: false`. Coverage has no statement counter, so no separate 100% statement-coverage claim is made; branches 0/0 are uninstrumented. Its fixture count is 2,617 package files plus 1 fixture-only input, not 2,618 package files. Production inputs/outputs, Muse digest proof, host installation, public metadata/publication, legal review and Runtime acceptance remain open. Deno unavailable |
+| F | Work Items, findings (Standalone), `artifact_contract` | component ready; Step F gates pending. AC-20/21/23 remain open; AC-22 is deterministic-only; AC-24 no-fix boundary is verified. The .35 initial RED was missing-module/absence evidence, not a behavioral RED. No real finding event exists |
+| G | Runtime request (D3 + D8) as a document | draft prepared, unsent and unaccepted; final relevant Source/schema hash binding waits for the current `.62` catalog/findings repair to freeze; E5a is not a prerequisite |
+| H | D14/D15 accepted scope, implemented only through the gated phases in [Step H](docs/task-plan-step-h.md): baseline closeout, rights-cleared Wondelai method subset, engineering/UX applicability and CSV map, then selected typed JSON resources | H0 current hash-bound gates and review record; H1 complete disposition and rights/fidelity evidence; H2 versioned applicability and cell-level evidence; H3 exact-ID, safety and shared-budget evidence | plan drafted; no donor admission, conversion, resource schema, feature implementation, or Runtime acceptance; see Step H for the canonical plan-review and current H0 evidence status |
 
 In detail — in [docs/next-actions.md](docs/next-actions.md).
 
 ## 12. Status and deferred items
 
-**Done:** product concept (research), roadmap, catalog design, fourteen decision
-records (D1–D9, D4b and D10–D13), an OKF bundle with a validator, a donor manifest with 8
-fixed snapshots (7 methodological donors and Open Knowledge Format).
+**Done:** product concept (research), roadmap, catalog design, sixteen decision
+records (D1–D9, D4b and D10–D15), an OKF bundle with a validator, and a donor manifest
+with eight processed snapshots (seven methodological donors and Open Knowledge Format)
+plus Wondelai registered-not-processed.
 
 **Deferred outside the current scope:** registration in the shared root files of the
-repository; the D3+D8 runtime request; the `.vida/*` cutover; marketplace publication;
-the Runtime mode of VP in general.
+repository; D3+D8 Runtime implementation and acceptance; the `.vida/*` cutover;
+marketplace publication; the Runtime mode of VP in general.
 
-**Status:** `research_status: finalized`; implementation: steps A0, A, B, C and D are closed —
-the corpus is 2510 instructions from 8 donors; step E is in progress (E1–E3 closed; E4's
-`vp-mode` SKILL is open and under review; E5's
-manifest schema, metadata inputs and owner-authorized package-build generator remain pending
-implementation and output generation).
+**Status:** `research_status: finalized`; steps A0, A, B, C and D are closed. E4 code and
+documentation are implemented; Step E remains open. The latent default guard stays deferred
+while each of the four fixed-product groups has one alternative. The `.65` review marks `.62`
+repair CODE+EVIDENCE READY. The `.67` numeric receipt is terminal and remains `NOT_CLOSED` with
+`packagePass: false`; the independent `.70` review marks it READY as an evidence baseline.
+Tests, typecheck, Knip, corpus and audit checks, OKF, and Markdown checks passed for the `.67`
+bytes; `.69` reran focused OKF and eight-document Markdown checks on the corrected docs.
+Coverage records function 467/467 and line 3,874/3,874 counters, no statement counter, and
+uninstrumented 0/0 branch counters; no separate 100% statement-coverage claim is made.
+Production inputs and outputs are absent. Muse catalog formation remains blocked by missing
+first-party digest proof. No host
+installation, publication, legal clearance or Runtime acceptance is established. Local metadata
+is optional where the selected host format permits it; public-release metadata remains unknown.
+F's three Work Items and findings component are ready,
+but Step F remains open: AC-20/21/23 lack required materialization, index, and scope-orchestrator
+proof. AC-22 has deterministic evidence only; merge accepts caller-reported evidence and does
+not verify reproduction, context, or equivalence. AC-24 verifies the no-fix boundary. The .35
+initial RED was absence evidence only, not a behavioral RED. No real event exists, so
+`docs/work/findings.jsonl` remains absent. G's request is prepared, unsent and unaccepted;
+final binding waits for the current `.62` catalog/findings repair to freeze. Runtime acceptance
+remains open.
 
 ## 13. Source licenses
 

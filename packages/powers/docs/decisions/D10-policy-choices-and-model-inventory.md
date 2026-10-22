@@ -28,7 +28,7 @@ sources:
   title: Vida Powers — task-level plan for step E
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T19:45:00Z' }
 verified: { by: human:repository-owner, at: '2026-10-20T20:10:00Z' }
-revision: '2'
+revision: '4'
 ---
 
 # Decision
@@ -106,6 +106,21 @@ package (SR-57).
 Per-host `marketplace.json` and `plugin.json` live in their own directory (the D4b pattern);
 the package description for the marketplace — at the root of the package (`source: "./"`). The owner of the manifests
 is the package build (a separate step, not in the current scope).
+
+**Supersession note — 2026-10-22:** the repository owner later approved Muse's root
+marketplace with `plugins/vida-powers/` and a separate compatible Antigravity plugin
+root, both formed from the one canonical Source. This target-specific decision
+supersedes the universal root-source layout above for Muse and Antigravity only; the
+historical decision text is retained. At the time of this update, the `.47` plan was
+complete and the `.50` review was in progress; formation had not started. The Muse
+`package_sha256` gate had no specified digest algorithm or test vector.
+
+The `.54` implementation status supersedes that pending-formation note. It formed
+local fixture outputs, but Muse marketplace formation remains blocked with
+`MANIFEST_MUSE_CATALOG_NOT_READY` because first-party digest proof is absent. Production
+inputs and outputs remain absent; no host installation, publication, or Runtime
+acceptance is established. See
+`../../../../.tmp/panel/native-formations-implementation-20261022-54/final-handoff.json`.
 
 ---
 

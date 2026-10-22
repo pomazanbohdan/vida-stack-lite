@@ -14,9 +14,9 @@ sources:
   title: Vida Powers — product concept and architectural baseline
 - id: decisions
   resource: /decisions/index.md
-  title: Accepted decisions D1–D13 (and D4b)
+  title: Accepted decisions D1–D15 (and D4b)
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '4'
+revision: '5'
 ---
 
 # 1. Purpose
@@ -61,7 +61,8 @@ rules, instructions and boundaries.
 
 | Zone | Vida Powers | VIDA Runtime |
 |---|---|---|
-| Methodological knowledge | Its own canonical corpus of instructions | Uses the same instructions |
+| General methodology and bounded engineering/UX guidance | Owns one canonical instruction corpus | Uses the same instructions through the D3 integration path |
+| Selected reference data | Owns typed records in the same catalog; access is by selected resource ID | Runtime resource access requires a separate integration and is not yet implemented |
 | Selection of instructions | The catalog + selection semantics | Activation of instructions (systemic) |
 | Use of instructions | Forms the bundle for the executor | Activation and registration of the bundle |
 | Choice of the next action | Describes the admissible options | Owns the execution route |
@@ -131,8 +132,9 @@ rules, instructions and boundaries.
   manager, the CLI framework and the test runner are taken from the project.
 - **NFR-02.** The code shipped in the skills works without a build under Bun, Node
   or Deno: only standard `node:` modules, no external dependencies.
-- **NFR-03.** The machine formats that the code reads are JSON; YAML — only for human
-  manifests.
+- **NFR-03.** Shipped code reads JSON catalogs and typed records plus Markdown instruction
+  frontmatter; it does not read CSV. The development-only donor intake may parse CSV only from
+  explicitly inventoried, pinned source paths. YAML remains limited to human manifests.
 - **NFR-04.** Instructions, profiles and registries have stable identifiers and
   versions; a change of content does not change the identifier.
 - **NFR-05.** Evidence and change logs are bound to a specific revision;
@@ -141,8 +143,11 @@ rules, instructions and boundaries.
 
 # 9. Boundaries (out of scope)
 
-- **BR-22.** The current scope does not include: domain packs (§11), the future UI over the
-  VIDA API (§9.3), external synchronization of issue trackers (§8.3).
+- **BR-22.** The accepted scope includes only the bounded engineering/UX pack and selected
+  typed reference families recorded in D14 and D15. Business, marketing, other unresearched
+  domains, a general-purpose knowledge platform, the future UI over the VIDA API (§9.3),
+  external issue-tracker synchronization (§8.3), and unselected reference data remain out of
+  scope.
 - **BR-23.** VP Runtime mode requires registration of the product in the repository and
   a runtime request; until they are performed, the Standalone part is proven.
 

@@ -1,0 +1,17 @@
+{
+  "author": {
+    "email": "fixture@example.invalid",
+    "name": "Fixture Maintainer"
+  },
+  "description": "Synthetic manifest fixture; never production metadata.",
+  "interface": {
+    "category": "Fixture Category",
+    "developerName": "Fixture Maintainer",
+    "privacyPolicyURL": "https://example.invalid/privacy",
+    "termsOfServiceURL": "https://example.invalid/terms"
+  },
+  "license": "FIXTURE-ONLY",
+  "name": "fixture-plugin",
+  "skills": "./skills/",
+  "version": "0.0.0-fixture"
+}

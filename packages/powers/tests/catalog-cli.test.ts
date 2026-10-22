@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { cp, copyFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { cp, copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -39,6 +40,52 @@ async function catalogWithProfileSchema(): Promise<string> {
     join(directory, 'config/vpeffectiveprofile.v1.schema.json'),
   );
   return join(directory, 'catalog.json');
+}
+
+async function catalogWithOversizedInstruction(): Promise<string> {
+  const catalogPath = await catalogWithProfileSchema();
+  const catalog = await loadCatalog(catalogPath);
+  const alpha = catalog.instructions.find((item) => item.instruction_id === 'alpha');
+  if (alpha === undefined) throw new Error('fixture alpha entry missing');
+  const instructionPath = join(dirname(catalogPath), alpha.path);
+  const source = await readFile(instructionPath, 'utf8');
+  const frontmatter = /^---\r?\n[\s\S]*?\r?\n---\r?\n/u.exec(source);
+  if (frontmatter === null) throw new Error('fixture alpha frontmatter missing');
+  const bytes = `${frontmatter[0]}${'x'.repeat(64_001)}\n`;
+  await writeFile(instructionPath, bytes, 'utf8');
+  alpha.sha256 = createHash('sha256').update(bytes).digest('hex');
+  await writeFile(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8');
+  return catalogPath;
+}
+
+async function catalogWithPolicyAlternatives(): Promise<{ catalogPath: string; group: string; alternatives: string[] }> {
+  const catalogPath = await catalogWithProfileSchema();
+  const catalog = JSON.parse(await readFile(catalogPath, 'utf8')) as {
+    tag_dictionary: { pattern: Record<string, string> };
+    instructions: { instruction_id: string; path: string; sha256: string }[];
+  };
+  const sourcePath = join(here, '../config/methodology-profile.json');
+  const methodology = JSON.parse(await readFile(sourcePath, 'utf8')) as {
+    groups: { id: string; alternatives: { id: string }[] }[];
+  };
+  const group = methodology.groups.find((item) => item.id === 'approval-policy');
+  const first = group?.alternatives[0];
+  const second = group?.alternatives[1];
+  if (group === undefined || first === undefined || second === undefined) throw new Error('canonical approval-policy alternatives are missing');
+  for (const alternative of [first, second]) catalog.tag_dictionary.pattern[alternative.id] = `Fixture policy alternative ${alternative.id}.`;
+  for (const [id, tag] of [['alpha', first.id], ['beta', second.id]]) {
+    const entry = catalog.instructions.find((item) => item.instruction_id === id);
+    if (entry === undefined) throw new Error(`fixture instruction ${id} is missing`);
+    const path = join(dirname(catalogPath), entry.path);
+    const source = await readFile(path, 'utf8');
+    const match = /^pattern_tags:\r?\n(?:  - [^\r\n]*\r?\n)*/mu.exec(source);
+    if (match === null) throw new Error(`fixture pattern_tags are missing for ${id}`);
+    const updated = source.replace(match[0], `pattern_tags:\n  - ${tag}\n`);
+    await writeFile(path, updated, 'utf8');
+    entry.sha256 = createHash('sha256').update(updated).digest('hex');
+  }
+  await writeFile(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8');
+  return { catalogPath, group: group.id, alternatives: [first.id, second.id] };
 }
 
 function runCli(args: string[]): ReturnType<typeof spawnSync> {
@@ -139,6 +186,36 @@ describe('catalog CLI', () => {
         expect.objectContaining({ instruction_id: 'beta', selection_reason: 'dependency' }),
       ]),
     });
+  });
+
+  test('unprofiled canonical alternative conflicts fail while non-conflicting diagnostics remain available', async () => {
+    const { catalogPath, group, alternatives } = await catalogWithPolicyAlternatives();
+    for (const required of ['alpha,beta', 'alpha']) {
+      const result = runCli(['compose', '--catalog', catalogPath, '--required', required]);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(stderrJson(result)).toMatchObject({
+        code: 'CATALOG_PROFILE_CONFLICT',
+        details: expect.objectContaining({
+          group,
+          alternatives,
+          resolution_required: true,
+          profile_refresh_required: true,
+        }),
+      });
+    }
+    const diagnostic = runCli(['compose', '--catalog', catalogPath, '--required', 'beta']);
+    expect(diagnostic.status).toBe(0);
+    expect(diagnostic.stderr).toBe('');
+    expect((stdoutJson(diagnostic) as { instructions: { instruction_id: string }[] }).instructions.map((item) => item.instruction_id)).toEqual(['beta', 'gamma']);
+  });
+
+  test('compose exposes the shared content limit as a structured CLI error', async () => {
+    const catalog = await catalogWithOversizedInstruction();
+    const result = runCli(['compose', '--catalog', catalog, '--required', 'alpha']);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(stderrJson(result)).toMatchObject({ code: 'CATALOG_BUNDLE_LIMIT_EXCEEDED' });
   });
 
   test('compose accepts id, product and condition filters', () => {
@@ -274,21 +351,35 @@ describe('catalog CLI', () => {
         details: { schemaErrors: expect.any(Array) },
       });
     }
-    const valid = await runInProcess([...prefix, '--required', 'alpha', '--profile', await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {} })]);
+    const valid = await runInProcess([...prefix, '--required', 'alpha', '--profile', await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} })]);
     expect(valid.status).toBe(0);
     expect((JSON.parse(valid.stdout) as { instructions: Record<string, unknown>[] }).instructions).toEqual(
       expect.arrayContaining([expect.objectContaining({ instruction_id: 'alpha' })]),
     );
   });
 
-  test('missing profile schema uses the catalog schema error convention', async () => {
-    const result = await runInProcess(['compose', '--catalog', join(fixtureDir, 'catalog.json'), '--required', 'alpha', '--profile', await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {} })]);
-    expect(result.status).toBe(1);
-    expect(JSON.parse(result.stderr)).toMatchObject({
-      code: 'CATALOG_INVALID',
-      message: 'cannot read vpeffectiveprofile.v1.schema.json',
-      details: { error: expect.stringContaining('vpeffectiveprofile.v1.schema.json') },
-    });
+  test('custom catalogs without an effective profile schema use the package schema', async () => {
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const result = await runInProcess(['compose', '--catalog', join(fixtureDir, 'catalog.json'), '--required', 'alpha', '--profile', profilePath]);
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect((JSON.parse(result.stdout) as { instructions: { instruction_id: string }[] }).instructions).toEqual(
+      expect.arrayContaining([expect.objectContaining({ instruction_id: 'alpha' })]),
+    );
+  });
+
+  test('compose uses the package-owned effective profile schema with a custom catalog', async () => {
+    const catalogPath = await catalogWithProfileSchema();
+    const callerSchemaPath = join(dirname(catalogPath), 'config', 'vpeffectiveprofile.v1.schema.json');
+    await writeFile(callerSchemaPath, JSON.stringify({ type: 'object', required: ['caller_owned_marker'] }), 'utf8');
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const result = await runInProcess(['compose', '--catalog', catalogPath, '--required', 'alpha', '--profile', profilePath]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect((JSON.parse(result.stdout) as { instructions: { instruction_id: string }[] }).instructions).toEqual(
+      expect.arrayContaining([expect.objectContaining({ instruction_id: 'alpha' })]),
+    );
   });
 });
 
@@ -395,4 +486,5 @@ describe('decisionEvaluate', () => {
     expect(result).toMatchObject({ selected: ['alpha', 'gamma'], score: 0, provider: 'catalog' });
     expect(result.rationale).toContain('product "vida-powers" in context "review"');
   });
+
 });

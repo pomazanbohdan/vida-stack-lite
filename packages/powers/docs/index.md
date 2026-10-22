@@ -14,14 +14,24 @@ each concept.
 * [Vida Powers — task-level plan for step C: catalog, operations, seed corpus](task-plan-step-c.md) - Step-by-step implementation: schemas, frontmatter parser, `catalog.*` operations, deterministic `decision.evaluate`, seed corpus, converter and validator.
 * [Vida Powers — task-level plan for step D: vertical slice of the corpus](task-plan-step-d.md) - Donor processing in phases: inventory, selection, segmentation into atomic instructions, deduplication of duplicates, batch approval of tags, materialization by the converter, and validation.
 * [Vida Powers — task-level plan for step E: skills vp-mode and vp-setup, setup, manifests](task-plan-step-e.md) - Source and effective methodology profile, the setup skill, the orchestration skill, per-host manifests and the marketplace.
-* [Vida Powers — next actions within packages/powers](next-actions.md) - Current scope of work in the product catalog: harness and skeleton, canonical documents, catalog with scripts, full eight-donor corpus, skills and manifests, Work Items and findings, runtime requests.
+* [Vida Powers - task-level plan for step F: Work Items and findings](task-plan-step-f.md) - Three product Work Items and the bounded Standalone findings writer, with open acceptance gates.
+* [Vida Powers - task-level plan for step G: D3 and D8 Runtime request](task-plan-step-g.md) - One draft request for the Agent maintainer, separate from VP-7.
+* [Vida Powers - task-level plan for step H: D14 and D15 content extension](task-plan-step-h.md) - H0-H3 phases for baseline closeout, rights-cleared methodology, engineering/UX applicability and later typed resources.
+* [Vida Powers — next actions within packages/powers](next-actions.md) - The original A-G delivery sequence and separately gated Step H.
 * [Vida Powers — instruction catalog design](catalog-design.md) - Package structure, instruction format, catalog operations, interaction with the methodology profile, validation, tests and packaging.
 * [Vida Powers — business requirements](business-requirements.md) - B-level: goals, boundaries of responsibility, autonomy constraints, methodology policy, delivery, non-functional requirements.
 * [Vida Powers — system specification](system-specification.md) - S-level: instruction model, catalog operations, Decision Provider, routing, methodology profile, materialization, findings, operational rules.
 * [Vida Powers — acceptance criteria](acceptance.md) - Verifiable conditions bound to SR, with the kind of evidence, type and state; separately — what we do not prove.
-* [Vida Powers — traceability matrix](traceability.md) - The link research § → BR → SR → AC and of decisions D1–D13 (and D4b) to normative clauses.
-* [Vida Powers — implementation plan](implementation-plan.md) - Order of stages, gates and acceptance criteria of the implementation: from product registration and canonical documents to corpus conversion, Router, materialization, Runtime integration and Standalone mode.
-* [Vida Powers — product concept and architectural baseline](research/vida-powers-product-research.md) - The finalized concept: the boundaries of VP and VIDA Runtime, the canonical instruction corpus with two tag dimensions, methodology policy, artifact-first materialization, Findings, wiki/work layout and Configured/Dynamic modes.
+* [Vida Powers — traceability matrix](traceability.md) - The link research § → BR → SR → AC and of decisions D1–D15 (and D4b) to normative clauses.
+* [Vida Powers — implementation plan](implementation-plan.md) - Stages 0-10, including separately gated D14/D15 work.
+* [Vida Powers — product concept and architectural baseline](research/vida-powers-product-research.md) - The finalized concept, D14/D15 accepted scope limits, product boundaries, methodology, materialization and evidence rules.
+
+# Work Items and requests
+
+* [VP-5 — vp-mode, vp-setup, package, and delivery channels](work/VP-5.md) - Stage 5 human Work Item.
+* [VP-6 — materialization, Work Items, and findings](work/VP-6.md) - Stage 6 human Work Item; implementation evidence and open proof are recorded separately.
+* [VP-7 — Runtime integration](work/VP-7.md) - Stage 7 human Work Item.
+* [REQ-D3-D8 — VP instruction registry and methodology profile](requests/REQ-D3-D8-runtime-request.md) - Draft request; not delivered, accepted, or bound to final Source/schema hashes.
 
 # Log
 
@@ -43,7 +53,9 @@ each concept.
 * [D11 — Product language: documentation in English, instructions from the donor originals](decisions/D11-product-language.md) - All product documentation is maintained in English; corpus instructions are not translated but taken from the original donor texts; tags, schemas, error codes and terms are in English.
 * [D12 — Opposing instructions are declared, not narrowed away](decisions/D12-declared-conflicts.md) - Two instructions that state opposite rules are declared as a conflicting pair: each names the other, the pair shares one theme pattern tag, and the catalogue reports the pair by name instead of applying both.
 * [D13 — One canonical severity scale: Critical / Important / Minor](decisions/D13-canonical-severity-scale.md) - The severity of a finding is expressed on one scale across the corpus; the domain scales of the donors and the earlier groups of the corpus are rewritten to it, the criteria of every level kept verbatim.
+* [D14 — Bounded engineering and UX guidance](decisions/D14-bounded-engineering-ux-guidance.md) - Accepted bounded engineering/UX instruction scope; other unresearched domains remain out of scope.
+* [D15 — Selected typed reference resources](decisions/D15-selected-typed-reference-resources.md) - Accepted typed resource families with exact-ID retrieval through the same catalog in a separate phase.
 
 # Outside the bundle
 
-* [Donor sources manifest](../donors.yaml) - Exact revisions of the eight donor repositories (7 methodological + Open Knowledge Format), licenses and file counters. Not an OKF concept: it is a machine manifest of sources for corpus conversion.
+* [Donor sources manifest](../donors.yaml) - Nine donor entries: eight processed (seven methodological donors and the Open Knowledge Format reference) plus Wondelai registered-not-processed. Wondelai is not part of the ingested corpus. Not an OKF concept: it is a machine manifest of sources for corpus conversion.

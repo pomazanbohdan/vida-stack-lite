@@ -21,12 +21,12 @@ sources:
   title: Vida Powers — business requirements
 - id: decisions
   resource: /decisions/index.md
-  title: Accepted decisions D1–D13 (and D4b)
+  title: Accepted decisions D1–D15 (and D4b)
 - id: next-actions
   resource: /next-actions.md
   title: Vida Powers — next actions within packages/powers
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '9'
+revision: '17'
 ---
 
 # 1. Why and for whom
@@ -97,7 +97,7 @@ from the catalog; a change of a rule in one place changes it for everyone.
 packages/powers/
   skills/
     vp-mode/
-      SKILL.md                    ← the main orchestration skill (host convention) — step E, not yet created
+      SKILL.md                    ← the main orchestration skill (host convention), implemented in step E
       scripts/
         schema.ts                 ← validator of a limited JSON Schema subset
         frontmatter.ts            ← parser of a limited YAML subset
@@ -207,10 +207,8 @@ artifact_contract_required_data:
   - test cases
   - expected results
 artifact_contract_verified_by: bun test
-compatibility_excludes:
-  - test-after-development
-compatibility_requires:
-  - define-acceptance-criteria
+compatibility_excludes: []
+compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/test-driven-development/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=workflows/.../test-driven.md
@@ -425,7 +423,7 @@ with an override `--catalog <path>` (tests, alternative layouts).
 | `catalog.tags` | — | `{capability:[{tag,description,aliases[]}], pattern:[…]}` | `CATALOG_INVALID` |
 | `catalog.search` | `capability[]`, `pattern[]`, `instruction_ids[]`, `roles[]`, `products[]`, `conditions[]` | `{results:[{instruction_id,title,summary,capability_tags,pattern_tags,revision}]}` — **without `content`** | `CATALOG_INVALID` |
 | `catalog.get` | `instruction_id` | `{instruction:{…all fields…}}` | `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED` |
-| `catalog.compose` | `capability[]`, `pattern[]`, `instruction_ids[]`, `roles[]`, `products[]`, `conditions[]`, `required_ids[]`, `profile` | `{instructions:[{instruction_id,title,summary,content,artifact_contract,selection_reason}]}` + execution context (SR-23) | `CATALOG_INVALID`, `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED`, `CATALOG_REQUIRED_CONFLICT`, `CATALOG_PROFILE_CONFLICT`, `CATALOG_DEPENDENCY_MISSING`, `CATALOG_DEPENDENCY_DISABLED` |
+| `catalog.compose` | `capability[]`, `pattern[]`, `instruction_ids[]`, `roles[]`, `products[]`, `conditions[]`, `required_ids[]`, `profile` | `{instructions:[{instruction_id,title,summary,content,artifact_contract,selection_reason}]}` + execution context (SR-23) | `CATALOG_INVALID`, `CATALOG_ID_UNKNOWN`, `CATALOG_INSTRUCTION_DISABLED`, `CATALOG_REQUIRED_CONFLICT`, `CATALOG_PROFILE_CONFLICT`, `CATALOG_DEPENDENCY_MISSING`, `CATALOG_DEPENDENCY_DISABLED`, `CATALOG_BUNDLE_LIMIT_EXCEEDED` |
 
 **Search semantics** (SR-10, SR-70)
 
@@ -456,7 +454,13 @@ with an override `--catalog <path>` (tests, alternative layouts).
 {
   "schema": "VPEffectiveProfile/v1",
   "groups": {
-    "testing-sequence": { "active": "test-first-development", "alternatives": ["test-first-development", "test-after-development"] }
+    "testing-sequence": { "active": "test-first-development", "alternatives": ["test-first-development"] },
+    "review-strategy": { "active": "code-review", "alternatives": ["code-review"] },
+    "architecture": { "active": "structural-design", "alternatives": ["structural-design"] },
+    "delivery": { "active": "plan-execution", "alternatives": ["plan-execution"] }
+  },
+  "unresolved_groups": {
+    "approval-policy": ["approval-policy-proceed", "approval-policy-gate"]
   }
 }
 ```
@@ -465,41 +469,56 @@ The active alternative is a **pattern tag** (a methodology), not an `instruction
 groups remain about methodologies (SR-26), and an instruction is bound to them by its own
 `pattern_tags`. **Every alternative has its own pattern tag**: the shared tag of the group
 (e.g. `approval-policy`) is a marker for search, not an alternative; otherwise two
-alternatives of one group would not differ from each other. Groups with product policy
-have an **explicitly declared** active alternative in the source profile
-(`default`); for groups where the user makes the choice, `default` is forbidden (D10). Inheritance resolution
-and override are outside `compose` (Stage 4);
-`compose` accepts an already resolved effective profile and remains a pure function.
+alternatives of one group would not differ from each other. The example mirrors
+`config/methodology-profile.json`: `testing-sequence`, `review-strategy`, `architecture`, and
+`delivery` each have one explicitly declared default alternative; the user-choice
+`approval-policy` is unresolved and carries both canonical alternatives. The latent guard for
+future product groups with multiple defaults remains deferred while the four current product
+groups each have one alternative. Groups with product policy have an **explicitly declared** active
+alternative in the source profile (`default`); for groups where the user makes the choice,
+`default` is forbidden (D10). Inheritance resolution and override are outside `compose` (Stage 4);
+`compose` accepts an effective profile with canonical groups and unresolved-choice state.
 
 **`compose` rules**
 
-1. `required_ids` are included **always**, even if they do not match the tags (SR-13).
-2. Tag matches → `selection_reason: "matched"`. The matching phase is performed **only**
-   when the request contains at least one non-empty selection dimension (`capability_tags`,
-   `pattern_tags`, `instruction_ids`, `roles`, `products`, `conditions`); a request without
-   dimensions does not pull the whole corpus (compose with only `required_ids` returns
-   the required instructions and their dependencies).
-3. Transitive `compatibility_requires` → `"dependency"`; an unknown or disabled
-   dependency → an error. A dependency **never disappears silently**: if the profile
-   rejects a dependency — an error (clause 4d).
-4. **Groups are resolved by the profile:** if a group has an active alternative, instructions with
-   other `pattern_tags` of this group do not enter the bundle. An error only when:
-   (a) the profile itself is contradictory (the active alternative is not among the list of
-   alternatives of the group);
-   (b) `required_ids` contradicts the active alternative;
-   (c) two instructions from different groups have a direct `compatibility_excludes` against
-   each other;
-   (d) a **dependency** on an inactive alternative of a group is closed by the **active**
-   alternative of that group (the group is one choice); the dependency is not discarded
-   silently and does not return the inactive alternative to the bundle.
-   Order of application: required → matches → profile filter (only for matches) →
-   dependency closure → `excludes` check.
-5. Without a profile: any pair with `compatibility_excludes` → an error (SR-14).
-   A pair declared as **opposing** (D12) — the two instructions name each other and
-   share one theme pattern tag — is reported with both names; where the pair is the
-   alternatives of one profile group, the active alternative enters the bundle and the
-   other does not (§4d).
-6. The output order is stable (by `instruction_id`).
+1. Validate the query and supplied effective profile before selection. The profile must
+   represent every canonical group as resolved or unresolved. A missing `unresolved_groups`
+   field, a user-choice group absent from both `groups` and `unresolved_groups`, or a
+   stale/mismatched canonical alternative set returns `CATALOG_PROFILE_CONFLICT` with
+   `profile_refresh_required: true`; refresh through `vp-setup` before treating it as a
+   user-choice request.
+2. `required_ids` are always included, even when they do not match tags (SR-13). Tag
+   matching runs only when at least one non-empty selection dimension is supplied; with
+   no dimensions, `compose` does not pull the whole corpus.
+3. Apply profile filtering to selected matches. A required inactive alternative conflicts;
+   selecting an unresolved user-choice group returns `CATALOG_PROFILE_CONFLICT` with
+   `resolution_required: true` and the canonical alternatives, without a bundle. A
+   conflicting group without a supplied profile requests a refreshed effective profile.
+4. Close every transitive `compatibility_requires` dependency. Missing or disabled
+   dependencies return `CATALOG_DEPENDENCY_MISSING` or `CATALOG_DEPENDENCY_DISABLED`.
+   Replace an inactive dependency only with the active alternative of its same resolved
+   group. If dependency closure reaches an unresolved group, return its canonical
+   alternatives with `resolution_required: true` and no bundle; never substitute a default
+   or discard a dependency silently.
+5. After dependency closure, validate canonical policy alternatives and all
+   `compatibility_excludes`. Conflicting canonical alternatives return
+   `CATALOG_PROFILE_CONFLICT`; excluded instructions return `CATALOG_REQUIRED_CONFLICT`.
+   Without a profile, non-conflicting diagnostics remain available, while conflicting
+   alternatives and exclusions fail; diagnostic output is not a resolved session bundle.
+6. Sort returned instructions by `instruction_id`, then enforce the whole-bundle limit:
+   at most 20 instructions and at most 64,000 UTF-8 bytes summed over each selected
+   `content` field after filtering, active substitution, and dependency closure. `1 KB`
+   means 1,000 bytes; the tag dictionary, JSON/envelope, metadata, and execution context
+   do not count. Overflow returns `CATALOG_BUNDLE_LIMIT_EXCEEDED` and no partial bundle.
+
+**Compose error distinctions:** missing `unresolved_groups` or stale canonical alternatives
+return `CATALOG_PROFILE_CONFLICT` with `profile_refresh_required: true`; a selected unresolved
+choice returns `CATALOG_PROFILE_CONFLICT` with `resolution_required: true`, the canonical
+alternatives, and no bundle. Missing or disabled transitive dependencies return
+`CATALOG_DEPENDENCY_MISSING` or `CATALOG_DEPENDENCY_DISABLED`; post-closure exclusions return
+`CATALOG_REQUIRED_CONFLICT`; a count or content-byte overflow returns
+`CATALOG_BUNDLE_LIMIT_EXCEEDED`. Without a profile, non-conflicting diagnostics are preserved,
+but they are not a resolved session bundle.
 
 **Semantics of `decision.evaluate` (D5).** In v1 the operation is implemented **deterministically**:
 `decision.evaluate` accepts already allowed candidates and returns a shortlist or a refusal
@@ -507,6 +526,8 @@ reason (no candidates, unknown candidate ID, candidate outside the allowed ones,
 incorrect format). Semantic evaluation is done by the `vp-mode` skill; an external
 provider is a host capability, not a VP obligation. The D5/SR-16…SR-21 contract preserves
 all fields (the source of the decision, the selected IDs, the reason for the fallback).
+
+Current v1 has exactly four refusal codes: no-candidates, unknown-candidate, candidate-not-allowed, and invalid-format. The applicability-unresolved code is planned only for the future structured applicability contract in SR-82; it is not a current v1 or E4 result.
 
 Deterministic rules of v1:
 
@@ -697,6 +718,16 @@ the digest.
 | `traceability.md` | the D3 row; a reference to the catalog design as a source |
 | `docs/index.md`, `docs/log.md` | the design in the bundle index; records about the changes |
 
+### D14/D15 reconciliation for §§5a, 6, 7, 14, and 16 (future, not implemented)
+
+- **§5a — formation.** The existing converter remains the Markdown instruction writer. H1 may use only a reviewed, rights-cleared Wondelai general-method subset from the pinned carrier. All 14 guided-journey directories are inside the declared carrier at plugins/wondelai-skills/skills/; their specified mirrors under plugins/metaskills/skills/ must be byte-identical. Exclude the 30 journey Markdown files (zero are outside the carrier), leaving 391 candidate Markdown files for classification. Those are files, not norms or delivered instructions. H2 uses only explicitly pinned and allowlisted normative CSV paths after rights and source review; record each row and cell in a versioned map. No CSV parser ships in a skill.
+- **§6 — catalog data.** Preserve one catalog.json. The future versioned VPCatalog/v2 manifest adds typed resources alongside instructions; it does not reinterpret VPCatalog/v1. Resource files use resources/<resource-id>.json and a VPReferenceResource/v1 contract with resource_id, type, revision, applicability, provenance, source row/cell locators, payload, and digest. Preserve the raw file hash separately. Define canonical JSON serialization and the digest boundary before formation. The processing map advances explicitly to VPCorpusMap/v2 to represent file, row, cell, instruction, resource, merge, and rejection links; do not retrofit CSV rows as Markdown files.
+- **§7 — operations.** Add catalog.resource.get as an exact-ID operation in the existing catalog CLI and portable reader. Extend search/compose with structured applicability facts, independent of methodology alternatives and compatibility conflicts. Current v1 refusal reasons stay the four existing codes; applicability-unresolved is a fifth reason only after H2 implements unknown-context handling. Resource retrieval is explicit, selected records only, and uses the shared canonical-path, symlink, digest, type, encoding, and size checks. One helper belongs under skills/vp-mode/scripts/ and development formation imports it; scripts/formation-payload.ts is not a runtime dependency.
+- **§7 — budget.** Keep the current 20-instruction cap. After resource retrieval is implemented, count selected instruction content plus selected resource payloads serialized as canonical UTF-8 JSON against the same 64,000-byte cap. Reject the whole result on overflow; resource IDs or artifact references cannot bypass the cap.
+- **§14 — estimate provenance.** The M3.1 R2 review of DECISION-r2.md (review SHA-256 d16d526824a89f60d6d05ad89e352a0ea7ae244956d2c1c9686df7f64b8e9aa2; reviewed artifact SHA-256 c0d09d203f8af86807f8381eec2e5f90bf8ea8144246e65652bee900c4840946) attributes the planning estimates. The verified 1,434 UUPM normative CSV rows and 391 candidate Markdown files are unlike source units; 1,300–1,700 new IDs, 10–40 existing-corpus merges, and 3–6 cross-donor clusters are estimates. The listed reference categories total 4,331, not 4,523; the 192-item discrepancy is unresolved. The 3,810–4,210 total and 52–68% growth are derived estimates, not delivered counts. Use only counts needed to plan and measure a pilot.
+- **F8 estimate link.** The M3.1 R2 review, §4/F4, traces the prior .61 F8 estimate finding to DECISION-r2.md lines 131–143. The review and reviewed-artifact hashes above bind the estimate attribution and correction.
+- **§16 — status.** D14/D15 are accepted scope only. No Wondelai rights clearance, UUPM admission, converted content, resource schema, implementation, or Runtime acceptance is claimed. Step H owns the phased work and gates.
+
 # 15. Traceability from research
 
 | Research § | Design element |
@@ -718,20 +749,45 @@ operations, the converter, the validator and the audit CLI exist and are covered
 the test suite. What is left is not inside this design any more — it is the next
 steps of the product.
 
-- **Step E4 — the orchestration skill** `skills/vp-mode/SKILL.md`: the main entry of
-  the skill (request → `catalog.search` → `catalog.compose` → bundle → execution or
-  delegation), the bundle boundary enforced **in the code** (≤ 20 instructions, ≤ 64 KB
-  of text — SR-58/AC-26), the mandatory Agent Fallback with its materialization and a
-  negotiation request for an unresolved policy group. The tooling under
-  `skills/vp-mode/scripts/` exists; the `SKILL.md` does not.
-- **Step E5 — the delivery channels**: E5 supplies `config/vppluginmanifest.v1.schema.json`
-  and the metadata inputs. The package build generates the four per-host manifests and
-  `marketplace.json` with a generator included in E5. The owner authorized the generator
-  on 2026-10-22; implementation and outputs remain pending.
-- **Step F — the Work Items and the findings**: `docs/work/` and the findings JSONL.
-  No task plan exists for the step; the plan is written and validated at its start.
-- **Step G — the runtime request**: one request document for D3 and D8 in
-  `docs/requests/`. No task plan exists for the step either.
+- **Step E4 — the orchestration skill** `skills/vp-mode/SKILL.md`: implemented with
+  `catalog.search`/`catalog.compose`, Agent Fallback, unresolved-policy negotiation, and
+  the enforced SR-58/AC-26 limit. `.38` records Bun/Node setup and compose smoke checks,
+  54 focused tests, a 28-file typecheck, and matching hashes for 2,510 instruction payloads;
+  Deno was unavailable. Full Step E gates remain pending in
+  [`task-plan-step-e.md#e5-target-status`](task-plan-step-e.md#e5-target-status).
+- **Step E5 — the delivery channels**: the canonical target status and E5b gaps are in
+  [`task-plan-step-e.md#e5-target-status`](task-plan-step-e.md#e5-target-status). The Codex
+  compatibility manifest uses the scaffold field `skills: "./skills/"`; Claude and Cursor
+  enumerate the current `vp-mode` and `vp-setup` paths. Adding a shipped skill requires a
+  matching map, schema, test and golden update; this is not a claim of future discovery.
+  The portable root uses standard `skills/` discovery and has no `skills` or `catalog` field.
+  Claude marketplace output includes the package description at top level. Owner decision
+  (2026-10-22, F2): `catalog.json` remains the canonical listing, surfaced by the CLI and
+  `vp-mode`; no catalog copy or vendor-specific catalog field is added. Rationale: supported
+  host formats declare skill paths, not a shared catalog property; CLI/SKILL access keeps one
+  corpus listing. Host mapping follows the
+  [Codex package structure](https://developers.openai.com/plugins/build/plugins),
+  [Claude manifest](https://code.claude.com/docs/en/plugins/manifest-reference),
+  [Claude marketplace](https://code.claude.com/docs/en/plugins/marketplace-reference) and
+  [Cursor plugin reference](https://cursor.com/docs/reference/plugins).
+- Local generation requires only selected-host mandatory metadata: `author.name` for Codex,
+  marketplace `owner.name` for Claude/Cursor, and Codex local marketplace `category`.
+  Email, license, privacy and terms fields stay optional where the host format allows them;
+  no placeholder values are synthesized. D4b's owner-supplied version, license, owner,
+  privacy and terms remain required for public release; skills-only Codex package validation
+  does not require MCP app review URLs ([submission requirements](https://developers.openai.com/plugins/deploy/submission)).
+- The generator records SHA-256 ownership in ignored package-local state. It regenerates only
+  matching owned files, conflicts on foreign or manually changed targets before writes, prunes
+  only proven-owned stale outputs, keeps check mode read-only and fences unresolved transactions.
+  Focused tests cover recovery and observed write-failure rollback (SR-80/AC-46).
+- **Step F — the Work Items and the findings**: the human Work Items and bounded
+  Standalone writer exist. `.35` focused tests support deterministic replay and the
+  no-fix boundary; AC-20/21/23 remain open, AC-22 is partial, and no real-event
+  `findings.jsonl` exists. Step F gates remain open in [VP-6](work/VP-6.md).
+- **Step G — the runtime request**: [`REQ-D3-D8`](requests/REQ-D3-D8-runtime-request.md)
+  is prepared as a draft, not sent or accepted. Final relevant Source/schema hash binding
+  waits for the `.62` catalog/findings freeze; E5a is not a prerequisite.
+- **Step H — D14/D15 content scope:** plan-review and current H0 evidence status are recorded in [task-plan-step-h.md](task-plan-step-h.md). No source is admitted by D14/D15; Wondelai rights review, engineering/UX content selection, typed resource schemas and all H1-H3 implementation gates remain open.
 - **The four owner decisions that are open** (`.agent/work/vp-next-steps/WORK.md`,
   "The open items that are not this work"):
   1. the ADR status vocabulary (R1) — `DEPRECATED` needs a decision;

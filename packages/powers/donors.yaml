@@ -124,6 +124,31 @@ donors:
       the revision was not pinned in the research frontmatter; the current HEAD is recorded
       of the main branch — a moving branch snapshot, not reproducible from the research
 
+  - id: wondelai-skills
+    role: candidate-methodology-donor
+    url: https://github.com/wondelai/skills
+    local_path: wondelai-skills
+    head_sha: c172996495bed0fcd26896a9416b2093fd7073f0
+    checked_out: detached
+    default_branch: main
+    license: MIT
+    license_file: LICENSE
+    file_count: 1636
+    content_path: plugins/wondelai-skills
+    content_file_count: 421
+    snapshot_source: pinned-head
+    status: registered-not-processed
+    note: >
+      65 skills, of which 14 are guided journeys (metaskills) that orchestrate the other skills
+      and keep their own state in docs/. The carrier set is the all-in-one plugin bundle
+      (421 .md files, every one distinct); the same skills also ship at the repository root and
+      under plugins/<collection>/skills/, and .claude/.cursor/.windsurf/.pi/.agents are symlink
+      mirrors - those copies are not carriers. The material is derived from published books
+      (Nielsen, Krug, HIG, The Pragmatic Programmer, DDIA, DDD, Clean Architecture); the guided
+      journeys and the case-study files state no norm of their own and are not carried into the
+      corpus. The donor is registered with a pinned snapshot; the selection phase (D) has not run
+      and no instruction carries this donor yet.
+
 not_cloned:
   - id: vida-runtime
     url: https://github.com/pomazanbohdan/vida-stack-lite

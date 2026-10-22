@@ -360,3 +360,7 @@ a pure function of the catalog); create `skills/vp-mode/scripts/catalog-cli.ts`;
 5. `bun run --cwd packages/agent lint:knip:pinned` — `{"issues":[]}`, exit 0.
 6. `bun tooling/agent/check-documentation.ts <explicit list of .md>` — `failures: []`.
 7. Each Task — a separate commit; no file is edited by two lanes.
+
+### Dated addendum — 2026-10-22
+
+Step C is closed. Its v1 decision.evaluate refusal set remains the four current reasons and codes: no candidates (no-candidates), unknown candidate ID (unknown-candidate), candidate outside the admissible set (candidate-not-allowed), and malformed format (invalid-format). The proposed fifth reason, applicability-unresolved, belongs only to the future D14 applicability phase in Step H and is not evidence of Step C implementation. AC-10 records the current/future boundary; SR-82 owns the future behavior.

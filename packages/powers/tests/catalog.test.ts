@@ -14,6 +14,8 @@ import {
   loadInstructions,
 } from '../skills/vp-mode/scripts/catalog.ts';
 import type { Catalog, ComposeQuery, Instruction, SearchQuery } from '../skills/vp-mode/scripts/catalog.ts';
+import { validateAgainstSchema } from '../skills/vp-mode/scripts/schema.ts';
+import type { Schema } from '../skills/vp-mode/scripts/schema.ts';
 
 const fixtureDir = fileURLToPath(new URL('./fixtures/catalog/', import.meta.url));
 const tempDirs: string[] = [];
@@ -44,6 +46,38 @@ async function fixture(): Promise<{ catalog: Catalog; instructions: Map<string, 
   const catalogPath = join(fixtureDir, 'catalog.json');
   const catalog = await loadCatalog(catalogPath);
   return { catalog, instructions: await loadInstructions(catalog, dirname(resolve(catalogPath))) };
+}
+
+type CanonicalMethodologyProfile = { groups: { id: string; alternatives: { id: string; instruction_ids: string[] }[] }[] };
+
+async function readCanonicalMethodologyProfile(): Promise<CanonicalMethodologyProfile> {
+  const path = join(resolve(dirname(fileURLToPath(import.meta.url)), '..'), 'config', 'methodology-profile.json');
+  return JSON.parse(await readFile(path, 'utf8')) as CanonicalMethodologyProfile;
+}
+
+async function readEffectiveProfileSchema(): Promise<Schema> {
+  const path = join(resolve(dirname(fileURLToPath(import.meta.url)), '..'), 'config', 'vpeffectiveprofile.v1.schema.json');
+  return JSON.parse(await readFile(path, 'utf8')) as Schema;
+}
+
+function syntheticInstructions(
+  seed: Instruction,
+  count: number,
+  content: string,
+  requiresFor: (index: number, ids: string[]) => string[] = () => [],
+): { instructions: Map<string, Instruction>; ids: string[] } {
+  const ids = Array.from({ length: count }, (_, index) => `budget-${index + 1}`);
+  const instructions = new Map(ids.map((id, index) => [id, {
+    ...seed,
+    instruction_id: id,
+    title: id,
+    summary: 'Synthetic instruction for bundle budget coverage.',
+    capability_tags: [],
+    pattern_tags: [],
+    content,
+    compatibility: { excludes: [], requires: requiresFor(index, ids) },
+  }]));
+  return { instructions, ids };
 }
 
 afterAll(async () => {
@@ -428,7 +462,7 @@ describe('catalogCompose', () => {
     });
     const defaults = catalogCompose(catalog, instructions, { profile: { schema: 'VPEffectiveProfile/v1', groups: {
       testing: { active: 'test-first-development', alternatives: ['test-first-development', 'test-after-development'] },
-    } } });
+    }, unresolved_groups: {} } });
     expect(defaults).toMatchObject({
       role: '', task_contract: '', effective_methodology: '', work_scope: '', materialization_requirements: [], artifact_references: [],
     });
@@ -456,7 +490,7 @@ describe('catalogCompose', () => {
     const { catalog, instructions } = await fixture();
     const profile = { schema: 'VPEffectiveProfile/v1' as const, groups: {
       testing: { active: 'missing-active-pattern', alternatives: ['missing-active-pattern', 'test-after-development'] },
-    } };
+    }, unresolved_groups: {} };
     const gamma = instructions.get('gamma');
     const alpha = instructions.get('alpha');
     if (gamma === undefined || alpha === undefined) throw new Error('fixture instructions missing');
@@ -476,7 +510,8 @@ describe('catalogCompose', () => {
     if (alpha === undefined || beta === undefined || gamma === undefined) throw new Error('fixture instructions missing');
     const profile = { schema: 'VPEffectiveProfile/v1' as const, groups: {
       'approval-policy': { active: 'approval-policy-proceed', alternatives: ['approval-policy-proceed', 'approval-policy-gate'] },
-    } };
+    }, unresolved_groups: {} };
+    expect(validateAgainstSchema(profile, await readEffectiveProfileSchema())).toEqual([]);
     const alternatives = new Map(instructions);
     alternatives.set('alpha', { ...alpha, compatibility: { excludes: [], requires: ['beta'] } });
     alternatives.set('beta', { ...beta, pattern_tags: ['approval-policy-gate'] });
@@ -487,11 +522,458 @@ describe('catalogCompose', () => {
     ]);
   });
 
+  test('negotiates when the active dependency replacement belongs to another unresolved group', async () => {
+    const { catalog, instructions } = await fixture();
+    const alpha = instructions.get('alpha');
+    const beta = instructions.get('beta');
+    const gamma = instructions.get('gamma');
+    if (alpha === undefined || beta === undefined || gamma === undefined) throw new Error('replacement fixture instructions missing');
+    const candidates = new Map<string, Instruction>([...instructions].map(([id, instruction]) => [id, { ...instruction, pattern_tags: [] }]));
+    candidates.set('alpha', { ...alpha, pattern_tags: [], compatibility: { excludes: [], requires: ['beta'] } });
+    candidates.set('beta', { ...beta, pattern_tags: ['test-after-development'] });
+    candidates.set('gamma', { ...gamma, pattern_tags: ['test-first-development', 'approval-policy-proceed'] });
+    const profile = {
+      schema: 'VPEffectiveProfile/v1' as const,
+      groups: { testing: { active: 'test-first-development', alternatives: ['test-first-development', 'test-after-development'] } },
+      unresolved_groups: { 'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'] },
+    };
+    expect(() => catalogCompose(catalog, candidates, { required_ids: ['alpha'], profile })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: {
+        group: 'approval-policy',
+        resolution_required: true,
+        alternatives: ['approval-policy-proceed', 'approval-policy-gate'],
+        dependency_id: 'gamma',
+        requiring_instruction_id: 'alpha',
+      },
+    }));
+  });
+
+  test('does not compose either unresolved approval-policy alternative and returns a negotiation error', async () => {
+    const { catalog, instructions } = await fixture();
+    const beta = instructions.get('beta');
+    const gamma = instructions.get('gamma');
+    if (beta === undefined || gamma === undefined) throw new Error('approval-policy fixture instructions missing');
+    const alternatives = new Map(instructions);
+    alternatives.set('beta', { ...beta, pattern_tags: ['approval-policy-gate'] });
+    alternatives.set('gamma', { ...gamma, pattern_tags: ['approval-policy-proceed'] });
+    const profile = {
+      schema: 'VPEffectiveProfile/v1' as const,
+      groups: {},
+      unresolved_groups: { 'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'] },
+    };
+    for (const query of [
+      { instruction_ids: ['beta', 'gamma'], profile },
+      { required_ids: ['beta', 'gamma'], profile },
+    ]) {
+      let bundle: unknown;
+      let error: unknown;
+      try {
+        bundle = catalogCompose(catalog, alternatives, query);
+      } catch (caught) {
+        error = caught;
+      }
+      expect(error).toMatchObject({
+        code: 'CATALOG_PROFILE_CONFLICT',
+        details: { group: 'approval-policy', resolution_required: true, alternatives: ['approval-policy-proceed', 'approval-policy-gate'] },
+      });
+      expect(bundle).toBeUndefined();
+    }
+  });
+
+  test('rejects unresolved groups without alternatives', async () => {
+    const { catalog, instructions } = await fixture();
+    expect(() => catalogCompose(catalog, instructions, {
+      required_ids: ['beta'],
+      profile: {
+        schema: 'VPEffectiveProfile/v1',
+        groups: {},
+        unresolved_groups: { 'approval-policy': [] },
+      },
+    })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: { group: 'approval-policy' },
+    }));
+  });
+
+  test('negotiates when an unresolved policy alternative is required by a dependency', async () => {
+    const { catalog, instructions } = await fixture();
+    const alpha = instructions.get('alpha');
+    const beta = instructions.get('beta');
+    if (alpha === undefined || beta === undefined) throw new Error('dependency fixture instructions missing');
+    const dependent = new Map(instructions);
+    dependent.set('alpha', { ...alpha, compatibility: { excludes: [], requires: ['beta'] } });
+    dependent.set('beta', { ...beta, pattern_tags: ['approval-policy-gate'] });
+    const profile = {
+      schema: 'VPEffectiveProfile/v1' as const,
+      groups: {},
+      unresolved_groups: { 'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'] },
+    };
+    expect(() => catalogCompose(catalog, dependent, { required_ids: ['alpha'], profile })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: {
+        group: 'approval-policy',
+        resolution_required: true,
+        alternatives: ['approval-policy-proceed', 'approval-policy-gate'],
+        dependency_id: 'beta',
+        requiring_instruction_id: 'alpha',
+      },
+    }));
+  });
+
+  test('requires unresolved-group state on supplied effective profiles', async () => {
+    const { catalog, instructions } = await fixture();
+    expect(() => catalogCompose(catalog, instructions, {
+      required_ids: ['beta'],
+      profile: { schema: 'VPEffectiveProfile/v1', groups: {} },
+    })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({ resolution_required: true, profile_refresh_required: true }),
+    }));
+  });
+
+  test('rejects schema-valid resolved alternative subsets against the canonical source before composing', async () => {
+    const { catalog, instructions } = await fixture();
+    const methodology = await readCanonicalMethodologyProfile();
+    const group = methodology.groups.find((item) => item.id === 'approval-policy');
+    if (group === undefined || group.alternatives.length < 2) throw new Error('canonical approval-policy alternatives are missing');
+    const active = group.alternatives[0];
+    const omitted = group.alternatives[1];
+    const beta = instructions.get('beta');
+    if (active === undefined || omitted === undefined || beta === undefined) throw new Error('canonical policy fixture is incomplete');
+    const profile = {
+      schema: 'VPEffectiveProfile/v1' as const,
+      groups: { [group.id]: { active: active.id, alternatives: [active.id] } },
+      unresolved_groups: {},
+    };
+    expect(validateAgainstSchema(profile, await readEffectiveProfileSchema())).toEqual([]);
+    const policyInstructions = new Map(instructions);
+    policyInstructions.set('beta', { ...beta, pattern_tags: [omitted.id] });
+    expect(() => catalogCompose(catalog, policyInstructions, { required_ids: ['beta'], profile })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({
+        group: group.id,
+        expected_alternatives: group.alternatives.map((item) => item.id),
+        actual_alternatives: [active.id],
+        profile_refresh_required: true,
+      }),
+    }));
+  });
+
+  test('rejects schema-valid unresolved alternative subsets before resolving dependency closure', async () => {
+    const { catalog, instructions } = await fixture();
+    const methodology = await readCanonicalMethodologyProfile();
+    const group = methodology.groups.find((item) => item.id === 'approval-policy');
+    if (group === undefined || group.alternatives.length < 2) throw new Error('canonical approval-policy alternatives are missing');
+    const active = group.alternatives[0];
+    const omitted = group.alternatives[1];
+    const alpha = instructions.get('alpha');
+    const beta = instructions.get('beta');
+    if (active === undefined || omitted === undefined || alpha === undefined || beta === undefined) throw new Error('canonical policy dependency fixture is incomplete');
+    const profile = {
+      schema: 'VPEffectiveProfile/v1' as const,
+      groups: {},
+      unresolved_groups: { [group.id]: [active.id] },
+    };
+    expect(validateAgainstSchema(profile, await readEffectiveProfileSchema())).toEqual([]);
+    const dependent = new Map(instructions);
+    dependent.set('alpha', { ...alpha, pattern_tags: [], compatibility: { excludes: [], requires: ['beta'] } });
+    dependent.set('beta', { ...beta, pattern_tags: [omitted.id] });
+    expect(() => catalogCompose(catalog, dependent, { required_ids: ['alpha'], profile })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({
+        group: group.id,
+        expected_alternatives: group.alternatives.map((item) => item.id),
+        actual_alternatives: [active.id],
+        profile_refresh_required: true,
+      }),
+    }));
+  });
+
+  test('rejects schema-valid unknown alternatives in resolved and unresolved canonical groups', async () => {
+    const { catalog, instructions } = await fixture();
+    const methodology = await readCanonicalMethodologyProfile();
+    const group = methodology.groups.find((item) => item.id === 'approval-policy');
+    if (group === undefined || group.alternatives.length < 2) throw new Error('canonical approval-policy alternatives are missing');
+    const active = group.alternatives[0];
+    const beta = instructions.get('beta');
+    if (active === undefined || beta === undefined) throw new Error('canonical policy fixture is incomplete');
+    const canonicalAlternatives = group.alternatives.map((item) => item.id);
+    const unknown = 'unknown-policy-alternative';
+    const resolved = {
+      schema: 'VPEffectiveProfile/v1' as const,
+      groups: { [group.id]: { active: active.id, alternatives: [...canonicalAlternatives, unknown] } },
+      unresolved_groups: {},
+    };
+    const unresolved = {
+      schema: 'VPEffectiveProfile/v1' as const,
+      groups: {},
+      unresolved_groups: { [group.id]: [...canonicalAlternatives, unknown] },
+    };
+    const schema = await readEffectiveProfileSchema();
+    expect(validateAgainstSchema(resolved, schema)).toEqual([]);
+    expect(validateAgainstSchema(unresolved, schema)).toEqual([]);
+    const policyInstructions = new Map(instructions);
+    policyInstructions.set('beta', { ...beta, pattern_tags: [canonicalAlternatives[1] ?? ''] });
+    for (const profile of [resolved, unresolved]) {
+      expect(() => catalogCompose(catalog, policyInstructions, { required_ids: ['beta'], profile })).toThrow(expect.objectContaining({
+        code: 'CATALOG_PROFILE_CONFLICT',
+        details: expect.objectContaining({
+          group: group.id,
+          expected_alternatives: canonicalAlternatives,
+          actual_alternatives: [...canonicalAlternatives, unknown],
+          profile_refresh_required: true,
+        }),
+      }));
+    }
+  });
+
+  test('validates profile alternatives from canonical source groups beyond approval policy', async () => {
+    const { catalog, instructions } = await fixture();
+    const methodology = await readCanonicalMethodologyProfile();
+    const group = methodology.groups.find((item) => item.id === 'testing-sequence');
+    const active = group?.alternatives[0];
+    if (group === undefined || active === undefined) throw new Error('canonical testing-sequence group is missing');
+    const unknown = 'stale-testing-alternative';
+    const profiles = [
+      {
+        schema: 'VPEffectiveProfile/v1' as const,
+        groups: { [group.id]: { active: active.id, alternatives: [active.id, unknown] } },
+        unresolved_groups: {},
+      },
+      {
+        schema: 'VPEffectiveProfile/v1' as const,
+        groups: {},
+        unresolved_groups: { [group.id]: [active.id, unknown] },
+      },
+    ];
+    const schema = await readEffectiveProfileSchema();
+    for (const profile of profiles) {
+      expect(validateAgainstSchema(profile, schema)).toEqual([]);
+      expect(() => catalogCompose(catalog, instructions, { required_ids: ['alpha'], profile })).toThrow(expect.objectContaining({
+        code: 'CATALOG_PROFILE_CONFLICT',
+        details: expect.objectContaining({
+          group: group.id,
+          expected_alternatives: [active.id],
+          actual_alternatives: [active.id, unknown],
+          profile_refresh_required: true,
+        }),
+      }));
+    }
+  });
+
+  test('refreshes a supplied profile missing a selected canonical user-decision group', async () => {
+    const { catalog, instructions } = await fixture();
+    const methodology = await readCanonicalMethodologyProfile();
+    const group = methodology.groups.find((item) => item.id === 'approval-policy');
+    const alternative = group?.alternatives[0];
+    const beta = instructions.get('beta');
+    if (group === undefined || alternative === undefined || beta === undefined) throw new Error('canonical approval-policy fixture is incomplete');
+    const profile = { schema: 'VPEffectiveProfile/v1' as const, groups: {}, unresolved_groups: {} };
+    expect(validateAgainstSchema(profile, await readEffectiveProfileSchema())).toEqual([]);
+    const policyInstructions = new Map(instructions);
+    policyInstructions.set('beta', { ...beta, pattern_tags: [alternative.id] });
+    expect(() => catalogCompose(catalog, policyInstructions, { required_ids: ['beta'], profile })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({
+        group: group.id,
+        expected_alternatives: group.alternatives.map((item) => item.id),
+        actual_alternatives: [],
+        profile_refresh_required: true,
+      }),
+    }));
+  });
+
+  test('does not treat an unrelated unresolved group as resolving a selected decision group', async () => {
+    const { catalog, instructions } = await fixture();
+    const methodology = await readCanonicalMethodologyProfile();
+    const policyGroup = methodology.groups.find((item) => item.id === 'approval-policy');
+    const unrelatedGroup = methodology.groups.find((item) => item.id === 'testing-sequence');
+    const policyAlternative = policyGroup?.alternatives[0];
+    const beta = instructions.get('beta');
+    if (policyGroup === undefined || unrelatedGroup === undefined || policyAlternative === undefined || beta === undefined) {
+      throw new Error('canonical policy fixture is incomplete');
+    }
+    const profile = {
+      schema: 'VPEffectiveProfile/v1' as const,
+      groups: {},
+      unresolved_groups: { [unrelatedGroup.id]: unrelatedGroup.alternatives.map((item) => item.id) },
+    };
+    expect(validateAgainstSchema(profile, await readEffectiveProfileSchema())).toEqual([]);
+    const policyInstructions = new Map(instructions);
+    policyInstructions.set('beta', {
+      ...beta,
+      pattern_tags: [policyAlternative.id],
+      compatibility: { excludes: [], requires: [] },
+    });
+
+    expect(() => catalogCompose(catalog, policyInstructions, { required_ids: ['beta'], profile })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({
+        group: policyGroup.id,
+        expected_alternatives: policyGroup.alternatives.map((item) => item.id),
+        actual_alternatives: [],
+        profile_refresh_required: true,
+      }),
+    }));
+  });
+
+  test('rejects policy alternatives selected without a profile while preserving unrelated diagnostics', async () => {
+    const { catalog, instructions } = await fixture();
+    const methodology = await readCanonicalMethodologyProfile();
+    const group = methodology.groups.find((item) => item.id === 'approval-policy');
+    const first = group?.alternatives[0];
+    const second = group?.alternatives[1];
+    const alpha = instructions.get('alpha');
+    const beta = instructions.get('beta');
+    if (group === undefined || first === undefined || second === undefined || alpha === undefined || beta === undefined) throw new Error('canonical policy fixture is incomplete');
+    const conflicting = new Map(instructions);
+    conflicting.set('alpha', { ...alpha, pattern_tags: [first.id], compatibility: { excludes: [], requires: [] } });
+    conflicting.set('beta', { ...beta, pattern_tags: [second.id], compatibility: { excludes: [], requires: [] } });
+    expect(() => catalogCompose(catalog, conflicting, { required_ids: ['alpha', 'beta'] })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({
+        group: group.id,
+        alternatives: [first.id, second.id],
+        resolution_required: true,
+        profile_refresh_required: true,
+      }),
+    }));
+    const dependent = new Map(conflicting);
+    dependent.set('alpha', { ...alpha, pattern_tags: [first.id], compatibility: { excludes: [], requires: ['beta'] } });
+    expect(() => catalogCompose(catalog, dependent, { required_ids: ['alpha'] })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({ group: group.id, alternatives: [first.id, second.id], resolution_required: true }),
+    }));
+    expect(catalogCompose(catalog, instructions, { required_ids: ['gamma'] }).instructions.map((item) => item.instruction_id)).toEqual(['gamma']);
+  });
+
+  test('accepts exactly 20 selected instructions', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const selected = syntheticInstructions(seed, 20, 'x');
+    expect(catalogCompose(catalog, selected.instructions, { required_ids: selected.ids }).instructions).toHaveLength(20);
+  });
+
+  test('rejects 21 selected instructions without returning a partial bundle', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const selected = syntheticInstructions(seed, 21, 'x');
+    expect(() => catalogCompose(catalog, selected.instructions, { required_ids: selected.ids })).toThrow(expect.objectContaining({
+      code: 'CATALOG_BUNDLE_LIMIT_EXCEEDED', details: expect.objectContaining({ instruction_count: 21, max_instructions: 20 }),
+    }));
+  });
+
+  test('accepts exactly 64,000 UTF-8 bytes of instruction content', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const body = 'x'.repeat(64_000);
+    const selected = syntheticInstructions(seed, 1, body);
+    expect(catalogCompose(catalog, selected.instructions, { required_ids: selected.ids }).instructions[0]?.content).toBe(body);
+  });
+
+  test('rejects 64,001 UTF-8 bytes of instruction content', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const selected = syntheticInstructions(seed, 1, 'x'.repeat(64_001));
+    expect(() => catalogCompose(catalog, selected.instructions, { required_ids: selected.ids })).toThrow(expect.objectContaining({
+      code: 'CATALOG_BUNDLE_LIMIT_EXCEEDED', details: expect.objectContaining({ instruction_count: 1, instruction_text_bytes: 64_001 }),
+    }));
+  });
+
+  test('counts multibyte UTF-8 content bytes at the exact limit', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const body = 'é'.repeat(32_000);
+    const selected = syntheticInstructions(seed, 1, body);
+    expect(body.length).toBe(32_000);
+    expect(catalogCompose(catalog, selected.instructions, { required_ids: selected.ids }).instructions[0]?.content).toBe(body);
+  });
+
+  test('rejects 64,002 UTF-8 bytes from 32,001 multibyte characters', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const body = 'é'.repeat(32_001);
+    const selected = syntheticInstructions(seed, 1, body);
+    expect(() => catalogCompose(catalog, selected.instructions, { required_ids: selected.ids })).toThrow(expect.objectContaining({
+      code: 'CATALOG_BUNDLE_LIMIT_EXCEEDED',
+      details: expect.objectContaining({ instruction_count: 1, instruction_text_bytes: 64_002, max_instruction_text_bytes: 64_000 }),
+    }));
+  });
+
+  test('aggregates instruction content bytes at the exact and over-limit boundaries', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const selected = syntheticInstructions(seed, 2, '');
+    const first = selected.instructions.get('budget-1');
+    const second = selected.instructions.get('budget-2');
+    if (first === undefined || second === undefined) throw new Error('aggregate fixture instructions missing');
+    selected.instructions.set('budget-1', { ...first, content: 'é'.repeat(16_000) });
+    selected.instructions.set('budget-2', { ...second, content: 'é'.repeat(16_000) });
+    expect(catalogCompose(catalog, selected.instructions, { required_ids: selected.ids }).instructions).toHaveLength(2);
+
+    selected.instructions.set('budget-2', { ...second, content: `${'é'.repeat(16_000)}x` });
+    expect(() => catalogCompose(catalog, selected.instructions, { required_ids: selected.ids })).toThrow(expect.objectContaining({
+      code: 'CATALOG_BUNDLE_LIMIT_EXCEEDED',
+      details: expect.objectContaining({ instruction_count: 2, instruction_text_bytes: 64_001, max_instruction_text_bytes: 64_000 }),
+    }));
+  });
+
+  test('does not count the full tag dictionary as instruction text', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const selected = syntheticInstructions(seed, 1, 'small instruction body');
+    const wideCatalog: Catalog = {
+      ...catalog,
+      tag_dictionary: {
+        ...catalog.tag_dictionary,
+        capability: { ...catalog.tag_dictionary.capability, 'large-description': 'x'.repeat(64_001) },
+      },
+    };
+    const bundle = catalogCompose(wideCatalog, selected.instructions, { required_ids: selected.ids });
+    expect(bundle.tag_dictionary.capability['large-description']).toHaveLength(64_001);
+  });
+
+  test('rejects overflow caused by mandatory dependencies instead of trimming them', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const selected = syntheticInstructions(seed, 21, 'x', (index, ids) => index === 0 ? ids.slice(1) : []);
+    const rootId = selected.ids[0];
+    if (rootId === undefined) throw new Error('synthetic dependency root missing');
+    expect(() => catalogCompose(catalog, selected.instructions, { required_ids: [rootId] })).toThrow(expect.objectContaining({
+      code: 'CATALOG_BUNDLE_LIMIT_EXCEEDED', details: expect.objectContaining({ instruction_count: 21 }),
+    }));
+  });
+
+  test('rejects overflow caused by transitive dependencies instead of trimming them', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const selected = syntheticInstructions(seed, 21, 'x', (index, ids) => {
+      const next = ids[index + 1];
+      return next === undefined ? [] : [next];
+    });
+    const rootId = selected.ids[0];
+    if (rootId === undefined) throw new Error('synthetic dependency root missing');
+    expect(() => catalogCompose(catalog, selected.instructions, { required_ids: [rootId] })).toThrow(expect.objectContaining({
+      code: 'CATALOG_BUNDLE_LIMIT_EXCEEDED', details: expect.objectContaining({ instruction_count: 21 }),
+    }));
+  });
+
   test('drops an inactive matched parent before collecting its dependencies', async () => {
     const { catalog, instructions } = await fixture();
     const profile = { schema: 'VPEffectiveProfile/v1' as const, groups: {
       testing: { active: 'test-first-development', alternatives: ['test-first-development', 'test-after-development'] },
-    } };
+    }, unresolved_groups: {} };
     const alpha = instructions.get('alpha');
     if (alpha === undefined) throw new Error('fixture alpha missing');
     const inactiveParent = new Map(instructions);
@@ -517,7 +999,7 @@ describe('catalogCompose', () => {
     const { catalog, instructions } = await fixture();
     const profile = { schema: 'VPEffectiveProfile/v1' as const, groups: {
       testing: { active: 'test-first-development', alternatives: ['test-first-development', 'test-after-development'] },
-    } };
+    }, unresolved_groups: {} };
     const filtered = catalogCompose(catalog, instructions, { capability_tags: ['alternate-workflow'], profile });
     expect(filtered.instructions.map((item) => item.instruction_id)).toEqual([]);
     expect(() => catalogCompose(catalog, instructions, { required_ids: ['conflict-mode'], profile })).toThrow(expect.objectContaining({ code: 'CATALOG_PROFILE_CONFLICT' }));
@@ -531,7 +1013,7 @@ describe('catalogCompose', () => {
     const { catalog, instructions } = await fixture();
     const profile = { schema: 'VPEffectiveProfile/v1' as const, groups: {
       testing: { active: 'test-first-development', alternatives: ['test-first-development', 'test-after-development'] },
-    } };
+    }, unresolved_groups: {} };
     const active = catalogCompose(catalog, instructions, { required_ids: ['alpha'], capability_tags: ['test-design'], profile });
     expect(active.instructions.map((item) => item.instruction_id)).toEqual(['alpha', 'beta', 'gamma']);
     expect(() => catalogCompose(catalog, instructions, {
