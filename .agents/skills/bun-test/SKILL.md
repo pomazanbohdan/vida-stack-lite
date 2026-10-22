@@ -91,6 +91,22 @@ reach the native verifier while its Journal is absent. Use actual current
 config/runtime/artifact bindings and the real composition/reservation owner;
 prove the null-Journal read followed by the resolver's native Host read and a
 complete no-write afterimage. This is component input, not CLI admission proof.
+For the corresponding TaskSource singleton refusal, create its genuine unissued
+Journal with public sync before fresh Host CAS, then prepare through the native
+owner. Save the no-write baseline after preparation, which legitimately persists
+metadata. Keep that Journal prerequisite separate from Source's nullable Journal.
+For a principal retry race, use ordinary admitted synthesis/prewriter preparation;
+an InitialSource receipt pins additional lineage that decision insertion can
+invalidate before the intended guard. Native session reservation acknowledges
+commit_unknown before Journal issue. Reconcile only the actual known-uninvoked
+attempt with matching proof; never infer no effect from a null issue alone.
+Count and forward real dispatch/CAS service boundaries. Use a separate configured
+store/capability at the resolver's awaited open boundary when a synchronous reader
+cannot await the transition; preserve the original open result and the immediate
+post-transition native afterimage. Share the fixture clock and existing case
+budget. Removing an unnecessary subprocess avoids startup and JSON/capture costs;
+it does not retroactively settle a retained child timeout. Retry permits change
+the context digest even when the actual WorkItem, input and request digest match.
 Record actual native reads before asserting denial; an orphan coordination
 ticket can reject a missing Work before the intended resolver guard. In a
 test-owned Host-disappearance fault, remove the exact Work/coordination pair

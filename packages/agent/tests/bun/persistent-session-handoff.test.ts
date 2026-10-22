@@ -1,3 +1,4 @@
+import { runSessionPrincipalRetry } from '../helpers/session-principal-retry-fixture.ts';
 import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-local-work.ts';
 import { boundedSpawnSync, executionBudget, pinnedEnvironment, readPin } from '../../bin/bun.ts';
 import { requireSynchronousChildSuccess } from '../helpers/synchronous-child-outcome.ts';
@@ -101,6 +102,7 @@ import {
 import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
 import {
   createPrewriterPreparationObservation,
+  runPreparationFixtureInProcess,
   runSynthesisFixtureInProcess,
 } from '../helpers/public-prewriter-fixture.ts';
 import { nativeDatabaseSnapshotReader } from '../helpers/native-database-snapshot.ts';
@@ -187,6 +189,8 @@ function requiredValue<T>(value: T | null | undefined, label: string): T {
   if (value === null || value === undefined) throw new Error(label + ' is missing');
   return value;
 }
+
+type PrincipalRetryReceipt = Awaited<ReturnType<typeof runSessionPrincipalRetry>>;
 
 function store(): PersistentSessionHandoffStore {
   const instance = new PersistentSessionHandoffStore(
@@ -2197,9 +2201,8 @@ test('configured writer preflight refuses a serialized identity transfer between
   );
 }, 20_000);
 
-test('configured source approval reaches the fresh multi-project refusal without writes', async () => {
-  caseDeadline = performance.now() + 5_000;
-  const repositoryRoot = await configuredFactoryFixture('multi-project-source-refusal-');
+async function freshMultiProjectApprovalSetup(kind: 'source' | 'tasksource') {
+  const repositoryRoot = await configuredFactoryFixture(`multi-project-${kind}-refusal-`);
   retainScratch = true;
   const packageRoot = path.resolve(import.meta.dir, '../..');
   writeFileSync(
@@ -2209,7 +2212,7 @@ test('configured source approval reaches the fresh multi-project refusal without
   const config = loadRuntimeConfig(repositoryRoot);
   const projectIds = ['agent', 'plugin'];
   const projectContext = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, projectIds);
-  const workflowId = 'task_execution';
+  const workflowId = 'task_execution' as const;
   const workflow = config.workflows[workflowId];
   if (!workflow) throw new Error('Configured task workflow is unavailable');
   const sourceStage = workflow.stages.find((stage) =>
@@ -2228,7 +2231,7 @@ test('configured source approval reaches the fresh multi-project refusal without
   const selectedProject = config.teams['default-development']?.allowed_projects.find((id) => projectIds.includes(id));
   if (!selectedProject) throw new Error('Configured development team has no project in the fresh project set');
 
-  const workId = 'multi-project-source-' + randomUUID();
+  const workId = `multi-project-${kind}-` + randomUUID();
   const nativeSessionHandle = 'fixture-multi-project-session-' + randomUUID();
   const selectedRoot = config.projects.find((project) => project.project_id === selectedProject)?.project_root;
   if (!selectedRoot) throw new Error('Fresh configured project has no Source root');
@@ -2237,6 +2240,40 @@ test('configured source approval reaches the fresh multi-project refusal without
   await mkdir(path.dirname(path.join(repositoryRoot, sourcePath)), { recursive: true });
   writeFileSync(path.join(repositoryRoot, sourcePath), 'fresh temporary project source\n');
   const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), implementationPaths);
+  return {
+    repositoryRoot,
+    config,
+    projectIds,
+    projectContext,
+    workflowId,
+    sourceStage,
+    assignmentIndex,
+    riskFlags,
+    selectedProject,
+    workId,
+    nativeSessionHandle,
+    implementationPaths,
+    sourceScope,
+  };
+}
+
+test('configured source approval reaches the fresh multi-project refusal without writes', async () => {
+  caseDeadline = performance.now() + 5_000;
+  const {
+    repositoryRoot,
+    config,
+    projectIds,
+    projectContext,
+    workflowId,
+    sourceStage,
+    assignmentIndex,
+    riskFlags,
+    selectedProject,
+    workId,
+    nativeSessionHandle,
+    implementationPaths,
+    sourceScope,
+  } = await freshMultiProjectApprovalSetup('source');
   const scopePath = `.agent/work/${workId}/scope.json`;
   const acceptancePath = `.agent/work/${workId}/acceptance.json`;
   const authorizationPath = `.agent/work/${workId}/source-authorization.json`;
@@ -2651,6 +2688,647 @@ test('configured source approval reaches the fresh multi-project refusal without
   expect(performance.now()).toBeLessThan(caseDeadline);
   retainScratch = false;
 });
+
+test('configured TaskSource approval reaches the fresh multi-project refusal without writes', async () => {
+  caseDeadline = performance.now() + 5_000;
+  const {
+    repositoryRoot,
+    config,
+    projectIds,
+    projectContext,
+    workflowId,
+    sourceStage,
+    assignmentIndex,
+    riskFlags,
+    selectedProject,
+    workId,
+    nativeSessionHandle: threadId,
+    implementationPaths,
+    sourceScope,
+  } = await freshMultiProjectApprovalSetup('tasksource');
+  const scopePath = `.agent/work/${workId}/scope.json`;
+  const acceptancePath = `.agent/work/${workId}/acceptance.json`;
+  const authorizationPath = `.agent/work/${workId}/source-authorization.json`;
+  await mkdir(path.dirname(path.join(repositoryRoot, scopePath)), { recursive: true });
+  const scope = {
+    schema: 'ImplementationScope/v1',
+    scope_id: `scope-${workId}`,
+    work_id: workId,
+    source_revision: sourceScope.digest,
+    ac_ids: ['AC-MULTI-PROJECT-TASKSOURCE'],
+    allowed_paths: implementationPaths,
+    implementation_paths: implementationPaths,
+    documentation_paths: [],
+    changed_symbols: [],
+    non_goals: ['No TaskSource command is issued by this refusal case'],
+    acceptance_trace: ['AC-MULTI-PROJECT-TASKSOURCE'],
+    behavior_trace: ['SR-MULTI-PROJECT-TASKSOURCE'],
+    test_trace: ['persistent-session-handoff.test.ts'],
+    diagnostic_trace: ['fresh multi-project TaskSource refusal fixture'],
+    attribution: { thread_id: threadId, pointer: 'fixture:multi-project-tasksource-refusal' },
+    owner: 'fixture',
+    created_at: new Date().toISOString(),
+  };
+  const acceptance = {
+    schema: 'AcceptanceManifest/v1',
+    id: `acceptance-${workId}`,
+    version: 1,
+    ac_ids: scope.ac_ids,
+    source: implementationPaths[0],
+    scope: scope.scope_id,
+    source_revision: sourceScope.digest,
+    contracts: [
+      {
+        id: scope.ac_ids[0],
+        definition: 'Configured TaskSource policy refuses a fresh multi-project request before mutation.',
+        sr: 'SR-MULTI-PROJECT-TASKSOURCE',
+        evidence: ['Configured TaskSource policy resolver'],
+      },
+    ],
+  };
+  const configDigest = runtimeConfigDigest(config);
+  const authorization: LocalSourceWriteAuthorization = {
+    schema: 'LocalSourceWriteAuthorization/v1',
+    action: 'source.write',
+    user_instruction_ref: `fixture:${workId}:source-authorization`,
+    work_id: workId,
+    attempt: 1,
+    scope_digest: sourceScope.digest,
+    config_digest: configDigest,
+    workflow_id: workflowId,
+    stage_ids: [sourceStage.id],
+    implementation_paths: implementationPaths,
+    native_session_handle: threadId,
+  };
+  const scopeBytes = Buffer.from(JSON.stringify(scope) + '\n');
+  const acceptanceBytes = Buffer.from(JSON.stringify(acceptance) + '\n');
+  const authorizationBytes = Buffer.from(JSON.stringify(authorization) + '\n');
+  expect(validateImplementationScope(scope)).toBe(true);
+  expect(validateAcceptanceManifestSchema(acceptance)).toBe(true);
+  writeFileSync(path.join(repositoryRoot, scopePath), scopeBytes);
+  writeFileSync(path.join(repositoryRoot, acceptancePath), acceptanceBytes);
+  writeFileSync(path.join(repositoryRoot, authorizationPath), authorizationBytes);
+
+  const item = {
+    schema: 'WorkItem/v1',
+    id: workId,
+    canonical_kind: 'task',
+    intent: 'task_execution',
+    project_id: selectedProject,
+    title: 'Exercise configured multi-project TaskSource refusal',
+    description: 'Use a fresh trusted Host Work and stop at native TaskSource policy preflight.',
+    risk_flags: riskFlags,
+    labels: [],
+    provider: 'local',
+    provider_type: 'Task',
+  };
+  const identity: WorkIdentity = {
+    repository_id: config.repository.repository_id,
+    project_ids: projectIds,
+    integrations_digest: projectContext.integrations_digest,
+    work_id: workId,
+  };
+  const runtimeSnapshot = snapshotRuntimePackageSources(
+    runtimePackageAccess(),
+    config.runtime.bundle,
+    runtimePackageCodePaths(config.runtime.bundle),
+  );
+  const schemaEntry = runtimeSnapshot.entries.find(
+    (entry) => entry.path === config.runtime.bundle + '/schemas/agent-runtime-config.v1.schema.json',
+  );
+  if (!schemaEntry?.exists) throw new Error('Fresh multi-project runtime schema snapshot is unavailable');
+  const databaseLedger = openConfiguredMastraSessionLedger(repositoryRoot);
+  mastraLedgers.push(databaseLedger);
+  const store = databaseLedger.hostState;
+  const seed = workAndLedger(
+    new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    identity,
+    configDigest,
+    store.workspaceId,
+    [],
+    sourceScope,
+  );
+  const context = { work_id: workId, attempt: 1, scope_digest: sourceScope.digest };
+  const runId = sessionBridgeRunId(store.workspaceId, context, workflowId);
+  const selection: WorkItemSelection = {
+    team: 'default-development',
+    kind: 'task',
+    intent: workflowId,
+    project: selectedProject,
+    risk_flags: riskFlags,
+    labels: [],
+  };
+  const compiled = compileDevelopmentWorkflow(config, selection.team, workflowId, riskFlags);
+  const waveIndex = compiled.waves.findIndex((wave) => wave.some((stage) => stage.id === sourceStage.id));
+  if (waveIndex < 0) throw new Error('Configured Source stage has no workflow wave');
+  const action = sessionActionsForWave(config, selection, context, workflowId, waveIndex, []).find(
+    (entry) => entry.stage_id === sourceStage.id && entry.assignment_index === assignmentIndex,
+  );
+  if (!action) throw new Error('Configured Source assignment has no real session action');
+  const bridgeRequest = buildSessionBridgeRequest({
+    runId,
+    workflowId,
+    configDigest,
+    context,
+    waveIndex,
+    action,
+    configuredContext: configuredContextForStage(repositoryRoot, config, workflowId, sourceStage.id, context),
+    priorResults: [],
+  });
+  const initialJournal = databaseLedger.sync(workId, 1, runId, sourceStage.id, [bridgeRequest], sourceScope);
+  expect(initialJournal.state.items).toHaveLength(1);
+  expect(initialJournal.state.items[0]).toMatchObject({ issue_id: null, observation: null });
+  expect(initialJournal.state.items[0]?.request).toEqual(bridgeRequest);
+  expect(initialJournal.state.run_id).toBe(runId);
+  expect(initialJournal.state.source_scope).toEqual(sourceScope);
+  expect(initialJournal.state.completed).toEqual([]);
+
+  const scopeSha256 = createHash('sha256').update(scopeBytes).digest('hex');
+  const acceptanceSha256 = createHash('sha256').update(acceptanceBytes).digest('hex');
+  const authorizationSha256 = createHash('sha256').update(authorizationBytes).digest('hex');
+  const commonReference = {
+    schema: 'LifecycleArtifactReference/v1' as const,
+    source_revision: sourceScope.digest,
+    scope_id: scope.scope_id,
+    ac_ids: scope.ac_ids,
+    generation: null,
+    implementation_fingerprint: null,
+    delivery_cycle_id: null,
+    disposition: 'current' as const,
+  };
+  const nextWork = {
+    ...seed.work,
+    binding: {
+      ...seed.work.binding,
+      repository_id: identity.repository_id,
+      project_ids: [...projectIds],
+      integrations_digest: identity.integrations_digest,
+      team_id: 'default-development',
+      workflow_id: workflowId,
+      provider_work_item_id: workId,
+      lifecycle_work_id: workId,
+      work_item_digest: canonicalJsonDigest(item),
+      work_source_revision: sourceScope.digest,
+      scope_id: scope.scope_id,
+      scope_contract_digest: scopeSha256,
+      acceptance_manifest_digest: acceptanceSha256,
+      ac_ids: [...scope.ac_ids],
+      implementation_paths: [...implementationPaths],
+      allowed_resources: implementationPaths.map((sourcePath) => `file:${sourcePath}`),
+      config_digest: configDigest,
+      runtime_source_revision: runtimeSnapshot.digest,
+      runtime_code_digest: runtimeSnapshot.digest,
+      schema_digest: schemaEntry.sha256,
+    },
+    contracts: {
+      scope: { schema: 'ImplementationScope/v1' as const, path: scopePath, sha256: scopeSha256 },
+      acceptance: { schema: 'AcceptanceManifest/v1' as const, path: acceptancePath, sha256: acceptanceSha256 },
+      decisions: [],
+    },
+    lease: { ...seed.work.lease!, thread_id: threadId },
+    execution: {
+      ...seed.work.execution,
+      run_id: runId,
+      input_digest: canonicalJsonDigest({
+        item,
+        scope: scopeSha256,
+        acceptance: acceptanceSha256,
+        source: sourceScope.digest,
+      }),
+      assignment_attempts: [],
+    },
+    lifecycle: {
+      ...seed.work.lifecycle,
+      source_revision: sourceScope.digest,
+      config_binding: {
+        config_digest: configDigest,
+        schema_digest: schemaEntry.sha256,
+        runtime_code_digest: runtimeSnapshot.digest,
+      },
+      scope: {
+        scope_id: scope.scope_id,
+        allowed_paths: [...implementationPaths],
+        fingerprint_paths: [...implementationPaths],
+        implementation_paths: [...implementationPaths],
+        documentation_paths: [],
+      },
+      references: [
+        {
+          ...commonReference,
+          kind: 'implementation_scope' as const,
+          artifact_schema: 'ImplementationScope/v1',
+          record_id: scope.scope_id,
+          path: scopePath,
+          sha256: scopeSha256,
+          principal: null,
+          decision: null,
+        },
+        {
+          ...commonReference,
+          kind: 'acceptance_manifest' as const,
+          artifact_schema: 'AcceptanceManifest/v1',
+          record_id: acceptance.id,
+          path: acceptancePath,
+          sha256: acceptanceSha256,
+          principal: null,
+          decision: null,
+        },
+        {
+          ...commonReference,
+          kind: 'execution_approval' as const,
+          artifact_schema: 'LocalSourceWriteAuthorization/v1',
+          record_id: authorization.user_instruction_ref,
+          path: authorizationPath,
+          sha256: authorizationSha256,
+          principal: 'local-session:' + canonicalJsonDigest(threadId),
+          decision: 'approved' as const,
+        },
+      ],
+    },
+  };
+  const nextLedger = {
+    ...seed.ledger,
+    tickets: seed.ledger.tickets.map((ticket) => ({
+      ...ticket,
+      repository_id: identity.repository_id,
+      project_ids: [...projectIds],
+      integrations_digest: identity.integrations_digest,
+      thread_id: threadId,
+      source_revision: sourceScope.digest,
+      contour_keys: [
+        ...new Set([
+          ...config.integrations.providers
+            .filter((provider) => projectIds.includes(provider.project_id))
+            .flatMap((provider) => [
+              `tenant:${provider.tenant_id}`,
+              `project:${provider.tenant_id}/${provider.project_id}`,
+            ]),
+          ...implementationPaths.map((sourcePath) => `file:${sourcePath}`),
+        ]),
+      ].sort(),
+      exclusive_resources: implementationPaths.map((sourcePath) => `file:${sourcePath}`),
+      active_resources: implementationPaths.map((sourcePath) => `file:${sourcePath}`),
+    })),
+    claims: seed.ledger.claims.map((claim) => ({
+      ...claim,
+      thread_id: threadId,
+      resources: implementationPaths.map((sourcePath) => `file:${sourcePath}`),
+    })),
+  };
+  const admitted = store.compareAndSwapHostState({ expectedWork: null, expectedLedger: null, nextWork, nextLedger });
+  requireHostState(admitted);
+  expect(admitted.work.execution.run_id).toBe(runId);
+  expect(admitted.work.execution.assignment_attempts).toEqual([]);
+  const projectSet = loadProjectSetContext(repositoryRoot, config, identity.repository_id, projectIds);
+  const request: TaskSourceBindingRequest = {
+    schema: 'TaskSourceBindingRequest/v1',
+    operation: 'propose-create',
+    operation_id: `fixture-${randomUUID()}`,
+    request_id: `fixture-${randomUUID()}`,
+    branch_ref: 'refs/heads/codex/fresh-multi-project-tasksource-refusal',
+    source_root: path.join(repositoryRoot, '.tmp', 'task-source-target-not-created'),
+    expected_host: {
+      work: admitted.workVersion,
+      ledger: admitted.ledgerVersion,
+      journal: { attempt: 1, version: initialJournal.version },
+      maintenance_generation: admitted.maintenanceGeneration,
+    },
+    work_id: workId,
+    attempt: 1,
+    thread_id: threadId,
+    repository_id: identity.repository_id,
+    project_ids: projectIds,
+    canonical_host_root: repositoryRoot,
+    config_digest: configDigest,
+    project_context_digest: projectSet.project_context_digest,
+  };
+  const prepared = store.prepareTaskSourceBindingOperation({
+    request,
+    identity,
+    verifyCurrent: ({ journal }) => {
+      if (!journal.source_scope) throw new Error('Fresh TaskSource Journal has no Source scope');
+      return { source_authorization_sha256: authorizationSha256, source_scope_digest: journal.source_scope.digest };
+    },
+  });
+  expect(prepared.status).toBe('prepared');
+  const rows = nativeDatabaseSnapshotReader(databaseLedger.sessionProducerBinding().database);
+  const beforeRows = rows();
+  const beforeHost = store.readHostStateSnapshot(identity);
+  requireHostState(beforeHost);
+  const beforeJournal = databaseLedger.resume(workId, 1);
+  if (!beforeJournal) throw new Error('Fresh TaskSource Journal disappeared before issue');
+  expect(store.readWorkSessionJournal(identity)).toEqual({
+    attempt: beforeJournal.state.attempt,
+    version: beforeJournal.version,
+    state: beforeJournal.state,
+  });
+  expect(request.expected_host.journal).toEqual({
+    attempt: beforeJournal.state.attempt,
+    version: beforeJournal.version,
+  });
+  let issuedInput: Parameters<typeof store.issueTaskSourceBindingOperation>[0] | undefined;
+  const issue = store.issueTaskSourceBindingOperation.bind(store);
+  const issueObserver = spyOn(store, 'issueTaskSourceBindingOperation').mockImplementation((input) => {
+    issuedInput = input;
+    return issue(input);
+  });
+  let nativeHostReads = 0;
+  let observedHost: ReturnType<typeof store.readHostStateSnapshot> | undefined;
+  const observedIdentities: WorkIdentity[] = [];
+  const readHost = store.readHostStateSnapshot.bind(store);
+  const hostObserver = spyOn(store, 'readHostStateSnapshot').mockImplementation((candidate) => {
+    const snapshot = readHost(candidate);
+    if (candidate.work_id === workId) {
+      nativeHostReads++;
+      observedIdentities.push(candidate);
+      observedHost = snapshot;
+    }
+    return snapshot;
+  });
+  const refusal = await withInitialSourceCleanup(
+    () => rejectionReason(store.issueTaskSourceBindingOperation({ request, identity })),
+    () => {
+      hostObserver.mockRestore();
+      issueObserver.mockRestore();
+    },
+    'Fresh multi-project TaskSource native observer restoration',
+  );
+  expect(() => {
+    throw refusal;
+  }).toThrow('task-source policy requires one admitted project');
+  expect(issuedInput).toEqual({ request, identity });
+  expect(nativeHostReads).toBe(1);
+  expect(observedIdentities.every((candidate) => canonicalJson(candidate) === canonicalJson(identity))).toBe(true);
+  expect(observedHost).toEqual(beforeHost);
+  expect(rows()).toEqual(beforeRows);
+  expect(
+    databaseLedger
+      .sessionProducerBinding()
+      .database.query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
+      )
+      .all(),
+  ).toEqual([]);
+  expect(store.readHostStateSnapshot(identity)).toEqual(beforeHost);
+  expect(databaseLedger.resume(workId, 1)).toEqual(beforeJournal);
+  expect(readFileSync(path.join(repositoryRoot, authorizationPath))).toEqual(authorizationBytes);
+  expect(readFileSync(path.join(repositoryRoot, scopePath))).toEqual(scopeBytes);
+  expect(readFileSync(path.join(repositoryRoot, acceptancePath))).toEqual(acceptanceBytes);
+  expect(existsSync(requiredValue(request.source_root, 'Fresh TaskSource target'))).toBe(false);
+  expect(beforeHost.work.execution.assignment_attempts).toEqual([]);
+  expect(performance.now()).toBeLessThan(caseDeadline);
+  await withInitialSourceCleanup(
+    () => undefined,
+    () => {
+      databaseLedger.close();
+      const index = mastraLedgers.indexOf(databaseLedger);
+      if (index >= 0) mastraLedgers.splice(index, 1);
+    },
+    'Fresh multi-project TaskSource ledger cleanup',
+  );
+  expect(performance.now()).toBeLessThan(caseDeadline);
+  retainScratch = false;
+});
+
+test('configured Source principal race retains native reserved no-effect retries and rejects fresh handle B before writes', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      const host = initialSourceHostStore(fixture);
+      const admitted = host.readHostStateSnapshot(fixture.identity);
+      requireHostState(admitted);
+      await bindControlledRuntimeInitialization(fixture.root, fixture.config, host);
+      await runPreparationFixtureInProcess(
+        {
+          args: [],
+          publicRun: () => {
+            throw new Error('Principal fixture must not enter public CLI');
+          },
+          sync: () => initialSourceJournal(fixture),
+          repositoryRoot: fixture.root,
+          workId: fixture.identity.work_id,
+          attempt: 1,
+          work: admitted.work,
+        },
+        {
+          ledger: initialSourceHostLedger(fixture),
+          bridge: requiredValue(fixture.bridge, 'Native preparation bridge'),
+          source: fixture.originalSource,
+        },
+      );
+      const database = initialSourceHostDatabase(fixture);
+      const nativeRows = nativeDatabaseSnapshotReader(database);
+      const admission = initialSourceAdmissionInput(fixture);
+      const journal = initialSourceJournal(fixture);
+      const item = requiredValue(journal.state.items[0], 'current configured writer');
+      if (journal.state.items.length !== 1 || item.request.stage_id !== 'develop_task')
+        throw new Error('Principal race fixture did not reach the single configured Source writer');
+      const initial = host.readHostStateSnapshot(fixture.identity);
+      requireHostState(initial);
+      const initialLease = requiredValue(initial.work.lease, 'initial Source lease');
+      const originalAuthorization = readFileSync(path.join(fixture.root, fixture.sourceAuthorizationPath));
+      const originalIntake = readFileSync(path.join(fixture.root, fixture.rawIntakePath));
+      const canonicalIntakePath = path.join(
+        fixture.root,
+        '.agent/work/' + fixture.identity.work_id + '/local-session-intake.v1.json',
+      );
+      const originalCanonicalIntake = readFileSync(canonicalIntakePath);
+      const journalBefore = nativeRows().tables.agent_host_mastra_session_ledger;
+      const seed = await runSessionPrincipalRetry({
+        mode: 'seed',
+        root: fixture.root,
+        identity: fixture.identity,
+        selection: admission.selection,
+        nativeSessionHandle: initialLease.thread_id,
+      });
+      expect(seed.mode).toBe('seed');
+      expect(seed.approvalAction).toBe('source.write');
+      expect(seed.approval).not.toBeNull();
+      expect(seed.previousAttemptId).toBeNull();
+      expect(seed.successor).toBe(initialLease.thread_id);
+      expect(seed.dispatchCalls).toBe(0);
+      expect(seed.casWriterCalls).toBe(0);
+      expect(seed.stageId).toBe(item.request.stage_id);
+      expect(seed.assignmentIndex).toBe(item.request.assignment_index);
+      expect(seed.actionId).toBe(item.request.action_id);
+      expect(seed.noEffectAfterimage).toMatchObject({
+        attempt_id: seed.attemptId,
+        request_digest: seed.requestDigest,
+        status: 'no_effect',
+        result: null,
+        result_digest: null,
+      });
+      expect(seed.journalItem).toMatchObject({ issue_id: null, observation: null });
+      expect(host.readHostStateSnapshot(fixture.identity).work?.lease).toEqual(seed.retryLease);
+      expect(nativeRows().tables.agent_host_mastra_session_ledger).toEqual(journalBefore);
+
+      let lineageReads = 0;
+      let armed = true;
+      let transitionLineageRead: number | undefined;
+      let nested: PrincipalRetryReceipt | undefined;
+      let nestedFailure: { readonly error: unknown } | undefined;
+      let admittedCompositionPrincipal: string | undefined;
+      let outerCapturedLease: unknown;
+      let nestedTransitionAfterimage: ReturnType<typeof nativeRows> | undefined;
+      const originalClaim = host.claimWorkflowAssignmentWithApproval.bind(host);
+      const claimBoundary = spyOn(host, 'claimWorkflowAssignmentWithApproval').mockImplementationOnce(
+        async (...args) => {
+          const openAdmitted = admittedSessionExecution.openAdmittedSessionExecution;
+          const admittedBoundary = spyOn(admittedSessionExecution, 'openAdmittedSessionExecution').mockImplementation(
+            async (...input) => {
+              if (armed) {
+                armed = false;
+                transitionLineageRead = lineageReads;
+                try {
+                  nested = await runSessionPrincipalRetry({
+                    mode: 'nested',
+                    root: fixture.root,
+                    identity: fixture.identity,
+                    selection: admission.selection,
+                    nativeSessionHandle: initialLease.thread_id,
+                    successorSessionHandle: 'native-principal-successor-B',
+                    previousAttemptId: seed.attemptId,
+                  });
+                  nestedTransitionAfterimage = nativeRows();
+                } catch (error) {
+                  nestedFailure = { error };
+                  throw error;
+                }
+              }
+              const execution = await openAdmitted(...input);
+              if (nested) admittedCompositionPrincipal = execution.composition.authentication.principal;
+              return execution;
+            },
+          );
+          const readLineage = host.readInitialSourceContinuationLineageView.bind(host);
+          const readHost = host.readHostStateSnapshot.bind(host);
+          const lineageBoundary = spyOn(host, 'readInitialSourceContinuationLineageView').mockImplementation(
+            (...lineageArgs) => {
+              const view = readLineage(...lineageArgs);
+              lineageReads++;
+              return view;
+            },
+          );
+          const hostBoundary = spyOn(host, 'readHostStateSnapshot').mockImplementation((identity) => {
+            const actual = readHost(identity);
+            if (
+              outerCapturedLease === undefined &&
+              canonicalJsonDigest(identity) === canonicalJsonDigest(fixture.identity)
+            )
+              outerCapturedLease = actual.work?.lease;
+            return actual;
+          });
+          return withInitialSourceCleanup(
+            () => originalClaim(...args),
+            () =>
+              completeOwnedCleanup([
+                () => {
+                  admittedBoundary.mockRestore();
+                  return undefined;
+                },
+                () => {
+                  hostBoundary.mockRestore();
+                  return undefined;
+                },
+                () => {
+                  lineageBoundary.mockRestore();
+                  return undefined;
+                },
+              ]),
+            'Native Source principal retry observer restoration',
+          );
+        },
+      );
+
+      await withInitialSourceCleanup(
+        async () => {
+          const denial = await rejectionReason(issueInitialSourceFixtureWriter(fixture));
+          if (nestedFailure) throw nestedFailure.error;
+          expect(() => {
+            throw denial;
+          }).toThrow('workflow approval denied');
+          expect(claimBoundary).toHaveBeenCalledTimes(1);
+          expect(transitionLineageRead).toBeGreaterThan(0);
+          expect(lineageReads).toBeGreaterThan(0);
+          expect(outerCapturedLease).toEqual(seed.retryLease);
+          if (!nested) throw new Error('Native nested reserved retry did not produce a child receipt');
+          expect(nested.mode).toBe('nested');
+          expect(nested.approvalAction).toBe('source.write');
+          expect(nested.approval).not.toBeNull();
+          expect(nested.successor).toBe('native-principal-successor-B');
+          expect(nested.attemptId).not.toBe(seed.attemptId);
+          expect(nested.previousAttemptId).toBe(seed.attemptId);
+          expect(nested.requestDigest).toBe(seed.requestDigest);
+          expect(nested.workItemDigest).toBe(seed.workItemDigest);
+          expect(nested.input).toEqual(seed.input);
+          expect(nested.workContextDigest).not.toBe(seed.workContextDigest);
+          expect(nested.attemptLease).toEqual(seed.retryLease);
+          expect(nested.stageId).toBe(item.request.stage_id);
+          expect(nested.assignmentIndex).toBe(item.request.assignment_index);
+          expect(nested.actionId).toBe(item.request.action_id);
+          expect(nested.noEffectAfterimage).toMatchObject({
+            attempt_id: nested.attemptId,
+            request_digest: nested.requestDigest,
+            status: 'no_effect',
+            result: null,
+            result_digest: null,
+          });
+          expect(nested.approval).not.toBeNull();
+          expect(nested.actualCompositionPrincipal).toBe(
+            'local-session:' + canonicalJsonDigest(seed.retryLease.thread_id),
+          );
+          expect(nested.reservationSchema).toBe('WorkflowSessionReservation/v1');
+          expect(nested.reservationRequest).toMatchObject({
+            stageId: item.request.stage_id,
+            assignmentIndex: item.request.assignment_index,
+          });
+          expect(admittedCompositionPrincipal).toBe(
+            'local-session:' + canonicalJsonDigest('native-principal-successor-B'),
+          );
+          expect(admittedCompositionPrincipal).not.toBe(
+            'local-session:' + canonicalJsonDigest(seed.retryLease.thread_id),
+          );
+          expect(nested.retryLease).toEqual({
+            ticket_id: seed.retryLease.ticket_id,
+            thread_id: 'native-principal-successor-B',
+            generation: seed.retryLease.generation + 1,
+          });
+          expect(nested.dispatchCalls).toBe(0);
+          expect(nested.casWriterCalls).toBe(0);
+          expect(nested.journalItem).toMatchObject({ issue_id: null, observation: null });
+          const finalWork = requiredValue(host.readHostStateSnapshot(fixture.identity).work, 'final Host Work');
+          expect(finalWork.lease).toEqual(nested.retryLease);
+          for (const receipt of [seed, nested]) {
+            const afterimage = finalWork.execution.assignment_attempts.find(
+              (entry) => entry.attempt_id === receipt.attemptId,
+            );
+            expect(afterimage).toMatchObject({
+              attempt_id: receipt.attemptId,
+              request_digest: receipt.requestDigest,
+              status: 'no_effect',
+              result: null,
+              result_digest: null,
+              reconciliation: { retry_lease: receipt.retryLease },
+            });
+          }
+          const transitionedRows = requiredValue(
+            nestedTransitionAfterimage,
+            'nested retry transition database afterimage',
+          );
+          expect(transitionedRows.tables.agent_host_mastra_session_ledger).toEqual(journalBefore);
+          expect(nativeRows()).toEqual(transitionedRows);
+          expect(readFileSync(path.join(fixture.root, fixture.sourceAuthorizationPath))).toEqual(originalAuthorization);
+          expect(readFileSync(path.join(fixture.root, fixture.rawIntakePath))).toEqual(originalIntake);
+          expect(readFileSync(canonicalIntakePath)).toEqual(originalCanonicalIntake);
+          expect(database.inTransaction).toBe(false);
+        },
+        () => claimBoundary.mockRestore(),
+        'Native Source principal retry claim observer restoration',
+      );
+    },
+    {},
+    20_000,
+  );
+}, 20_000);
 
 test('configured native continuation reaches the retained TaskSource authorization refusal without writes', async () => {
   const beforeimage = runtimePackageBeforeimageFixture(tmpdir(), 'vida-agent', (allocated) => {

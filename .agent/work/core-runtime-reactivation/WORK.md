@@ -10,32 +10,56 @@ The active contour is **bun-session-handoff-v2 only**, continuing the same repai
 lane with the shared reference classifier explicitly included. The predecessor
 bun-session-handoff retains its original three-Source scope in the retired
 registry. Its receipts and frozen ceilings remain unchanged.
-The current checked retirement packet is published as
-9ec2b7079e78dba0ab0a74cec4a44cbabdad1fbc. Its complete2270 outcome is below.
-The earlier2242 preparation was based on1680449984b7b805dc883a33ed9044eb8db2e691.
-The2242 throughput checkpoint investigated a supported native lease-race witness
-and the exact producer prerequisites for the remaining four arms, with no
-unchanged full rerun or new contour.2242 assigned native Luna the lease proposal
-in /workspace/vida-session-lease-patch-Kz7Uww, reference-set transitions and the
-specific multi-project configured ingress gap as disjoint lanes. Root owns all
-integration/checks/Git and will group only justified repairs before the next
-complete stage. A proposal or failed premise changes no counter disposition.
-The2242 lease proposal and2243 native-boundary alternative prepare no test:
-same-slot retries pass the retry-fence check before preflight, and direct Host
-no-effect recording does not renew the Work lease. The Journal-bound renewal
-requires the matching current item, absent for the proposed independent old
-readonly slot. The maintained configuration also requires one developer
-assignment. No broad impossibility/skip follows from this fixture limitation.
-2242's lease note is retained at DIAG/DIAG/session-lease-case-v2242.md because
-the worker used an extra path component;2243's exact note is
-DIAG/session-native-lease-boundary-v2243.md. Root's suggested API name
-reconcileWorkflowAttemptWithApproval does not exist; the actual native owner is
-reconcileWorkflowAttempt. No invocation of the nonexistent API was attempted.
-The reference and project lanes likewise prepare no test and leave their
-missing producer proofs OPEN. The reference reader discloses one unintended
-read-only git status during bootstrap, outside Root's staged-check freeze;
-it performed no mutation or numeric check. No reviewed finding is a new kill,
-coverage result or accepted skip. All these lanes have terminated.
+The latest complete measurement is2270 on9ec2b7079e78dba0ab0a74cec4a44cbabdad1fbc,
+with custody and raw counters below. The Source-project case was subsequently
+published asbf63e0a1ff13b5b220c74e01f7afc5f3e0980b9f. The current checked packet
+adds the configured TaskSource refusal and ordinary native principal retry race,
+reuses common multi-project setup, and awaits one combined complete stage after
+publication.2300 scoped strict150 and2301 configured lint pass;2301 groups all
+three affected cases:3PASS/0FAIL/110assertions in11.76s, including the9.24s
+principal case under its unchanged20s bound. These checks are not numeric closure.
+Independent2299 finds no lifecycle or causal blocker in the integrated fixture.
+Root remains the sole canonical writer, numeric owner and Git integrator.
+The superseded2242/2243 recipes and their exact diagnostics remain in the
+[published checkpoint](https://github.com/pomazanbohdan/vida-stack-lite/blob/bf63e0a1ff13b5b220c74e01f7afc5f3e0980b9f/.agent/work/core-runtime-reactivation/WORK.md#current-sequential-flsb-cycle).
+
+2288 integrates only the additive proposals against their actual bases, preserving
+the intervening Source-project and retirement controls.2290 corrects invented
+Host.journal/Journal.attempt fields to the real readWorkSessionJournal API and
+state.attempt before runtime. TaskSource syncs its genuine unissued Journal
+before fresh Host CAS, then captures all native rows/schema after preparation;
+the configured issue refusal preserves that baseline and leaves the target absent.
+The component inputs establish no native CLI admission or human-auth authenticity.
+
+The principal fixture uses ordinary admission plus real controlled initialization,
+synthesis and prewriter transitions, without InitialSource continuation. Each
+actual session reservation has the native commit_unknown entry acknowledgement
+while its Journal remains unissued. Owned observers count and forward actual
+dispatch/CAS services before attributable no-invocation reconciliation. The first
+retry renews A; a separate configured store/capability performs the nested retry
+to B at the resolver's awaited open boundary. The original open returns principal
+B against captured Host leaseA; the resulting refusal preserves the complete
+post-transition native database, Journal and original intake/authorization bytes.
+The equal request digest and WorkItem/input bindings are checked separately from
+the correctly changed permit/context digest. No provider or writer argv executes.
+
+Original failed premises remain retained:2290 child clock regression,2292 child
+TIMEOUT/SIGKILL at3s,2294 mistaken reserved-versus-commit_unknown expectation,
+2295 InitialSource receipt/decision lineage conflict, and2298 incorrect context
+digest equality.2293/2296/2300 static/lint failures stop before runtime. None
+counts as coverage, a kill or an objective skip; their roots/logs are not replayed.
+The final imported async helper removes both child startups, JSON transport and
+capture machinery instead of increasing budgets. A separate capability owns its
+serialization queue and the outer claim has not opened its transaction while
+awaiting verification.2293's independent call-graph objection was corrected in
+that same report after rereading the actual resolver;2299 reviews the final route.
+Common data setup is shared; Source and TaskSource retain separate guard inputs
+and their respective no-write baselines. Timing inputs differ: no speedup ratio,
+tool-call reduction or token saving is claimed. Select this checked batch plus
+one complete stage over per-edit stages or additional competing suite workers.
+Disk audit2264 remains the current observation; inaccessible live-process
+references still defer destructive cleanup. No further broad scan or deletion
+is justified, and no second automation or numeric producer starts.
 
 Root repairs the confirmed late-publication waste instead of repeating an
 unchanged numeric stage. checkContourProgressSnapshot reuses the existing
