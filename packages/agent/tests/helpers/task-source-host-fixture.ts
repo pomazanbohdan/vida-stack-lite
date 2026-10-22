@@ -211,19 +211,97 @@ type PeerReservation = {
   readonly host: HostStateSnapshot;
 };
 
-export function createTaskSourceHostFixture({
-  sourceScope,
-  expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-  retainedResources = [],
-  policyVerifier,
-  configuredHost,
-}: FixtureOptions = {}) {
+function allocateTaskSourceFixture({ configuredHost }: FixtureOptions) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-task-source-coordination-'));
   mkdirSync(path.join(root, '.git'));
   const repositoryRoot = configuredHost?.repositoryRoot ?? root;
   const identity = configuredHost?.identity ?? defaultIdentity;
   const workspaceId = deriveWorkspaceId(identity.repository_id, repositoryRoot);
   const database = openHostStateDatabase(root, 'host.sqlite', workspaceId);
+  return { root, repositoryRoot, identity, workspaceId, database, maintenanceGeneration: 0 };
+}
+
+export function createTaskSourceHostFixture(options: FixtureOptions = {}) {
+  return initializeTaskSourceFixture(allocateTaskSourceFixture(options), options);
+}
+
+export async function createProjectedTaskSourceHostFixture(options: FixtureOptions = {}) {
+  const storage = allocateTaskSourceFixture(options);
+  let closed = false;
+  try {
+    const maintainer = new HostStateStore(
+      storage.database,
+      storage.workspaceId,
+      undefined,
+      undefined,
+      undefined,
+      {
+        principal: 'fixture:task-source-projection',
+        projectIds: storage.identity.project_ids,
+        verify: (fence) => ({
+          schema: 'MaintenanceReleaseAuthorization/v1',
+          principal: 'fixture:task-source-projection',
+          fence_digest: canonicalJsonDigest(fence),
+          closure_digest: fence.binding.closure_digest,
+          bundle_digest: fence.binding.bundle_digest,
+        }),
+      },
+      storage.repositoryRoot,
+    );
+    const fence = maintainer.acquireMaintenanceFence({
+      schema: 'MaintenanceFenceBinding/v1',
+      project_ids: storage.identity.project_ids,
+      operation_id: 'fixture-task-source-projection',
+      manifest_digest: '2'.repeat(64),
+      request_digest: '3'.repeat(64),
+      bindings_digest: '4'.repeat(64),
+      closure_digest: '5'.repeat(64),
+      bundle_digest: '6'.repeat(64),
+    });
+    maintainer.repairTaskSourceBindingWorkProjection(fence);
+    const released = await maintainer.releaseMaintenanceFence(fence);
+    closeWorkspaceDatabaseWithAdmission(storage.database);
+    closed = true;
+    return initializeTaskSourceFixture(
+      {
+        ...storage,
+        database: openHostStateDatabase(storage.root, 'host.sqlite', storage.workspaceId),
+        maintenanceGeneration: released.generation,
+      },
+      options,
+    );
+  } catch (error) {
+    console.error('Retained projected TaskSource fixture setup: ' + storage.root);
+    if (!closed)
+      completeOwnedCleanup(
+        [
+          () => {
+            closeWorkspaceDatabaseWithAdmission(storage.database);
+          },
+        ],
+        { error },
+      );
+    throw error;
+  }
+}
+
+function initializeTaskSourceFixture(
+  {
+    root,
+    repositoryRoot,
+    identity,
+    workspaceId,
+    database,
+    maintenanceGeneration,
+  }: ReturnType<typeof allocateTaskSourceFixture>,
+  {
+    sourceScope,
+    expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    retainedResources = [],
+    policyVerifier,
+    configuredHost,
+  }: FixtureOptions,
+) {
   try {
     const config = configuredHost ? loadRuntimeConfig(repositoryRoot) : undefined;
     const configDigest = config ? runtimeConfigDigest(config) : '6'.repeat(64);
@@ -245,6 +323,7 @@ export function createTaskSourceHostFixture({
     const initial = store.compareAndSwapHostState({
       expectedWork: null,
       expectedLedger: null,
+      expectedMaintenanceGeneration: maintenanceGeneration,
       nextWork: seed.work,
       nextLedger: seed.ledger,
     });

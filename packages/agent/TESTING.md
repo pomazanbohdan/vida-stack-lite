@@ -1999,6 +1999,10 @@ Reuse the existing zero-counter map and evidence; do not create another inventor
 Keep unsupported transition requirements separate from platform-specific evidence
 that must eventually run on its native target. A search finding no fixture alone
 does not establish untestability. Trace the actual producer and preceding guards.
+Counter reviews quote the exact mapped expression, not a nearby predicate. An
+exact comparison of retained callable bytes and relative counter geometry can
+rebind navigation after unrelated Source edits; changed transitive contracts
+still require independent review. It cannot promote old counts or qualification.
 
 Root may advance the queue only after all testable paths are checked and every
 remaining counter has this disposition. Preserve the raw covered/total values,

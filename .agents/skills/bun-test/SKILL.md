@@ -29,6 +29,10 @@ implicit-if range labels. Select causal cases from actual gaps; additional
 denial assertions alone need not increase Istanbul's visited-operand counts.
 Check the actual Source expression at each retained zero-arm location; a nearby
 repeated predicate or shared function owner does not identify that counter.
+Quote that expression in the review before proposing a producer or disposition.
+For unchanged callable bodies in a changed file, reuse retained report geometry
+only after an exact body/relative-location comparison and current transitive
+prerequisite review; this navigation proof never changes measured counts.
 An empty missing-function group does not mean there are no uncovered statements
 or branch arms. Read each exact counter and its own retained gap list before
 classifying the contour or asking for another scan.

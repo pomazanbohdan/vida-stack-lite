@@ -114,6 +114,17 @@ remain sequential under the one execution owner.
 
 ### Current remaining work groups
 
+The current Host packet reuses one synchronous issuing-transaction history cache
+after policy verification, invalidating its Work and table metadata on receipt
+insertion. Projected-schema fixtures form storage under empty-DB maintenance and
+reopen before creating Work; ordinary fixtures use the same synchronous seed.
+Collect exact producer controls and independent prerequisite reviews before one
+pin refresh, ordinary commit/push, matching SDK and complete Host coverage stage.
+Reuse bound callable bytes/relative geometry for unchanged owners after a file
+edit, with current transitive guard review; never copy historical counter IDs or
+promote their old measurements. Unsupported runtime/capture producer prerequisites
+remain explicit gaps rather than accepted synthetic state or numeric closure.
+
 The confirmed TaskSource resource-history defect takes P0 precedence over the
 queued-handoff coverage recipe (WORK1751–1754). Before implementation, freeze
 the private transition roles: exact shape/version/resource validation, canonical

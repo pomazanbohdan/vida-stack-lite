@@ -13,11 +13,68 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current checked continuation coverage packet
 
-Current Source contains a reviewed P0 TaskSource/history correction and focused
-tests; complete numeric qualification awaits one new published SDK/image/stage.
-The complete numbers below remain bound to9112866, not this changed Source.
-The new private transition Source has its own registered contour; the existing
-host-state Source selection is unchanged.
+Published0d04c1ff5bb94d1cc86d4227815490f0344535fd contains the reviewed P0
+TaskSource/history correction. Ordinary commit hooks pass Knip, formatting522
+and strict529; ordinary push completes0. SDK formation39730772186/attempt1
+succeeds without suites; artifact12404793260 is658320bytes with digest
+c8b40c5ec396c50d91dc57b85b8f0820643c2a4083540f65301e56f8f0ba4e2e.
+The new private transition Source has its own pending registered contour;
+the existing host-state Source selection is unchanged.
+
+The single complete stage DIAG/stage-v1791.log binds Source0d04c1f and run
+79254dcb-6c05-4db1-ad9e-c043387994b8. It completes in259881.896527ms, exit0,
+no timeout/signal/spawn error, full capture, closed group, unchanged boot/image.
+Exact raw F1144/1145 L5069/5073 S5414/5421 B5603/5631 remain BLOCKED.
+The sole producer already refreshed CONTOUR-STATUS; no duplicate import runs.
+Image manifest d9a2033d80ce379aa5c8d1deb05c1bfbd85b656f093c8db3590983b595f3b4ac
+is retained at /workspace/.vida-quality-inputs/1f7e3566fbfca309b68f061d9d8a92705895162e/repository/.quality-image.json.
+Original non-cache scratch has a compared/fsynced424652byte archive at
+/workspace/vida-functional-retention-J3T5VB-udjQtv/archive.json; originals remain.
+Map DIAG/host-uncovered-plan-v1792.json is the current map, also atomically
+published through host-uncovered-plan-current.json. Changed Source requires
+current geometry review; old ordinal dispositions are not copied into this run.
+Four blind bounded Luna research lanes partition the same active contour into
+checkpoint/view, resource SQL/cache, historical objective geometry and remaining
+public producer prerequisites. Root alone integrates the next coherent packet;
+no further full stage until the available fixes and reviews have been collected.
+
+The next checked packet reuses the existing stored-history cache only inside
+the synchronous TaskSource issuing transaction, after the policy-verifier await.
+The receipt writer invalidates the affected Work and table metadata before the
+final read; rollback leaves no per-call cache alive. No new cache or budget.
+The queued-ticket case now reads the real atomic completed-recovery lineage
+without writes and resumes its retained engine through the checkpoint.1798
+passes2cases/194assertions in19.24s, retaining both unresolved proposal roots.
+
+The first projected-producer proposal1800 correctly refuses maintenance while
+an active Work lease exists; its root/log remain retained. The corrected shared
+fixture repairs an EMPTY private DB under the public maintenance fence, releases
+it, closes/reopens the same admitted path, then initializes Work/Journal under
+the observed maintenance generation. Legacy initialization remains synchronous
+and shares its seed.1806 passes FIFO/promotion, projected issue/retry and native
+atomic rollback together:3cases/91assertions in2.20s, with issued/unobserved roots
+retained even on PASS. Strict152 passes;1805's blind review finds no blocker.
+
+DIAG/objective-owner-rebind-v1803.json compares retained whole callable bytes
+and relative counter geometry for15historical objective owners against1792.
+It uses the already-bound reports/images with no new AST/scan/hash pass. Its
+producer passes strict2; this navigation proof does not change counts and still
+requires current transitive prerequisite review.1795/1796's generic producer
+proposals are not accepted as dispositions: several inferred nearby expressions
+or prerequisites rather than establishing the exact mapped operand. The Bun
+skill and TESTING now require the quoted expression before a review verdict.
+Current focused checks remain separate from the next final pin/publication/stage.
+
+1804 independently verifies the current transitive guards after the resource
+correction. Root accepts the15rebound branch dispositions and2matching statement
+dispositions from1803/1804, plus the two newly dominated Host-only fallbacks
+306/1 and1227/1: the sole receipt reader supplies the checked Work row version,
+and the atomic view's internal read always supplies the runtime continuation
+array. Preserve their defensive fallbacks and raw counters; these are objective
+queue dispositions, not covered arms or numeric PASS. The completed1792 map has
+17reviewed objective branch arms and11remaining undispositioned arms before
+the new controls are measured. Missing-function entry436 remains unclosed until
+the new engine-resume case is attributed by the next full report.
 
 Published9112866 completes its sole selected-contour stage with342PASS and
 6348assertions, full capture, closed process group and unchanged boot/image.

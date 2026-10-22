@@ -29,7 +29,11 @@ import {
 import { bindControlledRuntimeInitialization } from '../helpers/controlled-runtime-initialization-fixture.ts';
 import { buildReadOnlyDispatchRepairPlan } from '../../src/orchestration/read-only-dispatch-repair.ts';
 import { createAutomaticWorkAdmissionFixture } from '../helpers/automatic-work-admission-fixture.ts';
-import { createTaskSourceHostFixture, trustedTaskSourcePolicyDecision } from '../helpers/task-source-host-fixture.ts';
+import {
+  createTaskSourceHostFixture,
+  createProjectedTaskSourceHostFixture,
+  trustedTaskSourcePolicyDecision,
+} from '../helpers/task-source-host-fixture.ts';
 import { qualifiedRuntimeCodeEndpointFixture } from '../helpers/qualified-runtime-code-fixture.ts';
 import {
   bindFrontierContractReferences,
@@ -8476,6 +8480,23 @@ test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket
           expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
           const restored = initialSourceState(f);
           if (queuedSource) {
+            const rowsBeforeLineageRead = readFixtureHostRows(db);
+            const lineage = requiredValue(
+              host.readInitialSourceContinuationLineageView(f.identity, 1),
+              'Atomic completed-recovery Initial Source lineage view',
+            );
+            expect(lineage.receipt).toEqual(prepared.receipt);
+            expect(lineage.completedSourceReportRecovery).toEqual(retried);
+            expect(lineage.bindingCheckpoint).toEqual({
+              schema: 'InitialSourceBindingCheckpoint/v1',
+              continuation_id: prepared.receipt.continuation_id,
+              request_digest: prepared.receipt.request_digest,
+              work_version: restored.workVersion,
+              boundary_binding_digest: canonicalJsonDigest(prepared.receipt.successor_work.binding),
+            });
+            expect(Array.isArray(lineage.runtimeCodeContinuations)).toBe(true);
+            expect(readFixtureHostRows(db)).toEqual(rowsBeforeLineageRead);
+            expect(db.inTransaction).toBe(false);
             expect(
               restored.ledger.tickets.find((ticket) => ticket.ticket_id === queuedSource.ticket.ticket_id),
             ).toEqual({
@@ -8527,7 +8548,7 @@ test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket
             expect(recoveryReceiptRows.all(host.workspaceId, f.identity.work_id)).toEqual(recoveryReceiptBefore);
             expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
           }
-          if (mode === 'next-wave') {
+          if (mode === 'next-wave' || queuedSource) {
             await requiredValue(f.bridge, 'Retained writer engine').resume(
               requiredValue(restored.journal.step_id, 'Accepted writer step'),
               [observation],
@@ -8544,6 +8565,11 @@ test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket
                 (item) => item.issue_id === null && item.observation === null && item.host_reservation === undefined,
               ),
             ).toBe(true);
+            queuedSource?.verifyPreserved();
+          }
+          if (mode === 'next-wave') {
+            const advanced = initialSourceState(f);
+            const advancedJournal = { state: advanced.journal, version: advanced.journalVersion };
             const lease = requiredLease(advanced.work);
             expect(advanced.ledger.tickets.find((ticket) => ticket.ticket_id === lease.ticket_id)).toMatchObject({
               status: 'active',
@@ -13869,6 +13895,68 @@ const maintenanceStore = (handle = database) =>
   new HostStateStore(handle, workspace, undefined, undefined, undefined, maintenanceVerifier);
 const workingStore = (handle = database) =>
   new HostStateStore(handle, workspace, undefined, undefined, undefined, maintenanceVerifier, root);
+
+test('TaskSource projection repair feeds a public issued resource receipt from a reopened Host', async () => {
+  const deadline = performance.now() + 5_000;
+  const policy = mock(
+    async ({ request }: Parameters<NonNullable<ConstructorParameters<typeof HostStateStore>[8]>['verify']>[0]) =>
+      trustedTaskSourcePolicyDecision(request),
+  );
+  const f = await createProjectedTaskSourceHostFixture({ policyVerifier: policy });
+  let failure: { error: unknown } | undefined;
+  try {
+    expect(f.initial.maintenanceGeneration).toBeGreaterThan(0);
+    expect(
+      f.database
+        .query("SELECT name FROM pragma_table_info('agent_host_task_source_binding_operation') WHERE name='work_id'")
+        .get(),
+    ).toEqual({ name: 'work_id' });
+    expect(f.prepare().status).toBe('prepared');
+    const workspaceId = deriveWorkspaceId(f.identity.repository_id, f.root);
+    expect(
+      f.database
+        .query<{ work_id: string }, [string, string]>(
+          'SELECT work_id FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+        )
+        .get(workspaceId, f.request.operation_id),
+    ).toEqual({ work_id: f.identity.work_id });
+    const input = { request: f.request, identity: f.identity };
+    const issued = await f.store.issueTaskSourceBindingOperation(input);
+    expect(issued.status).toBe('issued');
+    expect(issued.command_argv).not.toBeNull();
+    expect(policy).toHaveBeenCalledTimes(1);
+    const receipts = () =>
+      f.database
+        .query<{ payload: string; digest: string }, [string, string]>(
+          'SELECT payload,digest FROM agent_host_task_source_resource_transition WHERE workspace_id=? AND operation_id=?',
+        )
+        .all(workspaceId, f.request.operation_id);
+    const beforeReceipts = receipts();
+    expect(beforeReceipts).toHaveLength(1);
+    const receipt = parseJsonRecord(beforeReceipts[0]!.payload);
+    expect(receipt).toMatchObject({ schema: 'TaskSourceResourceTransitionReceipt/v1', request: f.request });
+    expect(beforeReceipts[0]!.digest).toBe(canonicalJsonDigest(receipt));
+    const before = f.store.readHostStateSnapshot(f.identity);
+    expect(before.work).not.toBeNull();
+    expect((await f.store.issueTaskSourceBindingOperation(input)).status).toBe('already_issued');
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(receipts()).toEqual(beforeReceipts);
+    expect(f.database.inTransaction).toBe(false);
+    expect(performance.now()).toBeLessThan(deadline);
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(false, 'projected issued proposal without observation; no replay');
+        },
+      ],
+      failure,
+    );
+  }
+});
 
 test('TaskSource projection repair initializes absent storage under its exact held fence', async () => {
   preserveHostFixtureRoot = 'case failed or timed out';

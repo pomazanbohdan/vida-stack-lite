@@ -8347,7 +8347,7 @@ export class HostStateStore {
     );
     return history;
   }
-  /** These scopes contain no retained-receipt writes; each successor still reruns checkedStoredWork validation. */
+  /** Receipt writers invalidate their Work entry and table metadata before the next validation. */
   #withStoredWorkHistoryReadCache<T>(operation: () => T): T {
     const previous = this.#storedWorkHistoryReadCache;
     this.#storedWorkHistoryReadCache = previous ?? new Map();
@@ -9978,7 +9978,7 @@ export class HostStateStore {
     const commandArgv = policyRequest
       ? [policyRequest.proposed_argv.slice(1)]
       : taskSourceGitArgv(resolveTaskSourceRoot(this.#repositoryRoot, request.source_root));
-    const committed = this.#transactionWithProducerFence(() => {
+    const committed = this.#transactionWithProducerFenceAndStoredWorkHistoryCache(() => {
       this.#assertReconciliationWritesAllowed();
       const current = this.#read(identity);
       requireState(
