@@ -38,6 +38,11 @@ review after the current complete report has refreshed that map. Earlier produce
 research remains provisional. Resolve the report path from the map's `report`
 or the stage's `publication.json`; do not retype long execution-image identifiers
 or infer staleness from an optional absent commit field.
+Use the existing gap mapper and generated Markdown projection for bounded reads.
+For terminal outcomes select explicit scalar fields; never dump a raw report or
+every dictionary key. Coverage/function arrays and digest catalogs can expand to
+megabytes even when top-level arrays were filtered. Truncation limits tool output,
+not the cost of producing it; inspect a bounded shape before an unknown schema.
 For process cleanup, prove detached-descendant termination and reaping separately
 from owned process-group closure. A zombie has no useful command line; a native
 test can assign its own unique kernel `/proc/self/comm`, confirm it before exit,

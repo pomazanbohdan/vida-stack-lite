@@ -13,55 +13,45 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current checked continuation coverage packet
 
-Publishedbfad910 completes its sole selected-contour stage with341PASS and
-6296assertions, full capture, closed process group and unchanged boot/image.
-DIAG/gap-delta-v1701.json confirms251/1 newly visited with no lost arm,
-unchanged Source and all15reviewed objective branch geometries. Twenty-nine raw
-branch gaps remain,14undispositioned including native Windows. Raw S/B remain
-BLOCKED; exact F/L remain100. The stage takes234487.941278ms: Host325/5805 takes
-227.59s and stopped-source16/491 takes140.84s. The operation preserves
-execution_complete=true, report_complete=false and resource_safe_to_advance=false.
-No timeout, signal, compile/runtime failure or UNKNOWN is counted as a pass or kill.
+Published9112866 completes its sole selected-contour stage with342PASS and
+6348assertions, full capture, closed process group and unchanged boot/image.
+DIAG/gap-delta-v1729.json confirms937/4 and1486/3 newly visited, no lost arm,
+unchanged Source and all15reviewed objective branch geometries. Twenty-seven
+raw branch gaps remain,12undispositioned including native Windows. Raw S/B stay
+BLOCKED; exact F/L remain100. Stage252891.191805ms; Host326/5857 takes243.15s,
+stopped-source16/491 takes129.29s. execution_complete=true, report_complete=false,
+resource_safe_to_advance=false. These observed metrics belong to the bound image,
+not documentation commits or installed Runtime acceptance. No error/UNKNOWN is a kill.
 
-The two checked correction packets measure1121/1 and251/1 without regressing
-an arm. The first creates a real public maintenance acquire/release before legacy
-frontier Work admission, then reopens the generation-bound Journal. Its closed
-transition authorization refusal reaches the intended guard before the original
-success controls. The second reuses one typed withTemporaryFixtureReceipt owner
-for delivered-Journal and initial-source corrupt-row refusals. An implementation
-scope schema changes equally in the receipt's original/successor arrays; existing
-Work/request digests are rebound. The actual Host reader refuses lifecycle
-authority, then exact reverse CAS restores the receipt before original retries.
-Host/Journal/DDL beforeimages, transaction closure and primary/cleanup failures
-stay protected. This is refused corrupted input, never accepted fabricated history.
+The new next-wave case uses genuine accepted-report recovery, actual retained
+engine resume and the next unissued Journal wave before expired-lease recovery.
+Its Journal-only CAS refusal, unchanged rows/receipt, closed transaction, old/new
+claim resources, thread/generation and preserved binding/execution/artifacts/body/
+digest protect the successful transition. The repair fallback control derives
+from a genuine completed Host attempt and genuine started authorization; its
+foreign observation is refused and the exact native Journal preimage restored.
+Neither controlled fixture creates accepted fabricated history or observes a
+writer process. Static/focused failures, corrections and independent reviews
+are bound in the current three-hour audit below. The Host pin is refreshed once.
+Ordinary format520/strict527 hooks and normal push publish the code; one matching
+build-only SDK39720660816 supplies the one complete image/stage. No suites enter build/install.
 
-DIAG/lifecycle-focused-v1694.log has2PASS/233assertions,4493.32ms and2266.95ms
-native cases,9.44s command; strict149 and scoped lint pass. Root's observed native
-exit0 for the fail-fast sequence is recorded in verification-v1696.json; an empty
-lint log alone is not terminal proof. Independent lifecycle-receipt-review-v1695.md
-accepts both callers. Pin strict123, lint and1PASS/10 control are under v1696.
-Ordinary hooks pass520format/527strict; push-v1698.log owns normal publication.
-The earlier maintenance stale-handle failure and its retained root remain in
-released-fence-focused-v1682.log; v1683/v1684 own its corrected checks and review.
-The earlier relative-path diagnostic edit failed before changing Source and was
-corrected with an absolute path and fail-fast sequence. No budget was raised.
+The owner's batch instruction partitions ALL12remaining undispositioned arms:
+33/5-6 same-Work queued handoff;87/0 native-platform prerequisite;261/1 and262/1
+configured-frontier historical admission collectors;1144/1 and1204/7-8/1223/0
+configured continuation/report history;1542/1/1543/0/1553/0 mixed/report ancestry.
+Blind Luna1728/1730/1731/1732 research only independent mechanisms, with Root as
+sole Source/Git/numeric writer. Findings are provisional until Root integrates,
+checks and reviews one coherent packet before the next complete contour run.
+A queued foreign peer is not the target Work; use actual same-database branch/
+worktree reservations. Do not fabricate queued rows, accepted siblings or runtime
+history, or classify a search failure as an objective skip.
 
-The corrected blind lifecycle study v1691 rejects the inference that an unavailable
-public INTAKE append makes a later receipt collector objectively unreachable.
-Lineage validation precedes lifecycle authority validation; the new complete
-measurement now proves that refusal route. The same-Work queue study v1700 gives
-a concrete next composition for33/5 and33/6: native writer/report and contested
-TaskSource reservation must share the actual database, with queue creation before
-that Work's first reported non-inspect operation. A separate helper database or
-manually appended target ticket is not proof. This next route remains unimplemented
-and unmeasured. Mixed-wave and post-report studies v1680/v1681 keep their exact
-producer prerequisites OPEN; no engine acceptance change or new skip is inferred.
-
-Earlier checked packets, failures, reviews and rejected compositions remain in
-[publishedbfad910 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bfad910d5b614ff460be7ed61ddca9e7519190ef/.agent/work/core-runtime-reactivation/WORK.md#current-checked-continuation-coverage-packet).
-Original FAIL/UNKNOWN custody and fences remain unchanged. The numeric and
-custody owners below bind the latest complete observation; documentation-only
-reconciliation does not require another SDK, suite or numeric producer.
+Earlier checked packets, original failures, reviews and rejected compositions
+remain in [published9112866 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/9112866e081ff3de8cb01c4358f2c5e9cbe0b87f/.agent/work/core-runtime-reactivation/WORK.md#current-checked-continuation-coverage-packet).
+Original FAIL/UNKNOWN custody and fences remain unchanged. Numeric/custody owners
+below bind the latest complete observation; documentation-only reconciliation
+requires no second SDK, suite or numeric producer.
 
 ### Reporting simplification
 
@@ -1095,8 +1085,10 @@ remains separate. Final independent1722 accepts snapshot freshness and the whole
 changed fixture packet.1724 refreshes the Host test pin once; tooling strict123/
 lint0 and the existing two-file namespace control pass1case/10assertions.
 Documentation1723 checks6documents/75links with no failures; diff check passes.
-Fetch shows no divergent remote commits. This packet awaits ordinary publication
-and its one complete stage. Other contours, frozen CRAP/mutation and cutover stay deferred.
+Fetch shows no divergent remote commits. Ordinary hooks and push publish9112866;
+its one matching SDK and complete stage are bound above and below. The two
+target arms are now measured, not projected. Other contours, frozen CRAP/mutation
+and cutover stay deferred.
 
 ## Latest measurement custody
 
@@ -1109,17 +1101,18 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Retained stage/input, launch, native outcome and once-only publication | DIAG/user-delete-v1707/latest-evidence/; original /workspace/contour-stage-ZFdnyU and image locators retired |
-| Latest report and original input identities | DIAG/host-uncovered-plan-current.json resolves DIAG/user-delete-v1707/latest-evidence/focused-coverage.json and adjacent manifest/process/shard/image metadata |
-| SDK archive, CI and acquisition identity | DIAG/sdk-v1699.json; maintained readiness owner checks the actual ZIP/CI join once |
-| Admission, scratch qualification and complete producer log | DIAG/user-delete-v1686/result.json, DIAG/scratch-v1699.txt and DIAG/stage-v1699.log |
-| Verified durable non-cache scratch archive | /workspace/vida-functional-retention-ZFdnyU-GB8zOL/archive.json; owns exact bytes/hash, original root, excluded cache, full comparison and before/after capacity |
+| Retained stage/input, launch, native outcome and once-only publication | /workspace/contour-stage-1o0ovB/{execution,launch,publication}.json; new image/stage after retirement |
+| Latest report and original input identities | DIAG/host-uncovered-plan-current.json resolves run99852e62-f8c6-471f-8abf-880cae749bae original report and adjacent manifest/process/shard/image metadata |
+| SDK archive, CI and acquisition identity | DIAG/sdk-v1726.json; maintained readiness owner checks the actual ZIP/CI join once |
+| Admission, scratch qualification and complete producer log | DIAG/user-delete-v1707/result.json, DIAG/scratch-v1726.txt and DIAG/stage-v1726.log |
+| Verified durable non-cache scratch archive | /workspace/vida-functional-retention-1o0ovB-8IYhiJ/archive.json; exact bytes/hash, original root, excluded cache, full comparison and before/after capacity |
 | Predecessor relocation and explicit cleanup | DIAG/user-delete-v1535/{relocation,result}.json and events.jsonl; predecessor image retired |
 | Renewed exact-path retirement and current report relocation | DIAG/user-delete-v1707/{qualification,relocation,current-map-relocation,result}.json and events.jsonl; original locators retired |
 
-Thebfad immutable image and stage are now retired under the renewed exact-path order.
-Their selected original report/receipts and outside scratch, SDK and archive remain;
-the predecessor's image/stage locators also remain retired with their outside subset.
+Thebfad immutable image and stage are retired under the renewed exact-path order.
+Their selected original report/receipts and outside scratch, SDK and archive remain.
+The9112866 image/stage is formed afterwards by the sole producer with fresh admission;
+no current image is modified or retired by this reconciliation.
 The archive excludes only its declared private regenerable cache, whose original
 remains retained. Full tar comparison and fsync are custody, not a cleanup gain
 or reattestation. Retired historical inputs retain their original explicit GAP.
