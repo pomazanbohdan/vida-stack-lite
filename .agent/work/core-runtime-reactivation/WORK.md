@@ -6,7 +6,10 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-session-handoff only**, using its existing registry.
+The active contour is **bun-session-handoff-v2 only**, continuing the same repair
+lane with the shared reference classifier explicitly included. The predecessor
+bun-session-handoff retains its original three-Source scope in the retired
+registry. Its receipts and frozen ceilings remain unchanged.
 TaskSource resource transition completes exact F/L/S/B in stage1926 below;
 no second contour producer overlaps it. The preceding bun-host-state coverage cycle has completed
 all testable gaps and reviewed every residual objective counter under the owner's
@@ -65,6 +68,50 @@ Previous2208 remains evidence for its original inputs only. The extraction
 changes production Source and coverage geometry, so its remaining counter map
 and objective dispositions require comparison and independent review before
 rebinding; no old count is promoted and no missing native guard is called covered.
+
+Stage2225 /workspace/contour-stage-lpESyo on published59ff8b04df0788b92ea216bbfa16faa0709402e4
+completes its native producer:91PASS/0FAIL/1215assertions in85.71s, elapsed91.310s,
+exit0/no signal/timeout/spawn error, complete capture and closed group with
+unchanged boot/image. Publication fails and remains unknown/partial: Root added
+the fourth Source to an existing recorded contour name, contrary to TESTING's
+immutable-selection rule. The strict merger correctly refuses prior accepted
+three-file observations against that changed scope. No metric import or numeric
+closure is claimed. The original publication-error.json, receipts and raw logs
+remain unchanged. Image102e010ea3d436129c733726de1733f2cb4797fc, manifest
+49d921b4c31846234b57c99cbb8b078eb9b1267cb17d84df2afad6285f50e082,
+run ac64c12d-4eeb-405c-bb17-2dd45b3f575a retain diagnostic
+F276/276 L860/863 S939/944 B752/760, not a changed-denominator coverage gain.
+Source fingerprint ba68fb63849ac81844d26365c228a810a696276839c88a4bff88038ad8138ba9
+and test fingerprint b4d0ea650b93ddb4a9eb81671b68adf9d2329536e421706a36af385e3b10059d
+bind map2226. Its8branch/5statement deficits remain.2226 verifies/fsyncs the
+12369920-byte non-cache scratch archive at
+/workspace/vida-functional-retention-lpESyo-Ha1IfY/archive.json.
+
+Independent2227 confirms the registry repair: retire the original three-file
+bun-session-handoff selection and register all four files as bun-session-handoff-v2,
+with the same complete tests. Do not weaken checkedSources, rename old reports,
+or carry old scope into current closure. A targeted projection regression checks
+historical round-trip, strict missing/extra successor selections, reopened queue,
+idempotence and conflicting runs. Existing frozen ceilings/correspondence remain
+bound to original roles, never reset by the new contour label. The2225 diagnostic
+cannot be relabeled or imported as a successor result; one changed-scope stage
+is necessary after the checked repair is published, not an unchanged suite retry.
+2230 independently accepts the final registry/test packet.2228 retains a
+pre-check wrong-working-directory launcher failure;2229/2232 scoped strict131
+and zero-warning lint pass.2231 retains the projection fixture's missing
+report/manifest-binding prerequisite; the corrected fixture changes no reader
+guard.2233 passes the complete affected projection file:160PASS/0FAIL/506assertions
+in2.63s. Both historical and successor fixtures carry their own exact bindings;
+the current selector stays open for incomplete proof. The merger/reader Source
+is unchanged. Root publishes these checked bytes before the successor stage.
+
+Bounded2221/2222/2223 independently inspect the remaining native prerequisites.
+2221 proves ordinary local admission single-project but leaves the trusted Host
+writer's wider binding contract unresolved.2222 establishes no natural reference
+cardinality transition reaching the resolver and keeps that GAP OPEN; it rechecks
+the three prior objective arguments under the equivalent classifier.2223 identifies
+a possible supported successor-lease race, with reachability still unqualified.
+No proposal, earlier denial or hypothetical race is credited as coverage or skip.
 
 2186 prepares the key18 identity-transfer case in the Source-only patch copy
 /workspace/vida-session-identity-patch-B4h6GL. Independent2188 rejects two initial

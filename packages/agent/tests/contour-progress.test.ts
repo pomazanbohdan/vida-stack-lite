@@ -1135,6 +1135,59 @@ test('v3 identity reuse is independent of new/retained/removed row ordering', ()
   expect(() => contourAttempts(overlap, receipt)).toThrow();
 });
 
+test('session scope evolution preserves historical reports and rejects incomplete successor selection', () => {
+  const registry = mutationPartitions({ includeRetired: true });
+  const previous = registry.find((row) => row.name === 'bun-session-handoff')!;
+  const current = mutationPartitions().find((row) => row.name === 'bun-session-handoff-v2')!;
+  expect(previous.environment).toBe('retired');
+  expect(previous.sources).toHaveLength(3);
+  expect(current.sources).toEqual(['src/orchestration/local-source-authorization-reference.ts', ...previous.sources!]);
+  expect(current.tests).toEqual(previous.tests);
+  const reportFor = (partition: typeof previous) => {
+    const base = coverage();
+    return {
+      ...base,
+      run_id: 'scope-' + partition.name,
+      manifest_sha256: 'c'.repeat(64),
+      sources: partition.sources!.map((file) => digest(file)),
+      module_inputs: partition.sources!.map((file) => digest(file)),
+      test_inputs: partition.tests!.map((file) => digest(file)),
+      test_selection: { contour: partition.name, tests: partition.tests! },
+      metrics: partition.sources!.map((file) => ({
+        ...base.metrics[0]!,
+        file,
+        functions: [{ ...base.metrics[0]!.functions[0]!, identity: file + '#fixture' }],
+      })),
+    };
+  };
+  const prior = reportFor(previous);
+  const historical = mergeContourProgress(empty, contourAttempts(prior, receipt, 'd'.repeat(64)));
+  expect(mergeContourProgress(historical, []).attempts).toEqual(historical.attempts);
+  expect(renderContourProgress(historical)).toContain('bun-session-handoff (retired)');
+  expect(renderContourProgress(historical)).toContain('| bun-session-handoff-v2 | unknown');
+  expect(
+    selectContourCampaign(historical, 'unclosed', receipt.commit, 'coverage-only').map((row) => row.name),
+  ).toContain(current.name);
+  expect(() =>
+    contourAttempts({ ...prior, test_selection: { ...prior.test_selection, contour: current.name } }, receipt),
+  ).toThrow('Contour Source selection differs');
+  const successor = reportFor(current);
+  expect(() =>
+    contourAttempts({ ...successor, test_selection: { ...successor.test_selection, contour: previous.name } }, receipt),
+  ).toThrow('Contour Source selection differs');
+  const complete = mergeContourProgress(historical, contourAttempts(successor, receipt, 'e'.repeat(64)));
+  expect(complete.attempts).toHaveLength(2);
+  expect(
+    selectContourCampaign(complete, 'unclosed', receipt.commit, 'coverage-only').map((row) => row.name),
+  ).not.toContain(current.name);
+  expect(mergeContourProgress(complete, contourAttempts(successor, receipt, 'e'.repeat(64)))).toEqual(complete);
+  expect(() =>
+    mergeContourProgress(complete, [
+      { ...complete.attempts.find((row) => row.contour === current.name)!, status: 'changed' },
+    ]),
+  ).toThrow('Conflicting contour run');
+});
+
 test('retired governance observations survive the split without closing the new active contour', () => {
   const prior = coverage();
   const old = mutationPartitions({ includeRetired: true }).find((row) => row.name === 'main-governance')!;

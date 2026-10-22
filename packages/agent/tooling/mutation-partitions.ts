@@ -131,7 +131,7 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
       report: 'mutation-bun-host-state.json',
     },
     {
-      name: 'bun-session-handoff',
+      name: 'bun-session-handoff-v2',
       environment: 'bun',
       sources: [
         'src/orchestration/local-source-authorization-reference.ts',
@@ -140,7 +140,7 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
         'src/orchestration/workflow-plan.ts',
       ],
       tests: ['tests/session-handoff.test.ts', 'tests/bun/persistent-session-handoff.test.ts'],
-      report: 'mutation-bun-session-handoff.json',
+      report: 'mutation-bun-session-handoff-v2.json',
     },
     {
       name: 'bun-runtime-facade',
@@ -588,6 +588,17 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
   ];
   if (options.includeRetired)
     partitions.push(
+      {
+        name: 'bun-session-handoff',
+        environment: 'retired',
+        sources: [
+          'src/orchestration/persistent-session-handoff.ts',
+          'src/orchestration/session-handoff.ts',
+          'src/orchestration/workflow-plan.ts',
+        ],
+        tests: ['tests/session-handoff.test.ts', 'tests/bun/persistent-session-handoff.test.ts'],
+        report: 'mutation-bun-session-handoff.json',
+      },
       {
         name: 'main-contracts',
         environment: 'retired',

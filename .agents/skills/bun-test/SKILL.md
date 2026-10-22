@@ -392,6 +392,10 @@ original order. Lifecycle `current()` also filters `source_revision`, so it is
 not interchangeable with a four-field approval classifier. Register a new
 production helper in the selected contour's Source set; unit coverage of that
 helper does not establish coverage of its callers' native refusal guards.
+When that addition changes a recorded contour's Source set, retire the original
+selection and register a successor name before measurement, as TESTING requires.
+Keep the full tests and original frozen ceilings; never relabel a retained report
+or relax the merger to accommodate a changed historical scope.
 
 Pair overlapping-owner refusal with an active disjoint-owner control through
 the fixture's existing public admission. Require nonempty ticket resources and

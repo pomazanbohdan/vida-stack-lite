@@ -12,7 +12,11 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The active contour is **bun-session-handoff**. TaskSource resource transition
+The active contour is **bun-session-handoff-v2**, the same sequential repair lane
+with its extracted reference classifier explicitly included. The original
+three-Source bun-session-handoff remains retired historical scope; its evidence
+and frozen ceilings are unchanged. No second contour producer is started.
+TaskSource resource transition
 has completed exact F/L/S/B in stage1926; frozen/mutation remain deferred.
 The preceding
 bun-host-state coverage cycle has completed its testable gaps and has current
