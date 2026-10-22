@@ -120,4 +120,3 @@ these Markdown items are not Runtime-admitted records. Full Step F gates remain 
 - [Acceptance criteria](../acceptance.md)
 - [Agent WorkItem/v1 validator](../../../agent/src/orchestration/workflow-session-reservation-contract.ts)
 - [Current runtime config contract](../../../../agent-runtime.config.v1.yaml)
-

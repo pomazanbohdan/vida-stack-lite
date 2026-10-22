@@ -105,3 +105,4 @@
 * **Creation**: [Implementation plan](implementation-plan.md) created (rev 1) and rewritten (rev 2) after the independent review of round 1 — verdict REJECTED, 6 blocker, 12 major, 4 minor.
 * **Creation**: [Research document](research/vida-powers-product-research.md) added to the bundle; the document itself was generated on 2026-10-17.
 * **Creation**: The bundle index [index.md](index.md) created, the bundle declared as Open Knowledge Format v0.2 through `okf_version`.
+* **2026-10-22 H0 source-quality repair (.84).** The historical publication assurance gate failed. Both staged and committed `git diff --check` runs exited 2. They reported extra blank EOF lines in `REQ-D3-D8-runtime-request.md`, `VP-5.md`, `VP-6.md`, and `VP-7.md`. We removed one terminal LF from each file and preserved all preceding bytes. The repaired patch and aggregate checks pass. Independent `.85` review remains pending. Source-quality closeout stays open.

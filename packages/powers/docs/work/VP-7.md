@@ -98,4 +98,3 @@ The required/optional policy remains a proposal, with no silent default.
 - [Acceptance criteria](../acceptance.md)
 - [D3 decision](../decisions/D3-instruction-catalog-and-registry.md) · [D8 decision](../decisions/D8-methodology-profile.md)
 - [Draft `REQ-D3-D8`](../requests/REQ-D3-D8-runtime-request.md)
-

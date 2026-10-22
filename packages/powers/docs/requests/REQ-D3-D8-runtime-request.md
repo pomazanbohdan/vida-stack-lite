@@ -88,4 +88,3 @@ The request implements the existing D3 boundary for a VP extended registry and t
 Please return the proposed policy answers, the Agent-owned implementation path/schema list, migration sequence, focused test plan, and evidence requirements. The Vida Powers owner retains the profile schema and source semantics; the Agent maintainer retains Runtime registry/config/reader ownership. Any change to D3/D8 behavior returns to the respective owner for approval.
 
 The current next-actions queue records G as a draft prepared, unsent and unaccepted. This document does not mark G complete or authorize delivery. The request remains unbound to final hashes until the relevant E4 profile/catalog inputs freeze; E5a is not a prerequisite.
-

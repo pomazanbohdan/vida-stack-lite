@@ -108,4 +108,3 @@ established; see the canonical [Step E status](../task-plan-step-e.md#e5-target-
 - [System specification](../system-specification.md)
 - [Acceptance criteria](../acceptance.md)
 - [D5 decision](../decisions/D5-decision-provider.md) · [D7 decision](../decisions/D7-consumer-initialization.md)
-
