@@ -10,6 +10,9 @@ import { checkManifest, pinnedEnvironment, readPin, requireTerminalCommand } fro
 import { resourceDirectory } from '../bin/standalone-resources.ts';
 import { ownedDirectoryIdentity, removeOwnedDirectoryOrThrow } from './owned-staging.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
+import { executeMutationCommand } from './mutation-evidence.ts';
+import { captureSelectedSdkTestInputsFromCapturedBytes } from './sdk-artifact-capture.ts';
+import { isRecord } from '../src/contracts/forward-controller-values.ts';
 
 const runtimeEntryBytes = "export * from './index.js';\nexport * from './trusted-host.js';\n";
 
@@ -447,5 +450,174 @@ async function buildPackage(root: string, identity: ReturnType<typeof sdkBuildRe
   }
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
-  await buildPackage(path.resolve(import.meta.dirname, '..'), sdkBuildReceiptIdentity(process.argv.slice(2)));
+/** Build test-only SDK outputs from the caller's one captured input set. */
+export async function buildSdkTestInputsFromCapturedInputs(
+  root: string,
+  selectedInputs: ReadonlyMap<string, Buffer>,
+  remainingMs: () => number,
+): Promise<Map<string, Buffer>> {
+  if (!path.isAbsolute(root) || path.resolve(root) !== root)
+    throw new Error('SDK formation root must be canonical and absolute.');
+  resourceDirectory(root);
+  if (Bun.version !== readPin(root)) throw new Error('SDK formation requires the package-selected Bun.');
+  checkManifest(root, Bun.version);
+  const ownedInputs = new Map([...selectedInputs].map(([file, bytes]) => [file, Buffer.from(bytes)]));
+  const requiredInputs = [...sdkFormationBaseInputs, 'tooling/build-package.ts'];
+  if (requiredInputs.some((file) => !ownedInputs.has(file)))
+    throw new Error('Captured SDK formation inputs are missing required package files.');
+  for (const file of ownedInputs.keys()) {
+    if (
+      file.includes('\\') ||
+      file.includes('\0') ||
+      path.posix.isAbsolute(file) ||
+      file.split('/').some((part) => part === '' || part === '.' || part === '..') ||
+      !(/^(?:src|schemas|bin|tooling)\//u.test(file) || sdkFormationBaseInputs.some((base) => base === file))
+    )
+      throw new Error('Captured SDK formation input path is invalid: ' + file);
+  }
+  const inputs = ownedInputs;
+  const temporaryParent = path.join(root, '.tmp');
+  resourceDirectory(temporaryParent, true);
+  const snapshotRoot = mkdtempSync(path.join(temporaryParent, 'sdk-formation-'));
+  const snapshotIdentity = ownedDirectoryIdentity(snapshotRoot);
+  let snapshotRemoved = false;
+  let producerClosureObserved = true;
+  const evidenceParent = path.join(root, 'coverage/sdk-test-inputs');
+  resourceDirectory(evidenceParent, true);
+  const evidenceRoot = mkdtempSync(path.join(evidenceParent, 'build-'));
+  try {
+    let copied = 0;
+    for (const [file, bytes] of inputs) {
+      if ((copied++ & 31) === 0 && remainingMs() <= 0) throw new Error('SDK test-input preparation budget is spent.');
+      const destination = path.join(snapshotRoot, ...file.split('/'));
+      mkdirSync(path.dirname(destination), { recursive: true });
+      writeFileSync(destination, Buffer.from(bytes), { flag: 'wx', mode: 0o400 });
+    }
+    symlinkSync(
+      path.join(root, 'node_modules'),
+      path.join(snapshotRoot, 'node_modules'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+    const childScript = path.join(snapshotRoot, 'tooling/build-package.ts');
+    const timeoutMs = Math.floor(remainingMs());
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1)
+      throw new Error('SDK test-input preparation budget is spent.');
+    const command = [
+      process.execPath,
+      '--no-env-file',
+      '--no-install',
+      '--config=' + path.join(snapshotRoot, 'bunfig.toml'),
+      childScript,
+      '--captured-test-inputs',
+    ];
+    producerClosureObserved = false;
+    const child = await executeMutationCommand(command, root, timeoutMs, {
+      ownedProcessGroup: true,
+      outputByteLimit: 2 * 1024 * 1024,
+      stdoutFile: path.join(evidenceRoot, 'stdout.log'),
+      stderrFile: path.join(evidenceRoot, 'stderr.log'),
+    });
+    producerClosureObserved =
+      child.processCustody === null
+        ? child.spawnError !== null
+        : child.processCustody.terminationObserved && child.processCustody.processGroupTerminationObserved === true;
+    writeFileSync(
+      path.join(evidenceRoot, 'execution.json'),
+      JSON.stringify(
+        {
+          schema: 'VidaSdkTestInputBuild/v1',
+          snapshot: snapshotRoot,
+          command,
+          cwd: root,
+          timeout_ms: timeoutMs,
+          result: child,
+        },
+        null,
+        2,
+      ) + '\n',
+      { flag: 'wx', mode: 0o600 },
+    );
+    const capture = child.output_capture;
+    const terminal =
+      child.exitCode === 0 &&
+      child.signal === null &&
+      child.spawnError === null &&
+      !child.timedOut &&
+      child.processCustody?.terminationObserved === true &&
+      child.processCustody.processGroupTerminationObserved === true &&
+      capture?.complete === true;
+    if (!terminal) {
+      throw new Error(
+        'SDK test-input build did not reach a confirmed successful process-group exit: ' +
+          JSON.stringify({
+            exitCode: child.exitCode,
+            signal: child.signal,
+            spawnError: child.spawnError,
+            timedOut: child.timedOut,
+            processCustody: child.processCustody,
+            output_capture: capture?.complete ?? false,
+          }),
+      );
+    }
+    const resultBytes = await readFile(path.join(snapshotRoot, 'sdk-test-input-build-result.json'));
+    writeFileSync(path.join(evidenceRoot, 'formation-result.json'), resultBytes, { flag: 'wx', mode: 0o600 });
+    const resultValue: unknown = JSON.parse(resultBytes.toString('utf8'));
+    if (!isRecord(resultValue) || resultValue.schema !== 'CandidatePackageBuild/v1')
+      throw new Error('SDK test-input child result is invalid.');
+    for (const [file, bytes] of inputs) {
+      if (!bytes.equals(await readFile(path.join(snapshotRoot, ...file.split('/')))))
+        throw new Error('SDK captured formation input changed: ' + file);
+    }
+    const outputPaths = (await filesUnder(path.join(snapshotRoot, 'dist'))).map((file) =>
+      path.relative(snapshotRoot, file).replaceAll('\\', '/'),
+    );
+    const outputBytes = await readQualityInputs(snapshotRoot, outputPaths);
+    const identities = (entries: Map<string, Buffer>) =>
+      [...entries]
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([file, bytes]) => ({ path: file, bytes: bytes.length, sha256: sha256(bytes) }));
+    const receipt = {
+      ...resultValue,
+      schema: 'CandidateSdkTestInputs/v1',
+      purpose: 'development-tests',
+      bun_version: Bun.version,
+      inputs: identities(new Map([...inputs].map(([file, bytes]) => [file, Buffer.from(bytes)]))),
+      outputs: identities(outputBytes),
+      virtual_runtime_entry: { path: 'src/runtime.ts', sha256: sha256(runtimeEntryBytes) },
+      dependency_custody:
+        'External node_modules is linked; selected manifest and frozen lock are captured, dependency bytes are outside snapshot custody.',
+    };
+    const candidate = new Map(outputBytes);
+    candidate.set('dist/sdk-formation.json', Buffer.from(JSON.stringify(receipt) + '\n'));
+    captureSelectedSdkTestInputsFromCapturedBytes(root, inputs, candidate);
+    completeOwnedCleanup([() => removeOwnedDirectoryOrThrow(snapshotRoot, snapshotIdentity)]);
+    snapshotRemoved = true;
+    return candidate;
+  } catch (error) {
+    console.error(
+      'Retained failed SDK test-input formation: ' + (snapshotRemoved ? path.join(root, 'dist') : snapshotRoot),
+    );
+    if (!producerClosureObserved)
+      throw Object.assign(new Error('SDK test-input producer closure is unobserved.', { cause: error }), {
+        producerClosureObserved: false,
+      });
+    throw error;
+  }
+}
+
+async function formCapturedSdkTestInputsChild(): Promise<void> {
+  const snapshotRoot = path.resolve(import.meta.dirname, '..');
+  if (path.basename(path.dirname(snapshotRoot)) !== '.tmp' || !path.basename(snapshotRoot).startsWith('sdk-formation-'))
+    throw new Error('Captured SDK test-input snapshot path is invalid.');
+  const result = await formCapturedPackage(snapshotRoot);
+  writeFileSync(path.join(snapshotRoot, 'sdk-test-input-build-result.json'), JSON.stringify(result) + '\n', {
+    flag: 'wx',
+    mode: 0o600,
+  });
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const args = process.argv.slice(2);
+  if (args.length === 1 && args[0] === '--captured-test-inputs') await formCapturedSdkTestInputsChild();
+  else await buildPackage(path.resolve(import.meta.dirname, '..'), sdkBuildReceiptIdentity(args));
+}

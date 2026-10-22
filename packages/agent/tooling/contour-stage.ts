@@ -55,12 +55,6 @@ async function stageExecutionImage(
     manifest !== undefined && digest !== undefined
       ? await readQualityExecutionImageDescriptor(manifest, digest)
       : await (async () => {
-          const { ensureSdkCoverageInputsForTests } = await import('../../../tooling/agent/sdk-coverage-readiness.ts');
-          await ensureSdkCoverageInputsForTests({
-            root: packageRoot,
-            tests: partition.tests ?? [],
-            archivePath: process.env.VIDA_SDK_TEST_INPUT_ARCHIVE,
-          });
           return prepareQualityExecutionImage({
             sourcePackageRoot: packageRoot,
             storeRoot: values['image-store'] ?? path.join(path.dirname(repository), '.vida-quality-inputs'),
@@ -75,6 +69,11 @@ async function stageExecutionImage(
               'tooling/contour-stage.ts',
               'tooling/quality-execution-image.ts',
             ],
+            prepareSdkInputs: async ({ root, tests, selectedInputs }) => {
+              const { ensureSdkCoverageInputsForTests } =
+                await import('../../../tooling/agent/sdk-coverage-readiness.ts');
+              await ensureSdkCoverageInputsForTests({ root, tests, selectedInputs });
+            },
           });
         })();
   if (image.source_repository !== repository)

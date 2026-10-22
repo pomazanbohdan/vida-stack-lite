@@ -273,7 +273,7 @@ direct runtime-timing-boundary test plus the single runtime-kernel-composition
 case shared with the kernel contour. Kernel keeps its existing core tests, including
 configured-workflow and smoke. The emitted-SDK regression belongs to
 sdk-package-compatibility and remains in the full selection with SDK freshness.
-Never compare Stryker-instrumented Source with an unmutated CI formation receipt
+Never compare Stryker-instrumented Source with an unmutated formation receipt
 or rebuild dist per mutant. The full
 selection retains the timing public-output subprocess check separately. Do not
 substitute its child-health result for attributable target assertions.
@@ -506,31 +506,29 @@ build/install do not run suites. External dependency bytes remain outside
 snapshot custody. This join proves selected input freshness and output integrity,
 not authenticated formation origin or Native Runtime acceptance.
 
-The repository coverage adapter obtains SDK test inputs from the successful
-selected-commit `agent-sdk-coverage.yml` run. That CI job reuses the SDK builder
-with `--test-inputs` and emits a distinct `CandidateSdkTestInputs/v1` receipt,
+The repository coverage adapter prepares SDK test inputs locally through
+`tooling/agent/sdk-coverage-readiness.ts`. It reuses the existing SDK builder
+and emits a distinct `CandidateSdkTestInputs/v1` receipt,
 with exact `purpose: development-tests`. SDK regression accepts that exact
 envelope or the existing product receipt; mixed identities deny. Test inputs
 cannot enter SDK delivery verification or packaging. Their version binds Source
 compatibility only; the lifecycle's product-release version policy remains intact.
-The adapter validates the archive, emitted bytes and CI identity before replacing
-dist, retaining previous outputs and failed staging. Unavailable or failed CI
-remains an actionable preflight GAP; generated staging and prior dist custody
-live under `coverage/sdk-test-inputs`, outside maintained handwritten Source.
-There is no local compilation fallback.
-Artifact lookup admits a push run on `main` or an explicit workflow dispatch on
-its selected branch only when repository, workflow path, full Source commit,
-successful job, artifact name and API digest all agree. A branch name alone is
-never a freshness proof.
-It performs no second Source inventory/hash pass: coverage derives freshness
-from the one existing capture below. Cache reuse verifies actual output bytes.
-If Cloud denies the CLI's artifact-storage redirect, the selected GitHub connector
-may download that same observed artifact and materialize its returned file through
-the uploaded-file downloader. Pass its absolute path as
-`VIDA_SDK_TEST_INPUT_ARCHIVE` to the maintained coverage command. The repository
-adapter still validates current CI/run/attempt/artifact metadata, exact API ZIP
-digest, bounded archive and the final Source join; a local file grants no proof.
-This is a transport bridge, never local formation or an SDK freshness bypass.
+Reuse requires the complete current captured formation input inventory, pin,
+manifest and every receipt-listed output to match actual bytes. A stale or
+missing candidate triggers one bounded local formation from those same captured
+inputs before the test producer or immutable image is formed. Formation runs no
+suite and uses the existing installed dependencies, whose bytes remain outside
+snapshot custody. No GitHub job, network artifact, ZIP or archive override is a
+prerequisite. Source publication remains the numeric image owner's requirement;
+a Git commit change alone does not invalidate unchanged SDK formation inputs.
+The owner serializes canonical dist publication, validates the complete candidate
+and retains the previous dist and failed staging under `coverage/sdk-test-inputs`.
+Unknown producer custody retains its lock; stale outputs never become a fallback
+after failed formation. Already formed images retain their original SDK bytes.
+Direct preparation uses `bun tooling/agent/sdk-coverage-readiness.ts` from the
+repository root. Full and focused coverage call that same owner with their
+existing captured formation subset; they do not add another discovery/AST pass.
+The native release workflow and product-delivery qualification remain separate.
 
 Before a current full selection containing the SDK package compatibility test launches,
 coverage captures the SDK builder inputs, receipt and four emitted JS members
@@ -540,13 +538,14 @@ pass, never from the receipt's claimed input list. Validate that subset against
 the receipt before staging or producer launch. A copied quality object or a
 mutated exposed buffer cannot inherit the owner's private SDK projection.
 Captured-byte validation hashes actual bytes, never caller-supplied digests.
-Missing/stale artifacts block the run; form them separately without suites.
+Missing/stale artifacts trigger the internal readiness owner during that capture;
+failed formation blocks the run without a stale fallback or a test suite in build.
 
 `runBunCoverage` remains the single F/L/S/B collector for full and focused
 diagnostics. The full adapter prepares SDK inputs through the same readiness
-owner before typecheck and capture. A contour campaign prepares the union of its
-selected tests once before forming any immutable image; a single-stage command
-does the same before forming a new image. A focused non-SDK selection skips SDK
+owner during its input capture after the early typecheck. Contour campaigns and
+single-stage commands use that same captured-input preparation before forming
+any immutable image. A focused non-SDK selection skips SDK
 preparation. Reusing a verified immutable image keeps its original Source and
 SDK capture binding; its result is attributed to that image commit. The coverage
 child still checks captured artifact bytes before forming its own test snapshot.
@@ -710,7 +709,10 @@ qualifier's owned scratch before buffered child output returns; they are bounded
 diagnostics, not completion or Runtime evidence. Preserve operation, diagnostic
 and ledger-close failures through the existing owned-cleanup completion helper.
 
-Use current generated SDK outputs only when their inputs match. Missing or stale output is a GAP. Do not start a local build to make a test command pass.
+Use generated SDK outputs only when their inputs match. The internal readiness
+owner forms missing or stale development-test inputs before producer launch;
+test bodies never build their own SDK. Failed preparation remains a GAP and
+does not authorize use of stale output or product delivery.
 
 Use supported temporary directories or explicit owned fixture roots. Keep Source-workspace scratch in ignored `.tmp`, outside the package payload. Preserve fixtures when a child outcome is UNKNOWN.
 
@@ -1747,12 +1749,13 @@ A focused SDK package compatibility selection retains the full maintained SDK So
 inventory privately in that same capture. Omitted SDK Source is bound as tool
 input, with no added coverage claim. Formation projection and freshness use
 those complete captured bytes. The existing prepareSdkInputs callback is allowed
-only when this SDK-dependent test is selected and runs before typecheck/capture.
+only when this SDK-dependent test is selected and runs inside the existing
+capture after the early typecheck, before producer or immutable image formation.
 Externally supplied focused input-review callbacks and historical preparation
 remain forbidden. Only the fixed resource review above is synthesized by the
 runner for its exact pinned contour selection.
 Full-current Source/tool classification and historical SDK behavior stay intact.
-Use the maintained SDK readiness owner; do not form SDK outputs locally.
+Use the maintained internal SDK readiness owner; tests do not form their own outputs.
 
 The coverage lock retains an open descriptor and an immutable, exact in-memory
 owner handle until terminal cleanup. This prevents inode reuse from authorizing
@@ -3136,8 +3139,8 @@ The launcher recognizes only these exact supported entries after resolving
 relative and absolute path aliases; path spelling cannot bypass the coverage
 wall cap. Do not broaden this to arbitrary suffix matches.
 The runner reuses the inherited monotonic allowance, reserves30000ms for
-terminal/report work, prepares selected CI SDK inputs and runs one current
-typecheck under its acquired lock before one capture/preparation. SDK retrieval,
+terminal/report work and runs one current typecheck under its acquired lock before
+one capture, which prepares selected internal SDK inputs. SDK formation,
 producer and CRAP launches spend the same remainder;
 CRAP also retains its300000ms upper bound. Check the remainder between CPU
 phases; the pinned parent supplies the hard bound while a synchronous phase

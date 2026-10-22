@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "agent:build": "bun --cwd packages/agent run build",
+    "agent:prepare-sdk-tests": "bun tooling/agent/sdk-coverage-readiness.ts",
     "agent:test": "bun --cwd packages/agent run test",
     "agent:pack": "bun --cwd packages/agent run pack:sdk",
     "release:local": "bun tooling/agent/release-local.ts"

@@ -1,6 +1,5 @@
 /** Type-only ownership for release adapters that load these dependencies from vida-agent. */
 export type AgentTarModule = typeof import('tar');
-export type AgentJSZipModule = typeof import('jszip');
 export type AgentFsSafeArchiveModule = typeof import('@openclaw/fs-safe/archive');
 export type AgentReadArchiveEntry = AgentFsSafeArchiveModule['readArchiveEntry'];
 export type AgentLoadZipArchiveWithPreflight = AgentFsSafeArchiveModule['loadZipArchiveWithPreflight'];

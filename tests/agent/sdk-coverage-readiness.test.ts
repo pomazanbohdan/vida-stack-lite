@@ -1,65 +1,112 @@
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { afterEach, spyOn, test } from 'bun:test';
 import * as fs from 'node:fs';
+import * as ownedStaging from '../../packages/agent/tooling/owned-staging.ts';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
-import type { AgentJSZipModule } from '../../packages/agent/tooling/release-dependency-types.ts';
 import { sha256 } from '../../packages/agent/tooling/bun-coverage-evidence.ts';
 import { expectedJavascriptFiles } from '../../packages/agent/tooling/maintained-source-inventory.ts';
 import { classifyMaintainedSourcePath } from '../../packages/agent/tooling/ts-only-source-gate.ts';
-import {
-  assertSdkArtifactDigest,
-  ensureSdkCoverageInputsForTests,
-  publishSdkTestInputs,
-  validateSdkTestArchive,
-} from '../../tooling/agent/sdk-coverage-readiness.ts';
+import { publishSdkTestInputs } from '../../tooling/agent/sdk-coverage-readiness.ts';
+import { captureSelectedSdkTestInputsFromCapturedBytes } from '../../packages/agent/tooling/sdk-artifact-capture.ts';
+import { sdkArtifactFixture } from '../../packages/agent/tests/helpers/sdk-artifact-fixture.ts';
 
-const JSZip = createRequire(new URL('../../packages/agent/package.json', import.meta.url))('jszip') as AgentJSZipModule;
 const identity = { version: '1.2.3', bunVersion: Bun.version };
 const payloads = new Map(
   expectedJavascriptFiles.map((file, index) => [
-    `src/${file}`,
-    Buffer.from(`export const archiveMember${index} = ${index};\n`),
+    'src/' + file,
+    Buffer.from('export const archiveMember' + index + ' = ' + index + ';\n'),
   ]),
 );
 const roots: string[] = [];
 
-test('SDK readiness preserves the native cause when a bounded command cannot start', async () => {
-  const originalPath = process.env.PATH;
-  const missingExecutables = path.join(os.tmpdir(), 'sdk-no-executables-' + randomUUID());
-  assert.equal(existsSync(missingExecutables), false);
-  process.env.PATH = missingExecutables;
-  try {
-    await assert.rejects(
-      ensureSdkCoverageInputsForTests({ root: path.resolve(import.meta.dir, '../../packages/agent') }),
-      (error: unknown) => {
-        assert.ok(error instanceof Error);
-        assert.match(error.message, /git did not return a bounded successful result/u);
-        assert.ok(error.cause instanceof Error);
-        assert.equal(Reflect.get(error.cause, 'code'), 'ENOENT');
-        assert.equal(Reflect.get(error.cause, 'path'), 'git');
-        return true;
-      },
-    );
-  } finally {
-    if (originalPath === undefined) delete process.env.PATH;
-    else process.env.PATH = originalPath;
+function candidateFixture() {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'sdk-candidate-'));
+  roots.push(root);
+  const fixture = sdkArtifactFixture(root, { schema: 'CandidateSdkTestInputs/v1', purpose: 'development-tests' });
+  const files = fixture.artifacts();
+  const receiptValue = fixture.receipt();
+  for (const file of ['dist/src/index.d.ts', 'dist/schemas/local.schema.json']) {
+    const bytes = Buffer.from('declaration or schema fixture\n');
+    files.set(file, bytes);
+    receiptValue.outputs.push({ path: file, bytes: bytes.length, sha256: sha256(bytes) });
   }
+  receiptValue.inputs.sort((left, right) => left.path.localeCompare(right.path));
+  receiptValue.outputs.sort((left, right) => left.path.localeCompare(right.path));
+  const writeReceipt = () => files.set('dist/sdk-formation.json', Buffer.from(JSON.stringify(receiptValue)));
+  writeReceipt();
+  return { root, files, inputs: fixture.selectedInputs, receiptValue, writeReceipt };
+}
+
+test('local SDK candidate joins all captured inputs and every output, returning owned bytes', () => {
+  const fixture = candidateFixture();
+  const captured = captureSelectedSdkTestInputsFromCapturedBytes(fixture.root, fixture.inputs, fixture.files);
+  assert.deepEqual([...captured.keys()].sort(), [...fixture.files.keys()].sort());
+  const declarations = captured.get('dist/src/index.d.ts');
+  assert.ok(declarations);
+  declarations.fill(0);
+  assert.notDeepEqual(declarations, fixture.files.get('dist/src/index.d.ts'));
 });
 
-test('the SDK transport bridge accepts only the exact API-bound ZIP bytes', () => {
-  const bytes = Buffer.from('transport fixture');
-  const expected = `sha256:${sha256(bytes)}`;
-  assert.doesNotThrow(() => assertSdkArtifactDigest(bytes, expected));
-  assert.throws(() => assertSdkArtifactDigest(Buffer.from('changed'), expected), /API artifact digest/u);
-  assert.throws(() => assertSdkArtifactDigest(Buffer.alloc(0), expected), /API artifact digest/u);
-  assert.throws(() => assertSdkArtifactDigest(bytes, sha256(bytes)), /API artifact digest/u);
+test('a fresh product SDK is also reusable for tests without relabeling its receipt', () => {
+  const fixture = candidateFixture();
+  fixture.receiptValue.schema = 'CandidatePackageBuild/v1';
+  delete fixture.receiptValue.purpose;
+  fixture.writeReceipt();
+  const captured = captureSelectedSdkTestInputsFromCapturedBytes(fixture.root, fixture.inputs, fixture.files);
+  assert.deepEqual(captured.get('dist/sdk-formation.json'), fixture.files.get('dist/sdk-formation.json'));
+  assert.deepEqual([...captured.keys()].sort(), [...fixture.files.keys()].sort());
 });
 
-function capturedWarnings(body: () => void): string[] {
+test.each([
+  'input',
+  'output',
+  'declaration',
+  'schema',
+  'missing',
+  'extra',
+  'unlisted-javascript',
+  'missing-javascript',
+  'version',
+  'pin',
+  'purpose',
+  'product',
+  'input-order',
+] as const)('local SDK candidate refuses %s drift without modifying its input set', (mode) => {
+  const fixture = candidateFixture();
+  const receiptValue = fixture.receiptValue;
+  if (mode === 'input') fixture.inputs.set('src/index.ts', Buffer.from('changed captured Source\n'));
+  if (mode === 'output') fixture.files.set('dist/src/index.js', Buffer.from('changed JavaScript\n'));
+  if (mode === 'declaration') fixture.files.set('dist/src/index.d.ts', Buffer.from('changed declaration\n'));
+  if (mode === 'schema') fixture.files.set('dist/schemas/local.schema.json', Buffer.from('changed schema\n'));
+  if (mode === 'missing') fixture.files.delete('dist/src/index.d.ts');
+  if (mode === 'extra') fixture.files.set('dist/extra.txt', Buffer.from('undeclared output\n'));
+  if (mode === 'unlisted-javascript') {
+    const bytes = Buffer.from('export {};\n');
+    fixture.files.set('dist/src/extra.js', bytes);
+    receiptValue.outputs.push({ path: 'dist/src/extra.js', bytes: bytes.length, sha256: sha256(bytes) });
+    receiptValue.outputs.sort((left, right) => left.path.localeCompare(right.path));
+  }
+  if (mode === 'missing-javascript') {
+    fixture.files.delete('dist/src/index.js');
+    receiptValue.outputs = receiptValue.outputs.filter((entry) => entry.path !== 'dist/src/index.js');
+  }
+  if (mode === 'version') receiptValue.version = '99.0.0';
+  if (mode === 'pin') fixture.inputs.set('.bun-version', Buffer.from('0.0.0\n'));
+  if (mode === 'purpose') receiptValue.purpose = 'product';
+  if (mode === 'product') receiptValue.schema = 'CandidatePackageBuild/v1';
+  if (mode === 'input-order') receiptValue.inputs.reverse();
+  fixture.writeReceipt();
+  const before = [...fixture.files].map(([file, bytes]) => [file, Buffer.from(bytes)] as const);
+  assert.throws(() => captureSelectedSdkTestInputsFromCapturedBytes(fixture.root, fixture.inputs, fixture.files));
+  assert.deepEqual([...fixture.files], before);
+});
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
+async function capturedWarnings(body: () => Promise<void>): Promise<string[]> {
   const original: unknown = Reflect.get(process, 'emitWarning');
   assert.equal(typeof original, 'function');
   const warnings: string[] = [];
@@ -67,7 +114,7 @@ function capturedWarnings(body: () => void): string[] {
     warnings.push(String(warning));
   };
   try {
-    body();
+    await body();
   } finally {
     assert.equal(Reflect.set(process, 'emitWarning', original), true);
   }
@@ -117,140 +164,16 @@ function publicationFiles(): { files: Map<string, Buffer>; sdkReceiptBytes: Buff
   };
 }
 
-function downloadReceipt(sdkReceiptBytes: Buffer) {
-  const sourceCommit = 'a'.repeat(40);
-  return {
-    schema: 'SdkCoverageDownload/v1' as const,
-    source_commit: sourceCommit,
-    run_id: 123,
-    run_attempt: 2,
-    artifact_id: 456,
-    artifact_digest: 'sha256:' + 'b'.repeat(64),
-    artifact_name: `vida-sdk-test-inputs-${sourceCommit}-123-2`,
-    sdk_receipt_sha256: sha256(sdkReceiptBytes),
-    outputs: receipt().outputs,
-  };
-}
-
-async function archive(
-  options: {
-    readonly receipt?: unknown;
-    readonly omit?: string;
-    readonly extra?: ReadonlyMap<string, Buffer>;
-    readonly symlink?: string;
-    readonly overrides?: ReadonlyMap<string, Buffer>;
-  } = {},
-): Promise<Buffer> {
-  const zip = new JSZip();
-  for (const [pathname, original] of payloads) {
-    if (pathname === options.omit) continue;
-    const bytes = options.overrides?.get(pathname) ?? original;
-    zip.file(pathname, bytes, options.symlink === pathname ? { unixPermissions: 0o120777 } : {});
-  }
-  for (const [pathname, bytes] of options.extra ?? []) zip.file(pathname, bytes);
-  zip.file('sdk-formation.json', JSON.stringify(options.receipt ?? receipt()));
-  return zip.generateAsync({ type: 'nodebuffer', compression: 'STORE', platform: 'UNIX' });
-}
-
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
-
-test('accepts a complete development-test SDK archive and returns copied package paths', async () => {
-  const result = await validateSdkTestArchive(await archive(), identity);
-  assert.deepEqual(
-    [...result.keys()].sort(),
-    ['dist/sdk-formation.json', ...expectedJavascriptFiles.map((file) => `dist/src/${file}`)].sort(),
-  );
-  assert.deepEqual(result.get('dist/sdk-formation.json'), Buffer.from(JSON.stringify(receipt())));
-  for (const [pathname, bytes] of payloads)
-    assert.deepEqual(result.get(`dist/${pathname}`), bytes, `preserves emitted bytes for ${pathname}`);
-});
-
-test('rejects a product build receipt and an archive with the wrong test purpose', async () => {
-  const productReceipt = { ...receipt(), schema: 'CandidatePackageBuild/v1' };
-  const wrongPurpose = { ...receipt(), purpose: 'production' };
-  await assert.rejects(validateSdkTestArchive(await archive({ receipt: productReceipt }), identity));
-  await assert.rejects(validateSdkTestArchive(await archive({ receipt: wrongPurpose }), identity));
-});
-
-test('rejects receipt and requested identities that do not match the same package and Bun', async () => {
-  const wrongVersion = { ...receipt(), version: '1.2.4' };
-  const wrongBun = { ...receipt(), bun_version: '0.0.0' };
-  await assert.rejects(validateSdkTestArchive(await archive({ receipt: wrongVersion }), identity));
-  await assert.rejects(validateSdkTestArchive(await archive({ receipt: wrongBun }), identity));
-  await assert.rejects(validateSdkTestArchive(await archive(), { version: '1.2.4', bunVersion: Bun.version }));
-  await assert.rejects(validateSdkTestArchive(await archive(), { version: identity.version, bunVersion: '0.0.0' }));
-});
-
-test('rejects missing output, changed output bytes, and an incorrect output digest', async () => {
-  const first = payloads.keys().next().value;
-  if (!first) throw new Error('SDK archive fixture has no output member.');
-  const changed = new Map([[first, Buffer.from('different emitted bytes\n')]]);
-  await assert.rejects(validateSdkTestArchive(await archive({ omit: first }), identity));
-  await assert.rejects(validateSdkTestArchive(await archive({ overrides: changed }), identity));
-  const badDigest = receipt();
-  badDigest.outputs[0] = { ...badDigest.outputs[0]!, sha256: 'f'.repeat(64) };
-  await assert.rejects(validateSdkTestArchive(await archive({ receipt: badDigest }), identity));
-});
-
-test('rejects unsafe paths and Unix symbolic-link members', async () => {
-  await assert.rejects(
-    validateSdkTestArchive(await archive({ extra: new Map([['../escape.js', Buffer.from('x')]]) }), identity),
-  );
-  const first = payloads.keys().next().value;
-  if (!first) throw new Error('SDK archive fixture has no output member.');
-  await assert.rejects(validateSdkTestArchive(await archive({ symlink: first }), identity));
-});
-
-test('rejects unexpected archive members', async () => {
-  await assert.rejects(
-    validateSdkTestArchive(
-      await archive({ extra: new Map([['src/unlisted.js', Buffer.from('export {};')]]) }),
-      identity,
-    ),
-  );
-});
-
-test('rejects physically duplicated ZIP filenames', async () => {
-  const originalName = Buffer.from('src/other.js');
-  const duplicateName = Buffer.from('src/index.js');
-  assert.equal(originalName.length, duplicateName.length);
-  const zip = await archive({
-    extra: new Map([[originalName.toString(), Buffer.from('duplicate member')]]),
-  });
-  let renamedHeaders = 0;
-  for (
-    let offset = zip.indexOf(originalName);
-    offset >= 0;
-    offset = zip.indexOf(originalName, offset + originalName.length)
-  ) {
-    duplicateName.copy(zip, offset);
-    renamedHeaders++;
-  }
-  assert.equal(renamedHeaders, 2, 'renames both the local and central directory filename');
-  await assert.rejects(validateSdkTestArchive(zip, identity));
-});
-
-test('rejects a receipt above the bounded archive receipt limit', async () => {
-  const oversizedReceipt = { ...receipt(), dependency_custody: 'x'.repeat(8 * 1024 * 1024) };
-  await assert.rejects(validateSdkTestArchive(await archive({ receipt: oversizedReceipt }), identity));
-});
-
-test('publishes validated files and receipt while retaining the previous dist and removing its stage', () => {
+test('publishes validated files and receipt while retaining the previous dist and removing its stage', async () => {
   const root = publicationRoot();
   const priorBytes = Buffer.from('prior SDK output\n');
   const { files, sdkReceiptBytes } = publicationFiles();
-  const receiptValue = downloadReceipt(sdkReceiptBytes);
-  const warnings = capturedWarnings(() => {
-    publishSdkTestInputs(root, files, receiptValue, () => 10_000);
+  const warnings = await capturedWarnings(async () => {
+    await publishSdkTestInputs(root, files, () => 10_000);
   });
   assert.deepEqual(warnings, []);
   assert.deepEqual(readFileSync(path.join(root, 'dist/sdk-formation.json')), sdkReceiptBytes);
-  assert.deepEqual(
-    JSON.parse(readFileSync(path.join(root, 'dist/sdk-test-input-download.v1.json'), 'utf8')),
-    receiptValue,
-  );
+  assert.equal(existsSync(path.join(root, 'dist/sdk-test-input-download.v1.json')), false);
   for (const [pathname, bytes] of payloads) assert.deepEqual(readFileSync(path.join(root, 'dist', pathname)), bytes);
   const temporaryRoot = path.join(root, 'coverage/sdk-test-inputs');
   const entries = readdirSync(temporaryRoot);
@@ -268,9 +191,37 @@ test('publishes validated files and receipt while retaining the previous dist an
   assert.deepEqual(stages, []);
 });
 
+test('publication refuses readiness when owned stage cleanup returns an unresolved status', async () => {
+  const root = publicationRoot();
+  const { files, sdkReceiptBytes } = publicationFiles();
+  const cleanup = spyOn(ownedStaging, 'removeOwnedDirectoryOrThrow').mockImplementation(() => 'identity-mismatch');
+  try {
+    const warnings = await capturedWarnings(async () => {
+      await assert.rejects(
+        () => publishSdkTestInputs(root, files, () => 10_000),
+        (error: unknown) => {
+          assert.ok(error instanceof AggregateError);
+          assert.equal(error.errors.length, 1);
+          assert.match(String(error.errors[0]), /identity-mismatch/u);
+          return true;
+        },
+      );
+    });
+    assert.equal(cleanup.mock.calls.length, 1);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0]!, /Retained SDK test-input stage after publication/u);
+    assert.deepEqual(readFileSync(path.join(root, 'dist/sdk-formation.json')), sdkReceiptBytes);
+    const retained = readdirSync(path.join(root, 'coverage/sdk-test-inputs'));
+    assert.equal(retained.filter((file) => file.startsWith('sdk-test-inputs-prior-dist-')).length, 1);
+    assert.equal(retained.length, 2);
+  } finally {
+    cleanup.mockRestore();
+  }
+});
+
 test.each(['restored', 'rollback-error', 'undefined-primary', 'undefined-rollback', 'foreign-destination'] as const)(
   'failed SDK publication preserves exact causes and retained paths: %s',
-  (mode) => {
+  async (mode) => {
     const root = publicationRoot();
     const dist = path.join(root, 'dist');
     const temporaryRoot = path.join(root, 'coverage/sdk-test-inputs');
@@ -298,9 +249,9 @@ test.each(['restored', 'rollback-error', 'undefined-primary', 'undefined-rollbac
     });
     let warnings: string[];
     try {
-      warnings = capturedWarnings(() => {
+      warnings = await capturedWarnings(async () => {
         try {
-          publishSdkTestInputs(root, files, downloadReceipt(sdkReceiptBytes), () => 10_000);
+          await publishSdkTestInputs(root, files, () => 10_000);
         } catch (error) {
           caught = { error };
         }
@@ -332,15 +283,14 @@ test.each(['restored', 'rollback-error', 'undefined-primary', 'undefined-rollbac
   },
 );
 
-test('a spent pre-publication budget preserves the prior dist and retains its failed stage', () => {
+test('a spent pre-publication budget preserves the prior dist and retains its failed stage', async () => {
   const root = publicationRoot();
   const priorBytes = Buffer.from('prior SDK output\n');
-  const { files, sdkReceiptBytes } = publicationFiles();
+  const { files } = publicationFiles();
   let budgetChecks = 0;
-  const warnings = capturedWarnings(() => {
-    assert.throws(
-      () =>
-        publishSdkTestInputs(root, files, downloadReceipt(sdkReceiptBytes), () => (++budgetChecks === 1 ? 10_000 : 0)),
+  const warnings = await capturedWarnings(async () => {
+    await assert.rejects(
+      () => publishSdkTestInputs(root, files, () => (++budgetChecks === 1 ? 10_000 : 0)),
       /budget is spent/u,
     );
   });
@@ -360,15 +310,11 @@ test('a spent pre-publication budget preserves the prior dist and retains its fa
   assert.match(warnings[0] ?? '', /Retained failed SDK test-input stage/u);
 });
 
-test('rejects an unsafe publication path without writing outside the caller root', () => {
+test('rejects an unsafe publication path without writing outside the caller root', async () => {
   const root = publicationRoot();
   const unsafeFiles = new Map([['dist/../../../escape.js', Buffer.from('escaped')]]);
-  const receiptBytes = Buffer.from(JSON.stringify(receipt()));
-  const warnings = capturedWarnings(() => {
-    assert.throws(
-      () => publishSdkTestInputs(root, unsafeFiles, downloadReceipt(receiptBytes), () => 10_000),
-      /staging path is unsafe/u,
-    );
+  const warnings = await capturedWarnings(async () => {
+    await assert.rejects(() => publishSdkTestInputs(root, unsafeFiles, () => 10_000), /staging path is unsafe/u);
   });
   assert.match(warnings[0] ?? '', /Retained failed SDK test-input stage/u);
   assert.equal(existsSync(path.join(root, 'escape.js')), false);

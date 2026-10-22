@@ -99,7 +99,12 @@ export type RunBunCoverageOptions = {
   args?: string[];
   focusedDiagnostic?: FocusedDiagnosticSelection;
   reviewCurrentInputs?: CurrentCoverageReviewCallback;
-  prepareSdkInputs?: (input: { root: string; tests?: readonly string[]; remainingMs: () => number }) => Promise<void>;
+  prepareSdkInputs?: (input: {
+    root: string;
+    tests: readonly string[];
+    selectedInputs: ReadonlyMap<string, Buffer>;
+    remainingMs: () => number;
+  }) => Promise<void>;
 };
 
 function freezeCopiedReviewValue(value: unknown): unknown {
@@ -1415,12 +1420,6 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     // only current production runs the current Source typecheck.
     if (selectionMode === 'current') {
       if ((process.env.BUN_OPTIONS ?? '').trim()) throw new Error('Ambient BUN_OPTIONS are unsupported for coverage.');
-      if (!focused || selectedTestsRequireSdkArtifacts(focused.tests))
-        await options.prepareSdkInputs?.({
-          root,
-          ...(focused ? { tests: focused.tests } : {}),
-          remainingMs: () => commandBudget.remaining(),
-        });
       commandBudget.remaining();
       const typecheckAllowance = commandBudget.remaining();
       const typecheck = spawnSync(process.execPath, ['run', 'typecheck:pinned'], {
@@ -1454,7 +1453,13 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       persistOperationOutcome();
       if (typecheck.status !== 0) throw new Error('Pinned coverage typecheck failed.');
     }
-    const lockedInputs = await coverageInputs(root, focused ?? selectionMode);
+    const lockedInputs = await coverageInputs(
+      root,
+      focused ?? selectionMode,
+      options.prepareSdkInputs
+        ? (input) => options.prepareSdkInputs!({ ...input, remainingMs: () => commandBudget.remaining() })
+        : undefined,
+    );
     operationOutcome.selection.fingerprint = lockedInputs.test_fingerprint;
     operationOutcome.input_fingerprints = {
       source: lockedInputs.source_fingerprint,

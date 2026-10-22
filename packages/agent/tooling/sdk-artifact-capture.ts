@@ -25,8 +25,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function parseEntries(value: unknown, label: string): ReceiptEntry[] {
-  if (!Array.isArray(value)) throw new Error(`SDK formation ${label} inventory is invalid.`);
+  if (!Array.isArray(value) || value.length > 20_000) throw new Error(`SDK formation ${label} inventory is invalid.`);
   const seen = new Set<string>();
+  let totalBytes = 0;
   return value.map((entry): ReceiptEntry => {
     if (
       !isRecord(entry) ||
@@ -43,6 +44,9 @@ function parseEntries(value: unknown, label: string): ReceiptEntry[] {
     )
       throw new Error(`SDK formation ${label} entry is invalid or duplicated.`);
     seen.add(entry.path);
+    totalBytes += entry.bytes as number;
+    if (!Number.isSafeInteger(totalBytes) || totalBytes > 128 * 1024 * 1024)
+      throw new Error(`SDK formation ${label} inventory exceeds its byte bound.`);
     return { path: entry.path, bytes: entry.bytes as number, sha256: entry.sha256 };
   });
 }
@@ -151,7 +155,7 @@ function isValidFormationReceipt(value: unknown): value is Record<string, unknow
 }
 
 /** Decode receipt syntax once; callers still establish selected input and output identity. */
-export function decodeSdkFormationReceipt(value: unknown): {
+function decodeSdkFormationReceipt(value: unknown): {
   value: Record<string, unknown>;
   inputs: ReceiptEntry[];
   outputs: ReceiptEntry[];
@@ -160,15 +164,20 @@ export function decodeSdkFormationReceipt(value: unknown): {
   return { value, inputs: parseEntries(value.inputs, 'input'), outputs: parseEntries(value.outputs, 'output') };
 }
 
+function javascriptOutputRows(outputRows: ReceiptEntry[], outputPaths: readonly string[]): ReceiptEntry[] {
+  const expected = new Set(outputPaths);
+  const javascriptRows = outputRows.filter((entry) => entry.path.endsWith('.js'));
+  if (javascriptRows.length !== expected.size || javascriptRows.some((entry) => !expected.has(entry.path)))
+    throw new Error('SDK formation receipt does not contain the exact four JavaScript outputs.');
+  return javascriptRows;
+}
+
 function validateReceiptOutputs(
   outputRows: ReceiptEntry[],
   artifacts: ReadonlyMap<string, Buffer>,
   outputPaths: string[],
 ): Map<string, Buffer> {
-  const expected = new Set(outputPaths);
-  const javascriptRows = outputRows.filter((entry) => entry.path.endsWith('.js'));
-  if (javascriptRows.length !== expected.size || javascriptRows.some((entry) => !expected.has(entry.path)))
-    throw new Error('SDK formation receipt does not contain the exact four JavaScript outputs.');
+  const javascriptRows = javascriptOutputRows(outputRows, outputPaths);
 
   const captured = new Map<string, Buffer>();
   for (const output of javascriptRows) {
@@ -207,6 +216,67 @@ export function captureSelectedSdkJavascriptOutputsFromCapturedBytes(
   const ownedArtifacts = snapshotBytes(artifacts, 'SDK artifact');
   const selectedRows = selectedInputRows(ownedInputs);
   return validateCapturedSdkJavascriptOutputs(validateSelectedManifest(ownedInputs), ownedArtifacts, selectedRows);
+}
+
+/** Validate a complete SDK candidate for test consumption, including every declared output byte. */
+export function captureSelectedSdkTestInputsFromCapturedBytes(
+  root: string,
+  selectedInputs: ReadonlyMap<string, Buffer>,
+  artifacts: ReadonlyMap<string, Buffer>,
+): Map<string, Buffer> {
+  if (!path.isAbsolute(root)) throw new Error('SDK artifact capture root must be absolute.');
+  const ownedInputs = snapshotBytes(selectedInputs, 'Selected SDK formation input');
+  const ownedArtifacts = snapshotBytes(artifacts, 'SDK artifact');
+  const selectedRows = selectedInputRows(ownedInputs);
+  const selectedManifest = validateSelectedManifest(ownedInputs);
+  const receiptBytes = ownedArtifacts.get('dist/sdk-formation.json');
+  if (!receiptBytes) throw new Error('SDK formation output receipt is missing.');
+  if (receiptBytes.length > 8 * 1024 * 1024) throw new Error('SDK formation output receipt exceeds its byte bound.');
+  let decodedValue: unknown;
+  try {
+    decodedValue = JSON.parse(receiptBytes.toString('utf8')) as unknown;
+  } catch {
+    throw new Error('SDK formation output receipt is not valid JSON.');
+  }
+  const receipt = decodeSdkFormationReceipt(decodedValue);
+  validateReceiptInputs(receipt.inputs, selectedRows);
+  validateReceiptIdentity(receipt.value, selectedManifest.manifestValue, selectedManifest.selectedPin);
+  if (
+    receipt.inputs.some((entry, index) => index > 0 && receipt.inputs[index - 1]!.path.localeCompare(entry.path) >= 0)
+  )
+    throw new Error('SDK formation input inventory is not canonical.');
+  javascriptOutputRows(
+    receipt.outputs,
+    expectedJavascriptFiles.map((file) => `dist/src/${file}`),
+  );
+  const actualPaths = [...ownedArtifacts.keys()].sort((left, right) => left.localeCompare(right));
+  const declaredPaths = receipt.outputs.map((entry) => entry.path).sort((left, right) => left.localeCompare(right));
+  const exactPaths = [...declaredPaths, 'dist/sdk-formation.json'].sort((left, right) => left.localeCompare(right));
+  if (
+    receipt.outputs.length === 0 ||
+    receipt.outputs.length > 20_000 ||
+    receipt.outputs.some(
+      (entry, index) => index > 0 && receipt.outputs[index - 1]!.path.localeCompare(entry.path) >= 0,
+    ) ||
+    declaredPaths.some((file) => !file.startsWith('dist/') || file === 'dist/sdk-formation.json') ||
+    exactPaths.length !== actualPaths.length ||
+    exactPaths.some((file, index) => file !== actualPaths[index])
+  )
+    throw new Error('SDK formation receipt does not describe the exact complete output tree.');
+  let totalBytes = receiptBytes.length;
+  const result = new Map<string, Buffer>();
+  for (const output of receipt.outputs) {
+    const bytes = ownedArtifacts.get(output.path);
+    if (!bytes) throw new Error(`SDK formation output is missing: ${output.path}`);
+    totalBytes += bytes.length;
+    if (!Number.isSafeInteger(totalBytes) || totalBytes > 128 * 1024 * 1024)
+      throw new Error('SDK formation output tree exceeds its byte bound.');
+    if (bytes.length !== output.bytes || sha256(bytes) !== output.sha256)
+      throw new Error(`SDK formation output differs from its receipt: ${output.path}`);
+    result.set(output.path, Buffer.from(bytes));
+  }
+  result.set('dist/sdk-formation.json', Buffer.from(receiptBytes));
+  return result;
 }
 
 function validateCapturedSdkJavascriptOutputs(

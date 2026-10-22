@@ -92,6 +92,7 @@ type QualityInputCapture = {
   runtimeToolPaths: string[];
   sdkBuilderToolPaths?: string[];
   sdkFormationSourcePaths?: string[];
+  sdkFormationSelectedInputs?: Map<string, Buffer>;
   executionImageToolPaths?: string[];
   publishedContract?: PublishedContract;
 };
@@ -99,6 +100,11 @@ export type SdkFormationQualityInputCapture = {
   readonly selectedInputs: ReadonlyMap<string, Buffer>;
   readonly inputDigests: ReadonlyMap<string, string>;
 };
+export type SdkInputPreparation = (input: {
+  root: string;
+  tests: readonly string[];
+  selectedInputs: ReadonlyMap<string, Buffer>;
+}) => Promise<void>;
 const sdkFormationQualityInputs = new WeakMap<CoverageInputs, SdkFormationQualityInputCapture>();
 const sdkFormationCaptureInputs = new WeakMap<QualityInputCapture, SdkFormationQualityInputCapture>();
 const maxInputFileBytes = 4 * 1024 * 1024;
@@ -1298,6 +1304,7 @@ async function captureQualityInputBase(
   runtimeToolEntrypoints: readonly string[] = [],
   executionImage = false,
   semanticToolInputs: readonly string[] = [],
+  prepareSdkInputs?: SdkInputPreparation,
 ): Promise<QualityInputCapture> {
   const focused = typeof selection === 'string' ? undefined : selection;
   const selectionMode = typeof selection === 'string' ? selection : 'current';
@@ -1341,9 +1348,13 @@ async function captureQualityInputBase(
   const runtimeEntrypoints = [...testSelection.tests, ...runtimeToolEntrypoints];
   for (const testPath of selectionMode === 'current' ? testSelection.tests : [])
     runtimeEntrypoints.push(...(computedModuleEntryPointsByTest[testPath] ?? []));
+  const sdkArtifactPaths = ['dist/sdk-formation.json', ...expectedJavascriptFiles.map((file) => `dist/src/${file}`)];
+  const prepareSdkArtifacts = Boolean(prepareSdkInputs && sdkFormationTools.length);
   const allInputs = [
     ...new Set([...sources, ...(sdkFormationSourcePaths ?? []), ...capturedTestPaths, ...runtimeEntrypoints, ...tools]),
-  ].sort();
+  ]
+    .filter((file) => !prepareSdkArtifacts || !sdkArtifactPaths.includes(file))
+    .sort();
   const inputBytes = await readQualityInputs(root, allInputs);
   if (selectionMode === 'published-baseline-bun-native')
     verifyPublishedBaselineInputs(root, inputBytes, sources, testInputsAll);
@@ -1382,6 +1393,31 @@ async function captureQualityInputBase(
         contractInputs.filter((file) => file.startsWith('schemas/')),
       )
     : undefined;
+  let sdkFormationSelectedInputs: Map<string, Buffer> | undefined;
+  if (sdkBuilderToolPaths) {
+    const { projectSdkFormationInputBytes } = await import('./build-package.ts');
+    const projected = projectSdkFormationInputBytes({
+      inputBytes,
+      sourcePaths: sdkFormationSourcePaths ?? sources.filter((file) => file.startsWith('src/')),
+      schemaPaths: contractInputs.filter((file) => file.startsWith('schemas/')),
+      buildToolPaths: sdkBuilderToolPaths,
+    });
+    sdkFormationSelectedInputs = new Map([...projected].map(([file, bytes]) => [file, Buffer.from(bytes)] as const));
+    if (prepareSdkArtifacts && prepareSdkInputs) {
+      await prepareSdkInputs({
+        root,
+        tests: [...testSelection.tests],
+        selectedInputs: new Map(
+          [...sdkFormationSelectedInputs].map(([file, bytes]) => [file, Buffer.from(bytes)] as const),
+        ),
+      });
+      const artifacts = await readQualityInputs(root, sdkArtifactPaths);
+      for (const [file, bytes] of artifacts) inputBytes.set(file, bytes);
+      const capturedBytes = [...inputBytes.values()].reduce((total, bytes) => total + bytes.byteLength, 0);
+      if (inputBytes.size > maxInputPaths) throw new Error('Coverage input path limit exceeded.');
+      if (capturedBytes > maxInputBytes) throw new Error('Coverage input aggregate byte limit exceeded.');
+    }
+  }
   const capturedTestInputs = focused
     ? [...new Set([...capturedTestPaths, ...runtimeToolPaths.filter((file) => file.startsWith('tests/'))])].sort()
     : capturedTestPaths;
@@ -1417,6 +1453,7 @@ async function captureQualityInputBase(
     runtimeToolPaths: [...new Set([...capturedRuntimeTools, ...repositoryToolInputs])].sort(),
     ...(sdkBuilderToolPaths ? { sdkBuilderToolPaths } : {}),
     ...(sdkFormationSourcePaths ? { sdkFormationSourcePaths } : {}),
+    ...(sdkFormationSelectedInputs ? { sdkFormationSelectedInputs } : {}),
     ...(executionImage
       ? { executionImageToolPaths: [...maintainedSources, ...executionImageConfigInputs, ...semanticToolInputs] }
       : {}),
@@ -1515,15 +1552,8 @@ async function projectQualityInputCapture(
 async function sdkFormationInputsForCapture(capture: QualityInputCapture): Promise<SdkFormationQualityInputCapture> {
   const retained = sdkFormationCaptureInputs.get(capture);
   if (retained) return retained;
-  const { projectSdkFormationInputBytes } = await import('./build-package.ts');
-  const selectedInputs = projectSdkFormationInputBytes({
-    inputBytes: capture.inputBytes,
-    sourcePaths:
-      capture.sdkFormationSourcePaths ??
-      capture.sources.map((entry) => entry.path).filter((file) => file.startsWith('src/')),
-    schemaPaths: capture.contractInputs.filter((file) => file.startsWith('schemas/')),
-    buildToolPaths: capture.sdkBuilderToolPaths ?? [],
-  });
+  const selectedInputs = capture.sdkFormationSelectedInputs;
+  if (!selectedInputs) throw new Error('SDK formation selected input bytes are unavailable for this capture.');
   const inputDigests = new Map<string, string>();
   for (const file of selectedInputs.keys()) {
     const digest = capture.inputDigests.get(file)?.sha256;
@@ -1663,6 +1693,7 @@ export async function qualityInputs(
   root: string,
   additionalToolInputs: readonly string[] = [],
   selectionMode: QualityInputSelectionMode = 'current',
+  prepareSdkInputs?: SdkInputPreparation,
 ): Promise<CoverageInputs> {
   const image =
     process.env.VIDA_QUALITY_IMAGE_MANIFEST === undefined && process.env.VIDA_QUALITY_IMAGE_SHA256 === undefined
@@ -1674,6 +1705,9 @@ export async function qualityInputs(
     additionalToolInputs,
     selectionMode,
     additionalToolInputs.filter(importScanSource),
+    false,
+    [],
+    prepareSdkInputs,
   );
   return projectQualityInputCapture(
     capture,
@@ -1707,6 +1741,7 @@ export async function executionImageQualityInputs(
   additionalToolInputs: readonly string[],
   selection: FocusedDiagnosticSelection,
   semanticToolInputs: readonly string[] = [],
+  prepareSdkInputs?: SdkInputPreparation,
 ): Promise<CoverageInputs> {
   const capture = await captureQualityInputBase(
     root,
@@ -1715,6 +1750,7 @@ export async function executionImageQualityInputs(
     additionalToolInputs.filter(importScanSource),
     true,
     semanticToolInputs,
+    prepareSdkInputs,
   );
   return projectQualityInputCapture(capture, additionalToolInputs, 'current');
 }
@@ -1722,7 +1758,8 @@ export async function executionImageQualityInputs(
 export const coverageInputs = (
   root: string,
   selectionMode: QualityInputSelectionMode = 'current',
-): Promise<CoverageInputs> => qualityInputs(root, [], selectionMode);
+  prepareSdkInputs?: SdkInputPreparation,
+): Promise<CoverageInputs> => qualityInputs(root, [], selectionMode, prepareSdkInputs);
 
 export function capturedModuleInputs(
   inputs: Pick<CoverageInputs, 'sources' | 'test_inputs' | 'tool_inputs'>,

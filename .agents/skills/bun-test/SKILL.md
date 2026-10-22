@@ -286,11 +286,12 @@ absolute entries, so a generated config in another directory keeps the same
 compiler roots. Keep inherited strict options and ambient declarations intact.
 
 For full coverage SDK readiness, use the maintained coverage alias and its
-repository adapter. A Cloud artifact-storage403 may require the selected GitHub
-connector/uploaded-file transport bridge described in TESTING. Keep the actual
-run/attempt/artifact identity and ZIP digest; never copy Source into dist, compile
-locally, rewrite a receipt or disable freshness. Transport preparation is not
-Runtime acceptance. Do not print temporary signed URLs or credential bytes.
+internal readiness owner. Reuse the existing capture's complete SDK input
+projection for both cache validation and a necessary local test-input build.
+Check every declared output and preserve prior/failed publication roots. Test
+bodies never compile their own SDK, and formed images never refresh artifacts.
+Local formation runs no suite and establishes no product delivery or Runtime
+acceptance. Preserve the installed-dependency custody limit and strict freshness.
 For a focused selection, reuse `sdkFormationToolInputPaths` and the declared tests
 to determine SDK dependency. Reuse selectedTestsRequireSdkArtifacts: public
 run/controller fixtures can require the SDK export-completeness fence even when
@@ -300,7 +301,7 @@ Native Host/corrective helpers can reach that same guard. Add their selected tes
 file to the maintained selector and check the SDK capture projection, including
 nested test paths; do not infer Source-only execution from its directory.
 A selection without SDK-dependent tests does not capture dist or need separate
-artifact preparation. Keep automatic CI
+artifact preparation. Keep automatic internal
 formation and all freshness checks for selections that actually consume the SDK.
 The native batch pilot uses the v4 complete-partition descriptor described in
 TESTING. Preserve registry execution order while sorting only capture metadata;
@@ -820,11 +821,11 @@ adding another spelling of the same path. Child output assertions supply no
 child counters without qualified capture and custody.
 For sdk-package-compatibility, the focused capture retains complete SDK formation
 inputs privately while instrumenting only selected coverage Source. Prepare
-through the existing SDK readiness callback before capture; input review remains
+through the existing SDK readiness callback during capture; input review remains
 forbidden in focused mode. Never use the coverage subset as the SDK inventory.
 Keep emitted-SDK integrity cases in that artifact owner, separate from Source
 mutation partitions. Stryker instruments even the dry-run Source, which cannot
-match a receipt for unmutated CI formation. Preserve the complete ordinary
+match a receipt for unmutated formation. Preserve the complete ordinary
 selection and SDK freshness; never rebuild or waive receipt checks per mutant.
 
 For native mutation controls, distinguish the requested ID from the selected

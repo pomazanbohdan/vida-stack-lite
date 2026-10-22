@@ -97,9 +97,10 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
    each changed exact test pin once. Run its narrow control and documentation check.
    Root commits through ordinary hooks and performs a normal push.
 5. Let `selectedTestsRequireSdkArtifacts` and the maintained readiness owner
-   select whether a matching build-only SDK artifact is needed. Verify an
-   acquisition once when required; the TaskSource transition selection
-   needs none. Capture one immutable image and keep installed dependencies
+   select whether a matching SDK test-input artifact is needed. The internal
+   readiness owner reuses the existing captured formation subset, validates all
+   current outputs and forms missing/stale inputs locally without suites or CI.
+   The TaskSource transition selection needs none. Capture one immutable image and keep installed dependencies
    unchanged while producers depend on them.
 6. Execute one complete selected-contour coverage stage and import once through
    its maintained projection. Read native terminal/capture/group/image custody

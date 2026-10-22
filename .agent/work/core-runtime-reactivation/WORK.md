@@ -56,8 +56,7 @@ creator and parser owners retain their original decisions; new witness decisions
 live in three named private helpers. Frozen baselines are untouched.2100 final
 strict197/lint and11cases/222assertions pass in18.29s, followed serially by the
 two Host controls/175assertions in15.87s. No second numeric contour starts.
-2079 remains the bound numeric result until this coherent packet is measured
-once. A shared Host/receipt Source change invalidates its dependent
+Stage2124 below supplies this packet's bound numeric result. A shared Host/receipt Source change invalidates its dependent
 old qualification; the focused controls do not reattest the other contours.
 
 Published cf7a4944f4b1e8715553883953a6600ef78e05ff passes2102 ordinary hooks
@@ -74,9 +73,13 @@ Download is not admission or a completed stage. No readiness check is bypassed.
 and observed at143 before any stage log, scratch, image or coverage producer
 starts. These are watcher outcomes, not test TIMEOUT or numeric evidence.
 No duplicate formation or suite is dispatched to work around GitHub status.
-Resume the sole selected stage only after the current matching SDK workflow
-and exact attempt-job both complete successfully. Do not repeat checked controls
-or another full scan solely because this external prerequisite remains pending.
+Ordinary documentation publication b2306473d8f431b9222b7235901f3c49b4ddbc38
+subsequently receives terminal-success CI39825007939/attempt1/job119985876206.
+Its matching artifact12446242475 (662874bytes, API SHA256
+fcb6ebef764f15e3d85ae5dd2501d6091983e241f0a02eddb3c3a7287bc24787)
+is downloaded once to /workspace/vida-sdk-b230647-39825007939-1.zip.2124 then
+executes the sole actual selected stage; the original workflow discrepancy stays
+retained. No manual repeat formation, checked-control suite or broad scan is added.
 
 Blind2107 records the fresh-Work authorization route but finds no same-Work
 renewal producer in its bounded trace. This is not an exhaustive absence proof,
@@ -89,13 +92,13 @@ Blind2111 and adversarial2115 review native consistency guards. Key28's missing
 assignment has a disposition candidate: the outer verifier admits the exact
 indexed assignment, the resolver joins its initial Work to request config, and
 the packet builder joins that same loaded config object to Work before lookup.
-A later file change cannot alter that object. Bind the proof to the next actual
-report before accepting any disposition. Key18 stays OPEN across fresh native
+A later file change cannot alter that object. Map2125 now binds this proof to
+the actual2124 report; Root accepts its branch/throw disposition below. Key18 stays OPEN across fresh native
 config/identity reads. Root rejects2115's cross-identity counterexample for key21
 because key18 rejects that identity first; key21 nevertheless remains OPEN until
 its same-identity producer/immutability proof is complete. Key30's possible
 lease-thread change across fresh reads remains OPEN. No new skipped counter,
-covered count or closed contour follows from these research artifacts.
+covered count or closed contour follows from research alone.
 
 Blind2117 narrows key30 to the public no-effect retry-lease owner. Its existing
 already-no_effect branch can apply the exact successor lease synchronously at
@@ -106,6 +109,65 @@ the fixture must establish that intermediate state through the real owner and
 retain/await both calls, rather than manufacturing rows or replaying UNKNOWN.
 This is the next bounded fixture experiment, not demonstrated reachability or
 an accepted skip. Capture its refusal oracle after the intentional transition.
+
+The owner's new direct instruction replaces external CI preparation of SDK
+development-test inputs with the internal Bun readiness script, exposed as
+`bun run agent:prepare-sdk-tests`. Full/focused coverage, stage and campaign use
+that same owner inside their existing capture. Its complete captured SDK subset
+serves both freshness and a necessary local build; no extra Source closure pass,
+GitHub status watcher, ZIP download or archive override is a prerequisite. The
+SDK-only CI workflow is removed; native delivery CI retains its separate owner.
+Fresh product and test-only SDK receipts are both reusable without relabeling.
+Formation runs no tests and grants no product delivery or Runtime acceptance.
+
+Blind2126 reviews the reuse/publication design. Two isolated worker proposals
+2127/2128 are integrated by Root against unchanged b230647 base files, with
+Root corrections for captured child execution, receipt decoding, primary-error
+retention and rollback.2135 identifies unnecessary replacement of a valid product
+SDK; the shared strict decoder and positive control correct it.2139's independent
+final review finds no blocking defect. Root then persists the actual command,
+cwd and timeout in new child receipts. The historical2138 receipt remains
+unchanged and lacks those fields.2143 review accepts these changes and the new
+cleanup-status control: unresolved returned cleanup status now rejects readiness
+through the existing completeOwnedCleanup owner, retaining the stage and prior
+dist rather than silently reporting success.
+
+2138's single-capture component probe measures one local build at2883.490333ms
+and warm full-output validation at34.194854ms. It observes one callback, one new
+build and unchanged dist identity/receipt on reuse; these individual samples are
+not a benchmark or numeric qualification. The retained execution/log/result
+receipts are coverage/sdk-test-inputs/build-9l6PY3.2142's actual root CLI passes
+with new receipt coverage/sdk-test-inputs/build-ZzgM2m/execution.json, including
+the exact absolute Bun argv, cwd and269894ms remaining bound. Its child exits0,
+has no timeout/signal, complete capture and observed process/group termination.
+Successful Source snapshots are removed; logs, prior dist and failures remain.
+External installed dependency bytes remain explicitly outside snapshot custody.
+
+2140/2141 final static checks pass scoped strict144 and zero-warning lint;
+2141's affected SDK controls pass72cases/525assertions in668ms.2136's focused
+callback-order controls pass4cases/32assertions in1.60s.2143's additional cleanup
+change passes strict144/lint and24affected cases in143ms. Earlier2135 runner-mock
+failures remain retained; the mocks now exercise SDK preparation inside capture
+after the early typecheck and verify the actual supplied byte map.2142 actionlint
+and documentation-link checks pass. Publication and one current selected stage
+using internal SDK readiness are next; no numeric closure is claimed by these
+checks. This dependency repair precedes the key30 fixture experiment; no second
+contour starts and no budget or frozen/mutation gate changes.
+
+2144 bounds retirement to the two completed Source-only worker patch roots
+/workspace/vida-internal-sdk-owner-v2127 and
+/workspace/vida-internal-sdk-capture-v2128 (10files, no symlinks/shared hardlinks).
+Removal is deferred: /proc/117 and /proc/168 cwd/maps/fd are not inspectable, so
+absence of live dependencies cannot be confirmed. No archive or deletion is
+claimed; both proposals remain. The exact identities/inventory/blockers are in
+DIAG/internal-sdk-patch-retirement-v2144/manifest.json. Available durable bytes
+stay25265373184 before/after; existing resource floors remain unchanged.
+
+2145 ordinary precommit stops at strict Knip: removal of the external readiness
+adapter leaves two used-internally functions exported and an unused JSZip type.
+Root makes those functions private and removes the unused type; the native
+delivery reader's implementation/validation remain unchanged. The failed hook
+log remains retained. No hook or quality rule is bypassed.
 
 Configured-only keys5/10 remain OPEN:2087 identifies both the initial-only
 authorization lookup and old-config permission as prerequisites to resolve,
@@ -383,25 +445,51 @@ original scratch, native run manifest, raw logs and failure custody stay.
 
 ### Latest completed session measurement custody
 
-Stage2079 /workspace/contour-stage-Uu3krl completes on
-Source f4f536ad57809fac45483975318836586d276db6,
-run999f754e-94ff-4cbe-9cf3-52d231e36dd5. Elapsed70877.479506ms,
+Stage2124 /workspace/contour-stage-90KkpC completes on
+Source b2306473d8f431b9222b7235901f3c49b4ddbc38,
+run8df80db9-4968-42b5-a3fb-f1e6376a51b0. Elapsed84467.598537ms,
 exit0, no timeout/signal/spawn error, complete capture, closed producer/group,
-unchanged boot/image. Native87PASS/0FAIL/1108assertions in65.76s.
-Raw **F275/275 L857/862 S936/943 B750/764** remains BLOCKED/nonexact.
+unchanged boot/image. Native88PASS/0FAIL/1157assertions in78.72s.
+Raw **F275/275 L857/862 S936/943 B752/764** remains BLOCKED/nonexact.
+The real corrective writer and TaskSource cases visit keys23/38: two more
+branch arms than2079, with unchanged selected Source and denominators. Twelve
+branch arms remain, three with accepted dispositions and nine OPEN; seven
+statements remain, one with the key28 throw disposition. Five lines remain
+raw uncovered; no line exclusion or adjusted denominator is introduced.
 MaxCC/entryCRAP29 is diagnostic only; frozen/mutation remain deferred.
 The sole stage imports once; historical exact count17/46 stays unchanged.
-Image /workspace/.vida-quality-inputs/c6adaf479a1732d64261de3163ab4fe1d92a70bc/repository
-has manifest SHA25695520692bdb0f68559a76e28e6f6719ca427dc0d0edf439d894b019816b6d86d.
+Image /workspace/.vida-quality-inputs/c06b7ac211c6e9e515799c25d4132a2c770f935f/repository
+has manifest SHA2561b799b9447a7b1bdf770ed202262b2725ff35e21519b183ba3a2bfb95b056c2c.
 Focused report and native run manifest remain under its packages/agent/coverage/bun-unified;
-raw stdout/stderr remain in the stage.2080 verifies and fsyncs the8867840-byte
+raw stdout/stderr remain in the stage.2125 verifies and fsyncs the10762240-byte
 non-cache scratch archive at
-/workspace/vida-functional-retention-Uu3krl-OOYgAw/archive.json.
+/workspace/vida-functional-retention-90KkpC-yatZuq/archive.json.
 Original image/scratch/receipts/raw logs remain unchanged. Source fingerprint
 91a8a4c11222e70d47231932e09fc607d34967b8d3b93ab38832f01a372ff2ed is unchanged;
-tests fingerprint b3d225dd557ccc494021d3f1b793eeb9acad6fb298bc603932a918dc6b02a8d1
-binds this report. Map2080 retains the same two disposition counters and native
-production/config prerequisites; it does not reclassify their raw zero counts.
+tests fingerprint773a2d7a2109f60cd69ac05e61bbaf3144e64b2bfa7feb830c22fb0b826611e5
+binds this report. Map2125 reuses its complete retained geometry/counters without
+another inventory, AST or hash pass. Previous2079 custody, map2080 and its archive
+remain in [published b230647 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/b2306473d8f431b9222b7235901f3c49b4ddbc38/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-session-measurement-custody).
+
+#### Current session objective disposition extension
+
+The two earlier branch dispositions below retain their identical selected
+Source/counter geometry in2125. Root additionally accepts key28/arm0 and its
+throw statement73, persistent-session-handoff.ts311, bound to the same2124
+report/run, Source/test fingerprints and config-bearing image manifest above.
+The exact expression is `if (!assignment) throw new Error('Source preflight Host assignment is not configured')`.
+It requires a missing indexed assignment after the outer verifier admitted
+that exact assignment under request.config_digest. The resolver joins initial
+Work to that digest; buildAdmittedDevelopmentPacket joins its actual loaded
+config object to the same Work before the lookup. A changed file cannot mutate
+that loaded object; different accepted bytes fail the earlier digest join.
+Blind2111 and adversarial2115 independently establish these prerequisites,
+including the packet-builder check omitted by the first draft. No accepted
+native producer can reach the missing assignment under those contracts.
+This objective skip changes neither the raw zero counters nor BLOCKED outcome;
+reopen on changed verifier, config loader/digest, packet join or resolver caller.
+It grants no frozen/mutation waiver or Runtime acceptance. Other guard candidates
+remain OPEN for the reasons recorded above.
 
 ### Previous completed session measurement custody
 

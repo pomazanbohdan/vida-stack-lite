@@ -71,7 +71,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const marker = ${JSON.stringify(markerPath)};
 mock.module('./bun-coverage-evidence.ts', () => ({
   ...evidence,
-  async coverageInputs() {
+  async coverageInputs(capturedRoot, selection, prepareSdkInputs) {
     const outputRoot = path.join(root, 'coverage/bun-unified');
     const lockPath = path.join(outputRoot, 'coverage-run.lock');
     const lock = lstatSync(lockPath, { bigint: true });
@@ -182,7 +182,12 @@ test.each(['sdk', 'launcher-sdk', 'no-sdk', 'review'] as const)(
       const captureSdkGuard =
         mode === 'no-sdk'
           ? ''
-          : `if (!existsSync(${JSON.stringify(prepared)})) throw new Error('capture ran before SDK preparation');`;
+          : `
+            if (!prepareSdkInputs) throw new Error('SDK preparation callback is missing');
+            await prepareSdkInputs({ root: capturedRoot, tests: selection.tests,
+              selectedInputs: new Map([['src/probe.ts', Buffer.from('captured-source')]]) });
+            if (!existsSync(${JSON.stringify(prepared)})) throw new Error('SDK preparation did not complete');
+          `;
       const preload = writeCaptureProbe(root, `${captureSdkGuard}\nthrow new Error('focused SDK capture stop');\n`);
       const entrypoint = 'tooling/focused-sdk-options-probe.ts';
       write(
@@ -197,10 +202,11 @@ test.each(['sdk', 'launcher-sdk', 'no-sdk', 'review'] as const)(
           sources: ['src/runtime-kernel.ts'],
           tests: [${JSON.stringify(mode === 'no-sdk' ? 'tests/configured-workflow.test.ts' : mode === 'launcher-sdk' ? 'tests/paused-replacement-entrypoint.test.ts' : 'tests/sdk-package-compatibility.test.ts')}],
         },
-        prepareSdkInputs: async ({ root: preparedRoot }) => {
+        prepareSdkInputs: async ({ root: preparedRoot, selectedInputs }) => {
           writeFileSync(${JSON.stringify(prepared)}, JSON.stringify({
             root: preparedRoot, typecheck_seen: existsSync(${JSON.stringify(typecheck)}),
             capture_seen: existsSync(${JSON.stringify(capture)}),
+            captured_source: selectedInputs.get('src/probe.ts')?.toString(),
           }));
         },
         ${mode === 'review' ? 'reviewCurrentInputs: async () => { throw new Error("review must not run"); },' : ''}
@@ -214,7 +220,12 @@ test.each(['sdk', 'launcher-sdk', 'no-sdk', 'review'] as const)(
       if (mode === 'sdk' || mode === 'launcher-sdk') {
         expect(result.stderr).toContain('focused SDK capture stop');
         const preparation: unknown = JSON.parse(readFileSync(prepared, 'utf8'));
-        expect(preparation).toEqual({ root, typecheck_seen: false, capture_seen: false });
+        expect(preparation).toEqual({
+          root,
+          typecheck_seen: true,
+          capture_seen: true,
+          captured_source: 'captured-source',
+        });
         expect(existsSync(typecheck)).toBe(true);
         const captured: unknown = JSON.parse(readFileSync(capture, 'utf8'));
         expect(captured).toMatchObject({ calls: 1 });

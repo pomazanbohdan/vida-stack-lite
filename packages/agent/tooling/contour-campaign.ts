@@ -235,9 +235,12 @@ function writeRecord(directory: string, file: string, record: unknown): void {
 
 async function campaignImage(
   partition: MutationPartition,
-  prepareSdkInputs: () => Promise<void>,
+  prepareSdkInputs: (input: {
+    root: string;
+    tests: readonly string[];
+    selectedInputs: ReadonlyMap<string, Buffer>;
+  }) => Promise<void>,
 ): Promise<QualityExecutionImage> {
-  await prepareSdkInputs();
   return prepareQualityExecutionImage({
     sourcePackageRoot: packageRoot,
     storeRoot: path.join(path.dirname(repositoryRoot), '.vida-quality-inputs'),
@@ -253,6 +256,7 @@ async function campaignImage(
       'tooling/contour-stage.ts',
       'tooling/quality-execution-image.ts',
     ],
+    prepareSdkInputs,
   });
 }
 
@@ -401,13 +405,17 @@ async function main(): Promise<void> {
     };
   });
   let sdkInputsReady: Promise<void> | undefined;
-  const prepareCampaignSdkInputs = (): Promise<void> => {
+  const prepareCampaignSdkInputs = (input: {
+    root: string;
+    tests: readonly string[];
+    selectedInputs: ReadonlyMap<string, Buffer>;
+  }): Promise<void> => {
     sdkInputsReady ??= (async () => {
       const { ensureSdkCoverageInputsForTests } = await import('../../../tooling/agent/sdk-coverage-readiness.ts');
       await ensureSdkCoverageInputsForTests({
-        root: packageRoot,
+        root: input.root,
         tests: [...new Set(partitions.flatMap((partition) => partition.tests ?? []))],
-        archivePath: process.env.VIDA_SDK_TEST_INPUT_ARCHIVE,
+        selectedInputs: input.selectedInputs,
       });
     })();
     return sdkInputsReady;

@@ -368,6 +368,13 @@ The agent product architecture is owned by `docs/system-specification.md` in
 the source package. This protocol owns execution policy, not a second product
 architecture specification.
 
+Development SDK test inputs use the internal readiness/build owner declared in
+TESTING. They are locally formed from captured inputs before a test producer or
+immutable execution image starts, never within a test body. Formation runs no
+suite, retains the test-only receipt identity, validates input freshness and
+output integrity, and establishes no product delivery or Runtime acceptance.
+Native release formation and installation keep their separate CI/CD owners.
+
 Select dependency-ready self-development work by one prior qualitative estimate
 of the largest workflow, execution-step and token benefit. Shared developer
 unblocking takes priority; respect installation dependencies before migration

@@ -357,7 +357,6 @@ test.each([
 ] as const)('stage rejects %s output before accessing SDK or image inputs', async (_name, fileOutput, reuse) => {
   const root = mkdtempSync(path.join(tmpdir(), 'contour-output-preflight-'));
   const output = path.join(root, 'invalid-output');
-  const archive = path.join(root, 'must-not-read-sdk.zip');
   const manifest = path.join(root, 'must-not-read-image.json');
   if (fileOutput) writeFileSync(output, 'not a directory\n');
   let passed = false;
@@ -377,7 +376,7 @@ test.each([
       path.resolve(import.meta.dir, '..'),
       3000,
       {
-        env: { ...process.env, VIDA_SDK_TEST_INPUT_ARCHIVE: archive },
+        env: { ...process.env },
         stdoutFile: path.join(root, 'stdout.log'),
         stderrFile: path.join(root, 'stderr.log'),
         outputByteLimit: 64 * 1024,
@@ -388,7 +387,6 @@ test.each([
     expect(result.processCustody?.terminationObserved).toBe(true);
     const stderr = readFileSync(path.join(root, 'stderr.log'), 'utf8');
     expect(stderr).toContain(fileOutput ? 'Canonical output must be an existing directory.' : output);
-    expect(stderr).not.toContain(archive);
     expect(stderr).not.toContain(manifest);
     expect(readFileSync(path.join(root, 'stdout.log'), 'utf8')).toBe('');
     if (fileOutput) expect(readFileSync(output, 'utf8')).toBe('not a directory\n');

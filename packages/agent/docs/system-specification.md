@@ -3029,8 +3029,18 @@ last. Interrupted partial outputs remain retained; staging remains until known
 owned cleanup completes. No receipt means no completed
 formation. This is not atomic activation or crash-durable Runtime acceptance.
 Do not overwrite a foreign output directory or replay an uncertain formation.
-The explicit validated SDK artifact-to-test snapshot join remains pending;
-checkout `dist` alone is not current qualification evidence.
+Development-test SDK formation has one internal readiness owner shared by full
+and focused coverage. It receives the existing capture's complete SDK formation
+input projection. Reuse requires a valid product or test-only receipt, pin, manifest and
+all declared output bytes to agree; missing or stale output causes one bounded
+local formation from those captured inputs before image publication or test
+launch. Publication serializes dist, validates the complete candidate and retains
+prior and failed outputs. An unknown producer keeps its ownership fence. The
+test snapshot joins the receipt to its own captured formation inputs and emitted
+JavaScript; checkout dist alone is not qualification evidence. Already formed
+images never refresh their SDK. This development path needs no external CI or
+artifact service, runs no suites during formation, and grants no native delivery
+or Runtime acceptance. Native release CI retains its separate owner and evidence.
 
 Runtime initialization retries bounded lock-acquisition contention on Linux and
 Windows, rereading the receipt under the acquired lock. Once the protected

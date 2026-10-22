@@ -683,6 +683,11 @@ export async function prepareQualityExecutionImage(args: {
   storeRoot: string;
   selection: FocusedDiagnosticSelection;
   additionalToolInputs: readonly string[];
+  prepareSdkInputs?: (input: {
+    root: string;
+    tests: readonly string[];
+    selectedInputs: ReadonlyMap<string, Buffer>;
+  }) => Promise<void>;
 }): Promise<QualityExecutionImage> {
   assert(
     path.isAbsolute(args.sourcePackageRoot) && path.isAbsolute(args.storeRoot),
@@ -719,6 +724,7 @@ export async function prepareQualityExecutionImage(args: {
     args.additionalToolInputs,
     args.selection,
     semanticInputs,
+    args.prepareSdkInputs,
   );
   const inputFingerprint = qualityFingerprint(inputs);
   const { lockSha, bunPin } = dependencyPin(inputs);
