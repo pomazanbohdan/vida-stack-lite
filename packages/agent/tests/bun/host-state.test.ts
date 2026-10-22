@@ -4183,8 +4183,9 @@ function assertHistoricalCaptureRefusals(
 
 test('TaskSource promotes its earliest queued reservation after idle peer release while retaining the later waiter', async () => {
   const deadline = performance.now() + 5_000;
-  const policy = mock(async ({ request }: { request: Parameters<typeof trustedTaskSourcePolicyDecision>[0] }) =>
-    trustedTaskSourcePolicyDecision(request),
+  const policy = mock(
+    async ({ request }: Parameters<NonNullable<ConstructorParameters<typeof HostStateStore>[8]>['verify']>[0]) =>
+      trustedTaskSourcePolicyDecision(request),
   );
   const f = createTaskSourceHostFixture({ policyVerifier: policy });
   let completed = false;
@@ -4304,6 +4305,27 @@ test('TaskSource promotes its earliest queued reservation after idle peer releas
     });
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
     const nativeAfter = readFixtureHostRows(f.database);
+    const policyInput = requiredValue(policy.mock.calls[0]?.[0], 'First TaskSource policy input');
+    const policyRequest = {
+      repositoryRoot: policyInput.repositoryRoot,
+      operation: policyInput.operation,
+      preparedStateVersion: policyInput.stateVersion,
+      hostSnapshot: after,
+    };
+    expect(createTaskSourceMutationPolicyRequest(policyRequest).operation_id).toBe(f.request.operation_id);
+    expect(() =>
+      createTaskSourceMutationPolicyRequest({
+        ...policyRequest,
+        hostSnapshot: {
+          ...after,
+          ledger: {
+            ...after.ledger,
+            tickets: after.ledger.tickets.filter((ticket) => ticket.ticket_id !== queued.work.lease?.ticket_id),
+          },
+        },
+      }),
+    ).toThrow('task source mutation request is stale, same-root, or not a create proposal');
+    expect(readFixtureHostRows(f.database)).toEqual(nativeAfter);
     expect(await f.store.issueTaskSourceBindingOperation(laterInput)).toMatchObject({
       status: 'queued',
       action: null,
