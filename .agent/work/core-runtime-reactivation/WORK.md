@@ -64,9 +64,18 @@ FAIL2068 remain retained.2073 documentation check passes4documents/61links.
 Pstack's Laziness Protocol selects the existing native setup as the shared
 owner instead of introducing another fixture framework.
 
-2053 remains the numeric result until the coherent reviewed packet is published,
-formed and measured once. Remaining configured-only continuation, corrective
-planning and consistency guards remain OPEN under their existing studies.
+Published f4f536ad57809fac45483975318836586d276db6 passes normal2075 hooks:
+format526/strict533/Knip;2076 ordinary push matches origin/main. SDK
+CI39808423641/attempt1/job119927789815 completes successfully; artifact12439590189
+is the exact662453-byte /workspace/vida-sdk-f4f536a-39808423641-1.zip, API SHA256
+b95e70b6edc1bdc695ac7eb4402cbdd4e8ee692b118fde64f943461f5360eb9a.
+Stage2079 below is the sole actual full run for this packet. It visits the real
+checkpoint arm8/0: **F275/275 L857/862 S936/943 B750/764**, one more branch than
+2053, with unchanged Source/denominators. Fourteen branch arms remain, including
+the two reviewed objective dispositions; twelve are OPEN. No contour closes.
+Map2080 reuses its complete report without another scan/hash. Blind2081 studies
+the configured-only native continuation producer for keys5/10. Corrective
+planning and consistency guards remain under their existing studies.
 
 Published ec4304baf28e3cf49d1726fc419fd65f766a80a6 contains the reviewed peer,
 legacy synthesis and refused-corruption controls.2049 normal hooks pass
@@ -77,7 +86,7 @@ response before image/producer creation, despite the workflow's success. After
 the same exact attempt-jobs endpoint reports terminal success,2053 completes
 the sole actual coverage producer. Neither failure is a partial suite or kill.
 
-The current bound values are **F275/275 L857/862 S936/943 B749/764**: five lines,
+The preceding2053 bound values are **F275/275 L857/862 S936/943 B749/764**: five lines,
 seven statements and fifteen branch arms remain. Two arms have the objective
 dispositions below; the other thirteen remain OPEN. Map2054 reuses the complete
 report without another AST/scan/hash pass. Blind2055 studies native authorization
@@ -95,10 +104,9 @@ resolution correctly refuses its still-UNKNOWN issued action.2060 preserves
 that fence: strict196/lint and1case/12assertions pass in12.87s, case11.022s under
 the existing20s bound. All native rows and the original issued action remain
 unchanged by the refusal.2061 independently reviews this exact test delta.
-This does not visit the private digest checkpoint arm. The next supported
-composition is the queued same-work TaskSource path, with no issued own action;
-reuse its maintained preparation through one shared helper, retaining its native
-Host verification rather than copying a whole test or bypassing UNKNOWN.
+This does not visit the private digest checkpoint arm. The shared queued
+same-work TaskSource composition above subsequently reaches it in2079, with no
+issued own action, while retaining native Host verification and UNKNOWN fences.
 
 The work record now replaces304superseded history lines with exact published
 Git/path references below. Decisions and failed-control locators remain in those
@@ -256,6 +264,28 @@ remain immutable. DIAG/session-retention-v1983.log binds its verified/fsynced
 original scratch, native run manifest, raw logs and failure custody stay.
 
 ### Latest completed session measurement custody
+
+Stage2079 /workspace/contour-stage-Uu3krl completes on
+Source f4f536ad57809fac45483975318836586d276db6,
+run999f754e-94ff-4cbe-9cf3-52d231e36dd5. Elapsed70877.479506ms,
+exit0, no timeout/signal/spawn error, complete capture, closed producer/group,
+unchanged boot/image. Native87PASS/0FAIL/1108assertions in65.76s.
+Raw **F275/275 L857/862 S936/943 B750/764** remains BLOCKED/nonexact.
+MaxCC/entryCRAP29 is diagnostic only; frozen/mutation remain deferred.
+The sole stage imports once; historical exact count17/46 stays unchanged.
+Image /workspace/.vida-quality-inputs/c6adaf479a1732d64261de3163ab4fe1d92a70bc/repository
+has manifest SHA25695520692bdb0f68559a76e28e6f6719ca427dc0d0edf439d894b019816b6d86d.
+Focused report and native run manifest remain under its packages/agent/coverage/bun-unified;
+raw stdout/stderr remain in the stage.2080 verifies and fsyncs the8867840-byte
+non-cache scratch archive at
+/workspace/vida-functional-retention-Uu3krl-OOYgAw/archive.json.
+Original image/scratch/receipts/raw logs remain unchanged. Source fingerprint
+91a8a4c11222e70d47231932e09fc607d34967b8d3b93ab38832f01a372ff2ed is unchanged;
+tests fingerprint b3d225dd557ccc494021d3f1b793eeb9acad6fb298bc603932a918dc6b02a8d1
+binds this report. Map2080 retains the same two disposition counters and native
+production/config prerequisites; it does not reclassify their raw zero counts.
+
+### Previous completed session measurement custody
 
 Stage2053 /workspace/contour-stage-Gyrh4x completes on
 Source ec4304baf28e3cf49d1726fc419fd65f766a80a6,
