@@ -36,6 +36,10 @@ type DigestOptions = {
 type ContinuationFixtureOptions = {
   queued?: boolean;
   uncertain?: boolean;
+  capturedPending?: boolean;
+  journalItemsBeforeCapture?: (
+    items: readonly import('../../src/orchestration/persistent-session-handoff.ts').MastraLedgerItem[],
+  ) => readonly import('../../src/orchestration/persistent-session-handoff.ts').MastraLedgerItem[];
   completedAttempt?: boolean;
   disjointPeer?: boolean;
   lifecycleScopeReference?: boolean;
@@ -601,7 +605,14 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
     peer = { identity: peerIdentity, snapshot: peerSnapshot, ticket: peerTicket, claim: peerClaim };
   }
   let journalItem = historicalJournalItem(originalSource, runId, workflowId);
-  if (uncertain) journalItem = { ...journalItem, observation: null };
+  if (options.capturedPending)
+    journalItem = {
+      ...journalItem,
+      request: { ...journalItem.request, action_id: '4'.repeat(64), stage_id: 'synthesize_task' },
+      issue_id: '11111111-1111-4111-8111-111111111111',
+      observation: null,
+    };
+  else if (uncertain) journalItem = { ...journalItem, observation: null };
   else
     journalItem = {
       ...journalItem,
@@ -625,7 +636,7 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
     run_id: runId,
     step_id: 'synthesize',
     source_scope: originalSource,
-    items: [journalItem],
+    items: options.journalItemsBeforeCapture?.([journalItem]) ?? [journalItem],
     completed: [],
   };
   db.exec(

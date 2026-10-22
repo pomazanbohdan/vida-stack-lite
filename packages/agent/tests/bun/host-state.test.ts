@@ -20,6 +20,7 @@ import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-r
 import { createInitializationBundle } from '../helpers/init-bundle.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
+import { createHistoricalResearchActivationFixture } from '../helpers/historical-research-fixture.ts';
 import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
 import {
   createPrewriterPreparationObservation,
@@ -4947,6 +4948,147 @@ test('trusted Host continuation atomically retains historical evidence and never
   }
 });
 
+function capturedPendingActivation(item: MastraSessionLedgerState['items'][number]) {
+  const activation = createHistoricalResearchActivationFixture({
+    onRoot: retainContinuationFixtureRoot,
+    request: item.request,
+    issueId: requiredValue(item.issue_id, 'Captured pending activation issue'),
+    binding: {
+      work_id: 'work-1',
+      attempt: 1,
+      action_id: item.request.action_id,
+      issue_id: requiredValue(item.issue_id, 'Captured pending activation binding issue'),
+      run_id: item.request.run_id,
+      scope_id: 'scope-fixture',
+      scope_digest: item.request.scope_digest,
+      source_revision: item.request.scope_digest,
+      config_digest: item.request.config_digest,
+    },
+  });
+  return { use: activation.activationUse, plan: activation.activationPlan };
+}
+
+test('captured pending synthesis continues only as a retained review without inventing a completed observation', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-'));
+  retainContinuationFixtureRoot(root);
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const f = await continuationFixture({
+      root,
+      capturedPending: true,
+      journalItemsBeforeCapture: (items) => {
+        const item = firstOf(items, 'Captured pending activation item');
+        return [{ ...item, research_activation: capturedPendingActivation(item) }];
+      },
+    });
+    const before = requiredValue(f.store.readWorkSessionJournal(f.identity), 'Captured pending Journal');
+    expect(before.state.items).toHaveLength(1);
+    expect(before.state.items[0]).toMatchObject({
+      issue_id: f.capture.issue_id,
+      observation: null,
+      request: { action_id: f.capture.action_id, stage_id: 'synthesize_task' },
+    });
+    const request = continuationRequestFor(f);
+    const result = await f.store.continueDeliveredWork(request);
+    const after = requiredValue(f.store.readWorkSessionJournal(f.identity), 'Continued review Journal');
+    expect(result.receipt.prior_journal).toEqual(before.state);
+    expect(result.receipt.historical_capture).toEqual(f.capture);
+    expect(after.state.completed).toEqual(before.state.completed);
+    expect(after.state.items).toEqual([{ request: request.action.request, issue_id: null, observation: null }]);
+    expect(result.receipt).toMatchObject({ rights_granted: false, accepted_result: false, runtime_acceptance: false });
+    expect(f.store.readDeliveredWorkContinuationReceipt(f.identity, 1)).toEqual(result.receipt);
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)?.action_status).toBe('unissued');
+    withTemporaryFixtureReceipt(
+      f.db,
+      'agent_host_delivered_work_continuation',
+      f.workspaceId,
+      f.identity.work_id,
+      (changed) => {
+        const successor = recordAt(changed, 'successor_journal');
+        successor.completed = [{ step_id: before.state.step_id, items: before.state.items }];
+        recordAt(changed, 'journal_version').digest = canonicalJsonDigest(successor);
+      },
+      () =>
+        expect(() => f.store.readHostStateSnapshot(f.identity)).toThrow(
+          'historical continuation completed prefix or captured pending issue differs',
+        ),
+    );
+    expect(f.store.readDeliveredWorkContinuationReceipt(f.identity, 1)).toEqual(result.receipt);
+    expect((await f.store.continueDeliveredWork(request)).receipt).toEqual(result.receipt);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(after);
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          cleanupContinuationFixtures();
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test.each(['wrong-issue', 'wrong-stage', 'foreign-activation', 'unissued-sibling', 'pending-sibling'] as const)(
+  'captured pending synthesis refuses %s without changing native state',
+  async (variant) => {
+    const root = mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-'));
+    retainContinuationFixtureRoot(root);
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      const f = await continuationFixture({
+        root,
+        capturedPending: true,
+        journalItemsBeforeCapture: (items) => {
+          const item = firstOf(items, 'Captured pending fixture item');
+          if (variant === 'wrong-issue') return [{ ...item, issue_id: '22222222-2222-4222-8222-222222222222' }];
+          if (variant === 'wrong-stage') return [{ ...item, request: { ...item.request, stage_id: 'synthesize' } }];
+          if (variant === 'foreign-activation') {
+            const activation = capturedPendingActivation(item);
+            const { digest: _digest, ...original } = activation.plan;
+            const plan = { ...original, binding: { ...original.binding, work_id: 'foreign-work' } };
+            return [
+              { ...item, research_activation: { ...activation, plan: { ...plan, digest: canonicalJsonDigest(plan) } } },
+            ];
+          }
+          return [
+            item,
+            {
+              ...item,
+              request: { ...item.request, action_id: '9'.repeat(64) },
+              issue_id: variant === 'pending-sibling' ? '22222222-2222-4222-8222-222222222222' : null,
+            },
+          ];
+        },
+      });
+      const request = continuationRequestFor(f);
+      const rows = readFixtureHostRows(f.db);
+      const journal = f.store.readWorkSessionJournal(f.identity);
+      const capture = f.store.readHistoricalTerminalSynthesisCapture(f.identity, 1, f.capture.action_id);
+      await expectRejection(f.store.continueDeliveredWork(request), /unresolved outcome/);
+      expect(readFixtureHostRows(f.db)).toEqual(rows);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+      expect(f.store.readHistoricalTerminalSynthesisCapture(f.identity, 1, f.capture.action_id)).toEqual(capture);
+      expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toBeNull();
+      expect(f.db.inTransaction).toBe(false);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            cleanupContinuationFixtures();
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  },
+);
+
 test('historical capture releases its original owner while preserving the same-owner queue and denying continuation', async () => {
   const deadline = performance.now() + 5_000;
   const fixtureRoot = mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-'));
@@ -8237,6 +8379,22 @@ test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket
             ? undefined
             : admitDisjointInitialSourcePeers(f, mode === 'commit');
         const queuedSource = mode === 'queued-ticket' ? await prepareSameWorkQueuedTaskSource(f) : undefined;
+        if (queuedSource) {
+          const state = initialSourceState(f);
+          const input = requiredValue(f.input, 'Admitted resource-history producer input');
+          const producer = initialSourceHostLedger(f).beginSessionProducer({
+            selection: input.selection,
+            context: { ...input.context, scope_digest: state.work.binding.work_source_revision },
+            workflowId: state.work.binding.workflow_id,
+            runId: requiredValue(state.work.execution.run_id, 'Resource-history engine run'),
+            projectIds: f.identity.project_ids,
+            phase: 'initialize',
+            sourceScope: requiredValue(state.journal.source_scope, 'Resource-history producer Source scope'),
+          });
+          initialSourceHostStore(f).settleSessionProducer(producer, state.journalVersion);
+          expect(initialSourceState(f)).toEqual(state);
+          queuedSource.verifyPreserved();
+        }
         const peersReadyAt = performance.now();
         const readonlyPreparation =
           mode === 'rollback' || mode === 'terminal-history' ? completeReadonlyFixtureHostPreparation(f) : undefined;
@@ -8548,7 +8706,7 @@ test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket
             expect(recoveryReceiptRows.all(host.workspaceId, f.identity.work_id)).toEqual(recoveryReceiptBefore);
             expect(host.readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(retried);
           }
-          if (mode === 'next-wave' || queuedSource) {
+          if (mode === 'next-wave') {
             await requiredValue(f.bridge, 'Retained writer engine').resume(
               requiredValue(restored.journal.step_id, 'Accepted writer step'),
               [observation],
@@ -8565,11 +8723,6 @@ test.each(['rollback', 'terminal-history', 'commit', 'next-wave', 'queued-ticket
                 (item) => item.issue_id === null && item.observation === null && item.host_reservation === undefined,
               ),
             ).toBe(true);
-            queuedSource?.verifyPreserved();
-          }
-          if (mode === 'next-wave') {
-            const advanced = initialSourceState(f);
-            const advancedJournal = { state: advanced.journal, version: advanced.journalVersion };
             const lease = requiredLease(advanced.work);
             expect(advanced.ledger.tickets.find((ticket) => ticket.ticket_id === lease.ticket_id)).toMatchObject({
               status: 'active',

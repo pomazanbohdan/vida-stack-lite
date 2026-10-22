@@ -11,7 +11,89 @@ F/L/S/B100 or complete reviewed objective-gap disposition under the owner's
 Frozen correspondence/complexity/CRAP and mutation remain deferred, with their
 original budgets and assertion-confirmed Killed100 rules unchanged.
 
-### Current checked continuation coverage packet
+### Current repair packet after the incomplete8f8 run
+
+The8f8d4ebb5acf2d62d4872e0eccb372afe37eba8c packet was published normally.
+Its sole SDK stage1811 at /workspace/contour-stage-HwNK5D binds run
+e4e1ceec-83d7-4d65-9876-dcd0bfc68368. The outer launcher finishes in271076.045986ms
+with exit1, full capture, closed group and unchanged boot/image. The Host shard
+times out and receives SIGKILL after321partial PASS rows, without a final summary
+or JUnit. The other shard completes16PASS/491assertions. The operation remains
+UNKNOWN, execution/report incomplete and resource_safe_to_advance=false. There
+is no new attributable F/L/S/B report. Original native outcomes, raw logs and
+stage receipts remain in that image/stage; their compared/fsynced byte archive
+is /workspace/vida-functional-retention-HwNK5D-hfJj4P/archive.json. This preserves
+UNKNOWN bytes only; it is not transactional/effect qualification or replay authority.
+
+The queued-ticket control now exercises the actual producer begin/settle with
+its retained initial-binding checkpoint instead of duplicating full engine resume.
+The separate next-wave case retains real engine progression.1816's exact control
+passes1case/159assertions with strict152. Its fixture and issued proposal remain
+retained. The partial1811 timings are diagnostics only, not a controlled speedup
+comparison. The shard owner now rejects an observed UNKNOWN immediately after
+native terminal observations, before a later report-budget error masks it.
+Known nonzero assertion failures remain eligible for diagnostics.1817/1818 pass
+5targeted cases/33assertions; strict127 passes. Original failures stay unchanged.
+
+Blind Luna1812 confirms the documented historical capture/continuation
+contradiction. The original capture preserves an issued synthesis with null
+observation; the common continuation fence refused that exact known-terminal
+item.1821 reproduces it through the maintained trusted Host component fixture,
+without changing the Journal after capture. Its failed root/log remain retained.
+This is not public CLI/workflow qualification.1813's claim of an existing positive
+public capture CLI case was rejected on direct review: those CLI cases are denials.
+
+1820 independently accepts the narrow repair plan;1824 finds no concrete blocker
+in its inspected implementation. Only a unique sole current synthesize_task with
+the exact capture action/issue/workflow/run/config/scope may retain its null
+observation and structurally valid, item-bound research activation. Reservations,
+normalization and all other unresolved items still refuse. The original frontier
+stays verbatim in receipt.prior_journal; successor.completed keeps its exact prior
+prefix. History reads recheck that projection. Observed-terminal compatibility,
+all CAS/owner/authorization checks and no-acceptance semantics stay intact.
+The existing research Journal validator moves unchanged to the shared codec,
+retaining its public re-export and frozen correspondence, avoiding a new runtime
+dependency cycle. Its Source owner and the ledger adapter share one validator.
+
+1826's package-profile check passes8cases/298assertions with strict153 and scoped
+lint. It covers real typed activation preparation, captured pending continuation,
+exact retry, reader continuity, refused completed-prefix corruption with guarded
+restoration, wrong issue/stage/activation and pending/unissued siblings, plus the
+old observed-terminal and FIFO controls. All unresolved roots remain retained.
+The earlier1822 strict attempt failed a cleanup callback return type; it was
+corrected before1823/1826.1821/1822 root-directory runtime probes are retained
+separately and do not establish the package-profile result. Public CLI/native
+workflow positive qualification and a nonempty native completed-prefix composition
+remain explicit proof gaps; no numeric closure is claimed from component checks.
+
+Resource observation1819 records26,111,336,448available bytes on checkout/retained
+and6,696,042,496on scratch, above the unchanged2,214,592,512floor+reserve. Reuse
+the existing1707inventory; no new du/scan/hash pass. .vida-retained is absent.
+The exact current image and three contour-stage roots are deferred because the
+latest complete report and UNKNOWN custody depend on them. No paths were deleted,
+no admission threshold changed and no new automation was created. Existing PID1
+zombies are observed historical processes, not live producers to signal or reap
+from this session. No new numeric/build/install process was active during repairs.
+
+Audit DIAG/three-hour-audit-v1830.json joins the existing1791/1811receipts and
+current package-profile controls without another suite/AST/scan/hash pass.
+1827 rechecks the final shared-validator move: strict153, scoped lint and the
+same8Host cases/298assertions pass.1828 adds strict127 and8targeted native custody
+plus codec-property cases/3165assertions;1829 verifies the one refreshed reviewed
+Host selection pin with1case/10assertions. Full tool-call/token totals and a
+controlled speedup remain unmeasured. The chosen order is one coherent patch,
+static/lint, grouped exact cases, ordinary publication and one matching SDK stage.
+Extra Host case concurrency or contour writers have no measured safety/speedup
+proof and remain closed. SQLite's current transaction contract was retrieved at
+https://www.sqlite.org/lang_transaction.html as DIAG/sqlite-transactions-v1825.html;
+its IMMEDIATE/commit/rollback semantics support retaining the existing atomic
+owner rather than adding a transaction or database. The web connector returned
+no result; the official page was fetched directly without a support claim from
+the failed connector. Existing configured-frontier/recovery/initial-source paths
+remain on their own strict unresolved guards; no analogous capture exception is
+authorized for them. Final numeric qualification of this changed packet is pending.
+
+### Latest complete continuation coverage packet
 
 Published0d04c1ff5bb94d1cc86d4227815490f0344535fd contains the reviewed P0
 TaskSource/history correction. Ordinary commit hooks pass Knip, formatting522
@@ -42,8 +124,8 @@ The next checked packet reuses the existing stored-history cache only inside
 the synchronous TaskSource issuing transaction, after the policy-verifier await.
 The receipt writer invalidates the affected Work and table metadata before the
 final read; rollback leaves no per-call cache alive. No new cache or budget.
-The queued-ticket case now reads the real atomic completed-recovery lineage
-without writes and resumes its retained engine through the checkpoint.1798
+The published queued-ticket case read the real atomic completed-recovery lineage
+without writes and resumed its retained engine through the checkpoint.1798
 passes2cases/194assertions in19.24s, retaining both unresolved proposal roots.
 
 The first projected-producer proposal1800 correctly refuses maintenance while

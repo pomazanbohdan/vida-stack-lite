@@ -20,7 +20,7 @@ import { expectRejection } from './helpers/expect-rejection.ts';
 import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from '../tooling/coverage-run-lock.ts';
 import { buildCoverageRunOutcome } from '../tooling/coverage-run-outcome.ts';
-import { superviseCoverageProducers } from '../tooling/run-bun-coverage.ts';
+import { assertCoverageShardOutcomesKnown, superviseCoverageProducers } from '../tooling/run-bun-coverage.ts';
 import {
   coverageProducerReservationSafeToRelease,
   coverageProducerTerminalKnown,
@@ -72,6 +72,7 @@ test('supervisor accounts for every prepared native producer', async () => {
       executionBudget(4_000, 250),
     );
     expect(group.outcomes).toHaveLength(2);
+    expect(() => assertCoverageShardOutcomesKnown(group)).not.toThrow();
     passed = true;
   } finally {
     if (passed) rmSync(root, { recursive: true, force: true });
@@ -141,6 +142,7 @@ process.exit(${status});
     const group = await pending;
     expect(existsSync(path.join(root, 'pass.done'))).toBe(true);
     expect(existsSync(path.join(root, 'fail.done'))).toBe(true);
+    expect(() => assertCoverageShardOutcomesKnown(group)).not.toThrow();
     expect(group.outcomes).toEqual([
       expect.objectContaining({
         shard_id: 'pass',
@@ -214,6 +216,7 @@ test('a timed out producer stays accounted alongside a held sibling', async () =
       producerTerminalKnown: true,
       directProducerAccounted: true,
     });
+    expect(() => assertCoverageShardOutcomesKnown(group)).toThrow('coverage shard outcome is UNKNOWN');
     expect(existsSync(path.join(root, 'held.done'))).toBe(true);
     expect(group.reservationSafeToRelease).toBe(true);
     expect(group.resourceSafeToAdvance).toBe(false);
@@ -229,6 +232,7 @@ test('a real signal termination is terminal but never proves resource safety', a
   try {
     const script = `import { writeFileSync } from 'node:fs'; import path from 'node:path'; writeFileSync(path.join(${JSON.stringify(root)},'signal.pid'),String(process.pid)); process.kill(process.pid,'SIGTERM');`;
     const group = await superviseCoverageProducers([producer('signaled', root, script)], executionBudget(4_000, 250));
+    expect(() => assertCoverageShardOutcomesKnown(group)).toThrow('coverage shard outcome is UNKNOWN');
     const pid = Number(readMarker(root, 'signal.pid'));
     expect(pid).toBeGreaterThan(0);
     expect(group.outcomes).toHaveLength(1);
@@ -291,6 +295,7 @@ test('an exhausted shared budget records unattempted launches without creating m
       ),
     ];
     const group = await superviseCoverageProducers(launches, executionBudget(1_000, 0, performance.now() - 1));
+    expect(() => assertCoverageShardOutcomesKnown(group)).toThrow('coverage shard outcome is UNKNOWN');
     expect(group.outcomes).toHaveLength(2);
     expect(
       group.outcomes.every(

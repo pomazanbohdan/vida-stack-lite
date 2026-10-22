@@ -1,5 +1,6 @@
 import { coordinationLedgerDigest } from '../contracts/envelopes.js';
-import { parseMastraSessionLedgerState } from './mastra-session-ledger-codec.js';
+export { validateResearchJournalItem } from './mastra-session-ledger-codec.js';
+import { parseMastraSessionLedgerState, validateResearchJournalItem } from './mastra-session-ledger-codec.js';
 import { canonicalJsonAtDepth, canonicalJsonComponents } from '../contracts/canonical-json-core.js';
 import { qualifiedRuntimeCodeHistoryJson } from './qualified-runtime-code-continuation.js';
 import { Database } from 'bun:sqlite';
@@ -1211,50 +1212,6 @@ export function mastraLedgerStatus(state: MastraSessionLedgerState): MastraSessi
   if (state.items.length > 0 && state.items.every((item) => item.observation !== null))
     return state.items.some((item) => item.observation?.status === 'reported_failed') ? 'blocked' : 'ready_to_resume';
   return 'ready';
-}
-
-export function validateResearchJournalItem(item: MastraLedgerItem, state: MastraSessionLedgerState): boolean {
-  if (
-    Object.keys(item).some(
-      (key) =>
-        ![
-          'request',
-          'issue_id',
-          'observation',
-          'host_reservation',
-          'research_activation',
-          'research_normalization',
-        ].includes(key),
-    )
-  )
-    return false;
-  const binding = (plan: ObservedActivationUseWritePlan | ObservedResearchRecordPlan) =>
-    plan.binding.work_id === state.work_id &&
-    plan.binding.attempt === state.attempt &&
-    plan.binding.run_id === state.run_id &&
-    plan.binding.action_id === item.request.action_id &&
-    plan.binding.issue_id === item.issue_id &&
-    plan.binding.scope_digest === item.request.scope_digest &&
-    plan.binding.config_digest === item.request.config_digest;
-  if (item.research_activation) {
-    if (Object.keys(item.research_activation).sort().join(',') !== 'plan,use') return false;
-    const use = validateActivationUse(item.research_activation.use);
-    const plan = validateObservedActivationUseWritePlan(item.research_activation.plan);
-    if (
-      !binding(plan) ||
-      plan.use_digest !== use.digest ||
-      use.work_item_id !== state.work_id ||
-      use.source_revision !== plan.binding.source_revision ||
-      use.scope_id !== plan.binding.scope_id
-    )
-      return false;
-  }
-  if (item.research_normalization) {
-    const plan = validateObservedResearchRecordPlan(item.research_normalization);
-    if (!item.observation || !binding(plan) || plan.observation_digest !== canonicalJsonDigest(item.observation))
-      return false;
-  }
-  return true;
 }
 
 /** A CAS issue/outcome journal, deliberately without its own workflow stage scheduler. */

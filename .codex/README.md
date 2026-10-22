@@ -202,6 +202,11 @@ installed `skills/poteto-mode/SKILL.md` and the relevant focused leaves once for
 the task. Resolve the enabled `pstack@open-pstack` source path from
 `codex plugin list --json`; a catalog entry proves availability, not skill use.
 Do not copy a prior host's path or skill count into a new host's readiness claim.
+If an enabled plugin's reported marketplace source path is absent, resolve its
+installed cache for that same plugin/version and verify the actual skill and
+worker executable there. Do not repeatedly invoke the absent metadata path or
+reinstall an already available plugin solely to repair that locator. Record the
+resolved path in the current session's preparation receipt.
 The current CLEAR plan, backlog and WORK retain their owners. Native blind Luna,
 Root integration/checks/Git and disjoint shared-file assignments are the selected
 repository exceptions to Pstack's orchestration defaults.

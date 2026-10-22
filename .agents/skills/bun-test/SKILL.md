@@ -13,6 +13,15 @@ owns commands, timeouts, evidence gates and accepted policy. Its
 owns detailed scenario-specific requirements. Read both before changing an
 affected owner.
 
+For historical terminal capture, preserve the original issued item's null
+observation and exact receipt-bound Journal. Seed component prerequisites before
+persistence and capture; do not rewrite the captured Journal into a completed
+observation. Check that continuation retains the original only in prior_journal,
+preserves the completed prefix and installs one unissued review. Include foreign
+issue, activation and sibling refusals plus exact retry and restored receipt
+corruption. A trusted Host component fixture is not public CLI qualification;
+trace whether a cited CLI case is positive or denial-only before reusing it.
+
 For uncovered-function navigation, reuse the report's retained `istanbul_key`
 and `body_location` when present and matched to its bound Source map. The
 existing exact-geometry join owns them. Do not reconstruct IDs from map order,

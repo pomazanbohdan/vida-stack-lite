@@ -114,6 +114,12 @@ remain sequential under the one execution owner.
 
 ### Current remaining work groups
 
+The1811timeout adds a bounded reporting correction. Freeze new tooling role
+assertCoverageShardOutcomesKnown at maxCC3; it rejects observed UNKNOWN shard
+outcomes immediately after terminal receipts, before the reporting-budget check.
+It changes no deadline, custody flag, count or assertion-failure diagnostics.
+Use the existing native timeout/signal/unattempted custody cases for verification.
+
 The current Host packet reuses one synchronous issuing-transaction history cache
 after policy verification, invalidating its Work and table metadata on receipt
 insertion. Projected-schema fixtures form storage under empty-DB maintenance and
@@ -237,6 +243,27 @@ runtime error, missing coverage and UNKNOWN are distinct outcomes, never kills.
 No focused PASS, historical maximum or coverage milestone closes later gates.
 
 ## Priority boundary
+
+1820's independent plan review accepts a narrow historical-terminal P0 repair.
+Freeze historicalCapturedPendingRequestMatches, historicalCapturedPendingItem
+(including its completed-wave predicates), unresolvedContinuationItem,
+continuationHasUnresolvedItems (including its item predicate),
+historicalContinuationCompleted and assertHistoricalContinuationJournal at
+CC/CRAP10/10 before implementation. Preserve existing callable budgets and
+correspondence; extract the existing unresolved predicate rather than widening
+its permission. Only the unique current captured synthesize_task may retain its
+null observation and bound research activation; reservations, normalization and
+every other unresolved item still refuse. Preserve its exact prior Journal in
+the receipt, keep the successor completed prefix unchanged, and verify that
+projection again during history reads. Existing observed-terminal component
+fixtures retain their completed-wave projection. A pre-persistence pending
+component fixture is not public CLI/workflow qualification. No schema, loader,
+runtime or consumer transition belongs to this correction.
+Move the existing validateResearchJournalItem body unchanged from the persistent
+ledger adapter to its maintained Journal codec, retaining its old public export
+and original frozen correspondence/budget. Both the Host exception and ledger
+adapter reuse it. This avoids a new Host-to-ledger runtime cycle and duplicates
+no activation binding recipe. Its existing budget is not a new10/10 allowance.
 
 P0 covers reproduced defects/blockers in existing behavior and required delivery.
 P1 simplifies or reduces supported work. P2 adds capabilities/contracts/modes/

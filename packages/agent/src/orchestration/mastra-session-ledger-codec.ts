@@ -1,5 +1,7 @@
-import { assertCanonicalJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
+import { assertCanonicalJsonValue, canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.js';
 import {
+  type ObservedActivationUseWritePlan,
+  type ObservedResearchRecordPlan,
   validateActivationUse,
   validateObservedActivationUseWritePlan,
   validateObservedResearchRecordPlan,
@@ -154,4 +156,48 @@ export function parseMastraSessionLedgerState(value: unknown): MastraSessionLedg
   if (!exactKeys(value, stateRequiredKeys, stateOptionalKeys))
     throw new Error('Mastra session ledger state shape is invalid');
   return deepFreezeClone(parseStateFields(value));
+}
+
+export function validateResearchJournalItem(item: MastraLedgerItem, state: MastraSessionLedgerState): boolean {
+  if (
+    Object.keys(item).some(
+      (key) =>
+        ![
+          'request',
+          'issue_id',
+          'observation',
+          'host_reservation',
+          'research_activation',
+          'research_normalization',
+        ].includes(key),
+    )
+  )
+    return false;
+  const binding = (plan: ObservedActivationUseWritePlan | ObservedResearchRecordPlan) =>
+    plan.binding.work_id === state.work_id &&
+    plan.binding.attempt === state.attempt &&
+    plan.binding.run_id === state.run_id &&
+    plan.binding.action_id === item.request.action_id &&
+    plan.binding.issue_id === item.issue_id &&
+    plan.binding.scope_digest === item.request.scope_digest &&
+    plan.binding.config_digest === item.request.config_digest;
+  if (item.research_activation) {
+    if (Object.keys(item.research_activation).sort().join(',') !== 'plan,use') return false;
+    const use = validateActivationUse(item.research_activation.use);
+    const plan = validateObservedActivationUseWritePlan(item.research_activation.plan);
+    if (
+      !binding(plan) ||
+      plan.use_digest !== use.digest ||
+      use.work_item_id !== state.work_id ||
+      use.source_revision !== plan.binding.source_revision ||
+      use.scope_id !== plan.binding.scope_id
+    )
+      return false;
+  }
+  if (item.research_normalization) {
+    const plan = validateObservedResearchRecordPlan(item.research_normalization);
+    if (!item.observation || !binding(plan) || plan.observation_digest !== canonicalJsonDigest(item.observation))
+      return false;
+  }
+  return true;
 }

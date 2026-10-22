@@ -1945,6 +1945,10 @@ invocation where their existing resource
 and timeout contracts permit it. A pure input/schema check should precede an
 expensive fixture when it can resolve the same uncertainty. Reuse current results
 until another change or failure invalidates them.
+For parallel shard failure, preserve and classify the native terminal outcomes
+before checking the later reporting-phase budget. An observed timeout or signal
+must remain UNKNOWN with its original evidence; a secondary exhausted-budget
+error cannot replace it. Partial PASS rows never establish complete execution.
 Run direct Agent focused checks from `packages/agent`, so its Bun configuration,
 preloads and seed apply. A repository-root invocation with a package test path
 does not select that profile; preserve it separately and do not compare its timing

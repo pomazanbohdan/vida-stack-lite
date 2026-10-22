@@ -109,7 +109,10 @@ import {
   parseScopedSourceSnapshot as validateTaskSourceJournalScope,
   snapshotDeclaredSources,
 } from './orchestration/scoped-source-snapshot.js';
-import { parseMastraSessionLedgerState } from './orchestration/mastra-session-ledger-codec.js';
+import {
+  parseMastraSessionLedgerState,
+  validateResearchJournalItem,
+} from './orchestration/mastra-session-ledger-codec.js';
 import {
   buildReadOnlyDispatchRepairPlan,
   type ReadOnlyDispatchRepairPlan,
@@ -1534,6 +1537,76 @@ export class HostStateError extends Error {
 }
 function requireState(condition: unknown, message: string): asserts condition {
   if (!condition) throw new HostStateError(message);
+}
+function historicalCapturedPendingRequestMatches(
+  item: MastraLedgerItem,
+  work: WorkState,
+  capture: HistoricalTerminalSynthesisCaptureReceipt,
+): boolean {
+  return (
+    item.observation === null &&
+    item.issue_id === capture.issue_id &&
+    item.request.action_id === capture.action_id &&
+    item.request.stage_id === 'synthesize_task' &&
+    item.request.workflow_id === work.binding.workflow_id &&
+    item.request.run_id === work.execution.run_id &&
+    item.request.config_digest === work.binding.config_digest &&
+    item.request.scope_digest === work.binding.work_source_revision
+  );
+}
+function historicalCapturedPendingItem(
+  journal: MastraSessionLedgerState,
+  work: WorkState,
+  capture: HistoricalTerminalSynthesisCaptureReceipt | null,
+): MastraLedgerItem | null {
+  if (!capture || journal.items.length !== 1) return null;
+  const item = journal.items[0]!;
+  if (!historicalCapturedPendingRequestMatches(item, work, capture)) return null;
+  if (!validateResearchJournalItem(item, journal)) return null;
+  if (journal.completed.some((wave) => wave.items.some((prior) => prior.request.action_id === capture.action_id)))
+    return null;
+  return item;
+}
+function unresolvedContinuationItem(item: MastraLedgerItem): boolean {
+  return (
+    (item.issue_id !== null && item.observation === null) ||
+    item.host_reservation !== undefined ||
+    item.research_activation !== undefined ||
+    item.research_normalization !== undefined
+  );
+}
+function continuationHasUnresolvedItems(
+  journal: MastraSessionLedgerState,
+  capturedItem: MastraLedgerItem | null,
+): boolean {
+  return [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].some((item) =>
+    item === capturedItem
+      ? item.host_reservation !== undefined || item.research_normalization !== undefined
+      : unresolvedContinuationItem(item),
+  );
+}
+function historicalContinuationCompleted(
+  journal: MastraSessionLedgerState,
+  work: WorkState,
+  capture: HistoricalTerminalSynthesisCaptureReceipt | null,
+): MastraSessionLedgerState['completed'] {
+  if (historicalCapturedPendingItem(journal, work, capture)) return journal.completed;
+  return [
+    ...journal.completed,
+    ...(journal.items.length > 0 && journal.step_id ? [{ step_id: journal.step_id, items: journal.items }] : []),
+  ];
+}
+function assertHistoricalContinuationJournal(receipt: DeliveredWorkContinuationReceipt): void {
+  const prior = receipt.prior_journal;
+  const capturedItem = historicalCapturedPendingItem(prior, receipt.prior_work, receipt.historical_capture);
+  requireState(
+    !continuationHasUnresolvedItems(prior, capturedItem) &&
+      sameJson(
+        receipt.successor_journal.completed,
+        historicalContinuationCompleted(prior, receipt.prior_work, receipt.historical_capture),
+      ),
+    'historical continuation completed prefix or captured pending issue differs',
+  );
 }
 function synchronousProof<T>(result: T, message: string): T {
   if (
@@ -4017,6 +4090,7 @@ function checkedStoredWork(
           receipt.authorization.principal.trim().length > 0,
         'delivered-work continuation binding history is not continuous',
       );
+      assertHistoricalContinuationJournal(receipt);
       for (const attempt of original.execution.assignment_attempts) {
         const current = candidate.execution.assignment_attempts.find(
           (entry) => entry.attempt_id === attempt.attempt_id,
@@ -12738,13 +12812,7 @@ export class HostStateStore {
           ),
         'current task Source scope is not the exact authorized beforeimage bridge',
       );
-      const unresolved = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].some(
-        (item) =>
-          (item.issue_id !== null && item.observation === null) ||
-          item.host_reservation !== undefined ||
-          item.research_activation !== undefined ||
-          item.research_normalization !== undefined,
-      );
+      const unresolved = continuationHasUnresolvedItems(journal, historicalCapturedPendingItem(journal, work, capture));
       requireState(!unresolved, 'issued or reserved action has an unresolved outcome and cannot be reissued');
       if (action.kind === 'configured_frontier') {
         contract.validateConfiguredFrontierOwnerRelease({
@@ -12930,12 +12998,7 @@ export class HostStateStore {
           })),
           completed: projectedFrontier
             ? currentJournal!.completed
-            : [
-                ...currentJournal!.completed,
-                ...(currentJournal!.items.length > 0 && currentJournal!.step_id
-                  ? [{ step_id: currentJournal!.step_id, items: currentJournal!.items }]
-                  : []),
-              ],
+            : historicalContinuationCompleted(currentJournal!, work, capture),
         },
         nextWork: WorkState = {
           ...work,

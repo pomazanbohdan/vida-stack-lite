@@ -163,7 +163,7 @@ export function focusedCoverageShardReview(
     ? [
         {
           path: 'tests/bun/host-state.test.ts',
-          sha256: 'cbf372d3dcb90019b136308fd4985f0525b24954097c375228429806fcda2c9b',
+          sha256: '110dbe9ded007760431074c78a889b48728e3acfe6b49ab4a50bb99899701624',
         },
         {
           path: 'tests/stopped-source-capture.test.ts',
@@ -334,6 +334,14 @@ export type CoverageProducerGroup = {
   reservationSafeToRelease: boolean;
   resourceSafeToAdvance: false;
 };
+
+/** Preserve the observed producer failure before a later report-budget check can mask it. */
+export function assertCoverageShardOutcomesKnown(group: CoverageProducerGroup): void {
+  if (group.outcomes.some((outcome) => outcome.unknown))
+    throw new Error(
+      'Bun Test coverage shard outcome is UNKNOWN; preserve native timeout, signal and retained run evidence.',
+    );
+}
 
 function writeAtomic(file: string, value: unknown): void {
   const temporary = file + '.tmp-' + process.pid;
@@ -1664,6 +1672,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
           shardGroup,
           persistOperationOutcome,
         );
+        assertCoverageShardOutcomesKnown(shardGroup);
       } catch (error) {
         errors.push(error);
       }
