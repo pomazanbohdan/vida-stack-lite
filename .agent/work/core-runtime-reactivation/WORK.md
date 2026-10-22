@@ -56,9 +56,56 @@ creator and parser owners retain their original decisions; new witness decisions
 live in three named private helpers. Frozen baselines are untouched.2100 final
 strict197/lint and11cases/222assertions pass in18.29s, followed serially by the
 two Host controls/175assertions in15.87s. No second numeric contour starts.
-2079 remains the bound numeric result until this coherent packet is published
-and measured once. A shared Host/receipt Source change invalidates its dependent
+2079 remains the bound numeric result until this coherent packet is measured
+once. A shared Host/receipt Source change invalidates its dependent
 old qualification; the focused controls do not reattest the other contours.
+
+Published cf7a4944f4b1e8715553883953a6600ef78e05ff passes2102 ordinary hooks
+(format526/strict533/Knip);2103 ordinary push matches origin/main. SDK
+CI39821973142/attempt1/job119975301288 completes its formation job successfully
+at17:22:04UTC. However, the workflow and check suite still report in_progress
+with null conclusion;2118 retains that actual run/job discrepancy after more
+than17minutes. The maintained readiness owner requires both terminal successes.
+Artifact12445181596 is downloaded once to
+/workspace/vida-sdk-cf7a494-39821973142-1.zip (662875bytes; advertised API SHA256
+8407d57da958e9292a8dd0946988d2318b7ff94a28ae4c820c957b2619d5fbb3).
+Download is not admission or a completed stage. No readiness check is bypassed.
+2113's bounded control watcher exits124;2116's watcher is deliberately stopped
+and observed at143 before any stage log, scratch, image or coverage producer
+starts. These are watcher outcomes, not test TIMEOUT or numeric evidence.
+No duplicate formation or suite is dispatched to work around GitHub status.
+Resume the sole selected stage only after the current matching SDK workflow
+and exact attempt-job both complete successfully. Do not repeat checked controls
+or another full scan solely because this external prerequisite remains pending.
+
+Blind2107 records the fresh-Work authorization route but finds no same-Work
+renewal producer in its bounded trace. This is not an exhaustive absence proof,
+an objective skip or permission to retag the original grant. The continuation
+request validator explicitly requires different prior/target configuration
+digests (delivered-work-continuation.ts); the prior artifact cannot authorize
+the new configuration by assumption. Keep keys5/10 OPEN.
+
+Blind2111 and adversarial2115 review native consistency guards. Key28's missing
+assignment has a disposition candidate: the outer verifier admits the exact
+indexed assignment, the resolver joins its initial Work to request config, and
+the packet builder joins that same loaded config object to Work before lookup.
+A later file change cannot alter that object. Bind the proof to the next actual
+report before accepting any disposition. Key18 stays OPEN across fresh native
+config/identity reads. Root rejects2115's cross-identity counterexample for key21
+because key18 rejects that identity first; key21 nevertheless remains OPEN until
+its same-identity producer/immutability proof is complete. Key30's possible
+lease-thread change across fresh reads remains OPEN. No new skipped counter,
+covered count or closed contour follows from these research artifacts.
+
+Blind2117 narrows key30 to the public no-effect retry-lease owner. Its existing
+already-no_effect branch can apply the exact successor lease synchronously at
+the final native continuation read, before fresh admission captures its thread.
+The prerequisite is a genuinely persisted, fully verified fresh no-effect proof
+with the old lease still present. The normal producer completes both steps;
+the fixture must establish that intermediate state through the real owner and
+retain/await both calls, rather than manufacturing rows or replaying UNKNOWN.
+This is the next bounded fixture experiment, not demonstrated reachability or
+an accepted skip. Capture its refusal oracle after the intentional transition.
 
 Configured-only keys5/10 remain OPEN:2087 identifies both the initial-only
 authorization lookup and old-config permission as prerequisites to resolve,
