@@ -282,6 +282,10 @@ Completed correction packets must be committed and pushed after their applicable
 checks under the development-lifecycle self-development protocol. This Source
 repository's standing Git authorization applies; no separate per-packet approval
 is required. Keep unfinished work explicit and preserve unrelated staged changes.
+Observe commit/hook termination before another Git command; even `git status`
+can refresh the active index and invalidate its frozen identity. For read-only
+status outside that interval, use `git --no-optional-locks status`. Do not weaken
+the staged-byte/index guard to accommodate concurrent observers.
 
 Formation, qualification and installation sequencing has one owner:
 the installed development-lifecycle instruction's self-development protocol.

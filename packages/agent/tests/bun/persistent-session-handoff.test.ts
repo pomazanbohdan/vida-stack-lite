@@ -71,6 +71,7 @@ import {
   withReadonlyDispatchHostFixture,
 } from '../helpers/readonly-dispatch-host-fixture.ts';
 import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
+import { createPrewriterPreparationObservation } from '../helpers/public-prewriter-fixture.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { prepareLifecycleForCorrection } from '../../src/orchestration/final-assurance.ts';
 import { MastraSessionBridge } from '../../src/orchestration/mastra-session-bridge.ts';
@@ -333,7 +334,7 @@ afterEach(async () => {
     ]);
     if (caseDeadline !== undefined && performance.now() >= caseDeadline) {
       retainScratch = true;
-      throw new Error('Mastra lifecycle cleanup exhausted its monotonic 5s deadline');
+      throw new Error('Mastra lifecycle cleanup exhausted its monotonic case deadline');
     }
     if (scratch && !retainScratch) await rm(scratch, { recursive: true, force: true });
   } catch (error) {
@@ -750,6 +751,32 @@ describe('persistent advisory session handoff', () => {
     expect(() => first.prepareOrResume(selection('task', 'task_execution'), context)).toThrow(
       /differs from persisted binding/,
     );
+  });
+
+  test('prepare-or-resume propagates the exact non-race boundary failure', async () => {
+    caseDeadline = performance.now() + 5_000;
+    scratch = await mkdtemp(path.join(tmpdir(), 'session-prepare-failure-'));
+    retainScratch = true;
+    const active = store();
+    const selected = selection('research', 'information_research');
+    for (const cause of [undefined, 'native boundary failure', new Error('unrelated native failure')]) {
+      const prepare = spyOn(active, 'prepare').mockImplementationOnce(() => {
+        throw cause;
+      });
+      await withInitialSourceCleanup(
+        async () => {
+          expect(await rejectionReason(Promise.resolve().then(() => active.prepareOrResume(selected, context)))).toBe(
+            cause,
+          );
+          expect(prepare).toHaveBeenCalledTimes(1);
+          expect(active.resume(context.work_id, context.attempt)).toBeNull();
+        },
+        () => prepare.mockRestore(),
+        'Preparation fault boundary restoration',
+      );
+    }
+    expect(performance.now()).toBeLessThan(caseDeadline);
+    retainScratch = false;
   });
 
   test('configured store denies issue after root configuration changes without changing the persisted row', async () => {
@@ -1680,6 +1707,38 @@ test('native synthesis correction preserves admitted predecessors and refuses ch
         );
         expect(rows()).toEqual(preimage);
       }
+      const ownerRow = db
+        .query<{ id: string; revision: number; payload: string; digest: string }, [string, string]>(
+          "SELECT id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+        )
+        .get(host.workspaceId, fixture.identity.work_id);
+      if (!ownerRow) throw new Error('Native synthesis correction owner row is missing');
+      await withInitialSourceCleanup(
+        () => {
+          expect(
+            db
+              .query("DELETE FROM agent_host_state WHERE workspace_id=? AND kind='work' AND id=?")
+              .run(host.workspaceId, ownerRow.id).changes,
+          ).toBe(1);
+          const missingOwner = rows();
+          expect(() => ledger.correctObservedSynthesis(correction)).toThrow(
+            'synthesis correction owner, artifacts or coordination CAS changed',
+          );
+          expect(rows()).toEqual(missingOwner);
+          expect(db.inTransaction).toBe(false);
+        },
+        () => {
+          expect(
+            db
+              .query(
+                "INSERT INTO agent_host_state (workspace_id,kind,id,revision,payload,digest) VALUES (?,'work',?,?,?,?)",
+              )
+              .run(host.workspaceId, ownerRow.id, ownerRow.revision, ownerRow.payload, ownerRow.digest).changes,
+          ).toBe(1);
+        },
+        'Missing native synthesis owner refusal and exact restoration',
+      );
+      expect(rows()).toEqual(preimage);
       const corrected = expectReturned(() => ledger.correctObservedSynthesis(correction));
       expect(corrected.state.items).toEqual([
         { request: prepared.originalItem.request, issue_id: null, observation: null },
@@ -1798,7 +1857,15 @@ test('authorized corrective engine records its first actual suspension from the 
         items: [],
         completed: [],
       });
+      const archived = [...original.state.completed.flatMap((wave) => wave.items), ...original.state.items].find(
+        (item) => item.observation !== null,
+      )?.observation;
+      if (!archived) throw new Error('Corrective fixture has no original reported observation');
       const authorizedHost = current.store.readHostStateSnapshot(current.identity);
+      expect(corrected.state.items).toEqual([]);
+      expect(current.ledger.retrieveReportedObservation(current.identity.work_id, 1, archived)).toEqual(corrected);
+      expect(current.ledger.resume(current.identity.work_id, 1)).toEqual(corrected);
+      expect(current.store.readHostStateSnapshot(current.identity)).toEqual(authorizedHost);
       bridge = await MastraSessionBridge.open({
         ...current.producerInput,
         repositoryRoot: current.root,
@@ -2034,6 +2101,179 @@ test('readonly replacement report atomically binds raw and projected observation
     expect(performance.now()).toBeLessThan(deadline);
   });
 });
+
+test('readonly replacement rejects a completed-prefix tool reference and preserves the native history', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      await prepareInitialSourceFrontier(fixture, 'readonly');
+      const { store, ledger, item, plan, journal } = pauseReadonlyDispatchHostFixture(fixture);
+      expect(journal.state.completed.length).toBeGreaterThan(0);
+      const prior = journal.state.completed
+        .flatMap((wave) => wave.items)
+        .find((entry) => entry.observation !== null)?.observation;
+      if (!prior) throw new Error('Readonly frontier fixture has no completed-prefix observation');
+      expectReturned(() => store.commitReadOnlyDispatchRepair(plan));
+      const activated = expectReturned(() =>
+        ledger.activateReadOnlyReplacement(fixture.identity.work_id, 1, journal.version, item.request.action_id),
+      );
+      const source = activated.snapshot.state.source_scope;
+      if (!source) throw new Error('Readonly replacement has no native source scope');
+      const observation = mastraObservation(
+        { ...item.request, action_id: activated.dispatch.dispatch_action_id },
+        activated.dispatch.issue_id,
+        prior.tool_call_ref,
+      );
+      const hostBefore = store.readHostStateSnapshot(fixture.identity);
+      expect(() =>
+        ledger.reportReadOnlyReplacement(fixture.identity.work_id, 1, activated.snapshot.version, observation, source),
+      ).toThrow('replacement output digest or tool reference differs');
+      expect(ledger.resume(fixture.identity.work_id, 1)).toEqual(activated.snapshot);
+      expect(store.readHostStateSnapshot(fixture.identity)).toEqual(hostBefore);
+      const fresh = { ...observation, tool_call_ref: 'fixture:completed-prefix-replacement' };
+      const reported = expectReturned(() =>
+        ledger.reportReadOnlyReplacement(fixture.identity.work_id, 1, activated.snapshot.version, fresh, source),
+      );
+      expect(reported.state.completed).toEqual(journal.state.completed);
+      expect(reported.state.items[0]?.observation).toEqual({ ...fresh, action_id: item.request.action_id });
+      expect(store.readHostStateSnapshot(fixture.identity)).toEqual(hostBefore);
+    },
+    {
+      cooperativeSynthesis: true,
+      holdExpiredOwnerClock: true,
+      configure: (configured) => {
+        const architect = configured.agents.profiles.architect;
+        if (!architect) throw new Error('Readonly prewriter fixture needs the configured architect');
+        return {
+          ...configured,
+          agents: {
+            ...configured.agents,
+            profiles: { ...configured.agents.profiles, architect: { ...architect, egress_policy: 'none' } },
+          },
+        };
+      },
+    },
+    20_000,
+  );
+}, 20_000);
+
+test('cooperative prewriter reports persist without creating a Host work or preparation authority', async () => {
+  caseDeadline = performance.now() + 5_000;
+  scratch = await mkdtemp(path.join(tmpdir(), 'mastra-ownerless-prewriter-'));
+  retainScratch = true;
+  const { instance, workId } = mastraLedger('ownerless-prewriter');
+  const request = bridgeRequest({
+    actionId: 'a'.repeat(64),
+    workflowId: 'task_execution',
+    stageId: 'review_source_prewrite',
+    assignmentIndex: 0,
+  });
+  let journal = instance.sync(workId, 1, request.run_id, request.stage_id, [request]);
+  const before = instance.hostState.readWorkspaceSnapshot();
+  expect(before.work).toEqual([]);
+  journal = instance.issueWave(workId, 1, journal.version);
+  const item = mastraItemAt(journal, 0);
+  expect(item.host_reservation).toBeUndefined();
+  const observation = mastraObservation(item.request, item.issue_id, 'fixture:cooperative-prewriter');
+  const reported = expectReturned(() => instance.report(workId, 1, journal.version, observation));
+  expect(reported.state.items[0]?.observation).toEqual(observation);
+  expect(instance.retrieveReportedObservation(workId, 1, observation)).toEqual(reported);
+  expect(instance.hostState.readWorkspaceSnapshot()).toEqual(before);
+  expect(instance.resume(workId, 1)).toEqual(reported);
+  expect(performance.now()).toBeLessThan(caseDeadline);
+  retainScratch = false;
+});
+
+test('readonly replacement preserves an already reported peer in the same native wave', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      await prepareInitialSourceFrontier(fixture, 'readonly');
+      const ledger = initialSourceHostLedger(fixture);
+      const first = requiredMastraSnapshot(ledger.resume(fixture.identity.work_id, 1));
+      expect(first.state.items).toHaveLength(2);
+      let observed = ledger.issueWave(fixture.identity.work_id, 1, first.version);
+      const host = initialSourceHostStore(fixture);
+      const owner = host.readHostStateSnapshot(fixture.identity);
+      requireHostState(owner);
+      const peers = observed.state.items.filter((entry) => entry.request.role === 'source-planner');
+      expect(peers).toHaveLength(1);
+      for (const peer of peers) {
+        if (!peer.issue_id) throw new Error('Readonly prewriter peer was not issued');
+        const preparation = createPrewriterPreparationObservation(
+          { request: peer.request, issue_id: peer.issue_id },
+          { work: owner.work, workId: fixture.identity.work_id },
+          1,
+        );
+        const observation = {
+          ...mastraObservation(
+            peer.request,
+            peer.issue_id,
+            'fixture:readonly-peer:' + peer.request.action_id,
+            JSON.stringify(preparation),
+            preparation.observer_id,
+          ),
+          evidence_refs: preparation.evidence_refs,
+        };
+        observed = expectReturned(() =>
+          ledger.report(fixture.identity.work_id, 1, observed.version, observation, observed.state.source_scope),
+        );
+        expect(
+          observed.state.items.find((entry) => entry.request.action_id === peer.request.action_id)?.observation,
+        ).toEqual(observation);
+      }
+      const { store, item, plan, journal } = pauseReadonlyDispatchHostFixture(fixture);
+      const originalPeers = observed.state.items.filter((entry) => entry.request.action_id !== item.request.action_id);
+      expect(originalPeers).toHaveLength(1);
+      expectReturned(() => store.commitReadOnlyDispatchRepair(plan));
+      const activated = expectReturned(() =>
+        ledger.activateReadOnlyReplacement(fixture.identity.work_id, 1, journal.version, item.request.action_id),
+      );
+      expect(
+        activated.snapshot.state.items.filter((entry) => entry.request.action_id !== item.request.action_id),
+      ).toEqual(originalPeers);
+      const source = activated.snapshot.state.source_scope;
+      if (!source) throw new Error('Readonly peer fixture has no native Source scope');
+      const hostBefore = store.readHostStateSnapshot(fixture.identity);
+      const observation = mastraObservation(
+        { ...item.request, action_id: activated.dispatch.dispatch_action_id },
+        activated.dispatch.issue_id,
+        'fixture:replacement-with-peer',
+      );
+      const reported = expectReturned(() =>
+        ledger.reportReadOnlyReplacement(fixture.identity.work_id, 1, activated.snapshot.version, observation, source),
+      );
+      expect(reported.state.items.filter((entry) => entry.request.action_id !== item.request.action_id)).toEqual(
+        originalPeers,
+      );
+      expect(
+        reported.state.items.find((entry) => entry.request.action_id === item.request.action_id)?.observation,
+      ).toEqual({ ...observation, action_id: item.request.action_id });
+      expect(reported.state.completed).toEqual(journal.state.completed);
+      expect(store.readHostStateSnapshot(fixture.identity)).toEqual(hostBefore);
+    },
+    {
+      cooperativeSynthesis: true,
+      holdExpiredOwnerClock: true,
+      riskFlags: ['high'],
+      configure: (configured) => {
+        const architect = configured.agents.profiles.architect;
+        const security = configured.agents.profiles['reviewer-security'];
+        if (!architect || !security) throw new Error('Readonly peer fixture needs both configured prewriter profiles');
+        return {
+          ...configured,
+          agents: {
+            ...configured.agents,
+            profiles: {
+              ...configured.agents.profiles,
+              architect: { ...architect, egress_policy: 'none' },
+              'reviewer-security': { ...security, tools_policy: 'read_only', egress_policy: 'none' },
+            },
+          },
+        };
+      },
+    },
+    20_000,
+  );
+}, 20_000);
 
 test('native research normalization reserves only the observed plan and survives a closed-ledger reopen', async () => {
   await withAdmittedHandoffFixture(

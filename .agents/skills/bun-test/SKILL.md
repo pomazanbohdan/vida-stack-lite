@@ -53,6 +53,20 @@ denial assertions alone need not increase Istanbul's visited-operand counts.
 Check the actual Source expression at each retained zero-arm location; a nearby
 repeated predicate or shared function owner does not identify that counter.
 Quote that expression in the review before proposing a producer or disposition.
+For Istanbul `binary-expr`, an arm counts evaluation of its mapped operand,
+not that operand's truth value. A missing right operand in `left && right`
+requires a truthy `left`; `right` may be false. In `left || right`, a falsy
+`left` reaches the right operand. Check the retained location and operator
+before declaring a required pair of states impossible.
+Before extending a code-workflow fixture, inspect the loader's complete stage
+and profile predicates. Its pre-development validation permits only the exact
+configured prewriter. For an observed/pending peer wave, select the existing
+high-risk two-prewriter route before admission and report a typed preparation
+through its maintained helper. `source_write: false` alone does not establish
+the UNKNOWN-readonly predicate: a validator policy containing `test.read` is
+outside that predicate. Narrow the fresh fixture's profile to the actual
+read-only/no-egress policy; do not weaken the product guard. Serialize fresh
+transformed YAML without duplicate-object aliases, which the loader forbids.
 For unchanged callable bodies in a changed file, reuse retained report geometry
 only after an exact body/relative-location comparison and current transitive
 prerequisite review; this navigation proof never changes measured counts.

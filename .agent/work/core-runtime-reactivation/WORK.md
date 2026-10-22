@@ -17,7 +17,7 @@ or numeric producer is active. Complete the selected contour before another.
 
 ### Current measured repair packet
 
-The next session packet adds six native cases and extends the existing replacement
+The published session packet adds six native cases and extends the existing replacement
 case using report1963's map. It covers real same-key Mastra insertion loss, the
 configured TaskSource policy over current Source-plan bytes, synthesis correction
 and receipt corruption/refusal/restoration, maintenance generation/checksums,
@@ -66,8 +66,79 @@ relative to the selected test's directory, supporting nested paths instead of a
 root-only literal.1983 preserves the failed test fixture's relative-import
 assumption.1984 passes strict195/lint and both capture regressions:46assertions,
 356ms. TESTING and the Bun skill now identify this transitive caller boundary.
-The next image must use a current published SDK formation through maintained
-readiness. No exports fence, freshness check or image is modified to bypass it.
+Published ae68767848271be852f446af77b8cb7e3b138cb2 passes normal hooks and ordinary
+push. CI39782222197/attempt1 succeeds with artifact12426014395. Stage1987 stops
+before image/producer on GitHub archive transport failure. The approved connector
+retrieves the same artifact into /workspace/vida-sdk-ae68767-39782222197-1.zip;
+maintained readiness validates its CI identity and digest for stage1988 below.
+No exports fence, freshness check or image is modified to bypass it.
+
+The current unmeasured packet reuses map1989.1992 passes exact fault propagation,
+cooperative ownerless prewriter and archived corrective-report controls, but
+preserves the completed-prefix fixture's suspension refusal. Its actual history
+exists; the pending architect retains official_docs egress. The optional typed
+fixture configuration callback now serializes/revalidates architect egress none
+before ledger construction and admission. Default fixtures remain unchanged.
+1994 passes that native completed-prefix replacement control:1case/16assertions
+in7.56s, under the existing20s admitted-frontier exception. No accepted rows,
+product guards, timeout or UNKNOWN history are rewritten.
+
+Blind1993 review identifies an overstated no-write claim for the injected
+prepare failure. The case is narrowed to exact boundary-error propagation;
+undefined, string and unrelated Error retain their identity. Its empty-row check
+is a component postcondition, not a real failed SQLite transaction claim.
+1996 passes strict195/lint and two changed cases/92assertions in5.34s, including
+deleting only the real synthesis owner's row after forming a valid plan, refusing
+without writes, restoring its exact native columns, then succeeding normally.
+The common cleanup error now names the actual case deadline rather than falsely
+calling every configured exception5s. Roots and original failures remain retained.
+
+1990/1991/1995 remain independent candidate reports, not accepted dispositions.
+Root corrects two premises: the readonly producer creates completed history,
+and key5/arm1 at177:31 counts evaluation of `initial` in `configured && initial`,
+not simultaneous truth of both values. A configured-only view can reach that
+operand. The Bun skill records the general logical-operand rule. Configured
+preflight drift/checkpoint/frontier remain OPEN; no new full numeric producer
+has run for these edits.
+
+The same-wave peer preparation retains failed candidate fixtures/controls1998,
+2000–2003: YAML anchors, unsupported role consumption, mismatched edges, forbidden
+extra pre-development validation, then a pending validator's test.read policy.
+These are authoring-premise errors, not confirmed product defects or accepted
+configurations. The maintained loader/UNKNOWN-readonly predicates remain intact.
+The actual producer uses the standard high-risk two-prewriter stage: a new typed
+riskFlags fixture input binds both selection and WorkItem before admission.
+Both prewriter profiles select no egress; security selects read_only tools before
+admission. The existing typed preparation helper supplies the reported planner
+observation. No additional workflow stage or edge remains in the patch.
+The pause helper supports a genuinely issued wave with exactly one remaining
+pending item instead of imposing one total item.2004 passes strict195/lint and
+the affected case/18assertions in9.22s; the case itself takes7.170s under its
+existing20s Source-frontier exception. Peers and completed history are unchanged
+through native activation/report, with exact Host preservation. This is controlled
+ledger/bridge proof, not external provider execution or Runtime acceptance.
+1999's review describes bounded cooperative reports but also incorrectly says
+the helper paths have no diff and calls the directly related counter lesson
+unrelated. Root rejects those claims; its obsolete candidate configuration is
+not evidence of admission. The current skill records the loader/profile lesson
+to avoid another expensive invalid-fixture sequence.
+Fresh blind2005 reads the exact three changed code paths and finds no concrete
+implementation blocker. It confirms pre-admission configuration/risk binding,
+the standard two-prewriter producer, single-pending repair and exact owner-row
+restoration. Its review is independent Source evidence, not another numeric run.
+2006 documentation check passes4selected documents/24local links; no external
+link, runtime or staged-byte qualification is inferred.
+Normal commit2007 stops on its index-identity guard after format524/strict531.
+Root ran a concurrent plain git status, which can refresh the index even without
+changing selected file contents. Its original failed hook log and staged payload
+are retained. The Sidecar now orders Git observations after hook termination and
+selects --no-optional-locks for read-only status. Root repeats only the required
+ordinary hook/commit after checking the same staged file set; no hook bypass,
+guard relaxation, runtime rerun or numeric qualification follows this correction.
+The official [Git status background-refresh documentation](https://git-scm.com/docs/git-status#_background_refresh),
+retrieved in DIAG/git-status-doc-v2008.html, confirms that default status writes
+refreshed stat information to the index and recommends --no-optional-locks for
+background observers. The failed index-identity guard is preserved unchanged.
 
 The active session-handoff packet reproduces a valid-loaded-config P0. Explicit
 empty stage/assignment risk lists were truthy and filtered out the required
@@ -229,6 +300,26 @@ remain immutable. DIAG/session-retention-v1983.log binds its verified/fsynced
 original scratch, native run manifest, raw logs and failure custody stay.
 
 ### Latest completed session measurement custody
+
+Stage1988 /workspace/contour-stage-Gearny completes on
+Sourceae68767848271be852f446af77b8cb7e3b138cb2,
+run3aef60c1-4863-45d6-99f2-72226e6066fe. Elapsed40370.158919999994ms,
+exit0, no timeout/signal/spawn error, complete capture, closed producer/group,
+unchanged boot/image. Native78PASS/0FAIL/926assertions in34.76s.
+Raw **F274/275 L851/862 S928/943 B736/766** remains BLOCKED/nonexact.
+MaxCC/entryCRAP29 is diagnostic only; frozen/mutation remain deferred.
+The sole stage imports once; historical exact count stays17/46. Map1989 reuses
+retained Source geometry/counters:1function,11lines,15statements and30branch arms.
+Image /workspace/.vida-quality-inputs/098d2b18af6404b1a491d6198c98ed4393ce4cf9/repository
+has manifest SHA2568b441694c4bb7515e54e53c15392597fb4f02abacb9ba8b568bf7acb2018f609.
+The focused report and native manifest remain under its packages/agent/coverage/bun-unified;
+serial stdout/stderr remain in the stage. DIAG/session-retention-v1989.log binds
+the verified/fsynced4710400-byte scratch archive at
+/workspace/vida-functional-retention-Gearny-Ffb91X/archive.json.
+Original image, scratch, receipts and raw logs remain unchanged. These figures
+describe their captured inputs, not the current unmeasured test edits.
+
+### Preceding completed session measurement custody
 
 Stage1962 /workspace/contour-stage-PzOCkt completes on Sourcea0dac7675d627a31cf7cc761d2c495a4f05872c3,
 run5d526101-0cb5-490d-a7d2-aa4aa6879545. Elapsed27843.661303ms, exit0,
@@ -394,6 +485,18 @@ Current Source/Git, local/staged files, SDKs, operational DBs/leases/attempts,
 raw logs and FAIL/TIMEOUT/UNKNOWN remain protected.
 
 ### Execution combinations
+
+The10:15–13:15UTC audit reuses the same seven Git packets, complete stage1988,
+failed1982 and pre-producer transport failure1987. The transitive SDK-selector
+defect and successful-corrective-root cleanup are confirmed and fixed above.
+The stage's current capturedOutput memo still reads stdout once, and publication
+has one owner. No further useful scan/hash/capture removal is demonstrated.
+The configured-prefix failure shows a cheaper authoring order: check every
+pending profile's egress before an expensive admitted fixture, then exercise the
+actual history. No timeout is increased and no defensive path is excluded.
+Scope and inputs differ between timings; they prove no matched speedup or token
+saving. Reuse the12:41 resource observation1977; no additional broad disk scan,
+tree deletion or second automation occurs. Resource admission has no measured GAP.
 
 The09:41–12:41UTC audit reuses seven published Git packets, stages1926/1962,
 the existing1916 runner audit and report1963. Current bounded Source inspection

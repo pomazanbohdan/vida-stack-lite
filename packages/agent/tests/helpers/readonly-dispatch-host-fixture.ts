@@ -49,9 +49,12 @@ export function pauseReadonlyDispatchHostFixture(current: Awaited<ReturnType<typ
   const ledger = initialSourceHostLedger(current);
   const unissued = initialSourceJournal(current);
   expect(current.config.agents.profiles.researcher?.egress_policy).toBe('none');
-  expect(unissued.state.items).toHaveLength(1);
-  const issued = ledger.issueWave(current.identity.work_id, 1, unissued.version);
-  const item = issued.state.items[0];
+  const issued = unissued.state.items.every((entry) => entry.issue_id === null)
+    ? ledger.issueWave(current.identity.work_id, 1, unissued.version)
+    : unissued;
+  const pending = issued.state.items.filter((entry) => entry.issue_id !== null && entry.observation === null);
+  expect(pending).toHaveLength(1);
+  const item = pending[0];
   if (!item) throw new Error('Issued readonly dispatch item fixture is missing');
   const issueId = item.issue_id;
   if (!issueId) throw new Error('Issued readonly dispatch identity fixture is missing');

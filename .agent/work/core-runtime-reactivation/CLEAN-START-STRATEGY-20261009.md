@@ -124,13 +124,18 @@ remain sequential under the one execution owner.
 
 ### Current remaining work groups
 
-The active session-handoff packet fixes the reproduced empty-risk-list compiler
-block and checks the two handoff files with the existing workflow-contract
-controls. The supported Host-reservation, replacement-report, normalization,
-config-drift and insertion-race families identified in WORK are now implemented
-and pass focused checks and independent review. Publish this coherent packet,
-then execute one complete selected-contour coverage stage. Use its retained
-counter maps for the next batch; do not infer exact closure from focused PASS.
+The published session-handoff packets fix the empty-risk-list compiler defect,
+exercise native policy, correction, maintenance and replacement producers, and
+repair transitive SDK selection. Complete stage1988 and its retained map1989
+now own the next packet. Resolve its one missing function and30branch arms
+through genuine producer/refusal/restoration cases or reviewed dispositions.
+Current focused work exercises completed-prefix replacement, archived corrective
+reports, missing-owner refusal and cooperative ownerless prewriter reporting.
+The fixture's typed configuration transform runs before validation/admission;
+never change accepted configuration to satisfy a later guard. Keep remaining
+configured-preflight gaps open; peer preservation now has focused native proof.
+Finish the causal packet before
+another full stage, and do not infer exact closure from focused PASS.
 Reuse the existing Host/repair/research producers rather than manufacturing
 accepted rows or broadening suites.
 

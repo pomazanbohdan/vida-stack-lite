@@ -145,6 +145,8 @@ export async function createInitialSourceWorkFixture({
   parentRoot,
   onRoot,
   beforeAdmission,
+  configure,
+  riskFlags = [],
   cooperativeSynthesis = false,
   legacyTaskFrontier = false,
   researchSynthesis = false,
@@ -152,6 +154,8 @@ export async function createInitialSourceWorkFixture({
 }: {
   readonly parentRoot?: string;
   readonly onRoot?: (root: string) => void;
+  readonly configure?: (config: AgentRuntimeConfig) => AgentRuntimeConfig;
+  readonly riskFlags?: WorkItemSelection['risk_flags'];
   readonly beforeAdmission?: (state: {
     readonly database: BunDatabase;
     readonly store: HostStateStore;
@@ -266,6 +270,10 @@ export async function createInitialSourceWorkFixture({
       configBytes = stringifyYaml(configured);
       writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
     }
+    if (configure) {
+      configBytes = stringifyYaml(configure(loadRuntimeConfig(root)), { aliasDuplicateObjects: false });
+      writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
+    }
     const config = loadRuntimeConfig(root);
     mkdirSync(path.join(root, config.control.work_root), { recursive: true });
     const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
@@ -292,7 +300,7 @@ export async function createInitialSourceWorkFixture({
       kind: 'task',
       intent: 'task_execution',
       project: 'sample',
-      risk_flags: [],
+      risk_flags: [...riskFlags],
       labels: [],
     };
     const workItem: LocalWorkAdmissionInput['workItem'] = {
@@ -303,7 +311,7 @@ export async function createInitialSourceWorkFixture({
       project_id: selection.project,
       title: 'Continue an expired initial-source work item',
       description: 'Retain the accepted task and resume its unissued read-only first action.',
-      risk_flags: [],
+      risk_flags: [...riskFlags],
       labels: [],
       provider: 'local',
       provider_type: 'Task',
