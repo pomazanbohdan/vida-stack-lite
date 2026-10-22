@@ -86,8 +86,10 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
 6. Execute one complete selected-contour coverage stage and import once through
    its maintained projection. Read native terminal/capture/group/image custody
    before accepting numbers. Preserve every FAIL/TIMEOUT/UNKNOWN.
-7. Record current decisions and exact original receipt locators in WORK; do not
-   retype numeric/SDK fields in several documents. Reuse that report to plan the
+7. Record current decisions and exact original receipt selectors in WORK. The
+   generated contour projection owns raw metrics; the retained gap delta owns
+   counter gains/dispositions; stage, SDK and archive manifests own their binding
+   fields. Link those owners instead of retyping hashes or full numeric tables. Reuse that report to plan the
    next causal packet. After observed closure, qualify only exact owned
    regenerable cache retirement and archive/compare remaining scratch, preserving
    all original protected evidence and the unchanged resource floor.

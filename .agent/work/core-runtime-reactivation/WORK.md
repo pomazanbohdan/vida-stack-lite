@@ -13,14 +13,16 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current checked continuation coverage packet
 
-Published7439816 completes its sole selected-contour stage with341PASS and
-6266assertions, full capture, closed process group and unchanged boot/image.
-DIAG/gap-delta-v1668.json confirms135/1 newly visited, no lost arm and unchanged
+Published5bd4870 completes its sole selected-contour stage with341PASS and
+6277assertions, full capture, closed process group and unchanged boot/image.
+DIAG/gap-delta-v1676.json confirms253/1 newly visited, no lost arm and unchanged
 selected Source and15objective branch geometries. Raw S/B remain BLOCKED.
-Of32remaining branch arms,17remain undispositioned, including native Windows.
+Of31remaining branch arms,16remain undispositioned, including native Windows.
+The three completed correction stages add244/1,256/1,135/1 and253/1 without
+regressing a visited arm. No additional objective disposition is accepted.
 The numeric and custody owners below bind the exact current observations.
 
-The next checked packet refutes the proposed253skip. The genuine initial-source
+The measured packet refutes the proposed253skip. The genuine initial-source
 fixture copies its real admitted snapshot bytes to a distinct private path and
 appends that new artifact through public Host CAS. Its identifier is deliberately
 nonmatching for the historical admission collector. The actual continuation
@@ -36,8 +38,12 @@ fixture scope. No accepted fabricated continuation history is introduced.
 Root refreshes only the Host pin to
 905f271f022ce0b4dd7092c5f4fb4088fa32f9cade8855527e889c464746d058.
 DIAG/pin-strict-v1670.log has123-file PASS, scoped pin lint exits0 and
-pin-focused-v1670.log has1PASS/10assertions. Publication and one current-byte
-stage are next;253gain is still unmeasured. No251skip is inferred from the rejected duplicate-only argument.
+pin-focused-v1670.log has1PASS/10assertions. Ordinary hooks pass520format/527strict,
+and normal push publishes5bd4870. Its matching SDK/image stage completes in
+211053.34906ms: Host325/5786 takes202.96s; stopped-source16/491 takes134.43s.
+The exact operation remains BLOCKED with execution_complete=true,
+report_complete=false and resource_safe_to_advance=false. No251skip is inferred
+from the rejected duplicate-only argument.
 
 Further bounded studies leave real prerequisites open. DIAG/empty-current-capture-contract-v1664.md
 rejects a fabricated empty initial Journal: public CLI capture needs the exact
@@ -54,6 +60,17 @@ Earlier checked packets, rejected proof/fence and engine-context compositions,
 independent reviews, exact controls and transport recovery remain in the
 [published7439816 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/7439816fb2d5205dee6fe99324dc4eaca6439040/.agent/work/core-runtime-reactivation/WORK.md#current-checked-continuation-coverage-packet).
 Original failed/UNKNOWN observations retain their identities and custody.
+
+### Reporting simplification
+
+WORK now keeps the correction decision, current delta and exact custody selectors.
+The generated projection owns raw metrics, the retained comparison owns counter
+geometry and reviewed-disposition counts, and the stage/SDK/archive manifests own
+input identities and retention fields. This removes repeated manual hash and
+numeric transcription without adding a scanner, tool, authority or acceptance gate.
+Earlier full observations remain at the published packet link above and their
+original retained evidence. Future documentation-only reconciliation reuses the
+unchanged report and never repeats a suite.
 
 ### Current retention resource blocker
 
@@ -98,10 +115,10 @@ The earlier private-cache retirement is under DIAG/remainder-v1532-cache-retirem
 Fresh admission still applies before another producer. Cleanup and archival
 do not change numeric outcomes or reattest old measurements.
 
-The subsequent7439816 stage has a new immutable image, original receipts and
-verified non-cache scratch archive. Its current custody is recorded below;
-after archival25830985728durable bytes remain available, above the unchanged
-floor/reserve. Its private regenerable cache and every original are retained.
+The latest completed stage has a new immutable image, original receipts and a
+verified non-cache scratch archive. Current custody selectors below resolve its
+exact before/after available bytes, above the unchanged floor/reserve. Its private
+regenerable cache and every original are retained.
 
 Blind1498 studies the terminal Journal map arms1617/1 and1618/0. The original and
 corrected notes are retained under DIAG. Its singleton-wave proof is bound to
@@ -110,7 +127,7 @@ validated workflow graph. Root adds no disposition or accepted synthetic history
 The existing7branch/2statement dispositions retain their unchanged Source proof.
 The current DIAG/gap-delta-v1575.json checks the original branch geometry, binds
 new test inputs and adds the independently reviewed684/1 disposition. The other
-17branch arms remain undispositioned after the latest1new visit and the15reviewed
+16branch arms remain undispositioned after the latest1new visit and the15reviewed
 objective dispositions below, including the native-Windows GAP.
 No mutation producer or unchanged full-suite retry is started.
 
@@ -860,60 +877,38 @@ where copying/archive retention consumes the same space.
 ### Latest complete measurement
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
-and its JSON sibling. Its current bun-host-state observation binds Source
-7439816fb2d5205dee6fe99324dc4eaca6439040, run
-066a099a-2e20-461d-9192-244a7a326e81.
-F1125/1125,L4989/4989,S5323/5325,B5562/5594 leave2statement/32branch-arm gaps.
-F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
-do not relabel this Source/image binding or require another suite.
+and its JSON sibling. The current packet above records the accepted delta;
+the custody selectors below resolve the exact immutable Source, run, report,
+manifest, test/tool/config fingerprints and native child summaries. Do not
+transcribe those changing fields into a second manual numeric table.
 
-The stage has parent/native exits0, full capture, closed process group,
-unchanged boot/image and automatic projection publication. All341cases and
-6266assertions pass in213807.22905700002ms. Host325/5775 takes206.14s;
-stopped-source16/491 takes124.55s. Different Source/test/tool/scratch bindings across attempts
-are not a controlled speed benchmark. The unchanged300s coverage/330s stage
-budgets remain satisfied. The report-only join confirms135/1 newly visited.
-No previously visited branch arm is lost. DIAG/gap-delta-v1668.json binds both
-reports, unchanged selected Source fingerprint, changed test fingerprints and
-exact objective branch and statement geometry. Reviewed dispositions leave
-raw counters unchanged. Prior230/0,724/0 and1182/1 gains remain visited.
-The operation owner reports execution_complete=true but retains numeric BLOCKED,
-report_complete=false and resource_safe_to_advance=false. Parent exit0 does not
-override those results. No unchanged full retry is launched.
+Root checks terminal exits, full capture, process-group closure, unchanged boot
+and image, then the once-published report and exact geometry delta. These checks
+are independent of the operation's numeric BLOCKED outcome. execution_complete
+may be true while report_complete and resource_safe_to_advance remain false.
+A successful parent exit, focused PASS, historical maximum or documentation-only
+commit grants no extra acceptance and requires no unchanged full-suite retry.
+The unchanged300s coverage/330s stage budgets remain in force; different inputs
+and scratch bindings do not form a controlled speed benchmark.
 
-The two remaining statement locations are current#resolveTaskSourceBinding:9201
-and snapshotHistoricalTaskSourceSources:9389. They skip reported history from a
-different attempt or thread. DIAG/vida-task-source-history-producer-v1395.md traces
-the genuine producer prerequisite: bridge start is once per Work, resume keeps
-the same attempt, and existing continuation/recovery preserves its handle.
-That report's old own-ticket prerequisite is superseded by1463's equivalent
-lookup consolidation; only the two historical-producer GAPs remain applicable.
-Creating Journal/action rows directly would not supply a native producer. Keep
-those historical guards and raw exact acceptance OPEN. Use the owner's new
-objective-skip rule only after exact-counter disposition; remaining testable or
-undispositioned paths keep this same contour active. Do not repeat a full stage
-unchanged or fabricate history. Frozen/mutation stay deferred.
-
-The predecessor map is DIAG/host-uncovered-plan-v1652.json; the current
-map is refreshed once through the retained report-only join. The prior numeric,
-timing and retirement evidence remains in the
-[publishedaca52f0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/aca52f04331b9bc9fb99f8c3536e5118468b358b/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
-No new AST/Source scan/hash is used for this join. Frozen CC/CRAP remains deferred;
-the diagnostic255 maxima do not establish frozen-gate acceptance.
+The two remaining statement locations are #resolveTaskSourceBinding:9201 and
+snapshotHistoricalTaskSourceSources:9389. Their genuine same-Work second-attempt
+or thread producer prerequisites are traced in
+DIAG/vida-task-source-history-producer-v1395.md and the exact objective table
+below. Keep the guards, original raw denominators and disposition boundaries.
+No fresh AST/Source scan/hash is needed for the retained report-only geometry
+join. Diagnostic CC/entry-CRAP255 maxima do not establish frozen-gate acceptance;
+frozen correspondence/complexity/CRAP and mutation remain deferred.
 
 ### Bound objective coverage dispositions
 
-The table retains its original62b2652b/aca52f0 proof and is rebound to the current
-066a099a/7439816 report's identical gap geometry and unchanged selected Source in
-DIAG/gap-delta-v1668.json. That record separately binds changed test inputs and
-all15reviewed branch dispositions. It binds the native execution
-receipts above. Source fingerprint is
-aaec43aea318e9ce3d193c1cfe424be656926988979a8582efa366fc785d976a;
-test fingerprint is
-e75b8fdf9329be02e9bd8619569e49426b12df11176b041f70503d4a715a31de.
-The report's original manifest binding, tool_inputs/config hashes and tool fingerprint
-ea3a360dcc03f76bf3eda02be1e28f4ec9d8b0ab7d227afc8cc84d2a1bf83f88
-bind the checks without another hash pass. Independent blind1487 re-reads exact
+The table retains its original62b2652b/aca52f0 proof. Its current binding is
+DIAG/host-uncovered-plan-current.json and the successful exact-geometry comparison
+named in the current packet above. That comparison binds both report identities,
+changed test inputs, unchanged selected Source and all15accepted branch counters
+plus both statements. The original report manifest owns config/tool fingerprints.
+Reuse these retained owners instead of copying their hashes into this document.
+Independent blind1487 re-reads exact
 current counters and producers; DIAG/vida-objective-exact-history-v1487.md owns
 the detailed proof. Root accepts its two history dispositions. Independent1484
 also classifies continuation/repair arms; Root verifies and accepts only the
@@ -941,9 +936,9 @@ fallback, and a claimed fixture route does not prove the arm was visited.
 | HostStateStore.commitCompletedSourceReportRecovery | Branch1550 arm1 at17566 | Objective skip. The first-commit #read validates initial-source Work ancestry before the conditional; a retained retry returns earlier. A missing original receipt cannot reach this arm through either route. Independent proof: DIAG/owner-fallback-proofs-v1577.md. |
 | taskSourceReservationResources | Branch87 arm0 at1768:45–82 | Native-Windows qualification GAP, not a contract-unreachable skip. Requires the real supported native target; do not mock platform or claim current Linux evidence qualifies it. |
 
-Both missing statements and15of32missing branch arms have reviewed objective
-dispositions. RawS5323/5325 andB5562/5594 remain BLOCKED.
-The other17arms, including Windows, retain their exact gaps. The six added
+The accepted dispositions leave every raw counter and denominator unchanged.
+The generated projection owns raw values; the current exact-geometry delta owns
+the remaining and undispositioned counts. Windows retains its native-target GAP. The six added
 dispositions bind the exact current map and unchanged selected Source above;
 gap-delta-v1575.json retains its original eight-disposition result unchanged.
 The later1185/1 proof is included in the current15-disposition result;
@@ -987,26 +982,18 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Retained stage/input, launch, native outcome and capture | /workspace/contour-stage-DqxAua/{execution,launch,publication}.json |
-| Current immutable repository image | /workspace/.vida-quality-inputs/2941d754adedb3af6cbc4f1de17b027ee63f3bc5/repository |
-| Raw report, manifest and process/shard logs relative to image | packages/agent/coverage/bun-unified/diagnostics/066a099a-2e20-461d-9192-244a7a326e81.focused-coverage.json and diagnostics/runs/066a099a-2e20-461d-9192-244a7a326e81/ |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/sdk-v1662.json; /workspace/vida-sdk-7439816-39698248834-1.zip |
-| Admission, scratch qualification and complete producer log | DIAG/storage-v1661.txt, DIAG/scratch-v1661.txt and DIAG/stage-v1663.log |
-| Current non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-DqxAua-Y3kJAA/archive.json;325161bytes, full comparison PASS |
-| Current durable-retention capacity |25830985728available bytes after archival; archive.json owns before/after observations |
-| Original retained scratch and cache | /dev/shm/vida-quality-retained-HpYD7f; scratch-65H2is/scratch/bun-install-cache excluded from archive but retained unchanged |
+| Retained stage/input, launch, native outcome and once-only publication | /workspace/contour-stage-SYIJAs/{execution,launch,publication}.json |
+| Current report, immutable image and Source/test identities | DIAG/host-uncovered-plan-current.json; its report field resolves the original report and adjacent run manifest/process/shard logs |
+| SDK archive, CI and acquisition identity | DIAG/sdk-v1674.json; maintained readiness owner checks the actual ZIP/CI join once |
+| Admission, scratch qualification and complete producer log | DIAG/storage-v1673.txt, DIAG/scratch-v1673.txt and DIAG/stage-v1675.log |
+| Verified durable non-cache scratch archive | /workspace/vida-functional-retention-SYIJAs-2AoHzH/archive.json; owns exact bytes/hash, original root, excluded cache, full comparison and before/after capacity |
 | Predecessor relocation and explicit cleanup | DIAG/user-delete-v1535/{relocation,result}.json and events.jsonl; predecessor image retired |
-| Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
-The current7439816 immutable image, scratch, SDK and original receipts remain
-unchanged. Its325161-byte durable archive excludes only its declared private
-regenerable Bun cache, whose original remains retained. Every archived entry
-compares with its original; the archive and manifest are fsynced. This is custody,
-not a cleanup gain or reattestation. The earlier5350412 image and historical proof
-inside the explicit cleanup roots were retired before this new image formed;
-their retained subset and missing original custody remain explicit above.
-Prior qualified cache retirement stays in published history; no shared dependency
-scan/hash is repeated and no current cache is deleted.
+The current immutable image, scratch, SDK and original receipts remain unchanged.
+The archive excludes only its declared private regenerable cache, whose original
+remains retained. Full tar comparison and fsync are custody, not a cleanup gain
+or reattestation. Retired historical inputs retain their original explicit GAP.
+No shared dependency scan/hash is repeated and no current cache is deleted.
 
 Both filesystems passed admission before the current launch; checkout and
 durable evidence share the overlay. The later retention observation and exact
