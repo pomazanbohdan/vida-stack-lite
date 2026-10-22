@@ -73,6 +73,18 @@ an unchanged scope can short-circuit the compatibility route under test.
 At an awaited verifier-to-transaction boundary, a deliberate exact-row deletion
 can test the later native recheck. Restore only the captured absent key with
 guarded insertion and compare every original column before the success control.
+Before composing continuation fixtures, check actual lease resources and
+retained engine context, not just compatible receipt types. Code-only adoption
+requires sole execution-only ownership; a configured frontier may hold file
+claims. An initial-source successor may preserve an engine's original input
+context. Do not weaken those guards to make a fixture composition pass.
+A checksummed stored receipt can reach a history operand before its structural
+validator. Trace actual evaluation order before proposing an objective skip;
+exercise a refused, exact-CAS-restored corrupted row when that path is reachable.
+For recovery history, a real prior readonly attempt alone does not bypass a
+transaction-local projection shortcut. Use the supported changed runtime proof
+and assert both preserved history and the changed binding; distinguish the
+successful read from a tamper refusal rejected earlier.
 For stale-owner reader tests, suspend through the actual public producer and
 restore only the observed changed fixture rows with exact post-suspension CAS.
 Check the producer's full predicate: an unissued current item does not mean its

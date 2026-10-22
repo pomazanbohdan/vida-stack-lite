@@ -1,6 +1,6 @@
 # Core runtime reactivation work
 
-Status date:2026-10-21. Current execution decisions and evidence locators only.
+Status date:2026-10-22. Current execution decisions and evidence locators only.
 Historical records do not authorize state replay, Runtime cutover or acceptance.
 
 ## Current sequential F/L/S/B cycle
@@ -13,164 +13,65 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current checked continuation coverage packet
 
-Published9c39452 completes its sole full selected-contour stage with341PASS and
-6234assertions, exit0, complete capture, closed process group and unchanged
-boot/image. DIAG/gap-delta-v1611.json confirms17new branch visits, no lost arm,
-unchanged selected Source and exact unchanged geometry for all14objective branches
-and both objective statements. S/B remain numerically BLOCKED;28branch arms
-remain undispositioned after the additional1185proof below. Retained scratch
-has a verified durable archive below.
-The next bounded proposal is DIAG/context-evolution-proposal-v1608.md: use an
-actual accepted-document change to make configured-continuation context checks
-necessary, then investigate the exact verifier-to-transaction Journal race.
-Its current-byte implementation now passes strict149/scoped lint and the one
-native selected case: DIAG/context-focused-v1618.log has1PASS/119assertions,
-4648.63ms case/6.11s command/native exit0. It keeps old engine reconstruction
-bound to the original scope and successor projection/report/resume bound to the
-actually edited accepted-document scope. The explicit derived-run inequality
-prevents the old-context disjunct from hiding configured-continuation checks.
-The exact Journal deletion occurs in the typed verifier after first inspection;
-the transactional recheck refuses, leaves Host/receipt state unchanged, and
-guarded cleanup restores the exact absent row before the original success/retry.
-Independent DIAG/context-packet-review-v1619.md accepts correctness and unchanged
-resource scope. Root refreshes only the Host test pin; DIAG/pin-strict-v1620.log
-has123-file PASS, pin-lint-v1620.log exits0 with zero diagnostics and
-pin-focused-v1620.log has1PASS/10assertions. Publication and numeric qualification
-are pending. No new numeric gain is claimed.
+Published b8a6b46 completes its sole selected-contour stage with341PASS and
+6249assertions, full capture, closed process group and unchanged boot/image.
+DIAG/gap-delta-v1629.json confirms8new branch visits and no lost arm, with
+unchanged selected Source and exact geometry for15reviewed objective branches
+and both statements. Raw S/B remain BLOCKED. Of35remaining branch arms,
+20remain undispositioned, including native-Windows qualification.
+The measurement and custody sections below own current numbers and bindings.
 
-The next current-byte packet adds public stale-owner/refusal and projection
-rollback controls in the existing two selected files. Host reuses its genuine
-continuation, readonly frontier and completed-report recovery fixtures; both
-stopped/retired cases share one typed malformed-sibling owner. It binds exact
-Journal beforeimages, installs each invalid row by revision/payload/digest CAS,
-checks unchanged Host/Journal/DDL and closed transactions, then restores exact
-original bytes before the existing positive control. Research fields come from
-the maintained typed fixture, with its root registered to case failure retention.
-Request-only duplicate IDs must fail the terminal projection check. Distinct
-prior-request and completed-target variants use the existing post-projection
-fault to force rollback; none establishes accepted fabricated history.
+The next checked terminal-history packet applies the existing controlled runtime
+endpoint to that mode as well as commit mode. It requires a changed successor
+runtime digest and the genuine readonly attempt in both retained Work images.
+The ordinary post-recovery read now bypasses the transaction-local projection
+shortcut. The separate tamper refusal still fails earlier and is not visit proof.
+DIAG/history-focused-v1628.log has1PASS/39assertions; strict149 and scoped typed
+lint pass. Independent DIAG/history-packet-review-v1630.md accepts the eight-line
+delta and unchanged resource scope. Its numeric gain remains unmeasured.
 
-Host stale-owner controls use supported suspension, exact post-suspension Host
-row CAS restoration and the original positive lookup/rebind. The continuation
-reader uses the existing facade bound to targetConfig, not its preparation ledger.
-During expired recovery, callback-driven initial-receipt removal is refused by
-intermediate progress/admission validation, before the second lineage read.
-SQLite rollback restores the original row; guarded cleanup never overwrites a
-different retained row. This is an earlier refusal, not a1498/1 visit.
+A rejected1223prototype used configured-frontier file ownership with a code-only
+adoption route that requires sole execution-only ownership. Native refusal is
+preserved in DIAG/projection-focused-v1627.log with its failed fixture roots and
+projection-refused-v1627.patch. Root removes only that proposed case, preserving
+all earlier changes and the ownership guard. This is an exact composition GAP,
+not a product defect or objective disposition. Type compatibility is insufficient.
 
-DIAG/packet-strict-v1592.log records154-file strict PASS; scoped typed lint exits0
-with no diagnostics in packet-lint-v1592.log. Native focused execution exits0:
-host-negative-focused-v1593.log has3PASS/292assertions, stopped-negative-focused-v1593.log
-has2PASS/203assertions. Initial static and focused failures remain in their
-exclusive v1588/v1589/v1591 logs, with all failed roots retained. The three v1591
-fixture assumptions were corrected: old config facade, an unissued-prepared
-predicate that also required empty completed history, and the actual earlier
-lineage refusal. No timeout, gate or product contract is weakened. Blind studies
-v1576/v1580/v1585/v1586 remain proposals until checked against actual Source and
-native results; no candidate or extra assertion supplies a numeric visit.
-Independent current-byte review DIAG/blind-final-packet-review-v1595.md accepts
-the CAS/refusal/rollback controls and existing two-file resource namespaces, but
-finds a constructor-root custody gap. The shared historical-research fixture now
-offers onRoot immediately after mkdtemp, before any write. Its stopped caller
-registers the root there. Blind-retention-followup-v1597.md closes that finding.
-The existing setup regression injects the exact early callback failure, verifies
-registration and an empty root, and uses the ordinary case owner so an expected
-failure does not force retention of an otherwise successful installed fixture.
-The original v1598 retained package/root remains untouched; the corrected focused
-control is retention-focused-v1600.log:1PASS/16assertions/native exit0.
-The complete v1598 changed stopped packet has3PASS/218assertions, and current
-packet-strict-v1600.log records154-file PASS with zero scoped lint diagnostics.
-Root refreshes only both settled exact test digests after review. pin-strict-v1601.log
-has123-file PASS; pin-lint-v1601.log exits0 with zero diagnostics and
-pin-focused-v1601.log has1PASS/10assertions/native exit0. Publication and the one
-complete current-byte stage are now complete as recorded above and below.
-Product Source, resource rows, budgets and raw denominators are unchanged.
+The same packet adds a checksummed corrupted continuation receipt whose
+prior Journal source_scope is null. The public Host read refuses after the
+history ternary; native Host/Journal and the corrupted row remain unchanged.
+Exact payload/digest CAS restoration precedes the original positive path.
+DIAG/null-scope-focused-v1639.log has1PASS/128assertions in4412.91ms case/5.95s
+command; strict149 and scoped typed lint pass. Independent
+DIAG/negative-packet-review-v1640.md accepts both case deltas and unchanged two-file
+resource scope. Its135counter prose misidentifies the null fallback as the earlier
+sequence comparison; no new objective disposition is accepted from that passage.
+Root refreshes only the existing Host test pin to
+608b4be0b76bdf19c6e325117fc4924cf7f09a519cf98567fbce76b4b68249de.
+DIAG/pin-strict-v1644.log records123-file PASS, pin-lint-v1644.log exits0 and
+pin-focused-v1644.log has1PASS/10assertions. Source publication and one current-byte
+numeric stage are next; no gain is yet claimed for either new case delta.
+The earlier objective256proposal is rejected by DIAG/admission-proof-review-v1634.md:
+serialization/identity checks do not dominate that operand's structural validator.
 
-The corrective07258ce stage completes with both files passing and no case timeout.
-The current numeric binding and retained custody are in the measurement sections
-below. DIAG/gap-delta-v1575.json confirms three new branch visits and no lost arm;
-the repeated-no-effect case passes inside coverage with its unchanged deadline.
-No old FAIL/UNKNOWN is promoted by this fresh successful execution.
+The proposed initial-source to configured-frontier fixture composition fails
+at retained engine run-context validation after fixing its wall-clock regression.
+DIAG/composed-{focused-v1636,focused-v1637}.log and composed-refused-v1638.patch
+retain both failures and roots. The proposed global-clock/fixture changes are
+removed from Source; the existing working positive case is preserved. The
+counter261/262recipe remains a producer-compatibility GAP, not numeric evidence
+or an objective skip. Root accepts no251/253skip from a bounded lineage proof
+without resolving the cross-kind traversal and all supported producer guards.
+The queue/report proposal remains under exact public fixture preparation;
+its two independent studies are same-work-queue-prerequisites-v1632.md and
+queue-report-composition-v1633.md. No fabricated target ticket is admitted.
 
-The published1bd2a26 packet's first complete attempt does not produce a numeric
-report. Stage /workspace/contour-stage-j30nBj retains execution.json and
-publication-error.json; run e63b59a1-9649-4e81-960f-bd52bcf690b6 retains its original
-operation-outcome, supervisor and raw child logs in image
-/workspace/.vida-quality-inputs/4cbd14670144a3390fa68920f8fb6bbee25509a4/repository.
-Host records a repeated-no-effect setup failure at21779.81ms against its unchanged
-20s case limit, then reaches the shared child deadline and SIGKILL. Stopped-source
-has all16PASS. Parent exit1 at270786.369982ms has full capture, closed group and
-unchanged boot/image. The operation remains UNKNOWN, with no complete metrics or
-resourceSafeToAdvance. Its failed stage outcome is automatically projected once.
-
-The outer exec-server session disconnects while the original producer remains
-live. Root reconnects, observes the same boot and original workers, and starts no
-duplicate. The later stage receipt and DIAG/closed-processes-v1559.txt establish
-their observed closure. DIAG/stage-v1555-transport-interruption.json preserves
-the transport failure separately. Original failed scratch remains at
-/workspace/.vida-retained/coverage-1bd2a26-MGMcxT. No old UNKNOWN is resumed,
-relabelled or replayed; fresh regression uses repaired Source and new fixtures.
-
-The report-retry case unnecessarily continued into later planning, development
-and final-validation setup. Root reuses verifyNoEffectReport to stop at its actual
-assertion boundary. The callback explicitly performs the public Ledger report,
-then keeps every original no-effect lineage, released-rights and exact-retry
-assertion. The first extraction's active-versus-released failure remains in
-DIAG/repeated-no-effect-focused-v1560.log. Independent review catches late-cleanup
-retention: the helper now accepts the returned completion predicate and evaluates
-it after bridge/database close, preserving the original deadline through cleanup.
-Existing void callbacks retain their old behavior. The case asserts predicate use.
-DIAG/report-boundary-focused-v1566.log has2PASS/37assertions including the adjacent
-stale-root control; strict149, scoped lint and formatting pass under v1565 logs
-and Root's observed exit receipt static-v1565-outcome.json. Independent review is
-DIAG/blind-report-boundary-final-v1567.md. No budget or production Source changes.
-
-DIAG/native-comparison-v1559.json shows broader case-clock differences in both
-shards, but its partial run, changed inputs and scratch filesystem do not isolate
-a cause or establish a speedup. The corrective stage uses the already
-qualified private tmpfs-plus-durable-archive route with unchanged capacity floors.
-DIAG/blind-failed-stage-fixture-review-v1558.md reviews that resource route;
-original durable failed evidence is neither moved nor deleted.
-
-Root resumes from the relocated last report and existing zero-counter map;
-no old image or UNKNOWN operation is replayed. Blind Luna studies partition
-remaining counters by stored history, terminal capture and continuation owners
-under DIAG/blind-{history-gaps-v1536,terminal-gaps-v1537,remaining-proofs-v1545}.md.
-Their candidates are not dispositions. In particular, an acceptance guard does
-not make its earlier evaluated refusal path untestable; the terminal study gets
-a separate counterexample review before any objective skip is accepted.
-
-The checked packet adds the configured-frontier foreign-owner code-adoption
-refusal and shares its typed request builder with the initial-source refusal.
-Both require no endpoint-verifier call and unchanged native Host/Journal rows.
-The genuine readonly frontier case now temporarily empties its Journal items,
-asserts the public readonly refusal before verification, and restores the exact
-CAS-bound row through the existing shared cleanup owner. Its fixture parameter
-type now names only the four fields that owner actually uses. This is corrupted
-input refusal, not an accepted history or new authority.
-
-The native code-only component case also performs a second public adoption using
-its already prepared successor request. It checks both ordered immutable receipts,
-successive Work revisions, unchanged ledger/Journal and exact retries of both
-historical requests without another endpoint observation. The trusted endpoint
-fixture remains component evidence, not installation or Runtime acceptance.
-
-Strict149-file TypeScript and scoped zero-warning typed lint pass under
-DIAG/host-{strict,lint,format}-v1547.log. Focused evidence is
-DIAG/host-focused-v1541.log:2PASS/154assertions;
-DIAG/host-frontier-focused-v1544.log:1PASS/59assertions; and
-DIAG/host-code-history-v1548.log:1PASS/84assertions.
-The original missing type import and diagnostic lint-helper path failures stay
-in their exclusive earlier logs. No timeout is raised; the readonly case keeps
-its existing20s exception, other cases the default5s. Independent blind review
-DIAG/blind-packet-review-v1549.md passes correctness and the unchanged resource
-scope. Root refreshes only the existing Host test pin; DIAG/pin-strict-v1550.log,
-DIAG/pin-lint-v1550.log and DIAG/pin-focused-v1551.log retain strict123-file PASS,
-zero typed lint diagnostics and1PASS/10assertions for exact two-file isolation.
-The packet is published as1bd2a26 and its corrective fixture as07258ce. The first
-failed stage and separate current completed stage remain distinct outcomes.
-Raw denominators are unchanged; the measurement section owns the actual gains
-and the new independently reviewed sort-equality disposition.
+Earlier accepted packets, reviews, failed fixture custody, exact pins and17new
+visits remain in the
+[published b8a6b46 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/b8a6b465f8d7d1d35cf6737a8df527aca530ed50/.agent/work/core-runtime-reactivation/WORK.md#current-checked-continuation-coverage-packet).
+Original1bd2a26 UNKNOWN/SIGKILL evidence remains unchanged there and at its bound
+stage/image. Its observed closure and fresh repaired Source qualification permit
+new regression, never replay or relabelling of that old operation.
 
 ### Current retention resource blocker
 
@@ -215,9 +116,9 @@ The earlier private-cache retirement is under DIAG/remainder-v1532-cache-retirem
 Fresh admission still applies before another producer. Cleanup and archival
 do not change numeric outcomes or reattest old measurements.
 
-The subsequent9c39452 stage has a new immutable image, original receipts and
+The subsequent b8a6b46 stage has a new immutable image, original receipts and
 verified non-cache scratch archive. Its current custody is recorded below;
-after archival26042245120durable bytes remain available, above the unchanged
+after archival25972518912durable bytes remain available, above the unchanged
 floor/reserve. Its private regenerable cache and every original are retained.
 
 Blind1498 studies the terminal Journal map arms1617/1 and1618/0. The original and
@@ -227,8 +128,8 @@ validated workflow graph. Root adds no disposition or accepted synthetic history
 The existing7branch/2statement dispositions retain their unchanged Source proof.
 The current DIAG/gap-delta-v1575.json checks the original branch geometry, binds
 new test inputs and adds the independently reviewed684/1 disposition. The other
-28branch arms remain undispositioned after17new visits and seven further independently reviewed
-preceding-guard dispositions below, including the native-Windows GAP.
+20branch arms remain undispositioned after the latest8new visits and the15reviewed
+objective dispositions below, including the native-Windows GAP.
 No mutation producer or unchanged full-suite retry is started.
 
 ### Additional closed-dependency deduplication
@@ -978,21 +879,20 @@ where copying/archive retention consumes the same space.
 
 The sole generated numeric projection is [CONTOUR-STATUS](CONTOUR-STATUS.md)
 and its JSON sibling. Its current bun-host-state observation binds Source
-9c39452393815127ebdd1883130cd20c9bf1afb5, run
-45e4da51-487c-41c0-bd0f-238784cfb116.
-F1125/1125,L4989/4989,S5323/5325,B5551/5594 leave2statement/43branch-arm gaps.
+b8a6b465f8d7d1d35cf6737a8df527aca530ed50, run
+16113091-3495-4aa8-854b-f8e46e4ae7c5.
+F1125/1125,L4989/4989,S5323/5325,B5559/5594 leave2statement/35branch-arm gaps.
 F/L are exact100; S/B remain BLOCKED/nonexact. Documentation-only checkpoints
 do not relabel this Source/image binding or require another suite.
 
 The stage has parent/native exits0, full capture, closed process group,
 unchanged boot/image and automatic projection publication. All341cases and
-6234assertions pass in204635.830418ms. Host325/5743 takes197.62s;
-stopped-source16/491 takes122.68s. The repeated-no-effect case takes3501.60ms
-inside coverage. Different Source/test/tool/scratch bindings across attempts
+6249assertions pass in201379.456658ms. Host325/5758 takes194.01s;
+stopped-source16/491 takes115.72s. Different Source/test/tool/scratch bindings across attempts
 are not a controlled speed benchmark. The unchanged300s coverage/330s stage
-budgets remain satisfied. The report-only join confirms17new visits:1190/1,
-1191/1,1244/1,1397/1–5,1402/1,1419/2–5,1444/1,1445/0,1617/1 and1618/0.
-No previously visited branch arm is lost. DIAG/gap-delta-v1611.json binds both
+budgets remain satisfied. The report-only join confirms8new visits:548/2–5,
+549/0–1,1136/1 and1137/1.
+No previously visited branch arm is lost. DIAG/gap-delta-v1629.json binds both
 reports, unchanged selected Source fingerprint, changed test fingerprints and
 exact objective branch and statement geometry. Reviewed dispositions leave
 raw counters unchanged. Prior230/0,724/0 and1182/1 gains remain visited.
@@ -1013,7 +913,7 @@ objective-skip rule only after exact-counter disposition; remaining testable or
 undispositioned paths keep this same contour active. Do not repeat a full stage
 unchanged or fabricate history. Frozen/mutation stay deferred.
 
-The predecessor map is DIAG/host-uncovered-plan-v1575.json; the current
+The predecessor map is DIAG/host-uncovered-plan-v1610.json; the current
 map is refreshed once through the retained report-only join. The prior numeric,
 timing and retirement evidence remains in the
 [publishedaca52f0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/aca52f04331b9bc9fb99f8c3536e5118468b358b/.agent/work/core-runtime-reactivation/WORK.md#latest-complete-measurement).
@@ -1023,15 +923,15 @@ the diagnostic255 maxima do not establish frozen-gate acceptance.
 ### Bound objective coverage dispositions
 
 The table retains its original62b2652b/aca52f0 proof and is rebound to the current
-45e4da51/9c39452 report's identical gap geometry and unchanged selected Source in
-DIAG/gap-delta-v1611.json. That record separately binds changed test inputs and
-all14reviewed branch dispositions. It binds the native execution
+16113091/b8a6b46 report's identical gap geometry and unchanged selected Source in
+DIAG/gap-delta-v1629.json. That record separately binds changed test inputs and
+all15reviewed branch dispositions. It binds the native execution
 receipts above. Source fingerprint is
 aaec43aea318e9ce3d193c1cfe424be656926988979a8582efa366fc785d976a;
 test fingerprint is
-7720ea11e76064dcb6021dca9f26f4632a8d388e1c1a135340a9edcea56f1728.
+7b8d3082bee9405e089b09ca07bb6d634a869884faafb4ea0b27619cba0a23c6.
 The report's original manifest binding, tool_inputs/config hashes and tool fingerprint
-4fbcc182567a4cc160b282df93705f71206c88609afb78c1acc78d48fc8692b9
+9dcee299746c853bd915aa44642c83182aca3cdac2f634719bbf730f3573a32a
 bind the checks without another hash pass. Independent blind1487 re-reads exact
 current counters and producers; DIAG/vida-objective-exact-history-v1487.md owns
 the detailed proof. Root accepts its two history dispositions. Independent1484
@@ -1043,8 +943,8 @@ fallback, and a claimed fixture route does not prove the arm was visited.
 
 | Function in src/host-state.ts | Exact zero counters | Disposition and prerequisite |
 | --- | --- | --- |
-| HostStateStore.#resolveTaskSourceBinding | Statement2663 at9201:80–89; branch785 arm0 at9201:6–89, raw[0,8] | Objective skip. Reaching continue requires valid reported same-Work history from another attempt or native owner. Current bridge start is once per Work-bound run, resume preserves attempt, and supported renew/recovery/continuation preserves owner. No supported same-Work new-attempt or owner-transfer producer exists. Keep integrity checks and guard; reopen when that producer/contract changes. |
-| HostStateStore.snapshotHistoricalTaskSourceSources | Statement2718 at9389:51–60; branch809 arm0 at9389:12–60, raw[0,18] | Objective skip. Requires a genuine second same-Work attempt Journal retaining the first attempt's observed TaskSource action. Current bridge cannot produce that transition; direct ledger sync or edited retained history is not engine-backed evidence. Keep guard and reopen when the supported producer/contract changes. |
+| HostStateStore.#resolveTaskSourceBinding | Statement2663 at9201:80–89; branch785 arm0 at9201:6–89 | Objective skip. Reaching continue requires valid reported same-Work history from another attempt or native owner. Current bridge start is once per Work-bound run, resume preserves attempt, and supported renew/recovery/continuation preserves owner. No supported same-Work new-attempt or owner-transfer producer exists. Keep integrity checks and guard; reopen when that producer/contract changes. |
+| HostStateStore.snapshotHistoricalTaskSourceSources | Statement2718 at9389:51–60; branch809 arm0 at9389:12–60 | Objective skip. Requires a genuine second same-Work attempt Journal retaining the first attempt's observed TaskSource action. Current bridge cannot produce that transition; direct ledger sync or edited retained history is not engine-backed evidence. Keep guard and reopen when the supported producer/contract changes. |
 | HostStateStore.#repairWorkAuthority | Branch965 arm1 at10795:48–81 | Objective skip. The restored request-transition serializer's nullish fallback is dominated by restored-list validation/assignment on decoded operations, and by explicit restoredWorks assignment on the live restored-status producer. Invalid absent/null persisted lists fail before serialization. Preserve fallback; reopen on a changed restored producer/decoder. |
 | HostStateStore.authorizeCorrectiveExecution | Branch1301 arm1 at14289:91–93 | Objective skip. selectCorrectiveEvidence already requires each returned failed item to resolve to a configured test or eligible validate stage before the later stage-kind lookup. Thus its missing-stage empty-string operand cannot execute for returned evidence. Preserve refusal and reopen if the selector/producer contract changes. |
 | HostStateStore.authorizeCorrectiveExecution | Branch1303 arm1 at14300:93–95 | Objective skip. The ancestor worklist starts with those verified stage IDs and expands only configured required_after IDs. The bound validated workflow requires prerequisites to match existing predecessor edges. No absent stage or absent required_after reaches this fallback. Preserve it and reopen if config/closure/producer validation changes. |
@@ -1060,12 +960,12 @@ fallback, and a claimed fixture route does not prove the arm was visited.
 | HostStateStore.commitCompletedSourceReportRecovery | Branch1550 arm1 at17566 | Objective skip. The first-commit #read validates initial-source Work ancestry before the conditional; a retained retry returns earlier. A missing original receipt cannot reach this arm through either route. Independent proof: DIAG/owner-fallback-proofs-v1577.md. |
 | taskSourceReservationResources | Branch87 arm0 at1768:45–82 | Native-Windows qualification GAP, not a contract-unreachable skip. Requires the real supported native target; do not mock platform or claim current Linux evidence qualifies it. |
 
-Both missing statements and15of43missing branch arms have reviewed objective
-dispositions. RawS5323/5325 andB5551/5594 remain BLOCKED.
-The other28arms, including Windows, retain their exact gaps. The six added
+Both missing statements and15of35missing branch arms have reviewed objective
+dispositions. RawS5323/5325 andB5559/5594 remain BLOCKED.
+The other20arms, including Windows, retain their exact gaps. The six added
 dispositions bind the exact current map and unchanged selected Source above;
 gap-delta-v1575.json retains its original eight-disposition result unchanged.
-The later1185/1 proof binds the same current map and unchanged Source separately;
+The later1185/1 proof is included in the current15-disposition result;
 gap-delta-v1611.json retains its original14-disposition result unchanged.
 Reopen each additional skip if its producer, decoder or preceding guard changes.
 This does not close
@@ -1106,19 +1006,19 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Retained stage/input, launch, native outcome and capture | /workspace/contour-stage-ayY15F/{execution,launch,publication}.json |
-| Current immutable repository image | /workspace/.vida-quality-inputs/34bd9d59191b8e320363926464674235afbbb670/repository |
-| Raw report, manifest and process/shard logs relative to image | packages/agent/coverage/bun-unified/diagnostics/45e4da51-487c-41c0-bd0f-238784cfb116.focused-coverage.json and diagnostics/runs/45e4da51-487c-41c0-bd0f-238784cfb116/ |
-| SDK acquisition metadata and once-verified ZIP identity | DIAG/sdk-v1606.json; /workspace/vida-sdk-9c39452-39693093348-1.zip |
-| Admission, scratch qualification and complete producer log | DIAG/storage-v1604.txt, DIAG/scratch-v1604.txt and DIAG/stage-v1607.log |
-| Current non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-ayY15F-RyWGzl/archive.json;325551bytes, full comparison PASS |
-| Current durable-retention capacity |26042245120available bytes after archival; archive.json owns before/after observations |
-| Original retained scratch and cache | /dev/shm/vida-quality-retained-oGHNOf; scratch-4SuuVS/scratch/bun-install-cache excluded from archive but retained unchanged |
+| Retained stage/input, launch, native outcome and capture | /workspace/contour-stage-AoCXb6/{execution,launch,publication}.json |
+| Current immutable repository image | /workspace/.vida-quality-inputs/fb9ea7d1ffe412ed8f4a39957a2bff57eb1f7b10/repository |
+| Raw report, manifest and process/shard logs relative to image | packages/agent/coverage/bun-unified/diagnostics/16113091-3495-4aa8-854b-f8e46e4ae7c5.focused-coverage.json and diagnostics/runs/16113091-3495-4aa8-854b-f8e46e4ae7c5/ |
+| SDK acquisition metadata and once-verified ZIP identity | DIAG/sdk-v1624.json; /workspace/vida-sdk-b8a6b46-39694783307-1.zip |
+| Admission, scratch qualification and complete producer log | DIAG/storage-v1624.txt, DIAG/scratch-v1624.txt and DIAG/stage-v1625.log |
+| Current non-cache scratch archive and full-compare result | /workspace/vida-functional-retention-AoCXb6-FV7ADZ/archive.json;325010bytes, full comparison PASS |
+| Current durable-retention capacity |25972518912available bytes after archival; archive.json owns before/after observations |
+| Original retained scratch and cache | /dev/shm/vida-quality-retained-gww1p0; scratch-VkOKI0/scratch/bun-install-cache excluded from archive but retained unchanged |
 | Predecessor relocation and explicit cleanup | DIAG/user-delete-v1535/{relocation,result}.json and events.jsonl; predecessor image retired |
 | Current report-only zero-counter join | DIAG/host-uncovered-plan-current.json |
 
-The current9c39452 immutable image, scratch, SDK and original receipts remain
-unchanged. Its325551-byte durable archive excludes only its declared private
+The current b8a6b46 immutable image, scratch, SDK and original receipts remain
+unchanged. Its325010-byte durable archive excludes only its declared private
 regenerable Bun cache, whose original remains retained. Every archived entry
 compares with its original; the archive and manifest are fsynced. This is custody,
 not a cleanup gain or reattestation. The earlier5350412 image and historical proof

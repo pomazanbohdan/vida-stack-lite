@@ -6840,6 +6840,68 @@ test(
         expect(result.receipt.prior_ledger).toEqual(paused.ledger);
         expect(result.receipt.prior_journal).toEqual(journal.state);
         expect(result.snapshot.work?.execution.assignment_attempts).toEqual([readonlyPreparation.attempt]);
+        {
+          const receiptRow = () =>
+            db
+              .query<{ payload: string; digest: string }, [string, string]>(
+                'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=1',
+              )
+              .get(host.workspaceId, current.identity.work_id);
+          const original = requiredValue(receiptRow(), 'Native continuation receipt before corruption');
+          const retained = readFixtureHostRows(db);
+          const changed = parseJsonRecord(original.payload);
+          recordAt(changed, 'prior_journal').source_scope = null;
+          const payload = canonicalJson(changed);
+          const digest = canonicalJsonDigest(changed);
+          const replace = db.query(
+            'UPDATE agent_host_delivered_work_continuation SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND payload=? AND digest=?',
+          );
+          let failure: { error: unknown } | undefined;
+          let installed = false;
+          try {
+            installed =
+              replace.run(
+                payload,
+                digest,
+                host.workspaceId,
+                current.identity.work_id,
+                original.payload,
+                original.digest,
+              ).changes === 1;
+            expect(installed).toBe(true);
+            expect(() => store.readHostStateSnapshot(current.identity)).toThrow(
+              'original, current or authorized Source scope is invalid',
+            );
+            expect(readFixtureHostRows(db)).toEqual(retained);
+            expect(receiptRow()).toEqual({ payload, digest });
+            expect(db.inTransaction).toBe(false);
+          } catch (error) {
+            failure = { error };
+            throw error;
+          } finally {
+            completeOwnedCleanup(
+              [
+                () => {
+                  if (installed)
+                    expect(
+                      replace.run(
+                        original.payload,
+                        original.digest,
+                        host.workspaceId,
+                        current.identity.work_id,
+                        payload,
+                        digest,
+                      ).changes,
+                    ).toBe(1);
+                  expect(receiptRow()).toEqual(original);
+                  expect(readFixtureHostRows(db)).toEqual(retained);
+                },
+              ],
+              failure,
+            );
+          }
+          expect(store.readHostStateSnapshot(current.identity)).toEqual(result.snapshot);
+        }
         expectTerminalHostResultMutationDenied(
           db,
           store,
@@ -7572,7 +7634,7 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
         };
         // Only the external new-runtime proof is controlled; Host creates its own transition history.
         const recovery: typeof nativeRecovery =
-          mode === 'commit'
+          mode !== 'rollback'
             ? {
                 ...nativeRecovery,
                 request: { ...nativeRecovery.request, ...controlledEndpoint },
@@ -7641,6 +7703,13 @@ test.each(['rollback', 'terminal-history', 'commit'] as const)(
           expect(readonlyAttempt.attempt_id).not.toBe(issued.hostAttemptId);
           expect(restored.work.execution.assignment_attempts[0]).toEqual(readonlyAttempt);
           expect(restored.work.execution.assignment_attempts).toHaveLength(2);
+          if (mode === 'terminal-history') {
+            expect(retried.record.successor_work.binding.runtime_code_digest).not.toBe(
+              retried.record.prior_work.binding.runtime_code_digest,
+            );
+            expect(retried.record.prior_work.execution.assignment_attempts).toContainEqual(readonlyAttempt);
+            expect(retried.record.successor_work.execution.assignment_attempts).toContainEqual(readonlyAttempt);
+          }
           const recoveryReceiptRows = db.query(
             'SELECT * FROM agent_host_completed_source_report_recovery WHERE workspace_id=? AND work_id=? AND attempt=1',
           );
