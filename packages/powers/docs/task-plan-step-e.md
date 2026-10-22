@@ -27,7 +27,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T19:30:00Z' }
-revision: '4'
+revision: '5'
 ---
 
 **Goal:** complete the core of the product — the declaration of policies, environment-driven
@@ -208,9 +208,9 @@ the marketplace listing.
 - Layout: **per-host** `marketplace.json` and `plugin.json` in their own directory
   (`.claude-plugin/`, `.cursor-plugin/`, `.codex-plugin/`, `.agents/plugins/`) —
   per the D4b pattern; the package description for the marketplace — at the root of the package (`source: "./"`) ✓.
-  The owner of the manifests is the **package build** (a separate packaging step, not in this
-  scope) ✓.
-- The manifests are schema-valid ✓; the payload is not duplicated (D4b) ✓.
+  The package build generates these manifests. E5 supplies the schema and metadata inputs
+  and implements the generator under the owner's authorization dated 2026-10-22.
+- The generated manifests must validate against the schema and must not duplicate the payload (D4b).
 - A new AC: "the per-host manifests and the marketplace description are schema-valid and do not duplicate
   the payload" — a **proposal** (owner approval).
 
@@ -222,7 +222,7 @@ the marketplace listing.
 | E2. Effective profile | **closed** | `config/vpeffectiveprofile.v1.schema.json`; used by `catalog-cli` (no dedicated `tests/effective-profile.test.ts` was created) |
 | E3. `vp-setup` | **closed** | `skills/vp-setup/SKILL.md`, `skills/vp-setup/scripts/setup.ts`, `skills/vp-setup/scripts/cli.ts`, `tests/setup.test.ts` |
 | E4. `vp-mode` | **not started** | `skills/vp-mode/SKILL.md` does not exist; the tooling exists (`catalog.ts`, `catalog-cli.ts`, `frontmatter.ts`, `schema.ts`) |
-| E5. Per-host manifests and marketplace | **not started** | no `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, no `marketplace.json`, no `config/vppluginmanifest.v1.schema.json` |
+| E5. Per-host manifests and marketplace | **not started** | no `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, no `marketplace.json`, no `config/vppluginmanifest.v1.schema.json`; generator scope authorized 2026-10-22, implementation pending |
 
 ## Outside this plan
 

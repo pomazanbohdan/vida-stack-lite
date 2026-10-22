@@ -16,7 +16,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept and architectural baseline
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '4'
+revision: '5'
 ---
 
 Each criterion: **ID**, condition, **binding to an SR**, **evidence**, **type**, **state**.
@@ -59,7 +59,7 @@ the current scope (recorded as a GAP, not as passed).
 | AC-16 | A task-scoped override is recorded, passed to child agents and does not change the permanent profile, other products, permissions or security gates | SR-29 | override test | auto | open |
 | AC-17 | The semantics of an instruction does not change under the same ID; a change of behavior requires a new pattern ID | SR-30 | identity test | auto | open |
 | AC-18 | The `Light` level does not skip mandatory AC, materialization and mandatory gates | SR-31 | depth profile test | auto | open |
-| AC-19 | The same profile section is read from three carriers (`.vida/project.yaml`, the managed YAML block, the project config file) with the same result | SR-33 | carrier test | auto | open |
+| AC-19 | The same profile section is read from three carriers (`.vida/project.yaml`, a managed block with a JSON payload in the YAML carrier (`AGENTS.md` or `CLAUDE.md`), and the project config file) with the same result | SR-33 | carrier test | auto | open |
 
 ## Materialization, findings, scope
 

@@ -19,7 +19,7 @@ sources:
   resource: /decisions/index.md
   title: Accepted decisions D1–D13 (and D4b)
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '4'
+revision: '5'
 ---
 
 S-level: **what VP does, observably**. The B-level — `business-requirements.md`,
@@ -74,7 +74,7 @@ normative behavior.
 - **SR-30.** Live Inheritance: references to stable IDs without version pinning; a change of behavior = a **new pattern ID**, not a substitution under the same ID.
 - **SR-31.** The flow level, applicability and requirement level (`required`/`conditional`/`optional`) are separate properties. `Light` does not skip mandatory AC, materialization and mandatory gates; `Full` does not mean performing all stages.
 - **SR-32.** The roles (Researcher, Analyst, Decision Reviewer, Requirements Specialist, Test Designer, Implementer, Automation Tester, Manual/UI Tester, Independent Reviewer, Verifier) are formed as needed; the requirement level of a role ≠ actual participation. Independent verification is not replaced by the author's self-review.
-- **SR-33.** One profile schema — different carriers: Runtime → a section in `.vida/project.yaml`; Standalone → the same section in the managed YAML block of the instruction file; host shim → the project config file.
+- **SR-33.** One profile schema — different carriers: Runtime → a section in `.vida/project.yaml`; Standalone → the same section in a managed block with a JSON payload in `AGENTS.md` or `CLAUDE.md` (the YAML carrier); host shim → the project config file.
 
 ## 6. Two forms of an instruction
 

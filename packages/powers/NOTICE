@@ -27,10 +27,12 @@ the Apache License, Version 2.0.
 
 The Apache License, Version 2.0 requires that any NOTICE file distributed
 with the original work be reproduced. The original work's LICENSE.md is the
-verbatim Apache-2.0 text and carries no copyright line; its README.md carries
-no copyright line either. The original work ships no NOTICE file, so there is
-none to reproduce. This NOTICE file therefore records the attribution above
-and states that no NOTICE file was present in the original work.
+verbatim Apache-2.0 text. Its appendix includes the unfilled placeholder
+`Copyright [yyyy] [name of copyright owner]`. It does not identify a copyright
+holder. Its README.md carries no copyright line. The original work ships no
+NOTICE file, so there is none to reproduce. This NOTICE file records the
+attribution above and states that no NOTICE file was present in the original
+work. Legal clearance remains open.
 
 The MIT-licensed donors above each ship their own LICENSE file; those license
 texts are not reproduced here, and the pinned revisions above make the

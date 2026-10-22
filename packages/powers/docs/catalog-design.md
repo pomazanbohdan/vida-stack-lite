@@ -26,7 +26,7 @@ sources:
   resource: /next-actions.md
   title: Vida Powers — next actions within packages/powers
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '8'
+revision: '9'
 ---
 
 # 1. Why and for whom
@@ -724,10 +724,10 @@ steps of the product.
   of text — SR-58/AC-26), the mandatory Agent Fallback with its materialization and a
   negotiation request for an unresolved policy group. The tooling under
   `skills/vp-mode/scripts/` exists; the `SKILL.md` does not.
-- **Step E5 — the delivery channels**: `config/vppluginmanifest.v1.schema.json`, the
-  four per-host manifests and `marketplace.json`. **Gated on an owner decision** — who
-  owns the manifests: the package build (which writes them) or this stage (which
-  writes their inputs). None of them exists yet.
+- **Step E5 — the delivery channels**: E5 supplies `config/vppluginmanifest.v1.schema.json`
+  and the metadata inputs. The package build generates the four per-host manifests and
+  `marketplace.json` with a generator included in E5. The owner authorized the generator
+  on 2026-10-22; implementation and outputs remain pending.
 - **Step F — the Work Items and the findings**: `docs/work/` and the findings JSONL.
   No task plan exists for the step; the plan is written and validated at its start.
 - **Step G — the runtime request**: one request document for D3 and D8 in

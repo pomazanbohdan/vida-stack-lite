@@ -20,7 +20,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T12:00:00Z' }
-revision: '3'
+revision: '4'
 ---
 
 **Goal:** extend the canonical instruction corpus beyond the seed batch of step C
@@ -138,6 +138,8 @@ of step C), `docs/research/vida-powers-product-research.md` §4.1 (donor boundar
 | D4. Materialization and validation | **closed** | corpus of 161 instructions (superpowers + ponytail + pstack); `check-corpus.ts` → `issues: []`; the map has 314 entries (37 split / 149 converted / 14 merged / 114 rejected); 230 tests, coverage 100 % |
 
 **Status addendum (2026-10-21):** the donors outside the MVP pair — BMAD, matt-skills, addy-skills, pstack, gsd-core and open-knowledge-format — were all processed; the corpus is 2510 instructions. Steps E, F and G remain.
+
+**Scope clarification (2026-10-22):** "Outside the plan" and "remaining" below describe the original scope of step D. The 2026-10-21 status addendum records that all remaining donors were later processed.
 
 **Outside the plan of step D (remaining):** donors outside the MVP pair (BMAD, matt-skills,
 addy-skills, pstack, gsd-core) — a separate step with an owner decision on the boundary;

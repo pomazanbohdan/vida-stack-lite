@@ -183,7 +183,7 @@ packages/powers/
   README.md                     this file
   donors.yaml                   donor manifest (revisions, licenses, counters)
   docs/                         OKF bundle (index.md, log.md, research/, decisions/, work/, requests/)
-  config/                       VP schemas (VPCatalog/v1, VPInstruction/v1, VPEffectiveProfile/v1, VPCorpusMap/v1)
+  config/                       VP schemas (VPCatalog/v1, VPInstruction/v1, VPMethodologyProfile/v1, VPEffectiveProfile/v1, VPCorpusMap/v1); source profile: `config/methodology-profile.json`
   instructions/                 canonical instructions: .md + metadata, flat
   skills/                       vp-mode, vp-setup (+ their scripts/)
   (.codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/ — planned in step E; not yet created)   per-host manifests
@@ -236,11 +236,11 @@ counters. `--json` emits the report as JSON.
 | Step | Content | Status |
 |---|---|---|
 | A0 | Risk check for the agent lint gate | **closed** — the gate returns `{"issues":[]}`, exit 0 |
-| A | Product skeleton and harness (Bun package, tests) | **closed** — 326 tests pass (0 fail), typecheck exit 0 |
+| A | Product skeleton and harness (Bun package, tests) | **closed 2026-10-19** — 13 package tests passed; typecheck reported "No type errors" |
 | B | Canonical product documents (BR/SR/AC + matrix) | **closed** |
 | C | `VPCatalog/v1`, `VPMethodologyProfile/v1`, `catalog.*` operations, `decision.evaluate` | **closed 2026-10-20**: the schemas, the `catalog.*` operations, `decision.evaluate` and the CLI exist and are tested |
 | D | Full corpus from all eight donors | **closed**: 2510 instructions from 8 donors, 2790 map records, the map and the provenance reconciled (`audit map` → 0 findings) |
-| E | `vp-mode`/`vp-setup` skills, per-host manifests, marketplace | **in progress**: E1–E3 closed (the profile schemas, `vp-setup`); E4 (`skills/vp-mode/SKILL.md`) and E5 (the per-host manifests, the marketplace) not started |
+| E | `vp-mode`/`vp-setup` skills, per-host manifests, marketplace | **in progress**: E1–E3 closed (the profile schemas, `vp-setup`); E4's `vp-mode` SKILL is open and under review; E5's manifest schema, metadata inputs and owner-authorized package-build generator (2026-10-22) remain pending implementation. The package build will generate the per-host manifests and `marketplace.json`; outputs remain pending |
 | F | Work Items, findings (Standalone), `artifact_contract` | plan |
 | G | Runtime request (D3 + D8) as a document | plan |
 
@@ -257,7 +257,10 @@ repository; the D3+D8 runtime request; the `.vida/*` cutover; marketplace public
 the Runtime mode of VP in general.
 
 **Status:** `research_status: finalized`; implementation: steps A0, A, B, C and D are closed —
-the corpus is 2510 instructions from 8 donors; step E is in progress (E1–E3 closed).
+the corpus is 2510 instructions from 8 donors; step E is in progress (E1–E3 closed; E4's
+`vp-mode` SKILL is open and under review; E5's
+manifest schema, metadata inputs and owner-authorized package-build generator remain pending
+implementation and output generation).
 
 ## 13. Source licenses
 

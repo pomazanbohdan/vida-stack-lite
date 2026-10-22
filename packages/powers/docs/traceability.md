@@ -25,7 +25,7 @@ sources:
   resource: /catalog-design.md
   title: Vida Powers — instruction catalog design
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '4'
+revision: '5'
 ---
 
 ## Research → BR → SR → AC
@@ -92,7 +92,7 @@ the list of technically open questions (closed by stages, not by the specificati
 | CAT-D1 | Project layer of instructions | v1 canonical | — |
 | CAT-D2 | Semantic `decision.evaluate` | v1 deterministic | SR-16…SR-21, AC-10…AC-12 |
 | CAT-D3 | Digest binding of instructions | decided: digest in `catalog.json` | SR-76, AC-42 |
-| CAT-D4 | Language of instructions | v1 — product language | — |
+| CAT-D4 | Language of instructions | resolved by D11: English documentation and donor-original instruction text | SR-77 (catalog-design §13) |
 | CAT-D5 | Catalog hierarchy | v1 — flat | — |
 | CAT-D6 | CRAP/mutation gate for VP | deferred (a new dependency) | — |
 | CAT-D7 | Corpus navigation | bundle index | SR-73 |
@@ -102,10 +102,11 @@ the list of technically open questions (closed by stages, not by the specificati
 
 ## Coverage
 
-Each section of research §1–§14 has at least one row; the normative clauses of the
-S-specification have a binding to BR and AC. Clauses without a separate automated test — configuration, schema, runtime request or
-semantic check: their verification is closed by the gates of the respective stage
-(Stage 2/4/5/7) or by human review (AC with the type `manual`).
+Each research section (§1–§14) has at least one row. Research-derived clauses link
+research to BR, SR and AC where applicable. The Decision → SR/AC table records clauses
+that derive directly from decisions. D11 binds to SR-77, which has no separate AC by
+design. Clauses without an automated test, such as configuration, schema, runtime
+request or semantic checks, use their stage gate or human review when an AC is `manual`.
 
 **S-specification clauses without a separate AC** (maintained by reading the S-specification and acceptance document): SR-02, SR-08, SR-09,
 SR-17, SR-19, SR-27, SR-32, SR-34, SR-35, SR-36, SR-39, SR-40, SR-42, SR-44, SR-46, SR-47,

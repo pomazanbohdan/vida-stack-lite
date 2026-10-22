@@ -29,7 +29,7 @@ generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:01:10Z' 
 verified:
 - { by: deepseek/deepseek-flash, at: '2026-10-19T13:36:34Z' }
 - { by: opencode/glm-5.3-flash-free, at: '2026-10-19T13:59:31Z' }
-revision: '4'
+revision: '5'
 ---
 
 # Vida Powers — implementation plan
@@ -216,8 +216,8 @@ one major, six minor and partial research coverage remained.
 | D4b | Marketplace owner and hosts | a marketplace at the repo root / `packages/powers` itself / a separate repository; the set of hosts | **RESOLVED 2026-10-19**: `packages/powers` is itself the marketplace (`source: "./"`, publication as a Git repository through the existing Source mirror pattern); Codex — the verified first host, the rest — declared support with a limitation. Decision: `docs/decisions/D4b-marketplace-and-hosts.md` | resolved |
 | D5 | Decision Provider and routing | a specific provider / a provider-neutral interface | **RESOLVED 2026-10-19**: a provider-neutral `decision.evaluate` contract (implementations: the agent's master LLM / an external provider per host config), Agent Fallback mandatory; routing = LLM selection + agent formation from a fixed reference + flow level (Light/Medium/Full); the owner of the execution graph is untouched. Decision: `docs/decisions/D5-decision-provider.md` | resolved |
 | D6 | Research change log | create `*.changelog.md` / remove the reference | Resolved by format: the bundle log `packages/powers/docs/log.md` (OKF §9), which `vida.changelog_ref` points to; a separate `*.changelog.md` is not needed | 0 |
-| D7 | Environment-driven VP initialization | one layout for everything / three carriers | **RESOLVED 2026-10-19**: `vp-setup` determines the environment — Standalone → a managed YAML block in `AGENTS.md`/`CLAUDE.md`; agent-delivery → the config file of the agent runtime; host shim → the project config file from templates. Decision: `docs/decisions/D7-consumer-initialization.md` | resolved |
-| D8 | Methodology profile: schema and carrier | (a) a section in the runtime config; (b) a VP-owned file; (c) one schema, carrier by environment; (d) only `.vida/project.yaml` | **RESOLVED 2026-10-19**: (c) — the `VPMethodologyProfile/v1` schema belongs to VP; Runtime — a section in `.vida/project.yaml`, Standalone — a managed YAML block of the instruction file, host shim — the project config file. Decision: `docs/decisions/D8-methodology-profile.md` | resolved |
+| D7 | Environment-driven VP initialization | one layout for everything / three carriers | **RESOLVED 2026-10-19**: `vp-setup` determines the environment — Standalone → a managed block with a JSON payload in `AGENTS.md` or `CLAUDE.md` (the YAML carrier); agent-delivery → the config file of the agent runtime; host shim → the project config file from templates. Decision: `docs/decisions/D7-consumer-initialization.md` | resolved |
+| D8 | Methodology profile: schema and carrier | (a) a section in the runtime config; (b) a VP-owned file; (c) one schema, carrier by environment; (d) only `.vida/project.yaml` | **RESOLVED 2026-10-19**: (c) — the `VPMethodologyProfile/v1` schema belongs to VP; Runtime — a section in `.vida/project.yaml`, Standalone — a managed block with a JSON payload in the instruction file (`AGENTS.md` or `CLAUDE.md`), the YAML carrier; host shim — the project config file. Decision: `docs/decisions/D8-methodology-profile.md` | resolved |
 
 ---
 ## 4. Stages
@@ -428,8 +428,8 @@ Dependencies: Stage 2.
 Work:
 - **The profile schema is VP-owned** (D8): `VPMethodologyProfile/v1` in `packages/powers/config/`,
   with a single owner. **The carrier depends on the environment (D7):** Runtime — a section in
-  `.vida/project.yaml`; Standalone — the same section in a managed YAML block of
-  the project instruction file; host shim — the project config file. One semantics,
+  `.vida/project.yaml`; Standalone — the same section in a managed block with a JSON payload in
+  the project instruction file (`AGENTS.md` or `CLAUDE.md`), the YAML carrier; host shim — the project config file. One semantics,
   different carrier files.
 - `Effective Methodology Profile`: groups (testing-sequence, review-strategy,
   architecture, delivery), explicit selective inheritance between products, local
@@ -478,8 +478,9 @@ Work:
   provider-neutral operations; the relevance threshold is a calibrated parameter, not
   a universal constant; the owner of the execution graph remains untouched.
 - **`vp-setup` — the auxiliary setup skill (D7):** context-dependent initialization
-  with three writers: Standalone → a managed YAML block in the project `AGENTS.md`
-  (or `CLAUDE.md`, if `AGENTS.md` is absent); agent-delivery → the config file of the
+  with three writers: Standalone → a managed block with a JSON payload in the
+  project instruction file (existing `AGENTS.md` first, otherwise `CLAUDE.md`,
+  otherwise create `AGENTS.md`); agent-delivery → the config file of the
   agent runtime; host shim → the project config file from templates. All three:
   idempotency, preservation of third-party instructions, configuration of the available host
   hooks, layout mapping, activation verification. No writer changes the agent
@@ -498,6 +499,9 @@ Work:
   publication — through the existing Source catalog mirror pattern; installation through
   `codex plugin marketplace add <git-url>`. Codex — the verified first host; the rest
   of the hosts — declared support with a marked limitation.
+- The package build generates the per-host plugin manifests and `marketplace.json` from
+  E5's schema and metadata inputs. E5 includes the generator, authorized by the owner on
+  2026-10-22; implementation and outputs remain pending.
 
 AC:
 - Re-running `vp-setup` on an unchanged input → an empty diff (test) **for
