@@ -100,15 +100,17 @@ its same-identity producer/immutability proof is complete. Key30's possible
 lease-thread change across fresh reads remains OPEN. No new skipped counter,
 covered count or closed contour follows from research alone.
 
-Blind2117 narrows key30 to the public no-effect retry-lease owner. Its existing
-already-no_effect branch can apply the exact successor lease synchronously at
-the final native continuation read, before fresh admission captures its thread.
-The prerequisite is a genuinely persisted, fully verified fresh no-effect proof
-with the old lease still present. The normal producer completes both steps;
-the fixture must establish that intermediate state through the real owner and
-retain/await both calls, rather than manufacturing rows or replaying UNKNOWN.
-This is the next bounded fixture experiment, not demonstrated reachability or
-an accepted skip. Capture its refusal oracle after the intentional transition.
+Blind2117 proposes the public no-effect retry-lease owner for key30. Before
+authoring the case, Root and blind2158 identify an earlier prerequisite failure:
+the same-slot old-lease intermediate fails claimWorkflowAssignmentWithApproval's
+exact previous.reconciliation.retry_lease == input.lease check before the approval
+verifier and preflight resolver. Applying the retry first removes that proposed
+lease-change seam. Do not author or run the2117 same-slot case as-is. A distinct
+current unissued assignment or another supported native transition is still
+required; the selected fixtures do not establish it. This disproves that route,
+not every producer, so key30 stays OPEN with no objective skip or numeric gain.
+DIAG/session-retry-lease-prerequisite-v2158.md retains the exact trace. Do not
+manufacture Work/proof/authorization or reconcile issued UNKNOWN for this target.
 
 The owner's new direct instruction replaces external CI preparation of SDK
 development-test inputs with the internal Bun readiness script, exposed as
@@ -153,7 +155,7 @@ and documentation-link checks pass. Published6a41e3d0a4a45956cdd2a39eb34fea38def
 passes2146 ordinary hooks (format526/strict533/Knip), and2147 normal push matches
 origin/main with a clean Source tree. Stage2148 then verifies the internal SDK
 path below; the component checks alone claim no numeric closure. This dependency
-repair precedes the key30 fixture experiment; no second
+repair precedes the remaining producer studies and fixtures; no second
 contour starts and no budget or frozen/mutation gate changes.
 
 2144 bounds retirement to the two completed Source-only worker patch roots
@@ -218,8 +220,15 @@ fixtures retain their own mutable databases and failure isolation.
 
 No complete per-step setup, tool-call or token telemetry exists; do not invent
 percent savings or infer a regression from those different stage samples. Current
-coverage stays on bun-session-handoff; key30's genuine no-effect lease prerequisite
-remains the next bounded fixture experiment. No new objective disposition follows.
+coverage stays on bun-session-handoff.2158 corrects the key30 prerequisite above
+before a failing fixture is authored; resolve an actual distinct-slot producer
+or another supported transition first, alongside existing configured-continuation
+authorization gaps5/10. No new objective disposition follows.
+
+The copy correction publishes as8f03ed40f2c304574d5a97d812fce58b7d3dcaaa;
+2157 ordinary hooks pass format526/strict533/Knip and2159 normal push matches
+origin/main. The earlier2148 numeric report retains its original tool binding;
+targeted SDK ownership checks qualify this correction without relabeling it.
 
 Disk2154 makes one statfs observation on checkout, current functional scratch and
 retained archive: durable/retained25203605504available bytes, scratch5723320320,
