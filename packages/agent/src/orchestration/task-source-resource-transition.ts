@@ -2,6 +2,7 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { validateWorkState } from '../contracts/work-state-schema.js';
 import { coordinationLedgerDigest } from '../contracts/envelopes.js';
 import type {
   CoordinationLedger,
@@ -35,7 +36,7 @@ type TicketProjection = Pick<
   | 'exclusive_resources'
 > & { readonly status_at_issue: 'queued' | 'active' };
 
-export interface TaskSourceResourceTransitionReceipt {
+interface TaskSourceResourceTransitionReceiptV1 {
   readonly schema: 'TaskSourceResourceTransitionReceipt/v1';
   readonly workspace_id: string;
   readonly integrations_digest: string;
@@ -51,6 +52,13 @@ export interface TaskSourceResourceTransitionReceipt {
   readonly added_resources: readonly string[];
   readonly ticket: TicketProjection;
 }
+
+export type TaskSourceResourceTransitionReceipt =
+  | TaskSourceResourceTransitionReceiptV1
+  | (Omit<TaskSourceResourceTransitionReceiptV1, 'schema'> & {
+      readonly schema: 'TaskSourceResourceTransitionReceipt/v2';
+      readonly prior_work: WorkState;
+    });
 
 export interface TaskSourceResourceTransitionInput {
   readonly request: unknown;
@@ -204,7 +212,20 @@ const preparedOperationSchema = {
   },
 } as const;
 const schemaCompiler = new Ajv({ allErrors: false });
-const validateReceiptShape = schemaCompiler.compile<TaskSourceResourceTransitionReceipt>(receiptSchema as object);
+const validateReceiptShape = schemaCompiler.compile<TaskSourceResourceTransitionReceipt>({
+  anyOf: [
+    receiptSchema,
+    {
+      ...receiptSchema,
+      required: [...receiptSchema.required, 'prior_work'],
+      properties: {
+        ...receiptSchema.properties,
+        schema: { const: 'TaskSourceResourceTransitionReceipt/v2' },
+        prior_work: { type: 'object' },
+      },
+    },
+  ],
+});
 const validatePreparedShape = schemaCompiler.compile<JsonRecord>(preparedOperationSchema as object);
 const validateAuthorityShape = schemaCompiler.compile<TaskSourceResourceTransitionAuthority>(authoritySchema as object);
 
@@ -385,6 +406,12 @@ function validateLivePair(
   return { successor_work_version: afterWorkVersion, successor_ledger_version: afterLedgerVersion };
 }
 
+function resourceTransitionWitness(work: WorkState) {
+  return work.execution.assignment_attempts.length > 0
+    ? { schema: 'TaskSourceResourceTransitionReceipt/v2' as const, prior_work: work }
+    : { schema: 'TaskSourceResourceTransitionReceipt/v1' as const };
+}
+
 export function createTaskSourceResourceTransitionReceipt(
   input: TaskSourceResourceTransitionInput,
 ): TaskSourceResourceTransitionReceipt | undefined {
@@ -421,7 +448,7 @@ export function createTaskSourceResourceTransitionReceipt(
     'TaskSource Ledger postimage differs from exact reservation',
   );
   const receipt: TaskSourceResourceTransitionReceipt = {
-    schema: 'TaskSourceResourceTransitionReceipt/v1',
+    ...resourceTransitionWitness(checked.before.work),
     workspace_id: checked.before.work.workspace_id,
     integrations_digest: checked.before.work.binding.integrations_digest,
     request,
@@ -451,12 +478,50 @@ export function createTaskSourceResourceTransitionReceipt(
   return parseTaskSourceResourceTransitionReceipt(receipt);
 }
 
+function validateTerminalWorkWitness(
+  receipt: TaskSourceResourceTransitionReceipt,
+  request: TaskSourceBindingRequest,
+): void {
+  if (receipt.schema === 'TaskSourceResourceTransitionReceipt/v2') {
+    const prior = receipt.prior_work;
+    reject(
+      validateWorkState(prior) &&
+        same(workVersion(prior), receipt.prior_work_version) &&
+        canonicalJsonDigest(prior.binding) === receipt.prior_binding_digest &&
+        same(
+          [
+            prior.workspace_id,
+            prior.binding.lifecycle_work_id,
+            prior.binding.repository_id,
+            prior.binding.project_ids,
+            prior.binding.integrations_digest,
+            prior.binding.config_digest,
+          ],
+          [
+            receipt.workspace_id,
+            request.work_id,
+            request.repository_id,
+            request.project_ids,
+            receipt.integrations_digest,
+            request.config_digest,
+          ],
+        ) &&
+        prior.execution.assignment_attempts.length > 0 &&
+        prior.execution.assignment_attempts.every(
+          (attempt) => attempt.status === 'completed' || attempt.status === 'no_effect',
+        ),
+      'TaskSource resource history prior terminal Work witness differs',
+    );
+  }
+}
+
 export function parseTaskSourceResourceTransitionReceipt(candidate: unknown): TaskSourceResourceTransitionReceipt {
   reject(validateReceiptShape(candidate), 'TaskSource resource transition receipt schema invalid');
   const receipt = candidate as TaskSourceResourceTransitionReceipt,
     request = validateTaskSourceBindingRequest(receipt.request),
     requested = taskSourceResourcePair(request.canonical_host_root, request),
     ticket = receipt.ticket;
+  validateTerminalWorkWitness(receipt, request);
   reject(
     receipt.successor_work_version.revision === receipt.prior_work_version.revision + 1 &&
       receipt.successor_ledger_version.revision === receipt.prior_ledger_version.revision + 1 &&

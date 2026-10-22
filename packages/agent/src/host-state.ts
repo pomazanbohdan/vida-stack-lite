@@ -3460,6 +3460,7 @@ function pendingWorkHistoryRecord(receipt: PendingWorkHistoryReceipt): StoredWor
     case 'VidaRuntimeCodeRebindAuthorization/v1':
       return { kind: 'runtime', receipt };
     case 'TaskSourceResourceTransitionReceipt/v1':
+    case 'TaskSourceResourceTransitionReceipt/v2':
       return { kind: 'task-source-resource', receipt };
     case 'DeliveredWorkContinuationReceipt/v1':
       return { kind: 'continuation', receipt };
@@ -3484,7 +3485,11 @@ function assertTaskSourceResourcePendingBoundary(
   receipt: PendingWorkHistoryReceipt | undefined,
   records: readonly StoredWorkHistoryRecord[],
 ): void {
-  if (receipt?.schema !== 'TaskSourceResourceTransitionReceipt/v1') return;
+  if (
+    receipt?.schema !== 'TaskSourceResourceTransitionReceipt/v1' &&
+    receipt?.schema !== 'TaskSourceResourceTransitionReceipt/v2'
+  )
+    return;
   for (const record of records)
     requireState(
       record.kind === 'initial-source' || record.kind === 'task-source-resource',
@@ -3664,6 +3669,30 @@ function retainQualifiedTerminalBindings(
   }
 }
 
+function rewindTaskSourceWorkHistory(
+  candidate: WorkState,
+  expected: WorkState['binding'],
+  receipt: TaskSourceResourceTransitionReceipt,
+  bindings: Map<string, WorkState['binding']>,
+): WorkState['binding'] {
+  const priorBinding = rewindTaskSourceResourceBinding(candidate, expected, receipt);
+  if (receipt.schema === 'TaskSourceResourceTransitionReceipt/v2') {
+    const original = receipt.prior_work;
+    requireState(
+      sameJson(original.binding, priorBinding) &&
+        original.execution.run_id === candidate.execution.run_id &&
+        original.execution.input_digest === candidate.execution.input_digest &&
+        sameJson(
+          candidate.execution.assignment_attempts.slice(0, original.execution.assignment_attempts.length),
+          original.execution.assignment_attempts,
+        ),
+      'TaskSource resource history terminal assignment prefix changed',
+    );
+    for (const attempt of original.execution.assignment_attempts) bindings.set(attempt.attempt_id, priorBinding);
+  }
+  return priorBinding;
+}
+
 function checkedStoredWork(
   database: Database,
   workspaceId: string,
@@ -3696,7 +3725,7 @@ function checkedStoredWork(
   let expected = candidate.binding;
   for (const record of records) {
     if (record.kind === 'task-source-resource') {
-      expected = rewindTaskSourceResourceBinding(candidate, expected, record.receipt);
+      expected = rewindTaskSourceWorkHistory(candidate, expected, record.receipt, bindings);
       continue;
     }
     if (record.kind === 'qualified-runtime-code') {

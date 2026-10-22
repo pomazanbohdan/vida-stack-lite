@@ -20,6 +20,14 @@ can create the checkpoint without an own action. Preserve the peer's issued
 action and use the original configured writer verifier for the positive path.
 Do not manufacture a checkpoint or settle UNKNOWN merely to reach a counter.
 
+For TaskSource history after corrective execution, use the native terminal
+attempts as the witness oracle. First advance Work through an actual supported
+CAS when testing a later history reader: corrupting the exact successor version
+correctly trips its checksum before the intended prefix guard. Retain that
+failed premise. Compare every table after exact restoration, and keep issued
+proposals unexecuted and retained. The v2 history contract and bounds belong
+to TESTING and the system specification.
+
 For historical terminal capture, preserve the original issued item's null
 observation and exact receipt-bound Journal. Seed component prerequisites before
 persistence and capture; do not rewrite the captured Journal into a completed

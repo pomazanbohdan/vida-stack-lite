@@ -3032,6 +3032,16 @@ A queued own request has no issued action; a peer's issued UNKNOWN action must
 remain unchanged while the configured writer is reserved. Never clear that
 action to obtain a positive checkpoint path.
 
+For corrective TaskSource resource extension, retain the real failed-final,
+corrective authorization, native engine suspension and current source-lease
+producers. Verify production writer and TaskSource policies in independent
+fixtures under their existing20s bounds. An issued proposal remains unexecuted
+and its root retained. A v2 terminal-attempt witness must survive a native later
+Work CAS and reopened reader; changing a retained result with a recomputed row
+digest must fail the prefix check, followed by exact restoration and complete
+database equality. Keep foreign/missing/active witness denials and unchanged v1
+controls. A full stage is still required before claiming new covered counters.
+
 Route every asynchronous fixture operation, including preparation and recovery,
 through its existing pending-call owner. While a call remains unresolved, retain
 its root and the shared PATH/native-runtime/mock state it may still consume.

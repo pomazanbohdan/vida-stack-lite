@@ -1329,6 +1329,22 @@ History reads verify the exact preparation join and binding rewind under bounded
 snapshot reads. Missing or corrupt ancestry stays fenced; current tickets cannot
 reconstruct an absent beforeimage. Reads create no schema.
 
+An empty assignment history retains the compact
+`TaskSourceResourceTransitionReceipt/v1`. When a resource extension follows
+terminal assignments, the producer emits strict
+`TaskSourceResourceTransitionReceipt/v2` with its complete native `prior_work`.
+The witness must match the prior Work version, identity and binding digest;
+every witnessed attempt must be completed or no-effect. Commit reconstructs
+the receipt from the actual transaction preimage. Later reads require the
+same byte-identical attempt prefix and execution identity before assigning
+its prior binding; newer attempts keep their current binding. Earlier history
+records retain their own older bindings. Active and uncertain attempts cannot
+obtain historical authority from this witness. Assignment IDs and results are
+never rewritten to accommodate the new resources.
+New readers preserve existing v1 bytes. Strict older v1 readers reject v2;
+rollback must not assume forward readability of new history. This changes no
+SQL schema, applies no operational migration and grants no execution rights.
+
 Initial-source lineage uses the existing mixed-history proof to bind a read
 checkpoint to the current Work version and exact original receipt boundary.
 Its atomic Host view preserves the original authorization and bare-receipt

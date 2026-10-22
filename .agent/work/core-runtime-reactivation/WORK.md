@@ -17,6 +17,55 @@ or numeric producer is active. Complete the selected contour before another.
 
 ### Current measured repair packet
 
+#### Corrective policy and TaskSource terminal-history repair
+
+The current checked Source work extends the actual corrective engine fixture
+through configured writer and TaskSource policies.2089 catches a mistaken
+generation field statically.2090's first native attempt fails its missing
+Source-lease prerequisite, before preflight;2091 acquires that lease through
+the public owner and passes1case/24assertions in9.93s, case8.281s under20s.
+No budgets change.2092's writer passes, but TaskSource exposes a product defect:
+extending allowed_resources changes assignmentIdentity's full binding hash,
+while stored-history rewind omits prior terminal-attempt bindings. The native
+commit throws before its issued-result assertion. Full original failure and
+its root remain retained. Blind2093 confirms the defect,2094 reviews the witness
+repair before integration.
+
+The producer keeps v1 unchanged for empty histories and emits v2 with complete
+native prior_work for terminal assignment histories. It binds that witness to
+the actual old Work hash/version/identity and permits only terminal attempts.
+The existing commit rebuilds from its native preimage. History checks the exact
+prefix and base execution identity, maps only witnessed IDs to their prior
+binding, and leaves later attempts under current binding. Older history remains
+responsible for its older bindings. No attempt, result, authority or receipt is
+rewritten. Old strict v1 readers fail closed on v2; no operational migration,
+rollback/cutover or consumer effect is attempted.
+
+2095/2097 strict197/lint pass.2096 preserves an incorrect negative-control premise:
+altering the exact successor Work correctly fails its earlier checksum.2097 uses
+an actual later Work/Ledger CAS before that corruption, then proves the prefix
+refusal, exact restoration/full-database equality and successful reopened read.
+Both configured policies and all9v1 resource controls pass11cases/222assertions
+in20.74s; writer8.876s/TaskSource8.643s stay within20s. Issued writer/proposal roots
+remain retained with no argv execution or UNKNOWN replay. Separate2098 passes
+the older Host queued-ticket and v1 reopened-projection controls:2cases/175assertions
+in15.25s.2099 accepts the proof and asks for explicit downgrade-readability docs;
+the system specification now states that limit.2101 independently confirms it
+resolved and reviews the final private-helper extraction. The existing history,
+creator and parser owners retain their original decisions; new witness decisions
+live in three named private helpers. Frozen baselines are untouched.2100 final
+strict197/lint and11cases/222assertions pass in18.29s, followed serially by the
+two Host controls/175assertions in15.87s. No second numeric contour starts.
+2079 remains the bound numeric result until this coherent packet is published
+and measured once. A shared Host/receipt Source change invalidates its dependent
+old qualification; the focused controls do not reattest the other contours.
+
+Configured-only keys5/10 remain OPEN:2087 identifies both the initial-only
+authorization lookup and old-config permission as prerequisites to resolve,
+without fabricating a new grant.2088's worker stops on an unsupported rg flag;
+that is a search invocation error, not denied repository access or proof that
+the path is impossible. No disposition or Source-policy relaxation follows.
+
 #### Three-hour audit and queued checkpoint packet (2026-10-22 12:45–15:45 UTC)
 
 Reuse of retained reports and six published commits identifies the already fixed

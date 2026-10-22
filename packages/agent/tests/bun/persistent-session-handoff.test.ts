@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, setSystemTime, spyOn, test } from 'bun:test';
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { link, lstat, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -9,7 +9,7 @@ import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/con
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import type { WorkItemSelection } from '../../src/config/runtime-config.ts';
 import { HostStateStore, openHostStateDatabase, type WorkIdentity } from '../../src/host-state.ts';
-import { loadProjectContext } from '../../src/config/project-context.ts';
+import { loadProjectContext, loadProjectSetContext } from '../../src/config/project-context.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
@@ -74,10 +74,13 @@ import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-
 import { createPrewriterPreparationObservation } from '../helpers/public-prewriter-fixture.ts';
 import { nativeDatabaseSnapshotReader } from '../helpers/native-database-snapshot.ts';
 import { prepareQueuedInitialSourceTaskSource } from '../helpers/queued-initial-source-tasksource-fixture.ts';
-import { admitLocalSessionWork } from '../../src/orchestration/local-work-admission.ts';
+import { acquireLocalSourceWriterLease, admitLocalSessionWork } from '../../src/orchestration/local-work-admission.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { prepareLifecycleForCorrection } from '../../src/orchestration/final-assurance.ts';
 import { MastraSessionBridge } from '../../src/orchestration/mastra-session-bridge.ts';
+import { openAdmittedSessionExecution } from '../../src/orchestration/admitted-session-execution.ts';
+import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } from '../../src/runtime-kernel.ts';
+import { parseTaskSourceResourceTransitionReceipt } from '../../src/orchestration/task-source-resource-transition.ts';
 
 const { repositoryRoot: root, config } = configuredTestContext();
 const workspaceId = 'a'.repeat(64);
@@ -2290,107 +2293,392 @@ test('native synthesis correction preserves admitted predecessors and refuses ch
   );
 });
 
-test('authorized corrective engine records its first actual suspension from the empty Host-produced journal', async () => {
-  const deadline = performance.now() + 20_000;
-  caseDeadline = deadline;
-  let fixture: Awaited<ReturnType<typeof createFailedFinalCorrectionFixture>> | undefined;
-  let bridge: MastraSessionBridge | undefined;
-  let completed = false,
-    bridgeClosed = false;
-  await withInitialSourceCleanup(
-    async () => {
-      const current = await createFailedFinalCorrectionFixture('failed');
-      fixture = current;
-      console.info('Corrective handoff fixture root: ' + current.root);
-      if (performance.now() >= deadline) throw new Error('Corrective handoff setup exhausted its deadline');
-      const prepared = prepareLifecycleForCorrection({
-        root: current.root,
-        config: current.config,
-        store: current.store,
-        identity: current.identity,
-        journal: current.journal,
-        preparationPath: current.preparationPath,
-      });
-      const before = current.store.readHostStateSnapshot(current.identity);
-      requireHostState(before);
-      const original = current.store.readWorkSessionJournal(current.identity);
-      if (!prepared.workVersion || !prepared.ledgerVersion || !original)
-        throw new Error('Prepared corrective input is missing');
-      const issued = expectReturned(() =>
-        current.store.authorizeCorrectiveExecution({
-          identity: current.identity,
-          attempt: 1,
-          expectedWork: before.workVersion,
-          expectedLedger: before.ledgerVersion,
-          expectedJournal: original.version,
-          stageIds: ['develop_task', 'validate_focused', 'test_task'],
-          userInstructionRef: 'fixture:selected-corrective-owner',
+test.each(['writer', 'task-source'] as const)(
+  'authorized corrective engine reaches configured %s policy after its native journal suspension',
+  async (mode) => {
+    const deadline = performance.now() + 20_000;
+    caseDeadline = deadline;
+    let fixture: Awaited<ReturnType<typeof createFailedFinalCorrectionFixture>> | undefined;
+    let bridge: MastraSessionBridge | undefined;
+    let completed = false,
+      bridgeClosed = false,
+      writerReserved = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const current = await createFailedFinalCorrectionFixture('failed');
+        fixture = current;
+        console.info('Corrective handoff fixture root: ' + current.root);
+        if (performance.now() >= deadline) throw new Error('Corrective handoff setup exhausted its deadline');
+        const prepared = prepareLifecycleForCorrection({
+          root: current.root,
           config: current.config,
-        }),
-      );
-      const corrected = requiredMastraSnapshot(current.ledger.resume(current.identity.work_id, 1));
-      expect(corrected.state).toMatchObject({
-        run_id: issued.engine_run_id,
-        corrective_execution: issued,
-        step_id: null,
-        items: [],
-        completed: [],
-      });
-      const archived = [...original.state.completed.flatMap((wave) => wave.items), ...original.state.items].find(
-        (item) => item.observation !== null,
-      )?.observation;
-      if (!archived) throw new Error('Corrective fixture has no original reported observation');
-      const authorizedHost = current.store.readHostStateSnapshot(current.identity);
-      expect(corrected.state.items).toEqual([]);
-      expect(current.ledger.retrieveReportedObservation(current.identity.work_id, 1, archived)).toEqual(corrected);
-      expect(current.ledger.resume(current.identity.work_id, 1)).toEqual(corrected);
-      expect(current.store.readHostStateSnapshot(current.identity)).toEqual(authorizedHost);
-      bridge = await MastraSessionBridge.open({
-        ...current.producerInput,
-        repositoryRoot: current.root,
-        config: current.config,
-        workspaceId: current.store.workspaceId,
-        ledger: current.ledger,
-        correctiveExecution: issued,
-      });
-      const started = await expectAsyncReturned(() => bridge!.start(corrected.state.source_scope));
-      const journal = requiredMastraSnapshot(current.ledger.resume(current.identity.work_id, 1));
-      expect(started.status).toBe('suspended');
-      expect(started.run_id).toBe(issued.engine_run_id);
-      expect(journal.version.revision).toBe(corrected.version.revision + 1);
-      expect(journal.state.step_id).toBe(started.step_id);
-      expect(journal.state.corrective_execution).toEqual(issued);
-      expect(journal.state.completed).toEqual([]);
-      expect(journal.state.items.map((item) => item.request)).toEqual([...started.requests]);
-      expect(journal.state.items.length).toBeGreaterThan(0);
-      for (const item of journal.state.items) {
-        expect(item.issue_id).toBeNull();
-        expect(item.observation).toBeNull();
-        expect(item.request.run_id).toBe(issued.engine_run_id);
-        expect(issued.stage_ids).toContain(item.request.stage_id);
-      }
-      expect(current.store.readHostStateSnapshot(current.identity)).toEqual(authorizedHost);
-      expect(performance.now()).toBeLessThan(deadline);
-      completed = true;
-    },
-    async () => {
-      await withInitialSourceCleanup(
-        async () => {
-          if (bridge) await bridge.close();
-          bridgeClosed = true;
-        },
-        () => {
-          if (fixture) {
-            fixture.close(() => completed && bridgeClosed && performance.now() < deadline);
-          }
-        },
-        'Corrective bridge and fixture cleanup',
-      );
-      if (performance.now() >= deadline) throw new Error('Corrective handoff cleanup exhausted its deadline');
-    },
-    'Host-produced corrective suspension fixture',
-  );
-}, 20_000);
+          store: current.store,
+          identity: current.identity,
+          journal: current.journal,
+          preparationPath: current.preparationPath,
+        });
+        const before = current.store.readHostStateSnapshot(current.identity);
+        requireHostState(before);
+        const original = current.store.readWorkSessionJournal(current.identity);
+        if (!prepared.workVersion || !prepared.ledgerVersion || !original)
+          throw new Error('Prepared corrective input is missing');
+        const issued = expectReturned(() =>
+          current.store.authorizeCorrectiveExecution({
+            identity: current.identity,
+            attempt: 1,
+            expectedWork: before.workVersion,
+            expectedLedger: before.ledgerVersion,
+            expectedJournal: original.version,
+            stageIds: ['develop_task', 'validate_focused', 'test_task'],
+            userInstructionRef: 'fixture:selected-corrective-owner',
+            config: current.config,
+          }),
+        );
+        const corrected = requiredMastraSnapshot(current.ledger.resume(current.identity.work_id, 1));
+        expect(corrected.state).toMatchObject({
+          run_id: issued.engine_run_id,
+          corrective_execution: issued,
+          step_id: null,
+          items: [],
+          completed: [],
+        });
+        const archived = [...original.state.completed.flatMap((wave) => wave.items), ...original.state.items].find(
+          (item) => item.observation !== null,
+        )?.observation;
+        if (!archived) throw new Error('Corrective fixture has no original reported observation');
+        const authorizedHost = current.store.readHostStateSnapshot(current.identity);
+        expect(corrected.state.items).toEqual([]);
+        expect(current.ledger.retrieveReportedObservation(current.identity.work_id, 1, archived)).toEqual(corrected);
+        expect(current.ledger.resume(current.identity.work_id, 1)).toEqual(corrected);
+        expect(current.store.readHostStateSnapshot(current.identity)).toEqual(authorizedHost);
+        bridge = await MastraSessionBridge.open({
+          ...current.producerInput,
+          repositoryRoot: current.root,
+          config: current.config,
+          workspaceId: current.store.workspaceId,
+          ledger: current.ledger,
+          correctiveExecution: issued,
+        });
+        const started = await expectAsyncReturned(() => bridge!.start(corrected.state.source_scope));
+        const journal = requiredMastraSnapshot(current.ledger.resume(current.identity.work_id, 1));
+        expect(started.status).toBe('suspended');
+        expect(started.run_id).toBe(issued.engine_run_id);
+        expect(journal.version.revision).toBe(corrected.version.revision + 1);
+        expect(journal.state.step_id).toBe(started.step_id);
+        expect(journal.state.corrective_execution).toEqual(issued);
+        expect(journal.state.completed).toEqual([]);
+        expect(journal.state.items.map((item) => item.request)).toEqual([...started.requests]);
+        expect(journal.state.items.length).toBeGreaterThan(0);
+        for (const item of journal.state.items) {
+          expect(item.issue_id).toBeNull();
+          expect(item.observation).toBeNull();
+          expect(item.request.run_id).toBe(issued.engine_run_id);
+          expect(issued.stage_ids).toContain(item.request.stage_id);
+        }
+        expect(current.store.readHostStateSnapshot(current.identity)).toEqual(authorizedHost);
+        const configured = openConfiguredMastraSessionLedger(current.root);
+        await withInitialSourceCleanup(
+          async () => {
+            const item = journal.state.items[0];
+            if (journal.state.items.length !== 1 || item?.request.stage_id !== 'develop_task')
+              throw new Error('Corrective fixture did not reach its native writer frontier');
+            const projectId = current.identity.project_ids[0];
+            if (!projectId) throw new Error('Corrective fixture has no admitted project');
+            const owner = configured.hostState.readHostStateSnapshot(current.identity);
+            requireHostState(owner);
+            if (!owner.work.lease) throw new Error('Corrective fixture has no current owner lease');
+            acquireLocalSourceWriterLease({
+              repositoryRoot: current.root,
+              config: current.config,
+              store: configured.hostState,
+              identity: current.identity,
+              nativeSessionHandle: owner.work.lease.thread_id,
+              stageId: item.request.stage_id,
+              assignmentIndex: item.request.assignment_index,
+              expectedWork: owner.workVersion,
+              expectedLedger: owner.ledgerVersion,
+              expectedSessionJournal: { attempt: 1, version: journal.version },
+            });
+            if (mode === 'task-source') {
+              const beforeProposal = configured.hostState.readHostStateSnapshot(current.identity);
+              requireHostState(beforeProposal);
+              const project = loadProjectSetContext(
+                current.root,
+                current.config,
+                current.identity.repository_id,
+                current.identity.project_ids,
+              );
+              const reference = beforeProposal.work.lifecycle.references.find(
+                (entry) =>
+                  entry.kind === 'execution_approval' &&
+                  entry.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+                  entry.disposition === 'current' &&
+                  entry.decision === 'approved',
+              );
+              if (!reference) throw new Error('Corrective fixture has no current scoped Source permission');
+              const proposedRoot = current.root + '-unexecuted-corrective-proposal';
+              const request: TaskSourceBindingRequest = {
+                schema: 'TaskSourceBindingRequest/v1',
+                operation: 'propose-create',
+                operation_id: 'corrective-source-proposal',
+                request_id: 'corrective-source-request',
+                branch_ref: 'refs/heads/corrective-source-proposal',
+                source_root: proposedRoot,
+                expected_host: {
+                  work: beforeProposal.workVersion,
+                  ledger: beforeProposal.ledgerVersion,
+                  journal: { attempt: 1, version: journal.version },
+                  maintenance_generation: beforeProposal.maintenanceGeneration,
+                },
+                work_id: current.identity.work_id,
+                attempt: 1,
+                thread_id: owner.work.lease.thread_id,
+                repository_id: current.identity.repository_id,
+                project_ids: current.identity.project_ids,
+                canonical_host_root: current.root,
+                config_digest: runtimeConfigDigest(current.config),
+                project_context_digest: project.project_context_digest,
+              };
+              const prepared = configured.hostState.prepareTaskSourceBindingOperation({
+                request,
+                identity: current.identity,
+                verifyCurrent: (state) => {
+                  expect(state.work).toEqual(beforeProposal.work);
+                  expect(state.ledger).toEqual(beforeProposal.ledger);
+                  expect(state.journal).toEqual(journal.state);
+                  return {
+                    source_authorization_sha256: reference.sha256,
+                    source_scope_digest: beforeProposal.work.binding.work_source_revision,
+                  };
+                },
+              });
+              expect(prepared.status).toBe('prepared');
+              const result = await configured.hostState.issueTaskSourceBindingOperation({
+                request,
+                identity: current.identity,
+              });
+              writerReserved = true;
+              expect(result.status).toBe('issued');
+              expect(result.command_argv).not.toBeNull();
+              expect(existsSync(proposedRoot)).toBe(false);
+              const retained = requiredMastraSnapshot(configured.resume(current.identity.work_id, 1));
+              expect(retained.state.corrective_execution).toEqual(issued);
+              expect(retained.state.items[0]?.issue_id).toBeNull();
+              expect(retained.state.items[0]?.observation).toBeNull();
+              const resource = current.database
+                .query<{ payload: string }, [string, string]>(
+                  'SELECT payload FROM agent_host_task_source_resource_transition WHERE workspace_id=? AND operation_id=?',
+                )
+                .get(configured.hostState.workspaceId, request.operation_id);
+              if (!resource) throw new Error('Corrective TaskSource reservation has no retained history');
+              const receipt = parseTaskSourceResourceTransitionReceipt(JSON.parse(resource.payload));
+              if (receipt.schema !== 'TaskSourceResourceTransitionReceipt/v2')
+                throw new Error('Corrective TaskSource history has no terminal-attempt witness');
+              expect(receipt.prior_work).toEqual(beforeProposal.work);
+              expect(() => parseTaskSourceResourceTransitionReceipt({ ...receipt, prior_work: undefined })).toThrow(
+                'receipt schema invalid',
+              );
+              expect(() => parseTaskSourceResourceTransitionReceipt({ ...receipt, unexpected: true })).toThrow(
+                'receipt schema invalid',
+              );
+              expect(() =>
+                parseTaskSourceResourceTransitionReceipt({
+                  ...receipt,
+                  schema: 'TaskSourceResourceTransitionReceipt/v1',
+                }),
+              ).toThrow('receipt schema invalid');
+              expect(() =>
+                parseTaskSourceResourceTransitionReceipt({
+                  ...receipt,
+                  prior_work: { ...receipt.prior_work, workspace_id: 'foreign-workspace' },
+                }),
+              ).toThrow('prior terminal Work witness differs');
+              const activeWitness = {
+                ...receipt.prior_work,
+                execution: {
+                  ...receipt.prior_work.execution,
+                  assignment_attempts: receipt.prior_work.execution.assignment_attempts.map((attempt, index) =>
+                    index === 0
+                      ? { ...attempt, status: 'started' as const, result: null, result_digest: null }
+                      : attempt,
+                  ),
+                },
+              };
+              const activeVersion = { revision: activeWitness.revision, digest: canonicalJsonDigest(activeWitness) };
+              expect(() =>
+                parseTaskSourceResourceTransitionReceipt({
+                  ...receipt,
+                  prior_work: activeWitness,
+                  prior_work_version: activeVersion,
+                  request: {
+                    ...receipt.request,
+                    expected_host: { ...receipt.request.expected_host, work: activeVersion },
+                  },
+                }),
+              ).toThrow('prior terminal Work witness differs');
+              const issuedState = configured.hostState.readHostStateSnapshot(current.identity);
+              requireHostState(issuedState);
+              const native = configured.hostState.compareAndSwapHostState({
+                expectedWork: issuedState.workVersion,
+                expectedLedger: issuedState.ledgerVersion,
+                expectedMaintenanceGeneration: issuedState.maintenanceGeneration,
+                expectedSessionJournal: { attempt: 1, version: retained.version },
+                nextWork: {
+                  ...issuedState.work,
+                  revision: issuedState.work.revision + 1,
+                  lifecycle: {
+                    ...issuedState.work.lifecycle,
+                    revision: issuedState.work.lifecycle.revision + 1,
+                    next_action: 'Inspect the original TaskSource proposal; its result remains unknown.',
+                  },
+                },
+                nextLedger: { ...issuedState.ledger, revision: issuedState.ledger.revision + 1 },
+              });
+              requireHostState(native);
+              expect(native.workVersion.revision).toBe(receipt.successor_work_version.revision + 1);
+              expect(native.work.execution.assignment_attempts).toEqual(
+                beforeProposal.work.execution.assignment_attempts,
+              );
+              const first = native.work.execution.assignment_attempts[0];
+              const reopened = openConfiguredMastraSessionLedger(current.root);
+              await withInitialSourceCleanup(
+                async () => {
+                  expect(reopened.hostState.readHostStateSnapshot(current.identity)).toEqual(native);
+                  expect(reopened.resume(current.identity.work_id, 1)).toEqual(retained);
+                },
+                () => reopened.close(),
+                'TaskSource terminal-witness reopened ledger cleanup',
+              );
+              if (!first || first.status !== 'completed')
+                throw new Error('Corrective fixture has no original terminal result');
+              const row = current.database
+                .query<{ id: string; revision: number; payload: string; digest: string }, [string, string]>(
+                  "SELECT id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+                )
+                .get(configured.hostState.workspaceId, current.identity.work_id);
+              if (!row) throw new Error('Corrective TaskSource fixture has no native Work row');
+              const changedResult = { corruption: 'changed retained terminal result' };
+              const changed = {
+                ...native.work,
+                execution: {
+                  ...native.work.execution,
+                  assignment_attempts: native.work.execution.assignment_attempts.map((attempt, index) =>
+                    index === 0
+                      ? { ...attempt, result: changedResult, result_digest: canonicalJsonDigest(changedResult) }
+                      : attempt,
+                  ),
+                },
+              };
+              const changedPayload = canonicalJson(changed),
+                changedDigest = canonicalJsonDigest(changed);
+              const rows = nativeDatabaseSnapshotReader(current.database),
+                beforeCorruption = rows();
+              expect(
+                current.database
+                  .query(
+                    "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
+                  )
+                  .run(
+                    changedPayload,
+                    changedDigest,
+                    configured.hostState.workspaceId,
+                    row.id,
+                    row.revision,
+                    row.digest,
+                  ).changes,
+              ).toBe(1);
+              await withInitialSourceCleanup(
+                async () => {
+                  expect(() => configured.hostState.readHostStateSnapshot(current.identity)).toThrow(
+                    'TaskSource resource history terminal assignment prefix changed',
+                  );
+                },
+                () => {
+                  expect(
+                    current.database
+                      .query(
+                        "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND payload=? AND digest=?",
+                      )
+                      .run(
+                        row.payload,
+                        row.digest,
+                        configured.hostState.workspaceId,
+                        row.id,
+                        row.revision,
+                        changedPayload,
+                        changedDigest,
+                      ).changes,
+                  ).toBe(1);
+                  expect(rows()).toEqual(beforeCorruption);
+                  expect(configured.hostState.readHostStateSnapshot(current.identity)).toEqual(native);
+                },
+                'TaskSource retained terminal-result refusal and exact native restoration',
+              );
+              return;
+            }
+            const execution = await openAdmittedSessionExecution(
+              current.root,
+              configured.hostState,
+              projectId,
+              current.identity.work_id,
+            );
+            const capability = execution.composition.workflowExecutionCapability;
+            if (!capability) throw new Error('Corrective fixture has no native workflow capability');
+            const configDigest = runtimeConfigDigest(current.config);
+            const preparedWriter = await prepareWorkflowExecution(capability, {
+              repositoryRoot: current.root,
+              configDigest,
+              teamId: current.producerInput.selection.team,
+              workItemId: current.identity.work_id,
+            });
+            const reservation = await reserveWorkflowAssignmentForSession(capability, {
+              repositoryRoot: current.root,
+              configDigest,
+              teamId: current.producerInput.selection.team,
+              workflowId: item.request.workflow_id,
+              stageId: item.request.stage_id,
+              assignmentIndex: item.request.assignment_index,
+              workItemId: current.identity.work_id,
+              workItemDigest: preparedWriter.workItemDigest,
+              workContextDigest: preparedWriter.workContextDigest,
+              input: { bindings_manifest_ref: item.request.bindings_manifest_ref },
+            });
+            writerReserved = true;
+            expect(reservation.receipt.attempt.correction_generation).toBe(issued.correction_generation);
+            expect(reservation.receipt.attempt.correction_authorization).toEqual(issued.authorization);
+            const exposed = configured.issueWave(current.identity.work_id, 1, journal.version, {
+              [item.request.action_id]: reservation,
+            });
+            expect(exposed.state.corrective_execution).toEqual(issued);
+            expect(exposed.state.items[0]?.host_reservation).toEqual(reservation);
+            expect(exposed.state.items[0]?.observation).toBeNull();
+          },
+          () => configured.close(),
+          'Configured corrective writer ledger cleanup',
+        );
+        expect(performance.now()).toBeLessThan(deadline);
+        completed = true;
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (bridge) await bridge.close();
+            bridgeClosed = true;
+          },
+          () => {
+            if (fixture) {
+              fixture.close(() => completed && bridgeClosed && !writerReserved && performance.now() < deadline);
+            }
+          },
+          'Corrective bridge and fixture cleanup',
+        );
+        if (performance.now() >= deadline) throw new Error('Corrective handoff cleanup exhausted its deadline');
+      },
+      'Host-produced corrective suspension fixture',
+    );
+  },
+  20_000,
+);
 
 test('Mastra readers bind native maintenance generations and reject corrupted fence rows without writes', async () => {
   caseDeadline = performance.now() + 5_000;
