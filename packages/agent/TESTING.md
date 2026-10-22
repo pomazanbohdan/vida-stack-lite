@@ -2210,6 +2210,13 @@ for the later qualification phase. `--help` describes both routes. The runner
 requires a clean, immutable Source commit; neither selection nor a same-commit
 local proof establishes global or host freshness.
 
+Before SDK preparation or execution-image setup, the stage validates the
+existing canonical contour snapshot and any explicit `--snapshot` through the
+same bounded reader and strict merger used for publication. An absent canonical
+snapshot is allowed; a missing explicit or invalid snapshot fails before the
+producer. This early check grants no freshness or numeric admission. Publication
+still rereads the snapshots and applies all final binding/custody checks.
+
 Without `--coverage-only`, the campaign runs declared focused coverage and same-run scoped frozen
 CRAP per contour, then every selected partition's existing mutation pilot. It
 preserves full Source/test selections and the existing evidence owners. Missing

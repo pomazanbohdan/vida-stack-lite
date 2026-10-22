@@ -386,6 +386,14 @@ failure evidence and all other retained scratch. Reuse the latest inventory.
 
 ## Design a regression
 
+For a lease-race regression, distinguish an attempt's recorded `retry_lease`
+from the Work's actual renewed lease. The Host reconciliation transaction and
+the Journal-bound local renewal are different steps. A same-assignment retry
+must already match its persisted retry fence before the approval resolver runs;
+that retry alone cannot provide an intervening principal change. Check the
+actual exported producer names and the completed native Work/lease afterimage
+before preparing a race based on an assumed transition.
+
 For a shared reference classifier, test the matching facts and vary each field
 independently. Keep caller cardinality, revision and policy checks in their
 original order. Lifecycle `current()` also filters `source_revision`, so it is
@@ -828,6 +836,11 @@ use the all-contour campaign's `--all` or `--unclosed` selectors while the
 sequential strategy is active. Exact numeric evidence stays same-commit and
 input-bound, while data-only N/A remains separate. Frozen CRAP, complexity and
 mutation remain deferred for this cycle.
+
+If a stage rejects a retained snapshot before image setup, repair the registry
+or input provenance before launching tests. The preflight reuses the bounded
+publication reader and strict merger; it does not import scores or replace the
+final reread. Keep the original failed publication and its producer evidence.
 
 Run selected package tests from the package working directory with explicit
 `./tests/...` paths. Bare filters from the repository root can also match retained

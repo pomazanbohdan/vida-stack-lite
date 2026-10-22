@@ -15,6 +15,60 @@ import { executeMutationCommand, type MutationProcessResult } from '../tooling/m
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { CampaignResourceError } from '../tooling/contour-campaign.ts';
 
+test.each(['canonical', 'explicit'])(
+  'stage rejects an invalid %s snapshot before opening an execution image',
+  async (mode) => {
+    const root = mkdtempSync(path.join(tmpdir(), 'contour-snapshot-preflight-'));
+    const output = path.join(root, 'published');
+    mkdirSync(output);
+    const bytes = JSON.stringify({ schema: 'VidaContourProgress/v1', attempts: 'invalid' });
+    const snapshot = mode === 'canonical' ? path.join(output, 'CONTOUR-STATUS.json') : path.join(root, 'prior.json');
+    writeFileSync(snapshot, bytes);
+    let passed = false;
+    try {
+      const result = await executeMutationCommand(
+        [
+          process.execPath,
+          'tooling/contour-stage.ts',
+          '--contour',
+          'bun-session-handoff-v2',
+          '--lane',
+          'coverage',
+          '--output',
+          output,
+          '--image-manifest',
+          path.join(root, 'missing-image.json'),
+          '--image-sha256',
+          'a'.repeat(64),
+          ...(mode === 'explicit' ? ['--snapshot', snapshot] : []),
+        ],
+        path.resolve(import.meta.dir, '..'),
+        5_000,
+        {
+          ownedProcessGroup: true,
+          stdoutFile: path.join(root, 'stdout.log'),
+          stderrFile: path.join(root, 'stderr.log'),
+        },
+      );
+      expect(result.exitCode).toBe(1);
+      expect(result.timedOut).toBe(false);
+      expect(result.signal).toBeNull();
+      expect(result.spawnError).toBeNull();
+      expect(result.output_capture?.complete).toBe(true);
+      expect(result.processCustody?.processGroupTerminationObserved).toBe(true);
+      const stderr = readFileSync(path.join(root, 'stderr.log'), 'utf8');
+      expect(stderr).toContain('Invalid contour snapshot');
+      expect(stderr).not.toContain('missing-image.json');
+      expect(readFileSync(path.join(root, 'stdout.log'), 'utf8')).not.toContain('VidaContourStageLocation');
+      expect(readFileSync(snapshot, 'utf8')).toBe(bytes);
+      passed = true;
+    } finally {
+      if (passed) rmSync(root, { recursive: true });
+      else console.error('Retained contour snapshot preflight fixture: ' + root);
+    }
+  },
+);
+
 test('image outcomes separate captured inputs from legacy live Git claims', () => {
   const image = {
     schema: 'VidaQualityExecutionImage/v1',

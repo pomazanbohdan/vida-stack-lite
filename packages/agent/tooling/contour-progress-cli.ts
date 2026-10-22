@@ -50,6 +50,10 @@ function load(file: string, withDigest = false): unknown {
   return withDigest ? { value, sha256: createHash('sha256').update(bytes).digest('hex') } : value;
 }
 
+export function checkContourProgressSnapshot(file: string): void {
+  mergeContourProgress(load(file), []);
+}
+
 function publishSnapshot(output: string, snapshot: ReturnType<typeof mergeContourProgress>): string {
   const document = renderContourProgress(snapshot);
   mkdirSync(output, { recursive: true });

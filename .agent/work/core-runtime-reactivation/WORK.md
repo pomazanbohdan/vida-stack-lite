@@ -10,6 +10,58 @@ The active contour is **bun-session-handoff-v2 only**, continuing the same repai
 lane with the shared reference classifier explicitly included. The predecessor
 bun-session-handoff retains its original three-Source scope in the retired
 registry. Its receipts and frozen ceilings remain unchanged.
+The next repair packet is based on published1680449984b7b805dc883a33ed9044eb8db2e691.
+Throughput checkpoint: prioritize a supported native lease-race witness, then
+resolve the exact producer prerequisites for the remaining four arms; no
+unchanged full rerun or new contour.2242 assigns native Luna the lease proposal
+in /workspace/vida-session-lease-patch-Kz7Uww, reference-set transitions and the
+specific multi-project configured ingress gap as disjoint lanes. Root owns all
+integration/checks/Git and will group only justified repairs before the next
+complete stage. A proposal or failed premise changes no counter disposition.
+The2242 lease proposal and2243 native-boundary alternative prepare no test:
+same-slot retries pass the retry-fence check before preflight, and direct Host
+no-effect recording does not renew the Work lease. The Journal-bound renewal
+requires the matching current item, absent for the proposed independent old
+readonly slot. The maintained configuration also requires one developer
+assignment. No broad impossibility/skip follows from this fixture limitation.
+2242's lease note is retained at DIAG/DIAG/session-lease-case-v2242.md because
+the worker used an extra path component;2243's exact note is
+DIAG/session-native-lease-boundary-v2243.md. Root's suggested API name
+reconcileWorkflowAttemptWithApproval does not exist; the actual native owner is
+reconcileWorkflowAttempt. No invocation of the nonexistent API was attempted.
+The reference and project lanes likewise prepare no test and leave their
+missing producer proofs OPEN. The reference reader discloses one unintended
+read-only git status during bootstrap, outside Root's staged-check freeze;
+it performed no mutation or numeric check. No reviewed finding is a new kill,
+coverage result or accepted skip. All these lanes have terminated.
+
+Root repairs the confirmed late-publication waste instead of repeating an
+unchanged numeric stage. checkContourProgressSnapshot reuses the existing
+32MiB bounded reader and strict merger. The stage checks the existing canonical
+snapshot and explicit --snapshot after canonical-directory admission and before
+SDK/image setup. An absent canonical snapshot remains valid; missing explicit,
+invalid JSON/schema or scope mismatch fails before producer formation. The
+Set deduplicates lexical paths only. Final publication still rereads and
+strictly merges, so preflight grants no freshness, scope exemption or score.
+No Source/AST/inventory/hash pass or extra suite is introduced by this check.
+Independent2245 finds no code blocker and requests explicit-snapshot coverage;
+Root adds that second native-CLI case. Both use an invalid snapshot plus a
+missing-image sentinel, prove snapshot-error precedence, complete capture/group
+closure and unchanged snapshot bytes.2244 retains a static diagnostic from
+reading nonexistent result.stdout/stderr fields; the corrected test uses its
+owned captured files, reading stderr once.2245/2247 scoped strict131 and
+zero-warning lint pass.2248 groups the two affected tooling test files:
+180PASS/0FAIL/721assertions in3.41s under default5s. This checks the harness,
+not missing product guard coverage;2237's F/L/S/B remains unchanged and bound
+to its original image/tools. No unchanged complete contour rerun is justified.
+
+2250's independent static review finds the preserved authorization-count proposal
+feasible within its fresh isolated fixture. It requests binding the native
+retirement receipt to the original approval reference. Root will inspect that
+causal path and apply only the bounded test/helper diff before targeted static
+and native controls. The proposal remains unintegrated and unrun at this
+checkpoint; it grants no operational rebind/cutover, consumer effect or new
+Source authority. The review explicitly corrects its initial wrong-path reads.
 TaskSource resource transition completes exact F/L/S/B in stage1926 below;
 no second contour producer overlaps it. The preceding bun-host-state coverage cycle has completed
 all testable gaps and reviewed every residual objective counter under the owner's

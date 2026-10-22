@@ -12,7 +12,11 @@ import {
   requireCampaignStorage,
   throwAfterCampaignReceiptFailure,
 } from './contour-campaign.ts';
-import { readContourArtifact, runContourProgressWithNative } from './contour-progress-cli.ts';
+import {
+  checkContourProgressSnapshot,
+  readContourArtifact,
+  runContourProgressWithNative,
+} from './contour-progress-cli.ts';
 import { executeMutationCommand } from './mutation-evidence.ts';
 import { mutationPartitions } from './mutation-partitions.ts';
 import { mutationToolInputs } from './mutation-evidence.ts';
@@ -298,6 +302,13 @@ async function main(): Promise<void> {
   const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const repository = realpathSync(path.resolve(packageRoot, '../..'));
   const canonicalOutput = canonicalStageOutputDirectory(values.output);
+  const snapshots = new Set([path.join(canonicalOutput, 'CONTOUR-STATUS.json')]);
+  if (values.snapshot) {
+    const snapshot = path.resolve(values.snapshot);
+    if (!existsSync(snapshot)) throw new Error('Missing explicit contour snapshot: ' + snapshot);
+    snapshots.add(snapshot);
+  }
+  for (const snapshot of snapshots) if (existsSync(snapshot)) checkContourProgressSnapshot(snapshot);
   const image = await stageExecutionImage(packageRoot, repository, partition, values);
   const output = contourStageOutput(image.repository, canonicalOutput);
   const commit = image.source_commit;
