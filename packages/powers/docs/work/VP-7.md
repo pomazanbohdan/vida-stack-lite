@@ -31,8 +31,8 @@ sources:
 - id: request
   resource: /requests/REQ-D3-D8-runtime-request.md
   title: D3/D8 Runtime request draft
-generated: { by: vida-agent/gpt-6-luna, at: '2026-10-22T07:51:49Z' }
-revision: '3'
+generated: { by: vida-agent/gpt-6-luna, at: '2026-10-22T21:24:38Z' }
+revision: '4'
 ---
 
 # VP-7 — Runtime integration
@@ -52,21 +52,21 @@ Integrate the VP extended instruction registry and VP-owned methodology profile 
 - D8 has one VP-owned profile schema. The Agent currently reads `agent-runtime.config.v1.yaml`, which has no VP profile section. D8 ties appearance of the Runtime profile section to the `.vida/project.yaml` cutover. The Agent maintainer must resolve the transition/read policy; no existing support is claimed in either carrier.
 - No approved required/optional policy exists for the VP registry/profile. Missing-input behavior and any requiredness must receive explicit owner approval; silent defaults are forbidden.
 - Stage 7b storage migration remains gated by the separate storage-admission GAP and runtime owner. It is outside this request and must not be implemented as a second database.
-- One request, `REQ-D3-D8`, carries both D3 and D8. It is separate from VP-7 and remains a draft until final relevant profile/catalog source/schema hashes are bound after those E4 inputs freeze; E5a manifest work is not a prerequisite.
+- One request, `REQ-D3-D8`, carries both D3 and D8. It is separate from VP-7 and binds the current published base plus relevant VP inputs; rebind if an input changes before handoff. E5a manifest work is not a prerequisite.
 
 ## Acceptance references
 
 Relevant canonical criteria include AC-19 through AC-24, AC-38, and AC-40, plus Stage 7's acceptance block in the [implementation plan](../implementation-plan.md). The trace includes BR-07, BR-08, BR-10, D3, D8, SR-34 through SR-54, and SR-72. Runtime support and user acceptance remain open until the Agent-owned implementation, installation, and attributable acceptance evidence exist.
 
-## Implementation status addendum — 2026-10-22
+## Implementation status addendum — 2026-10-23
 
-D8 keeps `.vida/project.yaml` as the approved post-cutover Runtime target. The Agent
-currently reads `agent-runtime.config.v1.yaml` and has no VP profile reader. Current
-`vp-setup` outputs `.vida/vp-profile.json` and `vida-project-profile.json` are bridge
-JSON materializations; they do not establish Runtime reading or acceptance. The
-`REQ-D3-D8` request is draft, unsent and unaccepted; final binding waits only for the
-relevant E4 profile/catalog Source and schema inputs to freeze. E5a is not a prerequisite.
-The required/optional policy remains a proposal, with no silent default.
+The `REQ-D3-D8` request is bound to the current published Source commit and the listed
+VP input hashes; see the request for the exact values. It is prepared for owner review,
+unsent and unaccepted. D8 keeps `.vida/project.yaml` as the approved post-cutover target.
+The Agent currently reads `agent-runtime.config.v1.yaml`; `vp-setup` JSON outputs remain
+bridge materializations and are not Runtime reads. Required/optional policy and the
+current-to-cutover migration remain open. No attributable handoff or admission evidence
+exists, so the G phase remains open. Runtime acceptance remains a separate gate.
 
 ## Relations
 
@@ -78,7 +78,7 @@ The required/optional policy remains a proposal, with no silent default.
 ## Expected evidence
 
 - Agent-owned schema/config/source paths and focused tests for valid input, invalid schema, source/digest mismatch, and missing registry/profile behavior under an explicitly approved required/optional policy.
-- Source-bound VP artifact receipts, existing activation checks for privacy/size/output, selected carrier and migration decisions, and exact input hashes after the relevant E4 profile/catalog inputs freeze.
+- Source-bound VP artifact receipts, existing activation checks for privacy/size/output, selected carrier and migration decisions, and exact Agent/VP input hashes for each future implementation receipt. The current request's VP inputs are bound in `REQ-D3-D8`.
 - Static/fixture evidence is labeled separately from actual Runtime execution and attributable user acceptance. Delivery of the request or presence of code is not Runtime acceptance.
 - The Agent maintainer returns the implemented file list, test names, commands, and receipts. No Agent Source change is authorized by this Work Item alone.
 
