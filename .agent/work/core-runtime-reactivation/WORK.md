@@ -43,16 +43,42 @@ No Runtime adoption, install, cutover or forged endpoint is introduced for
 coverage. These branches stay OPEN. Blind1862 finds no blocker within this
 implementation scope;1863 finds no comment/style defects. Root reviewed both
 reports. The final selected test bytes have one refreshed review pin; eligibility
-passes1case/10assertions, tooling strict128 and scoped lint pass. Full stage
-remains pending publication and the matching SDK artifact. No local focused
-result is new numeric qualification.
+passes1case/10assertions, tooling strict128 and scoped lint pass.
+
+Published06950b2dbac823fb51117fe9660633f0bd82303c passes ordinary commit hooks
+(format522, strict529, Knip0) and push. CI39748745206/attempt1 succeeds without
+running suites. SDK artifact12412168300 is661767bytes, digest
+46044666f597d5a7b7ce99369845cab02b24c74963cdd81bfa248e2df2aafb19.
+The sole stage1866 at /workspace/contour-stage-sVHvzT completes in226370.703272ms,
+exit0, no timeout/signal/spawn error, full capture and closed process group,
+unchanged boot/image. Run6635b430-5489-4f00-a272-a997228b0995 records336Host
+PASS/6174assertions and16stopped-source PASS/491assertions. Raw exact coverage
+is F1155/1155 L5098/5099 S5452/5455 B5645/5669, still BLOCKED. Functions have
+no remaining uncovered entries. One line, three statements and24branch arms
+remain. Frozen max254 is not frozen-budget or mutation qualification.
+The stage performs the sole projection import. No repeated suite was started.
+
+Image f7ed8be30271c2feb2a8286d7180e812db0d4fb6 has manifest digest
+48631338e2309513a12366309b473cb4aa6faf9e85ecef79f432dcf48522565f.
+The compared/fsynced8017920byte non-cache scratch archive is
+/workspace/vida-functional-retention-sVHvzT-01gUP0/archive.json; originals remain
+unchanged. This is byte retention, not power-loss or Runtime acceptance proof.
+DIAG/host-uncovered-plan-v1867.json is the current report-bound map, Source
+fingerprint73b955269cee136432e7e4ea660844e1ac9bee203c8be03db90eb573ec193d10.
+The first1867invocation used the wrong script directory and failed before
+running a producer; the corrected call names both script and map output.
+1867 rebinds17previously reviewed arms by exact unchanged owner bodies and
+relative counter geometry. Earlier1841producer review remains their proof,
+not the rebind alone. Three other retained defensive arms have1855review;
+the four real frontier/history prerequisite branches remain OPEN under1859.
+Raw counters are unchanged by dispositions and the contour is not closed.
 
 The one current resource observation reports26010243072available bytes on
 workspace/retained and6473224192on scratch, above floor plus reserve2214592512.
 No cleanup, broad disk scan or duplicate producer was started for this batch.
 Earlier retained images and receipts still supply current proof dependencies.
 
-Published9e9c2804882b9030d89c54c28a82643b174f47a6 passes the ordinary commit
+The previous9e9c2804882b9030d89c54c28a82643b174f47a6 packet passes the ordinary commit
 hook (Knip0, format522, strict529) and ordinary push. CI39740965171/attempt1
 forms SDK inputs only; artifact12409390650 is658809bytes, digest
 ada9c2316cdc5d7eab984b14f2d7b15972e8dde187309f5437efb9ace439b922.
