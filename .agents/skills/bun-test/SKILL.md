@@ -997,6 +997,14 @@ Do not delete fixture state until assertions and owned checks succeed.
 
 ## Diagnose performance and parallel conflicts
 
+Read executing-package bytes through `readRuntimePackageResourceBytes`; a
+controlled beforeimage overlay delegates to `readRuntimePackageSourceResourceBytes`.
+Direct SafeAccess `readBytes` can create CAS sidecars and fail on the immutable
+execution image. Before the full contour run, check a new package-reading fixture
+with the package mounted read-only and its caller context and scratch writable.
+An immutable package and a mutable configured caller have different ownership;
+making the caller config read-only can fail a global hook before the selected case.
+
 When a Bun PASS row exceeds its declared case bound, follow TESTING's monotonic
 setup/cleanup deadline rule. Check whether preparation throws before the body's
 finally exists. Establish owned close handling before opening resources, preserve

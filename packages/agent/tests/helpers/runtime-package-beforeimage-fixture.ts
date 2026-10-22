@@ -10,6 +10,7 @@ import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts'
 export function runtimePackageBeforeimageFixture(parent: string, bundle: string, onRoot: (root: string) => void) {
   const currentAccess = runtimeConfig.runtimePackageAccess();
   const currentPaths = runtimeConfig.runtimePackageCodePaths(bundle, currentAccess);
+  const boundPaths = JSON.stringify([...currentPaths].sort());
   const root = mkdtempSync(path.join(parent, 'runtime-beforeimage-'));
   onRoot(root);
   const relativePaths = currentPaths.map((file) => {
@@ -23,14 +24,19 @@ export function runtimePackageBeforeimageFixture(parent: string, bundle: string,
   writeFileSync(
     changedFile,
     Buffer.concat([
-      currentAccess.readBytes(changedPath, 'Host package beforeimage data'),
+      runtimeConfig.readRuntimePackageResourceBytes(currentAccess, changedPath, 'Host package beforeimage data'),
       Buffer.from('\n/* Host beforeimage data, never executed. */\n'),
     ]),
   );
   const changedAccess = requireSafeRepositoryAccess(root);
   const access: Parameters<typeof sourceSnapshots.snapshotRuntimePackageSources>[0] = {
     fileExists: (file, label) => (file === changedPath ? changedAccess : currentAccess).fileExists(file, label),
-    readBytes: (file, label) => (file === changedPath ? changedAccess : currentAccess).readBytes(file, label),
+    readBytes: (file, label) =>
+      sourceSnapshots.readRuntimePackageSourceResourceBytes(
+        file === changedPath ? changedAccess : currentAccess,
+        file,
+        label,
+      ),
     readVerifiedCaptureBytes: (file, label, maxBytes) =>
       sourceSnapshots.readRuntimePackageSourceResourceBytes(
         file === changedPath ? changedAccess : currentAccess,
@@ -55,7 +61,7 @@ export function runtimePackageBeforeimageFixture(parent: string, bundle: string,
             !('repository_root' in reader) ||
             reader.repository_root !== currentAccess.repository_root ||
             selectedBundle !== bundle ||
-            JSON.stringify([...selectedPaths].sort()) !== JSON.stringify([...currentPaths].sort())
+            JSON.stringify([...selectedPaths].sort()) !== boundPaths
           )
             throw new Error('Runtime beforeimage snapshot escaped its selected package');
           return before;

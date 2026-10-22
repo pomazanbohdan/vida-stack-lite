@@ -79,7 +79,37 @@ recovery cases/138assertions and exact-pin eligibility1case/10assertions. The
 shared recovery projection now checks global order/owner before partitioning
 around recovery too. Root refreshed the sole changed Host test pin once after
 the complete assertion group; stopped-source bytes remain unchanged. Ordinary
-publication and one matching SDK/image/stage remain pending.
+publication and one matching SDK/image/stage follow below.
+
+Published b828812b63683aa5f395efe6beb5f8214aefa598 passes normal hooks
+(format523, strict530, Knip0) and ordinary push. Build-only CI39758657974/attempt1
+succeeds; SDK12415889866 is662463bytes with digest
+3e1985e04972e1eb8739b90b0cf65753072faed45df3998f3d7575fb093d4067.
+The sole stage1896 at /workspace/contour-stage-1YvYLt exits1 after246239.971012ms,
+without timeout/signal/spawn error. Producer/group/capture close on the unchanged
+boot and image f08d1c0d27c6cb7920f07fe906fc86a945e3f494. Run9477f46c-e0a7-4463-8f91-406d2a2681bc
+has337Host PASS/1FAIL/6213assertions and16stopped-source PASS/491assertions.
+No exact coverage report is admitted. The stage already publishes this failed
+attempt once; partial counters are not numeric evidence and are not re-imported.
+
+The failure is EROFS during beforeimage setup, before the selected case's Host
+transitions: direct SafeAccess.readBytes tries to create a CAS reclaim directory
+inside the read-only package. The helper now uses the existing executing-package
+resource owner and verified overlay reader on both byte paths. Its selected-path
+JSON is computed once, without caching live authority. The measured image is
+unchanged.1898 strict154 and scoped lint pass. A first readonly focused control
+incorrectly made the configured caller read-only too; its global hook refuses
+before case execution.1899 uses a separate writable caller fixture and passes
+the actual frontier-history case15assertions/15.85s with Source read-only.
+The technique owner records this fixture-check order before another full stage.
+
+Failed1896 scratch has a compared/fsynced8017920-byte non-cache archive at
+/workspace/vida-functional-retention-1YvYLt-Nn2Nzu/archive.json, with originals
+unchanged. The first1897archive script has a duplicate declaration and fails at
+parse time before writing an archive; corrected1898 runs once. This preserves
+FAIL bytes only, not coverage, durability or Runtime qualification. Current
+pin bytes need no change for the helper-only correction; independent read-only
+review, normal publication and one fresh matching SDK/image/stage remain.
 
 The current repair batch completes the genuine two-research historical
 capture component reproduction and canonical-record proof. The regular synthesis
