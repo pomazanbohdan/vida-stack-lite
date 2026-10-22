@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, setSystemTime, spyOn, test } from 'bun:test';
 import { writeFileSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { link, lstat, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Database } from 'bun:sqlite';
@@ -26,13 +27,18 @@ import {
   hostLedger as initialSourceHostLedger,
   hostDatabase as initialSourceHostDatabase,
   type InitialWorkFixture,
+  admittedInput as initialSourceAdmissionInput,
 } from '../helpers/initial-source-work-fixture.ts';
+import { requireHostState } from '../helpers/task-source-host-fixture.ts';
+import { suspendLocalWork } from '../../src/orchestration/suspend-local-work.ts';
+import type { TaskSourceBindingRequest } from '../../src/orchestration/task-source-binding.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import type {
   MastraLedgerItem,
   MastraSessionLedgerSnapshot,
   MastraSessionLedgerState,
   PersistentSessionSnapshot,
+  SynthesisObservationCorrectionPlan,
 } from '../../src/orchestration/persistent-session-handoff.ts';
 import {
   buildSessionBridgeRequest,
@@ -65,6 +71,9 @@ import {
   withReadonlyDispatchHostFixture,
 } from '../helpers/readonly-dispatch-host-fixture.ts';
 import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
+import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
+import { prepareLifecycleForCorrection } from '../../src/orchestration/final-assurance.ts';
+import { MastraSessionBridge } from '../../src/orchestration/mastra-session-bridge.ts';
 
 const { repositoryRoot: root, config } = configuredTestContext();
 const workspaceId = 'a'.repeat(64);
@@ -1413,13 +1422,526 @@ test('failed Host report preserves the uncertain source reservation and rejects 
   );
 }, 20_000);
 
+test('configured handoff factories reject unsafe native database paths without opening or replacing them', async () => {
+  caseDeadline = performance.now() + 5_000;
+  const repositoryRoot = await configuredFactoryFixture('unsafe-database');
+  retainScratch = true;
+  const fixtureConfig = loadRuntimeConfig(repositoryRoot);
+  const file = sessionHandoffDatabasePath(repositoryRoot, fixtureConfig);
+  const target = path.join(repositoryRoot, 'unsafe-database-target');
+  const bytes = Buffer.from('inert native path refusal control');
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(target, bytes);
+  for (const kind of ['symlink', 'hardlink', 'directory']) {
+    await withInitialSourceCleanup(
+      async () => {
+        if (kind === 'symlink') await symlink(target, file);
+        else if (kind === 'hardlink') await link(target, file);
+        else await mkdir(file);
+        const entry = await lstat(file);
+        const symlinkTarget = kind === 'symlink' ? await readlink(file) : null;
+        expect(() => openConfiguredSessionHandoffStore(repositoryRoot)).toThrow(
+          'session handoff database path is unsafe',
+        );
+        expect(() => openConfiguredMastraSessionLedger(repositoryRoot)).toThrow(
+          'Mastra session ledger database path is unsafe',
+        );
+        expect(await lstat(file)).toMatchObject({
+          dev: entry.dev,
+          ino: entry.ino,
+          mode: entry.mode,
+          nlink: entry.nlink,
+          size: entry.size,
+        });
+        if (symlinkTarget !== null) expect(await readlink(file)).toBe(symlinkTarget);
+        expect(await readFile(target)).toEqual(bytes);
+      },
+      () => rm(file, { recursive: true, force: true }),
+      'Unsafe database path refusal and controlled pathname restoration',
+    );
+  }
+  expect(performance.now()).toBeLessThan(caseDeadline);
+  retainScratch = false;
+});
+
+test('Mastra sync recovers an actual same-key insert race without replacing the winning suspension', async () => {
+  caseDeadline = performance.now() + 5_000;
+  scratch = await mkdtemp(path.join(tmpdir(), 'mastra-insert-race-'));
+  retainScratch = true;
+  const { database, instance, workId } = mastraLedger('mastra-insert-race');
+  const winnerDatabase = openHostStateDatabase(scratchPath(), 'host-0.sqlite', workspaceId);
+  const winnerHost = new HostStateStore(winnerDatabase, workspaceId, undefined, undefined, undefined, undefined, root);
+  const winner = new MastraSessionLedger(winnerDatabase, workspaceId, config, root, winnerHost);
+  mastraLedgers.push(winner);
+  const fixture = actualFocusedValidatorRequests(workId);
+  const transaction = database.transaction.bind(database);
+  let winning: MastraSessionLedgerSnapshot | undefined;
+  const raced = spyOn(database, 'transaction').mockImplementationOnce((body) => {
+    winning = winner.sync(workId, 1, fixture.runId, 'validate_focused', fixture.requests);
+    return transaction(body);
+  });
+  await withInitialSourceCleanup(
+    () => {
+      const current = expectReturned(() =>
+        instance.sync(workId, 1, fixture.runId, 'validate_focused', fixture.requests),
+      );
+      if (!winning) throw new Error('Native Mastra insertion winner did not run');
+      expect(current).toEqual(winning);
+      expect(current.version.revision).toBe(1);
+      expect(winner.resume(workId, 1)).toEqual(current);
+      expect(database.query('SELECT COUNT(*) AS count FROM agent_host_mastra_session_ledger').get()).toEqual({
+        count: 1,
+      });
+    },
+    () => raced.mockRestore(),
+    'Mastra insertion race and native transaction observer restoration',
+  );
+  expect(performance.now()).toBeLessThan(caseDeadline);
+  retainScratch = false;
+});
+
+test('configured TaskSource proposal binds real admitted policy evidence before issuing its inert argv', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      await prepareInitialSourceFrontier(fixture, 'writer');
+      const host = initialSourceHostStore(fixture),
+        ledger = initialSourceHostLedger(fixture);
+      const before = host.readHostStateSnapshot(fixture.identity);
+      requireHostState(before);
+      expect(
+        before.work.lifecycle.references
+          .filter(
+            (reference) =>
+              reference.artifact_schema === 'LifecyclePreparationObservation/v1' && reference.disposition === 'current',
+          )
+          .map((reference) => reference.kind)
+          .sort(),
+      ).toEqual(['source_plan']);
+      const journal = requiredMastraSnapshot(ledger.resume(fixture.identity.work_id, 1));
+      if (!before.work.lease) throw new Error('Configured TaskSource fixture has no lease');
+      const project = loadProjectContext(fixture.root, fixture.config, fixture.identity.repository_id, 'sample');
+      const request: TaskSourceBindingRequest = {
+        schema: 'TaskSourceBindingRequest/v1',
+        operation: 'propose-create',
+        operation_id: 'fixture-configured-policy',
+        request_id: 'fixture-configured-policy-request',
+        branch_ref: 'refs/heads/codex/fixture-configured-policy',
+        expected_host: {
+          work: before.workVersion,
+          ledger: before.ledgerVersion,
+          journal: { attempt: 1, version: journal.version },
+          maintenance_generation: before.maintenanceGeneration,
+        },
+        work_id: fixture.identity.work_id,
+        attempt: 1,
+        thread_id: before.work.lease.thread_id,
+        repository_id: fixture.identity.repository_id,
+        project_ids: fixture.identity.project_ids,
+        canonical_host_root: fixture.root,
+        source_root: path.join(fixture.root, '.tmp', 'task-source-policy'),
+        config_digest: runtimeConfigDigest(fixture.config),
+        project_context_digest: project.project_context_digest,
+      };
+      const authorizationSha = createHash('sha256')
+        .update(await readFile(path.join(fixture.root, fixture.sourceAuthorizationPath)))
+        .digest('hex');
+      const prepared = expectReturned(() =>
+        host.prepareTaskSourceBindingOperation({
+          request,
+          identity: fixture.identity,
+          verifyCurrent: ({ journal: current }) => {
+            if (!current.source_scope) throw new Error('Configured TaskSource journal has no Source scope');
+            return { source_authorization_sha256: authorizationSha, source_scope_digest: current.source_scope.digest };
+          },
+        }),
+      );
+      expect(prepared.status).toBe('prepared');
+      const issued = await expectAsyncReturned(() =>
+        host.issueTaskSourceBindingOperation({ request, identity: fixture.identity }),
+      );
+      expect(issued.status).toBe('issued');
+      if (!isPlainRecord(issued.action)) throw new Error('Configured TaskSource issued action is missing');
+      expect(issued.action).toMatchObject({
+        status: 'issued',
+        operation_id: request.operation_id,
+        request_id: request.request_id,
+      });
+      expect(issued.action.command_argv).toEqual([
+        ['-C', fixture.root, 'worktree', 'add', '--branch', 'codex/fixture-configured-policy', request.source_root],
+      ]);
+      expect(ledger.resume(fixture.identity.work_id, 1)).toEqual(journal);
+    },
+    { holdExpiredOwnerClock: true },
+    20_000,
+  );
+}, 20_000);
+
+test('native synthesis correction preserves admitted predecessors and refuses changed caller plans before exact retry', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      const prepared = await prepareNativeUnnormalizedSynthesis(fixture);
+      const host = initialSourceHostStore(fixture),
+        ledger = initialSourceHostLedger(fixture),
+        db = initialSourceHostDatabase(fixture);
+      const before = host.readHostStateSnapshot(fixture.identity);
+      requireHostState(before);
+      const admitted = initialSourceAdmissionInput(fixture);
+      const correctionPointer = 'fixture:correct-selected-synthesis';
+      suspendLocalWork({
+        store: host,
+        identity: fixture.identity,
+        journal: prepared.journal,
+        expectedWork: before.workVersion,
+        expectedLedger: before.ledgerVersion,
+        expectedMaintenanceGeneration: before.maintenanceGeneration,
+        nativeSessionHandle: admitted.nativeSessionHandle,
+        userRequestPointer: correctionPointer,
+        requestIntent: 'linked_correction',
+        config: fixture.config,
+        documentationContext: {
+          repository_root: fixture.root,
+          repository_id: fixture.identity.repository_id,
+          project_id: 'sample',
+          work_id: fixture.identity.work_id,
+        },
+      });
+      const paused = host.readHostStateSnapshot(fixture.identity);
+      requireHostState(paused);
+      const priorIssue = prepared.originalItem.issue_id;
+      if (!priorIssue) throw new Error('Observed synthesis issue is missing');
+      const body: Omit<SynthesisObservationCorrectionPlan, 'digest'> = {
+        schema: 'VidaSynthesisObservationCorrectionPlan/v1',
+        correction_id: 'fixture-selected-synthesis',
+        actor: admitted.nativeSessionHandle,
+        timestamp: new Date().toISOString(),
+        workspace_id: host.workspaceId,
+        repository_id: fixture.identity.repository_id,
+        project_ids: fixture.identity.project_ids,
+        integrations_digest: fixture.identity.integrations_digest,
+        work_id: fixture.identity.work_id,
+        attempt: 1,
+        action_id: prepared.originalItem.request.action_id,
+        prior_issue_id: priorIssue,
+        native_session_handle: admitted.nativeSessionHandle,
+        owner_correction_pointer: correctionPointer,
+        config_digest: paused.work.binding.config_digest,
+        source_digest: paused.work.binding.work_source_revision,
+        predecessor_refs: prepared.catalog.result_refs,
+        catalog_digest: canonicalJsonDigest(prepared.catalog),
+        expected_work: paused.workVersion,
+        expected_ledger: paused.ledgerVersion,
+        expected_journal: prepared.journal.version,
+        original_item: prepared.originalItem,
+      };
+      const correction = { ...body, digest: canonicalJsonDigest(body) };
+      const rows = () => ({
+        host: db.query('SELECT * FROM agent_host_state ORDER BY workspace_id,kind,id').all(),
+        journal: db.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt').all(),
+        schema: db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all(),
+      });
+      const preimage = rows();
+      for (const changed of [
+        { ...body, workspace_id: '0'.repeat(64) },
+        { ...body, config_digest: '0'.repeat(64) },
+        { ...body, predecessor_refs: [] },
+        { ...body, catalog_digest: 'invalid' },
+        { ...body, owner_correction_pointer: '' },
+      ]) {
+        expect(() => ledger.correctObservedSynthesis({ ...changed, digest: canonicalJsonDigest(changed) })).toThrow(
+          'synthesis correction plan is invalid',
+        );
+        expect(rows()).toEqual(preimage);
+      }
+      for (const [changed, message] of [
+        [
+          { ...body, expected_journal: { ...body.expected_journal, revision: body.expected_journal.revision + 1 } },
+          'synthesis correction journal CAS or source changed',
+        ],
+        [{ ...body, source_digest: '0'.repeat(64) }, 'synthesis correction journal CAS or source changed'],
+        [
+          { ...body, action_id: '0'.repeat(64) },
+          'synthesis correction is not the exact observed unnormalized native item',
+        ],
+        [
+          { ...body, prior_issue_id: '11111111-1111-4111-8111-111111111111' },
+          'synthesis correction is not the exact observed unnormalized native item',
+        ],
+        [
+          { ...body, expected_work: { ...body.expected_work, revision: body.expected_work.revision + 1 } },
+          'synthesis correction owner, artifacts or coordination CAS changed',
+        ],
+        [
+          { ...body, expected_ledger: { ...body.expected_ledger, digest: '0'.repeat(64) } },
+          'synthesis correction owner, artifacts or coordination CAS changed',
+        ],
+      ] satisfies readonly (readonly [Omit<SynthesisObservationCorrectionPlan, 'digest'>, string])[]) {
+        expect(() => ledger.correctObservedSynthesis({ ...changed, digest: canonicalJsonDigest(changed) })).toThrow(
+          message,
+        );
+        expect(rows()).toEqual(preimage);
+      }
+      const corrected = expectReturned(() => ledger.correctObservedSynthesis(correction));
+      expect(corrected.state.items).toEqual([
+        { request: prepared.originalItem.request, issue_id: null, observation: null },
+      ]);
+      expect(corrected.state.completed).toEqual(prepared.journal.state.completed);
+      expect(ledger.synthesisCorrection(fixture.identity.work_id, 1, body.action_id)).toEqual(correction);
+      expect(ledger.synthesisCorrection(fixture.identity.work_id, 1, '0'.repeat(64))).toBeNull();
+      expect(expectReturned(() => ledger.correctObservedSynthesis(correction))).toEqual(corrected);
+      const receiptRow = () =>
+        db
+          .query<{ payload: string; digest: string }, [string, string, number, string]>(
+            'SELECT payload,digest FROM agent_host_synthesis_observation_correction WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+          )
+          .get(host.workspaceId, fixture.identity.work_id, 1, body.action_id);
+      const originalReceipt = receiptRow();
+      if (!originalReceipt) throw new Error('Native synthesis correction receipt is missing');
+      for (const invalid of [
+        { ...correction, schema: 'foreign' },
+        { ...correction, workspace_id: '0'.repeat(64) },
+        { ...correction, work_id: 'foreign' },
+        { ...correction, attempt: 2 },
+        { ...correction, action_id: '0'.repeat(64) },
+        { ...correction, digest: '0'.repeat(64) },
+        { ...correction, actor: 'changed receipt actor' },
+      ]) {
+        await withInitialSourceCleanup(
+          () => {
+            expect(
+              db
+                .query(
+                  'UPDATE agent_host_synthesis_observation_correction SET payload=? WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+                )
+                .run(canonicalJson(invalid), host.workspaceId, fixture.identity.work_id, 1, body.action_id).changes,
+            ).toBe(1);
+            const corrupted = receiptRow();
+            expect(() => ledger.synthesisCorrection(fixture.identity.work_id, 1, body.action_id)).toThrow(
+              'synthesis correction receipt is invalid',
+            );
+            expect(receiptRow()).toEqual(corrupted);
+            expect(db.inTransaction).toBe(false);
+          },
+          () => {
+            expect(
+              db
+                .query(
+                  'UPDATE agent_host_synthesis_observation_correction SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+                )
+                .run(
+                  originalReceipt.payload,
+                  originalReceipt.digest,
+                  host.workspaceId,
+                  fixture.identity.work_id,
+                  1,
+                  body.action_id,
+                ).changes,
+            ).toBe(1);
+          },
+          'Synthesis receipt refusal and exact row restoration',
+        );
+        expect(receiptRow()).toEqual(originalReceipt);
+      }
+      const changed = { ...body, owner_correction_pointer: 'fixture:conflicting-correction' };
+      expect(() => ledger.correctObservedSynthesis({ ...changed, digest: canonicalJsonDigest(changed) })).toThrow(
+        'synthesis correction receipt conflicts',
+      );
+      expect(ledger.resume(fixture.identity.work_id, 1)).toEqual(corrected);
+      expect(host.readHostStateSnapshot(fixture.identity)).toEqual(paused);
+    },
+    { cooperativeSynthesis: true, researchSynthesis: true },
+  );
+});
+
+test('authorized corrective engine records its first actual suspension from the empty Host-produced journal', async () => {
+  const deadline = performance.now() + 20_000;
+  caseDeadline = deadline;
+  let fixture: Awaited<ReturnType<typeof createFailedFinalCorrectionFixture>> | undefined;
+  let bridge: MastraSessionBridge | undefined;
+  let completed = false,
+    bridgeClosed = false;
+  await withInitialSourceCleanup(
+    async () => {
+      const current = await createFailedFinalCorrectionFixture('failed');
+      fixture = current;
+      console.info('Corrective handoff fixture root: ' + current.root);
+      if (performance.now() >= deadline) throw new Error('Corrective handoff setup exhausted its deadline');
+      const prepared = prepareLifecycleForCorrection({
+        root: current.root,
+        config: current.config,
+        store: current.store,
+        identity: current.identity,
+        journal: current.journal,
+        preparationPath: current.preparationPath,
+      });
+      const before = current.store.readHostStateSnapshot(current.identity);
+      requireHostState(before);
+      const original = current.store.readWorkSessionJournal(current.identity);
+      if (!prepared.workVersion || !prepared.ledgerVersion || !original)
+        throw new Error('Prepared corrective input is missing');
+      const issued = expectReturned(() =>
+        current.store.authorizeCorrectiveExecution({
+          identity: current.identity,
+          attempt: 1,
+          expectedWork: before.workVersion,
+          expectedLedger: before.ledgerVersion,
+          expectedJournal: original.version,
+          stageIds: ['develop_task', 'validate_focused', 'test_task'],
+          userInstructionRef: 'fixture:selected-corrective-owner',
+          config: current.config,
+        }),
+      );
+      const corrected = requiredMastraSnapshot(current.ledger.resume(current.identity.work_id, 1));
+      expect(corrected.state).toMatchObject({
+        run_id: issued.engine_run_id,
+        corrective_execution: issued,
+        step_id: null,
+        items: [],
+        completed: [],
+      });
+      const authorizedHost = current.store.readHostStateSnapshot(current.identity);
+      bridge = await MastraSessionBridge.open({
+        ...current.producerInput,
+        repositoryRoot: current.root,
+        config: current.config,
+        workspaceId: current.store.workspaceId,
+        ledger: current.ledger,
+        correctiveExecution: issued,
+      });
+      const started = await expectAsyncReturned(() => bridge!.start(corrected.state.source_scope));
+      const journal = requiredMastraSnapshot(current.ledger.resume(current.identity.work_id, 1));
+      expect(started.status).toBe('suspended');
+      expect(started.run_id).toBe(issued.engine_run_id);
+      expect(journal.version.revision).toBe(corrected.version.revision + 1);
+      expect(journal.state.step_id).toBe(started.step_id);
+      expect(journal.state.corrective_execution).toEqual(issued);
+      expect(journal.state.completed).toEqual([]);
+      expect(journal.state.items.map((item) => item.request)).toEqual([...started.requests]);
+      expect(journal.state.items.length).toBeGreaterThan(0);
+      for (const item of journal.state.items) {
+        expect(item.issue_id).toBeNull();
+        expect(item.observation).toBeNull();
+        expect(item.request.run_id).toBe(issued.engine_run_id);
+        expect(issued.stage_ids).toContain(item.request.stage_id);
+      }
+      expect(current.store.readHostStateSnapshot(current.identity)).toEqual(authorizedHost);
+      expect(performance.now()).toBeLessThan(deadline);
+      completed = true;
+    },
+    async () => {
+      await withInitialSourceCleanup(
+        async () => {
+          if (bridge) await bridge.close();
+          bridgeClosed = true;
+        },
+        () => {
+          if (fixture) {
+            fixture.close(() => completed && bridgeClosed && performance.now() < deadline);
+          }
+        },
+        'Corrective bridge and fixture cleanup',
+      );
+      if (performance.now() >= deadline) throw new Error('Corrective handoff cleanup exhausted its deadline');
+    },
+    'Host-produced corrective suspension fixture',
+  );
+}, 20_000);
+
+test('Mastra readers bind native maintenance generations and reject corrupted fence rows without writes', async () => {
+  caseDeadline = performance.now() + 5_000;
+  scratch = await mkdtemp(path.join(tmpdir(), 'mastra-maintenance-integrity-'));
+  retainScratch = true;
+  const { database, instance, workId } = mastraLedger('maintenance-integrity');
+  const maintenance = new HostStateStore(database, workspaceId, undefined, undefined, undefined, {
+    principal: 'fixture:maintenance-reader',
+    projectIds: ['project'],
+    verify: (fence) => ({
+      schema: 'MaintenanceReleaseAuthorization/v1',
+      principal: 'fixture:maintenance-reader',
+      fence_digest: canonicalJsonDigest(fence),
+      closure_digest: fence.binding.closure_digest,
+      bundle_digest: fence.binding.bundle_digest,
+    }),
+  });
+  const receipt = expectReturned(() =>
+    maintenance.acquireMaintenanceFence({
+      schema: 'MaintenanceFenceBinding/v1',
+      project_ids: ['project'],
+      operation_id: 'fixture-maintenance-reader',
+      manifest_digest: '1'.repeat(64),
+      request_digest: '2'.repeat(64),
+      bindings_digest: '3'.repeat(64),
+      closure_digest: '4'.repeat(64),
+      bundle_digest: '5'.repeat(64),
+    }),
+  );
+  expect(() => instance.resume(workId, 1)).toThrow('session journal is fenced by maintenance generation');
+  const released = await expectAsyncReturned(() => maintenance.releaseMaintenanceFence(receipt));
+  expect(released.status).toBe('released');
+  expect(() => instance.resume(workId, 1)).toThrow('session journal is fenced by maintenance generation');
+  const rebound = expectReturned(
+    () => new MastraSessionLedger(database, workspaceId, config, root, instance.hostState),
+  );
+  expect(rebound.resume(workId, 1)).toBeNull();
+  const row = () =>
+    database
+      .query<{ revision: number; payload: string; digest: string }, [string]>(
+        'SELECT revision,payload,digest FROM agent_host_maintenance WHERE workspace_id=?',
+      )
+      .get(workspaceId);
+  const original = row();
+  if (!original) throw new Error('Native maintenance fence is missing');
+  for (const changed of [
+    { ...original, revision: original.revision + 1 },
+    { ...original, digest: '0'.repeat(64) },
+  ]) {
+    await withInitialSourceCleanup(
+      () => {
+        expect(
+          database
+            .query('UPDATE agent_host_maintenance SET revision=?,digest=? WHERE workspace_id=?')
+            .run(changed.revision, changed.digest, workspaceId).changes,
+        ).toBe(1);
+        const corrupted = row();
+        expect(() => rebound.resume(workId, 1)).toThrow('session maintenance state checksum invalid');
+        expect(row()).toEqual(corrupted);
+        expect(database.inTransaction).toBe(false);
+      },
+      () => {
+        expect(
+          database
+            .query('UPDATE agent_host_maintenance SET revision=?,digest=? WHERE workspace_id=?')
+            .run(original.revision, original.digest, workspaceId).changes,
+        ).toBe(1);
+      },
+      'Maintenance integrity refusal and row restoration',
+    );
+    expect(row()).toEqual(original);
+    expect(rebound.resume(workId, 1)).toBeNull();
+  }
+  expect(performance.now()).toBeLessThan(caseDeadline);
+  retainScratch = false;
+});
+
 test('readonly replacement report atomically binds raw and projected observations to its prepared dispatch', async () => {
   await withReadonlyDispatchHostFixture(async (fixture, deadline) => {
     const { store, ledger, item, plan, journal, db } = pauseReadonlyDispatchHostFixture(fixture);
     expect(expectReturned(() => store.commitReadOnlyDispatchRepair(plan))).toEqual(plan);
+    expect(ledger.preparedReadOnlyReplacement(fixture.identity.work_id, 1, item.request.action_id)).toEqual({
+      native_session_handle: plan.prior_native_handle,
+      plan_digest: plan.digest,
+    });
+    expect(ledger.preparedReadOnlyReplacement(fixture.identity.work_id, 1, '0'.repeat(64))).toBeNull();
+    expect(ledger.replacementDispatch(fixture.identity.work_id, 1, item.request.action_id)).toBeNull();
+    expect(ledger.replacementNativeHandle(fixture.identity.work_id, 1, item.request.action_id)).toBeNull();
     const activated = expectReturned(() =>
       ledger.activateReadOnlyReplacement(fixture.identity.work_id, 1, journal.version, item.request.action_id),
     );
+    expect(ledger.preparedReadOnlyReplacement(fixture.identity.work_id, 1, item.request.action_id)).toBeNull();
+    expect(ledger.replacementDispatch(fixture.identity.work_id, 1, item.request.action_id)).toEqual(activated.dispatch);
+    expect(ledger.replacementNativeHandle(fixture.identity.work_id, 1, item.request.action_id)).toBe(
+      plan.prior_native_handle,
+    );
+    expect(ledger.replacementDispatch(fixture.identity.work_id, 1, '0'.repeat(64))).toBeNull();
     const source = journal.state.source_scope;
     if (!source) throw new Error('Prepared readonly source scope is missing');
     const summary = 'Cooperative replacement report';
@@ -1444,6 +1966,26 @@ test('readonly replacement report atomically binds raw and projected observation
       schema: db.query('SELECT name,sql FROM sqlite_master ORDER BY name').all(),
     });
     const before = rows();
+    for (const changed of [
+      { ...raw, action_id: '0'.repeat(64) },
+      { ...raw, issue_id: '11111111-1111-4111-8111-111111111111' },
+      { ...raw, host_attempt_id: '0'.repeat(64) },
+    ]) {
+      expect(() =>
+        ledger.reportReadOnlyReplacement(fixture.identity.work_id, 1, activated.snapshot.version, changed, source),
+      ).toThrow('replacement report has no matching read-only dispatch');
+      expect(rows()).toEqual(before);
+    }
+    expect(() =>
+      ledger.reportReadOnlyReplacement(
+        fixture.identity.work_id,
+        1,
+        activated.snapshot.version,
+        { ...raw, output_digest: '0'.repeat(64) },
+        source,
+      ),
+    ).toThrow('replacement output digest or tool reference differs');
+    expect(rows()).toEqual(before);
     expect(() =>
       ledger.reportReadOnlyReplacement(fixture.identity.work_id, 1, activated.snapshot.version, raw, {
         ...source,

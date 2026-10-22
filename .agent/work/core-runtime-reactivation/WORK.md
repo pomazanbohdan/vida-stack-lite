@@ -17,6 +17,42 @@ or numeric producer is active. Complete the selected contour before another.
 
 ### Current measured repair packet
 
+The next session packet adds six native cases and extends the existing replacement
+case using report1963's map. It covers real same-key Mastra insertion loss, the
+configured TaskSource policy over current Source-plan bytes, synthesis correction
+and receipt corruption/refusal/restoration, maintenance generation/checksums,
+unsafe configured DB paths, and the Host-produced corrective engine's first
+suspension. No product implementation or runner policy changes in this packet.
+1964/1965/1966 are independent policy/synthesis/residual studies;1973 identifies
+the actual authorizeCorrectiveExecution/bridge producer. The fixture uses that
+producer with the existing20s exception, not a constructed accepted Journal.
+The policy proposal argv is asserted and never executed; its issued root remains.
+
+1967 passes maintenance/replacement controls:2cases/58assertions.1969 passes
+race/policy/synthesis:3cases/41assertions.1970 passes unsafe paths and expanded
+synthesis receipt refusal/restoration:2cases/83assertions.1972 retains a failed
+test premise and its root: the configured low-risk fixture produces source_plan,
+not an additional implementation_policy reference. The actual current Source
+preparation refutes1964's empty-preparation hypothesis; no map callback is skipped
+on that premise.1974 passes its correction.1975 retains two static nullable-CAS
+diagnostics without launching tests.1976 uses the already checked current Host
+versions and passes strict194/lint plus the three changed cases/36assertions in
+20.76s; the corrective case is9.478s and policy9.520s under their existing20s
+exceptions. Other cases retain5s.1968's earlier optional-winner static error is
+also retained; a required actual native winner now supplies the race oracle.
+
+Independent1971 review finds two assertion gaps, now fixed: native path identity
+and symlink target remain after each factory refusal, and the issued TaskSource
+record binds exact operation/request/status/argv.1976 verifies both.1978 reviews
+the final corrective producer and accepts those resolved findings. Its new
+cleanup finding is fixed: the corrective fixture now deletes only after body
+success, observed bridge close, database close and the unchanged monotonic
+deadline. Failure, pending cleanup or expiry retains the root.1979 passes
+strict194/lint and the affected case/15assertions in11.88s; Root confirms its
+exact success root is absent afterward. Other issued UNKNOWN fixture owners
+remain retained under their different contracts. Prior receipts are reused for
+unchanged cases. The coherent packet is ready for the next full selected stage.
+
 The active session-handoff packet reproduces a valid-loaded-config P0. Explicit
 empty stage/assignment risk lists were truthy and filtered out the required
 read-only Source planner. DIAG/session-red-v1936.log retains the native refusal
@@ -76,7 +112,12 @@ DIAG/session-controls-v1959.log passes scoped strict/lint, all78affected cases
 across the two handoff files and existing workflow-contract file:811assertions,
 32.98s. The separate exact Host resource-pin control passes1case/10assertions.
 The changed Host pin is refreshed once; stopped-source bytes remain unchanged.
-Current session-handoff full coverage remains pending until the sole stage below.
+Published a0dac7675d627a31cf7cc761d2c495a4f05872c3 passes normal
+format524/strict531/Knip hooks and ordinary push. The sole session stage1962
+below is complete; its report remains nonexact. The next coherent packet reuses
+DIAG/session-uncovered-plan-v1963.json, derived once from retained counters/maps.
+Blind bounded1964/1965/1966 review policy, synthesis and residual mechanisms
+inside this contour; Root remains the sole writer/check/numeric owner.
 Prior session report image locators are retired and their counters are historical
 navigation only; no new inventory or synthetic current maximum.
 
@@ -156,6 +197,27 @@ Normal hooks pass format523/strict530/Knip0 and ordinary push for both packets.
 No hook bypass, budget increase, runtime installation or consumer effect occurs.
 
 ## Latest measurement custody
+
+Stage1962 /workspace/contour-stage-PzOCkt completes on Sourcea0dac7675d627a31cf7cc761d2c495a4f05872c3,
+run5d526101-0cb5-490d-a7d2-aa4aa6879545. Elapsed27843.661303ms, exit0,
+no timeout/signal/spawn error, complete capture, closed producer/group and
+unchanged boot/image. All72selected cases/777assertions pass in22.68s.
+Raw **F250/275 L732/862 S800/943 B601/766** remains BLOCKED/nonexact.
+MaxCC29/entryCRAP870 is diagnostic only; frozen/mutation stay deferred.
+The projection imports once through the stage. Historical exact count stays17/46.
+Denominators differ from the retired session report; do not synthesize counter
+gains across its older inputs.25functions,143statements and165branch arms remain.
+The retained map1963 owns their exact identities and geometry; no AST rescan.
+Image /workspace/.vida-quality-inputs/7ef9fb151958b04d5f2f904302f63f3289a6e747/repository
+has manifest SHA2567ae059f6a40b75a7211e1b2ca0665d4c007af8bc4095b3a6884d836a86b35c91.
+The focused report and native run manifest remain under its packages/agent/coverage/bun-unified/diagnostics;
+native serial raw stdout/stderr remain in the stage. DIAG/session-retention-v1963.log
+binds the verified/fsynced3143680-byte scratch archive at
+/workspace/vida-functional-retention-PzOCkt-yxShgR/archive.json. Original scratch,
+reports, receipts, image and logs stay unchanged. This is custody, not current
+global qualification or power-loss durability evidence.
+
+### Preceding TaskSource measurement custody
 
 Stage1926 /workspace/contour-stage-5ljGSl completes on Sourcea38b77816ba1fa3ecae54c9d43ea55c1cb316542,
 run a41e7363-a950-4fd4-8255-02329fb4ca78. Elapsed5745.881669ms, exit0,
@@ -275,9 +337,11 @@ Native Windows and actual installation/runtime flows remain unqualified.
 
 ### Resource custody and cleanup
 
-The single audit observation reports25916473344available durable bytes and
-6249443328scratch bytes, above the unchanged2214592512-byte floor/reserve.
-Reuse1707's existing inventory; no new broad du/scan/hash or parallel cleanup.
+The single12:41UTC audit observation reports25657634816available durable bytes
+and5797494784scratch bytes, above the unchanged2214592512-byte floor/reserve.
+DIAG/resource-audit-v1977.json records exact direct-child target identities and
+11present/absent decisions with0deletions/0reclaimed bytes. It reuses1707's
+inventory; no new broad du/scan/hash or parallel cleanup.
 No deletion is qualified in this packet. The current image/report remains the
 compatible retained input for later frozen/mutation checks. Older dependency
 retirement still needs its exact owner/reference/mount/link qualification;
@@ -298,6 +362,25 @@ Current Source/Git, local/staged files, SDKs, operational DBs/leases/attempts,
 raw logs and FAIL/TIMEOUT/UNKNOWN remain protected.
 
 ### Execution combinations
+
+The09:41–12:41UTC audit reuses seven published Git packets, stages1926/1962,
+the existing1916 runner audit and report1963. Current bounded Source inspection
+confirms the stage still memoizes its stdout read and publishes once; no new
+runner/capture/hash defect is established. Stage1962 completes in27.844s with
+complete native capture/group/input custody, while its selected tests take22.68s.
+These different-scope Source runs are not a matched performance comparison.
+
+| Sequence | Evidence and decision |
+| --- | --- |
+| Scoped static, grouped affected cases, one complete stage per coherent packet | Selected;1959 records78cases/32.98s and1962 one27.844s stage. No per-edit stage is launched. |
+| Full stage after each assertion or failed static check | Rejected; incremental gain/time is unmeasured and unchanged inputs add no proof. Static failures stop before runtime. |
+| Disjoint blind readers alongside Root edits, serial checks and one numeric owner | Selected;1964–1966/1971/1973 supply bounded reports, not writers or competing suites. Tool-call/token savings are not measured. |
+| Wider test pool or concurrent compiler/index/cleanup during measurement | Not qualified; no matched benchmark or receipt/resource basis supports it. Existing limits remain. |
+
+The actual authoring corrections strengthen returned-value/path oracles, bind
+optional values before callbacks, and reuse existing native producers instead of
+invented accepted rows. Failed static/premise attempts remain attributable; no
+new full inventory, SDK download or synthetic coverage maximum is introduced.
 
 The06:45–09:45UTC audit reuses published packets, complete stages and gap maps.
 Blind DIAG/script-cost-v1886.md finds no confirmed useful runner-cost defect:
