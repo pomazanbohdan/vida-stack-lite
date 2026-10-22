@@ -58,6 +58,12 @@ not that operand's truth value. A missing right operand in `left && right`
 requires a truthy `left`; `right` may be false. In `left || right`, a falsy
 `left` reaches the right operand. Check the retained location and operator
 before declaring a required pair of states impossible.
+For a complete native no-write oracle and observers inside production catch
+boundaries, use [TESTING's contour rules](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle).
+Record actual native reads before asserting denial; an orphan coordination
+ticket can reject a missing Work before the intended resolver guard. In a
+test-owned Host-disappearance fault, remove the exact Work/coordination pair
+atomically and restore both exact rows. Keep the native reader's guard intact.
 Before extending a code-workflow fixture, inspect the loader's complete stage
 and profile predicates. Its pre-development validation permits only the exact
 configured prewriter. For an observed/pending peer wave, select the existing

@@ -17,6 +17,88 @@ or numeric producer is active. Complete the selected contour before another.
 
 ### Current measured repair packet
 
+Published94c3f6f8d13d87119cfddc415c239de9b5895c1a includes the checked history,
+peer, cooperative and archive controls below.2009 passes normal format524,
+strict531 and remaining hooks;2010 ordinary push reaches origin/main with the
+same commit and a clean Source tree. No new numeric qualification follows it.
+
+The current packet freezes three configured-writer refusal probes, their
+same-request positive control, one complete native snapshot helper and the
+private digest simplification.2011 static errors and2012 await-thenable lint
+stop before runtime.2013/2015 prove Journal removal and changed authorization
+through the actual configured policy before the original reservation succeeds.
+2016/2017 retain failed missing-Host fixture premises: deleting Work alone leaves
+its coordination ticket, and the native reader correctly refuses that orphan
+before the intended guard.2018 atomically removes the exact Work/shared-ledger
+pair in this owned fixture, observes the real completed read with absent Work,
+checks approval denial, restores exact columns, then exercises Journal removal,
+authorization-byte drift and successful native reservation. No writer argv runs.
+Observer values/completion are asserted outside the policy's catch, so a caught
+matcher failure cannot supply the expected denial. Cleanup preserves failures.
+
+Blind2019 accepts the native guard trace and private digest simplification,
+but finds that selected-table snapshots cannot establish a full-database
+no-write claim. The new nativeDatabaseSnapshotReader captures every persistent
+table from its schema observation, escapes identifiers, memoizes statements and
+sorts by all columns instead of physical rowid. Its inert regression detects a
+secondary-table update without schema change, quoted table names, reordered
+reinsertion and a later table.2021 preserves lint failures without running tests;
+2022 passes scoped strict196/lint and all3affected cases/53assertions in21.58s.
+The native preflight case takes10.200s and configured TaskSource9.931s under
+their existing20s exceptions. These are different-scope controls, not a measured
+speedup. One real fixture supplies all three reversible refusal probes.
+
+The private sourcePreflightContinuation now infers only the actual Host reader
+union. Its digest takes that producer's return type and drops the impossible
+bare InitialSourceContinuationReceipt alternative. Both direct callsites use
+the private producer. Public accepted-continuation types and actual lineage /
+configured-view hash behavior remain unchanged.2020 passes Source strict102,
+scoped strict195 and lint;2019 independently confirms the two-callsite proof.
+No function is renamed, split or added to production, and no frozen budget is
+changed. Old source-map counters remain bound to their original Source; the next
+complete selected stage owns the changed denominator and refreshed gap map.
+Freeze this checked packet before final review/publication, then run that one
+matching SDK/image/stage. Further producer candidates wait for its fresh map.
+
+Blind2024 finds no snapshot implementation blocker, but requests an explicit
+empty-table/schema-only regression.2025 adds that assertion before inserting
+the later row and passes scoped strict196/lint plus the single changed inert
+case:9assertions,2.02ms case/1.463s invocation.2022's two expensive unchanged
+controls remain applicable; they are not repeated for these three assertions.
+Root's bounded diff is DIAG/session-review-diff-v2024.patch; the review originally
+wrote coverage/fixture-diagnostics/20261019-focused-blockers/session-snapshot-final-review-v2024.md
+at the repository root. Final review resolves that boundary using the exact diff.
+
+### Three-hour execution audit,2026-10-22 11:15–14:15UTC
+
+Four published correction packets are a0dac76,8ea93f0,ae68767 and94c3f6f.
+Retained1982 proves the missing transitive SDK artifact classification;1987 is
+a pre-producer archive transport failure, not another test failure.1988 is the
+complete successful but nonexact run. Reuse those reports/maps and the checked
+readiness owner rather than re-scan Source or merge partial PASS rows. The
+current simplification removes a private impossible digest alternative; it
+does not bypass public validation or raise a budget. The complete snapshot
+helper fixes the insufficient selected-table no-write oracle; its prepared
+readers avoid rebuilding unchanged table statements at every probe.
+
+Compare three schedules: a full stage after each of three refusal probes would
+repeat SDK/image/setup and coverage work; multiple parallel fixtures would add
+independent roots and compete with the sole numeric owner; one real fixture
+with reversible probes, grouped focused controls and one final stage reuses
+setup while preserving denial/restoration and complete terminal evidence.
+Select the third.2022 measures that grouped preflight case at10.200s and its
+three-case invocation at21.58s; alternative schedules have not been benchmarked,
+so no speedup percentage or token saving is claimed. Native read-only review
+overlaps Root's independent checks; no second writer or numeric producer runs.
+No session-wide tool-call/token telemetry exists for an exact cost comparison.
+
+Disk audit1977 and inventory1707 remain the current reused observations:
+25,657,634,816durable and5,797,494,784scratch available bytes against the unchanged
+2,214,592,512floor+reserve. Exact deletion targets remain deferred for unresolved
+custody/dependencies; zero bytes are claimed reclaimed. Do not duplicate a broad
+du/hash scan or delete current SDK/images/evidence before the next producer's
+admission and terminal custody. This audit creates no second automation.
+
 The published session packet adds six native cases and extends the existing replacement
 case using report1963's map. It covers real same-key Mastra insertion loss, the
 configured TaskSource policy over current Source-plan bytes, synthesis correction

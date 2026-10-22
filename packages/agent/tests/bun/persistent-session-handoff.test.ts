@@ -72,6 +72,7 @@ import {
 } from '../helpers/readonly-dispatch-host-fixture.ts';
 import { prepareNativeUnnormalizedSynthesis } from '../helpers/native-synthesis-correction-fixture.ts';
 import { createPrewriterPreparationObservation } from '../helpers/public-prewriter-fixture.ts';
+import { nativeDatabaseSnapshotReader } from '../helpers/native-database-snapshot.ts';
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { prepareLifecycleForCorrection } from '../../src/orchestration/final-assurance.ts';
 import { MastraSessionBridge } from '../../src/orchestration/mastra-session-bridge.ts';
@@ -1526,6 +1527,276 @@ test('Mastra sync recovers an actual same-key insert race without replacing the 
   expect(performance.now()).toBeLessThan(caseDeadline);
   retainScratch = false;
 });
+
+test('native database snapshots detect secondary-table writes and preserve semantic row order', () => {
+  const database = new Database(':memory:');
+  try {
+    database.exec('CREATE TABLE state (id TEXT PRIMARY KEY,payload TEXT NOT NULL)');
+    database.exec('CREATE TABLE "secondary "" records" (id INTEGER PRIMARY KEY,payload TEXT NOT NULL)');
+    database.query('INSERT INTO state VALUES (?,?)').run('a', 'first');
+    database.query('INSERT INTO state VALUES (?,?)').run('b', 'second');
+    database.query('INSERT INTO "secondary "" records" VALUES (?,?)').run(1, 'original');
+    const read = nativeDatabaseSnapshotReader(database);
+    const before = read();
+    database.query('UPDATE "secondary "" records" SET payload=? WHERE id=1').run('changed');
+    const changed = read();
+    expect(changed.schema).toEqual(before.schema);
+    expect(changed.tables.state).toEqual(before.tables.state);
+    expect(changed).not.toEqual(before);
+    expect(changed.tables['secondary " records']).toEqual([{ id: 1, payload: 'changed' }]);
+    database.query('UPDATE "secondary "" records" SET payload=? WHERE id=1').run('original');
+    database.query('DELETE FROM state WHERE id=?').run('a');
+    database.query('INSERT INTO state VALUES (?,?)').run('a', 'first');
+    expect(read()).toEqual(before);
+    database.exec('CREATE TABLE later (id TEXT)');
+    const schemaChanged = read();
+    expect(schemaChanged).not.toEqual(before);
+    expect(schemaChanged.schema).not.toEqual(before.schema);
+    expect(schemaChanged.tables.later).toEqual([]);
+    database.query('INSERT INTO later VALUES (?)').run('observed');
+    expect(read().tables.later).toEqual([{ id: 'observed' }]);
+  } finally {
+    database.close();
+  }
+});
+
+test('configured writer preflight refuses disappeared Host or Journal and changed authorization before approval', async () => {
+  await withAdmittedHandoffFixture(
+    async (fixture) => {
+      await prepareInitialSourceFrontier(fixture, 'writer');
+      const host = initialSourceHostStore(fixture),
+        ledger = initialSourceHostLedger(fixture),
+        database = initialSourceHostDatabase(fixture);
+      const nativeRows = nativeDatabaseSnapshotReader(database);
+      const claim = host.claimWorkflowAssignmentWithApproval.bind(host);
+      const lookup = ledger.currentSnapshot.bind(ledger);
+      const authorizationPath = path.join(fixture.root, fixture.sourceAuthorizationPath);
+      const authorizationBytes = await readFile(authorizationPath);
+      const refused: string[] = [];
+      const boundary = spyOn(host, 'claimWorkflowAssignmentWithApproval').mockImplementationOnce(async (...args) => {
+        const hostPreimage = nativeRows();
+        const hostRows = hostPreimage.tables.agent_host_state;
+        if (!hostRows) throw new Error('Configured preflight snapshot has no Host table');
+        const ownerRow = database
+          .query<{ id: string; revision: number; payload: string; digest: string }, [string, string]>(
+            "SELECT id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+          )
+          .get(host.workspaceId, fixture.identity.work_id);
+        if (!ownerRow) throw new Error('Configured preflight fixture has no original Host owner');
+        const coordinationRow = database
+          .query<{ revision: number; payload: string; digest: string }, [string]>(
+            "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='ledger' AND id='shared'",
+          )
+          .get(host.workspaceId);
+        if (!coordinationRow) throw new Error('Configured preflight fixture has no original coordination row');
+        const readHost = host.readHostStateSnapshot.bind(host);
+        const readLineage = host.readInitialSourceContinuationLineageView.bind(host);
+        let armed = false,
+          removedHost = false,
+          removedCoordination = false,
+          hostReadCompleted = false;
+        let observedIdentity: WorkIdentity | undefined;
+        let observedWork: ReturnType<typeof readHost>['work'] | undefined;
+        const lineageBoundary = spyOn(host, 'readInitialSourceContinuationLineageView').mockImplementationOnce(
+          (...input) => {
+            const actual = readLineage(...input);
+            armed = true;
+            return actual;
+          },
+        );
+        const hostBoundary = spyOn(host, 'readHostStateSnapshot').mockImplementation((identity) => {
+          if (!armed) return readHost(identity);
+          armed = false;
+          observedIdentity = identity;
+          const changes = database
+            .transaction(() => ({
+              work: database
+                .query("DELETE FROM agent_host_state WHERE workspace_id=? AND kind='work' AND id=?")
+                .run(host.workspaceId, ownerRow.id).changes,
+              ledger: database
+                .query("DELETE FROM agent_host_state WHERE workspace_id=? AND kind='ledger' AND id='shared'")
+                .run(host.workspaceId).changes,
+            }))
+            .immediate();
+          removedHost = changes.work === 1;
+          removedCoordination = changes.ledger === 1;
+          const actual = readHost(identity);
+          observedWork = actual.work;
+          hostReadCompleted = true;
+          return actual;
+        });
+        await withInitialSourceCleanup(
+          async () => {
+            const denial = await rejectionReason(claim(...args));
+            expect(() => {
+              throw denial;
+            }).toThrow('workflow approval denied');
+            expect(lineageBoundary).toHaveBeenCalledTimes(1);
+            expect(observedIdentity).toEqual(fixture.identity);
+            expect(removedHost).toBe(true);
+            expect(removedCoordination).toBe(true);
+            expect(hostReadCompleted).toBe(true);
+            expect(observedWork ?? null).toBeNull();
+            expect(database.inTransaction).toBe(false);
+            expect(nativeRows()).toEqual({
+              ...hostPreimage,
+              tables: {
+                ...hostPreimage.tables,
+                agent_host_state: hostRows.filter(
+                  (row) =>
+                    !(
+                      isPlainRecord(row) &&
+                      ((row.kind === 'work' && row.id === ownerRow.id) ||
+                        (row.kind === 'ledger' && row.id === 'shared'))
+                    ),
+                ),
+              },
+            });
+            refused.push('host');
+          },
+          () =>
+            completeOwnedCleanup([
+              () => {
+                hostBoundary.mockRestore();
+                return undefined;
+              },
+              () => {
+                lineageBoundary.mockRestore();
+                return undefined;
+              },
+              () => {
+                if (removedHost)
+                  expect(
+                    database
+                      .query(
+                        "INSERT INTO agent_host_state (workspace_id,kind,id,revision,payload,digest) VALUES (?,'work',?,?,?,?)",
+                      )
+                      .run(host.workspaceId, ownerRow.id, ownerRow.revision, ownerRow.payload, ownerRow.digest).changes,
+                  ).toBe(1);
+                return undefined;
+              },
+              () => {
+                if (removedCoordination)
+                  expect(
+                    database
+                      .query(
+                        "INSERT INTO agent_host_state (workspace_id,kind,id,revision,payload,digest) VALUES (?,'ledger','shared',?,?,?)",
+                      )
+                      .run(host.workspaceId, coordinationRow.revision, coordinationRow.payload, coordinationRow.digest)
+                      .changes,
+                  ).toBe(1);
+                return undefined;
+              },
+            ]),
+          'Configured preflight Host disappearance and exact restoration',
+        );
+        expect(nativeRows()).toEqual(hostPreimage);
+        for (const fault of ['journal', 'authorization'] as const) {
+          const preimage = nativeRows();
+          const original = database
+            .query<{ revision: number; payload: string; digest: string }, [string, string]>(
+              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=1',
+            )
+            .get(host.workspaceId, fixture.identity.work_id);
+          if (!original) throw new Error('Configured preflight fixture has no original journal');
+          let removed = false;
+          let observedWorkId: string | undefined;
+          let observedLookup: MastraSessionLedgerSnapshot | null | undefined;
+          let removalChanges: number | undefined;
+          const missing = spyOn(ledger, 'currentSnapshot').mockImplementationOnce((workId) => {
+            observedWorkId = workId;
+            if (fault === 'journal') {
+              removalChanges = database
+                .query('DELETE FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=1')
+                .run(host.workspaceId, workId).changes;
+              removed = removalChanges === 1;
+            } else {
+              writeFileSync(authorizationPath, Buffer.concat([authorizationBytes, Buffer.from('\n')]));
+            }
+            observedLookup = lookup(workId);
+            return observedLookup;
+          });
+          await withInitialSourceCleanup(
+            async () => {
+              const denial = await rejectionReason(claim(...args));
+              expect(() => {
+                throw denial;
+              }).toThrow('workflow approval denied');
+              expect(missing).toHaveBeenCalledTimes(1);
+              expect(observedWorkId).toBe(fixture.identity.work_id);
+              expect(database.inTransaction).toBe(false);
+              const after = nativeRows();
+              if (fault === 'journal') {
+                expect(removalChanges).toBe(1);
+                expect(observedLookup).toBeNull();
+                expect(after).toEqual({
+                  ...preimage,
+                  tables: { ...preimage.tables, agent_host_mastra_session_ledger: [] },
+                });
+              } else {
+                expect(observedLookup?.version).toEqual({ revision: original.revision, digest: original.digest });
+                expect(await readFile(authorizationPath)).toEqual(
+                  Buffer.concat([authorizationBytes, Buffer.from('\n')]),
+                );
+                expect(after).toEqual(preimage);
+              }
+              refused.push(fault);
+            },
+            () => {
+              completeOwnedCleanup([
+                () => {
+                  missing.mockRestore();
+                  return undefined;
+                },
+                () => {
+                  if (!removed) return undefined;
+                  expect(
+                    database
+                      .query(
+                        'INSERT INTO agent_host_mastra_session_ledger (workspace_id,work_id,attempt,revision,payload,digest) VALUES (?,?,1,?,?,?)',
+                      )
+                      .run(
+                        host.workspaceId,
+                        fixture.identity.work_id,
+                        original.revision,
+                        original.payload,
+                        original.digest,
+                      ).changes,
+                  ).toBe(1);
+                  return undefined;
+                },
+                () => {
+                  if (fault === 'authorization') writeFileSync(authorizationPath, authorizationBytes);
+                  return undefined;
+                },
+              ]);
+            },
+            'Configured preflight missing-journal refusal and native row restoration',
+          );
+          expect(nativeRows()).toEqual(preimage);
+          expect(await readFile(authorizationPath)).toEqual(authorizationBytes);
+        }
+        return claim(...args);
+      });
+      await withInitialSourceCleanup(
+        async () => {
+          const issued = await expectAsyncReturned(() => issueInitialSourceFixtureWriter(fixture));
+          expect(refused).toEqual(['host', 'journal', 'authorization']);
+          expect(boundary).toHaveBeenCalledTimes(1);
+          expect(issued.journal.state.items[0]?.host_reservation?.receipt.attempt.attempt_id).toBe(
+            issued.hostAttemptId,
+          );
+          expect(issued.journal.state.items[0]?.observation).toBeNull();
+          expect(issued.journal.state.items[0]?.issue_id).toBe(issued.writer.issue_id);
+        },
+        () => boundary.mockRestore(),
+        'Configured native writer approval observer restoration',
+      );
+    },
+    { holdExpiredOwnerClock: true },
+    20_000,
+  );
+}, 20_000);
 
 test('configured TaskSource proposal binds real admitted policy evidence before issuing its inert argv', async () => {
   await withAdmittedHandoffFixture(

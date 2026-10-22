@@ -1974,6 +1974,17 @@ row/schema beforeimages within that fenced fixture, and check supported public
 behavior after release. An absent Work need not mean a Journal API returns null.
 Retain every failed fixture before correcting an invalid test assumption.
 
+A full-database no-write claim requires every persistent table's rows and the
+schema. Reuse `tests/helpers/native-database-snapshot.ts` for owned native fixture
+handles. Its reader derives tables from the same schema observation, reuses
+prepared statements and orders by all columns so exact restoration does not
+depend on rowid allocation. A schema change invalidates equality even when a
+previously unseen table is empty. Selected-table snapshots establish only their
+declared scope. Do not broaden them into a full-database claim.
+When production catches observer exceptions, record the observer's actual
+inputs, native results and completion flag, then assert outside that catch.
+A caught test assertion must not masquerade as the expected policy denial.
+
 The owner's2026-10-21 amendment retains sequential F/L/S/B work and allows
 reviewed objective skips before opening the next contour. During this phase run focused
 repairs and complete coverage for the active contour only. Exact F/L/S/B means

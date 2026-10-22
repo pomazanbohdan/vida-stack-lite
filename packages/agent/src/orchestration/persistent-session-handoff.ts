@@ -73,7 +73,6 @@ import { readAdmittedSessionExecutionContext, openAdmittedSessionExecution } fro
 import {
   buildAdmittedDevelopmentPacket,
   readInitialSourceContinuationLineageView,
-  type AcceptedSourceContinuation,
   type InitialSourceContinuationLineageView,
 } from './admitted-development-packet.js';
 import { configuredFrontierRecoveryViewDigest } from './failed-prewriter-transition.js';
@@ -163,11 +162,7 @@ function resumeStatus(state: PersistentSessionHandoffState): PersistentSessionSn
   return 'ready';
 }
 
-function sourcePreflightContinuation(
-  store: HostStateStore,
-  identity: WorkIdentity,
-  attempt: number,
-): AcceptedSourceContinuation | null {
+function sourcePreflightContinuation(store: HostStateStore, identity: WorkIdentity, attempt: number) {
   const configured = store.readConfiguredFrontierRecoveryView(identity, attempt);
   const initial: InitialSourceContinuationLineageView | null = readInitialSourceContinuationLineageView(
     store,
@@ -184,7 +179,7 @@ function sourcePreflightContinuationHistory(view: InitialSourceContinuationLinea
     ...(view.bindingCheckpoint ? { bindingCheckpoint: view.bindingCheckpoint } : {}),
   };
 }
-function sourcePreflightContinuationDigest(view: AcceptedSourceContinuation | null): string {
+function sourcePreflightContinuationDigest(view: ReturnType<typeof sourcePreflightContinuation>): string {
   if (view === null) return canonicalJsonDigest(null);
   if ('receipt' in view) {
     const payload = canonicalJsonComponents(
@@ -202,7 +197,7 @@ function sourcePreflightContinuationDigest(view: AcceptedSourceContinuation | nu
     );
     return createHash('sha256').update(payload).digest('hex');
   }
-  return 'schema' in view ? initialSourceContinuationRecord(view).digest : configuredFrontierRecoveryViewDigest(view);
+  return configuredFrontierRecoveryViewDigest(view);
 }
 
 function sourceWritePreflightResolver(
