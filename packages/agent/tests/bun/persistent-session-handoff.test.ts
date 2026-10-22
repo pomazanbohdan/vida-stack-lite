@@ -1978,6 +1978,30 @@ test('configured TaskSource proposal binds real admitted policy evidence before 
         ['-C', fixture.root, 'worktree', 'add', '--branch', 'codex/fixture-configured-policy', request.source_root],
       ]);
       expect(ledger.resume(fixture.identity.work_id, 1)).toEqual(journal);
+      const pendingTaskSource = initialSourceHostDatabase(fixture).query<Record<string, unknown>, [string, string]>(
+        'SELECT * FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+      );
+      const originalAction = pendingTaskSource.get(host.workspaceId, request.operation_id);
+      if (!originalAction) throw new Error('Issued TaskSource proposal action is missing');
+      const transitioned = host.readHostStateSnapshot(fixture.identity);
+      requireHostState(transitioned);
+      const lineage = host.readInitialSourceContinuationLineageView(fixture.identity, 1);
+      if (!lineage?.bindingCheckpoint) throw new Error('Issued TaskSource proposal has no native binding checkpoint');
+      expect(lineage.bindingCheckpoint).toEqual({
+        schema: 'InitialSourceBindingCheckpoint/v1',
+        continuation_id: lineage.receipt.continuation_id,
+        request_digest: lineage.receipt.request_digest,
+        work_version: transitioned.workVersion,
+        boundary_binding_digest: canonicalJsonDigest(lineage.receipt.successor_work.binding),
+      });
+      const nativeRows = nativeDatabaseSnapshotReader(initialSourceHostDatabase(fixture));
+      const beforeWriter = nativeRows();
+      const refusal = await rejectionReason(issueInitialSourceFixtureWriter(fixture));
+      expect(() => {
+        throw refusal;
+      }).toThrow('task source action outcome remains unknown; Source root resolution is blocked');
+      expect(nativeRows()).toEqual(beforeWriter);
+      expect(pendingTaskSource.get(host.workspaceId, request.operation_id)).toEqual(originalAction);
     },
     { holdExpiredOwnerClock: true },
     20_000,

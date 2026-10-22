@@ -70,6 +70,12 @@ supplied-snapshot boundary. Arming after the resolver's first native Journal
 read targets its later policy reread. Keep both actual peers and obtain one
 fresh successful reservation after the refusals. Do not infer either boundary
 from a raw total count of Host or lineage reads.
+An active same-work TaskSource proposal creates a native binding checkpoint,
+but its issued UNKNOWN action still blocks Source-root resolution. Preserve and
+test that refusal; do not synthesize a no-effect report to reach later policy.
+Use the supported queued-resource producer, which has no issued own action, for
+the later checkpoint composition. A direct checkpoint read is not private digest
+coverage. Keep that claim pending until the complete report records the arm.
 Before extending a code-workflow fixture, inspect the loader's complete stage
 and profile predicates. Its pre-development validation permits only the exact
 configured prewriter. For an observed/pending peer wave, select the existing

@@ -17,8 +17,51 @@ or numeric producer is active. Complete the selected contour before another.
 
 ### Current measured repair packet
 
+Published ec4304baf28e3cf49d1726fc419fd65f766a80a6 contains the reviewed peer,
+legacy synthesis and refused-corruption controls.2049 normal hooks pass
+format525/strict532/Knip;2050 ordinary push matches origin/main. CI39801951618,
+attempt1/artifact12436445616 succeeds. The exact662424-byte archive remains at
+/workspace/vida-sdk-ec4304b-39801951618-1.zip.2052 refuses a nonterminal attempt-job
+response before image/producer creation, despite the workflow's success. After
+the same exact attempt-jobs endpoint reports terminal success,2053 completes
+the sole actual coverage producer. Neither failure is a partial suite or kill.
+
+The current bound values are **F275/275 L857/862 S936/943 B749/764**: five lines,
+seven statements and fifteen branch arms remain. Two arms have the objective
+dispositions below; the other thirteen remain OPEN. Map2054 reuses the complete
+report without another AST/scan/hash pass. Blind2055 studies native authorization
+count corruption and2056 studies the real binding-checkpoint producer. No second
+contour or numeric writer is active. Keep configured-only continuation, corrective
+planning and remaining consistency guards open; a missing fixture is not a skip.
+
+2055 establishes that native lifecycle validation rejects duplicate current
+authorizations and rejects a missing one at EXECUTE or later. A pre-EXECUTE
+removal race remains a hypothesis, not an accepted disposition.2056 identifies
+real TaskSource resource history as the checkpoint producer.2058 retains a
+nullable Work-version type error without runtime.2059 then proves the active
+same-work TaskSource issue creates the native checkpoint, but Source writer
+resolution correctly refuses its still-UNKNOWN issued action.2060 preserves
+that fence: strict196/lint and1case/12assertions pass in12.87s, case11.022s under
+the existing20s bound. All native rows and the original issued action remain
+unchanged by the refusal.2061 independently reviews this exact test delta.
+This does not visit the private digest checkpoint arm. The next supported
+composition is the queued same-work TaskSource path, with no issued own action;
+reuse its maintained preparation through one shared helper, retaining its native
+Host verification rather than copying a whole test or bypassing UNKNOWN.
+
+The work record now replaces304superseded history lines with exact published
+Git/path references below. Decisions and failed-control locators remain in those
+immutable revisions; original DBs, archives, receipts and logs are untouched.
+Latest projection/current custody remain here. No disk bytes are claimed freed
+and no new full stage is needed solely for this documentary compaction.
+
+The following checked packet history is retained for traceability; its current
+numeric outcome is the2053 measurement below.
+
+#### Published repair controls (ec4304b)
+
 Published25295ca238ca4b16df0f1f0c524da88d8719a382 closes the snapshot/preflight
-packet below.2026 normal hooks pass format525/strict532/Knip;2027 ordinary push
+packet preserved in the linked published record.2026 normal hooks pass format525/strict532/Knip;2027 ordinary push
 matches origin/main with a clean tree. SDK CI39794258216/attempt1 completes
 successfully after the temporary nonterminal-workflow observation2029. Its
 artifact12432092873 is retained as /workspace/vida-sdk-25295ca-39794258216-1.zip;
@@ -35,7 +78,7 @@ not the SHA at198. Key8 also remains open: the existing frontier has no binding
 checkpoint. The always-array history and loader-enforced security-risk fallback
 have source-backed disposition candidates; they are not numeric PASS.
 
-The next packet uses real disjoint peer admission to exercise both supplied-Host
+Published ec4304b uses real disjoint peer admission to exercise both supplied-Host
 snapshot drift and mid-policy reread drift, retaining the actual accepted peers
 instead of deleting them to restore an old world.2035's nullable snapshot type
 error stops before runtime.2036 retains a failed observer premise: arming on
@@ -71,8 +114,8 @@ original checksum. The predicate inspects that artifact before its later CAS/
 checksum guard; the row is never accepted as valid history. Exact payload CAS
 restoration precedes the original successful correction. Strict196/lint and
 1case/85assertions pass in5.73s, case4.155s. This refusal exercises a stored-input
-boundary, not an accepted prior synthesis producer. No second full coverage
-stage has run for this correction packet.
+boundary, not an accepted prior synthesis producer. Stage2053 now measures this
+complete reviewed correction packet.
 
 Blind2044 accepts the peer and component legacy controls and independently
 confirms the two exact objective dispositions below. These do not complete the
@@ -80,7 +123,7 @@ contour: every other residual counter remains OPEN until checked or separately
 disposed.2047 confirms the additional refused synthesis artifact corruption
 reaches the intended pre-checksum guard, preserves all native rows and restores
 only its exact owned payload before the genuine positive control. No blocker
-remains in the reviewed correction packet; further counts need one new stage.
+remains in the reviewed correction packet; the resulting counts come from2053.
 
 #### Session objective dispositions bound to report2030
 
@@ -90,63 +133,22 @@ tests a4eef5a874f4f99d1d9343e6dba33311a28302172d77bc5e6b616c7126b299ae
 and the config-bearing immutable image manifest343603cab225ae752a896f8489a33e50864593236d407a7116f4c8e9c4bb075b.
 Raw counts and BLOCKED outcome remain unchanged. Neither entry waives frozen
 CC/CRAP, correspondence, mutation or native qualification.
+Map2054 retains the identical production Source fingerprint and these exact
+counter locations; ec4304b changes tests/docs only. Its tests fingerprint is
+40022cabbac99b0cd2d4b73de0c0ef0a2f2a9370cd906e1e47798e776b951dc1
+and config-bearing image manifest0d94c84a3185df395968a9f7053f34115d070e3ecf892ab9ae5b40d777bb23d3.
+The same dispositions remain applicable without promoting historical counters.
 
 | Exact counter and owner | Causal prerequisite and current contract | Review and remaining qualification |
 | --- | --- | --- |
 | persistent-session-handoff.ts sourcePreflightContinuationHistory, key7/arm1,178:102–104 | The `runtimeCodeContinuations ? ... : {}` alternate requires a falsy value. Both private digest callers obtain concrete native Host lineage; its reader always returns `host.runtimeCodeContinuations ?? []`, including a truthy empty array. A partial compatibility reader elsewhere does not supply this private native route. | DIAG/session-boundaries-review-v2044.md independently confirms the native reader/caller chain. Objective skip only; reopen if either caller or reader admits an omitted/falsy history. No fabricated partial-reader acceptance. |
 | workflow-plan.ts configuredReadOnlySourcePrewriter, key12/arm1,99:61–63 | `securityPrewriter?.risk_flags ?? []` requires a missing security assignment/list. Source workflow compilation accepts only branded, frozen successfully loaded config, whose strict prewriter validation requires the ordered security role and four exact risk flags. Malformed config fails before this private helper. | DIAG/session-residual-research-v2034.md and session-boundaries-review-v2044.md independently trace load/brand/compiler predicates. Objective skip only; reopen on changed loader/compiler contracts. No fallback deletion, excluded file or changed denominator. |
 
-Published94c3f6f8d13d87119cfddc415c239de9b5895c1a includes the checked history,
-peer, cooperative and archive controls below.2009 passes normal format524,
-strict531 and remaining hooks;2010 ordinary push reaches origin/main with the
-same commit and a clean Source tree. No new numeric qualification follows it.
-
-The published25295ca packet groups three configured-writer refusal probes, their
-same-request positive control, one complete native snapshot helper and the
-private digest simplification.2011 static errors and2012 await-thenable lint
-stop before runtime.2013/2015 prove Journal removal and changed authorization
-through the actual configured policy before the original reservation succeeds.
-2016/2017 retain failed missing-Host fixture premises: deleting Work alone leaves
-its coordination ticket, and the native reader correctly refuses that orphan
-before the intended guard.2018 atomically removes the exact Work/shared-ledger
-pair in this owned fixture, observes the real completed read with absent Work,
-checks approval denial, restores exact columns, then exercises Journal removal,
-authorization-byte drift and successful native reservation. No writer argv runs.
-Observer values/completion are asserted outside the policy's catch, so a caught
-matcher failure cannot supply the expected denial. Cleanup preserves failures.
-
-Blind2019 accepts the native guard trace and private digest simplification,
-but finds that selected-table snapshots cannot establish a full-database
-no-write claim. The new nativeDatabaseSnapshotReader captures every persistent
-table from its schema observation, escapes identifiers, memoizes statements and
-sorts by all columns instead of physical rowid. Its inert regression detects a
-secondary-table update without schema change, quoted table names, reordered
-reinsertion and a later table.2021 preserves lint failures without running tests;
-2022 passes scoped strict196/lint and all3affected cases/53assertions in21.58s.
-The native preflight case takes10.200s and configured TaskSource9.931s under
-their existing20s exceptions. These are different-scope controls, not a measured
-speedup. One real fixture supplies all three reversible refusal probes.
-
-The private sourcePreflightContinuation now infers only the actual Host reader
-union. Its digest takes that producer's return type and drops the impossible
-bare InitialSourceContinuationReceipt alternative. Both direct callsites use
-the private producer. Public accepted-continuation types and actual lineage /
-configured-view hash behavior remain unchanged.2020 passes Source strict102,
-scoped strict195 and lint;2019 independently confirms the two-callsite proof.
-No function is renamed, split or added to production, and no frozen budget is
-changed. Old source-map counters remain bound to their original Source; the next
-complete selected stage owns the changed denominator and refreshed gap map.
-Stage2030 measures this complete checked packet through one matching SDK/image.
-Its fresh map, rather than predicted coverage gains, selects the next corrections.
-
-Blind2024 finds no snapshot implementation blocker, but requests an explicit
-empty-table/schema-only regression.2025 adds that assertion before inserting
-the later row and passes scoped strict196/lint plus the single changed inert
-case:9assertions,2.02ms case/1.463s invocation.2022's two expensive unchanged
-controls remain applicable; they are not repeated for these three assertions.
-Root's bounded diff is DIAG/session-review-diff-v2024.patch; the review originally
-wrote coverage/fixture-diagnostics/20261019-focused-blockers/session-snapshot-final-review-v2024.md
-at the repository root. Final review resolves that boundary using the exact diff.
+The preceding history, snapshot and private-digest packets, their failed premises,
+review resolutions and exact DIAG locators are preserved in the
+[published25295ca WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/25295ca238ca4b16df0f1f0c524da88d8719a382/.agent/work/core-runtime-reactivation/WORK.md#current-measured-repair-packet).
+Those completed instructions are provenance, not the next execution plan. Original
+receipts, failed fixture roots and raw logs remain under their retained owners.
 
 ### Three-hour execution audit,2026-10-22 11:15–14:15UTC
 
@@ -178,271 +180,13 @@ custody/dependencies; zero bytes are claimed reclaimed. Do not duplicate a broad
 du/hash scan or delete current SDK/images/evidence before the next producer's
 admission and terminal custody. This audit creates no second automation.
 
-The published session packet adds six native cases and extends the existing replacement
-case using report1963's map. It covers real same-key Mastra insertion loss, the
-configured TaskSource policy over current Source-plan bytes, synthesis correction
-and receipt corruption/refusal/restoration, maintenance generation/checksums,
-unsafe configured DB paths, and the Host-produced corrective engine's first
-suspension. No product implementation or runner policy changes in this packet.
-1964/1965/1966 are independent policy/synthesis/residual studies;1973 identifies
-the actual authorizeCorrectiveExecution/bridge producer. The fixture uses that
-producer with the existing20s exception, not a constructed accepted Journal.
-The policy proposal argv is asserted and never executed; its issued root remains.
-
-1967 passes maintenance/replacement controls:2cases/58assertions.1969 passes
-race/policy/synthesis:3cases/41assertions.1970 passes unsafe paths and expanded
-synthesis receipt refusal/restoration:2cases/83assertions.1972 retains a failed
-test premise and its root: the configured low-risk fixture produces source_plan,
-not an additional implementation_policy reference. The actual current Source
-preparation refutes1964's empty-preparation hypothesis; no map callback is skipped
-on that premise.1974 passes its correction.1975 retains two static nullable-CAS
-diagnostics without launching tests.1976 uses the already checked current Host
-versions and passes strict194/lint plus the three changed cases/36assertions in
-20.76s; the corrective case is9.478s and policy9.520s under their existing20s
-exceptions. Other cases retain5s.1968's earlier optional-winner static error is
-also retained; a required actual native winner now supplies the race oracle.
-
-Independent1971 review finds two assertion gaps, now fixed: native path identity
-and symlink target remain after each factory refusal, and the issued TaskSource
-record binds exact operation/request/status/argv.1976 verifies both.1978 reviews
-the final corrective producer and accepts those resolved findings. Its new
-cleanup finding is fixed: the corrective fixture now deletes only after body
-success, observed bridge close, database close and the unchanged monotonic
-deadline. Failure, pending cleanup or expiry retains the root.1979 passes
-strict194/lint and the affected case/15assertions in11.88s; Root confirms its
-exact success root is absent afterward. Other issued UNKNOWN fixture owners
-remain retained under their different contracts. Prior receipts are reused for
-unchanged cases. Published8ea93f0ce7c4e4a0911bad45dda001bff287c381 passes
-normal format524/strict531/Knip hooks and ordinary push. Stage1982 below then
-finds the missing transitive SDK-consumer classification. Its full native FAIL
-is retained; partial cases do not update the latest numeric counters.
-
-The confirmed runner-input defect is fixed at the existing single
-selectedTestsRequireSdkArtifacts owner: both native Host and persistent handoff
-files require current SDK inputs because their failed-final helper calls the
-public launcher. The bounded analogous-call search finds those two native files
-and the already admitted final-assurance public caller. No broader test suite or
-new dependency resolver is introduced. The capture fixture derives its import
-relative to the selected test's directory, supporting nested paths instead of a
-root-only literal.1983 preserves the failed test fixture's relative-import
-assumption.1984 passes strict195/lint and both capture regressions:46assertions,
-356ms. TESTING and the Bun skill now identify this transitive caller boundary.
-Published ae68767848271be852f446af77b8cb7e3b138cb2 passes normal hooks and ordinary
-push. CI39782222197/attempt1 succeeds with artifact12426014395. Stage1987 stops
-before image/producer on GitHub archive transport failure. The approved connector
-retrieves the same artifact into /workspace/vida-sdk-ae68767-39782222197-1.zip;
-maintained readiness validates its CI identity and digest for stage1988 below.
-No exports fence, freshness check or image is modified to bypass it.
-
-The current unmeasured packet reuses map1989.1992 passes exact fault propagation,
-cooperative ownerless prewriter and archived corrective-report controls, but
-preserves the completed-prefix fixture's suspension refusal. Its actual history
-exists; the pending architect retains official_docs egress. The optional typed
-fixture configuration callback now serializes/revalidates architect egress none
-before ledger construction and admission. Default fixtures remain unchanged.
-1994 passes that native completed-prefix replacement control:1case/16assertions
-in7.56s, under the existing20s admitted-frontier exception. No accepted rows,
-product guards, timeout or UNKNOWN history are rewritten.
-
-Blind1993 review identifies an overstated no-write claim for the injected
-prepare failure. The case is narrowed to exact boundary-error propagation;
-undefined, string and unrelated Error retain their identity. Its empty-row check
-is a component postcondition, not a real failed SQLite transaction claim.
-1996 passes strict195/lint and two changed cases/92assertions in5.34s, including
-deleting only the real synthesis owner's row after forming a valid plan, refusing
-without writes, restoring its exact native columns, then succeeding normally.
-The common cleanup error now names the actual case deadline rather than falsely
-calling every configured exception5s. Roots and original failures remain retained.
-
-1990/1991/1995 remain independent candidate reports, not accepted dispositions.
-Root corrects two premises: the readonly producer creates completed history,
-and key5/arm1 at177:31 counts evaluation of `initial` in `configured && initial`,
-not simultaneous truth of both values. A configured-only view can reach that
-operand. The Bun skill records the general logical-operand rule. Configured
-preflight drift/checkpoint/frontier remain OPEN; no new full numeric producer
-has run for these edits.
-
-The same-wave peer preparation retains failed candidate fixtures/controls1998,
-2000–2003: YAML anchors, unsupported role consumption, mismatched edges, forbidden
-extra pre-development validation, then a pending validator's test.read policy.
-These are authoring-premise errors, not confirmed product defects or accepted
-configurations. The maintained loader/UNKNOWN-readonly predicates remain intact.
-The actual producer uses the standard high-risk two-prewriter stage: a new typed
-riskFlags fixture input binds both selection and WorkItem before admission.
-Both prewriter profiles select no egress; security selects read_only tools before
-admission. The existing typed preparation helper supplies the reported planner
-observation. No additional workflow stage or edge remains in the patch.
-The pause helper supports a genuinely issued wave with exactly one remaining
-pending item instead of imposing one total item.2004 passes strict195/lint and
-the affected case/18assertions in9.22s; the case itself takes7.170s under its
-existing20s Source-frontier exception. Peers and completed history are unchanged
-through native activation/report, with exact Host preservation. This is controlled
-ledger/bridge proof, not external provider execution or Runtime acceptance.
-1999's review describes bounded cooperative reports but also incorrectly says
-the helper paths have no diff and calls the directly related counter lesson
-unrelated. Root rejects those claims; its obsolete candidate configuration is
-not evidence of admission. The current skill records the loader/profile lesson
-to avoid another expensive invalid-fixture sequence.
-Fresh blind2005 reads the exact three changed code paths and finds no concrete
-implementation blocker. It confirms pre-admission configuration/risk binding,
-the standard two-prewriter producer, single-pending repair and exact owner-row
-restoration. Its review is independent Source evidence, not another numeric run.
-2006 documentation check passes4selected documents/24local links; no external
-link, runtime or staged-byte qualification is inferred.
-Normal commit2007 stops on its index-identity guard after format524/strict531.
-Root ran a concurrent plain git status, which can refresh the index even without
-changing selected file contents. Its original failed hook log and staged payload
-are retained. The Sidecar now orders Git observations after hook termination and
-selects --no-optional-locks for read-only status. Root repeats only the required
-ordinary hook/commit after checking the same staged file set; no hook bypass,
-guard relaxation, runtime rerun or numeric qualification follows this correction.
-The official [Git status background-refresh documentation](https://git-scm.com/docs/git-status#_background_refresh),
-retrieved in DIAG/git-status-doc-v2008.html, confirms that default status writes
-refreshed stat information to the index and recommends --no-optional-locks for
-background observers. The failed index-identity guard is preserved unchanged.
-
-The active session-handoff packet reproduces a valid-loaded-config P0. Explicit
-empty stage/assignment risk lists were truthy and filtered out the required
-read-only Source planner. DIAG/session-red-v1936.log retains the native refusal
-and /home/agent/.cache/vida-cloud-tooling/tmp/vida-session-handoff-6arTjD.
-The matcher now selects its existing unconditional branch for absent or empty
-lists; nonempty matching and all security/prewriter/config/graph guards remain.
-No callable or budget is replaced. The system specification states these
-semantics. DIAG/empty-risk-review-v1937.md accepts the Source/config/test boundary;
-its RED-path lookup incorrectly appended DIAG to the absolute diagnostics root.
-Root verifies the actual1327-byte log at the canonical path above. The review
-is Source evidence only, not independent native reproduction.
-
-Seven isolated configuration cases now share owned cleanup and retain failed
-roots instead of unconditional deletion. The first1935 assertion uses the old
-cleanup and lacks its configuration root;1936's exact native reproduction is
-retained under the corrected owner. Context/outcome/terminal DTO matrices add
-field/binding/scalar/evidence refusals without persisting false history. A single
-loaded fixture config serves ordinary/elevated stage/assignment filter controls.
-
-Blind DIAG/persistent-handoff-gaps-v1930.md and session-workflow-gaps-v1931.md
-partition the current contour, not numeric evidence. Root integrates1933's
-bounded proposal as six cooperative ledger lifecycle cases using public
-sync/issue/report: exact replay, incomplete-wave unchanged-row refusal,
-configured-wave advance, completed-history retrieval/report retry and four
-terminal projections. These model caller reports, not actual engine/tool effects.
-The existing cleanup owner attempts every registered close and retains roots on
-cleanup failure; new cases carry their5s monotonic deadline through owned close.
-1938/1940 retain static DTO/scope errors and launch no runtime.1941 passes
-strict95, scoped zero-warning lint and all70affected cases across the two
-handoff files plus the existing workflow-contract file:724assertions,10.01s.
-Earlier scoped1932/1937/1939 controls are retained; no second full stage runs.
-
-The remaining1930 producer-backed families are now implemented and checked:
-reserved Host success/failure reports, replacement reports, observed-research
-normalization reservation, configured-Mastra drift and native insertion races.
-The new shared readonly-dispatch fixture replaces the Host-local copy; it keeps
-issued UNKNOWN roots, the native pause/repair sequence and the5s deadline through
-owned close. The research helper's optional checkpoint preserves its default
-record/artifact/synthesis path. The selected case checks the actual observed-plan
-reservation and exact reopened ledger, not artifact normalization or tool origin.
-Both research items must exist; the unobserved sibling must refuse. Native
-Host reports keep the existing20s exception and restore the expired-owner clock
-after owned cleanup. No production code changes in this correction packet.
-
-DIAG/session-controls-v1950.log retains both regressed-renewal-clock failures;
-1951 retains the import error and1953 the unused-import lint failure.1954 retains
-the wrong research-fixture prerequisite;1955 retains the5s timeout from running
-unneeded downstream synthesis.1957 stops at the checked reservation with an
-identity-asserted checkpoint, passing without raising the deadline. All failed
-fixture roots and original logs remain.1958 passes the three unchanged-default
-Host helper controls:129assertions,8.29s. No full Host suite is repeated.
-Independent DIAG/handoff-batch-review-v1956.md accepts the producer boundaries
-and identifies the sibling-existence assertion, now fixed. Root also checks
-unchanged Host state after successful reservation and duplicate refusal.
-
-DIAG/session-controls-v1959.log passes scoped strict/lint, all78affected cases
-across the two handoff files and existing workflow-contract file:811assertions,
-32.98s. The separate exact Host resource-pin control passes1case/10assertions.
-The changed Host pin is refreshed once; stopped-source bytes remain unchanged.
-Published a0dac7675d627a31cf7cc761d2c495a4f05872c3 passes normal
-format524/strict531/Knip hooks and ordinary push. The sole session stage1962
-below is complete; its report remains nonexact. The next coherent packet reuses
-DIAG/session-uncovered-plan-v1963.json, derived once from retained counters/maps.
-Blind bounded1964/1965/1966 review policy, synthesis and residual mechanisms
-inside this contour; Root remains the sole writer/check/numeric owner.
-Prior session report image locators are retired and their counters are historical
-navigation only; no new inventory or synthetic current maximum.
-
-The10:49UTC continuation audits the preceding three hours through published Git
-packets and existing stages, without another suite, inventory or disk scan.
-DIAG/test-script-audit-v1916.md independently finds no confirmed runner/capture/
-report defect. Its identified inventory walks serve input admission; no measured
-evidence justifies deleting them. It confirms the single memoized stdout read
-and single report publication. Missing-report refusal after1896 preserves the
-native failure, not a partial PASS. Its absent archive-v1905.json locator is
-non-authoritative; current retention is the exact archive manifest below.
-
-The current TaskSource test packet expands one case into nine independent named
-cases with a shared typed fixture builder. It covers native active/queued/adopt
-issue, retained single-resource addition and released history; detached
-constructor/parser/join/rewind refusal matrices; pure queued-ticket promotion;
-and native rollback/unchanged-state/exact retry. Detached values never become
-accepted history. Both-resources-present/no-additions and queued promotion remain
-pure helper checks, not native producer acceptance claims. All issued unobserved
-roots are retained; no operation is replayed under a new ID.
-1915's missing returned-value wrappers and post-cleanup deadline check are fixed.
-Prepared JSON is decoded once per proof group as unknown and shape-checked,
-replacing unsafe casts/coercion. Typed element assertions replace unsafe generic
-array matchers.1917 retains two unknown-request type errors;1918 retains three
-matcher lint diagnostics, neither launches runtime cases.1919 passes strict154,
-scoped zero-warning type-aware lint and9cases/148assertions in2.43s, all under
-the unchanged5s per-case deadline.1922 adds fractional revision, successor Ledger
-revision/binding and ticket-order DTOs; strict154/lint and the2affected cases/
-44assertions pass in1.496s. Independent DIAG/task-source-final-review-v1920.md
-finds two missing constructor variations.1923 adds a valid-shaped foreign
-authority scope and an altered issuance Source revision, then passes strict154,
-scoped lint and the affected constructor case. No Source defect is established.
-All review findings are resolved before the first full contour stage.
-Publication a38b77816ba1fa3ecae54c9d43ea55c1cb316542 passes normal
-format523/strict530/Knip0 hooks and an ordinary push. The stage below closes this
-coverage packet; frozen/mutation and global qualification remain separate.
-The Bun skill now follows TESTING's objective-skip rule. The plan delegates SDK
-readiness to its maintained selector; this contour requires no SDK artifact.
-This removes an unnecessary CI/download prerequisite, with no measured speedup
-claim. Source implementation is unchanged in this test packet.
-
-Published b828812b63683aa5f395efe6beb5f8214aefa598 corrects two reproduced P0s.
-Qualified code adoption now preserves the prior binding of settled Host attempts
-through immutable prior-Work custody joined to exact Work CAS, shared schema,
-protected digest and terminal-only history. Descending history preserves older
-attempts and attempts completed between code adoptions. Altered terminal results
-refuse; old receipt envelopes remain unchanged.
-
-Configured-frontier readers now validate pre-transition code history against
-immutable prior Work and later history against its successor, rather than
-applying one protected binding to both segments. Host, packet, engine and
-failed-prewriter consumers carry that boundary. Global order, same attempt/owner,
-endpoint continuity and immutable transition revisions remain checked.
-An older adoption cannot override the configured successor endpoint.
-
-The existing genuine execution-only fixture supplies the two real Host commits
-before Source promotion; no qualified history row is fabricated. The frontier
-fixture stores one changed kernel resource as inert data, restores its scoped
-snapshot spy before real current-package adoption and carries the resulting
-receipt through writer reservation and completed-report recovery.
-Independent design/reviews are DIAG/qualified-terminal-design-v1883.md,
-config-code-segments-v1885.md and qualified-config-impl-v1891.md.
-1891 passes4focused cases/284assertions;1893 passes strict154/tooling128,
-scoped lint,2recovery cases/138assertions and pin eligibility1case/10assertions.
-The sole changed Host test pin is refreshed once; stopped-source bytes stay.
-
-Published 4e97a725eb2435beff7615d3f932a44e5aa81852 corrects the new fixture's
-direct package read after the full1896stage reproduces EROFS. Both byte routes
-now use maintained immutable-package readers; the selected path-set JSON is
-computed once.1898 strict154/lint pass.1899 checks the real frontier-history case
-with read-only Source and separate writable caller/scratch:1PASS/15assertions,
-15.85s. The first readonly control incorrectly froze the caller too and refuses
-in its global hook; retain that separate setup failure. Independent
-DIAG/readonly-fixture-review-v1899.md finds no Source blocker and verifies the
-neighboring helpers have no matching direct-package read.
-Normal hooks pass format523/strict530/Knip0 and ordinary push for both packets.
-No hook bypass, budget increase, runtime installation or consumer effect occurs.
+Earlier native session, SDK-classification, Host resource-history and TaskSource
+packets through2025 are preserved in the
+[published ec4304b WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/ec4304baf28e3cf49d1726fc419fd65f766a80a6/.agent/work/core-runtime-reactivation/WORK.md#current-measured-repair-packet).
+That record retains decisions, failed premises, public-producer traces, review
+IDs and exact evidence locators. Their completed authoring instructions do not
+select another contour or supersede the current map. No evidence tree is deleted
+by this documentation compaction.
 
 ## Latest measurement custody
 
@@ -461,6 +205,26 @@ remain immutable. DIAG/session-retention-v1983.log binds its verified/fsynced
 original scratch, native run manifest, raw logs and failure custody stay.
 
 ### Latest completed session measurement custody
+
+Stage2053 /workspace/contour-stage-Gyrh4x completes on
+Source ec4304baf28e3cf49d1726fc419fd65f766a80a6,
+run2a62a26b-0d23-4cd2-99db-22cdfba982fe. Elapsed60315.534539ms,
+exit0, no timeout/signal/spawn error, complete capture, closed producer/group,
+unchanged boot/image. Native86PASS/0FAIL/1081assertions in55.30s.
+Raw **F275/275 L857/862 S936/943 B749/764** remains BLOCKED/nonexact.
+Production Source and denominators are unchanged from2030; the checked tests
+visit two more statements and four more branch arms. MaxCC/entryCRAP29 remains
+diagnostic only; frozen/mutation are deferred. The sole stage imports once,
+with historical exact count17/46 unchanged. Map2054 contains the remaining gaps.
+Image /workspace/.vida-quality-inputs/2fc4dc60ffafc056cc5e72f7ace330a5d599e76b/repository
+has manifest SHA2560d94c84a3185df395968a9f7053f34115d070e3ecf892ab9ae5b40d777bb23d3.
+Focused report/native manifest remain under its packages/agent/coverage/bun-unified;
+raw stdout/stderr remain in the stage. DIAG/session-retention-v2054.log binds
+the verified/fsynced7936000-byte archive at
+/workspace/vida-functional-retention-Gyrh4x-3dqd0x/archive.json.
+Original image, scratch, receipts and raw logs remain unchanged.
+
+### Previous session measurement custody
 
 Stage2030 /workspace/contour-stage-DGwNEd completes on
 Source25295ca238ca4b16df0f1f0c524da88d8719a382,
