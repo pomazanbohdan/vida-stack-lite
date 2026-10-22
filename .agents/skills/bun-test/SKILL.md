@@ -86,6 +86,11 @@ request. Check the actual admitted packet after a native transition, outside
 the verifier's catch. A generic approval denial alone cannot identify its guard.
 Register a child launched through a computed path in the maintained Knip entry
 list before publication. Name the exact executable; do not ignore unused files.
+For the configured Source singleton refusal, a fresh typed trusted Host CAS can
+reach the native verifier while its Journal is absent. Use actual current
+config/runtime/artifact bindings and the real composition/reservation owner;
+prove the null-Journal read followed by the resolver's native Host read and a
+complete no-write afterimage. This is component input, not CLI admission proof.
 Record actual native reads before asserting denial; an orphan coordination
 ticket can reject a missing Work before the intended resolver guard. In a
 test-owned Host-disappearance fault, remove the exact Work/coordination pair

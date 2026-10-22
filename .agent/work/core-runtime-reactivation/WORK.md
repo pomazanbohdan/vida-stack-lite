@@ -882,6 +882,50 @@ CAS and configured approval claim before any Journal requirement. It does not
 rewrite existing singleton Work or assume that a component fixture establishes
 native CLI admission. Root will inspect its concrete first-guard proof before
 any new test. TaskSource's native Journal prerequisite stays separate.
+2271 finds that the configured Source approval verifier permits a nullable
+Journal before the singleton refusal. Root assigns2276 one isolated native Luna
+writer to a fresh typed Host-CAS component proposal under
+/workspace/vida-session-project-native-patch-F6jk4N, base7cf0309. It must use only
+a fresh temporary project/DB, not the current Source operational root mentioned
+in the research recipe. Existing singleton Work and accepted history stay intact.
+2277 independently checks the new nested same-slot no-effect retry premise for
+the principal guard, beginning with the actual same-handle reconciliation and
+current-Journal reissue predicates. Neither proposal is run or integrated yet;
+Root remains the sole canonical writer, Git and numeric owner. A bounded
+same-pattern check of spy assertions/restoration in both selected test files
+finds no additional after-restoration call-history assertion to correct.
+2280 integrates2276's bounded Source-project diff, preserving retirement and
+identity controls. Root corrects the proposal's nonexistent package config path
+to the captured repository configuration, binds actual package/schema snapshots,
+selected-project Source paths, claims and configured integration contours, and
+checks Scope/AC plus the typed cooperative authorization before reservation.
+The pure shared workAndLedger builder body and existing caller are unchanged;
+only its export is added.2280 retains a strict diagnostic for the authorization
+literal's widened string fields;2281 supplies its maintained type and passes
+strict149/configured lint and1PASS/0FAIL/25assertions in0.73s,2.40s with startup.
+2283 independently approves the actual configured verifier path: after the
+nullable Journal observation the next actual Host read reaches the Source
+project refusal, before any admitted-session/Journal requirement. Full native
+database/schema and Host afterimages, empty history, absent Journal, zero
+dispatch and artifact byte equality support the claim. This is a fresh trusted
+component fixture, not native CLI admission or human-auth authenticity proof.
+Counters16/17 remain numerically OPEN until the next complete report.
+
+2277 rejects a Journal-issued nested retry because no-effect renewal requires
+an unissued item. Root corrects its conflation of Host reservation and Journal
+issuance.2278 confirms the RESERVED-only ordering: real configured Host attempt2
+can be reconciled before issueWave, preserving the current unissued Journal.
+2279 prepares an unvalidated principal proposal in
+/workspace/vida-session-principal-native-patch-36NXN9; Root review finds JSON
+assertion casts, a nonexistent data-reader authentication field, missing raw
+child capture and a post-denial self-comparison instead of a saved transition
+afterimage. It is not integrated or run; refine these boundaries before checks.
+Its handoff is under packages/agent/tests/bun/HANDOFF.md in that patch, not the
+requested root path.2282 separately finds a plausible TaskSource producer order:
+public mechanical sync before any Work, then fresh public Host CAS with matching
+headers. That unexecuted route creates no accepted observation or raw SQL Journal;
+its native preparation/issue prerequisites still need a concrete test. Root
+will group supported remaining repairs before the next complete stage.
 
 ### Predecessor session measurement custody at2208
 

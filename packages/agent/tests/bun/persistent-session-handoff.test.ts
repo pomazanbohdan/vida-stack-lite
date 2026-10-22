@@ -2,18 +2,28 @@ import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-loc
 import { boundedSpawnSync, executionBudget, pinnedEnvironment, readPin } from '../../bin/bun.ts';
 import { requireSynchronousChildSuccess } from '../helpers/synchronous-child-outcome.ts';
 import { buildAdmittedDevelopmentPacket } from '../../src/orchestration/admitted-development-packet.ts';
-import { readLocalSourceWriteAuthorization } from '../../src/orchestration/local-source-authorization.ts';
+import {
+  readLocalSourceWriteAuthorization,
+  type LocalSourceWriteAuthorization,
+} from '../../src/orchestration/local-source-authorization.ts';
+import { validateImplementationScope } from '../../src/contracts/implementation-scope.ts';
+import { validateAcceptanceManifestSchema } from '../../src/contracts/acceptance-manifest-schema.ts';
 import { afterEach, describe, expect, setSystemTime, spyOn, test } from 'bun:test';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { link, lstat, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { stringify as stringifyYaml } from 'yaml';
 import path from 'node:path';
 import { Database } from 'bun:sqlite';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
-import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
+import {
+  loadRuntimeConfig,
+  runtimeConfigDigest,
+  runtimePackageAccess,
+  runtimePackageCodePaths,
+} from '../../src/config/runtime-config.ts';
 import type { WorkItemSelection } from '../../src/config/runtime-config.ts';
 import {
   HostStateStore,
@@ -31,6 +41,7 @@ import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-ac
 import {
   compareScopedSourceSnapshots,
   snapshotDeclaredSources,
+  snapshotRuntimePackageSources,
 } from '../../src/orchestration/scoped-source-snapshot.ts';
 import {
   createInitialSourceWorkFixture,
@@ -46,7 +57,7 @@ import {
   currentJournal as initialSourceJournal,
   changeOneAcceptedDocument,
 } from '../helpers/initial-source-work-fixture.ts';
-import { requireHostState } from '../helpers/task-source-host-fixture.ts';
+import { requireHostState, workAndLedger } from '../helpers/task-source-host-fixture.ts';
 import { suspendLocalWork } from '../../src/orchestration/suspend-local-work.ts';
 import type { TaskSourceBindingRequest } from '../../src/orchestration/task-source-binding.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
@@ -117,6 +128,7 @@ import {
   dispatchWorkflowAssignment,
   prepareWorkflowExecution,
   reserveWorkflowAssignmentForSession,
+  createTrustedLocalSessionComposition,
   type WorkflowAssignmentRequest,
 } from '../../src/runtime-kernel.ts';
 import { parseTaskSourceResourceTransitionReceipt } from '../../src/orchestration/task-source-resource-transition.ts';
@@ -2184,6 +2196,461 @@ test('configured writer preflight refuses a serialized identity transfer between
     20_000,
   );
 }, 20_000);
+
+test('configured source approval reaches the fresh multi-project refusal without writes', async () => {
+  caseDeadline = performance.now() + 5_000;
+  const repositoryRoot = await configuredFactoryFixture('multi-project-source-refusal-');
+  retainScratch = true;
+  const packageRoot = path.resolve(import.meta.dir, '../..');
+  writeFileSync(
+    path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'),
+    readFileSync(path.resolve(packageRoot, '../..', 'agent-runtime.config.v1.yaml')),
+  );
+  const config = loadRuntimeConfig(repositoryRoot);
+  const projectIds = ['agent', 'plugin'];
+  const projectContext = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, projectIds);
+  const workflowId = 'task_execution';
+  const workflow = config.workflows[workflowId];
+  if (!workflow) throw new Error('Configured task workflow is unavailable');
+  const sourceStage = workflow.stages.find((stage) =>
+    stage.assignments.some(
+      (assignment) => config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source',
+    ),
+  );
+  const assignmentIndex = sourceStage?.assignments.findIndex(
+    (assignment) => config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source',
+  );
+  if (!sourceStage || assignmentIndex === undefined || assignmentIndex < 0)
+    throw new Error('Configured task workflow has no Source-writing assignment');
+  const sourceAssignment = sourceStage.assignments[assignmentIndex];
+  if (!sourceAssignment) throw new Error('Configured task Source assignment is unavailable');
+  const riskFlags = [...new Set([...(sourceStage.risk_flags ?? []), ...(sourceAssignment.risk_flags ?? [])])];
+  const selectedProject = config.teams['default-development']?.allowed_projects.find((id) => projectIds.includes(id));
+  if (!selectedProject) throw new Error('Configured development team has no project in the fresh project set');
+
+  const workId = 'multi-project-source-' + randomUUID();
+  const nativeSessionHandle = 'fixture-multi-project-session-' + randomUUID();
+  const selectedRoot = config.projects.find((project) => project.project_id === selectedProject)?.project_root;
+  if (!selectedRoot) throw new Error('Fresh configured project has no Source root');
+  const implementationPaths = [path.posix.join(selectedRoot, 'src/task.ts')];
+  const sourcePath = requiredValue(implementationPaths[0], 'Fresh project Source path');
+  await mkdir(path.dirname(path.join(repositoryRoot, sourcePath)), { recursive: true });
+  writeFileSync(path.join(repositoryRoot, sourcePath), 'fresh temporary project source\n');
+  const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), implementationPaths);
+  const scopePath = `.agent/work/${workId}/scope.json`;
+  const acceptancePath = `.agent/work/${workId}/acceptance.json`;
+  const authorizationPath = `.agent/work/${workId}/source-authorization.json`;
+  await mkdir(path.dirname(path.join(repositoryRoot, scopePath)), { recursive: true });
+  const scope = {
+    schema: 'ImplementationScope/v1',
+    scope_id: `scope-${workId}`,
+    work_id: workId,
+    source_revision: sourceScope.digest,
+    ac_ids: ['AC-MULTI-PROJECT-SOURCE'],
+    allowed_paths: implementationPaths,
+    implementation_paths: implementationPaths,
+    documentation_paths: [],
+    changed_symbols: [],
+    non_goals: ['No writer is dispatched by this refusal case'],
+    acceptance_trace: ['AC-MULTI-PROJECT-SOURCE'],
+    behavior_trace: ['SR-MULTI-PROJECT-SOURCE'],
+    test_trace: ['persistent-session-handoff.test.ts'],
+    diagnostic_trace: ['fresh multi-project refusal fixture'],
+    attribution: { thread_id: nativeSessionHandle, pointer: 'fixture:multi-project-source-refusal' },
+    owner: 'fixture',
+    created_at: new Date().toISOString(),
+  };
+  const acceptance = {
+    schema: 'AcceptanceManifest/v1',
+    id: `acceptance-${workId}`,
+    version: 1,
+    ac_ids: scope.ac_ids,
+    source: implementationPaths[0],
+    scope: scope.scope_id,
+    source_revision: sourceScope.digest,
+    contracts: [
+      {
+        id: scope.ac_ids[0],
+        definition: 'A fresh multi-project Source request is refused before any write or dispatch.',
+        sr: 'SR-MULTI-PROJECT-SOURCE',
+        evidence: ['Configured local Source approval resolver'],
+      },
+    ],
+  };
+  const configDigest = runtimeConfigDigest(config);
+  const authorization: LocalSourceWriteAuthorization = {
+    schema: 'LocalSourceWriteAuthorization/v1',
+    action: 'source.write',
+    user_instruction_ref: `fixture:${workId}:source-authorization`,
+    work_id: workId,
+    attempt: 1,
+    scope_digest: sourceScope.digest,
+    config_digest: configDigest,
+    workflow_id: workflowId,
+    stage_ids: [sourceStage.id],
+    implementation_paths: implementationPaths,
+    native_session_handle: nativeSessionHandle,
+  };
+  const scopeBytes = Buffer.from(JSON.stringify(scope) + '\n');
+  const acceptanceBytes = Buffer.from(JSON.stringify(acceptance) + '\n');
+  const authorizationBytes = Buffer.from(JSON.stringify(authorization) + '\n');
+  expect(validateImplementationScope(scope)).toBe(true);
+  expect(validateAcceptanceManifestSchema(acceptance)).toBe(true);
+  writeFileSync(path.join(repositoryRoot, scopePath), scopeBytes);
+  writeFileSync(path.join(repositoryRoot, acceptancePath), acceptanceBytes);
+  writeFileSync(path.join(repositoryRoot, authorizationPath), authorizationBytes);
+
+  const item = {
+    schema: 'WorkItem/v1',
+    id: workId,
+    canonical_kind: 'task',
+    intent: 'task_execution',
+    project_id: selectedProject,
+    title: 'Exercise the configured multi-project Source refusal',
+    description: 'Use a fresh trusted Host Work and stop at native Source preflight.',
+    risk_flags: riskFlags,
+    labels: [],
+    provider: 'local',
+    provider_type: 'Task',
+  };
+  const identity: WorkIdentity = {
+    repository_id: config.repository.repository_id,
+    project_ids: projectIds,
+    integrations_digest: projectContext.integrations_digest,
+    work_id: workId,
+  };
+  const runtimeSnapshot = snapshotRuntimePackageSources(
+    runtimePackageAccess(),
+    config.runtime.bundle,
+    runtimePackageCodePaths(config.runtime.bundle),
+  );
+  const schemaEntry = runtimeSnapshot.entries.find(
+    (entry) => entry.path === config.runtime.bundle + '/schemas/agent-runtime-config.v1.schema.json',
+  );
+  if (!schemaEntry?.exists) throw new Error('Fresh multi-project runtime schema snapshot is unavailable');
+  const databaseLedger = openConfiguredMastraSessionLedger(repositoryRoot);
+  mastraLedgers.push(databaseLedger);
+  const store = databaseLedger.hostState;
+  const seed = workAndLedger(
+    new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    identity,
+    configDigest,
+    store.workspaceId,
+    [],
+    sourceScope,
+  );
+  const runId = sessionBridgeRunId(
+    store.workspaceId,
+    { work_id: workId, attempt: 1, scope_digest: sourceScope.digest },
+    workflowId,
+  );
+  const scopeSha256 = createHash('sha256').update(scopeBytes).digest('hex');
+  const acceptanceSha256 = createHash('sha256').update(acceptanceBytes).digest('hex');
+  const authorizationSha256 = createHash('sha256').update(authorizationBytes).digest('hex');
+  const commonReference = {
+    schema: 'LifecycleArtifactReference/v1' as const,
+    source_revision: sourceScope.digest,
+    scope_id: scope.scope_id,
+    ac_ids: scope.ac_ids,
+    generation: null,
+    implementation_fingerprint: null,
+    delivery_cycle_id: null,
+    disposition: 'current' as const,
+  };
+  const nextWork = {
+    ...seed.work,
+    binding: {
+      ...seed.work.binding,
+      repository_id: identity.repository_id,
+      project_ids: [...projectIds],
+      integrations_digest: identity.integrations_digest,
+      team_id: 'default-development',
+      workflow_id: workflowId,
+      provider_work_item_id: workId,
+      lifecycle_work_id: workId,
+      work_item_digest: canonicalJsonDigest(item),
+      work_source_revision: sourceScope.digest,
+      scope_id: scope.scope_id,
+      scope_contract_digest: scopeSha256,
+      acceptance_manifest_digest: acceptanceSha256,
+      ac_ids: [...scope.ac_ids],
+      implementation_paths: [...implementationPaths],
+      allowed_resources: implementationPaths.map((sourcePath) => `file:${sourcePath}`),
+      config_digest: configDigest,
+      runtime_source_revision: runtimeSnapshot.digest,
+      runtime_code_digest: runtimeSnapshot.digest,
+      schema_digest: schemaEntry.sha256,
+    },
+    contracts: {
+      scope: { schema: 'ImplementationScope/v1' as const, path: scopePath, sha256: scopeSha256 },
+      acceptance: { schema: 'AcceptanceManifest/v1' as const, path: acceptancePath, sha256: acceptanceSha256 },
+      decisions: [],
+    },
+    lease: { ...seed.work.lease!, thread_id: nativeSessionHandle },
+    execution: {
+      ...seed.work.execution,
+      run_id: runId,
+      input_digest: canonicalJsonDigest({
+        item,
+        scope: scopeSha256,
+        acceptance: acceptanceSha256,
+        source: sourceScope.digest,
+      }),
+      assignment_attempts: [],
+    },
+    lifecycle: {
+      ...seed.work.lifecycle,
+      source_revision: sourceScope.digest,
+      config_binding: {
+        config_digest: configDigest,
+        schema_digest: schemaEntry.sha256,
+        runtime_code_digest: runtimeSnapshot.digest,
+      },
+      scope: {
+        scope_id: scope.scope_id,
+        allowed_paths: [...implementationPaths],
+        fingerprint_paths: [...implementationPaths],
+        implementation_paths: [...implementationPaths],
+        documentation_paths: [],
+      },
+      references: [
+        {
+          ...commonReference,
+          kind: 'implementation_scope' as const,
+          artifact_schema: 'ImplementationScope/v1',
+          record_id: scope.scope_id,
+          path: scopePath,
+          sha256: scopeSha256,
+          principal: null,
+          decision: null,
+        },
+        {
+          ...commonReference,
+          kind: 'acceptance_manifest' as const,
+          artifact_schema: 'AcceptanceManifest/v1',
+          record_id: acceptance.id,
+          path: acceptancePath,
+          sha256: acceptanceSha256,
+          principal: null,
+          decision: null,
+        },
+        {
+          ...commonReference,
+          kind: 'execution_approval' as const,
+          artifact_schema: 'LocalSourceWriteAuthorization/v1',
+          record_id: authorization.user_instruction_ref,
+          path: authorizationPath,
+          sha256: authorizationSha256,
+          principal: 'local-session:' + canonicalJsonDigest(nativeSessionHandle),
+          decision: 'approved' as const,
+        },
+      ],
+    },
+  };
+  const nextLedger = {
+    ...seed.ledger,
+    tickets: seed.ledger.tickets.map((ticket) => ({
+      ...ticket,
+      repository_id: identity.repository_id,
+      project_ids: [...projectIds],
+      integrations_digest: identity.integrations_digest,
+      thread_id: nativeSessionHandle,
+      source_revision: sourceScope.digest,
+      contour_keys: [
+        ...new Set([
+          ...config.integrations.providers
+            .filter((provider) => projectIds.includes(provider.project_id))
+            .flatMap((provider) => [
+              `tenant:${provider.tenant_id}`,
+              `project:${provider.tenant_id}/${provider.project_id}`,
+            ]),
+          ...implementationPaths.map((sourcePath) => `file:${sourcePath}`),
+        ]),
+      ].sort(),
+      exclusive_resources: [...implementationPaths].map((sourcePath) => `file:${sourcePath}`),
+      active_resources: [...implementationPaths].map((sourcePath) => `file:${sourcePath}`),
+    })),
+    claims: seed.ledger.claims.map((claim) => ({
+      ...claim,
+      thread_id: nativeSessionHandle,
+      resources: implementationPaths.map((sourcePath) => `file:${sourcePath}`),
+    })),
+  };
+  const admitted = store.compareAndSwapHostState({
+    expectedWork: null,
+    expectedLedger: null,
+    nextWork,
+    nextLedger,
+  });
+  requireHostState(admitted);
+  expect(admitted.work.execution.assignment_attempts).toEqual([]);
+  expect(store.readWorkSessionJournal(identity)).toBeNull();
+  expect(readLocalSourceWriteAuthorization(repositoryRoot, authorizationPath)).toEqual({
+    authorization,
+    sha256: authorizationSha256,
+  });
+
+  let dispatchCalls = 0;
+  const composition = await createTrustedLocalSessionComposition({
+    repositoryRoot,
+    repositoryId: identity.repository_id,
+    projectIds,
+    nativeSessionHandle,
+    admittedWork: { workId, store },
+    services: {
+      governanceCapability: store.governanceCapability,
+      resolveWorkflowWorkItem: (requestedId) => {
+        if (requestedId !== workId) throw new Error('Fresh multi-project fixture received a foreign WorkItem request');
+        return item;
+      },
+      resolveWorkExecutionContext: (request) => {
+        const current = store.readHostStateSnapshot(identity);
+        requireHostState(current);
+        const lease = current.work.lease;
+        const ticket = current.ledger.tickets.find((entry) => entry.ticket_id === lease?.ticket_id);
+        if (!lease || !ticket?.expires_at) throw new Error('Fresh multi-project fixture lost its active lease');
+        return {
+          schema: 'WorkExecutionContext/v1' as const,
+          binding: current.work.binding,
+          permit: {
+            context_digest: canonicalJsonDigest(current.work.binding),
+            checkpoint_revision: current.workVersion.revision,
+            checkpoint_digest: current.workVersion.digest,
+            runtime_current_revision: 1,
+            stage_id: request.stageId,
+            assignment_index: request.assignmentIndex,
+            dispatch_authorized: true,
+            lease: {
+              thread_id: lease.thread_id,
+              ticket_id: lease.ticket_id,
+              generation: lease.generation,
+              ledger_revision: current.ledgerVersion.revision,
+              expires_at: ticket.expires_at,
+              active_resources: ticket.active_resources,
+              blocked_resources: ticket.blocked_resources,
+            },
+          },
+        };
+      },
+      resolveIdentity: () => null,
+      verifyApproval: () => null,
+      runtimeRevision: () => ({ sourceRevision: admitted.work.binding.runtime_code_digest, currentRevision: 1 }),
+      casWriter: () => {
+        throw new Error('Fresh multi-project refusal must stop before the writer');
+      },
+      dispatchWorkflowAssignment: () => {
+        dispatchCalls++;
+        throw new Error('Fresh multi-project refusal must not dispatch writer code');
+      },
+      validateWorkflowAssignmentResult: () => undefined,
+    },
+  });
+  const capability = composition.workflowExecutionCapability;
+  if (!capability) throw new Error('Fresh multi-project fixture has no workflow execution capability');
+  const prepared = await prepareWorkflowExecution(capability, {
+    repositoryRoot,
+    configDigest: configDigest,
+    teamId: 'default-development',
+    workItemId: workId,
+  });
+  const rows = nativeDatabaseSnapshotReader(databaseLedger.sessionProducerBinding().database);
+  const beforeRows = rows();
+  const beforeHost = store.readHostStateSnapshot(identity);
+  requireHostState(beforeHost);
+  expect(store.readWorkSessionJournal(identity)).toBeNull();
+  let approvalClaimCalls = 0;
+  let observedInvocation: Parameters<typeof store.claimWorkflowAssignmentWithApproval>[0] | undefined;
+  const claimWorkflowAttempt = store.claimWorkflowAssignmentWithApproval.bind(store);
+  const claimObserver = spyOn(store, 'claimWorkflowAssignmentWithApproval').mockImplementation(
+    (invocation, requestDigest, action, storeId) => {
+      approvalClaimCalls++;
+      observedInvocation = invocation;
+      return claimWorkflowAttempt(invocation, requestDigest, action, storeId);
+    },
+  );
+  let verifierJournalReads = 0;
+  let verifierJournalValue: ReturnType<typeof store.readWorkSessionJournal> | undefined;
+  const approvalTrace: string[] = [];
+  let resolverHostSnapshot: ReturnType<typeof store.readHostStateSnapshot> | undefined;
+  const readHost = store.readHostStateSnapshot.bind(store);
+  const hostObserver = spyOn(store, 'readHostStateSnapshot').mockImplementation((candidateIdentity) => {
+    const snapshot = readHost(candidateIdentity);
+    if (candidateIdentity.work_id === workId) {
+      approvalTrace.push('host');
+      if (verifierJournalReads > 0) resolverHostSnapshot = snapshot;
+    }
+    return snapshot;
+  });
+  const readJournal = store.readWorkSessionJournal.bind(store);
+  const journalObserver = spyOn(store, 'readWorkSessionJournal').mockImplementation((candidateIdentity) => {
+    const journal = readJournal(candidateIdentity);
+    if (candidateIdentity.work_id === workId) {
+      verifierJournalReads++;
+      verifierJournalValue = journal;
+      approvalTrace.push('journal');
+    }
+    return journal;
+  });
+  const refusal = await withInitialSourceCleanup(
+    () =>
+      rejectionReason(
+        reserveWorkflowAssignmentForSession(capability, {
+          repositoryRoot,
+          configDigest: configDigest,
+          teamId: 'default-development',
+          workflowId,
+          stageId: sourceStage.id,
+          assignmentIndex,
+          workItemId: workId,
+          workItemDigest: prepared.workItemDigest,
+          workContextDigest: prepared.workContextDigest,
+          input: {},
+        }),
+      ),
+    () => {
+      journalObserver.mockRestore();
+      hostObserver.mockRestore();
+      claimObserver.mockRestore();
+    },
+    'Fresh multi-project Source verifier observer restoration',
+  );
+  expect(() => {
+    throw refusal;
+  }).toThrow('workflow approval denied');
+  expect(approvalClaimCalls).toBe(1);
+  expect(observedInvocation).toMatchObject({
+    authentication: { repositoryRoot, repositoryId: identity.repository_id, projectIds },
+    workflowId,
+    stage: { id: sourceStage.id },
+    workItem: item,
+  });
+  expect(verifierJournalReads).toBe(1);
+  expect(verifierJournalValue).toBeNull();
+  const verifierJournalIndex = approvalTrace.indexOf('journal');
+  expect(verifierJournalIndex).toBeGreaterThan(0);
+  expect(approvalTrace.slice(verifierJournalIndex)).toEqual(['journal', 'host']);
+  expect(resolverHostSnapshot).toEqual(beforeHost);
+  expect(dispatchCalls).toBe(0);
+  expect(rows()).toEqual(beforeRows);
+  expect(store.readHostStateSnapshot(identity)).toEqual(beforeHost);
+  expect(store.readWorkSessionJournal(identity)).toBeNull();
+  expect(beforeHost.work.execution.assignment_attempts).toEqual([]);
+  expect(readFileSync(path.join(repositoryRoot, authorizationPath))).toEqual(authorizationBytes);
+  expect(readFileSync(path.join(repositoryRoot, scopePath))).toEqual(scopeBytes);
+  expect(readFileSync(path.join(repositoryRoot, acceptancePath))).toEqual(acceptanceBytes);
+  expect(performance.now()).toBeLessThan(caseDeadline);
+  await withInitialSourceCleanup(
+    () => undefined,
+    () => {
+      databaseLedger.close();
+      const ledgerIndex = mastraLedgers.indexOf(databaseLedger);
+      if (ledgerIndex >= 0) mastraLedgers.splice(ledgerIndex, 1);
+    },
+    'Fresh multi-project Source ledger cleanup',
+  );
+  expect(performance.now()).toBeLessThan(caseDeadline);
+  retainScratch = false;
+});
 
 test('configured native continuation reaches the retained TaskSource authorization refusal without writes', async () => {
   const beforeimage = runtimePackageBeforeimageFixture(tmpdir(), 'vida-agent', (allocated) => {

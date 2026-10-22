@@ -44,7 +44,7 @@ type WorkLedgerSeed = {
   readonly ledger: CoordinationLedger;
 };
 
-function workAndLedger(
+export function workAndLedger(
   expiresAt: string,
   identity: WorkIdentity,
   configDigest: string,
