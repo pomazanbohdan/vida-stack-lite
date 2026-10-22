@@ -290,6 +290,10 @@ internal readiness owner. Reuse the existing capture's complete SDK input
 projection for both cache validation and a necessary local test-input build.
 Check every declared output and preserve prior/failed publication roots. Test
 bodies never compile their own SDK, and formed images never refresh artifacts.
+If artifact validation already owns copied buffers, reuse those private bytes
+in its returned map instead of copying each output again. Verify output order
+and mutate every returned output/receipt in the ownership control to prove the
+caller's original bytes remain unchanged.
 Local formation runs no suite and establishes no product delivery or Runtime
 acceptance. Preserve the installed-dependency custody limit and strict freshness.
 For a focused selection, reuse `sdkFormationToolInputPaths` and the declared tests

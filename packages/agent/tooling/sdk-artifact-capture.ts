@@ -273,9 +273,9 @@ export function captureSelectedSdkTestInputsFromCapturedBytes(
       throw new Error('SDK formation output tree exceeds its byte bound.');
     if (bytes.length !== output.bytes || sha256(bytes) !== output.sha256)
       throw new Error(`SDK formation output differs from its receipt: ${output.path}`);
-    result.set(output.path, Buffer.from(bytes));
+    result.set(output.path, bytes);
   }
-  result.set('dist/sdk-formation.json', Buffer.from(receiptBytes));
+  result.set('dist/sdk-formation.json', receiptBytes);
   return result;
 }
 

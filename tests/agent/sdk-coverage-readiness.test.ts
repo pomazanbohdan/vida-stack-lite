@@ -43,10 +43,14 @@ test('local SDK candidate joins all captured inputs and every output, returning 
   const fixture = candidateFixture();
   const captured = captureSelectedSdkTestInputsFromCapturedBytes(fixture.root, fixture.inputs, fixture.files);
   assert.deepEqual([...captured.keys()].sort(), [...fixture.files.keys()].sort());
-  const declarations = captured.get('dist/src/index.d.ts');
-  assert.ok(declarations);
-  declarations.fill(0);
-  assert.notDeepEqual(declarations, fixture.files.get('dist/src/index.d.ts'));
+  for (const [file, bytes] of captured) {
+    const original = fixture.files.get(file);
+    assert.ok(original);
+    const before = Buffer.from(original);
+    bytes.fill(0);
+    assert.notDeepEqual(bytes, original, file);
+    assert.deepEqual(original, before, file);
+  }
 });
 
 test('a fresh product SDK is also reusable for tests without relabeling its receipt', () => {

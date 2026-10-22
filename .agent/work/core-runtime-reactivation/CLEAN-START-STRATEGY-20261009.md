@@ -86,6 +86,8 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
    edited test declarations. Reconcile case names with existing inventory/current
    declarations rather than a new AST pass. Diagnose causal failures; never loop
    an unchanged setup timeout or mistake a filtered-out case for validation.
+   Resolve an older failed control against its later exact named result and
+   current fixture before assigning another repair; preserve both observations.
    Within one unchanged fixture boundary, reuse the typed snapshot already
    returned by its owner for Journal and expiry assertions. Read fresh state
    after a transition; never reuse a preimage across a mutation or verifier.

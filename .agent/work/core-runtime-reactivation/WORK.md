@@ -177,7 +177,62 @@ without fabricating a new grant.2088's worker stops on an unsupported rg flag;
 that is a search invocation error, not denied repository access or proof that
 the path is impossible. No disposition or Source-policy relaxation follows.
 
-#### Three-hour audit and queued checkpoint packet (2026-10-22 12:45–15:45 UTC)
+#### Three-hour scripts and test-method audit (2026-10-22 15:35–18:35 UTC)
+
+Root reuses the three complete stage receipts2079/2124/2148, existing SDK and
+callback controls, current inventories and two blind read-only Luna reviews.
+No second cycle, writer, suite, AST/scan/hash or mutation producer is started.
+The completed product defect in cf7a494 is terminal-attempt binding after a real
+TaskSource resource extension; it is not fixed again. This audit's script
+corrections are the internal SDK formation/capture owner and unresolved returned
+cleanup-status refusal described above. Exact Source, output bytes, logs and
+process/group receipts remain attributable; watcher timeouts do not become test
+timeouts, successful builds do not become Runtime acceptance, and all original
+failures remain retained.
+
+Blind2152 additionally finds one unused full-output copy in complete SDK
+validation. Root reuses the validator's already private snapshot buffers in its
+returned map, preserving receipt order and every check, instead of adding a new
+validation mode or another helper. The existing ownership control now mutates
+every returned output and receipt and proves caller bytes stay unchanged.
+2155/2156 zero-warning lint and strict144 pass; the affected SDK packet passes
+73cases/525Bun-expect assertions in744ms (Node assert checks are not counted in
+that Bun number). Independent2156 review confirms ownership/order. This removes
+one output-set Buffer copy by inspection; no measured time/token saving is claimed.
+It changes a tool input, so2148's numeric evidence is not relabeled for new bytes.
+The next causal contour packet will capture the new tool once; do not repeat the
+full stage solely to claim an unchanged counter.
+
+Blind2153 initially mistakes the old2135 mock failure for a current defect. Root
+checks the actual named2136 PASS for all four modes and current in-capture mock;
+the reviewer withdraws the claim. No test-selection rewrite or repeat suite is
+needed. Current assertions retain callback-after-typecheck/during-capture,
+supplied-byte ownership, non-SDK skip and review refusal. Separate real lifecycle
+fixtures retain their own mutable databases and failure isolation.
+
+| Composition | Observed evidence and decision |
+| --- | --- |
+| Full contour after each authoring micro-edit | Reject unchanged reruns.2079/2124/2148 cost70.88/84.47/94.68s on different changed inputs; these are not paired speed measurements.|
+| Sequential static, affected controls, independent review, publish, one causal contour | Select. SDK controls744ms and the prior four callback modes1.60s give bounded feedback;2148 separately proves the new internal SDK ingress with88PASS.|
+| Concurrent heavy fixtures/full stages | Not qualified. They contend for shared dependencies/process resources and duplicate formation; no measured speedup supports them. Bounded independent read-only review can overlap Root's separate preparation.|
+
+No complete per-step setup, tool-call or token telemetry exists; do not invent
+percent savings or infer a regression from those different stage samples. Current
+coverage stays on bun-session-handoff; key30's genuine no-effect lease prerequisite
+remains the next bounded fixture experiment. No new objective disposition follows.
+
+Disk2154 makes one statfs observation on checkout, current functional scratch and
+retained archive: durable/retained25203605504available bytes, scratch5723320320,
+each above the unchanged2214592512floor/reserve. It reuses inventory1707/audit1977
+and2144's unresolved process-reference check instead of another recursive scan.
+The exact .vida-quality-inputs/.vida-retained and direct contour* identities and
+18deferred/no-op candidates are in DIAG/three-hour-disk-audit-v2154.json. Unknown
+live-reference custody for /proc/117 and /proc/168 plus existing donor/current
+dependencies prevents deletion; no protected path is removed, no locator retired
+and no bytes reclaimed. There is no current free-space admission GAP. No schedule
+or automation changes are made.
+
+#### Prior queued checkpoint audit (2026-10-22 12:45–15:45 UTC)
 
 Reuse of retained reports and six published commits identifies the already fixed
 SDK transitive-input classification (ae68767), native snapshot assertions, peer
