@@ -3045,6 +3045,9 @@ opening or starting Mastra: at least one assignment must remain, required stages
 and declared terminals must survive, and consumed artifacts need effective
 producers. Filtering preserves each original assignment index. An empty or
 incomplete graph is a typed block, never a successful no-op.
+An absent or empty stage/assignment `risk_flags` list is unconditional; a
+nonempty list requires at least one matching effective risk flag. Empty filters
+cannot remove the otherwise valid read-only Source planner.
 
 Public session actions carry a versioned resolved profile bound to the current
 configuration: model, reasoning, execution mode, mutation scope, resolved tool

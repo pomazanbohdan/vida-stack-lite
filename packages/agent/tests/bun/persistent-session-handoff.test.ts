@@ -44,6 +44,7 @@ import {
 } from '../../src/orchestration/persistent-session-handoff.ts';
 import { sessionActionsForWave } from '../../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../../src/orchestration/workflow-plan.ts';
+import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 
 const { repositoryRoot: root, config } = configuredTestContext();
 const workspaceId = 'a'.repeat(64);
@@ -57,6 +58,7 @@ const flows: [string, WorkItemSelection['kind'], WorkItemSelection['intent']][] 
 ];
 let scratch: string | undefined;
 let retainScratch = false;
+let caseDeadline: number | undefined;
 const stores: PersistentSessionHandoffStore[] = [];
 const mastraLedgers: MastraSessionLedger[] = [];
 
@@ -279,12 +281,27 @@ function mastraObservation(
 }
 
 afterEach(async () => {
-  for (const instance of mastraLedgers.splice(0)) instance.close();
-  for (const instance of stores.splice(0)) instance.close();
-  if (scratch && retainScratch) console.error(`Retained failed session handoff fixture root: ${scratch}`);
-  else if (scratch) await rm(scratch, { recursive: true, force: true });
-  scratch = undefined;
-  retainScratch = false;
+  try {
+    completeOwnedCleanup([
+      ...[...mastraLedgers.splice(0), ...stores.splice(0)].map((instance) => () => {
+        instance.close();
+        return undefined;
+      }),
+    ]);
+    if (caseDeadline !== undefined && performance.now() >= caseDeadline) {
+      retainScratch = true;
+      throw new Error('Mastra lifecycle cleanup exhausted its monotonic 5s deadline');
+    }
+    if (scratch && !retainScratch) await rm(scratch, { recursive: true, force: true });
+  } catch (error) {
+    retainScratch = true;
+    throw error;
+  } finally {
+    if (scratch && retainScratch) console.error(`Retained failed session handoff fixture root: ${scratch}`);
+    scratch = undefined;
+    retainScratch = false;
+    caseDeadline = undefined;
+  }
 });
 
 async function configuredFactoryFixture(name: string): Promise<string> {
@@ -1070,4 +1087,235 @@ describe('durable Mastra research exposure and invocation identity', () => {
       ),
     ).toThrow(/outside an allowed read-only slot batch/);
   });
+});
+
+describe('Mastra configured-wave ledger projections', () => {
+  function nextConfiguredWave(
+    fixture: ReturnType<typeof actualFocusedValidatorRequests>,
+    priorResults: readonly SessionBridgeObservation[],
+  ): { readonly stepId: string; readonly waveIndex: number; readonly requests: SessionBridgeRequest[] } {
+    const workflowId = 'task_execution';
+    const selected = selection('task', workflowId);
+    const compiled = compileDevelopmentWorkflow(config, selected.team, workflowId, selected.risk_flags);
+    const waveIndex = fixture.waveIndex + 1;
+    if (compiled.waves[waveIndex] === undefined) throw new Error('configured workflow has no next wave');
+    const actions = sessionActionsForWave(config, selected, fixture.requestContext, workflowId, waveIndex, []);
+    const firstAction = actions[0];
+    if (firstAction === undefined) throw new Error('configured next wave has no session actions');
+    const stepId = firstAction.stage_id;
+    if (actions.some((action) => action.stage_id !== stepId))
+      throw new Error('configured next wave spans more than one Mastra step');
+    const requests = actions.map((action) =>
+      buildSessionBridgeRequest({
+        runId: fixture.runId,
+        workflowId,
+        configDigest: runtimeConfigDigest(config),
+        context: fixture.requestContext,
+        waveIndex,
+        action,
+        configuredContext: configuredContextForStage(root, config, workflowId, action.stage_id, fixture.requestContext),
+        priorResults,
+      }),
+    );
+    return { stepId, waveIndex, requests };
+  }
+
+  function persistedRow(database: Database, workId: string) {
+    return database
+      .query<{ revision: number; payload: string; digest: string }, [string, string, number]>(
+        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .get(workspaceId, workId, 1);
+  }
+
+  test('replays an exact sync without version change and refuses incomplete advance without rewriting the row', async () => {
+    const deadline = performance.now() + 5000;
+    caseDeadline = deadline;
+    const checkDeadline = () => {
+      if (performance.now() >= deadline) throw new Error('Mastra lifecycle case exceeded its monotonic 5s deadline');
+    };
+    let succeeded = false;
+    try {
+      scratch = await mkdtemp(path.join(tmpdir(), 'mastra-lifecycle-replay-'));
+      checkDeadline();
+      const workId = 'mastra-lifecycle-incomplete-advance';
+      const fixture = actualFocusedValidatorRequests(workId);
+      const { database, instance } = mastraLedger(workId);
+      let current = instance.sync(
+        workId,
+        fixture.requestContext.attempt,
+        fixture.runId,
+        'validate_focused',
+        fixture.requests,
+      );
+      checkDeadline();
+      const exactReplay = instance.sync(
+        workId,
+        fixture.requestContext.attempt,
+        fixture.runId,
+        'validate_focused',
+        fixture.requests,
+      );
+      expect(exactReplay).toEqual(current);
+      expect(exactReplay.version).toEqual(current.version);
+
+      current = instance.issueWave(workId, fixture.requestContext.attempt, current.version);
+      expect(current.state.items.every((item) => item.host_reservation === undefined)).toBe(true);
+      const issued = mastraItemAt(current, 0);
+      const firstObservation = mastraObservation(issued.request, issued.issue_id, 'incomplete-advance-validator');
+      current = instance.report(workId, fixture.requestContext.attempt, current.version, firstObservation);
+      checkDeadline();
+
+      const next = nextConfiguredWave(fixture, [firstObservation]);
+      const before = persistedRow(database, workId);
+      expect(before).toBeDefined();
+      expect(() =>
+        instance.sync(workId, fixture.requestContext.attempt, fixture.runId, next.stepId, next.requests),
+      ).toThrow(/advanced without all unique observed effects/);
+      expect(persistedRow(database, workId)).toEqual(before);
+      expect(requiredMastraSnapshot(instance.resume(workId, fixture.requestContext.attempt))).toEqual(current);
+      checkDeadline();
+      succeeded = true;
+    } finally {
+      if (!succeeded) retainScratch = true;
+    }
+  }, 5000);
+
+  test('advances once after both configured readonly validators and retrieves exact completed-history retries', async () => {
+    const deadline = performance.now() + 5000;
+    caseDeadline = deadline;
+    const checkDeadline = () => {
+      if (performance.now() >= deadline) throw new Error('Mastra lifecycle case exceeded its monotonic 5s deadline');
+    };
+    let succeeded = false;
+    try {
+      scratch = await mkdtemp(path.join(tmpdir(), 'mastra-lifecycle-advance-'));
+      checkDeadline();
+      const workId = 'mastra-lifecycle-complete-advance';
+      const fixture = actualFocusedValidatorRequests(workId);
+      expect(fixture.requests.map((request) => request.role).sort()).toEqual([
+        'correctness-validator',
+        'requirements-validator',
+      ]);
+      const { database, instance } = mastraLedger(workId);
+      let current = instance.sync(
+        workId,
+        fixture.requestContext.attempt,
+        fixture.runId,
+        'validate_focused',
+        fixture.requests,
+      );
+      current = instance.issueWave(workId, fixture.requestContext.attempt, current.version);
+      expect(current.state.items.every((item) => item.host_reservation === undefined)).toBe(true);
+      const observations = current.state.items.map((item) =>
+        mastraObservation(item.request, item.issue_id, `completed-focused-validator-${item.request.action_id}`),
+      );
+      for (const observation of observations) {
+        current = instance.report(workId, fixture.requestContext.attempt, current.version, observation);
+        checkDeadline();
+      }
+
+      const priorStep = current.state.step_id;
+      if (priorStep === null) throw new Error('Configured validator step is already terminal');
+      const priorCompleted = { step_id: priorStep, items: current.state.items };
+      const next = nextConfiguredWave(fixture, observations);
+      const advanced = instance.sync(workId, fixture.requestContext.attempt, fixture.runId, next.stepId, next.requests);
+      expect(advanced.version.revision).toBe(current.version.revision + 1);
+      expect(advanced.state.step_id).toBe(next.stepId);
+      expect(advanced.state.items.map((item) => item.request)).toEqual(next.requests);
+      expect(advanced.state.completed).toEqual([priorCompleted]);
+      const firstObservation = observations[0];
+      if (firstObservation === undefined) throw new Error('configured validator wave produced no observation');
+      expect(instance.retrieveReportedObservation(workId, fixture.requestContext.attempt, firstObservation)).toEqual(
+        advanced,
+      );
+      const beforeRetry = persistedRow(database, workId);
+      expect(instance.report(workId, fixture.requestContext.attempt, advanced.version, firstObservation)).toEqual(
+        advanced,
+      );
+      expect(() =>
+        instance.retrieveReportedObservation(workId, fixture.requestContext.attempt, {
+          ...firstObservation,
+          summary: 'changed retry for completed history',
+          output_digest: canonicalJsonDigest('changed retry for completed history'),
+        }),
+      ).toThrow(/retry differs from recorded terminal observation/);
+      expect(persistedRow(database, workId)).toEqual(beforeRetry);
+      checkDeadline();
+      succeeded = true;
+    } finally {
+      if (!succeeded) retainScratch = true;
+    }
+  }, 5000);
+
+  test.each([
+    ['success', 'complete'],
+    ['failed', 'blocked'],
+    ['canceled', 'blocked'],
+    ['unknown', 'blocked'],
+  ] as const)(
+    'projects terminal %s status for its own work ID and leaves persisted history stable',
+    async (workflowStatus, expectedStatus) => {
+      const deadline = performance.now() + 5000;
+      caseDeadline = deadline;
+      const checkDeadline = () => {
+        if (performance.now() >= deadline) throw new Error('Mastra lifecycle case exceeded its monotonic 5s deadline');
+      };
+      let succeeded = false;
+      try {
+        scratch = await mkdtemp(path.join(tmpdir(), `mastra-lifecycle-terminal-${workflowStatus}-`));
+        checkDeadline();
+        const workId = `mastra-lifecycle-terminal-${workflowStatus}`;
+        const fixture = actualFocusedValidatorRequests(workId);
+        const { database, instance } = mastraLedger(workId);
+        let current = instance.sync(
+          workId,
+          fixture.requestContext.attempt,
+          fixture.runId,
+          'validate_focused',
+          fixture.requests,
+        );
+        current = instance.issueWave(workId, fixture.requestContext.attempt, current.version);
+        for (const item of current.state.items) {
+          current = instance.report(
+            workId,
+            fixture.requestContext.attempt,
+            current.version,
+            mastraObservation(item.request, item.issue_id, `terminal-${workflowStatus}-${item.request.action_id}`),
+          );
+          checkDeadline();
+        }
+        const terminal = instance.sync(
+          workId,
+          fixture.requestContext.attempt,
+          fixture.runId,
+          null,
+          [],
+          null,
+          workflowStatus,
+        );
+        expect(terminal.resume_status).toBe(expectedStatus);
+        const before = persistedRow(database, workId);
+        expect(before).toBeDefined();
+        const exactTerminalReplay = instance.sync(
+          workId,
+          fixture.requestContext.attempt,
+          fixture.runId,
+          null,
+          [],
+          null,
+          workflowStatus,
+        );
+        expect(exactTerminalReplay).toEqual(terminal);
+        expect(exactTerminalReplay.resume_status).toBe(expectedStatus);
+        expect(persistedRow(database, workId)).toEqual(before);
+        expect(exactTerminalReplay.state.completed).toEqual(terminal.state.completed);
+        checkDeadline();
+        succeeded = true;
+      } finally {
+        if (!succeeded) retainScratch = true;
+      }
+    },
+    5000,
+  );
 });

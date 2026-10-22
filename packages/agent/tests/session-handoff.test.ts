@@ -12,6 +12,8 @@ import {
   allowsSharedInvocationForConfiguredSlots,
   createSessionActionProjector,
   prepareSessionWorkflowHandoff,
+  prepareSessionWorkflowHandoffFromConfig,
+  validateSessionAgentOutcome,
   validateSessionWorkflowHandoffFromConfig,
   type SessionAgentAction,
   type SessionAgentOutcome,
@@ -24,6 +26,7 @@ import {
   executableWorkflowWaveIndices,
 } from '../src/orchestration/workflow-plan.js';
 import type { CorrectiveExecution } from '../src/orchestration/final-assurance.js';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let root = '';
@@ -95,6 +98,33 @@ async function createFixture(): Promise<string> {
   ).toMatchObject({ status: 'initialized' });
   return fixtureRoot;
 }
+
+async function withConfigFixture(body: (fixtureRoot: string) => void | Promise<void>): Promise<void> {
+  const deadline = performance.now() + 5_000;
+  const fixtureRoot = await createFixture();
+  let failure: { error: unknown } | undefined;
+  try {
+    await body(fixtureRoot);
+    expect(performance.now()).toBeLessThan(deadline);
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          if (failure) {
+            console.error('Retained failed session configuration fixture: ' + fixtureRoot);
+            return;
+          }
+          rmSync(fixtureRoot, { recursive: true, force: true });
+          if (performance.now() >= deadline) throw new Error('Session configuration cleanup exhausted its deadline');
+        },
+      ],
+      failure,
+    );
+  }
+}
 beforeAll(async () => {
   root = await createFixture();
 });
@@ -144,6 +174,105 @@ function simulatedReports(
 }
 
 describe('advisory session agent handoff', () => {
+  test('context and outcome validation enforce exact fields, scalar bounds and returned evidence', () => {
+    const config = loadRuntimeConfig(root);
+    const selected = selection('research', 'information_research');
+    for (const [field, value, message] of [
+      ['work_id', '', 'work id'],
+      ['work_id', 'Foreign', 'work id'],
+      ['work_id', 'a'.repeat(129), 'work id'],
+      ['attempt', 0, 'attempt'],
+      ['attempt', 1.5, 'attempt'],
+      ['scope_digest', 'bad', 'scope digest'],
+    ] as const) {
+      const candidate = { ...context };
+      Reflect.set(candidate, field, value);
+      expect(() => prepareSessionWorkflowHandoffFromConfig(config, selected, candidate)).toThrow(message);
+    }
+    const extraContext = { ...context, extra: true };
+    expect(() => prepareSessionWorkflowHandoffFromConfig(config, selected, extraContext)).toThrow('context fields');
+    const state = prepareSessionWorkflowHandoffFromConfig(config, selected, context);
+    const action = state.actions[0];
+    if (!action) throw new Error('Research workflow has no first action');
+    const report = reportAt(simulatedReports(state), 0);
+    const changes: readonly [string, unknown, string][] = [
+      ['stage_id', 'foreign', 'binding or order'],
+      ['role', 'foreign', 'binding or order'],
+      ['status', 'pass', 'status'],
+      ['summary', 4, 'summary'],
+      ['summary', 'x'.repeat(4097), 'summary'],
+      ['evidence_refs', {}, 'evidence'],
+      ['evidence_refs', [4], 'evidence'],
+      ['evidence_refs', [''], 'evidence'],
+      ['evidence_refs', ['x'.repeat(513)], 'evidence'],
+      ['session_result', null, 'session result'],
+      ['session_result', { ...report.session_result, extra: true }, 'session result'],
+    ];
+    for (const [field, value, message] of changes) {
+      const candidate = { ...report };
+      Reflect.set(candidate, field, value);
+      expect(() => validateSessionAgentOutcome(state, action, candidate), field).toThrow(message);
+    }
+    for (const field of ['issue_id', 'agent_id', 'tool_call_ref'] as const)
+      for (const value of [4, '', 'x'.repeat(257)]) {
+        const candidate = { ...report, session_result: { ...report.session_result } };
+        Reflect.set(candidate.session_result, field, value);
+        expect(() => validateSessionAgentOutcome(state, action, candidate), field).toThrow('session result');
+      }
+    const extraReport = { ...report, extra: true };
+    expect(() => validateSessionAgentOutcome(state, action, extraReport)).toThrow('outcome fields');
+    expect(() => validateSessionAgentOutcome(state, action, report)).not.toThrow();
+    expect(() =>
+      validateSessionAgentOutcome(state, action, {
+        ...report,
+        summary: 'x'.repeat(4096),
+        evidence_refs: ['x'.repeat(512)],
+        session_result: {
+          issue_id: 'i'.repeat(256),
+          agent_id: 'a'.repeat(256),
+          tool_call_ref: 't'.repeat(256),
+          output_digest: canonicalJsonDigest('x'.repeat(4096)),
+        },
+      }),
+    ).not.toThrow();
+  });
+
+  test('handoff verification rejects resealed binding changes and preserves genuine blocked terminal state', () => {
+    const config = loadRuntimeConfig(root);
+    const state = prepareSessionWorkflowHandoffFromConfig(
+      config,
+      selection('research', 'information_research'),
+      context,
+    );
+    const reseal = (candidate: SessionWorkflowHandoff): SessionWorkflowHandoff => {
+      const { digest, ...body } = candidate;
+      void digest;
+      return { ...body, digest: canonicalJsonDigest(body) };
+    };
+    const schema = { ...state };
+    Reflect.set(schema, 'schema', 'foreign');
+    expect(() => validateSessionWorkflowHandoffFromConfig(config, schema)).toThrow('schema');
+    const extraState = { ...state, extra: true };
+    expect(() => validateSessionWorkflowHandoffFromConfig(config, extraState)).toThrow('fields');
+    for (const [changed, message] of [
+      [{ ...state, config_digest: '0'.repeat(64) }, 'configuration changed'],
+      [{ ...state, binding_id: 'foreign' }, 'workflow selection changed'],
+      [{ ...state, actions: [] }, 'actions changed'],
+    ] as const)
+      expect(() => validateSessionWorkflowHandoffFromConfig(config, reseal(changed))).toThrow(message);
+    const blocked = advanceSessionWorkflowHandoff(root, state, simulatedReports(state, 'reported_failed'));
+    expect(blocked.status).toBe('blocked');
+    expect(blocked.actions).toEqual([]);
+    expect(() => validateSessionWorkflowHandoffFromConfig(config, blocked)).not.toThrow();
+    expect(() => advanceSessionWorkflowHandoff(root, blocked, [])).toThrow('not awaiting outcomes');
+    expect(() =>
+      validateSessionWorkflowHandoffFromConfig(config, reseal({ ...blocked, actions: state.actions })),
+    ).toThrow('terminal state');
+    const invalidStatus = { ...blocked };
+    Reflect.set(invalidStatus, 'status', 'foreign');
+    expect(() => validateSessionWorkflowHandoffFromConfig(config, reseal(invalidStatus))).toThrow('terminal state');
+  });
+
   test('workflow risk and executable-wave helpers preserve configured boundaries', async () => {
     const flags = ['security'] as const;
     expect(effectiveWorkflowRiskFlags(undefined, 'high')).toEqual(['high']);
@@ -158,8 +287,7 @@ describe('advisory session agent handoff', () => {
     expect(executableWorkflowWaveIndices(plan, ['worker'])).toEqual([1]);
     expect(executableWorkflowWaveIndices(plan, ['missing'])).toEqual([]);
 
-    const fixtureRoot = await createFixture();
-    try {
+    await withConfigFixture((fixtureRoot) => {
       const configRecord = parseConfig(fixtureRoot);
       const workflow = recordAt(recordAt(configRecord, 'workflows'), 'implementation_new');
       const stages = arrayAt(workflow, 'stages');
@@ -173,19 +301,61 @@ describe('advisory session agent handoff', () => {
       optionalStageFixture.required_after = ['research_parallel'];
       stages.push(optionalStageFixture);
       arrayAt(workflow, 'edges').push(['research_parallel', 'optional_security_research']);
+      const assignmentStage = structuredClone(researchStage);
+      assignmentStage.id = 'optional_assignment_research';
+      assignmentStage.required_after = ['research_parallel'];
+      assignmentStage.risk_flags = [];
+      const assignments = arrayAt(assignmentStage, 'assignments');
+      for (const assignment of assignments) {
+        if (!isRecord(assignment)) throw new Error('Research assignment is not a record');
+        assignment.risk_flags = [];
+      }
+      const gated = assignments[0];
+      if (!isRecord(gated) || typeof gated.role !== 'string' || assignments.length < 2)
+        throw new Error('Research assignments are missing');
+      gated.risk_flags = ['security'];
+      stages.push(assignmentStage);
+      arrayAt(workflow, 'edges').push(['research_parallel', 'optional_assignment_research']);
+      const prewriter = stages.find(
+        (stage): stage is MutableYamlRecord => isRecord(stage) && stage.id === 'review_source_prewrite',
+      );
+      if (!prewriter) throw new Error('Source prewriter stage is missing');
+      prewriter.risk_flags = [];
+      const planner = arrayAt(prewriter, 'assignments').find(
+        (assignment): assignment is MutableYamlRecord => isRecord(assignment) && assignment.role === 'source-planner',
+      );
+      if (!planner) throw new Error('Source planner assignment is missing');
+      planner.risk_flags = [];
       writeConfig(fixtureRoot, configRecord);
 
-      const compiled = compileDevelopmentWorkflow(
-        loadRuntimeConfig(fixtureRoot),
-        'default-development',
-        'implementation_new',
-      );
+      const fixtureConfig = loadRuntimeConfig(fixtureRoot);
+      const compiled = compileDevelopmentWorkflow(fixtureConfig, 'default-development', 'implementation_new');
       const optionalStage = compiled.waves.flat().find((stage) => stage.id === 'optional_security_research');
       expect(optionalStage).toBeDefined();
       expect(optionalStage?.assignments).toEqual([]);
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
+      const withoutSecurity = compiled.waves.flat().find((stage) => stage.id === assignmentStage.id);
+      expect(withoutSecurity?.assignments.map((assignment) => assignment.role)).toEqual(
+        assignments.slice(1).map((assignment) => {
+          if (!isRecord(assignment) || typeof assignment.role !== 'string')
+            throw new Error('Research assignment role is missing');
+          return assignment.role;
+        }),
+      );
+      const risks = ['security'];
+      const withSecurity = compileDevelopmentWorkflow(
+        fixtureConfig,
+        'default-development',
+        'implementation_new',
+        risks,
+      );
+      const included = withSecurity.waves.flat().find((stage) => stage.id === assignmentStage.id);
+      expect(included?.assignments).toHaveLength(assignments.length);
+      expect(included?.assignments[0]?.role).toBe(gated.role);
+      expect(withSecurity.waves.map((wave) => wave.map((stage) => stage.id))).toEqual(
+        compiled.waves.map((wave) => wave.map((stage) => stage.id)),
+      );
+      expect(risks).toEqual(['security']);
+    });
 
     const config = loadRuntimeConfig(root);
     const elevatedTask = compileDevelopmentWorkflow(config, 'default-development', 'task_execution', [], 'high');
@@ -262,6 +432,7 @@ describe('advisory session agent handoff', () => {
     expect(projector.executableWaveIndices(['unknown-stage'])).toEqual([]);
 
     const firstWave = projector.actionsForWave(context, 0, []);
+    expect(() => projector.actionsForWave(context, -1, [])).toThrow('wave is unavailable');
     expect(firstWave.length).toBeGreaterThan(0);
     const firstAction = firstWave[0];
     if (!firstAction) throw new Error('projected first wave has no action');
@@ -347,8 +518,7 @@ describe('advisory session agent handoff', () => {
   });
 
   test('risk filters cannot remove every effective action or a required artifact producer', async () => {
-    const emptyRoot = await createFixture();
-    try {
+    await withConfigFixture((emptyRoot) => {
       const config = parseConfig(emptyRoot);
       const research = recordAt(recordAt(config, 'workflows'), 'information_research_light');
       for (const stage of arrayAt(research, 'stages')) {
@@ -363,12 +533,9 @@ describe('advisory session agent handoff', () => {
       expect(() =>
         prepareSessionWorkflowHandoff(emptyRoot, selection('research', 'information_research'), context),
       ).toThrow('workflow information_research_light has no effective assignments after risk filters');
-    } finally {
-      rmSync(emptyRoot, { recursive: true, force: true });
-    }
+    });
 
-    const missingProducerRoot = await createFixture();
-    try {
+    await withConfigFixture((missingProducerRoot) => {
       const config = parseConfig(missingProducerRoot);
       const research = recordAt(recordAt(config, 'workflows'), 'information_research_light');
       const firstStage = arrayAt(research, 'stages')[0];
@@ -382,14 +549,11 @@ describe('advisory session agent handoff', () => {
           'information_research_light',
         ),
       ).toThrow('effective stage synthesize_research is missing a required stage after risk filters');
-    } finally {
-      rmSync(missingProducerRoot, { recursive: true, force: true });
-    }
+    });
   });
 
   test('action binds the complete resolved profile and configured skill refs to current config', async () => {
-    const profileRoot = await createFixture();
-    try {
+    await withConfigFixture((profileRoot) => {
       const config = parseConfig(profileRoot);
       const agents = recordAt(config, 'agents');
       const executor = recordAt(recordAt(agents, 'profiles'), 'executor');
@@ -452,14 +616,11 @@ describe('advisory session agent handoff', () => {
       };
       const changed: SessionWorkflowHandoff = { ...changedBody, digest: canonicalJsonDigest(changedBody) };
       expect(() => validateSessionWorkflowHandoffFromConfig(loaded, changed)).toThrow(/actions changed/);
-    } finally {
-      rmSync(profileRoot, { recursive: true, force: true });
-    }
+    });
   });
 
   test('a loaded team profile mismatch cannot produce a workflow handoff', async () => {
-    const mismatchRoot = await createFixture();
-    try {
+    await withConfigFixture((mismatchRoot) => {
       const config = parseConfig(mismatchRoot);
       const team = recordAt(recordAt(config, 'teams'), 'default-development');
       recordAt(team, 'roles')['code-researcher'] = 'researcher';
@@ -472,14 +633,11 @@ describe('advisory session agent handoff', () => {
       expect(() =>
         prepareSessionWorkflowHandoff(mismatchRoot, selection('feature', 'implementation_new'), context),
       ).toThrow(mismatch);
-    } finally {
-      rmSync(mismatchRoot, { recursive: true, force: true });
-    }
+    });
   });
 
   test('a loaded develop-stage override selects the executor while other develop stages use the team role', async () => {
-    const overrideRoot = await createFixture();
-    try {
+    await withConfigFixture((overrideRoot) => {
       const config = parseConfig(overrideRoot);
       const team = recordAt(recordAt(config, 'teams'), 'default-development');
       recordAt(team, 'roles')['developer-orchestrator'] = 'tester';
@@ -494,9 +652,7 @@ describe('advisory session agent handoff', () => {
       expect(() => compileDevelopmentWorkflow(loaded, 'default-development', 'bug_fix')).toThrow(
         'team default-development role/profile does not match workflow bug_fix/develop_fix',
       );
-    } finally {
-      rmSync(overrideRoot, { recursive: true, force: true });
-    }
+    });
   });
 
   test('security risk includes conditional security research while ordinary bug work excludes it', () => {
@@ -516,8 +672,7 @@ describe('advisory session agent handoff', () => {
   });
 
   test('a branch joins only after both parallel predecessors and reaches the delivery terminal', async () => {
-    const branchRoot = await createFixture();
-    try {
+    await withConfigFixture((branchRoot) => {
       const config = parseConfig(branchRoot);
       const workflow = recordAt(recordAt(config, 'workflows'), 'implementation_new');
       const stages = arrayAt(workflow, 'stages');
@@ -559,9 +714,7 @@ describe('advisory session agent handoff', () => {
       }
       expect(state.status).toBe('all_reports_collected');
       expect(state.actions).toEqual([]);
-    } finally {
-      rmSync(branchRoot, { recursive: true, force: true });
-    }
+    });
   });
 
   test.each(selections)('collects reports for configured %s flow by complete waves', (workflow, kind, intent) => {

@@ -17,6 +17,45 @@ or numeric producer is active. Complete the selected contour before another.
 
 ### Current measured repair packet
 
+The active session-handoff packet reproduces a valid-loaded-config P0. Explicit
+empty stage/assignment risk lists were truthy and filtered out the required
+read-only Source planner. DIAG/session-red-v1936.log retains the native refusal
+and /home/agent/.cache/vida-cloud-tooling/tmp/vida-session-handoff-6arTjD.
+The matcher now selects its existing unconditional branch for absent or empty
+lists; nonempty matching and all security/prewriter/config/graph guards remain.
+No callable or budget is replaced. The system specification states these
+semantics. DIAG/empty-risk-review-v1937.md accepts the Source/config/test boundary;
+its RED-path lookup incorrectly appended DIAG to the absolute diagnostics root.
+Root verifies the actual1327-byte log at the canonical path above. The review
+is Source evidence only, not independent native reproduction.
+
+Seven isolated configuration cases now share owned cleanup and retain failed
+roots instead of unconditional deletion. The first1935 assertion uses the old
+cleanup and lacks its configuration root;1936's exact native reproduction is
+retained under the corrected owner. Context/outcome/terminal DTO matrices add
+field/binding/scalar/evidence refusals without persisting false history. A single
+loaded fixture config serves ordinary/elevated stage/assignment filter controls.
+
+Blind DIAG/persistent-handoff-gaps-v1930.md and session-workflow-gaps-v1931.md
+partition the current contour, not numeric evidence. Root integrates1933's
+bounded proposal as six cooperative ledger lifecycle cases using public
+sync/issue/report: exact replay, incomplete-wave unchanged-row refusal,
+configured-wave advance, completed-history retrieval/report retry and four
+terminal projections. These model caller reports, not actual engine/tool effects.
+The existing cleanup owner attempts every registered close and retains roots on
+cleanup failure; new cases carry their5s monotonic deadline through owned close.
+1938/1940 retain static DTO/scope errors and launch no runtime.1941 passes
+strict95, scoped zero-warning lint and all70affected cases across the two
+handoff files plus the existing workflow-contract file:724assertions,10.01s.
+Earlier scoped1932/1937/1939 controls are retained; no second full stage runs.
+
+Current session-handoff coverage remains pending. Before its first full stage,
+finish the remaining1930 producer-backed families: reserved Host reports,
+replacement reports, observed-research normalization, configured-Mastra drift
+and the real insert-race path. They are supported prerequisites, not objective
+skips. Prior session report image locators are retired and their counters are
+historical navigation only; no new inventory or synthetic current maximum.
+
 The10:49UTC continuation audits the preceding three hours through published Git
 packets and existing stages, without another suite, inventory or disk scan.
 DIAG/test-script-audit-v1916.md independently finds no confirmed runner/capture/

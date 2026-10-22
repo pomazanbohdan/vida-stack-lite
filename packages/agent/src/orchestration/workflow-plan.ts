@@ -81,7 +81,7 @@ function assignmentMatchesRisk(
     () => true,
     () => assignmentRisks!.some((risk) => riskFlags?.includes(risk) === true),
   ];
-  return actions[Number(Boolean(assignmentRisks))]!();
+  return actions[Number(Boolean(assignmentRisks?.length))]!();
 }
 
 function configuredReadOnlySourcePrewriter(
