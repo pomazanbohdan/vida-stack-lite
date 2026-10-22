@@ -32,7 +32,9 @@ principal-race proposals remain explicitly unvalidated at
 /workspace/vida-session-authorization-patch-CmwIwo and
 /workspace/vida-session-principal-patch-f5PRBA. They are not integrated or run.
 Their reviews retain the precise unresolved prerequisites; no skip or coverage
-gain is assigned to those proposals. All delegated lanes have terminated.
+gain is assigned to those proposals. Their delegated preparation/review lanes
+have terminated.2210/2211 now compare two bounded ordinary validation designs,
+read-only, while Root reconciles2208. They have no Source or numeric ownership.
 Root completes the accepted regression's review and normal publication before
 the sole complete selected-contour stage. Existing cleanup deferral/custody
 applies to these preserved patch copies; no removal or freed bytes are claimed.
@@ -62,6 +64,11 @@ zero-warning lint and the changed documentation check, all passing. The exact
 no-write assertions cover native tables/schema, original Journal, approval
 reference and declaration/intake files; the fixture deliberately changes its
 integration configuration, so this is not a configuration-preservation claim.
+520580a publishes the five reviewed files through ordinary hooks;2206 confirms
+the normal push equals origin/main.2208 below supplies the complete measurement.
+No unchanged full run follows it. Any future shared validation extraction needs
+a real duplication benefit, unchanged refusal semantics/order, full inventory
+scope and correspondence review; moving counters alone is not a correction.
 
 2162/2163 resume the remaining counter studies from map2149. Root rejects
 two first-draft premise errors: key5 counts evaluation of the RHS even when
@@ -149,7 +156,7 @@ creator and parser owners retain their original decisions; new witness decisions
 live in three named private helpers. Frozen baselines are untouched.2100 final
 strict197/lint and11cases/222assertions pass in18.29s, followed serially by the
 two Host controls/175assertions in15.87s. No second numeric contour starts.
-Stage2180 below supplies the latest bound numeric result. A shared Host/receipt Source change invalidates its dependent
+Stage2208 below supplies the latest bound numeric result. A shared Host/receipt Source change invalidates its dependent
 old qualification; the focused controls do not reattest the other contours.
 
 Published cf7a4944f4b1e8715553883953a6600ef78e05ff passes2102 ordinary hooks
@@ -611,41 +618,47 @@ original scratch, native run manifest, raw logs and failure custody stay.
 
 ### Latest completed session measurement custody
 
-Stage2180 /workspace/contour-stage-AcxKtE completes on
-Source19c396e5a1e229d643d1f1a53f621037d7c84f57,
-runc99ddfc7-6252-483b-b25b-ec396f4043e3. Elapsed79298.74131699999ms,
+Stage2208 /workspace/contour-stage-3WiLMQ completes on
+Source520580afc3bd2299adfddcc100e06f2453b19783,
+run0339473e-b6df-43ad-ab46-ff3a7da2cdaa. Elapsed85461.44820299999ms,
 exit0, no timeout/signal/spawn error, complete capture, closed producer/group,
-unchanged boot/image. Native89PASS/0FAIL/1182assertions in74.58s.
-Raw **F275/275 L858/862 S937/943 B755/764** remains BLOCKED/nonexact.
-The configured TaskSource refusal adds1line,1statement and3branches relative
-to2148 with unchanged denominators. Nine branch arms remain, three with prior
-accepted dispositions and six OPEN pending2182–2185; six statements remain,
-two with the key21/key28 throw dispositions. Four lines remain
+unchanged boot/image. Native90PASS/0FAIL/1208assertions in80.47s.
+Raw **F275/275 L859/862 S938/943 B756/764** remains BLOCKED/nonexact.
+The ordinary identity-transfer refusal adds1line,1statement and1branch relative
+to2180 with unchanged denominators; key18 and its throw statement42 are covered.
+Eight branch arms remain, three with prior accepted dispositions and five OPEN
+(16/17/26/30/35); five statements remain, two with the key21/key28 throw
+dispositions. Three lines remain
 raw uncovered; no line exclusion or adjusted denominator is introduced.
 MaxCC/entryCRAP29 is diagnostic only; frozen/mutation remain deferred.
 The sole stage imports once; historical exact count17/46 stays unchanged.
-Image /workspace/.vida-quality-inputs/0dc09c1be2108e3fae5a6b4315cc463c6f970d26/repository
-has manifest SHA256a9808db3776e33236bff986f0506114c8074bb487d9d1ad35c440a0a61903413.
+Image /workspace/.vida-quality-inputs/76a6612b678d158d0fcab943ef48b41af25186a6/repository
+has manifest SHA256883dab780723b3e7f3de03257f112fc5abc391da7a19856516b6f0f52b823b61.
 Focused report and native run manifest remain under its packages/agent/coverage/bun-unified;
-raw stdout/stderr remain in the stage.2181 verifies and fsyncs the11653120-byte
+raw stdout/stderr remain in the stage.2209 verifies and fsyncs the12369920-byte
 non-cache scratch archive at
-/workspace/vida-functional-retention-AcxKtE-A2qMEd/archive.json.
+/workspace/vida-functional-retention-3WiLMQ-6xUNSf/archive.json.
 Original image/scratch/receipts/raw logs remain unchanged. Source fingerprint
 91a8a4c11222e70d47231932e09fc607d34967b8d3b93ab38832f01a372ff2ed is unchanged;
-tests fingerprintc354e10a2370a772a79aafb167ac8603adb69d65afe60f34e562264c45b28b32
-binds this report. Map2181 reuses its complete retained geometry/counters without
+tests fingerprint6f80f85fad96b63b5f59717e2011afbe9acbbfe4367f89c9ff550be0c377aea8
+binds this report. Map2209 reuses its complete retained geometry/counters without
 another inventory, AST or hash pass. The shared internal SDK owner runs before
-image admission, with no archive override or CI prerequisite. Previous2148
-custody and SDK formation remain in [published19c396e WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/19c396e5a1e229d643d1f1a53f621037d7c84f57/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-session-measurement-custody).
+image admission, with no archive override or CI prerequisite.2207 is a retained
+pre-producer wrong-working-directory launcher error, with no suite/image started;
+2208 corrects that invocation from packages/agent and runs once. Previous2180
+custody and archive remain in [published520580a WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/520580afc3bd2299adfddcc100e06f2453b19783/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-session-measurement-custody).
 
 #### Current session objective disposition extension
 
 The retained history disposition and key21/key28 retain their identical selected
-Source/counter geometry in map2181. Independent2185 rechecks all three against
-run c99ddfc7-6252-483b-b25b-ec396f4043e3, its Source/test fingerprints and
-config-bearing image manifest above. No historical workflow-plan skip is carried.
+Source/counter geometry in map2209. Independent2185 rechecks all three against
+the preceding2180 report. Production Source fingerprint and every remaining
+mapped expression are unchanged in2208; only the new regression/tests change.
+Root rebinds those three dispositions to run0339473e-b6df-43ad-ab46-ff3a7da2cdaa,
+the Source/test fingerprints and config-bearing image manifest above. No
+historical workflow-plan skip is carried.
 Root accepts key28/arm0 and its
-throw statement73, persistent-session-handoff.ts311, rebound to the current2180
+throw statement73, persistent-session-handoff.ts311, rebound to the current2208
 report/run, Source/test fingerprints and config-bearing image manifest above.
 The exact expression is `if (!assignment) throw new Error('Source preflight Host assignment is not configured')`.
 It requires a missing indexed assignment after the outer verifier admitted
@@ -662,8 +675,9 @@ It grants no frozen/mutation waiver or Runtime acceptance.
 
 2163 and independent2164 establish the same-identity WorkItem invariant for
 key21/arm0 and throw statement53 at persistent-session-handoff.ts248–254.
-Root accepts their objective disposition, rebound by2185 to run c99ddfc7-6252-483b-b25b-ec396f4043e3,
-map2181, exact Source/test fingerprints and manifest above.2166 directly compares
+Root accepts their objective disposition, rebound through unchanged Source and
+counter geometry to run0339473e-b6df-43ad-ab46-ff3a7da2cdaa, map2209,
+exact Source/test fingerprints and manifest above.2166 directly compares
 the ten selected prerequisite/config/test files with that image's original bytes;
 all match, without another inventory/AST/hash pass. The exact comparison receipt
 is DIAG/session-workitem-byte-join-v2166.json. This is no fresh numeric run.
