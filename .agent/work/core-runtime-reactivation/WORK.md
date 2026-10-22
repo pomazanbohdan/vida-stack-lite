@@ -13,54 +13,55 @@ original budgets and assertion-confirmed Killed100 rules unchanged.
 
 ### Current checked continuation coverage packet
 
-Published7d7182b completes its sole selected-contour stage with341PASS and
-6280assertions, full capture, closed process group and unchanged boot/image.
-DIAG/gap-delta-v1692.json confirms1121/1 newly visited with no lost arm,
-unchanged Source and all15reviewed objective branch geometries. Thirty raw
-branch gaps remain,15undispositioned including native Windows. Raw S/B stay
-BLOCKED; exact F/L remain100. The stage takes203327.472932ms; native shard times
-are196.72s and119.02s. The original operation distinguishes execution_complete=true,
-report_complete=false and resource_safe_to_advance=false. No timeout, signal,
-compile/runtime failure or UNKNOWN is counted as a pass or kill.
+Publishedbfad910 completes its sole selected-contour stage with341PASS and
+6296assertions, full capture, closed process group and unchanged boot/image.
+DIAG/gap-delta-v1701.json confirms251/1 newly visited with no lost arm,
+unchanged Source and all15reviewed objective branch geometries. Twenty-nine raw
+branch gaps remain,14undispositioned including native Windows. Raw S/B remain
+BLOCKED; exact F/L remain100. The stage takes234487.941278ms: Host325/5805 takes
+227.59s and stopped-source16/491 takes140.84s. The operation preserves
+execution_complete=true, report_complete=false and resource_safe_to_advance=false.
+No timeout, signal, compile/runtime failure or UNKNOWN is counted as a pass or kill.
 
-This packet creates a real public maintenance acquire/release before legacy
-frontier Work admission, then reopens the generation-bound Journal. A closed
-transition authorization refusal now reaches its intended guard, preserving
-Host/receipt beforeimages before original success controls. The stale-handle
-attempt and root remain in DIAG/released-fence-focused-v1682.log; corrected
-v1683 and independent maintenance-generation-review-v1684.md own its checks.
-Pin strict123, lint and exact1PASS/10 control are under v1687. Normal hooks pass
-520format/527strict; push-v1689.log and push-transport-v1689.json resolve the
-successful remote publication despite a later exec transport disconnect. No
-second push is issued. SDK/image/custody selectors below own their identities.
+The two checked correction packets measure1121/1 and251/1 without regressing
+an arm. The first creates a real public maintenance acquire/release before legacy
+frontier Work admission, then reopens the generation-bound Journal. Its closed
+transition authorization refusal reaches the intended guard before the original
+success controls. The second reuses one typed withTemporaryFixtureReceipt owner
+for delivered-Journal and initial-source corrupt-row refusals. An implementation
+scope schema changes equally in the receipt's original/successor arrays; existing
+Work/request digests are rebound. The actual Host reader refuses lifecycle
+authority, then exact reverse CAS restores the receipt before original retries.
+Host/Journal/DDL beforeimages, transaction closure and primary/cleanup failures
+stay protected. This is refused corrupted input, never accepted fabricated history.
 
-The next checked Source packet follows the corrected blind lifecycle collector
-study DIAG/lifecycle-collector-v1691.md. A public lifecycle append is unavailable
-in INTAKE, but that does not prove251/1 objectively unreachable: the receipt
-validator checks lineage before the later Work lifecycle authority validator.
-The actual initial-source case now installs one checksum-consistent corrupted
-receipt via exact row CAS, changes implementation_scope schema equally in its
-prior/successor references and rebinds existing Work/request digests. The real
-Host read refuses lifecycle authority; no fabricated history is accepted.
-Original receipt, Host/Journal rows and DDL are restored before all original
-positive/retry controls. withTemporaryFixtureReceipt shares that owner with the
-existing delivered-Journal corruption; its table type admits only those two
-fixture tables. Primary and cleanup failures remain separate and retained.
 DIAG/lifecycle-focused-v1694.log has2PASS/233assertions,4493.32ms and2266.95ms
-native cases,9.44s command; strict149 and scoped lint pass. The earlier v1693
-relative-path edit failed before changing Source; its absolute-path correction
-preserves both cases and runs fail-fast checks. Numeric251/1 remains pending
-for these new bytes; the completed7d stage cannot attest them.
-Independent DIAG/lifecycle-receipt-review-v1695.md accepts both callers' CAS,
-authority refusal and restoration. Root observes native exit0 for the fail-fast
-strict/lint/focused sequence; the empty lint log alone is not that terminal proof.
-The one refreshed pin has strict123, scoped lint and1PASS/10 control under v1696.
+native cases,9.44s command; strict149 and scoped lint pass. Root's observed native
+exit0 for the fail-fast sequence is recorded in verification-v1696.json; an empty
+lint log alone is not terminal proof. Independent lifecycle-receipt-review-v1695.md
+accepts both callers. Pin strict123, lint and1PASS/10 control are under v1696.
+Ordinary hooks pass520format/527strict; push-v1698.log owns normal publication.
+The earlier maintenance stale-handle failure and its retained root remain in
+released-fence-focused-v1682.log; v1683/v1684 own its corrected checks and review.
+The earlier relative-path diagnostic edit failed before changing Source and was
+corrected with an absolute path and fail-fast sequence. No budget was raised.
 
-The bounded mixed-wave and post-report studies v1680/v1681 keep concrete producer
-prerequisites OPEN. No engine acceptance change or objective skip is inferred.
+The corrected blind lifecycle study v1691 rejects the inference that an unavailable
+public INTAKE append makes a later receipt collector objectively unreachable.
+Lineage validation precedes lifecycle authority validation; the new complete
+measurement now proves that refusal route. The same-Work queue study v1700 gives
+a concrete next composition for33/5 and33/6: native writer/report and contested
+TaskSource reservation must share the actual database, with queue creation before
+that Work's first reported non-inspect operation. A separate helper database or
+manually appended target ticket is not proof. This next route remains unimplemented
+and unmeasured. Mixed-wave and post-report studies v1680/v1681 keep their exact
+producer prerequisites OPEN; no engine acceptance change or new skip is inferred.
+
 Earlier checked packets, failures, reviews and rejected compositions remain in
-[published7d7182b WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/7d7182b0fbb0227d572db6ef8f36b8b2067227b5/.agent/work/core-runtime-reactivation/WORK.md#current-checked-continuation-coverage-packet).
-Original FAIL/UNKNOWN custody and fences remain unchanged.
+[publishedbfad910 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bfad910d5b614ff460be7ed61ddca9e7519190ef/.agent/work/core-runtime-reactivation/WORK.md#current-checked-continuation-coverage-packet).
+Original FAIL/UNKNOWN custody and fences remain unchanged. The numeric and
+custody owners below bind the latest complete observation; documentation-only
+reconciliation does not require another SDK, suite or numeric producer.
 
 ### Reporting simplification
 
@@ -98,9 +99,23 @@ that stale-handle prerequisite without weakening its guard or adding another
 ordinary-path setup. The explicit option is unused elsewhere; analogous current
 configuration handle reuse is already covered by the Bun skill. All previous
 rejected compositions remain failures, never visits or objective skips. Closed
-transition authorization remains the only new measured candidate for the next
-selected stage. The remaining mixed-wave and post-report studies keep their
+transition authorization was the initial audit's next measurement candidate;
+its later complete stage confirms1121/1. The mixed-wave and post-report studies keep their
 exact producer prerequisites OPEN; no speculative production change is made.
+
+The subsequent receipt-helper packet also measures251/1. Reused JUnit rows in
+DIAG/timing-comparison-v1702.json compare both complete341-case selections.
+Mean case time changes0.854s to0.995s, p95 by nearest rank4.940s to5.264s and
+maximum22.825s to27.098s, within each case's existing exception. These are different
+inputs and observations, not a controlled speed benchmark.193cases increase and
+148decrease; the largest increases belong to unchanged tests in both shards.
+The added initial-source refusal stays2.03s; the refactored legacy case changes
+4.44s to5.62s under its existing exception. This does not attribute the234.49s
+parent time to the helper or justify another unchanged full rerun. Keep the same
+two-file pilot and budgets; later setup-cost work uses these exact case receipts.
+The selected receipts do not meter agent tool calls or billed tokens; no numeric
+reduction in either is claimed. Compact owner reads and prepared-contract output
+selection reduce repeated text without changing an evidence gate.
 
 WORK now keeps the correction decision, current delta and exact custody selectors.
 The generated projection owns raw metrics, the retained comparison owns counter
@@ -1041,15 +1056,15 @@ It is distinct from the stage receipt directory and retained scratch.
 
 | Owner | Exact locator |
 | --- | --- |
-| Retained stage/input, launch, native outcome and once-only publication | /workspace/contour-stage-8sK3dH/{execution,launch,publication}.json; new stage after retirement |
+| Retained stage/input, launch, native outcome and once-only publication | /workspace/contour-stage-ZFdnyU/{execution,launch,publication}.json; new stage after retirement |
 | Latest report and original input identities | DIAG/host-uncovered-plan-current.json resolves the new original report and adjacent manifest/process/shard/image metadata; predecessor subset remains relocated |
-| SDK archive, CI and acquisition identity | DIAG/sdk-v1690.json; maintained readiness owner checks the actual ZIP/CI join once |
-| Admission, scratch qualification and complete producer log | DIAG/user-delete-v1686/result.json, DIAG/scratch-v1690.txt and DIAG/stage-v1690.log |
-| Verified durable non-cache scratch archive | /workspace/vida-functional-retention-8sK3dH-3uLH4T/archive.json; owns exact bytes/hash, original root, excluded cache, full comparison and before/after capacity |
+| SDK archive, CI and acquisition identity | DIAG/sdk-v1699.json; maintained readiness owner checks the actual ZIP/CI join once |
+| Admission, scratch qualification and complete producer log | DIAG/user-delete-v1686/result.json, DIAG/scratch-v1699.txt and DIAG/stage-v1699.log |
+| Verified durable non-cache scratch archive | /workspace/vida-functional-retention-ZFdnyU-GB8zOL/archive.json; owns exact bytes/hash, original root, excluded cache, full comparison and before/after capacity |
 | Predecessor relocation and explicit cleanup | DIAG/user-delete-v1535/{relocation,result}.json and events.jsonl; predecessor image retired |
 | Renewed exact-path retirement and current report relocation | DIAG/user-delete-v1686/{qualification,relocation,current-map-relocation,result}.json and events.jsonl; original locators retired |
 
-The7d immutable image and stage are formed after the completed exact-path retirement.
+Thebfad immutable image and stage are formed after the completed exact-path retirement.
 Their original report/receipts, scratch, SDK and archive remain; the predecessor's
 image/stage locators remain retired with their selected outside evidence subset.
 The archive excludes only its declared private regenerable cache, whose original
