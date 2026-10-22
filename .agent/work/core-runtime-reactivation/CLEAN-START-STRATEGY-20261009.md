@@ -12,10 +12,11 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The active contour is **bun-final-assurance**, selected after session-handoff-v2
-completed all testable paths and rebound its remaining independent objective
-dispositions. Session raw coverage remains BLOCKED/nonexact; its exact bindings
-are in WORK. The original three-Source bun-session-handoff remains retired
+The active contour is **bun-development-controller**, selected after
+session-handoff-v2 and final-assurance completed all testable paths and bound
+their remaining independent objective dispositions. Both raw coverage outcomes
+remain BLOCKED/nonexact; their exact bindings are in WORK.
+The original three-Source bun-session-handoff remains retired
 historical scope with unchanged evidence and ceilings. No second producer starts.
 TaskSource resource transition
 has completed exact F/L/S/B in stage1926; frozen/mutation remain deferred.
