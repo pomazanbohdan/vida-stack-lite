@@ -6,8 +6,9 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-development-controller only**;2398 measures the same
-fault-control packet on Bun1.4.4, with remaining paths still OPEN in map2399.
+The active contour is **bun-development-controller only**;2422 measures the native
+Bun feature-adoption packet. Remaining paths stay OPEN, with2399 retained as prior
+gap navigation rather than a new coverage claim.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
@@ -91,8 +92,12 @@ reissue of the synthetic observed child. No kill-rule or schema relaxation.
 
 Original failed static/fixture probes2408/2409/2413/2414 and their roots/logs
 remain retained. They resolve through the later exact results above; no unchanged
-failure is replayed. Root retains all edits, final checks, Git and the one
-selected coverage stage after the checked Source packet.
+failure is replayed. Root retains all edits, final checks and Git. Ordinary hooks
+on5aabf69 pass native formatting for529files and strict536.2422 below completes the
+sole selected stage, including automatic fresh SDK test-input formation. Its actual
+SDK and run manifests both declare Bun1.4.4. The generated report imports once
+automatically; no parallel collector, full-suite repetition, frozen or mutation
+producer is added.
 
 ### Current controller repair packet
 
@@ -277,6 +282,23 @@ lifecycle, TESTING, the plan and backlog; no second authority is created.
 ## Latest measurement custody
 
 ### Latest completed development-controller measurement
+
+Stage2422 /workspace/contour-stage-hUyQm8 runs on Bun1.4.4 and
+Source5aabf699207df925ff0192570e924fc6174f319e,
+run709d90f7-746c-43e0-ba56-a535d1174301. It completes in35826.113912ms,
+exit0, no signal/timeout/spawn error, complete capture, closed group, unchanged
+boot/image and one automatic paired import. Native11PASS/0FAIL/198expect calls
+in31.79s. Raw **F59/62 L235/246 S265/278 B267/286** remains BLOCKED/nonexact.
+MaxCC/entryCRAP17 is diagnostic; no frozen/mutation acceptance is claimed.
+
+Image /workspace/.vida-quality-inputs/8e0254c2faeb7255a3a722a58b2c081774b64843/repository
+has manifest23b58671c0930f97de9d0f42fff894986930be0607606898ff951b18dce32a8f.
+2423 verifies/fsyncs the10240-byte non-cache archive at
+/workspace/vida-functional-retention-hUyQm8-QjTSSn/archive.json; originals remain.
+Current native SDK test inputs are formed and captured under1.4.4; this is neither
+product delivery nor Runtime acceptance. The result does not close the contour.
+
+### Preceding Bun1.4.4 toolchain measurement
 
 Stage2398 /workspace/contour-stage-tXhIZ4 runs on Bun1.4.4 and
 Source7cfb999bdbfbc729902933d357db5327cb6c9730,
