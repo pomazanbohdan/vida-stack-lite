@@ -340,6 +340,15 @@ companions are decoder inputs for a refusal, never accepted lifecycle history.
 Retain failed roots. Positive parent chains still require their genuine producers;
 missing fixtures or child attribution remain engineering GAPs, not objective skips.
 
+Keep component and public CLI assertions separate when a fixture spans both.
+Reuse runSuccessfully and the real run API for preparation or a final report;
+match the returned version/action IDs to the readonly Host journal and verify
+unissued items. Preserve public CLI positive preparation, issue, report and
+negative output/CAS controls elsewhere in the same scenarios. A direct call
+awaits the production ledger/bridge close owner; retain failures. Component
+execution supplies no child PID/output/group or actual-main proof. Missing
+entrypoint attribution still requires the existing collector's native joins.
+
 The same private public-CLI timing owner also records parent phase starts for
 the corrective fixtures, including setup and in-process runs, to attribute the
 intervals between CLI children. `PrivatePublicCliFixturePhaseTiming/v1` carries

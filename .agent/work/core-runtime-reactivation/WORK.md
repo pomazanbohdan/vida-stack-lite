@@ -174,6 +174,54 @@ changed-input stage. The small terminal worker proposal remains in its exact
 DIAG directory pending the existing privileged reference-custody GAP; it is not a
 new checkout or execution image. No destructive cleanup or new inventory runs.
 
+### Run component and CLI boundary packet
+
+2634 compares two bounded alternatives before implementation. An exact canonical
+positive CLI collector profile avoids private-module aliasing, but still needs
+native option/deadline/environment, loaded-module closure and process-group proof.
+Its proposed extra contour is rejected: the current producer/selection remains
+bun-cli-run, one Source and two tests. Root does not add a case-selection ledger,
+caller-owned numeric labels, a new collector or an unqualified child exception.
+Entry-only counter custody remains an OPEN engineering GAP, not an objective skip.
+
+The selected smaller unit reuses the existing runSuccessfully/run component API
+and genuine createFixture/prepareMutationIntake producers in three current
+scenarios. Persisted-scope preparation now runs in process; its subsequent
+changed-scope CLI denial and CLI reread remain. Native readonly Host inspection
+binds the returned version to the real persisted journal and action IDs, proves
+unissued/null-observation items, and compares work/journal afterimages across the
+CLI controls. Project-order preparation also runs in process, while the second
+positive preparation through CLI still verifies the reversed receipt. CAS/report
+retains public CLI preparation, issue, malformed-report denials and its first
+positive report; only the final successful report runs through the component API.
+The existing greater-than-one action assertion guarantees a distinct CLI report.
+Its returned next wave is matched to the persisted journal version/action IDs and
+unissued/null observations. No native agent action or consumer effect is run.
+
+The actual production async finally closes its ledger and bridge before run
+returns. Failure/UNKNOWN roots remain protected; no per-case subprocess is needed
+to claim component counters. These calls establish component behavior, not the
+main wrapper, native child stdout/PID/group evidence, Runtime acceptance or a
+measured speedup. All prior CLI denial/output assertions remain; no blanket
+migration removes public boundaries. Laziness Protocol chooses reuse over new
+dynamic-argv proof/schema plumbing. Sequence Work into Verifiable Units keeps
+scoped checks and native afterimages ahead of one complete changed-input stage.
+
+2636 passes scoped strict149/lint and the persisted-scope case with20expects in
+7.33s.2638 passes final scoped strict149/lint and the other two affected cases,
+65expects in38.83s. These scopes differ from prior full stages; no benchmark ratio,
+tool-call/token savings or global throughput claim follows. Fresh2637 independently reviews the
+final bounded diff and finds no correctness blocker, lost CLI boundary assertion,
+comment or suppression. Its optional completed-prefix refinement is not required
+for the verified version/action/no-issued transition. The reader accidentally
+runs a broad textual diagnostics rg lookup, emits truncated output, discloses it
+and does not use it as evidence. This is real avoidable tool/output cost, with no
+measured token total. Future briefs name exact status logs and prohibit searching
+the diagnostics directory; Root already owns their terminal results. The review
+is Source evidence, not a claim that the named nested comment role or tests ran.
+Checked publication precedes the sole changed-input full stage. Original
+private-module/CLI engineering GAPs remain.
+
 ### Run registration correction packet
 
 2605 independently confirms the missing native-Istanbul registration route.

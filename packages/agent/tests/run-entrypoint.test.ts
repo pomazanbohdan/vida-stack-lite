@@ -3254,14 +3254,39 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     });
 
-    test('rejects a changed scope for a persisted attempt before issuing its wave', async () => {
+    test('CLI rejects a changed scope after component preparation without issuing its wave', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-persisted-'));
       const fixture = ownedMutationFixture(root, 30_000);
       let completed = false;
       try {
         const { args, config } = createFixture(root);
         const admitted = prepareMutationIntake(args, config);
-        const prepared = fixture.invoke(admitted.admissionArgs);
+        const prepared = parseTestRunPayload(await runSuccessfully(admitted.admissionArgs));
+        expect(prepared.status).toBe('prepared');
+        expect(requireIssuedActions(prepared)).toEqual([]);
+        const nextActions = requireNextActions(prepared);
+        expect(nextActions.length).toBeGreaterThan(0);
+        const databaseRelativePath = path.relative(root, sessionHandoffDatabasePath(root, config));
+        const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+        const before = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+        expect(before.work).toHaveLength(1);
+        expect(before.journals).toHaveLength(1);
+        const journal = before.journals[0];
+        assert.ok(journal);
+        expect(journal.version).toEqual(requireStateVersion(prepared.state_version));
+        expect(
+          journal.state.items.map((item) => ({
+            action_id: item.request.action_id,
+            issue_id: item.issue_id,
+            observation: item.observation,
+          })),
+        ).toEqual(
+          nextActions.map((item) => ({
+            action_id: item.request.action_id,
+            issue_id: null,
+            observation: null,
+          })),
+        );
         const changed = admitted.args.map((entry, index) =>
           admitted.args[index - 1] === '--scope-digest' ? 'b'.repeat(64) : entry,
         );
@@ -3285,6 +3310,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             'The requested project context could not be bound. Next action: inspect the exact work and check its issued contract before retrying.',
         });
         expect(requireStateVersion(fixture.invoke(admitted.args).state_version)).toEqual(preparedVersion);
+        const after = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+        expect(after.work).toEqual(before.work);
+        expect(after.journals).toEqual(before.journals);
         completed = true;
       } finally {
         if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
@@ -3369,7 +3397,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const { args, initialization, initializationPath, config } = createFixture(root, 'agent-runtime-new', true);
         const admitted = prepareMutationIntake(args, config);
         expect(initialization.project_ids).toEqual(['alpha-project', 'mutation-project']);
-        expect(fixture.invoke(admitted.admissionArgs).status).toBe('prepared');
+        const prepared = parseTestRunPayload(await runSuccessfully(admitted.admissionArgs));
+        expect(prepared.status).toBe('prepared');
+        expect(requireIssuedActions(prepared)).toEqual([]);
         writeFileSync(
           initializationPath,
           record({ ...initialization, project_ids: [...initialization.project_ids].reverse() }),
@@ -3642,11 +3672,38 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               evidence_refs: [sourceId],
             }),
           );
-          const result = fixture.invoke([...admitted.args, ...expected(version), '--report', reportFile]);
+          const reportArgs = [...admitted.args, ...expected(version), '--report', reportFile];
+          const result =
+            item === issuedActions.at(-1)
+              ? parseTestRunPayload(await runSuccessfully(reportArgs))
+              : fixture.invoke(reportArgs);
           version = requireStateVersion(result.state_version);
           if (item === issuedActions.at(-1)) {
             expect(result.resume_status).toBe('ready');
             expect(requireNextActions(result)[0]?.request.wave_index).toBe(1);
+            expect(requireIssuedActions(result)).toEqual([]);
+            const observed = inspectHostWorkspaceDatabase(
+              root,
+              path.relative(root, sessionHandoffDatabasePath(root, config)),
+              deriveWorkspaceId(config.repository.repository_id, root),
+            );
+            expect(observed.journals).toHaveLength(1);
+            const journal = observed.journals[0];
+            assert.ok(journal);
+            expect(journal.version).toEqual(version);
+            expect(
+              journal.state.items.map((entry) => ({
+                action_id: entry.request.action_id,
+                issue_id: entry.issue_id,
+                observation: entry.observation,
+              })),
+            ).toEqual(
+              requireNextActions(result).map((entry) => ({
+                action_id: entry.request.action_id,
+                issue_id: null,
+                observation: null,
+              })),
+            );
           }
         }
         completed = true;
