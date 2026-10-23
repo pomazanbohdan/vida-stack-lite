@@ -319,6 +319,10 @@ roots and restore all scoped spies in finally before database close. A malformed
 receipt status fails schema validation before the authority-read catch; require
 that exact public refusal and unchanged bytes before restoring the valid fixture
 for a separate project-path denial.
+The existing fs-resource capture owner must include TESTING.md when the selected
+closure reaches run-entrypoint fixtures. Check its digest and captured bytes,
+prior-reader inclusion and unrelated-reader exclusion. Bind it before immutable
+image formation; do not add resources to a measured image after launch.
 
 The same private public-CLI timing owner also records parent phase starts for
 the corrective fixtures, including setup and in-process runs, to attribute the

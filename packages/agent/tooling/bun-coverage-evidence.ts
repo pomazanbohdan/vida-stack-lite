@@ -1200,19 +1200,24 @@ async function captureConfiguredTestContextInputs(
     : [];
   // These fixtures read package data through fs rather than a module import.
   // Bind it once for their closures, without adding it to unrelated scopes.
-  if (
-    visited.has('tests/helpers/documentation-policy-fixture.ts') ||
-    visited.has('tests/helpers/init-bundle.ts') ||
-    visited.has('tests/helpers/runtime-config-rebind-fixture.ts') ||
-    visited.has('tests/contained-controller-fixture.ts') ||
-    visited.has('tests/development-controller.test.ts') ||
-    visited.has('tests/init-entrypoint-v8.test.ts') ||
-    visited.has('tests/initialization.test.ts') ||
-    visited.has('tests/audit-partial-init.test.ts') ||
-    visited.has('tests/session-handoff.test.ts') ||
-    visited.has('tests/paused-replacement-entrypoint.test.ts')
-  )
-    paths.push('TESTING.md');
+  for (const reader of [
+    'tests/helpers/documentation-policy-fixture.ts',
+    'tests/helpers/init-bundle.ts',
+    'tests/helpers/runtime-config-rebind-fixture.ts',
+    'tests/contained-controller-fixture.ts',
+    'tests/development-controller.test.ts',
+    'tests/init-entrypoint-v8.test.ts',
+    'tests/initialization.test.ts',
+    'tests/audit-partial-init.test.ts',
+    'tests/session-handoff.test.ts',
+    'tests/paused-replacement-entrypoint.test.ts',
+    'tests/run-entrypoint.test.ts',
+  ]) {
+    if (visited.has(reader)) {
+      paths.push('TESTING.md');
+      break;
+    }
+  }
   if (visited.has('tests/init-entrypoint-v8.test.ts')) paths.push('README.md');
   if (visited.has('tests/contained-controller-fixture.ts'))
     paths.push(...(await walkFiles(root, path.join(root, 'docs'))));

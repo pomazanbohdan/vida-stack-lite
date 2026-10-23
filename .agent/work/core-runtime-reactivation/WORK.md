@@ -23,6 +23,46 @@ Toolchain completes all testable paths in2561. Its remaining9branch arms and
 2statements have independent dispositions, including an OPEN native Windows
 prerequisite. This permits queue progression, not numeric exact100.
 
+### Run image-resource failure and repair
+
+2611 runs the changed registration packet on e9859f28cf794a495d5be249ce0895e76c0e2a02,
+stage `/workspace/contour-stage-W23ILK`, runff4efaa7-759b-459c-809e-44a3b1ef61cd.
+It registers76cases,59PASS/17FAIL in33.41s, outer38314.344364ms. All17fail during
+fixture setup because the immutable image lacks TESTING.md. No numeric report
+is attributable; projection imports only1311's failed/unknown-or-partial stage
+outcome with accepted:false and null coverage. Keep2602's prior bound counts
+as history, not qualification for the changed tests. Native exit1, no timeout/
+signal/spawn error, complete capture and observed closed producer/group permit
+repair in fresh namespaces, not replay of any retained UNKNOWN operation.
+
+Image `/workspace/.vida-quality-inputs/bc2f3cb73b81d60e457b31d40b9491a45911c534/repository`,
+manifest SHA256349bad665a2b072d6450818eecc42ab0d76455b76057e3cc19de98806b4e8e8a.
+Failed run manifest keeps SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
+test8a94ac7898b9da8ca14cab1c431b51f81827d0311c2a643f88966db8fc4bd2ac,
+tool852f1d896b9127696e5180680e31065b5ab15ca68245c34d4efdedc3513274c4.
+2612 resolves its sole manifest UUID and verifies/fsyncs the70932480-byte functional
+archive at `/workspace/vida-functional-retention-W23ILK-6t2YGE/archive.json`.
+Original image, failed roots, manifest, raw logs and terminal receipts stay.
+
+The existing captureConfiguredTestContextInputs owner lists fs-only guide readers;
+run-entrypoint was missing.2613's new reader control reproduces an absent guide
+digest and bytes. Preserve that failed fixture/log. Root adds only this reader,
+replacing the ten-term OR with the same data list plus one reader and a bounded
+loop that pushes once then breaks. No new callable or frozen-budget reset is
+introduced.2614's edit guard miscounts the old list and stops before Source writes;
+2615 confirms all ten existing strings before applying the correction.
+The existing path/byte limits, inputBytes dedup, artifact readiness and one image
+producer remain. Other copied inputs are already bound by contract/SDK/repository
+context inventories; the image's exact repository documentation-policy file exists.
+No extra full capture/hash/AST pass or per-test build is added for the audit.
+
+2615 passes scoped strict149, zero-warning lint and three actual capture controls
+with15expects in206ms. They verify the prior reader, unrelated exclusion and new
+reader, digest and bytes. Independent2616 confirms membership equivalence,
+at-most-once capture, maintained limits and no comment/suppression changes.
+A new full stage is justified by changed capture-tool inputs. Never patch the
+failed immutable image or weaken admission to make the old stage pass.
+
 ### Latest completed run measurement
 
 2602 completes the exact one-Source/two-test contour on

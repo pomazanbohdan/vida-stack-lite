@@ -83,8 +83,9 @@ async function captureTest(
 
 test.each([
   { file: 'tests/development-controller.test.ts', captured: true },
+  { file: 'tests/run-entrypoint.test.ts', captured: true },
   { file: 'tests/unrelated-reader.ts', captured: false },
-])('coverage capture binds the controller package guide only for its reader: $file', async ({ file, captured }) => {
+])('coverage capture binds the package guide only for its declared reader: $file', async ({ file, captured }) => {
   await captureTest("import { test } from 'bun:test'; test('fixture', () => {});", 'ts', {
     reader: file,
     bytes: 'controller fixture guide\n',
