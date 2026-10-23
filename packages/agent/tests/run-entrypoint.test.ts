@@ -2981,6 +2981,45 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     };
   };
 
+  test('task-source routing rejects mixed, invalid and incomplete options before project side effects', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-run-task-source-cli-'));
+    const before = readdirSync(root).sort();
+    const cases = [
+      {
+        args: [
+          '--project-root',
+          root,
+          '--task-source-operation',
+          'inspect',
+          '--task-source-request',
+          'request.json',
+          '--repository',
+          'mutation-repository',
+        ],
+      },
+      {
+        args: ['--project-root', root, '--task-source-operation', 'mutate', '--task-source-request', 'request.json'],
+      },
+      {
+        args: ['--project-root', root, '--task-source-operation', 'report', '--task-source-request', 'request.json'],
+      },
+    ];
+    try {
+      for (const scenario of cases) {
+        await Promise.resolve(
+          expect(run(scenario.args)).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CLI-001',
+            message:
+              'Task source operations require --project-root ABSOLUTE_PATH, --task-source-operation prepare|inspect|issue|report|recover and --task-source-request RELATIVE_PATH; report also requires --task-source-report RELATIVE_PATH.',
+          }),
+        );
+        expect(readdirSync(root).sort()).toEqual(before);
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('public run handles delivered-work inspect, issue retry, report retry and conflict without opening the old engine', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-run-continuation-'));
     let completed = false;

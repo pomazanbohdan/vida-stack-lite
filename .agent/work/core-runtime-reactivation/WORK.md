@@ -2887,6 +2887,65 @@ focused: 296/557 functions, 1338/2863 lines, 1429/3143 statements and 1697/3663
 branches. This is not contour closure or numeric qualification. The producer
 owns the status projection; next work stays on `bun-cli-run`.
 
+### Three-hour bun-cli-run audit and next test packet — 2026-10-23 20:53–23:53 UTC
+
+The current projection has eight failed `stage-outcome` rows between 21:29 and
+23:25, followed by two rows for one focused coverage run at 23:37 (coverage and
+its `BLOCKED` outcome), not ten independent stage invocations. The eight
+distinct failed stage IDs are `PMEduW`, `ofUwnA`, `UcviWf`, `C0CCHw`, `utCB8t`,
+`PhVTvw`, `351mV1` and `B6HMB5`. Their retained stage receipts record
+1,290,464 ms total (21m30.464s), 161,308 ms mean (2m41.308s), and a
+132.670–203.324s range. Each ran against a different Source image. All eight
+published the same generic “exactly one attributable report location” failure.
+The retained `B6HMB5` raw stderr identifies the concrete assertion:
+`Prepared run operation module was not loaded: src/orchestration/local-work-admission.ts`.
+Its capture was complete, the process group closed, the image remained
+unchanged, and exit was 1 without timeout. This confirms the module-load
+expectation error fixed in `2b009da`; it does not establish a general capture,
+scan or hash defect. The outer publication error is generic, while the raw log
+retains the actionable assertion.
+
+The one subsequent stage `J3Km37` ran 148.300s on `2b009da`, used Bun 1.4.4
+with one parallel worker, and completed its TypeScript gate (544 files, zero
+diagnostics) and selected suite (104 tests, 2,047 assertions, 143.61s). It
+published the focused diagnostic with complete capture, closed process group,
+unchanged boot/image and exit 0. The diagnostic remains `BLOCKED`: F 296/557,
+L 1338/2863, S 1429/3143, B 1697/3663; max CC 501 and entry CRAP 5402. These
+are the pre-next-packet values, not exact coverage or numeric qualification.
+
+| Order / concurrency | Measured evidence and decision |
+| --- | --- |
+| Full stage after each source edit; one producer | Eight late failures consumed 21m30.464s across changed images and repeated the same assertion family. Reject this sequence for the invariant failure. |
+| Targeted regression, strict/lint, independent review, then one coherent changed-input stage; one producer | Selected. The prior packet's single post-fix stage completed in 148.300s. Current packet follows the same order after the final checks below. |
+| Concurrent numeric stages or wider worker pool | Not measured or qualified. The successful stage used `1x PARALLEL`; receipts do not record comparative token/tool-call totals, so no savings are claimed. |
+
+For the next small, behavior-based case, the focused diagnostic's uncovered
+Istanbul closure at `bin/run.ts` `parseArgs` line 3173 had no matching
+`task_source_operation` case in the selected `run-entrypoint.test.ts`. The new
+test exercises the public `run()` route with mixed ordinary options, an
+unsupported operation and `report` without its report destination. It checks
+the exact CLI refusal and that the owned temporary project root has no writes.
+The targeted Bun 1.4.4 test passes (1 test, 6 expectations); strict test-project
+checking reports no errors across 509 files; package-pinned Oxlint passes. Its
+first lint attempt found an `await-thenable` in the new test; the assertion now
+uses the established `Promise.resolve(...)` pattern. Blind Luna review had no
+remaining findings after narrowing the title to the asserted no-side-effect
+claim. The final packet stage still needs to update the coverage counters.
+
+Blind gap review of `verifyCurrent` (`bin/run.ts` `run#0/property:verifyCurrent#0`,
+CC 73, zero hits in the retained diagnostic) found a plausible expired-lease
+refusal, but no selected fixture demonstrates a supported producer for its
+lease, lineage, source authority and CAS prerequisites. Do not synthesize those
+records or mark an objective skip: obtain the real producer path before
+proposing that case. The report is
+[`pending-proposals/bun-cli-run-next-gap-20261023-review.md`](pending-proposals/bun-cli-run-next-gap-20261023-review.md).
+
+Tool-call and token totals are absent from the retained receipts. Reuse the
+single existing disk/admission observation and inventories; this audit did not
+repeat broad disk scans or cleanup. Keep the stage as the sole numeric producer,
+run it only after this packet is committed, and let its terminal outcome update
+the projection.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
