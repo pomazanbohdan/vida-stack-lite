@@ -439,6 +439,11 @@ failure evidence and all other retained scratch. Reuse the latest inventory.
 
 ## Design a regression
 
+Trace the complete producer before choosing a state-version oracle. A stable
+payload digest can accompany an increased CAS revision. Assert those separately
+and pass the returned version to the next operation; do not infer version identity
+from unchanged content or from a helper's first half.
+
 For a lease-race regression, distinguish an attempt's recorded `retry_lease`
 from the Work's actual renewed lease. The Host reconciliation transaction and
 the Journal-bound local renewal are different steps. A same-assignment retry

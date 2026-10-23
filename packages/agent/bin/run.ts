@@ -764,7 +764,7 @@ export function repairAuthority(
         'new_launcher_sha256',
         'evidence',
       ],
-      ['schema', 'repair_id', 'operator', 'outcome', 'pointer', 'evidence'],
+      ['schema', 'repair_id', 'operator', 'outcome', 'pointer'],
     ) ||
     !exactStringFields(
       decision,

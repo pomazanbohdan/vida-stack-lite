@@ -280,6 +280,63 @@ neither is relabeled as a fresh current capacity observation. No cleanup occurs
 while preparing final checks; unresolved privileged references still defer the
 authorized retirement roots. No available-byte gain is claimed.
 
+### Lease renewal and repair evidence packet
+
+2753's bounded selector analysis proposes another copied selected-runtime
+refusal, but that fixture's entrypoint is explicitly its private bundle. It does
+not resolve current canonical counters; Root does not prioritize a one-branch
+addition without attribution. Nested repair/forward producer gaps remain OPEN,
+not objective skips.2754 instead identifies the public run() renewal branch
+and existing admitted CAS fixture.2756's implementation trace disproves its
+predicted generation advance: same-owner renewal preserves ticket/generation,
+extends expiry and advances Work/ledger revisions. The final store statement
+also bumps Journal CAS revision while preserving its digest and payload. Use
+that complete actual contract, with unchanged source/cutoff bindings, rather than encode the
+analysis hypothesis as an assertion. Root groups supported renewal controls in
+the existing fixture before another complete stage.
+
+Root finds a separate concrete parser contradiction in repairAuthority:
+authorization.evidence is required to be a string by exactStringFields and an
+array by the immediately following review-kind guard.2757 independently confirms
+the current reachable parser contract and the one-field correction. Remove only
+evidence from the string-field list; preserve its required exact key and every
+later array/kind/item/path/digest/authority check.2756 prepares a direct read-only
+refusal regression using intentionally invalid review DTOs with internally bound
+headers. Root must observe the expected pre-fix failure and post-fix refusal at
+the precise review guard. No positive authority, accepted operational history,
+repair producer qualification or runtime/loader/DB cutover is created or claimed.
+
+Root applies the complete2756 test diff after git apply --check.2758 rejects two
+partial/nullable snapshot assertions at strict before runtime; Root compares the
+full narrowed snapshot and uses a partial entry matcher without suppression.
+2759 strict159/lint0 pass; the new direct authority regression then fails exactly
+as predicted, returning Repair authority is invalid instead of the later review
+refusal. Its original fixture remains at
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-repair-review-evidence-n528Ud`.
+Root changes only the authorization string-field entry; the required exact key
+and every subsequent review/authority check stay intact.
+
+2760 proves the repair regression green but rejects the draft renewal oracle:
+Journal revision2 has the same digest as revision1. Its failed genuine fixture
+remains at `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-mutation-V88cA9`.
+Root confirms the store's explicit Journal CAS bump and corrects the oracle,
+adding same-fixture foreign owner/generation and stale-Journal refusal controls.
+During2761's patch write the execution environment drops. The tool reports write
+failure and a read-only follow-up reports no usable environment. After restoration,
+Root observes published82f5f22, all three local tracked draft files and every
+intended patch hunk intact;2761 has no check logs. No operation is replayed.
+2762 strict159passes but lint rejects awaiting Bun's void-typed matcher. Root
+uses the existing actual-Promise assert.rejects owner.2763 strict159/lint0 and
+four targeted cases pass with127expect calls in35.18s, including the full genuine
+CAS/report continuation. Original failed logs/fixtures remain retained. These
+checks establish the parser correction and bounded renewal behavior, not numeric
+closure, a matched speedup, full-database no-write proof or positive repair authority.
+2764's fresh independent final review returns PASS for the current frozen2763
+patch and current canonical bytes.2765 checks3documents/25local links with no
+failures and passes whitespace validation. No code comments change; no separate
+comment-agent execution is claimed. Publish the checked packet before the sole
+changed-input stage. Numeric coverage remains bound to2750 until that terminal.
+
 ### Run artifact boundary and UNKNOWN capture packet
 
 2703 prepares one isolated native Luna proposal for remaining pre-issue-mapping

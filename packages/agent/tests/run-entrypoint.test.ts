@@ -3392,6 +3392,105 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       rejectFirstAuthorityRecord('repair', kind);
   });
 
+  test('repair authority rejects malformed review evidence at its evidence boundary without writes', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-repair-review-evidence-'));
+    let completed = false;
+    try {
+      const digestRecord = (value: unknown) => createHash('sha256').update(record(value)).digest('hex');
+      const invalidEvidence: readonly unknown[] = [
+        [],
+        [{ kind: 'correctness' }, { kind: 'security' }, { kind: 'other' }],
+        [null],
+        'string control',
+      ];
+      const snapshot = () =>
+        readdirSync(root)
+          .sort()
+          .map((name) => [name, readFileSync(path.join(root, name)).toString('base64')]);
+      for (const evidence of invalidEvidence) {
+        const authorization = {
+          schema: 'VidaActiveLauncherRepairAuthorization/v1',
+          repair_id: authorityRefusalSelector.generation,
+          operator: 'fixture-owner',
+          outcome: 'approved',
+          pointer: 'fixture:invalid-review-evidence',
+          old_generation: 'parent-generation',
+          old_selector_sha256: 'c'.repeat(64),
+          old_payload_manifest_sha256: 'd'.repeat(64),
+          old_launcher_sha256: 'e'.repeat(64),
+          new_payload_manifest_sha256: 'b'.repeat(64),
+          new_launcher_sha256: 'f'.repeat(64),
+          evidence,
+        };
+        const plan = {
+          schema: 'VidaActiveLauncherRepairPlan/v1',
+          repair_id: authorityRefusalSelector.generation,
+          operator: 'fixture-owner',
+          parent_cutover_id: 'parent-generation',
+          parent_selector_sha256: 'c'.repeat(64),
+          parent_payload_manifest_sha256: 'd'.repeat(64),
+          parent_launcher_sha256: 'e'.repeat(64),
+          successor_payload_manifest_sha256: 'b'.repeat(64),
+          successor_launcher_sha256: 'f'.repeat(64),
+          archive_manifest_sha256: 'a'.repeat(64),
+          authorization_sha256: digestRecord(authorization),
+        };
+        const selectorIntent: Parameters<typeof repairAuthority>[1] = {
+          schema: 'ActiveRuntimeSelector/v1',
+          generation: authorityRefusalSelector.generation,
+          runtime: 'vida-agent',
+          bundle_root: 'vida-agent',
+          config_path: 'agent-runtime.config.v1.yaml',
+          archive_manifest_sha256: plan.archive_manifest_sha256,
+          plan_sha256: digestRecord(plan),
+          payload_manifest_sha256: plan.successor_payload_manifest_sha256,
+          state_policy: 'clean_start_no_ticket_transfer',
+        };
+        const decision = {
+          schema: 'VidaActiveLauncherRepairDecision/v1',
+          repair_id: selectorIntent.generation,
+          operator: plan.operator,
+          plan_sha256: selectorIntent.plan_sha256,
+          authorization_sha256: plan.authorization_sha256,
+          selector_intent_sha256: digestRecord(selectorIntent),
+          outcome: 'approved',
+        };
+        const selector = {
+          ...selectorIntent,
+          activation_decision_sha256: digestRecord(decision),
+        };
+        const selectorSha = digestRecord(selector);
+        const commit = {
+          schema: 'VidaActiveLauncherRepairSelectorCommit/v1',
+          repair_id: selector.generation,
+          plan_sha256: selector.plan_sha256,
+          decision_sha256: selector.activation_decision_sha256,
+          selector_sha256: selectorSha,
+        };
+        writeFileSync(path.join(root, 'repair-plan.v1.json'), record(plan));
+        writeFileSync(path.join(root, 'repair-authorization.v1.json'), record(authorization));
+        writeFileSync(path.join(root, 'repair-decision.v1.json'), record(decision));
+        writeFileSync(path.join(root, 'repair-selector-commit.v1.json'), record(commit));
+        const before = snapshot();
+        let caught: unknown;
+        try {
+          repairAuthority(root, selector, selectorSha, root, true);
+        } catch (error) {
+          caught = error;
+        }
+        expect(caught).toMatchObject({
+          code: 'GAP-VIDA-RUN-SELECTOR-001',
+          message: 'Repair review bindings are invalid.',
+        });
+        expect(snapshot()).toEqual(before);
+      }
+      completed = true;
+    } finally {
+      if (completed) rmSync(root, { recursive: true, force: true });
+      else process.stderr.write(`Retained failed repair review-evidence fixture: ${root}\n`);
+    }
+  });
+
   test('forward authority rejects malformed first controller records without writes', () => {
     for (const kind of ['missing', 'nonregular', 'json', 'scalar', 'noncanonical', 'schema', 'fields'] as const)
       rejectFirstAuthorityRecord('forward', kind);
@@ -3752,7 +3851,78 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           '--expected-digest',
           version.digest,
         ];
-        const issued = fixture.invoke([...admitted.args, ...expected(preparedVersion), '--issue-wave', 'true']);
+        const databaseRelativePath = path.relative(root, sessionHandoffDatabasePath(root, config));
+        const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+        const beforeRenewal = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+        const beforeWork = beforeRenewal.work[0];
+        const beforeJournal = beforeRenewal.journals[0];
+        assert.ok(beforeWork?.state.lease && beforeJournal);
+        expect(beforeJournal.version).toEqual(preparedVersion);
+        const renewalArgs = [
+          ...admitted.args,
+          ...expected(preparedVersion),
+          '--renew-lease',
+          'true',
+          '--native-session-handle',
+          admitted.nativeSessionHandle,
+          '--lease-generation',
+          String(beforeWork.state.lease.generation),
+        ];
+        for (const [flag, value] of [
+          ['--native-session-handle', admitted.nativeSessionHandle + '-foreign'],
+          ['--lease-generation', String(beforeWork.state.lease.generation + 1)],
+        ] as const) {
+          const changed = renewalArgs.map((entry, index) => (renewalArgs[index - 1] === flag ? value : entry));
+          await assert.rejects(run(changed), /lease renewal owner, fencing identity or live expiry differs/);
+          expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeRenewal);
+        }
+        const renewed = requireRecord(await run(renewalArgs), 'lease renewal inspection');
+        expect(renewed).toMatchObject({
+          schema: 'VidaLocalSessionInspection/v1',
+          status: 'inspected',
+          work_id: admitted.args[admitted.args.indexOf('--work-id') + 1],
+          attempt: 1,
+          lease: {
+            ticket_id: beforeWork.state.lease.ticket_id,
+            thread_id: admitted.nativeSessionHandle,
+            generation: beforeWork.state.lease.generation,
+          },
+        });
+        const renewedVersion = requireStateVersion(renewed.journal_version as StateVersion | undefined);
+        expect(renewedVersion).toEqual({ revision: preparedVersion.revision + 1, digest: preparedVersion.digest });
+        const afterRenewal = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+        const afterWork = afterRenewal.work[0];
+        const afterJournal = afterRenewal.journals[0];
+        assert.ok(afterWork?.state.lease && afterJournal);
+        const beforeTicket = beforeRenewal.ledger?.tickets.find(
+          (ticket) => ticket.ticket_id === beforeWork.state.lease?.ticket_id,
+        );
+        const afterTicket = afterRenewal.ledger?.tickets.find(
+          (ticket) => ticket.ticket_id === afterWork.state.lease?.ticket_id,
+        );
+        assert.ok(beforeTicket?.expires_at && afterTicket?.expires_at);
+        expect(afterWork.version).not.toEqual(beforeWork.version);
+        expect(afterRenewal.ledger_version).not.toEqual(beforeRenewal.ledger_version);
+        expect(afterWork.state.lease).toEqual(beforeWork.state.lease);
+        expect(Date.parse(afterTicket.expires_at)).toBeGreaterThan(Date.parse(beforeTicket.expires_at));
+        expect(afterJournal).toEqual({ ...beforeJournal, version: renewedVersion });
+        expect(afterRenewal.admission_attempts).toEqual(beforeRenewal.admission_attempts);
+        expect(renewed.work_version).toEqual(afterWork.version);
+        expect(renewed.ledger_version).toEqual(afterRenewal.ledger_version);
+        expect(renewed.journal_version).toEqual(afterJournal.version);
+        expect(afterJournal.state.source_scope).toEqual(beforeJournal.state.source_scope);
+        const preservedScope = beforeJournal.state.source_scope;
+        assert.ok(preservedScope);
+        expect(preservedScope.entries.find((entry) => entry.path === 'AGENT.sidecar.md')).toMatchObject({
+          path: 'AGENT.sidecar.md',
+          sha256: sourceEntry.sha256,
+        });
+        expect(preservedScope).toEqual(
+          snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']),
+        );
+        await assert.rejects(run(renewalArgs), /lease renewal journal CAS changed/);
+        expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(afterRenewal);
+        const issued = fixture.invoke([...admitted.args, ...expected(renewedVersion), '--issue-wave', 'true']);
         expect(issued.status).toBe('wave_issued');
         const issuedActions = requireIssuedActions(issued);
         const issuedVersion = requireStateVersion(issued.state_version);

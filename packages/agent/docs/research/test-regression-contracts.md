@@ -392,8 +392,23 @@ the actual exported readers. Check cycle/depth before file reads, malformed JSON
 non-record values, noncanonical bytes, wrong schemas and unexpected fields with
 exact selector error messages and unchanged fixture afterimages. Schema-only
 companions are decoder inputs for a refusal, never accepted lifecycle history.
+Repair authorization requires the evidence key but does not classify its value
+as a string. The subsequent array, exact review-kind and item checks own that
+validation. Digest-consistent invalid header DTOs with empty arrays, wrong kinds,
+null entries and a string must reach the exact review-bindings refusal without
+changing the fixture file set or bytes. They never contain valid passed reviews
+or establish positive authority.
 Retain failed roots. Positive parent chains still require their genuine producers;
 missing fixtures or child attribution remain engineering GAPs, not objective skips.
+
+Public run lease renewal reuses the admitted CAS fixture and its observed owner,
+lease generation and Journal version. Check foreign owner/generation refusal,
+then renewal under the original ticket/generation. In this freshly admitted
+fixture expiry advances, Work/ledger versions advance, and Journal revision
+advances while its digest and complete payload stay unchanged. Continue issue
+with the returned Journal version; reject its stale predecessor. Preserve the
+observed Host projection, admission attempts and declared Source bytes across
+refusals. These checks do not claim full-database equality or a new lease identity.
 
 Keep component and public CLI assertions separate when a fixture spans both.
 Reuse runSuccessfully and the real run API for preparation or a final report;
