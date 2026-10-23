@@ -563,6 +563,10 @@ export async function inspectDevelopmentController({ controllerRoot }: { readonl
     state.engine !== path.join(controllerRoot, process.platform === 'win32' ? 'bun.exe' : 'bun')
   )
     throw new Error('Controller operational metadata differs.');
+  if (state.status === 'ready') {
+    if (state.qualification === undefined) throw new Error('Ready controller qualification is missing.');
+    requireMatchingQualification(state.qualification, state);
+  }
   targetRoot(state.target);
   canonicalDirectory(state.package_root);
   if (

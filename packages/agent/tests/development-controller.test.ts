@@ -10,6 +10,8 @@ import {
   linkSync,
   rmSync,
   realpathSync,
+  existsSync,
+  readdirSync,
 } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -19,9 +21,11 @@ import {
   inspectDevelopmentController,
   executeDevelopmentController,
   developmentControllerChildDiagnostic,
+  developmentControllerBinding,
   main,
 } from '../bin/development-controller.ts';
 import { readPortableLock } from '../bin/install.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const sourceRoot = process.env.VIDA_CONTROLLER_TEST_TARGET ?? path.resolve(import.meta.dirname, '../../..');
@@ -34,6 +38,27 @@ function cleanupOwnedFixture(scratch: string): void {
     throw new Error('Fixture cleanup requires the exact physical owned temporary path');
   }
   rmSync(resolved, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+}
+
+async function withRestoredControllerMetadata(file: string, operation: () => Promise<void>): Promise<void> {
+  const before = readFileSync(file);
+  let failure: { readonly error: unknown } | undefined;
+  try {
+    await operation();
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          writeFileSync(file, before);
+          assert.deepEqual(readFileSync(file), before);
+        },
+      ],
+      failure,
+    );
+  }
 }
 
 test('controller failure diagnostics preserve bounded sanitized terminal fields without claiming no effects', () => {
@@ -88,20 +113,179 @@ test('controller failure diagnostics decode buffers and byte views before redact
   expect(empty.stderr).toEqual({ text: '', truncated: false });
 });
 
+test('controller diagnostics normalize absent and scalar failures without exposing credentials', () => {
+  for (const [value, rendered] of [
+    [null, ''],
+    [false, 'false'],
+    [42, '42'],
+    [{}, ''],
+  ] as const) {
+    const diagnostic = developmentControllerChildDiagnostic(
+      { status: 1, signal: null, stdout: null, stderr: null, error: { message: value } },
+      -1.4,
+    );
+    expect(diagnostic.elapsed_ms).toBe(0);
+    expect(diagnostic.error).toEqual({ text: '', truncated: false });
+    const scalar = developmentControllerChildDiagnostic(
+      { status: 1, signal: null, stdout: null, stderr: null, error: value },
+      0,
+    );
+    expect(scalar.error).toEqual(value ? { text: rendered, truncated: false } : null);
+  }
+  const credential = developmentControllerChildDiagnostic(
+    { status: 1, signal: null, stdout: null, stderr: null, error: 'https://user:private-value@example.test/refused' },
+    0,
+  );
+  expect(credential.error).toEqual({ text: 'https://[redacted]@example.test/refused', truncated: false });
+});
+
+test('controller CLI rejects malformed options and absent commands before creating a controller', async () => {
+  const cases: readonly (readonly [readonly string[], RegExp])[] = [
+    [[], /development-controller prepare/],
+    [['inspect'], /Required controller option/],
+    [['inspect', '--controller-root'], /Invalid controller option/],
+    [['inspect', '--controller-root', ''], /Invalid controller option/],
+    [['inspect', '--controller-root', '/unused', '--controller-root', '/other'], /Invalid controller option/],
+    [['prepare', '--controller-root', '/unused'], /Required controller option/],
+    [['inspect', '--controller-root', '/unused', '--', 'scope'], /Unexpected controller arguments/],
+    [['exec', '--controller-root', '/unused', '--'], /Controlled command is missing/],
+    [['exec', '--controller-root', '/unused', '--', 'vida-agent'], /Controlled command is missing/],
+  ];
+  const output: string[] = [];
+  const stdout = spyOn(process.stdout, 'write').mockImplementation((chunk: unknown) => {
+    output.push(String(chunk));
+    return true;
+  });
+  try {
+    for (const [args, error] of cases) await assert.rejects(main([...args]), error);
+    expect(output).toEqual([]);
+  } finally {
+    stdout.mockRestore();
+  }
+});
+
+test('controller inspection preserves the missing-root cause without disclosing the path', async () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-missing-'));
+  let completed = false;
+  try {
+    const missing = path.join(scratch, 'missing');
+    await assert.rejects(inspectDevelopmentController({ controllerRoot: missing }), (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.equal(error.message, 'Development controller root is unavailable.');
+      assert.ok(error.cause instanceof Error);
+      assert.equal(Reflect.get(error.cause, 'code'), 'ENOENT');
+      return true;
+    });
+    const linked = path.join(scratch, 'dangling');
+    symlinkSync(missing, linked, process.platform === 'win32' ? 'junction' : 'dir');
+    await assert.rejects(inspectDevelopmentController({ controllerRoot: linked }), /root is unavailable/);
+    completed = true;
+  } finally {
+    if (completed) cleanupOwnedFixture(scratch);
+    else console.error(`Retained failed or uncertain controller fixture: ${scratch}`);
+  }
+});
+
 test('qualified development controller preserves Source identity and accepts a scoped new target bin through unchanged current code', async () => {
   await import('../src/config/runtime-config.ts');
   const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-'));
   let completed = false;
   try {
     const controllerRoot = path.join(scratch, 'controller');
-    let prepared: Awaited<ReturnType<typeof prepareDevelopmentController>> | undefined;
-    await assert.doesNotReject(async () => {
-      prepared = await prepareDevelopmentController({ target: sourceRoot, controllerRoot });
+    const prepareOutput: string[] = [];
+    const prepareStdout = spyOn(process.stdout, 'write').mockImplementation((chunk: unknown) => {
+      prepareOutput.push(String(chunk));
+      return true;
     });
-    assert.ok(prepared, 'controller preparation returned a result');
+    const diagnostics = process.env.VIDA_CONTROLLER_DIAGNOSTICS;
+    process.env.VIDA_CONTROLLER_DIAGNOSTICS = 'true';
+    try {
+      await main(['prepare', '--target', sourceRoot, '--controller-root', controllerRoot]);
+    } finally {
+      prepareStdout.mockRestore();
+      if (diagnostics === undefined) delete process.env.VIDA_CONTROLLER_DIAGNOSTICS;
+      else process.env.VIDA_CONTROLLER_DIAGNOSTICS = diagnostics;
+    }
+    const prepared = await inspectDevelopmentController({ controllerRoot });
+    expect(JSON.parse(prepareOutput.join(''))).toMatchObject({
+      schema: 'VidaDevelopmentController/v1',
+      status: 'prepared',
+      next_action: 'verify',
+      controller_root: controllerRoot,
+      target: sourceRoot,
+    });
     expect(prepared.status).toBe('prepared');
     expect(readFileSync(path.join(prepared.package_root, 'bun.lock')).equals(readPortableLock(packageRoot))).toBe(true);
     expect(prepared.identity.bundle).toBe('packages/agent');
+    const original = prepared;
+    const stateFile = path.join(controllerRoot, 'controller.json');
+    const malformed: readonly unknown[] = [
+      null,
+      [],
+      { ...original, schema: 'other' },
+      { ...original, status: 'other' },
+      ...['controller_root', 'entrypoint', 'target', 'package_root', 'engine', 'engine_sha256'].map((field) => ({
+        ...original,
+        [field]: null,
+      })),
+      { ...original, elapsed_ms: null },
+      { ...original, qualification: null },
+      ...['schema', 'status', 'package_binding', 'fixture_root', 'checks'].map((field) => ({
+        ...original,
+        qualification: {
+          schema: 'DevelopmentControllerQualification/v1',
+          status: 'pass',
+          package_binding: original.package_binding.digest,
+          fixture_root: '/unused',
+          checks: [],
+          [field]: null,
+        },
+      })),
+      { ...original, invocation: null },
+      { ...original, invocation: { executable: null, args: [] } },
+      { ...original, invocation: { executable: original.engine, args: [null] } },
+      { ...original, identity: null },
+      ...['repository_id', 'project_ids', 'bundle'].map((field) => ({
+        ...original,
+        identity: { ...original.identity, [field]: null },
+      })),
+      { ...original, identity: { ...original.identity, project_ids: [null] } },
+      ...[
+        null,
+        [],
+        { files: [] },
+        { ...original.package_binding, files: [null] },
+        ...['path', 'bytes', 'sha256'].map((field) => ({
+          ...original.package_binding,
+          files: [{ path: 'fixture', bytes: 0, sha256: 'fixture', [field]: null }],
+        })),
+        { ...original.package_binding, files: [{ path: 'fixture', bytes: -1, sha256: 'fixture' }] },
+        { ...original.package_binding, files: [{ path: 'fixture', bytes: 0.5, sha256: 'fixture' }] },
+        { ...original.package_binding, links: [null] },
+        { ...original.package_binding, links: [{ path: null, target: 'fixture' }] },
+        { ...original.package_binding, links: [{ path: 'fixture', target: null }] },
+        { ...original.package_binding, digest: 'wrong' },
+        { ...original.package_binding, runtime_paths: null },
+        { ...original.package_binding, runtime_paths: [null] },
+      ].map((package_binding) => ({ ...original, package_binding })),
+    ];
+    await withRestoredControllerMetadata(stateFile, async () => {
+      for (const value of malformed) {
+        writeFileSync(stateFile, JSON.stringify(value));
+        await assert.rejects(inspectDevelopmentController({ controllerRoot }), /metadata is malformed/);
+      }
+      for (const value of [
+        { ...original, unexpected: true },
+        { ...original, controller_root: scratch },
+        { ...original, entrypoint: '/unused' },
+        { ...original, invocation: { ...original.invocation, args: [] } },
+        { ...original, package_root: scratch },
+        { ...original, engine: '/unused' },
+      ]) {
+        writeFileSync(stateFile, JSON.stringify(value));
+        await assert.rejects(inspectDevelopmentController({ controllerRoot }), /operational metadata differs/);
+      }
+    });
     await Promise.resolve(
       expect(
         executeDevelopmentController({ controllerRoot, command: 'run', args: ['--project-root', sourceRoot] }),
@@ -161,6 +345,73 @@ test('qualified development controller preserves Source identity and accepts a s
     if (ready.qualification === undefined) throw new Error('ready controller is missing its qualification');
     expect(ready.qualification.schema).toBe('DevelopmentControllerQualification/v1');
     expect(ready.qualification.checks).toContain('actual-source-report');
+    expect(developmentControllerBinding(ready.package_root)).toBe(ready.package_binding.digest);
+    expect(existsSync(ready.qualification.fixture_root)).toBe(false);
+    const observations = path.join(controllerRoot, 'observations');
+    const observationRuns = readdirSync(observations).sort();
+    expect(observationRuns).toHaveLength(2);
+    await withRestoredControllerMetadata(stateFile, async () => {
+      for (const qualification of [
+        undefined,
+        { ...ready.qualification, status: 'failed' },
+        { ...ready.qualification, package_binding: '0'.repeat(64) },
+      ]) {
+        writeFileSync(stateFile, JSON.stringify({ ...ready, qualification }));
+        await assert.rejects(inspectDevelopmentController({ controllerRoot }), /qualification/);
+        await assert.rejects(
+          executeDevelopmentController({ controllerRoot, command: 'scope', args: ['--project-root', sourceRoot] }),
+          /qualification/,
+        );
+        expect(readdirSync(observations).sort()).toEqual(observationRuns);
+      }
+      writeFileSync(
+        stateFile,
+        JSON.stringify({
+          ...ready,
+          identity: { ...ready.identity, repository_id: ready.identity.repository_id + '-foreign' },
+        }),
+      );
+      await assert.rejects(inspectDevelopmentController({ controllerRoot }), /target identity differs/);
+      await assert.rejects(
+        executeDevelopmentController({ controllerRoot, command: 'scope', args: ['--project-root', sourceRoot] }),
+        /target identity differs/,
+      );
+      expect(readdirSync(observations).sort()).toEqual(observationRuns);
+    });
+    for (const run of observationRuns) {
+      const root = path.join(observations, run);
+      expect(JSON.parse(readFileSync(path.join(root, 'controller-child.json'), 'utf8'))).toMatchObject({
+        exit_code: 0,
+        signal: null,
+        timed_out: false,
+        capture_status: 'complete',
+      });
+      expect(JSON.parse(readFileSync(path.join(root, 'parent-complete.json'), 'utf8'))).toMatchObject({
+        status: 'complete',
+        controller_child: 'complete',
+      });
+    }
+    const qualificationRun = observationRuns.find((run) =>
+      existsSync(path.join(observations, run, 'nested/qualifier-repair-inspect.json')),
+    );
+    assert.ok(qualificationRun, 'qualification retained its declared nested child observations');
+    for (const role of ['qualifier-repair-inspect', 'qualifier-repair-plan', 'qualifier-repair-apply']) {
+      expect(
+        JSON.parse(readFileSync(path.join(observations, qualificationRun, 'nested', role + '.json'), 'utf8')),
+      ).toMatchObject({ role, exit_code: 0, signal: null, timed_out: false, capture_status: 'complete' });
+    }
+    for (const input of [
+      { command: 'unsupported', args: ['--project-root', sourceRoot] },
+      { command: 'scope' },
+      { command: 'scope', args: ['--project-root'] },
+      { command: 'scope', args: ['--project-root', sourceRoot, '--project-root', sourceRoot] },
+    ]) {
+      await assert.rejects(
+        executeDevelopmentController({ controllerRoot, ...input }),
+        input.command === 'unsupported' ? /supported target command/ : /exact original target/,
+      );
+      expect(readdirSync(observations).sort()).toEqual(observationRuns);
+    }
     const qualification: unknown = ready.qualification;
     if (typeof qualification !== 'object' || qualification === null || !('runtime_acceptance' in qualification)) {
       throw new TypeError('controller qualification is missing runtime acceptance status');
@@ -173,14 +424,6 @@ test('qualified development controller preserves Source identity and accepts a s
         verify_ms: ready.elapsed_ms,
       }),
     );
-    const warmStarted = performance.now();
-    let inspected: Awaited<ReturnType<typeof inspectDevelopmentController>> | undefined;
-    await assert.doesNotReject(async () => {
-      inspected = await inspectDevelopmentController({ controllerRoot });
-    });
-    assert.ok(inspected, 'controller inspection returned a result');
-    expect(inspected.qualification).toEqual(ready.qualification);
-    console.log(JSON.stringify({ operation: 'warm-controller-inspect', elapsed_ms: performance.now() - warmStarted }));
     const execStarted = performance.now();
     const invoked = spawnSync(
       ready.engine,
@@ -214,6 +457,9 @@ test('qualified development controller preserves Source identity and accepts a s
       throw new TypeError('controller scope output must be a schema-bearing object');
     }
     expect(invokedOutput.schema).toBe('ScopedSourceSnapshot/v1');
+    expect(invokedOutput).toMatchObject({
+      entries: [{ path: 'packages/agent/bin/development-controller.ts', exists: true }],
+    });
     console.log(JSON.stringify({ operation: 'warm-controller-exec', elapsed_ms: performance.now() - execStarted }));
     await Promise.resolve(
       expect(
@@ -239,7 +485,7 @@ test('qualified development controller preserves Source identity and accepts a s
     const pinFile = path.join(ready.package_root, '.bun-version');
     const pin = readFileSync(pinFile);
     writeFileSync(pinFile, '1.4.1\n');
-    await Promise.resolve(expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow());
+    await Promise.resolve(expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('Bun pin differs'));
     writeFileSync(pinFile, pin);
     const dependency = ready.package_binding.files.find(
       (file) => file.path.startsWith('node_modules/') && file.path.endsWith('package.json'),
@@ -261,6 +507,7 @@ test('qualified development controller preserves Source identity and accepts a s
 
 test('development controller rejects an active selector and an overlapping or linked target before construction', async () => {
   const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-deny-'));
+  let completed = false;
   try {
     mkdirSync(path.join(scratch, '.agent'));
     writeFileSync(path.join(scratch, '.agent/active-runtime-selector.v1.json'), '{}');
@@ -284,8 +531,10 @@ test('development controller rejects an active selector and an overlapping or li
         }),
       ).rejects.toThrow('outside'),
     );
+    completed = true;
   } finally {
-    cleanupOwnedFixture(scratch);
+    if (completed) cleanupOwnedFixture(scratch);
+    else console.error(`Retained failed or uncertain controller fixture: ${scratch}`);
   }
 });
 

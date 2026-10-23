@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date:2026-10-22. This document owns execution order.
+Status date:2026-10-23. This document owns execution order.
 [WORK](WORK.md) owns decisions and evidence locators; the existing
 [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable IDs.
 
@@ -16,6 +16,9 @@ The active contour is **bun-development-controller**, selected after
 session-handoff-v2 and final-assurance completed all testable paths and bound
 their remaining independent objective dispositions. Both raw coverage outcomes
 remain BLOCKED/nonexact; their exact bindings are in WORK.
+The current packet fixes persisted ready/qualification consistency and groups
+its controller refusal, restoration and retained-observation controls before
+the next sole complete contour stage. WORK owns the red/green and review evidence.
 The original three-Source bun-session-handoff remains retired
 historical scope with unchanged evidence and ceilings. No second producer starts.
 TaskSource resource transition
@@ -258,12 +261,12 @@ This preserves previously blocked configured/frontier/runtime/recovery orderings
 until their own genuine proof, rather than returning unreadable queued/issued
 state. It does not filter persisted history or weaken any existing validator.
 
-| Group | Dependency and acceptance |
-| --- | --- |
-| TaskSource current/history/policy | Existing real peer preparation and typed native callback inputs; metadata-only and no-effect scope, exact Host/Journal/operation preservation. Current controls and remaining exact gaps are in WORK. |
-| Continuation/session producer | Native configured-frontier/initial-source owners; resolve actual post-prewriter setup cost within its original5s bound. Preserve timed-out proposals and current producer fences. |
-| Recovery/reconciliation | The reproduced same-ticket retry/report epoch defect has a reviewed Source correction and focused current/repeated/stale-root controls. The later different-slot CLI writer now has focused exact-retry-lease proof. Complete current-byte review/pin/publication, then one matching SDK/image/stage; WORK owns exact outcomes. Existing native report/repair fixtures still require genuine legacy split-state prerequisites before claiming retained-report delegation. |
-| Defensive validation and all remaining arms | Existing exact zero-counter geometry and function inventory; preserve contracts/frozen callables. No deletion, synthetic authority or duplicate live reads solely for coverage. |
+| Group                                       | Dependency and acceptance                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TaskSource current/history/policy           | Existing real peer preparation and typed native callback inputs; metadata-only and no-effect scope, exact Host/Journal/operation preservation. Current controls and remaining exact gaps are in WORK.                                                                                                                                                                                                                                                                     |
+| Continuation/session producer               | Native configured-frontier/initial-source owners; resolve actual post-prewriter setup cost within its original5s bound. Preserve timed-out proposals and current producer fences.                                                                                                                                                                                                                                                                                         |
+| Recovery/reconciliation                     | The reproduced same-ticket retry/report epoch defect has a reviewed Source correction and focused current/repeated/stale-root controls. The later different-slot CLI writer now has focused exact-retry-lease proof. Complete current-byte review/pin/publication, then one matching SDK/image/stage; WORK owns exact outcomes. Existing native report/repair fixtures still require genuine legacy split-state prerequisites before claiming retained-report delegation. |
+| Defensive validation and all remaining arms | Existing exact zero-counter geometry and function inventory; preserve contracts/frozen callables. No deletion, synthetic authority or duplicate live reads solely for coverage.                                                                                                                                                                                                                                                                                           |
 
 Treat preceding measured packets as completed development evidence under their
 own inputs. Do not repeat closed fixture setup or borrow an out-of-selection90s

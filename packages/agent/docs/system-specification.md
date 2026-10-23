@@ -517,6 +517,9 @@ report regression before readiness. Controlled execution revalidates those
 bindings and rejects controller drift, wrong package identity, pin or dependencies.
 A copied tree alone is not qualification. Internally computed bindings travel
 through supported operations; callers do not manually compute/replay hashes.
+Persisted `ready` metadata must retain a passing qualification for the exact
+current package binding. Inspection and controlled execution reject missing,
+non-passing or differently bound qualifications before issuing a child.
 Qualification metadata cannot grant human approval, a lease, delivery or Runtime
 acceptance. Outside-scope authorization denies undeclared writes; this does not
 promise physical filesystem isolation or detection of arbitrary unrelated edits.

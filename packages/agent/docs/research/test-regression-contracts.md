@@ -1262,6 +1262,15 @@ absent-computed-field behavior. Shared extraction alone proves no frozen budget.
 
 Check restart, failure and affected-proof invalidation. Metadata, copying and a small probe do not prove ready capability. Construction and qualified readiness are separate. The controller supplies no global PATH, production selector or Runtime acceptance.
 
+Reuse one real CLI preparation and qualification for malformed operational
+metadata, ready-without-qualification, failed-status, foreign-binding and stored
+target-identity controls. Inspection and execution must refuse before another
+child observation appears. Restore exact metadata bytes through the owned
+cleanup accumulator, retaining both primary and restoration failures. Check
+qualification-fixture removal while parent and all declared nested receipts
+remain complete. Parser, diagnostics and absent/dangling-root checks require
+no controller construction. These component controls grant no Runtime acceptance.
+
 ### Controller child observations
 
 Decode Buffer and Uint8Array diagnostic streams through the existing UTF-8

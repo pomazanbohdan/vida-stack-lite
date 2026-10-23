@@ -1,6 +1,6 @@
 # Core runtime reactivation work
 
-Status date:2026-10-22. Root owns Source integration, Git and final numbers.
+Status date:2026-10-23. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
@@ -13,7 +13,38 @@ bound below. This permits queue advancement, not exact100, numeric PASS, a froze
 waiver or mutation acceptance. Historical exact F/L/S/B remains17/46.
 Root owns canonical edits, final checks, Git and the sole numeric producer.
 
-### Current measured repair packet
+### Current controller repair packet
+
+The active packet rejects persisted ready metadata without a passing
+qualification for its exact current package binding. Independent2342 found the
+missing consistency guard.2346 reproduces the missing inspection rejection on
+an actual prepared and verified controller; the original failed root/log stays
+retained. This is a confirmed product inspection/readiness defect, not an
+authorization, consumer-effect or Runtime acceptance finding. The inspector
+now reuses requireMatchingQualification before any child can be issued.
+
+The same single real CLI construction/qualification covers malformed metadata,
+missing/failed/foreign-bound ready qualifications, stored identity mismatch,
+unsupported commands and malformed target argv. It checks no new observation
+on refusal, exact metadata restoration, removed qualification scratch and
+complete parent/three nested child receipts. The stored identity fault is not
+a changed live target configuration. The public scope result names the actual
+selected Source path. Wrong-pin refusal now has a specific oracle.
+Pure parser/diagnostic/absent-root controls need no install. Metadata restoration
+uses completeOwnedCleanup to preserve primary and restoration errors together;
+failed negative fixtures are retained. One duplicate warm-inspect is removed.
+All fresh public inspect/binding/execution checks keep their integrity reads.
+
+2350 scoped strict99 and configured zero-warning lint pass. The full affected
+test file passes8cases/91expect calls in28.30s after the fix.2344's earlier
+8case/86expect pass did not contain the readiness regression.2346's red failure
+is preserved, never counted as a kill or objective skip. These changed inputs
+do not establish a measured speedup. Complete selected-contour numeric evidence
+is still pending; no prior counter is promoted.
+Independent2349 finds no blocking defect in the fix, exact restoration or
+no-new-observation oracles.2351 documentation links/headings and diff checks pass.
+
+### Preceding measured repair packet
 
 The checked Source packet662cd74101016b8d436e31d8275f3c3f6a020983 is published.
 It strengthens the full native source-drift no-write oracle, tests settled versus
@@ -29,7 +60,37 @@ TaskSource singleton refusal and real A-to-B principal race. Its numeric2306
 result and the unchanged three causal skips are below. Original failed child
 TIMEOUT/SIGKILL and fixture-premise evidence remain retained and unreplayed.
 
-### Current execution audit
+### Three-hour execution audit,2026-10-22 21:45–2026-10-23 00:45UTC
+
+Seven published Git packets occur in this window. Reuse stages2306/2312/2330,
+their current manifests, terminal execution/capture/group receipts and the
+generated projection.2337's bounded runner review finds no justified additional
+read/hash/capture rewrite: capturedOutput is memoized, publication has one owner,
+and pre/post image integrity checks protect distinct boundaries. Root corrects
+its false missing-log claim by exact stat/read of DIAG/session-stage-v2306.log
+and DIAG/assurance-stage-v2330.log; both original files exist. That worker also
+discloses an unnecessary fixture-directory listing; it is not repeated.
+
+The selected sequence remains scoped strict/lint, grouped affected tests and one
+complete changed-input contour stage. A stage per assertion repeats SDK/image
+formation/publication without resolving the cheaper premise first. Root plus
+bounded native Luna readers catches the ready-metadata defect without duplicate
+writers or checks. Concurrent broad suites/indexing/cleanup remain unqualified.
+This compares proof obligations and observed operations, not matched speed or
+token telemetry. No exact token/tool-call saving or timing ratio is claimed.
+
+Disk2338 observes24,728,051,712available durable bytes and5,645,328,384scratch
+bytes once per filesystem, above the unchanged2GiB floor and prior64MiB reserve.
+Its26exact candidate records reuse2264/inventory1707/audit1977/retirement2144/
+disk2154. /workspace/.vida-retained is absent. Live cwd references for /proc/117
+and /proc/168 remain EACCES; destructive image/contour retirement is deferred
+before recursive dependency/mount/link scans. No files are deleted,0bytes are
+claimed reclaimed, and no resource GAP, schedule change or second automation
+is introduced. Protect current report/SDK/donor/restoration and all uncertain
+evidence. Vex remains unqualified for current Source; bounded direct reads use
+the declared fallback without a competing index refresh.
+
+### Preceding execution audit
 
 Scripts: c8d4f048c73f6169c7f5b0089becb1197ef63e60 fixes late snapshot-publication
 failure by reusing the bounded strict reader before SDK/image formation.2248
@@ -46,12 +107,12 @@ those assumptions. Late full stages are reserved for a coherent checked packet.
 Current elapsed results have different inputs; no speedup ratio or exact token/
 tool-call saving is claimed.
 
-| Execution combination | Evidence and decision |
-| --- | --- |
-| Scoped static/lint, grouped affected controls, one complete selected-contour run | Selected;2306 and2330 have complete native terminal/capture/group/input custody. |
-| A complete stage after every fixture/static correction | Rejected; retained targeted failures resolve the premise before SDK/image/setup repetition. |
-| Root writer/numeric owner plus bounded blind Luna proposals/reviews | Selected; workers do not duplicate compiler, suites, Git or index work. |
-| Wider concurrent suites, cold indexing or cleanup during final measurement | Unqualified; no matched benchmark or independent resource-custody basis supports it. |
+| Execution combination                                                            | Evidence and decision                                                                       |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Scoped static/lint, grouped affected controls, one complete selected-contour run | Selected;2306 and2330 have complete native terminal/capture/group/input custody.            |
+| A complete stage after every fixture/static correction                           | Rejected; retained targeted failures resolve the premise before SDK/image/setup repetition. |
+| Root writer/numeric owner plus bounded blind Luna proposals/reviews              | Selected; workers do not duplicate compiler, suites, Git or index work.                     |
+| Wider concurrent suites, cold indexing or cleanup during final measurement       | Unqualified; no matched benchmark or independent resource-custody basis supports it.        |
 
 Disk audit2264 is reused:24,943,607,808durable and5,673,287,680scratch available
 bytes exceed the unchanged2GiB floor and prior64MiB reserve. Inaccessible
@@ -216,11 +277,11 @@ All rows bind2306's report/run, image and fingerprints above. Existing independe
 review2222 and its antecedents remain applicable because the bound Source and
 exact counter geometry are unchanged.2308 rebinds their retained expressions:
 
-| Branch / arm | Line | Statement | Accepted causal prerequisite |
-| --- | --- | --- | --- |
-| 7 / 1 | 179 | none | Native continuation views supply the truthy runtimeCodeContinuations array; missing views bypass projection. Reviews2185/2222. |
-| 21 / 0 | 249 | 53 at255 | Admission validates schema/ID and immutable intake/item digest; the earlier identity join rejects a distinct admitted identity. Reviews2163/2164/2185/2222. |
-| 27 / 0 | 308 | 73 | Outer assignment verification and earlier packet/config-digest join bind the same immutable loaded configuration. Reviews2111/2115/2185/2222. |
+| Branch / arm | Line | Statement | Accepted causal prerequisite                                                                                                                                |
+| ------------ | ---- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 7 / 1        | 179  | none      | Native continuation views supply the truthy runtimeCodeContinuations array; missing views bypass projection. Reviews2185/2222.                              |
+| 21 / 0       | 249  | 53 at255  | Admission validates schema/ID and immutable intake/item digest; the earlier identity join rejects a distinct admitted identity. Reviews2163/2164/2185/2222. |
+| 27 / 0       | 308  | 73        | Outer assignment verification and earlier packet/config-digest join bind the same immutable loaded configuration. Reviews2111/2115/2185/2222.               |
 
 There are no undispositioned testable session paths. Queue advancement to
 bun-final-assurance is authorized under TESTING's objective-skip amendment.
@@ -517,31 +578,31 @@ OPEN proposal described the already-covered true arm;1906 independently traces
 the implicit cache-absent arm and sole cache-wrapped producer instead.
 The table records causes, never adjusted counters or numeric PASS.
 
-| Counter · location | Function · mapped alternative | Causal prerequisite |
-| --- | --- | --- |
-| 54/0 · 1573:2 | historicalCapturedPendingItem · `if (journal.completed.some((wave) => wave.items.some((prior) => prior.request.action_id === capture.action_id))) return null;` | The supported bridge has one issued action ID and moves its result out of pending; corrupt duplicates refuse. |
-| 63/1 · 1633:109 | historicalContinuationCompleted · `[]` | The exact pending-capture route returns completed first; configured continuation bypasses this historical fallback. |
-| 240/1 · 3449:2 | writeTaskSourceResourceHistory · `if (cache) delete cache.availableTables;`, implicit else | The only defined receipt producer runs inside the cache wrapper; no receipt returns earlier. Cache is always present at this counter. |
-| 327/1 · 4409:33 | initialSourceCheckpointMatches · `version(work)` | The sole caller supplies the same checked Work row version. |
-| 721/1 · 8298:40 | importReconciledHostState · `0` | Duplicate Work keys refuse before sort; distinct keys cannot reach the equality fallback. |
-| 808/1 · 9610:11 | #resolveTaskSourceBinding · `[]` | Checked Work requires its schema-valid Ledger and ticket array. |
-| 822/0 · 9666:6 | #resolveTaskSourceBinding · `request.attempt !== currentAttempt \|\| request.thread_id !== threadId` | No supported same-Work attempt/owner-transfer producer creates valid observed history for that other binding. |
-| 846/0 · 9854:12 | snapshotHistoricalTaskSourceSources · `request.attempt !== input.attempt` | The supported retained resource-history producer preserves Work and attempt. |
-| 994/1 · 11212:48 | #repairWorkAuthority · `restoredWorks(value.work_changes)` | Restored transition decoding/live production requires the validated restored list before this fallback. |
-| 1211/1 · 13782:78 | commitReadOnlyFrontierRuntimeCode · `-1` | Absent item makes stage absent and short-circuits optional access; a parsed present request requires its index. |
-| 1214/1 · 13791:116 | commitReadOnlyFrontierRuntimeCode · `[]` | The checked Work/Ledger pair requires claims as an array. |
-| 1238/1 · 14085:14 | readCompletedSourceReportRecoveryReceipt · `null` | Recovery lineage requires the initial receipt; missing/corrupt ancestry refuses earlier. |
-| 1245/1 · 14172:71 | readInitialSourceContinuationLineageView · `[]` | The internal checked Work reader always supplies its validated runtime continuation array. |
-| 1334/1 · 14754:91 | authorizeCorrectiveExecution · `''` | The request must first resolve to a configured validate/test stage. |
-| 1336/1 · 14765:93 | authorizeCorrectiveExecution · `[]` | Validated configured stage predecessors provide required_after. |
-| 1465/1 · 16325:62 | captureRetiredSourceObservation · `[]` | Validated release operations require resources before this projection. |
-| 1516/1 · 17175:12 | recoverExpiredLocalLease · `null` | Existing completed recovery requires its original initial-source receipt. |
-| 1531/1 · 17355:12 | recoverExpiredLocalLease · `null` | The same fenced transaction revalidates progress and ancestry before the second read. |
-| 1583/1 · 18031:12 | commitCompletedSourceReportRecovery · `null` | Recovery commit requires a matching non-null initial receipt and request/continuation digests. |
-| 1601/1 · 18391:56 | captureHistoricalTerminalSynthesisAndRelease · `[]` | The validated Work lease and active claim require the corresponding ticket/resources. |
-| S131 ·1574:4; L1574 | historicalCapturedPendingItem · `return null;` | Same duplicate-action proof as54/0. |
-| S2796 ·9666:80 | #resolveTaskSourceBinding · `continue;` | Same attempt/owner proof as822/0. |
-| S2851 ·9854:51 | snapshotHistoricalTaskSourceSources · `continue;` | Same attempt proof as846/0. |
+| Counter · location  | Function · mapped alternative                                                                                                                                   | Causal prerequisite                                                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 54/0 · 1573:2       | historicalCapturedPendingItem · `if (journal.completed.some((wave) => wave.items.some((prior) => prior.request.action_id === capture.action_id))) return null;` | The supported bridge has one issued action ID and moves its result out of pending; corrupt duplicates refuse.                         |
+| 63/1 · 1633:109     | historicalContinuationCompleted · `[]`                                                                                                                          | The exact pending-capture route returns completed first; configured continuation bypasses this historical fallback.                   |
+| 240/1 · 3449:2      | writeTaskSourceResourceHistory · `if (cache) delete cache.availableTables;`, implicit else                                                                      | The only defined receipt producer runs inside the cache wrapper; no receipt returns earlier. Cache is always present at this counter. |
+| 327/1 · 4409:33     | initialSourceCheckpointMatches · `version(work)`                                                                                                                | The sole caller supplies the same checked Work row version.                                                                           |
+| 721/1 · 8298:40     | importReconciledHostState · `0`                                                                                                                                 | Duplicate Work keys refuse before sort; distinct keys cannot reach the equality fallback.                                             |
+| 808/1 · 9610:11     | #resolveTaskSourceBinding · `[]`                                                                                                                                | Checked Work requires its schema-valid Ledger and ticket array.                                                                       |
+| 822/0 · 9666:6      | #resolveTaskSourceBinding · `request.attempt !== currentAttempt \|\| request.thread_id !== threadId`                                                            | No supported same-Work attempt/owner-transfer producer creates valid observed history for that other binding.                         |
+| 846/0 · 9854:12     | snapshotHistoricalTaskSourceSources · `request.attempt !== input.attempt`                                                                                       | The supported retained resource-history producer preserves Work and attempt.                                                          |
+| 994/1 · 11212:48    | #repairWorkAuthority · `restoredWorks(value.work_changes)`                                                                                                      | Restored transition decoding/live production requires the validated restored list before this fallback.                               |
+| 1211/1 · 13782:78   | commitReadOnlyFrontierRuntimeCode · `-1`                                                                                                                        | Absent item makes stage absent and short-circuits optional access; a parsed present request requires its index.                       |
+| 1214/1 · 13791:116  | commitReadOnlyFrontierRuntimeCode · `[]`                                                                                                                        | The checked Work/Ledger pair requires claims as an array.                                                                             |
+| 1238/1 · 14085:14   | readCompletedSourceReportRecoveryReceipt · `null`                                                                                                               | Recovery lineage requires the initial receipt; missing/corrupt ancestry refuses earlier.                                              |
+| 1245/1 · 14172:71   | readInitialSourceContinuationLineageView · `[]`                                                                                                                 | The internal checked Work reader always supplies its validated runtime continuation array.                                            |
+| 1334/1 · 14754:91   | authorizeCorrectiveExecution · `''`                                                                                                                             | The request must first resolve to a configured validate/test stage.                                                                   |
+| 1336/1 · 14765:93   | authorizeCorrectiveExecution · `[]`                                                                                                                             | Validated configured stage predecessors provide required_after.                                                                       |
+| 1465/1 · 16325:62   | captureRetiredSourceObservation · `[]`                                                                                                                          | Validated release operations require resources before this projection.                                                                |
+| 1516/1 · 17175:12   | recoverExpiredLocalLease · `null`                                                                                                                               | Existing completed recovery requires its original initial-source receipt.                                                             |
+| 1531/1 · 17355:12   | recoverExpiredLocalLease · `null`                                                                                                                               | The same fenced transaction revalidates progress and ancestry before the second read.                                                 |
+| 1583/1 · 18031:12   | commitCompletedSourceReportRecovery · `null`                                                                                                                    | Recovery commit requires a matching non-null initial receipt and request/continuation digests.                                        |
+| 1601/1 · 18391:56   | captureHistoricalTerminalSynthesisAndRelease · `[]`                                                                                                             | The validated Work lease and active claim require the corresponding ticket/resources.                                                 |
+| S131 ·1574:4; L1574 | historicalCapturedPendingItem · `return null;`                                                                                                                  | Same duplicate-action proof as54/0.                                                                                                   |
+| S2796 ·9666:80      | #resolveTaskSourceBinding · `continue;`                                                                                                                         | Same attempt/owner proof as822/0.                                                                                                     |
+| S2851 ·9854:51      | snapshotHistoricalTaskSourceSources · `continue;`                                                                                                               | Same attempt proof as846/0.                                                                                                           |
 
 Review files are DIAG/final-host-dispositions-v1904.md and
 DIAG/cache-counter-arm-v1906.md. All20branch arms,3statements and the shared
@@ -601,12 +662,12 @@ runner/capture/hash defect is established. Stage1962 completes in27.844s with
 complete native capture/group/input custody, while its selected tests take22.68s.
 These different-scope Source runs are not a matched performance comparison.
 
-| Sequence | Evidence and decision |
-| --- | --- |
-| Scoped static, grouped affected cases, one complete stage per coherent packet | Selected;1959 records78cases/32.98s and1962 one27.844s stage. No per-edit stage is launched. |
-| Full stage after each assertion or failed static check | Rejected; incremental gain/time is unmeasured and unchanged inputs add no proof. Static failures stop before runtime. |
+| Sequence                                                                         | Evidence and decision                                                                                                           |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Scoped static, grouped affected cases, one complete stage per coherent packet    | Selected;1959 records78cases/32.98s and1962 one27.844s stage. No per-edit stage is launched.                                    |
+| Full stage after each assertion or failed static check                           | Rejected; incremental gain/time is unmeasured and unchanged inputs add no proof. Static failures stop before runtime.           |
 | Disjoint blind readers alongside Root edits, serial checks and one numeric owner | Selected;1964–1966/1971/1973 supply bounded reports, not writers or competing suites. Tool-call/token savings are not measured. |
-| Wider test pool or concurrent compiler/index/cleanup during measurement | Not qualified; no matched benchmark or receipt/resource basis supports it. Existing limits remain. |
+| Wider test pool or concurrent compiler/index/cleanup during measurement          | Not qualified; no matched benchmark or receipt/resource basis supports it. Existing limits remain.                              |
 
 The actual authoring corrections strengthen returned-value/path oracles, bind
 optional values before callbacks, and reuse existing native producers instead of
