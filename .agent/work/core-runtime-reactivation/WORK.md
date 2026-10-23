@@ -57,6 +57,13 @@ selected lint and11affected cases in4.45s. Final2536 covers the publication guar
 and the existing ownership/manifest/native-cache controls before publication:
 strict23 and selected lint pass; all12cases pass in3.88s. Documentation check
 passes2changed documents/12local links and headings.
+The checked correction is published asac594c3 through ordinary hooks (strict538,
+format and configured quality checks). Before the first full current stage,2537
+also checks the two newly introduced defensive states: acquired-but-unobserved
+descriptor identity and missing staged pathname. Both use real fixture handles,
+preserve the target manifest and close the native descriptor; they grant no
+production effect or UNKNOWN reconciliation. Source behavior is unchanged from
+ac594c3. Keep existing ceilings and one numeric owner.
 
 ### Public entrypoint correction packet
 

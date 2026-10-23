@@ -423,6 +423,78 @@ test('sync refuses to publish a replaced stage after successful fsync', () => {
   }
 });
 
+test('sync retains an acquired stage when descriptor identity cannot be observed', () => {
+  const { root } = fixture();
+  const before = readFileSync(path.join(root, 'package.json'));
+  writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
+  const failure = new Error('injected descriptor metadata failure');
+  const originalFstat = fs.fstatSync;
+  let descriptor: number | undefined;
+  let nativeFileObserved = false;
+  let completed = false;
+  const stat = spyOn(fs, 'fstatSync');
+  try {
+    stat.mockImplementation((fd) => {
+      descriptor = fd;
+      nativeFileObserved = originalFstat(fd).isFile();
+      throw failure;
+    });
+    assert.throws(
+      () => syncPin(root),
+      (error) => {
+        assert.ok(error instanceof AggregateError);
+        assert.equal(error.errors[0], failure);
+        assert.match(String(error.errors[1]), /indeterminate/);
+        assert.equal(error.errors.length, 2);
+        return true;
+      },
+    );
+    assert.equal(nativeFileObserved, true);
+    assert.ok(descriptor !== undefined);
+    assert.throws(() => originalFstat(descriptor!), { code: 'EBADF' });
+    const stage = readdirSync(root).find((name) => name.startsWith('.bun-pin-'));
+    assert.ok(stage);
+    assert.equal(readFileSync(path.join(root, stage), 'utf8'), '');
+    assert.deepEqual(readFileSync(path.join(root, 'package.json')), before);
+    completed = true;
+  } finally {
+    stat.mockRestore();
+    if (!completed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed descriptor metadata fixture at ' + root);
+    }
+  }
+});
+
+test('sync refuses a missing stage before publication without changing the manifest', () => {
+  const { root } = fixture();
+  const before = readFileSync(path.join(root, 'package.json'));
+  writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
+  const originalFsync = fs.fsyncSync;
+  let completed = false;
+  const sync = spyOn(fs, 'fsyncSync');
+  try {
+    sync.mockImplementation((fd) => {
+      originalFsync(fd);
+      const stage = readdirSync(root).find((name) => name.startsWith('.bun-pin-'));
+      assert.ok(stage);
+      fs.unlinkSync(path.join(root, stage));
+    });
+    assert.throws(() => syncPin(root), {
+      message: 'Bun staged manifest identity changed during synchronization; no replacement permitted.',
+    });
+    assert.deepEqual(readFileSync(path.join(root, 'package.json')), before);
+    assert.deepEqual(readdirSync(root).sort(), ['.bun-version', 'package.json']);
+    completed = true;
+  } finally {
+    sync.mockRestore();
+    if (!completed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed missing-stage fixture at ' + root);
+    }
+  }
+});
+
 test('sync preserves body and close failures while completing owned stage removal', () => {
   const { root } = fixture();
   const manifestPath = path.join(root, 'package.json');
