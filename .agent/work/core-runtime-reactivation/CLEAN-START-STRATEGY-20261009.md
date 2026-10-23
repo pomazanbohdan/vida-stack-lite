@@ -36,8 +36,14 @@ incidental-build dependency in the private lock-fallback fixture. Correct that
 setup and preserve its terminal failure.2446 completes the corrected changed-input
 stage and visits five additional branch arms with unchanged denominators. The
 same contour's optional copy-list observation passes focused checks and independent
-review with full setup restoration; its changed-input stage follows publication.
-CLI attribution remains next.
+review with full setup restoration;2461 measures its omission branch after6588f1f
+publication. Four defensive objective dispositions are bound in WORK without
+changing counts or permitting queue advancement while other paths remain OPEN.
+CLI attribution remains next through the existing coverage owners: qualify a
+non-test child receipt and exact parent merge, preserving the expected denial
+exit1 and every ordinary test-loaded receipt requirement. Cache/exit-state
+fixtures do not replace that custody; native prerequisites and negative controls
+precede the next full selected-contour measurement.
 WORK binds the correction/review and native CLI loader prerequisites;
 first-import/query fixtures may not assume suite ordering.
 The configured-caller and filesystem-guide capture defects are repaired. WORK

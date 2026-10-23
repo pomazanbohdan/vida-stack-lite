@@ -6,10 +6,11 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-development-controller only**;2446 measures the
-checked construction-drift and self-contained lock-fallback packet. Its map2448
-retains14branch arms/10statements/3functions. Remaining paths stay OPEN; historical
-geometry is navigation rather than a new coverage claim.
+The active contour is **bun-development-controller only**;2461 measures the
+checked construction-drift, lock-fallback and copy-list observation packet.
+Map2463 retains13branch arms/10statements/3functions. Four defensive branch
+dispositions are accepted below; other paths remain OPEN or native-target GAPs.
+Historical geometry is navigation rather than a new coverage claim.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
@@ -178,9 +179,52 @@ the environment restore before mutation and each spy restore immediately after
 acquisition, then uses completeOwnedCleanup for setup, operation and cleanup errors.
 2454 reviews the corrected bytes with no blocking findings. Original2452 callback-
 typing failure remains retained;2453 passes strict103/lint and the affected case,
-1PASS/0FAIL/156expect calls in39.25s. The sole changed-input stage follows this
-checked packet's ordinary publication.2455 independently reviews four exact
-defensive counter candidates; no disposition or new count is assumed from a task.
+1PASS/0FAIL/156expect calls in39.25s. Ordinary hooks and push publish6588f1f.
+Stage2461 below visits the optional-copy-list omission branch72arm1 with unchanged
+denominators. Root does not reinterpret the injected false observation as physical
+Source absence. This packet now visits6additional branch arms,3statements and2lines
+over2422; no new function or exact contour closure is claimed.
+
+2458 reviews the possible cache-reload fixture rather than another collector.
+Inert2457 proves a fresh same-URL namespace after eviction;2459 then proves restoring
+the exact require.cache object does not restore later ESM namespace identity.
+2460 confirms process.exitCode has a nonconfigurable native accessor and stops
+before any exit-state mutation. The current TESTING exit-recipient/cache rules
+remain controlling; no controller-cache or process-global fixture is adopted.
+2458's report is relocated from the reader's mistaken literal DIAG subdirectory
+to the current DIAG owner; other contents of that subdirectory remain untouched.
+
+### Current controller defensive dispositions
+
+Independent review2455 quotes the mapped expressions and preceding guards.
+Root accepts only these four objective branch dispositions, including the directly
+dominated statements/function listed here. Binding is2461's run
+cae373d4-5954-444f-ad86-736ff21784fd on Source6588f1f and unchanged controller Source
+fingerprintf251d18af1902b00dfc933432835ca523610686c4cd61534c22a7f687f8a0b47,
+test8a8901ccef7d7f79080cb06199a2bb0ac7914cf6145c03663d20c7945f4da784 and
+tool159f4dff3f92420ccd8172a1c7b0fda1296ee255c07b9f2ca60333cf7a901d96.
+The image/manifest below binds runtime/configuration.2455 reviewed2448's same
+Source geometry; the subsequent test-only observation/cleanup packet changes none
+of these causal contracts. Map2463 confirms all four remain zero.
+
+| Exact counter and expression                                                                                     | Objective prerequisite and reopen trigger                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| b1arm0/s2, requireRuntimeConfigModule76–77: `if (!isRecord(value)                                                |                                                                                                                                                                           | typeof value.readRuntimeConfigIdentityForObservation !== 'function')` | Fixed executing-package import supplies its declared callable; public inputs cannot select a different module. Reopen for a supported alternate/injectable module or qualified seam for that exact import. Preserve the API guard. |
+| b15arm0/s20, requiredOption192: `if (!value) throw new Error('Required controller option is missing.');`         | Full per-mode required lists are checked by validateControllerOptions before every helper call. Reopen if a caller bypasses validation or the required contract changes.  |
+| b19arm1, readQualification215: `output.trim().split(/\r?\n/).at(-1) ?? ''`                                       | Native string split always produces at least one string, including empty input; the nullish operand is unreachable. Reopen if the native string/split contract changes.   |
+| b106arm1/s263/f57, main702–704: final `: (() => { throw new Error('Controller action is not valid here.'); })()` | Parser admits four actions, exec returns, and all other actions match preceding branches. Reopen if a new admitted mode lacks a branch or action can enter after parsing. |
+
+These dispositions do not add hits, alter denominators or qualify numeric PASS.
+Actual CLI entry/catch/Error formatting remains testable and OPEN; Windows engine
+arms remain native-target evidence gaps. Non-Error formatting and legacy non-Bun
+entry need their own current disposition before queue advancement. The contour
+therefore remains active. The next coherent implementation is a parent-validated
+non-test CLI-child counter receipt through the existing preload/observer/runner
+owners, retaining the ordinary test-loaded receipt and expected blocked exit1.
+Validate native entry identity/load, run/parent/PID/runtime/argv/output bindings,
+unique terminal custody, exact sparse-map shapes and one-time counter merge;
+missing or mismatched proof stays UNKNOWN. No child protocol is yet implemented,
+no second producer starts and no current measurement is claimed for future bytes.
 
 The product inspector now rejects persisted ready metadata with missing,
 non-passing or foreign-bound qualification before a child can run.2346 reproduces
@@ -363,6 +407,25 @@ lifecycle, TESTING, the plan and backlog; no second authority is created.
 ## Latest measurement custody
 
 ### Latest completed development-controller measurement
+
+Stage2461 /workspace/contour-stage-PMCCw0 runs on Bun1.4.4 and
+Source6588f1f834f690b050d245778dfc5ea33b2bad7a,
+runcae373d4-5954-444f-ad86-736ff21784fd. It completes in37005.544677ms,
+exit0/nullsignal/no timeout/spawn error, complete capture, closed group, unchanged
+boot/image and one automatic paired import. Native13PASS/0FAIL/223expect calls
+in31.59s. Raw **F59/62 L237/246 S268/278 B273/286** remains BLOCKED/nonexact;
+branch72arm1 is newly visited. MaxCC/entryCRAP17 remains diagnostic; no frozen or
+mutation acceptance is claimed.
+
+Image /workspace/.vida-quality-inputs/1dc7976285be980e8ad2f8a702ded90b5421e067/repository
+has manifestb1a08854afa26052e25b0dea5de7e572445c78ac1586868853e2dffd53253f2a.
+2462 verifies/fsyncs the10240-byte non-cache archive at
+/workspace/vida-functional-retention-PMCCw0-uD4DiB/archive.json; originals remain.
+Report-only map2463 reconciles3missing functions,10statements and13branch arms
+against this complete report, without another AST/hash/inventory pass. Historical
+exact F/L/S/B remains17/46 and global freshness remains unverified.
+
+### Preceding construction and lock-fallback measurement
 
 Stage2446 /workspace/contour-stage-tE8nvy runs on Bun1.4.4 and
 Source1d60a7fd4d6eb605ede38a88d285defd09efb8ba,
