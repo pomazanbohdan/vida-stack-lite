@@ -4283,6 +4283,300 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }
   });
+
+  test('run retired-source decoder rejects deeper malformed request fields before native reads or workspace writes', async () => {
+    const expectedMessage = 'Retired-source request workspace or owner binding differs';
+    const makeBase = (config: AgentRuntimeConfig, root: string, ownerHandle: string) => ({
+      schema: 'RetiredSourceCapture/v1',
+      workspace_id: deriveWorkspaceId(config.repository.repository_id, root),
+      operatorHandle: ownerHandle,
+      nativeTurnEvidenceRef: 'unread-fixture-native-turn',
+      identity: {
+        repository_id: config.repository.repository_id,
+        project_ids: config.projects.map((project) => project.project_id),
+        integrations_digest: canonicalJsonDigest(config.integrations),
+        work_id: 'unaccepted-fixture-work',
+      },
+      attempt: 1,
+      actionId: 'unaccepted-fixture-action',
+      issueId: 'unaccepted-fixture-issue',
+      expectedWork: { revision: 1, digest: 'fixture-work-digest' },
+      expectedLedger: { revision: 1, digest: 'fixture-ledger-digest' },
+      expectedJournal: { revision: 1, digest: 'fixture-journal-digest' },
+      expectedMaintenanceGeneration: 0,
+      retirementOperationId: 'unaccepted-fixture-operation',
+      retirementClaimId: 'unaccepted-fixture-claim',
+      observation: { host_attempt_id: 'unaccepted-fixture-host-attempt' },
+      terminalEvidence: {
+        schema: 'RetiredSourceTerminalEvidence/v1',
+        source_thread_id: 'fixture-thread',
+        source_turn_id: 'fixture-turn',
+        source_thread_status: 'interrupted',
+        source_turn_status: 'interrupted',
+        operator_thread_id: 'fixture-operator-thread',
+        original_actor_id: 'fixture-actor',
+        final_message_id: null,
+        action_id: 'unaccepted-fixture-action',
+        issue_id: 'unaccepted-fixture-issue',
+        host_attempt_id: 'unaccepted-fixture-host-attempt',
+        active_source_writer_ids: [],
+        observed_commands: [],
+        original_tool_records: [],
+        later_grants: [],
+      },
+      candidateSnapshot: { schema: 'UnverifiedSourceSnapshot/v1', entries: [] },
+    });
+    type DecoderPrefix = ReturnType<typeof makeBase>;
+    const cases = [
+      {
+        name: 'maintenance generation type',
+        change: (request: DecoderPrefix) => ({ ...request, expectedMaintenanceGeneration: '0' }),
+      },
+      {
+        name: 'safe positive attempt',
+        change: (request: DecoderPrefix) => ({ ...request, attempt: 1.5 }),
+      },
+      {
+        name: 'observation host attempt type',
+        change: (request: DecoderPrefix) => ({ ...request, observation: { host_attempt_id: 1 } }),
+      },
+      {
+        name: 'terminal evidence schema',
+        change: (request: DecoderPrefix) => ({
+          ...request,
+          terminalEvidence: { ...request.terminalEvidence, schema: 'RetiredSourceTerminalEvidence/v0' },
+        }),
+      },
+      {
+        name: 'terminal final message nullability',
+        change: (request: DecoderPrefix) => ({
+          ...request,
+          terminalEvidence: { ...request.terminalEvidence, final_message_id: 'message' },
+        }),
+      },
+      {
+        name: 'observed command truncation flag',
+        change: (request: DecoderPrefix) => ({
+          ...request,
+          terminalEvidence: {
+            ...request.terminalEvidence,
+            observed_commands: [
+              {
+                ref: 'command-ref',
+                status: 'completed',
+                exit_code: 0,
+                command_sha256: 'command-digest',
+                output_sha256: null,
+                output_present: false,
+              },
+            ],
+          },
+        }),
+      },
+      {
+        name: 'candidate entry nonnegative size',
+        change: (request: DecoderPrefix) => ({
+          ...request,
+          candidateSnapshot: {
+            ...request.candidateSnapshot,
+            entries: [{ path: 'candidate.ts', sha256: 'candidate-digest', size: -1 }],
+          },
+        }),
+      },
+    ];
+    for (const entry of cases) {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-retired-decoder-'));
+      let complete = false;
+      try {
+        const { config, initializationPath } = createFixture(root),
+          configPath = path.join(root, 'agent-runtime.config.v1.yaml'),
+          requestPath = path.join(root, 'request.json'),
+          ownerHandle = `fixture-owner-${randomUUID()}`,
+          base = makeBase(config, root, ownerHandle),
+          requestBytes = Buffer.from(`${JSON.stringify(entry.change(base))}\n`),
+          configBefore = readFileSync(configPath),
+          initializationBefore = readFileSync(initializationPath);
+        const args = [
+          '--capture-retired-source',
+          'true',
+          '--project-root',
+          root,
+          '--native-session-handle',
+          ownerHandle,
+          '--request',
+          'request.json',
+        ];
+        writeFileSync(requestPath, JSON.stringify(base));
+        await assert.rejects(run(args), { name: 'ZodError' });
+        writeFileSync(requestPath, requestBytes);
+        await assert.rejects(
+          run(args),
+          (error: unknown) => error instanceof Error && error.message === expectedMessage,
+        );
+        expect(readFileSync(configPath)).toEqual(configBefore);
+        expect(readFileSync(initializationPath)).toEqual(initializationBefore);
+        expect(readFileSync(requestPath)).toEqual(requestBytes);
+        expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+        expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+        complete = true;
+      } finally {
+        if (complete) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed retired-source decoder root (${entry.name}): ${root}\n`);
+      }
+    }
+  });
+
+  const stoppedSourceDecoderRequest = (initialization: RuntimeInitializationReceipt) => ({
+    workspace_id: initialization.workspace_id,
+    identity: {
+      repository_id: initialization.repository_id,
+      project_ids: [...initialization.project_ids],
+      integrations_digest: initialization.integrations_digest,
+      work_id: 'decoder-prefix-only',
+    },
+    attempt: 1,
+    expectedWork: { revision: 1, digest: 'a'.repeat(64) },
+    expectedLedger: { revision: 1, digest: 'b'.repeat(64) },
+    expectedJournal: { revision: 1, digest: 'c'.repeat(64) },
+    nativeSessionHandle: 'decoder-prefix-only',
+    observation: {
+      schema: 'VidaSessionObservation/v1',
+      status: 'reported_complete',
+      summary: 'decoder prefix only',
+      output_digest: 'd'.repeat(64),
+      action_id: 'decoder-prefix-only',
+      host_attempt_id: 'decoder-prefix-only',
+      issue_id: 'decoder-prefix-only',
+      agent_id: 'decoder-prefix-only',
+      tool_call_ref: 'decoder-prefix-only',
+      changed_paths: [],
+      evidence_refs: [],
+    },
+    terminalEvidence: {
+      schema: 'StoppedSourceTerminalEvidence/v1',
+      native_actor: 'decoder-prefix-only',
+      observation_ref: 'missing-terminal-record.json',
+      owner_decision_ref: 'missing-owner-record.json',
+      terminal: 'partial_stopped',
+    },
+    candidateSnapshot: { schema: 'UnverifiedSourceSnapshot/v1', entries: [] },
+  });
+
+  type StoppedDecoderPrefix = ReturnType<typeof stoppedSourceDecoderRequest>;
+  const stoppedSourceDecoderMalformedCases = [
+    [
+      'context',
+      [
+        {
+          label: 'repository binding',
+          change: (r: StoppedDecoderPrefix) => ({ ...r, identity: { ...r.identity, repository_id: 7 } }),
+        },
+        {
+          label: 'revision',
+          change: (r: StoppedDecoderPrefix) => ({ ...r, expectedWork: { ...r.expectedWork, revision: '1' } }),
+        },
+        { label: 'attempt', change: (r: StoppedDecoderPrefix) => ({ ...r, attempt: '1' }) },
+        { label: 'owner handle', change: (r: StoppedDecoderPrefix) => ({ ...r, nativeSessionHandle: 7 }) },
+      ],
+    ],
+    [
+      'observation',
+      [
+        {
+          label: 'action binding',
+          change: (r: StoppedDecoderPrefix) => ({ ...r, observation: { ...r.observation, action_id: 7 } }),
+        },
+        {
+          label: 'status',
+          change: (r: StoppedDecoderPrefix) => ({ ...r, observation: { ...r.observation, status: 'unknown' } }),
+        },
+        {
+          label: 'changed paths',
+          change: (r: StoppedDecoderPrefix) => ({ ...r, observation: { ...r.observation, changed_paths: [7] } }),
+        },
+      ],
+    ],
+    [
+      'evidence',
+      [
+        {
+          label: 'terminal state',
+          change: (r: StoppedDecoderPrefix) => ({
+            ...r,
+            terminalEvidence: { ...r.terminalEvidence, terminal: 'completed' },
+          }),
+        },
+        {
+          label: 'entry collection',
+          change: (r: StoppedDecoderPrefix) => ({ ...r, candidateSnapshot: { ...r.candidateSnapshot, entries: {} } }),
+        },
+        {
+          label: 'entry size',
+          change: (r: StoppedDecoderPrefix) => ({
+            ...r,
+            candidateSnapshot: {
+              ...r.candidateSnapshot,
+              entries: [{ path: 'candidate.ts', sha256: 'e'.repeat(64), size: null }],
+            },
+          }),
+        },
+      ],
+    ],
+  ] as const;
+
+  test.each(stoppedSourceDecoderMalformedCases)(
+    'run stopped-source request %s rejects malformed nested predicates before workspace access',
+    async (_group, cases) => {
+      for (const entry of cases) {
+        const root = mkdtempSync(path.join(tmpdir(), 'vida-run-stopped-decoder-'));
+        let complete = false;
+        try {
+          const { config, initialization, initializationPath } = createFixture(root);
+          const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
+          const requestPath = path.join(root, 'request.json');
+          const configBefore = readFileSync(configPath);
+          const initializationBefore = readFileSync(initializationPath);
+          const request = stoppedSourceDecoderRequest(initialization);
+          const args = [
+            '--capture-stopped-source',
+            'true',
+            '--mode',
+            'inspect',
+            '--project-root',
+            root,
+            '--request',
+            'request.json',
+          ];
+          writeFileSync(requestPath, JSON.stringify(request));
+          await assert.rejects(
+            run(args),
+            (error: unknown) =>
+              error instanceof Error &&
+              'code' in error &&
+              error.code === 'ENOENT' &&
+              'path' in error &&
+              error.path === path.join(root, 'missing-terminal-record.json'),
+          );
+          const requestBytes = Buffer.from(JSON.stringify(entry.change(request)));
+          writeFileSync(requestPath, requestBytes);
+          await assert.rejects(
+            run(args),
+            (error: unknown) => error instanceof Error && error.message === 'Capture workspace/root binding differs',
+          );
+          expect(readFileSync(configPath)).toEqual(configBefore);
+          expect(readFileSync(initializationPath)).toEqual(initializationBefore);
+          expect(readFileSync(requestPath)).toEqual(requestBytes);
+          expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+          expect(existsSync(path.join(root, 'fixture.sqlite'))).toBe(false);
+          expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+          complete = true;
+        } finally {
+          if (complete) rmSync(root, { recursive: true, force: true });
+          else process.stderr.write(`Retained failed stopped-source decoder root (${entry.label}): ${root}\n`);
+        }
+      }
+    },
+  );
 }
 
 test('failed prewriter owner recovery rejects non-string arguments before repository access', () => {

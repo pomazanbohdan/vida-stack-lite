@@ -277,6 +277,13 @@ Separate in-process special-command controls use exact refusals, fresh private
 roots and unchanged configuration/initialization/request bytes; malformed
 requests must create neither a workspace database nor Work. Preserve failed roots.
 These controls establish early refusals, not positive recovery history.
+For stopped/retired nested decoder refusals, first prove the same typed prefix
+reaches the next distinct native boundary. Stopped capture must reach the exact
+missing terminal-file ENOENT/path; retired capture must reach the downstream
+observation parser's ZodError. Then change one field and require the earlier
+exact envelope refusal, preserving byte/no-DB/no-Work oracles. Do not create
+terminal/history files to make a decoder control appear to be accepted evidence.
+
 Other copied-wrapper and fresh-start environment children remain behavioral
 controls; they do not contribute measured counters.
 

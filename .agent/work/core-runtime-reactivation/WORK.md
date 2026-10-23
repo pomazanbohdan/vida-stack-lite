@@ -119,6 +119,39 @@ registration. Batch prerequisite repairs and newly registered targeted controls
 before the next complete changed-input stage. Do not claim every gap comes from
 this gate or treat missing attribution/fixtures as objective untestability.
 
+### Run nested decoder packet
+
+2662/2663 are independent blind native Luna proposals for retired/stopped request
+decoders within the same contour. They write only their assigned fragment and
+rationale artifacts, no shared Source/Git/checks/producer. Root integrates7retired
+and10stopped malformed-field controls. The stopped proposal's three duplicated
+fixture loops become one typed test.each table, without unchecked Record casts.
+Existing configured initialization supplies actual root/workspace identity;
+placeholder decoder fields are not admitted native history or accepted effects.
+
+Root adds a causal control on each same request prefix before the mutation.
+Retired requests reach the downstream observation parser's ZodError; stopped
+requests reach native ENOENT on the exact absent terminal observation path. Then
+one changed field must return its exact earlier decoder error. No native terminal
+or owner evidence file is invented, no DB/Work is created, and configuration,
+initialization and request bytes remain unchanged. Each failed root is retained.
+The existing default5s bound is unchanged;3stopped groups have at most4roots.
+
+The first Root integration helper uses the wrong working directory and fails
+before writing. Its following formatter examines unchanged Source and is not
+packet qualification.2666 scoped strict then catches two createFixture scope
+errors after correct integration, before tests. Root moves the whole packet
+inside the existing native/mutation/V8 scope rather than widening registration.
+Original failed logs and proposals stay.2667 passes strict157/lint0 and all4new
+cases,112Bun expects in4.47s, plus native assert.rejects controls. A final literal
+argv dedup reuses the same args in retired prefix/refusal calls;2669 repeats only
+that changed target,1PASS/42expects in2.25s after strict157/lint0.
+Unchanged stopped passes are reused.
+Fresh2668 independently reviews exact Source, causal premises, default budgets
+and failure custody, returns PASS with no correctness blocker, and leaves
+numeric qualification to one complete changed-input stage. No report map,
+AST/index/hash sweep, CLI protocol replay or per-test SDK build is added.
+
 ### Run fixed-help and command-refusal packet
 
 2645 supplies a bounded native Luna proposal for16special selectors and six
