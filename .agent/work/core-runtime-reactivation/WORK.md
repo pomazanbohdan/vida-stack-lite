@@ -38,89 +38,57 @@ The regression contract owns the current rule. No old image is repaired.
 
 ### Latest completed run measurement
 
-2685 completes the exact one-Source/two-test contour on
-082014178a05ec528080133d56f66dcb6ee6c9c9, stage `/workspace/contour-stage-hl14xQ`,
-run597db24c-91f1-4d7e-9308-4fd333a7955c. All88tests pass with0failures and870expects
-in129.60s, outer135734.95729899997ms. Raw **F195/557 L991/2863 S1046/3143 B1067/3663**
+2699 completes the exact one-Source/two-test contour on
+`e9afe8d5357c578bc0aec5bd86e5520b04c8cbba`, stage `/workspace/contour-stage-jx5TL6`,
+run103d2108-0285-4e2d-9de6-1b577b1c8eae. All92tests pass with0failures and1044expects
+in115.51s, outer120622.566431ms. Raw **F218/557 L1074/2863 S1142/3143 B1198/3663**
 stays BLOCKED/nonexact. Max CC501/entry CRAP5402 is navigation, not frozen
 acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
 closed producer/group, unchanged boot/image and the sole paired projection
-publication pass,1323attempts. Frozen/CRAP/mutation stay deferred.
+publication pass,1325attempts. Frozen/CRAP/mutation stay deferred.
 
-Image `/workspace/.vida-quality-inputs/ab7a1038768a161dd837560720a73f4c24a40f85/repository`,
-manifest SHA256e3b8cc510aecbc9024fc9049a6abf3d9912bd4fb85ed0c393070e59b656e1d73.
+Image `/workspace/.vida-quality-inputs/602aaf5127a3bf75808c6ada54e9d2de2f3b3e04/repository`,
+manifest SHA256cd961740ab74aa228705dcb70f96992c081e7e1b73f41786cca16b0484fddecc.
 Package report is
-`coverage/bun-unified/diagnostics/597db24c-91f1-4d7e-9308-4fd333a7955c.focused-coverage.json`;
-run-manifest SHA256bf1125cbaf4bcf364c2f355cd02a87f223f7da09b15e7b2ed6c9558d0523c752.
+`coverage/bun-unified/diagnostics/103d2108-0285-4e2d-9de6-1b577b1c8eae.focused-coverage.json`;
+run-manifest SHA256f1a128049b3bd80cc8eb43df7cba3003ca5305b140c98d90d85c98e7c6ab6035.
 SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
-test3b6314d95f09719598827872f33eb13cb2eb1883ee13712e0af75270eb23fd62,
-tool99b238493c9f32b57f2c1673530c4f04a63b71936c8f501cb70f5b7405696c20.
-2687 reuses retained canonical geometry to map all362zero functions,2097statements
-and2596branch arms, with compact output only. No AST/index/hash sweep repeats.
-2686 verifies/fsyncs the40632320-byte functional archive at
-`/workspace/vida-functional-retention-hl14xQ-KGvmah/archive.json`; originals stay.
-Archive SHA256829bbab8ba46c66c0a2934bdc38b5a00cd94359cb78746185bc7bf3ec004c75a
+test13e8fdb2366731f05a22bc28598563301e1ec775f278f29155825adf4f406f99,
+tool751b9ceb270276e9721c056c24ef58d8e65396b9221b33856061e75424b871ce.
+2701 reuses retained canonical geometry to map all339zero functions,2001statements
+and2465branch arms, with compact output only. No AST/index/hash sweep repeats.
+2700 verifies/fsyncs the40642560-byte functional archive at
+`/workspace/vida-functional-retention-jx5TL6-ccYGRj/archive.json`; originals stay.
+Archive SHA2565ae2e8c89e30dfdcdf7686411bd331c14af318e50dfdae7110610e3d4afcce7c
 binds the one new retention artifact, not old reattestation.
 
-The actual single canonical CLI childc2e5f2b4-465d-4275-9daf-237c7dbe833c has
-parentPID39/childPID1067, complete native capture, exit0/null signal/no error,
+The actual single canonical CLI child04dec793-565f-4153-b184-ca17400f50e0 has
+parentPID39/childPID140, complete native capture, exit0/null signal/no error,
 4889stdout bytes and0stderr bytes. Its receipt under this run's processes/cli
 binds loaded run.ts and all three required metadata modules, with no loaded
 workspace-database-cli.ts. The owned producer/group closure and unchanged
 boot/image are observed separately, not inferred from the child receipt.
 
-Against2671's unchanged Source fingerprint/denominators, the release-refusal
-packet adds24functions,78lines,82statements and103branch arms. Across the three
-packets since2641 the gains are69functions,280lines,293statements and388branch
-arms.2671's88cases/159.30s and2685's88cases/129.60s have changed test/tool inputs;
-these observations do not establish a matched speedup. All88cases execute and
-all selected Source/test/capture/native receipts pass. No timing budget changes.
-2671's report/map/archive and prior observed per-case timing analysis remain in
-[publishedbd175f6 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bd175f625807ce3a7be1a6d47552e9e5a1e58f4a/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
+Against2685's unchanged Source fingerprint/denominators, the decoder packet adds
+23functions,83lines,96statements and131branch arms. Across four packets since2641
+the gains are92functions,363lines,389statements and519branch arms.2685's88cases
+in129.60s and2699's92cases in115.51s have changed test/tool inputs. These are not
+matched speedup observations. No timing budget or denominator changes.
+Historical exact count stays17/46; the active bun-cli-run contour stays open.
+The previous2685 full bindings, maps, native child proof, failed designs and
+retention chain remain in
+[publishedec36d92 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/ec36d92/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
 
-2659's complete native help proof,84PASS and F146/L878/S929/B835 remain in
-[published021c5ea WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/021c5ea/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement),
-map2661 and `/workspace/vida-functional-retention-Z3LGec-H4GJYY/archive.json`.
-The2658 wrong-cwd Script-not-found attempt starts no producer/input scan and is
-retained separately. Earlier2641 bindings and all2611failure evidence remain in
-[publishedbdce114 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bdce1145ccc1de353adafb6b1dba0e2eac2d428f/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
+Reuse the sole existing disk snapshot2649 and latest2699 admission rather than
+another filesystem walk.2699 observes2511847424available scratch bytes against
+2147483648minimum. The existing floor and reserve remain unchanged. No cleanup
+runs during measurement; no path is retired or old run requalified. Current
+custody restrictions and the timer remain unchanged.
 
-Root's first2643 gap-header projection emits11560tool-reported original output
-tokens before truncation. It reads retained geometry, not another AST/hash/index,
-but the output is avoidable cost. The next query uses counts by fixed line range
-and at most22headers. The separate reader's accidental broad rg is disclosed
-below. No session-level tool/token total or savings telemetry is available.
-
-2621 independently finds private selected-package CLI launches outside the current
-exact child collector profiles. Their counters require a narrow native alias,
-physical-module byte binding, preserved import.meta.url and exact launch cardinality
-through the existing collector. Missing attribution is an OPEN engineering GAP,
-not an objective skip.2622 separately confirms repairAuthority and
-forwardUpdateAuthority have no direct tests or producer-backed positive records
-in the selected selector fixtures. Their missing coverage is genuine unexercised
-behavior. Negative component tests can inspect real exported guards without
-inventing qualified history or Runtime acceptance.
-
-The bounded authority/cache packet below is published in2081cc6 after scoped
-checks, independent review and ordinary hooks; its normal push completes before
-2631. Root owns canonical integration and checks. Native2634 compares canonical-child admission with the
-private-module alias design and direct component reuse. The component packet in
-e8515c2 is checked below and measured once in2641. Child-only gaps still require
-exact native argv/environment/output, loaded-input and terminal/group joins plus
-missing/duplicate/foreign refusal controls. No unchanged full run is warranted.
-Next use2687's bounded ranges and genuine maintained fixture producers for the
-remaining helper/command paths. Keep the same contour and all numeric gates.
-
-A bounded Source read finds an omitted registration route at test line2509.
-The existing direct/component group registers only for mutationMode or
-v8CoverageMode. The current Istanbul owner instead sets its maintained
-AGENT_RUNTIME_NATIVE_COVERAGE_MAIN=1 flag in both serial/versioned child envs.
-2605 independently reviews adding that existing flag to this one registration
-condition, preserving ordinary/mutation/V8 behavior. Removing the gate entirely
-would also change ordinary suite membership; a new collector does not repair
-registration. Batch prerequisite repairs and newly registered targeted controls
-before the next complete changed-input stage. Do not claim every gap comes from
-this gate or treat missing attribution/fixtures as objective untestability.
+2621's private selected-package CLI attribution and2622's missing positive
+producer prerequisites remain OPEN engineering gaps, not objective skips.
+Use2701's exact zero-counter ranges and genuine maintained fixture producers for
+the next related batch. Keep the one active contour and all numeric gates.
 
 ### Run untrusted retired-artifact decoder packet
 
@@ -166,8 +134,8 @@ producer ran from2696.2697 passes strict158/lint0 and all four affected groups,
 oracle correction, not a demonstrated product mutation or numeric closure.
 Fresh blind2697 review passes the corrected current bytes, causal refusals,
 preservation and retention. It runs no checks or producer. Documentation links
-and `git diff --check` pass. Ordinary hooks and the sole changed-input stage
-remain with Root.
+and `git diff --check` pass. Ordinary hooks pass full formatting531/strict538. The normal push publishes
+`e9afe8d` before2699. The sole changed-input stage completes as recorded above.
 
 Pstack's Laziness Protocol keeps one pure request factory instead of a second
 fixture builder. Model the Domain uses named case groups for malformed DTOs.
