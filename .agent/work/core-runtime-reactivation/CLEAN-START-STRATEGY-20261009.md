@@ -46,11 +46,19 @@ child-side persisted-state observation; parent snapshots or direct APIs cannot
 supply it. No new objective skip or exact contour closure is established.
 2824–2842 qualified inert method ownership and instance mechanics. Actual Bun
 execution methods belong to each returned Statement, so reject the prototype-only
-design and retain the bounded instance-method mechanics proof.2846 observes the
-existing native issue's SQL, but its create-capable Host connections have no
-existing-only identity entry and Database.exec remains unqualified. Keep that
-native exit0 separate from the deliberately failed observer/case. Resolve actual
-Host connection ownership and SQL/FS consumption before adding a fixed role.
+design and retain the bounded instance-method mechanics proof.2846 exposes the
+existing-only registry's missing Host identity.2854–2861 observes the actual Host
+opener's consumed stats/native PRAGMA on its exact returned objects and qualifies
+SQL-only exec mechanics. The unchanged genuine case passes101assertions in that
+diagnostic profile. Keep the earlier deliberate observer failures and original
+fixtures. Before adding a fixed issue role, qualify combined FS/SQL consumption,
+decoded state/CAS/issued-ID joins, captured graph and native receipts through
+the existing owner. Diagnostic success adds no numeric counter or exact closure.
+Implement the next fixed issue subject in the same collector. Its genuine argv
+omits --intake. Preparation may supply root/work-bound target paths, but the
+issue child must prove its own fresh FS consumption under the shared SQL/FS
+budget. Preserve the existing byte-equality dedup before hashing and all native
+calls, option/deadline/group checks, UNKNOWN retention and refusal controls.
 WORK owns the retained fixture, raw capture, remaining qualification and
 retained-scratch reserve GAP; use the existing durable
 route for any next admitted producer without changing floors or prior evidence.

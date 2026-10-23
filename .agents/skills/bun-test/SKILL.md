@@ -617,6 +617,11 @@ opener. Missing identity keeps that connection unqualified. Observe the actual
 owner without extra SQL, product hooks or a filename/stat fallback. Retain native
 terminal and raw output before failing an incomplete observer, so fixture cleanup
 cannot erase that diagnostic failure.
+Save original functions before mocking a live module namespace. Correlate the
+exact opener return with its consumed native PRAGMA and stat results. Distinguish
+direct bigint snapshots from same-path guard calls by their original options;
+missing or ambiguous observations remain incomplete. A passing diagnostic still
+needs the maintained collector's combined budgets, joins and refusal controls.
 
 For an inclusive SQLite image-byte boundary, build a real database at the exact
 native page size/count. Delete an allocated padding BLOB to retain the image's

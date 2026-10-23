@@ -86,7 +86,8 @@ and `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-mutation-jJPTrK`.
 The actual Host connections3/9 use openHostStateDatabase's create-capable opener,
 which checks native database_list and before/after physical identity itself.
 They are absent from the existing-only raw opener's WeakMap, so its lookup
-cannot attest those connections. Database.exec mechanics are also unqualified.
+cannot attest those connections. Database.exec mechanics are also unqualified
+at2846.
 Neither a filename/stat fallback nor parent snapshots fill these gaps.2847
 independently selects observation of the existing Host owner's original calls,
 without qualifying that unimplemented interception. No new collector role or
@@ -95,8 +96,55 @@ observer refusal, and no issue counter, skip or new contour closure is admitted.
 2848 independently checks the scoped docs against raw and terminal evidence;
 Root applies its strategy tense correction. Documentation checks3files/31local
 links and diff whitespace pass. No separate code-comment review is claimed for
-this documentation-only packet.2849 prepares the next isolated Host-owner
-proposal; it has no runtime or numeric authority before Root verification.
+this documentation-only packet. Normal2851 hooks pass formatting533/strict540;
+2852's ordinary push publishes4e52def after terminal commit completion.
+
+2849's next isolated proposal still uses stack text despite its signature-based
+README, calls a live mocked fs namespace, references a nonexistent default export
+and mixes admission-gate PRAGMAs with Host facts. It remains unexecuted. Root's
+separate2854 diagnostic saves the original lstat function, selects the two actual
+bigint-option calls in the exact synchronous opener context and correlates the
+native PRAGMA only with the returned Host object. Gate calls stay in the SQL
+trace. Its first native check rejects11nullable indexed accesses;2855 passes89
+after explicit null handling. No gate is weakened or old artifact overwritten.
+
+2856 establishes both Host opens and all12connection identities in this graph;
+Database.exec still keeps complete=false, so the case deliberately fails and
+retains `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-mutation-piZgzq`.
+The native issue itself exits0; outer capture is complete and its owned group
+closes.2857/2858 then qualifies inert SQL-only Database.exec mechanics with eight
+successful calls, exact return/error forwarding, changes1/stale0, actual explicit
+BEGIN/ROLLBACK state and full descriptor restore. Native strict4 and exit0 pass;
+the inert DB and1278-byte stdout remain retained. Other binding forms and full
+transaction tracing remain unsupported.
+
+2859 admits only that one-string exec form to the diagnostic, with2860 native
+strict89 passing.2861's unchanged genuine CAS/report case then passes1/0,
+101expects in35.58s; Bun's whole selected invocation takes36.86s. Its Source
+commit is4e52defc85e6c52002b7426ba6ac12c690c4e819, Bun1.4.4 and boot unchanged.
+Native issue child598353 exits0 with26297stdout bytes/empty stderr. The retained
+`run-host-owner-probe-v2859/child-598353` SQL capture has2670events/2827464bytes,
+12verified connections and two exact Host-open witnesses, with no diagnostics.
+The outer `run-host-owner-native-v2861.*` capture is complete and its owned group
+closes. This does not supply the detached native issue group's maintained receipt.
+2863 checks the retained bytes only: five actual Journal CAS changes progress
+revision2 through7; every expected version and work/attempt matches the original
+argv and previous change. The observed final row and wave_issued output share
+revision7/digest, with3issued actions. This
+navigation is not a decoded issue-graph admission or a new coverage result.
+
+2862 independently confirms the observed Host correlation and SQL-only mechanics.
+Its wording about the89-file check belongs to the separate2860 log, not the outer
+terminal receipt; its group wording is limited to that receipt's outer group.
+Before adding a fixed issue role, the existing owner still needs consumed FS
+proof, combined FS/SQL4MiB/4096limits, exact Work/Ledger/Journal/CAS/issued-ID joins,
+captured-module/launch/deadline/group bindings and targeted refusal controls.
+2864 supplies a bounded integration design. Root corrects its intake wording:
+the genuine issue argv omits --intake. Reuse preparation's root/work-bound paths
+only to discover targets, then observe the issue child's own fresh FS reads;
+preparation's old consumed bytes are not issue consumption. Reuse the existing
+byte-equality dedup before hashing. No further unchanged case, full
+suite, numeric stage, Source hook, skip or contour closure follows this diagnostic.
 
 The single19:24:53UTC preflight2828 observes20633284608durable available bytes and
 2182447104retained-scratch bytes. Native storage enforces2147483648; the separate
