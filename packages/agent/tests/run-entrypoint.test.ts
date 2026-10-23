@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import { recoverFailedPrewriterOwner } from '../bin/recover-failed-prewriter-owner.ts';
 import { afterAll, describe, expect, test, spyOn } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
+import {
+  openAdmittedWorkspaceDatabase,
+  closeWorkspaceDatabaseWithAdmission,
+} from '../src/config/storage-read-admission.ts';
+import { sessionBridgeDatabaseRelativePath } from '../src/config/project-paths.ts';
+import { nativeDatabaseSnapshotReader } from './helpers/native-database-snapshot.ts';
 import { observeWorkStateSchemaCompiles } from './helpers/ajv-compile-observer.ts';
 import {
   HostStateStore,
@@ -2801,6 +2807,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     return {
       args: admittedArgs,
       admissionArgs: [...admittedArgs, '--intake', intakePath],
+      nativeSessionHandle: intake.native_session_handle,
       sourceEntry,
     };
   };
@@ -3726,6 +3733,87 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 observation: null,
               })),
             );
+            const selected = observed.work[0];
+            assert.ok(selected && observed.ledger_version);
+            expect(observed.work).toHaveLength(1);
+            expect(selected.state.execution.assignment_attempts).toEqual([]);
+            const request = {
+              schema: 'CompletedReadonlyReleaseRequest/v1',
+              workspace_id: observed.workspace_id,
+              identity: selected.identity,
+              attempt: journal.attempt,
+              expectedWork: selected.version,
+              expectedLedger: observed.ledger_version,
+              expectedJournal: journal.version,
+              nativeSessionHandle: admitted.nativeSessionHandle,
+              userRequestPointer: 'fixture:readonly-release-inspection',
+              requestIntent: 'linked_correction',
+            };
+            const requestRef = 'readonly-request.json';
+            const requestFile = path.join(root, requestRef);
+            const requestBytes = Buffer.from(JSON.stringify(request));
+            const planRef = `readonly-release-plan-${selected.identity.work_id}.json`;
+            const planFile = path.join(root, planRef);
+            const inspectDatabases = () =>
+              [
+                path.relative(root, sessionHandoffDatabasePath(root, config)),
+                sessionBridgeDatabaseRelativePath(config),
+              ].map((relative) => {
+                const database = openAdmittedWorkspaceDatabase(root, relative, observed.workspace_id, true);
+                let outcome: DatabaseWorkOutcome<ReturnType<ReturnType<typeof nativeDatabaseSnapshotReader>>>;
+                try {
+                  outcome = { ok: true, value: nativeDatabaseSnapshotReader(database)() };
+                } catch (error) {
+                  outcome = { ok: false, error };
+                }
+                return finishWorkspaceDatabaseClose(
+                  database,
+                  outcome,
+                  closeWorkspaceDatabaseWithAdmission,
+                  'Readonly release snapshot and database close failed',
+                );
+              });
+            const databasesBefore = inspectDatabases();
+            const releaseArgs = (mode: string) => [
+              '--release-completed-readonly',
+              'true',
+              '--mode',
+              mode,
+              '--project-root',
+              root,
+              '--request',
+              requestRef,
+            ];
+            const completedResearch = journal.state.completed.flatMap((wave) => wave.items);
+            expect(completedResearch).toHaveLength(issuedActions.length);
+            expect(completedResearch.every((item) => item.research_activation && item.research_normalization)).toBe(
+              true,
+            );
+            const staleJournal = { ...request.expectedJournal, revision: request.expectedJournal.revision - 1 };
+            for (const [mode, changed, message] of [
+              ['inspect', request, 'Readonly release actual accepted readonly action differs'],
+              ['plan', request, 'Readonly release actual accepted readonly action differs'],
+              [
+                'inspect',
+                { ...request, expectedJournal: staleJournal },
+                'Readonly release journal identity/CAS differs',
+              ],
+              [
+                'inspect',
+                { ...request, identity: { ...request.identity, project_ids: [] } },
+                'Readonly release identity differs',
+              ],
+            ] as const) {
+              const changedBytes = changed === request ? requestBytes : Buffer.from(JSON.stringify(changed));
+              writeFileSync(requestFile, changedBytes);
+              await assert.rejects(
+                run(releaseArgs(mode)),
+                (error: unknown) => error instanceof Error && error.message === message,
+              );
+              expect(readFileSync(requestFile)).toEqual(changedBytes);
+              expect(inspectDatabases()).toEqual(databasesBefore);
+              expect(existsSync(planFile)).toBe(false);
+            }
           }
         }
         completed = true;

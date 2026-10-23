@@ -125,6 +125,66 @@ registration. Batch prerequisite repairs and newly registered targeted controls
 before the next complete changed-input stage. Do not claim every gap comes from
 this gate or treat missing attribution/fixtures as objective untestability.
 
+### Run completed-research release-refusal packet
+
+2675/2676 compare maintained positive-fixture routes as bounded blind native Luna
+readers. They do not edit Source, run tests/compiler, create worktrees or start a
+second producer. A large stopped-source fixture extraction and importing its
+whole test file are rejected. Reuse the current CAS/report producer and unchanged
+60s case bound; all prior public CLI, report, Journal and unissued-wave oracles stay.
+
+2676's proposed plain-readonly positive premise fails in2677 after strict158/lint0:
+`Readonly release actual accepted readonly action differs`. The original target
+log and completed fixture
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-mutation-UBa17W` remain retained.
+No native domain rows are edited during diagnosis.
+A bounded readonly SQLite observation confirms all three genuinely completed
+research items have research_activation and research_normalization, no Host
+reservation, and reported_complete observations. The Source guard correctly
+rejects these records as plain readonly release. No research metadata, engine,
+Host row or production guard is changed to manufacture the proposed success.
+This is a fixture/design-premise error, not a newly confirmed product bug.
+The failed candidate's full pre-change test-input snapshot was not retained;
+its log/fixture/request and unchanged product Source identify the observed refusal,
+but it is not numeric qualification or a complete failed-input reattestation.
+
+The corrected packet extends that same genuine producer, returns its
+existing intake owner handle, and uses the maintained nativeDatabaseSnapshotReader
+with admitted readonly opens and guaranteed close. Exact inspect/plan refusal,
+stale Journal CAS and empty project identity compare both complete native Host
+and engine schemas/rows plus request bytes and absent plan. Activated/normalized
+research is not silently relabelled as effect-free completed readonly work.
+2678 passes strict158/lint0 and the one composite target,73Bun expects in29.23s.
+Only that changed target is repeated; no unchanged full stage or SDK build runs.
+2679 confirms the refusal proof but finds a new helper's try/finally could mask
+an original snapshot error if database close also fails. Root uses the existing
+DatabaseWorkOutcome/finishWorkspaceDatabaseClose owner instead, with reader
+construction inside its protected try. No new cleanup framework is introduced.
+2681 passes scoped strict158/lint0; its exact candidate diff is saved before
+checks in DIAG/run-readonly-input-v2681.patch.2682 reuses the maintained native
+sync accumulator control,1PASS/16expects in1.157s, covering success, work-only,
+close-only and both errors. The earlier73-expect composite pass is reused rather
+than repeating29s for the cleanup-owner join.2683 independently returns PASS,
+resolving the custody blocker. Its accidental broad diagnostic rg emits truncated
+output and is disclosed; it is not used as evidence and no token savings are
+claimed. Future bounded review briefs need no diagnostics-directory lookup;
+Root owns check logs and final numbers. One complete changed-input stage follows.
+
+A fully qualifying plain-readonly positive producer remains an OPEN engineering
+prerequisite, not an objective skip. The specialized settled-research historical
+route is not a drop-in replacement: inspectHistoricalOwnerContext requires an
+accepted Source configuration with runtime.bundle packages/agent, whereas this
+fixture uses agent-runtime-new. Keep those identity/initialization/runtime gates.
+Use retained2673 geometry for further candidates rather than inventing authority.
+
+The cloud-environment-runtime skill available at this continuation bootstrap is read;
+its current runtime API reports connected/running, observations_current true and
+enforced unrestricted HTTP policy. The actual v1 policy keeps the proxy and VPN
+configured false; no credential contents are read, no networking/config changes
+or timer operations occur. Existing2671 scratch admission and2649durable snapshot
+are reused, no extra df/du/hash sweep or cleanup. Historical unsupported skill
+claims remain historical; no unavailable named role is claimed as executed.
+
 ### Run nested decoder packet
 
 2662/2663 are independent blind native Luna proposals for retired/stopped request

@@ -277,6 +277,16 @@ Separate in-process special-command controls use exact refusals, fresh private
 roots and unchanged configuration/initialization/request bytes; malformed
 requests must create neither a workspace database nor Work. Preserve failed roots.
 These controls establish early refusals, not positive recovery history.
+A completed research wave carrying activation and normalization is not a plain
+completed-readonly release fixture. Reuse its genuine admission, issued actions,
+reports and unissued frontier to require the exact inspect/plan refusal. Compare
+both native Host and engine schemas/rows with the existing snapshot reader and
+admitted readonly opens; retain every failure. Stale Journal CAS and empty project
+identity must refuse separately without changing those databases or creating a
+release plan. Derive the owner handle from the existing intake producer. This is
+a component refusal, not positive release, accepted native history or permission
+to delete research metadata.
+
 For stopped/retired nested decoder refusals, first prove the same typed prefix
 reaches the next distinct native boundary. Stopped capture must reach the exact
 missing terminal-file ENOENT/path; retired capture must reach the downstream
