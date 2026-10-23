@@ -1290,6 +1290,19 @@ Use native initialization for alternate portable-bundle refusal and an isolated
 CLI missing-option invocation for its exact blocked envelope; neither constructs
 a controller. Native Windows arms require their own target evidence.
 
+Construction refusal controls forward real filesystem operations before corrupting
+only an owned destination. An inconsistent second portable-lock observation may
+change the returned buffer after the native read, never Source bytes; label it a
+reader-boundary fault rather than a real concurrent Source mutation. Both refusals
+must happen before child observations or controller metadata exist. For post-install
+lock drift, forward the actual installer observation unchanged, mutate only the
+private copied lock, and require complete terminal/parent receipts with no ready
+metadata. Do not substitute a successful child DTO. Reuse that rejected construction
+for diagnostics-disabled execution and restore the environment before genuine
+qualification. Check the existing private package's embedded portable lock against
+the root lock before removing/restoring only its root lock; native inspection must
+detect binding drift and succeed after restoration.
+
 ### Controller child observations
 
 Decode Buffer and Uint8Array diagnostic streams through the existing UTF-8

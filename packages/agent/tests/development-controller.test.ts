@@ -30,6 +30,8 @@ import { readPortableLock } from '../bin/install.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { configuredTestRepositoryRoot } from './configured-context.ts';
 import * as controllerObservation from '../bin/development-controller-observation.ts';
+import * as controllerFilesystem from 'node:fs';
+import * as controllerInstall from '../bin/install.ts';
 import { initializeProject } from '../bin/init.ts';
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
@@ -191,11 +193,140 @@ test('controller inspection preserves the missing-root cause without disclosing 
   }
 });
 
+test('controller construction rejects real private copy corruption before installing dependencies', async () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-copy-fault-'));
+  const controllerRoot = path.join(scratch, 'controller');
+  const nativeCopy = controllerFilesystem.copyFileSync;
+  const copiedInputs: { file: string; bytes: Buffer }[] = [];
+  let completed = false;
+  try {
+    const copy = spyOn(controllerFilesystem, 'copyFileSync').mockImplementation((source, destination, mode) => {
+      nativeCopy(source, destination, mode);
+      if (
+        copiedInputs.length === 0 &&
+        typeof source === 'string' &&
+        typeof destination === 'string' &&
+        destination.startsWith(path.join(controllerRoot, 'package') + path.sep)
+      ) {
+        copiedInputs.push({ file: source, bytes: readFileSync(source) });
+        writeFileSync(destination, Buffer.concat([readFileSync(destination), Buffer.from('\nprivate copy fault\n')]));
+      }
+    });
+    try {
+      await assert.rejects(
+        prepareDevelopmentController({ target: sourceRoot, controllerRoot }),
+        /Executing package changed during construction/,
+      );
+    } finally {
+      copy.mockRestore();
+    }
+    expect(copiedInputs).toHaveLength(1);
+    const [copied] = copiedInputs;
+    assert.ok(copied);
+    assert.deepEqual(readFileSync(copied.file), copied.bytes);
+    expect(existsSync(path.join(controllerRoot, 'controller.json'))).toBe(false);
+    expect(existsSync(path.join(controllerRoot, 'observations'))).toBe(false);
+    completed = true;
+  } finally {
+    if (completed) cleanupOwnedFixture(scratch);
+    else console.error(`Retained failed or uncertain copy fault fixture: ${scratch}`);
+  }
+});
+
+test('controller construction rejects inconsistent lock observations without writing Source', async () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-lock-fault-'));
+  const controllerRoot = path.join(scratch, 'controller');
+  const nativeLock = controllerInstall.readPortableLock;
+  const originalLock = nativeLock(packageRoot);
+  const sourceReads: Buffer[] = [];
+  let completed = false;
+  try {
+    const lock = spyOn(controllerInstall, 'readPortableLock').mockImplementation((root) => {
+      const bytes = nativeLock(root);
+      if (root === packageRoot) {
+        sourceReads.push(bytes);
+        if (sourceReads.length === 2) return Buffer.concat([bytes, Buffer.from('\n')]);
+      }
+      return bytes;
+    });
+    try {
+      await assert.rejects(
+        prepareDevelopmentController({ target: sourceRoot, controllerRoot }),
+        /Executing package lock changed during construction/,
+      );
+    } finally {
+      lock.mockRestore();
+    }
+    expect(sourceReads).toHaveLength(2);
+    for (const bytes of sourceReads) expect(bytes).toEqual(originalLock);
+    expect(readPortableLock(packageRoot)).toEqual(originalLock);
+    expect(existsSync(path.join(controllerRoot, 'controller.json'))).toBe(false);
+    expect(existsSync(path.join(controllerRoot, 'observations'))).toBe(false);
+    completed = true;
+  } finally {
+    if (completed) cleanupOwnedFixture(scratch);
+    else console.error(`Retained failed or uncertain lock observation fixture: ${scratch}`);
+  }
+});
+
 test('qualified development controller preserves Source identity and accepts a scoped new target bin through unchanged current code', async () => {
   await import('../src/config/runtime-config.ts');
   const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-'));
   let completed = false;
   try {
+    const installFaultRoot = path.join(scratch, 'install-lock-fault');
+    const sourceLock = readPortableLock(packageRoot);
+    const nativeInstall = controllerObservation.invokeObservedControllerChild;
+    const installs: ReturnType<typeof nativeInstall>[] = [];
+    const installCommands: string[][] = [];
+    const originalDiagnostics = process.env.VIDA_CONTROLLER_DIAGNOSTICS;
+    process.env.VIDA_CONTROLLER_DIAGNOSTICS = 'false';
+    const install = spyOn(controllerObservation, 'invokeObservedControllerChild').mockImplementation((input) => {
+      const result = nativeInstall(input);
+      installs.push(result);
+      installCommands.push([...input.args]);
+      if (
+        input.controllerRoot === installFaultRoot &&
+        result.status === 0 &&
+        result.signal === null &&
+        result.error === undefined &&
+        result.observation_complete
+      ) {
+        const lock = path.join(installFaultRoot, 'package/bun.lock');
+        writeFileSync(lock, Buffer.concat([readFileSync(lock), Buffer.from('\n')]));
+      }
+      return result;
+    });
+    try {
+      await assert.rejects(
+        prepareDevelopmentController({ target: sourceRoot, controllerRoot: installFaultRoot }),
+        /Frozen controller lock changed during installation/,
+      );
+    } finally {
+      install.mockRestore();
+      if (originalDiagnostics === undefined) delete process.env.VIDA_CONTROLLER_DIAGNOSTICS;
+      else process.env.VIDA_CONTROLLER_DIAGNOSTICS = originalDiagnostics;
+    }
+    expect(installs).toHaveLength(1);
+    expect(installs[0]).toMatchObject({ status: 0, signal: null, observation_complete: true });
+    expect(installCommands).toHaveLength(1);
+    const [installArguments] = installCommands;
+    assert.ok(installArguments);
+    for (const flag of ['install', '--frozen-lockfile', '--ignore-scripts', '--production'])
+      expect(installArguments.includes(flag)).toBe(true);
+    expect(readPortableLock(packageRoot)).toEqual(sourceLock);
+    expect(existsSync(path.join(installFaultRoot, 'controller.json'))).toBe(false);
+    const installObservations = path.join(installFaultRoot, 'observations');
+    const installRuns = readdirSync(installObservations);
+    expect(installRuns).toHaveLength(1);
+    const [installRun] = installRuns;
+    assert.ok(installRun);
+    expect(
+      JSON.parse(readFileSync(path.join(installObservations, installRun, 'controller-child.json'), 'utf8')),
+    ).toMatchObject({ exit_code: 0, signal: null, timed_out: false, capture_status: 'complete' });
+    expect(
+      JSON.parse(readFileSync(path.join(installObservations, installRun, 'parent-complete.json'), 'utf8')),
+    ).toMatchObject({ status: 'complete', controller_child: 'complete' });
     const controllerRoot = path.join(scratch, 'controller');
     const prepareOutput: string[] = [];
     const prepareStdout = spyOn(process.stdout, 'write').mockImplementation((chunk: unknown) => {
@@ -641,6 +772,14 @@ test('qualified development controller preserves Source identity and accepts a s
       expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('current vida-agent candidate'),
     );
     writeFileSync(manifestFile, manifest);
+    const packageLock = path.join(ready.package_root, 'bun.lock');
+    await withRestoredControllerMetadata(packageLock, async () => {
+      const lock = readPortableLock(ready.package_root);
+      assert.deepEqual(readFileSync(path.join(ready.package_root, 'dist/portable/bun.lock')), lock);
+      unlinkSync(packageLock);
+      expect(readPortableLock(ready.package_root)).toEqual(lock);
+      await assert.rejects(inspectDevelopmentController({ controllerRoot }), /drift/);
+    });
     await withRestoredControllerMetadata(manifestFile, async () => {
       for (const value of [null, [], { name: 42 }, { version: 42 }]) {
         writeFileSync(manifestFile, JSON.stringify(value));

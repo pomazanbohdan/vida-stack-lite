@@ -101,6 +101,38 @@ producer is added.
 
 ### Current controller repair packet
 
+The next checked packet addresses remaining construction/snapshot comparisons.
+Binding2425 confirms the latest2422 Source/test fingerprints match map2399's
+retained geometry, without another AST/inventory/hash pass. Independent bounded
+studies2426/2427 separate actual CLI-process instrumentation from testable I/O
+guards. Inert native probe2428 confirms scoped fs-copy and portable-lock observers
+affect named imports and restore their real implementations.
+
+Root adds real private copy corruption and an inconsistent second lock-reader
+return after a genuine read, preserving original Source bytes and refusing before
+any child or controller metadata. The existing end-to-end fixture forwards one
+actual installer result before mutating its private copied lock; complete terminal
+and parent receipts survive, and no successful controller metadata is saved for
+that refusal. It covers diagnostics-disabled execution, then restores environment/
+adapter state before the single genuine qualification. The ready private package
+also exercises embedded-lock fallback after root-lock removal and exact restoration.
+No product defect, real Source mutation or accepted synthetic install is claimed.
+
+2431 strict103/zero-warning lint and the2cheap cases pass in868ms.2432's complete
+file passes13cases/220expect calls in34.34s under unchanged deadlines. Original
+2429Buffer-typing and2430asymmetric-matcher lint diagnostics remain retained and
+resolve through2431's native byte comparisons and typed argument checks.
+The independent current-byte review2433 reports no blocking findings. The sole
+changed-input stage follows publication of this checked packet.
+
+2426 confirms the real CLI catch/errorMessage are executable, still OPEN counters.
+The Bun Test-only afterAll/selected-tests-loaded receipt cannot simply be inherited
+by a non-test CLI child.2434 designs a bounded child-counter protocol using the
+existing immutable input/capture owners, conditional on a native direct-entry
+instrumentation proof; no new collector or weakened test-child receipt is
+activated. Windows arms and fixed-root absent-lock prerequisites remain
+separate. No new contour opens while testable/undispositioned paths remain.
+
 The product inspector now rejects persisted ready metadata with missing,
 non-passing or foreign-bound qualification before a child can run.2346 reproduces
 the missing rejection on a real prepared/verified controller.2350 passes its
