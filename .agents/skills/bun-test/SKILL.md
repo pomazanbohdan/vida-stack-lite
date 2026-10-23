@@ -84,6 +84,14 @@ history after `mockRestore` is not a durable observation. Complete real synthesi
 prerequisites before choosing a later readonly frontier for a negative writer
 request. Check the actual admitted packet after a native transition, outside
 the verifier's catch. A generic approval denial alone cannot identify its guard.
+Resolve a fresh-process counter-custody prerequisite before the final full stage,
+alongside the Source/test repairs. A module-startup constant cannot be changed by
+per-call environment or a query-cache assumption. Prefer a narrowly bound native
+scenario through the existing collector; an expired positive deadline can test
+policy construction before any target launch. Require exact argv/environment,
+terminal/output and duplicate-scenario refusals, then measure changed inputs once.
+Lack of a current collector is an OPEN engineering GAP, not proof that Source is
+objectively untestable. Do not move branches or weaken admission merely for hits.
 Register a child launched through a computed path in the maintained Knip entry
 list before publication. Name the exact executable; do not ignore unused files.
 For the configured Source singleton refusal, a fresh typed trusted Host CAS can

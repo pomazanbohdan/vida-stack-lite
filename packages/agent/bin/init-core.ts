@@ -483,12 +483,8 @@ function buildReceipt(
   return { rawSchema, receipt };
 }
 
-/** @param {SafeRepositoryAccess} access @param {string} bundle @param {SafeRepositoryAccess} packageAccess @returns {TemplateEvidence[]} */
-function existingOutputEvidence(
-  access: SafeRepositoryAccess,
-  bundle: string,
-  packageAccess: SafeRepositoryAccess,
-): TemplateEvidence[] {
+/** @param {SafeRepositoryAccess} access @param {SafeRepositoryAccess} packageAccess @returns {TemplateEvidence[]} */
+function existingOutputEvidence(access: SafeRepositoryAccess, packageAccess: SafeRepositoryAccess): TemplateEvidence[] {
   return outputs.map(([template, output]) => {
     const templateBytes = packageAccess.readBytes(`templates/${template}`, 'initialization template');
     const outputBytes = access.readBytes(output, 'existing project integration file');
@@ -538,7 +534,7 @@ function validateExistingReceipt(
   );
   const config = requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot);
   validateExistingBindings(config, bundle, repository, selectedProjects);
-  const evidence = existingOutputEvidence(access, bundle, packageAccess);
+  const evidence = existingOutputEvidence(access, packageAccess);
   if (
     receipt.workspace_id !== requireRuntimeModule(workspaceIdentity).deriveWorkspaceId(repository, canonicalRoot) ||
     receipt.repository_id !== repository ||
@@ -655,7 +651,7 @@ async function resumePendingInitialization(
     existing.push({ output: entry.output, output_sha256: entry.output_sha256 });
   }
   const installed = requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot);
-  const evidence = existingOutputEvidence(access, bundle, packageAccess);
+  const evidence = existingOutputEvidence(access, packageAccess);
   const provenance = evidence.every(
     (entry, index) =>
       entry.output_sha256 === requireEntry(intent.templates, index, 'Initialization template evidence').output_sha256,
@@ -732,7 +728,7 @@ async function reconcileExistingInitialization(
     access.readText(requireEntry(outputs, 3, 'Documentation policy output')[1], 'existing documentation policy'),
   );
   validateGeneratedReferences(access, validatedConfig, [], packageAccess);
-  const evidence = existingOutputEvidence(access, bundle, packageAccess);
+  const evidence = existingOutputEvidence(access, packageAccess);
   const { rawSchema, receipt } = buildReceipt(
     packageAccess,
     bundle,

@@ -271,6 +271,15 @@ canonical counter validation. This is not recursion into a coverage suite.
 Other copied-wrapper and fresh-start environment children remain behavioral
 controls; they do not contribute measured counters.
 
+Initialization's native Bun entry control uses an explicit private project root
+and preserves launch, raw Buffer streams and terminal records before assertions.
+Verify the generated receipt's repository/project binding and integration content;
+failed fixtures remain retained. It does not qualify Node or modify a consumer.
+On a verified package-reader failure, observe stable and raw reader attempts as
+well and require no fallback for that target or publication. A copied initializer
+must render a copied-only valid resource marker absent from the original package.
+Create the bundle under its existing retention try/finally, including setup faults.
+
 CLEAR and public CLI fixture runners share the synchronous child-outcome
 classifier. An error, signal or missing integer status is UNKNOWN: fail the
 case with its child diagnostic and retain the consumer root. Integer exit 1

@@ -252,6 +252,60 @@ test('init CLI reports initializer failure without printing a success receipt', 
   expect(cli.exit.exitCode).toBe(1);
 });
 
+test('native init CLI initializes an isolated project and preserves terminal evidence before assertions', () => {
+  const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-native-cli-'));
+  let completed = false;
+  try {
+    const args = [
+      path.join(packageRoot, 'bin/init.ts'),
+      '--project-root',
+      projectRoot,
+      '--repository',
+      'safe-repository',
+      '--project',
+      'alpha=.',
+    ];
+    writeFileSync(
+      path.join(projectRoot, 'cli-launch.json'),
+      JSON.stringify({ executable: process.execPath, args, cwd: projectRoot, timeout_ms: 5000 }),
+      { flag: 'wx' },
+    );
+    const result = spawnSync(process.execPath, args, {
+      cwd: projectRoot,
+      windowsHide: true,
+      timeout: 5000,
+      maxBuffer: 128 * 1024,
+    });
+    writeFileSync(path.join(projectRoot, 'cli.stdout.log'), result.stdout ?? Buffer.alloc(0), { flag: 'wx' });
+    writeFileSync(path.join(projectRoot, 'cli.stderr.log'), result.stderr ?? Buffer.alloc(0), { flag: 'wx' });
+    writeFileSync(
+      path.join(projectRoot, 'cli-terminal.json'),
+      JSON.stringify({
+        pid: result.pid,
+        status: result.status,
+        signal: result.signal,
+        error: result.error?.message ?? null,
+        capture_available: Buffer.isBuffer(result.stdout) && Buffer.isBuffer(result.stderr),
+      }),
+      { flag: 'wx' },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status, result.stderr?.toString('utf8')).toBe(0);
+    expect(result.stderr.length).toBe(0);
+    const output: unknown = JSON.parse(result.stdout.toString('utf8'));
+    expect(output).toMatchObject({ status: 'initialized' });
+    const receipt: unknown = JSON.parse(
+      readFileSync(path.join(projectRoot, '.agent/runtime-initialization.v1.json'), 'utf8'),
+    );
+    expect(receipt).toMatchObject({ repository_id: 'safe-repository', project_ids: ['alpha'] });
+    expect(readFileSync(path.join(projectRoot, 'AGENT.sidecar.md'), 'utf8')).toContain('Selected projects: alpha');
+    completed = true;
+  } finally {
+    retainedCleanup(projectRoot, completed);
+  }
+});
+
 test('Node CLI delegates the same arguments to pinned Bun and preserves its exit status', async () => {
   const calls: string[][] = [];
   const cli = cliHarness();
@@ -375,6 +429,7 @@ test('public initializer does not fall back or publish when a verified package r
   let completed = false;
   const failure = new Error('fixture verified package read failure');
   const verifiedTargets: string[] = [];
+  const stableTargets: string[] = [];
   const rawTargets: string[] = [];
   const originalRequire = safeRepositoryAccess.requireSafeRepositoryAccess;
   const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((root) => {
@@ -392,6 +447,14 @@ test('public initializer does not fall back or publish when a verified package r
         rawTargets.push(target);
         return nativeAccess.readText.call(nativeAccess, target, label);
       },
+      ...(nativeStableRead
+        ? {
+            readStableBytes(target: string, label: string): Buffer | null {
+              stableTargets.push(target);
+              return nativeStableRead.call(nativeAccess, target, label);
+            },
+          }
+        : {}),
       readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
         expect(this === wrapped).toBe(true);
         verifiedTargets.push(target);
@@ -410,6 +473,7 @@ test('public initializer does not fall back or publish when a verified package r
   try {
     await Promise.resolve(expect(initializeProject(validRequest(projectRoot))).rejects.toBe(failure));
     expect(verifiedTargets).toContain('templates/AGENTS.template.md');
+    expect(stableTargets).not.toContain('templates/AGENTS.template.md');
     expect(rawTargets).not.toContain('templates/AGENTS.template.md');
     expect(
       [
@@ -711,21 +775,26 @@ test('bundle initializer writes a receipt and preserves project-owned files on r
 
 test('copied public initializer preserves project-owned integration values on a repeated run', async () => {
   const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-existing-'));
-  const bundle = createInitializationBundle(packageRoot, projectRoot, [
-    'src',
-    'schemas',
-    'instructions',
-    'templates',
-    'tooling',
-    'package.json',
-    'README.md',
-    'TESTING.md',
-    'bun.lock',
-    '.bun-version',
-  ]);
-  const dependencies = path.join(bundle, 'node_modules');
+  let dependencies: string | undefined;
   let completed = false;
   try {
+    const bundle = createInitializationBundle(packageRoot, projectRoot, [
+      'src',
+      'schemas',
+      'instructions',
+      'templates',
+      'tooling',
+      'package.json',
+      'README.md',
+      'TESTING.md',
+      'bun.lock',
+      '.bun-version',
+    ]);
+    dependencies = path.join(bundle, 'node_modules');
+    const template = path.join(bundle, 'templates/AGENT.sidecar.template.md');
+    const marker = '<!-- copied-init-resource-origin -->';
+    expect(readFileSync(path.join(packageRoot, 'templates/AGENT.sidecar.template.md'), 'utf8')).not.toContain(marker);
+    writeFileSync(template, readFileSync(template, 'utf8') + '\n' + marker + '\n');
     cpSync(path.join(packageRoot, 'bin'), path.join(bundle, 'bin'), { recursive: true, dereference: false });
     symlinkSync(
       path.join(packageRoot, 'node_modules'),
@@ -749,6 +818,7 @@ test('copied public initializer preserves project-owned integration values on a 
     const receipt = path.join(projectRoot, '.agent', 'runtime-initialization.v1.json');
     expect(readFileSync(sidecar, 'utf8')).toContain('Repository: safe-repository');
     expect(readFileSync(sidecar, 'utf8')).toContain('Selected projects: outside-project');
+    expect(readFileSync(sidecar, 'utf8')).toContain(marker);
     expect(readFileSync(yaml, 'utf8')).toContain('repository_id: safe-repository');
     expect(readFileSync(yaml, 'utf8')).toContain('project_id: outside-project');
     expect(JSON.parse(readFileSync(receipt, 'utf8'))).toMatchObject({ repository_id: 'safe-repository' });
@@ -782,7 +852,7 @@ test('copied public initializer preserves project-owned integration values on a 
     expect(readFileSync(receipt)).toEqual(receiptBytes);
     completed = true;
   } finally {
-    if (completed && existsSync(dependencies)) unlinkSync(dependencies);
+    if (completed && dependencies !== undefined && existsSync(dependencies)) unlinkSync(dependencies);
     retainedCleanup(projectRoot, completed);
   }
 });

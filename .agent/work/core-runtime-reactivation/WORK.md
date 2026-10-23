@@ -23,6 +23,48 @@ Toolchain completes all testable paths in2561. Its remaining9branch arms and
 2statements have independent dispositions, including an OPEN native Windows
 prerequisite. This permits queue progression, not numeric exact100.
 
+### Init correction packet
+
+Current scope is bin/init-core.ts and bin/init.ts with tests/initialization.test.ts
+and tests/init-entrypoint-v8.test.ts. The old954e017a report's exact locator in
+retired601e3bf7 is absent. Its historical geometry is navigation, not current
+evidence; no UNKNOWN is replayed. Root has no active numeric producer while
+preparing this packet. Native blind2541/2542 readers use contracts2565/2566 and
+inspect disjoint core and
+entry fixture scopes without Git/compiler/runtime work.
+
+One reader proposes the approved future .vida layout as a product mismatch.
+Sidecar explicitly retains current paths until the coordinated upgrade exists;
+this is the existing migration GAP, not a newly confirmed regression or a
+layout-cutover authorization. Preserve current layout and its upgrade prerequisite.
+The confirmed safe Source cleanup removes existingOutputEvidence's unused bundle
+parameter, stale tag and three arguments. Evidence tuples and retained ceilings
+are unchanged; no new product callable is introduced.
+
+The fixture packet observes stable reads as well as verified/raw reads after an
+injected preferred-reader failure, proves copied-resource origin with a copied-
+only inert template marker and moves bundle setup inside retainedCleanup custody.
+One native pinned-Bun CLI case initializes a fresh private project, retaining
+exclusive launch/terminal and original Buffer logs before assertions. It proves
+real entry/parse/init/receipt binding, not native Node, installation or consumer
+effects. No per-test SDK build or new shared fixture runner is added.
+
+2567 passes scoped strict102, selected zero-warning lint and five affected entry,
+reader-failure, copied-origin, existing-receipt and explicit-recovery cases with
+53expect calls in5.01s.2542's final independent review finds no blocker. Remaining
+counter work waits for the sole changed-input stage after ordinary publication.
+
+Preparation finds README's worker-helper path ambiguous: scripts are under
+skills/poteto-mode, not plugin root. Root resolves that actual installed1.17.5
+executable after two absent-root probes and one unsupported --help probe. Fresh
+2565/2566 preparations parse kind=prepared/nonempty identical instructions; legacy
+remains prompt-only. README now states the exact relative path and passes known
+WORK/plan paths to readers. One reader discloses an accidental recursive work-
+history lookup; no result is used as evidence and the broad lookup is not repeated.
+Bun-test guidance now resolves collection prerequisites with the repair packet
+before its final full stage, distinguishing an engineering GAP from objective
+untestability. This prevents repeating the earlier clock-custody sequence.
+
 ### Toolchain correction packet
 
 Completed testable scope is bin/bun.ts with tests/bun-toolchain.test.ts and

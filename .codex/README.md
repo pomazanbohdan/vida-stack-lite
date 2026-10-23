@@ -216,8 +216,9 @@ with parent/provider codex, native route and the assigned access mode. Read its
 prepared instructions into the worker brief. The legacy contract is prompt-only;
 it does not restrict inherited tools or qualify hard isolation. Keep each result
 in its assigned artifact path and independently review it before Source joins.
-Invoke the installed `scripts/worker-contract/pstack-worker-contract` executable
-with Bun. Its adjacent `cli.ts` exports the implementation; executing that module
+Invoke `skills/poteto-mode/scripts/worker-contract/pstack-worker-contract`
+under the resolved plugin root with Bun. The `scripts` directory belongs to the
+poteto-mode skill, not the plugin root. Its adjacent `cli.ts` exports the implementation; executing that module
 alone can exit0 without preparing anything. Require a nonempty parsed result
 with `kind: prepared` and nonempty `instructions` before dispatch. Exit0 alone
 does not establish contract preparation.
@@ -231,6 +232,8 @@ do not skip the kind/instructions checks or omit the contract from the brief.
 Bounded direct reads and textual rg searches on assigned files are not full
 repository/AST/index/hash scans. State that distinction in restricted reader
 briefs; use the declared checked-in lifecycle fallback when the CLI is absent.
+Give readers the exact current WORK and plan paths. Do not search the complete
+`.agent/work` history to rediscover those two files.
 
 cloud-pstack-setup.ts --install installs/enables pstack@open-pstack and
 superpowers@superpowers-dev through the native Codex Git marketplaces. It discovers
