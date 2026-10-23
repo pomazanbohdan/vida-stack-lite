@@ -36,6 +36,47 @@ review pass;2618 measures a fresh image. Detailed failure/Source bindings remain
 in [published25427e0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/25427e0/.agent/work/core-runtime-reactivation/WORK.md#run-image-resource-failure-and-repair).
 The regression contract owns the current rule. No old image is repaired.
 
+### Latest run attempt: preserved native timeout
+
+2807 publishes the reviewed inspect/historical-owner packet asebc3033e50081de844f84cea024d1f6f99f6d240
+after normal formatting533/strict540 hooks and terminal0 push.2808 performs its
+single changed-input stage `/workspace/contour-stage-4OUhBX`, internal coverage
+runde658176-29e8-42ef-9e3b-4a33f58230be. The selected suite records103PASS/1FAIL,
+2038expects in139.53s; outer144074.036115ms. Historical decoder and genuine
+CAS/inspect cases pass,179.69ms and27489.90ms respectively. Different inputs,
+conditions and a failed suite do not establish a speedup or new numeric gain.
+
+The existing stale-integrations-digest case's native child843 reaches its4621ms
+effective deadline under the unchanged5000ms case budget. The terminal records
+statusnull/SIGKILL/ETIMEDOUT, timed_outtrue, cleanup_outcomeunknown and incomplete
+child capture, with empty raw streams. Original virtual paths are
+`/tmp/vida-run-negative-context-SzznwV` and `/tmp/vida-run-unknown-child-jlxq75`;
+their physical owner is
+`/dev/shm/vida-quality-retained-KirPpM/scratch-g8qZYE/scratch`.
+This is an UNKNOWN native outcome, not a product refusal, assertion-confirmed
+kill, supported root-cause diagnosis or permission to retry archived state.
+
+The outer producer closes with exit1/null signal/no spawn error or timeout,
+complete raw capture, closed owned group, unchanged boot and immutable image.
+Image `/workspace/.vida-quality-inputs/704b98b1d53915fe893c0d1829a64f203e5d438f/repository`
+has manifest SHA256e3d08061e5d269a6975b44ba77ac43e0daa5a3bd8f7076c29741483d497d1d53.
+SourceFP remains e365c5c58a27395a351afce83fc90a6688a3395da4d11b216b274beb6571b91c;
+testFP7a04f3779f54ab3c3757d56480922ddc01eeea472260fec8c3fd4e8e35a5201a,
+toolFP766eebb75bc2edb3e17b2c5e3879dafd9311cff73b01983e1424237d54d6bad9.
+The suite failure prevents an attributable focused report; the existing owner
+publishes one unknown-or-partial stage outcome,1336total attempts. Previous
+counters below remain historical, not current qualification. No replacement
+gap map, second stage, budget increase, objective skip or contour closure follows.
+
+After observed outer closure2809 reuses the generic retention owner, tar-compares
+and fsyncs the41246720-byte non-cache archive
+`/workspace/vida-functional-retention-4OUhBX-ADlP8M/archive.json`.
+Original failed/UNKNOWN fixtures, native receipts and raw logs remain unchanged;
+retention grants bytes only. Native admission reuses2265255936available scratch
+bytes against the unchanged floor; no new audit disk sweep or cleanup occurs.
+2811 independently studies a larger next public-boundary packet from retained
+geometry and current callers; it has no writer, check or numeric authority.
+
 ### Latest completed run measurement
 
 2790 completes the one-Source/two-test contour on

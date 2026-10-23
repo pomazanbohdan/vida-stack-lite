@@ -37,9 +37,15 @@ packet with one fixture baseline/configuration digest and exact request afterima
 WORK owns its review, checks and terminal measurement.2791 retains all existing
 native report/issue contracts and identifies direct prepared-state inspect as a
 supported next-packet candidate.2798/2801/2802/2804 group it with historical-owner
-decoder, argument/reference and byte-bound refusals. Finish independent review
-and ordinary publication before one complete changed-input stage. Do not repeat
-the unchanged genuine case for the later decoder-only additions. No subprocess
+decoder, argument/reference and byte-bound refusals.2805 independently approves
+the frozen packet;2807 publishesebc3033 after normal hooks/push. Its sole2808
+stage records103PASS/1FAIL: the existing stale-integrations-digest native child
+times out with UNKNOWN custody. WORK owns the exact terminal/image/retention
+bindings; no attributable coverage report or new numeric gain is established.
+Keep the failed roots and native logs fenced; no unchanged rerun, budget increase
+or archived UNKNOWN replay.2811 studies a larger next coherent public-boundary
+packet using retained geometry. Do not repeat the unchanged genuine case for
+the decoder-only additions. No subprocess
 is removed merely to raise parent counters; keep current counter admission.
 Preserve the same collector/readiness owners and do not add private alias admission.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts
