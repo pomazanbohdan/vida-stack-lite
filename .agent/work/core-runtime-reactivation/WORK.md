@@ -65,40 +65,46 @@ failed immutable image or weaken admission to make the old stage pass.
 
 ### Latest completed run measurement
 
-2631 completes the exact one-Source/two-test contour on
-2081cc65c1e650c9e85b520a21e23fb6dffbcadd, stage `/workspace/contour-stage-XzHx1V`,
-rune049ac5d-ecde-4573-899e-94346a684d90. All80tests pass with0failures and683expects
-in120.47s, outer126320.300936ms. Raw **F77/557 L468/2863 S494/3143 B452/3663**
+2641 completes the exact one-Source/two-test contour on
+e8515c20ba0e5bdbc82c2f6bc68183637e791288, stage `/workspace/contour-stage-Sy2uKm`,
+run50ab201c-deb5-4b14-bbaa-519d94711236. All80tests pass with0failures and688expects
+in132.13s, outer139177.227175ms. Raw **F126/557 L711/2863 S753/3143 B679/3663**
 stays BLOCKED/nonexact. Max CC501/entry CRAP13340 is navigation, not frozen
 acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
 closed process/group, unchanged boot/image and one paired projection import
-pass,1315attempts. Frozen/CRAP/mutation stay deferred.
+pass,1317attempts. Frozen/CRAP/mutation stay deferred.
 
-Image `/workspace/.vida-quality-inputs/287895e04f7c57d3a4aa146cec7adf2f36f560fa/repository`,
-manifest SHA2564812a5330659b875c67136434b6cc9cd9b66a15e27e7ab6b82eae37746384f53.
+Image `/workspace/.vida-quality-inputs/cd60f0ae0110495e3124f2b84fb12a07355336e2/repository`,
+manifest SHA256ca2160befddc6ddef1100cb33ad27e63764d8753431c009fda6800cd1408fff8.
 Package report is
-`coverage/bun-unified/diagnostics/e049ac5d-ecde-4573-899e-94346a684d90.focused-coverage.json`;
-run-manifest SHA256d770261674f0e59e42c84ff3eec6013767ecfc454c886109fd925dc04bd404a6.
+`coverage/bun-unified/diagnostics/50ab201c-deb5-4b14-bbaa-519d94711236.focused-coverage.json`;
+run-manifest SHA25644629f83e1705dacfad8582f2f8e4f246197b35a43fef1afaabf015e8a8261bb.
 SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
-test390d3f357f908b627f1b183aaa8d68518ac6df141574d3671780bbf9c28e1410,
-tool22a622aa23119d8d3806156e3dfa0aa9543ca4151fa1539d5583df45ae5d53d5.
-2633 reuses retained canonical geometry to map all480zero functions,2649statements
-and3211branch arms. No AST/index/hash sweep is repeated.2632 verifies/fsyncs the
+test1384c23135f6e3ca5969ce987fe77ed10bcb113e1402d8fb9dcb8294f91c44be,
+tool46c75fde113f36f059b09a5173dccb3926eb85ef03ccc74f4ae321dad9579682.
+2643 reuses retained canonical geometry to map all431zero functions,2390statements
+and2984branch arms. No AST/index/hash sweep is repeated.2642 verifies/fsyncs the
 40601600-byte functional archive at
-`/workspace/vida-functional-retention-XzHx1V-f6xf7k/archive.json`; originals stay.
-Archive SHA256f9088e16f6f740b38c295c7f57dbda8dbc9ee26a242378514c9d7105dd2bf0d4
+`/workspace/vida-functional-retention-Sy2uKm-aHKtNp/archive.json`; originals stay.
+Archive SHA2564f7dfb1c3c2080ffd50ee18ab28efc38ceafec4cb241bcdbde6885d44428ba8d
 binds this one new retention artifact, not another tree hash or old reattestation.
 
-Compared with2618's unchanged Source fingerprint and denominators, direct refusal
-controls add3covered functions,25lines,25statements and12branch arms.
-2618's76tests/165.88s and2631's80tests/120.47s have different test/tool inputs and
-membership; their durations establish no matched speedup ratio. The cache defect
-has a direct red/green environment oracle below, not a benchmark claim.
-2618 run90f021fc-85fe-4fb8-9b87-24f0fdf454ec, its map2619 and40591360-byte archive
-`/workspace/vida-functional-retention-hX5Wqs-L2S3oi/archive.json` remain historical.
-2602 run8133eab4-003f-426f-a749-1b385423d73e and its original map2603 and archive
-`/workspace/vida-functional-retention-ROyiXn-SjJWe9/archive.json` also stay.
+Compared with2631's unchanged Source fingerprint and denominators, real component
+execution adds49covered functions,243lines,259statements and227branch arms.
+2631's80tests/120.47s and2641's80tests/132.13s have changed test/tool inputs; do not
+claim a matched performance ratio. Actual component transitions now contribute
+attributable parent counters without claiming that child counters were admitted.
+2631 rune049ac5d-ecde-4573-899e-94346a684d90, map2633 and archive
+`/workspace/vida-functional-retention-XzHx1V-f6xf7k/archive.json` remain historical.
+2618/2602 original reports, maps and functional archives also stay; their bindings
+are in [published40ba17e WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/40ba17e/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
 2611's failed resource setup and originals remain retained.
+
+Root's first2643 gap-header projection emits11560tool-reported original output
+tokens before truncation. It reads retained geometry, not another AST/hash/index,
+but the output is avoidable cost. The next query uses counts by fixed line range
+and at most22headers. The separate reader's accidental broad rg is disclosed
+below. No session-level tool/token total or savings telemetry is available.
 
 2621 independently finds private selected-package CLI launches outside the current
 exact child collector profiles. Their counters require a narrow native alias,
@@ -112,12 +118,13 @@ inventing qualified history or Runtime acceptance.
 
 The bounded authority/cache packet below is published in2081cc6 after scoped
 checks, independent review and ordinary hooks; its normal push completes before
-2631. Root owns canonical integration and checks. Native2634 now compares one
-existing canonical run preparation launch through the current collector with the
-larger private-module alias design. Reuse canonical measured bytes before adding
-an alias protocol; a new profile requires exact native argv/environment/output,
-loaded-input and terminal joins plus missing/duplicate/foreign refusal controls.
-No unchanged full run is warranted. Keep the same contour and all numeric gates.
+2631. Root owns canonical integration and checks. Native2634 compares canonical-child admission with the
+private-module alias design and direct component reuse. The component packet in
+e8515c2 is checked below and measured once in2641. Child-only gaps still require
+exact native argv/environment/output, loaded-input and terminal/group joins plus
+missing/duplicate/foreign refusal controls. No unchanged full run is warranted.
+Next use2643's bounded ranges and genuine maintained fixture producers for the
+remaining helper/command paths. Keep the same contour and all numeric gates.
 
 A bounded Source read finds an omitted registration route at test line2509.
 The existing direct/component group registers only for mutationMode or
