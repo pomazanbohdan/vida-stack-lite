@@ -18,6 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { initializeProject, main } from '../bin/init.ts';
 import { initializeProjectFromBundle } from '../bin/init-core.ts';
+import * as pinnedBun from '../bin/bun.ts';
 import { createInitializationBundle } from './helpers/init-bundle.js';
 import { expectReturned, expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.js';
@@ -146,6 +147,12 @@ test.each([
     file: 'schemas/documentation-policy.v1.schema.json',
     change: (_text: string) => '[]',
     error: 'Documentation policy schema is invalid',
+  },
+  {
+    name: 'non-JSON documentation policy',
+    file: 'templates/documentation-policy.template.v1.json',
+    change: (_text: string) => '{not JSON',
+    error: 'Documentation policy is not JSON',
   },
   {
     name: 'invalid documentation policy',
@@ -693,6 +700,24 @@ test('Node CLI delegates the same arguments to pinned Bun and preserves its exit
   expect(calls).toEqual([[fileURLToPath(new URL('../bin/init.ts', import.meta.url)), ...args]]);
   expect(cli.exit.exitCode).toBe(7);
   expect(cli.messages).toEqual({ out: [], err: [] });
+});
+
+test('default init delegation selects the maintained pinned Bun owner', async () => {
+  const cli = cliHarness();
+  const args = ['--invalid-init-option'];
+  const calls: (readonly string[])[] = [];
+  const delegateSpy = spyOn(pinnedBun, 'runPinnedBun').mockImplementation((forwarded) => {
+    calls.push([...forwarded]);
+    return 1;
+  });
+  try {
+    await cli.run(args, { bunRuntime: false });
+    expect(calls).toEqual([[fileURLToPath(new URL('../bin/init.ts', import.meta.url)), ...args]]);
+    expect(cli.exit.exitCode).toBe(1);
+    expect(cli.messages).toEqual({ out: [], err: [] });
+  } finally {
+    delegateSpy.mockRestore();
+  }
 });
 
 test('public initializer rejects relative and linked project roots before initialization', async () => {

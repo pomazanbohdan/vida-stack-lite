@@ -25,29 +25,72 @@ prerequisite. This permits queue progression, not numeric exact100.
 
 ### Latest completed init measurement
 
-2568 completes the exact two-file contour on
-684d0627191f6f91badfd15dd73885ba1635d233, stage `/workspace/contour-stage-CPI6aU`,
-run96272e72-e3d1-457e-8320-1e21aecd8dab. All68tests pass with0failures and413expect
-calls in53.18s, outer57945.665691ms. Raw **F84/84 L309/326 S329/353 B172/211**
+2579 completes the exact two-file contour on
+cc7ec706d1257a6c3162d81a9bdac5af2d72915f, stage `/workspace/contour-stage-M1m72D`,
+runb792da0d-9fa1-41e7-8967-d682d780765d. All91tests pass with0failures and534expect
+calls in50.58s, outer54372.467417ms. Raw **F84/84 L325/326 S348/353 B195/211**
 remains BLOCKED/nonexact. Max CC/entry CRAP12 is navigation, not frozen acceptance.
 Native exit0, null signal, no timeout/spawn error, complete capture, closed
 process/group, unchanged boot/image and one paired projection import pass,
-1304attempts. Historical exact count stays17/46; no old input is requalified.
+1306attempts. Historical exact count stays17/46; no old input is requalified.
 
-Image `/workspace/.vida-quality-inputs/4f4814cdfe71588efa1f9f983f43d6b83857ff20/repository`,
-manifest SHA256454c8dd6e186f40fb69a7d5eb6ea2d1def6a7d1a1da2fb7a02d2698f81c2f731.
+Image `/workspace/.vida-quality-inputs/92e8cf796e6a7e32c6ce24e511fefc589128a7ea/repository`,
+manifest SHA25621aa17e919d19fa263e9e0714f182806c4c33c117a6fd90b69e3caf1e7d5c232.
 Package report is
-`coverage/bun-unified/diagnostics/96272e72-e3d1-457e-8320-1e21aecd8dab.focused-coverage.json`;
-run-manifest SHA256b064aedc12a25883723e303100a08b24c192003300d467adda1ad79c1320eafd.
+`coverage/bun-unified/diagnostics/b792da0d-9fa1-41e7-8967-d682d780765d.focused-coverage.json`;
+run-manifest SHA2566a33f1f99167f949b7e51ba7ef61615e2468352fa1775a0a4da965b2b8560c41.
 Source fingerprint011d0a1587d0bb639886f80a94c763d723f6564d5bca038cbd0396148b2d20b0,
-testc9cb622bfe7d12fbf48728b9b5e66d0ffcba5db2b98a3fa6f935793b52e3ea3d,
-tool569df0acbfc75d8ab8696ef145db2b33b23bfffe7d7f4029c82de6b0ad3ed366.
-2569 maps all39zero branch arms/24statements through retained canonical maps
-only.2570 verifies/fsyncs the10240-byte functional scratch archive at
-`/workspace/vida-functional-retention-CPI6aU-8NTYRx/archive.json`; original logs,
-receipts, report and image stay. Fresh2571/2572 parsed native reader contracts
-split render/validation from reconciliation/receipt gaps. No further full stage
-starts before their complete batch is repaired or independently dispositioned.
+test90cfb430d4bde9ae3b1c986178aef5e6f77ab1270fda1c850c4325644bb3faff,
+toolddb3602b4a99d3164c452549c6da81ecd425ca5609ff7771c385d029291ce614.
+2580 maps all16zero branch arms/5statements through retained canonical maps
+only.2581 verifies/fsyncs the10240-byte functional scratch archive at
+`/workspace/vida-functional-retention-M1m72D-s5n5t2/archive.json`; original logs,
+receipts, report and image stay. Fresh2582 parsed native reader contract reviews
+all remaining counters. The changed tests add23covered branch arms,19statements
+and16lines against2568 with unchanged Source fingerprint and denominators.
+Different test/tool inputs make the elapsed times unsuitable for a speedup claim.
+The preceding2568 binding remains in publishedcc7ec70 WORK.
+
+2580 also exposes a missed catch statement, s110 at init-core.ts330. A copied
+policy can contain invalid JSON without malformed template braces.2583 adds
+that exact refusal to the existing table and passes scoped strict102, selected
+zero-warning lint and one targeted case/5expect calls in826ms. This is a testable
+missing scenario, not an objective skip. Another full stage requires this actual
+changed input; no unchanged complete suite is repeated.
+
+### Init final gap checks
+
+Independent native2582 reviews every remaining2580counter. It confirms s110 is
+testable and also rejects the proposed init.ts b13 fallback skip. The public
+component main accepts an explicit bunRuntime:false option, so its real default
+module selection can be checked under Bun without native Node qualification.
+Root adds that control with a scoped spy on the maintained imported runPinnedBun
+owner, exact forwarded argv/status assertions and finally restoration. It runs
+no child or consumer operation.2585 passes scoped strict102, selected zero-warning
+lint and both final controls,8expect calls in1.61s. The transport disconnect
+obscured the compound tool response, but on reconnection the original logs and
+completed2586preparation are present, with no live compiler/test producer.
+Reuse those results rather than rerun them. Environment status again reports
+current connected/running readiness. No timer state or schedule changes.
+
+Independent2586 review finds no code blocker in either actual change. It confirms
+component-only adapter attribution, finally spy restoration and no added comments
+or suppressions. The reader did not launch the no-comments leaf's nested reviewer
+under Root's no-delegation brief; Root uses this fresh bounded Luna review, not a
+claim that the unavailable named role or nested workflow ran. The
+remaining objective candidates below are bound to unchanged SourceFP above and
+2582 review; they become the final disposition table only after one changed-input
+stage proves s110 and b13. Keep BLOCKED and all raw denominators.
+
+| Source function/counter and exact expression | Causal prerequisite and reopen condition |
+| --- | --- |
+| init-core.ts module load b0–b8/1, lines9–17, each `isBunRuntime ? await import(...) : null` | The nine false operands require actual non-Bun Core loading. Supported init delegates to Bun. Reopen if direct non-Bun initialization is supported; do not replace global Bun to simulate native target qualification. |
+| requireRuntimeModule b9/0+s12, line48, `if (module === null)` | Those module slots are null only on the unsupported non-Bun load path. Reopen on runtime/import contract change. |
+| requireEntry b10/0+s20, line74, `if (entry === undefined)` | Fixed outputs and rendered maps, validated nonempty project mappings and exactly four validated receipt templates precede indexing. Reopen for a new caller or changed validated shape. |
+| expandProjectSet b15/0+s37, line101, `if (!projectTemplate || !integrationTemplate)` | configureRenderedTemplates parses the template config first; its schema requires at least one project and provider. Reopen if schema or call order allows empty arrays. |
+| requireInitializationRuntime b25/0+s58, line168, `if (!isBunRuntime)` | Supported Core runs under pinned Bun. Reopen when direct non-Bun initialization becomes supported. |
+| renderTemplates b34/0, line261, `createdAt = new Date().toISOString()` | Every private caller explicitly supplies time; recovery timestamps are schema validated. Reopen if a supported caller omits it. Keep the guard/default and denominator. |
+| buildReceipt b50/0, line456, `provenance = 'generated'` | All four private callers supply generated/computed/adopted provenance. Reopen if a supported caller omits it. Keep the default and denominator. |
 
 ### Init remaining-path packet
 
@@ -76,7 +119,7 @@ Source reads that bundle and writes through the project access owner. The reader
 discloses an accidental diagnostics directory listing, unused as evidence.
 Existing V8-specific skips are unchanged. Copied CLI child execution does not
 supply ordinary parent counters; the new direct cases exercise instrumented Core.
-All current counters still belong to2568 until the changed-input stage completes.
+That packet was subsequently measured once in2579 above.
 
 ### Init correction packet
 
@@ -854,6 +897,34 @@ The real CLI child proves its blocked envelope;2392 confirms its child execution
 does not increment the parent Source entry/catch/errorMessage counters. This remains
 an attribution GAP, never an accepted skip. stageMarker's diagnostics-disabled arm
 also remains testable and OPEN. No denominator, frozen ceiling or mutation rule changes.
+
+### Three-hour execution audit,2026-10-23 07:43–10:43UTC
+
+The bounded Git observation contains12published packets,8d01ddc throughcc7ec70.
+The two reproduced pin-stage ownership bugs remain the confirmed product fixes
+inac594c3. Later packets repair counter attribution, causal fixtures and private
+resource custody. Toolchain completes all testable paths with reviewed remaining
+GAPs; init's2579 stage adds23covered arms on unchanged Source. Reuse its native
+terminal/capture/group receipts and2580 canonical map, not another inventory.
+
+Script review confirms one producer, readiness owner, output capture and paired
+projection. No new repeated scan/hash/read or timeout defect is demonstrated.
+Authoring review finds two corrected2574 premises and one missed catch statement
+in2580. Static102 and focused23cases precede the single2579stage. A further run
+is justified only by2583's actual new non-JSON case. The failed premises and
+original logs remain retained; broad reader lookups are disclosed and not reused.
+
+| Order and parallelism | Evidence and decision |
+| --- | --- |
+| Scoped strict/lint, grouped causal cases, independent bounded readers, one final stage per coherent input packet | Selected.2577 checks23cases in9.45s;2579 measures91cases in50.58s, outer54.372s. These are different scopes, not a benchmark ratio. |
+| Full suite after every assertion or failed static check | Rejected.2573's type failure and2574's two premises were resolved with cheaper checks before2579. No quality or timing benefit supports duplicate unchanged runs. |
+| Two disjoint read-only mechanism reviewers, then one final reviewer; serial compiler/numeric work | Selected. Readers own no Git, suites or shared writes. Wider concurrent suites/index/cleanup lack matched evidence and custody. |
+
+Tool-call/token savings and wider worker throughput remain unmeasured hypotheses.
+Sequence Work into Verifiable Units keeps checked publication before measurement.
+The maintained table and shared fixture remove scenario duplication. Reuse the
+single disk observation below and2472inventory; unresolved privileged-process
+custody still defers destructive cleanup. Timer state/schedule remain unchanged.
 
 ### Three-hour execution audit,2026-10-23 06:43–09:43UTC
 

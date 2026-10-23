@@ -290,6 +290,10 @@ output evidence read; earlier drift exercises the output guard instead. An
 interruption before the first output write must retain native pending intent and
 permit explicit recovery after restoring the writer. Do not fabricate accepted
 history or replay an UNKNOWN operation.
+Malformed policy JSON must reach the parse catch independently of schema denial.
+Check the default imported pinned-Bun adapter as a component binding with exact
+forwarded arguments and exit status. Restore its scoped spy in finally. This
+control does not qualify native Node or launch an initialization child.
 
 CLEAR and public CLI fixture runners share the synchronous child-outcome
 classifier. An error, signal or missing integer status is UNKNOWN: fail the
