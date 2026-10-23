@@ -366,6 +366,9 @@ For scoped strict checks, use tooling/quality-current.ts's createCompilerProject
 It resolves explicit package-relative entries against packageRoot and preserves
 absolute entries, so a generated config in another directory keeps the same
 compiler roots. Keep inherited strict options and ambient declarations intact.
+Before targeting a conditionally declared case, check its declaration profile.
+A zero-match run is not verification. Select the existing fixture profile without
+starting an unrelated coverage producer or changing its budgets.
 
 For full coverage SDK readiness, use the maintained coverage alias and its
 internal readiness owner. Reuse the existing capture's complete SDK input

@@ -43,9 +43,12 @@ stage records103PASS/1FAIL: the existing stale-integrations-digest native child
 times out with UNKNOWN custody. WORK owns the exact terminal/image/retention
 bindings; no attributable coverage report or new numeric gain is established.
 Keep the failed roots and native logs fenced; no unchanged rerun, budget increase
-or archived UNKNOWN replay.2811 studies a larger next coherent public-boundary
-packet using retained geometry. Do not repeat the unchanged genuine case for
-the decoder-only additions. No subprocess
+or archived UNKNOWN replay.2811's report-role proposal retains an OPEN native
+persisted-read prerequisite.2813 identifies a supported ordinary prepared-state
+re-entry without intake;2817 verifies its resumed payload and unchanged complete
+Host projection in the existing genuine case. Finish independent review and
+ordinary publication before its sole changed-input stage and fresh admission.
+Do not repeat the unchanged genuine case for decoder-only additions. No subprocess
 is removed merely to raise parent counters; keep current counter admission.
 Preserve the same collector/readiness owners and do not add private alias admission.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts

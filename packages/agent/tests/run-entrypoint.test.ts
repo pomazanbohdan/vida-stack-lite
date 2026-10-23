@@ -4406,6 +4406,24 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           lease: beforeWork.state.lease,
         });
         expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeRenewal);
+        const resumedPrepared = requireRecord(
+          await runSuccessfully(admitted.args),
+          'persisted prepared attempt public re-entry',
+        );
+        assert.ok(beforeJournal.state.source_scope && preparedActions[0]);
+        expect(resumedPrepared).toMatchObject({
+          status: 'resumed',
+          workflow: preparedActions[0].request.workflow_id,
+          mastra_run_id: beforeJournal.state.run_id,
+          mastra_step_id: beforeJournal.state.step_id,
+          state_version: preparedVersion,
+          source_snapshot_digest: beforeJournal.state.source_scope.digest,
+          reconciliation_required: null,
+          issued_actions: [],
+          completed_observations: [],
+        });
+        expect(parseTestRunPayload(resumedPrepared)).toEqual({ ...prepared, status: 'resumed' });
+        expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeRenewal);
         const renewalArgs = [
           ...admitted.args,
           ...expected(preparedVersion),

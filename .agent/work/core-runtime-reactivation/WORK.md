@@ -76,6 +76,36 @@ retention grants bytes only. Native admission reuses2265255936available scratch
 bytes against the unchanged floor; no new audit disk sweep or cleanup occurs.
 2811 independently studies a larger next public-boundary packet from retained
 geometry and current callers; it has no writer, check or numeric authority.
+Its native-report proposal has the same unqualified persisted-read prerequisite
+as2806, so it grants no ready patch or exhaustive disposition. Root retains all
+existing native controls and does not run the report's broader suggested selection.
+
+### Persisted prepared-state re-entry packet
+
+2813's independent bounded trace identifies the existing no-intake public re-entry
+after the genuine native prepared child. It skips admission-attempt recording and
+local-work admission, reads the existing engine snapshot and returns resumed.
+Root adds one assertion group to the same CAS fixture, preserving all native
+preparation, issue/report, renewal, refusal, UNKNOWN and60s case controls. Compare
+the normalized response with the actual prepared payload except status; bind the
+workflow/run/step IDs, Source digest and Journal version to the real beforeimage,
+require empty issued actions/observations and compare the full Host projection
+unchanged. No extra fixture, admission, action or collector role is added.
+
+2814 scoped strict137/lint0 passes, but the first target invocation matches0cases:
+the existing native fixture declaration profile was absent.2816 uses that profile
+and exposes Root/design's unsupported boolean oracle after4.36s. The actual
+unresolvedHostEffect domain is null-or-detail, so Root corrects the assertion to
+exactnull without changing product Source. Both unsuccessful logs and the failed
+owned fixture remain retained; neither is numeric proof or a product-bug claim.
+2817 scoped strict137/lint0 and the complete changed CAS case pass,101expects/
+35.88s.2815 independently reviews the corrected frozen2817 diff without a remaining
+Source finding. Its phrase native observation refers to2816's component response;
+Root does not promote that direct API observation to native CLI proof. Root's
+documentation check covers4documents/35local links with0failures. No full stage
+precedes those corrections. Publish ordinarily, then admit one changed-input stage
+through the existing owner.
+The prior failed stage/UNKNOWN remains separate and is never replayed.
 
 ### Latest completed run measurement
 

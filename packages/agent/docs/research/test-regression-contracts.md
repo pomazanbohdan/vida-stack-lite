@@ -439,6 +439,13 @@ Before renewal, public inspect reuses the genuine native prepared state and the
 existing Host beforeimage. Assert the actual work/attempt, Work/Ledger/Journal
 versions and lease, then compare that inspected projection unchanged. Keep the
 native preparation arm and every native issue/report/refusal control intact.
+Ordinary prepared-state re-entry uses persisted invocation arguments without
+intake. Compare its resumed response with the native prepared payload, allowing
+only the status change, and bind run/step IDs, Source digest and Journal version
+to the persisted beforeimage. The absence of unresolved Host effects is null;
+the field can hold reconciliation detail and is not a boolean. Compare the full
+Host projection unchanged before continuing renewal. Do not repeat admission or
+replace a native positive issue/report to execute this public boundary.
 After the existing final report, exact public retry returns the recorded
 observation and current version with unchanged Work/Ledger/Journal/admission
 projection. A valid envelope with a different summary and recomputed output digest
