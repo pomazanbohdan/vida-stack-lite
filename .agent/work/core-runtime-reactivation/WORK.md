@@ -6,8 +6,8 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-development-controller only**;2377 remains the latest
-completed measurement while the checked fault-control packet awaits its sole stage.
+The active contour is **bun-development-controller only**;2391 completes the checked
+fault-control packet, with remaining paths still OPEN in map2392.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
@@ -48,13 +48,14 @@ uncertain observation is replayed, counted as a kill or disposed by deletion.
 The [published2376 WORK checkpoint](https://github.com/pomazanbohdan/vida-stack-lite/blob/6a05da63d14fb0c5fe60ae87941761378796e836/.agent/work/core-runtime-reactivation/WORK.md#current-controller-repair-packet)
 retains every preceding diagnostic, failed premise, review and exact locator.
 
-2377 below measures the integrated packet. The new requireReadyQualification
+2377 measures the preceding integrated packet. The new requireReadyQualification
 invariant has CC3/entryCRAP3; inspector returns to CC17. No ceiling is raised.
 This is a new invariant callable, not an old frozen-role reassignment; exhaustive
-frozen correspondence remains pending. Map2378 retains3missing functions,
-25statements and32branch arms. All are OPEN, not accepted objective skips.
-Keep this same contour active and group its remaining causal repairs before the
-next complete stage. Historical17/46 exact and global freshness remain distinct
+frozen correspondence remains pending. Map2378 retained3missing functions,
+25statements and32branch arms;2392 now retains3/13/19, respectively. All remaining
+paths are OPEN, not accepted objective skips. Keep this same contour active and
+group its remaining causal repairs before another complete stage. Historical17/46
+exact and global freshness remain distinct
 from this BLOCKED current result.
 
 2382/2383 independently review every retained I/O/CLI gap before the next stage.
@@ -69,13 +70,15 @@ controller construction. No product defect is established by this packet.
 2388 independently finds no blocking issue.2387 passes strict103/zero-warning lint
 and3cheap cases;2389 passes the final11cases/198expect calls in46.67s under unchanged
 deadlines. Original2385/2386 checks remain retained. The whole-file functional run
-is not numeric qualification; one changed-input stage follows the checked commit.
+is not numeric qualification;2391 measures published00ef587 below.
 
 Fixed-layout lock absence, construction-time copy/lock drift, actual install-lock
 effects and native Windows arms remain prerequisite GAPs.2383's proposed defensive
 CLI dispositions are review candidates, not accepted skips or visited counters.
-The real CLI child proves its blocked envelope; parent counter attribution still
-requires the numeric report. No denominator, frozen ceiling or mutation rule changes.
+The real CLI child proves its blocked envelope;2392 confirms its child execution
+does not increment the parent Source entry/catch/errorMessage counters. This remains
+an attribution GAP, never an accepted skip. stageMarker's diagnostics-disabled arm
+also remains testable and OPEN. No denominator, frozen ceiling or mutation rule changes.
 
 ### Three-hour execution audit,2026-10-23 00:39–03:39UTC
 
@@ -194,6 +197,29 @@ lifecycle, TESTING, the plan and backlog; no second authority is created.
 ## Latest measurement custody
 
 ### Latest completed development-controller measurement
+
+Stage2391 /workspace/contour-stage-t4J1fQ runs on
+Source00ef58750628962516ebc538cda81e532fe2b3ba,
+runbf718719-37c2-4a57-949f-1df2f70eff1d. It completes in40540.32436ms,
+exit0 with no signal/timeout/spawn error, complete capture and observed group
+closure, unchanged boot/image and one automatic paired import. Native11PASS/
+0FAIL/198expect calls in34.47s. Raw **F59/62 L235/246 S265/278 B267/286** remains
+BLOCKED/nonexact:6more lines,12statements and13branch arms than2377, with unchanged
+denominators and Source fingerprint. MaxCC/entryCRAP17 remains diagnostic only;
+frozen correspondence/CRAP and mutation remain deferred under unchanged ceilings.
+
+Image /workspace/.vida-quality-inputs/20463325ce658c60bba6723f8dfef7f3ed76a2f1/repository
+has manifest563d9457f947ab06b99cd7161896eb6522daad2e43e2a00e3f2dd5e8ca637c91.
+Map2392 reuses the complete retained report/geometry, Source fingerprint
+f251d18af1902b00dfc933432835ca523610686c4cd61534c22a7f687f8a0b47 and test fingerprint
+1620c3fe7da15dedbe8aeeaf5cd86b85329aa70a7d4427dbad5f85d99989600a.
+2392 verifies/fsyncs the10240-byte non-cache archive at
+/workspace/vida-functional-retention-t4J1fQ-xtVcVu/archive.json; originals remain.
+Raw gaps are3functions,13statements and19branch arms. CLI attribution, native
+Windows, fixed-layout absence, drift effects and diagnostic-disabled prerequisites
+are explicit; no fresh exact closure, frozen waiver or mutation acceptance is claimed.
+
+### Preceding development-controller invariant measurement
 
 Stage2377 /workspace/contour-stage-UmDDqM runs on
 Source6a05da63d14fb0c5fe60ae87941761378796e836,
