@@ -12,29 +12,20 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The active contour is **bun-cli-toolchain**, the next partition in
-packages/agent/tooling/mutation-partitions.ts. Public entrypoints'2526 stage passes
-all124tests; independent blind2529 dispositions all six remaining branch arms and
-six statements. Five rows are contract invariants; Windows folding remains an
-explicit native-target GAP. [WORK](WORK.md#public-entrypoint-remaining-counter-dispositions)
-owns exact counters, proof and reopen conditions. This permits queue advancement,
-not exact100, numeric PASS or changed denominators. Frozen/mutation stay deferred.
+The active contour is **bun-cli-init**, the next partition in
+packages/agent/tooling/mutation-partitions.ts. Toolchain's2561 stage completes all
+testable paths, including both fresh finite-ancestor clock arms. Independent
+blind2541/2542 dispositions cover all remaining9branch arms and2statements;
+2530 reviews the changed native collector. Native Windows remains an explicit
+target GAP. [WORK](WORK.md#toolchain-remaining-counter-dispositions) owns exact
+counters, bound receipts and reopen conditions. Queue progress is not exact100,
+numeric PASS or changed denominators. Frozen/CRAP and mutation stay deferred.
 
-Reconcile current toolchain Source/test/runtime bindings and retained receipts
-before choosing checks or a fresh stage. Its declared scope is bin/bun.ts with
-tests/bun-toolchain.test.ts and tests/bun-cache-routing.test.ts. Keep one writer,
-one numeric producer and all existing budgets. Batch all known repairs before
-the complete selected stage; old UNKNOWN is not replayed.
-
-The complete2553 stage and final remaining-counter table are bound in
-[WORK](WORK.md#toolchain-remaining-counter-dispositions). Private producer
-invariants and immutable-root repair have independent objective dispositions;
-native Windows and finite-ancestor clock custody prerequisites remain OPEN.
-Keep toolchain active while the supported clock paths lack an admissible fresh
-child counter route. Next work designs and qualifies that route through the
-existing collector owner. Do not repeat unchanged stages or open bun-cli-init
-merely because these paths have a handoff or because controller had a named
-deferral. Freeze/CRAP and mutation remain outside this phase.
+Reconcile current init Source/test/runtime bindings and retained receipts before
+choosing checks or a fresh stage. Scope is bin/init-core.ts and bin/init.ts with
+tests/initialization.test.ts and tests/init-entrypoint-v8.test.ts. Root keeps one
+writer and numeric producer. Batch known repairs before the complete selected
+stage, reuse readiness/artifacts and do not replay historical UNKNOWN.
 
 The owner's2026-10-23 instruction
 explicitly skips bun-development-controller with a recorded GAP. This named

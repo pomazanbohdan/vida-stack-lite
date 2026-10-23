@@ -6,8 +6,8 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-cli-toolchain only**, the next declared partition
-after public entrypoints' reviewed dispositions below. Reuse its
+The active contour is **bun-cli-init only**, the next declared partition
+after toolchain's reviewed dispositions below. Reuse its
 retained receipts and inventory before deciding on affected checks or a new
 coverage stage. Historical UNKNOWN operations remain fenced and are not replayed.
 The latest public correction packet is published aseb2a3b1. Its complete2526 stage
@@ -19,13 +19,16 @@ in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
 waiver or mutation acceptance. Historical exact F/L/S/B remains17/46.
 Root owns canonical edits, final checks, Git and the sole numeric producer.
+Toolchain completes all testable paths in2561. Its remaining9branch arms and
+2statements have independent dispositions, including an OPEN native Windows
+prerequisite. This permits queue progression, not numeric exact100.
 
 ### Toolchain correction packet
 
-Active scope is bin/bun.ts with tests/bun-toolchain.test.ts and
+Completed testable scope is bin/bun.ts with tests/bun-toolchain.test.ts and
 tests/bun-cache-routing.test.ts. Its oldcdc7acf2 report locator in the retired
 1927d736 image is absent. Historical counters are navigation only; no archived
-operation is replayed. Current2553 custody and remaining dispositions are below.
+operation is replayed. Current2561 custody and remaining dispositions are below.
 
 Blind Luna2530 identifies a Source defect: syncPin's finally unlinks a colliding
 temporary pathname even if exclusive open failed before acquisition.2531 proves
@@ -67,43 +70,44 @@ ac594c3. Keep existing ceilings and one numeric owner.
 
 ### Latest completed toolchain measurement
 
-2553 runs the full selected two-file contour on
-bd2f8d5c0f256e0861d48c1da6cbf72cb15e2381, stage `/workspace/contour-stage-wAltzp`,
-run36462e8b-fdf3-486e-8ed9-853c59af080c. All97tests pass with0failures in5.77s;
-stage elapsed9133.367071ms. Raw **F44/44 L290/291 S328/330 B409/420** remains
+2561 runs the full selected two-file contour on
+e0e5e064a6f903df4bc54c2c3b31dc938609f22a, stage `/workspace/contour-stage-0kpRep`,
+run7e4359be-5031-4399-a8a3-658fe9659b66. All98tests pass with0failures in6.23s;
+stage elapsed10423.331179ms. Raw **F44/44 L290/291 S328/330 B411/420** remains
 BLOCKED/nonexact. Max CC/entry CRAP34 is navigation, not frozen acceptance.
 Exit0/null signal, no timeout/spawn error, complete native capture, observed closed
 process/group and unchanged boot/image all pass. Paired projection import runs
-once,1300attempts. Historical exact count stays17/46, not current qualification.
+once,1302attempts. Historical exact count stays17/46, not current qualification.
 
-Image `/workspace/.vida-quality-inputs/5ee272c108ad1ce7fce34611ef6e8f45ca65ced4/repository`,
-manifest SHA256a87c58ec1103ebe4616b97a0d6c98af754ef27fc1ff9ef95e8870ca697bb3a82.
+Image `/workspace/.vida-quality-inputs/c179a7cff19aba1b491bdb725a67cf4d64f6b141/repository`,
+manifest SHA256dc2618130638e759721e34f7c3fb1e194995c140eb1a413442f581d1c419da26.
 Package report is
-`coverage/bun-unified/diagnostics/36462e8b-fdf3-486e-8ed9-853c59af080c.focused-coverage.json`;
-run-manifest SHA256880338bedbd16563ab92f64716aa3f56734e01f9c4b1a892d12a357a5aa8077b.
+`coverage/bun-unified/diagnostics/7e4359be-5031-4399-a8a3-658fe9659b66.focused-coverage.json`;
+run-manifest SHA2561ea86201be9fab3326e177947572d04d266c46e816c25d71f2c63280188dffa9.
 Source fingerprinteba016494f506e33ae4eff9db87447b6d776f38e16189e34d7ef56ee5ab98ecc,
-testefe2338e171037c871eb93c70e5138b134bd59ff824a381ff9ac3ad66b9727c4,
-toola3d9bf5235f54fd2412290a991d018ac4c369a6c16c6f9a36635f4e7b154981f.
-2554 reuses canonical maps/counters for exactly2statement/11branch gaps, no AST
-pass.2555 verifies/fsyncs the38379520-byte functional scratch archive at
-`/workspace/vida-functional-retention-wAltzp-gDdp0C/archive.json`; originals stay.
+test427c9baa04a7ef4b7adbb7b38f4529ccfec3053d6f5f6c0849a43caa287086b2,
+tool393f2c192bdf1f01b32e55053656cd04581e37612036bc7ca1640d4edf943c37.
+2562 reuses canonical maps/counters for exactly2statement/9branch gaps, no AST
+pass.2563 verifies/fsyncs the38389760-byte functional scratch archive at
+`/workspace/vida-functional-retention-0kpRep-mHKE6g/archive.json`; originals stay.
 The earlier2538/2549 measurements, maps and archives remain in
 [publishedbd2f8d5 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bd2f8d5c0f256e0861d48c1da6cbf72cb15e2381/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-toolchain-measurement).
 
 ### Toolchain remaining-counter dispositions
 
 Blind native Luna2541/2542 independently review actual Source and v2550 counter
-geometry. Final2554 preserves those exact remaining counters and Source bytes;
-only b99/1 is newly visited.2556 compares retained manifests without hashing
+geometry. Final2562 preserves the9remaining counters and identical Source
+fingerprint; b99/1 and both clock arms have since been visited.2530 independently
+reviews the changed collector.2556 compares retained manifests without hashing
 inputs again: Source fingerprint is identical; the only changed tool input is
 tests/bun-toolchain.test.ts, also a test input.2554's preliminary assumption that
 the tool fingerprint must stay equal fails and its log remains retained. No
 historical counter is promoted or merged into the current run.
 
-All locations below are bin/bun.ts in the fully bound2553 image above. They do
+All locations below are bin/bun.ts in the fully bound2561 image above. They do
 not change raw counters or BLOCKED. Reopen invariant dispositions when their
-producer/guard or supported contract changes. Native-platform and admissible
-clock-custody prerequisites remain open; they are not proved impossible.
+producer/guard or supported contract changes. Native-platform prerequisites
+remain open; they are not proved impossible.
 
 | Counter | Exact expression and location | Independent cause and disposition |
 | --- | --- | --- |
@@ -114,17 +118,13 @@ clock-custody prerequisites remain open; they are not proved impossible.
 | b122/0 | `name.toUpperCase() === 'PATH'`,513:35–64 | OPEN native Windows GAP. Case-folding requires an attributable native Windows collector; Linux or a platform override cannot qualify it. |
 | b125/0 | `'bun.exe'`,521:83–92 | OPEN native Windows GAP. Requires native Windows npm-alias selection with the unchanged input/capture contract. |
 | b162/0 and s275 | `options.node === undefined && !options.executable`,654–656 | Objective skip under the repository Bun-only contract. A Bun host with neither selector returns or throws at its earlier host probe; either explicit selector makes this guard false. Reopen for a supported non-Bun development host or changed guard chain. |
-| b171/1 | `String(inherited.duration)`,693:67–93 | OPEN finite-ancestor clock custody GAP. The constant is captured at import; per-call environment cannot set it. Requires a fresh finite-parent native child and an admitted current-coverage policy/counter route. The current version-only CLI collector cannot supply it. |
-| b172/1 | `String(inherited.expiry)`,694:63–87 | OPEN clock custody GAP with the same fresh startup/deadline prerequisite. Keep original finite native observations separate from in-process DTOs. |
 | b194/0 and s318 | `typeof result.status !== 'number'`,762 | Objective skip. The earlier integer guard routes every native non-number status through succeeded, which throws. Reopen only if either guard/result contract changes; a shifting getter is not native evidence. |
 | b200/0 | `'Bun manifest mirrors synchronized.'`,775:30–66 | Objective skip for this immutable default-root image. The true sync arm repairs canonical package bytes, which measurement forbids changing. The checked no-op and private-root sync repair tests retain their distinct behavioral evidence. Reopen for an admissible isolated mutable repair producer; copied-root counters are not accepted by the present collector. |
 
-Toolchain stays the sole active contour. The owner's latest order allows the
-next partition only after exact100 or complete objective dispositions. The two
-clock custody arms are still supported-but-uncollected, so neither a handoff nor
-the prior named controller exception permits advancement. The checked additive
-route below now awaits its changed-input stage;2553's clock counters remain
-missing until that producer observes them. Native Windows qualification is separate.
+The actual2561 stage visits b171/1 and b172/1 through the additive native route
+below. No supported-but-uncollected parent path remains. Advance to bun-cli-init
+under TESTING's reviewed disposition rule, with raw BLOCKED/nonexact unchanged.
+Native Windows qualification, frozen correspondence/CRAP and mutation stay OPEN.
 
 ### Toolchain gap repair before the next full stage
 
@@ -225,6 +225,12 @@ the exact duplicate-subject guard with different native IDs. Wrong output contro
 now preserve matching terminal references before refusal. Scoped strict133/lint
 and all5CLI-protocol cases330expect calls pass in2.89s. Unchanged11preload lifecycle
 cases retain2559's pass without another run.
+
+Ordinary2560 commit/hooks pass format531, strict538 and configured quality gates;
+e0e5e064a6f903df4bc54c2c3b31dc938609f22a is pushed. The sole changed-input2561 stage
+then observes both finite clock arms with complete native custody, as bound above.
+Model the Domain gives each allowed Source/argv scenario its own identity rather
+than weakening Source uniqueness globally. No production branch moves for hits.
 
 ### Public entrypoint correction packet
 
@@ -755,7 +761,9 @@ also remains testable and OPEN. No denominator, frozen ceiling or mutation rule 
 ### Three-hour execution audit,2026-10-23 06:43–09:43UTC
 
 The Git observation contains ten published packets in this window,61bd093 through
-bd2f8d5. Reuse stages2490/2526/2538/2549/2553, maps, manifests, native terminal/
+bd2f8d5. The window is the initial09:43 Git observation; subsequent measurements
+are follow-up packets in the same cycle. Reuse stages2490/2526/2538/2549/2553, maps,
+manifests, native terminal/
 capture/group receipts and the paired projection. The actual Source defects are
 the pin-stage collision deletion and replacement publication, reproduced2531/
 2535 and fixed inac594c3. Failed roots/logs remain retained. Main extraction and
