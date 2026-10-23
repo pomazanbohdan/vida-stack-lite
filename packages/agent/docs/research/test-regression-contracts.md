@@ -280,6 +280,17 @@ well and require no fallback for that target or publication. A copied initialize
 must render a copied-only valid resource marker absent from the original package.
 Create the bundle under its existing retention try/finally, including setup faults.
 
+Direct initialization refusal controls alter only explicit copied resources or
+native receipts produced in a private root. Restore pending intent from its
+actual completed archive and retain the original bytes. Assert consumer outputs,
+provenance and directory entries after refusal. This snapshot does not attest
+copied bundle immutability. Require the intended guard's exact error and an
+observed race checkpoint. Place reconciliation config drift after the final
+output evidence read; earlier drift exercises the output guard instead. An
+interruption before the first output write must retain native pending intent and
+permit explicit recovery after restoring the writer. Do not fabricate accepted
+history or replay an UNKNOWN operation.
+
 CLEAR and public CLI fixture runners share the synchronous child-outcome
 classifier. An error, signal or missing integer status is UNKNOWN: fail the
 case with its child diagnostic and retain the consumer root. Integer exit 1

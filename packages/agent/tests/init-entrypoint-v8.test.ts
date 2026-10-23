@@ -15,12 +15,14 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { initializeProject, main } from '../bin/init.ts';
 import { initializeProjectFromBundle } from '../bin/init-core.ts';
 import { createInitializationBundle } from './helpers/init-bundle.js';
 import { expectReturned, expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.js';
 import * as safeRepositoryAccess from '../src/config/safe-repository-access.js';
+import { isRecord } from '../src/contracts/forward-controller-values.ts';
 
 type InitMainOptions = NonNullable<Parameters<typeof main>[0]>;
 type InitializationRequest = Parameters<typeof initializeProject>[0];
@@ -61,6 +63,377 @@ const validRequest = (projectRoot: string, projectMappings = ['alpha=.']): Initi
   repository: 'safe-repository',
   projectMappings,
 });
+
+const initFiles = [
+  'AGENTS.md',
+  'AGENT.sidecar.md',
+  'agent-runtime.config.v1.yaml',
+  'docs/agent-instructions/documentation-policy.v1.json',
+  '.agent/runtime-initialization.pending.v1.json',
+  '.agent/runtime-initialization.v1.json',
+] as const;
+type InitGapFixture = { projectRoot: string; bundle: string; request: InitializationRequest };
+
+function initState(projectRoot: string) {
+  const archive = path.join(projectRoot, '.agent/initialization-provenance');
+  return {
+    root_entries: readdirSync(projectRoot).sort(),
+    directories: ['docs', 'docs/agent-instructions', '.agent', '.agent/initialization-provenance'].map((directory) => ({
+      directory,
+      entries: existsSync(path.join(projectRoot, directory))
+        ? readdirSync(path.join(projectRoot, directory)).sort()
+        : null,
+    })),
+    files: initFiles.map((file) => ({
+      file,
+      bytes: existsSync(path.join(projectRoot, file)) ? readFileSync(path.join(projectRoot, file)) : null,
+    })),
+    archive: existsSync(archive)
+      ? readdirSync(archive)
+          .sort()
+          .map((file) => ({ file, bytes: readFileSync(path.join(archive, file)) }))
+      : null,
+  };
+}
+
+function fixtureRecord(value: unknown): Record<string, unknown> {
+  if (!isRecord(value)) throw new Error('Expected fixture object');
+  return value;
+}
+
+async function initGapFixture(run: (fixture: InitGapFixture) => Promise<void>): Promise<void> {
+  const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-gap-'));
+  let completed = false;
+  try {
+    const bundle = createInitializationBundle(packageRoot, projectRoot);
+    await run({ projectRoot, bundle, request: validRequest(projectRoot) });
+    completed = true;
+  } finally {
+    retainedCleanup(projectRoot, completed);
+  }
+}
+
+function restoreNativePending(projectRoot: string, keepReceipt = false): void {
+  const directory = path.join(projectRoot, '.agent/initialization-provenance');
+  const names = readdirSync(directory);
+  expect(names).toHaveLength(1);
+  const archived = path.join(directory, names[0]!);
+  const bytes = readFileSync(archived);
+  writeFileSync(path.join(projectRoot, 'captured-pending.original.json'), bytes, { flag: 'wx' });
+  writeFileSync(path.join(projectRoot, '.agent/runtime-initialization.pending.v1.json'), bytes, { flag: 'wx' });
+  rmSync(archived);
+  if (!keepReceipt) rmSync(path.join(projectRoot, '.agent/runtime-initialization.v1.json'));
+}
+
+function changeProjectTitle(projectRoot: string): void {
+  const file = path.join(projectRoot, 'agent-runtime.config.v1.yaml');
+  const config = fixtureRecord(parseYaml(readFileSync(file, 'utf8')));
+  const projects = config.projects;
+  if (!Array.isArray(projects)) throw new Error('Fixture projects are absent');
+  fixtureRecord(projects[0]).title = 'changed-after-preflight';
+  writeFileSync(file, stringifyYaml(config));
+}
+
+test.each([
+  {
+    name: 'unmatched template braces',
+    file: 'templates/AGENTS.template.md',
+    change: (text: string) => text + '\n{{\n',
+    error: 'Malformed template parameter',
+  },
+  {
+    name: 'array documentation schema',
+    file: 'schemas/documentation-policy.v1.schema.json',
+    change: (_text: string) => '[]',
+    error: 'Documentation policy schema is invalid',
+  },
+  {
+    name: 'invalid documentation policy',
+    file: 'templates/documentation-policy.template.v1.json',
+    change: (_text: string) => '{}',
+    error: 'Documentation policy does not satisfy selected v1 schema',
+  },
+  {
+    name: 'foreign policy identity',
+    file: 'templates/documentation-policy.template.v1.json',
+    change: (text: string) => text.replace('"project_id": "{{REPOSITORY}}"', '"project_id": "foreign-repository"'),
+    error: 'Documentation policy identity differs',
+  },
+  {
+    name: 'different documentation path',
+    file: 'templates/agent-runtime.config.template.v1.yaml',
+    change: (text: string) =>
+      text.replace(
+        'documentation_policy_path: docs/agent-instructions/documentation-policy.v1.json',
+        'documentation_policy_path: docs/other-policy.json',
+      ),
+    error: 'Generated documentation policy path differs',
+  },
+  {
+    name: 'different generated bundle',
+    file: 'templates/agent-runtime.config.template.v1.yaml',
+    change: (text: string) => text.replaceAll('{{BUNDLE}}', 'other-agent'),
+    error: 'Generated configuration does not match',
+  },
+  {
+    name: 'different integration file',
+    file: 'templates/agent-runtime.config.template.v1.yaml',
+    change: (text: string) => text.replace('sidecar: AGENT.sidecar.md', 'sidecar: other-sidecar.md'),
+    error: 'Generated configuration must use the fixed project integration files',
+  },
+])('direct init gap: $name refuses before publication', async ({ file, change, error }) => {
+  await initGapFixture(async ({ projectRoot, bundle, request }) => {
+    const target = path.join(bundle, file);
+    const before = readFileSync(target, 'utf8');
+    const changed = change(before);
+    expect(changed).not.toBe(before);
+    writeFileSync(target, changed);
+    const baseline = initState(projectRoot);
+    await expectRejection(initializeProjectFromBundle(request, bundle), error);
+    expect(initState(projectRoot)).toEqual(baseline);
+    expect(existsSync(path.join(projectRoot, '.agent'))).toBe(false);
+  });
+});
+
+test('direct init gap: dot template paths rebase to the explicit nested project', async () => {
+  await initGapFixture(async ({ projectRoot, bundle, request }) => {
+    const target = path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml');
+    const before = readFileSync(target, 'utf8');
+    const template = fixtureRecord(parseYaml(before));
+    if (!Array.isArray(template.projects)) throw new Error('Fixture project template missing');
+    fixtureRecord(template.projects[0]).wiki_root = '.';
+    writeFileSync(target, stringifyYaml(template));
+    mkdirSync(path.join(projectRoot, 'nested'));
+    const result = await initializeProjectFromBundle({ ...request, projectMappings: ['alpha=nested'] }, bundle);
+    expect(result.status).toBe('initialized');
+    expect(loadRuntimeConfig(projectRoot).projects[0]?.wiki_root).toBe('nested');
+  });
+});
+
+test('direct init gap: linked parent root is refused before physical project writes', async () => {
+  await initGapFixture(async ({ projectRoot, bundle, request }) => {
+    const physical = path.join(projectRoot, 'physical');
+    const target = path.join(physical, 'project');
+    const alias = path.join(projectRoot, 'alias');
+    mkdirSync(target, { recursive: true });
+    symlinkSync(physical, alias, process.platform === 'win32' ? 'junction' : 'dir');
+    await expectRejection(
+      initializeProjectFromBundle({ ...request, projectRoot: path.join(alias, 'project') }, bundle),
+      'canonical physical project root',
+    );
+    expect(readdirSync(target)).toEqual([]);
+  });
+});
+
+test.each([
+  'empty-output',
+  'receipt-evidence',
+  'intent-provenance',
+  'intent-template',
+  'receipt-time',
+  'empty-pending-output',
+  'managed-agents',
+  'partial-set',
+] as const)('direct init gap: %s keeps the denied recovery state unchanged', async (variant) => {
+  await initGapFixture(async ({ projectRoot, bundle, request }) => {
+    expect((await initializeProjectFromBundle(request, bundle)).status).toBe('initialized');
+    const receipt = path.join(projectRoot, '.agent/runtime-initialization.v1.json');
+    const pending = path.join(projectRoot, '.agent/runtime-initialization.pending.v1.json');
+    writeFileSync(path.join(projectRoot, 'captured-receipt.original.json'), readFileSync(receipt), { flag: 'wx' });
+    let message: string;
+    if (variant === 'empty-output') {
+      writeFileSync(path.join(projectRoot, 'AGENT.sidecar.md'), '');
+      message = 'Existing project integration file is empty';
+    } else if (variant === 'receipt-evidence') {
+      const value = fixtureRecord(JSON.parse(readFileSync(receipt, 'utf8')));
+      if (!Array.isArray(value.templates)) throw new Error('Fixture template evidence missing');
+      fixtureRecord(value.templates[0]).output_sha256 = '0'.repeat(64);
+      writeFileSync(receipt, JSON.stringify(value));
+      message = 'Existing initialization receipt differs';
+    } else if (variant === 'partial-set') {
+      rmSync(receipt);
+      rmSync(path.join(projectRoot, 'AGENTS.md'));
+      message = 'Reconciliation requires all existing project integration files';
+    } else {
+      restoreNativePending(projectRoot, variant === 'receipt-time');
+      if (variant === 'intent-provenance') {
+        const value = fixtureRecord(JSON.parse(readFileSync(pending, 'utf8')));
+        value.provenance = 'adopted_existing';
+        writeFileSync(pending, JSON.stringify(value));
+        message = 'Pending initialization intent is not a generated recovery intent';
+      } else if (variant === 'intent-template') {
+        const template = path.join(bundle, 'templates/AGENT.sidecar.template.md');
+        writeFileSync(template, readFileSync(template, 'utf8') + '\nChanged current template.\n');
+        message = 'Pending initialization intent differs from the requested identity or current templates';
+      } else if (variant === 'receipt-time') {
+        const value = fixtureRecord(JSON.parse(readFileSync(receipt, 'utf8')));
+        if (typeof value.created_at !== 'string') throw new Error('Fixture creation time absent');
+        value.created_at = new Date(Date.parse(value.created_at) + 1).toISOString();
+        writeFileSync(receipt, JSON.stringify(value));
+        message = 'Canonical receipt belongs to a different initialization operation';
+      } else {
+        writeFileSync(
+          path.join(projectRoot, variant === 'managed-agents' ? 'AGENTS.md' : 'AGENT.sidecar.md'),
+          variant === 'managed-agents' ? 'Changed managed policy.\n' : '',
+        );
+        message = 'Managed AGENTS or empty owner output requires explicit diff resolution';
+      }
+    }
+    const baseline = initState(projectRoot);
+    await expectRejection(initializeProjectFromBundle({ ...request, reconcileExisting: true }, bundle), message);
+    expect(initState(projectRoot)).toEqual(baseline);
+  });
+});
+
+test('direct init gap: native pending intent selects recovery guidance and adopts owner output', async () => {
+  await initGapFixture(async ({ projectRoot, bundle, request }) => {
+    await initializeProjectFromBundle(request, bundle);
+    restoreNativePending(projectRoot);
+    const baseline = initState(projectRoot);
+    const failure = await rejectionReason(initializeProjectFromBundle(request, bundle));
+    expect(failure).toBeInstanceOf(Error);
+    if (!(failure instanceof Error)) throw new Error('Expected pending initialization refusal');
+    const blocked: unknown = JSON.parse(failure.message);
+    expect(blocked).toMatchObject({
+      status: 'partial_not_ready',
+      next_action: 'Use explicit reconciliation to resume the matching recorded initialization intent.',
+    });
+    expect(initState(projectRoot)).toEqual(baseline);
+    const sidecar = path.join(projectRoot, 'AGENT.sidecar.md');
+    const owner = readFileSync(sidecar, 'utf8') + '\nOwner-preserved note.\n';
+    writeFileSync(sidecar, owner);
+    expect((await initializeProjectFromBundle({ ...request, reconcileExisting: true }, bundle)).status).toBe(
+      'resumed_initialization',
+    );
+    expect(readFileSync(sidecar, 'utf8')).toBe(owner);
+    const receipt: unknown = JSON.parse(
+      readFileSync(path.join(projectRoot, '.agent/runtime-initialization.v1.json'), 'utf8'),
+    );
+    expect(receipt).toMatchObject({ provenance: 'adopted_existing' });
+  });
+});
+
+test('direct init gap: first-output interruption resumes from a real pending intent without config', async () => {
+  await initGapFixture(async ({ projectRoot, bundle, request }) => {
+    const original = safeRepositoryAccess.requireSafeRepositoryAccess;
+    let intercepted = false;
+    const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((root) => {
+      const access = original(root);
+      if (path.resolve(root) !== projectRoot) return access;
+      return {
+        ...access,
+        prepareExclusiveCreation: async () => {
+          const creator = await access.prepareExclusiveCreation();
+          return {
+            ...creator,
+            writeExclusive: async (...args: Parameters<typeof creator.writeExclusive>) => {
+              if (args[0] === 'AGENTS.md') {
+                intercepted = true;
+                throw new Error('fixture first-output interruption');
+              }
+              return creator.writeExclusive(...args);
+            },
+          };
+        },
+      };
+    });
+    try {
+      await expectRejection(initializeProjectFromBundle(request, bundle), 'fixture first-output interruption');
+    } finally {
+      accessSpy.mockRestore();
+    }
+    expect(intercepted).toBe(true);
+    expect(existsSync(path.join(projectRoot, '.agent/runtime-initialization.pending.v1.json'))).toBe(true);
+    for (const file of initFiles.slice(0, 4)) expect(existsSync(path.join(projectRoot, file))).toBe(false);
+    const result = await initializeProjectFromBundle({ ...request, reconcileExisting: true }, bundle);
+    expect(result.status).toBe('resumed_initialization');
+    expect(existsSync(path.join(projectRoot, '.agent/runtime-initialization.v1.json'))).toBe(true);
+    expect(existsSync(path.join(projectRoot, '.agent/runtime-initialization.pending.v1.json'))).toBe(false);
+  });
+});
+
+test.each(['reconcile-output', 'reconcile-config', 'resume-output', 'initial-config'] as const)(
+  'direct init gap: %s race refuses publication at its actual guard',
+  async (variant) => {
+    await initGapFixture(async ({ projectRoot, bundle, request }) => {
+      const initial = variant === 'initial-config';
+      const resume = variant === 'resume-output';
+      if (!initial) {
+        await initializeProjectFromBundle(request, bundle);
+        if (resume) {
+          restoreNativePending(projectRoot);
+          rmSync(path.join(projectRoot, 'AGENTS.md'));
+        } else rmSync(path.join(projectRoot, '.agent/runtime-initialization.v1.json'));
+      }
+      const original = safeRepositoryAccess.requireSafeRepositoryAccess;
+      let armed = false;
+      let raced = false;
+      let afterRace: ReturnType<typeof initState> | undefined;
+      const mutate = () => {
+        if (raced) return;
+        raced = true;
+        if (variant === 'reconcile-config' || initial) changeProjectTitle(projectRoot);
+        else {
+          const file = path.join(projectRoot, 'AGENT.sidecar.md');
+          writeFileSync(file, readFileSync(file, 'utf8') + '\nConcurrent owner note.\n');
+        }
+        afterRace = initState(projectRoot);
+      };
+      const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((root) => {
+        const access = original(root);
+        if (path.resolve(root) !== projectRoot) return access;
+        return {
+          ...access,
+          readBytes(target: string, label: string): Buffer {
+            const bytes = access.readBytes(target, label);
+            if (
+              armed &&
+              variant === 'reconcile-config' &&
+              target === 'docs/agent-instructions/documentation-policy.v1.json' &&
+              label === 'existing project integration file'
+            )
+              mutate();
+            return bytes;
+          },
+          prepareExclusiveCreation: async () => {
+            const creator = await access.prepareExclusiveCreation();
+            armed = true;
+            if (variant === 'reconcile-output' || resume) mutate();
+            if (!initial) return creator;
+            return {
+              ...creator,
+              writeExclusive: async (...args: Parameters<typeof creator.writeExclusive>) => {
+                const result = await creator.writeExclusive(...args);
+                if (args[0] === 'docs/agent-instructions/documentation-policy.v1.json') mutate();
+                return result;
+              },
+            };
+          },
+        };
+      });
+      const expected = initial
+        ? 'Project configuration changed during initialization'
+        : resume
+          ? 'Owner initialization output changed during resume'
+          : variant === 'reconcile-config'
+            ? 'Project configuration changed during reconciliation'
+            : 'Project integration file changed during reconciliation';
+      try {
+        await expectRejection(
+          initializeProjectFromBundle({ ...request, reconcileExisting: !initial }, bundle),
+          expected,
+        );
+      } finally {
+        accessSpy.mockRestore();
+      }
+      expect(raced).toBe(true);
+      expect(afterRace).toBeDefined();
+      if (afterRace === undefined) throw new Error('Expected native race checkpoint was not observed');
+      expect(initState(projectRoot)).toEqual(afterRace);
+      expect(existsSync(path.join(projectRoot, '.agent/runtime-initialization.v1.json'))).toBe(false);
+    });
+  },
+);
 
 test('init CLI passes parsed values to the fixed-root initializer and prints its receipt', async () => {
   const calls: InitializationRequest[] = [];

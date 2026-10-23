@@ -23,6 +23,61 @@ Toolchain completes all testable paths in2561. Its remaining9branch arms and
 2statements have independent dispositions, including an OPEN native Windows
 prerequisite. This permits queue progression, not numeric exact100.
 
+### Latest completed init measurement
+
+2568 completes the exact two-file contour on
+684d0627191f6f91badfd15dd73885ba1635d233, stage `/workspace/contour-stage-CPI6aU`,
+run96272e72-e3d1-457e-8320-1e21aecd8dab. All68tests pass with0failures and413expect
+calls in53.18s, outer57945.665691ms. Raw **F84/84 L309/326 S329/353 B172/211**
+remains BLOCKED/nonexact. Max CC/entry CRAP12 is navigation, not frozen acceptance.
+Native exit0, null signal, no timeout/spawn error, complete capture, closed
+process/group, unchanged boot/image and one paired projection import pass,
+1304attempts. Historical exact count stays17/46; no old input is requalified.
+
+Image `/workspace/.vida-quality-inputs/4f4814cdfe71588efa1f9f983f43d6b83857ff20/repository`,
+manifest SHA256454c8dd6e186f40fb69a7d5eb6ea2d1def6a7d1a1da2fb7a02d2698f81c2f731.
+Package report is
+`coverage/bun-unified/diagnostics/96272e72-e3d1-457e-8320-1e21aecd8dab.focused-coverage.json`;
+run-manifest SHA256b064aedc12a25883723e303100a08b24c192003300d467adda1ad79c1320eafd.
+Source fingerprint011d0a1587d0bb639886f80a94c763d723f6564d5bca038cbd0396148b2d20b0,
+testc9cb622bfe7d12fbf48728b9b5e66d0ffcba5db2b98a3fa6f935793b52e3ea3d,
+tool569df0acbfc75d8ab8696ef145db2b33b23bfffe7d7f4029c82de6b0ad3ed366.
+2569 maps all39zero branch arms/24statements through retained canonical maps
+only.2570 verifies/fsyncs the10240-byte functional scratch archive at
+`/workspace/vida-functional-retention-CPI6aU-8NTYRx/archive.json`; original logs,
+receipts, report and image stay. Fresh2571/2572 parsed native reader contracts
+split render/validation from reconciliation/receipt gaps. No further full stage
+starts before their complete batch is repaired or independently dispositioned.
+
+### Init remaining-path packet
+
+2571/2572 split the retained2569 map into disjoint render/validation and
+receipt/reconciliation reviews. Root batches23 direct cases before another full
+stage. The cases cover malformed copied resources, identity/path refusal,
+physical-root aliasing, native pending provenance, receipt divergence, supported
+recovery and four actual publication races. Pending bytes come from a completed
+private initialization archive. The first-output fault occurs after native intent
+persistence and before the first write; recovery follows restored writer access.
+The config reconciliation race occurs after the final output evidence read, so
+it reaches the config digest guard rather than the preceding output guard.
+
+2573 retains an initial strict failure corrected with the maintained isRecord
+boundary and an explicit optional-state guard.2574 retains two invalid test
+premises and both failed fixture roots. Pending status is a JSON Error envelope;
+changing only runtime.bundle reaches an earlier isolation guard.2575 checks the
+two corrected controls. After strengthening the output-state snapshot,2577 passes
+scoped strict102, selected zero-warning lint and all23cases with121expect calls
+in9.45s. No complete stage is duplicated by these authoring checks.
+
+Independent2530 review under prepared2576 finds no Source blocker. The snapshot
+covers consumer outputs/provenance, root entries and four output directories;
+it does not claim byte immutability inside the private copied resource bundle.
+Source reads that bundle and writes through the project access owner. The reader
+discloses an accidental diagnostics directory listing, unused as evidence.
+Existing V8-specific skips are unchanged. Copied CLI child execution does not
+supply ordinary parent counters; the new direct cases exercise instrumented Core.
+All current counters still belong to2568 until the changed-input stage completes.
+
 ### Init correction packet
 
 Current scope is bin/init-core.ts and bin/init.ts with tests/initialization.test.ts
