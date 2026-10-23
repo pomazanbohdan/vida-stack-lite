@@ -23,14 +23,15 @@ numeric PASS or changed denominators. Frozen/CRAP and mutation stay deferred.
 Reconcile current run Source/test/runtime bindings and retained receipts before
 choosing checks or a fresh stage. Scope is bin/run.ts with tests/run-entrypoint.test.ts
 and tests/bun-cache-routing.test.ts. Root keeps one writer and numeric producer.
-The next run packet targets one existing genuine canonical prepared CLI call
-through the current collector. Preserve its bounded argv/environment/capture and
-fixture bindings. The scoped design selects one collector-owned role and a
-one-shot trigger at the genuine first prepared CAS call. The existing shared
-group observer is published asc2a8dbd; require its actual owned-group observation,
-not leader exit alone. Complete bounded per-operation consumed-byte evidence,
-native negative controls and independent review before measuring new counters.
-Private alias admission is not selected.
+The publisheda7b02bd collector binds one existing genuine canonical prepared CLI
+call beside help.2750 validates its actual argv/environment, six consumed input
+roles, bounded per-operation byte evidence, raw capture and owned-group closure.
+All99tests pass, but the small3line/3statement/2branch-arm gain leaves the contour
+BLOCKED. Valid attribution alone is not broad coverage progress. Use2752's
+retained gap map and bounded real-caller/fixture analysis to group the next
+testable paths before another complete stage. Keep every unsupported or absent
+producer prerequisite explicit; no new objective skip is established by this run.
+Preserve the same collector/readiness owners and do not add private alias admission.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts
 and do not replay historical UNKNOWN. Toolchain's2561 result and reviewed gaps
 remain in WORK, including its OPEN native Windows prerequisite.

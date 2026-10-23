@@ -38,76 +38,72 @@ The regression contract owns the current rule. No old image is repaired.
 
 ### Latest completed run measurement
 
-2708 completes the exact one-Source/two-test contour on
-`92674f10c6c680933856dab119806bdca4bc4779`, stage `/workspace/contour-stage-oZyIOM`,
-rund237ace8-929d-477c-8405-23cffda6c9dd. All98tests pass with0failures and1276expects
-in119.60s, outer124507.401002ms. Raw **F218/557 L1077/2863 S1146/3143 B1207/3663**
+2750 completes the one-Source/two-test contour on
+`a7b02bd26f74f758b8cf8373f0585d9ce24cdc0e`, stage `/workspace/contour-stage-RYHGaa`,
+runcc68cc8f-df54-4762-bae7-ebf687053672. All99tests pass with0failures and1285expects
+in128.70s; outer133427.098396ms. Raw **F218/557 L1080/2863 S1149/3143 B1209/3663**
 stays BLOCKED/nonexact. Max CC501/entry CRAP5402 is navigation, not frozen
 acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
 closed producer/group, unchanged boot/image and the sole paired projection
-publication pass,1327attempts. Frozen/CRAP/mutation stay deferred.
+publication pass,1329attempts. Frozen/CRAP/mutation stay deferred.
 
-Image `/workspace/.vida-quality-inputs/43e8ac89c9ab8c39fe3043ed89a9904d95183e5e/repository`,
-manifest SHA256b7bb87c1c0a31ddfddbd99a1f9ef3fc811ac7df00939e6f682cd33f3250bbfe9.
+Image `/workspace/.vida-quality-inputs/1bf42f95651c930ce6cc8136c9669ef5b5d43151/repository`,
+manifest SHA256b8e5a4b6ff15620ebc5a7aae763a78358fef5c1afe2cee3e2120198b648d63af.
 Package report is
-`coverage/bun-unified/diagnostics/d237ace8-929d-477c-8405-23cffda6c9dd.focused-coverage.json`;
-run-manifest SHA256db2823c36130c47fa829bb4a44469a6186a7a12698b5329f52ee3672b233527e.
+`coverage/bun-unified/diagnostics/cc68cc8f-df54-4762-bae7-ebf687053672.focused-coverage.json`;
+run-manifest SHA256b5c17a4b7a4d9c794361633bfe30e76384a6a2a3f66be8d03ca1b1a47cea410b.
 SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
-testce2fa0e2808a806f6bebdf52bc524d7f2ae8b4b7612bb2de910d9a8fad9f9765,
-toolb73fe70a08b3929060c8a38de8c869a73da538d848f8da6ecc4752b1f6758bd3.
-2710 reuses retained canonical geometry to map all339zero functions,1997statements
-and2456branch arms, with compact output only. No AST/index/hash sweep repeats.
-2709 verifies/fsyncs the40652800-byte functional archive at
-`/workspace/vida-functional-retention-oZyIOM-l6qJL2/archive.json`; originals stay.
-Archive SHA256d8d09061355a6e1cbb329bcd774c0bf4eb0f28991b8092088a5638659d640cad
-binds the one new retention artifact, not old reattestation.
+test6a783331cc9eaeba0c065d427dcdb044cced1d045bfa5d593ca06c1b74747996,
+tool4ce15a66809dc424a286e9c446d4a2ef15519c20460920395a4c9729c10452c6.
+2752 joins the new retained counters to2710's unchanged checked geometry and
+Source fingerprint, without a Source/AST/scan/hash pass. Its map retains339zero
+functions,1994statements and2454branch arms. All remain OPEN unless separately
+reviewed under TESTING; none becomes an objective skip by being hard to reach.
 
-The actual single canonical CLI child35fd3070-b048-49a2-bc1b-efa580902f09 has
-parentPID39/childPID268, complete native capture, exit0/null signal/no error,
-4889stdout bytes and0stderr bytes. Its receipt under this run's processes/cli
-binds loaded run.ts and all three required metadata modules, with no loaded
-workspace-database-cli.ts. The owned producer/group closure and unchanged
-boot/image are observed separately, not inferred from the child receipt.
+Both fixed canonical child subjects are admitted exactly once. Help child
+a5377699-c4d6-4c22-aad1-108c8068dba1, parent39/child190, returns0 with4889stdout
+bytes,0stderr bytes and required metadata modules. Prepared child
+f30a9b15-2924-4d68-86b9-61e8030485c6, parent39/child454, returns0 with8536stdout
+bytes/0stderr, detached groupgone and required workspace-database/local-work-admission
+modules. Its actual pinned budget59613 and deadline1792775469376 match the launch.
+Consumed evidence is complete with no issues,218read operations,109streams,
+69269unique bytes and7opens with no observed reads, under unchanged4MiB/4096limits.
+Native proof lives in the run's processes/cli tree; the receipt is counter binding,
+not acceptance authority or a substitute for the genuine CLI assertion.
 
-The separate controlled UNKNOWN capture is retained at
-`/dev/shm/vida-quality-retained-KirPpM/scratch-u8FtpT/scratch/vida-run-unknown-child-8bhich`.
-Its original captured stdout8237bytes/stderr8217bytes and terminal record remain
-UNKNOWN, timed_out=true, capture_complete=false, both streams available as UTF-8.
-They are included in2709's compared archive. Passing refusal assertions neither
-changes that operation's disposition nor establishes complete OS pipe capture.
+The actual controlled timeout remains UNKNOWN at
+`/dev/shm/vida-quality-retained-KirPpM/scratch-kmRbvN/scratch/vida-run-unknown-child-TflznI`.
+The separate inert native exit0/post-return diagnostic control remains boundary
+UNKNOWN at sibling `vida-run-unknown-child-z41DSo`, with command_outcome_unknown=false
+and both streams retained as Buffers. It is not a command failure or groupgone
+qualification.2751 compares and fsyncs the40765440-byte functional archive at
+`/workspace/vida-functional-retention-RYHGaa-wsnjC2/archive.json`; originals stay.
+Archive SHA2563f709a25014f565af84ed8d0dd20df1293400687df896a98717081941c3c386b
+binds this one retention artifact, not old reattestation. The bun-install-cache tree is excluded.
 
-Against2699's unchanged Source fingerprint/denominators, this packet adds0functions,
-3lines,4statements and9branch arms. Across five packets since2641 the gains are
-92functions,366lines,393statements and528branch arms.2699's92cases/115.51s and
-2708's98cases/119.60s have changed test/tool inputs and scope. No matched speedup
-is established. No budget or denominator changes. Historical exact count stays
-17/46; bun-cli-run remains open.2699's prior bindings and retention chain remain in
-[published7cbbe08 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/7cbbe08/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
+Against2708's unchanged Source fingerprint and denominators, this packet gains
+0functions,3lines,3statements and2branch arms. The valid prepared receipt does
+not establish a broader coverage gain or close the contour. Different test/tool
+inputs and99versus98cases mean128.70s/119.60s are not a matched speedup. Historical
+exact count stays17/46; bun-cli-run remains open. The predecessor's complete
+2708 bindings, original UNKNOWN and retention chain remain in
+[published3e3fcdc WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/3e3fcdc/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
 
-Reuse the sole disk snapshot2649 and latest2708 admission rather than another
-filesystem walk.2708 observes2470858752available scratch bytes against2147483648
-minimum. The existing floor and reserve remain unchanged. No cleanup runs during
-measurement; no path is retired or old run requalified. Current custody
-restrictions and the timer remain unchanged.
-
-Root's first2708 read mistakenly prints the report's nested metrics/function
-inventory, with34975tool-reported original output tokens and truncation. This is
-avoidable output cost, not another AST/hash/index scan. Read final numbers from
-the producer's existing compact `VidaContourProgress/v1.coverage_runs` output.
-Whitelist report identity/fingerprint fields and native terminal/loaded paths;
-do not print the nested metrics object. No session-wide token saving is claimed.
-
-2621's private selected-package CLI attribution and2622's missing positive
-producer prerequisites remain OPEN engineering gaps, not objective skips.
-Use2710's exact zero-counter ranges and genuine maintained fixture producers for
-the next related batch. Keep the one active contour and all numeric gates.
+Reuse audit-disk-v2649 and2750's actual native admission of2429861888scratch
+available bytes against2147483648minimum, with the unchanged67108864reserve.
+The floor-plus-reserve margin is215269376bytes at that observation; no current
+capacity GAP is established. No cleanup occurs during final checks; privileged
+unknown reference custody still defers the exact retirement roots. No path is
+retired and no reclaimed bytes or refreshed historical qualification is claimed.
+The existing timer is unchanged.2753/2754 are bounded disjoint same-contour
+readers of retained gaps and real callers, not new writers or numeric producers.
 
 ### Current run attribution architecture
 
 At17:06:31UTC the bounded Git author-date view for14:06:31–17:06:31UTC contains
 seven commits, three code/test corrections and four plan/result records. This is
-Git history, not an operation, tool-call or token count. Five completed coverage
-packets since2641 raise F126/L711/S753/B679 to F218/L1077/S1146/B1207, with the
+Git history, not an operation, tool-call or token count. Six completed coverage
+packets since2641 raise F126/L711/S753/B679 to F218/L1080/S1149/B1209, with the
 same557/2863/3143/3663denominators and Source fingerprint; that longer comparison
 is not a three-hour delta. Historical exact17/46
 does not rise. The confirmed current defect is test-harness UNKNOWN retention;
