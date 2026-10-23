@@ -10,7 +10,7 @@ The active contour is **bun-cli-run only**, the next declared partition
 after init's reviewed dispositions below. Reuse its
 retained receipts and inventory before deciding on affected checks or a new
 coverage stage. Historical UNKNOWN operations remain fenced and are not replayed.
-The latest public correction packet is published aseb2a3b1. Its complete2526 stage
+The earlier public-entrypoint correction is published aseb2a3b1. Its complete2526 stage
 passes all124tests; blind2529 dispositions every remaining counter below. This
 permits queue progress with an open native Windows GAP; test PASS is not exact coverage.
 Historical geometry is navigation rather than a new coverage claim.
@@ -22,6 +22,94 @@ Root owns canonical edits, final checks, Git and the sole numeric producer.
 Toolchain completes all testable paths in2561. Its remaining9branch arms and
 2statements have independent dispositions, including an OPEN native Windows
 prerequisite. This permits queue progression, not numeric exact100.
+
+### Native SQLite observation prerequisite
+
+The current packet investigates native issue counter admission; it grants no new
+CLI role, numeric result or objective skip. Root retains the existing successful
+CAS child and every help/prepared/issue/report/UNKNOWN control. F/L/S/B is still
+the only phase;2820 below remains the latest numeric measurement.
+
+2824/2825 independently compare native SQLite interception with update hooks or
+typed Host snapshots.2826 favors the existing child preload boundary, conditional
+on actual native qualification. Parent snapshots, update hooks and decoder-only
+callbacks cannot establish the consumed row and native CAS result. The six-file
+proof belongs to the prepared child, not the unadmitted issue child. No product
+hook, extra product database read/admission/action, collector or ledger is introduced.
+
+A transient exec-server disconnect interrupts2827's proposal. The same boot and
+cleand15d3ae checkout return; its incomplete15497-byte probe is retained unchecked
+and never executed. Root's smaller owned diagnostics use fresh inert SQLite files
+on durable storage, no accepted Host history or operational DB.2831 strict4 passes;
+2832 native exit1 is a controlled failed premise: Statement.prototype lacks an own
+get descriptor before any DB open or get execution. Capture is complete and the
+owned group closes; modified descriptors are restored.2834's separate exit0
+probe establishes that get/all/run/values are own writable/configurable instance
+methods, with the actual prototype still equal to exported Statement.prototype.
+
+2835/2838's corrected instance wrapper passes10observed native executions.2841/
+2842 strengthens it with four explicitly captured successful run calls, native
+CAS changes1/stale0, exact run result/snapshot/parameter forwarding, a constraint
+execution error preserved by reference, rollback and full descriptor flags.
+Strict4 and native exit0/complete capture/closed group pass. Current mechanics
+still exclude Database.exec writes, values/iterate, named/omitted bindings, full
+transaction trace and actual Host/issue qualification. Numeric database handles
+are not connection identities; retain object-owned logical IDs and the existing
+verified file-identity owner. Typed lint of the ignored diagnostic file reports
+Node/Bun error types even with an explicit resolution config; no lint PASS or
+canonical Source qualification is claimed. All failed logs and DB roots remain.
+
+2839 reviews Source and terminal receipts but looks up incorrect stdout paths.
+Root's exact raw files do exist as sqlite-api-probe-native-v2832.stdout.log,
+sqlite-statement-owner-native-v2834.stdout.log and sqlite-instance-native-v2838.stdout.log.
+Its prototype-bypass description is corrected by2832's earlier descriptor refusal;
+its32145408 resource number is a shortfall, not available tmpfs capacity. Keep its
+SQL shape as navigation until the real selected Host-backed caller is observed.
+2840 prepares a bounded non-gating trace for that one existing CAS issue call.
+Root reviews both preloads.2844's explicit two-root TypeScript diagnostic check
+passes;2850 also passes the current package-selected native Bun checker,5files.
+This does not supply typed lint or canonical Source qualification.
+2845 refuses the worker README's bare relative preload before loading the test;
+2846 uses the absolute preload path, preserving all native options, arguments,
+the existing60s case budget and seed113. No archived state is replayed.
+
+2846's native issue child597333 exits0 with26297stdout bytes and empty stderr.
+The observer records2670SQL events in2768446bytes with10deduplicated blobs, below
+the unchanged4096/4MiB limits. It sees query/get/all/run and Database.exec,
+including five real Journal UPDATE results with changes1. This is a diagnostic
+profile, not numeric qualification or a complete transaction proof. The outer
+case deliberately fails on incomplete observation after30expects/10.80s, with
+complete outer capture, closed process group and unchanged boot. Preserve
+`run-issue-sql-native-v2846.*`,2840's child launch/terminal/raw streams/SQL trace
+and `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-mutation-jJPTrK`.
+
+The actual Host connections3/9 use openHostStateDatabase's create-capable opener,
+which checks native database_list and before/after physical identity itself.
+They are absent from the existing-only raw opener's WeakMap, so its lookup
+cannot attest those connections. Database.exec mechanics are also unqualified.
+Neither a filename/stat fallback nor parent snapshots fill these gaps.2847
+independently selects observation of the existing Host owner's original calls,
+without qualifying that unimplemented interception. No new collector role or
+repeated genuine case follows. No product bug follows from this
+observer refusal, and no issue counter, skip or new contour closure is admitted.
+2848 independently checks the scoped docs against raw and terminal evidence;
+Root applies its strategy tense correction. Documentation checks3files/31local
+links and diff whitespace pass. No separate code-comment review is claimed for
+this documentation-only packet.2849 prepares the next isolated Host-owner
+proposal; it has no runtime or numeric authority before Root verification.
+
+The single19:24:53UTC preflight2828 observes20633284608durable available bytes and
+2182447104retained-scratch bytes. Native storage enforces2147483648; the separate
+prior67108864operational reserve remains in force. Retained scratch is32145408
+bytes short of the combined requirement, so no next numeric producer uses it.
+The existing default durable isolation route remains available without reducing
+floors or moving evidence into tmpfs. Docker117/168 are still live; privileged
+reference custody remains unresolved. No cleanup, retirement or timer change.
+
+Pstack Attack the Premise selects a tiny native ownership probe before another
+full run. Model the Domain selects statement-object metadata and a WeakSet for
+cached instances. Boundary Discipline keeps observation in coverage tooling and
+consumption qualification separate from returned status or parent snapshots.
 
 ### Run image-resource failure and repair
 
@@ -173,11 +261,11 @@ skipped or supplied by parent snapshots, hashes or direct API execution.
 
 ### Current run attribution architecture
 
-At18:39:27UTC the bounded Git committer-date view for15:39:27–18:39:27UTC contains
-eight commits, five code/test corrections and three plan/result records, from
-c2a8dbd through0a8645a. This is Git history, not an operation, tool-call or token
-count. The window contains shared process-group probing, prepared-child counter
-admission, two parser corrections and negative request/fixture expansion.
+At19:54:57UTC the bounded Git committer-date view for16:54:57–19:54:57UTC contains
+eleven commits, six code/test corrections and five plan/result records, from
+a7b02bd throughd15d3ae. This is Git history, not an operation, tool-call or token
+count. The window contains prepared-child counter admission, two parser
+corrections, negative request/fixture expansion and prepared inspect/re-entry.
 Historical exact17/46 does not rise. Older UNKNOWN-retention and masked-action/
 baseline-overwrite fixes precede this window and are not counted as new results.
 2759/2763

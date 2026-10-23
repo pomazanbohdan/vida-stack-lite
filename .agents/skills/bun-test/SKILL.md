@@ -606,6 +606,18 @@ catalog rows, rejected extra schema and preserved input bytes. A cloned Host
 keeping rows alone does not prove that its inventory included those objects.
 Use native bigint expectations when safeIntegers is enabled.
 
+Before observing SQLite calls, inspect actual method ownership on the selected
+runtime: a Statement method can be an own function rather than a prototype method.
+Qualify cached/repeated calls, exact return/error forwarding, native CAS results
+and full descriptor restoration. A numeric handle is not a connection identity;
+join the actual object to its existing verified file owner. Inert mechanics never
+qualify an issue child or replace its consumed-row proof.
+An existing-only opener's identity registry does not cover a create-capable Host
+opener. Missing identity keeps that connection unqualified. Observe the actual
+owner without extra SQL, product hooks or a filename/stat fallback. Retain native
+terminal and raw output before failing an incomplete observer, so fixture cleanup
+cannot erase that diagnostic failure.
+
 For an inclusive SQLite image-byte boundary, build a real database at the exact
 native page size/count. Delete an allocated padding BLOB to retain the image's
 high-water size and free pages for a real merge. Assert actual page/freelist
