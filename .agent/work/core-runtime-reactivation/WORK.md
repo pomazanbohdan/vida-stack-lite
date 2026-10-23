@@ -6,8 +6,8 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-development-controller only**;2391 completes the checked
-fault-control packet, with remaining paths still OPEN in map2392.
+The active contour is **bun-development-controller only**;2398 measures the same
+fault-control packet on Bun1.4.4, with remaining paths still OPEN in map2399.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
@@ -29,17 +29,19 @@ same pin instead of maintaining another selected-runtime literal.
 
 Official [release notes](https://bun.com/blog/bun-v1.4.4) document checker changes
 and native coverage corrections; upstream speed claims are not local benchmarks.
-2395 passes89toolchain/version-policy cases with0failures in1.99s. The applicable
-commit hooks qualify current static/lint bytes separately. Prior2391 and all older
+2395 passes89toolchain/version-policy cases with0failures in1.99s. Ordinary commit
+hooks pass formatting, strict536 and configured quality checks on1.4.4. Prior2391 and all older
 coverage observations remain bound to their original1.4.3 runtime; this update
-does not re-attest them, form a new SDK/native artifact or grant Runtime acceptance.
+does not re-attest them or grant Runtime acceptance.
 The owner's follow-up explicitly includes transparent coverage migration. The
 existing full/focused runCoverage and selected contour-stage routes share
 ensureSdkCoverageInputsForTests and the package pin. SDK receipt validation already
 requires both selectedPin and executing Bun.version, so an old1.4.3 artifact cannot
-silently qualify the1.4.4 run. The sole producer will form missing/stale SDK inputs
-automatically and publish the selected controller's new bound report after this
-checked Source packet. No parallel collector or manual receipt rewrite is needed.
+silently qualify the1.4.4 run.2398 automatically forms current SDK test inputs
+and publishes the selected controller report through the same owner. Canonical
+and captured dist/sdk-formation.json both declare CandidateSdkTestInputs/v1,
+purpose development-tests and bun_version1.4.4; the native run manifest also
+declares1.4.4. No parallel collector or manual receipt rewrite is needed.
 
 ### Current controller repair packet
 
@@ -224,6 +226,24 @@ lifecycle, TESTING, the plan and backlog; no second authority is created.
 ## Latest measurement custody
 
 ### Latest completed development-controller measurement
+
+Stage2398 /workspace/contour-stage-tXhIZ4 runs on Bun1.4.4 and
+Source7cfb999bdbfbc729902933d357db5327cb6c9730,
+runc1cd71b0-6987-4ca5-9afd-7bd1fe101ebc. It completes in33925.689732ms,
+exit0, no signal/timeout/spawn error, complete capture, closed group, unchanged
+boot/image and one automatic paired import. Native11PASS/0FAIL/198expect calls
+in30.07s. Raw **F59/62 L235/246 S265/278 B267/286** is unchanged and BLOCKED/nonexact;
+remaining3functions/13statements/19branch arms stay OPEN. MaxCC/entryCRAP17 remains
+diagnostic; no frozen/mutation producer or native product delivery is claimed.
+
+Image /workspace/.vida-quality-inputs/80e8b153c3d0f1126ad76fe6e10bfefceb82600d/repository
+has manifest86ab9ae8103d3ac0c3ad8a574eb28d86a0ea95aa2020e77c89ec411c56d095a2.
+The captured run manifest binds Bun1.4.4; map2399 reuses its complete report and
+geometry without another scan.2399 verifies/fsyncs the10240-byte non-cache archive
+at /workspace/vida-functional-retention-tXhIZ4-DmmvN9/archive.json; originals remain.
+Old1.4.3 observations are retained separately, not combined with current counters.
+
+### Preceding Bun1.4.3 controller measurement
 
 Stage2391 /workspace/contour-stage-t4J1fQ runs on
 Source00ef58750628962516ebc538cda81e532fe2b3ba,

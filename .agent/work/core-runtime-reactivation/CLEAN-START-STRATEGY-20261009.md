@@ -17,15 +17,15 @@ session-handoff-v2 and final-assurance completed all testable paths and bound
 their remaining independent objective dispositions. Both raw coverage outcomes
 remain BLOCKED/nonexact; their exact bindings are in WORK.
 The owner's Bun1.4.4 update changes the execution pin; historical1.4.3 measurements
-keep their original binding. Use fresh current-runtime admission and readiness
-before the next producer; the toolchain update alone does not qualify coverage.
+keep their original binding.2398 completes fresh current-runtime admission,
+automatic SDK readiness and selected-contour coverage through the existing owner.
 The current packet extends the persisted ready/qualification correction with
 grouped rejected child-adapter, filesystem and CLI refusal controls. Independent
 readers review remaining I/O and CLI prerequisites before one complete changed-
 input stage; cheap controls precede the shared real construction/qualification.
 2391 completes that packet with additional visited counters and unchanged
 denominators. Its testable and undispositioned paths stay in this active lane;
-2392 binds the next prerequisites. CLI child functional evidence does not visit
+2399 retains those prerequisites after the1.4.4 run. CLI child functional evidence does not visit
 parent entry/catch counters, so attribution remains OPEN rather than a skip.
 The configured-caller and filesystem-guide capture defects are repaired. WORK
 owns current metrics, red/green, reviews and exact evidence; no next contour opens.
