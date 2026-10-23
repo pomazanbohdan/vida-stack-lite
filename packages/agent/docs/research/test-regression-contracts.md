@@ -1299,9 +1299,13 @@ lock drift, forward the actual installer observation unchanged, mutate only the
 private copied lock, and require complete terminal/parent receipts with no ready
 metadata. Do not substitute a successful child DTO. Reuse that rejected construction
 for diagnostics-disabled execution and restore the environment before genuine
-qualification. Check the existing private package's embedded portable lock against
-the root lock before removing/restoring only its root lock; native inspection must
-detect binding drift and succeed after restoration.
+qualification. The private lock-fallback fixture must work in a clean execution
+image without relying on an incidental Source build. If the private package lacks
+its embedded portable lock, create that fixture resource exclusively from its
+actual root-lock bytes; otherwise check their equality. Remove/restore the root
+lock within that scope, and restore the portable resource's original bytes or
+absence afterward. Native inspection must detect binding drift and succeed after
+restoration; this fixture does not establish native SDK formation.
 
 ### Controller child observations
 

@@ -48,7 +48,7 @@ function cleanupOwnedFixture(scratch: string): void {
 }
 
 async function withRestoredControllerMetadata(file: string, operation: () => Promise<void>): Promise<void> {
-  const before = readFileSync(file);
+  const before = existsSync(file) ? readFileSync(file) : undefined;
   let failure: { readonly error: unknown } | undefined;
   try {
     await operation();
@@ -59,8 +59,13 @@ async function withRestoredControllerMetadata(file: string, operation: () => Pro
     completeOwnedCleanup(
       [
         () => {
-          writeFileSync(file, before);
-          assert.deepEqual(readFileSync(file), before);
+          if (before === undefined) {
+            if (existsSync(file)) unlinkSync(file);
+            expect(existsSync(file)).toBe(false);
+          } else {
+            writeFileSync(file, before);
+            assert.deepEqual(readFileSync(file), before);
+          }
         },
       ],
       failure,
@@ -773,12 +778,19 @@ test('qualified development controller preserves Source identity and accepts a s
     );
     writeFileSync(manifestFile, manifest);
     const packageLock = path.join(ready.package_root, 'bun.lock');
-    await withRestoredControllerMetadata(packageLock, async () => {
-      const lock = readPortableLock(ready.package_root);
-      assert.deepEqual(readFileSync(path.join(ready.package_root, 'dist/portable/bun.lock')), lock);
-      unlinkSync(packageLock);
-      expect(readPortableLock(ready.package_root)).toEqual(lock);
-      await assert.rejects(inspectDevelopmentController({ controllerRoot }), /drift/);
+    const portableLock = path.join(ready.package_root, 'dist/portable/bun.lock');
+    await withRestoredControllerMetadata(portableLock, async () => {
+      const lock = readFileSync(packageLock);
+      if (!existsSync(portableLock)) {
+        mkdirSync(path.dirname(portableLock), { recursive: true });
+        writeFileSync(portableLock, lock, { flag: 'wx' });
+      }
+      assert.deepEqual(readFileSync(portableLock), lock);
+      await withRestoredControllerMetadata(packageLock, async () => {
+        unlinkSync(packageLock);
+        expect(readPortableLock(ready.package_root)).toEqual(lock);
+        await assert.rejects(inspectDevelopmentController({ controllerRoot }), /drift/);
+      });
     });
     await withRestoredControllerMetadata(manifestFile, async () => {
       for (const value of [null, [], { name: 42 }, { version: 42 }]) {

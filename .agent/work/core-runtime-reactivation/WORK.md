@@ -101,7 +101,7 @@ producer is added.
 
 ### Current controller repair packet
 
-The next checked packet addresses remaining construction/snapshot comparisons.
+The checked packet71e7a0f addresses remaining construction/snapshot comparisons.
 Binding2425 confirms the latest2422 Source/test fingerprints match map2399's
 retained geometry, without another AST/inventory/hash pass. Independent bounded
 studies2426/2427 separate actual CLI-process instrumentation from testable I/O
@@ -122,8 +122,26 @@ No product defect, real Source mutation or accepted synthetic install is claimed
 file passes13cases/220expect calls in34.34s under unchanged deadlines. Original
 2429Buffer-typing and2430asymmetric-matcher lint diagnostics remain retained and
 resolve through2431's native byte comparisons and typed argument checks.
-The independent current-byte review2433 reports no blocking findings. The sole
-changed-input stage follows publication of this checked packet.
+The independent current-byte review2433 reports no blocking findings. Ordinary
+hooks and push publish71e7a0f. Its changed-input stage2437 terminates with12PASS/
+1FAIL/214expect calls in26.73s: the private ready copy in a clean image lacks
+dist/portable/bun.lock. This is a test setup defect, not a product failure or new
+numeric qualification. No focused report exists; publication refuses the absent
+report and preserves the terminal failure as attempt1284. Source71e7a0f,
+runf8983a55-eb38-4aaf-9f8a-55739d64f055, stage/workspace/contour-stage-MJIpBl,
+exit1/nullsignal/no timeout/spawn error, complete capture, closed group and unchanged
+boot/image remain attributable.2438 verifies/fsyncs its648704000-byte non-cache
+failure archive at/workspace/vida-functional-retention-MJIpBl-BGVYWA/archive.json;
+originals remain protected.
+
+The correction creates a missing private portable-lock fixture from actual copied
+root-lock bytes, without requiring an incidental Source SDK build. The restoration
+owner now preserves prior absence as well as existing bytes. Nested restoration
+removes the temporary fallback only after restoring the root lock; real inspection
+must still refuse changed binding and later succeed.2439 strict103 and zero-warning
+lint pass.2442's affected case passes1/0 with154expect calls in44.21s under its
+unchanged deadline. Independent review2440 finds no blocking issue, including
+primary/restoration error preservation and restoration of prior absence.
 
 2426 confirms the real CLI catch/errorMessage are executable, still OPEN counters.
 The Bun Test-only afterAll/selected-tests-loaded receipt cannot simply be inherited
@@ -132,6 +150,17 @@ existing immutable input/capture owners, conditional on a native direct-entry
 instrumentation proof; no new collector or weakened test-child receipt is
 activated. Windows arms and fixed-root absent-lock prerequisites remain
 separate. No new contour opens while testable/undispositioned paths remain.
+
+2441 identifies a smaller first-import argv fixture as conditional, not yet
+admitted. Native inert probe2443 shows Bun1.4.4 treats a query-bearing import as
+the same cached module with the same import.meta.url; it cannot re-execute the
+already statically imported entry. Other maintained tests import the same module,
+so assuming a first import globally would introduce suite-order dependence.
+2444 separately observes the native preload's onLoad receiving a direct inert
+entry request with unchanged argv. This supports further child-counter design,
+not attributed controller hits or a qualified receipt. Its intentionally blocked
+CLI exit1 must retain that expected behavior; a proposed exit0-only child protocol
+would exclude the very error path being measured and is not adopted.
 
 The product inspector now rejects persisted ready metadata with missing,
 non-passing or foreign-bound qualification before a child can run.2346 reproduces
