@@ -1,15 +1,21 @@
 import { expect, test, spyOn } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import * as childProcess from 'node:child_process';
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import manifest from '../package.json' with { type: 'json' };
 import { cliMetadataResult } from '../bin/cli-metadata.ts';
-import { inspectScope } from '../bin/scope.ts';
+import { inspectScope, main as scopeMain } from '../bin/scope.ts';
 import { main as publicCliMain } from '../bin/vida-agent.ts';
-import { freezeCliDeclaration, cliCommandSet, cliCommandNames } from '../bin/cli-command-contracts.ts';
+import {
+  freezeCliDeclaration,
+  cliCommandSet,
+  cliCommandNames,
+  cliCommandContracts,
+} from '../bin/cli-command-contracts.ts';
+import * as runtimeConfig from '../src/config/runtime-config.ts';
 import { runOptionDetails, runScalarOptionFields, runRepeatedOptions } from '../bin/run-cli-options.ts';
 import { captureRuntimeInputClosure, readQualityInputs } from '../tooling/bun-coverage-evidence.ts';
 import { expectRejection } from './helpers/expect-rejection.js';
@@ -89,6 +95,151 @@ test('canonical native public help preserves its terminal result and complete he
   expect(JSON.parse(child.stdout)).toEqual(cliMetadataResult(['--help'], manifest));
 });
 
+test('canonical native scope and repair refusals preserve their exact terminal contracts', () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  for (const [entry, expected] of [
+    [
+      'scope.ts',
+      {
+        schema: 'VidaAgentCommandResult/v1',
+        status: 'blocked',
+        code: 'GAP-VIDA-SCOPE-001',
+        message: cliCommandContracts.scope.syntax,
+      },
+    ],
+    [
+      'repair-work-state.ts',
+      { status: 'blocked', message: 'vida work-state repair: kind, mode or absolute project root missing' },
+    ],
+  ] as const) {
+    const child = spawnSync(
+      process.execPath,
+      ['--no-env-file', '--no-install', '--config=' + path.join(root, 'bunfig.toml'), path.join(root, 'bin', entry)],
+      { encoding: 'utf8', windowsHide: true, timeout: 4000 },
+    );
+    expect(child.error).toBeUndefined();
+    expect(child.signal).toBeNull();
+    expect(child.status).toBe(1);
+    expect(child.stdout).toBe('');
+    expect(JSON.parse(child.stderr)).toEqual(expected);
+  }
+});
+
+test('callable scope preserves non-Error dependency refusals without changing process exit state', async () => {
+  const errors: string[] = [];
+  const stderr = spyOn(process.stderr, 'write');
+  try {
+    stderr.mockImplementation((chunk) => {
+      errors.push(String(chunk));
+      return true;
+    });
+    const config = spyOn(runtimeConfig, 'loadRuntimeConfig');
+    try {
+      config.mockImplementation(() => {
+        throw 'scope dependency refusal';
+      });
+      const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+      await scopeMain({
+        args: [
+          '--project-root',
+          path.resolve(import.meta.dirname, '..'),
+          '--repository',
+          'fixture',
+          '--project',
+          'agent',
+          '--path',
+          'fixture.txt',
+        ],
+        exit,
+      });
+      expect(exit.exitCode).toBe(1);
+      expect(JSON.parse(errors.join(''))).toEqual({
+        schema: 'VidaAgentCommandResult/v1',
+        status: 'blocked',
+        code: 'GAP-VIDA-SCOPE-001',
+        message: 'scope dependency refusal',
+      });
+      expect(config).toHaveBeenCalledTimes(1);
+    } finally {
+      config.mockRestore();
+    }
+  } finally {
+    stderr.mockRestore();
+  }
+});
+
+test('public CLI resolves each validated embedded context and rejects unsafe package data', () => {
+  const packageRoot = path.resolve(import.meta.dirname, '..');
+  const dataRoot = mkdtempSync(path.join(realpathSync(tmpdir()), 'public-cli-data-'));
+  const variables = ['BUN_BE_BUN', 'VIDA_STANDALONE_ROOT', 'VIDA_STANDALONE_EXECUTABLE'] as const;
+  const before = variables.map((key) => process.env[key]);
+  const output: string[] = [];
+  const errors: string[] = [];
+  let completed = false;
+  try {
+    writeFileSync(path.join(dataRoot, '.bun-version'), manifest.engines.bun + '\n');
+    writeFileSync(path.join(dataRoot, 'package.json'), JSON.stringify(manifest));
+    mkdirSync(path.join(dataRoot, 'instructions/directory.md'), { recursive: true });
+    writeFileSync(path.join(dataRoot, 'outside.md'), 'regular external instruction target');
+    symlinkSync(path.join(dataRoot, 'outside.md'), path.join(dataRoot, 'instructions/linked.md'), 'file');
+    const stdout = spyOn(process.stdout, 'write');
+    try {
+      stdout.mockImplementation((chunk) => {
+        output.push(String(chunk));
+        return true;
+      });
+      const stderr = spyOn(process.stderr, 'write');
+      try {
+        stderr.mockImplementation((chunk) => {
+          errors.push(String(chunk));
+          return true;
+        });
+        process.env.BUN_BE_BUN = '1';
+        process.env.VIDA_STANDALONE_EXECUTABLE = process.execPath;
+        process.env.VIDA_STANDALONE_ROOT = packageRoot;
+        publicCliMain({ args: ['--help'], exit: {} });
+        expect(JSON.parse(output.join(''))).toEqual(cliMetadataResult(['--help'], manifest));
+        const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+        publicCliMain({ args: ['scope', '--project-root', 'relative'], exit });
+        expect(exit.exitCode).toBe(1);
+        process.env.VIDA_STANDALONE_ROOT = dataRoot;
+        output.length = 0;
+        publicCliMain({ args: ['--help'], exit: {} });
+        expect(JSON.parse(output.join(''))).toEqual(cliMetadataResult(['--help'], manifest));
+        for (const name of ['directory', 'linked']) {
+          output.length = 0;
+          errors.length = 0;
+          const rejected: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+          publicCliMain({ args: ['instructions', '--path', name], exit: rejected });
+          expect(rejected.exitCode).toBe(1);
+          expect(output).toEqual([]);
+          expect(JSON.parse(errors.join(''))).toMatchObject({
+            status: 'blocked',
+            message: 'instruction must be a package-owned regular file',
+          });
+        }
+        for (const bin of [null, [], 'invalid-bin']) {
+          writeFileSync(path.join(dataRoot, 'package.json'), JSON.stringify({ ...manifest, bin }));
+          expect(() => publicCliMain({ args: ['--help'], exit: {} })).toThrow('CLI package manifest is invalid');
+        }
+      } finally {
+        stderr.mockRestore();
+      }
+    } finally {
+      stdout.mockRestore();
+    }
+    completed = true;
+  } finally {
+    for (const [index, key] of variables.entries()) {
+      const value = before[index];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    if (completed) rmSync(dataRoot, { recursive: true, force: true });
+    else console.error('Retained failed embedded CLI data fixture at ' + dataRoot);
+  }
+});
+
 test('public CLI forwarding normalizes absolute roots and preserves native refusal and adapter errors', () => {
   const root = path.resolve(import.meta.dirname, '..');
   const originalArgs = ['scope', '--project-root', path.join(root, '..') + '/agent/../missing-public-project'];
@@ -126,6 +277,9 @@ test('public CLI forwarding normalizes absolute roots and preserves native refus
     publicCliMain({ args: ['reconcile-artifacts'], exit });
     expect(exit.exitCode).toBe(1);
     expect(forwarded()[1]?.[1]).toEqual([path.join(root, 'bin/bun.ts'), path.join(root, 'bin/reconcile-artifacts.ts')]);
+    publicCliMain({ args: ['scope', '--project-root', 'relative'], exit });
+    expect(exit.exitCode).toBe(1);
+    expect(forwarded()[2]?.[1]).toEqual([path.join(root, 'bin/scope.ts'), '--project-root', 'relative']);
     const errors: string[] = [];
     const stderr = spyOn(process.stderr, 'write');
     try {
@@ -145,7 +299,7 @@ test('public CLI forwarding normalizes absolute roots and preserves native refus
       fault = 'signal';
       publicCliMain({ args: ['scope'], exit });
       expect(exit.exitCode).toBe(1);
-      expect(forwarded()).toHaveLength(4);
+      expect(forwarded()).toHaveLength(5);
     } finally {
       stderr.mockRestore();
     }
@@ -204,6 +358,9 @@ test('malformed scope argv reports actual public help syntax before configuratio
     ['--project-root', '', '--repository', 'example', '--project', 'agent', '--path', 'src/a.ts'],
   ];
   for (const args of malformed) await expectRejection(inspectScope(args), help.syntax);
+  const sparse = new Array<string>(2);
+  sparse[1] = 'unpaired-value';
+  await expectRejection(inspectScope(sparse), help.syntax);
   await expectRejection(
     inspectScope([
       '--project-root',

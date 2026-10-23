@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test, spyOn } from 'bun:test';
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 import { initializeProject } from '../bin/init.ts';
-import { inspectScope } from '../bin/scope.ts';
+import { inspectScope, main as scopeMain } from '../bin/scope.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import {
   compareScopedSourceSnapshots,
@@ -254,6 +254,26 @@ describe('cooperative scoped source evidence', () => {
       expect(sharedOutput).toEqual(
         await inspect(['--path', 'products/selected/src/probe.txt', '--repository-path', 'shared.txt']),
       );
+      const stdout = spyOn(process.stdout, 'write');
+      try {
+        const written: string[] = [];
+        stdout.mockImplementation((chunk) => {
+          written.push(String(chunk));
+          return true;
+        });
+        const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+        await scopeMain({
+          args: argumentsFor(
+            ['--path', 'products/selected/src/probe.txt', '--repository-path', 'shared.txt'],
+            ['selected'],
+          ),
+          exit,
+        });
+        expect(exit.exitCode).toBeUndefined();
+        expect(written.join('')).toBe(JSON.stringify(sharedOutput) + '\n');
+      } finally {
+        stdout.mockRestore();
+      }
       for (const paths of [
         ['--repository-path', 'products/selected/src/probe.txt'],
         ['--repository-path', 'products/foreign/src/probe.txt'],

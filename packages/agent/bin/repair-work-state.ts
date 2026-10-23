@@ -102,13 +102,21 @@ export function runWorkStateRepair(args: readonly string[]) {
   );
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+export function main({
+  args = process.argv.slice(2),
+  exit = process,
+}: {
+  args?: readonly string[];
+  exit?: Partial<Pick<NodeJS.Process, 'exitCode'>>;
+} = {}): void {
   try {
-    console.log(JSON.stringify(runWorkStateRepair(process.argv.slice(2))));
+    console.log(JSON.stringify(runWorkStateRepair(args)));
   } catch (error) {
     console.error(
       JSON.stringify({ status: 'blocked', message: error instanceof Error ? error.message : String(error) }),
     );
-    process.exitCode = 1;
+    exit.exitCode = 1;
   }
 }
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) main();

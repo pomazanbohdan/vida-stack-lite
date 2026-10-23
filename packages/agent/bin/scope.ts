@@ -121,23 +121,31 @@ export async function inspectScope(args: readonly string[]) {
   return dependencies.snapshotDeclaredSources(dependencies.requireSafeRepositoryAccess(root), paths);
 }
 
-if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+export async function main({
+  args = process.argv.slice(2),
+  exit = process,
+}: {
+  args?: readonly string[];
+  exit?: Partial<Pick<NodeJS.Process, 'exitCode'>>;
+} = {}): Promise<void> {
   try {
     if (typeof Bun === 'undefined') {
       const { runPinnedBun } = await import('./bun.ts');
-      process.exitCode = runPinnedBun([fileURLToPath(import.meta.url), ...process.argv.slice(2)], {
+      exit.exitCode = runPinnedBun([fileURLToPath(import.meta.url), ...args], {
         root: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
         cwd: process.cwd(),
       });
     } else {
       const { resolvePinnedBun } = await import('./bun.ts');
       resolvePinnedBun({ root: path.resolve(import.meta.dirname, '..'), executable: process.execPath });
-      process.stdout.write(`${JSON.stringify(await inspectScope(process.argv.slice(2)))}\n`);
+      process.stdout.write(`${JSON.stringify(await inspectScope(args))}\n`);
     }
   } catch (error) {
     process.stderr.write(
       `${JSON.stringify({ schema: 'VidaAgentCommandResult/v1', status: 'blocked', code: 'GAP-VIDA-SCOPE-001', message: error instanceof Error ? error.message : String(error) })}\n`,
     );
-    process.exitCode = 1;
+    exit.exitCode = 1;
   }
 }
+
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) await main();

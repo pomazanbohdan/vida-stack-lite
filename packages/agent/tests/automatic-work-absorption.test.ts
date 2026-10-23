@@ -46,7 +46,8 @@ import {
   admitLocalSessionWork as admitLocalSessionWorkSource,
   acquireLocalSourceWriterLease as acquireLocalSourceWriterLeaseSource,
 } from '../src/orchestration/local-work-admission.ts';
-import { runWorkStateRepair } from '../bin/repair-work-state.ts';
+import { runWorkStateRepair, main as repairMain } from '../bin/repair-work-state.ts';
+import { nativeDatabaseSnapshotReader } from './helpers/native-database-snapshot.ts';
 import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.ts';
 
 import type {
@@ -2055,6 +2056,80 @@ test('work-state repair rejects malformed selectors and attribution before readi
     expect(configRead).not.toHaveBeenCalled();
   } finally {
     configRead.mockRestore();
+  }
+});
+
+test('work-state repair inspects canonical state readonly and selects the default planning authority', () => {
+  const f = fixture(false, true);
+  try {
+    const snapshot = nativeDatabaseSnapshotReader(f.database);
+    const before = snapshot();
+    const inspected = runWorkStateRepair(['--kind', 'work-state', '--mode', 'inspect', '--project-root', f.root]);
+    expect(inspected).toEqual(
+      inspectHostWorkspaceDatabase(f.root, path.relative(f.root, f.database.filename), f.store.workspaceId),
+    );
+    expect(snapshot()).toEqual(before);
+    const workspace = f.store.readWorkspaceSnapshot();
+    const output: string[] = [];
+    const log = spyOn(console, 'log');
+    try {
+      log.mockImplementation((value: unknown) => {
+        output.push(String(value));
+      });
+      const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+      repairMain({
+        args: [
+          '--kind',
+          'work-state',
+          '--mode',
+          'plan',
+          '--project-root',
+          f.root,
+          '--repair-id',
+          'public-default-plan',
+          '--actor',
+          'fixture-owner',
+        ],
+        exit,
+      });
+      expect(exit.exitCode).toBeUndefined();
+      expect(output).toHaveLength(1);
+      const result: unknown = JSON.parse(output[0]!);
+      expect(result).toMatchObject({ status: 'planned' });
+      expect(f.store.readWorkspaceSnapshot()).toEqual(workspace);
+    } finally {
+      log.mockRestore();
+    }
+  } finally {
+    f.close();
+  }
+});
+
+test('callable work-state repair serializes non-Error dependency refusals with local exit state', () => {
+  const error = spyOn(console, 'error');
+  try {
+    const output: string[] = [];
+    error.mockImplementation((value: unknown) => {
+      output.push(String(value));
+    });
+    const config = spyOn(runtimeConfig, 'loadRuntimeConfig');
+    try {
+      config.mockImplementation(() => {
+        throw 'repair dependency refusal';
+      });
+      const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+      repairMain({
+        args: ['--kind', 'work-state', '--mode', 'inspect', '--project-root', path.resolve(import.meta.dirname)],
+        exit,
+      });
+      expect(exit.exitCode).toBe(1);
+      expect(output).toEqual([JSON.stringify({ status: 'blocked', message: 'repair dependency refusal' })]);
+      expect(config).toHaveBeenCalledTimes(1);
+    } finally {
+      config.mockRestore();
+    }
+  } finally {
+    error.mockRestore();
   }
 });
 

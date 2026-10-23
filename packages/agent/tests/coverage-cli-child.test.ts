@@ -31,6 +31,7 @@ import {
   type CliCoverageContext,
 } from '../tooling/coverage-cli-child.ts';
 import { mergeCoverageShardCounters } from '../tooling/coverage-shard-evidence.ts';
+import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const capturedTools = new Map(coverageToolInputs.map((file) => [file, readFileSync(path.join(packageRoot, file))]));
@@ -205,6 +206,33 @@ test.each(['controller', 'public'] as const)(
             message: 'Required controller option is missing.',
           }
         : { schema: 'VidaAgentCommandResult/v1', status: 'help', commands: ['help'] };
+    const subjects = [
+      { entry, args: [argument], exit: expectedExit, output: expectedOutput },
+      ...(variant === 'controller'
+        ? []
+        : [
+            {
+              entry: 'bin/scope.ts',
+              args: [],
+              exit: 1,
+              output: {
+                schema: 'VidaAgentCommandResult/v1',
+                status: 'blocked',
+                code: 'GAP-VIDA-SCOPE-001',
+                message: cliCommandContracts.scope.syntax,
+              },
+            },
+            {
+              entry: 'bin/repair-work-state.ts',
+              args: [],
+              exit: 1,
+              output: {
+                status: 'blocked',
+                message: 'vida work-state repair: kind, mode or absolute project root missing',
+              },
+            },
+          ]),
+    ];
     const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-cli-child-'));
     let passed = false;
     try {
@@ -228,8 +256,20 @@ test.each(['controller', 'public'] as const)(
             JSON.stringify(JSON.stringify(expectedOutput)) +
             ');\n';
       const inputs = new Map(capturedTools);
-      for (const selected of selectedSources)
-        inputs.set(selected, Buffer.from(selected === entry ? sourceText : 'export const inert = true;\n'));
+      for (const selected of selectedSources) {
+        const subject = subjects.find((row) => row.entry === selected);
+        assert.ok(subject);
+        inputs.set(
+          selected,
+          Buffer.from(
+            selected === entry
+              ? sourceText
+              : 'export function hit() { return 7; }\nif (import.meta.main) { console.error(' +
+                  JSON.stringify(JSON.stringify(subject.output)) +
+                  '); process.exitCode = 1; }\n',
+          ),
+        );
+      }
       for (const selected of selectedTests.slice(1))
         inputs.set(
           selected,
@@ -246,16 +286,18 @@ test.each(['controller', 'public'] as const)(
             `import { hit } from "../${entry}";`,
             'test("native denial", () => {',
             '  expect(hit()).toBe(7);',
-            `  const child = spawnSync(process.execPath, ${JSON.stringify([
-              '--no-env-file',
-              '--no-install',
-              '--config=' + path.join(root, 'bunfig.toml'),
-              path.join(root, entry),
-              argument,
-            ])}, {encoding:"utf8",windowsHide:true,timeout:4000});`,
-            `  expect(child.error).toBeUndefined(); expect(child.signal).toBeNull(); expect(child.status).toBe(${expectedExit});`,
-            `  expect(child.${variant === 'controller' ? 'stdout' : 'stderr'}).toBe("");`,
-            `  expect(JSON.parse(child.${variant === 'controller' ? 'stderr' : 'stdout'})).toEqual(${JSON.stringify(expectedOutput)});`,
+            ...subjects.flatMap((subject, index) => [
+              `  const child${index} = spawnSync(process.execPath, ${JSON.stringify([
+                '--no-env-file',
+                '--no-install',
+                '--config=' + path.join(root, 'bunfig.toml'),
+                path.join(root, subject.entry),
+                ...subject.args,
+              ])}, {encoding:"utf8",windowsHide:true,timeout:4000});`,
+              `  expect(child${index}.error).toBeUndefined(); expect(child${index}.signal).toBeNull(); expect(child${index}.status).toBe(${subject.exit});`,
+              `  expect(child${index}.${subject.exit === 1 ? 'stdout' : 'stderr'}).toBe("");`,
+              `  expect(JSON.parse(child${index}.${subject.exit === 1 ? 'stderr' : 'stdout'})).toEqual(${JSON.stringify(subject.output)});`,
+            ]),
             '});',
           ].join('\n'),
         ),
@@ -391,7 +433,7 @@ test.each(['controller', 'public'] as const)(
       const admit = (ctx: CliCoverageContext, raw: unknown, exitCode = 0) =>
         cliCoverageChildMaps(ctx, raw, result.pid, exitCode, validateLoaded);
       const maps = admit(context, report.cli_children);
-      expect(maps).toHaveLength(1);
+      expect(maps).toHaveLength(subjects.length);
       const merged = mergeCoverageShardCounters(sourceMaps, [record(report.coverage), ...maps]);
       const parent = record(record(report.coverage)[path.join(root, entry)]);
       const parentStatements = record(parent.s);
@@ -399,7 +441,10 @@ test.each(['controller', 'public'] as const)(
       expect(Object.entries(parentStatements).some(([key, count]) => count === 0 && mergedStatements[key]! > 0)).toBe(
         true,
       );
-      const child = record((report.cli_children as unknown[])[0]);
+      assert.ok(Array.isArray(report.cli_children));
+      const children = report.cli_children.map(record);
+      const child = children[0]!;
+      const siblings = children.slice(1);
       const childReceipt = record(
         JSON.parse(readFileSync(path.join(directory, String(record(child.receipt).path)), 'utf8')),
       );
@@ -409,6 +454,16 @@ test.each(['controller', 'public'] as const)(
       expect(() => admit(context, undefined)).toThrow();
       expect(() => admit(context, [])).toThrow();
       expect(() => admit(context, [child, child])).toThrow();
+      if (variant === 'public') {
+        for (const length of [1, 2, 4])
+          expect(() =>
+            admit(
+              context,
+              Array.from({ length }, (_, index) => children[index % children.length]),
+            ),
+          ).toThrow();
+        expect(() => admit(context, [child, child, children[2]])).toThrow('Duplicate focused CLI');
+      }
       for (const [key, value] of Object.entries({
         parent_pid: result.pid + 1,
         pid: result.pid,
@@ -418,7 +473,7 @@ test.each(['controller', 'public'] as const)(
         complete: false,
         id: '../escape',
       })) {
-        expect(() => admit(context, [{ ...child, [key]: value }]), key).toThrow();
+        expect(() => admit(context, [{ ...child, [key]: value }, ...siblings]), key).toThrow();
       }
       for (const selection of [
         { ...manifest, schema: 'VidaBunCoverageRun/v3' },
@@ -442,14 +497,16 @@ test.each(['controller', 'public'] as const)(
         const negativeDirectory = path.join(root, 'negative', label);
         const copyContext = { ...context, directory: negativeDirectory };
         const row = structuredClone(child);
-        const targetDirectory = path.join(negativeDirectory, 'cli', String(row.id));
-        mkdirSync(targetDirectory, { recursive: true });
-        for (const file of proofFiles)
-          copyFileSync(path.join(directory, 'cli', String(row.id), file), path.join(targetDirectory, file));
+        for (const original of children) {
+          const targetDirectory = path.join(negativeDirectory, 'cli', String(original.id));
+          mkdirSync(targetDirectory, { recursive: true });
+          for (const file of proofFiles)
+            copyFileSync(path.join(directory, 'cli', String(original.id), file), path.join(targetDirectory, file));
+        }
         mutate(copyContext, row);
         expect(() => {
-          const children = admit(copyContext, [row]);
-          if (checkCounters) mergeCoverageShardCounters(sourceMaps, children);
+          const maps = admit(copyContext, [row, ...siblings]);
+          if (checkCounters) mergeCoverageShardCounters(sourceMaps, maps);
         }, label).toThrow();
       };
       const rewrite = (

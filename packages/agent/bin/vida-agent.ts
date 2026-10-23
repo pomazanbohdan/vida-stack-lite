@@ -7,9 +7,6 @@ import { resolvePinnedBun, runPinnedBun, standaloneRuntime } from './bun.ts';
 import { commands, cliMetadataResult, cliErrorResult, cliCommandEntrypoint, type CliManifest } from './cli-metadata.ts';
 import { cliCommandContracts } from './cli-command-contracts.ts';
 
-const embedded = standaloneRuntime();
-const packageRoot = embedded?.root ?? realpathSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'));
-
 function isStringMap(value: unknown): value is Record<string, string> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
   return Object.values(value).every((entry) => typeof entry === 'string');
@@ -28,14 +25,18 @@ function isCliPackageManifest(value: unknown): value is CliManifest & { name: st
   );
 }
 
-const manifestValue: unknown = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
-if (!isCliPackageManifest(manifestValue)) throw new Error('CLI package manifest is invalid');
-const manifest = manifestValue;
+function cliContext() {
+  const embedded = standaloneRuntime();
+  const packageRoot = embedded?.root ?? realpathSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'));
+  const manifest: unknown = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+  if (!isCliPackageManifest(manifest)) throw new Error('CLI package manifest is invalid');
+  return { embedded, packageRoot, manifest };
+}
 const output = (value: unknown): void => {
   process.stdout.write(`${JSON.stringify(value)}\n`);
 };
 
-function instructionResult(args: readonly string[]) {
+function instructionResult({ packageRoot, manifest }: ReturnType<typeof cliContext>, args: readonly string[]) {
   const option = cliCommandContracts.instructions.options[0];
   if (!option) throw new Error('instructions option declaration is unavailable');
   if (args[0] !== option.name || args.length !== option.arity + 1)
@@ -58,7 +59,11 @@ function commandArguments(args: readonly string[]): string[] {
   return normalized;
 }
 
-function forwardPublicCommand(command: string, suppliedArgs: readonly string[]) {
+function forwardPublicCommand(
+  { embedded, packageRoot }: ReturnType<typeof cliContext>,
+  command: string,
+  suppliedArgs: readonly string[],
+) {
   const args = commandArguments(suppliedArgs);
   const entrypoint = path.join(packageRoot, 'bin', cliCommandEntrypoint(command));
   if (embedded) {
@@ -89,13 +94,14 @@ export function main({
   args?: readonly string[];
   exit?: Partial<Pick<NodeJS.Process, 'exitCode'>>;
 } = {}): void {
+  const context = cliContext();
   const [command = '', ...args] = suppliedArgs;
   try {
-    if (!embedded) resolvePinnedBun({ root: packageRoot, executable: process.execPath });
-    const metadata = cliMetadataResult([command, ...args], manifest);
+    if (!context.embedded) resolvePinnedBun({ root: context.packageRoot, executable: process.execPath });
+    const metadata = cliMetadataResult([command, ...args], context.manifest);
     if (metadata) output(metadata);
-    else if (command === 'instructions') output(instructionResult(args));
-    else if (commands.has(command)) exit.exitCode = forwardPublicCommand(command, args);
+    else if (command === 'instructions') output(instructionResult(context, args));
+    else if (commands.has(command)) exit.exitCode = forwardPublicCommand(context, command, args);
     else throw new Error('Unsupported public command; run vida-agent --help to list supported commands.');
   } catch (error: unknown) {
     process.stderr.write(`${JSON.stringify(cliErrorResult(error))}\n`);
@@ -103,4 +109,5 @@ export function main({
   }
 }
 
-if (embedded || import.meta.main) main();
+if (import.meta.main || standaloneRuntime()) main();
+else cliContext();

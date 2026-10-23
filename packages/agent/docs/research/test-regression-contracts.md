@@ -1321,7 +1321,12 @@ with one real captured preload and inert instrumented entries, not a production
 coverage claim. Exercise both exact controller and public-entrypoint profiles.
 The parent loads every selected test; the separate native CLI receipt loads only
 the selected entry without claiming a test. Require the real denial terminal for
-the controller and exit0 with canonical help JSON for the public entry. Demonstrate
+the controller. The full public profile admits exactly three native subjects:
+root help exit0, scope without arguments exit1 and repair without arguments exit1.
+Check exact envelopes, unique subject/launch identities and three sparse maps.
+Reject incomplete or extra subject sets as well as copied-proof mutations with
+the complete unaffected sibling proofs, so cardinality cannot mask a bad receipt.
+Demonstrate
 newly visited statements through the existing
 canonical merger. Use copied proof files for stale/foreign PID, argv, environment,
 manifest, input, output and malformed-counter refusals; never rewrite the original
@@ -1334,7 +1339,7 @@ The native parent/child environment join and unset/default controls cover direct
 CLI semantics separately from Bun Test's normalized environment digest.
 
 Public CLI coverage separates callable dispatch from one canonical native help
-launch. Callable cases supply a local exit recipient and restore each spy from a
+launch and the two exact native refusal launches. Callable cases supply a local exit recipient and restore each spy from a
 guard established immediately after acquisition, including mock setup failures.
 Preserve native forwarding arguments, cwd, environment and refusal results;
 synthetic adapter error/signal controls do not establish native history. A private
@@ -1344,6 +1349,13 @@ its ordinary children. Reuse the scope fixture for callable/native success parit
 and causal product/repository denials. Capture child logs before assertions,
 bound each launch by the remaining case deadline, retain failed roots and remove
 successful roots only after the final deadline check.
+Resolve the public invocation context through the existing runtime/root/manifest
+validators once per callable main, before its result-envelope catch. Do not add a
+caller-supplied context. A private metadata/data fixture may exercise malformed
+manifest and instruction directory/file-symlink refusal while its scoped embedded
+markers remain valid. Restore environment and spies before retiring a successful
+fixture; retain failures. Use a canonical temporary parent. Captured query-path
+acceptance alone does not establish a new module instance in Bun's module cache.
 
 Decode Buffer and Uint8Array diagnostic streams through the existing UTF-8
 output owner before redaction and the 4096-character cap. Respect byte-view

@@ -10,8 +10,9 @@ The active contour is **bun-cli-public-entrypoints only**, the next declared
 partition after the owner's explicit controller deferral below. Reuse its
 retained receipts and inventory before deciding on affected checks or a new
 coverage stage. Historical UNKNOWN operations remain fenced and are not replayed.
-The correction packet below is implemented and checked; its full numeric stage
-remains pending publication. Selection and targeted tests do not close it.
+The correction packet below is published as8d01ddc. Its complete2515 stage
+passes all119tests, with remaining statement/branch gaps below. Continue this
+same contour; a test PASS does not establish exact coverage.
 Historical geometry is navigation rather than a new coverage claim.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
@@ -73,6 +74,91 @@ complete contour stage. No public F/L/S/B qualification is claimed yet.
 2514 also passes the remaining supervised two-shard synthetic preload control
 (1case/79expect calls in1.068s); this is protocol evidence, not parallel activation.
 The documentation owner passes4changed documents/57local links and headings.
+
+### Latest completed public-entrypoint measurement
+
+2515 is the single complete selected stage on Source8d01ddce4b563941c5a354146295762b9c7fb179:
+`/workspace/contour-stage-VYnzPC`, runbaffc3bb-84ab-412d-a722-97acc7dc2a0d.
+All119tests pass with0failures/2958expect calls in146.25s; outer elapsed is
+150419.44429ms. Raw **F29/29 L137/153 S159/181 B126/148**, BLOCKED/nonexact.
+The process exits0 with null signal, no timeout/spawn error and complete capture,
+observed process/group termination, unchanged boot and execution-image inputs.
+The stage's existing paired projection import completes once (1292attempts).
+Its historical global exact count stays17/46; this observation is not closure.
+
+Execution image is
+`/workspace/.vida-quality-inputs/a93fd2c4c1152b857bab06ab1c6b72c78dd39b7e/repository`;
+image manifest SHA256d8e0b9e403bcac43884946583c0527462bfd3dd84492cbdeda08ebde658fde8a.
+Its package report is
+`coverage/bun-unified/diagnostics/baffc3bb-84ab-412d-a722-97acc7dc2a0d.focused-coverage.json`;
+run-manifest SHA256fe71e567b5224b284f8152bd4df095b0cc3713184051ed3b7ad383faae1ff447.
+Source fingerprint93a2a1c976156a0e5d7a472f7b7ee854af1ac1ae62abdc892057297e8cd822b0,
+test2e20d9feb37739b8dcf2532c16cd4e9ecfca8266ef7196bbb1b114df6efb6275,
+tool80be6b2a5e1fe4028971bfb8891ba57de8c6f9fe8ec8270a2dfe4fe08feff7be.
+Original stage stdout/stderr, execution/publication/launch receipts and report
+remain in place.2516 verifies and fsyncs the1812480-byte non-cache scratch archive
+at `/workspace/vida-functional-retention-VYnzPC-QStVfb/archive.json`; originals
+remain unchanged. This retention is not numeric requalification.
+
+DIAG/public-cli-gap-map-v2517.json binds all22zero statements/22branch arms to
+the retained canonical maps, counters and exact Source expressions without another
+AST/scan/hash pass. Its first diagnostic rejects an unlabeled implicit-if location;
+2518 preserves that original failure and records the empty-range arm explicitly.
+No function gaps remain. Bounded blind reviews2519/2520 classify the remaining
+scope/repair and public-dispatch paths before the next coherent repair packet.
+
+### Public wrapper and remaining-path repair packet
+
+2519 independently confirms the scope parser's unpaired-key fallback is testable
+with a sparse readonly string-array input; missing-value argv targets a different
+counter. Add that causal refusal and relative-root forwarding unchanged-argv
+assertions. Reuse the canonical Host fixture for a successful readonly repair
+inspection (complete native DB/schema snapshot equality) and the supported default
+planning authority (unchanged Host workspace, real plan persistence). Scoped main
+success reuses the existing scope fixture and exact native output.
+
+Scope and repair now have callable main with local exit recipients and unchanged
+direct-entry predicates/output envelopes. Both native no-argument wrappers must
+still run.2519 independently reviews the existing custody owner's bounded extension
+to exactly three public subjects, unique launch IDs/sources and three sparse maps:
+canonical root help, scope no-args and repair no-args. Controller stays one subject.
+The captured command declaration supplies scope usage. Copy-proof negatives retain
+all sibling proofs so a cardinality denial cannot mask the intended corruption.
+No generic collector, child pool or extra producer is introduced. Non-Error catch
+assertions are controlled config-reader faults with local exit state, not native
+history, accepted operations or mutation kills.
+
+2522's targeted run passes9cases but rejects the attempted query-module fixture:
+Bun reuses the already statically imported module despite the captured URL query.
+The loader's captured-path guarantee does not promise cache isolation. Retain that
+FAIL/root and do not use its absent output as coverage.2520 independently checks
+the actual loader and approves the smaller production cliContext abstraction.
+Resolve embedded runtime/root/manifest once at each main invocation, before its
+existing result catch; pass only that validated context to private helpers, with
+no caller override. Preserve pin-before-metadata and direct/embedded activation.
+The replacement package-data fixture uses scoped valid embedded markers and local
+exit, no argv mutation/query import. Its regular-file symlink is outside the
+instruction directory; its temporary parent is canonical. Malformed bin inputs
+reach the CLI's own manifest validator after native embedded pin/name checks.
+They are negative component inputs, not installed-artifact qualification.
+
+Freeze new scope/repair main and cliContext at prospective CC/CRAP10/10. Keep old
+helper correspondence and ceilings unchanged; frozen/mutation work stays deferred.
+2521's tooling199 and test158 checks pass but lint rejects unsafe dynamic-import
+assignment;2522 removes that unsafe typing before exposing the cache premise.
+2523 passes strict158, selected lint and4affected cases/47expect calls in743ms.
+The other9cases in2522 include both real native protocol fixtures, positive repair,
+scope parity/denial and sparse-parser checks; their unchanged results are reused.
+Complete remaining lifecycle/capture checks and independent review, publish through
+ordinary hooks, then one full current-input stage. No projected gain is numeric proof.
+2524 passes strict158, selected lint and14cases/257expect calls in6.41s, including
+all11preload lifecycle controls, capture failures/environment binding and the
+revised embedded fixture.2520's final review finds the new context/fixture sound
+but notes passive imports previously validated the manifest too. Root preserves
+that behavior with cliContext in the non-activation arm. It still resolves only
+once inside each main; direct/embedded invocation errors remain before the catch.
+2525 passes all4affected activation/context cases after that correction. The
+documentation owner passes5changed documents/57local links and headings.
 
 ### Owner-authorized controller deferral
 

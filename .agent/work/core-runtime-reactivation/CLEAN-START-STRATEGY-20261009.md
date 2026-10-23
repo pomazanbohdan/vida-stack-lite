@@ -25,7 +25,9 @@ Retained receipts, Source/test selection and inventory have been reconciled.
 An old UNKNOWN is not a baseline to replay. Preserve its native terminal/effect
 fences. Complete the checked public CLI/fixture correction packet in
 [WORK](WORK.md#public-entrypoint-correction-packet), publish through ordinary
-hooks, then run one complete selected coverage stage on the new inputs.
+hooks, then run one complete selected coverage stage on the new inputs. The first
+public stage is complete; WORK's remaining-path packet batches its actual gaps
+before the next full stage, with the same single producer and unchanged budgets.
 The declared scope contains bin/repair-work-state.ts, bin/scope.ts and
 bin/vida-agent.ts with the partition's five complete test files. Keep exactly
 one writer/integrator and one final numeric producer. No run is implied by

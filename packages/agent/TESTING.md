@@ -2594,8 +2594,9 @@ Only two serial v2 focused selections may carry `cli_children`:
 - `bun-development-controller`, with its one declared Source and test, observes
   one native missing-option `inspect` invocation.
 - `bun-cli-public-entrypoints`, with its exact three Sources and five declared
-  tests, observes one canonical native `bin/vida-agent.ts --help` invocation.
-  Other help-matrix children remain ordinary launches without counter admission.
+  tests, observes exactly three canonical native invocations: `bin/vida-agent.ts
+  --help`, `bin/scope.ts` without arguments and `bin/repair-work-state.ts` without
+  arguments. Other children remain ordinary launches without counter admission.
 
 Each case preserves its original flags, cwd, environment and 4000ms child bound.
 The preload explicitly loads the captured preload for that child and reuses the
@@ -2611,10 +2612,14 @@ sidecar before receipt admission, and returns the originally requested UTF-8
 strings to the test. Launch errors, signal/timeout, unavailable capture or absent
 receipts retain their evidence and cannot contribute counters.
 
+Each declared subject must appear once with a distinct launch ID and its own
+one-Source counter map. Missing, duplicate and foreign subjects deny admission.
 The controller's expected child exit1 is a tested blocked envelope, admitted only
 with empty stdout and exact decoded stderr. The public help case requires exit0,
 empty stderr and a `VidaAgentCommandResult/v1` help result with nonempty commands;
-its parent test asserts the complete canonical help contract. Both require a
+its parent test asserts the complete canonical help contract. Scope and repair
+require exit1, empty stdout and their exact missing-option blocked envelopes;
+scope usage comes from the captured command-declaration tool input. All require a
 passing parent suite and complete native capture. The separate non-test receipt
 claims no assigned-test load. The parent
 still proves every selected test loaded from its snapshot. Validate the child's
