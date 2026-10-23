@@ -506,10 +506,13 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                   options: runOptionDetails(),
                 }
               : { schema: 'VidaAgentCommandResult/v1', status: 'help', commands: ['help'] };
-      const subjects = [
+      const subjects: { entry: string; args: string[]; exit: number; output: unknown }[] = [
         { entry, args: [argument], exit: expectedExit, output: expectedOutput },
         ...(variant === 'run'
-          ? [{ entry, args: [], exit: 0, output: { schema: 'VidaAgentRunResult/v1', status: 'prepared' } }]
+          ? [
+              { entry, args: [], exit: 0, output: { schema: 'VidaAgentRunResult/v1', status: 'prepared' } },
+              { entry, args: [], exit: 0, output: { schema: 'VidaAgentRunResult/v1', status: 'wave_issued' } },
+            ]
           : []),
         ...(variant === 'toolchain'
           ? [
@@ -552,9 +555,79 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         const runId = randomUUID();
         const fixtureRoot = path.join(root, 'prepared-fixture');
         const workId = 'mutation-run-' + runId;
+        let runFixture: Record<string, unknown> | undefined;
         if (variant === 'run') {
           const prepared = subjects[1];
+          const issue = subjects[2];
           assert.ok(prepared);
+          assert.ok(issue);
+          const workspaceId = sha256(Buffer.from('workspace-' + runId));
+          const actionId = 'action-' + runId;
+          const issueId = 'issue-' + actionId;
+          const priorActionId = 'prior-action-' + runId;
+          const priorIssueId = 'prior-issue-' + priorActionId;
+          const scopeBytes = JSON.stringify({ implementation_paths: ['selected.txt'] });
+          const acceptanceBytes = '{}';
+          const scopePath = path.join(fixtureRoot, 'scope.json');
+          const acceptancePath = path.join(fixtureRoot, 'acceptance.json');
+          const request = { action_id: actionId, stage_id: 'research', assignment_index: 0 };
+          const priorRequest = { action_id: priorActionId, stage_id: 'research', assignment_index: 1 };
+          const initialJournal = {
+            schema: 'MastraSessionLedger/v1',
+            workspace_id: workspaceId,
+            work_id: workId,
+            attempt: 1,
+            run_id: 'fixture-run-' + runId,
+            step_id: 'fixture-step',
+            items: [
+              { request: priorRequest, issue_id: priorIssueId, observation: null },
+              { request, issue_id: null, observation: null },
+            ],
+          };
+          const initialJournalPayload = JSON.stringify(initialJournal);
+          const initialJournalDigest = sha256(Buffer.from(initialJournalPayload));
+          const finalJournal = {
+            ...initialJournal,
+            items: initialJournal.items.map((item) => ({ ...item, issue_id: item.issue_id ?? issueId })),
+          };
+          const finalJournalDigest = sha256(Buffer.from(JSON.stringify(finalJournal)));
+          const preparedOutput = {
+            schema: 'VidaAgentRunResult/v1',
+            status: 'prepared',
+            state_version: { revision: 1, digest: initialJournalDigest },
+            next_actions: [{ request }],
+            issued_actions: [],
+          };
+          prepared.output = preparedOutput;
+          issue.output = {
+            schema: 'VidaAgentRunResult/v1',
+            status: 'wave_issued',
+            state_version: { revision: 2, digest: finalJournalDigest },
+            next_actions: [],
+            issued_actions: [
+              { request: priorRequest, issue_id: priorIssueId },
+              { request, issue_id: issueId },
+            ],
+          };
+          runFixture = {
+            workspaceId,
+            actionId,
+            issueId,
+            scopePath,
+            acceptancePath,
+            scopeBytes,
+            acceptanceBytes,
+            request,
+            initialJournal,
+            initialJournalPayload,
+            initialJournalDigest,
+            finalJournal,
+            finalJournalDigest,
+            preparedOutput,
+            scopeSha256: sha256(Buffer.from(scopeBytes)),
+            acceptanceSha256: sha256(Buffer.from(acceptanceBytes)),
+            issuedOutput: issue.output,
+          };
           prepared.args = [
             '--project-root',
             fixtureRoot,
@@ -581,11 +654,39 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             '--intake',
             path.join(fixtureRoot, '.agent', 'work', workId, 'intake.json'),
           ];
+          issue.args = [
+            ...prepared.args.slice(0, 22),
+            '--expected-revision',
+            '1',
+            '--expected-digest',
+            initialJournalDigest,
+            '--issue-wave',
+            'true',
+          ];
           seedPreparedFixture(fixtureRoot, workId);
         }
         const snapshotRelative = `coverage/bun-unified/runs/${runId}/snapshot`;
         const snapshot = path.join(root, snapshotRelative);
         const directory = path.join(root, 'processes');
+        const hostModuleSource = [
+          'import { Database } from "bun:sqlite";',
+          'import { lstatSync } from "node:fs";',
+          'import path from "node:path";',
+          'export function openHostStateDatabase(root, relative) {',
+          '  const file=path.resolve(root,relative); const db=new Database(file);',
+          '  db.query("PRAGMA database_list").all();',
+          '  lstatSync(file,{bigint:true}); lstatSync(file,{bigint:true});',
+          '  return db;',
+          '}',
+        ].join('\n');
+        const rawModuleSource = [
+          'import { lstatSync } from "node:fs";',
+          'export function workspaceDatabaseFileIdentity(database) {',
+          '  const main=database.query("PRAGMA database_list").all().find((row)=>row.name==="main");',
+          '  if (!main || typeof main.file!=="string") return null;',
+          '  const stat=lstatSync(main.file,{bigint:true}); return {dev:String(stat.dev),ino:String(stat.ino)};',
+          '}',
+        ].join('\n');
         const sourceText =
           variant === 'controller'
             ? [
@@ -612,21 +713,56 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                 ? [
                     'import { help } from "./cli-metadata.ts";',
                     'import { openSync, readSync, closeSync } from "node:fs";',
+                    'import { Database } from "bun:sqlite";',
+                    'import { createHash } from "node:crypto";',
                     'import path from "node:path";',
+                    `const fixture=${JSON.stringify(runFixture ?? {})};`,
                     'export function hit() { return 7; }',
                     'function read(file) { const fd = openSync(file, "r"); const chunks=[]; const buffer=Buffer.alloc(65536); try { while(true) { const n=readSync(fd,buffer,0,buffer.length,null); if(!n)break; chunks.push(Buffer.from(buffer.subarray(0,n))); } return Buffer.concat(chunks); } finally { closeSync(fd); } }',
+                    'function digest(value) { return createHash("sha256").update(value).digest("hex"); }',
+                    'function seedDatabase(root) {',
+                    '  const db=new Database(path.join(root,".agent/host-state.sqlite"));',
+                    '  db.exec("CREATE TABLE agent_host_state (workspace_id TEXT, kind TEXT, id TEXT, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
+                    '  db.exec("CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
+                    '  const putState=db.prepare("INSERT INTO agent_host_state VALUES (?,?,?,?,?,?,?)");',
+                    '  const putJournal=db.prepare("INSERT INTO agent_host_mastra_session_ledger VALUES (?,?,?,?,?,?,?)");',
+                    '  const work={schema:"WorkState/v1",workspace_id:fixture.workspaceId,revision:1,binding:{lifecycle_work_id:fixture.initialJournal.work_id,scope_contract_digest:"a".repeat(64)},contracts:{scope:{path:fixture.scopePath,sha256:fixture.scopeSha256},acceptance:{path:fixture.acceptancePath,sha256:fixture.acceptanceSha256}},lease:{ticket_id:"ticket-"+fixture.actionId,thread_id:"thread-"+fixture.actionId,generation:1},execution:{run_id:fixture.initialJournal.run_id}};',
+                    '  const claimId="claim-"+fixture.actionId; const secondClaimId="claim-secondary-"+fixture.actionId;',
+                    '  const ledger={schema:"CoordinationLedger/v1",workspace_id:fixture.workspaceId,revision:1,tickets:[{ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active",claim_ids:[claimId,secondClaimId]}],claims:[{claim_id:claimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"},{claim_id:secondClaimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"}]};',
+                    '  for (const [kind,id,value] of [["work",fixture.initialJournal.work_id,work],["ledger","shared",ledger]]) { const payload=JSON.stringify(value); putState.run(fixture.workspaceId,kind,id,1,payload,digest(payload),Buffer.from(payload)); }',
+                    '  putJournal.run(fixture.workspaceId,fixture.initialJournal.work_id,1,1,fixture.initialJournalPayload,fixture.initialJournalDigest,Buffer.from(fixture.initialJournalPayload));',
+                    '  db.close();',
+                    '}',
+                    'async function hostRead(root,workId) {',
+                    '  const { openHostStateDatabase }=await import("../src/host-state.ts");',
+                    '  const db=openHostStateDatabase(root,".agent/host-state.sqlite");',
+                    '  const work=db.query("SELECT workspace_id,kind,id,revision,payload,digest,raw_payload_bytes FROM agent_host_state WHERE workspace_id = ? AND kind = ? AND id = ?").get(fixture.workspaceId,"work",workId);',
+                    '  const ledger=db.query("SELECT workspace_id,kind,id,revision,payload,digest,raw_payload_bytes FROM agent_host_state WHERE workspace_id = ? AND kind = ? AND id = ?").get(fixture.workspaceId,"ledger","shared");',
+                    '  const journal=db.query("SELECT workspace_id,work_id,attempt,revision,payload,digest,raw_payload_bytes FROM agent_host_mastra_session_ledger WHERE workspace_id = ? AND work_id = ? AND attempt = ?").get(fixture.workspaceId,workId,1);',
+                    '  const other=openHostStateDatabase(root,".agent/host-state.sqlite"); other.close();',
+                    '  const changed=db.query("UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?").run(2,JSON.stringify(fixture.finalJournal),fixture.finalJournalDigest,fixture.workspaceId,workId,1,1,fixture.initialJournalDigest);',
+                    '  db.close(); return {work,ledger,journal,changed};',
+                    '}',
                     'if (import.meta.main) {',
-                    '  if (!process.argv.includes("--intake")) console.log(JSON.stringify(help()));',
+                    '  if (process.argv.includes("--issue-wave")) {',
+                    '    await import("./workspace-database-cli.ts"); await import("../src/orchestration/local-work-admission.ts");',
+                    '    const root=process.argv[process.argv.indexOf("--project-root")+1]; const workId=process.argv[process.argv.indexOf("--work-id")+1];',
+                    '    read(path.join(root,"agent-runtime.config.v1.yaml")); read(path.join(root,".agent/runtime-initialization.v1.json"));',
+                    '    const intake=JSON.parse(read(path.join(root,".agent/work",workId,"intake.json")).toString()); read(path.join(root,"selected.txt"));',
+                    '    const state=await hostRead(root,workId); if(state.changed.changes!==1) throw new Error("Synthetic journal compare-and-swap failed");',
+                    '    console.log(JSON.stringify(fixture.issuedOutput));',
+                    '  } else if (!process.argv.includes("--intake")) console.log(JSON.stringify(help()));',
                     '  else {',
                     '    await import("./workspace-database-cli.ts"); await import("../src/orchestration/local-work-admission.ts");',
                     '    const root=process.argv[process.argv.indexOf("--project-root")+1];',
+                    '    seedDatabase(root);',
                     '    const config=path.join(root,"agent-runtime.config.v1.yaml");',
                     '    for(let i=0;i<7;i++)closeSync(openSync(config,"r"));',
                     '    read(config); read(path.join(root,".agent/runtime-initialization.v1.json"));',
                     '    const intake=JSON.parse(read(process.argv[process.argv.indexOf("--intake")+1]).toString());',
                     '    const scope=JSON.parse(read(path.join(root,intake.scope_path)).toString());',
                     '    read(path.join(root,intake.acceptance_path)); read(path.join(root,scope.implementation_paths[0]));',
-                    '    console.log(JSON.stringify({schema:"VidaAgentRunResult/v1",status:"prepared"}));',
+                    '    console.log(JSON.stringify(fixture.preparedOutput));',
                     '  }',
                     '}',
                   ].join('\n')
@@ -634,6 +770,11 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                   JSON.stringify(JSON.stringify(expectedOutput)) +
                   ');\n';
         const inputs = new Map(capturedTools);
+        if (variant === 'run') {
+          assert.ok(runFixture);
+          inputs.set('src/host-state.ts', Buffer.from(hostModuleSource));
+          inputs.set('src/config/workspace-database-raw.ts', Buffer.from(rawModuleSource));
+        }
         if (variant === 'run')
           inputs.set(
             'bin/cli-metadata.ts',
@@ -680,14 +821,18 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
               'test("native denial", () => {',
               '  expect(hit()).toBe(7);',
               ...subjects.flatMap((subject, index) => [
-                ...(variant === 'run' && index === 1 ? ['  spawnSync.armPrepared();'] : []),
+                ...(variant === 'run' && index === 1
+                  ? ['  spawnSync.armPrepared();']
+                  : variant === 'run' && index === 2
+                    ? ['  spawnSync.armIssue();']
+                    : []),
                 `  const child${index} = spawnSync(process.execPath, ${JSON.stringify([
-                  ...(variant === 'run' && index === 1
+                  ...(variant === 'run' && (index === 1 || index === 2)
                     ? []
                     : ['--no-env-file', '--no-install', '--config=' + path.join(root, 'bunfig.toml')]),
                   path.join(root, subject.entry),
                   ...subject.args,
-                ])}, {encoding:"utf8",windowsHide:true,timeout:4000${variant === 'run' && index === 1 ? ',cwd:' + JSON.stringify(root) + ',killSignal:"SIGKILL",detached:true,env:{...process.env,VIDA_PINNED_COMMAND_BUDGET_MS:"4000",VIDA_PINNED_COMMAND_DEADLINE_MS:String(Date.now()+4000)}' : variant === 'toolchain' && subject.exit === 1 ? ',env:{...process.env,VIDA_PINNED_COMMAND_BUDGET_MS:"4000",VIDA_PINNED_COMMAND_DEADLINE_MS:"1"}' : ''}});`,
+                ])}, {encoding:"utf8",windowsHide:true,timeout:4000${variant === 'run' && (index === 1 || index === 2) ? ',cwd:' + JSON.stringify(root) + ',killSignal:"SIGKILL",detached:true,env:{...process.env,VIDA_PINNED_COMMAND_BUDGET_MS:"4000",VIDA_PINNED_COMMAND_DEADLINE_MS:String(Date.now()+4000)}' : variant === 'toolchain' && subject.exit === 1 ? ',env:{...process.env,VIDA_PINNED_COMMAND_BUDGET_MS:"4000",VIDA_PINNED_COMMAND_DEADLINE_MS:"1"}' : ''}});`,
                 `  expect(child${index}.error).toBeUndefined(); expect(child${index}.signal).toBeNull(); expect(child${index}.status).toBe(${subject.exit});`,
                 `  expect(child${index}.${subject.exit === 1 ? 'stdout' : 'stderr'}).toBe("");`,
                 variant === 'toolchain'
@@ -719,9 +864,20 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         const toolInputs = digests([
           ...coverageToolInputs,
           ...(variant === 'run'
-            ? ['bin/cli-metadata.ts', 'bin/workspace-database-cli.ts', 'src/orchestration/local-work-admission.ts']
+            ? [
+                'bin/cli-metadata.ts',
+                'bin/workspace-database-cli.ts',
+                'src/orchestration/local-work-admission.ts',
+                'src/host-state.ts',
+                'src/config/workspace-database-raw.ts',
+              ]
             : []),
         ]);
+        const moduleInputs = capturedModuleInputs({ sources, test_inputs: testInputs, tool_inputs: toolInputs });
+        if (variant === 'run') {
+          assert.ok(moduleInputs.some((input) => input.path === 'src/host-state.ts'));
+          assert.ok(moduleInputs.some((input) => input.path === 'src/config/workspace-database-raw.ts'));
+        }
         const instrumentedSources = sources.map((source) => {
           const bytes = inputs.get(source.path)!;
           const instrumented = instrumentSource(path.join(root, source.path), bytes.toString('utf8'));
@@ -761,7 +917,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           tests,
           test_inputs: testInputs,
           tool_inputs: toolInputs,
-          module_inputs: capturedModuleInputs({ sources, test_inputs: testInputs, tool_inputs: toolInputs }),
+          module_inputs: moduleInputs,
           test_selection: {
             mode: 'focused-diagnostic',
             contour:
@@ -867,7 +1023,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         expect(() => admit(context, [])).toThrow();
         expect(() => admit(context, [child, child])).toThrow();
         if (subjects.length > 1) {
-          for (const length of variant === 'public' ? [1, 2, 4] : [1, 3])
+          for (const length of variant === 'public' || variant === 'run' ? [1, 2, 4] : [1, 3])
             expect(() =>
               admit(
                 context,
@@ -943,7 +1099,9 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         };
         if (variant === 'run') {
           const preparedChild = children.find((row) => row.subject_role === 'run-admission-prepared');
+          const issueChildIndex = children.findIndex((row) => row.subject_role === 'run-issue-wave');
           assert.ok(preparedChild);
+          assert.ok(issueChildIndex >= 0);
           const preparedReceipt = record(
             JSON.parse(readFileSync(path.join(directory, String(record(preparedChild.receipt).path)), 'utf8')),
           );
@@ -980,6 +1138,125 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           expect(unread.every((row) => row.closed === true)).toBe(true);
           const unreadIds = new Set(unread.map((row) => row.id));
           expect(operations.some((row) => unreadIds.has(row.stream_id))).toBe(false);
+
+          negative(
+            'issue-delete-returning-is-not-a-work-read',
+            (ctx, row) =>
+              rewrite(ctx, row, 'receipt', (proof) => {
+                const operations = record(proof.consumed_sql).operations as Record<string, unknown>[];
+                const workRead = operations.find((operation) => {
+                  const bindings = operation.arguments;
+                  return (
+                    operation.method === 'Statement.get' &&
+                    Array.isArray(bindings) &&
+                    bindings[1] === 'work' &&
+                    /\bfrom agent_host_state\b/iu.test(String(operation.sql))
+                  );
+                });
+                assert.ok(workRead);
+                workRead.sql =
+                  'DELETE FROM agent_host_state WHERE workspace_id = ? AND kind = ? AND id = ? RETURNING workspace_id,kind,id,revision,payload,digest,raw_payload_bytes';
+              }),
+            false,
+            issueChildIndex,
+            'no exact Work read row observed',
+          );
+          negative(
+            'issue-duplicate-ledger-claim-cannot-hide-a-missing-claim',
+            (ctx, row) =>
+              rewrite(ctx, row, 'receipt', (proof) => {
+                const sql = record(proof.consumed_sql);
+                const operations = sql.operations as Record<string, unknown>[];
+                const ledgerRead = operations.find((operation) => {
+                  const bindings = operation.arguments;
+                  return (
+                    operation.method === 'Statement.get' &&
+                    Array.isArray(bindings) &&
+                    bindings[1] === 'ledger' &&
+                    /\bfrom agent_host_state\b/iu.test(String(operation.sql))
+                  );
+                });
+                assert.ok(ledgerRead);
+                const ledgerRow = record(ledgerRead.result);
+                const ledgerPayload = record(JSON.parse(String(ledgerRow.payload)));
+                const claims = ledgerPayload.claims as Record<string, unknown>[];
+                assert.equal(claims.length, 2);
+                const first = record(claims[0]);
+                const second = record(claims[1]);
+                assert.notEqual(first.claim_id, second.claim_id);
+                ledgerPayload.claims = [first, { ...first }];
+
+                const bytes = Buffer.from(JSON.stringify(ledgerPayload));
+                const payloads = sql.payloads as Record<string, unknown>[];
+                const payloadId = payloads.length + 1;
+                payloads.push({ payload_id: payloadId, byte_length: bytes.length, base64: bytes.toString('base64') });
+                ledgerRow.payload = bytes.toString('utf8');
+                ledgerRow.digest = sha256(bytes);
+                ledgerRow.raw_payload_bytes = { type: 'blob', ref: payloadId, byte_length: bytes.length };
+              }),
+            false,
+            issueChildIndex,
+            'current ticket claim does not join exactly one active ledger row',
+          );
+          negative(
+            'issue-work-read-from-unwitnessed-same-file-connection',
+            (ctx, row) =>
+              rewrite(ctx, row, 'receipt', (proof) => {
+                const sql = record(proof.consumed_sql);
+                const connections = sql.connections as Record<string, unknown>[];
+                const operations = sql.operations as Record<string, unknown>[];
+                const witnessed = record(connections[0]);
+                const foreignId = 'unwitnessed-same-file-connection';
+                connections.push({ connection_id: foreignId, file_identity: witnessed.file_identity });
+                for (const operation of operations)
+                  if (operation.method === 'Statement.get' && /\bfrom agent_host_state\b/iu.test(String(operation.sql)))
+                    operation.connection_id = foreignId;
+              }),
+            false,
+            issueChildIndex,
+            'no exact Work read row observed',
+          );
+          negative(
+            'issue-journal-cas-on-different-host-connection',
+            (ctx, row) =>
+              rewrite(ctx, row, 'receipt', (proof) => {
+                const sql = record(proof.consumed_sql);
+                const host = sql.host_opens as Record<string, unknown>[];
+                const operations = sql.operations as Record<string, unknown>[];
+                const cas = operations.find(
+                  (operation) =>
+                    operation.method === 'Statement.run' &&
+                    String(operation.sql).startsWith('UPDATE agent_host_mastra_session_ledger'),
+                );
+                assert.ok(cas);
+                cas.connection_id = host[1]!.connection_id;
+              }),
+            false,
+            issueChildIndex,
+            'Journal CAS changed connection from its initial Host Journal read',
+          );
+          negative(
+            'issue-output-must-match-new-journal-issue',
+            (ctx, row) => {
+              const stdout = record(row.stdout);
+              const outputPath = path.join(ctx.directory, String(stdout.path));
+              const output = record(JSON.parse(readFileSync(outputPath, 'utf8')));
+              const issued = output.issued_actions as Record<string, unknown>[];
+              const newest = issued.at(-1);
+              assert.ok(newest);
+              newest.issue_id = 'unrelated-prior-issue';
+              const bytes = Buffer.from(JSON.stringify(output));
+              writeFileSync(outputPath, bytes);
+              stdout.sha256 = sha256(bytes);
+              stdout.bytes = bytes.length;
+              rewrite(ctx, row, 'terminal', (proof) => {
+                proof.stdout = row.stdout;
+              });
+            },
+            false,
+            issueChildIndex,
+            'CLI issue differs from final Journal payload',
+          );
 
           negative(
             'run-prepared-read-position-discontinuous',

@@ -30,6 +30,7 @@ import {
 import {
   createCliCoverageObserver,
   preparedCliInputRoles,
+  issueCliInputRoles,
   focusedCliCoverage,
   readCliCoverageLaunch,
   writeCliCoverageReceipt,
@@ -277,7 +278,13 @@ const bootstrapInputs = [
   return { path: file, sha256: expectedHash };
 });
 
-function createPreparedReadCapture() {
+function createPreparedReadCapture(
+  rootPath: string,
+  intakePath: string,
+  seed: readonly Record<string, unknown>[] = [],
+  reserve?: (operations: number, bytes: number) => boolean,
+  requiredRoles: readonly string[] = preparedCliInputRoles,
+) {
   const maxBytes = 4 * 1024 * 1024;
   const maxOperations = 4096;
   const targets = new Map<string, string>();
@@ -320,14 +327,12 @@ function createPreparedReadCapture() {
       ctime: String(stat.ctimeNs),
     };
   };
-  const arg = (name: string) => {
-    const index = process.argv.indexOf(name);
-    return index < 0 ? undefined : process.argv[index + 1];
-  };
-  const rootPath = arg('--project-root');
-  const intakePath = arg('--intake');
-  if (!rootPath || !path.isAbsolute(rootPath) || !intakePath || !path.isAbsolute(intakePath))
+  if (!path.isAbsolute(rootPath) || !path.isAbsolute(intakePath))
     throw new Error('Prepared observer requires its validated absolute root and intake.');
+  const charge = (value: unknown, operations = 0) => {
+    if (reserve && !reserve(operations, Buffer.byteLength(JSON.stringify(value))))
+      throw new Error('Shared CLI consumption bound exceeded.');
+  };
   const add = (file: string, role: string) => {
     const relative = path.relative(rootPath, file);
     if (
@@ -345,6 +350,15 @@ function createPreparedReadCapture() {
   add(path.join(rootPath, 'agent-runtime.config.v1.yaml'), 'runtime-config');
   add(path.join(rootPath, '.agent', 'runtime-initialization.v1.json'), 'runtime-initialization');
   add(intakePath, 'intake');
+  for (const target of seed) {
+    if (
+      typeof target.path !== 'string' ||
+      typeof target.role !== 'string' ||
+      !preparedCliInputRoles.some((role) => role === target.role)
+    )
+      throw new Error('Prepared input target metadata is invalid.');
+    add(target.path, target.role);
+  }
   const derived = new Set<string>();
   const derive = (role: string, bytes: Buffer, hash: string) => {
     const key = role + ':' + hash;
@@ -440,6 +454,7 @@ function createPreparedReadCapture() {
             bytes: bytes.toString('base64'),
             raw: bytes,
           };
+          charge({ id: payload.id, path: payload.path, sha256: payload.sha256, bytes: payload.bytes });
           payloads.set(payload.id, payload);
           payloadBytes += count;
         }
@@ -458,7 +473,7 @@ function createPreparedReadCapture() {
         const chunks = stream.payload_ids.map((id) => payloads.get(id)!.raw);
         const bytes = chunks.length === 1 ? chunks[0]! : Buffer.concat(chunks);
         const hash = chunks.length === 1 ? payloads.get(stream.payload_ids[0]!)!.sha256 : digest(bytes);
-        completed.push({
+        const completion = {
           id: stream.id,
           fd: stream.fd,
           role: stream.role,
@@ -468,10 +483,12 @@ function createPreparedReadCapture() {
           sha256: hash,
           payload_ids: [...stream.payload_ids],
           complete: true,
-        });
+        };
+        charge(completion);
+        completed.push(completion);
         derive(stream.role, bytes, hash);
       }
-      operations.push({
+      const operation = {
         sequence: operations.length + 1,
         stream_id: stream.id,
         fd: stream.fd,
@@ -484,7 +501,9 @@ function createPreparedReadCapture() {
         bytes_read: count,
         eof: count === 0,
         payload_id: payloadId,
-      });
+      };
+      charge(operation, 1);
+      operations.push(operation);
     } catch {
       stream.complete = false;
       issues.push('Prepared read observation failed.');
@@ -515,7 +534,7 @@ function createPreparedReadCapture() {
   return {
     apis: { openSync: wrappedOpen, readSync: wrappedRead, closeSync: wrappedClose, readFileSync: wrappedReadFile },
     finish: () => {
-      const roles = preparedCliInputRoles;
+      const roles = requiredRoles;
       for (const role of roles)
         if (!completed.some((row) => row.role === role)) issues.push('Prepared input was not consumed: ' + role);
       for (const stream of streams.values()) {
@@ -548,8 +567,42 @@ const cliContext: CliCoverageContext = {
   manifest_sha256: digest(manifestBytes),
 };
 const cliLaunch = readCliCoverageLaunch(cliContext);
-const preparedReadCapture =
-  cliLaunch?.subject_role === 'run-admission-prepared' ? createPreparedReadCapture() : undefined;
+const consumptionIssues: string[] = [];
+let consumptionOperations = 0;
+let consumptionBytes = 0;
+const reserveConsumption = (operations: number, bytes: number): boolean => {
+  if (
+    !Number.isSafeInteger(operations) ||
+    operations < 0 ||
+    !Number.isSafeInteger(bytes) ||
+    bytes < 0 ||
+    consumptionOperations + operations > 4096 ||
+    consumptionBytes + bytes > 4 * 1024 * 1024
+  ) {
+    if (!consumptionIssues.includes('Shared CLI consumption bound exceeded.'))
+      consumptionIssues.push('Shared CLI consumption bound exceeded.');
+    return false;
+  }
+  consumptionOperations += operations;
+  consumptionBytes += bytes;
+  return true;
+};
+const runOperation =
+  cliLaunch?.subject_role === 'run-admission-prepared' || cliLaunch?.subject_role === 'run-issue-wave';
+const issueOperation = cliLaunch?.subject_role === 'run-issue-wave';
+const runArgument = (name: string, argv = process.argv) => {
+  const index = argv.indexOf(name);
+  return index < 0 ? undefined : argv[index + 1];
+};
+const preparedReadCapture = runOperation
+  ? createPreparedReadCapture(
+      runArgument('--project-root')!,
+      runArgument('--intake', issueOperation ? cliLaunch!.prepared!.argv : process.argv)!,
+      issueOperation ? cliLaunch!.prepared!.inputs : [],
+      issueOperation ? reserveConsumption : undefined,
+      issueOperation ? issueCliInputRoles : preparedCliInputRoles,
+    )
+  : undefined;
 const rejectedCliLaunch = process.env.VIDA_BUN_COVERAGE_CLI_LAUNCH !== undefined && !cliLaunch;
 const cliObserver =
   !cliLaunch && !rejectedCliLaunch && focusedCliCoverage(manifest)
@@ -758,6 +811,20 @@ Bun.plugin({
   },
 });
 
+const sqlCapture = issueOperation
+  ? await (
+      await import('./coverage-cli-sqlite.ts')
+    ).createCliSqliteCapture({
+      projectRoot: runArgument('--project-root')!,
+      hostModulePath: path.join(root, 'src/host-state.ts'),
+      rawModulePath: path.join(root, 'src/config/workspace-database-raw.ts'),
+      reserve: reserveConsumption,
+      incomplete: (message) => {
+        if (!consumptionIssues.includes(message)) consumptionIssues.push(message);
+      },
+    })
+  : undefined;
+
 function loadedInputReceipt(): SourceDigest[] {
   return [...loadedInputs]
     .map(([file, sha256]) => ({ path: file, sha256 }))
@@ -777,6 +844,18 @@ if (cliLaunch) {
       {
         loaded_inputs: loadedInputReceipt(),
         ...(preparedReadCapture ? { consumed_inputs: preparedReadCapture.finish() } : {}),
+        ...(sqlCapture
+          ? {
+              consumed_sql: sqlCapture.finish(),
+              consumption_limits: {
+                max_bytes: 4 * 1024 * 1024,
+                max_operations: 4096,
+                operations: consumptionOperations,
+                bytes: consumptionBytes,
+                issues: consumptionIssues,
+              },
+            }
+          : {}),
         external_module_inputs: [...externalModules].map(([file, sha256]) => ({ path: file, sha256 })),
         coverage: Object.fromEntries([...loadedFiles].sort().map((file) => [file, coverage[file]])),
       },

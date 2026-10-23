@@ -730,7 +730,7 @@ type PublicRunChildOptions = {
   readonly childTimeout?: number;
   readonly bundleRoot?: string;
   readonly onUnknown?: (result?: ReturnType<typeof boundedSpawnSync>) => void;
-  readonly coverageRole?: 'run-admission-prepared';
+  readonly coverageRole?: 'run-admission-prepared' | 'run-issue-wave';
 };
 
 interface QuerySpyHandle {
@@ -2167,15 +2167,16 @@ function invoke(
   const budget = options.budget ?? executionBudget(5_000, 250);
   const observer = spawnSync as typeof spawnSync & {
     armPrepared?: () => void;
+    armIssue?: () => void;
     preparedProcessGroupState?: () => 'gone' | 'present' | 'unknown' | undefined;
     preparedNativeResult?: () => ReturnType<typeof boundedSpawnSync> | undefined;
   };
-  const observingPrepared = options.coverageRole !== undefined && typeof observer.armPrepared === 'function';
+  const arm = options.coverageRole === 'run-issue-wave' ? observer.armIssue : observer.armPrepared;
+  const observingPrepared = options.coverageRole !== undefined && typeof arm === 'function';
   const nativeSpawn = observingPrepared
     ? (...call: Parameters<typeof spawnSync>) => {
-        if (options.coverageRole !== 'run-admission-prepared' || typeof observer.armPrepared !== 'function')
-          throw new Error('Prepared CLI coverage observer is unavailable.');
-        observer.armPrepared();
+        if (typeof arm !== 'function') throw new Error('Prepared CLI coverage observer is unavailable.');
+        arm();
         return Reflect.apply(spawnSync, undefined, call) as ReturnType<typeof spawnSync>;
       }
     : spawnSync;
@@ -2851,7 +2852,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       });
     };
     return {
-      invoke(args: readonly string[], status = 0, coverageRole?: 'run-admission-prepared'): TestRunPayload {
+      invoke(
+        args: readonly string[],
+        status = 0,
+        coverageRole?: 'run-admission-prepared' | 'run-issue-wave',
+      ): TestRunPayload {
         if (coverageRole) {
           if (status !== 0) throw new Error('Prepared CLI coverage requires its existing successful caller.');
           if (unknown) throw new Error(`Refusing to reuse retained run fixture: ${root}`);
@@ -4488,7 +4493,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         );
         await assert.rejects(run(renewalArgs), /lease renewal journal CAS changed/);
         expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(afterRenewal);
-        const issued = fixture.invoke([...admitted.args, ...expected(renewedVersion), '--issue-wave', 'true']);
+        const issued = fixture.invoke(
+          [...admitted.args, ...expected(renewedVersion), '--issue-wave', 'true'],
+          0,
+          'run-issue-wave',
+        );
         expect(issued.status).toBe('wave_issued');
         const issuedActions = requireIssuedActions(issued);
         const issuedVersion = requireStateVersion(issued.state_version);

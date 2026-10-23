@@ -10,6 +10,7 @@ import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 import { observeOwnedProcessGroup } from './owned-process-group.ts';
 import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
 import { runOptionDetails } from '../bin/run-cli-options.ts';
+import { validateIssueSqlConsumption } from './coverage-cli-sql-join.ts';
 
 type Digest = { path: string; sha256: string };
 export type CliCoverageManifest = {
@@ -70,6 +71,17 @@ export type CliChildLaunch = {
   native_options: Record<string, unknown>;
   budget_ms: string | null;
   deadline_ms: string | null;
+  prepared?: CliPreparedBinding;
+};
+type CliPreparedBinding = {
+  id: string;
+  argv: string[];
+  inputs: Record<string, unknown>[];
+  launch: Reference;
+  receipt: Reference;
+  terminal: Reference;
+  stdout: Output;
+  prepared_output?: Record<string, unknown>;
 };
 
 const source = 'bin/development-controller.ts';
@@ -96,6 +108,8 @@ export const preparedCliInputRoles = [
   'acceptance',
   'selected-source',
 ] as const;
+export const issueCliInputRoles = ['runtime-config', 'runtime-initialization', 'intake', 'selected-source'] as const;
+const runOperationRoles = new Set(['run-admission-prepared', 'run-issue-wave']);
 const idPattern = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/u;
 const filePattern =
   /^cli\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\/(?:launch\.json|receipt\.json|terminal\.json|stdout\.log|stderr\.log)$/u;
@@ -198,7 +212,11 @@ function cliSubjects(manifest: CliCoverageManifest): CliSubject[] {
         { role: 'repair-missing-options', source: 'bin/repair-work-state.ts', exit_code: 1 },
       ]
     : subject.role === 'run-help'
-      ? [subject, { role: 'run-admission-prepared', source: 'bin/run.ts', exit_code: 0 }]
+      ? [
+          subject,
+          { role: 'run-admission-prepared', source: 'bin/run.ts', exit_code: 0 },
+          { role: 'run-issue-wave', source: 'bin/run.ts', exit_code: 0 },
+        ]
       : [subject];
 }
 
@@ -206,14 +224,22 @@ function subjectKey(subject: CliSubject): string {
   return subject.role;
 }
 
-function launchSubject(context: CliCoverageContext, entry: unknown, argv: unknown, role: unknown): CliSubject {
+function launchSubject(
+  context: CliCoverageContext,
+  entry: unknown,
+  argv: unknown,
+  role: unknown,
+  prepared?: unknown,
+): CliSubject {
   const selected = cliSubjects(context.manifest).find(
     (subject) =>
       subject.role === role &&
       subject.source === proofRecord(entry).path &&
-      (subject.role === 'run-admission-prepared'
-        ? validPreparedArgv(context, argv)
-        : isDeepStrictEqual(argv, nativeArgv(context, subject))),
+      (subject.role === 'run-issue-wave'
+        ? validIssueArgv(context, argv, prepared)
+        : subject.role === 'run-admission-prepared'
+          ? validPreparedArgv(context, argv)
+          : isDeepStrictEqual(argv, nativeArgv(context, subject))),
   );
   assert.ok(selected, 'Foreign focused CLI subject.');
   return selected;
@@ -265,6 +291,24 @@ function validPreparedArgv(context: CliCoverageContext, value: unknown): value i
     options.get('--intent') === 'information_research' &&
     options.get('--workflow') === 'information_research_light' &&
     options.size === 12,
+  );
+}
+
+function validIssueArgv(context: CliCoverageContext, value: unknown, prepared: unknown): value is string[] {
+  if (!Array.isArray(value)) return false;
+  const values = value as unknown[];
+  if (values.length !== 29 || !values.every((entry: unknown) => typeof entry === 'string')) return false;
+  if (!isRecord(prepared) || !validPreparedArgv(context, prepared.argv)) return false;
+  const argv = values as string[];
+  return (
+    isDeepStrictEqual(argv.slice(0, 23), prepared.argv.slice(0, 23)) &&
+    argv[23] === '--expected-revision' &&
+    /^(?:0|[1-9]\d*)$/u.test(argv[24]!) &&
+    Number.isSafeInteger(Number(argv[24])) &&
+    argv[25] === '--expected-digest' &&
+    /^[a-f0-9]{64}$/u.test(argv[26]!) &&
+    argv[27] === '--issue-wave' &&
+    argv[28] === 'true'
   );
 }
 
@@ -343,7 +387,7 @@ function checkedLaunch(context: CliCoverageContext, value: unknown): CliChildLau
   assert.equal(row.executable, process.execPath);
   assert.equal(row.runtime_executable_sha256, context.manifest.runtime_executable_sha256);
   assert.equal(row.manifest_sha256, context.manifest_sha256);
-  const subject = launchSubject(context, row.entry, row.original_argv, row.subject_role);
+  const subject = launchSubject(context, row.entry, row.original_argv, row.subject_role, row.prepared);
   assert.deepEqual(
     row.entry,
     context.manifest.sources.find((entry) => entry.path === subject.source),
@@ -351,10 +395,13 @@ function checkedLaunch(context: CliCoverageContext, value: unknown): CliChildLau
   const expectedPreload = context.manifest.tool_inputs.find((item) => item.path === preload);
   assert.ok(expectedPreload, 'CLI preload is absent from captured tools.');
   assert.deepEqual(row.preload, expectedPreload);
-  const args =
-    subject.role === 'run-admission-prepared' ? (row.original_argv as string[]) : nativeArgv(context, subject);
+  const args = runOperationRoles.has(subject.role) ? (row.original_argv as string[]) : nativeArgv(context, subject);
+  let checkedPrepared: CliPreparedBinding | undefined;
   if (subject.role === 'run-admission-prepared') assert.ok(validPreparedArgv(context, args));
-  else assert.deepEqual(row.original_argv, args);
+  else if (subject.role === 'run-issue-wave') {
+    assert.ok(validIssueArgv(context, args, row.prepared));
+    checkedPrepared = checkedPreparedBinding(context, row.prepared, String(row.id));
+  } else assert.deepEqual(row.original_argv, args);
   assert.deepEqual(row.effective_argv, ['--preload', path.join(context.snapshot, preload), ...args]);
   assert.equal(row.original_encoding, 'utf8');
   assert.equal(row.capture_encoding, 'buffer');
@@ -362,7 +409,7 @@ function checkedLaunch(context: CliCoverageContext, value: unknown): CliChildLau
   assert.equal(typeof row.environment_sha256, 'string');
   assert.match(String(row.environment_sha256), /^[a-f0-9]{64}$/u);
   assert.ok(isRecord(row.native_options));
-  if (subject.role === 'run-admission-prepared') {
+  if (runOperationRoles.has(subject.role)) {
     assert.ok(typeof row.native_options.detached === 'boolean');
     assert.deepEqual(row.native_options, {
       cwd: context.root,
@@ -385,7 +432,75 @@ function checkedLaunch(context: CliCoverageContext, value: unknown): CliChildLau
     assert.equal(row.budget_ms, null);
     assert.equal(row.deadline_ms, null);
   }
-  return row as CliChildLaunch;
+  const checkedRow = row as CliChildLaunch;
+  return checkedPrepared ? { ...checkedRow, prepared: checkedPrepared } : checkedRow;
+}
+
+function checkedPreparedBinding(context: CliCoverageContext, value: unknown, issueId: string): CliPreparedBinding {
+  const binding = proofRecord(value);
+  assert.equal(typeof binding.id, 'string');
+  const id = String(binding.id);
+  assert.match(id, idPattern);
+  assert.notEqual(id, issueId, 'An issue cannot use itself as preparation.');
+  assert.ok(validPreparedArgv(context, binding.argv));
+  const rawLaunch = proofRecord(
+    JSON.parse(referencedBytes(context, binding.launch, proofPath(id, 'launch.json')).toString('utf8')),
+  );
+  assert.equal(rawLaunch.subject_role, 'run-admission-prepared');
+  const launch = checkedLaunch(context, rawLaunch);
+  assert.equal(launch.id, id);
+  assert.deepEqual(binding.argv, launch.original_argv);
+  const terminal = proofRecord(
+    JSON.parse(referencedBytes(context, binding.terminal, proofPath(id, 'terminal.json')).toString('utf8')),
+  );
+  assert.equal(terminal.id, id);
+  assert.equal(terminal.subject_role, 'run-admission-prepared');
+  assert.equal(terminal.parent_pid, launch.parent_pid);
+  assert.equal(terminal.exit_code, 0);
+  assert.equal(terminal.signal, null);
+  assert.equal(terminal.error, null);
+  assert.equal(terminal.error_observed, false);
+  assert.equal(terminal.complete, true);
+  assert.equal(terminal.capture_available, true);
+  assert.equal(terminal.process_group_state, 'gone');
+  assert.deepEqual(binding.stdout, terminal.stdout, 'Prepared CLI output reference differs from its terminal receipt.');
+  const stdoutBytes = referencedBytes(context, binding.stdout, proofPath(id, 'stdout.log'));
+  assert.equal(proofRecord(binding.stdout).bytes, stdoutBytes.length);
+  const preparedOutput = proofRecord(JSON.parse(stdoutBytes.toString('utf8')));
+  assert.equal(preparedOutput.schema, 'VidaAgentRunResult/v1');
+  assert.equal(preparedOutput.status, 'prepared');
+  assert.ok(Array.isArray(preparedOutput.next_actions) && preparedOutput.next_actions.length > 0);
+  const readyActionIds: string[] = [];
+  for (const value of preparedOutput.next_actions) {
+    const action = proofRecord(value);
+    const request = proofRecord(action.request);
+    assert.equal(typeof request.action_id, 'string');
+    readyActionIds.push(String(request.action_id));
+  }
+  assert.equal(new Set(readyActionIds).size, readyActionIds.length, 'Prepared CLI ready-wave action IDs repeat.');
+  assert.deepEqual(terminal.parent_inputs_before, terminal.parent_inputs_after);
+  assert.deepEqual(binding.inputs, terminal.parent_inputs_after);
+  assert.ok(Array.isArray(binding.inputs) && binding.inputs.length === preparedCliInputRoles.length);
+  const inputs = binding.inputs.map(proofRecord);
+  assert.deepEqual(
+    inputs.map((row) => String(row.role)).sort((left, right) => left.localeCompare(right)),
+    [...preparedCliInputRoles].sort((left, right) => left.localeCompare(right)),
+  );
+  assert.equal(new Set(inputs.map((row) => row.path)).size, inputs.length);
+  const receipt = proofRecord(
+    JSON.parse(referencedBytes(context, binding.receipt, proofPath(id, 'receipt.json')).toString('utf8')),
+  );
+  assert.equal(receipt.id, id);
+  assert.equal(receipt.subject_role, 'run-admission-prepared');
+  assert.equal(receipt.run_id, context.manifest.run_id);
+  assert.equal(receipt.manifest_sha256, context.manifest_sha256);
+  assert.equal(receipt.parent_pid, launch.parent_pid);
+  assert.equal(receipt.exit_code, 0);
+  assert.equal(proofRecord(receipt.consumed_inputs).complete, true);
+  return {
+    ...(binding as CliPreparedBinding),
+    prepared_output: preparedOutput,
+  };
 }
 
 export function readCliCoverageLaunch(context: CliCoverageContext): CliChildLaunch | undefined {
@@ -394,18 +509,18 @@ export function readCliCoverageLaunch(context: CliCoverageContext): CliChildLaun
   const relative = path.relative(context.directory, file).replaceAll(path.sep, '/');
   const raw = proofRecord(JSON.parse(proofBytes(context.directory, relative).toString('utf8')));
   if (
-    raw.subject_role === 'run-admission-prepared' &&
+    runOperationRoles.has(String(raw.subject_role)) &&
     (process.platform === 'win32' || !isRecord(raw.native_options) || raw.native_options.detached !== true)
   )
     return undefined;
   const launch = checkedLaunch(context, raw);
   assert.equal(relative, proofPath(launch.id, 'launch.json'));
   assert.equal(launch.parent_pid, process.ppid);
-  const subject = launchSubject(context, launch.entry, launch.original_argv, launch.subject_role);
+  const subject = launchSubject(context, launch.entry, launch.original_argv, launch.subject_role, launch.prepared);
   assert.deepEqual(process.argv, [
     launch.executable,
     path.join(context.root, launch.entry.path),
-    ...(subject.role === 'run-admission-prepared'
+    ...(runOperationRoles.has(subject.role)
       ? launch.original_argv.slice(1)
       : subject.argument === undefined
         ? []
@@ -413,15 +528,12 @@ export function readCliCoverageLaunch(context: CliCoverageContext): CliChildLaun
   ]);
   assert.deepEqual(
     process.execArgv,
-    launch.effective_argv.slice(
-      0,
-      subject.role === 'run-admission-prepared' ? 2 : subject.argument === undefined ? -1 : -2,
-    ),
+    launch.effective_argv.slice(0, runOperationRoles.has(subject.role) ? 2 : subject.argument === undefined ? -1 : -2),
   );
   assert.equal(process.cwd(), launch.cwd);
   assert.equal((process.env.BUN_OPTIONS ?? '').trim(), '');
   assert.equal(cliCoverageEnvironmentSha256(process.env), launch.environment_sha256);
-  if (subject.role === 'run-admission-prepared') {
+  if (runOperationRoles.has(subject.role)) {
     assert.equal(process.env.VIDA_PINNED_COMMAND_BUDGET_MS, launch.budget_ms);
     assert.equal(process.env.VIDA_PINNED_COMMAND_DEADLINE_MS, launch.deadline_ms);
     assert.ok(Number(launch.deadline_ms) > Date.now());
@@ -441,6 +553,8 @@ export function writeCliCoverageReceipt(
     external_module_inputs: unknown[];
     coverage: Record<string, unknown>;
     consumed_inputs?: unknown;
+    consumed_sql?: unknown;
+    consumption_limits?: unknown;
   },
   exitCode: number,
 ): void {
@@ -469,7 +583,7 @@ export function writeCliCoverageReceipt(
       module_inputs: context.manifest.module_inputs,
       manifest_sha256: context.manifest_sha256,
       environment_sha256: launch.environment_sha256,
-      ...(launch.subject_role === 'run-admission-prepared'
+      ...(runOperationRoles.has(launch.subject_role)
         ? {
             pinned_budget_ms: process.env.VIDA_PINNED_COMMAND_BUDGET_MS,
             pinned_deadline_ms: process.env.VIDA_PINNED_COMMAND_DEADLINE_MS,
@@ -480,7 +594,11 @@ export function writeCliCoverageReceipt(
   );
 }
 
-function preparedInputSnapshot(argv: readonly string[], root: string): Record<string, unknown>[] {
+function preparedInputSnapshot(
+  argv: readonly string[],
+  root: string,
+  targets?: readonly Record<string, unknown>[],
+): Record<string, unknown>[] {
   assert.equal(realpathSync(root), root);
   const captured = new Map<string, { bytes: Buffer; row: Record<string, unknown> }>();
   const identity = (stat: import('node:fs').BigIntStats) => ({
@@ -541,6 +659,18 @@ function preparedInputSnapshot(argv: readonly string[], root: string): Record<st
     assert.ok(!path.isAbsolute(relative));
     return path.resolve(root, relative);
   };
+  if (targets) {
+    assert.equal(targets.length, issueCliInputRoles.length);
+    assert.deepEqual(
+      targets.map((row) => String(row.role)).sort((left, right) => left.localeCompare(right)),
+      [...issueCliInputRoles].sort((left, right) => left.localeCompare(right)),
+    );
+    for (const target of targets) {
+      assert.equal(typeof target.path, 'string');
+      capture(String(target.role), String(target.path));
+    }
+    return [...captured.values()].map(({ row }) => row);
+  }
   const intakePath = valueAfterArg(argv, '--intake');
   assert.ok(intakePath && path.isAbsolute(intakePath));
   const intake = proofRecord(JSON.parse(capture('intake', intakePath).toString('utf8')));
@@ -567,10 +697,11 @@ export function createCliCoverageObserver(
   const original = actual.spawnSync;
   const observations: CliChildObservation[] = [];
   const launches = new Set<string>();
-  let preparedArmed = false;
+  let preparedArmed: 'run-admission-prepared' | 'run-issue-wave' | false = false;
   let preparedActive = false;
   let preparedProcessGroupState: 'gone' | 'present' | 'unknown' | undefined;
   let preparedNativeResult: SpawnSyncReturns<string | Buffer> | undefined;
+  let preparedBinding: CliPreparedBinding | undefined;
   function spawnSync(...call: unknown[]): SpawnSyncReturns<string | Buffer> {
     const [command, args, settings] = call;
     const prepared = preparedArmed;
@@ -585,8 +716,11 @@ export function createCliCoverageObserver(
         (candidate) =>
           command === process.execPath &&
           Array.isArray(args) &&
-          (candidate.role === 'run-admission-prepared'
-            ? prepared && validPreparedArgv(context, args)
+          (runOperationRoles.has(candidate.role)
+            ? prepared === candidate.role &&
+              (candidate.role === 'run-admission-prepared'
+                ? validPreparedArgv(context, args)
+                : validIssueArgv(context, args, preparedBinding))
             : candidate.source === source
               ? args.includes(path.join(context.root, source))
               : JSON.stringify(args) === JSON.stringify(nativeArgv(context, candidate))),
@@ -601,12 +735,12 @@ export function createCliCoverageObserver(
       const key = subjectKey(subject);
       assert.ok(!launches.has(key), 'Duplicate focused CLI launch.');
       launches.add(key);
-      if (subject.role !== 'run-admission-prepared') assert.deepEqual(args, nativeArgv(context, subject));
+      if (!runOperationRoles.has(subject.role)) assert.deepEqual(args, nativeArgv(context, subject));
       const options = proofRecord(settings);
       const { env: requestedEnvironment, ...nativeOptions } = options;
       assert.deepEqual(
         nativeOptions,
-        subject.role === 'run-admission-prepared'
+        runOperationRoles.has(subject.role)
           ? {
               cwd: path.resolve(context.root),
               encoding: 'utf8',
@@ -618,7 +752,7 @@ export function createCliCoverageObserver(
           : { encoding: 'utf8', windowsHide: true, timeout: 4000 },
         'CLI observation requires the unchanged bounded native invocation.',
       );
-      if (subject.role === 'run-admission-prepared') {
+      if (runOperationRoles.has(subject.role)) {
         assert.ok(
           Number.isSafeInteger(options.timeout) &&
             Number(options.timeout) > 0 &&
@@ -628,7 +762,7 @@ export function createCliCoverageObserver(
       const expectedEnvironment = subject.expired_clock
         ? { ...process.env, VIDA_PINNED_COMMAND_BUDGET_MS: '4000', VIDA_PINNED_COMMAND_DEADLINE_MS: '1' }
         : undefined;
-      if (subject.role === 'run-admission-prepared') {
+      if (runOperationRoles.has(subject.role)) {
         assert.ok(isRecord(requestedEnvironment));
         assert.equal(requestedEnvironment.VIDA_PINNED_COMMAND_BUDGET_MS, String(options.timeout));
         assert.match(String(requestedEnvironment.VIDA_PINNED_COMMAND_DEADLINE_MS), /^[1-9]\d*$/u);
@@ -641,22 +775,30 @@ export function createCliCoverageObserver(
       }
       let preparedBefore: Record<string, unknown>[] | undefined;
       let preparedAfter: Record<string, unknown>[] | undefined;
-      if (subject.role === 'run-admission-prepared') {
+      const issueTargets =
+        subject.role === 'run-issue-wave'
+          ? preparedBinding?.inputs.filter((row) => issueCliInputRoles.some((role) => role === row.role))
+          : undefined;
+      if (runOperationRoles.has(subject.role)) {
         try {
           preparedBefore = preparedInputSnapshot(
             args as string[],
             String(valueAfterArg(args as string[], '--project-root')),
+            issueTargets,
           );
+          if (subject.role === 'run-issue-wave') {
+            assert.ok(preparedBinding && issueTargets);
+            assert.deepEqual(preparedBefore, issueTargets, 'Issue fixture changed after preparation.');
+          }
         } catch (error) {
           throw new Error('Prepared CLI input snapshot failed before dispatch.', { cause: error });
         }
       }
       const id = randomUUID();
       mkdirSync(path.join(context.directory, 'cli', id), { recursive: true, mode: 0o700 });
-      const effectiveEnvironment: NodeJS.ProcessEnv =
-        subject.role === 'run-admission-prepared'
-          ? (requestedEnvironment as NodeJS.ProcessEnv)
-          : (expectedEnvironment ?? process.env);
+      const effectiveEnvironment: NodeJS.ProcessEnv = runOperationRoles.has(subject.role)
+        ? (requestedEnvironment as NodeJS.ProcessEnv)
+        : (expectedEnvironment ?? process.env);
       const env: NodeJS.ProcessEnv = {
         ...effectiveEnvironment,
         [launchEnvironment]: path.join(context.directory, proofPath(id, 'launch.json')),
@@ -673,12 +815,11 @@ export function createCliCoverageObserver(
         runtime_executable_sha256: context.manifest.runtime_executable_sha256,
         entry: context.manifest.sources.find((entry) => entry.path === subject.source)!,
         preload: tool,
-        original_argv:
-          subject.role === 'run-admission-prepared' ? [...(args as string[])] : nativeArgv(context, subject),
+        original_argv: runOperationRoles.has(subject.role) ? [...(args as string[])] : nativeArgv(context, subject),
         effective_argv: [
           '--preload',
           path.join(context.snapshot, preload),
-          ...(subject.role === 'run-admission-prepared' ? [...(args as string[])] : nativeArgv(context, subject)),
+          ...(runOperationRoles.has(subject.role) ? [...(args as string[])] : nativeArgv(context, subject)),
         ],
         original_encoding: 'utf8',
         capture_encoding: 'buffer',
@@ -687,8 +828,9 @@ export function createCliCoverageObserver(
         environment_sha256: cliCoverageEnvironmentSha256(env),
         manifest_sha256: context.manifest_sha256,
         native_options: nativeOptions,
-        budget_ms: subject.role === 'run-admission-prepared' ? String(env.VIDA_PINNED_COMMAND_BUDGET_MS) : null,
-        deadline_ms: subject.role === 'run-admission-prepared' ? String(env.VIDA_PINNED_COMMAND_DEADLINE_MS) : null,
+        budget_ms: runOperationRoles.has(subject.role) ? String(env.VIDA_PINNED_COMMAND_BUDGET_MS) : null,
+        deadline_ms: runOperationRoles.has(subject.role) ? String(env.VIDA_PINNED_COMMAND_DEADLINE_MS) : null,
+        ...(subject.role === 'run-issue-wave' && preparedBinding ? { prepared: preparedBinding } : {}),
       };
       if (subject.role !== 'run-admission-prepared') checkedLaunch(context, launch);
       const launchReference = writeProof(context, proofPath(id, 'launch.json'), jsonBytes(launch));
@@ -699,7 +841,7 @@ export function createCliCoverageObserver(
           launch.effective_argv,
           { ...options, encoding: launch.capture_encoding, env },
         ]) as SpawnSyncReturns<string | Buffer>;
-        if (subject.role === 'run-admission-prepared') preparedNativeResult = result;
+        if (runOperationRoles.has(subject.role)) preparedNativeResult = result;
       } catch (error) {
         try {
           writeProof(
@@ -725,11 +867,12 @@ export function createCliCoverageObserver(
         }
         throw error;
       }
-      if (subject.role === 'run-admission-prepared') {
+      if (runOperationRoles.has(subject.role)) {
         try {
           preparedAfter = preparedInputSnapshot(
             args as string[],
             String(valueAfterArg(args as string[], '--project-root')),
+            issueTargets,
           );
           assert.deepEqual(preparedAfter, preparedBefore, 'Prepared fixture inputs changed during the native call.');
         } catch (error) {
@@ -737,15 +880,15 @@ export function createCliCoverageObserver(
         }
       }
       const processGroupState =
-        subject.role === 'run-admission-prepared' &&
+        runOperationRoles.has(subject.role) &&
         nativeOptions.detached === true &&
         Number.isSafeInteger(result.pid) &&
         Number(result.pid) > 1
           ? observeOwnedProcessGroup(Number(result.pid))
-          : subject.role === 'run-admission-prepared'
+          : runOperationRoles.has(subject.role)
             ? 'unknown'
             : undefined;
-      if (subject.role === 'run-admission-prepared') preparedProcessGroupState = processGroupState;
+      if (runOperationRoles.has(subject.role)) preparedProcessGroupState = processGroupState;
       const captureAvailable = Buffer.isBuffer(result.stdout) && Buffer.isBuffer(result.stderr);
       const stdout = Buffer.from(result.stdout ?? '');
       const stderr = Buffer.from(result.stderr ?? '');
@@ -797,6 +940,18 @@ export function createCliCoverageObserver(
         stderr: stderrReference,
         ...(processGroupState === undefined ? {} : { process_group_state: processGroupState }),
       });
+      if (subject.role === 'run-admission-prepared') {
+        assert.ok(terminal.complete && processGroupState === 'gone' && preparedBefore);
+        preparedBinding = {
+          id,
+          argv: [...(args as string[])],
+          inputs: preparedBefore,
+          launch: launchReference,
+          terminal: terminalReference,
+          receipt: observations.at(-1)!.receipt,
+          stdout: observations.at(-1)!.stdout,
+        };
+      }
       return {
         ...result,
         stdout: Buffer.isBuffer(result.stdout) ? result.stdout.toString('utf8') : result.stdout,
@@ -819,13 +974,23 @@ export function createCliCoverageObserver(
     preparedNativeResult = undefined;
     preparedProcessGroupState = undefined;
     assert.ok(!launches.has('run-admission-prepared'), 'Duplicate focused CLI launch.');
-    preparedArmed = true;
+    preparedArmed = 'run-admission-prepared';
+  };
+  const armIssue = () => {
+    assert.ok(subjects.some((subject) => subject.role === 'run-issue-wave'));
+    assert.ok(preparedBinding, 'Issue CLI coverage requires the observed preparation.');
+    assert.ok(!preparedArmed && !preparedActive, 'Run CLI observation is already armed or active.');
+    assert.ok(!launches.has('run-issue-wave'), 'Duplicate focused CLI issue launch.');
+    preparedNativeResult = undefined;
+    preparedProcessGroupState = undefined;
+    preparedArmed = 'run-issue-wave';
   };
   Object.assign(
     spawnSync,
     subjects.some((subject) => subject.role === 'run-admission-prepared')
       ? {
           armPrepared,
+          armIssue,
           preparedProcessGroupState: () => preparedProcessGroupState,
           preparedNativeResult: () => preparedNativeResult,
         }
@@ -834,6 +999,7 @@ export function createCliCoverageObserver(
   return {
     spawnSync,
     armPrepared,
+    armIssue,
     preparedProcessGroupState: () => preparedProcessGroupState,
     preparedNativeResult: () => preparedNativeResult,
     finish: () => {
@@ -884,7 +1050,7 @@ export function cliCoverageChildMaps(
       context,
       JSON.parse(referencedBytes(context, observation.launch, proofPath(id, 'launch.json')).toString('utf8')),
     );
-    const subject = launchSubject(context, launch.entry, launch.original_argv, launch.subject_role);
+    const subject = launchSubject(context, launch.entry, launch.original_argv, launch.subject_role, launch.prepared);
     const key = subjectKey(subject);
     assert.ok(!admittedSubjects.has(key), 'Duplicate focused CLI subject.');
     admittedSubjects.add(key);
@@ -918,7 +1084,7 @@ export function cliCoverageChildMaps(
     const receipt = proofRecord(
       JSON.parse(referencedBytes(context, observation.receipt, proofPath(id, 'receipt.json')).toString('utf8')),
     );
-    if (subject.role === 'run-admission-prepared') {
+    if (runOperationRoles.has(subject.role)) {
       assert.equal(
         receipt.pinned_budget_ms,
         launch.budget_ms,
@@ -932,7 +1098,7 @@ export function cliCoverageChildMaps(
       assert.equal(terminal.prepared_input_error, undefined);
       assert.deepEqual(terminal.parent_inputs_after, terminal.parent_inputs_before);
       const parentInputs = terminal.parent_inputs_before;
-      assert.ok(Array.isArray(parentInputs) && parentInputs.length === 6);
+      assert.ok(Array.isArray(parentInputs) && parentInputs.length === (subject.role === 'run-issue-wave' ? 4 : 6));
       const inputEvidence = proofRecord(receipt.consumed_inputs);
       assert.equal(inputEvidence.complete, true);
       assert.deepEqual(inputEvidence.issues, []);
@@ -973,7 +1139,8 @@ export function cliCoverageChildMaps(
         payloads.set(String(payload.id), { path: String(payload.path), bytes, sha256: String(payload.sha256) });
       }
       assert.equal(uniqueBytes, limits.unique_bytes);
-      const requiredRoles: readonly string[] = preparedCliInputRoles;
+      const requiredRoles: readonly string[] =
+        subject.role === 'run-issue-wave' ? issueCliInputRoles : preparedCliInputRoles;
       const rows = parentInputs.map((value) => proofRecord(value));
       const byRole = new Map(rows.map((row) => [String(row.role), row]));
       assert.deepEqual([...byRole.keys()].sort(), [...requiredRoles].sort());
@@ -1097,13 +1264,48 @@ export function cliCoverageChildMaps(
         'Prepared CLI runtime-config path differs from its fixed role.',
       );
       assert.equal(rolePath('runtime-initialization'), path.join(root, '.agent', 'runtime-initialization.v1.json'));
-      assert.equal(rolePath('intake'), valueAfterArg(launch.original_argv, '--intake'));
+      assert.equal(
+        rolePath('intake'),
+        valueAfterArg(subject.role === 'run-issue-wave' ? launch.prepared!.argv : launch.original_argv, '--intake'),
+      );
+      if (subject.role === 'run-issue-wave') {
+        assert.deepEqual(
+          parentInputs,
+          launch.prepared!.inputs.filter((row) => issueCliInputRoles.some((role) => role === row.role)),
+        );
+        assert.ok(
+          raw.some(
+            (candidate: unknown) =>
+              isRecord(candidate) &&
+              candidate.id === launch.prepared!.id &&
+              candidate.subject_role === 'run-admission-prepared' &&
+              isDeepStrictEqual(candidate.launch, launch.prepared!.launch) &&
+              isDeepStrictEqual(candidate.receipt, launch.prepared!.receipt) &&
+              isDeepStrictEqual(candidate.terminal, launch.prepared!.terminal),
+          ),
+          'Issue ancestry is not the independently admitted prepared observation.',
+        );
+      }
       const intake = proofRecord(JSON.parse(consumed.get('intake')!.toString('utf8')));
-      const scope = proofRecord(JSON.parse(consumed.get('scope')!.toString('utf8')));
-      assert.equal(rolePath('scope'), selectedPath(intake.scope_path));
-      assert.equal(rolePath('acceptance'), selectedPath(intake.acceptance_path));
-      assert.ok(Array.isArray(scope.implementation_paths) && scope.implementation_paths.length === 1);
-      assert.equal(rolePath('selected-source'), selectedPath(scope.implementation_paths[0]));
+      if (subject.role === 'run-admission-prepared') {
+        const scope = proofRecord(JSON.parse(consumed.get('scope')!.toString('utf8')));
+        assert.equal(rolePath('scope'), selectedPath(intake.scope_path));
+        assert.equal(rolePath('acceptance'), selectedPath(intake.acceptance_path));
+        assert.ok(Array.isArray(scope.implementation_paths) && scope.implementation_paths.length === 1);
+        assert.equal(rolePath('selected-source'), selectedPath(scope.implementation_paths[0]));
+      } else {
+        for (const [role, field] of [
+          ['scope', 'scope_path'],
+          ['acceptance', 'acceptance_path'],
+        ] as const) {
+          const ancestor = launch.prepared!.inputs.find((row) => row.role === role);
+          assert.equal(ancestor?.path, selectedPath(intake[field]));
+        }
+        assert.equal(
+          rolePath('selected-source'),
+          launch.prepared!.inputs.find((row) => row.role === 'selected-source')?.path,
+        );
+      }
       assert.equal(observation.process_group_state, 'gone', 'Prepared CLI owned process group is not gone.');
       assert.equal(terminal.process_group_state, 'gone');
       assert.equal(launch.native_options.detached, true);
@@ -1127,7 +1329,7 @@ export function cliCoverageChildMaps(
     assert.deepEqual(receipt.argv, [
       launch.executable,
       path.join(context.root, subject.source),
-      ...(subject.role === 'run-admission-prepared'
+      ...(runOperationRoles.has(subject.role)
         ? launch.original_argv.slice(1)
         : subject.argument === undefined
           ? []
@@ -1137,7 +1339,7 @@ export function cliCoverageChildMaps(
       receipt.exec_argv,
       launch.effective_argv.slice(
         0,
-        subject.role === 'run-admission-prepared' ? 2 : subject.argument === undefined ? -1 : -2,
+        runOperationRoles.has(subject.role) ? 2 : subject.argument === undefined ? -1 : -2,
       ),
     );
     const stdout = referencedBytes(context, observation.stdout, proofPath(id, 'stdout.log'));
@@ -1174,6 +1376,41 @@ export function cliCoverageChildMaps(
       const prepared = proofRecord(JSON.parse(stdout.toString('utf8')));
       assert.equal(prepared.schema, 'VidaAgentRunResult/v1');
       assert.equal(prepared.status, 'prepared');
+    } else if (subject.role === 'run-issue-wave') {
+      assert.equal(stderr.length, 0);
+      const issued = proofRecord(JSON.parse(stdout.toString('utf8')));
+      assert.equal(issued.schema, 'VidaAgentRunResult/v1');
+      assert.equal(issued.status, 'wave_issued');
+      const limits = proofRecord(receipt.consumption_limits);
+      assert.equal(limits.max_bytes, maxProofBytes);
+      assert.equal(limits.max_operations, 4096);
+      assert.deepEqual(limits.issues, []);
+      const sql = proofRecord(receipt.consumed_sql);
+      const inputs = proofRecord(receipt.consumed_inputs);
+      assert.ok(Array.isArray(sql.operations) && Array.isArray(sql.host_opens) && Array.isArray(inputs.operations));
+      const statCount = sql.host_opens.reduce((sum: number, value: unknown) => {
+        const host = proofRecord(value);
+        assert.ok(Array.isArray(host.stat_observations));
+        return sum + host.stat_observations.length;
+      }, 0);
+      assert.equal(limits.operations, inputs.operations.length + sql.operations.length + statCount);
+      assert.ok(
+        Number.isSafeInteger(limits.operations) && Number(limits.operations) > 0 && Number(limits.operations) <= 4096,
+      );
+      assert.ok(
+        Number.isSafeInteger(limits.bytes) && Number(limits.bytes) > 0 && Number(limits.bytes) <= maxProofBytes,
+      );
+      assert.ok(
+        jsonBytes({ consumed_inputs: inputs, consumed_sql: sql, consumption_limits: limits }).length <= maxProofBytes,
+        'Combined issue consumption exceeds the unchanged proof bound.',
+      );
+      validateIssueSqlConsumption(sql, {
+        argv: launch.original_argv,
+        output: issued,
+        preparedOutput: launch.prepared!.prepared_output!,
+        root: valueAfterArg(launch.original_argv, '--project-root')!,
+        preparedInputs: launch.prepared!.inputs.map((value) => proofRecord(value)),
+      });
     } else if (subject.source === 'bin/bun.ts') {
       if (subject.expired_clock) {
         assert.equal(stdout.length, 0);
@@ -1202,7 +1439,19 @@ export function cliCoverageChildMaps(
           : { status: 'blocked', message: 'vida work-state repair: kind, mode or absolute project root missing' },
       );
     }
-    assert.deepEqual(receipt.external_module_inputs, []);
+    const expectedExternalInputs =
+      subject.role === 'run-issue-wave'
+        ? [
+            {
+              path: path
+                .relative(context.root, path.join(context.snapshot, 'tooling/coverage-cli-sqlite.ts'))
+                .replaceAll(path.sep, '/'),
+              sha256: context.manifest.tool_inputs.find((entry) => entry.path === 'tooling/coverage-cli-sqlite.ts')
+                ?.sha256,
+            },
+          ]
+        : [];
+    assert.deepEqual(receipt.external_module_inputs, expectedExternalInputs);
     assert.ok(Array.isArray(receipt.loaded_inputs));
     const loaded = validateLoaded(receipt.loaded_inputs);
     assert.ok(loaded.has(subject.source) && loaded.has(preload) && loaded.has('tooling/coverage-cli-child.ts'));
@@ -1211,9 +1460,12 @@ export function cliCoverageChildMaps(
         assert.ok(loaded.has(file), 'Run help metadata module was not loaded: ' + file);
       assert.ok(!loaded.has('bin/workspace-database-cli.ts'), 'Run help loaded operation-only runtime modules.');
     }
-    if (subject.role === 'run-admission-prepared')
+    if (runOperationRoles.has(subject.role))
       for (const file of ['bin/workspace-database-cli.ts', 'src/orchestration/local-work-admission.ts'])
         assert.ok(loaded.has(file), 'Prepared run operation module was not loaded: ' + file);
+    if (subject.role === 'run-issue-wave')
+      for (const file of ['src/host-state.ts', 'src/config/workspace-database-raw.ts'])
+        assert.ok(loaded.has(file), 'Issue SQL observation module was not captured: ' + file);
     const coverage = proofRecord(receipt.coverage);
     assert.deepEqual(
       Object.keys(coverage),
