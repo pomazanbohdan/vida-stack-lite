@@ -6,8 +6,8 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-cli-init only**, the next declared partition
-after toolchain's reviewed dispositions below. Reuse its
+The active contour is **bun-cli-run only**, the next declared partition
+after init's reviewed dispositions below. Reuse its
 retained receipts and inventory before deciding on affected checks or a new
 coverage stage. Historical UNKNOWN operations remain fenced and are not replayed.
 The latest public correction packet is published aseb2a3b1. Its complete2526 stage
@@ -25,38 +25,33 @@ prerequisite. This permits queue progression, not numeric exact100.
 
 ### Latest completed init measurement
 
-2579 completes the exact two-file contour on
-cc7ec706d1257a6c3162d81a9bdac5af2d72915f, stage `/workspace/contour-stage-M1m72D`,
-runb792da0d-9fa1-41e7-8967-d682d780765d. All91tests pass with0failures and534expect
-calls in50.58s, outer54372.467417ms. Raw **F84/84 L325/326 S348/353 B195/211**
+2589 completes the exact two-file contour on
+f09b32e46bcd7272d57aa04bcd02c4ee12da6a76, stage `/workspace/contour-stage-fUDkgF`,
+runc9bcabeb-b209-4a2a-8075-d9bb5f1d5405. All93tests pass with0failures and542expect
+calls in49.42s, outer53873.184593ms. Raw **F84/84 L326/326 S349/353 B196/211**
 remains BLOCKED/nonexact. Max CC/entry CRAP12 is navigation, not frozen acceptance.
 Native exit0, null signal, no timeout/spawn error, complete capture, closed
 process/group, unchanged boot/image and one paired projection import pass,
-1306attempts. Historical exact count stays17/46; no old input is requalified.
+1308attempts. Historical exact count stays17/46; no old input is requalified.
 
-Image `/workspace/.vida-quality-inputs/92e8cf796e6a7e32c6ce24e511fefc589128a7ea/repository`,
-manifest SHA25621aa17e919d19fa263e9e0714f182806c4c33c117a6fd90b69e3caf1e7d5c232.
+Image `/workspace/.vida-quality-inputs/da38c22acab98e6b659ddc2a1ae46a9cbaf2cf59/repository`,
+manifest SHA256df139e667df3464f0ec66e7045a5a71f63dfaad49b81be82c467d0ce611ccea2.
 Package report is
-`coverage/bun-unified/diagnostics/b792da0d-9fa1-41e7-8967-d682d780765d.focused-coverage.json`;
-run-manifest SHA2566a33f1f99167f949b7e51ba7ef61615e2468352fa1775a0a4da965b2b8560c41.
+`coverage/bun-unified/diagnostics/c9bcabeb-b209-4a2a-8075-d9bb5f1d5405.focused-coverage.json`;
+run-manifest SHA256b51d81b202f828484790ae02bade0c7aa61f3f191a68ea7935264a634e9df6d0.
 Source fingerprint011d0a1587d0bb639886f80a94c763d723f6564d5bca038cbd0396148b2d20b0,
-test90cfb430d4bde9ae3b1c986178aef5e6f77ab1270fda1c850c4325644bb3faff,
-toolddb3602b4a99d3164c452549c6da81ecd425ca5609ff7771c385d029291ce614.
-2580 maps all16zero branch arms/5statements through retained canonical maps
-only.2581 verifies/fsyncs the10240-byte functional scratch archive at
-`/workspace/vida-functional-retention-M1m72D-s5n5t2/archive.json`; original logs,
-receipts, report and image stay. Fresh2582 parsed native reader contract reviews
-all remaining counters. The changed tests add23covered branch arms,19statements
-and16lines against2568 with unchanged Source fingerprint and denominators.
-Different test/tool inputs make the elapsed times unsuitable for a speedup claim.
-The preceding2568 binding remains in publishedcc7ec70 WORK.
-
-2580 also exposes a missed catch statement, s110 at init-core.ts330. A copied
-policy can contain invalid JSON without malformed template braces.2583 adds
-that exact refusal to the existing table and passes scoped strict102, selected
-zero-warning lint and one targeted case/5expect calls in826ms. This is a testable
-missing scenario, not an objective skip. Another full stage requires this actual
-changed input; no unchanged complete suite is repeated.
+test5f7e81543ec841a2e90d03d1a67a1da14652669d9656b76d58d03598f1e241ba,
+toole0ca7f8e0461de65fc333b1d80f3a312cab87cb009a6d6ca8f633016f41b7828.
+2590 maps all15zero branch arms/4statements through retained canonical maps
+only. Its exact geometry comparison removes only s110 and init.ts b13/1 from
+2580, with unchanged Source fingerprint. This binds independent2582 dispositions
+below to the latest result without another AST/index/hash pass.2591 verifies and
+fsyncs the10240-byte functional scratch archive at
+`/workspace/vida-functional-retention-fUDkgF-hTjmbz/archive.json`; original logs,
+receipts, report and image stay. All testable paths now complete. Queue progress
+uses reviewed objective gaps, not numeric PASS or changed denominators. Reopen
+on the table's contract/producer prerequisites. Frozen/CRAP/mutation stay deferred.
+The preceding2579 binding remains in publishedf09b32e WORK.
 
 ### Init final gap checks
 
@@ -78,9 +73,9 @@ component-only adapter attribution, finally spy restoration and no added comment
 or suppressions. The reader did not launch the no-comments leaf's nested reviewer
 under Root's no-delegation brief; Root uses this fresh bounded Luna review, not a
 claim that the unavailable named role or nested workflow ran. The
-remaining objective candidates below are bound to unchanged SourceFP above and
-2582 review; they become the final disposition table only after one changed-input
-stage proves s110 and b13. Keep BLOCKED and all raw denominators.
+remaining objective dispositions below are bound to unchanged SourceFP above,
+2582 review and2590's exact latest geometry.2589 proves s110 and b13 without
+changing Source or denominators. Keep the raw BLOCKED outcome.
 
 | Source function/counter and exact expression | Causal prerequisite and reopen condition |
 | --- | --- |

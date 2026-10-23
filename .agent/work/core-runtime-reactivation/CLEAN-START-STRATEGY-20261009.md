@@ -12,20 +12,20 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The active contour is **bun-cli-init**, the next partition in
-packages/agent/tooling/mutation-partitions.ts. Toolchain's2561 stage completes all
-testable paths, including both fresh finite-ancestor clock arms. Independent
-blind2541/2542 dispositions cover all remaining9branch arms and2statements;
-2530 reviews the changed native collector. Native Windows remains an explicit
-target GAP. [WORK](WORK.md#toolchain-remaining-counter-dispositions) owns exact
-counters, bound receipts and reopen conditions. Queue progress is not exact100,
+The active contour is **bun-cli-run**, the next partition in
+packages/agent/tooling/mutation-partitions.ts. Init's2589 stage completes all
+testable paths; independent2582 dispositions and2590 exact retained-map comparison
+cover all remaining15branch arms and4statements. Its raw result stays BLOCKED.
+[WORK](WORK.md#latest-completed-init-measurement) owns exact counters, bindings,
+remaining qualification and reopen prerequisites. Queue progress is not exact100,
 numeric PASS or changed denominators. Frozen/CRAP and mutation stay deferred.
 
-Reconcile current init Source/test/runtime bindings and retained receipts before
-choosing checks or a fresh stage. Scope is bin/init-core.ts and bin/init.ts with
-tests/initialization.test.ts and tests/init-entrypoint-v8.test.ts. Root keeps one
-writer and numeric producer. Batch known repairs before the complete selected
-stage, reuse readiness/artifacts and do not replay historical UNKNOWN.
+Reconcile current run Source/test/runtime bindings and retained receipts before
+choosing checks or a fresh stage. Scope is bin/run.ts with tests/run-entrypoint.test.ts
+and tests/bun-cache-routing.test.ts. Root keeps one writer and numeric producer.
+Batch known repairs before the complete selected stage, reuse readiness/artifacts
+and do not replay historical UNKNOWN. Toolchain's2561 result and reviewed gaps
+remain in WORK, including its OPEN native Windows prerequisite.
 
 The owner's2026-10-23 instruction
 explicitly skips bun-development-controller with a recorded GAP. This named
