@@ -55,6 +55,13 @@ the captured old resource and current snapshot, not equal digest placeholders.
 Keep the prior resource reader bound on the old endpoint verifier and preserve
 the report recovery's exact frontier/runtime digest join.
 
+For canonical help attribution, extend the existing exact-selection CLI collector
+rather than adding a private alias or dynamic-argv channel. Bind the complete
+metadata to its captured owners and test payload refusals with consistent capture
+hashes, so a hash mismatch cannot mask the semantic guard. Synthetic protocol
+controls do not replace the complete real-Source producer qualification in
+[TESTING](../../../packages/agent/TESTING.md#focused-controller-cli-counter-custody).
+
 For uncovered-function navigation, reuse the report's retained `istanbul_key`
 and `body_location` when present and matched to its bound Source map. The
 existing exact-geometry join owns them. Do not reconstruct IDs from map order,

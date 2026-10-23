@@ -25,43 +25,16 @@ prerequisite. This permits queue progression, not numeric exact100.
 
 ### Run image-resource failure and repair
 
-2611 runs the changed registration packet on e9859f28cf794a495d5be249ce0895e76c0e2a02,
-stage `/workspace/contour-stage-W23ILK`, runff4efaa7-759b-459c-809e-44a3b1ef61cd.
-It registers76cases,59PASS/17FAIL in33.41s, outer38314.344364ms. All17fail during
-fixture setup because the immutable image lacks TESTING.md. No numeric report
-is attributable; projection imports only1311's failed/unknown-or-partial stage
-outcome with accepted:false and null coverage. Keep2602's prior bound counts
-as history, not qualification for the changed tests. Native exit1, no timeout/
-signal/spawn error, complete capture and observed closed producer/group permit
-repair in fresh namespaces, not replay of any retained UNKNOWN operation.
-
-Image `/workspace/.vida-quality-inputs/bc2f3cb73b81d60e457b31d40b9491a45911c534/repository`,
-manifest SHA256349bad665a2b072d6450818eecc42ab0d76455b76057e3cc19de98806b4e8e8a.
-Failed run manifest keeps SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
-test8a94ac7898b9da8ca14cab1c431b51f81827d0311c2a643f88966db8fc4bd2ac,
-tool852f1d896b9127696e5180680e31065b5ab15ca68245c34d4efdedc3513274c4.
-2612 resolves its sole manifest UUID and verifies/fsyncs the70932480-byte functional
-archive at `/workspace/vida-functional-retention-W23ILK-6t2YGE/archive.json`.
-Original image, failed roots, manifest, raw logs and terminal receipts stay.
-
-The existing captureConfiguredTestContextInputs owner lists fs-only guide readers;
-run-entrypoint was missing.2613's new reader control reproduces an absent guide
-digest and bytes. Preserve that failed fixture/log. Root adds only this reader,
-replacing the ten-term OR with the same data list plus one reader and a bounded
-loop that pushes once then breaks. No new callable or frozen-budget reset is
-introduced.2614's edit guard miscounts the old list and stops before Source writes;
-2615 confirms all ten existing strings before applying the correction.
-The existing path/byte limits, inputBytes dedup, artifact readiness and one image
-producer remain. Other copied inputs are already bound by contract/SDK/repository
-context inventories; the image's exact repository documentation-policy file exists.
-No extra full capture/hash/AST pass or per-test build is added for the audit.
-
-2615 passes scoped strict149, zero-warning lint and three actual capture controls
-with15expects in206ms. They verify the prior reader, unrelated exclusion and new
-reader, digest and bytes. Independent2616 confirms membership equivalence,
-at-most-once capture, maintained limits and no comment/suppression changes.
-A new full stage is justified by changed capture-tool inputs. Never patch the
-failed immutable image or weaken admission to make the old stage pass.
+2611 runff4efaa7-759b-459c-809e-44a3b1ef61cd returns59PASS/17FAIL because
+TESTING.md is absent from the immutable image, with no attributable numeric
+report. Preserve stage `/workspace/contour-stage-W23ILK`, its failed roots/raw
+logs/terminal receipts and70932480-byte archive
+`/workspace/vida-functional-retention-W23ILK-6t2YGE/archive.json`.
+The existing capture owner adds the missing run-entrypoint reader while retaining
+all prior membership, byte/path limits and input dedup. Scoped controls and blind
+review pass;2618 measures a fresh image. Detailed failure/Source bindings remain
+in [published25427e0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/25427e0/.agent/work/core-runtime-reactivation/WORK.md#run-image-resource-failure-and-repair).
+The regression contract owns the current rule. No old image is repaired.
 
 ### Latest completed run measurement
 
@@ -137,49 +110,79 @@ registration. Batch prerequisite repairs and newly registered targeted controls
 before the next complete changed-input stage. Do not claim every gap comes from
 this gate or treat missing attribution/fixtures as objective untestability.
 
+### Run fixed-help and command-refusal packet
+
+2645 supplies a bounded native Luna proposal for16special selectors and six
+helper tops/empty-request decoders. Root integrates only its assigned hunks,
+omits conflicts already intercepted by a preceding selector, and retains exact
+errors, empty-root and unchanged config/initialization/request oracles. No Work
+or workspace DB may be created. These are genuine early refusals, not fabricated
+positive history.2649 passes scoped strict149/lint and3targets/48Bun expects in
+2.25s; native assert.rejects checks are additional and not Bun expect counts.
+
+The original2645 proposal has an unprefixed hunk separator and unsupported
+footer. GNU patch dry-run returns0, but actual patch applies only the import;
+Root's assigned-test-name check detects the missing hunks. The original remains
+at DIAG/run-command-refusal-patch-v2645/proposal.diff. Strict git apply --check
+rejects it. Root's separate run-command-normalized-v2648.patch passes the full
+check and all three assigned test names appear once. The README now requires
+that existing strict full-diff check and complete hunk inspection. No unrelated
+local/staged content is replaced, and no malformed packet is published.
+
+2647 independently compares fixed canonical help admission with private aliases
+and dynamic argv. The selected route reuses the existing typed CLI-profile
+registry, exact v2 focused selection, native argv/environment/raw Buffer capture,
+loaded-input receipts and canonical sparse-map validator. Only bin/run.ts --help
+is added for the current one-Source/two-test contour. Full run metadata matches
+its captured owners; their loaded bytes are required and the workspace-database
+operation module is refused. Bootstrap/tool membership captures the actual new
+static dependency. No new collector, schema, budget, SDK build or private alias.
+
+2650 preserves the causal missing-profile red and its original root
+`/home/agent/.cache/vida-cloud-tooling/tmp/coverage-cli-child-P6BjNn`.
+2651 passes all6protocol cases/407expects in4.51s and the real help plus command
+controls,4PASS/54expects in2.80s. Semantic negatives rewrite matching raw-capture
+hashes/terminal refs to reach the actual metadata guards, and reject missing or
+operation-only loaded modules.2652's strict157 passes but lint catches an unsafe
+any-array spread before further execution; its original log remains. An explicit
+unknown[] binding fixes it without suppression.2653 passes strict157/lint0 and
+only the affected run protocol case,1PASS/84expects in1.166s. Existing other
+profile passes and real-help/command passes are reused. One real changed-input
+stage and final native child/group/geometry inspection remain pending.
+
+2646's bounded completed-WORK dedup retains live anchors, current2641 numbers,
+OPEN gaps and exact original failure archives while linking completed details
+to published25427e0. Root corrects its mistaken cleanup phrase rather than
+removing failure retention.2645's snake-case gap lookup and2647's leaf lookup
+under poteto-mode are reader locator errors, not absent map/skills. Root reuses
+the actual camel-case map and sibling leaf paths; no new inventory is warranted.
+2654's initial review blocks on presumed absent metadata custody. Root inspects
+captureRuntimeInputClosure and the already retained2641manifest, whose tool_inputs
+and module_inputs both contain bin/cli-metadata.ts at SHA256
+a6f84551a9ac602f1163cc4831ac12c9382023f32ea48b4c0cb98804929fc21d.
+The literal dynamic import is already discovered. This rebuts that specific
+missing-static-entry premise; adding a redundant static owner is unwarranted.
+Fresh2656 independently verifies both retained entries and the maintained
+transitive closure, passes the custody objection, and leaves real numeric
+qualification to the pending sole stage. No Source change is needed for this
+rebuttal.2654/2656 artifacts preserve both original and corrected conclusions.
+The current review uses native Luna with fresh prepared prompt-only contract;
+Root owns all Source edits, checks and Git. Named unavailable nested roles are
+not claimed as executed.
+
 ### Run cache-owner and authority-refusal packet
 
-2623 blind native Luna prepares only a bounded test diff against86d3032 in
-DIAG/run-authority-negative-patch-v2623. Root verifies its exact hunks against
-canonical bytes before applying them, replaces partial-selector casts with one
-typed complete controlled selector, and adds malformed-JSON/non-record controls.
-Both genuine exported authority readers now receive missing/nonregular files,
-invalid JSON, noncanonical encoding, wrong schema or unexpected-field inputs.
-Forward cycle/depth controls precede any reads. Exact public errors and directory/
-byte afterimages are asserted; failed roots remain. Schema-only companion records
-are negative decoder inputs, not accepted lifecycle or Runtime history. Positive
-chains and their real producers remain OPEN engineering GAPs.
-
-2624 independently traces the private cache-root mismatch. Its limited metadata
-lookup examines an init-stage locator, so it cannot establish the latest run's
-environment. Root therefore tests the premise directly rather than claim an
-observed extra process or speedup for2618.2625's tiny actual selected-package
-child reaches its correct private bin/run.ts but receives the canonical package
-cache. The exact native red oracle and root
-`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-cache-owner-VlXo44` remain.
-Root pins the existing invoke environment against its explicit bundle root.
-The owned fixture now selects one bundle and derives one entrypoint up front,
-removing repeated per-call selectedLauncher overrides. Ordinary canonical calls
-and inert timeout programs keep the prior default. Custom cache and0 remain
-caller-selected. Production Source, actual entry URL, argv, cwd, budgets and
-UNKNOWN retention are unchanged. Under a derived-cache mismatch the actual CLI
-would re-exec to repair its namespace; this conditional Source trace is not a
-measured process count or speedup for prior stages.
-
-2626 passes strict149 but lint finds the now-unused fixtureBundle binding, stopping
-before tests. Root removes that obsolete binding.2628 passes scoped strict149,
-zero-warning lint and5targeted cases/60expects in2.03s. They include three actual
-inert cache-child launches, both authority tables, cycle/depth and the unchanged
-expected-timeout retention control. No full19-case137s group or complete stage is
-repeated for these local uncertainties. Fresh2627 independently reviews the
-integrated packet and finds no blocker, dropped assertion, comment or suppression.
-The afterimage proves unchanged names/bytes, not metadata or transient writes;
-no stronger filesystem claim is made. The named nested no-comments role is not
-available in the assigned no-subdelegation lane; this is actual direct native
-review, not a claim that the named role ran. Checked publication precedes one
-changed-input stage. The small terminal worker proposal remains in its exact
-DIAG directory pending the existing privileged reference-custody GAP; it is not a
-new checkout or execution image. No destructive cleanup or new inventory runs.
+The2081cc6 packet binds one owned bundle and its entrypoint/environment, preserving
+canonical calls, explicit/disabled caches, argv/cwd/bounds and UNKNOWN custody.
+The real red oracle remains at
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-cache-owner-VlXo44`.
+Typed direct authority refusals check exact errors and names/byte afterimages;
+schema-only decoder inputs are not accepted history. Positive causal producers
+remain OPEN. Scoped strict/lint,5targets/60expects and blind2627 review pass;
+2631 is the sole changed-input stage. The terminal proposal remains pending the
+privileged reference-custody GAP. Details and earlier retained roots are in
+[published25427e0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/25427e0/.agent/work/core-runtime-reactivation/WORK.md#run-cache-owner-and-authority-refusal-packet).
+Current fixture rules stay in the maintained regression contract.
 
 ### Run component and CLI boundary packet
 
@@ -231,37 +234,15 @@ private-module/CLI engineering GAPs remain.
 
 ### Run registration correction packet
 
-2605 independently confirms the missing native-Istanbul registration route.
-Root adds the maintained native flag only to the existing conditional. No Source
-branch, denominator, old mutation/V8 condition or budget changes. This runs
-component tests named mutation path, not a mutation engine or qualification lane.
-The independent review does not attribute all513function gaps to this omission.
-
-Before enabling that group, Root finds four unconditional failure cleanups and
-two spies restored only on success. The delivered-work control now restores both
-spies in finally before closing its DB and marks completion only afterwards.
-It and three direct refusal roots retain failures. Existing bounded child/UNKNOWN
-retention remains unchanged.2607 independently reviews these exact changes with
-no blocker, dropped assertion, new comment or suppression.
-
-2606 passes strict139/lint, then the19newly registered controls produce18PASS and
-one stale assertion in137.36s. Original log and failed root
-`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-context-sUWunB` remain retained.
-The receipt status unknown violates the pending/bound schema enum before the
-old expected status guard; run's authority-read catch correctly reports
-Runtime initialization authority is unavailable.2608 checks only that corrected
-case, adding unchanged receipt/no-work assertions before restoring the genuine
-fixture's prior schema-valid bytes and exercising escaping-path denial. It passes
-strict139/lint and1case/6expects in1.82s. Independent2609 confirms the actual
-schema/reader/catch order and retained refusal semantics. No prior state is forged.
-
-Keep the other18passes rather than rerun the137.36s group for one oracle change.
-Within that group the released-selector case takes52.606s and CAS/report28.217s;
-these native case costs do not establish a matched speedup or divided parallel
-estimate. Serial execution, independent read-only reviews and one changed-input
-stage are selected. A full stage per assertion and concurrent suites/compilers
-are rejected without matched/resource qualification. Tool-call/token savings
-remain unmeasured. No per-test build or extra numeric producer is added.
+Thee9859f2 packet adds the existing native Istanbul flag to conditional
+registration without changing ordinary/mutation/V8 routes. Failure roots are
+retained; both scoped spies restore in finally before DB close.2606's18PASS/1stale
+schema assertion and root
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-context-sUWunB` remain.
+2608 checks the corrected schema-before-catch refusal and unchanged receipt/work
+oracles; blind2609 review passes. Reuse the other18passes rather than repeat the
+137.36s group. Registration is not mutation qualification or the cause of every
+gap. Details remain in [published25427e0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/25427e0/.agent/work/core-runtime-reactivation/WORK.md#run-registration-correction-packet).
 
 ### Run contour repair and measurement plan
 
@@ -273,27 +254,15 @@ fixture/capture costs from entry/counter planning. Native readers own no writes,
 Git, compiler, tests or second producer. Their bounded Source reviews find no
 additional justified copy/build/cache optimization or measured speedup.
 
-2593 confirms that invoke reduces an UNKNOWN child to2KiB stream tails before
-throwing, while the passing timeout control retains only its root.2595 adds the
-missing evidence oracle and reproduces ENOENT for stdout.log. Original failure
-log and root `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-uninitialized-kbdLjA`
-remain retained. Root extends the existing onUnknown callback with its actual
-tracked result. Only that timeout fixture persists exclusive launch, full
-received UTF8 stdout/stderr and terminal/timeout/cleanup fields before the tail
-exception. UNKNOWN stays retained and capture_complete remains false; a cleanup
-attempt is not descendant closure. This preserves decoded diagnostics, not a
-new byte-exact child counter protocol or complete-output qualification.
+The69ec28c timeout packet preserves full received UTF8 streams and actual
+PID/status/signal/timeout/cleanup fields before diagnostic tails. The original
+ENOENT/log and root
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-uninitialized-kbdLjA` remain.
+The over8KiB controls and native-field bindings pass strict/lint and blind review.
+UNKNOWN stays retained with capture_complete:false; a cleanup attempt does not
+prove descendant closure or child counter custody. Launch/encoding/budgets stay.
+Details remain in [published25427e0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/25427e0/.agent/work/core-runtime-reactivation/WORK.md#run-contour-repair-and-measurement-plan).
 
-2596 passes scoped strict139, zero-warning lint and the repaired control.2598
-strengthens it with over8KiB in each stream and exact saved-text assertions;
-the original prefix markers are absent from the exception tails but present in
-retained full texts. Strict139/lint and1case/12expects pass in1.94s.2597 fresh
-independent review finds no blocker and requests native terminal-field assertions.
-2600 binds saved PID/status/signal/timeout/cleanup values to the actual observer
-result; scoped strict139/lint and1case/13expects pass in2.19s. No added comment or
-suppression is found. The named nested no-comments role is not launched under
-the read-only brief; the native independent review is the actual evidence.
-Root publishes this coherent packet before one complete changed-input stage. Ordinary invoke launch/encoding/budget stays unchanged.
 
 2594 finds maintained run-cli-main assertions in routing-contracts. Defer adding
 that whole file until the fresh map establishes actual missing paths, because
@@ -1173,40 +1142,43 @@ does not increment the parent Source entry/catch/errorMessage counters. This rem
 an attribution GAP, never an accepted skip. stageMarker's diagnostics-disabled arm
 also remains testable and OPEN. No denominator, frozen ceiling or mutation rule changes.
 
-### Three-hour execution audit,2026-10-23 09:00–12:00UTC
+### Three-hour execution audit,2026-10-23 09:53–12:53UTC
 
-The bounded Git observation contains14published packets,ac594c3 through86d3032.
-The two reproduced pin-stage ownership bugs inac594c3 remain product fixes.
-Toolchain and init complete all testable paths with independent objective
-GAPs. Run remains the sole active contour. Reuse2602/2611/2618 receipts and
-canonical maps; registration adds30covered functions and223branch arms on
-unchanged run Source. Its raw status is still BLOCKED, not exact100.
-
-Script defects confirmed in this window are lost full received timeout
-streams and an omitted TESTING.md capture input for run fixtures. Their causal
-red/green controls and publication are above. The missing native registration
-gate was a test-authoring defect. Four failure cleanup paths and two success-only
-spy restorations are repaired before activation. The one obsolete schema-denial
-oracle is corrected against the actual read/catch order with no-write assertions.
-Failed roots and native logs remain. The resource failure2611 is not numeric
-proof; one fresh2618 stage follows its actual capture-input correction.
+The12:52:58UTC bounded Git observation has13published packets,e0e5e06 through
+25427e0. Pin-stage product fixes precede this window; current confirmed changes
+are harness/fixture/attribution repairs, not a newly claimed product bug.
+Reuse2602/2611/2618/2631/2641 receipts, retained maps and the sole projection.
+Run is still the only active contour, raw BLOCKED/nonexact. Registration,
+captured TESTING.md, full received timeout streams, one owned cache bundle and
+real component reuse are verified above. Missing positive authority/history
+producers and private-child attribution remain engineering gaps, not skips.
 
 | Order and parallelism | Evidence and decision |
 | --- | --- |
-| Scoped strict/lint, grouped controls, independent bounded review, one final changed-input stage | Selected.2606 checks19new controls,18PASS/1stale assertion in137.36s;2608 checks only the corrected case in1.82s;2615 verifies3capture controls in206ms;2618 runs76cases in165.88s. Different scopes are not benchmark ratios. |
-| Full stage after each assertion, before fixture readiness, or unchanged after a known failure | Rejected.2608 preserves the prior18passes;2613 reproduces the missing guide in a small control. Repeating137s or a full stage for these local uncertainties has no demonstrated value. |
-| Two disjoint native preparation/review lanes with one Root writer/producer; wider parallel suites, scans or cleanup | Two bounded lanes selected. They write isolated proposals or one review artifact, never shared Source/Git. Wider numeric/build/compiler concurrency has no matched resource/custody qualification and remains unselected. |
+| Scoped strict/lint, grouped causal controls, independent review, one changed-input stage | Selected.2651 checks6protocol cases in4.51s and4real targets in2.80s;2653 repeats only the changed semantic case in1.166s.2641's complete80cases take132.13s. Different scopes/inputs are not speedup ratios. |
+| Full stage after each assertion or before fixture/profile readiness | Rejected. Preserve2606's18passes after one corrected assertion, and the current causal missing-profile red. Neither a137s group retry nor unchanged full stage resolves these local uncertainties better than their exact controls. |
+| Bounded disjoint native preparation/review lanes with one Root writer/producer | Selected. Fixture/command proposals and profile design/review have separate outputs. Wider numeric/compiler/index/cleanup concurrency has no matched resource/custody qualification and is not activated. |
 
-Setup remains significant in selected-package/CAS fixtures, but private CLI
-attribution and positive repair/forward fixture prerequisites must be resolved
-before their cost can be optimized safely. Tool-call/token savings and wider
-parallel throughput remain unmeasured hypotheses. No extra SDK build, full-suite
-audit, AST/index/hash pass or second capture/producer is introduced.
-The prior07:43–10:43 audit is preserved in
-[published86d3032 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/86d30323efb2412766cd37bf8317fbce5312e556/.agent/work/core-runtime-reactivation/WORK.md).
-Reuse the single disk observation and2472inventory below. Unknown privileged
-process custody still defers destructive cleanup;0bytes reclaimed. The current
-timer state and schedule remain unchanged.
+Setup remains material in selected-package/CAS fixtures. Current direct API reuse
+preserves native persistence and public boundary controls; missing producer
+prerequisites must be solved before claiming further safe setup savings.
+Avoidable output cost includes2643's11560original tool-output tokens before
+truncation and a reader's broad diagnostics rg. Current briefs name exact logs
+and bounded ranges. Full-patch checking catches a real handoff failure. Exact
+session tool calls, token totals and savings are not exposed; wider throughput
+claims remain hypotheses. No audit benchmark, full-suite replay or AST/hash/index
+pass is added. Earlier audit details remain in
+[published25427e0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/25427e0/.agent/work/core-runtime-reactivation/WORK.md#three-hour-execution-audit2026-10-23-09001200utc).
+
+DIAG/audit-disk-v2649.log is the single fresh12:52:58UTC filesystem observation.
+Checkout/durable evidence have21760655360available bytes; scratch has2634756096.
+The unchanged2147483648floor plus67108864reserve requires2214592512bytes,
+leaving margins19546062848durable and420163584scratch. No capacity GAP currently.
+Reuse2472's36-target inventory. Docker owners117/168 remain alive with privileged
+cwd observations unavailable and no observed closure. This unresolved reference
+custody defers destructive retirement of exact authorized roots and contour
+children.0bytes reclaimed, no locators retired, original reports/logs/archives
+remain. Timer schedule, prompt and enabled state stay unchanged.
 
 ### Three-hour execution audit,2026-10-23 06:43–09:43UTC
 

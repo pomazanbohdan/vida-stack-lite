@@ -2589,7 +2589,7 @@ function execution from statement counters or replace them with field closures.
 
 ### Focused controller CLI counter custody
 
-Only three serial v2 focused selections may carry `cli_children`:
+Only four serial v2 focused selections may carry `cli_children`:
 
 - `bun-development-controller`, with its one declared Source and test, observes
   one native missing-option `inspect` invocation.
@@ -2606,6 +2606,15 @@ Only three serial v2 focused selections may carry `cli_children`:
   and exactly `Execution budget exhausted before child launch.` plus newline.
   The fresh import computes finite ancestor clock policy before the spent
   budget refuses runtime resolution; it never starts a coverage suite.
+
+- `bun-cli-run`, with exactly `bin/run.ts`, `tests/run-entrypoint.test.ts` and
+  `tests/bun-cache-routing.test.ts`, observes one canonical `bin/run.ts --help`
+  invocation. Require exit0, empty stderr and the exact schema, help status, run
+  command, syntax and complete options from the captured metadata owners.
+  Its loaded-input receipt must include `bin/cli-metadata.ts`,
+  `bin/run-cli-options.ts` and `bin/cli-command-contracts.ts`, and must not include
+  the operation-only `bin/workspace-database-cli.ts`. No private package alias,
+  dynamic operation argv or other run child gains counter admission.
 
 Each case preserves its original flags, cwd, environment and 4000ms child bound.
 The preload explicitly loads the captured preload for that child and reuses the

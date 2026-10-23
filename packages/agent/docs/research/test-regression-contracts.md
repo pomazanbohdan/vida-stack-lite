@@ -268,6 +268,15 @@ child launch. Keep the version and clock profiles distinct under the same Source
 reject missing, duplicate or extra profiles, altered startup clocks and terminal-
 consistent wrong output. Their sparse maps merge only after existing custody and
 canonical counter validation. This is not recursion into a coverage suite.
+Run's canonical help child uses that same collector only for the exact one-Source,
+two-test selection. Assert the complete captured run metadata and reject wrong
+schema/status/command/syntax/options even when raw-capture hashes and terminal
+references agree with the altered payload. Reject missing metadata load and any
+loaded workspace-database operation module before merging its sparse map.
+Separate in-process special-command controls use exact refusals, fresh private
+roots and unchanged configuration/initialization/request bytes; malformed
+requests must create neither a workspace database nor Work. Preserve failed roots.
+These controls establish early refusals, not positive recovery history.
 Other copied-wrapper and fresh-start environment children remain behavioral
 controls; they do not contribute measured counters.
 

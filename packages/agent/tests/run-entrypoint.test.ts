@@ -45,6 +45,8 @@ import {
   run,
   writeDurable,
 } from '../bin/run.ts';
+import { runOptionDetails, runSpecialModeOptions } from '../bin/run-cli-options.ts';
+import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
 import { initializeProject } from '../bin/init.ts';
 import { inspectLocalSession } from '../src/orchestration/inspect-local-session.ts';
 import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.js';
@@ -2124,6 +2126,26 @@ function invoke(
 }
 
 describe('vida-agent run entrypoint fast checks', () => {
+  test('run help completes through the captured canonical CLI without loading operations', () => {
+    const result = spawnSync(
+      process.execPath,
+      ['--no-env-file', '--no-install', '--config=' + path.join(packageRoot, 'bunfig.toml'), launcher, '--help'],
+      { encoding: 'utf8', windowsHide: true, timeout: 4000 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    const help = requireRecord(parseJsonUnknown(result.stdout), 'run help result');
+    expect(help).toMatchObject({
+      schema: 'VidaAgentCommandResult/v1',
+      status: 'help',
+      command: 'run',
+      syntax: cliCommandContracts.run.syntax,
+    });
+    expect(help.options).toEqual(runOptionDetails());
+  });
+
   test('unknown public child result retains the shared uninitialized fixture at cleanup', () => {
     const program = path.join(repositoryRoot, 'inert-timeout-fixture.ts');
     const configFile = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
@@ -4025,6 +4047,240 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             );
         }
       }, 90_000);
+    }
+  });
+
+  test('run special commands reject malformed separate signals before helper dispatch', async () => {
+    const messages = [
+      'Initial source continuation requires its exact separate signal',
+      'Unprepared recovery requires its exact separate signal',
+      'Completed Source report recovery requires its exact separate signal',
+      'Failed prewriter transition requires its exact separate signal',
+      'Failed prewriter owner recovery requires its exact separate signal',
+      'Recovery review requires its exact separate signal',
+      'Historical release requires its exact separate signal',
+      'Historical normalization resume requires its exact separate signal',
+      'Historical terminal synthesis capture requires its exact separate signal',
+      'Unissued owner release requires its exact separate signal',
+      'Settled research release requires its exact separate signal',
+      'Readonly bookkeeping release requires its exact separate signal',
+      'Interrupted Source retirement requires its exact separate signal',
+      'Readonly release requires separate exact signal',
+      'Retired-source capture requires its exact separate capture signal',
+      'Stopped-source capture requires exact separate capture signal',
+    ];
+    expect(runSpecialModeOptions).toHaveLength(messages.length);
+    const precedingSelectors = new Set<string>();
+    for (const [index, contract] of runSpecialModeOptions.entries()) {
+      const message = messages[index];
+      if (!message) throw new Error(`Missing special-command refusal for ${contract.selector}`);
+      for (const args of [
+        [contract.selector, 'false'],
+        ['--mode', 'true', contract.selector],
+      ])
+        await assert.rejects(run(args), (error: unknown) => error instanceof Error && error.message === message);
+      for (const conflict of contract.conflicts ?? []) {
+        if (precedingSelectors.has(conflict)) continue;
+        await assert.rejects(
+          run([contract.selector, 'true', conflict, 'true']),
+          (error: unknown) => error instanceof Error && error.message === message,
+        );
+      }
+      precedingSelectors.add(contract.selector);
+    }
+  });
+
+  test('run special helper tops reject malformed argv and modes before repository effects', async () => {
+    const cases = [
+      {
+        selector: '--capture-stopped-source',
+        wrong: (root: string) => ['--request', 'request.json', '--mode', 'inspect', '--project-root', root],
+        wrongMessage:
+          'Usage: run.mjs --capture-stopped-source true --mode inspect|plan|apply|resume --project-root ABS --request REL',
+        invalid: (root: string) => ['--mode', 'invalid', '--project-root', root, '--request', 'request.json'],
+        invalidMessage: 'Capture operation mode invalid',
+      },
+      {
+        selector: '--recover-unprepared-work',
+        wrong: (root: string) => [
+          '--project-root',
+          root,
+          '--mode',
+          'inspect',
+          '--native-session-handle',
+          'owner',
+          '--request',
+          'request.json',
+        ],
+        wrongMessage: 'Unprepared recovery requires mode, exact root, original owner handle and request',
+        invalid: (root: string) => [
+          '--mode',
+          'invalid',
+          '--project-root',
+          root,
+          '--native-session-handle',
+          'owner',
+          '--request',
+          'request.json',
+        ],
+        invalidMessage: 'Unprepared recovery mode invalid',
+      },
+      {
+        selector: '--capture-retired-source',
+        wrong: (root: string) => [
+          '--native-session-handle',
+          'owner',
+          '--project-root',
+          root,
+          '--request',
+          'request.json',
+        ],
+        wrongMessage: 'Retired-source capture requires exact root, current owner handle and request',
+      },
+      {
+        selector: '--retire-interrupted-source-owner',
+        wrong: (root: string) => [
+          '--project-root',
+          root,
+          '--mode',
+          'inspect',
+          '--native-session-handle',
+          'owner',
+          '--request',
+          'request.json',
+        ],
+        wrongMessage: 'Interrupted Source retirement requires mode, exact root, current owner handle and request',
+        invalid: (root: string) => [
+          '--mode',
+          'invalid',
+          '--project-root',
+          root,
+          '--native-session-handle',
+          'owner',
+          '--request',
+          'request.json',
+        ],
+        invalidMessage: 'Interrupted Source retirement mode invalid',
+      },
+      {
+        selector: '--release-completed-readonly',
+        wrong: (root: string) => ['--project-root', root, '--mode', 'inspect', '--request', 'request.json'],
+        wrongMessage: 'Readonly release requires mode, exact root and request',
+        invalid: (root: string) => ['--mode', 'invalid', '--project-root', root, '--request', 'request.json'],
+        invalidMessage: 'Readonly release mode invalid',
+      },
+      {
+        selector: '--recovery-review',
+        wrong: (root: string) => ['--mode', 'inspect', '--project-root', root],
+        wrongMessage: 'Recovery review requires exact mode, root and caller-history export',
+        invalid: (root: string) => ['--mode', 'invalid', '--project-root', root, '--request', 'request.json'],
+        invalidMessage: 'Recovery review mode or argument set invalid',
+      },
+    ];
+    for (const entry of cases) {
+      const refuseOnEmptyRoot = async (argsForRoot: (root: string) => string[], message: string) => {
+        const root = mkdtempSync(path.join(tmpdir(), 'vida-run-special-empty-'));
+        let complete = false;
+        try {
+          await assert.rejects(
+            run([entry.selector, 'true', ...argsForRoot(root)]),
+            (error: unknown) => error instanceof Error && error.message === message,
+          );
+          expect(readdirSync(root)).toEqual([]);
+          complete = true;
+        } finally {
+          if (complete) rmSync(root, { recursive: true, force: true });
+          else process.stderr.write(`Retained failed run-special empty root: ${root}\n`);
+        }
+      };
+      await refuseOnEmptyRoot(entry.wrong, entry.wrongMessage);
+      if (entry.invalid && entry.invalidMessage) await refuseOnEmptyRoot(entry.invalid, entry.invalidMessage);
+    }
+  });
+
+  test('run special helper request decoders refuse empty records before opening a workspace database', async () => {
+    const cases = [
+      {
+        selector: '--capture-stopped-source',
+        args: (root: string) => ['--mode', 'inspect', '--project-root', root, '--request', 'request.json'],
+        message: 'Capture workspace/root binding differs',
+      },
+      {
+        selector: '--recover-unprepared-work',
+        args: (root: string) => [
+          '--mode',
+          'inspect',
+          '--project-root',
+          root,
+          '--native-session-handle',
+          'owner',
+          '--request',
+          'request.json',
+        ],
+        message: 'Unprepared recovery request shape differs',
+      },
+      {
+        selector: '--capture-retired-source',
+        args: (root: string) => [
+          '--project-root',
+          root,
+          '--native-session-handle',
+          'owner',
+          '--request',
+          'request.json',
+        ],
+        message: 'Retired-source request workspace or owner binding differs',
+      },
+      {
+        selector: '--retire-interrupted-source-owner',
+        args: (root: string) => [
+          '--mode',
+          'inspect',
+          '--project-root',
+          root,
+          '--native-session-handle',
+          'owner',
+          '--request',
+          'request.json',
+        ],
+        message: 'Interrupted Source retirement request shape differs',
+      },
+      {
+        selector: '--release-completed-readonly',
+        args: (root: string) => ['--mode', 'inspect', '--project-root', root, '--request', 'request.json'],
+        message: 'Readonly release identity differs',
+      },
+      {
+        selector: '--recovery-review',
+        args: (root: string) => ['--mode', 'inspect', '--project-root', root, '--request', 'request.json'],
+        message: 'Recovery caller-history export shape invalid',
+      },
+    ];
+    for (const entry of cases) {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-special-request-'));
+      let complete = false;
+      try {
+        const { config, initializationPath } = createFixture(root);
+        const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
+        const requestPath = path.join(root, 'request.json');
+        const configBefore = readFileSync(configPath);
+        const initializationBefore = readFileSync(initializationPath);
+        const requestBytes = Buffer.from('{}');
+        writeFileSync(requestPath, requestBytes);
+        await assert.rejects(
+          run([entry.selector, 'true', ...entry.args(root)]),
+          (error: unknown) => error instanceof Error && error.message === entry.message,
+        );
+        expect(readFileSync(configPath)).toEqual(configBefore);
+        expect(readFileSync(initializationPath)).toEqual(initializationBefore);
+        expect(readFileSync(requestPath)).toEqual(requestBytes);
+        expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+        expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+        complete = true;
+      } finally {
+        if (complete) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed run-special request root: ${root}\n`);
+      }
     }
   });
 }

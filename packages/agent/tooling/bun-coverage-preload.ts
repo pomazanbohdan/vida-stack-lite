@@ -253,6 +253,8 @@ const bootstrapInputs = [
   'tooling/published-coverage-inputs.ts',
   'tooling/fixture-child-observation.ts',
   'tooling/coverage-cli-child.ts',
+  'bin/cli-command-contracts.ts',
+  'bin/run-cli-options.ts',
   ...(manifest.schema === 'VidaBunCoverageRun/v3'
     ? ['tooling/coverage-shard-evidence.ts', 'tooling/coverage-counters.ts']
     : []),

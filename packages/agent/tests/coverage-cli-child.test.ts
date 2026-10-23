@@ -32,6 +32,7 @@ import {
 } from '../tooling/coverage-cli-child.ts';
 import { mergeCoverageShardCounters } from '../tooling/coverage-shard-evidence.ts';
 import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
+import { runOptionDetails } from '../bin/run-cli-options.ts';
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const capturedTools = new Map(coverageToolInputs.map((file) => [file, readFileSync(path.join(packageRoot, file))]));
@@ -180,23 +181,32 @@ test('CLI observer preserves terminal and capture failures before refusing absen
   }
 });
 
-test.each(['controller', 'public', 'toolchain'] as const)(
+test.each(['controller', 'public', 'toolchain', 'run'] as const)(
   'focused %s CLI counters require native custody and canonical counter validation',
   (variant) => {
-    const entry = variant === 'controller' ? sourceFile : variant === 'toolchain' ? 'bin/bun.ts' : 'bin/vida-agent.ts';
+    const entry =
+      variant === 'controller'
+        ? sourceFile
+        : variant === 'toolchain'
+          ? 'bin/bun.ts'
+          : variant === 'run'
+            ? 'bin/run.ts'
+            : 'bin/vida-agent.ts';
     const selectedSources = variant === 'public' ? ['bin/repair-work-state.ts', 'bin/scope.ts', entry] : [entry];
     const selectedTests =
       variant === 'controller'
         ? [testFile]
         : variant === 'toolchain'
           ? ['tests/bun-toolchain.test.ts', 'tests/bun-cache-routing.test.ts']
-          : [
-              'tests/scope-help-parity.test.ts',
-              'tests/scoped-source-snapshot.test.ts',
-              'tests/run-entrypoint.test.ts',
-              'tests/automatic-work-absorption.test.ts',
-              'tests/admitted-runtime-canonical-intake.test.ts',
-            ];
+          : variant === 'run'
+            ? ['tests/run-entrypoint.test.ts', 'tests/bun-cache-routing.test.ts']
+            : [
+                'tests/scope-help-parity.test.ts',
+                'tests/scoped-source-snapshot.test.ts',
+                'tests/run-entrypoint.test.ts',
+                'tests/automatic-work-absorption.test.ts',
+                'tests/admitted-runtime-canonical-intake.test.ts',
+              ];
     const expectedExit = variant === 'controller' ? 1 : 0;
     const argument = variant === 'controller' ? 'inspect' : variant === 'toolchain' ? '--version' : '--help';
     const expectedOutput =
@@ -208,7 +218,15 @@ test.each(['controller', 'public', 'toolchain'] as const)(
           }
         : variant === 'toolchain'
           ? Bun.version
-          : { schema: 'VidaAgentCommandResult/v1', status: 'help', commands: ['help'] };
+          : variant === 'run'
+            ? {
+                schema: 'VidaAgentCommandResult/v1',
+                status: 'help',
+                command: 'run',
+                syntax: cliCommandContracts.run.syntax,
+                options: runOptionDetails(),
+              }
+            : { schema: 'VidaAgentCommandResult/v1', status: 'help', commands: ['help'] };
     const subjects = [
       { entry, args: [argument], exit: expectedExit, output: expectedOutput },
       ...(variant === 'toolchain'
@@ -275,10 +293,24 @@ test.each(['controller', 'public', 'toolchain'] as const)(
                 '  } else console.log(Bun.version);',
                 '}',
               ].join('\n')
-            : 'export function hit() { return 7; }\nif (import.meta.main) console.log(' +
-              JSON.stringify(JSON.stringify(expectedOutput)) +
-              ');\n';
+            : variant === 'run'
+              ? 'import { help } from "./cli-metadata.ts";\nexport function hit() { return 7; }\nif (import.meta.main) console.log(JSON.stringify(help()));\n'
+              : 'export function hit() { return 7; }\nif (import.meta.main) console.log(' +
+                JSON.stringify(JSON.stringify(expectedOutput)) +
+                ');\n';
       const inputs = new Map(capturedTools);
+      if (variant === 'run')
+        inputs.set(
+          'bin/cli-metadata.ts',
+          Buffer.from(
+            [
+              'import { runOptionDetails } from "./run-cli-options.ts";',
+              'import { cliCommandContracts } from "./cli-command-contracts.ts";',
+              'export function help() { return {schema:"VidaAgentCommandResult/v1",status:"help",command:"run",syntax:cliCommandContracts.run.syntax,options:runOptionDetails()}; }',
+            ].join('\n'),
+          ),
+        );
+      if (variant === 'run') inputs.set('bin/workspace-database-cli.ts', Buffer.from('export const inert = true;\n'));
       for (const selected of selectedSources) {
         const subject = subjects.find((row) => row.entry === selected);
         assert.ok(subject);
@@ -345,7 +377,10 @@ test.each(['controller', 'public', 'toolchain'] as const)(
       const sources = digests(selectedSources);
       const tests = selectedTests;
       const testInputs = digests(tests);
-      const toolInputs = digests(coverageToolInputs);
+      const toolInputs = digests([
+        ...coverageToolInputs,
+        ...(variant === 'run' ? ['bin/cli-metadata.ts', 'bin/workspace-database-cli.ts'] : []),
+      ]);
       const instrumentedSources = sources.map((source) => {
         const bytes = inputs.get(source.path)!;
         const instrumented = instrumentSource(path.join(root, source.path), bytes.toString('utf8'));
@@ -393,7 +428,9 @@ test.each(['controller', 'public', 'toolchain'] as const)(
               ? 'bun-development-controller'
               : variant === 'toolchain'
                 ? 'bun-cli-toolchain'
-                : 'bun-cli-public-entrypoints',
+                : variant === 'run'
+                  ? 'bun-cli-run'
+                  : 'bun-cli-public-entrypoints',
           sources: selectedSources,
           tests,
         },
@@ -436,7 +473,7 @@ test.each(['controller', 'public', 'toolchain'] as const)(
       expect(result.stderr).toContain(
         variant === 'controller'
           ? 'Ran 1 test across 1 file.'
-          : variant === 'toolchain'
+          : variant === 'toolchain' || variant === 'run'
             ? 'Ran 2 tests across 2 files.'
             : 'Ran 5 tests across 5 files.',
       );
@@ -488,7 +525,7 @@ test.each(['controller', 'public', 'toolchain'] as const)(
       expect(() => admit(context, undefined)).toThrow();
       expect(() => admit(context, [])).toThrow();
       expect(() => admit(context, [child, child])).toThrow();
-      if (variant !== 'controller') {
+      if (subjects.length > 1) {
         for (const length of variant === 'public' ? [1, 2, 4] : [1, 3])
           expect(() =>
             admit(
@@ -622,6 +659,52 @@ test.each(['controller', 'public', 'toolchain'] as const)(
       negative('changed-output', (ctx, row) =>
         writeFileSync(path.join(ctx.directory, String(record(row.stderr).path)), '{}'),
       );
+      if (variant === 'run') {
+        for (const [key, value] of Object.entries({
+          command: 'scope',
+          syntax: 'foreign',
+          options: [],
+          status: 'blocked',
+          schema: 'foreign',
+        }))
+          negative('run-help-' + key, (ctx, row) => {
+            const reference = record(row.stdout);
+            const file = path.join(ctx.directory, String(reference.path));
+            const output = record(JSON.parse(readFileSync(file, 'utf8')));
+            output[key] = value;
+            const bytes = Buffer.from(JSON.stringify(output));
+            writeFileSync(file, bytes);
+            row.stdout = { ...reference, sha256: sha256(bytes), bytes: bytes.length };
+            rewrite(ctx, row, 'terminal', (proof) => {
+              proof.stdout = row.stdout;
+            });
+          });
+        negative(
+          'run-metadata-unloaded',
+          (ctx, row) =>
+            rewrite(ctx, row, 'receipt', (proof) => {
+              assert.ok(Array.isArray(proof.loaded_inputs));
+              proof.loaded_inputs = proof.loaded_inputs.filter((input) => record(input).path !== 'bin/cli-metadata.ts');
+            }),
+          false,
+          0,
+          'Run help metadata module was not loaded: bin/cli-metadata.ts',
+        );
+        negative(
+          'run-operation-loaded',
+          (ctx, row) =>
+            rewrite(ctx, row, 'receipt', (proof) => {
+              assert.ok(Array.isArray(proof.loaded_inputs));
+              const operation = manifest.module_inputs.find((input) => input.path === 'bin/workspace-database-cli.ts');
+              assert.ok(operation);
+              const loadedInputs: unknown[] = proof.loaded_inputs;
+              proof.loaded_inputs = [...loadedInputs, operation];
+            }),
+          false,
+          0,
+          'Run help loaded operation-only runtime modules.',
+        );
+      }
       if (variant === 'toolchain') {
         negative(
           'duplicate-clock-profile',

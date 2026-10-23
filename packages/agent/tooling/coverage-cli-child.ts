@@ -8,6 +8,7 @@ import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-sa
 import { sha256 } from './bun-coverage-evidence.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
+import { runOptionDetails } from '../bin/run-cli-options.ts';
 
 type Digest = { path: string; sha256: string };
 export type CliCoverageManifest = {
@@ -117,34 +118,43 @@ function samePaths(actual: readonly string[] | undefined, expected: readonly str
   );
 }
 
+const cliProfiles = [
+  {
+    contour: 'bun-cli-toolchain',
+    sources: toolchainSources,
+    tests: toolchainTests,
+    subject: { source: 'bin/bun.ts', argument: '--version', exit_code: 0 },
+  },
+  {
+    contour: 'bun-cli-public-entrypoints',
+    sources: publicSources,
+    tests: publicTests,
+    subject: { source: 'bin/vida-agent.ts', argument: '--help', exit_code: 0 },
+  },
+  {
+    contour: 'bun-cli-run',
+    sources: ['bin/run.ts'],
+    tests: ['tests/run-entrypoint.test.ts', 'tests/bun-cache-routing.test.ts'],
+    subject: { source: 'bin/run.ts', argument: '--help', exit_code: 0 },
+  },
+] as const;
+
 function cliSubject(manifest: CliCoverageManifest) {
   if (focusedControllerCliCoverage(manifest)) return { source, argument: 'inspect', exit_code: 1 };
-  if (
-    manifest.schema === 'VidaBunCoverageRun/v2' &&
-    manifest.test_selection.mode === 'focused-diagnostic' &&
-    manifest.test_selection.contour === 'bun-cli-toolchain' &&
-    samePaths(
-      manifest.sources.map((row) => row.path),
-      toolchainSources,
-    ) &&
-    samePaths(manifest.test_selection.sources, toolchainSources) &&
-    samePaths(manifest.tests, toolchainTests) &&
-    samePaths(manifest.test_selection.tests, toolchainTests)
-  )
-    return { source: 'bin/bun.ts', argument: '--version', exit_code: 0 };
-  if (
-    manifest.schema === 'VidaBunCoverageRun/v2' &&
-    manifest.test_selection.mode === 'focused-diagnostic' &&
-    manifest.test_selection.contour === 'bun-cli-public-entrypoints' &&
-    samePaths(
-      manifest.sources.map((row) => row.path),
-      publicSources,
-    ) &&
-    samePaths(manifest.test_selection.sources, publicSources) &&
-    samePaths(manifest.tests, publicTests) &&
-    samePaths(manifest.test_selection.tests, publicTests)
-  )
-    return { source: 'bin/vida-agent.ts', argument: '--help', exit_code: 0 };
+  if (manifest.schema !== 'VidaBunCoverageRun/v2' || manifest.test_selection.mode !== 'focused-diagnostic')
+    return undefined;
+  for (const profile of cliProfiles)
+    if (
+      manifest.test_selection.contour === profile.contour &&
+      samePaths(
+        manifest.sources.map((row) => row.path),
+        profile.sources,
+      ) &&
+      samePaths(manifest.test_selection.sources, profile.sources) &&
+      samePaths(manifest.tests, profile.tests) &&
+      samePaths(manifest.test_selection.tests, profile.tests)
+    )
+      return profile.subject;
   return undefined;
 }
 
@@ -595,6 +605,14 @@ export function cliCoverageChildMaps(
           help.commands.length > 0 &&
           help.commands.every((command) => typeof command === 'string'),
       );
+    } else if (subject.source === 'bin/run.ts') {
+      assert.equal(stderr.length, 0);
+      const help = proofRecord(JSON.parse(stdout.toString('utf8')));
+      assert.equal(help.schema, 'VidaAgentCommandResult/v1');
+      assert.equal(help.status, 'help');
+      assert.equal(help.command, 'run');
+      assert.equal(help.syntax, cliCommandContracts.run.syntax);
+      assert.deepEqual(help.options, runOptionDetails());
     } else if (subject.source === 'bin/bun.ts') {
       if (subject.expired_clock) {
         assert.equal(stdout.length, 0);
@@ -627,6 +645,11 @@ export function cliCoverageChildMaps(
     assert.ok(Array.isArray(receipt.loaded_inputs));
     const loaded = validateLoaded(receipt.loaded_inputs);
     assert.ok(loaded.has(subject.source) && loaded.has(preload) && loaded.has('tooling/coverage-cli-child.ts'));
+    if (subject.source === 'bin/run.ts') {
+      for (const file of ['bin/cli-metadata.ts', 'bin/run-cli-options.ts', 'bin/cli-command-contracts.ts'])
+        assert.ok(loaded.has(file), 'Run help metadata module was not loaded: ' + file);
+      assert.ok(!loaded.has('bin/workspace-database-cli.ts'), 'Run help loaded operation-only runtime modules.');
+    }
     const coverage = proofRecord(receipt.coverage);
     assert.deepEqual(
       Object.keys(coverage),

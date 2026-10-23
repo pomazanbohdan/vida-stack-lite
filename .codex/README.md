@@ -87,6 +87,12 @@ calls during those checks. Outside that freeze, use `git --no-optional-locks`
 for status/diff inspection: default status can refresh the index and invalidate
 the hook's captured identity even when staged content is unchanged. Keep the
 identity guard strict; serialize inspection instead of bypassing it.
+Before integrating a worker's complete unified diff, run `git apply --check`
+against current canonical bytes. Require every assigned hunk to be present in
+the resulting diff before checks/publication. A partial application or a generic
+patch dry run does not establish complete integration. Preserve the rejected
+proposal and use a separate corrected artifact.
+
 If a command returns a live session ID, wait for its terminal exit before any
 dependent Git operation. Printed formatting/typecheck PASS rows are not commit
 completion; an early push can return up-to-date before the commit exists.
