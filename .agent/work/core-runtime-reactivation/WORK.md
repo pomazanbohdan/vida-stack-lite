@@ -38,48 +38,45 @@ The regression contract owns the current rule. No old image is repaired.
 
 ### Latest completed run measurement
 
-2671 completes the exact one-Source/two-test contour on
-c491012287988a0287d0d05e0d003ab018fdc9ea, stage `/workspace/contour-stage-FpKx5Q`,
-run08d5fab9-8b7d-4b9f-bb70-506d23e7c62f. All88tests pass with0failures and854expects
-in159.30s, outer165023.93015ms. Raw **F171/557 L913/2863 S964/3143 B964/3663**
+2685 completes the exact one-Source/two-test contour on
+082014178a05ec528080133d56f66dcb6ee6c9c9, stage `/workspace/contour-stage-hl14xQ`,
+run597db24c-91f1-4d7e-9308-4fd333a7955c. All88tests pass with0failures and870expects
+in129.60s, outer135734.95729899997ms. Raw **F195/557 L991/2863 S1046/3143 B1067/3663**
 stays BLOCKED/nonexact. Max CC501/entry CRAP5402 is navigation, not frozen
 acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
 closed producer/group, unchanged boot/image and the sole paired projection
-publication pass,1321attempts. Frozen/CRAP/mutation stay deferred.
+publication pass,1323attempts. Frozen/CRAP/mutation stay deferred.
 
-Image `/workspace/.vida-quality-inputs/c79339463cefd2a07d1b9701903b1e9397e627ed/repository`,
-manifest SHA25692bf1b5dcbcbdbb3e636332f953797c9757e5a8d8671f14003e78e2e703d2f60.
+Image `/workspace/.vida-quality-inputs/ab7a1038768a161dd837560720a73f4c24a40f85/repository`,
+manifest SHA256e3b8cc510aecbc9024fc9049a6abf3d9912bd4fb85ed0c393070e59b656e1d73.
 Package report is
-`coverage/bun-unified/diagnostics/08d5fab9-8b7d-4b9f-bb70-506d23e7c62f.focused-coverage.json`;
-run-manifest SHA256d2bd32a9518a4fe94c92284d9065880776113b49e9fb4fbfacb991d7845e1a14.
+`coverage/bun-unified/diagnostics/597db24c-91f1-4d7e-9308-4fd333a7955c.focused-coverage.json`;
+run-manifest SHA256bf1125cbaf4bcf364c2f355cd02a87f223f7da09b15e7b2ed6c9558d0523c752.
 SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
-teste9f9c9211cfb5a884fd226dac45294013845f950da7ace11249494599146d0ae,
-tool6f6036a48bfdf8c41bde882e1d2c0c18bd5b522244554498ace3e1e915ffa4b6.
-2673 reuses retained canonical geometry to map all386zero functions,2179statements
-and2699branch arms, with compact output only. No AST/index/hash sweep repeats.
-2672 verifies/fsyncs the40632320-byte functional archive at
-`/workspace/vida-functional-retention-FpKx5Q-XB4Oz2/archive.json`; originals stay.
-Archive SHA256adfc50c40cea1392b0f4c78e264fd89212c07b2dbb0ed432d4811d9769554cd2
+test3b6314d95f09719598827872f33eb13cb2eb1883ee13712e0af75270eb23fd62,
+tool99b238493c9f32b57f2c1673530c4f04a63b71936c8f501cb70f5b7405696c20.
+2687 reuses retained canonical geometry to map all362zero functions,2097statements
+and2596branch arms, with compact output only. No AST/index/hash sweep repeats.
+2686 verifies/fsyncs the40632320-byte functional archive at
+`/workspace/vida-functional-retention-hl14xQ-KGvmah/archive.json`; originals stay.
+Archive SHA256829bbab8ba46c66c0a2934bdc38b5a00cd94359cb78746185bc7bf3ec004c75a
 binds the one new retention artifact, not old reattestation.
 
-The actual single canonical CLI child6d40d4ed-60a9-4804-a203-4a4bab58c5a4 has
-parentPID39/childPID1076, complete native capture, exit0/null signal/no error,
+The actual single canonical CLI childc2e5f2b4-465d-4275-9daf-237c7dbe833c has
+parentPID39/childPID1067, complete native capture, exit0/null signal/no error,
 4889stdout bytes and0stderr bytes. Its receipt under this run's processes/cli
 binds loaded run.ts and all three required metadata modules, with no loaded
 workspace-database-cli.ts. The owned producer/group closure and unchanged
 boot/image are observed separately, not inferred from the child receipt.
 
-Against2659's unchanged Source fingerprint/denominators, decoder controls add
-25functions,35lines,35statements and129branch arms. Across the two packets since
-2641 the gains are45functions,202lines,211statements and285branch arms.
-2659's84cases/132.41s and2671's88cases/159.30s have changed test/tool inputs,
-so performance comparison is inconclusive. Reused native per-case logs show the
-four new decoder cases total1309.94ms inside2671. The existing CAS/report and
-released-journal cases total67055.53ms, with observed increases6690.63ms and
-4268.63ms respectively. This locates substantial time in old composite fixtures;
-CPU/I/O limiter, matched repeatability and causal regression remain unmeasured.
-Pstack's benchmark checklist is read; no extra benchmark is run for this audit
-and no speedup or timing-budget change follows from these unmatched runs.
+Against2671's unchanged Source fingerprint/denominators, the release-refusal
+packet adds24functions,78lines,82statements and103branch arms. Across the three
+packets since2641 the gains are69functions,280lines,293statements and388branch
+arms.2671's88cases/159.30s and2685's88cases/129.60s have changed test/tool inputs;
+these observations do not establish a matched speedup. All88cases execute and
+all selected Source/test/capture/native receipts pass. No timing budget changes.
+2671's report/map/archive and prior observed per-case timing analysis remain in
+[publishedbd175f6 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bd175f625807ce3a7be1a6d47552e9e5a1e58f4a/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
 
 2659's complete native help proof,84PASS and F146/L878/S929/B835 remain in
 [published021c5ea WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/021c5ea/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement),
@@ -111,7 +108,7 @@ private-module alias design and direct component reuse. The component packet in
 e8515c2 is checked below and measured once in2641. Child-only gaps still require
 exact native argv/environment/output, loaded-input and terminal/group joins plus
 missing/duplicate/foreign refusal controls. No unchanged full run is warranted.
-Next use2673's bounded ranges and genuine maintained fixture producers for the
+Next use2687's bounded ranges and genuine maintained fixture producers for the
 remaining helper/command paths. Keep the same contour and all numeric gates.
 
 A bounded Source read finds an omitted registration route at test line2509.
@@ -168,7 +165,8 @@ than repeating29s for the cleanup-owner join.2683 independently returns PASS,
 resolving the custody blocker. Its accidental broad diagnostic rg emits truncated
 output and is disclosed; it is not used as evidence and no token savings are
 claimed. Future bounded review briefs need no diagnostics-directory lookup;
-Root owns check logs and final numbers. One complete changed-input stage follows.
+Root owns check logs and final numbers.2685 completes the sole changed-input
+stage above, with native terminal/group/capture and geometry-qualified results.
 
 A fully qualifying plain-readonly positive producer remains an OPEN engineering
 prerequisite, not an objective skip. The specialized settled-research historical
@@ -1257,7 +1255,7 @@ The12:52:58UTC bounded Git observation has13published packets,e0e5e06 through
 25427e0. Pin-stage product fixes precede this window; current confirmed changes
 are harness/fixture/attribution repairs, not a newly claimed product bug.
 Reuse2602/2611/2618/2631/2641 receipts, retained maps and the sole projection.
-The2657–2674 packets are follow-ups of this same cycle, not extra commits folded
+The2657–2688 packets are follow-ups of this same cycle, not extra commits folded
 into the earlier13-packet window observation.
 Run is still the only active contour, raw BLOCKED/nonexact. Registration,
 captured TESTING.md, full received timeout streams, one owned cache bundle and
