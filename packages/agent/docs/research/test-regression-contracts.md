@@ -324,6 +324,22 @@ closure reaches run-entrypoint fixtures. Check its digest and captured bytes,
 prior-reader inclusion and unrelated-reader exclusion. Bind it before immutable
 image formation; do not add resources to a measured image after launch.
 
+Bind an owned run fixture to one selected bundle root and derive its entrypoint
+from that root. Pin the child environment against the same root before launch;
+per-call launcher overrides can split package and cache identity. A tiny real
+child checks its physical entry and inherited cache, including derived, explicit
+custom and disabled cache settings. Preserve the canonical/inert-program default,
+UNKNOWN latch and child/case bounds. This control establishes environment routing,
+not a measured speedup, child counter attribution or Runtime acceptance.
+
+Direct repair/forward authority refusals use typed controlled selector input and
+the actual exported readers. Check cycle/depth before file reads, malformed JSON,
+non-record values, noncanonical bytes, wrong schemas and unexpected fields with
+exact selector error messages and unchanged fixture afterimages. Schema-only
+companions are decoder inputs for a refusal, never accepted lifecycle history.
+Retain failed roots. Positive parent chains still require their genuine producers;
+missing fixtures or child attribution remain engineering GAPs, not objective skips.
+
 The same private public-CLI timing owner also records parent phase starts for
 the corrective fixtures, including setup and in-process runs, to attribute the
 intervals between CLI children. `PrivatePublicCliFixturePhaseTiming/v1` carries

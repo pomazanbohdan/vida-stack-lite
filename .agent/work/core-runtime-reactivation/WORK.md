@@ -65,27 +65,53 @@ failed immutable image or weaken admission to make the old stage pass.
 
 ### Latest completed run measurement
 
-2602 completes the exact one-Source/two-test contour on
-69ec28c36b3f65bff900058f148cfd4dbd0b62ee, stage `/workspace/contour-stage-ROyiXn`,
-run8133eab4-003f-426f-a749-1b385423d73e. All57tests pass with0failures and289expects
-in32.91s, outer37397.723769ms. Raw **F44/557 L205/2863 S219/3143 B217/3663**
+2618 completes the exact one-Source/two-test contour on
+86d30323efb2412766cd37bf8317fbce5312e556, stage `/workspace/contour-stage-hX5Wqs`,
+run90f021fc-85fe-4fb8-9b87-24f0fdf454ec. All76tests pass with0failures and636expects
+in165.88s, outer172070.351396ms. Raw **F74/557 L443/2863 S469/3143 B440/3663**
 stays BLOCKED/nonexact. Max CC501/entry CRAP21756 is navigation, not frozen
 acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
 closed process/group, unchanged boot/image and one paired projection import
-pass,1310attempts. Frozen/CRAP/mutation stay deferred.
+pass,1313attempts. Frozen/CRAP/mutation stay deferred.
 
-Image `/workspace/.vida-quality-inputs/ffa6aa37319d2406b8823b8f28e0aabf1007ac74/repository`,
-manifest SHA2562fcf939f847c100174cd5a2de981983a201e180d93d175c41023731dbdaf09a6.
+Image `/workspace/.vida-quality-inputs/1fcd7476219f70ebd454d6d0634c9208538ca9b9/repository`,
+manifest SHA256b675e72c96b8037e6fc061f0c16d58c416ce58deb023e4e4edb3428bcc022836.
 Package report is
-`coverage/bun-unified/diagnostics/8133eab4-003f-426f-a749-1b385423d73e.focused-coverage.json`;
-run-manifest SHA256312cef603c5f947801e1bd103185adde258cca7f18dbc6fc8557d708adfec912.
+`coverage/bun-unified/diagnostics/90f021fc-85fe-4fb8-9b87-24f0fdf454ec.focused-coverage.json`;
+run-manifest SHA256a24f8749607ff53de26869fbd2deaf5381664771a6deb87a41ec23d28ec31c1c.
 SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
-tested01ff744da6517c0d75329ed63e3dd35590525c16f0ec50f70fc5369eaadafc,
-toolaa4d8a7b16a62fbc0bb43d05476db0af837b4be5e1c4bdc076aa62d56b69ea89.
-2603 reuses retained canonical geometry to map all513zero functions,2924statements
-and3446branch arms. No AST/index/hash sweep is repeated.2604 verifies/fsyncs the
-40325120-byte functional archive at
-`/workspace/vida-functional-retention-ROyiXn-SjJWe9/archive.json`; originals stay.
+test8a94ac7898b9da8ca14cab1c431b51f81827d0311c2a643f88966db8fc4bd2ac,
+tool71013878ab4022b5f02a56c7f5a216a1f26aebc8eba561b99b35aefc8047e65a.
+2619 reuses retained canonical geometry to map all483zero functions,2674statements
+and3223branch arms. No AST/index/hash sweep is repeated.2620 verifies/fsyncs the
+40591360-byte functional archive at
+`/workspace/vida-functional-retention-hX5Wqs-L2S3oi/archive.json`; originals stay.
+
+Compared with2602's unchanged Source fingerprint and denominators, the activated
+controls add30covered functions,238lines,250statements and223branch arms.
+2602's57tests/32.91s and2618's76tests/165.88s have different test/tool inputs and
+membership; their durations establish no speedup or matched regression ratio.
+2602 run8133eab4-003f-426f-a749-1b385423d73e and its original report, map2603 and
+40325120-byte archive `/workspace/vida-functional-retention-ROyiXn-SjJWe9/archive.json`
+remain historical evidence.2611's failed resource setup and originals stay retained.
+
+2621 independently finds private selected-package CLI launches outside the current
+exact child collector profiles. Their counters require a narrow native alias,
+physical-module byte binding, preserved import.meta.url and exact launch cardinality
+through the existing collector. Missing attribution is an OPEN engineering GAP,
+not an objective skip.2622 separately confirms repairAuthority and
+forwardUpdateAuthority have no direct tests or producer-backed positive records
+in the selected selector fixtures. Their missing coverage is genuine unexercised
+behavior. Negative component tests can inspect real exported guards without
+inventing qualified history or Runtime acceptance.
+
+Next verifiable packet prepares bounded authority refusals and independently
+checks the private launch/cache premise before any collector expansion. Root owns
+canonical integration and checks. A blind writer may produce only a bounded diff
+in an ordinary isolated directory; the second reader owns no code, compiler or
+producer. Reuse their prepared2623/2624 native Luna contracts. Batch accepted
+changes, scoped strict/lint, causal controls and independent review before the
+single changed-input stage. Keep the same contour and all numeric gates.
 
 A bounded Source read finds an omitted registration route at test line2509.
 The existing direct/component group registers only for mutationMode or
@@ -97,6 +123,50 @@ would also change ordinary suite membership; a new collector does not repair
 registration. Batch prerequisite repairs and newly registered targeted controls
 before the next complete changed-input stage. Do not claim every gap comes from
 this gate or treat missing attribution/fixtures as objective untestability.
+
+### Run cache-owner and authority-refusal packet
+
+2623 blind native Luna prepares only a bounded test diff against86d3032 in
+DIAG/run-authority-negative-patch-v2623. Root verifies its exact hunks against
+canonical bytes before applying them, replaces partial-selector casts with one
+typed complete controlled selector, and adds malformed-JSON/non-record controls.
+Both genuine exported authority readers now receive missing/nonregular files,
+invalid JSON, noncanonical encoding, wrong schema or unexpected-field inputs.
+Forward cycle/depth controls precede any reads. Exact public errors and directory/
+byte afterimages are asserted; failed roots remain. Schema-only companion records
+are negative decoder inputs, not accepted lifecycle or Runtime history. Positive
+chains and their real producers remain OPEN engineering GAPs.
+
+2624 independently traces the private cache-root mismatch. Its limited metadata
+lookup examines an init-stage locator, so it cannot establish the latest run's
+environment. Root therefore tests the premise directly rather than claim an
+observed extra process or speedup for2618.2625's tiny actual selected-package
+child reaches its correct private bin/run.ts but receives the canonical package
+cache. The exact native red oracle and root
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-cache-owner-VlXo44` remain.
+Root pins the existing invoke environment against its explicit bundle root.
+The owned fixture now selects one bundle and derives one entrypoint up front,
+removing repeated per-call selectedLauncher overrides. Ordinary canonical calls
+and inert timeout programs keep the prior default. Custom cache and0 remain
+caller-selected. Production Source, actual entry URL, argv, cwd, budgets and
+UNKNOWN retention are unchanged. Under a derived-cache mismatch the actual CLI
+would re-exec to repair its namespace; this conditional Source trace is not a
+measured process count or speedup for prior stages.
+
+2626 passes strict149 but lint finds the now-unused fixtureBundle binding, stopping
+before tests. Root removes that obsolete binding.2628 passes scoped strict149,
+zero-warning lint and5targeted cases/60expects in2.03s. They include three actual
+inert cache-child launches, both authority tables, cycle/depth and the unchanged
+expected-timeout retention control. No full19-case137s group or complete stage is
+repeated for these local uncertainties. Fresh2627 independently reviews the
+integrated packet and finds no blocker, dropped assertion, comment or suppression.
+The afterimage proves unchanged names/bytes, not metadata or transient writes;
+no stronger filesystem claim is made. The named nested no-comments role is not
+available in the assigned no-subdelegation lane; this is actual direct native
+review, not a claim that the named role ran. Checked publication precedes one
+changed-input stage. The small terminal worker proposal remains in its exact
+DIAG directory pending the existing privileged reference-custody GAP; it is not a
+new checkout or execution image. No destructive cleanup or new inventory runs.
 
 ### Run registration correction packet
 
@@ -1042,33 +1112,40 @@ does not increment the parent Source entry/catch/errorMessage counters. This rem
 an attribution GAP, never an accepted skip. stageMarker's diagnostics-disabled arm
 also remains testable and OPEN. No denominator, frozen ceiling or mutation rule changes.
 
-### Three-hour execution audit,2026-10-23 07:43–10:43UTC
+### Three-hour execution audit,2026-10-23 09:00–12:00UTC
 
-The bounded Git observation contains12published packets,8d01ddc throughcc7ec70.
-The two reproduced pin-stage ownership bugs remain the confirmed product fixes
-inac594c3. Later packets repair counter attribution, causal fixtures and private
-resource custody. Toolchain completes all testable paths with reviewed remaining
-GAPs; init's2579 stage adds23covered arms on unchanged Source. Reuse its native
-terminal/capture/group receipts and2580 canonical map, not another inventory.
+The bounded Git observation contains14published packets,ac594c3 through86d3032.
+The two reproduced pin-stage ownership bugs inac594c3 remain product fixes.
+Toolchain and init complete all testable paths with independent objective
+GAPs. Run remains the sole active contour. Reuse2602/2611/2618 receipts and
+canonical maps; registration adds30covered functions and223branch arms on
+unchanged run Source. Its raw status is still BLOCKED, not exact100.
 
-Script review confirms one producer, readiness owner, output capture and paired
-projection. No new repeated scan/hash/read or timeout defect is demonstrated.
-Authoring review finds two corrected2574 premises and one missed catch statement
-in2580. Static102 and focused23cases precede the single2579stage. A further run
-is justified only by2583's actual new non-JSON case. The failed premises and
-original logs remain retained; broad reader lookups are disclosed and not reused.
+Script defects confirmed in this window are lost full received timeout
+streams and an omitted TESTING.md capture input for run fixtures. Their causal
+red/green controls and publication are above. The missing native registration
+gate was a test-authoring defect. Four failure cleanup paths and two success-only
+spy restorations are repaired before activation. The one obsolete schema-denial
+oracle is corrected against the actual read/catch order with no-write assertions.
+Failed roots and native logs remain. The resource failure2611 is not numeric
+proof; one fresh2618 stage follows its actual capture-input correction.
 
 | Order and parallelism | Evidence and decision |
 | --- | --- |
-| Scoped strict/lint, grouped causal cases, independent bounded readers, one final stage per coherent input packet | Selected.2577 checks23cases in9.45s;2579 measures91cases in50.58s, outer54.372s. These are different scopes, not a benchmark ratio. |
-| Full suite after every assertion or failed static check | Rejected.2573's type failure and2574's two premises were resolved with cheaper checks before2579. No quality or timing benefit supports duplicate unchanged runs. |
-| Two disjoint read-only mechanism reviewers, then one final reviewer; serial compiler/numeric work | Selected. Readers own no Git, suites or shared writes. Wider concurrent suites/index/cleanup lack matched evidence and custody. |
+| Scoped strict/lint, grouped controls, independent bounded review, one final changed-input stage | Selected.2606 checks19new controls,18PASS/1stale assertion in137.36s;2608 checks only the corrected case in1.82s;2615 verifies3capture controls in206ms;2618 runs76cases in165.88s. Different scopes are not benchmark ratios. |
+| Full stage after each assertion, before fixture readiness, or unchanged after a known failure | Rejected.2608 preserves the prior18passes;2613 reproduces the missing guide in a small control. Repeating137s or a full stage for these local uncertainties has no demonstrated value. |
+| Two disjoint native preparation/review lanes with one Root writer/producer; wider parallel suites, scans or cleanup | Two bounded lanes selected. They write isolated proposals or one review artifact, never shared Source/Git. Wider numeric/build/compiler concurrency has no matched resource/custody qualification and remains unselected. |
 
-Tool-call/token savings and wider worker throughput remain unmeasured hypotheses.
-Sequence Work into Verifiable Units keeps checked publication before measurement.
-The maintained table and shared fixture remove scenario duplication. Reuse the
-single disk observation below and2472inventory; unresolved privileged-process
-custody still defers destructive cleanup. Timer state/schedule remain unchanged.
+Setup remains significant in selected-package/CAS fixtures, but private CLI
+attribution and positive repair/forward fixture prerequisites must be resolved
+before their cost can be optimized safely. Tool-call/token savings and wider
+parallel throughput remain unmeasured hypotheses. No extra SDK build, full-suite
+audit, AST/index/hash pass or second capture/producer is introduced.
+The prior07:43–10:43 audit is preserved in
+[published86d3032 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/86d30323efb2412766cd37bf8317fbce5312e556/.agent/work/core-runtime-reactivation/WORK.md).
+Reuse the single disk observation and2472inventory below. Unknown privileged
+process custody still defers destructive cleanup;0bytes reclaimed. The current
+timer state and schedule remain unchanged.
 
 ### Three-hour execution audit,2026-10-23 06:43–09:43UTC
 
