@@ -2622,10 +2622,14 @@ Only four serial v2 focused selections may carry `cli_children`:
   This role requires complete raw capture, actual owned-group `gone`, and loaded
   workspace-database/local-work-admission modules. Windows remains unqualified.
   Bounded before/after snapshots bind six unique in-root, single-link regular files
-  to actual child read streams and EOF for config, initialization, intake, scope,
-  acceptance and selected Source. Retained payloads bind read order, fd/path/role,
-  requested/effective position and byte count within4MiB/4096operations. Equal
-  path/Buffer payloads share storage; every actual operation remains recorded.
+  to actual child reads and EOF for config, initialization, intake, scope,
+  acceptance and selected Source. The observer supports complete `readSync`
+  streams and whole-file `readFileSync` reads by canonical path or observed
+  descriptor. It retains exact returned bytes, preserves Buffer or UTF-8 return
+  values even when evidence is incomplete, and marks unsupported options, path
+  aliases or identity changes incomplete. Retained payloads bind read order,
+  fd/path/role, requested/effective position and byte count within4MiB/4096operations.
+  Equal path/Buffer payloads share storage; every actual operation remains recorded.
   Opens with no observed reads do not prove consumption. Snapshot or post-return
   evidence failures propagate through the existing UNKNOWN retention owner before
   fixture cleanup; native command outcome remains separate from boundary UNKNOWN.

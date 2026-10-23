@@ -28,8 +28,10 @@ import {
   createCliCoverageObserver,
   focusedCliCoverage,
   focusedControllerCliCoverage,
+  preparedCliInputRoles,
   type CliCoverageContext,
 } from '../tooling/coverage-cli-child.ts';
+import { createPreparedReadCapture } from '../tooling/coverage-cli-prepared-inputs.ts';
 import { mergeCoverageShardCounters } from '../tooling/coverage-shard-evidence.ts';
 import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
 import { runOptionDetails } from '../bin/run-cli-options.ts';
@@ -63,6 +65,99 @@ function seedPreparedFixture(fixtureRoot: string, workId: string): void {
     writeFileSync(file, bytes);
   }
 }
+
+test('prepared input capture binds complete readFileSync bytes and rejects unsupported encodings', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'vida-prepared-read-capture-'));
+  const intake = path.join(root, '.agent/work/prepared/intake.json');
+  const inputFiles = new Map([
+    [path.join(root, 'agent-runtime.config.v1.yaml'), 'inert protocol config'],
+    [path.join(root, '.agent/runtime-initialization.v1.json'), '{}'],
+    [intake, JSON.stringify({ scope_path: 'scope.json', acceptance_path: 'acceptance.json' })],
+    [path.join(root, 'scope.json'), JSON.stringify({ implementation_paths: ['selected.txt'] })],
+    [path.join(root, 'acceptance.json'), '{}'],
+    [path.join(root, 'selected.txt'), 'inert selected bytes'],
+  ]);
+  try {
+    for (const [file, bytes] of inputFiles) {
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, bytes);
+    }
+    const expected = inputFiles.get(intake)!;
+    for (const method of ['path', 'descriptor'] as const) {
+      const capture = createPreparedReadCapture(root, intake, [], undefined, ['intake'], preparedCliInputRoles);
+      let actual: unknown;
+      if (method === 'path') {
+        actual = capture.apis.readFileSync(intake, 'utf8');
+      } else {
+        const fd = capture.apis.openSync(intake, 'r');
+        actual = capture.apis.readFileSync(fd);
+        capture.apis.closeSync(fd);
+      }
+      const bytes = method === 'path' ? Buffer.from(String(actual), 'utf8') : (actual as Buffer);
+      assert.deepEqual(bytes, Buffer.from(expected));
+      const evidence = capture.finish();
+      assert.equal(evidence.complete, true, JSON.stringify(evidence.issues));
+      assert.deepEqual(evidence.issues, []);
+      assert.equal(evidence.streams.length, 1);
+      assert.equal(evidence.streams[0]!.read_method, 'readFileSync');
+      assert.equal(evidence.operations.length, 1);
+      assert.equal(evidence.operations[0]!.read_method, 'readFileSync');
+      assert.equal(evidence.operations[0]!.eof, true);
+    }
+
+    const acceptance = path.join(root, 'acceptance.json');
+    writeFileSync(acceptance, Buffer.from([0xff]));
+    const byteCapture = createPreparedReadCapture(
+      root,
+      intake,
+      [{ path: acceptance, role: 'acceptance' }],
+      undefined,
+      ['acceptance'],
+      preparedCliInputRoles,
+    );
+    assert.equal(byteCapture.apis.readFileSync(acceptance, 'utf8'), '\ufffd');
+    const byteEvidence = byteCapture.finish();
+    assert.equal(byteEvidence.complete, true, JSON.stringify(byteEvidence.issues));
+    assert.deepEqual(Buffer.from(String(byteEvidence.payloads[0]!.bytes), 'base64'), Buffer.from([0xff]));
+
+    const unsupportedCapture = createPreparedReadCapture(
+      root,
+      intake,
+      [],
+      undefined,
+      ['intake'],
+      preparedCliInputRoles,
+    );
+    unsupportedCapture.apis.readFileSync(intake, 'latin1');
+    const unsupportedEvidence = unsupportedCapture.finish();
+    assert.equal(unsupportedEvidence.complete, false);
+    assert.ok(unsupportedEvidence.issues.includes('Prepared readFileSync options are unsupported.'));
+
+    const failedCapture = createPreparedReadCapture(root, intake, [], () => false, ['intake'], preparedCliInputRoles);
+    const failedResult = failedCapture.apis.readFileSync(intake, 'utf8');
+    assert.equal(typeof failedResult, 'string');
+    assert.equal(failedResult, expected);
+    assert.equal(failedCapture.finish().complete, false);
+
+    const alias = path.join(root, 'intake-alias.json');
+    symlinkSync(intake, alias);
+    const aliasCapture = createPreparedReadCapture(root, intake, [], undefined, ['intake'], preparedCliInputRoles);
+    assert.deepEqual(aliasCapture.apis.readFileSync(alias), Buffer.from(expected));
+    const aliasEvidence = aliasCapture.finish();
+    assert.equal(aliasEvidence.complete, false);
+    assert.ok(aliasEvidence.issues.includes('Prepared readFileSync path is not canonical.'));
+
+    const aliasOpenCapture = createPreparedReadCapture(root, intake, [], undefined, ['intake'], preparedCliInputRoles);
+    const aliasFd = aliasOpenCapture.apis.openSync(alias, 'r');
+    assert.deepEqual(aliasOpenCapture.apis.readFileSync(aliasFd), Buffer.from(expected));
+    aliasOpenCapture.apis.closeSync(aliasFd);
+    const aliasOpenEvidence = aliasOpenCapture.finish();
+    assert.equal(aliasOpenEvidence.complete, false);
+    assert.ok(aliasOpenEvidence.issues.includes('Prepared input open observation failed.'));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 function preparedCliArguments(fixtureRoot: string, workId: string): string[] {
   return [
@@ -712,13 +807,13 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
               : variant === 'run'
                 ? [
                     'import { help } from "./cli-metadata.ts";',
-                    'import { openSync, readSync, closeSync } from "node:fs";',
+                    'import { openSync, readSync, closeSync, readFileSync } from "node:fs";',
                     'import { Database } from "bun:sqlite";',
                     'import { createHash } from "node:crypto";',
                     'import path from "node:path";',
                     `const fixture=${JSON.stringify(runFixture ?? {})};`,
                     'export function hit() { return 7; }',
-                    'function read(file) { const fd = openSync(file, "r"); const chunks=[]; const buffer=Buffer.alloc(65536); try { while(true) { const n=readSync(fd,buffer,0,buffer.length,null); if(!n)break; chunks.push(Buffer.from(buffer.subarray(0,n))); } return Buffer.concat(chunks); } finally { closeSync(fd); } }',
+                    'function read(file) { if(file.endsWith("selected.txt")) { const fd=openSync(file,"r"); const chunks=[]; const buffer=Buffer.alloc(65536); try { while(true) { const n=readSync(fd,buffer,0,buffer.length,null); if(!n)break; chunks.push(Buffer.from(buffer.subarray(0,n))); } return Buffer.concat(chunks); } finally { closeSync(fd); } } return readFileSync(file); }',
                     'function digest(value) { return createHash("sha256").update(value).digest("hex"); }',
                     'function seedDatabase(root) {',
                     '  const db=new Database(path.join(root,".agent/host-state.sqlite"));',
@@ -1109,7 +1204,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           const streams = evidence.streams as Record<string, unknown>[];
           const operations = evidence.operations as Record<string, unknown>[];
           expect(streams).toHaveLength(6);
-          expect(operations).toHaveLength(12);
+          expect(operations).toHaveLength(7);
           expect(preparedReceipt.pinned_budget_ms).toBe('4000');
           expect(preparedReceipt.pinned_deadline_ms).toBe(
             record(JSON.parse(readFileSync(path.join(directory, String(record(preparedChild.launch).path)), 'utf8')))
@@ -1117,14 +1212,22 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           );
           for (const stream of streams) {
             const streamOperations = operations.filter((operation) => operation.stream_id === stream.id);
-            expect(streamOperations.filter((operation) => Number(operation.bytes_read) > 0)).toHaveLength(1);
-            expect(
-              streamOperations.filter((operation) => Number(operation.bytes_read) === 0 && operation.eof === true),
-            ).toHaveLength(1);
+            if (stream.read_method === 'readFileSync') {
+              expect(streamOperations).toHaveLength(1);
+              expect(streamOperations[0]!.read_method).toBe('readFileSync');
+              expect(streamOperations[0]!.bytes_read).toBe(stream.bytes);
+              expect(streamOperations[0]!.eof).toBe(true);
+            } else {
+              expect(stream.read_method).toBe('readSync');
+              expect(streamOperations.filter((operation) => Number(operation.bytes_read) > 0)).toHaveLength(1);
+              expect(
+                streamOperations.filter((operation) => Number(operation.bytes_read) === 0 && operation.eof === true),
+              ).toHaveLength(1);
+            }
           }
           const runtimeConfigStream = streams.find((stream) => stream.role === 'runtime-config');
           assert.ok(runtimeConfigStream);
-          expect(operations.filter((operation) => operation.stream_id === runtimeConfigStream.id)).toHaveLength(2);
+          expect(operations.filter((operation) => operation.stream_id === runtimeConfigStream.id)).toHaveLength(1);
           expect(
             operations.every(
               (operation) =>

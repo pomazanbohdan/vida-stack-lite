@@ -1100,7 +1100,11 @@ export function cliCoverageChildMaps(
       const parentInputs = terminal.parent_inputs_before;
       assert.ok(Array.isArray(parentInputs) && parentInputs.length === (subject.role === 'run-issue-wave' ? 4 : 6));
       const inputEvidence = proofRecord(receipt.consumed_inputs);
-      assert.equal(inputEvidence.complete, true);
+      assert.equal(
+        inputEvidence.complete,
+        true,
+        'Prepared CLI input capture is incomplete: ' + JSON.stringify(inputEvidence.issues),
+      );
       assert.deepEqual(inputEvidence.issues, []);
       assert.ok(Array.isArray(inputEvidence.streams) && Array.isArray(inputEvidence.payloads));
       assert.ok(inputEvidence.streams.length > 0 && inputEvidence.streams.length <= 4096);
@@ -1151,6 +1155,8 @@ export function cliCoverageChildMaps(
         assert.match(id, /^s(?:0|[1-9]\d*)$/u);
         assert.ok(Number.isSafeInteger(stream.fd) && Number(stream.fd) >= 0);
         const role = String(stream.role);
+        const readMethod = stream.read_method;
+        assert.ok(readMethod === 'readSync' || readMethod === 'readFileSync');
         const parent = byRole.get(role);
         assert.ok(parent && requiredRoles.includes(role));
         assert.ok(!streams.has(id));
@@ -1185,6 +1191,7 @@ export function cliCoverageChildMaps(
         assert.equal(operation.fd, stream.row.fd);
         assert.equal(operation.path, stream.row.path);
         assert.equal(operation.role, stream.row.role);
+        assert.equal(operation.read_method, stream.row.read_method);
         let state = readState.get(streamId);
         if (!state) {
           state = { next: 0, payloadIds: [], eof: false };
@@ -1198,10 +1205,32 @@ export function cliCoverageChildMaps(
         );
         assert.equal(Number.isSafeInteger(operation.buffer_offset) && Number(operation.buffer_offset) >= 0, true);
         assert.equal(Number.isSafeInteger(operation.bytes_read) && Number(operation.bytes_read) >= 0, true);
-        assert.ok(
-          Number.isSafeInteger(operation.requested_count) &&
-            Number(operation.requested_count) >= Number(operation.bytes_read),
-        );
+        assert.ok(Number.isSafeInteger(operation.requested_count) && Number(operation.requested_count) >= 0);
+        if (stream.row.read_method === 'readFileSync') {
+          assert.equal(state.next, 0, 'Prepared readFileSync input was partially consumed before the full read.');
+          assert.equal(operation.requested_position, null);
+          assert.equal(operation.buffer_offset, 0);
+          assert.equal(operation.requested_count, stream.row.bytes);
+          assert.equal(
+            operation.bytes_read,
+            stream.row.bytes,
+            'Prepared CLI read byte count differs from its payload.',
+          );
+          assert.equal(operation.eof, true);
+          const payloadId = String(operation.payload_id);
+          const payload = payloads.get(payloadId);
+          assert.ok(
+            payload && payload.path === operation.path,
+            'Prepared CLI read payload differs from its input path.',
+          );
+          assert.equal(payload.bytes.length, stream.row.bytes);
+          state.next = Number(stream.row.bytes);
+          state.payloadIds.push(payloadId);
+          usedPayloads.add(payloadId);
+          state.eof = true;
+          continue;
+        }
+        assert.ok(Number(operation.requested_count) >= Number(operation.bytes_read));
         if (operation.bytes_read === 0) {
           assert.equal(operation.eof, true);
           assert.equal(operation.payload_id, null);
