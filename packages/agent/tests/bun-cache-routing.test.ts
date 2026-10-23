@@ -9,12 +9,13 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, type SpawnSyncOptionsWithStringEncoding } from 'node:child_process';
 import path from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { test } from 'bun:test';
 import { expectReturned } from './helpers/expect-rejection.ts';
+import { isUnknownSynchronousChild } from './helpers/synchronous-child-outcome.ts';
 
 // TEST SETUP ONLY: preserve fixture/cache outputs. No install, Runtime acceptance,
 // native action or measured speed improvement is asserted by these regressions.
@@ -34,6 +35,7 @@ assert.ok(
   'cache test scratch must be outside the copied baseline bundle',
 );
 mkdirSync(scratch, { recursive: true });
+const invocationRoot = mkdtempSync(path.join(scratch, 'invocations-'));
 type BunCacheApi = Pick<typeof import('../bin/bun.ts'), 'pinnedEnvironment' | 'readPin' | 'runPinnedBun'>;
 
 function isBunCacheApi(value: unknown): value is BunCacheApi {
@@ -283,9 +285,74 @@ function cleanEnv(): NodeJS.ProcessEnv {
   return env;
 }
 
+function capturedChild(label: string, args: string[], options: SpawnSyncOptionsWithStringEncoding) {
+  const directory = path.join(invocationRoot, label);
+  mkdirSync(directory, { recursive: false });
+  writeFileSync(
+    path.join(directory, 'launch.json'),
+    JSON.stringify({
+      schema: 'PrivateBunCacheFixtureLaunch/v1',
+      executable: process.execPath,
+      args,
+      cwd: options.cwd,
+      timeout_ms: options.timeout,
+    }) + '\n',
+    { flag: 'wx' },
+  );
+  let child;
+  try {
+    child = spawnSync(process.execPath, args, { ...options, encoding: 'buffer' });
+  } catch (error) {
+    writeFileSync(
+      path.join(directory, 'terminal.json'),
+      JSON.stringify({
+        schema: 'PrivateBunCacheFixtureTerminal/v1',
+        pid: null,
+        status: null,
+        signal: null,
+        spawn_threw: true,
+        error: String(error),
+        capture_complete: false,
+        unknown: true,
+      }) + '\n',
+      { flag: 'wx' },
+    );
+    throw error;
+  }
+  writeFileSync(path.join(directory, 'stdout.log'), child.stdout ?? Buffer.alloc(0), { flag: 'wx' });
+  writeFileSync(path.join(directory, 'stderr.log'), child.stderr ?? Buffer.alloc(0), { flag: 'wx' });
+  writeFileSync(
+    path.join(directory, 'terminal.json'),
+    JSON.stringify({
+      schema: 'PrivateBunCacheFixtureTerminal/v1',
+      pid: child.pid,
+      status: child.status,
+      signal: child.signal,
+      error:
+        child.error === undefined
+          ? null
+          : {
+              name: child.error.name,
+              message: child.error.message,
+              code: 'code' in child.error && typeof child.error.code === 'string' ? child.error.code : null,
+            },
+      capture_complete:
+        Buffer.isBuffer(child.stdout) && Buffer.isBuffer(child.stderr) && !isUnknownSynchronousChild(child),
+      unknown: isUnknownSynchronousChild(child),
+    }) + '\n',
+    { flag: 'wx' },
+  );
+  return {
+    ...child,
+    stdout: Buffer.isBuffer(child.stdout) ? child.stdout.toString('utf8') : child.stdout,
+    stderr: Buffer.isBuffer(child.stderr) ? child.stderr.toString('utf8') : child.stderr,
+    output: child.output.map((value) => (Buffer.isBuffer(value) ? value.toString('utf8') : value)),
+  };
+}
+
 test('actual direct Bun entrypoint terminates with strict public JSON when required arguments are invalid', () => {
   const { root, parent } = realCopy();
-  const result = spawnSync(process.execPath, [path.join(root, 'bin/run.ts'), '--invalid-fixture-argument'], {
+  const result = capturedChild('invalid-direct-run', [path.join(root, 'bin/run.ts'), '--invalid-fixture-argument'], {
     cwd: parent,
     env: cleanEnv(),
     encoding: 'utf8',
@@ -310,7 +377,7 @@ test('actual direct Bun entrypoint terminates with strict public JSON when requi
 
 test('actual direct run help completes from its metadata-only closure', () => {
   const { root, parent } = realCopy();
-  const result = spawnSync(process.execPath, [path.join(root, 'bin/run.ts'), '--help'], {
+  const result = capturedChild('direct-run-help', [path.join(root, 'bin/run.ts'), '--help'], {
     cwd: parent,
     env: cleanEnv(),
     encoding: 'utf8',
@@ -340,7 +407,7 @@ test('actual Bun wrapper routes embedded markers to the selected root and cache 
   executable: process.env.VIDA_STANDALONE_EXECUTABLE,
   cache: process.env.BUN_RUNTIME_TRANSPILER_CACHE_PATH
 }));`;
-  const result = spawnSync(process.execPath, [path.join(root, 'bin/bun.ts'), '-e', program], {
+  const result = capturedChild('embedded-wrapper', [path.join(root, 'bin/bun.ts'), '-e', program], {
     cwd: parent,
     env: {
       ...cleanEnv(),
@@ -376,7 +443,7 @@ let executed=false;
 await main({isMain:false,execute:async()=>{executed=true;throw Error('unexpected execution');}});
 if(executed||process.exitCode) throw Error('library import entered main execution');
 console.log(JSON.stringify({status:'pass',run_export:typeof run==='function',cache_unchanged:true}));`;
-  const result = spawnSync(process.execPath, ['-e', program], {
+  const result = capturedChild('imported-run', ['-e', program], {
     cwd: parent,
     env: cleanEnv(),
     encoding: 'utf8',

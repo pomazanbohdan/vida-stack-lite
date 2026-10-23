@@ -4,6 +4,7 @@ import {
   closeSync,
   existsSync,
   fsyncSync,
+  fstatSync,
   lstatSync,
   openSync,
   readFileSync,
@@ -12,11 +13,13 @@ import {
   statSync,
   unlinkSync,
   writeFileSync,
+  type BigIntStats,
 } from 'node:fs';
 import path from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readCliErrorProperty as errorProperty } from './cli-error-properties.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 
 const bundleRoot = fileURLToPath(new URL('../', import.meta.url));
 
@@ -166,6 +169,14 @@ export function checkManifest(root: string, pin: string): void {
   }
 }
 
+function pinStageStatus(file: string, identity: Pick<BigIntStats, 'dev' | 'ino'>) {
+  const current = lstatSync(file, { bigint: true, throwIfNoEntry: false });
+  if (current === undefined) return 'missing';
+  if (!current.isFile() || current.isSymbolicLink() || current.dev !== identity.dev || current.ino !== identity.ino)
+    return 'identity-mismatch';
+  return 'match';
+}
+
 export function syncPin(root: string = bundleRoot): boolean {
   const pin = readPin(root);
   const file = path.join(root, 'package.json');
@@ -187,8 +198,13 @@ export function syncPin(root: string = bundleRoot): boolean {
   const after = `${JSON.stringify(manifest, null, 2)}\n`;
   const temporary = path.join(root, `.bun-pin-${randomUUID()}.tmp`);
   let descriptor: number | undefined;
+  let ownsTemporary = false;
+  let stageIdentity: Pick<BigIntStats, 'dev' | 'ino'> | undefined;
+  let primaryFailure: { error: unknown } | undefined;
   try {
     descriptor = openSync(temporary, 'wx', identity.mode & 0o777);
+    ownsTemporary = true;
+    stageIdentity = fstatSync(descriptor, { bigint: true });
     writeFileSync(descriptor, before.includes('\r\n') ? after.replaceAll('\n', '\r\n') : after);
     fsyncSync(descriptor);
     closeSync(descriptor);
@@ -204,10 +220,30 @@ export function syncPin(root: string = bundleRoot): boolean {
     ) {
       throw new Error('Bun pin or manifest changed during synchronization; retry against the current files.');
     }
+    if (pinStageStatus(temporary, stageIdentity) !== 'match')
+      throw new Error('Bun staged manifest identity changed during synchronization; no replacement permitted.');
     renameSync(temporary, file);
+    ownsTemporary = false;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
   } finally {
-    if (descriptor !== undefined) closeSync(descriptor);
-    if (existsSync(temporary)) unlinkSync(temporary);
+    completeOwnedCleanup(
+      [
+        () => {
+          if (descriptor !== undefined) closeSync(descriptor);
+        },
+        () => {
+          if (!ownsTemporary) return;
+          if (stageIdentity === undefined) return 'indeterminate';
+          const status = pinStageStatus(temporary, stageIdentity);
+          if (status !== 'match') return status;
+          unlinkSync(temporary);
+          return 'removed';
+        },
+      ],
+      primaryFailure,
+    );
   }
   return true;
 }

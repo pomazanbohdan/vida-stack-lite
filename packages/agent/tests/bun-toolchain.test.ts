@@ -300,6 +300,176 @@ test('sync rejects a non-regular package manifest before creating replacement st
   assert.deepEqual(readdirSync(file), [], 'the rejected manifest directory remains untouched');
 });
 
+test('sync preserves a foreign stage when exclusive creation collides', () => {
+  const { root } = fixture();
+  const manifestPath = path.join(root, 'package.json');
+  const before = readFileSync(manifestPath);
+  writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
+  const originalOpen = fs.openSync;
+  let foreign: string | undefined;
+  let completed = false;
+  const open = spyOn(fs, 'openSync');
+  try {
+    open.mockImplementation((file, flags, mode) => {
+      if (
+        typeof file === 'string' &&
+        path.dirname(file) === root &&
+        path.basename(file).startsWith('.bun-pin-') &&
+        flags === 'wx'
+      ) {
+        foreign = file;
+        const descriptor = originalOpen(file, 'wx', mode);
+        try {
+          writeFileSync(descriptor, 'foreign stage bytes');
+        } finally {
+          fs.closeSync(descriptor);
+        }
+      }
+      return originalOpen(file, flags, mode);
+    });
+    assert.throws(() => syncPin(root), { code: 'EEXIST' });
+    assert.ok(foreign, 'exclusive creation reached the independently created stage');
+    assert.equal(readFileSync(foreign, 'utf8'), 'foreign stage bytes');
+    assert.deepEqual(readFileSync(manifestPath), before);
+    completed = true;
+  } finally {
+    open.mockRestore();
+    if (!completed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed pin collision fixture at ' + root);
+    }
+  }
+});
+
+test('sync retains a replaced stage and reports its original failure with cleanup identity drift', () => {
+  const { root } = fixture();
+  const manifestPath = path.join(root, 'package.json');
+  const before = readFileSync(manifestPath);
+  writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
+  const failure = new Error('injected staged path replacement');
+  let replaced: string | undefined;
+  let completed = false;
+  const sync = spyOn(fs, 'fsyncSync');
+  try {
+    sync.mockImplementation(() => {
+      const name = readdirSync(root).find((name) => name.startsWith('.bun-pin-'));
+      assert.ok(name);
+      replaced = path.join(root, name);
+      fs.renameSync(replaced, path.join(root, 'retained-owned-stage.json'));
+      writeFileSync(replaced, 'foreign replacement', { flag: 'wx' });
+      throw failure;
+    });
+    assert.throws(
+      () => syncPin(root),
+      (error) => {
+        assert.ok(error instanceof AggregateError);
+        assert.equal(error.errors[0], failure);
+        assert.match(String(error.errors[1]), /identity-mismatch/);
+        assert.equal(error.errors.length, 2);
+        return true;
+      },
+    );
+    assert.ok(replaced);
+    assert.equal(readFileSync(replaced, 'utf8'), 'foreign replacement');
+    assert.deepEqual(readFileSync(manifestPath), before);
+    completed = true;
+  } finally {
+    sync.mockRestore();
+    if (!completed) {
+      temporaryRoots.delete(root);
+      console.error('Retained staged identity-drift evidence at ' + root);
+    }
+  }
+});
+
+test('sync refuses to publish a replaced stage after successful fsync', () => {
+  const { root } = fixture();
+  const manifestPath = path.join(root, 'package.json');
+  const before = readFileSync(manifestPath);
+  writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
+  const originalFsync = fs.fsyncSync;
+  let replaced: string | undefined;
+  let completed = false;
+  const sync = spyOn(fs, 'fsyncSync');
+  try {
+    sync.mockImplementation((fd) => {
+      originalFsync(fd);
+      const name = readdirSync(root).find((name) => name.startsWith('.bun-pin-'));
+      assert.ok(name);
+      replaced = path.join(root, name);
+      fs.renameSync(replaced, path.join(root, 'retained-owned-stage.json'));
+      writeFileSync(replaced, '{"foreign":true}', { flag: 'wx' });
+    });
+    assert.throws(
+      () => syncPin(root),
+      (error) => {
+        assert.ok(error instanceof AggregateError);
+        assert.match(String(error.errors[0]), /staged manifest identity changed/);
+        assert.match(String(error.errors[1]), /identity-mismatch/);
+        assert.equal(error.errors.length, 2);
+        return true;
+      },
+    );
+    assert.ok(replaced);
+    assert.equal(readFileSync(replaced, 'utf8'), '{"foreign":true}');
+    assert.deepEqual(readFileSync(manifestPath), before);
+    completed = true;
+  } finally {
+    sync.mockRestore();
+    if (!completed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed pin publication fixture at ' + root);
+    }
+  }
+});
+
+test('sync preserves body and close failures while completing owned stage removal', () => {
+  const { root } = fixture();
+  const manifestPath = path.join(root, 'package.json');
+  const before = readFileSync(manifestPath);
+  writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
+  const bodyFailure = new Error('injected sync body failure');
+  const closeFailure = new Error('injected completed close failure');
+  const originalClose = fs.closeSync;
+  let descriptor: number | undefined;
+  let completed = false;
+  const sync = spyOn(fs, 'fsyncSync');
+  try {
+    sync.mockImplementation((fd) => {
+      descriptor = fd;
+      throw bodyFailure;
+    });
+    const close = spyOn(fs, 'closeSync');
+    try {
+      close.mockImplementation((fd) => {
+        originalClose(fd);
+        if (fd === descriptor) throw closeFailure;
+      });
+      assert.throws(
+        () => syncPin(root),
+        (error) => {
+          assert.ok(error instanceof AggregateError);
+          assert.deepEqual(error.errors, [bodyFailure, closeFailure]);
+          return true;
+        },
+      );
+      assert.ok(descriptor !== undefined);
+      assert.throws(() => fs.fstatSync(descriptor!), { code: 'EBADF' });
+      assert.deepEqual(readFileSync(manifestPath), before);
+      assert.deepEqual(readdirSync(root).sort(), ['.bun-version', 'package.json']);
+      completed = true;
+    } finally {
+      close.mockRestore();
+    }
+  } finally {
+    sync.mockRestore();
+    if (!completed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed sync/close fixture at ' + root);
+    }
+  }
+});
+
 test('sync closes its staged descriptor and removes the stage when fsync fails', () => {
   const { root } = fixture();
   const manifestPath = path.join(root, 'package.json');

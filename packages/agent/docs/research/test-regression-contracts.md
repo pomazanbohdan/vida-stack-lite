@@ -1466,6 +1466,25 @@ and valid consumer declarations reaching the missing-artifact gate without
 requiring host Node/npm. Await actual rejected operations
 with the shared rejection helper. These guard checks do not qualify SDK output.
 
+Pinned manifest synchronization removes only its acquired stage. Exercise a real
+exclusive-open collision with an independently created file, and replacement of
+the opened stage both before a failing fsync and after successful fsync. Require
+the original manifest and foreign pathname bytes to survive. Capture stage
+device/inode through the opened descriptor with bigint precision; use the same
+check before rename and cleanup. Reuse completeOwnedCleanup to preserve the
+operation error and every close/removal failure while attempting independent
+cleanup. These synchronous checks retain the existing cooperative filesystem
+boundary; they do not establish atomic containment against hostile directory
+mutation. Passing controlled fixtures use normal cleanup; failed fixtures remain.
+
+Cache-routing CLI fixtures preserve their existing shared copy/cache owner and
+argv, environment, timeouts and UTF-8 return shape. Save each native child's raw
+Buffer streams plus exclusive launch/terminal records before assertions, under
+a unique invocation directory. Do not serialize environment. Signal, spawn or
+overflow error and missing status remain UNKNOWN with capture_complete false;
+readable or partial output is not complete native evidence. This private fixture
+capture neither admits coverage-child counters nor grants Runtime acceptance.
+
 The pack metadata adapter reads actual bounded archive bytes and derives file
 sizes and full SHA-512 integrity. Its inert fixtures cover identity, unsafe
 paths, duplicate entries and non-regular members. Lifecycle parity is checked

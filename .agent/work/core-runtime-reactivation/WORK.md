@@ -20,6 +20,44 @@ bound below. This permits queue advancement, not exact100, numeric PASS, a froze
 waiver or mutation acceptance. Historical exact F/L/S/B remains17/46.
 Root owns canonical edits, final checks, Git and the sole numeric producer.
 
+### Toolchain correction packet
+
+Active scope is bin/bun.ts with tests/bun-toolchain.test.ts and
+tests/bun-cache-routing.test.ts. Its oldcdc7acf2 report locator in the retired
+1927d736 image is absent. Historical counters are navigation only; no archived
+operation is replayed and no current numeric evidence is claimed yet.
+
+Blind Luna2530 identifies a Source defect: syncPin's finally unlinks a colliding
+temporary pathname even if exclusive open failed before acquisition.2531 proves
+the deletion using an independently created real file and native EEXIST; its red
+test/root remain retained. Root makes acquisition explicit, captures bigint
+descriptor identity and clears ownership after publication. Reuse the existing
+completeOwnedCleanup owner to preserve primary and cleanup failures and attempt
+independent closes/removal. The existing syncPin ceiling stays unchanged; new
+pinStageStatus and cleanup callbacks have prospective CC/CRAP10/10.
+
+Independent review also finds stage identity must guard publication, not only
+cleanup.2535 proves replacement after successful fsync could be published; its
+red fixture/log stay retained. The same identity predicate now guards pre-rename
+and cleanup, preserving foreign bytes and reporting drift. The existing target
+manifest/pin CAS remains; no hostile-directory atomicity claim is introduced.
+New cases cover collision, stage replacement, publication refusal and body/close
+error causality. Successful controls clean normally; failures retain their roots.
+
+Four cache-routing children previously kept output only in memory. A file-local
+helper now captures native Buffer streams and exclusive launch/terminal records
+before assertions, preserves original options and decoded UTF-8 results, and
+records no environment. Each invocation has a unique directory; overflow, signal,
+spawn and missing status cannot claim complete capture. The intentionally retained
+copy/cache owner is unchanged. No extra generic runner, scan/hash pass or suite
+is added.2530's final read finds no remaining blocker in this bounded packet.
+2533's strict check rejects Error.code access before tests; its original diagnostic
+is retained and corrected by actual property/type narrowing.2534 passes strict23,
+selected lint and11affected cases in4.45s. Final2536 covers the publication guard
+and the existing ownership/manifest/native-cache controls before publication:
+strict23 and selected lint pass; all12cases pass in3.88s. Documentation check
+passes2changed documents/12local links and headings.
+
 ### Public entrypoint correction packet
 
 2500's bounded Source/test review separates parent-imported scope/repair bodies
