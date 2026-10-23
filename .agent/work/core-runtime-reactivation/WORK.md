@@ -102,6 +102,57 @@ producer prerequisites remain OPEN engineering gaps, not objective skips.
 Use2710's exact zero-counter ranges and genuine maintained fixture producers for
 the next related batch. Keep the one active contour and all numeric gates.
 
+### Current run attribution architecture
+
+At15:08:09UTC the bounded three-hour Git author-date view contains13commits,
+including six correction packets and their published result records. This is
+Git history, not an operation, tool-call or token count. Five completed coverage
+packets since2641 raise F126/L711/S753/B679 to F218/L1077/S1146/B1207, with the
+same557/2863/3143/3663denominators and Source fingerprint. Historical exact17/46
+does not rise. The confirmed current defect is test-harness UNKNOWN retention;
+the masked action assertion and unchecked baseline overwrite are test-oracle
+defects. No product bug is established by these corrections.
+
+2712's independent native Source trace disproves the broad premise that positive
+selected CLI calls all use private copies. The CAS/report case's first
+`fixture.invoke(admitted.admissionArgs)` uses the default canonical packageRoot
+entrypoint and genuinely returns prepared. Its configured `agent-runtime-new`
+bundle is a separate identity. Existing selected-runtime cases explicitly choose
+copied entrypoints and remain outside this narrower route.
+
+Root and2712 select one prepared canonical call as the next collector design,
+rather than more duplicate refusal rows or a private alias. The existing help
+profile cannot admit it: argv, pinned environment, dynamic remaining timeout,
+output contract and loaded operation modules differ. Replacing these with the
+help profile's4000ms/absent-env contract would change the caller, not qualify it.
+
+The proposed scoped binding passes one fixed prepared-subject role and concrete
+fixture/argv facts through the captured test invocation owner. A narrow spawn
+adapter observes the final boundedSpawnSync options after its clock calculation,
+then the existing collector validates and observes the one real native call.
+Exact entry/source/test/tool/runtime binding, full argv/cwd/environment/native
+options, config/initialization/intake bytes, raw output, terminal/loaded inputs
+and exactly one proof per selected subject remain mandatory. Prepared behavior
+still comes from the existing public CLI assertion; the receipt grants counters
+only. No new product export, producer, authority ledger or alias is selected.
+
+2713 independently finds the narrow fixed-role design feasible, but identifies
+a concrete prerequisite. The child receipt currently proves loaded modules,
+not which config/init/intake/scope/acceptance bytes the CLI consumed. Parent
+before/after hashes cannot substitute for that read observation. Keep the test
+option as a one-shot trigger; the collector derives and verifies actual call and
+fixture facts. No dynamic profile or caller-selected expected values is admitted.
+
+2714 prepares a bounded non-gating native read-path probe for Root. It targets
+only the existing first canonical prepared child inside the same CAS case,
+retains actual read results and native output under its assigned diagnostics,
+and preserves the caller's environment/deadline/options. The experimental
+preload changes are explicit, not a comparable performance condition or numeric
+qualification. If exact consumed reads cannot be observed through the current
+capture boundary, retain that GAP rather than inventing a receipt or broadening
+admission. No positive counters are claimed before real native closure and the
+independent guard controls pass through the existing owner.
+
 ### Run artifact boundary and UNKNOWN capture packet
 
 2703 prepares one isolated native Luna proposal for remaining pre-issue-mapping

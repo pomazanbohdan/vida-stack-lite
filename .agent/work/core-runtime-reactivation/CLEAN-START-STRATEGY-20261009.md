@@ -23,6 +23,10 @@ numeric PASS or changed denominators. Frozen/CRAP and mutation stay deferred.
 Reconcile current run Source/test/runtime bindings and retained receipts before
 choosing checks or a fresh stage. Scope is bin/run.ts with tests/run-entrypoint.test.ts
 and tests/bun-cache-routing.test.ts. Root keeps one writer and numeric producer.
+The next run packet targets one existing genuine canonical prepared CLI call
+through the current collector. Preserve its bounded argv/environment/capture and
+fixture bindings. Complete the scoped test-to-observer design and native negative
+controls before measuring new counters. Private alias admission is not selected.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts
 and do not replay historical UNKNOWN. Toolchain's2561 result and reviewed gaps
 remain in WORK, including its OPEN native Windows prerequisite.
