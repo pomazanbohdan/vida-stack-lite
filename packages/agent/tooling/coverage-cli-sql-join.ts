@@ -239,6 +239,14 @@ function checkPreparedContracts(work: RecordValue, preparedInputs: readonly Reco
       (row) => row.role === key && row.path === ref.path && row.sha256 === ref.sha256,
     );
     assert(matches.length === 1, `Work ${key} contract does not match one parent-preparation metadata row`);
+    if (key === 'scope') {
+      const binding = jsonRecord(work.binding, 'Work binding');
+      assert.equal(
+        binding.scope_contract_digest,
+        ref.sha256,
+        'Work scope binding differs from the captured scope contract',
+      );
+    }
   }
 }
 
@@ -579,8 +587,8 @@ export function validateIssueSqlConsumption(
     'Work row payload identity/revision differs',
   );
   assert(
-    record(work.binding) && work.binding.scope_contract_digest === scopeDigest,
-    'Work scope binding differs from argv',
+    record(work.binding) && work.binding.work_source_revision === scopeDigest,
+    'Work source revision differs from argv',
   );
   checkPreparedContracts(work, input.preparedInputs);
   checkCurrentIntakeArtifact(work, input.intakeInput, input.root, workId);

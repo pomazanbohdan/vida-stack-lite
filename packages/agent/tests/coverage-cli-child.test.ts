@@ -920,7 +920,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                     '  db.exec("CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
                     '  const putState=db.prepare("INSERT INTO agent_host_state VALUES (?,?,?,?,?,?,?)");',
                     '  const putJournal=db.prepare("INSERT INTO agent_host_mastra_session_ledger VALUES (?,?,?,?,?,?,?)");',
-                    '  const work={schema:"WorkState/v1",workspace_id:fixture.workspaceId,revision:1,binding:{lifecycle_work_id:fixture.initialJournal.work_id,scope_contract_digest:"a".repeat(64)},contracts:{scope:{path:fixture.scopePath,sha256:fixture.scopeSha256},acceptance:{path:fixture.acceptancePath,sha256:fixture.acceptanceSha256}},lease:{ticket_id:"ticket-"+fixture.actionId,thread_id:"thread-"+fixture.actionId,generation:1},execution:{run_id:fixture.initialJournal.run_id},artifacts:[{artifact_id:"local-session-intake",schema:"VidaLocalSessionIntake/v1",path:fixture.admittedIntakePath,sha256:fixture.admittedIntakeSha256}]};',
+                    '  const work={schema:"WorkState/v1",workspace_id:fixture.workspaceId,revision:1,binding:{lifecycle_work_id:fixture.initialJournal.work_id,work_source_revision:"a".repeat(64),scope_contract_digest:fixture.scopeSha256},contracts:{scope:{path:fixture.scopePath,sha256:fixture.scopeSha256},acceptance:{path:fixture.acceptancePath,sha256:fixture.acceptanceSha256}},lease:{ticket_id:"ticket-"+fixture.actionId,thread_id:"thread-"+fixture.actionId,generation:1},execution:{run_id:fixture.initialJournal.run_id},artifacts:[{artifact_id:"local-session-intake",schema:"VidaLocalSessionIntake/v1",path:fixture.admittedIntakePath,sha256:fixture.admittedIntakeSha256}]};',
                     '  const claimId="claim-"+fixture.actionId; const secondClaimId="claim-secondary-"+fixture.actionId;',
                     '  const ledger={schema:"CoordinationLedger/v1",workspace_id:fixture.workspaceId,revision:1,tickets:[{ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active",claim_ids:[claimId,secondClaimId]}],claims:[{claim_id:claimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"},{claim_id:secondClaimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"}]};',
                     '  for (const [kind,id,value] of [["work",fixture.initialJournal.work_id,work],["ledger","shared",ledger]]) { const payload=JSON.stringify(value); putState.run(fixture.workspaceId,kind,id,1,payload,digest(payload),Buffer.from(payload)); }',
@@ -1291,10 +1291,10 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           writeFileSync(file, bytes);
           ref.sha256 = sha256(bytes);
         };
-        const rewriteWorkArtifact = (
+        const rewriteWorkState = (
           ctx: CliCoverageContext,
           row: Record<string, unknown>,
-          change: (artifact: Record<string, unknown>) => void,
+          change: (work: Record<string, unknown>) => void,
         ) =>
           rewrite(ctx, row, 'receipt', (proof) => {
             const sql = record(proof.consumed_sql);
@@ -1315,10 +1315,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             const payloadId = Number(rawBytes.ref);
             const oldPayload = String(workRow.payload);
             const decoded = record(JSON.parse(oldPayload));
-            const artifacts = decoded.artifacts as Record<string, unknown>[];
-            const intakeArtifact = artifacts.find((artifact) => artifact.artifact_id === 'local-session-intake');
-            assert.ok(intakeArtifact);
-            change(intakeArtifact);
+            change(decoded);
             const bytes = Buffer.from(JSON.stringify(decoded));
             const payload = (sql.payloads as Record<string, unknown>[]).find(
               (candidate) => candidate.payload_id === payloadId,
@@ -1343,6 +1340,17 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                 resultBytes.byte_length = bytes.length;
               }
             }
+          });
+        const rewriteWorkArtifact = (
+          ctx: CliCoverageContext,
+          row: Record<string, unknown>,
+          change: (artifact: Record<string, unknown>) => void,
+        ) =>
+          rewriteWorkState(ctx, row, (work) => {
+            const artifacts = work.artifacts as Record<string, unknown>[];
+            const intakeArtifact = artifacts.find((artifact) => artifact.artifact_id === 'local-session-intake');
+            assert.ok(intakeArtifact);
+            change(intakeArtifact);
           });
         if (variant === 'run') {
           const preparedChild = children.find((row) => row.subject_role === 'run-admission-prepared');
@@ -1460,6 +1468,28 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             false,
             issueChildIndex,
             'Work local-session-intake artifact differs from the observed issue input.',
+          );
+          negative(
+            'issue-work-source-revision-must-match-argv',
+            (ctx, row) =>
+              rewriteWorkState(ctx, row, (work) => {
+                const binding = record(work.binding);
+                binding.work_source_revision = 'b'.repeat(64);
+              }),
+            false,
+            issueChildIndex,
+            'Work source revision differs from argv',
+          );
+          negative(
+            'issue-work-scope-binding-must-match-captured-contract',
+            (ctx, row) =>
+              rewriteWorkState(ctx, row, (work) => {
+                const binding = record(work.binding);
+                binding.scope_contract_digest = 'b'.repeat(64);
+              }),
+            false,
+            issueChildIndex,
+            'Work scope binding differs from the captured scope contract',
           );
           negative(
             'issue-delete-returning-is-not-a-work-read',
