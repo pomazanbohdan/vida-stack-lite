@@ -104,8 +104,8 @@ the next related batch. Keep the one active contour and all numeric gates.
 
 ### Current run attribution architecture
 
-At15:08:09UTC the bounded three-hour Git author-date view contains13commits,
-including six correction packets and their published result records. This is
+At15:51:49UTC the bounded three-hour Git author-date view contains11commits,
+including five correction packets and their published result records. This is
 Git history, not an operation, tool-call or token count. Five completed coverage
 packets since2641 raise F126/L711/S753/B679 to F218/L1077/S1146/B1207, with the
 same557/2863/3143/3663denominators and Source fingerprint. Historical exact17/46
@@ -143,15 +143,58 @@ before/after hashes cannot substitute for that read observation. Keep the test
 option as a one-shot trigger; the collector derives and verifies actual call and
 fixture facts. No dynamic profile or caller-selected expected values is admitted.
 
-2714 prepares a bounded non-gating native read-path probe for Root. It targets
-only the existing first canonical prepared child inside the same CAS case,
-retains actual read results and native output under its assigned diagnostics,
-and preserves the caller's environment/deadline/options. The experimental
-preload changes are explicit, not a comparable performance condition or numeric
-qualification. If exact consumed reads cannot be observed through the current
-capture boundary, retain that GAP rather than inventing a receipt or broadening
-admission. No positive counters are claimed before real native closure and the
-independent guard controls pass through the existing owner.
+2714 prepares a bounded non-gating native read-path probe for Root.2716 strict
+rejects namespace-default properties; Root corrects only its experimental copy.
+2717 formatting excludes the ignored diagnostic files, so no formatting PASS is
+claimed.2718 strict checks89files and the existing CAS case passes1/0 with73
+assertions in34.77s. Its first canonical child573723 returns0 with raw capture,
+but repeated input payloads exceed the unchanged4MiB diagnostic bound. The
+incomplete probe stays incomplete and its original evidence remains retained.
+
+Root's2719 copy deduplicates equal path/Buffer payloads while preserving every
+actual read operation. Strict89passes; the same CAS case passes1/0 with73
+assertions in30.60s. Native child573944 exposes all six required roles through
+238read records,12unique payloads and71636stored bytes, within the original
+4MiB/4096-operation bounds. The roles are config53184bytes, initialization1883,
+intake15055, scope917, acceptance578 and selected Source19, each with observed
+EOF. Seven additional opens have no observed data reads. Source's existence
+probe can open/close without reading, but that does not prove every unobserved
+open is metadata-only. Evidence is
+DIAG/run-consumed-read-probe-v2719/child-573944/native-reads.json and its exact
+launch/terminal/raw payload files. Experimental preload conditions differ; the
+two elapsed times are not a matched speedup or numeric qualification.
+
+2727's independent bounded Source audit traces the95config reads to current
+configuration and kernel freshness owners. runtime-config.ts already reuses the
+parsed object only after reading and digesting current safe bytes; kernel checks
+also cross asynchronous governance/host and CAS boundaries. The retained probe
+has no caller stacks, so neither all95call sites nor redundant parses are proved.
+Do not replace these checks with an invocation/global cache. A proposed removal
+requires an attributed repeated pair and equivalent current identity/content and
+source-selection protection. DIAG/run-repeated-config-reads-v2727.md names the
+existing stale-config, warmed-cache, identity and CAS controls. No extra probe,
+scan, benchmark or product change is performed for this audit.
+
+2720 stops its collector proposal at a concrete shared-owner prerequisite.
+The positive bounded child uses detached:true; leader exit0 does not prove the
+owned group closed. Root extracts the existing mutation owner's read-only group
+probe into tooling/owned-process-group.ts. Its closed result is gone, present or
+unknown; only native ESRCH proves gone. The existing async waiter reuses it and
+keeps its deadline, polling and cleanup policy. The existing mutationToolInputs
+owner includes the extracted dependency for future stage images. No cleanup signals or new timeout
+are added.2721 independent blind review requires rejecting PID1 before probing,
+because -1 is a special POSIX target. Root includes that guard and its causal
+no-syscall assertion.2724 scoped strict7passes and lint reports no findings;
+five focused cases pass with29assertions, while one Windows-only case is skipped
+on Linux. These include the existing native EPERM, surviving-group and empty-group
+controls. This verifies harness mechanics, not a mutation campaign or qualification.
+
+2722 prepares the related collector implementation in its assigned diagnostics;
+Root alone integrates and checks it. No full producer is repeated for the probe
+or prerequisite extraction. Positive counters stay fenced until exact consumed
+inputs, native group closure and independent collector controls pass through
+the existing owner. Source bin/run.ts, all budgets and historical fences remain
+unchanged.
 
 ### Run artifact boundary and UNKNOWN capture packet
 

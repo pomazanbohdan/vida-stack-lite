@@ -5,6 +5,7 @@ import path from 'node:path';
 import { parse } from '@babel/parser';
 import { typescriptSyntaxPlugins } from './babel-syntax.js';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
+import { observeOwnedProcessGroup } from './owned-process-group.ts';
 
 export type MutationBodyEvent =
   | {
@@ -583,6 +584,7 @@ export const mutationToolInputs = [
   'tooling/mutation-map-reporter.ts',
   'tooling/mutation-command-runner.ts',
   'tooling/mutation-evidence.ts',
+  'tooling/owned-process-group.ts',
   'tooling/mutation-per-test-evidence.ts',
   'tooling/mutation-assertion-context.ts',
   'tooling/mutation-test-adapter.ts',
@@ -752,14 +754,10 @@ async function observeExit(exited: Promise<number>, durationMs: number): Promise
 }
 
 async function waitForOwnedProcessGroup(pid: number | null, durationMs: number): Promise<boolean> {
-  if (pid === null || process.platform === 'win32') return false;
   const deadline = Date.now() + durationMs;
   while (true) {
-    try {
-      process.kill(-pid, 0);
-    } catch (error) {
-      return childErrorCode(error) === 'ESRCH';
-    }
+    const state = observeOwnedProcessGroup(pid);
+    if (state !== 'present') return state === 'gone';
     const remaining = deadline - Date.now();
     if (remaining <= 0) return false;
     await new Promise((resolve) => setTimeout(resolve, Math.min(100, remaining)));
