@@ -407,6 +407,15 @@ Forward negative DTOs keep their header digests coherent while varying required
 field types, plan collections, changed-file members, parent selector shape and
 review item shape. Each must refuse at its intended boundary before review receipt
 reads and preserve the complete bounded fixture tree.
+Public recovery-review negative exports vary exact outer keys, caller identity,
+owner/CAS bindings, source snapshot/entries, context and required observation.
+Every input remains malformed and must refuse before opening the recovery route,
+DB or work directory. Nullable source-entry bytes/digests and empty entries are
+allowed parser shapes; keep a later malformed context for those controls.
+Reuse one initial owned-tree baseline and stable configuration digest. Replace
+only the submitted request bytes in the expected tree, then read the complete
+afterimage once per refusal. This retains exact config/init/request and directory
+membership assertions without separate duplicate reads of those files.
 Retain failed roots. Positive parent chains still require their genuine producers;
 missing fixtures or child attribution remain engineering GAPs, not objective skips.
 

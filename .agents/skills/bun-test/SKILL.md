@@ -299,6 +299,12 @@ can prove public parsing, recorded-observation retrieval and unchanged inspected
 state without executing the downstream normalizer. For the paired conflict,
 change one submitted field and recompute its ordinary envelope digest, then
 restore the original file in finally. Reuse the same genuine admitted attempt.
+For a serial negative DTO matrix that changes only its request file, reuse the
+initial complete owned-tree baseline and any stable fixture digest. Derive each
+expected request entry from the bytes actually submitted, then compare one fresh
+complete afterimage. Avoid a second beforeimage walk and separate config/init
+reads that duplicate the same oracle. Do not carry that baseline across a real
+state transition or a fixture whose prior refusal was not checked.
 For a composed Host lineage read, reuse its atomic view and captured versions.
 Do not rebuild the join from separate readers or serialize already validated
 large receipts under a smaller generic byte limit. A test-only policy adapter

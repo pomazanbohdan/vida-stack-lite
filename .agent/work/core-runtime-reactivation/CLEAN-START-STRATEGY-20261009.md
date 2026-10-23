@@ -24,19 +24,19 @@ Reconcile current run Source/test/runtime bindings and retained receipts before
 choosing checks or a fresh stage. Scope is bin/run.ts with tests/run-entrypoint.test.ts
 and tests/bun-cache-routing.test.ts. Root keeps one writer and numeric producer.
 The existing collector binds one genuine canonical prepared CLI call beside help.
-2767 preserves its actual argv/environment, six consumed input roles, bounded
-per-operation bytes, raw capture and owned-group closure. The publishedebe8373
-packet fixes the repair evidence type contradiction and exercises public renewal
-with owner/generation/stale-CAS refusals in its real admitted fixture. Its complete
-stage remains BLOCKED; WORK owns the new Source binding and measured counters.
-Use2769's retained gap map and bounded real-caller/fixture analysis to group the
+2783 preserves its actual argv/environment, six consumed input roles, bounded
+per-operation bytes, raw capture and owned-group closure. Publishedebe8373 and
+d2998b6 fix the two repair evidence type contradictions and exercise genuine
+renewal, linked negative DTOs and exact/conflicting report retrieval. The complete
+stage remains BLOCKED; WORK owns its current binding and measured counters.
+Use2786's retained gap map and bounded real-caller/fixture analysis to group the
 next testable paths before another complete stage. Keep unsupported or absent
 producer prerequisites explicit; no new objective skip is established by this run.
-2774–2779 group the parent evidence type correction, linked forward DTO refusals
-and public report retrieval in one packet. WORK owns the causal red, corrected
-fixture premise and targeted outcomes. Complete independent review and ordinary
-publication before its sole changed-input stage; do not repeat the unchanged
-genuine CAS case for the later forward-only DTO correction.
+2784/2787 group the next public recovery-review negative decoder matrix. Root
+reuses one unchanged fixture baseline and configuration digest, replacing only
+the declared request bytes in each expected afterimage. Complete independent
+review and ordinary publication before its sole changed-input stage; keep the
+unchanged genuine CAS case's prior result until the complete selected stage.
 Preserve the same collector/readiness owners and do not add private alias admission.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts
 and do not replay historical UNKNOWN. Toolchain's2561 result and reviewed gaps

@@ -5277,6 +5277,213 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     }
   });
 
+  test('recovery review caller-history decoder refuses malformed nested shapes before workspace effects', async () => {
+    type DecoderCase = {
+      name: string;
+      mode: 'prepare' | 'begin' | 'complete' | 'inspect';
+      mutate: (input: Record<string, unknown>) => void;
+    };
+    const cases: DecoderCase[] = [];
+    const add = (name: string, mode: DecoderCase['mode'], mutate: DecoderCase['mutate']) =>
+      cases.push({ name, mode, mutate });
+    const objectAt = (value: Record<string, unknown>, key: string) =>
+      requireRecord(value[key], `recovery decoder fixture ${key}`);
+    const requestAt = (value: Record<string, unknown>) => objectAt(value, 'request');
+    const sourceAt = (value: Record<string, unknown>) => objectAt(requestAt(value), 'source');
+    const entryAt = (value: Record<string, unknown>) => {
+      const entries = sourceAt(value).entries;
+      assert.ok(Array.isArray(entries), 'recovery decoder fixture entries');
+      return requireRecord(entries[0], 'recovery decoder fixture entry');
+    };
+    const versionAt = (value: Record<string, unknown>, key: string) => objectAt(requestAt(value), key);
+
+    for (const key of ['identity', 'attempt', 'baselinePath', 'callerSession', 'controllerId', 'userInstructionRef']) {
+      add(`outer missing ${key}`, 'inspect', (input) => delete input[key]);
+    }
+    add('outer identity is not a record', 'inspect', (input) => (input.identity = null));
+    add('outer identity has an extra key', 'inspect', (input) => (objectAt(input, 'identity').extra = 'fixture'));
+    for (const [key, invalid] of [
+      ['repository_id', null],
+      ['project_ids', {}],
+      ['integrations_digest', null],
+      ['work_id', 1],
+    ] as const) {
+      add(`outer identity ${key} type`, 'inspect', (input) => (objectAt(input, 'identity')[key] = invalid));
+      add(`outer identity missing ${key}`, 'inspect', (input) => delete objectAt(input, 'identity')[key]);
+    }
+    add('outer identity project_ids item type', 'inspect', (input) => (objectAt(input, 'identity').project_ids = [1]));
+    add('outer attempt type', 'inspect', (input) => (input.attempt = '1'));
+    add('outer baselinePath type', 'inspect', (input) => (input.baselinePath = null));
+    for (const key of ['callerSession', 'controllerId', 'userInstructionRef']) {
+      add(`outer ${key} type`, 'inspect', (input) => (input[key] = null));
+    }
+    add('outer unknown key', 'inspect', (input) => (input.extra = 'fixture'));
+    add('prepare mode rejects a request key', 'prepare', (input) => (input.request = {}));
+    add('inspect mode requires request', 'inspect', (input) => delete input.request);
+    add('inspect mode rejects observation key', 'inspect', (input) => (input.observation = true));
+    add('originalContexts must be nonempty', 'inspect', (input) => (input.originalContexts = []));
+    add('originalContexts must be an array', 'inspect', (input) => (input.originalContexts = 'fixture'));
+
+    add('binding is not a record', 'begin', (input) => (input.request = null));
+    add('binding has an extra key', 'begin', (input) => (requestAt(input).extra = 'fixture'));
+    for (const key of [
+      'identity',
+      'attempt',
+      'callerSession',
+      'controllerId',
+      'userInstructionRef',
+      'historicalOwner',
+      'expectedWork',
+      'expectedLedger',
+      'expectedJournal',
+      'maintenanceGeneration',
+      'source',
+      'context',
+    ]) {
+      add(`binding missing ${key}`, 'begin', (input) => delete requestAt(input)[key]);
+    }
+    add('binding identity is not a record', 'begin', (input) => (requestAt(input).identity = null));
+    add(
+      'binding identity has an extra key',
+      'begin',
+      (input) => (objectAt(requestAt(input), 'identity').extra = 'fixture'),
+    );
+    for (const [key, invalid] of [
+      ['repository_id', null],
+      ['project_ids', {}],
+      ['integrations_digest', null],
+      ['work_id', 1],
+    ] as const) {
+      add(`binding identity ${key} type`, 'begin', (input) => (objectAt(requestAt(input), 'identity')[key] = invalid));
+      add(`binding identity missing ${key}`, 'begin', (input) => delete objectAt(requestAt(input), 'identity')[key]);
+    }
+    add(
+      'binding identity project_ids item type',
+      'begin',
+      (input) => (objectAt(requestAt(input), 'identity').project_ids = [1]),
+    );
+    add('binding attempt type', 'begin', (input) => (requestAt(input).attempt = '1'));
+    for (const key of ['callerSession', 'controllerId', 'userInstructionRef', 'historicalOwner']) {
+      add(`binding ${key} type`, 'begin', (input) => (requestAt(input)[key] = null));
+    }
+    for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal']) {
+      add(`binding ${key} record`, 'begin', (input) => (requestAt(input)[key] = null));
+      add(`binding ${key} missing revision`, 'begin', (input) => delete versionAt(input, key).revision);
+      add(`binding ${key} revision type`, 'begin', (input) => (versionAt(input, key).revision = '1'));
+      add(`binding ${key} missing digest`, 'begin', (input) => delete versionAt(input, key).digest);
+      add(`binding ${key} digest type`, 'begin', (input) => (versionAt(input, key).digest = null));
+      add(`binding ${key} extra key`, 'begin', (input) => (versionAt(input, key).extra = true));
+    }
+    add('binding maintenanceGeneration type', 'begin', (input) => (requestAt(input).maintenanceGeneration = '1'));
+    add('source snapshot is not a record', 'begin', (input) => (requestAt(input).source = null));
+    add('source snapshot has an extra key', 'begin', (input) => (sourceAt(input).extra = true));
+    for (const key of ['schema', 'entries', 'digest']) {
+      add(`source snapshot missing ${key}`, 'begin', (input) => delete sourceAt(input)[key]);
+    }
+    add('source snapshot schema', 'begin', (input) => (sourceAt(input).schema = 'ScopedSourceSnapshot/v0'));
+    add('source snapshot entries type', 'begin', (input) => (sourceAt(input).entries = {}));
+    add('source snapshot digest type', 'begin', (input) => (sourceAt(input).digest = null));
+    add('source entry is not a record', 'begin', (input) => (sourceAt(input).entries = [null]));
+    add('source entry has an extra key', 'begin', (input) => (entryAt(input).extra = true));
+    for (const key of ['path', 'exists', 'bytes', 'sha256']) {
+      add(`source entry missing ${key}`, 'begin', (input) => delete entryAt(input)[key]);
+    }
+    add('source entry path type', 'begin', (input) => (entryAt(input).path = null));
+    add('source entry exists type', 'begin', (input) => (entryAt(input).exists = 1));
+    add('source entry bytes type', 'begin', (input) => (entryAt(input).bytes = {}));
+    add('source entry sha256 type', 'begin', (input) => (entryAt(input).sha256 = 1));
+    add('binding context must be a record', 'begin', (input) => (requestAt(input).context = []));
+    for (const field of ['bytes', 'sha256']) {
+      add(`nullable source entry ${field} preserves later context refusal`, 'begin', (input) => {
+        entryAt(input)[field] = null;
+        requestAt(input).context = [];
+      });
+    }
+    add('empty source entries preserve later context refusal', 'begin', (input) => {
+      sourceAt(input).entries = [];
+      requestAt(input).context = [];
+    });
+    add('complete mode requires observation', 'complete', (input) => delete input.observation);
+    for (const value of [null, false, 0, '']) {
+      add(
+        `complete mode rejects falsey observation ${String(value)}`,
+        'complete',
+        (input) => (input.observation = value),
+      );
+    }
+
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-run-recovery-review-shape-'));
+    let complete = false;
+    try {
+      const { config } = createFixture(root);
+      const requestPath = path.join(root, 'request.json');
+      const integrationsDigest = canonicalJsonDigest(config.integrations);
+      writeFileSync(requestPath, '');
+      const fixtureBefore = snapshotAuthorityFixture(root);
+      const makeInput = (mode: DecoderCase['mode']): Record<string, unknown> => {
+        const identity = {
+          repository_id: config.repository.repository_id,
+          project_ids: config.projects.map((project) => project.project_id),
+          integrations_digest: integrationsDigest,
+          work_id: 'unaccepted-fixture-work',
+        };
+        const version = (digest: string) => ({ revision: 1, digest });
+        const input: Record<string, unknown> = {
+          identity,
+          attempt: 1,
+          baselinePath: 'fixture-baseline.json',
+          callerSession: 'fixture-session',
+          controllerId: 'fixture-controller',
+          userInstructionRef: 'fixture:pointer',
+        };
+        if (mode !== 'prepare') {
+          input.request = {
+            identity: { ...identity },
+            attempt: 1,
+            callerSession: 'fixture-session',
+            controllerId: 'fixture-controller',
+            userInstructionRef: 'fixture:pointer',
+            historicalOwner: 'fixture-historical-owner',
+            expectedWork: version('fixture-work-version'),
+            expectedLedger: version('fixture-ledger-version'),
+            expectedJournal: version('fixture-journal-version'),
+            maintenanceGeneration: 1,
+            source: {
+              schema: 'ScopedSourceSnapshot/v1',
+              entries: [{ path: 'fixture/source', exists: true, bytes: 0, sha256: 'fixture-source-entry' }],
+              digest: 'fixture-source-snapshot',
+            },
+            context: {},
+          };
+        }
+        if (mode === 'complete') input.observation = { fixture: 'unaccepted-observation' };
+        return input;
+      };
+      for (const entry of cases) {
+        const input = makeInput(entry.mode);
+        entry.mutate(input);
+        const requestBytes = Buffer.from(record(input));
+        writeFileSync(requestPath, requestBytes);
+        const before = fixtureBefore.map((item) =>
+          item.path === 'request.json' ? { ...item, bytes: requestBytes.toString('base64') } : item,
+        );
+        await assert.rejects(
+          run(['--recovery-review', 'true', '--mode', entry.mode, '--project-root', root, '--request', 'request.json']),
+          (error: unknown) =>
+            error instanceof Error && error.message === 'Recovery caller-history export shape invalid',
+          entry.name,
+        );
+        expect(snapshotAuthorityFixture(root)).toEqual(before);
+        expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+        expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+      }
+      complete = true;
+    } finally {
+      if (complete) rmSync(root, { recursive: true, force: true });
+      else process.stderr.write(`Retained failed recovery-review decoder root: ${root}\n`);
+    }
+  });
+
   const retiredSourceDecoderRequest = (config: AgentRuntimeConfig, root: string, ownerHandle: string) => ({
     schema: 'RetiredSourceCapture/v1',
     workspace_id: deriveWorkspaceId(config.repository.repository_id, root),

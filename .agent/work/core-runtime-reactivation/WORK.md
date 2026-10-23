@@ -38,65 +38,65 @@ The regression contract owns the current rule. No old image is repaired.
 
 ### Latest completed run measurement
 
-2767 completes the one-Source/two-test contour on
-`ebe8373a39184051f36043a39dbe3bfb034bead8`, stage `/workspace/contour-stage-lUrzjT`,
-run8430c50d-84c3-40ce-b85b-2b7135e1209b. All100tests pass with0failures and1311expects
-in139.19s; outer145036.19635399999ms. Raw **F234/557 L1157/2863 S1231/3143 B1328/3663**
+2783 completes the one-Source/two-test contour on
+`d2998b6698da5183004d840f7bdd596af93ccddb`, stage `/workspace/contour-stage-dS4I1H`,
+run292d316c-776e-4576-a746-0e0bd8455c64. All102tests pass with0failures and1356expects
+in124.85s; outer130083.440859ms. Raw **F253/557 L1211/2863 S1288/3143 B1512/3663**
 stays BLOCKED/nonexact. Max CC501/entry CRAP5402 is navigation, not frozen
 acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
 closed producer/group, unchanged boot/image and the sole paired projection
-publication pass,1331attempts. Frozen/CRAP/mutation stay deferred.
+publication pass,1333attempts. Frozen/CRAP/mutation stay deferred.
 
-Image `/workspace/.vida-quality-inputs/fbdd69aaa84f719c68963c252d3c6d971920d321/repository`,
-manifest SHA25633897d2dfe0867c348ead63a49d1096f491c82136b31405ad35bb4617ea623de.
+Image `/workspace/.vida-quality-inputs/4c45457ed78c954f873713ce7d4db64d83573070/repository`,
+manifest SHA256ba3e91370e06af7ef81ac608ff082fdeb93fef36c33c40ae8fb95810a0105d6d.
 Package report is
-`coverage/bun-unified/diagnostics/8430c50d-84c3-40ce-b85b-2b7135e1209b.focused-coverage.json`;
-run-manifest SHA25659405f4ad3e85688e5b6c0daddfcc761a0997e48d7b4ae47f568c8ca38703a2f.
-SourceFP6882ea9e0b41121e57cf82a9b874d6e0df7eb8b82ce0becd462be8317ca98760,
-testebcc69aa0f40c6c0992c449fbd37843556fceeab0368f0c6009daf63f5952989,
-tool1c13cd6d7f8b0e31b14db981507a77e6cbfdb4be6fdfce2b3b139f08139ed0e0.
-2769 reuses the producer's retained canonical geometry/counters and reads the
-changed captured Source once for navigation, with no AST/index/hash sweep.
-It retains323zero functions,1912statements and2335branch arms. All remain OPEN
-unless separately reviewed under TESTING. No new objective skip is established.
+`coverage/bun-unified/diagnostics/292d316c-776e-4576-a746-0e0bd8455c64.focused-coverage.json`;
+run-manifest SHA256cf3dcff809dcc68590b9acf08ad8ebf82895ded424f3563e0675c35de5e3c415.
+SourceFPe365c5c58a27395a351afce83fc90a6688a3395da4d11b216b274beb6571b91c,
+testc78a6774927b82de178c67141dcfb2d6ece7b01f72dfb76321690585a863677b,
+toold3f332cc4baa9a0190faf479c62d588a8f7a9e65f33ea557b345b59d0b5c2e3d.
+2786 reuses retained canonical geometry/counters and reads the changed captured
+Source once, with no AST/index/hash sweep. It retains304zero functions,
+1855statements and2151branch arms. All remain OPEN unless separately reviewed
+under TESTING. No new objective skip is established.
 
-Both canonical child subjects remain admitted exactly once. Help child
-5b892aba-8310-4cb3-8487-a35e10adf1f0, parent39/child189, returns0 with4889stdout
-bytes and0stderr. Prepared child0fc52a39-1eae-4369-afd1-0cb8708f2e3e,
+Both canonical CLI subjects remain admitted exactly once. Help child
+a0afcd53-cb8f-44c8-b807-fe35f1351b3c, parent39/child188, returns0 with4889stdout
+bytes and0stderr. Prepared child81a34b3e-c314-4a89-8eec-947004cdc596,
 parent39/child305, returns0 with8536stdout/0stderr bytes, detached groupgone and
 required workspace-database/local-work-admission modules. Its actual pinned
-budget59640 and deadline1792776997556 match the launch. Consumed evidence is
+budget59622 and deadline1792778794541 match the launch. Consumed evidence is
 complete, with no issues,218operations,109streams,69269unique bytes and7opens
 without observed reads, under unchanged4MiB/4096limits. Native proofs remain in
 the run's processes/cli tree; they grant counters, not lifecycle authority.
 
-Controlled timeout evidence remains UNKNOWN at
-`/dev/shm/vida-quality-retained-KirPpM/scratch-utZSq5/scratch/vida-run-unknown-child-cQpcMZ`.
-The separate inert native exit0/post-return diagnostic control remains boundary
-UNKNOWN at sibling `vida-run-unknown-child-wQXbW9`, with command_outcome_unknown=false,
-unknown group and Buffer capture. Neither is replayed or promoted by passing
-assertions.2768 compares/fsyncs the40775680-byte functional archive at
-`/workspace/vida-functional-retention-lUrzjT-ysj2jI/archive.json`; originals stay.
-Archive SHA2568f9e45744f7f6e96c3d13a1d558003dc3e0433fbf1c1ebb7e9406d854d8d0eb0
-binds this one artifact; bun-install-cache is excluded. No old run is reattested.
+2785 reuses the existing retain-functional-stage.ts owner rather than another
+stage-specific archive script. It compares/fsyncs the40806400-byte non-cache
+functional archive at
+`/workspace/vida-functional-retention-dS4I1H-ipWOl0/archive.json`.
+Original `/dev/shm/vida-quality-retained-KirPpM/scratch-1Qrht7` remains unchanged,
+including controlled UNKNOWN evidence; bun-install-cache is excluded.
+Preservation grants no replay, fresh qualification or Runtime acceptance.
 
-Compared with2750's recorded totals, the arithmetic change is16functions,
-77lines,82statements and119branch arms, with unchanged557/2863/3143/3663totals.
-Source/test/tool identities differ because of the confirmed parser correction
-and added genuine renewal/refusal assertions. Do not merge the old counts or
-claim a same-input speedup from139.19s/128.70s. Historical exact count stays17/46;
-bun-cli-run remains open.2750's prior Source/proof/UNKNOWN/retention chain remains
-in [published82f5f22 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/82f5f22/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
+Compared with2767's recorded totals, the arithmetic change is19functions,
+54lines,57statements and184branch arms, with unchanged557/2863/3143/3663totals.
+Source/test/tool identities differ because of the parent parser correction and
+added forward/refusal/retrieval controls. Do not merge old counters or claim a
+same-input speedup from124.85s/139.19s. Historical exact count stays17/46;
+bun-cli-run remains open.2767's original bindings, proofs, UNKNOWN and retention
+chain remain in [published8a28450 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/8a28450/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
 
-Reuse audit-disk-v2649 and2767's actual native admission of2388729856scratch
+Reuse audit-disk-v2649 and2783's actual native admission of2347589632scratch
 available bytes against2147483648minimum and unchanged67108864reserve. Its
-floor-plus-reserve margin is174137344bytes at that observation, not a fresh
+floor-plus-reserve margin is132997120bytes at that observation, not a fresh
 post-run free-space claim. No capacity GAP is established by that admission.
 No cleanup competes with final checks. Unknown privileged reference custody
 still defers the exact authorized retirement roots;0paths retired and no bytes
 reclaimed. The timer and all historical fences remain unchanged.
-Use2769's current map and genuine public callers for the next coherent packet;
-missing positive repair/forward producer qualification stays OPEN, not skipped.
+Use2786's current map and genuine public callers for the next coherent packet.
+2784 prepares a bounded negative recovery-review decoder proposal separately;
+no second writer, producer or contour starts. Positive repair/forward producer
+qualification stays OPEN, not skipped.
 
 ### Current run attribution architecture
 
@@ -400,8 +400,40 @@ Root adds the required inert header binding and a string-evidence control.
 No full stage has run for these intermediate failures.2775's fresh independent
 review returns PASS for the complete current code patch and affected contracts.
 Root's2780 documentation check passes4documents/35local links and whitespace
-validation. No code comment or suppression changes. Final publication precedes
-the one changed-input stage; bun-cli-run remains OPEN.
+validation. No code comment or suppression changes.2781's explicit tracked-path
+add reports the ignored .agent parent while staging all six intended files;
+no commit starts there. Root verifies the staged scope and2782 commitsd2998b6
+through ordinary formatting533/strict540 hooks, then normal push reaches
+terminal0.2783 is the sole changed-input measurement recorded above.
+
+### Public recovery-review negative decoder packet
+
+While2783 owns the immutable numeric image, blind native2784 prepares a disjoint
+tests-only proposal in its assigned directory from publishedd2998b6. No canonical
+write, check or second producer occurs there. Root waits for terminal2783 and
+preserves its receipts/archive before applying the complete unified diff after
+git apply --check and comparing the full proposed file. The matrix uses public
+run() recovery-review dispatch with structurally malformed exports only. It
+checks outer keys/identity, required bindings, owner/CAS fields, source snapshot
+and entry shapes, context, originalContexts and complete-mode observations before
+the internal recovery route can open. Nullable source bytes/digests and empty
+entry lists are valid parser shapes, so Root pairs them with a later bad context
+instead of inventing a false shape oracle. No valid request, baseline authority,
+observation acceptance or operation history is manufactured.
+
+Root replaces unchecked fixture casts with the maintained record parser. One
+stable configuration digest and initial owned-tree baseline replace the draft's
+per-control digest, repeated beforeimage walk and separate config/init/request
+reads. Each expected tree substitutes only its actual submitted request bytes;
+the complete fresh afterimage and absent DB/work paths remain asserted. This
+reduces duplicate operations by construction, without a measured speedup claim.
+2787 scoped strict159/lint0 and both changed/existing decoder cases pass with
+349expect calls in3.00s. The genuine CAS case is unchanged and not repeated here.
+2788's fresh independent final review returns PASS for the complete frozen
+test diff and affected contracts. Documentation checks5documents/35local links
+without failures; whitespace checks pass. Ordinary publication precedes the sole
+next changed-input stage. Unreached valid-authority paths and the dominated optional
+request false edge are not converted into skips or changed denominators.
 
 ### Run artifact boundary and UNKNOWN capture packet
 
