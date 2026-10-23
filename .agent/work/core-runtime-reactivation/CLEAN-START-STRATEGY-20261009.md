@@ -24,31 +24,28 @@ Reconcile current run Source/test/runtime bindings and retained receipts before
 choosing checks or a fresh stage. Scope is bin/run.ts with tests/run-entrypoint.test.ts
 and tests/bun-cache-routing.test.ts. Root keeps one writer and numeric producer.
 The existing collector binds one genuine canonical prepared CLI call beside help.
-2790 preserves its actual argv/environment, six consumed input roles, bounded
+2820 preserves its actual argv/environment, six consumed input roles, bounded
 per-operation bytes, raw capture and owned-group closure. Publishedebe8373 and
 d2998b6 fix the two repair evidence type contradictions and exercise genuine
 renewal, linked negative DTOs and exact/conflicting report retrieval. The complete
 stage remains BLOCKED; WORK owns its current binding and measured counters.
-Use2793's retained gap map and bounded real-caller/fixture analysis to group the
+Use2822's retained gap map and bounded real-caller/fixture analysis to group the
 next testable paths before another complete stage. Keep unsupported or absent
 producer prerequisites explicit; no new objective skip is established by this run.
-Publishedf3cd312 and2790 complete the public recovery-review negative decoder
-packet with one fixture baseline/configuration digest and exact request afterimages.
-WORK owns its review, checks and terminal measurement.2791 retains all existing
-native report/issue contracts and identifies direct prepared-state inspect as a
-supported next-packet candidate.2798/2801/2802/2804 group it with historical-owner
-decoder, argument/reference and byte-bound refusals.2805 independently approves
-the frozen packet;2807 publishesebc3033 after normal hooks/push. Its sole2808
-stage records103PASS/1FAIL: the existing stale-integrations-digest native child
-times out with UNKNOWN custody. WORK owns the exact terminal/image/retention
-bindings; no attributable coverage report or new numeric gain is established.
-Keep the failed roots and native logs fenced; no unchanged rerun, budget increase
-or archived UNKNOWN replay.2811's report-role proposal retains an OPEN native
-persisted-read prerequisite.2813 identifies a supported ordinary prepared-state
-re-entry without intake;2817 verifies its resumed payload and unchanged complete
-Host projection in the existing genuine case. Finish independent review and
-ordinary publication before its sole changed-input stage and fresh admission.
-Do not repeat the unchanged genuine case for decoder-only additions. No subprocess
+Publishedf3cd312,ebc3033 andb5cadda group recovery/historical negative decoders,
+argument/reference/byte bounds and genuine prepared inspect/re-entry. Reuse their
+single owned fixture baselines and exact request afterimages.2815 independently
+reviews the corrected re-entry oracle;2817 verifies the complete genuine case
+before normal2819 hooks/push and the sole2820 changed-input stage. All selected
+tests pass; WORK owns raw counters, immutable image and native/retention bindings.
+The preceding2808 stale-integrations native timeout remains a separate preserved
+failed/UNKNOWN attempt with no attributable metrics. Do not replay those roots,
+increase budgets or treat the later successful changed inputs as repairing its
+custody.2806/2811 native issue/report counter admission still needs qualified
+child-side persisted-state observation; parent snapshots or direct APIs cannot
+supply it. No new objective skip or exact contour closure is established.
+Do not repeat an unchanged full stage or individual case without a changed input,
+failure or unresolved risk justifying it. No subprocess
 is removed merely to raise parent counters; keep current counter admission.
 Preserve the same collector/readiness owners and do not add private alias admission.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts

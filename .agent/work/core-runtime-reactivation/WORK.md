@@ -36,7 +36,7 @@ review pass;2618 measures a fresh image. Detailed failure/Source bindings remain
 in [published25427e0 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/25427e0/.agent/work/core-runtime-reactivation/WORK.md#run-image-resource-failure-and-repair).
 The regression contract owns the current rule. No old image is repaired.
 
-### Latest run attempt: preserved native timeout
+### Preserved preceding run attempt: native timeout
 
 2807 publishes the reviewed inspect/historical-owner packet asebc3033e50081de844f84cea024d1f6f99f6d240
 after normal formatting533/strict540 hooks and terminal0 push.2808 performs its
@@ -109,75 +109,67 @@ The prior failed stage/UNKNOWN remains separate and is never replayed.
 
 ### Latest completed run measurement
 
-2790 completes the one-Source/two-test contour on
-`f3cd312445083fd7437250d6237a6d23964ce2a8`, stage `/workspace/contour-stage-54j49S`,
-run475441b4-6995-424f-aa11-5b8dd1698148. All103tests pass with0failures and1669expects
-in143.68s; outer149780.37043ms. Raw **F261/557 L1220/2863 S1299/3143 B1558/3663**
-stays BLOCKED/nonexact. Max CC501/entry CRAP5402 is navigation, not frozen
-acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
-closed producer/group, unchanged boot/image and the sole paired projection
-publication pass,1335attempts. Frozen/CRAP/mutation stay deferred.
+2820 completes the one-Source/two-test contour on
+`b5caddaaa8de72896bf8624f8f692340888c9cce`, stage `/workspace/contour-stage-kZhujt`,
+runbbd02f4f-33d4-4694-8f82-c1d2d09ad9f3. All104tests pass with0failures and2047expects
+in138.88s; outer144482.822851ms. Raw **F275/557 L1280/2863 S1363/3143 B1656/3663**
+stays BLOCKED/nonexact. Native exit0/null signal/no timeout/spawn error, complete
+capture, closed producer/group, unchanged boot/image and the sole paired projection
+publication pass,1338attempts. Max CC501/entry CRAP5402 remains navigation only;
+frozen/CRAP/mutation stay deferred. No contour is newly closed; historical exact
+F/L/S/B stays17/46. The preceding2808 failure and UNKNOWN remain preserved above.
 
-Image `/workspace/.vida-quality-inputs/11fd74d9d540eb1c1b471676e128b473c6b5dbfc/repository`,
-manifest SHA2561c7e60b3d8007bcccf5551709a8a080673401b1de1b171aa613c73b1d2eb93f0.
+Image `/workspace/.vida-quality-inputs/a58f118c25952931c1875b86f9b4ff3c3b2f5888/repository`,
+manifest SHA2569c817fd5ab61d24243e7216b3ffb2b7f4999d2f1fddf80e47c4d9fcd06689d24.
 Package report is
-`coverage/bun-unified/diagnostics/475441b4-6995-424f-aa11-5b8dd1698148.focused-coverage.json`;
-run-manifest SHA2563138ef6489550d2c423fb6fdcef73210d3586c2c26d7a9764d25b5a1de695d67.
+`coverage/bun-unified/diagnostics/bbd02f4f-33d4-4694-8f82-c1d2d09ad9f3.focused-coverage.json`;
+run-manifest SHA256c34e282e530357f0c7e4f43b2be54f0b564e18ab8913463de2dac8c9d50359fc.
 SourceFPe365c5c58a27395a351afce83fc90a6688a3395da4d11b216b274beb6571b91c,
-testb814e73fa3395d4bdfbc3ffd1635d79652a230c3bf7039c29a5d256f622332ac,
-tool029286e1cac5db6f27740ff30c7be8dc451b9d35ff66b8bd0cf715dc0537a693.
-2793 joins the new retained counters to2786's checked missing-counter geometry,
-requiring the same Source fingerprint and exact mapped locations. No Source,
-AST, index or hash pass is repeated. It retains296zero functions,1844statements
-and2105branch arms. All remain OPEN unless separately reviewed under TESTING.
-No new objective skip is established.
+test307a3e9c4f4ea9d2b2ae7f603d16091796ae3abaae3384ccf49a80e9c54f0d48,
+toold07d7a12cc56b33024a3622f3b124af9a57bb03088ea0dab47dca00eda927110.
+2822 joins new retained counters to2793's checked geometry, requiring the same
+Source fingerprint and exact mapped locations. No Source, AST, index or hash pass
+is repeated. Remaining282functions,1780statements and2007branch arms remain OPEN
+unless separately reviewed under TESTING. No new objective skip is established.
+Root's first result query accidentally includes the full per-function metric array
+and truncates; the corrected query selects only aggregate coverage. Neither query
+runs an inventory or changes evidence; no tool-call/token saving is claimed.
 
-Both canonical CLI subjects remain admitted exactly once. Help child
-52184a99-c520-479e-8583-9530efef7e15, parent39/child1019, returns0 with4889stdout
-bytes and0stderr. Prepared childc316eee5-b3df-412f-89c6-f54f069b22be,
-parent39/child270, returns0 with8536stdout/0stderr bytes and detached groupgone.
-Its actual pinned budget59594 and deadline1792779512572 match the launch.
-Consumed evidence is complete, with no issues,218operations,109streams,
-69269unique bytes and7opens without observed reads, under unchanged4MiB/4096limits.
-Native proofs remain in the run's processes/cli tree; they grant counters, not
-lifecycle authority.
+Both fixed canonical CLI subjects remain admitted exactly once. Help child
+2830c970-22d7-44ef-8958-dfa45b20db56, parent39/child261, returns0 with4889stdout
+bytes and0stderr. Prepared child787ae069-b3fd-446b-96e7-e45e653c3148,
+parent39/child863, returns0 with8536stdout/0stderr bytes and detached groupgone.
+Its actual pinned budget59614 and deadline1792782602625 remain bound. Consumed
+proof is complete with no issues,218operations,109streams,69269unique bytes and
+7opens without observed reads, under unchanged4MiB/4096limits. Native proofs stay
+in the run's processes/cli tree; they grant counters, not lifecycle authority.
 
-2792 reuses retain-functional-stage.ts, compares and fsyncs the40816640-byte
-non-cache functional archive at
-`/workspace/vida-functional-retention-54j49S-PFkh70/archive.json`.
-Original `/dev/shm/vida-quality-retained-KirPpM/scratch-iecsIr` remains unchanged,
-including controlled UNKNOWN evidence; bun-install-cache is excluded.
-Preservation grants no replay, fresh qualification or Runtime acceptance.
+2821 reuses retain-functional-stage.ts, compares and fsyncs the40826880-byte
+non-cache archive at `/workspace/vida-functional-retention-kZhujt-WLbC27/archive.json`.
+Original `/dev/shm/vida-quality-retained-KirPpM/scratch-ewY7tR` remains unchanged,
+including controlled UNKNOWN evidence; bun-install-cache is excluded. Retention
+grants bytes only, no replay, fresh qualification or Runtime acceptance.
 
-Against2783 the arithmetic gain is8functions,9lines,11statements and46branch arms,
-with unchanged557/2863/3143/3663totals and Source fingerprint. Test/tool inputs
-and image identities differ. The new negative matrix takes947.84ms in2790.
-Descriptive per-case comparison of the two retained logs locates3.8754s of added
-elapsed time in genuine CAS/report,3.6849s in released-journal admission and2.8890s
-in changed-scope refusal. Different inputs/conditions and those observations
-establish no causal slowdown or measured speedup. No benchmark or suite is rerun
-for this audit. Compared with2767 before both packets, arithmetic gains are
-27functions,63lines,68statements and230branch arms; Source/test/tool differ there.
-Do not merge old counters or relabel this as a three-hour delta. Historical exact
-count stays17/46; bun-cli-run remains open.2783's original bindings, proofs and
-retention chain remain in [publishedf3cd312 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/f3cd312/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
+Against2790 the arithmetic gain is14functions,60lines,64statements and98branch
+arms, with unchanged totals and Source fingerprint. Test/tool inputs and image
+identities differ. Historical decoder takes192.97ms and genuine CAS/report/re-entry
+28077.67ms in2820. These observations and138.88s versus143.68s establish no matched
+speedup. No benchmark or suite is rerun for the audit.2790's original bindings,
+proofs and retention chain remain in [published662d4ca WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/662d4ca/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
 
-2790's native admission records2306428928scratch available bytes against
-2147483648minimum and unchanged67108864reserve. The next request's single
-audit-disk-v2797 observation records20828450816available bytes on checkout and
-durable retained evidence, and2265255936scratch bytes. Against the unchanged
-2214592512floor-plus-reserve requirement, margins are18613858304durable and
-50663424scratch bytes. No capacity GAP is established at that observation;
-the next real producer must still pass its own fresh admission. No broad du,
-scan or hash pass occurs.2797 observes no active numeric/build/install process;
-Docker owners117/168 remain live with privileged reference custody unresolved.
-This still defers the exact authorized retirement roots;0paths retired and no
-bytes reclaimed. No cleanup competes with checks. The timer and all historical
-fences remain unchanged.
-Use2793's current map and genuine public callers for the next coherent packet.
-2791 independently studies existing CAS fixture native/API boundaries without
-new execution or writer authority. Positive repair/forward producer qualification
-stays OPEN, not skipped.
+The request's single audit-disk-v2797 observation records20828450816available bytes
+on checkout/durable retained evidence and2265255936scratch bytes. Against the
+unchanged2147483648floor plus67108864reserve, margins are18613858304durable and
+50663424scratch bytes.2820's separate native admission records2223636480scratch
+available bytes,9043968above the unchanged combined requirement. These are their
+observed admission times, not a post-run free-space claim. The next real producer
+must pass fresh admission. No broad du/scan/hash pass or cleanup occurs.2797
+observes no active numeric/build/install process; Docker owners117/168 remain live
+with privileged reference custody unresolved. Authorized retirement roots stay
+deferred:0paths retired, no bytes reclaimed, timer and UNKNOWN fences unchanged.
+Use2822's current map and genuine public callers for the next coherent packet.
+2806/2811's native issue/report persisted-read prerequisites remain OPEN, not
+skipped or supplied by parent snapshots, hashes or direct API execution.
 
 ### Current run attribution architecture
 
