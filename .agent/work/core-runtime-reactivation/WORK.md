@@ -122,6 +122,60 @@ registration. Batch prerequisite repairs and newly registered targeted controls
 before the next complete changed-input stage. Do not claim every gap comes from
 this gate or treat missing attribution/fixtures as objective untestability.
 
+### Run untrusted retired-artifact decoder packet
+
+2689's blind native Luna proposal covers only untrusted legacy read DTO refusals.
+Root reuses the existing request factory, then groups12artifact cases into four
+tests under the existing registration gate. The packet also adds three malformed
+nested request records to the existing decoder test. No issued wave, accepted
+action, terminal history or provider receipt is fabricated. Every native case
+first reaches the exact missing issue-mapping refusal, then requires its own
+earlier guard refusal. Configuration, initialization, request
+and artifact bytes stay unchanged, with no workspace database or Work. Failed
+roots remain retained. Source `bin/run.ts` and all deadlines stay unchanged.
+
+Root reviews every proposed hunk and applies the complete2692 patch only after
+`git apply --check`. Root corrects a two-defect schema case to change only its
+schema, gives each group a distinct reported name, and replaces a duplicated
+baseline with independent empty-inventory controls.
+The initial worker map path omitted `packages/agent`; the corrected exact path
+resolves the existing2687 map. That brief error is not missing numeric evidence.
+
+2692's saved input patch precedes scoped strict158PASS, lint0 and four selected
+tests with137expects in4.37s. After the command-case refinement,2693 saves the
+new input patch and passes strict158/lint0 plus the two changed command groups
+with42expects in3.17s. The unchanged nested-request, shape and binding checks
+reuse2692. These focused observations are not a matched performance comparison
+or numeric closure. Four groups bound fixture setup without parallel shared
+state; the sole full producer follows independent review and publication.
+
+2694's independent native review rejects the malformed-action assertion because
+the missing wave would still cause its expected error if that action were
+incorrectly accepted. Root removes that masked case rather than fabricating an
+issued wave. The retained baseline remains a control for reaching the mapping
+boundary, not an oracle for action validation. No product defect is established.
+
+2695's fresh review confirms that correction and identifies an unchecked
+baseline artifact overwrite. Root consolidates the six byte/no-DB/no-Work
+assertions into one local function and calls it after both refusals, before the
+overwrite.2696 strict catches a Buffer generic mismatch in the new parameter.
+The parameter now derives its exact type from the actual artifact bytes rather
+than widening or casting. The failed strict log remains untouched; no tests or
+producer ran from2696.2697 passes strict158/lint0 and all four affected groups,
+156expects in2.44s. The unchanged old request checks reuse2692. This is a test
+oracle correction, not a demonstrated product mutation or numeric closure.
+Fresh blind2697 review passes the corrected current bytes, causal refusals,
+preservation and retention. It runs no checks or producer. Documentation links
+and `git diff --check` pass. Ordinary hooks and the sole changed-input stage
+remain with Root.
+
+Pstack's Laziness Protocol keeps one pure request factory instead of a second
+fixture builder. Model the Domain uses named case groups for malformed DTOs.
+Sequence Work into Verifiable Units batches the related guards before one full
+changed-input stage. Named external review roles remain unavailable; the actual
+independent reviewer uses the authorized native Luna route. No worktree or second
+canonical writer is created. No comments, suppressions or product guards change.
+
 ### Run completed-research release-refusal packet
 
 2675/2676 compare maintained positive-fixture routes as bounded blind native Luna

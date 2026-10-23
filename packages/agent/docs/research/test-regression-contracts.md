@@ -294,6 +294,17 @@ observation parser's ZodError. Then change one field and require the earlier
 exact envelope refusal, preserving byte/no-DB/no-Work oracles. Do not create
 terminal/history files to make a decoder control appear to be accepted evidence.
 
+Retired native-artifact refusal controls use an owned regular `.tmp` file with
+an untrusted legacy read DTO. First require the exact missing issue-mapping
+refusal with no valid issued action or wave. Then change the artifact and require
+the selected shape, binding, command-inventory or truncated-output refusal.
+An absent wave masks action-validation defects, so its refusal does not prove
+action non-promotion. No fixture command runs.
+Keep request, artifact, configuration and initialization bytes unchanged after
+each refusal, with no workspace database or Work. Retain failed roots and keep
+the ordinary case deadline. These parser controls do not establish accepted
+native history or provider provenance.
+
 Other copied-wrapper and fresh-start environment children remain behavioral
 controls; they do not contribute measured counters.
 

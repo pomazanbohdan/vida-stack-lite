@@ -4372,49 +4372,50 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     }
   });
 
+  const retiredSourceDecoderRequest = (config: AgentRuntimeConfig, root: string, ownerHandle: string) => ({
+    schema: 'RetiredSourceCapture/v1',
+    workspace_id: deriveWorkspaceId(config.repository.repository_id, root),
+    operatorHandle: ownerHandle,
+    nativeTurnEvidenceRef: 'unread-fixture-native-turn',
+    identity: {
+      repository_id: config.repository.repository_id,
+      project_ids: config.projects.map((project) => project.project_id),
+      integrations_digest: canonicalJsonDigest(config.integrations),
+      work_id: 'unaccepted-fixture-work',
+    },
+    attempt: 1,
+    actionId: 'unaccepted-fixture-action',
+    issueId: 'unaccepted-fixture-issue',
+    expectedWork: { revision: 1, digest: 'fixture-work-digest' },
+    expectedLedger: { revision: 1, digest: 'fixture-ledger-digest' },
+    expectedJournal: { revision: 1, digest: 'fixture-journal-digest' },
+    expectedMaintenanceGeneration: 0,
+    retirementOperationId: 'unaccepted-fixture-operation',
+    retirementClaimId: 'unaccepted-fixture-claim',
+    observation: { host_attempt_id: 'unaccepted-fixture-host-attempt' },
+    terminalEvidence: {
+      schema: 'RetiredSourceTerminalEvidence/v1',
+      source_thread_id: 'fixture-thread',
+      source_turn_id: 'fixture-turn',
+      source_thread_status: 'interrupted',
+      source_turn_status: 'interrupted',
+      operator_thread_id: 'fixture-operator-thread',
+      original_actor_id: 'fixture-actor',
+      final_message_id: null,
+      action_id: 'unaccepted-fixture-action',
+      issue_id: 'unaccepted-fixture-issue',
+      host_attempt_id: 'unaccepted-fixture-host-attempt',
+      active_source_writer_ids: [],
+      observed_commands: [],
+      original_tool_records: [],
+      later_grants: [],
+    },
+    candidateSnapshot: { schema: 'UnverifiedSourceSnapshot/v1', entries: [] },
+  });
+
   test('run retired-source decoder rejects deeper malformed request fields before native reads or workspace writes', async () => {
     const expectedMessage = 'Retired-source request workspace or owner binding differs';
-    const makeBase = (config: AgentRuntimeConfig, root: string, ownerHandle: string) => ({
-      schema: 'RetiredSourceCapture/v1',
-      workspace_id: deriveWorkspaceId(config.repository.repository_id, root),
-      operatorHandle: ownerHandle,
-      nativeTurnEvidenceRef: 'unread-fixture-native-turn',
-      identity: {
-        repository_id: config.repository.repository_id,
-        project_ids: config.projects.map((project) => project.project_id),
-        integrations_digest: canonicalJsonDigest(config.integrations),
-        work_id: 'unaccepted-fixture-work',
-      },
-      attempt: 1,
-      actionId: 'unaccepted-fixture-action',
-      issueId: 'unaccepted-fixture-issue',
-      expectedWork: { revision: 1, digest: 'fixture-work-digest' },
-      expectedLedger: { revision: 1, digest: 'fixture-ledger-digest' },
-      expectedJournal: { revision: 1, digest: 'fixture-journal-digest' },
-      expectedMaintenanceGeneration: 0,
-      retirementOperationId: 'unaccepted-fixture-operation',
-      retirementClaimId: 'unaccepted-fixture-claim',
-      observation: { host_attempt_id: 'unaccepted-fixture-host-attempt' },
-      terminalEvidence: {
-        schema: 'RetiredSourceTerminalEvidence/v1',
-        source_thread_id: 'fixture-thread',
-        source_turn_id: 'fixture-turn',
-        source_thread_status: 'interrupted',
-        source_turn_status: 'interrupted',
-        operator_thread_id: 'fixture-operator-thread',
-        original_actor_id: 'fixture-actor',
-        final_message_id: null,
-        action_id: 'unaccepted-fixture-action',
-        issue_id: 'unaccepted-fixture-issue',
-        host_attempt_id: 'unaccepted-fixture-host-attempt',
-        active_source_writer_ids: [],
-        observed_commands: [],
-        original_tool_records: [],
-        later_grants: [],
-      },
-      candidateSnapshot: { schema: 'UnverifiedSourceSnapshot/v1', entries: [] },
-    });
-    type DecoderPrefix = ReturnType<typeof makeBase>;
+    type DecoderPrefix = ReturnType<typeof retiredSourceDecoderRequest>;
     const cases = [
       {
         name: 'maintenance generation type',
@@ -4471,6 +4472,68 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           },
         }),
       },
+      {
+        name: 'original tool record must be completed',
+        change: (request: DecoderPrefix) => ({
+          ...request,
+          terminalEvidence: {
+            ...request.terminalEvidence,
+            original_tool_records: [
+              {
+                call_ref: 'untrusted-record',
+                actor_id: 'untrusted-actor',
+                action_id: request.actionId,
+                issue_id: request.issueId,
+                host_attempt_id: request.observation.host_attempt_id,
+                status: 'failed',
+                changed_paths: [],
+              },
+            ],
+          },
+        }),
+      },
+      {
+        name: 'original tool record changed paths must be strings',
+        change: (request: DecoderPrefix) => ({
+          ...request,
+          terminalEvidence: {
+            ...request.terminalEvidence,
+            original_tool_records: [
+              {
+                call_ref: 'untrusted-record',
+                actor_id: 'untrusted-actor',
+                action_id: request.actionId,
+                issue_id: request.issueId,
+                host_attempt_id: request.observation.host_attempt_id,
+                status: 'completed',
+                changed_paths: [null],
+              },
+            ],
+          },
+        }),
+      },
+      {
+        name: 'later grant requires a string evidence reference',
+        change: (request: DecoderPrefix) => ({
+          ...request,
+          terminalEvidence: {
+            ...request.terminalEvidence,
+            later_grants: [
+              {
+                work_id: 'untrusted-work',
+                ticket_id: 'untrusted-ticket',
+                claim_id: 'untrusted-claim',
+                actor_id: 'untrusted-actor',
+                action_id: request.actionId,
+                issue_id: request.issueId,
+                host_attempt_id: request.observation.host_attempt_id,
+                changed_paths: [],
+                evidence_ref: 7,
+              },
+            ],
+          },
+        }),
+      },
     ];
     for (const entry of cases) {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-retired-decoder-'));
@@ -4480,7 +4543,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           configPath = path.join(root, 'agent-runtime.config.v1.yaml'),
           requestPath = path.join(root, 'request.json'),
           ownerHandle = `fixture-owner-${randomUUID()}`,
-          base = makeBase(config, root, ownerHandle),
+          base = retiredSourceDecoderRequest(config, root, ownerHandle),
           requestBytes = Buffer.from(`${JSON.stringify(entry.change(base))}\n`),
           configBefore = readFileSync(configPath),
           initializationBefore = readFileSync(initializationPath);
@@ -4661,6 +4724,225 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         } finally {
           if (complete) rmSync(root, { recursive: true, force: true });
           else process.stderr.write(`Retained failed stopped-source decoder root (${entry.label}): ${root}\n`);
+        }
+      }
+    },
+  );
+  type RetiredSourceNativeCase = {
+    name: string;
+    artifact: unknown;
+    message: string;
+  };
+
+  type RetiredSourceNativeGroup = {
+    name: string;
+    cases: readonly RetiredSourceNativeCase[];
+  };
+
+  const retiredDecoderTurn = (items: unknown[], turnId = 'fixture-turn') => ({
+    id: turnId,
+    status: 'interrupted',
+    items,
+  });
+  const retiredDecoderArtifact = (
+    turns: unknown[],
+    threadId = 'fixture-thread',
+    schema = 'RetiredSourceTurnRead/v1',
+  ) => ({
+    schema,
+    data: { thread: { id: threadId, status: { type: 'interrupted' } }, turns },
+  });
+  const retiredDecoderCommand = (outputText = 'fixture readonly output') => ({
+    id: 'fixture-command',
+    type: 'commandExecution',
+    command: 'fixture readonly output',
+    status: 'completed',
+    exitCode: 0,
+    output: { text: outputText, truncated: false },
+  });
+  const noIssuedActionOutput = JSON.stringify([
+    null,
+    { schema: 'VidaAgentRunResult/v1', issued_actions: [null], stdout: '{invalid-json' },
+    0,
+  ]);
+
+  const retiredSourceNativeGroups: readonly RetiredSourceNativeGroup[] = [
+    {
+      name: 'artifact and item shape guards',
+      cases: [
+        {
+          name: 'unsupported read schema',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([])], 'fixture-thread', 'RetiredSourceTurnRead/v0'),
+          message: 'Retired-source native evidence contract differs',
+        },
+        {
+          name: 'turn cardinality',
+          artifact: retiredDecoderArtifact([]),
+          message: 'Retired-source native evidence contract differs',
+        },
+        {
+          name: 'turn item collection',
+          artifact: retiredDecoderArtifact([{ id: 'fixture-turn', status: 'interrupted', items: null }]),
+          message: 'Retired-source turn is invalid',
+        },
+        {
+          name: 'item record shape',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([null])]),
+          message: 'Retired-source thread item is invalid',
+        },
+      ],
+    },
+    {
+      name: 'thread and turn binding guards',
+      cases: [
+        {
+          name: 'thread identity',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([])], 'unbound-thread'),
+          message: 'Retired-source original thread or interrupted turn differs',
+        },
+        {
+          name: 'turn identity',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([], 'unbound-turn')]),
+          message: 'Retired-source original thread or interrupted turn differs',
+        },
+        {
+          name: 'forbidden final agent message',
+          artifact: retiredDecoderArtifact([
+            retiredDecoderTurn([{ id: 'fixture-final', type: 'agentMessage', phase: 'final' }]),
+          ]),
+          message: 'Retired-source original thread or interrupted turn differs',
+        },
+      ],
+    },
+    {
+      name: 'command inventory guards',
+      cases: [
+        {
+          name: 'empty command inventory',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([])]),
+          message: 'Retired-source complete command inventory is absent',
+        },
+        {
+          name: 'unresolved command outcome',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([{ ...retiredDecoderCommand(), status: 'unknown' }])]),
+          message: 'Retired-source command inventory has a duplicate or unresolved outcome',
+        },
+        {
+          name: 'duplicate command identity',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand(), retiredDecoderCommand()])]),
+          message: 'Retired-source command inventory has a duplicate or unresolved outcome',
+        },
+        {
+          name: 'incomplete command output',
+          artifact: retiredDecoderArtifact([
+            retiredDecoderTurn([{ ...retiredDecoderCommand(), output: { text: 1, truncated: false } }]),
+          ]),
+          message: 'Retired-source command output is incomplete',
+        },
+      ],
+    },
+    {
+      name: 'command evidence guards',
+      cases: [
+        {
+          name: 'truncated command output remains incomplete evidence',
+          artifact: retiredDecoderArtifact([
+            retiredDecoderTurn([
+              { ...retiredDecoderCommand(), output: { text: 'untrusted partial output', truncated: true } },
+            ]),
+          ]),
+          message: 'Retired-source truncated command output could hide an effect',
+        },
+      ],
+    },
+  ];
+
+  test.each(retiredSourceNativeGroups.map(({ name, cases }) => [name, cases] as const))(
+    'run retired-source native decoder rejects %s before persistence',
+    async (_name, cases) => {
+      for (const entry of cases) {
+        const root = mkdtempSync(path.join(tmpdir(), 'vida-run-retired-native-'));
+        let complete = false;
+        try {
+          const { config, initializationPath } = createFixture(root),
+            configPath = path.join(root, 'agent-runtime.config.v1.yaml'),
+            requestPath = path.join(root, 'request.json'),
+            artifactPath = path.join(root, '.tmp', 'untrusted-turn.json'),
+            ownerHandle = `fixture-owner-${randomUUID()}`,
+            actionId = 'a'.repeat(64),
+            hostAttemptId = 'b'.repeat(64),
+            issueId = '00000000-0000-4000-8000-000000000001',
+            base = retiredSourceDecoderRequest(config, root, ownerHandle),
+            request = {
+              ...base,
+              nativeTurnEvidenceRef: '.tmp/untrusted-turn.json',
+              actionId,
+              issueId,
+              observation: {
+                schema: 'VidaSessionObservation/v1',
+                action_id: actionId,
+                host_attempt_id: hostAttemptId,
+                issue_id: issueId,
+                agent_id: 'fixture:decoder-only',
+                tool_call_ref: 'fixture:decoder-only',
+                status: 'reported_failed',
+                summary: 'Untrusted decoder fixture',
+                output_digest: 'c'.repeat(64),
+                evidence_refs: [],
+              },
+              terminalEvidence: {
+                ...base.terminalEvidence,
+                action_id: actionId,
+                issue_id: issueId,
+                host_attempt_id: hostAttemptId,
+              },
+            },
+            requestBytes = Buffer.from(JSON.stringify(request)),
+            baselineBytes = Buffer.from(
+              JSON.stringify(
+                retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand(noIssuedActionOutput)])]),
+              ),
+            ),
+            artifactBytes = Buffer.from(JSON.stringify(entry.artifact)),
+            configBefore = readFileSync(configPath),
+            initializationBefore = readFileSync(initializationPath),
+            args = [
+              '--capture-retired-source',
+              'true',
+              '--project-root',
+              root,
+              '--native-session-handle',
+              ownerHandle,
+              '--request',
+              'request.json',
+            ];
+          const assertUnchanged = (expectedArtifact: typeof artifactBytes) => {
+            expect(readFileSync(configPath)).toEqual(configBefore);
+            expect(readFileSync(initializationPath)).toEqual(initializationBefore);
+            expect(readFileSync(requestPath)).toEqual(requestBytes);
+            expect(readFileSync(artifactPath)).toEqual(expectedArtifact);
+            expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+            expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+          };
+          mkdirSync(path.dirname(artifactPath), { recursive: true });
+          writeFileSync(requestPath, requestBytes);
+          writeFileSync(artifactPath, baselineBytes);
+          await assert.rejects(
+            run(args),
+            (error: unknown) =>
+              error instanceof Error && error.message === 'Retired-source original issue mapping differs',
+          );
+          assertUnchanged(baselineBytes);
+          writeFileSync(artifactPath, artifactBytes);
+          await assert.rejects(
+            run(args),
+            (error: unknown) => error instanceof Error && error.message === entry.message,
+          );
+          assertUnchanged(artifactBytes);
+          complete = true;
+        } finally {
+          if (complete) rmSync(root, { recursive: true, force: true });
+          else process.stderr.write(`Retained failed retired-source native decoder root (${entry.name}): ${root}\n`);
         }
       }
     },
