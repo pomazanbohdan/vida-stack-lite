@@ -925,7 +925,6 @@ export function repairAuthority(
         'plan_sha256',
         'pointer',
         'selector_intent_sha256',
-        'evidence',
       ],
     ) ||
     !exactStringFields(

@@ -100,9 +100,10 @@ missing positive repair/forward producer qualification stays OPEN, not skipped.
 
 ### Current run attribution architecture
 
-At17:06:31UTC the bounded Git author-date view for14:06:31–17:06:31UTC contains
-seven commits, three code/test corrections and four plan/result records. This is
-Git history, not an operation, tool-call or token count. Six completed coverage
+At17:53:02UTC the bounded Git committer-date view for14:53:02–17:53:02UTC contains
+eight commits, four code/test corrections and four plan/result records, from
+92674f1 through8a28450. This is Git history, not an operation, tool-call or token
+count. Six completed coverage
 packets since2641 through2750 raise F126/L711/S753/B679 to F218/L1080/S1149/B1209, with the
 same557/2863/3143/3663denominators and Source fingerprint; that longer comparison
 is not a three-hour delta. Historical exact17/46
@@ -110,6 +111,22 @@ does not rise. That window confirms test-harness UNKNOWN retention and test-orac
 the masked action assertion and unchecked baseline overwrite. Later2759/2763
 causally demonstrate and correct the repair evidence string/array contradiction,
 a product parser bug. Its measured Source identity is owned by2767 above.
+
+The current audit reuses2743/2750/2763/2767 receipts and2769's retained gap map.
+Strict/lint precede grouped causal cases, followed by independent review and one
+changed-input stage.2759's cheap parser red precedes the35.18s genuine grouped
+2763 check and139.19s complete2767 suite. These different scopes and inputs prove
+no speedup ratio. A full stage per assertion or after failed static checks would
+repeat unresolved setup without qualifying the local correction. Disjoint blind
+design/review lanes remain useful alongside Root preparation; compiler, numeric,
+index and cleanup concurrency remains unqualified. There is no new benchmark,
+full suite, AST inventory or hash sweep for this audit. Exact tool-call/token
+totals and savings are unavailable. The bounded current Source review confirms
+no additional justified global configuration cache, repeated-hash removal or
+capture rewrite beyond the published fixes. Existing final native receipts,
+readiness/artifact reuse, timeouts, retention and report publication retain their
+owners. Disk observations and unresolved privileged custody remain as recorded
+above; no deletion or timer change occurs.
 
 2712's independent native Source trace disproves the broad premise that positive
 selected CLI calls all use private copies. The CAS/report case's first
@@ -339,6 +356,52 @@ comment-agent execution is claimed. Publish the checked packet before the sole
 changed-input stage. 2766 publishesebe8373 after normal formatting533/strict540 hooks and terminal
 commit/push0.2767 is the sole changed-input measurement recorded above; no full
 producer is repeated for the audit or preceding failed assertion/type checks.
+
+### Parent evidence, forward DTO and report retry packet
+
+2771/2772/2773 are disjoint blind native design/review studies of the current
+run contour, using fresh Pstack contracts and2769's existing map.2773 independently
+confirms a second parser contradiction: parentDecision.evidence is both a
+required string and an exact six-kind record. Root removes only its entry from
+the string-field list, retaining the required key and all item/path/digest guards.
+The negative parent/child DTO chain contains inert FixtureCutoverEvidence/v1
+bytes and untrusted status strings, never actual passed reviews or accepted
+history. Its one mismatched parent evidence digest must reach the existing
+parent-evidence refusal. No positive authority or cutover is exercised.
+
+2774 prepares one complete tests-only proposal in its unique diagnostic directory.
+Root checks the complete unified diff against current bytes before applying it,
+then confirms byte equality with the complete proposed test file. Root consolidates
+the prior flat snapshot helpers into one bounded recursive fixture reader; names,
+directory membership and every regular-file byte remain part of the oracle.
+The forward matrix shares one linked header builder and one evidence array across
+19malformed DTO controls, including all five changed-member field types. Each
+refuses before review receipt reads and preserves the complete owned fixture.
+The genuine admitted CAS case adds exact final-report retrieval and a different
+summary with recomputed envelope digest. Both preserve the inspected Work,
+Ledger, Journal, lease and admission projection; the original report is restored
+in finally. Retrieval returns before downstream normalization, so no normalization
+or positive forward-history coverage is inferred from retry.
+
+2776 strict rejects an unknown retry-version value before any runtime check.
+Root reuses the maintained typed result parser instead of a cast.2777 strict159
+and lint0 pass, then the precise parent regression fails as predicted with
+Repair parent authority is invalid instead of Repair parent evidence is invalid.
+Retain its original log and
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-repair-parent-evidence-LCu9go`.
+After the one-entry Source correction,2778 strict159/lint0 pass and five affected
+cases pass, including the35.002s genuine CAS/report case, while the forward matrix
+fails because its extended parent selector omits activation_decision_sha256.
+That incomplete DTO is retained at
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-forward-linked-refusal-iw0KPi`.
+Root adds the required inert header binding and a string-evidence control.
+2779 strict159/lint0 and the changed forward case pass,19controls/38expects in
+1.332s including Bun startup. The unchanged genuine CAS case is not repeated.
+No full stage has run for these intermediate failures.2775's fresh independent
+review returns PASS for the complete current code patch and affected contracts.
+Root's2780 documentation check passes4documents/35local links and whitespace
+validation. No code comment or suppression changes. Final publication precedes
+the one changed-input stage; bun-cli-run remains OPEN.
 
 ### Run artifact boundary and UNKNOWN capture packet
 

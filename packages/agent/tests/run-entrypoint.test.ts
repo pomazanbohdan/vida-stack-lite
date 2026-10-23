@@ -3280,6 +3280,168 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     plan_sha256: 'b'.repeat(64),
   };
 
+  const snapshotAuthorityFixture = (root: string) => {
+    const entries: { path: string; kind: 'directory' | 'file'; bytes?: string }[] = [];
+    const visit = (relative: string) => {
+      for (const name of readdirSync(path.join(root, relative)).sort()) {
+        const child = relative ? `${relative}/${name}` : name;
+        const file = path.join(root, ...child.split('/'));
+        const info = lstatSync(file);
+        if (info.isSymbolicLink()) throw new Error('authority fixture contains a symbolic link');
+        if (info.isDirectory()) {
+          entries.push({ path: child, kind: 'directory' });
+          visit(child);
+        } else if (info.isFile()) {
+          entries.push({ path: child, kind: 'file', bytes: readFileSync(file).toString('base64') });
+        } else throw new Error('authority fixture contains an unsupported entry');
+      }
+    };
+    visit('');
+    return entries;
+  };
+
+  const buildForwardRefusalFixture = (
+    root: string,
+    change: (records: {
+      plan: Record<string, unknown>;
+      authorization: Record<string, unknown>;
+      parent: Record<string, unknown>;
+      evidence: Record<string, unknown>[];
+    }) => void,
+  ) => {
+    const digestRecord = (value: unknown) => createHash('sha256').update(record(value)).digest('hex');
+    const generation = 'fixture-forward-child';
+    const parentGeneration = 'fixture-forward-parent';
+    const archiveManifestSha256 = 'a'.repeat(64);
+    const oldPayloadManifestSha256 = 'c'.repeat(64);
+    const newPayloadManifestSha256 = 'e'.repeat(64);
+    const parent = {
+      schema: 'ActiveRuntimeSelector/v1',
+      generation: parentGeneration,
+      runtime: 'vida-agent',
+      bundle_root: 'vida-agent',
+      config_path: 'agent-runtime.config.v1.yaml',
+      archive_manifest_sha256: archiveManifestSha256,
+      plan_sha256: 'b'.repeat(64),
+      payload_manifest_sha256: oldPayloadManifestSha256,
+      state_policy: 'forward_only_preserve_work',
+      activation_decision_sha256: '8'.repeat(64),
+    };
+    const changed = [
+      {
+        path: 'vida-agent/bin/run.mjs',
+        old_sha256: 'd'.repeat(64),
+        new_sha256: 'e'.repeat(64),
+        old_size: 1,
+        new_size: 1,
+      },
+    ];
+    const evidence: Record<string, unknown>[] = [
+      {
+        kind: 'assurance',
+        path: 'fixture-assurance.json',
+        sha256: '1'.repeat(64),
+        reverse_path: 'fixture-assurance-reverse.json',
+        reverse_sha256: '2'.repeat(64),
+        status: 'passed',
+      },
+      {
+        kind: 'correctness',
+        path: 'fixture-correctness.json',
+        sha256: '3'.repeat(64),
+        reverse_path: 'fixture-correctness-reverse.json',
+        reverse_sha256: '4'.repeat(64),
+        status: 'passed',
+      },
+      {
+        kind: 'security',
+        path: 'fixture-security.json',
+        sha256: '5'.repeat(64),
+        reverse_path: 'fixture-security-reverse.json',
+        reverse_sha256: '6'.repeat(64),
+        status: 'passed',
+      },
+    ];
+    const plan: Record<string, unknown> = {
+      schema: 'VidaForwardUpdateMaintenance/v1',
+      operation_id: generation,
+      operator: 'fixture-owner',
+      parent_generation: parentGeneration,
+      parent_selector_sha256: digestRecord(parent),
+      parent_cutoff_sha256: '7'.repeat(64),
+      first_admitted_work_attempt: null,
+      old_payload_manifest_sha256: oldPayloadManifestSha256,
+      new_payload_manifest_sha256: newPayloadManifestSha256,
+      changed,
+      preserved_mutable_outputs: [],
+    };
+    const authorization: Record<string, unknown> = {
+      schema: 'VidaForwardUpdateAuthorization/v1',
+      operation_id: generation,
+      operator: 'fixture-owner',
+      outcome: 'approved',
+      pointer: 'fixture:untrusted-forward-parser-input',
+      plan_sha256: digestRecord(plan),
+      evidence,
+    };
+    change({ plan, authorization, parent, evidence });
+    plan.parent_selector_sha256 = digestRecord(parent);
+    authorization.plan_sha256 = digestRecord(plan);
+    const decision = {
+      schema: 'VidaForwardUpdateDecision/v1',
+      operation_id: generation,
+      operator: 'fixture-owner',
+      plan_sha256: digestRecord(plan),
+      authorization_sha256: digestRecord(authorization),
+      selector_intent_sha256: '',
+      outcome: 'approved',
+    };
+    const selectorIntent: Parameters<typeof forwardUpdateAuthority>[1] = {
+      schema: 'ActiveRuntimeSelector/v1',
+      generation,
+      runtime: 'vida-agent',
+      bundle_root: 'vida-agent',
+      config_path: 'agent-runtime.config.v1.yaml',
+      archive_manifest_sha256: parent.archive_manifest_sha256,
+      plan_sha256: digestRecord(plan),
+      payload_manifest_sha256: newPayloadManifestSha256,
+      state_policy: 'forward_only_preserve_work',
+    };
+    decision.selector_intent_sha256 = digestRecord(selectorIntent);
+    const selector = { ...selectorIntent, activation_decision_sha256: digestRecord(decision) };
+    const selectorSha = digestRecord(selector);
+    const commit = {
+      schema: 'VidaForwardUpdateSelectorCommit/v1',
+      operation_id: generation,
+      plan_sha256: selector.plan_sha256,
+      decision_sha256: selector.activation_decision_sha256,
+      selector_sha256: selectorSha,
+    };
+    const cutoff = {
+      schema: 'VidaNewWorkCutoffWitness/v1',
+      generation,
+      selector_sha256: selectorSha,
+      first_admitted_work_attempt: plan.first_admitted_work_attempt,
+    };
+    const release = {
+      schema: 'VidaForwardUpdateRelease/v1',
+      operation_id: generation,
+      operator: 'fixture-owner',
+      lock_sha256: digestRecord(plan),
+      status: 'released_by_explicit_operator_action',
+    };
+    mkdirSync(root, { recursive: true });
+    writeFileSync(path.join(root, 'forward-intent.v1.json'), record(plan));
+    writeFileSync(path.join(root, 'forward-authorization.v1.json'), record(authorization));
+    writeFileSync(path.join(root, 'forward-decision.v1.json'), record(decision));
+    writeFileSync(path.join(root, 'forward-selector-commit.v1.json'), record(commit));
+    writeFileSync(path.join(root, 'parent-selector.v1.json'), record(parent));
+    writeFileSync(path.join(root, 'maintenance-lock.released.v1.json'), record(plan));
+    writeFileSync(path.join(root, 'maintenance-release.v1.json'), record(release));
+    writeFileSync(path.join(root, 'cutoff-witness.json'), record(cutoff));
+    return { selector, selectorSha };
+  };
+
   test('forward authority rejects a repeated generation and an eight-record parent chain before reading', () => {
     for (const [name, seen] of [
       ['repeated generation', new Set(['selected-generation'])],
@@ -3345,17 +3507,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         for (const [name, companionSchema] of companionRecords)
           writeFileSync(path.join(root, name), `${JSON.stringify({ schema: companionSchema }, null, 2)}\n`);
       }
-      const snapshot = () => ({
-        entries: readdirSync(root).sort(),
-        bytes:
-          kind === 'nonregular'
-            ? []
-            : readdirSync(root)
-                .sort()
-                .map((name) => [name, readFileSync(path.join(root, name)).toString('base64')]),
-        directoryEntries: kind === 'nonregular' ? readdirSync(recordPath).sort() : [],
-      });
-      const before = snapshot();
+      const before = snapshotAuthorityFixture(root);
       let caught: unknown;
       try {
         if (reader === 'repair') repairAuthority(root, authorityRefusalSelector, '', root, true);
@@ -3379,7 +3531,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         code: 'GAP-VIDA-RUN-SELECTOR-001',
         message,
       });
-      expect(snapshot()).toEqual(before);
+      expect(snapshotAuthorityFixture(root)).toEqual(before);
       completed = true;
     } finally {
       if (completed) rmSync(root, { recursive: true, force: true });
@@ -3403,10 +3555,6 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         [null],
         'string control',
       ];
-      const snapshot = () =>
-        readdirSync(root)
-          .sort()
-          .map((name) => [name, readFileSync(path.join(root, name)).toString('base64')]);
       for (const evidence of invalidEvidence) {
         const authorization = {
           schema: 'VidaActiveLauncherRepairAuthorization/v1',
@@ -3471,7 +3619,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         writeFileSync(path.join(root, 'repair-authorization.v1.json'), record(authorization));
         writeFileSync(path.join(root, 'repair-decision.v1.json'), record(decision));
         writeFileSync(path.join(root, 'repair-selector-commit.v1.json'), record(commit));
-        const before = snapshot();
+        const before = snapshotAuthorityFixture(root);
         let caught: unknown;
         try {
           repairAuthority(root, selector, selectorSha, root, true);
@@ -3482,7 +3630,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           code: 'GAP-VIDA-RUN-SELECTOR-001',
           message: 'Repair review bindings are invalid.',
         });
-        expect(snapshot()).toEqual(before);
+        expect(snapshotAuthorityFixture(root)).toEqual(before);
       }
       completed = true;
     } finally {
@@ -3494,6 +3642,390 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   test('forward authority rejects malformed first controller records without writes', () => {
     for (const kind of ['missing', 'nonregular', 'json', 'scalar', 'noncanonical', 'schema', 'fields'] as const)
       rejectFirstAuthorityRecord('forward', kind);
+  });
+
+  test('forward authority refuses linked malformed records before reading review receipts or writing', () => {
+    const changedMemberFieldCases: readonly [
+      string,
+      'path' | 'old_sha256' | 'new_sha256' | 'old_size' | 'new_size',
+      unknown,
+    ][] = [
+      ['path', 'path', null],
+      ['old digest', 'old_sha256', 7],
+      ['new digest', 'new_sha256', null],
+      ['old size', 'old_size', '1'],
+      ['new size', 'new_size', null],
+    ];
+    const cases: readonly {
+      name: string;
+      change: Parameters<typeof buildForwardRefusalFixture>[1];
+      message: string;
+    }[] = [
+      {
+        name: 'plan required header type',
+        change: ({ plan }) => {
+          plan.parent_generation = 7;
+        },
+        message: 'Forward update proof is invalid.',
+      },
+      {
+        name: 'authorization required header type',
+        change: ({ authorization }) => {
+          authorization.pointer = null;
+        },
+        message: 'Forward update proof is invalid.',
+      },
+      {
+        name: 'optional first admitted attempt type',
+        change: ({ plan }) => {
+          plan.first_admitted_work_attempt = true;
+        },
+        message: 'Forward update records are invalid.',
+      },
+      {
+        name: 'changed collection type',
+        change: ({ plan }) => {
+          plan.changed = null;
+        },
+        message: 'Forward update records are invalid.',
+      },
+      {
+        name: 'preserved collection type',
+        change: ({ plan }) => {
+          plan.preserved_mutable_outputs = null;
+        },
+        message: 'Forward update records are invalid.',
+      },
+      {
+        name: 'changed collection member type',
+        change: ({ plan }) => {
+          plan.changed = [null];
+        },
+        message: 'Forward update records are invalid.',
+      },
+      ...changedMemberFieldCases.map(([fieldName, field, value]) => ({
+        name: `changed collection member ${fieldName} type`,
+        change: ({ plan }: { plan: Record<string, unknown> }) => {
+          plan.changed = [
+            {
+              path: 'vida-agent/bin/run.mjs',
+              old_sha256: 'd'.repeat(64),
+              new_sha256: 'e'.repeat(64),
+              old_size: 1,
+              new_size: 1,
+              [field]: value,
+            },
+          ];
+        },
+        message: 'Forward update records are invalid.',
+      })),
+      {
+        name: 'parent selector missing required fields',
+        change: ({ parent }) => {
+          for (const key of ['generation', 'runtime', 'bundle_root', 'config_path', 'plan_sha256']) delete parent[key];
+        },
+        message: 'Forward parent selector is invalid.',
+      },
+      {
+        name: 'parent selector extra field',
+        change: ({ parent }) => {
+          parent.unexpected = 'untrusted fixture field';
+        },
+        message: 'Forward parent selector is invalid.',
+      },
+      {
+        name: 'review evidence wrong length',
+        change: ({ authorization }) => {
+          authorization.evidence = [];
+        },
+        message: 'Forward review bindings are invalid.',
+      },
+      {
+        name: 'review evidence wrong kinds',
+        change: ({ evidence }) => {
+          const first = evidence[0];
+          if (!first) throw new Error('forward review fixture item is missing');
+          evidence[0] = { ...first, kind: 'other' };
+        },
+        message: 'Forward review bindings are invalid.',
+      },
+      {
+        name: 'review evidence null',
+        change: ({ authorization }) => {
+          authorization.evidence = null;
+        },
+        message: 'Forward review bindings are invalid.',
+      },
+      {
+        name: 'review evidence string',
+        change: ({ authorization }) => {
+          authorization.evidence = 'untrusted parser input';
+        },
+        message: 'Forward review bindings are invalid.',
+      },
+      {
+        name: 'kind-valid review item with invalid status',
+        change: ({ evidence }) => {
+          const first = evidence[0];
+          if (!first) throw new Error('forward review fixture item is missing');
+          evidence[0] = { ...first, status: 'reviewed' };
+        },
+        message: 'Forward review evidence is invalid.',
+      },
+      {
+        name: 'kind-valid review item with invalid field shape',
+        change: ({ evidence }) => {
+          const first = evidence[0];
+          if (!first) throw new Error('forward review fixture item is missing');
+          evidence[0] = { ...first, path: null };
+        },
+        message: 'Forward review evidence is invalid.',
+      },
+    ];
+    for (const scenario of cases) {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-forward-linked-refusal-'));
+      let completed = false;
+      try {
+        const { selector, selectorSha } = buildForwardRefusalFixture(root, scenario.change);
+        const before = snapshotAuthorityFixture(root);
+        let caught: unknown;
+        try {
+          forwardUpdateAuthority(root, selector, selectorSha, root, true);
+        } catch (error) {
+          caught = error;
+        }
+        expect(caught).toMatchObject({ code: 'GAP-VIDA-RUN-SELECTOR-001', message: scenario.message });
+        expect(snapshotAuthorityFixture(root)).toEqual(before);
+        completed = true;
+      } finally {
+        if (completed) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed forward linked refusal (${scenario.name}): ${root}\n`);
+      }
+    }
+  });
+
+  test('repair authority refuses a mismatched parent evidence digest without writes', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-repair-parent-evidence-'));
+    let completed = false;
+    try {
+      const digestRecord = (value: unknown) => createHash('sha256').update(record(value)).digest('hex');
+      const parentGeneration = 'fixture-repair-parent';
+      const childGeneration = 'fixture-repair-child';
+      const parentRoot = path.join(root, '.agent', 'cutover', parentGeneration);
+      const childRoot = path.join(root, '.agent', 'cutover', childGeneration);
+      mkdirSync(parentRoot, { recursive: true });
+      mkdirSync(childRoot, { recursive: true });
+      const archiveManifestSha256 = 'a'.repeat(64);
+      const parentPayloadManifestSha256 = 'b'.repeat(64);
+      const parentLauncherSha256 = 'c'.repeat(64);
+      const successorPayloadManifestSha256 = 'd'.repeat(64);
+      const successorLauncherSha256 = 'e'.repeat(64);
+      const parentIntent = {
+        schema: 'ActiveRuntimeSelector/v1',
+        generation: parentGeneration,
+        runtime: 'vida-agent',
+        bundle_root: 'vida-agent',
+        config_path: 'agent-runtime.config.v1.yaml',
+        archive_manifest_sha256: archiveManifestSha256,
+        plan_sha256: 'f'.repeat(64),
+        payload_manifest_sha256: parentPayloadManifestSha256,
+        state_policy: 'clean_start_no_ticket_transfer',
+      };
+      const parentEvidence = Object.fromEntries(
+        ['parity', 'security', 'assurance', 'rollback', 'dev', 'staged_runtime'].map((kind, index) => {
+          const relativePath = `.agent/cutover/${parentGeneration}/${kind}-evidence.json`;
+          const bytes = Buffer.from(record({ schema: 'FixtureCutoverEvidence/v1', kind }));
+          writeFileSync(path.join(root, ...relativePath.split('/')), bytes);
+          return [
+            kind,
+            {
+              actor: 'untrusted fixture datum',
+              path: relativePath,
+              pointer: `fixture:untrusted-parent-${kind}`,
+              sha256: index === 0 ? '0'.repeat(64) : createHash('sha256').update(bytes).digest('hex'),
+              status: 'passed',
+            },
+          ];
+        }),
+      );
+      const parentDecision = {
+        schema: 'VidaCutoverActivationDecision/v1',
+        actor: 'untrusted fixture datum',
+        cutover_id: parentGeneration,
+        evidence: parentEvidence,
+        outcome: 'approved',
+        payload_manifest_sha256: parentIntent.payload_manifest_sha256,
+        plan_sha256: parentIntent.plan_sha256,
+        pointer: 'fixture:untrusted-parent-decision',
+        selector_intent_sha256: digestRecord(parentIntent),
+      };
+      const parentSelector = {
+        ...parentIntent,
+        activation_decision_sha256: digestRecord(parentDecision),
+      };
+      const parentSha = digestRecord(parentSelector);
+      const parentCommit = {
+        schema: 'VidaPreparedSelectorCommit/v1',
+        cutover_id: parentGeneration,
+        plan_sha256: parentSelector.plan_sha256,
+        activation_decision_sha256: parentSelector.activation_decision_sha256,
+        selector_sha256: parentSha,
+      };
+      const parentJournal = {
+        schema: 'VidaPreparedInstallJournal/v1',
+        cutover_id: parentGeneration,
+        plan_sha256: parentSelector.plan_sha256,
+        archive_manifest_sha256: archiveManifestSha256,
+        payload_manifest_sha256: parentPayloadManifestSha256,
+        archive_scope: 'fixture-parent-scope',
+        state_policy: parentSelector.state_policy,
+        status: 'installing',
+      };
+      const parentReady = {
+        schema: 'VidaPreparedInstallReady/v1',
+        cutover_id: parentGeneration,
+        plan_sha256: parentSelector.plan_sha256,
+        archive_scope: parentJournal.archive_scope,
+        state_policy: parentSelector.state_policy,
+        status: 'ready_for_selector',
+      };
+      const parentLock = {
+        schema: 'VidaCutoverMaintenanceLock/v1',
+        cutover_id: parentGeneration,
+        operator: 'fixture-owner',
+        attestation: 'old_runtime_quiesced',
+        archive_manifest_sha256: archiveManifestSha256,
+        plan_sha256: parentSelector.plan_sha256,
+        payload_manifest_sha256: parentPayloadManifestSha256,
+        expected_file_count: 0,
+        archive_manifest: { manifest_sha256: archiveManifestSha256 },
+        plan: {
+          schema: 'VidaPreparedInstallPlan/v1',
+          plan_sha256: parentSelector.plan_sha256,
+          payload_manifest_sha256: parentPayloadManifestSha256,
+          archive_manifest_sha256: archiveManifestSha256,
+        },
+        state_policy: parentSelector.state_policy,
+        activation_decision_path: `.agent/cutover/${parentGeneration}/activation-decision.v1.json`,
+        activation_decision_sha256: parentSelector.activation_decision_sha256,
+      };
+      const parentRelease = {
+        schema: 'VidaCutoverMaintenanceRelease/v1',
+        cutover_id: parentGeneration,
+        operator: parentLock.operator,
+        lock_sha256: digestRecord(parentLock),
+        status: 'released_by_explicit_operator_action',
+      };
+      const parentCutoff = {
+        schema: 'VidaNewWorkCutoffWitness/v1',
+        generation: parentGeneration,
+        selector_sha256: parentSha,
+        first_admitted_work_attempt: null,
+      };
+      writeFileSync(path.join(root, '.agent', 'cutover', 'active-runtime-selector.v1.json'), record(parentSelector));
+      for (const [name, value] of [
+        ['selector-commit.json', parentCommit],
+        ['activation-decision.v1.json', parentDecision],
+        ['prepared-install.json', parentJournal],
+        ['install-ready.json', parentReady],
+        ['maintenance-lock.released.v1.json', parentLock],
+        ['maintenance-release.v1.json', parentRelease],
+        ['cutoff-witness.json', parentCutoff],
+      ] as const)
+        writeFileSync(path.join(parentRoot, name), record(value));
+
+      const childEvidence = ['assurance', 'correctness', 'security'].map((kind) => {
+        const relativePath = `.agent/cutover/${childGeneration}/${kind}-evidence.json`;
+        const bytes = Buffer.from(record({ schema: 'FixtureCutoverEvidence/v1', kind }));
+        writeFileSync(path.join(root, ...relativePath.split('/')), bytes);
+        return {
+          kind,
+          path: relativePath,
+          sha256: createHash('sha256').update(bytes).digest('hex'),
+          status: 'passed',
+        };
+      });
+      const repairAuthorization = {
+        schema: 'VidaActiveLauncherRepairAuthorization/v1',
+        repair_id: childGeneration,
+        operator: 'fixture-owner',
+        outcome: 'approved',
+        pointer: 'fixture:untrusted-child-parser-input',
+        old_generation: parentGeneration,
+        old_selector_sha256: parentSha,
+        old_payload_manifest_sha256: parentPayloadManifestSha256,
+        old_launcher_sha256: parentLauncherSha256,
+        new_payload_manifest_sha256: successorPayloadManifestSha256,
+        new_launcher_sha256: successorLauncherSha256,
+        evidence: childEvidence,
+      };
+      const repairPlan = {
+        schema: 'VidaActiveLauncherRepairPlan/v1',
+        repair_id: childGeneration,
+        operator: 'fixture-owner',
+        parent_cutover_id: parentGeneration,
+        parent_selector_sha256: parentSha,
+        parent_payload_manifest_sha256: parentPayloadManifestSha256,
+        parent_launcher_sha256: parentLauncherSha256,
+        successor_payload_manifest_sha256: successorPayloadManifestSha256,
+        successor_launcher_sha256: successorLauncherSha256,
+        archive_manifest_sha256: archiveManifestSha256,
+        authorization_sha256: digestRecord(repairAuthorization),
+      };
+      const childIntent: Parameters<typeof repairAuthority>[1] = {
+        schema: 'ActiveRuntimeSelector/v1',
+        generation: childGeneration,
+        runtime: 'vida-agent',
+        bundle_root: 'vida-agent',
+        config_path: 'agent-runtime.config.v1.yaml',
+        archive_manifest_sha256: archiveManifestSha256,
+        plan_sha256: digestRecord(repairPlan),
+        payload_manifest_sha256: successorPayloadManifestSha256,
+        state_policy: 'clean_start_no_ticket_transfer',
+      };
+      const repairDecision = {
+        schema: 'VidaActiveLauncherRepairDecision/v1',
+        repair_id: childGeneration,
+        operator: 'fixture-owner',
+        plan_sha256: childIntent.plan_sha256,
+        authorization_sha256: repairPlan.authorization_sha256,
+        selector_intent_sha256: digestRecord(childIntent),
+        outcome: 'approved',
+      };
+      const childSelector = {
+        ...childIntent,
+        activation_decision_sha256: digestRecord(repairDecision),
+      };
+      const childSha = digestRecord(childSelector);
+      const childCommit = {
+        schema: 'VidaActiveLauncherRepairSelectorCommit/v1',
+        repair_id: childGeneration,
+        plan_sha256: childSelector.plan_sha256,
+        decision_sha256: childSelector.activation_decision_sha256,
+        selector_sha256: childSha,
+      };
+      writeFileSync(path.join(childRoot, 'repair-plan.v1.json'), record(repairPlan));
+      writeFileSync(path.join(childRoot, 'repair-authorization.v1.json'), record(repairAuthorization));
+      writeFileSync(path.join(childRoot, 'repair-decision.v1.json'), record(repairDecision));
+      writeFileSync(path.join(childRoot, 'repair-selector-commit.v1.json'), record(childCommit));
+      writeFileSync(path.join(childRoot, 'parent-selector.v1.json'), record(parentSelector));
+      const before = snapshotAuthorityFixture(root);
+      let caught: unknown;
+      try {
+        repairAuthority(root, childSelector, childSha, childRoot, true);
+      } catch (error) {
+        caught = error;
+      }
+      expect(caught).toMatchObject({
+        code: 'GAP-VIDA-RUN-SELECTOR-001',
+        message: 'Repair parent evidence is invalid.',
+      });
+      expect(snapshotAuthorityFixture(root)).toEqual(before);
+      completed = true;
+    } finally {
+      if (completed) rmSync(root, { recursive: true, force: true });
+      else process.stderr.write(`Retained failed repair parent evidence fixture: ${root}\n`);
+    }
   });
 
   describe('vida-agent run mutation path', () => {
@@ -4149,6 +4681,45 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               expect(existsSync(planFile)).toBe(false);
             }
           }
+        }
+        const originalReportBytes = readFileSync(reportFile);
+        const submittedObservation = requireRecord(
+          parseJsonUnknown(originalReportBytes.toString('utf8')),
+          'last accepted session report',
+        );
+        const inspectClaimProjection = () => {
+          const observed = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+          return {
+            work: observed.work,
+            ledger: observed.ledger,
+            ledger_version: observed.ledger_version,
+            journals: observed.journals,
+            admission_attempts: observed.admission_attempts,
+          };
+        };
+        const beforeExactRetry = inspectClaimProjection();
+        const exactRetry = parseTestRunPayload(
+          await runSuccessfully([...admitted.args, ...expected(version), '--report', reportFile]),
+        );
+        expect(exactRetry.status).toBe('report_retrieved');
+        expect(exactRetry.recorded_observation).toEqual(submittedObservation);
+        expect(requireStateVersion(exactRetry.state_version)).toEqual(version);
+        expect(inspectClaimProjection()).toEqual(beforeExactRetry);
+
+        const originalSummary = submittedObservation.summary;
+        if (typeof originalSummary !== 'string') throw new Error('last accepted report summary is invalid');
+        const conflictingSummary = `${originalSummary}!`;
+        const conflictingReport = {
+          ...submittedObservation,
+          summary: conflictingSummary,
+          output_digest: canonicalJsonDigest(conflictingSummary),
+        };
+        try {
+          writeFileSync(reportFile, JSON.stringify(conflictingReport));
+          await assert.rejects(run([...admitted.args, ...expected(version), '--report', reportFile]), /retry differs/);
+          expect(inspectClaimProjection()).toEqual(beforeExactRetry);
+        } finally {
+          writeFileSync(reportFile, originalReportBytes);
         }
         completed = true;
       } finally {

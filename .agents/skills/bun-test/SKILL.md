@@ -294,6 +294,11 @@ then assert exact replay without continuing unrelated validation phases. Return
 the case's completion predicate when cleanup must retain a root after its deadline.
 The helper evaluates it after bridge/database closure. Check that the returned
 predicate is consumed; an early body success must not discard a late failed root.
+Trace an exact report retry's early return before assigning coverage credit. It
+can prove public parsing, recorded-observation retrieval and unchanged inspected
+state without executing the downstream normalizer. For the paired conflict,
+change one submitted field and recompute its ordinary envelope digest, then
+restore the original file in finally. Reuse the same genuine admitted attempt.
 For a composed Host lineage read, reuse its atomic view and captured versions.
 Do not rebuild the join from separate readers or serialize already validated
 large receipts under a smaller generic byte limit. A test-only policy adapter

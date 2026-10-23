@@ -32,6 +32,11 @@ stage remains BLOCKED; WORK owns the new Source binding and measured counters.
 Use2769's retained gap map and bounded real-caller/fixture analysis to group the
 next testable paths before another complete stage. Keep unsupported or absent
 producer prerequisites explicit; no new objective skip is established by this run.
+2774–2779 group the parent evidence type correction, linked forward DTO refusals
+and public report retrieval in one packet. WORK owns the causal red, corrected
+fixture premise and targeted outcomes. Complete independent review and ordinary
+publication before its sole changed-input stage; do not repeat the unchanged
+genuine CAS case for the later forward-only DTO correction.
 Preserve the same collector/readiness owners and do not add private alias admission.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts
 and do not replay historical UNKNOWN. Toolchain's2561 result and reviewed gaps

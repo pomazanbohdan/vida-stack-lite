@@ -398,6 +398,15 @@ validation. Digest-consistent invalid header DTOs with empty arrays, wrong kinds
 null entries and a string must reach the exact review-bindings refusal without
 changing the fixture file set or bytes. They never contain valid passed reviews
 or establish positive authority.
+The parent activation decision likewise requires evidence as an exact six-kind
+record, not a string. A linked parent/child negative DTO chain with inert
+FixtureCutoverEvidence/v1 bytes and one mismatched parent evidence digest must
+reach the parent-evidence refusal without writes. Synthetic status strings in
+these parser inputs do not attest reviews, native observations or accepted history.
+Forward negative DTOs keep their header digests coherent while varying required
+field types, plan collections, changed-file members, parent selector shape and
+review item shape. Each must refuse at its intended boundary before review receipt
+reads and preserve the complete bounded fixture tree.
 Retain failed roots. Positive parent chains still require their genuine producers;
 missing fixtures or child attribution remain engineering GAPs, not objective skips.
 
@@ -409,6 +418,11 @@ advances while its digest and complete payload stay unchanged. Continue issue
 with the returned Journal version; reject its stale predecessor. Preserve the
 observed Host projection, admission attempts and declared Source bytes across
 refusals. These checks do not claim full-database equality or a new lease identity.
+After the existing final report, exact public retry returns the recorded
+observation and current version with unchanged Work/Ledger/Journal/admission
+projection. A valid envelope with a different summary and recomputed output digest
+conflicts; restore its original report bytes in finally. The early retrieval path
+does not execute the downstream report normalizer or issue another action.
 
 Keep component and public CLI assertions separate when a fixture spans both.
 Reuse runSuccessfully and the real run API for preparation or a final report;
