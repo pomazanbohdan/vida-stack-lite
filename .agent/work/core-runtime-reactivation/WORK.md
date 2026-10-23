@@ -6,9 +6,10 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-development-controller only**;2422 measures the native
-Bun feature-adoption packet. Remaining paths stay OPEN, with2399 retained as prior
-gap navigation rather than a new coverage claim.
+The active contour is **bun-development-controller only**;2446 measures the
+checked construction-drift and self-contained lock-fallback packet. Its map2448
+retains14branch arms/10statements/3functions. Remaining paths stay OPEN; historical
+geometry is navigation rather than a new coverage claim.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
@@ -161,6 +162,25 @@ entry request with unchanged argv. This supports further child-counter design,
 not attributed controller hits or a qualified receipt. Its intentionally blocked
 CLI exit1 must retain that expected behavior; a proposed exit0-only child protocol
 would exclude the very error path being measured and is not adopted.
+
+2449 independently accepts a bounded optional-copy-list observation fault: forward
+every native existsSync query, return false only for the exact Source bun.lock,
+record its actual true observation, and leave native lstat/read lock bytes intact.
+The same actual installer still receives the private lock from the construction
+owner's unconditional write; its complete successful result precedes the private
+post-install corruption/refusal. This tests the omission branch, not a genuine
+missing Source file, SDK layout or concurrent Source mutation. Diagnostics-disabled
+execution now also asserts no stage marker reaches the scoped parent stderr.
+
+2450 passes strict103/lint and the complete13cases/222expect calls in36.81s.
+Review2451 finds a setup-failure cleanup gap before the old try/finally. Root arms
+the environment restore before mutation and each spy restore immediately after
+acquisition, then uses completeOwnedCleanup for setup, operation and cleanup errors.
+2454 reviews the corrected bytes with no blocking findings. Original2452 callback-
+typing failure remains retained;2453 passes strict103/lint and the affected case,
+1PASS/0FAIL/156expect calls in39.25s. The sole changed-input stage follows this
+checked packet's ordinary publication.2455 independently reviews four exact
+defensive counter candidates; no disposition or new count is assumed from a task.
 
 The product inspector now rejects persisted ready metadata with missing,
 non-passing or foreign-bound qualification before a child can run.2346 reproduces
@@ -343,6 +363,27 @@ lifecycle, TESTING, the plan and backlog; no second authority is created.
 ## Latest measurement custody
 
 ### Latest completed development-controller measurement
+
+Stage2446 /workspace/contour-stage-tE8nvy runs on Bun1.4.4 and
+Source1d60a7fd4d6eb605ede38a88d285defd09efb8ba,
+run89ae883e-921d-4313-9a60-24ae1a86fc2e. It completes in33677.026141ms,
+exit0/nullsignal/no timeout/spawn error, complete capture, closed group, unchanged
+boot/image and one automatic paired import. Native13PASS/0FAIL/221expect calls
+in29.58s. Raw **F59/62 L237/246 S268/278 B272/286** remains BLOCKED/nonexact;
+the packet visits2additional lines,3statements and5branch arms with unchanged
+denominators. MaxCC/entryCRAP17 remains diagnostic, with frozen/mutation deferred.
+
+Image /workspace/.vida-quality-inputs/6aa6f549fda89a3d0dce797e5b9499cb4ccd84c1/repository
+has manifestd50ec73e3325ea0deca340560b3aa5747b6131142bc126ee3217f67155618fac.
+2447 verifies/fsyncs the10240-byte non-cache archive at
+/workspace/vida-functional-retention-tE8nvy-Fx87IZ/archive.json; originals remain.
+Report-only map2448 joins the current native counters to retained exact Source
+geometry without another AST/hash/inventory pass. Branches27/68/73/75/77 are now
+visited; the remaining optional Source-lock copy-list observation is addressed
+next within the same contour. No contour closure or current global exact count
+increase is claimed.
+
+### Preceding Bun feature-adoption measurement
 
 Stage2422 /workspace/contour-stage-hUyQm8 runs on Bun1.4.4 and
 Source5aabf699207df925ff0192570e924fc6174f319e,

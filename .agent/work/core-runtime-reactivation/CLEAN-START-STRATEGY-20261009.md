@@ -33,9 +33,13 @@ denominators. Its testable and undispositioned paths stay in this active lane;
 parent entry/catch counters, so attribution remains OPEN rather than a skip.
 Construction-drift controls71e7a0f pass focused checks, but stage2437 exposes an
 incidental-build dependency in the private lock-fallback fixture. Correct that
-setup, preserve its terminal failure and obtain one changed-input stage before
-admitting any new counts. WORK binds the correction/review and native CLI loader
-prerequisites; first-import/query fixtures may not assume suite ordering.
+setup and preserve its terminal failure.2446 completes the corrected changed-input
+stage and visits five additional branch arms with unchanged denominators. The
+same contour's optional copy-list observation passes focused checks and independent
+review with full setup restoration; its changed-input stage follows publication.
+CLI attribution remains next.
+WORK binds the correction/review and native CLI loader prerequisites;
+first-import/query fixtures may not assume suite ordering.
 The configured-caller and filesystem-guide capture defects are repaired. WORK
 owns current metrics, red/green, reviews and exact evidence; no next contour opens.
 The original three-Source bun-session-handoff remains retired

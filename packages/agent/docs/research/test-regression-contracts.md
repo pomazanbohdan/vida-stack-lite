@@ -1299,7 +1299,14 @@ lock drift, forward the actual installer observation unchanged, mutate only the
 private copied lock, and require complete terminal/parent receipts with no ready
 metadata. Do not substitute a successful child DTO. Reuse that rejected construction
 for diagnostics-disabled execution and restore the environment before genuine
-qualification. The private lock-fallback fixture must work in a clean execution
+qualification. Its copy-list absence control may forward the native exact Source
+lock existence query and override only that observation: require one actual-true
+observation, untouched native lock reads/Source bytes and a complete real installer
+result. This is a false-negative observation fault, not actual Source absence or
+SDK-layout qualification. Check suppressed stage markers outside production catch
+boundaries. Arm environment restoration before mutation and each spy restoration
+immediately after acquisition; preserve setup/operation and cleanup errors through
+the existing cleanup owner. The private lock-fallback fixture must work in a clean execution
 image without relying on an incidental Source build. If the private package lacks
 its embedded portable lock, create that fixture resource exclusively from its
 actual root-lock bytes; otherwise check their equality. Remove/restore the root

@@ -282,36 +282,73 @@ test('qualified development controller preserves Source identity and accepts a s
     const installFaultRoot = path.join(scratch, 'install-lock-fault');
     const sourceLock = readPortableLock(packageRoot);
     const nativeInstall = controllerObservation.invokeObservedControllerChild;
+    const nativeExists = controllerFilesystem.existsSync;
     const installs: ReturnType<typeof nativeInstall>[] = [];
     const installCommands: string[][] = [];
+    const sourceLockObservations: boolean[] = [];
+    const disabledDiagnostics: string[] = [];
     const originalDiagnostics = process.env.VIDA_CONTROLLER_DIAGNOSTICS;
-    process.env.VIDA_CONTROLLER_DIAGNOSTICS = 'false';
-    const install = spyOn(controllerObservation, 'invokeObservedControllerChild').mockImplementation((input) => {
-      const result = nativeInstall(input);
-      installs.push(result);
-      installCommands.push([...input.args]);
-      if (
-        input.controllerRoot === installFaultRoot &&
-        result.status === 0 &&
-        result.signal === null &&
-        result.error === undefined &&
-        result.observation_complete
-      ) {
-        const lock = path.join(installFaultRoot, 'package/bun.lock');
-        writeFileSync(lock, Buffer.concat([readFileSync(lock), Buffer.from('\n')]));
-      }
-      return result;
-    });
+    const restoreFault: Array<() => undefined> = [
+      () => {
+        if (originalDiagnostics === undefined) delete process.env.VIDA_CONTROLLER_DIAGNOSTICS;
+        else process.env.VIDA_CONTROLLER_DIAGNOSTICS = originalDiagnostics;
+      },
+    ];
+    let faultFailure: { readonly error: unknown } | undefined;
     try {
+      process.env.VIDA_CONTROLLER_DIAGNOSTICS = 'false';
+      const presence = spyOn(controllerFilesystem, 'existsSync');
+      restoreFault.unshift(() => {
+        presence.mockRestore();
+      });
+      presence.mockImplementation((file) => {
+        const present = nativeExists(file);
+        if (file === path.join(packageRoot, 'bun.lock')) {
+          sourceLockObservations.push(present);
+          return false;
+        }
+        return present;
+      });
+      const diagnosticOutput = spyOn(process.stderr, 'write');
+      restoreFault.unshift(() => {
+        diagnosticOutput.mockRestore();
+      });
+      diagnosticOutput.mockImplementation((chunk: unknown) => {
+        disabledDiagnostics.push(String(chunk));
+        return true;
+      });
+      const install = spyOn(controllerObservation, 'invokeObservedControllerChild');
+      restoreFault.unshift(() => {
+        install.mockRestore();
+      });
+      install.mockImplementation((input) => {
+        const result = nativeInstall(input);
+        installs.push(result);
+        installCommands.push([...input.args]);
+        if (
+          input.controllerRoot === installFaultRoot &&
+          result.status === 0 &&
+          result.signal === null &&
+          result.error === undefined &&
+          result.observation_complete
+        ) {
+          const lock = path.join(installFaultRoot, 'package/bun.lock');
+          writeFileSync(lock, Buffer.concat([readFileSync(lock), Buffer.from('\n')]));
+        }
+        return result;
+      });
       await assert.rejects(
         prepareDevelopmentController({ target: sourceRoot, controllerRoot: installFaultRoot }),
         /Frozen controller lock changed during installation/,
       );
+    } catch (error) {
+      faultFailure = { error };
+      throw error;
     } finally {
-      install.mockRestore();
-      if (originalDiagnostics === undefined) delete process.env.VIDA_CONTROLLER_DIAGNOSTICS;
-      else process.env.VIDA_CONTROLLER_DIAGNOSTICS = originalDiagnostics;
+      completeOwnedCleanup(restoreFault, faultFailure);
     }
+    expect(sourceLockObservations).toEqual([true]);
+    expect(disabledDiagnostics.join('')).not.toContain('DevelopmentControllerStage/v1');
     expect(installs).toHaveLength(1);
     expect(installs[0]).toMatchObject({ status: 0, signal: null, observation_complete: true });
     expect(installCommands).toHaveLength(1);
