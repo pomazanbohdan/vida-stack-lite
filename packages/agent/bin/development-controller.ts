@@ -226,6 +226,12 @@ function requireMatchingQualification(qualification: Qualification, state: Contr
     throw new Error('Controller qualification did not establish the current package.');
 }
 
+function requireReadyQualification(state: ControllerState): void {
+  if (state.status !== 'ready') return;
+  if (state.qualification === undefined) throw new Error('Ready controller qualification is missing.');
+  requireMatchingQualification(state.qualification, state);
+}
+
 function errorMessage(value: unknown) {
   return value instanceof Error ? value.message : typeof value === 'string' ? value : 'Unknown failure';
 }
@@ -563,10 +569,7 @@ export async function inspectDevelopmentController({ controllerRoot }: { readonl
     state.engine !== path.join(controllerRoot, process.platform === 'win32' ? 'bun.exe' : 'bun')
   )
     throw new Error('Controller operational metadata differs.');
-  if (state.status === 'ready') {
-    if (state.qualification === undefined) throw new Error('Ready controller qualification is missing.');
-    requireMatchingQualification(state.qualification, state);
-  }
+  requireReadyQualification(state);
   targetRoot(state.target);
   canonicalDirectory(state.package_root);
   if (

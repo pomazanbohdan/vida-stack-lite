@@ -7,7 +7,7 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 ## Current sequential F/L/S/B cycle
 
 The active contour is **bun-development-controller only**; no new producer has
-started. Session-handoff-v2 and final-assurance have completed all testable paths
+started after completed2371. Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
 waiver or mutation acceptance. Historical exact F/L/S/B remains17/46.
@@ -88,6 +88,26 @@ failures are retained; they are not evidence of the guide assertion. The final
 capture control uses a focused import closure and runs no synthetic SDK producer.
 Independent2368 finds no material issue with capture ownership, bounds,
 deduplication or the unrelated-reader control.2369 documentation/diff checks pass.
+
+2371 completes the changed-input contour successfully; exact custody is below.
+Its report-only2372 map retains3missing functions,28statements and34branch arms.
+These are still OPEN, not objective skips or numeric closure. Existing counts
+have changed Source/geometry from the historical report; do not claim a paired
+coverage gain against that old denominator.
+
+The next checked packet adds a successful parent main/exec scope observation
+alongside the required native CLI child. The earlier child ran from the copied
+controller and did not visit the parent's execute/main counters. The two locations
+share one prepare/verify, without another SDK construction.2373 strict100/lint
+and8cases/92expect calls in32.38s pass. Independent2374 finds no guard-order,
+custody or error-semantics regression.
+2371 identifies inspectDevelopmentController as CC19. Move only the newly added
+ready-state invariant into requireReadyQualification at the same boundary,
+preserving the inspector's earlier ceiling and the unchanged new-callable10/10
+rule. This is a new invariant callable, not a reassignment of an old frozen role.
+The final report must establish its numeric values; no ceiling is raised and
+frozen correspondence/CRAP remain pending. Do not form another contour or call
+this one closed while its remaining testable/undispositioned paths are OPEN.
 
 ### Preceding measured repair packet
 
@@ -177,6 +197,25 @@ provenance, not current pending actions. Current rules remain with Sidecar,
 lifecycle, TESTING, the plan and backlog; no second authority is created.
 
 ## Latest measurement custody
+
+### Latest completed development-controller measurement
+
+Stage2371 /workspace/contour-stage-D5i6dJ runs on
+Sourceb452185c90c00249388f40eb71b6c421b2d9509a,
+run3ace48ff-1667-4b12-8aa0-6413f6f4b188. It completes in34616.228114ms,
+exit0 with no signal/timeout/spawn error, complete capture and observed group
+closure, unchanged boot/image and one automatic paired import. Native8PASS/
+0FAIL/91expect calls in29.20s. Raw **F58/61 L225/245 S248/276 B252/286** remains
+BLOCKED/nonexact. MaxCC/entryCRAP19 is diagnostic, not frozen acceptance.
+
+Image /workspace/.vida-quality-inputs/54918bf71f1e80dbcf887c88b036cd952e265e1e/repository
+has manifestb10442f1d7a268c7563ef17c7f9721e492ed45720926f21140be22425f9d73d1.
+Map2372 reuses the complete retained report/geometry, Source fingerprint
+20b3fcd9be84ddfac24bc4531faf6aa7930400ce032a9e8e81d640debbb4a7d5 and test fingerprint
+a5856d270b5b89542e9db294901765ebfa5ddc3dbeb6a951ef535ebc1000ecda.
+2372 verifies/fsyncs the10240-byte non-cache archive at
+/workspace/vida-functional-retention-D5i6dJ-y7yVq2/archive.json; originals remain.
+No frozen or mutation producer starts, and current global freshness is unverified.
 
 ### Latest completed final-assurance measurement
 

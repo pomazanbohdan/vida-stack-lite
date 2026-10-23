@@ -426,6 +426,39 @@ test('qualified development controller preserves Source identity and accepts a s
       }),
     );
     const execStarted = performance.now();
+    const execOutput: string[] = [];
+    const execStdout = spyOn(process.stdout, 'write').mockImplementation((chunk: unknown) => {
+      execOutput.push(String(chunk));
+      return true;
+    });
+    try {
+      await main([
+        'exec',
+        '--controller-root',
+        controllerRoot,
+        '--',
+        'scope',
+        '--project-root',
+        sourceRoot,
+        '--repository',
+        prepared.identity.repository_id,
+        '--project',
+        'agent',
+        '--path',
+        'packages/agent/bin/development-controller.ts',
+      ]);
+    } finally {
+      execStdout.mockRestore();
+    }
+    expect(JSON.parse(execOutput.join(''))).toMatchObject({
+      schema: 'ScopedSourceSnapshot/v1',
+      entries: [
+        {
+          path: 'packages/agent/bin/development-controller.ts',
+          exists: existsSync(path.join(sourceRoot, 'packages/agent/bin/development-controller.ts')),
+        },
+      ],
+    });
     const invoked = spawnSync(
       ready.engine,
       [
