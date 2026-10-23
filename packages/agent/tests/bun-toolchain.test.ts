@@ -2359,7 +2359,7 @@ test('embedded runtime rejects a linked package root', () => {
   }
 });
 
-test('bounded child diagnostics report the exact stage and terminal status', () => {
+test.each([undefined, 100])('bounded child diagnostics report the exact stage and terminal status: %s', (allowance) => {
   let captured = '';
   const capture = spyOn(process.stderr, 'write').mockImplementation((chunk) => {
     const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
@@ -2372,7 +2372,7 @@ test('bounded child diagnostics report the exact stage and terminal status', () 
       () => ({ status: 0, signal: null }),
       'fixture',
       [],
-      { env: {}, diagnostics: true, timeout: 100 },
+      { env: {}, diagnostics: true, timeout: allowance },
       'diagnostic fixture',
     );
     assert.equal(result.status, 0);
@@ -2385,7 +2385,8 @@ test('bounded child diagnostics report the exact stage and terminal status', () 
     assert.equal(Reflect.get(diagnostic, 'stage'), 'diagnostic fixture');
     assert.equal(Reflect.get(diagnostic, 'status'), 0);
     const timeout: unknown = Reflect.get(diagnostic, 'timeout_ms');
-    assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 100);
+    if (allowance === undefined) assert.equal(timeout, null);
+    else assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= allowance);
     assert.equal(typeof Reflect.get(diagnostic, 'elapsed_ms'), 'number');
     assert.equal(typeof Reflect.get(diagnostic, 'child_elapsed_ms'), 'number');
   } finally {
