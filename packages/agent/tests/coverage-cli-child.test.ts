@@ -920,7 +920,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                     '  db.exec("CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
                     '  const putState=db.prepare("INSERT INTO agent_host_state VALUES (?,?,?,?,?,?,?)");',
                     '  const putJournal=db.prepare("INSERT INTO agent_host_mastra_session_ledger VALUES (?,?,?,?,?,?,?)");',
-                    '  const work={schema:"WorkState/v1",workspace_id:fixture.workspaceId,revision:1,binding:{lifecycle_work_id:fixture.initialJournal.work_id,work_source_revision:"a".repeat(64),scope_contract_digest:fixture.scopeSha256},contracts:{scope:{path:fixture.scopePath,sha256:fixture.scopeSha256},acceptance:{path:fixture.acceptancePath,sha256:fixture.acceptanceSha256}},lease:{ticket_id:"ticket-"+fixture.actionId,thread_id:"thread-"+fixture.actionId,generation:1},execution:{run_id:fixture.initialJournal.run_id},artifacts:[{artifact_id:"local-session-intake",schema:"VidaLocalSessionIntake/v1",path:fixture.admittedIntakePath,sha256:fixture.admittedIntakeSha256}]};',
+                    '  const work={schema:"WorkState/v1",workspace_id:fixture.workspaceId,revision:1,binding:{lifecycle_work_id:fixture.initialJournal.work_id,work_source_revision:"a".repeat(64),scope_contract_digest:fixture.scopeSha256,acceptance_manifest_digest:fixture.acceptanceSha256},contracts:{scope:{path:path.relative(root,fixture.scopePath),sha256:fixture.scopeSha256},acceptance:{path:path.relative(root,fixture.acceptancePath),sha256:fixture.acceptanceSha256}},lease:{ticket_id:"ticket-"+fixture.actionId,thread_id:"thread-"+fixture.actionId,generation:1},execution:{run_id:fixture.initialJournal.run_id},artifacts:[{artifact_id:"local-session-intake",schema:"VidaLocalSessionIntake/v1",path:fixture.admittedIntakePath,sha256:fixture.admittedIntakeSha256}]};',
                     '  const claimId="claim-"+fixture.actionId; const secondClaimId="claim-secondary-"+fixture.actionId;',
                     '  const ledger={schema:"CoordinationLedger/v1",workspace_id:fixture.workspaceId,revision:1,tickets:[{ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active",claim_ids:[claimId,secondClaimId]}],claims:[{claim_id:claimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"},{claim_id:secondClaimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"}]};',
                     '  for (const [kind,id,value] of [["work",fixture.initialJournal.work_id,work],["ledger","shared",ledger]]) { const payload=JSON.stringify(value); putState.run(fixture.workspaceId,kind,id,1,payload,digest(payload),Buffer.from(payload)); }',
@@ -1481,6 +1481,42 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             'Work source revision differs from argv',
           );
           negative(
+            'issue-work-scope-contract-path-must-be-project-relative',
+            (ctx, row) =>
+              rewriteWorkState(ctx, row, (work) => {
+                const contracts = record(work.contracts);
+                const scope = record(contracts.scope);
+                scope.path = '../scope.json';
+              }),
+            false,
+            issueChildIndex,
+            'Work scope contract path escapes the project root',
+          );
+          negative(
+            'issue-work-scope-contract-path-must-not-be-absolute',
+            (ctx, row) =>
+              rewriteWorkState(ctx, row, (work) => {
+                const contracts = record(work.contracts);
+                const scope = record(contracts.scope);
+                scope.path = '/scope.json';
+              }),
+            false,
+            issueChildIndex,
+            'Work scope contract path must be relative to the project root',
+          );
+          negative(
+            'issue-work-scope-contract-digest-must-match-captured-input',
+            (ctx, row) =>
+              rewriteWorkState(ctx, row, (work) => {
+                const contracts = record(work.contracts);
+                const scope = record(contracts.scope);
+                scope.sha256 = 'b'.repeat(64);
+              }),
+            false,
+            issueChildIndex,
+            'Work scope contract does not match one parent-preparation metadata row',
+          );
+          negative(
             'issue-work-scope-binding-must-match-captured-contract',
             (ctx, row) =>
               rewriteWorkState(ctx, row, (work) => {
@@ -1489,7 +1525,42 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
               }),
             false,
             issueChildIndex,
-            'Work scope binding differs from the captured scope contract',
+            'Work scope binding differs from its captured contract',
+          );
+          negative(
+            'issue-work-acceptance-contract-path-must-stay-within-project-root',
+            (ctx, row) =>
+              rewriteWorkState(ctx, row, (work) => {
+                const contracts = record(work.contracts);
+                const acceptance = record(contracts.acceptance);
+                acceptance.path = '../acceptance.json';
+              }),
+            false,
+            issueChildIndex,
+            'Work acceptance contract path escapes the project root',
+          );
+          negative(
+            'issue-work-acceptance-contract-digest-must-match-captured-input',
+            (ctx, row) =>
+              rewriteWorkState(ctx, row, (work) => {
+                const contracts = record(work.contracts);
+                const acceptance = record(contracts.acceptance);
+                acceptance.sha256 = 'b'.repeat(64);
+              }),
+            false,
+            issueChildIndex,
+            'Work acceptance contract does not match one parent-preparation metadata row',
+          );
+          negative(
+            'issue-work-acceptance-binding-must-match-captured-contract',
+            (ctx, row) =>
+              rewriteWorkState(ctx, row, (work) => {
+                const binding = record(work.binding);
+                binding.acceptance_manifest_digest = 'b'.repeat(64);
+              }),
+            false,
+            issueChildIndex,
+            'Work acceptance binding differs from its captured contract',
           );
           negative(
             'issue-delete-returning-is-not-a-work-read',

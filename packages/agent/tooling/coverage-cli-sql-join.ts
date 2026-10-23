@@ -230,23 +230,28 @@ function assertHostIdentity(
   return { physical, connectionIds };
 }
 
-function checkPreparedContracts(work: RecordValue, preparedInputs: readonly RecordValue[]): void {
+function checkPreparedContracts(work: RecordValue, preparedInputs: readonly RecordValue[], root: string): void {
   const contracts = jsonRecord(work.contracts, 'Work contracts');
+  const binding = jsonRecord(work.binding, 'Work binding');
   for (const key of ['scope', 'acceptance']) {
     const ref = jsonRecord(contracts[key], `Work ${key} contract`);
     assert(text(ref.path) && digest(ref.sha256), `Work ${key} contract reference invalid`);
+    assert(!path.isAbsolute(ref.path), `Work ${key} contract path must be relative to the project root`);
+    const absolutePath = path.resolve(root, ref.path);
+    const relativePath = path.relative(root, absolutePath);
+    assert(
+      relativePath !== '' &&
+        relativePath !== '..' &&
+        !relativePath.startsWith('..' + path.sep) &&
+        !path.isAbsolute(relativePath),
+      `Work ${key} contract path escapes the project root`,
+    );
     const matches = preparedInputs.filter(
-      (row) => row.role === key && row.path === ref.path && row.sha256 === ref.sha256,
+      (row) => row.role === key && row.path === absolutePath && row.sha256 === ref.sha256,
     );
     assert(matches.length === 1, `Work ${key} contract does not match one parent-preparation metadata row`);
-    if (key === 'scope') {
-      const binding = jsonRecord(work.binding, 'Work binding');
-      assert.equal(
-        binding.scope_contract_digest,
-        ref.sha256,
-        'Work scope binding differs from the captured scope contract',
-      );
-    }
+    const bindingDigest = key === 'scope' ? binding.scope_contract_digest : binding.acceptance_manifest_digest;
+    assert.equal(bindingDigest, ref.sha256, `Work ${key} binding differs from its captured contract`);
   }
 }
 
@@ -590,7 +595,7 @@ export function validateIssueSqlConsumption(
     record(work.binding) && work.binding.work_source_revision === scopeDigest,
     'Work source revision differs from argv',
   );
-  checkPreparedContracts(work, input.preparedInputs);
+  checkPreparedContracts(work, input.preparedInputs, input.root);
   checkCurrentIntakeArtifact(work, input.intakeInput, input.root, workId);
   assert(
     record(work.lease) && text(work.lease.ticket_id) && text(work.lease.thread_id),
