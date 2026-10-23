@@ -973,7 +973,7 @@ During migration, use `tsconfig.checked-js.json` for one combined strict CLI/
 tooling check; it also remains mandatory for the staged precommit snapshot.
 The separate CLI and tooling commands remain available for focused checks.
 Do not add another full CLI/tooling pass to a successful all-maintained check.
-Bun 1.4.3's `bun check --project ... --no-pretty` owns these no-emit checks,
+The pinned Bun's `bun check --project ... --no-pretty` owns these no-emit checks,
 including the explicit all-maintained root list and staged snapshot project.
 Require the Source-selected Bun before executing the gate. Its embedded
 TypeScript 7 compiler replaces the previous no-emit subprocess; it does not

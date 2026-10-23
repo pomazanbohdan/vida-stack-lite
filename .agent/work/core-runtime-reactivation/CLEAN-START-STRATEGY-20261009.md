@@ -16,6 +16,9 @@ The active contour is **bun-development-controller**, selected after
 session-handoff-v2 and final-assurance completed all testable paths and bound
 their remaining independent objective dispositions. Both raw coverage outcomes
 remain BLOCKED/nonexact; their exact bindings are in WORK.
+The owner's Bun1.4.4 update changes the execution pin; historical1.4.3 measurements
+keep their original binding. Use fresh current-runtime admission and readiness
+before the next producer; the toolchain update alone does not qualify coverage.
 The current packet extends the persisted ready/qualification correction with
 grouped rejected child-adapter, filesystem and CLI refusal controls. Independent
 readers review remaining I/O and CLI prerequisites before one complete changed-

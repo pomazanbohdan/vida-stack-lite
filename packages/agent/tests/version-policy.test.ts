@@ -15,10 +15,11 @@ import {
   readDispositionProposal,
 } from '../../../tooling/agent/release-local.ts';
 import { validateCIDeliveryFormationMembers } from '../../../tooling/agent/release-ci-evidence.ts';
+import { readPin } from '../bin/bun.ts';
 
 type CIDeliveryRequest = Parameters<typeof normalizeLegacyReleaseDispatchIntent>[0]['request'];
 type CIDeliveryRequestBody = Omit<CIDeliveryRequest, 'request_id'>;
-const selectedBunPin = '1.4.3';
+const selectedBunPin = readPin();
 const historicalBunPin = '1.4.2';
 
 function isRecord(value: unknown): value is Record<string, unknown> {

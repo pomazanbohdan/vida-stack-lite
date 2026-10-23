@@ -14,6 +14,33 @@ bound below. This permits queue advancement, not exact100, numeric PASS, a froze
 waiver or mutation acceptance. Historical exact F/L/S/B remains17/46.
 Root owns canonical edits, final checks, Git and the sole numeric producer.
 
+### Bun1.4.4 toolchain update
+
+The owner's2026-10-23 instruction selects stable Bun1.4.4. Official release
+metadata confirms the published non-prerelease tag; the Linux x64 archive matches
+its official SHASUMS256 entry. Retained research/downloads and the old1.4.3
+executable are outside measured images at the exact path in
+DIAG/bun-upgrade-location-v2394.txt. The host launcher is atomically replaced;
+both direct Bun and bin/bun.ts now report1.4.4. .bun-version remains the sole
+runtime pin; --sync-pin updates engines.bun/packageManager. Cloud bootstrap already
+reads that owner and needs no new hardcoded version. Declaration dependencies and
+the frozen dependency lock remain unchanged. version-policy tests now read the
+same pin instead of maintaining another selected-runtime literal.
+
+Official [release notes](https://bun.com/blog/bun-v1.4.4) document checker changes
+and native coverage corrections; upstream speed claims are not local benchmarks.
+2395 passes89toolchain/version-policy cases with0failures in1.99s. The applicable
+commit hooks qualify current static/lint bytes separately. Prior2391 and all older
+coverage observations remain bound to their original1.4.3 runtime; this update
+does not re-attest them, form a new SDK/native artifact or grant Runtime acceptance.
+The owner's follow-up explicitly includes transparent coverage migration. The
+existing full/focused runCoverage and selected contour-stage routes share
+ensureSdkCoverageInputsForTests and the package pin. SDK receipt validation already
+requires both selectedPin and executing Bun.version, so an old1.4.3 artifact cannot
+silently qualify the1.4.4 run. The sole producer will form missing/stale SDK inputs
+automatically and publish the selected controller's new bound report after this
+checked Source packet. No parallel collector or manual receipt rewrite is needed.
+
 ### Current controller repair packet
 
 The product inspector now rejects persisted ready metadata with missing,

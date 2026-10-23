@@ -441,9 +441,9 @@
     "typescript": "7.0.2"
   },
   "engines": {
-    "bun": "1.4.3",
+    "bun": "1.4.4",
     "node": "26.11.1",
     "npm": "12.x"
   },
-  "packageManager": "bun@1.4.3"
+  "packageManager": "bun@1.4.4"
 }
