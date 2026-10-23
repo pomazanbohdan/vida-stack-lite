@@ -305,6 +305,24 @@ each refusal, with no workspace database or Work. Retain failed roots and keep
 the ordinary case deadline. These parser controls do not establish accepted
 native history or provider provenance.
 
+Native artifact path and size controls retain their regular-file baseline before
+creating a private symlink, hardlink, directory or oversized candidate. Apply the
+candidate kind only after baseline checks. Check link targets and target bytes,
+hardlink inode identity, and empty directory contents after refusal. Prefix
+acceptance for absent output or a truncated readonly command proves only that
+the decoder reaches missing issue mapping. No command runs and no issue is
+accepted.
+
+The run test invocation owner retains each UNKNOWN or rejected terminal result
+in a unique private scratch directory. Save the captured UTF-8 or Buffer streams,
+launch arguments and observed terminal/cleanup fields with exclusive writes.
+Record unavailable streams and incomplete capture explicitly. Keep the directory
+on the primary error and do not infer group closure or complete OS pipe capture.
+Set shared/caller retention flags before diagnostics. A callback failure must
+not prevent capture; aggregate diagnostic failures with the original UNKNOWN
+error and native cause. The existing native timeout control checks this owner
+without a second timeout child or a caller-owned duplicate writer.
+
 Other copied-wrapper and fresh-start environment children remain behavioral
 controls; they do not contribute measured counters.
 

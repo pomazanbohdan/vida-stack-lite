@@ -90,6 +90,56 @@ producer prerequisites remain OPEN engineering gaps, not objective skips.
 Use2701's exact zero-counter ranges and genuine maintained fixture producers for
 the next related batch. Keep the one active contour and all numeric gates.
 
+### Run artifact boundary and UNKNOWN capture packet
+
+2703 prepares one isolated native Luna proposal for remaining pre-issue-mapping
+boundaries;2704 independently confirms the UNKNOWN capture defect and compares
+three ownership choices. Both use bounded Source navigation, with no tests,
+compiler, indexing, Git, worktree or canonical writes. Root checks the complete
+proposal with `git apply --check` before integration. Root corrects the proposal's
+baseline kind checks, Buffer type widening and earlier item-id refusal, and
+replaces a duplicated absolute-reference refusal with root escape. The final
+table has29controls in10groups, with at most four fresh roots per ordinary case.
+Private link/directory/size cases and prefix-acceptance controls share the current
+request and unchanged-state owner. They supply no accepted issue or native history.
+
+The shared test `invoke` had no evidence owner for ordinary UNKNOWN callers.
+Its error exposed only2048-character tails, while the existing native timeout
+case wrote its own full capture and the mutation caller only set a retention flag.
+A throwing callback could also replace the UNKNOWN error. Root moves retention
+into that existing test invocation boundary and removes the callback's duplicate
+writer. Production `bin/bun.ts`, deadlines, environment and normal terminal
+results stay unchanged. Exclusive private artifacts retain captured UTF-8/Buffer
+streams, actual launch and observed native outcome, with unavailable/completeness
+limits explicit. No group closure is inferred. Both callback and capture failures
+preserve the primary UNKNOWN/native cause. The same native timeout child now
+throws from its callback and verifies automatic capture and exact error identity.
+
+The alternative of caller-owned copies leaves the confirmed omission in place.
+Moving this capture into `boundedSpawnSync` would change unrelated production
+callers and evidence ownership. Pstack's Laziness Protocol selects the existing
+test invocation boundary; Model the Domain keeps native artifact cases grouped
+by their actual guard. No separate capture framework or ledger is added.
+
+2705 saves current input diff before scoped strict158/lint0 and the11affected
+cases pass with401expects in6.01s. This selection contains10native groups and
+the existing UNKNOWN case. Earlier2699's full92case/115.51s result uses different
+inputs and scope; it is not a performance baseline for this selection.
+Static-first then targeted tests and independent review is retained.2696's actual
+static failure demonstrates that this order can reject bad inputs before another
+image/full producer. Starting the full producer first adds that work before the
+same diagnosis. Running static checks and native tests concurrently would share
+resources and disqualify timing comparisons; it has no measured benefit here.
+Two independent proposal/design readers run concurrently, while integration,
+checks, Git and the final producer remain serial. Tool-call/token totals and
+matched throughput measurements are unavailable; no numerical savings is claimed.
+2706's fresh independent native review passes current Source and all29DTO cases.
+It confirms capture continues after callback failure and preserves error identity.
+Absent-stream metadata and simultaneous filesystem capture failure have no native
+control in this packet. Those limits remain open, not claimed as verified.
+Documentation links and diff whitespace checks pass. Root retains ordinary hooks,
+normal push and the sole full changed-input stage.
+
 ### Run untrusted retired-artifact decoder packet
 
 2689's blind native Luna proposal covers only untrusted legacy read DTO refusals.

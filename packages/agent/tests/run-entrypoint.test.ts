@@ -31,9 +31,11 @@ import {
   cpSync,
   existsSync,
   linkSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readlinkSync,
   readdirSync,
   rmSync,
   symlinkSync,
@@ -2116,17 +2118,74 @@ function invoke(
   if (commandOutcomeUnknown(result) || !isTerminalUtf8SpawnResult(result)) {
     if (args.some((argument, index) => argument === '--project-root' && args[index + 1] === repositoryRoot))
       sharedRunOutcomeUnknown = true;
-    options.onUnknown?.(result);
     const tail = (value: unknown): string => {
       if (typeof value === 'string') return value.slice(-2048);
       if (value instanceof Uint8Array)
         return Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString('utf8').slice(-2048);
       return '';
     };
-    throw new Error(
+    const failure: Error & { evidenceRoot?: string } = new Error(
       `Public run child outcome is unknown (status=${result.status ?? 'null'} signal=${result.signal ?? 'none'} ` +
         `error=${result.error?.code ?? 'none'}).\nstdout tail:\n${tail(result.stdout)}\nstderr tail:\n${tail(result.stderr)}`,
+      { cause: result.error },
     );
+    const diagnosticFailures: unknown[] = [];
+    try {
+      options.onUnknown?.(result);
+    } catch (error) {
+      diagnosticFailures.push(error);
+    }
+    try {
+      const evidence = mkdtempSync(path.join(tmpdir(), 'vida-run-unknown-child-'));
+      failure.evidenceRoot = evidence;
+      failure.message += `\nUNKNOWN child evidence directory: ${evidence}`;
+      writeFileSync(
+        path.join(evidence, 'launch.json'),
+        JSON.stringify({
+          executable: process.execPath,
+          args: [entrypoint, ...args],
+          cwd: packageRoot,
+          requested_timeout_ms: options.childTimeout ?? 5_000,
+          encoding: 'utf8',
+        }),
+        { flag: 'wx' },
+      );
+      writeFileSync(path.join(evidence, 'stdout.log'), result.stdout ?? '', { flag: 'wx' });
+      writeFileSync(path.join(evidence, 'stderr.log'), result.stderr ?? '', { flag: 'wx' });
+      writeFileSync(
+        path.join(evidence, 'terminal.json'),
+        JSON.stringify({
+          pid: result.pid ?? null,
+          status: result.status,
+          signal: result.signal ?? null,
+          error: result.error
+            ? { name: result.error.name, message: result.error.message, code: result.error.code ?? null }
+            : null,
+          timeout_ms: result.timeoutMs ?? null,
+          timed_out: result.timedOut ?? false,
+          cleanup_attempted: result.cleanupAttempted ?? false,
+          cleanup_outcome: result.cleanupOutcome ?? null,
+          cleanup_status: result.cleanupStatus ?? null,
+          cleanup_error_code: result.cleanupErrorCode ?? null,
+          unknown: true,
+          command_outcome_unknown: commandOutcomeUnknown(result),
+          stdout_available: result.stdout !== undefined && result.stdout !== null,
+          stderr_available: result.stderr !== undefined && result.stderr !== null,
+          stdout_encoding:
+            typeof result.stdout === 'string' ? 'utf8' : Buffer.isBuffer(result.stdout) ? 'buffer' : null,
+          stderr_encoding:
+            typeof result.stderr === 'string' ? 'utf8' : Buffer.isBuffer(result.stderr) ? 'buffer' : null,
+          capture_encoding: 'utf8',
+          capture_complete: false,
+        }),
+        { flag: 'wx' },
+      );
+    } catch (error) {
+      diagnosticFailures.push(error);
+    }
+    if (diagnosticFailures.length)
+      throw new AggregateError([failure, ...diagnosticFailures], failure.message, { cause: failure });
+    throw failure;
   }
   return result;
 }
@@ -2162,19 +2221,7 @@ describe('vida-agent run entrypoint fast checks', () => {
       program,
       `process.stdout.write(${JSON.stringify(stdout)}); process.stderr.write(${JSON.stringify(stderr)}); setInterval(() => {}, 1000);\n`,
     );
-    const evidence = path.join(repositoryRoot, 'timeout-child-evidence');
-    mkdirSync(evidence);
-    writeFileSync(
-      path.join(evidence, 'launch.json'),
-      JSON.stringify({
-        executable: process.execPath,
-        args: [program, '--project-root', repositoryRoot],
-        cwd: packageRoot,
-        requested_timeout_ms: 1000,
-        encoding: 'utf8',
-      }),
-      { flag: 'wx' },
-    );
+    const callbackFailure = new Error('fixture UNKNOWN callback failed');
     let observed: ReturnType<typeof boundedSpawnSync> | undefined;
     let failure: unknown;
     try {
@@ -2183,28 +2230,7 @@ describe('vida-agent run entrypoint fast checks', () => {
         childTimeout: 1_000,
         onUnknown(result) {
           observed = result;
-          writeFileSync(path.join(evidence, 'stdout.log'), result.stdout ?? '', { flag: 'wx' });
-          writeFileSync(path.join(evidence, 'stderr.log'), result.stderr ?? '', { flag: 'wx' });
-          writeFileSync(
-            path.join(evidence, 'terminal.json'),
-            JSON.stringify({
-              pid: result.pid ?? null,
-              status: result.status,
-              signal: result.signal ?? null,
-              error: result.error
-                ? { name: result.error.name, message: result.error.message, code: result.error.code ?? null }
-                : null,
-              timeout_ms: result.timeoutMs ?? null,
-              timed_out: result.timedOut ?? false,
-              cleanup_attempted: result.cleanupAttempted ?? false,
-              cleanup_outcome: result.cleanupOutcome ?? null,
-              cleanup_status: result.cleanupStatus ?? null,
-              unknown: commandOutcomeUnknown(result),
-              capture_encoding: 'utf8',
-              capture_complete: false,
-            }),
-            { flag: 'wx' },
-          );
+          throw callbackFailure;
         },
       });
     } catch (error) {
@@ -2216,6 +2242,24 @@ describe('vida-agent run entrypoint fast checks', () => {
     expect(failure.message).toContain('inert-child-started');
     expect(failure.message).not.toContain('full-stdout-before-tail');
     expect(failure.message).not.toContain('full-stderr-before-tail');
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError) || !(failure.cause instanceof Error))
+      throw Error('UNKNOWN callback failure lost the primary operation error');
+    const primary = failure.cause;
+    expect(failure.errors).toEqual([primary, callbackFailure]);
+    expect(primary.cause).toBe(observed?.error);
+    if (!('evidenceRoot' in primary) || typeof primary.evidenceRoot !== 'string')
+      throw Error('UNKNOWN child capture directory was not retained');
+    const evidence = primary.evidenceRoot;
+    expect(requireRecord(parseJsonUnknown(readFileSync(path.join(evidence, 'launch.json'), 'utf8')), 'launch')).toEqual(
+      {
+        executable: process.execPath,
+        args: [program, '--project-root', repositoryRoot],
+        cwd: packageRoot,
+        requested_timeout_ms: 1000,
+        encoding: 'utf8',
+      },
+    );
     expect(readFileSync(path.join(evidence, 'stdout.log'), 'utf8')).toBe(stdout);
     expect(readFileSync(path.join(evidence, 'stderr.log'), 'utf8')).toBe(stderr);
     const terminal = requireRecord(
@@ -4732,6 +4776,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     name: string;
     artifact: unknown;
     message: string;
+    reference?: string;
+    fileKind?: 'symlink' | 'hardlink' | 'directory' | 'oversized';
   };
 
   type RetiredSourceNativeGroup = {
@@ -4853,6 +4899,163 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           ]),
           message: 'Retired-source truncated command output could hide an effect',
         },
+        {
+          name: 'truncated command with a write command remains unsafe',
+          artifact: retiredDecoderArtifact([
+            retiredDecoderTurn([
+              {
+                ...retiredDecoderCommand(),
+                command: 'Get-Content source.ts | Set-Content source.ts',
+                output: { text: 'partial read', truncated: true },
+              },
+            ]),
+          ]),
+          message: 'Retired-source truncated command output could hide an effect',
+        },
+      ],
+    },
+    {
+      name: 'remaining artifact and command shape bounds',
+      cases: [
+        {
+          name: 'decoded artifact must be an object',
+          artifact: [],
+          message: 'Retired-source native evidence must be an object',
+        },
+        {
+          name: 'thread status type must be nonempty',
+          artifact: {
+            ...retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand()])]),
+            data: {
+              ...retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand()])]).data,
+              thread: { id: 'fixture-thread', status: { type: '' } },
+            },
+          },
+          message: 'Retired-source original thread or interrupted turn differs',
+        },
+        {
+          name: 'turn status must remain interrupted',
+          artifact: retiredDecoderArtifact([{ ...retiredDecoderTurn([retiredDecoderCommand()]), status: 'completed' }]),
+          message: 'Retired-source original thread or interrupted turn differs',
+        },
+        {
+          name: 'turn item count is bounded',
+          artifact: retiredDecoderArtifact([
+            retiredDecoderTurn(
+              Array.from({ length: 4097 }, (_, index) => ({
+                ...retiredDecoderCommand(),
+                id: `fixture-command-${index}`,
+              })),
+            ),
+          ]),
+          message: 'Retired-source original thread or interrupted turn differs',
+        },
+      ],
+    },
+    {
+      name: 'remaining command inventory bounds',
+      cases: [
+        {
+          name: 'item identity must be a string',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([{ ...retiredDecoderCommand(), id: null }])]),
+          message: 'Retired-source thread item is invalid',
+        },
+        {
+          name: 'command text must be a string',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([{ ...retiredDecoderCommand(), command: null }])]),
+          message: 'Retired-source command inventory has a duplicate or unresolved outcome',
+        },
+        {
+          name: 'command exit code must be an integer',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([{ ...retiredDecoderCommand(), exitCode: 0.5 }])]),
+          message: 'Retired-source command inventory has a duplicate or unresolved outcome',
+        },
+        {
+          name: 'command inventory has a maximum size',
+          artifact: retiredDecoderArtifact([
+            retiredDecoderTurn(
+              Array.from({ length: 513 }, (_, index) => ({
+                ...retiredDecoderCommand(),
+                id: `fixture-command-${index}`,
+              })),
+            ),
+          ]),
+          message: 'Retired-source complete command inventory is absent',
+        },
+      ],
+    },
+    {
+      name: 'native evidence reference guards',
+      cases: [
+        {
+          name: 'reference must name retained temporary evidence',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand()])]),
+          reference: 'request.json',
+          message: 'Retired-source native evidence must reference a retained .tmp read',
+        },
+        {
+          name: 'reference must remain inside the project root',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand()])]),
+          reference: '.tmp/../..',
+          message: 'Retired-source native evidence path differs',
+        },
+      ],
+    },
+    {
+      name: 'native evidence file identity guards',
+      cases: [
+        {
+          name: 'symbolic link is refused',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand()])]),
+          fileKind: 'symlink',
+          message: 'Retired-source native evidence path differs',
+        },
+        {
+          name: 'hard link is refused',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand()])]),
+          fileKind: 'hardlink',
+          message: 'Retired-source native evidence path differs',
+        },
+        {
+          name: 'directory is refused as evidence',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand()])]),
+          fileKind: 'directory',
+          message: 'Retired-source native evidence path differs',
+        },
+      ],
+    },
+    {
+      name: 'native evidence byte bound',
+      cases: [
+        {
+          name: 'artifact exceeds five MiB',
+          artifact: null,
+          fileKind: 'oversized',
+          message: 'Retired-source native evidence changed or exceeds its bound',
+        },
+      ],
+    },
+    {
+      name: 'command forms accepted up to original issue mapping',
+      cases: [
+        {
+          name: 'missing output remains a valid absent output',
+          artifact: retiredDecoderArtifact([retiredDecoderTurn([{ ...retiredDecoderCommand(), output: undefined }])]),
+          message: 'Retired-source original issue mapping differs',
+        },
+        {
+          name: 'truncated read-only command remains prefix-accepted',
+          artifact: retiredDecoderArtifact([
+            retiredDecoderTurn([
+              {
+                ...retiredDecoderCommand(),
+                command: 'Get-Content source.ts',
+                output: { text: 'partial read', truncated: true },
+              },
+            ]),
+          ]),
+          message: 'Retired-source original issue mapping differs',
+        },
       ],
     },
   ];
@@ -4868,6 +5071,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             configPath = path.join(root, 'agent-runtime.config.v1.yaml'),
             requestPath = path.join(root, 'request.json'),
             artifactPath = path.join(root, '.tmp', 'untrusted-turn.json'),
+            targetPath = path.join(root, '.tmp', 'private-target.json'),
             ownerHandle = `fixture-owner-${randomUUID()}`,
             actionId = 'a'.repeat(64),
             hostAttemptId = 'b'.repeat(64),
@@ -4916,11 +5120,28 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               '--request',
               'request.json',
             ];
-          const assertUnchanged = (expectedArtifact: typeof artifactBytes) => {
+          let expectedRequestBytes = requestBytes;
+          const assertUnchanged = (
+            expectedArtifact: typeof artifactBytes,
+            fileKind?: RetiredSourceNativeCase['fileKind'],
+          ) => {
             expect(readFileSync(configPath)).toEqual(configBefore);
             expect(readFileSync(initializationPath)).toEqual(initializationBefore);
-            expect(readFileSync(requestPath)).toEqual(requestBytes);
-            expect(readFileSync(artifactPath)).toEqual(expectedArtifact);
+            expect(readFileSync(requestPath)).toEqual(expectedRequestBytes);
+            if (fileKind === 'directory') {
+              expect(lstatSync(artifactPath).isDirectory()).toBe(true);
+              expect(readdirSync(artifactPath)).toEqual([]);
+            } else expect(readFileSync(artifactPath)).toEqual(expectedArtifact);
+            if (fileKind === 'symlink') {
+              expect(lstatSync(artifactPath).isSymbolicLink()).toBe(true);
+              expect(readlinkSync(artifactPath)).toBe(targetPath);
+            }
+            if (fileKind === 'hardlink') {
+              expect(lstatSync(artifactPath).nlink).toBe(2);
+              expect(lstatSync(artifactPath).ino).toBe(lstatSync(targetPath).ino);
+            }
+            if (fileKind === 'symlink' || fileKind === 'hardlink')
+              expect(readFileSync(targetPath)).toEqual(artifactBytes);
             expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
             expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
           };
@@ -4933,12 +5154,29 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               error instanceof Error && error.message === 'Retired-source original issue mapping differs',
           );
           assertUnchanged(baselineBytes);
-          writeFileSync(artifactPath, artifactBytes);
+          let candidateBytes = artifactBytes;
+          if (entry.reference !== undefined) {
+            expectedRequestBytes = Buffer.from(JSON.stringify({ ...request, nativeTurnEvidenceRef: entry.reference }));
+            writeFileSync(requestPath, expectedRequestBytes);
+          }
+          if (entry.fileKind !== undefined) unlinkSync(artifactPath);
+          if (entry.fileKind === 'symlink' || entry.fileKind === 'hardlink') {
+            writeFileSync(targetPath, artifactBytes);
+            if (entry.fileKind === 'symlink') symlinkSync(targetPath, artifactPath);
+            else linkSync(targetPath, artifactPath);
+          } else if (entry.fileKind === 'directory') {
+            mkdirSync(artifactPath);
+          } else if (entry.fileKind === 'oversized') {
+            candidateBytes = Buffer.alloc(5 * 1024 * 1024 + 1, 0x20);
+            writeFileSync(artifactPath, candidateBytes);
+          } else {
+            writeFileSync(artifactPath, artifactBytes);
+          }
           await assert.rejects(
             run(args),
             (error: unknown) => error instanceof Error && error.message === entry.message,
           );
-          assertUnchanged(artifactBytes);
+          assertUnchanged(candidateBytes, entry.fileKind);
           complete = true;
         } finally {
           if (complete) rmSync(root, { recursive: true, force: true });
