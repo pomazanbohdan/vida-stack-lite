@@ -38,40 +38,49 @@ The regression contract owns the current rule. No old image is repaired.
 
 ### Latest completed run measurement
 
-2641 completes the exact one-Source/two-test contour on
-e8515c20ba0e5bdbc82c2f6bc68183637e791288, stage `/workspace/contour-stage-Sy2uKm`,
-run50ab201c-deb5-4b14-bbaa-519d94711236. All80tests pass with0failures and688expects
-in132.13s, outer139177.227175ms. Raw **F126/557 L711/2863 S753/3143 B679/3663**
-stays BLOCKED/nonexact. Max CC501/entry CRAP13340 is navigation, not frozen
+2659 completes the exact one-Source/two-test contour on
+bdce1145ccc1de353adafb6b1dba0e2eac2d428f, stage `/workspace/contour-stage-Z3LGec`,
+rundc5fd0cb-0326-4e6c-9d7f-f282ac415436. All84tests pass with0failures and742expects
+in132.41s, outer138645.279054ms. Raw **F146/557 L878/2863 S929/3143 B835/3663**
+stays BLOCKED/nonexact. Max CC501/entry CRAP5402 is navigation, not frozen
 acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
-closed process/group, unchanged boot/image and one paired projection import
-pass,1317attempts. Frozen/CRAP/mutation stay deferred.
+closed producer/group, unchanged boot/image and the sole paired projection
+publication pass,1319attempts. Frozen/CRAP/mutation stay deferred.
 
-Image `/workspace/.vida-quality-inputs/cd60f0ae0110495e3124f2b84fb12a07355336e2/repository`,
-manifest SHA256ca2160befddc6ddef1100cb33ad27e63764d8753431c009fda6800cd1408fff8.
+Image `/workspace/.vida-quality-inputs/c4b687823e8da72ec1bd261868094812d781f03c/repository`,
+manifest SHA256e07ae70b77913e673ec5dd97181683bdcd631731b13fd76b75cd9873bf91b7e7.
 Package report is
-`coverage/bun-unified/diagnostics/50ab201c-deb5-4b14-bbaa-519d94711236.focused-coverage.json`;
-run-manifest SHA25644629f83e1705dacfad8582f2f8e4f246197b35a43fef1afaabf015e8a8261bb.
+`coverage/bun-unified/diagnostics/dc5fd0cb-0326-4e6c-9d7f-f282ac415436.focused-coverage.json`;
+run-manifest SHA256b6cbe311e30cbb87265017735029e3ec8c8493834c03e8ea655ed730b4ed2ab4.
 SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
-test1384c23135f6e3ca5969ce987fe77ed10bcb113e1402d8fb9dcb8294f91c44be,
-tool46c75fde113f36f059b09a5173dccb3926eb85ef03ccc74f4ae321dad9579682.
-2643 reuses retained canonical geometry to map all431zero functions,2390statements
-and2984branch arms. No AST/index/hash sweep is repeated.2642 verifies/fsyncs the
-40601600-byte functional archive at
-`/workspace/vida-functional-retention-Sy2uKm-aHKtNp/archive.json`; originals stay.
-Archive SHA2564f7dfb1c3c2080ffd50ee18ab28efc38ceafec4cb241bcdbde6885d44428ba8d
-binds this one new retention artifact, not another tree hash or old reattestation.
+test97bc376b7d1b43b0e57f1bdfc9028a106d096c96c9f5e08e7513412dc93f605f,
+toolb0851a79a6da11abb49680bab0e24dad6693ea0af7f0b7ff6397036733262b1e.
+2661 reuses retained canonical geometry to map all411zero functions,2214statements
+and2828branch arms, with compact output only. No AST/index/hash sweep repeats.
+2660 verifies/fsyncs the40622080-byte functional archive at
+`/workspace/vida-functional-retention-Z3LGec-H4GJYY/archive.json`; originals stay.
+Archive SHA256e33e6ef388c4b8e36c8959a00ce20ca5473b058707128f51d3a20df4d7e270c9
+binds the one new retention artifact, not old reattestation.
 
-Compared with2631's unchanged Source fingerprint and denominators, real component
-execution adds49covered functions,243lines,259statements and227branch arms.
-2631's80tests/120.47s and2641's80tests/132.13s have changed test/tool inputs; do not
-claim a matched performance ratio. Actual component transitions now contribute
-attributable parent counters without claiming that child counters were admitted.
-2631 rune049ac5d-ecde-4573-899e-94346a684d90, map2633 and archive
-`/workspace/vida-functional-retention-XzHx1V-f6xf7k/archive.json` remain historical.
-2618/2602 original reports, maps and functional archives also stay; their bindings
-are in [published40ba17e WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/40ba17e/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
-2611's failed resource setup and originals remain retained.
+The actual single canonical CLI child08834e1f-a688-46fd-9f18-0e4172463490 has
+parentPID39/childPID128, complete native capture, exit0/null signal/no error,
+4889stdout bytes and0stderr bytes. The receipt under this run's processes/cli
+binds loaded run.ts and all three required metadata modules, with no loaded
+workspace-database-cli.ts. Its one sparse Source map has3visited functions,
+10statements and6branch arms and passes the existing canonical validator/merge.
+The native owned producer/group closure and unchanged boot/image are observed
+separately, not inferred from that child receipt. The manifest's actual closure
+confirms metadata custody in the real changed-input stage.
+
+Against2641's unchanged Source fingerprint and denominators, this coherent
+packet adds20functions,167lines,176statements and156branch arms.2641's80cases
+in132.13s and2659's84in132.41s have changed test/tool inputs; these are not a
+matched speedup/regression ratio. The2658 invocation at repository root returns
+Script not found before any producer or input scan starts. Its original log
+stays;2659 uses the documented package root and is the only real full stage.
+Earlier2641 results, maps and exact archives remain in
+[publishedbdce114 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bdce1145ccc1de353adafb6b1dba0e2eac2d428f/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
+2611's failed resource setup and every original log remain retained.
 
 Root's first2643 gap-header projection emits11560tool-reported original output
 tokens before truncation. It reads retained geometry, not another AST/hash/index,
@@ -148,7 +157,7 @@ any-array spread before further execution; its original log remains. An explicit
 unknown[] binding fixes it without suppression.2653 passes strict157/lint0 and
 only the affected run protocol case,1PASS/84expects in1.166s. Existing other
 profile passes and real-help/command passes are reused. One real changed-input
-stage and final native child/group/geometry inspection remain pending.
+stage2659 and final native child/group/geometry inspection complete above.
 
 2646's bounded completed-WORK dedup retains live anchors, current2641 numbers,
 OPEN gaps and exact original failure archives while linking completed details
