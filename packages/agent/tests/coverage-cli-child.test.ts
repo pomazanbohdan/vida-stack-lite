@@ -211,6 +211,16 @@ test.each(['controller', 'public', 'toolchain'] as const)(
           : { schema: 'VidaAgentCommandResult/v1', status: 'help', commands: ['help'] };
     const subjects = [
       { entry, args: [argument], exit: expectedExit, output: expectedOutput },
+      ...(variant === 'toolchain'
+        ? [
+            {
+              entry,
+              args: ['tooling/run-bun-coverage.ts'],
+              exit: 1,
+              output: 'Execution budget exhausted before child launch.\n',
+            },
+          ]
+        : []),
       ...(variant !== 'public'
         ? []
         : [
@@ -256,7 +266,15 @@ test.each(['controller', 'public', 'toolchain'] as const)(
               '}',
             ].join('\n')
           : variant === 'toolchain'
-            ? 'export function hit() { return 7; }\nif (import.meta.main) console.log(Bun.version);\n'
+            ? [
+                'export function hit() { return 7; }',
+                'if (import.meta.main) {',
+                '  if (process.argv[2] === "tooling/run-bun-coverage.ts") {',
+                '    if (process.env.VIDA_PINNED_COMMAND_BUDGET_MS !== "4000" || process.env.VIDA_PINNED_COMMAND_DEADLINE_MS !== "1") throw new Error("Wrong clock witness startup environment");',
+                '    console.error("Execution budget exhausted before child launch."); process.exitCode = 1;',
+                '  } else console.log(Bun.version);',
+                '}',
+              ].join('\n')
             : 'export function hit() { return 7; }\nif (import.meta.main) console.log(' +
               JSON.stringify(JSON.stringify(expectedOutput)) +
               ');\n';
@@ -298,11 +316,11 @@ test.each(['controller', 'public', 'toolchain'] as const)(
                 '--config=' + path.join(root, 'bunfig.toml'),
                 path.join(root, subject.entry),
                 ...subject.args,
-              ])}, {encoding:"utf8",windowsHide:true,timeout:4000});`,
+              ])}, {encoding:"utf8",windowsHide:true,timeout:4000${variant === 'toolchain' && subject.exit === 1 ? ',env:{...process.env,VIDA_PINNED_COMMAND_BUDGET_MS:"4000",VIDA_PINNED_COMMAND_DEADLINE_MS:"1"}' : ''}});`,
               `  expect(child${index}.error).toBeUndefined(); expect(child${index}.signal).toBeNull(); expect(child${index}.status).toBe(${subject.exit});`,
               `  expect(child${index}.${subject.exit === 1 ? 'stdout' : 'stderr'}).toBe("");`,
               variant === 'toolchain'
-                ? `  expect(child${index}.stdout).toBe(${JSON.stringify(Bun.version + '\n')});`
+                ? `  expect(child${index}.${subject.exit === 0 ? 'stdout' : 'stderr'}).toBe(${JSON.stringify(subject.exit === 0 ? Bun.version + '\n' : subject.output)});`
                 : `  expect(JSON.parse(child${index}.${subject.exit === 1 ? 'stderr' : 'stdout'})).toEqual(${JSON.stringify(subject.output)});`,
             ]),
             '});',
@@ -470,15 +488,16 @@ test.each(['controller', 'public', 'toolchain'] as const)(
       expect(() => admit(context, undefined)).toThrow();
       expect(() => admit(context, [])).toThrow();
       expect(() => admit(context, [child, child])).toThrow();
-      if (variant === 'public') {
-        for (const length of [1, 2, 4])
+      if (variant !== 'controller') {
+        for (const length of variant === 'public' ? [1, 2, 4] : [1, 3])
           expect(() =>
             admit(
               context,
               Array.from({ length }, (_, index) => children[index % children.length]),
             ),
           ).toThrow();
-        expect(() => admit(context, [child, child, children[2]])).toThrow('Duplicate focused CLI');
+        if (variant === 'public')
+          expect(() => admit(context, [child, child, children[2]])).toThrow('Duplicate focused CLI');
       }
       for (const [key, value] of Object.entries({
         parent_pid: result.pid + 1,
@@ -509,10 +528,12 @@ test.each(['controller', 'public', 'toolchain'] as const)(
         label: string,
         mutate: (ctx: CliCoverageContext, row: Record<string, unknown>) => void,
         checkCounters = false,
+        subjectIndex = 0,
+        expectedError?: string,
       ) => {
         const negativeDirectory = path.join(root, 'negative', label);
         const copyContext = { ...context, directory: negativeDirectory };
-        const row = structuredClone(child);
+        const row = structuredClone(children[subjectIndex]!);
         for (const original of children) {
           const targetDirectory = path.join(negativeDirectory, 'cli', String(original.id));
           mkdirSync(targetDirectory, { recursive: true });
@@ -521,9 +542,12 @@ test.each(['controller', 'public', 'toolchain'] as const)(
         }
         mutate(copyContext, row);
         expect(() => {
-          const maps = admit(copyContext, [row, ...siblings]);
+          const maps = admit(
+            copyContext,
+            children.map((original, index) => (index === subjectIndex ? row : original)),
+          );
           if (checkCounters) mergeCoverageShardCounters(sourceMaps, maps);
-        }, label).toThrow();
+        }, label).toThrow(expectedError);
       };
       const rewrite = (
         ctx: CliCoverageContext,
@@ -569,6 +593,7 @@ test.each(['controller', 'public', 'toolchain'] as const)(
         entry: {},
         preload: {},
         manifest_sha256: '0'.repeat(64),
+        environment_sha256: '0'.repeat(64),
       }))
         negative('launch-' + key, (ctx, row) =>
           rewrite(ctx, row, 'launch', (proof) => {
@@ -598,13 +623,89 @@ test.each(['controller', 'public', 'toolchain'] as const)(
         writeFileSync(path.join(ctx.directory, String(record(row.stderr).path)), '{}'),
       );
       if (variant === 'toolchain') {
+        negative(
+          'duplicate-clock-profile',
+          (ctx, row) => {
+            const clock = children[1]!;
+            const clockLaunch = record(
+              JSON.parse(readFileSync(path.join(ctx.directory, String(record(clock.launch).path)), 'utf8')),
+            );
+            const clockReceipt = record(
+              JSON.parse(readFileSync(path.join(ctx.directory, String(record(clock.receipt).path)), 'utf8')),
+            );
+            row.exit_code = 1;
+            rewrite(ctx, row, 'launch', (proof) => {
+              for (const key of ['original_argv', 'effective_argv', 'environment_sha256'])
+                proof[key] = clockLaunch[key];
+            });
+            rewrite(ctx, row, 'receipt', (proof) => {
+              proof.exit_code = 1;
+              for (const key of ['argv', 'exec_argv', 'environment_sha256']) proof[key] = clockReceipt[key];
+            });
+            for (const [key, bytes] of [
+              ['stdout', Buffer.alloc(0)],
+              ['stderr', Buffer.from('Execution budget exhausted before child launch.\n')],
+            ] as const) {
+              const ref = record(row[key]);
+              writeFileSync(path.join(ctx.directory, String(ref.path)), bytes);
+              ref.sha256 = sha256(bytes);
+              ref.bytes = bytes.length;
+            }
+            rewrite(ctx, row, 'terminal', (proof) => {
+              proof.exit_code = 1;
+              proof.stdout = row.stdout;
+              proof.stderr = row.stderr;
+            });
+          },
+          false,
+          0,
+          'Duplicate focused CLI subject.',
+        );
         negative('noncanonical-version-line', (ctx, row) => {
           const ref = record(row.stdout);
           const bytes = Buffer.from(Bun.version + '\nextra\n');
           writeFileSync(path.join(ctx.directory, String(ref.path)), bytes);
           ref.sha256 = sha256(bytes);
           ref.bytes = bytes.length;
+          rewrite(ctx, row, 'terminal', (proof) => {
+            proof.stdout = ref;
+          });
         });
+        negative(
+          'noncanonical-clock-denial',
+          (ctx, row) => {
+            const ref = record(row.stderr);
+            const bytes = Buffer.from('Wrong rejection.\n');
+            writeFileSync(path.join(ctx.directory, String(ref.path)), bytes);
+            ref.sha256 = sha256(bytes);
+            ref.bytes = bytes.length;
+            rewrite(ctx, row, 'terminal', (proof) => {
+              proof.stderr = ref;
+            });
+          },
+          false,
+          1,
+        );
+        const clockArguments = [
+          '--no-env-file',
+          '--no-install',
+          '--config=' + path.join(root, 'bunfig.toml'),
+          path.join(root, entry),
+          'tooling/run-bun-coverage.ts',
+        ];
+        for (const deadline of [undefined, '2']) {
+          const observer = createCliCoverageObserver(context, {
+            spawnSync: () => assert.fail('Wrong environment launched'),
+          });
+          expect(() =>
+            observer.spawnSync(process.execPath, clockArguments, {
+              encoding: 'utf8',
+              windowsHide: true,
+              timeout: 4000,
+              env: { ...process.env, VIDA_PINNED_COMMAND_BUDGET_MS: '4000', VIDA_PINNED_COMMAND_DEADLINE_MS: deadline },
+            }),
+          ).toThrow('exact scenario environment');
+        }
         const withoutPin = {
           ...context,
           manifest: { ...manifest, tool_inputs: manifest.tool_inputs.filter((item) => item.path !== '.bun-version') },

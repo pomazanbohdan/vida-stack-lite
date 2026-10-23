@@ -353,6 +353,33 @@ test('current toolchain gaps: canonical native version dispatch uses the selecte
   assert.equal(runPinnedBun(['--version']), 0);
 });
 
+test('current toolchain gaps: finite ancestor coverage policy stops before launching an expired child', () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const before = readFileSync(path.join(root, 'package.json'), 'utf8');
+  const child = spawnSync(
+    process.execPath,
+    [
+      '--no-env-file',
+      '--no-install',
+      '--config=' + path.join(root, 'bunfig.toml'),
+      path.join(root, 'bin/bun.ts'),
+      'tooling/run-bun-coverage.ts',
+    ],
+    {
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 4000,
+      env: { ...process.env, VIDA_PINNED_COMMAND_BUDGET_MS: '4000', VIDA_PINNED_COMMAND_DEADLINE_MS: '1' },
+    },
+  );
+  assert.equal(child.error, undefined);
+  assert.equal(child.signal, null);
+  assert.equal(child.status, 1);
+  assert.equal(child.stdout, '');
+  assert.equal(child.stderr, 'Execution budget exhausted before child launch.\n');
+  assert.equal(readFileSync(path.join(root, 'package.json'), 'utf8'), before);
+});
+
 test('direct CLI entrypoint handles idempotent pin sync and an expired launch deadline', () => {
   const root = path.resolve(import.meta.dirname, '..');
   const entry = path.join(root, 'bin/bun.ts');

@@ -262,6 +262,12 @@ The exact focused selections in
 [TESTING's CLI custody contract](../../TESTING.md#focused-controller-cli-counter-custody)
 are the bounded exception. Toolchain's canonical version child binds its plain
 stdout to the captured pin, with missing-pin and noncanonical-output refusals.
+The second exact native toolchain scenario inherits a finite duration and an
+already expired deadline, computes review policy and refuses before any target
+child launch. Keep the version and clock profiles distinct under the same Source;
+reject missing, duplicate or extra profiles, altered startup clocks and terminal-
+consistent wrong output. Their sparse maps merge only after existing custody and
+canonical counter validation. This is not recursion into a coverage suite.
 Other copied-wrapper and fresh-start environment children remain behavioral
 controls; they do not contribute measured counters.
 

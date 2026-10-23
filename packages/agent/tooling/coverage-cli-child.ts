@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { closeSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import type { SpawnSyncReturns } from 'node:child_process';
 import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
 import { sha256 } from './bun-coverage-evidence.ts';
@@ -73,6 +74,8 @@ const publicTests = [
   'tests/automatic-work-absorption.test.ts',
   'tests/admitted-runtime-canonical-intake.test.ts',
 ];
+const toolchainSources = ['bin/bun.ts'];
+const toolchainTests = ['tests/bun-toolchain.test.ts', 'tests/bun-cache-routing.test.ts'];
 const preload = 'tooling/bun-coverage-preload.ts';
 const launchEnvironment = 'VIDA_BUN_COVERAGE_CLI_LAUNCH';
 const maxProofBytes = 4 * 1024 * 1024;
@@ -116,8 +119,6 @@ function samePaths(actual: readonly string[] | undefined, expected: readonly str
 
 function cliSubject(manifest: CliCoverageManifest) {
   if (focusedControllerCliCoverage(manifest)) return { source, argument: 'inspect', exit_code: 1 };
-  const toolchainSources = ['bin/bun.ts'];
-  const toolchainTests = ['tests/bun-toolchain.test.ts', 'tests/bun-cache-routing.test.ts'];
   if (
     manifest.schema === 'VidaBunCoverageRun/v2' &&
     manifest.test_selection.mode === 'focused-diagnostic' &&
@@ -147,18 +148,29 @@ function cliSubject(manifest: CliCoverageManifest) {
   return undefined;
 }
 
-type CliSubject = { source: string; argument?: string; exit_code: number };
+type CliSubject = { source: string; argument?: string; exit_code: number; expired_clock?: true };
 
 function cliSubjects(manifest: CliCoverageManifest): CliSubject[] {
   const subject = cliSubject(manifest);
   if (!subject) return [];
+  if (subject.source === 'bin/bun.ts')
+    return [
+      subject,
+      { source: subject.source, argument: 'tooling/run-bun-coverage.ts', exit_code: 1, expired_clock: true },
+    ];
   return subject.source === 'bin/vida-agent.ts'
     ? [subject, { source: 'bin/scope.ts', exit_code: 1 }, { source: 'bin/repair-work-state.ts', exit_code: 1 }]
     : [subject];
 }
 
-function launchSubject(context: CliCoverageContext, entry: unknown): CliSubject {
-  const selected = cliSubjects(context.manifest).find((subject) => subject.source === proofRecord(entry).path);
+function subjectKey(subject: CliSubject): string {
+  return JSON.stringify([subject.source, subject.argument ?? null]);
+}
+
+function launchSubject(context: CliCoverageContext, entry: unknown, argv: unknown): CliSubject {
+  const selected = cliSubjects(context.manifest).find(
+    (subject) => subject.source === proofRecord(entry).path && isDeepStrictEqual(argv, nativeArgv(context, subject)),
+  );
   assert.ok(selected, 'Foreign focused CLI subject.');
   return selected;
 }
@@ -249,7 +261,7 @@ function checkedLaunch(context: CliCoverageContext, value: unknown): CliChildLau
   assert.equal(row.executable, process.execPath);
   assert.equal(row.runtime_executable_sha256, context.manifest.runtime_executable_sha256);
   assert.equal(row.manifest_sha256, context.manifest_sha256);
-  const subject = launchSubject(context, row.entry);
+  const subject = launchSubject(context, row.entry, row.original_argv);
   assert.deepEqual(
     row.entry,
     context.manifest.sources.find((entry) => entry.path === subject.source),
@@ -275,7 +287,7 @@ export function readCliCoverageLaunch(context: CliCoverageContext): CliChildLaun
   const launch = checkedLaunch(context, JSON.parse(proofBytes(context.directory, relative).toString('utf8')));
   assert.equal(relative, proofPath(launch.id, 'launch.json'));
   assert.equal(launch.parent_pid, process.ppid);
-  const subject = launchSubject(context, launch.entry);
+  const subject = launchSubject(context, launch.entry, launch.original_argv);
   assert.deepEqual(process.argv, [
     launch.executable,
     path.join(context.root, launch.entry.path),
@@ -285,6 +297,10 @@ export function readCliCoverageLaunch(context: CliCoverageContext): CliChildLaun
   assert.equal(process.cwd(), launch.cwd);
   assert.equal((process.env.BUN_OPTIONS ?? '').trim(), '');
   assert.equal(cliCoverageEnvironmentSha256(process.env), launch.environment_sha256);
+  if (subject.expired_clock) {
+    assert.equal(process.env.VIDA_PINNED_COMMAND_BUDGET_MS, '4000');
+    assert.equal(process.env.VIDA_PINNED_COMMAND_DEADLINE_MS, '1');
+  }
   return launch;
 }
 
@@ -343,19 +359,28 @@ export function createCliCoverageObserver(
           : JSON.stringify(args) === JSON.stringify(nativeArgv(context, candidate))),
     );
     if (!subject) return Reflect.apply(original, actual, call) as SpawnSyncReturns<string | Buffer>;
-    assert.ok(!launches.has(subject.source), 'Duplicate focused CLI launch.');
-    launches.add(subject.source);
+    const key = subjectKey(subject);
+    assert.ok(!launches.has(key), 'Duplicate focused CLI launch.');
+    launches.add(key);
     assert.deepEqual(args, nativeArgv(context, subject));
     const options = proofRecord(settings);
+    const { env: requestedEnvironment, ...nativeOptions } = options;
     assert.deepEqual(
-      options,
+      nativeOptions,
       { encoding: 'utf8', windowsHide: true, timeout: 4000 },
       'CLI observation requires the unchanged bounded native invocation.',
+    );
+    const expectedEnvironment = subject.expired_clock
+      ? { ...process.env, VIDA_PINNED_COMMAND_BUDGET_MS: '4000', VIDA_PINNED_COMMAND_DEADLINE_MS: '1' }
+      : undefined;
+    assert.ok(
+      isDeepStrictEqual(requestedEnvironment, expectedEnvironment),
+      'CLI observation requires the exact scenario environment.',
     );
     const id = randomUUID();
     mkdirSync(path.join(context.directory, 'cli', id), { recursive: true, mode: 0o700 });
     const env: NodeJS.ProcessEnv = {
-      ...process.env,
+      ...(expectedEnvironment ?? process.env),
       [launchEnvironment]: path.join(context.directory, proofPath(id, 'launch.json')),
     };
     assert.equal((env.BUN_OPTIONS ?? '').trim(), '');
@@ -485,7 +510,7 @@ export function cliCoverageChildMaps(
   }
   assert.equal(parentSuiteExitCode, 0, 'CLI counters require a passing parent suite.');
   assert.ok(Array.isArray(raw) && raw.length === subjects.length, 'Focused CLI proof must be unique and complete.');
-  const admittedSources = new Set<string>();
+  const admittedSubjects = new Set<string>();
   const admittedIds = new Set<string>();
   return raw.map((value: unknown) => {
     const observation = proofRecord(value);
@@ -497,9 +522,10 @@ export function cliCoverageChildMaps(
       context,
       JSON.parse(referencedBytes(context, observation.launch, proofPath(id, 'launch.json')).toString('utf8')),
     );
-    const subject = launchSubject(context, launch.entry);
-    assert.ok(!admittedSources.has(subject.source), 'Duplicate focused CLI subject.');
-    admittedSources.add(subject.source);
+    const subject = launchSubject(context, launch.entry, launch.original_argv);
+    const key = subjectKey(subject);
+    assert.ok(!admittedSubjects.has(key), 'Duplicate focused CLI subject.');
+    admittedSubjects.add(key);
     assert.equal(observation.parent_pid, parentPid);
     assert.ok(Number.isSafeInteger(observation.pid) && Number(observation.pid) > 0 && observation.pid !== parentPid);
     assert.equal(observation.exit_code, subject.exit_code);
@@ -570,14 +596,19 @@ export function cliCoverageChildMaps(
           help.commands.every((command) => typeof command === 'string'),
       );
     } else if (subject.source === 'bin/bun.ts') {
-      assert.equal(stderr.length, 0);
-      const pinInput = context.manifest.tool_inputs.find((entry) => entry.path === '.bun-version');
-      assert.ok(pinInput, 'Captured Bun pin is missing.');
-      const pinBytes = readFileSync(path.join(context.snapshot, '.bun-version'));
-      assert.equal(sha256(pinBytes), pinInput.sha256, 'Captured Bun pin bytes differ.');
-      const pin = pinBytes.toString('utf8').trim();
-      assert.match(pin, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u);
-      assert.deepEqual(stdout, Buffer.from(pin + '\n'));
+      if (subject.expired_clock) {
+        assert.equal(stdout.length, 0);
+        assert.deepEqual(stderr, Buffer.from('Execution budget exhausted before child launch.\n'));
+      } else {
+        assert.equal(stderr.length, 0);
+        const pinInput = context.manifest.tool_inputs.find((entry) => entry.path === '.bun-version');
+        assert.ok(pinInput, 'Captured Bun pin is missing.');
+        const pinBytes = readFileSync(path.join(context.snapshot, '.bun-version'));
+        assert.equal(sha256(pinBytes), pinInput.sha256, 'Captured Bun pin bytes differ.');
+        const pin = pinBytes.toString('utf8').trim();
+        assert.match(pin, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u);
+        assert.deepEqual(stdout, Buffer.from(pin + '\n'));
+      }
     } else {
       assert.equal(stdout.length, 0);
       assert.deepEqual(

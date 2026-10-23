@@ -122,9 +122,9 @@ clock-custody prerequisites remain open; they are not proved impossible.
 Toolchain stays the sole active contour. The owner's latest order allows the
 next partition only after exact100 or complete objective dispositions. The two
 clock custody arms are still supported-but-uncollected, so neither a handoff nor
-the prior named controller exception permits advancement. Next work is bounded
-design/qualification of that fresh-child counter route in the existing owner,
-not another unchanged full stage. Native Windows qualification remains separate.
+the prior named controller exception permits advancement. The checked additive
+route below now awaits its changed-input stage;2553's clock counters remain
+missing until that producer observes them. Native Windows qualification is separate.
 
 ### Toolchain gap repair before the next full stage
 
@@ -192,6 +192,39 @@ unchanged stage is repeated.2541 independently dispositions the five private
 producer-invariant gaps;2542 separately reviews platform/runtime/clock and sync
 custody prerequisites. Genuine supported-but-uncollected states remain open GAPs,
 not objective impossibility, numeric PASS or denominator changes.
+
+### Toolchain finite-ancestor native witness
+
+2530 independently designs two alternatives: keep native version custody and add
+one exact expired-clock scenario, or replace version custody with the clock case.
+Root chooses the additive route. Source branches stay in place; main/runtime
+behavior, existing budgets and the captured artifact owner do not change.
+
+The second exact `bin/bun.ts tooling/run-bun-coverage.ts` invocation inherits
+duration4000 and positive expired epoch deadline1 in that child only. Its fresh
+Source import computes current coverage policy before the spent budget refuses
+the first runtime probe. No target coverage suite launches. Exact status1, empty
+stdout, full stderr, native capture/receipt/PID and unchanged manifest bytes are
+asserted. Expected deadline refusal is an ordinary terminal test result, never
+UNKNOWN or a mutation kill.
+
+The existing observer admits exactly two named Source/argv keys for toolchain;
+controller/public keep1/3. Match exact parent environment plus only those two
+replacements, verify both child startup values, and retain one sparse Source map
+per distinct launch. Missing/duplicate/extra scenarios deny. Hoist the fixed
+toolchain selection lists alongside the existing public lists; no generic runner,
+extra dependency, AST inventory, build or hash sweep is added. New subjectKey has
+prospective CC/CRAP10/10; no retained ceiling increases.
+
+2558 strict catches a duplicated synthetic negative-control property before
+runtime.2559 passes strict133/lint, the actual expired native case81ms, and all
+16protocol/lifecycle cases489expect calls in7.21s.2530's independent current-byte
+review finds no blocker in no-recursion, environment, duplicate-profile or counter
+custody.2560 adds a terminal-consistent same-profile duplicate control that reaches
+the exact duplicate-subject guard with different native IDs. Wrong output controls
+now preserve matching terminal references before refusal. Scoped strict133/lint
+and all5CLI-protocol cases330expect calls pass in2.89s. Unchanged11preload lifecycle
+cases retain2559's pass without another run.
 
 ### Public entrypoint correction packet
 

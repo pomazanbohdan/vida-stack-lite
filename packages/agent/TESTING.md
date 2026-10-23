@@ -2598,9 +2598,14 @@ Only three serial v2 focused selections may carry `cli_children`:
   --help`, `bin/scope.ts` without arguments and `bin/repair-work-state.ts` without
   arguments. Other children remain ordinary launches without counter admission.
 - `bun-cli-toolchain`, with exactly `bin/bun.ts` and its two declared tests,
-  observes one canonical native `bin/bun.ts --version` invocation. Its stdout
+  observes two exact native scenarios. `bin/bun.ts --version` stdout
   must equal the exact stable pin line from the digest-bound captured
-  `.bun-version`; stderr is empty and exit status is0.
+  `.bun-version`; stderr is empty and exit status is0. The second invocation is
+  `bin/bun.ts tooling/run-bun-coverage.ts` with a child-only4000ms inherited
+  duration and positive expired epoch deadline1. It must exit1 with empty stdout
+  and exactly `Execution budget exhausted before child launch.` plus newline.
+  The fresh import computes finite ancestor clock policy before the spent
+  budget refuses runtime resolution; it never starts a coverage suite.
 
 Each case preserves its original flags, cwd, environment and 4000ms child bound.
 The preload explicitly loads the captured preload for that child and reuses the
@@ -2617,7 +2622,11 @@ strings to the test. Launch errors, signal/timeout, unavailable capture or absen
 receipts retain their evidence and cannot contribute counters.
 
 Each declared subject must appear once with a distinct launch ID and its own
-one-Source counter map. Missing, duplicate and foreign subjects deny admission.
+one-Source counter map. Identity includes the exact source and canonical argv;
+only the two toolchain scenarios share a Source. Missing, duplicate and foreign
+scenarios deny admission. The clock witness requires an exact copy of parent
+environment with only its two fixed clock replacements; all other subjects keep
+their existing environment. Child startup verifies the bound clock values.
 The controller's expected child exit1 is a tested blocked envelope, admitted only
 with empty stdout and exact decoded stderr. The public help case requires exit0,
 empty stderr and a `VidaAgentCommandResult/v1` help result with nonempty commands;
