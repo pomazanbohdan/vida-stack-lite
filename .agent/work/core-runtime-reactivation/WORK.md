@@ -25,7 +25,7 @@ Root owns canonical edits, final checks, Git and the sole numeric producer.
 Active scope is bin/bun.ts with tests/bun-toolchain.test.ts and
 tests/bun-cache-routing.test.ts. Its oldcdc7acf2 report locator in the retired
 1927d736 image is absent. Historical counters are navigation only; no archived
-operation is replayed. Current2538 custody is recorded below.
+operation is replayed. Current2553 custody and remaining dispositions are below.
 
 Blind Luna2530 identifies a Source defect: syncPin's finally unlinks a colliding
 temporary pathname even if exclusive open failed before acquisition.2531 proves
@@ -67,30 +67,64 @@ ac594c3. Keep existing ceilings and one numeric owner.
 
 ### Latest completed toolchain measurement
 
-2538 runs the full selected two-file contour on
-d5aef6516454834545c6c8ad7ae47985d4e93364, stage `/workspace/contour-stage-Pr8TX4`,
-run0ade538a-91a7-4efe-ad0f-8c2ddec33c3c. All89tests pass with0failures in6.22s;
-stage elapsed10418.111085ms. Raw **F43/43 L281/291 S317/329 B373/417** remains
-BLOCKED/nonexact. Max CC/entry CRAP34 is report navigation, not frozen acceptance.
-Exit0/null signal, no timeout/spawn error, full capture, closed process/group and
-unchanged boot/image inputs all pass. Existing paired import completes once,
-1296attempts. Global historical exact count remains17/46.
+2553 runs the full selected two-file contour on
+bd2f8d5c0f256e0861d48c1da6cbf72cb15e2381, stage `/workspace/contour-stage-wAltzp`,
+run36462e8b-fdf3-486e-8ed9-853c59af080c. All97tests pass with0failures in5.77s;
+stage elapsed9133.367071ms. Raw **F44/44 L290/291 S328/330 B409/420** remains
+BLOCKED/nonexact. Max CC/entry CRAP34 is navigation, not frozen acceptance.
+Exit0/null signal, no timeout/spawn error, complete native capture, observed closed
+process/group and unchanged boot/image all pass. Paired projection import runs
+once,1300attempts. Historical exact count stays17/46, not current qualification.
 
-Image `/workspace/.vida-quality-inputs/49ce308cb68f158b3a044c497ff47da5f4433021/repository`,
-manifest SHA256e6ecd12cc6cefef409b3a0c0f3b510836d09e86941d59173f8e8bb0bb2ecc8d7.
+Image `/workspace/.vida-quality-inputs/5ee272c108ad1ce7fce34611ef6e8f45ca65ced4/repository`,
+manifest SHA256a87c58ec1103ebe4616b97a0d6c98af754ef27fc1ff9ef95e8870ca697bb3a82.
 Package report is
-`coverage/bun-unified/diagnostics/0ade538a-91a7-4efe-ad0f-8c2ddec33c3c.focused-coverage.json`;
-run-manifest SHA256ab390c08a8e080ad94da1846cdfa2e7fb55ab022f00eb34aae64d3bddcc98826.
-Source fingerprinte159e713e9d9cd125ced98dc3de188542610b49f29626cf1e80df7e4498f4678,
-test0fd2a5a8fd12521a25a31c6c2a79d0d6e63464fdab6de7c028ac182c6008c4e6,
-tool469fd6c2b36031d891a57df25b10212d18ea858b61092247dde23900ada15ebf.
-Original logs/receipts/image/report remain unchanged.2540 verifies/fsyncs the
-38369280-byte non-cache scratch archive at
-`/workspace/vida-functional-retention-Pr8TX4-k1UYMU/archive.json`; originals remain.
-2539 maps all12zero statements/44zero branch arms through retained canonical
-maps/counters only, without AST/scan/hash passes. No function gaps remain. Blind
-2541/2542 split defaults/timeouts from resolver/runtime prerequisites before the
-next complete repair packet;2530 checks bounded native wrapper custody design.
+`coverage/bun-unified/diagnostics/36462e8b-fdf3-486e-8ed9-853c59af080c.focused-coverage.json`;
+run-manifest SHA256880338bedbd16563ab92f64716aa3f56734e01f9c4b1a892d12a357a5aa8077b.
+Source fingerprinteba016494f506e33ae4eff9db87447b6d776f38e16189e34d7ef56ee5ab98ecc,
+testefe2338e171037c871eb93c70e5138b134bd59ff824a381ff9ac3ad66b9727c4,
+toola3d9bf5235f54fd2412290a991d018ac4c369a6c16c6f9a36635f4e7b154981f.
+2554 reuses canonical maps/counters for exactly2statement/11branch gaps, no AST
+pass.2555 verifies/fsyncs the38379520-byte functional scratch archive at
+`/workspace/vida-functional-retention-wAltzp-gDdp0C/archive.json`; originals stay.
+The earlier2538/2549 measurements, maps and archives remain in
+[publishedbd2f8d5 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bd2f8d5c0f256e0861d48c1da6cbf72cb15e2381/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-toolchain-measurement).
+
+### Toolchain remaining-counter dispositions
+
+Blind native Luna2541/2542 independently review actual Source and v2550 counter
+geometry. Final2554 preserves those exact remaining counters and Source bytes;
+only b99/1 is newly visited.2556 compares retained manifests without hashing
+inputs again: Source fingerprint is identical; the only changed tool input is
+tests/bun-toolchain.test.ts, also a test input.2554's preliminary assumption that
+the tool fingerprint must stay equal fails and its log remains retained. No
+historical counter is promoted or merged into the current run.
+
+All locations below are bin/bun.ts in the fully bound2553 image above. They do
+not change raw counters or BLOCKED. Reopen invariant dispositions when their
+producer/guard or supported contract changes. Native-platform and admissible
+clock-custody prerequisites remain open; they are not proved impossible.
+
+| Counter | Exact expression and location | Independent cause and disposition |
+| --- | --- | --- |
+| b52/1 | `result.cleanupOutcome ?? 'unknown'`,280:166–175 | Objective skip. The sole timeout producer assigns an outcome, including no-PID/zero-allowance UNKNOWN, before private succeeded formats it. Reopen if normalization or a supported caller changes. |
+| b56/0 | `cleanup = defaultTimeoutCleanup`,295:92–113 | Objective skip. The private helper's sole call always passes argument2 explicitly. Reopen on a supported omitted-argument caller. |
+| b58/1 | `result.cleanupTimeoutMs ?? 30_000`,298:71–77 | Objective skip. The only producer assigns a numeric allowance and calls the helper only when positive. Reopen if missing allowances become supported. |
+| b62/0 | `timeout = 30_000`,311:54–60 | Objective skip. Its callback caller always supplies the numeric second argument. Reopen when the supported invocation changes. |
+| b122/0 | `name.toUpperCase() === 'PATH'`,513:35–64 | OPEN native Windows GAP. Case-folding requires an attributable native Windows collector; Linux or a platform override cannot qualify it. |
+| b125/0 | `'bun.exe'`,521:83–92 | OPEN native Windows GAP. Requires native Windows npm-alias selection with the unchanged input/capture contract. |
+| b162/0 and s275 | `options.node === undefined && !options.executable`,654–656 | Objective skip under the repository Bun-only contract. A Bun host with neither selector returns or throws at its earlier host probe; either explicit selector makes this guard false. Reopen for a supported non-Bun development host or changed guard chain. |
+| b171/1 | `String(inherited.duration)`,693:67–93 | OPEN finite-ancestor clock custody GAP. The constant is captured at import; per-call environment cannot set it. Requires a fresh finite-parent native child and an admitted current-coverage policy/counter route. The current version-only CLI collector cannot supply it. |
+| b172/1 | `String(inherited.expiry)`,694:63–87 | OPEN clock custody GAP with the same fresh startup/deadline prerequisite. Keep original finite native observations separate from in-process DTOs. |
+| b194/0 and s318 | `typeof result.status !== 'number'`,762 | Objective skip. The earlier integer guard routes every native non-number status through succeeded, which throws. Reopen only if either guard/result contract changes; a shifting getter is not native evidence. |
+| b200/0 | `'Bun manifest mirrors synchronized.'`,775:30–66 | Objective skip for this immutable default-root image. The true sync arm repairs canonical package bytes, which measurement forbids changing. The checked no-op and private-root sync repair tests retain their distinct behavioral evidence. Reopen for an admissible isolated mutable repair producer; copied-root counters are not accepted by the present collector. |
+
+Toolchain stays the sole active contour. The owner's latest order allows the
+next partition only after exact100 or complete objective dispositions. The two
+clock custody arms are still supported-but-uncollected, so neither a handoff nor
+the prior named controller exception permits advancement. Next work is bounded
+design/qualification of that fresh-child counter route in the existing owner,
+not another unchanged full stage. Native Windows qualification remains separate.
 
 ### Toolchain gap repair before the next full stage
 
@@ -146,18 +180,9 @@ is committed and pushed. An initial tracked-path git add returns an ignored
 parent warning after staging the exact nine tracked files; no commit runs in
 that failed chain. Root verifies the staged set before ordinary2548 commit.
 
-2549 completes one changed-input stage at `/workspace/contour-stage-N70tEz`,
-run469b0f50-567b-43e3-a41c-03974f058546:96PASS/0FAIL in6.02s, stage9136.316066ms.
-Raw **F44/44 L290/291 S328/330 B408/420** remains BLOCKED, not exact100.
-Exit0, null signal, complete native capture, observed closed process/group,
-unchanged boot/image and one paired projection import pass (1298attempts).
-Image is `/workspace/.vida-quality-inputs/c9a4e315331a222a123d48fd6b82fe7a2020d48c/repository`,
-manifest SHA2560fd35ca808c98d7d580e165c8dea6495c12543f5724552b53d0a4508d72be5ae.
-The package report is
-`coverage/bun-unified/diagnostics/469b0f50-567b-43e3-a41c-03974f058546.focused-coverage.json`.
-2550 reuses retained maps to identify exactly2statement/12branch gaps, no AST
-pass.2551 verifies/fsyncs the38379520-byte functional archive at
-`/workspace/vida-functional-retention-N70tEz-xdAXiL/archive.json`; originals stay.
+2549's complete96PASS stage and2550/2551 map/retention are preserved in the
+publishedbd2f8d5 WORK linked above. Latest2553 supersedes its changing status;
+all original images, receipts, logs and archives remain unchanged.
 
 The remaining map identifies one authoring regression: replacing the original
 unlimited diagnostic case with a finite one lost b99/1. Keep both contractual
@@ -694,34 +719,52 @@ does not increment the parent Source entry/catch/errorMessage counters. This rem
 an attribution GAP, never an accepted skip. stageMarker's diagnostics-disabled arm
 also remains testable and OPEN. No denominator, frozen ceiling or mutation rule changes.
 
-### Three-hour execution audit,2026-10-23 03:43–06:43UTC
+### Three-hour execution audit,2026-10-23 06:43–09:43UTC
 
-Reuse complete stages2446/2461, map2463 and native CLI prerequisite2467. Grouped
-construction, reader-fault and restoration assertions visit actual missing paths;
-cache reload cannot restore the ESM namespace, so no global process/cache fixture
-is adopted. The selected next unit is child-process counter attribution using
-the existing artifact, not another collection or repeated full contour run.
+The Git observation contains ten published packets in this window,61bd093 through
+bd2f8d5. Reuse stages2490/2526/2538/2549/2553, maps, manifests, native terminal/
+capture/group receipts and the paired projection. The actual Source defects are
+the pin-stage collision deletion and replacement publication, reproduced2531/
+2535 and fixed inac594c3. Failed roots/logs remain retained. Main extraction and
+the fixed CLI collector make execution attributable, without native installation.
 
-Scoped strict/lint then cheap native protocol controls, independent read-only
-review and one final stage remains the selected sequence. The preceding shared
-construction cases take29.58–39.25s while the inert CLI protocol control takes
-about1s; different scopes and inputs establish no speedup. Running a full stage
-after every assertion would repeat preparation without qualifying unfinished
-code. Wider numeric pools have neither resource custody nor a matched measured
-benefit. Root plus bounded blind readers retains one writer and one producer;
-token/tool-call savings are unmeasured. Existing stream/hash/projection owners
-are reused. The confirmed environment and raw-capture defects are fixed above.
+Script audit: exclusive child logs precede assertions; incomplete native capture
+cannot contribute counters. Reuse the captured artifact and sparse merge instead
+of another build, collector, AST inventory or hash sweep. No additional confirmed
+runner timeout, repeated stream-read or projection defect justifies a speculative
+rewrite.2554's invalid unchanged-tool-fingerprint assumption is corrected through
+retained manifest entries, without another hash pass; tests are also tool inputs.
 
-Disk2472 samples the checkout/evidence filesystem once at06:43:06UTC with
-23,005,679,616available bytes and scratch with3,245,117,440. Both meet the unchanged
-2,147,483,648floor plus prior67,108,864reserve. Its36exact cleanup-target records
-reuse the existing inventory. /proc/117/cwd and/proc/168/cwd remain EACCES, so
-unknown live custody defers deletion before descendant/link/mount scans. Nothing
-is deleted,0bytes reclaimed and no resource GAP claimed.2472 retains exact paths,
-identities and deferrals; no second automation or broad scan is started.
-The existing audit timer's prompt now applies poteto-mode and current single-
-contour/artifact/custody rules. Its ID, three-hour schedule and enabled state
-remain unchanged, verified through the automation owner's readback.
+Authoring audit: the old PATH timeout test did not reach PATH. It now uses an
+explicit inert node path and causal command assertions. Preserve finite and
+unlimited diagnostics together. Static checks catch actual narrowing/fixture-ID
+errors; the failed trailing-slash oracle remains retained. Module startup and
+per-call environment clocks stay distinct. Environment equality uses boolean
+oracles so failures cannot print credential values.
+
+| Order and concurrency | Observed evidence and decision |
+| --- | --- |
+| Scoped strict/lint, grouped controls, independent review, one changed-input stage; one writer/producer plus two bounded mechanism readers | Selected.2545 affected controls take115ms with one failed oracle;2546 corrected control74ms; protocol/lifecycle16cases9.47s.2553 full97cases5.77s, outer9.133s. These differing scopes establish no speedup ratio. |
+| Full stage per assertion or before static/fixture fixes | Rejected. It repeats admission/image/publication with cheap unresolved premises. No matched speed or quality benefit is measured. |
+| Wider concurrent suites/writers, cold index or cleanup during final checks | Unqualified. No matched benchmark or resource-custody basis supports it. Readers run no compiler/tests/Git; Root measures serially. |
+
+Tool-call/token savings remain hypotheses without telemetry. Pstack1.17.5 is
+enabled and resolved through README, tooling lock and current plugin metadata;
+the installed poteto/leaf files are available. Remote catalog returns451 but
+local skills/native Luna remain usable. Vex stays stale/unqualified; bounded
+Source fallback avoids reindexing. Sequence Work into Verifiable Units preserves
+checked publication; Unslop keeps reports factual. The existing timer's state
+and schedule are unchanged; no second automation starts.
+
+One current df observation records22,617,931,776available durable bytes on
+checkout/retained evidence and2,947,948,544scratch bytes. Both exceed the unchanged
+2,147,483,648floor plus67,108,864reserve;2553 also performs fresh native admission.
+Reuse2472's36exact target records and unresolved/proc/117/cwd and/proc/168/cwd
+custody. No observed owner completion resolves those deferrals. Delete nothing,
+reclaim0bytes and claim no capacity GAP. Preserve the exact-target cleanup
+exception and protected evidence; do not repeat broad reference/mount/link walks.
+The preceding audit and exact2472 observations remain in
+[publishedbd2f8d5 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/bd2f8d5c0f256e0861d48c1da6cbf72cb15e2381/.agent/work/core-runtime-reactivation/WORK.md#three-hour-execution-audit2026-10-23-03430643utc).
 
 ### Three-hour execution audit,2026-10-23 00:39–03:39UTC
 

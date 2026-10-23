@@ -26,6 +26,16 @@ tests/bun-toolchain.test.ts and tests/bun-cache-routing.test.ts. Keep one writer
 one numeric producer and all existing budgets. Batch all known repairs before
 the complete selected stage; old UNKNOWN is not replayed.
 
+The complete2553 stage and final remaining-counter table are bound in
+[WORK](WORK.md#toolchain-remaining-counter-dispositions). Private producer
+invariants and immutable-root repair have independent objective dispositions;
+native Windows and finite-ancestor clock custody prerequisites remain OPEN.
+Keep toolchain active while the supported clock paths lack an admissible fresh
+child counter route. Next work designs and qualifies that route through the
+existing collector owner. Do not repeat unchanged stages or open bun-cli-init
+merely because these paths have a handoff or because controller had a named
+deferral. Freeze/CRAP and mutation remain outside this phase.
+
 The owner's2026-10-23 instruction
 explicitly skips bun-development-controller with a recorded GAP. This named
 exception allows queue advancement while its two native Windows engine-name
