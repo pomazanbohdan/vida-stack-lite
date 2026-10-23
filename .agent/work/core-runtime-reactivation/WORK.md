@@ -65,35 +65,40 @@ failed immutable image or weaken admission to make the old stage pass.
 
 ### Latest completed run measurement
 
-2618 completes the exact one-Source/two-test contour on
-86d30323efb2412766cd37bf8317fbce5312e556, stage `/workspace/contour-stage-hX5Wqs`,
-run90f021fc-85fe-4fb8-9b87-24f0fdf454ec. All76tests pass with0failures and636expects
-in165.88s, outer172070.351396ms. Raw **F74/557 L443/2863 S469/3143 B440/3663**
-stays BLOCKED/nonexact. Max CC501/entry CRAP21756 is navigation, not frozen
+2631 completes the exact one-Source/two-test contour on
+2081cc65c1e650c9e85b520a21e23fb6dffbcadd, stage `/workspace/contour-stage-XzHx1V`,
+rune049ac5d-ecde-4573-899e-94346a684d90. All80tests pass with0failures and683expects
+in120.47s, outer126320.300936ms. Raw **F77/557 L468/2863 S494/3143 B452/3663**
+stays BLOCKED/nonexact. Max CC501/entry CRAP13340 is navigation, not frozen
 acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
 closed process/group, unchanged boot/image and one paired projection import
-pass,1313attempts. Frozen/CRAP/mutation stay deferred.
+pass,1315attempts. Frozen/CRAP/mutation stay deferred.
 
-Image `/workspace/.vida-quality-inputs/1fcd7476219f70ebd454d6d0634c9208538ca9b9/repository`,
-manifest SHA256b675e72c96b8037e6fc061f0c16d58c416ce58deb023e4e4edb3428bcc022836.
+Image `/workspace/.vida-quality-inputs/287895e04f7c57d3a4aa146cec7adf2f36f560fa/repository`,
+manifest SHA2564812a5330659b875c67136434b6cc9cd9b66a15e27e7ab6b82eae37746384f53.
 Package report is
-`coverage/bun-unified/diagnostics/90f021fc-85fe-4fb8-9b87-24f0fdf454ec.focused-coverage.json`;
-run-manifest SHA256a24f8749607ff53de26869fbd2deaf5381664771a6deb87a41ec23d28ec31c1c.
+`coverage/bun-unified/diagnostics/e049ac5d-ecde-4573-899e-94346a684d90.focused-coverage.json`;
+run-manifest SHA256d770261674f0e59e42c84ff3eec6013767ecfc454c886109fd925dc04bd404a6.
 SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
-test8a94ac7898b9da8ca14cab1c431b51f81827d0311c2a643f88966db8fc4bd2ac,
-tool71013878ab4022b5f02a56c7f5a216a1f26aebc8eba561b99b35aefc8047e65a.
-2619 reuses retained canonical geometry to map all483zero functions,2674statements
-and3223branch arms. No AST/index/hash sweep is repeated.2620 verifies/fsyncs the
-40591360-byte functional archive at
-`/workspace/vida-functional-retention-hX5Wqs-L2S3oi/archive.json`; originals stay.
+test390d3f357f908b627f1b183aaa8d68518ac6df141574d3671780bbf9c28e1410,
+tool22a622aa23119d8d3806156e3dfa0aa9543ca4151fa1539d5583df45ae5d53d5.
+2633 reuses retained canonical geometry to map all480zero functions,2649statements
+and3211branch arms. No AST/index/hash sweep is repeated.2632 verifies/fsyncs the
+40601600-byte functional archive at
+`/workspace/vida-functional-retention-XzHx1V-f6xf7k/archive.json`; originals stay.
+Archive SHA256f9088e16f6f740b38c295c7f57dbda8dbc9ee26a242378514c9d7105dd2bf0d4
+binds this one new retention artifact, not another tree hash or old reattestation.
 
-Compared with2602's unchanged Source fingerprint and denominators, the activated
-controls add30covered functions,238lines,250statements and223branch arms.
-2602's57tests/32.91s and2618's76tests/165.88s have different test/tool inputs and
-membership; their durations establish no speedup or matched regression ratio.
-2602 run8133eab4-003f-426f-a749-1b385423d73e and its original report, map2603 and
-40325120-byte archive `/workspace/vida-functional-retention-ROyiXn-SjJWe9/archive.json`
-remain historical evidence.2611's failed resource setup and originals stay retained.
+Compared with2618's unchanged Source fingerprint and denominators, direct refusal
+controls add3covered functions,25lines,25statements and12branch arms.
+2618's76tests/165.88s and2631's80tests/120.47s have different test/tool inputs and
+membership; their durations establish no matched speedup ratio. The cache defect
+has a direct red/green environment oracle below, not a benchmark claim.
+2618 run90f021fc-85fe-4fb8-9b87-24f0fdf454ec, its map2619 and40591360-byte archive
+`/workspace/vida-functional-retention-hX5Wqs-L2S3oi/archive.json` remain historical.
+2602 run8133eab4-003f-426f-a749-1b385423d73e and its original map2603 and archive
+`/workspace/vida-functional-retention-ROyiXn-SjJWe9/archive.json` also stay.
+2611's failed resource setup and originals remain retained.
 
 2621 independently finds private selected-package CLI launches outside the current
 exact child collector profiles. Their counters require a narrow native alias,
@@ -105,13 +110,14 @@ in the selected selector fixtures. Their missing coverage is genuine unexercised
 behavior. Negative component tests can inspect real exported guards without
 inventing qualified history or Runtime acceptance.
 
-Next verifiable packet prepares bounded authority refusals and independently
-checks the private launch/cache premise before any collector expansion. Root owns
-canonical integration and checks. A blind writer may produce only a bounded diff
-in an ordinary isolated directory; the second reader owns no code, compiler or
-producer. Reuse their prepared2623/2624 native Luna contracts. Batch accepted
-changes, scoped strict/lint, causal controls and independent review before the
-single changed-input stage. Keep the same contour and all numeric gates.
+The bounded authority/cache packet below is published in2081cc6 after scoped
+checks, independent review and ordinary hooks; its normal push completes before
+2631. Root owns canonical integration and checks. Native2634 now compares one
+existing canonical run preparation launch through the current collector with the
+larger private-module alias design. Reuse canonical measured bytes before adding
+an alias protocol; a new profile requires exact native argv/environment/output,
+loaded-input and terminal joins plus missing/duplicate/foreign refusal controls.
+No unchanged full run is warranted. Keep the same contour and all numeric gates.
 
 A bounded Source read finds an omitted registration route at test line2509.
 The existing direct/component group registers only for mutationMode or
