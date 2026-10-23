@@ -24,19 +24,21 @@ Reconcile current run Source/test/runtime bindings and retained receipts before
 choosing checks or a fresh stage. Scope is bin/run.ts with tests/run-entrypoint.test.ts
 and tests/bun-cache-routing.test.ts. Root keeps one writer and numeric producer.
 The existing collector binds one genuine canonical prepared CLI call beside help.
-2783 preserves its actual argv/environment, six consumed input roles, bounded
+2790 preserves its actual argv/environment, six consumed input roles, bounded
 per-operation bytes, raw capture and owned-group closure. Publishedebe8373 and
 d2998b6 fix the two repair evidence type contradictions and exercise genuine
 renewal, linked negative DTOs and exact/conflicting report retrieval. The complete
 stage remains BLOCKED; WORK owns its current binding and measured counters.
-Use2786's retained gap map and bounded real-caller/fixture analysis to group the
+Use2793's retained gap map and bounded real-caller/fixture analysis to group the
 next testable paths before another complete stage. Keep unsupported or absent
 producer prerequisites explicit; no new objective skip is established by this run.
-2784/2787 group the next public recovery-review negative decoder matrix. Root
-reuses one unchanged fixture baseline and configuration digest, replacing only
-the declared request bytes in each expected afterimage. Complete independent
-review and ordinary publication before its sole changed-input stage; keep the
-unchanged genuine CAS case's prior result until the complete selected stage.
+Publishedf3cd312 and2790 complete the public recovery-review negative decoder
+packet with one fixture baseline/configuration digest and exact request afterimages.
+WORK owns its review, checks and terminal measurement.2791 retains all existing
+native report/issue contracts and identifies direct prepared-state inspect as a
+supported next-packet candidate. Group it with other confirmed related controls
+before another full stage; do not measure a single added assertion. No subprocess
+is removed merely to raise parent counters. Keep current counter admission.
 Preserve the same collector/readiness owners and do not add private alias admission.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts
 and do not replay historical UNKNOWN. Toolchain's2561 result and reviewed gaps
