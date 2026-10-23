@@ -511,7 +511,7 @@ function checkedPreparedBinding(context: CliCoverageContext, value: unknown, iss
   assert.equal(receipt.parent_pid, launch.parent_pid);
   assert.equal(receipt.exit_code, 0);
   assert.equal(proofRecord(receipt.consumed_inputs).complete, true);
-  const issueTargets = preparedIssueTargets(context, binding.argv as string[], inputs);
+  const issueTargets = preparedIssueTargets(binding.argv as string[], inputs);
   assert.ok(Array.isArray(binding.issue_targets));
   assert.deepEqual(binding.issue_targets, issueTargets, 'Prepared issue targets differ from the checked work binding.');
   return {
@@ -707,18 +707,12 @@ function valueAfterArg(argv: readonly string[], name: string): string | undefine
 }
 
 function preparedIssueTargets(
-  context: CliCoverageContext,
   argv: readonly string[],
   inputs: readonly Record<string, unknown>[],
 ): CliPreparedIssueTarget[] {
   const root = valueAfterArg(argv, '--project-root');
   const workId = valueAfterArg(argv, '--work-id');
   assert.ok(root && path.isAbsolute(root) && path.resolve(root) === root);
-  const relativeRoot = path.relative(context.root, root);
-  assert.ok(
-    !path.isAbsolute(relativeRoot) && relativeRoot !== '..' && !relativeRoot.startsWith('..' + path.sep),
-    'Prepared project root escapes the CLI evidence root.',
-  );
   assert.ok(workId && /^mutation-run-[a-f0-9-]{36}$/u.test(workId));
   const intake = inputs.find((row) => row.role === 'intake');
   assert.ok(intake && typeof intake.path === 'string' && typeof intake.realpath === 'string');
@@ -834,7 +828,7 @@ export function createCliCoverageObserver(
       let preparedAfter: Record<string, unknown>[] | undefined;
       const issueTargets =
         subject.role === 'run-issue-wave'
-          ? preparedBinding && preparedIssueTargets(context, preparedBinding.argv, preparedBinding.inputs)
+          ? preparedBinding && preparedIssueTargets(preparedBinding.argv, preparedBinding.inputs)
           : undefined;
       if (runOperationRoles.has(subject.role)) {
         try {

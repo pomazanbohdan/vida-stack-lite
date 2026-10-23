@@ -733,12 +733,20 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
       ];
       const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-cli-child-'));
       let passed = false;
+      let runFixtureRoot: string | undefined;
       try {
         const runId = randomUUID();
-        const fixtureRoot = path.join(root, 'prepared-fixture');
+        const fixtureRoot = path.resolve(root, '..', path.basename(root) + '-prepared-fixture');
         const workId = 'mutation-run-' + runId;
         let runFixture: Record<string, unknown> | undefined;
         if (variant === 'run') {
+          runFixtureRoot = fixtureRoot;
+          const fixtureRelativeToEvidence = path.relative(root, fixtureRoot);
+          assert.ok(
+            !path.isAbsolute(fixtureRelativeToEvidence) &&
+              (fixtureRelativeToEvidence === '..' || fixtureRelativeToEvidence.startsWith('..' + path.sep)),
+            'Consumer project fixture must be outside the CLI evidence root.',
+          );
           const prepared = subjects[1];
           const issue = subjects[2];
           assert.ok(prepared);
@@ -1992,8 +2000,16 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         );
         passed = true;
       } finally {
-        if (passed) rmSync(root, { recursive: true, force: true });
-        else console.error('Preserved failed CLI coverage protocol fixture at ' + root);
+        if (passed) {
+          rmSync(root, { recursive: true, force: true });
+          if (runFixtureRoot) rmSync(runFixtureRoot, { recursive: true, force: true });
+        } else {
+          console.error(
+            'Preserved failed CLI coverage protocol fixture at ' +
+              root +
+              (runFixtureRoot ? ' and consumer fixture at ' + runFixtureRoot : ''),
+          );
+        }
       }
     },
   );
