@@ -312,6 +312,14 @@ for timeout, preserve the root and unchanged config, and retain the UNKNOWN latc
 after the passing negative assertion. A sent signal or cleanup attempt does not
 prove descendant quiescence. This control does not qualify child counter custody.
 
+Register the maintained run component controls for the current native coverage
+producer flag as well as their existing mutation and V8 contexts. Registration
+is not mutation qualification. Preserve failures in direct refusal/continuation
+roots and restore all scoped spies in finally before database close. A malformed
+receipt status fails schema validation before the authority-read catch; require
+that exact public refusal and unchanged bytes before restoring the valid fixture
+for a separate project-path denial.
+
 The same private public-CLI timing owner also records parent phase starts for
 the corrective fixtures, including setup and in-process runs, to attribute the
 intervals between CLI children. `PrivatePublicCliFixturePhaseTiming/v1` carries

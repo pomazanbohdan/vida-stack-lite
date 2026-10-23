@@ -23,6 +23,75 @@ Toolchain completes all testable paths in2561. Its remaining9branch arms and
 2statements have independent dispositions, including an OPEN native Windows
 prerequisite. This permits queue progression, not numeric exact100.
 
+### Latest completed run measurement
+
+2602 completes the exact one-Source/two-test contour on
+69ec28c36b3f65bff900058f148cfd4dbd0b62ee, stage `/workspace/contour-stage-ROyiXn`,
+run8133eab4-003f-426f-a749-1b385423d73e. All57tests pass with0failures and289expects
+in32.91s, outer37397.723769ms. Raw **F44/557 L205/2863 S219/3143 B217/3663**
+stays BLOCKED/nonexact. Max CC501/entry CRAP21756 is navigation, not frozen
+acceptance. Native exit0/null signal/no timeout/spawn error, complete capture,
+closed process/group, unchanged boot/image and one paired projection import
+pass,1310attempts. Frozen/CRAP/mutation stay deferred.
+
+Image `/workspace/.vida-quality-inputs/ffa6aa37319d2406b8823b8f28e0aabf1007ac74/repository`,
+manifest SHA2562fcf939f847c100174cd5a2de981983a201e180d93d175c41023731dbdaf09a6.
+Package report is
+`coverage/bun-unified/diagnostics/8133eab4-003f-426f-a749-1b385423d73e.focused-coverage.json`;
+run-manifest SHA256312cef603c5f947801e1bd103185adde258cca7f18dbc6fc8557d708adfec912.
+SourceFP2ef942b46c9a84a00dcb3482616d2033c09c27a5ba1c53d5567b27e5aa086f94,
+tested01ff744da6517c0d75329ed63e3dd35590525c16f0ec50f70fc5369eaadafc,
+toolaa4d8a7b16a62fbc0bb43d05476db0af837b4be5e1c4bdc076aa62d56b69ea89.
+2603 reuses retained canonical geometry to map all513zero functions,2924statements
+and3446branch arms. No AST/index/hash sweep is repeated.2604 verifies/fsyncs the
+40325120-byte functional archive at
+`/workspace/vida-functional-retention-ROyiXn-SjJWe9/archive.json`; originals stay.
+
+A bounded Source read finds an omitted registration route at test line2509.
+The existing direct/component group registers only for mutationMode or
+v8CoverageMode. The current Istanbul owner instead sets its maintained
+AGENT_RUNTIME_NATIVE_COVERAGE_MAIN=1 flag in both serial/versioned child envs.
+2605 independently reviews adding that existing flag to this one registration
+condition, preserving ordinary/mutation/V8 behavior. Removing the gate entirely
+would also change ordinary suite membership; a new collector does not repair
+registration. Batch prerequisite repairs and newly registered targeted controls
+before the next complete changed-input stage. Do not claim every gap comes from
+this gate or treat missing attribution/fixtures as objective untestability.
+
+### Run registration correction packet
+
+2605 independently confirms the missing native-Istanbul registration route.
+Root adds the maintained native flag only to the existing conditional. No Source
+branch, denominator, old mutation/V8 condition or budget changes. This runs
+component tests named mutation path, not a mutation engine or qualification lane.
+The independent review does not attribute all513function gaps to this omission.
+
+Before enabling that group, Root finds four unconditional failure cleanups and
+two spies restored only on success. The delivered-work control now restores both
+spies in finally before closing its DB and marks completion only afterwards.
+It and three direct refusal roots retain failures. Existing bounded child/UNKNOWN
+retention remains unchanged.2607 independently reviews these exact changes with
+no blocker, dropped assertion, new comment or suppression.
+
+2606 passes strict139/lint, then the19newly registered controls produce18PASS and
+one stale assertion in137.36s. Original log and failed root
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-context-sUWunB` remain retained.
+The receipt status unknown violates the pending/bound schema enum before the
+old expected status guard; run's authority-read catch correctly reports
+Runtime initialization authority is unavailable.2608 checks only that corrected
+case, adding unchanged receipt/no-work assertions before restoring the genuine
+fixture's prior schema-valid bytes and exercising escaping-path denial. It passes
+strict139/lint and1case/6expects in1.82s. Independent2609 confirms the actual
+schema/reader/catch order and retained refusal semantics. No prior state is forged.
+
+Keep the other18passes rather than rerun the137.36s group for one oracle change.
+Within that group the released-selector case takes52.606s and CAS/report28.217s;
+these native case costs do not establish a matched speedup or divided parallel
+estimate. Serial execution, independent read-only reviews and one changed-input
+stage are selected. A full stage per assertion and concurrent suites/compilers
+are rejected without matched/resource qualification. Tool-call/token savings
+remain unmeasured. No per-test build or extra numeric producer is added.
+
 ### Run contour repair and measurement plan
 
 Current scope is bin/run.ts with tests/run-entrypoint.test.ts and

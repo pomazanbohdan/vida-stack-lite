@@ -1879,6 +1879,7 @@ writeFileSync(path.join(repositoryRoot, 'AGENT.sidecar.md'), '# Uninitialized fi
 const launcher = path.join(packageRoot, 'bin', 'run.ts');
 const mutationMode = process.env.AGENT_RUNTIME_MUTATION_PART === 'bun';
 const v8CoverageMode = process.env.AGENT_RUNTIME_V8_COVERAGE === '1';
+const nativeCoverageMode = process.env.AGENT_RUNTIME_NATIVE_COVERAGE_MAIN === '1';
 const ordinaryDescribe = mutationMode ? describe.skip : describe;
 
 test('durable controller publication cleans only its own pending file when publication fails', () => {
@@ -2506,7 +2507,7 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
   });
 });
 
-if (mutationMode || v8CoverageMode) {
+if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   const record = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
   const createFixture = (root: string, bundleName = 'agent-runtime-new', multiProject = false) => {
     const fixtureBundle = path.join(root, bundleName);
@@ -2778,6 +2779,7 @@ if (mutationMode || v8CoverageMode) {
 
   test('public run handles delivered-work inspect, issue retry, report retry and conflict without opening the old engine', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-run-continuation-'));
+    let completed = false;
     try {
       const fixtureSetup = createFixture(root, 'vida-agent');
       mkdirSync(path.join(root, 'docs/agent-instructions'), { recursive: true });
@@ -2854,6 +2856,8 @@ if (mutationMode || v8CoverageMode) {
         ],
         originalSource,
       });
+      let snapshotSpy: QuerySpyHandle | undefined;
+      let bridgeSpy: QuerySpyHandle | undefined;
       try {
         const currentSourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['src/task.ts']),
           selection: WorkItemSelection = {
@@ -2941,9 +2945,9 @@ if (mutationMode || v8CoverageMode) {
             '--expected-digest',
             version.digest,
           ],
-          engine = await import('../src/orchestration/session-engine-snapshot.ts'),
-          snapshotSpy = spyOn(engine, 'readSessionEngineSnapshot'),
-          bridgeSpy = spyOn(MastraSessionBridge, 'open');
+          engine = await import('../src/orchestration/session-engine-snapshot.ts');
+        snapshotSpy = spyOn(engine, 'readSessionEngineSnapshot');
+        bridgeSpy = spyOn(MastraSessionBridge, 'open');
         if (!initial) throw Error('fixture continuation state is missing');
         expect(initial.action_status).toBe('unissued');
         fixture.closeDatabase();
@@ -3017,13 +3021,15 @@ if (mutationMode || v8CoverageMode) {
         );
         expect(snapshotSpy).not.toHaveBeenCalled();
         expect(bridgeSpy).not.toHaveBeenCalled();
-        snapshotSpy.mockRestore();
-        bridgeSpy.mockRestore();
       } finally {
+        snapshotSpy?.mockRestore();
+        bridgeSpy?.mockRestore();
         fixture.closeDatabase();
       }
+      completed = true;
     } finally {
-      rmSync(root, { recursive: true, force: true });
+      if (completed) rmSync(root, { recursive: true, force: true });
+      else process.stderr.write(`Retained failed run continuation fixture: ${root}\n`);
     }
   });
 
@@ -3048,15 +3054,19 @@ if (mutationMode || v8CoverageMode) {
 
     test('rejects invalid initialization status and an escaping work path without creating work', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-context-'));
+      let completed = false;
       try {
         const { args, initialization, initializationPath } = createFixture(root);
         writeFileSync(initializationPath, record({ ...initialization, workspace_binding_status: 'unknown' }));
+        const deniedReceipt = readFileSync(initializationPath);
         await Promise.resolve(
           expect(run(args)).rejects.toMatchObject({
             code: 'GAP-VIDA-RUN-CONTEXT-001',
-            message: 'Runtime initialization status is invalid.',
+            message: 'Runtime initialization authority is unavailable.',
           }),
         );
+        expect(readFileSync(initializationPath)).toEqual(deniedReceipt);
+        expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
         writeFileSync(initializationPath, record(initialization));
         const escaping = args.map((entry, index) => (args[index - 1] === '--work-path' ? '../escape' : entry));
         await Promise.resolve(
@@ -3066,8 +3076,10 @@ if (mutationMode || v8CoverageMode) {
           }),
         );
         expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+        completed = true;
       } finally {
-        rmSync(root, { recursive: true, force: true });
+        if (completed) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed run refusal fixture: ${root}\n`);
       }
     });
 
@@ -3114,6 +3126,7 @@ if (mutationMode || v8CoverageMode) {
 
     test('rejects incomplete selector authority before project context', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-selector-'));
+      let completed = false;
       try {
         mkdirSync(path.join(root, '.agent', 'cutover'), { recursive: true });
         writeFileSync(path.join(root, '.agent', 'cutover', 'incomplete'), 'x');
@@ -3129,13 +3142,16 @@ if (mutationMode || v8CoverageMode) {
             code: 'GAP-VIDA-RUN-SELECTOR-001',
           }),
         );
+        completed = true;
       } finally {
-        rmSync(root, { recursive: true, force: true });
+        if (completed) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed run refusal fixture: ${root}\n`);
       }
     });
 
     test('rejects independent repository and requested-project drift before creating state', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-identity-'));
+      let completed = false;
       try {
         const { args, initialization, initializationPath } = createFixture(root);
         const withRepository = (repository: string) =>
@@ -3167,8 +3183,10 @@ if (mutationMode || v8CoverageMode) {
           );
           expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
         }
+        completed = true;
       } finally {
-        rmSync(root, { recursive: true, force: true });
+        if (completed) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed run refusal fixture: ${root}\n`);
       }
     });
 
