@@ -42,10 +42,14 @@ changing counts or permitting queue advancement while other paths remain OPEN.
 The non-test CLI child receipt and exact parent merge now pass native protocol
 and negative controls through the existing coverage owners. They preserve the
 expected denial exit1 and every ordinary test-loaded receipt requirement.
-Publish the reviewed packet before the single complete changed-input stage.
-Use that report to bind remaining reviewed dispositions and actual entry/catch
-counts; protocol controls alone do not qualify the contour. Cache/exit-state
-fixtures do not replace child custody.
+The reviewed packet61bd093 is published and2490 completes the sole changed-input
+stage.2492 reuses the retained geometry to bind all remaining contract
+dispositions. Two native Windows engine-name arms remain OPEN. No native Windows
+environment is attached; continue this contour there when available. Keep this
+cycle blocked instead of repeating Linux or opening another contour past that
+testable target gap. Raw numeric outcome remains BLOCKED/nonexact, and all
+frozen/mutation work stays deferred. Cache/exit-state fixtures do not replace
+child custody.
 WORK binds the correction/review and native CLI loader prerequisites;
 first-import/query fixtures may not assume suite ordering.
 The configured-caller and filesystem-guide capture defects are repaired. WORK

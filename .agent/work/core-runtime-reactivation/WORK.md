@@ -6,10 +6,12 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-development-controller only**;2461 measures the
-checked construction-drift, lock-fallback and copy-list observation packet.
-Map2463 retains13branch arms/10statements/3functions. Four defensive branch
-dispositions are accepted below; other paths remain OPEN or native-target GAPs.
+The active contour is **bun-development-controller only**.2490 measures the
+checked non-test CLI child attribution with unchanged Source/test fingerprints.
+Map2492 retains10branch arms/4statements/1function. Eight branch arms and all
+remaining statements/function have independent contract dispositions below.
+Two native Windows branch arms remain OPEN; no native Windows environment is
+attached. The cycle is blocked on that target evidence, not repeated on Linux.
 Historical geometry is navigation rather than a new coverage claim.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
@@ -230,12 +232,15 @@ input stage in that order. No new AST/inventory, dependency install, SDK build,
 numeric producer or counter qualification occurs in these protocol controls.
 Ordinary commit hook2487 rejects one unused public type export. Root makes the
 observer's internal type private; no suppression or hook bypass is used.
-Publication and the complete selected-contour measurement remain next.
+2488 passes normal hooks, including formatting531 and strict538, and publishes
+61bd09344f95968b19371746a264f7c17134c9c1 by ordinary push2489.
+Stage2490 below visits the actual CLI entry/catch/Error paths. No second full
+contour run is needed for unchanged inputs. No product behavior is changed.
 
 ### Current controller defensive dispositions
 
 Independent review2455 quotes the mapped expressions and preceding guards.
-Root accepts only these four objective branch dispositions, including the directly
+Root accepts these four objective branch dispositions, including the directly
 dominated statements/function listed here. Binding is2461's run
 cae373d4-5954-444f-ad86-736ff21784fd on Source6588f1f and unchanged controller Source
 fingerprintf251d18af1902b00dfc933432835ca523610686c4cd61534c22a7f687f8a0b47,
@@ -260,19 +265,23 @@ Root accepts these additional contract dispositions against the2461 binding.
 | b25arm1, errorMessage236, `value instanceof Error ? value.message : ...` | Sole entry catch receives main's rejection. Supported CLI operations produce Error objects and expose no non-Error rejection seam. Reopen for a supported non-Error producer or top-level injection boundary. |
 | b26arm0, errorMessage236, `typeof value === 'string' ? value : ...`      | Requires a thrown string from that same producer. Reopen if an admitted operation supplies one.                                                                                                               |
 | b26arm1, errorMessage236, `'Unknown failure'`                            | Requires a non-Error, non-string rejection. Reopen if a supported producer can supply it.                                                                                                                     |
-| b113arm0/s271, direct entry725–726, `typeof Bun === 'undefined'`         | Non-Bun Source execution is outside the package-selected Bun tooling contract. Reopen if that direct-entry runtime becomes supported.                                                                         |
+| b113arm0/s273, direct entry725–726, `typeof Bun === 'undefined'`         | Non-Bun Source execution is outside the package-selected Bun tooling contract. Reopen if that direct-entry runtime becomes supported.                                                                         |
 
 These dispositions do not add hits, alter denominators or qualify numeric PASS.
-Actual CLI entry/catch/Error formatting remains testable and OPEN until its
-complete stage.2483 separately leaves b76arm0 at505 and b81arm0 at569 OPEN as
+Stage2490 visits the CLI entry/catch/Error formatting; map2492 confirms all
+remaining zero-counter identities against the exact retained geometry. The
+unchanged Source/test fingerprints rebind the preceding independent causal
+reviews; current tool identity and image/config binding are recorded below.
+2483 separately leaves b76arm0 at505 and b81arm0 at569 OPEN as
 native Windows evidence gaps. Both map the `process.platform === 'win32'`
 alternative `'bun.exe'` in prepareDevelopmentController/inspectDevelopmentController.
 The current Linux environment supplies no native Windows qualification; platform
 simulation would not close it. A native Windows maintained-controller run is
-required. The contour remains active pending the new measurement and those gaps.
-The implemented non-test CLI-child protocol above retains the ordinary
-test-loaded receipt and expected blocked exit1. Its focused controls establish
-protocol behavior, not a new controller measurement.
+required. The contour remains active and blocked on native target evidence.
+All four remaining statements are s2/20/263/273 and the remaining function is
+f57, matching the accepted guard/legacy dispositions. No testable Linux path
+remains in the bound map. Do not repeat an unchanged Linux stage, simulate a
+native target, mark the contour exact or open the next contour past this GAP.
 
 The product inspector now rejects persisted ready metadata with missing,
 non-passing or foreign-bound qualification before a child can run.2346 reproduces
@@ -485,22 +494,31 @@ lifecycle, TESTING, the plan and backlog; no second authority is created.
 
 ### Latest completed development-controller measurement
 
-Stage2461 /workspace/contour-stage-PMCCw0 runs on Bun1.4.4 and
-Source6588f1f834f690b050d245778dfc5ea33b2bad7a,
-runcae373d4-5954-444f-ad86-736ff21784fd. It completes in37005.544677ms,
+Stage2490 /workspace/contour-stage-CJEv0d runs on Bun1.4.4 and
+Source61bd09344f95968b19371746a264f7c17134c9c1,
+runbfdbf2b3-08aa-4ba6-81a8-75cfe1cdfc62. It completes in35416.197027ms,
 exit0/nullsignal/no timeout/spawn error, complete capture, closed group, unchanged
 boot/image and one automatic paired import. Native13PASS/0FAIL/223expect calls
-in31.59s. Raw **F59/62 L237/246 S268/278 B273/286** remains BLOCKED/nonexact;
-branch72arm1 is newly visited. MaxCC/entryCRAP17 remains diagnostic; no frozen or
-mutation acceptance is claimed.
+in31.19s. Raw **F61/62 L243/246 S274/278 B276/286** remains BLOCKED/nonexact.
+The new protocol visits2functions,6lines,6statements and3branch arms, including
+b25arm0/b111arm0/b113arm1, with unchanged denominators. MaxCC/entryCRAP17 remains
+diagnostic; no frozen or mutation acceptance is claimed.
 
-Image /workspace/.vida-quality-inputs/1dc7976285be980e8ad2f8a702ded90b5421e067/repository
-has manifestb1a08854afa26052e25b0dea5de7e572445c78ac1586868853e2dffd53253f2a.
-2462 verifies/fsyncs the10240-byte non-cache archive at
-/workspace/vida-functional-retention-PMCCw0-uD4DiB/archive.json; originals remain.
-Report-only map2463 reconciles3missing functions,10statements and13branch arms
-against this complete report, without another AST/hash/inventory pass. Historical
-exact F/L/S/B remains17/46 and global freshness remains unverified.
+Image /workspace/.vida-quality-inputs/7edf82defdd101ba3f27637a366e21d8ca98d7ae/repository
+has manifest99cf34f6678a4e8e110efa6ae9e9db9874089dad30fae3f8d0e17a7a0f29fa2d.
+Its package report is coverage/bun-unified/diagnostics/
+bfdbf2b3-08aa-4ba6-81a8-75cfe1cdfc62.focused-coverage.json, bound to run-manifest
+0cf2554ccb71510f063115b87cd2d9cfb2c6d97430aa26dcf1ac3e8da4a9c02e.
+Source/test fingerprints remain f251d18af1902b00dfc933432835ca523610686c4cd61534c22a7f687f8a0b47
+and8a8901ccef7d7f79080cb06199a2bb0ac7914cf6145c03663d20c7945f4da784;
+tool fingerprint is63773cad5022c530798e967064eef6e20fca743d7e51e9321923f774b29ecb1b.
+2491 verifies/fsyncs the10240-byte non-cache archive at
+/workspace/vida-functional-retention-CJEv0d-m2Fzu1/archive.json; originals remain.
+Report-only map2492 compares retained fn/statement/branch geometry exactly and
+reuses the prior gap inventory, without another AST or Source hash pass.
+Historical exact F/L/S/B remains17/46 and global freshness remains unverified.
+The [published61bd093 checkpoint](https://github.com/pomazanbohdan/vida-stack-lite/blob/61bd09344f95968b19371746a264f7c17134c9c1/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-development-controller-measurement)
+retains the preceding2461 custody and exact locators.
 
 ### Preceding construction and lock-fallback measurement
 
