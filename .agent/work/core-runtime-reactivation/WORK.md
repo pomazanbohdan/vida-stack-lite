@@ -67,6 +67,28 @@ independently confirms the causal fix and unchanged context/freshness guards.
 No runner rewrite, second capture owner, image mutation or timeout increase is
 introduced. Another complete stage requires this changed input packet first.
 
+Stage2362 on9cdd983d3c8bcfd5bc6a13ab9b94c4c261bc46ae at
+/workspace/contour-stage-MiqEDA also closes native exit1 with7PASS/1FAIL,
+4978.577087ms, complete capture/group and unchanged boot/image. The context fix
+reaches the next genuine prerequisite: TESTING.md is missing from the image.
+2367 verifies/fsyncs its10240-byte scratch archive at
+/workspace/vida-functional-retention-MiqEDA-ou6s0K/archive.json; originals remain.
+Neither failed stage yields new coverage or a mutation kill.
+
+The explicit premise in2364 compares the retained image manifest against the
+constructor's required files and its existing SDK formation inventory. Every
+declared SDK formation input is captured, but the fs-read TESTING.md is absent.
+No new AST, Source traversal or hash pass is used. The existing capture owner
+now includes that guide when its visited closure contains the controller test;
+unrelated scopes still omit it. The focused inert-reader test resolves this
+input-catalog defect before another full stage.2365 reproduces the missing guide
+digest;2366 passes23capture cases/39expect calls in1.038s, strict20/configured
+lint pass. Earlier2363 diagnostic syntax and2364 synthetic SDK-prerequisite
+failures are retained; they are not evidence of the guide assertion. The final
+capture control uses a focused import closure and runs no synthetic SDK producer.
+Independent2368 finds no material issue with capture ownership, bounds,
+deduplication or the unrelated-reader control.2369 documentation/diff checks pass.
+
 ### Preceding measured repair packet
 
 The checked Source packet662cd74101016b8d436e31d8275f3c3f6a020983 is published.

@@ -1172,6 +1172,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | da97c16c-3f3d-47ed-ab1d-e4ccec2f03f4 | 708c1531020f886046d8d86e20a774eb86d6259b | 2026-10-16T11:15:30.024Z | focused-diagnostic; owner accepted locally; selection bound | 49/62 · 180/243 · 192/273 · 194/282 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/da97c16c-3f3d-47ed-ab1d-e4ccec2f03f4.focused-coverage.json |
 | coverage-outcome | da97c16c-3f3d-47ed-ab1d-e4ccec2f03f4 | not-captured | 2026-10-16T11:15:30.033Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/da97c16c-3f3d-47ed-ab1d-e4ccec2f03f4.json |
 | stage-outcome | contour-stage-tCOJJQ | b9fcd7706fcc3a43a65e890d7a827ce5d59b2d9d | 2026-10-23T00:58:22.074Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-tCOJJQ/publication-error.json |
+| stage-outcome | contour-stage-MiqEDA | 9cdd983d3c8bcfd5bc6a13ab9b94c4c261bc46ae | 2026-10-23T01:03:50.866Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-MiqEDA/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

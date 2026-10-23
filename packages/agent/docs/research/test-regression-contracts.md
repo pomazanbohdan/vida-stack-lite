@@ -1274,6 +1274,8 @@ Resolve the default target through configuredTestRepositoryRoot so immutable
 image tests use their captured consumer context. Preserve the explicit controller
 target override and compare scope existence with the selected target filesystem.
 The qualification's own Source fixture still proves the actual new-bin report.
+Capture its fs-read TESTING.md through the existing guide-input owner, including
+an imported controller-reader closure; unrelated scopes retain no guide input.
 
 ### Controller child observations
 

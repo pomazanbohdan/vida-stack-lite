@@ -1203,6 +1203,7 @@ async function captureConfiguredTestContextInputs(
     visited.has('tests/helpers/init-bundle.ts') ||
     visited.has('tests/helpers/runtime-config-rebind-fixture.ts') ||
     visited.has('tests/contained-controller-fixture.ts') ||
+    visited.has('tests/development-controller.test.ts') ||
     visited.has('tests/init-entrypoint-v8.test.ts') ||
     visited.has('tests/initialization.test.ts') ||
     visited.has('tests/audit-partial-init.test.ts') ||

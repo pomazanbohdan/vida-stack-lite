@@ -23,7 +23,11 @@ test('captured module union binds a shared Source/tool once and rejects conflict
   ).toThrow(/Captured module input digest conflicts across categories/u);
 });
 
-async function captureTest(source: string, extension = 'ts'): Promise<void> {
+async function captureTest(
+  source: string,
+  extension = 'ts',
+  guide?: { readonly reader: string; readonly bytes: string; readonly captured: boolean },
+): Promise<void> {
   const root = mkdtempSync(path.join(tmpdir(), 'coverage-import-boundary-'));
   let passed = false;
   try {
@@ -40,11 +44,32 @@ async function captureTest(source: string, extension = 'ts'): Promise<void> {
     write('templates/fixture.yaml', 'fixture: true\n');
     write('instructions/fixture.md', 'fixture\n');
     const file = `tests/fixture.test.${extension}`;
+    if (guide) {
+      write('TESTING.md', guide.bytes);
+      write(guide.reader, 'export const inertReader = true;\n');
+      source = `import './${path.basename(guide.reader)}';\n` + source;
+    }
     write(file, source);
-    const inputs = await coverageInputs(root);
+    const inputs = await coverageInputs(
+      root,
+      guide
+        ? {
+            mode: 'focused-diagnostic',
+            contour: 'capture-reader-fixture',
+            sources: ['src/fixture.ts'],
+            tests: [file],
+          }
+        : 'current',
+    );
     expect(inputs.tests).toEqual([file]);
     expect(inputs.input_bytes[file]).toEqual(Buffer.from(source));
     expect(inputs.test_inputs.find((input) => input.path === file)?.sha256).toBe(sha256(source));
+    if (guide) {
+      expect(inputs.tool_inputs.find((input) => input.path === 'TESTING.md')?.sha256).toBe(
+        guide.captured ? sha256(guide.bytes) : undefined,
+      );
+      expect(inputs.input_bytes['TESTING.md']).toEqual(guide.captured ? Buffer.from(guide.bytes) : undefined);
+    }
     passed = true;
   } catch (error) {
     // Capture denial is terminal and has no running test subject or Runtime state.
@@ -55,6 +80,17 @@ async function captureTest(source: string, extension = 'ts'): Promise<void> {
     else console.error(`Preserved failed coverage import fixture at ${root}`);
   }
 }
+
+test.each([
+  { file: 'tests/development-controller.test.ts', captured: true },
+  { file: 'tests/unrelated-reader.ts', captured: false },
+])('coverage capture binds the controller package guide only for its reader: $file', async ({ file, captured }) => {
+  await captureTest("import { test } from 'bun:test'; test('fixture', () => {});", 'ts', {
+    reader: file,
+    bytes: 'controller fixture guide\n',
+    captured,
+  });
+});
 
 test('coverage capture accepts Vitest text fixtures, comments, and erased type-only references', async () => {
   await captureTest(`import { test } from 'bun:test';
