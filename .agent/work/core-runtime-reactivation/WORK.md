@@ -2869,6 +2869,24 @@ The large historical WORK is replaced by its immutable Git source below,
 removing stale pending instructions and repeated metric/hash narratives.
 Current gaps, exact evidence and live anchors remain here.
 
+### CLI module-load attribution correction — 2026-10-23
+
+Commit `2b009da` keeps `bin/workspace-database-cli.ts` required for both run
+operations and requires `src/orchestration/local-work-admission.ts` for
+preparation plus issue waves whose prepared actions include a
+`repository_source` writer. Read-only issue waves do not load that module in
+`bin/run.ts`; requiring it there rejected a valid native receipt. The validator
+checks every prepared action scope before deciding. Focused regression passes
+11 tests / 509 expectations; tooling strict checks 203 files, Oxlint and exact
+formatting pass. The bounded independent review found no issue.
+
+The sole post-commit stage `contour-stage-J3Km37` terminated in 148.30 s with
+exit 0, complete capture, a closed group, unchanged boot/image inputs and
+published its diagnostic. Its coverage outcome remains `BLOCKED` and only
+focused: 296/557 functions, 1338/2863 lines, 1429/3143 statements and 1697/3663
+branches. This is not contour closure or numeric qualification. The producer
+owns the status projection; next work stays on `bun-cli-run`.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
