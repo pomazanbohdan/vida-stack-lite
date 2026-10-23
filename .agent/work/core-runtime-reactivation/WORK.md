@@ -6,18 +6,43 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-development-controller only**.2490 measures the
-checked non-test CLI child attribution with unchanged Source/test fingerprints.
-Map2492 retains10branch arms/4statements/1function. Eight branch arms and all
-remaining statements/function have independent contract dispositions below.
-Two native Windows branch arms remain OPEN; no native Windows environment is
-attached. The cycle is blocked on that target evidence, not repeated on Linux.
+The active contour is **bun-cli-public-entrypoints only**, the next declared
+partition after the owner's explicit controller deferral below. Reuse its
+retained receipts and inventory before deciding on affected checks or a new
+coverage stage. Historical UNKNOWN operations remain fenced and are not replayed.
+No implementation or numeric run for this next contour is claimed by selection.
 Historical geometry is navigation rather than a new coverage claim.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
 waiver or mutation acceptance. Historical exact F/L/S/B remains17/46.
 Root owns canonical edits, final checks, Git and the sole numeric producer.
+
+### Owner-authorized controller deferral
+
+On2026-10-23 the owner explicitly instructs: "Або пропусти цей контур" and
+"с зафіксованим ГАП". Root defers bun-development-controller and advances only
+the sequential coverage queue. This named instruction replaces the preceding
+hold on queue advancement; it does not make native Windows evidence available
+or classify those paths as unreachable under the product contract.
+
+The unresolved GAP is b76arm0 at bin/development-controller.ts505 and b81arm0
+at569. Both choose `'bun.exe'` when `process.platform === 'win32'`, in
+prepareDevelopmentController and inspectDevelopmentController. Independent
+review2483 confirms the native-target prerequisite. The current Linux host
+does not satisfy it. Reopen this contour when a native Windows runner with
+attributable counter/capture/terminal custody is available, or when an approved
+contract change affects those exact paths. Do not substitute platform simulation.
+
+Retain stage2490/runbfdbf2b3-08aa-4ba6-81a8-75cfe1cdfc62 on Source61bd093,
+map2492 and the full image/manifest/fingerprint binding under
+[latest custody](#latest-completed-development-controller-measurement).
+Raw **F61/62 L243/246 S274/278 B276/286** remains BLOCKED/nonexact.
+Eight other branch arms, s2/20/263/273 and f57 retain their reviewed contract
+dispositions below. Preserve every denominator, original receipt/log, image and
+UNKNOWN fence. This is an owner-authorized skip with an explicit native GAP,
+not exact coverage, a frozen/CRAP waiver, mutation acceptance or Runtime acceptance.
+The generated CONTOUR-STATUS keeps its report-issued values unchanged.
 
 ### Bun1.4.4 toolchain update
 
@@ -277,11 +302,13 @@ native Windows evidence gaps. Both map the `process.platform === 'win32'`
 alternative `'bun.exe'` in prepareDevelopmentController/inspectDevelopmentController.
 The current Linux environment supplies no native Windows qualification; platform
 simulation would not close it. A native Windows maintained-controller run is
-required. The contour remains active and blocked on native target evidence.
+required. The owner's explicit deferral above leaves that evidence OPEN while
+allowing the coverage queue to advance.
 All four remaining statements are s2/20/263/273 and the remaining function is
 f57, matching the accepted guard/legacy dispositions. No testable Linux path
 remains in the bound map. Do not repeat an unchanged Linux stage, simulate a
-native target, mark the contour exact or open the next contour past this GAP.
+native target or mark the contour exact. The named owner instruction above is
+the sole authority for this contour's queue advancement.
 
 The product inspector now rejects persisted ready metadata with missing,
 non-passing or foreign-bound qualification before a child can run.2346 reproduces

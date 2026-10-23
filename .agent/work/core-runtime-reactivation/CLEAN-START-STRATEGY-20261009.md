@@ -12,48 +12,31 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The active contour is **bun-development-controller**, selected after
-session-handoff-v2 and final-assurance completed all testable paths and bound
-their remaining independent objective dispositions. Both raw coverage outcomes
-remain BLOCKED/nonexact; their exact bindings are in WORK.
-The owner's Bun1.4.4 update changes the execution pin; historical1.4.3 measurements
-keep their original binding.2398 completes fresh current-runtime admission,
-automatic SDK readiness and selected-contour coverage through the existing owner.
-The subsequent feature-adoption packet replaces Oxfmt with native bun fmt,
-selects native check/format explicitly and adopts typed SQLite reader handling.
-2422 qualifies that changed input closure once through the same stage after
-focused checks/publication;2398 is not proof of the new package/type bytes.
-The current packet extends the persisted ready/qualification correction with
-grouped rejected child-adapter, filesystem and CLI refusal controls. Independent
-readers review remaining I/O and CLI prerequisites before one complete changed-
-input stage; cheap controls precede the shared real construction/qualification.
-2391 completes that packet with additional visited counters and unchanged
-denominators. Its testable and undispositioned paths stay in this active lane;
-2399 retains those prerequisites after the1.4.4 run. CLI child functional evidence does not visit
-parent entry/catch counters, so attribution remains OPEN rather than a skip.
-Construction-drift controls71e7a0f pass focused checks, but stage2437 exposes an
-incidental-build dependency in the private lock-fallback fixture. Correct that
-setup and preserve its terminal failure.2446 completes the corrected changed-input
-stage and visits five additional branch arms with unchanged denominators. The
-same contour's optional copy-list observation passes focused checks and independent
-review with full setup restoration;2461 measures its omission branch after6588f1f
-publication. Four defensive objective dispositions are bound in WORK without
-changing counts or permitting queue advancement while other paths remain OPEN.
-The non-test CLI child receipt and exact parent merge now pass native protocol
-and negative controls through the existing coverage owners. They preserve the
-expected denial exit1 and every ordinary test-loaded receipt requirement.
-The reviewed packet61bd093 is published and2490 completes the sole changed-input
-stage.2492 reuses the retained geometry to bind all remaining contract
-dispositions. Two native Windows engine-name arms remain OPEN. No native Windows
-environment is attached; continue this contour there when available. Keep this
-cycle blocked instead of repeating Linux or opening another contour past that
-testable target gap. Raw numeric outcome remains BLOCKED/nonexact, and all
-frozen/mutation work stays deferred. Cache/exit-state fixtures do not replace
-child custody.
-WORK binds the correction/review and native CLI loader prerequisites;
-first-import/query fixtures may not assume suite ordering.
-The configured-caller and filesystem-guide capture defects are repaired. WORK
-owns current metrics, red/green, reviews and exact evidence; no next contour opens.
+The active contour is **bun-cli-public-entrypoints**, the next partition in
+packages/agent/tooling/mutation-partitions.ts. The owner's2026-10-23 instruction
+explicitly skips bun-development-controller with a recorded GAP. This named
+exception allows queue advancement while its two native Windows engine-name
+branches remain OPEN. [WORK](WORK.md#owner-authorized-controller-deferral) owns
+the exact counters, independent review, complete report binding and reopen
+condition. Its raw numeric outcome remains BLOCKED/nonexact; no denominator,
+frozen/CRAP requirement or mutation rule changes.
+
+Start the new contour by reconciling its retained receipts, Source/test selection
+and inventory. An old UNKNOWN is not a baseline to replay. Preserve its native
+terminal/effect fences and resolve current prerequisites before any new run.
+The declared scope contains bin/repair-work-state.ts, bin/scope.ts and
+bin/vida-agent.ts with the partition's five complete test files. Keep exactly
+one writer/integrator and one final numeric producer. No run is implied by
+selecting the partition.
+
+The [publishedcabf547 strategy](https://github.com/pomazanbohdan/vida-stack-lite/blob/cabf5479ce7a062bceeb7f0cab4fc37c4b94b12d/.agent/work/core-runtime-reactivation/CLEAN-START-STRATEGY-20261009.md#current-state)
+preserves the preceding controller/toolchain repair sequence. Stage2490
+qualifies actual CLI entry/catch/Error counter attribution through the existing
+owners;2492 binds remaining dispositions without another AST pass. Native
+Windows qualification is deferred under the owner's named exception and must
+not become a simulated target or numeric PASS. Bun1.4.4 remains the execution
+pin; older runtime measurements keep their original binding. WORK owns exact
+outcomes, custody and retained artifacts. All frozen/mutation work stays deferred.
 The original three-Source bun-session-handoff remains retired
 historical scope with unchanged evidence and ceilings. No second producer starts.
 TaskSource resource transition
@@ -95,6 +78,8 @@ or disposition every remaining path under the owner's2026-10-21
 [objective-skip amendment](../../../packages/agent/TESTING.md#objective-coverage-skips),
 before choosing another contour. The completed Host disposition permits the
 current queue advance only; reopen it when its supported producer/contract changes.
+The owner's named controller deferral in WORK is the separate2026-10-23
+queue exception for its native Windows GAP; it is not a general platform waiver.
 Preserve selection, denial/retry/restoration
 assertions, CAS, ownership, authorization and UNKNOWN semantics. Keep a blocked
 contour active while testable or undispositioned paths remain. An objective skip
