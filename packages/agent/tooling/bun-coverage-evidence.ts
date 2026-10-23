@@ -143,6 +143,7 @@ export const coverageToolInputs: string[] = [
   'tooling/coverage-shard-evidence.ts',
   'tooling/coverage-run-lock.ts',
   'tooling/owned-cleanup-completion.ts',
+  'tooling/owned-process-group.ts',
   'tooling/published-coverage-inputs.ts',
   'tooling/published-baseline-reference.ts',
   'tooling/fixture-child-observation.ts',

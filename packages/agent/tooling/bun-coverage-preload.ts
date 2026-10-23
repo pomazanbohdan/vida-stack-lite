@@ -1,6 +1,16 @@
 import { randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import {
+  closeSync,
+  fstatSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  readSync,
+  realpathSync,
+  renameSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 import { parsePublishedFixtureIdentity } from './published-coverage-inputs.js';
 import {
@@ -19,6 +29,7 @@ import {
 } from './coverage-instrumented-sources.ts';
 import {
   createCliCoverageObserver,
+  preparedCliInputRoles,
   focusedCliCoverage,
   readCliCoverageLaunch,
   writeCliCoverageReceipt,
@@ -253,6 +264,7 @@ const bootstrapInputs = [
   'tooling/published-coverage-inputs.ts',
   'tooling/fixture-child-observation.ts',
   'tooling/coverage-cli-child.ts',
+  'tooling/owned-process-group.ts',
   'bin/cli-command-contracts.ts',
   'bin/run-cli-options.ts',
   ...(manifest.schema === 'VidaBunCoverageRun/v3'
@@ -264,6 +276,270 @@ const bootstrapInputs = [
   if (!preverifiedBootstrap.has(file)) snapshotBytes(file, expectedHash);
   return { path: file, sha256: expectedHash };
 });
+
+function createPreparedReadCapture() {
+  const maxBytes = 4 * 1024 * 1024;
+  const maxOperations = 4096;
+  const targets = new Map<string, string>();
+  type Stream = {
+    id: string;
+    fd: number;
+    path: string;
+    role: string;
+    identity: Record<string, string>;
+    length: number;
+    next: number;
+    reads: number;
+    eof: boolean;
+    complete: boolean;
+    payload_ids: string[];
+  };
+  const streams = new Map<number, Stream>();
+  const completed: Array<Record<string, unknown>> = [];
+  const operations: Array<Record<string, unknown>> = [];
+  const unreadOpens: Array<Record<string, unknown>> = [];
+  const payloads = new Map<string, { id: string; path: string; sha256: string; bytes: string; raw: Buffer }>();
+  const issues: string[] = [];
+  let payloadBytes = 0;
+  let nextStream = 0;
+  const originalOpen = openSync;
+  const originalRead = readSync;
+  const originalClose = closeSync;
+  const originalReadFile = readFileSync;
+  const originalFstat = fstatSync;
+  const identity = (fd: number) => {
+    const stat = originalFstat(fd, { bigint: true });
+    if (!stat.isFile() || stat.nlink !== 1n) throw new Error('Prepared input is not a regular single-link file.');
+    return {
+      dev: String(stat.dev),
+      ino: String(stat.ino),
+      size: String(stat.size),
+      mode: String(stat.mode),
+      nlink: String(stat.nlink),
+      mtime: String(stat.mtimeNs),
+      ctime: String(stat.ctimeNs),
+    };
+  };
+  const arg = (name: string) => {
+    const index = process.argv.indexOf(name);
+    return index < 0 ? undefined : process.argv[index + 1];
+  };
+  const rootPath = arg('--project-root');
+  const intakePath = arg('--intake');
+  if (!rootPath || !path.isAbsolute(rootPath) || !intakePath || !path.isAbsolute(intakePath))
+    throw new Error('Prepared observer requires its validated absolute root and intake.');
+  const add = (file: string, role: string) => {
+    const relative = path.relative(rootPath, file);
+    if (
+      !relative ||
+      relative === '..' ||
+      relative.startsWith('..' + path.sep) ||
+      path.isAbsolute(relative) ||
+      realpathSync(file) !== file
+    )
+      throw new Error('Prepared input path is not canonical within its project root.');
+    const previous = targets.get(file);
+    if (previous !== undefined && previous !== role) throw new Error('Prepared input roles alias the same file.');
+    targets.set(file, role);
+  };
+  add(path.join(rootPath, 'agent-runtime.config.v1.yaml'), 'runtime-config');
+  add(path.join(rootPath, '.agent', 'runtime-initialization.v1.json'), 'runtime-initialization');
+  add(intakePath, 'intake');
+  const derived = new Set<string>();
+  const derive = (role: string, bytes: Buffer, hash: string) => {
+    const key = role + ':' + hash;
+    if (derived.has(key) || (role !== 'intake' && role !== 'scope')) return;
+    const value: unknown = JSON.parse(bytes.toString('utf8'));
+    if (!isRecord(value)) throw new Error('Prepared path input is not an object.');
+    if (role === 'intake') {
+      for (const [field, nextRole] of [
+        ['scope_path', 'scope'],
+        ['acceptance_path', 'acceptance'],
+      ] as const) {
+        const relative = value[field];
+        if (typeof relative !== 'string' || path.isAbsolute(relative))
+          throw new Error('Prepared intake path is invalid.');
+        add(path.resolve(rootPath, relative), nextRole);
+      }
+    } else {
+      const paths = value.implementation_paths;
+      if (!Array.isArray(paths) || paths.length !== 1 || typeof paths[0] !== 'string' || path.isAbsolute(paths[0]))
+        throw new Error('Prepared scope does not select one relative source.');
+      add(path.resolve(rootPath, paths[0]), 'selected-source');
+    }
+    derived.add(key);
+  };
+  const wrappedOpen = function (this: unknown, ...call: unknown[]): number {
+    const fd = Reflect.apply(originalOpen, this, call) as number;
+    try {
+      const file = typeof call[0] === 'string' ? realpathSync(call[0]) : '';
+      const role = targets.get(file);
+      if (role) {
+        if (nextStream >= maxOperations || streams.has(fd))
+          throw new Error('Prepared open bound or descriptor identity failed.');
+        streams.set(fd, {
+          id: 's' + nextStream++,
+          fd,
+          path: file,
+          role,
+          identity: identity(fd),
+          length: 0,
+          next: 0,
+          reads: 0,
+          eof: false,
+          complete: true,
+          payload_ids: [],
+        });
+      }
+    } catch {
+      issues.push('Prepared input open observation failed.');
+    }
+    return fd;
+  };
+  const wrappedRead = function (this: unknown, ...call: unknown[]): number {
+    const stream = streams.get(Number(call[0]));
+    let count: number;
+    try {
+      count = Reflect.apply(originalRead, this, call) as number;
+    } catch (error) {
+      if (stream) issues.push('Prepared native read failed.');
+      throw error;
+    }
+    if (!stream) return count;
+    stream.reads++;
+    try {
+      if (operations.length >= maxOperations || stream.eof)
+        throw new Error('Prepared read bound or EOF ordering failed.');
+      const buffer = call[1];
+      const offset = call[2];
+      const requested = call[3];
+      const position = call[4] == null ? stream.next : call[4];
+      if (
+        !Buffer.isBuffer(buffer) ||
+        !Number.isSafeInteger(offset) ||
+        Number(offset) < 0 ||
+        !Number.isSafeInteger(requested) ||
+        Number(requested) < 0 ||
+        !Number.isSafeInteger(count) ||
+        count < 0 ||
+        count > Number(requested) ||
+        Number(offset) + Number(requested) > buffer.length ||
+        position !== stream.next
+      )
+        throw new Error('Prepared native read shape is unsupported.');
+      const bytes = Buffer.from(buffer.subarray(Number(offset), Number(offset) + count));
+      let payloadId: string | null = null;
+      if (count > 0) {
+        let payload = [...payloads.values()].find((value) => value.path === stream.path && value.raw.equals(bytes));
+        if (!payload) {
+          if (payloadBytes + count > maxBytes) throw new Error('Prepared unique-byte bound exceeded.');
+          payload = {
+            id: 'p' + payloads.size,
+            path: stream.path,
+            sha256: digest(bytes),
+            bytes: bytes.toString('base64'),
+            raw: bytes,
+          };
+          payloads.set(payload.id, payload);
+          payloadBytes += count;
+        }
+        payloadId = payload.id;
+        stream.payload_ids.push(payloadId);
+        stream.length += count;
+        stream.next += count;
+      } else {
+        stream.eof = true;
+        if (
+          !stream.complete ||
+          String(stream.length) !== stream.identity.size ||
+          JSON.stringify(identity(stream.fd)) !== JSON.stringify(stream.identity)
+        )
+          throw new Error('Prepared input changed or was not completely read.');
+        const chunks = stream.payload_ids.map((id) => payloads.get(id)!.raw);
+        const bytes = chunks.length === 1 ? chunks[0]! : Buffer.concat(chunks);
+        const hash = chunks.length === 1 ? payloads.get(stream.payload_ids[0]!)!.sha256 : digest(bytes);
+        completed.push({
+          id: stream.id,
+          fd: stream.fd,
+          role: stream.role,
+          path: stream.path,
+          identity: stream.identity,
+          bytes: bytes.length,
+          sha256: hash,
+          payload_ids: [...stream.payload_ids],
+          complete: true,
+        });
+        derive(stream.role, bytes, hash);
+      }
+      operations.push({
+        sequence: operations.length + 1,
+        stream_id: stream.id,
+        fd: stream.fd,
+        path: stream.path,
+        role: stream.role,
+        file_position: position,
+        requested_position: call[4] ?? null,
+        buffer_offset: offset,
+        requested_count: requested,
+        bytes_read: count,
+        eof: count === 0,
+        payload_id: payloadId,
+      });
+    } catch {
+      stream.complete = false;
+      issues.push('Prepared read observation failed.');
+    }
+    return count;
+  };
+  const wrappedClose = function (this: unknown, ...call: unknown[]): unknown {
+    const stream = streams.get(Number(call[0]));
+    if (stream && stream.reads > 0 && (!stream.eof || !stream.complete))
+      issues.push('Prepared consumed input closed without a complete stream.');
+    const result: unknown = Reflect.apply(originalClose, this, call);
+    if (stream?.reads === 0)
+      unreadOpens.push({ id: stream.id, fd: stream.fd, role: stream.role, path: stream.path, closed: true });
+    streams.delete(Number(call[0]));
+    return result;
+  };
+  const wrappedReadFile = function (this: unknown, ...call: unknown[]): unknown {
+    try {
+      const file = typeof call[0] === 'string' ? path.resolve(call[0]) : '';
+      if (targets.has(file) || (typeof call[0] === 'number' && streams.has(call[0])))
+        issues.push('Prepared readFileSync consumption is unsupported.');
+    } catch {
+      issues.push('Prepared readFileSync path observation failed.');
+    }
+    const result: unknown = Reflect.apply(originalReadFile, this, call);
+    return result;
+  };
+  return {
+    apis: { openSync: wrappedOpen, readSync: wrappedRead, closeSync: wrappedClose, readFileSync: wrappedReadFile },
+    finish: () => {
+      const roles = preparedCliInputRoles;
+      for (const role of roles)
+        if (!completed.some((row) => row.role === role)) issues.push('Prepared input was not consumed: ' + role);
+      for (const stream of streams.values()) {
+        if (stream.reads > 0) issues.push('Prepared consumed descriptor remained open.');
+        else unreadOpens.push({ id: stream.id, fd: stream.fd, role: stream.role, path: stream.path, closed: false });
+      }
+      return {
+        complete: issues.length === 0,
+        issues,
+        streams: completed,
+        operations,
+        opens_without_observed_reads: unreadOpens,
+        payloads: [...payloads.values()].map(({ raw: _raw, ...payload }) => payload),
+        limits: {
+          max_bytes: maxBytes,
+          max_operations: maxOperations,
+          operations: operations.length,
+          unique_bytes: payloadBytes,
+        },
+      };
+    },
+  };
+}
+
 const cliContext: CliCoverageContext = {
   root,
   snapshot: snapshotRoot,
@@ -272,8 +548,11 @@ const cliContext: CliCoverageContext = {
   manifest_sha256: digest(manifestBytes),
 };
 const cliLaunch = readCliCoverageLaunch(cliContext);
+const preparedReadCapture =
+  cliLaunch?.subject_role === 'run-admission-prepared' ? createPreparedReadCapture() : undefined;
+const rejectedCliLaunch = process.env.VIDA_BUN_COVERAGE_CLI_LAUNCH !== undefined && !cliLaunch;
 const cliObserver =
-  !cliLaunch && focusedCliCoverage(manifest)
+  !cliLaunch && !rejectedCliLaunch && focusedCliCoverage(manifest)
     ? createCliCoverageObserver(cliContext, await import('node:child_process'))
     : undefined;
 // Fixture children are subjects; observe direct APIs without granting counters
@@ -286,15 +565,22 @@ const fixtureObserver = fixture
       maxOutputBytes: 32 * 1024 * 1024,
     })
   : undefined;
-if (fixtureObserver || cliObserver) {
-  const actual = await import('node:child_process');
+if (fixtureObserver || cliObserver || preparedReadCapture) {
   const { mock } = await import('bun:test');
-  const observed = { ...fixtureObserver?.apis, ...(cliObserver ? { spawnSync: cliObserver.spawnSync } : {}) };
-  await mock.module('node:child_process', () => ({
-    ...actual,
-    ...observed,
-    default: { ...actual.default, ...observed },
-  }));
+  if (fixtureObserver || cliObserver) {
+    const actual = await import('node:child_process');
+    const observed = { ...fixtureObserver?.apis, ...(cliObserver ? { spawnSync: cliObserver.spawnSync } : {}) };
+    await mock.module('node:child_process', () => ({
+      ...actual,
+      ...observed,
+      default: { ...actual.default, ...observed },
+    }));
+  }
+  if (preparedReadCapture) {
+    const actual = await import('node:fs');
+    const observed = preparedReadCapture.apis;
+    await mock.module('node:fs', () => ({ ...actual, ...observed, default: { ...actual.default, ...observed } }));
+  }
 }
 // Import the JSON adapter only after its captured bootstrap bytes have been verified.
 const { capturedJsonModule } = await import('./captured-json-module.js');
@@ -490,13 +776,14 @@ if (cliLaunch) {
       cliLaunch,
       {
         loaded_inputs: loadedInputReceipt(),
+        ...(preparedReadCapture ? { consumed_inputs: preparedReadCapture.finish() } : {}),
         external_module_inputs: [...externalModules].map(([file, sha256]) => ({ path: file, sha256 })),
         coverage: Object.fromEntries([...loadedFiles].sort().map((file) => [file, coverage[file]])),
       },
       code,
     );
   });
-} else {
+} else if (!rejectedCliLaunch) {
   // Bun test skips process exit listeners; a preload hook runs after all files.
   const { afterAll } = await import('bun:test');
   afterAll(() => {

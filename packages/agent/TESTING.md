@@ -2608,15 +2608,33 @@ Only four serial v2 focused selections may carry `cli_children`:
   budget refuses runtime resolution; it never starts a coverage suite.
 
 - `bun-cli-run`, with exactly `bin/run.ts`, `tests/run-entrypoint.test.ts` and
-  `tests/bun-cache-routing.test.ts`, observes one canonical `bin/run.ts --help`
-  invocation. Require exit0, empty stderr and the exact schema, help status, run
+  `tests/bun-cache-routing.test.ts`, observes exactly two fixed subjects. Its
+  canonical `bin/run.ts --help` invocation requires exit0, empty stderr and the exact schema, help status, run
   command, syntax and complete options from the captured metadata owners.
   Its loaded-input receipt must include `bin/cli-metadata.ts`,
   `bin/run-cli-options.ts` and `bin/cli-command-contracts.ts`, and must not include
-  the operation-only `bin/workspace-database-cli.ts`. No private package alias,
-  dynamic operation argv or other run child gains counter admission.
+  the operation-only `bin/workspace-database-cli.ts`. The existing first genuine
+  prepared CAS invocation supplies a one-shot arm for `run-admission-prepared`.
+  The collector derives its canonical entry, exact closed argv grammar and fixture
+  paths from the actual final native call. It preserves cwd, environment, dynamic
+  remaining timeout, SIGKILL and detached execution. The positive safe timeout
+  stays at or below60000ms; its pinned budget/deadline must match the child receipt.
+  This role requires complete raw capture, actual owned-group `gone`, and loaded
+  workspace-database/local-work-admission modules. Windows remains unqualified.
+  Bounded before/after snapshots bind six unique in-root, single-link regular files
+  to actual child read streams and EOF for config, initialization, intake, scope,
+  acceptance and selected Source. Retained payloads bind read order, fd/path/role,
+  requested/effective position and byte count within4MiB/4096operations. Equal
+  path/Buffer payloads share storage; every actual operation remains recorded.
+  Opens with no observed reads do not prove consumption. Snapshot or post-return
+  evidence failures propagate through the existing UNKNOWN retention owner before
+  fixture cleanup; native command outcome remains separate from boundary UNKNOWN.
+  The genuine CLI assertions retain behavior authority. These receipts grant
+  counters only. No private package alias or other run child gains admission.
 
-Each case preserves its original flags, cwd, environment and 4000ms child bound.
+Each help/missing-option/toolchain case preserves its original flags, cwd,
+environment and4000ms child bound. The prepared run subject preserves its actual
+bounded call as specified above.
 The preload explicitly loads the captured preload for that child and reuses the
 existing instrumented artifact. No additional AST/inventory pass or build is
 part of this attribution. Partial or foreign Source/test selections are denied.
@@ -2631,8 +2649,8 @@ strings to the test. Launch errors, signal/timeout, unavailable capture or absen
 receipts retain their evidence and cannot contribute counters.
 
 Each declared subject must appear once with a distinct launch ID and its own
-one-Source counter map. Identity includes the exact source and canonical argv;
-only the two toolchain scenarios share a Source. Missing, duplicate and foreign
+one-Source counter map. Identity includes the fixed subject role, exact source and canonical argv;
+the two toolchain scenarios and two run subjects each share their selected Source. Missing, duplicate and foreign
 scenarios deny admission. The clock witness requires an exact copy of parent
 environment with only its two fixed clock replacements; all other subjects keep
 their existing environment. Child startup verifies the bound clock values.

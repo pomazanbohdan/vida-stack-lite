@@ -104,11 +104,12 @@ the next related batch. Keep the one active contour and all numeric gates.
 
 ### Current run attribution architecture
 
-At15:51:49UTC the bounded three-hour Git author-date view contains11commits,
-including five correction packets and their published result records. This is
+At17:06:31UTC the bounded Git author-date view for14:06:31–17:06:31UTC contains
+seven commits, three code/test corrections and four plan/result records. This is
 Git history, not an operation, tool-call or token count. Five completed coverage
 packets since2641 raise F126/L711/S753/B679 to F218/L1077/S1146/B1207, with the
-same557/2863/3143/3663denominators and Source fingerprint. Historical exact17/46
+same557/2863/3143/3663denominators and Source fingerprint; that longer comparison
+is not a three-hour delta. Historical exact17/46
 does not rise. The confirmed current defect is test-harness UNKNOWN retention;
 the masked action assertion and unchecked baseline overwrite are test-oracle
 defects. No product bug is established by these corrections.
@@ -189,12 +190,99 @@ five focused cases pass with29assertions, while one Windows-only case is skipped
 on Linux. These include the existing native EPERM, surviving-group and empty-group
 controls. This verifies harness mechanics, not a mutation campaign or qualification.
 
-2722 prepares the related collector implementation in its assigned diagnostics;
-Root alone integrates and checks it. No full producer is repeated for the probe
-or prerequisite extraction. Positive counters stay fenced until exact consumed
-inputs, native group closure and independent collector controls pass through
-the existing owner. Source bin/run.ts, all budgets and historical fences remain
-unchanged.
+The prerequisite is published asc2a8dbd. Ordinary hooks check formatting533 and
+strict540; commit and push2728 both reach terminal0 before dependent work.
+No full producer is repeated for the probe or prerequisite extraction.
+
+### Run prepared collector packet
+
+2722 supplies a complete isolated proposal. Root checks all hunks against current
+canonical bytes before integration.2729 strict rejects19errors before runtime;
+2730 then passes159files but lint rejects an unsafe close-result assignment and
+cwd coercion.2732/2733 reject the narrowed synthetic delegate type before runtime.
+Root fixes these without suppression or a widened native budget. Original failed
+logs and the unvalidated proposal remain in DIAG. A brief exec transport failure
+creates no shell log; after context restoration Root observes the same checkout,
+published HEAD and all six local draft files before continuing.
+
+2731 independent review selects the smaller counter-binding boundary. Remove
+top-level product-validator imports and duplicated semantic reads from the
+preload's collector. The genuine canonical CLI test and its maintained validators
+remain behavior authority. Parent snapshots now use bounded no-follow descriptor
+reads, stable fd/path identity and exact bytes before/after; admission derives
+the six expected paths from retained actual intake/scope payloads. No product
+acceptance rule or operation authority moves into a receipt.
+
+Root keeps one fixed prepared role beside the existing required help role.
+The test supplies one literal trigger only. Observe the actual25-element argv
+and final bounded native options; no help-prefix, absent-env or4000ms substitution
+is made for the genuine call. Other unselected CLI calls keep their original
+behavior and earn no counters. Shared role names and the existing tool-input
+owner bind the observer dependency. Child capture preserves each actual read,
+fd, ordering, EOF and payload within4MiB/4096operations. Exact Buffer equality
+deduplicates before hashing. Zero-read opens remain explicitly unobserved reads,
+not consumption or assumed metadata-only evidence. Windows prepared qualification
+remains unsupported; the native run-protocol control explicitly skips there.
+
+2735's synthetic native protocol baseline reaches six passing cases; its
+duplicate-clock negative is masked by a missing role join. Root fixes that
+coherent candidate before rechecking.2736's ordinary CAS case exposes an
+unconditional prepared guard when no observer exists. Its failed fixture and log
+remain retained; the correction activates the guard only at an installed observer.
+2737's native capture control first fails strict on an overloaded mock signature.
+2738 proves actual exit0/raw stdout/stderr survive a post-return diagnostic failure
+and unknown group, with the same primary error and retained fixture. The existing
+invoke UNKNOWN writer owns that capture, including native-known versus
+boundary-unknown classification, callback failures and partial evidence.
+
+2739 final scoped strict159 and lint0 pass. All seven protocol cases pass with
+426assertions in3.77s. The ordinary genuine CAS, existing native timeout/callback
+control and new native diagnostic-failure control pass3/0 with98assertions in
+38.60s. These are targeted, non-gating checks with changed conditions, not a
+matched benchmark or current numeric qualification.2740's independent review
+returns BLOCKED. Swallowed before/after snapshot failures could dispatch despite
+missing inputs or allow fixture deletion before later receipt refusal. Final
+launch validation also lacked the live60000ms ceiling and child-observed clock
+echoes. Root propagates snapshot failure before dispatch or after raw/terminal
+capture, preserves primary causes and cached native results, and settles the
+active observer in finally. Shared timeout validation and actual child budget/
+deadline echoes close the receipt join.2741 prepares causal negative controls
+in a disjoint proposal; Root alone integrates and checks them. Positive
+counters remain fenced until that owner publishes a valid terminal outcome.
+Source bin/run.ts, all budgets and historical fences remain unchanged.
+
+2744 rejects three fixture delegate/Buffer type errors before any runtime test;
+2745 passes strict159 but lint rejects an unbound process.kill reference. Root
+uses a compatible explicit delegate result union and restores the exact native
+property descriptor without a type/lint suppression.2746 passes strict159 and
+zero-warning lint, then all8protocol cases with473assertions in4.41s. Causal
+negatives reach the dedicated group, child-clock, timeout, role/path, missing-role,
+requested/effective position, payload and duplicate-subject guards. Seven native
+fixture opens explicitly have no observed reads. Replaced masked negatives are
+removed instead of duplicated. Root also corrects UNKNOWN capture's encoding
+label for cached native Buffers.2747's actual inert native Buffer control, existing
+timeout/callback control and genuine CAS case pass3/0 with99assertions in31.49s.
+The uninitialized UNKNOWN root remains retained at
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-uninitialized-4jW1VG`.
+2739 and2747 timings have changed inputs, so neither a speedup nor production
+qualification is claimed. Fresh independent2743 review returns PASS against the
+frozen2747 patch and current canonical bytes.2748 documentation checks3documents/
+55local links with no failures; diff whitespace checks pass. Publication and one
+changed-input stage follow. TESTING owns the new fixed-role/read/clock contract.
+
+| Check ordering and concurrency | Current evidence and decision |
+| --- | --- |
+| Grouped static checks, protocol controls, genuine CAS, independent review, one stage | Selected.2744/2745 refuse malformed harness input before runtime;2746 costs4.41s and2747 costs31.49s.2708's complete119.60s is a different scope, not a speedup denominator. |
+| Complete stage after each read/clock/control correction | Rejected. The concrete type/lint/control failures are resolved by scoped checks; no complete suite is repeated for this audit. |
+| Disjoint Luna test proposal and bounded review with one Root check/producer | Selected for preparation. More numeric/compiler/index/build/cleanup parallelism remains unqualified; it is not enabled or scored with an invented throughput/token saving. |
+
+The resumed owner observes c2a8dbd and all seven tracked draft files unchanged,
+with no live compiler/test/build/producer among the bounded process view. Native
+Luna delegation uses the freshly prepared2741 legacy contract, not a worktree or
+second writer. Reuse audit-disk-v2649 and2708's later native admission receipt;
+neither is relabeled as a fresh current capacity observation. No cleanup occurs
+while preparing final checks; unresolved privileged references still defer the
+authorized retirement roots. No available-byte gain is claimed.
 
 ### Run artifact boundary and UNKNOWN capture packet
 

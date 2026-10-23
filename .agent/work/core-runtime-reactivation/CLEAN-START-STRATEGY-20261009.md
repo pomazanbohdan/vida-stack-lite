@@ -25,8 +25,12 @@ choosing checks or a fresh stage. Scope is bin/run.ts with tests/run-entrypoint.
 and tests/bun-cache-routing.test.ts. Root keeps one writer and numeric producer.
 The next run packet targets one existing genuine canonical prepared CLI call
 through the current collector. Preserve its bounded argv/environment/capture and
-fixture bindings. Complete the scoped test-to-observer design and native negative
-controls before measuring new counters. Private alias admission is not selected.
+fixture bindings. The scoped design selects one collector-owned role and a
+one-shot trigger at the genuine first prepared CAS call. The existing shared
+group observer is published asc2a8dbd; require its actual owned-group observation,
+not leader exit alone. Complete bounded per-operation consumed-byte evidence,
+native negative controls and independent review before measuring new counters.
+Private alias admission is not selected.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts
 and do not replay historical UNKNOWN. Toolchain's2561 result and reviewed gaps
 remain in WORK, including its OPEN native Windows prerequisite.

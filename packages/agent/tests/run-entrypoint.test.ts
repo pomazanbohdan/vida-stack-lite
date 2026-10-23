@@ -654,6 +654,69 @@ async function runSuccessfully(args: readonly string[]): Promise<unknown> {
   return result;
 }
 
+test('unknown prepared group retains native raw output when post-return diagnostics fail', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-run-prepared-unknown-'));
+  const program = path.join(root, 'inert.ts');
+  const stdout = 'prepared-before-tail\n' + 'x'.repeat(8192);
+  const stderr = 'native-stderr-before-tail\n' + 'y'.repeat(8192);
+  writeFileSync(
+    program,
+    `process.stdout.write(${JSON.stringify(stdout)}); process.stderr.write(${JSON.stringify(stderr)});\n`,
+  );
+  const native = await import('node:child_process');
+  const original = native.spawnSync;
+  const diagnosticFailure = new Error('terminal evidence write failed');
+  let observed: ReturnType<typeof boundedSpawnSync> | undefined;
+  let retained = false;
+  const failing = spyOn(native, 'spawnSync').mockImplementation((...call: unknown[]) => {
+    const [command, args, settings] = call;
+    observed = Reflect.apply(original, native, [
+      command,
+      args,
+      { ...requireRecord(settings, 'inert native child settings'), encoding: 'buffer' },
+    ]) as ReturnType<typeof boundedSpawnSync>;
+    throw diagnosticFailure;
+  });
+  Object.assign(failing, {
+    armPrepared: () => {},
+    preparedProcessGroupState: () => 'unknown' as const,
+    preparedNativeResult: () => observed,
+  });
+  let caught: unknown;
+  try {
+    try {
+      invoke(['--project-root', root], {}, program, {
+        coverageRole: 'run-admission-prepared',
+        onUnknown: () => {
+          retained = true;
+        },
+      });
+    } catch (error) {
+      caught = error;
+    }
+  } finally {
+    failing.mockRestore();
+  }
+  expect(caught).toBe(diagnosticFailure);
+  expect(retained).toBe(true);
+  expect(observed?.status).toBe(0);
+  expect(Buffer.isBuffer(observed?.stdout)).toBe(true);
+  const failure = caught as Error & { evidenceRoot?: string };
+  expect(typeof failure.evidenceRoot).toBe('string');
+  const evidence = failure.evidenceRoot!;
+  expect(readFileSync(path.join(evidence, 'stdout.log'), 'utf8')).toBe(stdout);
+  expect(readFileSync(path.join(evidence, 'stderr.log'), 'utf8')).toBe(stderr);
+  const terminal: unknown = JSON.parse(readFileSync(path.join(evidence, 'terminal.json'), 'utf8'));
+  expect(terminal).toMatchObject({
+    status: 0,
+    unknown: true,
+    command_outcome_unknown: false,
+    process_group_state: 'unknown',
+    capture_encoding: 'buffer',
+  });
+  expect(readFileSync(program, 'utf8')).toContain('prepared-before-tail');
+});
+
 type ActiveSelectorState = Parameters<typeof advanceCutoff>[0];
 
 function requireFixtureWorkState(store: HostStateStore, identity: WorkIdentity): WorkState {
@@ -666,7 +729,8 @@ type PublicRunChildOptions = {
   readonly budget?: ReturnType<typeof executionBudget>;
   readonly childTimeout?: number;
   readonly bundleRoot?: string;
-  readonly onUnknown?: (result: ReturnType<typeof boundedSpawnSync>) => void;
+  readonly onUnknown?: (result?: ReturnType<typeof boundedSpawnSync>) => void;
+  readonly coverageRole?: 'run-admission-prepared';
 };
 
 interface QuerySpyHandle {
@@ -2101,21 +2165,61 @@ function invoke(
   options: PublicRunChildOptions = {},
 ): TerminalUtf8SpawnResult {
   const budget = options.budget ?? executionBudget(5_000, 250);
-  const result = boundedSpawnSync(
-    spawnSync,
-    process.execPath,
-    [entrypoint, ...args],
-    {
-      cwd: packageRoot,
-      env: pinnedEnvironment(process.execPath, { ...process.env, ...env }, options.bundleRoot ?? packageRoot),
-      encoding: 'utf8',
-      windowsHide: true,
-      timeout: options.childTimeout ?? 5_000,
-      budget,
-    },
-    `public run ${path.basename(entrypoint)}`,
-  );
-  if (commandOutcomeUnknown(result) || !isTerminalUtf8SpawnResult(result)) {
+  const observer = spawnSync as typeof spawnSync & {
+    armPrepared?: () => void;
+    preparedProcessGroupState?: () => 'gone' | 'present' | 'unknown' | undefined;
+    preparedNativeResult?: () => ReturnType<typeof boundedSpawnSync> | undefined;
+  };
+  const observingPrepared = options.coverageRole !== undefined && typeof observer.armPrepared === 'function';
+  const nativeSpawn = observingPrepared
+    ? (...call: Parameters<typeof spawnSync>) => {
+        if (options.coverageRole !== 'run-admission-prepared' || typeof observer.armPrepared !== 'function')
+          throw new Error('Prepared CLI coverage observer is unavailable.');
+        observer.armPrepared();
+        return Reflect.apply(spawnSync, undefined, call) as ReturnType<typeof spawnSync>;
+      }
+    : spawnSync;
+  let result: ReturnType<typeof boundedSpawnSync>;
+  let observationFailure: { error: unknown } | undefined;
+  try {
+    result = boundedSpawnSync(
+      nativeSpawn,
+      process.execPath,
+      [entrypoint, ...args],
+      {
+        cwd: packageRoot,
+        env: pinnedEnvironment(process.execPath, { ...process.env, ...env }, options.bundleRoot ?? packageRoot),
+        encoding: 'utf8',
+        windowsHide: true,
+        timeout: options.childTimeout ?? 5_000,
+        budget,
+      },
+      `public run ${path.basename(entrypoint)}`,
+    );
+  } catch (error) {
+    const nativeResult = observingPrepared ? observer.preparedNativeResult?.() : undefined;
+    if (nativeResult === undefined) {
+      if (observingPrepared) {
+        try {
+          options.onUnknown?.(undefined);
+        } catch (retentionError) {
+          throw new AggregateError([error, retentionError], 'Prepared observation and fixture retention failed.', {
+            cause: error,
+          });
+        }
+      }
+      throw error;
+    }
+    result = nativeResult;
+    observationFailure = { error };
+  }
+  const processGroupState = observingPrepared ? observer.preparedProcessGroupState?.() : undefined;
+  if (
+    observationFailure !== undefined ||
+    (observingPrepared && processGroupState !== 'gone') ||
+    commandOutcomeUnknown(result) ||
+    !isTerminalUtf8SpawnResult(result)
+  ) {
     if (args.some((argument, index) => argument === '--project-root' && args[index + 1] === repositoryRoot))
       sharedRunOutcomeUnknown = true;
     const tail = (value: unknown): string => {
@@ -2124,11 +2228,14 @@ function invoke(
         return Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString('utf8').slice(-2048);
       return '';
     };
-    const failure: Error & { evidenceRoot?: string } = new Error(
-      `Public run child outcome is unknown (status=${result.status ?? 'null'} signal=${result.signal ?? 'none'} ` +
-        `error=${result.error?.code ?? 'none'}).\nstdout tail:\n${tail(result.stdout)}\nstderr tail:\n${tail(result.stderr)}`,
-      { cause: result.error },
-    );
+    const failure: Error & { evidenceRoot?: string } =
+      observationFailure?.error instanceof Error
+        ? observationFailure.error
+        : new Error(
+            `Public run child outcome is unknown (status=${result.status ?? 'null'} signal=${result.signal ?? 'none'} ` +
+              `error=${result.error?.code ?? 'none'}).\nstdout tail:\n${tail(result.stdout)}\nstderr tail:\n${tail(result.stderr)}`,
+            { cause: observationFailure === undefined ? result.error : observationFailure.error },
+          );
     const diagnosticFailures: unknown[] = [];
     try {
       options.onUnknown?.(result);
@@ -2169,13 +2276,14 @@ function invoke(
           cleanup_error_code: result.cleanupErrorCode ?? null,
           unknown: true,
           command_outcome_unknown: commandOutcomeUnknown(result),
+          ...(observingPrepared ? { process_group_state: processGroupState ?? 'unknown' } : {}),
           stdout_available: result.stdout !== undefined && result.stdout !== null,
           stderr_available: result.stderr !== undefined && result.stderr !== null,
           stdout_encoding:
             typeof result.stdout === 'string' ? 'utf8' : Buffer.isBuffer(result.stdout) ? 'buffer' : null,
           stderr_encoding:
             typeof result.stderr === 'string' ? 'utf8' : Buffer.isBuffer(result.stderr) ? 'buffer' : null,
-          capture_encoding: 'utf8',
+          capture_encoding: Buffer.isBuffer(result.stdout) || Buffer.isBuffer(result.stderr) ? 'buffer' : 'utf8',
           capture_complete: false,
         }),
         { flag: 'wx' },
@@ -2743,7 +2851,19 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       });
     };
     return {
-      invoke(args: readonly string[], status = 0): TestRunPayload {
+      invoke(args: readonly string[], status = 0, coverageRole?: 'run-admission-prepared'): TestRunPayload {
+        if (coverageRole) {
+          if (status !== 0) throw new Error('Prepared CLI coverage requires its existing successful caller.');
+          if (unknown) throw new Error(`Refusing to reuse retained run fixture: ${root}`);
+          const payload = invokeMutationRecord(args, status, entrypoint, {
+            bundleRoot,
+            budget,
+            childTimeout: caseTimeout,
+            onUnknown: () => (unknown = true),
+            coverageRole,
+          });
+          return parseTestRunPayload(payload);
+        }
         return parseTestRunPayload(invokeOwnedRecord(args, status));
       },
       invokeInspection(args: readonly string[]): Record<string, unknown> {
@@ -3621,7 +3741,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           runtimePaths,
         );
         expect(runtimeSnapshot.entries.every((entry) => entry.exists)).toBe(true);
-        const prepared = fixture.invoke(admitted.admissionArgs);
+        const prepared = fixture.invoke(admitted.admissionArgs, 0, 'run-admission-prepared');
         expect(prepared.status).toBe('prepared');
         const preparedActions = requireNextActions(prepared);
         const preparedVersion = requireStateVersion(prepared.state_version);
