@@ -91,13 +91,18 @@ Do not merge old counters or relabel this as a three-hour delta. Historical exac
 count stays17/46; bun-cli-run remains open.2783's original bindings, proofs and
 retention chain remain in [publishedf3cd312 WORK](https://github.com/pomazanbohdan/vida-stack-lite/blob/f3cd312/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-run-measurement).
 
-Reuse audit-disk-v2649 and2790's actual native admission of2306428928scratch
-available bytes against2147483648minimum and unchanged67108864reserve. Its
-floor-plus-reserve margin is91836416bytes at that observation, not a fresh
-post-run free-space claim. No capacity GAP is established by that admission.
-No cleanup competes with final checks. Unknown privileged reference custody
-still defers the exact authorized retirement roots;0paths retired and no bytes
-reclaimed. The timer and all historical fences remain unchanged.
+2790's native admission records2306428928scratch available bytes against
+2147483648minimum and unchanged67108864reserve. The next request's single
+audit-disk-v2797 observation records20828450816available bytes on checkout and
+durable retained evidence, and2265255936scratch bytes. Against the unchanged
+2214592512floor-plus-reserve requirement, margins are18613858304durable and
+50663424scratch bytes. No capacity GAP is established at that observation;
+the next real producer must still pass its own fresh admission. No broad du,
+scan or hash pass occurs.2797 observes no active numeric/build/install process;
+Docker owners117/168 remain live with privileged reference custody unresolved.
+This still defers the exact authorized retirement roots;0paths retired and no
+bytes reclaimed. No cleanup competes with checks. The timer and all historical
+fences remain unchanged.
 Use2793's current map and genuine public callers for the next coherent packet.
 2791 independently studies existing CAS fixture native/API boundaries without
 new execution or writer authority. Positive repair/forward producer qualification
@@ -105,15 +110,14 @@ stays OPEN, not skipped.
 
 ### Current run attribution architecture
 
-At18:22:01UTC the bounded Git committer-date view for15:22:01–18:22:01UTC contains
-seven commits, five code/test corrections and two plan/result records, from
-c2a8dbd throughf3cd312. This is Git history, not an operation, tool-call or token
-count. Six completed coverage
-packets since2641 through2750 raise F126/L711/S753/B679 to F218/L1080/S1149/B1209, with the
-same557/2863/3143/3663denominators and Source fingerprint; that longer comparison
-is not a three-hour delta. Historical exact17/46
-does not rise. That window confirms test-harness UNKNOWN retention and test-oracle defects in
-the masked action assertion and unchecked baseline overwrite. Later2759/2763
+At18:39:27UTC the bounded Git committer-date view for15:39:27–18:39:27UTC contains
+eight commits, five code/test corrections and three plan/result records, from
+c2a8dbd through0a8645a. This is Git history, not an operation, tool-call or token
+count. The window contains shared process-group probing, prepared-child counter
+admission, two parser corrections and negative request/fixture expansion.
+Historical exact17/46 does not rise. Older UNKNOWN-retention and masked-action/
+baseline-overwrite fixes precede this window and are not counted as new results.
+2759/2763
 causally demonstrate and correct the repair evidence string/array contradiction,
 a product parser bug.2767 records that packet's original measured Source;
 the latest completed measurement above owns the current composite binding.
@@ -137,6 +141,17 @@ capture rewrite beyond the published fixes. Existing final native receipts,
 readiness/artifact reuse, timeouts, retention and report publication retain their
 owners. Disk observations and unresolved privileged custody remain as recorded
 above; no deletion or timer change occurs.
+
+2799 independently reviews the current stage, help/prepared CLI capture and
+consumed-read owners. It confirms no new runner defect or supported cost removal:
+stdout is memoized once, projection imports once, equal path/Buffer payloads
+reuse storage before hashing, and native terminal/group/capture failures retain
+their original receipts. Root keeps those owners and freshness checks unchanged.
+The report's scratch-margin arithmetic is off by40000bytes; Root's2797 formula
+above is50663424bytes, not the report's50703424. No extra df or scan is run.
+Cheap static/negative controls before the genuine case remain the chosen order;
+full-stage-per-assertion and wider numeric/compiler/index concurrency have no
+qualified benefit. Tool-call/token totals and savings remain unavailable.
 
 2712's independent native Source trace disproves the broad premise that positive
 selected CLI calls all use private copies. The CAS/report case's first
@@ -461,6 +476,53 @@ Pstack Fix Root Causes selects the one-field parser correction; Test Behavior
 selects actual public refusals/retrieval and complete afterimages; Laziness
 Protocol selects one stable fixture baseline/digest and reuse of retained geometry
 and the generic retention owner. No new abstraction or collector is added.
+
+### Prepared inspect and historical-owner decoder packet
+
+2798's blind native writer prepares one tests-only diff against published0a8645a
+in its assigned directory. Root runs git apply --check, applies every hunk and
+compares the complete file to the proposed copy before own corrections. The
+genuine prepared CAS case gains one supported public inspect before renewal,
+with work/attempt, Work/Ledger/Journal versions, lease and unchanged existing Host
+projection. Its native prepared arm, every native issue/report/denial and
+UNKNOWN/case bounds remain intact. No extra admitted fixture is formed.
+
+One owned negative DTO matrix checks historical-owner header and apply-inspection
+fields through the shared selector, then only schema/predicate/mode differences
+for its three aliases. Root catches the unsupported premise that extra inspection
+metadata must be rejected: that reader is open-shaped. Pair the extra field and
+valid nullable preimage bindings with a later malformed owner instead. No accepted
+request, historical observation, authority, effect or DB state is synthesized.
+The prior complete-tree baseline/digest owner is reused; each afterimage changes
+only submitted request bytes. Raw malformed text and record mutations are a
+typed union, preserving exact optional-property checking without suppression.
+
+2800 strict rejects the draft's optional callback populated with undefined, before
+runtime. Root fixes the case model.2801 strict159/lint0 and the initial104-control
+decoder case pass,313expects/2.35s.2802's changed genuine CAS case passes with
+98expects in31.22s, including public inspect and the entire original continuation.
+Root groups the remaining related public argument, request-reference and byte-bound
+controls before any full stage.2804 strict159/lint0 and the expanded124-control
+decoder case pass,373expects/2.11s. The unchanged genuine case is not repeated.
+The exact/over-limit65536/65537-byte controls and malformed argv/path controls
+refuse at their own existing boundary; parser controls refuse before authority/DB.
+The original failed strict log and untouched worker proposal remain retained.
+No full suite, build or benchmark is run for these intermediate steps.
+2805 independently reviews the frozen complete test diff and records PASS, including
+the persisted inspect oracle, open inspection metadata, exact nested records and
+byte-bound/path refusal order. Its no-comments finding is textual inspection only,
+not a separately delegated leaf verdict. Root's documentation check covers4docs/
+35local links with0failures. Ordinary publication precedes the sole changed-input
+stage. F/L/S/B stays the only numeric phase, and this packet grants no skip,
+changed denominator, frozen waiver, kill or Runtime acceptance.
+
+2806 finds no equivalent selected native positive first-issue control. Retain the
+existing CAS issue child: direct API substitution would lose its native wave_issued
+and action-ID contract. Extending the existing collector requires reviewed fixed-role
+admission and qualified child-side persisted Work/Ledger/Journal observation; the
+selected sources expose no qualified owner for that observation. This is an OPEN
+engineering prerequisite, not an objective skip or permission to infer DB reads
+from hashes, snapshots or the returned result. No second fixture or collector is added.
 
 ### Run artifact boundary and UNKNOWN capture packet
 

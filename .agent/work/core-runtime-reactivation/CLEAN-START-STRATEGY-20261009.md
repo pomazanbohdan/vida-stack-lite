@@ -36,9 +36,11 @@ Publishedf3cd312 and2790 complete the public recovery-review negative decoder
 packet with one fixture baseline/configuration digest and exact request afterimages.
 WORK owns its review, checks and terminal measurement.2791 retains all existing
 native report/issue contracts and identifies direct prepared-state inspect as a
-supported next-packet candidate. Group it with other confirmed related controls
-before another full stage; do not measure a single added assertion. No subprocess
-is removed merely to raise parent counters. Keep current counter admission.
+supported next-packet candidate.2798/2801/2802/2804 group it with historical-owner
+decoder, argument/reference and byte-bound refusals. Finish independent review
+and ordinary publication before one complete changed-input stage. Do not repeat
+the unchanged genuine case for the later decoder-only additions. No subprocess
+is removed merely to raise parent counters; keep current counter admission.
 Preserve the same collector/readiness owners and do not add private alias admission.
 Batch known repairs before the complete selected stage, reuse readiness/artifacts
 and do not replay historical UNKNOWN. Toolchain's2561 result and reviewed gaps

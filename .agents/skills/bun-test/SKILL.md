@@ -305,6 +305,11 @@ expected request entry from the bytes actually submitted, then compare one fresh
 complete afterimage. Avoid a second beforeimage walk and separate config/init
 reads that duplicate the same oracle. Do not carry that baseline across a real
 state transition or a fixture whose prior refusal was not checked.
+Trace a nested reader's key policy before calling extra metadata invalid.
+Represent raw malformed text and structured request mutation as alternatives in
+the case type; retain exact optional-property checking rather than populating
+an optional callback with undefined. Allowed shapes need a later malformed field
+when the test must stop before an authority or operation boundary.
 For a composed Host lineage read, reuse its atomic view and captured versions.
 Do not rebuild the join from separate readers or serialize already validated
 large receipts under a smaller generic byte limit. A test-only policy adapter

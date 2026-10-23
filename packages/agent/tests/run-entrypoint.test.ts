@@ -4389,7 +4389,23 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const beforeWork = beforeRenewal.work[0];
         const beforeJournal = beforeRenewal.journals[0];
         assert.ok(beforeWork?.state.lease && beforeJournal);
+        const preparedWorkId = beforeWork.identity.work_id;
         expect(beforeJournal.version).toEqual(preparedVersion);
+        const inspectedPrepared = requireRecord(
+          await runSuccessfully([...admitted.args, '--inspect', 'true']),
+          'prepared attempt public inspection',
+        );
+        expect(inspectedPrepared).toMatchObject({
+          schema: 'VidaLocalSessionInspection/v1',
+          status: 'inspected',
+          work_id: preparedWorkId,
+          attempt: 1,
+          journal_version: preparedVersion,
+          work_version: beforeWork.version,
+          ledger_version: beforeRenewal.ledger_version,
+          lease: beforeWork.state.lease,
+        });
+        expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeRenewal);
         const renewalArgs = [
           ...admitted.args,
           ...expected(preparedVersion),
@@ -4412,7 +4428,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(renewed).toMatchObject({
           schema: 'VidaLocalSessionInspection/v1',
           status: 'inspected',
-          work_id: admitted.args[admitted.args.indexOf('--work-id') + 1],
+          work_id: preparedWorkId,
           attempt: 1,
           lease: {
             ticket_id: beforeWork.state.lease.ticket_id,
@@ -5481,6 +5497,369 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     } finally {
       if (complete) rmSync(root, { recursive: true, force: true });
       else process.stderr.write(`Retained failed recovery-review decoder root: ${root}\n`);
+    }
+  });
+
+  test('historical owner release decoders reject malformed requests before authority or effects', async () => {
+    type SelectorContract = {
+      selector: string;
+      schema: string;
+      predicates: readonly string[];
+    };
+    type DecoderCase = {
+      name: string;
+      selector: SelectorContract;
+      mode: 'inspect' | 'apply';
+      argv?: (args: string[]) => string[];
+      error?: string;
+    } & ({ mutate: (request: Record<string, unknown>) => void; raw?: never } | { raw: string; mutate?: never });
+    const selectors: readonly SelectorContract[] = [
+      {
+        selector: '--release-historical-owner',
+        schema: 'HistoricalOwnerReleaseRequest/v1',
+        predicates: ['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators'],
+      },
+      {
+        selector: '--release-unissued-owner',
+        schema: 'UnissuedOwnerReleaseRequest/v1',
+        predicates: ['unissued_prepared'],
+      },
+      {
+        selector: '--release-settled-research-owner',
+        schema: 'SettledResearchOwnerReleaseRequest/v1',
+        predicates: ['settled_research'],
+      },
+      {
+        selector: '--release-readonly-bookkeeping-owner',
+        schema: 'ReadonlyBookkeepingOwnerReleaseRequest/v1',
+        predicates: ['readonly_bookkeeping'],
+      },
+    ];
+    const cases: DecoderCase[] = [];
+    const add = (
+      name: string,
+      selector: SelectorContract,
+      mode: DecoderCase['mode'],
+      mutate: NonNullable<DecoderCase['mutate']>,
+    ) => cases.push({ name, selector, mode, mutate });
+    const historical = selectors[0];
+    if (!historical) throw new Error('historical owner release selector contract is missing');
+    const identityAt = (request: Record<string, unknown>) =>
+      requireRecord(request.identity, 'historical owner release identity');
+    const inspectionAt = (request: Record<string, unknown>) =>
+      requireRecord(request.inspection, 'historical owner release inspection');
+    const versionAt = (request: Record<string, unknown>, key: string) =>
+      requireRecord(inspectionAt(request)[key], `historical owner release ${key}`);
+
+    cases.push({ name: 'malformed JSON', selector: historical, mode: 'inspect', raw: '{' });
+    for (const raw of ['null', '[]', '0', ' '.repeat(65_536)])
+      cases.push({
+        name: `non-record or boundary JSON (${raw.length} bytes)`,
+        selector: historical,
+        mode: 'inspect',
+        raw,
+      });
+    cases.push({
+      name: 'oversized request',
+      selector: historical,
+      mode: 'inspect',
+      raw: 'x'.repeat(65_537),
+      error: 'Historical release request exceeds bound',
+    });
+    const withValue = (args: string[], flag: string, value: string) =>
+      args.map((item, index) => (args[index - 1] === flag ? value : item));
+    const argumentCases: readonly {
+      name: string;
+      argv: (args: string[]) => string[];
+      error: string;
+    }[] = [
+      {
+        name: 'missing helper arguments',
+        argv: (args) => args.slice(0, 2),
+        error: 'Historical release requires mode, exact root, owner, baseline and request',
+      },
+      {
+        name: 'duplicate helper flag',
+        argv: (args) => args.map((item) => (item === '--request' ? '--mode' : item)),
+        error: 'Historical release arguments invalid',
+      },
+      {
+        name: 'empty owner handle',
+        argv: (args) => withValue(args, '--native-session-handle', ''),
+        error: 'Historical release arguments invalid',
+      },
+      {
+        name: 'unknown helper flag',
+        argv: (args) => [...args, '--unexpected', 'fixture'],
+        error: 'Historical release mode or argument set invalid',
+      },
+      {
+        name: 'invalid helper mode',
+        argv: (args) => withValue(args, '--mode', 'unsupported'),
+        error: 'Historical release mode or argument set invalid',
+      },
+      {
+        name: 'relative project root',
+        argv: (args) => withValue(args, '--project-root', 'relative-root'),
+        error: 'Historical release mode or argument set invalid',
+      },
+      {
+        name: 'escaping baseline reference',
+        argv: (args) => withValue(args, '--baseline-config', '../baseline.json'),
+        error: 'Historical release references must be bounded repository-relative paths',
+      },
+      ...[
+        '../request.json',
+        './request.json',
+        'nested//request.json',
+        '/request.json',
+        'C:/request.json',
+        'nested\\request.json',
+        'request\n.json',
+        'x'.repeat(2049),
+      ].map((value) => ({
+        name: `invalid request reference (${value.length} chars)`,
+        argv: (args: string[]) => withValue(args, '--request', value),
+        error: 'Historical release references must be bounded repository-relative paths',
+      })),
+    ];
+    for (const entry of argumentCases) cases.push({ ...entry, selector: historical, mode: 'inspect', raw: '{}' });
+    for (const key of ['schema', 'identity', 'attempt', 'userRequestPointer', 'requestIntent', 'predicate']) {
+      add(`header missing ${key}`, historical, 'inspect', (request) => delete request[key]);
+    }
+    add('header has an extra key', historical, 'inspect', (request) => (request.extra = 'fixture'));
+    add(
+      'schema value differs',
+      historical,
+      'inspect',
+      (request) => (request.schema = 'HistoricalOwnerReleaseRequest/v0'),
+    );
+    add('identity is not a record', historical, 'inspect', (request) => (request.identity = null));
+    add('identity has an extra key', historical, 'inspect', (request) => (identityAt(request).extra = 'fixture'));
+    for (const key of ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) {
+      add(`identity missing ${key}`, historical, 'inspect', (request) => delete identityAt(request)[key]);
+    }
+    for (const [key, invalid] of [
+      ['repository_id', null],
+      ['project_ids', {}],
+      ['integrations_digest', null],
+      ['work_id', 1],
+    ] as const) {
+      add(`identity ${key} type`, historical, 'inspect', (request) => (identityAt(request)[key] = invalid));
+    }
+    add('identity project id item type', historical, 'inspect', (request) => (identityAt(request).project_ids = [1]));
+    add('attempt type', historical, 'inspect', (request) => (request.attempt = '1'));
+    add('request pointer type', historical, 'inspect', (request) => (request.userRequestPointer = null));
+    add('request intent invalid', historical, 'inspect', (request) => (request.requestIntent = 'unsupported'));
+    add('predicate invalid', historical, 'inspect', (request) => (request.predicate = 'unsupported'));
+    add('inspect mode rejects inspection key', historical, 'inspect', (request) => (request.inspection = {}));
+    add('apply mode requires inspection', historical, 'apply', (request) => delete request.inspection);
+    add('apply inspection is not a record', historical, 'apply', (request) => (request.inspection = null));
+    add('extra inspection metadata preserves later malformed owner refusal', historical, 'apply', (request) => {
+      inspectionAt(request).extra = true;
+      inspectionAt(request).nativeSessionHandle = null;
+    });
+    for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal']) {
+      add(`inspection missing ${key}`, historical, 'apply', (request) => delete inspectionAt(request)[key]);
+      add(`inspection ${key} is not a record`, historical, 'apply', (request) => (inspectionAt(request)[key] = null));
+      add(
+        `inspection ${key} missing revision`,
+        historical,
+        'apply',
+        (request) => delete versionAt(request, key).revision,
+      );
+      add(
+        `inspection ${key} revision type`,
+        historical,
+        'apply',
+        (request) => (versionAt(request, key).revision = '1'),
+      );
+      add(`inspection ${key} missing digest`, historical, 'apply', (request) => delete versionAt(request, key).digest);
+      add(`inspection ${key} digest type`, historical, 'apply', (request) => (versionAt(request, key).digest = null));
+      add(
+        `inspection ${key} has an extra key`,
+        historical,
+        'apply',
+        (request) => (versionAt(request, key).extra = true),
+      );
+    }
+    add(
+      'inspection maintenance generation type',
+      historical,
+      'apply',
+      (request) => (inspectionAt(request).expectedMaintenanceGeneration = '1'),
+    );
+    for (const key of [
+      'baseline_binding',
+      'receipt_binding',
+      'current_config_binding',
+      'engine_binding',
+      'request_binding',
+      'preimage_binding',
+      'nativeSessionHandle',
+    ]) {
+      add(`inspection missing ${key}`, historical, 'apply', (request) => delete inspectionAt(request)[key]);
+    }
+    for (const key of [
+      'baseline_binding',
+      'receipt_binding',
+      'current_config_binding',
+      'engine_binding',
+      'request_binding',
+      'nativeSessionHandle',
+    ]) {
+      add(`inspection ${key} type`, historical, 'apply', (request) => (inspectionAt(request)[key] = null));
+    }
+    add(
+      'inspection preimage binding type',
+      historical,
+      'apply',
+      (request) => (inspectionAt(request).preimage_binding = false),
+    );
+    for (const value of [null, 'fixture-preimage-binding']) {
+      add(
+        `nullable preimage binding ${String(value)} still rejects later malformed binding`,
+        historical,
+        'apply',
+        (request) => {
+          inspectionAt(request).preimage_binding = value;
+          inspectionAt(request).nativeSessionHandle = null;
+        },
+      );
+    }
+    for (const requestIntent of ['next_work', 'linked_correction']) {
+      add(`request intent ${requestIntent} still rejects later malformed key set`, historical, 'inspect', (request) => {
+        request.requestIntent = requestIntent;
+        request.preimage_ref = 'preimage.json';
+      });
+    }
+    for (const predicate of historical.predicates) {
+      add(`allowed predicate ${predicate} still rejects malformed preimage rule`, historical, 'inspect', (request) => {
+        request.predicate = predicate;
+        request.preimage_ref = predicate === 'settled_writer_failed_validators' ? null : 'preimage.json';
+      });
+    }
+    add('writer predicate requires preimage reference', historical, 'inspect', (request) => {
+      request.predicate = 'settled_writer_failed_validators';
+      delete request.preimage_ref;
+    });
+    add('writer preimage reference type', historical, 'inspect', (request) => {
+      request.predicate = 'settled_writer_failed_validators';
+      request.preimage_ref = null;
+    });
+    add(
+      'nonwriter predicate rejects preimage reference',
+      historical,
+      'inspect',
+      (request) => (request.preimage_ref = 'preimage.json'),
+    );
+
+    const aliases = selectors.slice(1);
+    for (const selector of aliases) {
+      for (const mode of ['inspect', 'apply'] as const) {
+        for (const predicate of selector.predicates) {
+          add(`${selector.selector} allowed ${predicate} reaches malformed key set`, selector, mode, (request) => {
+            request.predicate = predicate;
+            request.preimage_ref = 'preimage.json';
+          });
+        }
+        add(`${selector.selector} rejects another schema`, selector, mode, (request) => {
+          request.schema = 'HistoricalOwnerReleaseRequest/v1';
+        });
+        add(`${selector.selector} rejects another predicate`, selector, mode, (request) => {
+          request.predicate = 'completed_readonly';
+        });
+        add(`${selector.selector} preserves ${mode} inspection key set`, selector, mode, (request) => {
+          if (mode === 'inspect') request.inspection = {};
+          else request.inspection = null;
+        });
+        if (selector.predicates[0] !== 'settled_writer_failed_validators') {
+          add(`${selector.selector} rejects writer-only preimage reference`, selector, mode, (request) => {
+            request.preimage_ref = 'preimage.json';
+          });
+        }
+      }
+    }
+
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-run-historical-owner-shape-'));
+    let complete = false;
+    try {
+      const { config } = createFixture(root);
+      const requestPath = path.join(root, 'request.json');
+      writeFileSync(requestPath, '');
+      const fixtureBefore = snapshotAuthorityFixture(root);
+      const identity = {
+        repository_id: config.repository.repository_id,
+        project_ids: config.projects.map((project) => project.project_id),
+        integrations_digest: canonicalJsonDigest(config.integrations),
+        work_id: 'unaccepted-historical-owner-fixture',
+      };
+      const makeRequest = (selector: SelectorContract, mode: DecoderCase['mode']): Record<string, unknown> => {
+        const predicate = selector.predicates[0];
+        if (!predicate) throw new Error('historical owner release predicate is missing');
+        const request: Record<string, unknown> = {
+          schema: selector.schema,
+          identity: { ...identity },
+          attempt: 1,
+          userRequestPointer: 'fixture:user-request',
+          requestIntent: 'next_work',
+          predicate,
+        };
+        if (predicate === 'settled_writer_failed_validators') request.preimage_ref = 'preimage.json';
+        if (mode === 'apply') {
+          request.inspection = {
+            expectedWork: { revision: 1, digest: 'fixture-work-version' },
+            expectedLedger: { revision: 1, digest: 'fixture-ledger-version' },
+            expectedJournal: { revision: 1, digest: 'fixture-journal-version' },
+            expectedMaintenanceGeneration: 1,
+            baseline_binding: 'fixture-baseline-binding',
+            receipt_binding: 'fixture-receipt-binding',
+            current_config_binding: 'fixture-config-binding',
+            engine_binding: 'fixture-engine-binding',
+            request_binding: 'fixture-request-binding',
+            preimage_binding: null,
+            nativeSessionHandle: 'fixture-native-session',
+          };
+        }
+        return request;
+      };
+      for (const entry of cases) {
+        const request = makeRequest(entry.selector, entry.mode);
+        entry.mutate?.(request);
+        const requestBytes = Buffer.from(entry.raw ?? record(request));
+        writeFileSync(requestPath, requestBytes);
+        const expectedAfterimage = fixtureBefore.map((item) =>
+          item.path === 'request.json' ? { ...item, bytes: requestBytes.toString('base64') } : item,
+        );
+        const argv = [
+          entry.selector.selector,
+          'true',
+          '--mode',
+          entry.mode,
+          '--project-root',
+          root,
+          '--native-session-handle',
+          'fixture-native-session',
+          '--baseline-config',
+          'agent-runtime.config.v1.yaml',
+          '--request',
+          'request.json',
+        ];
+        await assert.rejects(
+          run(entry.argv?.(argv) ?? argv),
+          (error: unknown) =>
+            error instanceof Error &&
+            error.message === (entry.error ?? 'Historical release request shape or predicate invalid'),
+          entry.name,
+        );
+        expect(snapshotAuthorityFixture(root)).toEqual(expectedAfterimage);
+        expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+        expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+      }
+      complete = true;
+    } finally {
+      if (complete) rmSync(root, { recursive: true, force: true });
+      else process.stderr.write(`Retained failed historical owner decoder root: ${root}\n`);
     }
   });
 

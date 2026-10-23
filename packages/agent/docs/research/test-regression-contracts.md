@@ -416,6 +416,14 @@ Reuse one initial owned-tree baseline and stable configuration digest. Replace
 only the submitted request bytes in the expected tree, then read the complete
 afterimage once per refusal. This retains exact config/init/request and directory
 membership assertions without separate duplicate reads of those files.
+Historical-owner release negative requests cover the shared header/inspection
+reader once, with only schema/predicate/mode controls repeated for its maintained
+aliases. Raw non-record JSON, exact/over-limit bytes, malformed argv and unsafe
+request/baseline references refuse at their declared public boundary. Every
+shape-valid prerequisite remains paired with a malformed field before authority
+or DB work. Additional inspection metadata is allowed by this reader; pair it
+and nullable preimage bindings with a later bad owner instead of treating those
+allowed shapes as failures. Exact version-record keys still remain required.
 Retain failed roots. Positive parent chains still require their genuine producers;
 missing fixtures or child attribution remain engineering GAPs, not objective skips.
 
@@ -427,6 +435,10 @@ advances while its digest and complete payload stay unchanged. Continue issue
 with the returned Journal version; reject its stale predecessor. Preserve the
 observed Host projection, admission attempts and declared Source bytes across
 refusals. These checks do not claim full-database equality or a new lease identity.
+Before renewal, public inspect reuses the genuine native prepared state and the
+existing Host beforeimage. Assert the actual work/attempt, Work/Ledger/Journal
+versions and lease, then compare that inspected projection unchanged. Keep the
+native preparation arm and every native issue/report/refusal control intact.
 After the existing final report, exact public retry returns the recorded
 observation and current version with unchanged Work/Ledger/Journal/admission
 projection. A valid envelope with a different summary and recomputed output digest
