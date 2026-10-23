@@ -1,16 +1,195 @@
-import { expect, test } from 'bun:test';
+import { expect, test, spyOn } from 'bun:test';
 import { spawnSync } from 'node:child_process';
+import * as childProcess from 'node:child_process';
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import manifest from '../package.json' with { type: 'json' };
 import { cliMetadataResult } from '../bin/cli-metadata.ts';
 import { inspectScope } from '../bin/scope.ts';
+import { main as publicCliMain } from '../bin/vida-agent.ts';
 import { freezeCliDeclaration, cliCommandSet, cliCommandNames } from '../bin/cli-command-contracts.ts';
 import { runOptionDetails, runScalarOptionFields, runRepeatedOptions } from '../bin/run-cli-options.ts';
 import { captureRuntimeInputClosure, readQualityInputs } from '../tooling/bun-coverage-evidence.ts';
 import { expectRejection } from './helpers/expect-rejection.js';
+
+test('public CLI main preserves local exit state for metadata and returns bounded instruction failures', () => {
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const stdoutSpy = spyOn(process.stdout, 'write');
+  try {
+    stdoutSpy.mockImplementation((chunk) => {
+      stdout.push(String(chunk));
+      return true;
+    });
+    const stderrSpy = spyOn(process.stderr, 'write');
+    try {
+      stderrSpy.mockImplementation((chunk) => {
+        stderr.push(String(chunk));
+        return true;
+      });
+      const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+      publicCliMain({ args: ['--help'], exit });
+      expect(exit.exitCode).toBeUndefined();
+      expect(JSON.parse(stdout.join(''))).toMatchObject({ schema: 'VidaAgentCommandResult/v1', status: 'help' });
+      expect(stderr).toEqual([]);
+      for (const name of ['development-lifecycle', 'development-lifecycle.md']) {
+        stdout.length = 0;
+        publicCliMain({ args: ['instructions', '--path', name], exit });
+        expect(JSON.parse(stdout.join(''))).toEqual({
+          schema: 'VidaAgentInstruction/v1',
+          package: manifest.name,
+          version: manifest.version,
+          path: fileURLToPath(new URL('../instructions/development-lifecycle.md', import.meta.url)),
+        });
+        expect(exit.exitCode).toBeUndefined();
+      }
+      for (const args of [
+        [],
+        ['foreign-command'],
+        ['instructions'],
+        ['instructions', '--foreign', 'development-lifecycle'],
+        ['instructions', '--path', '../escape'],
+        ['instructions', '--path', ''],
+      ]) {
+        stdout.length = 0;
+        stderr.length = 0;
+        const denied: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+        publicCliMain({ args, exit: denied });
+        expect(denied.exitCode).toBe(1);
+        expect(stdout).toEqual([]);
+        expect(JSON.parse(stderr.join(''))).toMatchObject({ schema: 'VidaAgentCommandResult/v1', status: 'blocked' });
+      }
+    } finally {
+      stderrSpy.mockRestore();
+    }
+  } finally {
+    stdoutSpy.mockRestore();
+  }
+});
+
+test('canonical native public help preserves its terminal result and complete help contract', () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const child = spawnSync(
+    process.execPath,
+    [
+      '--no-env-file',
+      '--no-install',
+      '--config=' + path.join(root, 'bunfig.toml'),
+      path.join(root, 'bin/vida-agent.ts'),
+      '--help',
+    ],
+    { encoding: 'utf8', windowsHide: true, timeout: 4000 },
+  );
+  expect(child.error).toBeUndefined();
+  expect(child.signal).toBeNull();
+  expect(child.status).toBe(0);
+  expect(child.stderr).toBe('');
+  expect(JSON.parse(child.stdout)).toEqual(cliMetadataResult(['--help'], manifest));
+});
+
+test('public CLI forwarding normalizes absolute roots and preserves native refusal and adapter errors', () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const originalArgs = ['scope', '--project-root', path.join(root, '..') + '/agent/../missing-public-project'];
+  const before = [...originalArgs];
+  const originalSpawn = childProcess.spawnSync;
+  const failure = new Error('native adapter refused');
+  let fault: 'error' | 'signal' | undefined;
+  const calls = spyOn(childProcess, 'spawnSync');
+  const forwarded = () => calls.mock.calls.filter((call) => Array.isArray(call[1]) && call[1][0] !== '--version');
+  try {
+    calls.mockImplementation(((...call: unknown[]) => {
+      if (Array.isArray(call[1]) && call[1][0] === path.join(root, 'bin/scope.ts') && fault !== undefined)
+        return {
+          pid: 0,
+          status: null,
+          signal: fault === 'signal' ? 'SIGTERM' : null,
+          ...(fault === 'error' ? { error: failure } : {}),
+          output: [null, null, null],
+          stdout: Buffer.alloc(0),
+          stderr: Buffer.alloc(0),
+        };
+      return Reflect.apply(originalSpawn, childProcess, call) as ReturnType<typeof spawnSync>;
+    }) as typeof spawnSync);
+    const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+    publicCliMain({ args: originalArgs, exit });
+    expect(exit.exitCode).toBe(1);
+    expect(originalArgs).toEqual(before);
+    const first = forwarded()[0];
+    expect(first?.[0]).toBe(process.execPath);
+    expect(first?.[1]).toEqual([path.join(root, 'bin/scope.ts'), '--project-root', path.resolve(before[2]!)]);
+    expect(first?.[2]?.cwd).toBe(process.cwd());
+    expect(first?.[2]?.env === process.env).toBe(true);
+    expect(first?.[2]?.stdio).toBe('inherit');
+    expect(first?.[2]?.windowsHide).toBe(true);
+    publicCliMain({ args: ['reconcile-artifacts'], exit });
+    expect(exit.exitCode).toBe(1);
+    expect(forwarded()[1]?.[1]).toEqual([path.join(root, 'bin/bun.ts'), path.join(root, 'bin/reconcile-artifacts.ts')]);
+    const errors: string[] = [];
+    const stderr = spyOn(process.stderr, 'write');
+    try {
+      stderr.mockImplementation((chunk) => {
+        errors.push(String(chunk));
+        return true;
+      });
+      fault = 'error';
+      publicCliMain({ args: ['scope'], exit });
+      expect(exit.exitCode).toBe(1);
+      expect(JSON.parse(errors.join(''))).toEqual({
+        schema: 'VidaAgentCommandResult/v1',
+        status: 'blocked',
+        code: 'GAP-VIDA-CLI-001',
+        message: failure.message,
+      });
+      fault = 'signal';
+      publicCliMain({ args: ['scope'], exit });
+      expect(exit.exitCode).toBe(1);
+      expect(forwarded()).toHaveLength(4);
+    } finally {
+      stderr.mockRestore();
+    }
+  } finally {
+    calls.mockRestore();
+  }
+});
+
+test('materialized CLI import still dispatches instructions when its module is not the direct entry', () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const child = spawnSync(
+    process.execPath,
+    [
+      '--no-env-file',
+      '--no-install',
+      '--config=' + path.join(root, 'bunfig.toml'),
+      '-e',
+      'process.argv=[process.execPath,"private-import-control","instructions","--path","development-lifecycle"]; await import(' +
+        JSON.stringify(pathToFileURL(path.join(root, 'bin/vida-agent.ts')).href) +
+        ');',
+    ],
+    {
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 4000,
+      env: {
+        ...process.env,
+        BUN_BE_BUN: '1',
+        VIDA_STANDALONE_ROOT: root,
+        VIDA_STANDALONE_EXECUTABLE: process.execPath,
+      },
+    },
+  );
+  expect(child.error).toBeUndefined();
+  expect(child.signal).toBeNull();
+  expect(child.status).toBe(0);
+  expect(child.stderr).toBe('');
+  expect(JSON.parse(child.stdout)).toEqual({
+    schema: 'VidaAgentInstruction/v1',
+    package: manifest.name,
+    version: manifest.version,
+    path: path.join(root, 'instructions/development-lifecycle.md'),
+  });
+});
 
 test('malformed scope argv reports actual public help syntax before configuration access', async () => {
   const help = cliMetadataResult(['scope', '--help'], manifest);
@@ -22,8 +201,24 @@ test('malformed scope argv reports actual public help syntax before configuratio
     ['--project-root', '/never-read'],
     ['--project-root', '/never-read', '--repository', 'example'],
     ['--project-root', '/never-read', '--repository', 'example', '--project', 'agent'],
+    ['--project-root', '', '--repository', 'example', '--project', 'agent', '--path', 'src/a.ts'],
   ];
   for (const args of malformed) await expectRejection(inspectScope(args), help.syntax);
+  await expectRejection(
+    inspectScope([
+      '--project-root',
+      '/never-read',
+      '--project-root',
+      '/never-read',
+      '--repository',
+      'example',
+      '--project',
+      'agent',
+      '--path',
+      'src/a.ts',
+    ]),
+    'duplicate scope option',
+  );
 });
 
 test('duplicate scope paths reject before configuration access', async () => {

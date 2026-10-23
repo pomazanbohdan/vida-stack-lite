@@ -21,9 +21,11 @@ the exact counters, independent review, complete report binding and reopen
 condition. Its raw numeric outcome remains BLOCKED/nonexact; no denominator,
 frozen/CRAP requirement or mutation rule changes.
 
-Start the new contour by reconciling its retained receipts, Source/test selection
-and inventory. An old UNKNOWN is not a baseline to replay. Preserve its native
-terminal/effect fences and resolve current prerequisites before any new run.
+Retained receipts, Source/test selection and inventory have been reconciled.
+An old UNKNOWN is not a baseline to replay. Preserve its native terminal/effect
+fences. Complete the checked public CLI/fixture correction packet in
+[WORK](WORK.md#public-entrypoint-correction-packet), publish through ordinary
+hooks, then run one complete selected coverage stage on the new inputs.
 The declared scope contains bin/repair-work-state.ts, bin/scope.ts and
 bin/vida-agent.ts with the partition's five complete test files. Keep exactly
 one writer/integrator and one final numeric producer. No run is implied by

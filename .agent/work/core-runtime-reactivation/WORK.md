@@ -10,13 +10,69 @@ The active contour is **bun-cli-public-entrypoints only**, the next declared
 partition after the owner's explicit controller deferral below. Reuse its
 retained receipts and inventory before deciding on affected checks or a new
 coverage stage. Historical UNKNOWN operations remain fenced and are not replayed.
-No implementation or numeric run for this next contour is claimed by selection.
+The correction packet below is implemented and checked; its full numeric stage
+remains pending publication. Selection and targeted tests do not close it.
 Historical geometry is navigation rather than a new coverage claim.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
 waiver or mutation acceptance. Historical exact F/L/S/B remains17/46.
 Root owns canonical edits, final checks, Git and the sole numeric producer.
+
+### Public entrypoint correction packet
+
+2500's bounded Source/test review separates parent-imported scope/repair bodies
+from child-only public dispatch counters.2501 finds no blocker in the inspected
+admission/run fixture owners. The old Oct16 UNKNOWN projection rows carry no
+captured fingerprints and their original locators are absent. They are not
+current evidence or operations to replay. Keep their fences unchanged.
+
+Independent2502 compares broad multi-child observation with callable dispatch
+plus one exact canonical root-help child. Root selects the latter. Preserve
+the existing controller diagnostic unchanged and add only the full public
+Source3/test5 selection's one bounded launch to its existing custody owner.
+No generic child collector, nested-process attribution or extra help-matrix
+instrumentation is planned. The direct public child proves its wrapper; local
+main tests use an injected exit recipient. Keep native output/cwd/env and activate
+both direct entry and embedded dynamic import. An import.meta.main-only guard
+would break bin/standalone.ts's current import route.
+
+Freeze new public-dispatch main, instruction, argument-normalization and command-
+forwarding helpers, including any new callbacks, at prospective CC/CRAP10/10.
+Preserve old isStringMap/isCliPackageManifest/output correspondence and ceilings.
+Batch cheap repair parser refusals and parent-scope success/denial assertions
+with the existing fixture. Root also confirms the public-scope composite leaves
+its success root unremoved and its children unbounded; repair setup/terminal
+retention, per-child bounds and successful cleanup without changing its60s cap.
+Then scoped strict/lint, grouped affected cases, protocol negative controls,
+independent review and one complete changed-input stage after publication.
+Public main now accepts a local exit recipient and preserves direct/embedded
+dispatch. The existing custody owner accepts one exact public root-help child
+only for the full three-Source/five-test selection. Protocol fixtures cover both
+profiles and copied-proof refusals. Cheap repair-parser denials and callable
+scope parity reuse existing owners. The scope composite now bounds children by
+its remaining60s case deadline, captures logs, retains failures and removes its
+successful root. A corrected repository-denial premise supplies the required
+informational path before reaching membership validation.
+
+2511's independent dispatch review finds no behavioral blocker and identifies
+spy setup outside restoration guards. Root moves mock installation inside the
+guards established immediately after acquisition.2512 finds no custody/fixture
+defect and identifies the stale controller-only TESTING contract; the same
+packet updates that owner and its regression reference for both exact cases.
+
+2507 passes8affected cases/337expect calls in9.85s.2508's unchanged139-child help
+matrix passes in4.50s; its two new assertion-premise failures are retained and
+corrected.2510 passes those two cases/28expect calls in142ms without repeating
+the matrix.2513 passes strict tooling199 and test157 files, selected type-aware
+lint and12cases/120expect calls in5.16s, including the guarded spies and preload
+lifecycle controls. Earlier2503–2506/2509 compiler/assertion failures retain their
+original logs under DIAG; they are not passing evidence. The unchanged matrix
+is reused only for this preparation check, not substituted for the pending
+complete contour stage. No public F/L/S/B qualification is claimed yet.
+2514 also passes the remaining supervised two-shard synthetic preload control
+(1case/79expect calls in1.068s); this is protocol evidence, not parallel activation.
+The documentation owner passes4changed documents/57local links and headings.
 
 ### Owner-authorized controller deferral
 

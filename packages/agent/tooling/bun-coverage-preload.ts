@@ -19,7 +19,7 @@ import {
 } from './coverage-instrumented-sources.ts';
 import {
   createCliCoverageObserver,
-  focusedControllerCliCoverage,
+  focusedCliCoverage,
   readCliCoverageLaunch,
   writeCliCoverageReceipt,
   type CliCoverageContext,
@@ -271,7 +271,7 @@ const cliContext: CliCoverageContext = {
 };
 const cliLaunch = readCliCoverageLaunch(cliContext);
 const cliObserver =
-  !cliLaunch && focusedControllerCliCoverage(manifest)
+  !cliLaunch && focusedCliCoverage(manifest)
     ? createCliCoverageObserver(cliContext, await import('node:child_process'))
     : undefined;
 // Fixture children are subjects; observe direct APIs without granting counters

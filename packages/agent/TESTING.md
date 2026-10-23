@@ -2567,8 +2567,8 @@ appear there. Generated local modules outside `src`, `bin`, `tests` and `tooling
 may load live bytes; the receipt classifies and hashes those bytes separately.
 The runner process itself remains checkout-loaded and fingerprinted. The captured
 preload is passed as a Bun CLI option, so test-spawned child processes do not
-inherit the coverage preload. The sole serial focused controller exception below
-adds its captured preload explicitly. Installed
+inherit the coverage preload. The two exact serial focused CLI cases below
+add their captured preload explicitly. Installed
 npm dependencies, Bun runtime files, non-module filesystem reads, generated
 resources and inherited environment are outside byte-snapshot custody. Published
 baseline environment and Bun config files are captured and supplied from the
@@ -2589,12 +2589,18 @@ function execution from statement counters or replace them with field closures.
 
 ### Focused controller CLI counter custody
 
-Only the serial v2 focused `bun-development-controller` selection, with its one
-declared Source and test, may carry `cli_children`. The preload observes exactly
-one native missing-option `inspect` invocation with unchanged flags, cwd and
-4000ms child bound. It explicitly loads the captured preload for that child and
-reuses the existing instrumented artifact. No additional AST/inventory pass or
-build is part of this attribution.
+Only two serial v2 focused selections may carry `cli_children`:
+
+- `bun-development-controller`, with its one declared Source and test, observes
+  one native missing-option `inspect` invocation.
+- `bun-cli-public-entrypoints`, with its exact three Sources and five declared
+  tests, observes one canonical native `bin/vida-agent.ts --help` invocation.
+  Other help-matrix children remain ordinary launches without counter admission.
+
+Each case preserves its original flags, cwd, environment and 4000ms child bound.
+The preload explicitly loads the captured preload for that child and reuses the
+existing instrumented artifact. No additional AST/inventory pass or build is
+part of this attribution. Partial or foreign Source/test selections are denied.
 
 `coverage-cli-child.ts` binds an exclusive launch ID, parent/native child PIDs,
 original/effective argv, captured entry/preload, manifest, runtime and input
@@ -2605,9 +2611,12 @@ sidecar before receipt admission, and returns the originally requested UTF-8
 strings to the test. Launch errors, signal/timeout, unavailable capture or absent
 receipts retain their evidence and cannot contribute counters.
 
-The expected child exit1 is a tested blocked envelope, admitted only with a
-passing parent suite, empty stdout, exact decoded stderr and complete native
-capture. Its separate non-test receipt claims no assigned-test load. The parent
+The controller's expected child exit1 is a tested blocked envelope, admitted only
+with empty stdout and exact decoded stderr. The public help case requires exit0,
+empty stderr and a `VidaAgentCommandResult/v1` help result with nonempty commands;
+its parent test asserts the complete canonical help contract. Both require a
+passing parent suite and complete native capture. The separate non-test receipt
+claims no assigned-test load. The parent
 still proves every selected test loaded from its snapshot. Validate the child's
 loaded inputs, bounded no-follow proof files and unique sparse Source map before
 the existing canonical geometry/counter validator and merge. Full/published and

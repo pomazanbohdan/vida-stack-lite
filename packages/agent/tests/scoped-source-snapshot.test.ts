@@ -15,7 +15,7 @@ import {
 } from '../src/orchestration/scoped-source-snapshot.ts';
 import * as snapshots from '../src/orchestration/scoped-source-snapshot.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
-import { expectAsyncReturned } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
 
 type SnapshotReader = Parameters<typeof snapshotDeclaredSources>[0];
 type SnapshotEntry = ReturnType<typeof snapshotDeclaredSources>['entries'][number];
@@ -185,70 +185,109 @@ describe('cooperative scoped source evidence', () => {
   });
   test('public scope resolves equal, nested, shared and repository-evidence paths without widening selectors', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'scope-shared-fixture-'));
-    mkdirSync(path.join(root, '.git'), { recursive: true });
-    for (const project of ['selected', 'foreign'])
-      mkdirSync(path.join(root, 'products', project, 'src'), { recursive: true });
-    mkdirSync(path.join(root, 'products/src'), { recursive: true });
-    mkdirSync(path.join(root, 'wiki/skills'), { recursive: true });
-    mkdirSync(path.join(root, 'docs/internal'), { recursive: true });
-    writeFileSync(path.join(root, 'products/selected/src/probe.txt'), 'selected');
-    writeFileSync(path.join(root, 'products/foreign/src/probe.txt'), 'foreign');
-    writeFileSync(path.join(root, 'products/src/shared-probe.txt'), 'broad-root');
-    writeFileSync(path.join(root, 'wiki/skills/guide.md'), 'informational skills path');
-    writeFileSync(path.join(root, 'docs/internal/reference.md'), 'informational internal path');
-    await initializeProject({
-      projectRoot: root,
-      repository: 'scope-fixture',
-      projectMappings: [
-        'selected=products/selected',
-        'peer=products/selected',
-        'broad=products',
-        'foreign=products/foreign',
-      ],
-    });
-    const config = loadRuntimeConfig(root);
-    const selectedProject = config.projects.find((project) => project.project_id === 'selected');
-    if (selectedProject === undefined) throw new Error('Selected fixture project is missing');
-    expect(selectedProject.code_selectors).toEqual(['products/selected/src/**']);
-    writeFileSync(path.join(root, 'shared.txt'), 'shared');
-    const base = ['--project-root', root, '--repository', 'scope-fixture'];
-    const invoke = (args: string[], projects: string[] = ['selected']) =>
-      spawnSync(
-        process.execPath,
-        [
-          path.join(packageRoot, 'bin/scope.ts'),
-          ...base,
-          ...projects.flatMap((project) => ['--project', project]),
-          ...args,
+    const deadline = performance.now() + 60_000;
+    let completed = false;
+    try {
+      mkdirSync(path.join(root, '.git'), { recursive: true });
+      for (const project of ['selected', 'foreign'])
+        mkdirSync(path.join(root, 'products', project, 'src'), { recursive: true });
+      mkdirSync(path.join(root, 'products/src'), { recursive: true });
+      mkdirSync(path.join(root, 'wiki/skills'), { recursive: true });
+      mkdirSync(path.join(root, 'docs/internal'), { recursive: true });
+      writeFileSync(path.join(root, 'products/selected/src/probe.txt'), 'selected');
+      writeFileSync(path.join(root, 'products/foreign/src/probe.txt'), 'foreign');
+      writeFileSync(path.join(root, 'products/src/shared-probe.txt'), 'broad-root');
+      writeFileSync(path.join(root, 'wiki/skills/guide.md'), 'informational skills path');
+      writeFileSync(path.join(root, 'docs/internal/reference.md'), 'informational internal path');
+      await initializeProject({
+        projectRoot: root,
+        repository: 'scope-fixture',
+        projectMappings: [
+          'selected=products/selected',
+          'peer=products/selected',
+          'broad=products',
+          'foreign=products/foreign',
         ],
-        {
-          encoding: 'utf8',
-          windowsHide: true,
-        },
+      });
+      const config = loadRuntimeConfig(root);
+      const selectedProject = config.projects.find((project) => project.project_id === 'selected');
+      if (selectedProject === undefined) throw new Error('Selected fixture project is missing');
+      expect(selectedProject.code_selectors).toEqual(['products/selected/src/**']);
+      writeFileSync(path.join(root, 'shared.txt'), 'shared');
+      const base = ['--project-root', root, '--repository', 'scope-fixture'];
+      const evidence = path.join(root, '.scope-cli-evidence');
+      mkdirSync(evidence);
+      let sequence = 0;
+      const argumentsFor = (args: string[], projects: string[]) => [
+        ...base,
+        ...projects.flatMap((project) => ['--project', project]),
+        ...args,
+      ];
+      const inspect = (args: string[], projects: string[] = ['selected']) => inspectScope(argumentsFor(args, projects));
+      const invoke = (args: string[], projects: string[] = ['selected']) => {
+        const remaining = Math.floor(deadline - performance.now());
+        if (remaining <= 0) throw new Error('Public scope fixture deadline expired before native launch.');
+        const child = spawnSync(
+          process.execPath,
+          [path.join(packageRoot, 'bin/scope.ts'), ...argumentsFor(args, projects)],
+          {
+            encoding: 'utf8',
+            windowsHide: true,
+            timeout: Math.min(4000, remaining),
+          },
+        );
+        const prefix = path.join(evidence, String(sequence++));
+        writeFileSync(prefix + '.stdout.log', child.stdout ?? '');
+        writeFileSync(prefix + '.stderr.log', child.stderr ?? '');
+        expect(child.error).toBeUndefined();
+        expect(child.signal).toBeNull();
+        expect(child.status === 0 || child.status === 1).toBe(true);
+        return child;
+      };
+      const shared = invoke(['--path', 'products/selected/src/probe.txt', '--repository-path', 'shared.txt']);
+      expect(shared.status).toBe(0);
+      const sharedOutput: unknown = JSON.parse(shared.stdout);
+      expect(recordArray(sharedOutput, 'entries').map((entry) => stringField(entry, 'path'))).toEqual([
+        'products/selected/src/probe.txt',
+        'shared.txt',
+      ]);
+      expect(sharedOutput).toEqual(
+        await inspect(['--path', 'products/selected/src/probe.txt', '--repository-path', 'shared.txt']),
       );
-    const shared = invoke(['--path', 'products/selected/src/probe.txt', '--repository-path', 'shared.txt']);
-    expect(shared.status).toBe(0);
-    const sharedOutput: unknown = JSON.parse(shared.stdout);
-    expect(recordArray(sharedOutput, 'entries').map((entry) => stringField(entry, 'path'))).toEqual([
-      'products/selected/src/probe.txt',
-      'shared.txt',
-    ]);
-    expect(invoke(['--path', 'products/selected/src/probe.txt'], ['peer']).status).toBe(0);
-    expect(invoke(['--path', 'wiki/skills/guide.md', '--path', 'docs/internal/reference.md']).status).toBe(0);
-    expect(invoke(['--path', 'products/src/shared-probe.txt'], ['broad']).status).toBe(0);
-    for (const args of [
-      ['--repository-path', 'products/selected/src/probe.txt'],
-      ['--repository-path', 'products/foreign/src/probe.txt'],
-      ['--path', 'products/foreign/src/probe.txt'],
-      ['--repository-path', 'shared.txt', '--repository-path', 'shared.txt'],
-      ['--repository-path', '../escape.txt'],
-    ])
-      expect(invoke(args).status).not.toBe(0);
-    expect(invoke(['--path', 'products/foreign/src/probe.txt'], ['broad']).status).not.toBe(0);
-    mkdirSync(path.join(root, 'shared-dir'));
-    writeFileSync(path.join(root, 'shared-dir/probe.txt'), 'shared');
-    symlinkSync(path.join(root, 'shared-dir'), path.join(root, 'linked-dir'), 'junction');
-    expect(invoke(['--repository-path', 'linked-dir/probe.txt']).status).not.toBe(0);
+      for (const paths of [
+        ['--repository-path', 'products/selected/src/probe.txt'],
+        ['--repository-path', 'products/foreign/src/probe.txt'],
+      ])
+        await expectRejection(
+          inspect(['--path', 'wiki/skills/guide.md', ...paths]),
+          'repository scope path is covered by a configured project; use --path',
+        );
+      await expectRejection(
+        inspect(['--path', 'products/foreign/src/probe.txt']),
+        'scope path is outside selected products',
+      );
+      expect(invoke(['--path', 'products/selected/src/probe.txt'], ['peer']).status).toBe(0);
+      expect(invoke(['--path', 'wiki/skills/guide.md', '--path', 'docs/internal/reference.md']).status).toBe(0);
+      expect(invoke(['--path', 'products/src/shared-probe.txt'], ['broad']).status).toBe(0);
+      for (const args of [
+        ['--path', 'wiki/skills/guide.md', '--repository-path', 'products/selected/src/probe.txt'],
+        ['--path', 'wiki/skills/guide.md', '--repository-path', 'products/foreign/src/probe.txt'],
+        ['--path', 'products/foreign/src/probe.txt'],
+        ['--repository-path', 'shared.txt', '--repository-path', 'shared.txt'],
+        ['--repository-path', '../escape.txt'],
+      ])
+        expect(invoke(args).status).not.toBe(0);
+      expect(invoke(['--path', 'products/foreign/src/probe.txt'], ['broad']).status).not.toBe(0);
+      mkdirSync(path.join(root, 'shared-dir'));
+      writeFileSync(path.join(root, 'shared-dir/probe.txt'), 'shared');
+      symlinkSync(path.join(root, 'shared-dir'), path.join(root, 'linked-dir'), 'junction');
+      expect(invoke(['--repository-path', 'linked-dir/probe.txt']).status).not.toBe(0);
+      if (performance.now() >= deadline) throw new Error('Public scope fixture deadline expired before cleanup.');
+      completed = true;
+    } finally {
+      if (completed) rmSync(root, { recursive: true, force: true });
+      else console.error('Retained failed or uncertain public scope fixture at ' + root);
+    }
   }, 60_000);
 
   test('derives prepare scope in an external consumer and normalizes public absolute roots without admitting unsafe paths', async () => {

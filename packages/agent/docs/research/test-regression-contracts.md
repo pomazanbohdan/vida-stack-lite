@@ -1317,10 +1317,12 @@ restoration; this fixture does not establish native SDK formation.
 ### Controller child observations
 
 `tests/coverage-cli-child.test.ts` qualifies the focused CLI coverage protocol
-with one real captured preload and an inert instrumented entry, not a production
-controller coverage claim. The parent test loads its assigned file; the separate
-native CLI receipt loads the entry without claiming that test. Require the real
-denial terminal and demonstrate newly visited statements through the existing
+with one real captured preload and inert instrumented entries, not a production
+coverage claim. Exercise both exact controller and public-entrypoint profiles.
+The parent loads every selected test; the separate native CLI receipt loads only
+the selected entry without claiming a test. Require the real denial terminal for
+the controller and exit0 with canonical help JSON for the public entry. Demonstrate
+newly visited statements through the existing
 canonical merger. Use copied proof files for stale/foreign PID, argv, environment,
 manifest, input, output and malformed-counter refusals; never rewrite the original
 native observation to author an accepted counter. Reject missing/duplicate proof,
@@ -1330,6 +1332,18 @@ native history. A real invalid-UTF-8 child must preserve its original raw byte
 even though no counter receipt exists; complete output alone cannot admit it.
 The native parent/child environment join and unset/default controls cover direct
 CLI semantics separately from Bun Test's normalized environment digest.
+
+Public CLI coverage separates callable dispatch from one canonical native help
+launch. Callable cases supply a local exit recipient and restore each spy from a
+guard established immediately after acquisition, including mock setup failures.
+Preserve native forwarding arguments, cwd, environment and refusal results;
+synthetic adapter error/signal controls do not establish native history. A private
+dynamic-import child checks the existing embedded entry guard; it is not compiled
+artifact qualification or loader activation. The existing help matrix retains
+its ordinary children. Reuse the scope fixture for callable/native success parity
+and causal product/repository denials. Capture child logs before assertions,
+bound each launch by the remaining case deadline, retain failed roots and remove
+successful roots only after the final deadline check.
 
 Decode Buffer and Uint8Array diagnostic streams through the existing UTF-8
 output owner before redaction and the 4096-character cap. Respect byte-view

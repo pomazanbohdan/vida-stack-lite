@@ -64,6 +64,14 @@ export type CliChildLaunch = {
 
 const source = 'bin/development-controller.ts';
 const test = 'tests/development-controller.test.ts';
+const publicSources = ['bin/repair-work-state.ts', 'bin/scope.ts', 'bin/vida-agent.ts'];
+const publicTests = [
+  'tests/scope-help-parity.test.ts',
+  'tests/scoped-source-snapshot.test.ts',
+  'tests/run-entrypoint.test.ts',
+  'tests/automatic-work-absorption.test.ts',
+  'tests/admitted-runtime-canonical-intake.test.ts',
+];
 const preload = 'tooling/bun-coverage-preload.ts';
 const launchEnvironment = 'VIDA_BUN_COVERAGE_CLI_LAUNCH';
 const maxProofBytes = 4 * 1024 * 1024;
@@ -97,6 +105,36 @@ export function focusedControllerCliCoverage(manifest: CliCoverageManifest): boo
   );
 }
 
+function samePaths(actual: readonly string[] | undefined, expected: readonly string[]): boolean {
+  return (
+    actual !== undefined &&
+    actual.length === expected.length &&
+    JSON.stringify([...actual].sort()) === JSON.stringify([...expected].sort())
+  );
+}
+
+function cliSubject(manifest: CliCoverageManifest) {
+  if (focusedControllerCliCoverage(manifest)) return { source, argument: 'inspect', exit_code: 1 };
+  if (
+    manifest.schema === 'VidaBunCoverageRun/v2' &&
+    manifest.test_selection.mode === 'focused-diagnostic' &&
+    manifest.test_selection.contour === 'bun-cli-public-entrypoints' &&
+    samePaths(
+      manifest.sources.map((row) => row.path),
+      publicSources,
+    ) &&
+    samePaths(manifest.test_selection.sources, publicSources) &&
+    samePaths(manifest.tests, publicTests) &&
+    samePaths(manifest.test_selection.tests, publicTests)
+  )
+    return { source: 'bin/vida-agent.ts', argument: '--help', exit_code: 0 };
+  return undefined;
+}
+
+export function focusedCliCoverage(manifest: CliCoverageManifest): boolean {
+  return cliSubject(manifest) !== undefined;
+}
+
 function proofRecord(value: unknown): Record<string, unknown> {
   assert.ok(
     typeof value === 'object' && value !== null && !Array.isArray(value),
@@ -106,12 +144,14 @@ function proofRecord(value: unknown): Record<string, unknown> {
 }
 
 function nativeArgv(context: CliCoverageContext): string[] {
+  const subject = cliSubject(context.manifest);
+  assert.ok(subject, 'CLI coverage requires an exact supported selection.');
   return [
     '--no-env-file',
     '--no-install',
     '--config=' + path.join(context.root, 'bunfig.toml'),
-    path.join(context.root, source),
-    'inspect',
+    path.join(context.root, subject.source),
+    subject.argument,
   ];
 }
 
@@ -165,10 +205,7 @@ function jsonBytes(value: unknown): Buffer {
 }
 
 function checkedLaunch(context: CliCoverageContext, value: unknown): CliChildLaunch {
-  assert.ok(
-    focusedControllerCliCoverage(context.manifest),
-    'CLI counters require the exact focused controller selection.',
-  );
+  assert.ok(focusedCliCoverage(context.manifest), 'CLI counters require an exact supported focused selection.');
   const row = proofRecord(value);
   assert.equal(row.schema, 'VidaBunCoverageCliLaunch/v1');
   assert.equal(typeof row.id, 'string');
@@ -178,7 +215,11 @@ function checkedLaunch(context: CliCoverageContext, value: unknown): CliChildLau
   assert.equal(row.executable, process.execPath);
   assert.equal(row.runtime_executable_sha256, context.manifest.runtime_executable_sha256);
   assert.equal(row.manifest_sha256, context.manifest_sha256);
-  assert.deepEqual(row.entry, context.manifest.sources[0]);
+  const subject = cliSubject(context.manifest)!;
+  assert.deepEqual(
+    row.entry,
+    context.manifest.sources.find((entry) => entry.path === subject.source),
+  );
   const expectedPreload = context.manifest.tool_inputs.find((item) => item.path === preload);
   assert.ok(expectedPreload, 'CLI preload is absent from captured tools.');
   assert.deepEqual(row.preload, expectedPreload);
@@ -200,7 +241,11 @@ export function readCliCoverageLaunch(context: CliCoverageContext): CliChildLaun
   const launch = checkedLaunch(context, JSON.parse(proofBytes(context.directory, relative).toString('utf8')));
   assert.equal(relative, proofPath(launch.id, 'launch.json'));
   assert.equal(launch.parent_pid, process.ppid);
-  assert.deepEqual(process.argv, [launch.executable, path.join(context.root, source), 'inspect']);
+  assert.deepEqual(process.argv, [
+    launch.executable,
+    path.join(context.root, launch.entry.path),
+    cliSubject(context.manifest)!.argument,
+  ]);
   assert.deepEqual(process.execArgv, launch.effective_argv.slice(0, -2));
   assert.equal(process.cwd(), launch.cwd);
   assert.equal((process.env.BUN_OPTIONS ?? '').trim(), '');
@@ -216,7 +261,7 @@ export function writeCliCoverageReceipt(
 ): void {
   assert.deepEqual(
     Object.keys(captured.coverage),
-    [path.join(context.root, source)],
+    [path.join(context.root, launch.entry.path)],
     'CLI entry was not instrumented.',
   );
   writeProof(
@@ -247,14 +292,21 @@ export function createCliCoverageObserver(
   context: CliCoverageContext,
   actual: Pick<typeof import('node:child_process'), 'spawnSync'>,
 ) {
-  assert.ok(focusedControllerCliCoverage(context.manifest));
+  const selected = cliSubject(context.manifest);
+  assert.ok(selected);
+  const subject = selected;
   const original = actual.spawnSync;
   const observations: CliChildObservation[] = [];
   let launches = 0;
   function spawnSync(...call: unknown[]): SpawnSyncReturns<string | Buffer> {
     const [command, args, settings] = call;
+    const expectedArgs = nativeArgv(context);
     const matched =
-      command === process.execPath && Array.isArray(args) && args.includes(path.join(context.root, source));
+      command === process.execPath &&
+      Array.isArray(args) &&
+      (subject.source === source
+        ? args.includes(path.join(context.root, source))
+        : JSON.stringify(args) === JSON.stringify(expectedArgs));
     if (!matched) return Reflect.apply(original, actual, call) as SpawnSyncReturns<string | Buffer>;
     launches++;
     assert.equal(launches, 1, 'Duplicate focused CLI launch.');
@@ -281,7 +333,7 @@ export function createCliCoverageObserver(
       parent_pid: process.pid,
       executable: process.execPath,
       runtime_executable_sha256: context.manifest.runtime_executable_sha256,
-      entry: context.manifest.sources[0]!,
+      entry: context.manifest.sources.find((entry) => entry.path === subject.source)!,
       preload: tool,
       original_argv: nativeArgv(context),
       effective_argv: ['--preload', path.join(context.snapshot, preload), ...nativeArgv(context)],
@@ -336,7 +388,8 @@ export function createCliCoverageObserver(
       exit_code: result.status,
       signal: result.signal,
       error_observed: result.error !== undefined,
-      complete: captureAvailable && result.error === undefined && result.signal === null && result.status === 1,
+      complete:
+        captureAvailable && result.error === undefined && result.signal === null && result.status === subject.exit_code,
       capture_available: captureAvailable,
       error: result.error?.message ?? null,
       stdout: stdoutReference,
@@ -390,7 +443,8 @@ export function cliCoverageChildMaps(
   parentSuiteExitCode: number,
   validateLoaded: (rows: unknown[]) => Set<string>,
 ): Record<string, unknown>[] {
-  if (!focusedControllerCliCoverage(context.manifest)) {
+  const subject = cliSubject(context.manifest);
+  if (!subject) {
     assert.equal(raw, undefined, 'Unselected coverage cannot carry CLI child counters.');
     return [];
   }
@@ -401,7 +455,7 @@ export function cliCoverageChildMaps(
   const id = String(observation.id);
   assert.equal(observation.parent_pid, parentPid);
   assert.ok(Number.isSafeInteger(observation.pid) && Number(observation.pid) > 0 && observation.pid !== parentPid);
-  assert.equal(observation.exit_code, 1);
+  assert.equal(observation.exit_code, subject.exit_code);
   assert.equal(observation.signal, null);
   assert.equal(observation.error_observed, false);
   assert.equal(observation.complete, true);
@@ -445,23 +499,39 @@ export function cliCoverageChildMaps(
   assert.equal(receipt.tool_fingerprint, context.manifest.tool_fingerprint);
   assert.deepEqual(receipt.module_inputs, context.manifest.module_inputs);
   assert.equal(receipt.environment_sha256, launch.environment_sha256);
-  assert.deepEqual(receipt.argv, [launch.executable, path.join(context.root, source), 'inspect']);
+  assert.deepEqual(receipt.argv, [launch.executable, path.join(context.root, subject.source), subject.argument]);
   assert.deepEqual(receipt.exec_argv, launch.effective_argv.slice(0, -2));
   const stdout = referencedBytes(context, observation.stdout, proofPath(id, 'stdout.log'));
   const stderr = referencedBytes(context, observation.stderr, proofPath(id, 'stderr.log'));
   assert.equal(proofRecord(observation.stdout).bytes, stdout.length);
   assert.equal(proofRecord(observation.stderr).bytes, stderr.length);
-  assert.equal(stdout.length, 0);
-  assert.deepEqual(JSON.parse(stderr.toString('utf8')), {
-    status: 'blocked',
-    code: 'GAP-DEVELOPMENT-CONTROLLER-001',
-    message: 'Required controller option is missing.',
-  });
+  if (subject.source === source) {
+    assert.equal(stdout.length, 0);
+    assert.deepEqual(JSON.parse(stderr.toString('utf8')), {
+      status: 'blocked',
+      code: 'GAP-DEVELOPMENT-CONTROLLER-001',
+      message: 'Required controller option is missing.',
+    });
+  } else {
+    assert.equal(stderr.length, 0);
+    const help = proofRecord(JSON.parse(stdout.toString('utf8')));
+    assert.equal(help.schema, 'VidaAgentCommandResult/v1');
+    assert.equal(help.status, 'help');
+    assert.ok(
+      Array.isArray(help.commands) &&
+        help.commands.length > 0 &&
+        help.commands.every((command) => typeof command === 'string'),
+    );
+  }
   assert.deepEqual(receipt.external_module_inputs, []);
   assert.ok(Array.isArray(receipt.loaded_inputs));
   const loaded = validateLoaded(receipt.loaded_inputs);
-  assert.ok(loaded.has(source) && loaded.has(preload) && loaded.has('tooling/coverage-cli-child.ts'));
+  assert.ok(loaded.has(subject.source) && loaded.has(preload) && loaded.has('tooling/coverage-cli-child.ts'));
   const coverage = proofRecord(receipt.coverage);
-  assert.deepEqual(Object.keys(coverage), [path.join(context.root, source)], 'Foreign or unloaded CLI Source counter.');
+  assert.deepEqual(
+    Object.keys(coverage),
+    [path.join(context.root, subject.source)],
+    'Foreign or unloaded CLI Source counter.',
+  );
   return [coverage];
 }

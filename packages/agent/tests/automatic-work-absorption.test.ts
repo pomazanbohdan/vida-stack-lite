@@ -2007,6 +2007,57 @@ test('public admission rejects drifted predecessor attribution without any effec
   }
 });
 
+test('work-state repair rejects malformed selectors and attribution before reading configuration', () => {
+  const base = ['--kind', 'work-state', '--mode', 'apply', '--project-root', '/never-read', '--repair-id', 'repair'];
+  const cases: Array<{ args: string[]; message: string }> = [
+    { args: ['--unknown', 'value'], message: 'invalid or duplicate arguments' },
+    { args: ['--mode'], message: 'invalid or duplicate arguments' },
+    { args: ['--mode', ''], message: 'invalid or duplicate arguments' },
+    { args: ['--mode', 'inspect', '--mode', 'apply'], message: 'invalid or duplicate arguments' },
+    { args: [], message: 'kind, mode or absolute project root missing' },
+    { args: ['--mode', 'foreign'], message: 'kind, mode or absolute project root missing' },
+    {
+      args: ['--kind', 'foreign', '--mode', 'inspect', '--project-root', '/never-read'],
+      message: 'kind, mode or absolute project root missing',
+    },
+    {
+      args: ['--kind', 'work-state', '--mode', 'inspect', '--project-root', '.'],
+      message: 'kind, mode or absolute project root missing',
+    },
+    { args: base.slice(0, -2), message: 'repair operation identity missing' },
+    { args: [...base.slice(0, -1), '../escape'], message: 'repair operation identity missing' },
+    { args: [...base.slice(0, -1), 'x'.repeat(81)], message: 'repair operation identity missing' },
+    { args: [...base, '--actor', 'operator'], message: 'only plan accepts and requires attribution' },
+    {
+      args: ['--kind', 'work-state', '--mode', 'plan', '--project-root', '/never-read', '--repair-id', 'repair'],
+      message: 'only plan accepts and requires attribution',
+    },
+    {
+      args: [
+        '--kind',
+        'work-state',
+        '--mode',
+        'plan',
+        '--project-root',
+        '/never-read',
+        '--repair-id',
+        'repair',
+        '--actor',
+        '  ',
+      ],
+      message: 'only plan accepts and requires attribution',
+    },
+  ];
+  const configRead = spyOn(runtimeConfig, 'loadRuntimeConfig');
+  try {
+    for (const { args, message } of cases)
+      expect(() => runWorkStateRepair(args)).toThrow('vida work-state repair: ' + message);
+    expect(configRead).not.toHaveBeenCalled();
+  } finally {
+    configRead.mockRestore();
+  }
+});
+
 test('work-state inspection CLI refuses missing canonical SQLite without creating it', () => {
   const f = fixture();
   try {
