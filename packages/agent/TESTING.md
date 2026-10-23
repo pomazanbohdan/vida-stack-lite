@@ -2622,12 +2622,20 @@ Only four serial v2 focused selections may carry `cli_children`:
   This role requires complete raw capture, actual owned-group `gone`, and loaded
   workspace-database/local-work-admission modules. Windows remains unqualified.
   Bounded before/after snapshots bind six unique in-root, single-link regular files
-  to actual child reads and EOF for config, initialization, intake, scope,
+  to complete child-read evidence for config, initialization, intake, scope,
   acceptance and selected Source. The observer supports complete `readSync`
-  streams and whole-file `readFileSync` reads by canonical path or observed
-  descriptor. It retains exact returned bytes, preserves Buffer or UTF-8 return
-  values even when evidence is incomplete, and marks unsupported options, path
-  aliases or identity changes incomplete. Retained payloads bind read order,
+  streams, whole-file `readFileSync` results, and bounded descriptor-reader
+  results by canonical path or observed descriptor. The bounded
+  `@openclaw/fs-safe` reader result is retained only when the returned bytes
+  equal the stable single-link descriptor and path identity at the observed
+  size; its evidence records `complete_result:true` and `eof:false`, without
+  inventing a zero-byte syscall. On Linux, the descriptor-relative
+  `/proc/self/fd/<dirfd>/<basename>`
+  form is accepted only with `O_NOFOLLOW` and a directory fd whose canonical
+  path is the prepared file's parent; other path aliases remain incomplete.
+  It ignores unrelated opens and retains exact returned bytes, preserves Buffer
+  or UTF-8 return values even when evidence is incomplete, and marks unsupported
+  options or identity changes incomplete. Retained payloads bind read order,
   fd/path/role, requested/effective position and byte count within4MiB/4096operations.
   Equal path/Buffer payloads share storage; every actual operation remains recorded.
   Opens with no observed reads do not prove consumption. Snapshot or post-return

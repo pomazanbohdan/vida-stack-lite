@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import {
+  constants as fsConstants,
   closeSync,
   fstatSync,
   openSync,
@@ -31,7 +32,7 @@ export function createPreparedReadCapture(
     fd: number;
     path: string;
     role: string;
-    read_method: 'readSync' | 'readFileSync';
+    read_method: 'readSync' | 'readFileSync' | 'readFileDescriptorBoundedSync';
     identity: Record<string, string>;
     length: number;
     next: number;
@@ -41,6 +42,7 @@ export function createPreparedReadCapture(
     payload_ids: string[];
   };
   const streams = new Map<number, Stream>();
+  const boundedReads = new Set<number>();
   const completed: Array<Record<string, unknown>> = [];
   const operations: Array<Record<string, unknown>> = [];
   const unreadOpens: Array<Record<string, unknown>> = [];
@@ -123,35 +125,66 @@ export function createPreparedReadCapture(
     }
     derived.add(key);
   };
-  const wrappedOpen = function (this: unknown, ...call: unknown[]): number {
-    const fd = Reflect.apply(originalOpen, this, call) as number;
+  const isRootBoundDescriptorPath = (requestedPath: string, canonical: string, flags: unknown) => {
+    const match = /^\/proc\/self\/fd\/([1-9]\d*)\/([^/]+)$/u.exec(requestedPath);
+    if (
+      process.platform !== 'linux' ||
+      !match ||
+      typeof flags !== 'number' ||
+      (flags & fsConstants.O_NOFOLLOW) === 0 ||
+      match[2] !== path.basename(canonical)
+    )
+      return false;
+    const parentFd = Number(match[1]);
     try {
-      const requested = typeof call[0] === 'string' ? call[0] : '';
-      const file = requested ? realpathSync(requested) : '';
-      if (requested && requested !== file && targets.has(file))
-        throw new Error('Prepared input open path is not canonical.');
-      const role = targets.get(file);
-      if (role) {
-        if (nextStream >= maxOperations || streams.has(fd))
-          throw new Error('Prepared open bound or descriptor identity failed.');
-        streams.set(fd, {
-          id: 's' + nextStream++,
-          fd,
-          path: file,
-          role,
-          read_method: 'readSync',
-          identity: identity(fd),
-          length: 0,
-          next: 0,
-          reads: 0,
-          eof: false,
-          complete: true,
-          payload_ids: [],
-        });
-      }
+      return (
+        originalFstat(parentFd).isDirectory() && realpathSync(`/proc/self/fd/${parentFd}`) === path.dirname(canonical)
+      );
+    } catch {
+      return false;
+    }
+  };
+  const observeOpenedFile = (requestedPath: string, fd: number, flags?: unknown) => {
+    const absolute = path.resolve(requestedPath);
+    const requestedRole = targets.get(absolute);
+    let canonical: string;
+    try {
+      canonical = realpathSync(absolute);
+    } catch {
+      if (requestedRole) issues.push('Prepared input open observation failed.');
+      return;
+    }
+    const canonicalRole = targets.get(canonical);
+    if (!requestedRole && !canonicalRole) return;
+    if (absolute !== canonical && !isRootBoundDescriptorPath(absolute, canonical, flags)) {
+      issues.push('Prepared input open path is not canonical.');
+      return;
+    }
+    if (!canonicalRole) return;
+    try {
+      if (nextStream >= maxOperations || streams.has(fd))
+        throw new Error('Prepared open bound or descriptor identity failed.');
+      streams.set(fd, {
+        id: 's' + nextStream++,
+        fd,
+        path: canonical,
+        role: canonicalRole,
+        read_method: 'readSync',
+        identity: identity(fd),
+        length: 0,
+        next: 0,
+        reads: 0,
+        eof: false,
+        complete: true,
+        payload_ids: [],
+      });
     } catch {
       issues.push('Prepared input open observation failed.');
     }
+  };
+  const wrappedOpen = function (this: unknown, ...call: unknown[]): number {
+    const fd = Reflect.apply(originalOpen, this, call) as number;
+    if (typeof call[0] === 'string') observeOpenedFile(call[0], fd, call[1]);
     return fd;
   };
   const wrappedRead = function (this: unknown, ...call: unknown[]): number {
@@ -163,7 +196,7 @@ export function createPreparedReadCapture(
       if (stream) issues.push('Prepared native read failed.');
       throw error;
     }
-    if (!stream) return count;
+    if (!stream || boundedReads.has(Number(call[0]))) return count;
     stream.reads++;
     try {
       if (operations.length >= maxOperations || stream.eof)
@@ -289,6 +322,106 @@ export function createPreparedReadCapture(
       return { supported: false };
     }
   };
+  const wrapBoundedDescriptorRead =
+    (readBounded: (fd: number, maxBytes: number) => Buffer): ((fd: number, maxBytes: number) => Buffer) =>
+    (fd, maxReadBytes) => {
+      const stream = streams.get(fd);
+      if (!stream) return readBounded(fd, maxReadBytes);
+      if (
+        !Number.isSafeInteger(maxReadBytes) ||
+        maxReadBytes < 0 ||
+        maxReadBytes > maxBytes ||
+        stream.reads > 0 ||
+        stream.eof ||
+        stream.length !== 0
+      ) {
+        stream.complete = false;
+        issues.push('Prepared bounded descriptor read did not start at the observed file offset.');
+        return readBounded(fd, maxReadBytes);
+      }
+
+      let bytes: Buffer;
+      boundedReads.add(fd);
+      try {
+        bytes = readBounded(fd, maxReadBytes);
+      } catch (error) {
+        stream.complete = false;
+        issues.push('Prepared bounded descriptor read failed before its bytes were observed.');
+        throw error;
+      } finally {
+        boundedReads.delete(fd);
+      }
+
+      try {
+        if (
+          !Buffer.isBuffer(bytes) ||
+          bytes.length > maxReadBytes ||
+          stream.reads !== 0 ||
+          String(bytes.length) !== stream.identity.size ||
+          JSON.stringify(identity(fd)) !== JSON.stringify(stream.identity) ||
+          JSON.stringify(pathIdentity(stream.path)) !== JSON.stringify(stream.identity)
+        )
+          throw new Error('Prepared bounded descriptor read result or identity is incomplete.');
+        const payload = [...payloads.values()].find((value) => value.path === stream.path && value.raw.equals(bytes));
+        const retained = payload ?? {
+          id: 'p' + payloads.size,
+          path: stream.path,
+          sha256: digest(bytes),
+          bytes: bytes.toString('base64'),
+          raw: Buffer.from(bytes),
+        };
+        if (!payload) {
+          if (payloadBytes + bytes.length > maxBytes) throw new Error('Prepared unique-byte bound exceeded.');
+          charge({ id: retained.id, path: retained.path, sha256: retained.sha256, bytes: retained.bytes });
+          payloads.set(retained.id, retained);
+          payloadBytes += bytes.length;
+        }
+        stream.read_method = 'readFileDescriptorBoundedSync';
+        stream.reads++;
+        stream.length = bytes.length;
+        stream.next = bytes.length;
+        stream.eof = true;
+        stream.payload_ids.push(retained.id);
+        const completion = {
+          id: stream.id,
+          fd: stream.fd,
+          role: stream.role,
+          read_method: stream.read_method,
+          path: stream.path,
+          identity: stream.identity,
+          bytes: bytes.length,
+          sha256: retained.sha256,
+          payload_ids: [...stream.payload_ids],
+          complete: true,
+        };
+        charge(completion);
+        completed.push(completion);
+        const operation = {
+          sequence: operations.length + 1,
+          stream_id: stream.id,
+          fd: stream.fd,
+          path: stream.path,
+          role: stream.role,
+          read_method: stream.read_method,
+          file_position: 0,
+          requested_position: null,
+          buffer_offset: 0,
+          requested_count: maxReadBytes,
+          bytes_read: bytes.length,
+          eof: false,
+          complete_result: true,
+          payload_id: retained.id,
+        };
+        charge(operation, 1);
+        operations.push(operation);
+        derive(stream.role, bytes, retained.sha256);
+        return bytes;
+      } catch {
+        stream.complete = false;
+        issues.push('Prepared bounded descriptor read result or identity is incomplete.');
+        return bytes;
+      }
+    };
   const wrappedReadFile = function (this: unknown, ...call: unknown[]): unknown {
     let file = '';
     let role: string | undefined;
@@ -460,6 +593,8 @@ export function createPreparedReadCapture(
   };
   return {
     apis: { openSync: wrappedOpen, readSync: wrappedRead, closeSync: wrappedClose, readFileSync: wrappedReadFile },
+    observeRootFileOpen: observeOpenedFile,
+    wrapBoundedDescriptorRead,
     finish: () => {
       const roles = requiredRoles;
       for (const role of roles)

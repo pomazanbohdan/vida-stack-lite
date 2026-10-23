@@ -1156,7 +1156,9 @@ export function cliCoverageChildMaps(
         assert.ok(Number.isSafeInteger(stream.fd) && Number(stream.fd) >= 0);
         const role = String(stream.role);
         const readMethod = stream.read_method;
-        assert.ok(readMethod === 'readSync' || readMethod === 'readFileSync');
+        assert.ok(
+          readMethod === 'readSync' || readMethod === 'readFileSync' || readMethod === 'readFileDescriptorBoundedSync',
+        );
         const parent = byRole.get(role);
         assert.ok(parent && requiredRoles.includes(role));
         assert.ok(!streams.has(id));
@@ -1206,17 +1208,27 @@ export function cliCoverageChildMaps(
         assert.equal(Number.isSafeInteger(operation.buffer_offset) && Number(operation.buffer_offset) >= 0, true);
         assert.equal(Number.isSafeInteger(operation.bytes_read) && Number(operation.bytes_read) >= 0, true);
         assert.ok(Number.isSafeInteger(operation.requested_count) && Number(operation.requested_count) >= 0);
-        if (stream.row.read_method === 'readFileSync') {
+        if (stream.row.read_method === 'readFileSync' || stream.row.read_method === 'readFileDescriptorBoundedSync') {
           assert.equal(state.next, 0, 'Prepared readFileSync input was partially consumed before the full read.');
           assert.equal(operation.requested_position, null);
           assert.equal(operation.buffer_offset, 0);
-          assert.equal(operation.requested_count, stream.row.bytes);
+          if (stream.row.read_method === 'readFileSync') assert.equal(operation.requested_count, stream.row.bytes);
+          else
+            assert.ok(
+              Number.isSafeInteger(operation.requested_count) &&
+                Number(operation.requested_count) >= Number(stream.row.bytes),
+              'Prepared bounded descriptor read limit is below its complete result.',
+            );
           assert.equal(
             operation.bytes_read,
             stream.row.bytes,
             'Prepared CLI read byte count differs from its payload.',
           );
-          assert.equal(operation.eof, true);
+          if (stream.row.read_method === 'readFileSync') assert.equal(operation.eof, true);
+          else {
+            assert.equal(operation.eof, false);
+            assert.equal(operation.complete_result, true);
+          }
           const payloadId = String(operation.payload_id);
           const payload = payloads.get(payloadId);
           assert.ok(

@@ -3,19 +3,24 @@ import assert from 'node:assert/strict';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import {
+  constants as fsConstants,
+  closeSync,
   copyFileSync,
   linkSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readFileSync,
   readdirSync,
   rmSync,
   symlinkSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
 import {
   capturedModuleInputs,
   coverageToolInputs,
@@ -105,6 +110,78 @@ test('prepared input capture binds complete readFileSync bytes and rejects unsup
       assert.equal(evidence.operations[0]!.eof, true);
     }
 
+    const rootFileCapture = createPreparedReadCapture(
+      root,
+      intake,
+      [],
+      undefined,
+      ['runtime-config'],
+      preparedCliInputRoles,
+    );
+    const runtimeConfig = path.join(root, 'agent-runtime.config.v1.yaml');
+    const opened = openRootFileSync({
+      absolutePath: runtimeConfig,
+      rootPath: root,
+      boundaryLabel: 'prepared input test',
+      maxBytes: 1024,
+    });
+    assert.equal(opened.ok, true);
+    if (!opened.ok) throw new Error('Root-bounded prepared input open failed.');
+    rootFileCapture.observeRootFileOpen(opened.path, opened.fd);
+    const rootFileBytes = rootFileCapture.wrapBoundedDescriptorRead(readFileDescriptorBoundedSync)(opened.fd, 1024);
+    rootFileCapture.apis.closeSync(opened.fd);
+    assert.equal(rootFileBytes.toString(), inputFiles.get(runtimeConfig));
+    const rootFileEvidence = rootFileCapture.finish();
+    assert.equal(rootFileEvidence.complete, true, JSON.stringify(rootFileEvidence.issues));
+    assert.equal(rootFileEvidence.streams[0]!.read_method, 'readFileDescriptorBoundedSync');
+    assert.equal(rootFileEvidence.operations[0]!.bytes_read, rootFileBytes.length);
+    assert.equal(rootFileEvidence.operations[0]!.eof, false);
+    assert.equal(rootFileEvidence.operations[0]!.complete_result, true);
+
+    if (process.platform === 'linux') {
+      const parentFd = openSync(root, fsConstants.O_RDONLY | fsConstants.O_DIRECTORY);
+      const descriptorCapture = createPreparedReadCapture(
+        root,
+        intake,
+        [],
+        undefined,
+        ['runtime-config'],
+        preparedCliInputRoles,
+      );
+      const descriptorPath = `/proc/self/fd/${parentFd}/agent-runtime.config.v1.yaml`;
+      const descriptorFd = descriptorCapture.apis.openSync(
+        descriptorPath,
+        fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW,
+      );
+      const descriptorBuffer = Buffer.alloc(Buffer.byteLength(inputFiles.get(runtimeConfig)!));
+      const descriptorBytes = descriptorCapture.apis.readSync(
+        descriptorFd,
+        descriptorBuffer,
+        0,
+        descriptorBuffer.length,
+        null,
+      );
+      assert.equal(descriptorCapture.apis.readSync(descriptorFd, Buffer.alloc(1), 0, 1, null), 0);
+      descriptorCapture.apis.closeSync(descriptorFd);
+      closeSync(parentFd);
+      assert.equal(descriptorBytes, descriptorBuffer.length);
+      assert.equal(descriptorBuffer.toString(), inputFiles.get(runtimeConfig));
+      const descriptorEvidence = descriptorCapture.finish();
+      assert.equal(descriptorEvidence.complete, true, JSON.stringify(descriptorEvidence.issues));
+      assert.equal(descriptorEvidence.streams[0]!.path, runtimeConfig);
+      assert.equal(descriptorEvidence.operations.length, 2);
+      assert.equal(descriptorEvidence.operations[1]!.eof, true);
+    }
+
+    const transient = path.join(root, 'unprepared-transient.txt');
+    writeFileSync(transient, 'not a prepared input');
+    const unrelatedCapture = createPreparedReadCapture(root, intake, [], undefined, [], []);
+    const transientFd = unrelatedCapture.apis.openSync(transient, 'r');
+    unlinkSync(transient);
+    unrelatedCapture.observeRootFileOpen(transient, transientFd);
+    unrelatedCapture.apis.closeSync(transientFd);
+    assert.deepEqual(unrelatedCapture.finish().issues, []);
+
     const acceptance = path.join(root, 'acceptance.json');
     writeFileSync(acceptance, Buffer.from([0xff]));
     const byteCapture = createPreparedReadCapture(
@@ -153,7 +230,7 @@ test('prepared input capture binds complete readFileSync bytes and rejects unsup
     aliasOpenCapture.apis.closeSync(aliasFd);
     const aliasOpenEvidence = aliasOpenCapture.finish();
     assert.equal(aliasOpenEvidence.complete, false);
-    assert.ok(aliasOpenEvidence.issues.includes('Prepared input open observation failed.'));
+    assert.ok(aliasOpenEvidence.issues.includes('Prepared input open path is not canonical.'));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -1212,11 +1289,15 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           );
           for (const stream of streams) {
             const streamOperations = operations.filter((operation) => operation.stream_id === stream.id);
-            if (stream.read_method === 'readFileSync') {
+            if (stream.read_method === 'readFileSync' || stream.read_method === 'readFileDescriptorBoundedSync') {
               expect(streamOperations).toHaveLength(1);
-              expect(streamOperations[0]!.read_method).toBe('readFileSync');
+              expect(streamOperations[0]!.read_method).toBe(stream.read_method);
               expect(streamOperations[0]!.bytes_read).toBe(stream.bytes);
-              expect(streamOperations[0]!.eof).toBe(true);
+              if (stream.read_method === 'readFileSync') expect(streamOperations[0]!.eof).toBe(true);
+              else {
+                expect(streamOperations[0]!.eof).toBe(false);
+                expect(streamOperations[0]!.complete_result).toBe(true);
+              }
             } else {
               expect(stream.read_method).toBe('readSync');
               expect(streamOperations.filter((operation) => Number(operation.bytes_read) > 0)).toHaveLength(1);

@@ -344,7 +344,21 @@ if (fixtureObserver || cliObserver || preparedReadCapture) {
   if (preparedReadCapture) {
     const actual = await import('node:fs');
     const observed = preparedReadCapture.apis;
-    await mock.module('node:fs', () => ({ ...actual, ...observed, default: { ...actual.default, ...observed } }));
+    for (const name of ['openSync', 'readSync', 'closeSync', 'readFileSync'] as const)
+      Object.defineProperty(actual.default, name, {
+        configurable: true,
+        enumerable: true,
+        value: observed[name],
+        writable: true,
+      });
+    await mock.module('node:fs', () => ({ ...actual, ...observed, default: actual.default }));
+    const rootFileApi = await import('@openclaw/fs-safe/advanced');
+    await mock.module('@openclaw/fs-safe/advanced', () => ({
+      ...rootFileApi,
+      readFileDescriptorBoundedSync: preparedReadCapture.wrapBoundedDescriptorRead(
+        rootFileApi.readFileDescriptorBoundedSync,
+      ),
+    }));
   }
 }
 // Import the JSON adapter only after its captured bootstrap bytes have been verified.
