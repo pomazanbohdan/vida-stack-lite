@@ -690,9 +690,16 @@ export function validateIssueSqlConsumption(
     preparedOutput.schema === 'VidaAgentRunResult/v1' && preparedOutput.status === 'prepared',
     'prepared CLI output is not the admitted preparation result',
   );
+  const preparedRevision = preparedVersion.revision;
   assert(
-    preparedVersion.revision === initialJournal.revision && preparedVersion.digest === initialJournal.digest,
-    'current Journal base differs from the completed prepared CLI output',
+    typeof preparedRevision === 'number' &&
+      Number.isSafeInteger(preparedRevision) &&
+      preparedRevision > 0 &&
+      typeof initialJournal.revision === 'number' &&
+      Number.isSafeInteger(initialJournal.revision) &&
+      preparedRevision <= initialJournal.revision &&
+      preparedVersion.digest === initialJournal.digest,
+    'prepared CLI output does not bind the current Journal content or revision',
   );
   assert(
     Array.isArray(preparedOutput.next_actions) && preparedOutput.next_actions.length > 0,

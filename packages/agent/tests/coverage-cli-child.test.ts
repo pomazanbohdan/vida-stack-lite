@@ -781,6 +781,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             items: initialJournal.items.map((item) => ({ ...item, issue_id: item.issue_id ?? issueId })),
           };
           const finalJournalDigest = sha256(Buffer.from(JSON.stringify(finalJournal)));
+          // A lease renewal advances the Journal CAS without changing the prepared payload digest.
           const preparedOutput = {
             schema: 'VidaAgentRunResult/v1',
             status: 'prepared',
@@ -793,7 +794,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           issue.output = {
             schema: 'VidaAgentRunResult/v1',
             status: 'wave_issued',
-            state_version: { revision: 2, digest: finalJournalDigest },
+            state_version: { revision: 3, digest: finalJournalDigest },
             next_actions: [],
             issued_actions: [
               { request: priorRequest, issue_id: priorIssueId },
@@ -851,7 +852,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           issue.args = [
             ...prepared.args.slice(0, 22),
             '--expected-revision',
-            '1',
+            '2',
             '--expected-digest',
             initialJournalDigest,
             '--issue-wave',
@@ -924,7 +925,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                     '  const claimId="claim-"+fixture.actionId; const secondClaimId="claim-secondary-"+fixture.actionId;',
                     '  const ledger={schema:"CoordinationLedger/v1",workspace_id:fixture.workspaceId,revision:1,tickets:[{ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active",claim_ids:[claimId,secondClaimId]}],claims:[{claim_id:claimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"},{claim_id:secondClaimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"}]};',
                     '  for (const [kind,id,value] of [["work",fixture.initialJournal.work_id,work],["ledger","shared",ledger]]) { const payload=JSON.stringify(value); putState.run(fixture.workspaceId,kind,id,1,payload,digest(payload),Buffer.from(payload)); }',
-                    '  putJournal.run(fixture.workspaceId,fixture.initialJournal.work_id,1,1,fixture.initialJournalPayload,fixture.initialJournalDigest,Buffer.from(fixture.initialJournalPayload));',
+                    '  putJournal.run(fixture.workspaceId,fixture.initialJournal.work_id,1,2,fixture.initialJournalPayload,fixture.initialJournalDigest,Buffer.from(fixture.initialJournalPayload));',
                     '  db.close();',
                     '}',
                     'async function hostRead(root,workId) {',
@@ -934,7 +935,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                     '  const ledger=db.query("SELECT workspace_id,kind,id,revision,payload,digest,raw_payload_bytes FROM agent_host_state WHERE workspace_id = ? AND kind = ? AND id = ?").get(fixture.workspaceId,"ledger","shared");',
                     '  const journal=db.query("SELECT workspace_id,work_id,attempt,revision,payload,digest,raw_payload_bytes FROM agent_host_mastra_session_ledger WHERE workspace_id = ? AND work_id = ? AND attempt = ?").get(fixture.workspaceId,workId,1);',
                     '  const other=openHostStateDatabase(root,".agent/host-state.sqlite"); other.close();',
-                    '  const changed=db.query("UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?").run(2,JSON.stringify(fixture.finalJournal),fixture.finalJournalDigest,fixture.workspaceId,workId,1,1,fixture.initialJournalDigest);',
+                    '  const changed=db.query("UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?").run(3,JSON.stringify(fixture.finalJournal),fixture.finalJournalDigest,fixture.workspaceId,workId,1,2,fixture.initialJournalDigest);',
                     '  db.close(); return {work,ledger,journal,changed};',
                     '}',
                     'if (import.meta.main) {',
