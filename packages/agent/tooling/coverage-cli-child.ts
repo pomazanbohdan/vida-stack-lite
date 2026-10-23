@@ -77,12 +77,26 @@ type CliPreparedBinding = {
   id: string;
   argv: string[];
   inputs: Record<string, unknown>[];
+  issue_targets?: CliPreparedIssueTarget[];
   launch: Reference;
   receipt: Reference;
   terminal: Reference;
   stdout: Output;
   prepared_output?: Record<string, unknown>;
 };
+type CliPreparedIssueTarget =
+  | {
+      role: 'intake';
+      path: string;
+      origin: {
+        path: string;
+        realpath: string;
+        identity: Record<string, unknown>;
+        bytes: number;
+        sha256: string;
+      };
+    }
+  | { role: 'runtime-config' | 'runtime-initialization' | 'selected-source'; path: string };
 
 const source = 'bin/development-controller.ts';
 const test = 'tests/development-controller.test.ts';
@@ -497,8 +511,12 @@ function checkedPreparedBinding(context: CliCoverageContext, value: unknown, iss
   assert.equal(receipt.parent_pid, launch.parent_pid);
   assert.equal(receipt.exit_code, 0);
   assert.equal(proofRecord(receipt.consumed_inputs).complete, true);
+  const issueTargets = preparedIssueTargets(context, binding.argv as string[], inputs);
+  assert.ok(Array.isArray(binding.issue_targets));
+  assert.deepEqual(binding.issue_targets, issueTargets, 'Prepared issue targets differ from the checked work binding.');
   return {
     ...(binding as CliPreparedBinding),
+    issue_targets: issueTargets,
     prepared_output: preparedOutput,
   };
 }
@@ -688,6 +706,45 @@ function valueAfterArg(argv: readonly string[], name: string): string | undefine
   return index < 0 ? undefined : argv[index + 1];
 }
 
+function preparedIssueTargets(
+  context: CliCoverageContext,
+  argv: readonly string[],
+  inputs: readonly Record<string, unknown>[],
+): CliPreparedIssueTarget[] {
+  const root = valueAfterArg(argv, '--project-root');
+  const workId = valueAfterArg(argv, '--work-id');
+  assert.ok(root && path.isAbsolute(root) && path.resolve(root) === root);
+  const relativeRoot = path.relative(context.root, root);
+  assert.ok(
+    !path.isAbsolute(relativeRoot) && relativeRoot !== '..' && !relativeRoot.startsWith('..' + path.sep),
+    'Prepared project root escapes the CLI evidence root.',
+  );
+  assert.ok(workId && /^mutation-run-[a-f0-9-]{36}$/u.test(workId));
+  const intake = inputs.find((row) => row.role === 'intake');
+  assert.ok(intake && typeof intake.path === 'string' && typeof intake.realpath === 'string');
+  assert.ok(isRecord(intake.identity));
+  assert.ok(Number.isSafeInteger(intake.bytes) && Number(intake.bytes) > 0);
+  assert.ok(typeof intake.sha256 === 'string' && /^[a-f0-9]{64}$/u.test(intake.sha256));
+  const canonicalIntakePath = path.join(root, '.agent', 'work', workId, 'local-session-intake.v1.json');
+  return issueCliInputRoles.map((role) => {
+    if (role === 'intake')
+      return {
+        role,
+        path: canonicalIntakePath,
+        origin: {
+          path: intake.path as string,
+          realpath: intake.realpath as string,
+          identity: intake.identity as Record<string, unknown>,
+          bytes: intake.bytes as number,
+          sha256: intake.sha256 as string,
+        },
+      };
+    const input = inputs.find((row) => row.role === role);
+    assert.ok(input && typeof input.path === 'string');
+    return { role, path: input.path };
+  });
+}
+
 export function createCliCoverageObserver(
   context: CliCoverageContext,
   actual: Pick<typeof import('node:child_process'), 'spawnSync'>,
@@ -777,7 +834,7 @@ export function createCliCoverageObserver(
       let preparedAfter: Record<string, unknown>[] | undefined;
       const issueTargets =
         subject.role === 'run-issue-wave'
-          ? preparedBinding?.inputs.filter((row) => issueCliInputRoles.some((role) => role === row.role))
+          ? preparedBinding && preparedIssueTargets(context, preparedBinding.argv, preparedBinding.inputs)
           : undefined;
       if (runOperationRoles.has(subject.role)) {
         try {
@@ -788,7 +845,11 @@ export function createCliCoverageObserver(
           );
           if (subject.role === 'run-issue-wave') {
             assert.ok(preparedBinding && issueTargets);
-            assert.deepEqual(preparedBefore, issueTargets, 'Issue fixture changed after preparation.');
+            assert.deepEqual(
+              preparedBefore.map(({ role, path }) => ({ role, path })),
+              issueTargets.map(({ role, path }) => ({ role, path })),
+              'Issue target snapshot differs from its prepared work binding.',
+            );
           }
         } catch (error) {
           throw new Error('Prepared CLI input snapshot failed before dispatch.', { cause: error });
@@ -830,7 +891,9 @@ export function createCliCoverageObserver(
         native_options: nativeOptions,
         budget_ms: runOperationRoles.has(subject.role) ? String(env.VIDA_PINNED_COMMAND_BUDGET_MS) : null,
         deadline_ms: runOperationRoles.has(subject.role) ? String(env.VIDA_PINNED_COMMAND_DEADLINE_MS) : null,
-        ...(subject.role === 'run-issue-wave' && preparedBinding ? { prepared: preparedBinding } : {}),
+        ...(subject.role === 'run-issue-wave' && preparedBinding && issueTargets
+          ? { prepared: { ...preparedBinding, issue_targets: issueTargets } }
+          : {}),
       };
       if (subject.role !== 'run-admission-prepared') checkedLaunch(context, launch);
       const launchReference = writeProof(context, proofPath(id, 'launch.json'), jsonBytes(launch));
@@ -1148,6 +1211,15 @@ export function cliCoverageChildMaps(
       const rows = parentInputs.map((value) => proofRecord(value));
       const byRole = new Map(rows.map((row) => [String(row.role), row]));
       assert.deepEqual([...byRole.keys()].sort(), [...requiredRoles].sort());
+      if (subject.role === 'run-issue-wave') {
+        const issueTargets = launch.prepared!.issue_targets;
+        assert.ok(Array.isArray(issueTargets));
+        assert.deepEqual(
+          rows.map(({ role, path }) => ({ role, path })),
+          issueTargets.map(({ role, path }) => ({ role, path })),
+          'Issue snapshots do not match their exact prepared targets.',
+        );
+      }
       const streams = new Map<string, { row: Record<string, unknown>; bytes: Buffer }>();
       for (const streamValue of inputEvidence.streams) {
         const stream = proofRecord(streamValue);
@@ -1307,13 +1379,11 @@ export function cliCoverageChildMaps(
       assert.equal(rolePath('runtime-initialization'), path.join(root, '.agent', 'runtime-initialization.v1.json'));
       assert.equal(
         rolePath('intake'),
-        valueAfterArg(subject.role === 'run-issue-wave' ? launch.prepared!.argv : launch.original_argv, '--intake'),
+        subject.role === 'run-issue-wave'
+          ? launch.prepared!.issue_targets?.find((row) => row.role === 'intake')?.path
+          : valueAfterArg(launch.original_argv, '--intake'),
       );
       if (subject.role === 'run-issue-wave') {
-        assert.deepEqual(
-          parentInputs,
-          launch.prepared!.inputs.filter((row) => issueCliInputRoles.some((role) => role === row.role)),
-        );
         assert.ok(
           raw.some(
             (candidate: unknown) =>
@@ -1445,12 +1515,17 @@ export function cliCoverageChildMaps(
         jsonBytes({ consumed_inputs: inputs, consumed_sql: sql, consumption_limits: limits }).length <= maxProofBytes,
         'Combined issue consumption exceeds the unchanged proof bound.',
       );
+      const parentInputs = terminal.parent_inputs_before;
+      assert.ok(Array.isArray(parentInputs));
+      const intakeInput = parentInputs.map((value: unknown) => proofRecord(value)).find((row) => row.role === 'intake');
+      assert.ok(intakeInput);
       validateIssueSqlConsumption(sql, {
         argv: launch.original_argv,
         output: issued,
         preparedOutput: launch.prepared!.prepared_output!,
         root: valueAfterArg(launch.original_argv, '--project-root')!,
         preparedInputs: launch.prepared!.inputs.map((value) => proofRecord(value)),
+        intakeInput,
       });
     } else if (subject.source === 'bin/bun.ts') {
       if (subject.expired_clock) {

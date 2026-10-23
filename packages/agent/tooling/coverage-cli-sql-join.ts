@@ -242,6 +242,39 @@ function checkPreparedContracts(work: RecordValue, preparedInputs: readonly Reco
   }
 }
 
+function checkCurrentIntakeArtifact(
+  work: RecordValue,
+  observedIntake: RecordValue,
+  root: string,
+  workId: string,
+): void {
+  const relativePath = `.agent/work/${workId}/local-session-intake.v1.json`;
+  const canonicalPath = path.join(root, '.agent', 'work', workId, 'local-session-intake.v1.json');
+  assert.equal(observedIntake.role, 'intake');
+  assert.equal(observedIntake.path, canonicalPath, 'Observed issue intake path is not the canonical work artifact.');
+  assert.equal(observedIntake.realpath, canonicalPath);
+  assert(Number.isSafeInteger(observedIntake.bytes) && Number(observedIntake.bytes) > 0);
+  assert(digest(observedIntake.sha256));
+  const identity = jsonRecord(observedIntake.identity, 'Observed issue intake identity');
+  assert(
+    identity.nlink === '1' && identity.size === String(observedIntake.bytes),
+    'Observed issue intake is not the same bounded single-link file.',
+  );
+  assert(Array.isArray(work.artifacts), 'Work artifact list is missing from the observed SQL row.');
+  const intakeArtifacts = work.artifacts.filter(
+    (value: unknown) => record(value) && value.artifact_id === 'local-session-intake',
+  );
+  assert(intakeArtifacts.length === 1, 'Work must contain exactly one current local-session-intake artifact.');
+  const artifact = jsonRecord(intakeArtifacts[0], 'Work local-session-intake artifact');
+  assert(
+    artifact.schema === 'VidaLocalSessionIntake/v1' &&
+      artifact.path === relativePath &&
+      path.resolve(root, String(artifact.path)) === canonicalPath &&
+      artifact.sha256 === observedIntake.sha256,
+    'Work local-session-intake artifact differs from the observed issue input.',
+  );
+}
+
 function checkJournalCas(
   operations: RecordValue[],
   payloads: Map<number, Uint8Array>,
@@ -408,6 +441,7 @@ export function validateIssueSqlConsumption(
     preparedOutput: Record<string, unknown>;
     root: string;
     preparedInputs: readonly Record<string, unknown>[];
+    intakeInput: Record<string, unknown>;
   },
 ): void {
   const raw = jsonRecord(rawValue, 'SQLite capture');
@@ -549,6 +583,7 @@ export function validateIssueSqlConsumption(
     'Work scope binding differs from argv',
   );
   checkPreparedContracts(work, input.preparedInputs);
+  checkCurrentIntakeArtifact(work, input.intakeInput, input.root, workId);
   assert(
     record(work.lease) && text(work.lease.ticket_id) && text(work.lease.thread_id),
     'Work has no current lease binding',

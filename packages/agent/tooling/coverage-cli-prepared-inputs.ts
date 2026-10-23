@@ -18,7 +18,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 export function createPreparedReadCapture(
   rootPath: string,
-  intakePath: string,
+  intakePath: string | undefined,
   seed: readonly Record<string, unknown>[] = [],
   reserve?: (operations: number, bytes: number) => boolean,
   requiredRoles: readonly string[] = [],
@@ -69,8 +69,8 @@ export function createPreparedReadCapture(
   };
   const identity = (fd: number) => identityOf(originalFstat(fd, { bigint: true }));
   const pathIdentity = (file: string) => identityOf(statSync(file, { bigint: true }));
-  if (!path.isAbsolute(rootPath) || !path.isAbsolute(intakePath))
-    throw new Error('Prepared observer requires its validated absolute root and intake.');
+  if (!path.isAbsolute(rootPath) || (intakePath !== undefined && !path.isAbsolute(intakePath)))
+    throw new Error('Prepared observer requires its validated absolute root and any explicit intake.');
   const charge = (value: unknown, operations = 0) => {
     if (reserve && !reserve(operations, Buffer.byteLength(JSON.stringify(value))))
       throw new Error('Shared CLI consumption bound exceeded.');
@@ -91,7 +91,7 @@ export function createPreparedReadCapture(
   };
   add(path.join(rootPath, 'agent-runtime.config.v1.yaml'), 'runtime-config');
   add(path.join(rootPath, '.agent', 'runtime-initialization.v1.json'), 'runtime-initialization');
-  add(intakePath, 'intake');
+  if (intakePath !== undefined) add(intakePath, 'intake');
   for (const target of seed) {
     if (
       typeof target.path !== 'string' ||

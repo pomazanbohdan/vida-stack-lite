@@ -52,7 +52,16 @@ function record(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function seedPreparedFixture(fixtureRoot: string, workId: string): void {
+function seedPreparedFixture(
+  fixtureRoot: string,
+  workId: string,
+): { admittedIntakePath: string; admittedIntakeBytes: string } {
+  const admittedIntakeRelative = '.agent/work/' + workId + '/local-session-intake.v1.json';
+  const admittedIntakeBytes = JSON.stringify({
+    scope_path: 'scope.json',
+    acceptance_path: 'acceptance.json',
+    runtime_code_paths: ['src/host-state.ts'],
+  });
   const fixtureInputs = new Map([
     ['agent-runtime.config.v1.yaml', 'inert protocol config'],
     ['.agent/runtime-initialization.v1.json', '{}'],
@@ -69,6 +78,7 @@ function seedPreparedFixture(fixtureRoot: string, workId: string): void {
     mkdirSync(path.dirname(file), { recursive: true });
     writeFileSync(file, bytes);
   }
+  return { admittedIntakePath: admittedIntakeRelative, admittedIntakeBytes };
 }
 
 test('prepared input capture binds complete readFileSync bytes and rejects unsupported encodings', () => {
@@ -770,6 +780,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             next_actions: [{ request }],
             issued_actions: [],
           };
+          const admittedIntake = seedPreparedFixture(fixtureRoot, workId);
           prepared.output = preparedOutput;
           issue.output = {
             schema: 'VidaAgentRunResult/v1',
@@ -787,6 +798,9 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             issueId,
             scopePath,
             acceptancePath,
+            admittedIntakePath: admittedIntake.admittedIntakePath,
+            admittedIntakeBytes: admittedIntake.admittedIntakeBytes,
+            admittedIntakeSha256: sha256(Buffer.from(admittedIntake.admittedIntakeBytes)),
             scopeBytes,
             acceptanceBytes,
             request,
@@ -835,7 +849,6 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             '--issue-wave',
             'true',
           ];
-          seedPreparedFixture(fixtureRoot, workId);
         }
         const snapshotRelative = `coverage/bun-unified/runs/${runId}/snapshot`;
         const snapshot = path.join(root, snapshotRelative);
@@ -884,7 +897,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
               : variant === 'run'
                 ? [
                     'import { help } from "./cli-metadata.ts";',
-                    'import { openSync, readSync, closeSync, readFileSync } from "node:fs";',
+                    'import { openSync, readSync, closeSync, readFileSync, writeFileSync } from "node:fs";',
                     'import { Database } from "bun:sqlite";',
                     'import { createHash } from "node:crypto";',
                     'import path from "node:path";',
@@ -893,12 +906,13 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                     'function read(file) { if(file.endsWith("selected.txt")) { const fd=openSync(file,"r"); const chunks=[]; const buffer=Buffer.alloc(65536); try { while(true) { const n=readSync(fd,buffer,0,buffer.length,null); if(!n)break; chunks.push(Buffer.from(buffer.subarray(0,n))); } return Buffer.concat(chunks); } finally { closeSync(fd); } } return readFileSync(file); }',
                     'function digest(value) { return createHash("sha256").update(value).digest("hex"); }',
                     'function seedDatabase(root) {',
+                    '  writeFileSync(path.join(root,fixture.admittedIntakePath),fixture.admittedIntakeBytes);',
                     '  const db=new Database(path.join(root,".agent/host-state.sqlite"));',
                     '  db.exec("CREATE TABLE agent_host_state (workspace_id TEXT, kind TEXT, id TEXT, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
                     '  db.exec("CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
                     '  const putState=db.prepare("INSERT INTO agent_host_state VALUES (?,?,?,?,?,?,?)");',
                     '  const putJournal=db.prepare("INSERT INTO agent_host_mastra_session_ledger VALUES (?,?,?,?,?,?,?)");',
-                    '  const work={schema:"WorkState/v1",workspace_id:fixture.workspaceId,revision:1,binding:{lifecycle_work_id:fixture.initialJournal.work_id,scope_contract_digest:"a".repeat(64)},contracts:{scope:{path:fixture.scopePath,sha256:fixture.scopeSha256},acceptance:{path:fixture.acceptancePath,sha256:fixture.acceptanceSha256}},lease:{ticket_id:"ticket-"+fixture.actionId,thread_id:"thread-"+fixture.actionId,generation:1},execution:{run_id:fixture.initialJournal.run_id}};',
+                    '  const work={schema:"WorkState/v1",workspace_id:fixture.workspaceId,revision:1,binding:{lifecycle_work_id:fixture.initialJournal.work_id,scope_contract_digest:"a".repeat(64)},contracts:{scope:{path:fixture.scopePath,sha256:fixture.scopeSha256},acceptance:{path:fixture.acceptancePath,sha256:fixture.acceptanceSha256}},lease:{ticket_id:"ticket-"+fixture.actionId,thread_id:"thread-"+fixture.actionId,generation:1},execution:{run_id:fixture.initialJournal.run_id},artifacts:[{artifact_id:"local-session-intake",schema:"VidaLocalSessionIntake/v1",path:fixture.admittedIntakePath,sha256:fixture.admittedIntakeSha256}]};',
                     '  const claimId="claim-"+fixture.actionId; const secondClaimId="claim-secondary-"+fixture.actionId;',
                     '  const ledger={schema:"CoordinationLedger/v1",workspace_id:fixture.workspaceId,revision:1,tickets:[{ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active",claim_ids:[claimId,secondClaimId]}],claims:[{claim_id:claimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"},{claim_id:secondClaimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"}]};',
                     '  for (const [kind,id,value] of [["work",fixture.initialJournal.work_id,work],["ledger","shared",ledger]]) { const payload=JSON.stringify(value); putState.run(fixture.workspaceId,kind,id,1,payload,digest(payload),Buffer.from(payload)); }',
@@ -920,7 +934,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                     '    await import("./workspace-database-cli.ts"); await import("../src/orchestration/local-work-admission.ts");',
                     '    const root=process.argv[process.argv.indexOf("--project-root")+1]; const workId=process.argv[process.argv.indexOf("--work-id")+1];',
                     '    read(path.join(root,"agent-runtime.config.v1.yaml")); read(path.join(root,".agent/runtime-initialization.v1.json"));',
-                    '    const intake=JSON.parse(read(path.join(root,".agent/work",workId,"intake.json")).toString()); read(path.join(root,"selected.txt"));',
+                    '    const intake=JSON.parse(read(path.join(root,".agent/work",workId,"local-session-intake.v1.json")).toString()); read(path.join(root,"selected.txt"));',
                     '    const state=await hostRead(root,workId); if(state.changed.changes!==1) throw new Error("Synthetic journal compare-and-swap failed");',
                     '    console.log(JSON.stringify(fixture.issuedOutput));',
                     '  } else if (!process.argv.includes("--intake")) console.log(JSON.stringify(help()));',
@@ -1269,6 +1283,59 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           writeFileSync(file, bytes);
           ref.sha256 = sha256(bytes);
         };
+        const rewriteWorkArtifact = (
+          ctx: CliCoverageContext,
+          row: Record<string, unknown>,
+          change: (artifact: Record<string, unknown>) => void,
+        ) =>
+          rewrite(ctx, row, 'receipt', (proof) => {
+            const sql = record(proof.consumed_sql);
+            const operations = sql.operations as Record<string, unknown>[];
+            const workRead = operations.find((operation) => {
+              const bindings = operation.arguments;
+              return (
+                operation.method === 'Statement.get' &&
+                Array.isArray(bindings) &&
+                bindings[1] === 'work' &&
+                bindings[2] === workId &&
+                /\bfrom agent_host_state\b/iu.test(String(operation.sql))
+              );
+            });
+            assert.ok(workRead);
+            const workRow = record(workRead.result);
+            const rawBytes = record(workRow.raw_payload_bytes);
+            const payloadId = Number(rawBytes.ref);
+            const oldPayload = String(workRow.payload);
+            const decoded = record(JSON.parse(oldPayload));
+            const artifacts = decoded.artifacts as Record<string, unknown>[];
+            const intakeArtifact = artifacts.find((artifact) => artifact.artifact_id === 'local-session-intake');
+            assert.ok(intakeArtifact);
+            change(intakeArtifact);
+            const bytes = Buffer.from(JSON.stringify(decoded));
+            const payload = (sql.payloads as Record<string, unknown>[]).find(
+              (candidate) => candidate.payload_id === payloadId,
+            );
+            assert.ok(payload);
+            payload.byte_length = bytes.length;
+            payload.base64 = bytes.toString('base64');
+            for (const operation of operations) {
+              const results = Array.isArray(operation.result)
+                ? operation.result
+                : operation.result === null || operation.result === undefined
+                  ? []
+                  : [operation.result];
+              for (const value of results) {
+                if (typeof value !== 'object' || value === null || Array.isArray(value)) continue;
+                const resultRow = record(value);
+                if (!Object.hasOwn(resultRow, 'raw_payload_bytes')) continue;
+                const resultBytes = record(resultRow.raw_payload_bytes);
+                if (resultBytes.ref !== payloadId || resultRow.payload !== oldPayload) continue;
+                resultRow.payload = bytes.toString('utf8');
+                resultRow.digest = sha256(bytes);
+                resultBytes.byte_length = bytes.length;
+              }
+            }
+          });
         if (variant === 'run') {
           const preparedChild = children.find((row) => row.subject_role === 'run-admission-prepared');
           const issueChildIndex = children.findIndex((row) => row.subject_role === 'run-issue-wave');
@@ -1277,6 +1344,33 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           const preparedReceipt = record(
             JSON.parse(readFileSync(path.join(directory, String(record(preparedChild.receipt).path)), 'utf8')),
           );
+          const issueChild = children[issueChildIndex]!;
+          const issueReceipt = record(
+            JSON.parse(readFileSync(path.join(directory, String(record(issueChild.receipt).path)), 'utf8')),
+          );
+          const issueInputs = record(issueReceipt.consumed_inputs);
+          const issueIntakeStream = (issueInputs.streams as Record<string, unknown>[]).find(
+            (stream) => stream.role === 'intake',
+          );
+          assert.ok(issueIntakeStream);
+          expect(issueIntakeStream.path).toBe(path.join(fixtureRoot, String(runFixture!.admittedIntakePath)));
+          expect(issueIntakeStream.sha256).toBe(runFixture!.admittedIntakeSha256);
+          const issueLaunch = record(
+            JSON.parse(readFileSync(path.join(directory, String(record(issueChild.launch).path)), 'utf8')),
+          );
+          const preparedBinding = record(issueLaunch.prepared);
+          const issueTargets = preparedBinding.issue_targets as Record<string, unknown>[];
+          const issueIntakeTarget = issueTargets.find((target) => target.role === 'intake');
+          assert.ok(issueIntakeTarget);
+          expect(issueIntakeTarget.path).toBe(issueIntakeStream.path);
+          const origin = record(issueIntakeTarget.origin);
+          const preparedIntakeStream = (
+            record(preparedReceipt.consumed_inputs).streams as Record<string, unknown>[]
+          ).find((stream) => stream.role === 'intake');
+          assert.ok(preparedIntakeStream);
+          expect(origin.path).toBe(preparedIntakeStream.path);
+          expect(origin.sha256).toBe(preparedIntakeStream.sha256);
+          expect(issueIntakeStream.sha256).not.toBe(preparedIntakeStream.sha256);
           const evidence = record(preparedReceipt.consumed_inputs);
           const streams = evidence.streams as Record<string, unknown>[];
           const operations = evidence.operations as Record<string, unknown>[];
@@ -1323,6 +1417,42 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           const unreadIds = new Set(unread.map((row) => row.id));
           expect(operations.some((row) => unreadIds.has(row.stream_id))).toBe(false);
 
+          negative(
+            'issue-target-cannot-fall-back-to-original-intake',
+            (ctx, row) =>
+              rewrite(ctx, row, 'launch', (proof) => {
+                const prepared = record(proof.prepared);
+                const targets = prepared.issue_targets as Record<string, unknown>[];
+                const intake = targets.find((target) => target.role === 'intake');
+                assert.ok(intake);
+                const preparedArgv = prepared.argv as string[];
+                const intakeIndex = preparedArgv.indexOf('--intake');
+                intake.path = preparedArgv[intakeIndex + 1];
+              }),
+            false,
+            issueChildIndex,
+            'Prepared issue targets differ from the checked work binding.',
+          );
+          negative(
+            'issue-work-artifact-path-must-match-consumed-canonical-intake',
+            (ctx, row) =>
+              rewriteWorkArtifact(ctx, row, (artifact) => {
+                artifact.path = '.agent/work/' + workId + '/intake.json';
+              }),
+            false,
+            issueChildIndex,
+            'Work local-session-intake artifact differs from the observed issue input.',
+          );
+          negative(
+            'issue-work-artifact-digest-must-match-consumed-canonical-intake',
+            (ctx, row) =>
+              rewriteWorkArtifact(ctx, row, (artifact) => {
+                artifact.sha256 = 'f'.repeat(64);
+              }),
+            false,
+            issueChildIndex,
+            'Work local-session-intake artifact differs from the observed issue input.',
+          );
           negative(
             'issue-delete-returning-is-not-a-work-read',
             (ctx, row) =>

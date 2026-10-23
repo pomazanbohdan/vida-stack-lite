@@ -308,8 +308,8 @@ const runArgument = (name: string, argv = process.argv) => {
 const preparedReadCapture = runOperation
   ? createPreparedReadCapture(
       runArgument('--project-root')!,
-      runArgument('--intake', issueOperation ? cliLaunch!.prepared!.argv : process.argv)!,
-      issueOperation ? cliLaunch!.prepared!.inputs : [],
+      issueOperation ? undefined : runArgument('--intake')!,
+      issueOperation ? cliLaunch!.prepared!.issue_targets! : [],
       issueOperation ? reserveConsumption : undefined,
       issueOperation ? issueCliInputRoles : preparedCliInputRoles,
       preparedCliInputRoles,
