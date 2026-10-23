@@ -304,10 +304,13 @@ mocked-child namespaces; it does not qualify real process interruption or CLI
 coverage. Keep the existing child and case bounds.
 
 The run-entrypoint shared-root control uses a real inert timer-only Bun child
-and the same close owner as afterAll. Confirm its startup marker, UNKNOWN
-classification, root retention and unchanged config bytes. Keep the selected
-root latch after the passing negative assertion, preserve caller notices and
-do not interpret direct termination as product or descendant quiescence.
+and the same close owner as afterAll. Preserve its exclusive launch, full received
+UTF8 stdout/stderr and original terminal, timeout and cleanup fields before
+reducing an UNKNOWN result to diagnostic tails. Emit more than the tail limit
+in both streams and compare the retained full text. Keep capture_complete false
+for timeout, preserve the root and unchanged config, and retain the UNKNOWN latch
+after the passing negative assertion. A sent signal or cleanup attempt does not
+prove descendant quiescence. This control does not qualify child counter custody.
 
 The same private public-CLI timing owner also records parent phase starts for
 the corrective fixtures, including setup and in-process runs, to attribute the

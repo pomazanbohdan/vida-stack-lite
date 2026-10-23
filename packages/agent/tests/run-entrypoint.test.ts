@@ -648,7 +648,7 @@ function requireFixtureWorkState(store: HostStateStore, identity: WorkIdentity):
 type PublicRunChildOptions = {
   readonly budget?: ReturnType<typeof executionBudget>;
   readonly childTimeout?: number;
-  readonly onUnknown?: () => void;
+  readonly onUnknown?: (result: ReturnType<typeof boundedSpawnSync>) => void;
 };
 
 interface QuerySpyHandle {
@@ -2099,7 +2099,7 @@ function invoke(
   if (commandOutcomeUnknown(result) || !isTerminalUtf8SpawnResult(result)) {
     if (args.some((argument, index) => argument === '--project-root' && args[index + 1] === repositoryRoot))
       sharedRunOutcomeUnknown = true;
-    options.onUnknown?.();
+    options.onUnknown?.(result);
     const tail = (value: unknown): string => {
       if (typeof value === 'string') return value.slice(-2048);
       if (value instanceof Uint8Array)
@@ -2119,12 +2119,56 @@ describe('vida-agent run entrypoint fast checks', () => {
     const program = path.join(repositoryRoot, 'inert-timeout-fixture.ts');
     const configFile = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
     const before = readFileSync(configFile);
-    writeFileSync(program, "console.log('inert-child-started'); setInterval(() => {}, 1000);\n");
+    const stdout = 'full-stdout-before-tail\n' + 'x'.repeat(8192) + '\ninert-child-started\n';
+    const stderr = 'full-stderr-before-tail\n' + 'y'.repeat(8192) + '\n';
+    writeFileSync(
+      program,
+      `process.stdout.write(${JSON.stringify(stdout)}); process.stderr.write(${JSON.stringify(stderr)}); setInterval(() => {}, 1000);\n`,
+    );
+    const evidence = path.join(repositoryRoot, 'timeout-child-evidence');
+    mkdirSync(evidence);
+    writeFileSync(
+      path.join(evidence, 'launch.json'),
+      JSON.stringify({
+        executable: process.execPath,
+        args: [program, '--project-root', repositoryRoot],
+        cwd: packageRoot,
+        requested_timeout_ms: 1000,
+        encoding: 'utf8',
+      }),
+      { flag: 'wx' },
+    );
+    let observed: ReturnType<typeof boundedSpawnSync> | undefined;
     let failure: unknown;
     try {
       invoke(['--project-root', repositoryRoot], {}, program, {
         budget: executionBudget(1_000, 250),
         childTimeout: 1_000,
+        onUnknown(result) {
+          observed = result;
+          writeFileSync(path.join(evidence, 'stdout.log'), result.stdout ?? '', { flag: 'wx' });
+          writeFileSync(path.join(evidence, 'stderr.log'), result.stderr ?? '', { flag: 'wx' });
+          writeFileSync(
+            path.join(evidence, 'terminal.json'),
+            JSON.stringify({
+              pid: result.pid ?? null,
+              status: result.status,
+              signal: result.signal ?? null,
+              error: result.error
+                ? { name: result.error.name, message: result.error.message, code: result.error.code ?? null }
+                : null,
+              timeout_ms: result.timeoutMs ?? null,
+              timed_out: result.timedOut ?? false,
+              cleanup_attempted: result.cleanupAttempted ?? false,
+              cleanup_outcome: result.cleanupOutcome ?? null,
+              cleanup_status: result.cleanupStatus ?? null,
+              unknown: commandOutcomeUnknown(result),
+              capture_encoding: 'utf8',
+              capture_complete: false,
+            }),
+            { flag: 'wx' },
+          );
+        },
       });
     } catch (error) {
       failure = error;
@@ -2133,6 +2177,30 @@ describe('vida-agent run entrypoint fast checks', () => {
     if (!(failure instanceof Error)) throw Error('inert child did not produce an UNKNOWN error');
     expect(failure.message).toContain('Public run child outcome is unknown');
     expect(failure.message).toContain('inert-child-started');
+    expect(failure.message).not.toContain('full-stdout-before-tail');
+    expect(failure.message).not.toContain('full-stderr-before-tail');
+    expect(readFileSync(path.join(evidence, 'stdout.log'), 'utf8')).toBe(stdout);
+    expect(readFileSync(path.join(evidence, 'stderr.log'), 'utf8')).toBe(stderr);
+    const terminal = requireRecord(
+      parseJsonUnknown(readFileSync(path.join(evidence, 'terminal.json'), 'utf8')),
+      'timeout terminal',
+    );
+    expect(observed).toBeDefined();
+    if (observed === undefined) throw Error('native timeout observation was not retained');
+    expect(terminal).toMatchObject({
+      pid: observed.pid ?? null,
+      status: observed.status,
+      signal: observed.signal ?? null,
+      timeout_ms: observed.timeoutMs ?? null,
+      cleanup_attempted: observed.cleanupAttempted ?? false,
+      cleanup_outcome: observed.cleanupOutcome ?? null,
+      cleanup_status: observed.cleanupStatus ?? null,
+      unknown: true,
+      capture_complete: false,
+      capture_encoding: 'utf8',
+      timed_out: true,
+    });
+    expect(requireRecord(terminal.error, 'timeout spawn error').code).toBe('ETIMEDOUT');
     closeUninitializedRunFixture();
     expect(existsSync(repositoryRoot)).toBe(true);
     expect(readFileSync(configFile)).toEqual(before);

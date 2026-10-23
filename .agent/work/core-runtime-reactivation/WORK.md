@@ -23,6 +23,46 @@ Toolchain completes all testable paths in2561. Its remaining9branch arms and
 2statements have independent dispositions, including an OPEN native Windows
 prerequisite. This permits queue progression, not numeric exact100.
 
+### Run contour repair and measurement plan
+
+Current scope is bin/run.ts with tests/run-entrypoint.test.ts and
+tests/bun-cache-routing.test.ts. The sole projection's last report fa7e5fe9 on
+Oct19 is navigation only; its exact retired ee624b35 locator is absent. No old
+UNKNOWN is replayed or counts promoted.2593/2594 fresh native contracts split
+fixture/capture costs from entry/counter planning. Native readers own no writes,
+Git, compiler, tests or second producer. Their bounded Source reviews find no
+additional justified copy/build/cache optimization or measured speedup.
+
+2593 confirms that invoke reduces an UNKNOWN child to2KiB stream tails before
+throwing, while the passing timeout control retains only its root.2595 adds the
+missing evidence oracle and reproduces ENOENT for stdout.log. Original failure
+log and root `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-uninitialized-kbdLjA`
+remain retained. Root extends the existing onUnknown callback with its actual
+tracked result. Only that timeout fixture persists exclusive launch, full
+received UTF8 stdout/stderr and terminal/timeout/cleanup fields before the tail
+exception. UNKNOWN stays retained and capture_complete remains false; a cleanup
+attempt is not descendant closure. This preserves decoded diagnostics, not a
+new byte-exact child counter protocol or complete-output qualification.
+
+2596 passes scoped strict139, zero-warning lint and the repaired control.2598
+strengthens it with over8KiB in each stream and exact saved-text assertions;
+the original prefix markers are absent from the exception tails but present in
+retained full texts. Strict139/lint and1case/12expects pass in1.94s.2597 fresh
+independent review finds no blocker and requests native terminal-field assertions.
+2600 binds saved PID/status/signal/timeout/cleanup values to the actual observer
+result; scoped strict139/lint and1case/13expects pass in2.19s. No added comment or
+suppression is found. The named nested no-comments role is not launched under
+the read-only brief; the native independent review is the actual evidence.
+Root publishes this coherent packet before one complete changed-input stage. Ordinary invoke launch/encoding/budget stays unchanged.
+
+2594 finds maintained run-cli-main assertions in routing-contracts. Defer adding
+that whole file until the fresh map establishes actual missing paths, because
+some integer/JSON routing is already covered. A missing child-attribution route
+is an engineering GAP, not objective untestability. The first current stage is
+needed after the retired report; it is not a duplicate unchanged baseline.
+Use the existing readiness/capture/publication owners and serial resources.
+No per-test build, new collector, AST inventory or hash sweep is added.
+
 ### Latest completed init measurement
 
 2589 completes the exact two-file contour on
