@@ -12,8 +12,21 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The active contour is **bun-cli-public-entrypoints**, the next partition in
-packages/agent/tooling/mutation-partitions.ts. The owner's2026-10-23 instruction
+The active contour is **bun-cli-toolchain**, the next partition in
+packages/agent/tooling/mutation-partitions.ts. Public entrypoints'2526 stage passes
+all124tests; independent blind2529 dispositions all six remaining branch arms and
+six statements. Five rows are contract invariants; Windows folding remains an
+explicit native-target GAP. [WORK](WORK.md#public-entrypoint-remaining-counter-dispositions)
+owns exact counters, proof and reopen conditions. This permits queue advancement,
+not exact100, numeric PASS or changed denominators. Frozen/mutation stay deferred.
+
+Reconcile current toolchain Source/test/runtime bindings and retained receipts
+before choosing checks or a fresh stage. Its declared scope is bin/bun.ts with
+tests/bun-toolchain.test.ts and tests/bun-cache-routing.test.ts. Keep one writer,
+one numeric producer and all existing budgets. Batch all known repairs before
+the complete selected stage; old UNKNOWN is not replayed.
+
+The owner's2026-10-23 instruction
 explicitly skips bun-development-controller with a recorded GAP. This named
 exception allows queue advancement while its two native Windows engine-name
 branches remain OPEN. [WORK](WORK.md#owner-authorized-controller-deferral) owns
@@ -21,17 +34,10 @@ the exact counters, independent review, complete report binding and reopen
 condition. Its raw numeric outcome remains BLOCKED/nonexact; no denominator,
 frozen/CRAP requirement or mutation rule changes.
 
-Retained receipts, Source/test selection and inventory have been reconciled.
-An old UNKNOWN is not a baseline to replay. Preserve its native terminal/effect
-fences. Complete the checked public CLI/fixture correction packet in
-[WORK](WORK.md#public-entrypoint-correction-packet), publish through ordinary
-hooks, then run one complete selected coverage stage on the new inputs. The first
-public stage is complete; WORK's remaining-path packet batches its actual gaps
-before the next full stage, with the same single producer and unchanged budgets.
-The declared scope contains bin/repair-work-state.ts, bin/scope.ts and
-bin/vida-agent.ts with the partition's five complete test files. Keep exactly
-one writer/integrator and one final numeric producer. No run is implied by
-selecting the partition.
+Public CLI and fixture corrections are published aseb2a3b1 and measured once as
+one complete packet. [WORK](WORK.md#latest-completed-public-entrypoint-measurement)
+owns current custody and results. Preserve old UNKNOWN fences; missing historical
+locators do not authorize replay. No new run is implied by selecting toolchain.
 
 The [publishedcabf547 strategy](https://github.com/pomazanbohdan/vida-stack-lite/blob/cabf5479ce7a062bceeb7f0cab4fc37c4b94b12d/.agent/work/core-runtime-reactivation/CLEAN-START-STRATEGY-20261009.md#current-state)
 preserves the preceding controller/toolchain repair sequence. Stage2490

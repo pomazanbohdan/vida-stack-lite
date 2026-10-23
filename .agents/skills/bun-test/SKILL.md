@@ -1113,6 +1113,12 @@ reexecution. This preparation changes no authority or UNKNOWN predicate.
 For callable CLI main tests, use its injected local exit recipient. Preserve
 the exit-code assertion without mutating the Bun test process. Check native
 command exit independently from the printed case counters.
+Captured query-path admission proves which bytes load, not whether Bun creates a
+fresh module instance. A query on an already imported module can reuse its cached
+state. For a CLI invocation context, resolve it through the production validators
+once per main call instead of relying on query imports or cache mutation. Private
+package-data fixtures keep scoped environment restoration, local exit recipients
+and the original initialization-error boundary; they are not native artifact proof.
 
 An expected-UNKNOWN child control keeps its fixture retained after assertions
 pass. Use the same cleanup owner as the real caller, with retention scoped to

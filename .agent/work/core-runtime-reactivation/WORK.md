@@ -6,13 +6,13 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-cli-public-entrypoints only**, the next declared
-partition after the owner's explicit controller deferral below. Reuse its
+The active contour is **bun-cli-toolchain only**, the next declared partition
+after public entrypoints' reviewed dispositions below. Reuse its
 retained receipts and inventory before deciding on affected checks or a new
 coverage stage. Historical UNKNOWN operations remain fenced and are not replayed.
-The correction packet below is published as8d01ddc. Its complete2515 stage
-passes all119tests, with remaining statement/branch gaps below. Continue this
-same contour; a test PASS does not establish exact coverage.
+The latest public correction packet is published aseb2a3b1. Its complete2526 stage
+passes all124tests; blind2529 dispositions every remaining counter below. This
+permits queue progress with an open native Windows GAP; test PASS is not exact coverage.
 Historical geometry is navigation rather than a new coverage claim.
 Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
@@ -77,35 +77,65 @@ The documentation owner passes4changed documents/57local links and headings.
 
 ### Latest completed public-entrypoint measurement
 
-2515 is the single complete selected stage on Source8d01ddce4b563941c5a354146295762b9c7fb179:
-`/workspace/contour-stage-VYnzPC`, runbaffc3bb-84ab-412d-a722-97acc7dc2a0d.
-All119tests pass with0failures/2958expect calls in146.25s; outer elapsed is
-150419.44429ms. Raw **F29/29 L137/153 S159/181 B126/148**, BLOCKED/nonexact.
+2526 is the single complete stage after the second coherent correction packet,
+on Sourceeb2a3b13d4630cdc3895f0a16103bb975b77b4ac:
+`/workspace/contour-stage-v0yU54`, runb476f6b9-e231-4c29-bd83-f3b1a6f0a94f.
+All124tests pass with0failures/2998expect calls in144s; outer elapsed is
+147746.909529ms. Raw **F32/32 L152/155 S179/185 B148/154**, BLOCKED/nonexact.
 The process exits0 with null signal, no timeout/spawn error and complete capture,
 observed process/group termination, unchanged boot and execution-image inputs.
-The stage's existing paired projection import completes once (1292attempts).
+The stage's existing paired projection import completes once (1294attempts).
 Its historical global exact count stays17/46; this observation is not closure.
 
 Execution image is
-`/workspace/.vida-quality-inputs/a93fd2c4c1152b857bab06ab1c6b72c78dd39b7e/repository`;
-image manifest SHA256d8e0b9e403bcac43884946583c0527462bfd3dd84492cbdeda08ebde658fde8a.
+`/workspace/.vida-quality-inputs/5126c66bc07b90fceca1bc6f7a257235e3d66a02/repository`;
+image manifest SHA2568c83cb039623961a2aea25a7ddfc7ea3cb380c9d4bdb1c0371b2436c48e7297b.
 Its package report is
-`coverage/bun-unified/diagnostics/baffc3bb-84ab-412d-a722-97acc7dc2a0d.focused-coverage.json`;
-run-manifest SHA256fe71e567b5224b284f8152bd4df095b0cc3713184051ed3b7ad383faae1ff447.
-Source fingerprint93a2a1c976156a0e5d7a472f7b7ee854af1ac1ae62abdc892057297e8cd822b0,
-test2e20d9feb37739b8dcf2532c16cd4e9ecfca8266ef7196bbb1b114df6efb6275,
-tool80be6b2a5e1fe4028971bfb8891ba57de8c6f9fe8ec8270a2dfe4fe08feff7be.
+`coverage/bun-unified/diagnostics/b476f6b9-e231-4c29-bd83-f3b1a6f0a94f.focused-coverage.json`;
+run-manifest SHA2563b2e9dd0d50e67492639d6136eb0004c880bd8cd60446bdad869e26fb605ecb1.
+Source fingerprint8d36a83ef41b538ab22f6cb67396acb4b0383b91f5787ac8c9633e59d18cf8de,
+test7e8c665f02afed5c0dcdba802ed360b2ca9744c0d37a0050bbbbfd0d3917f4a0,
+tool263bcd6275981d1354eaf6d49e76d27a6f866e32ece6ac052e5eb98fc57ebaff.
 Original stage stdout/stderr, execution/publication/launch receipts and report
-remain in place.2516 verifies and fsyncs the1812480-byte non-cache scratch archive
-at `/workspace/vida-functional-retention-VYnzPC-QStVfb/archive.json`; originals
+remain in place.2528 verifies and fsyncs the1812480-byte non-cache scratch archive
+at `/workspace/vida-functional-retention-v0yU54-ypisBZ/archive.json`; originals
 remain unchanged. This retention is not numeric requalification.
 
-DIAG/public-cli-gap-map-v2517.json binds all22zero statements/22branch arms to
-the retained canonical maps, counters and exact Source expressions without another
-AST/scan/hash pass. Its first diagnostic rejects an unlabeled implicit-if location;
-2518 preserves that original failure and records the empty-range arm explicitly.
-No function gaps remain. Bounded blind reviews2519/2520 classify the remaining
-scope/repair and public-dispatch paths before the next coherent repair packet.
+DIAG/public-cli-gap-map-v2527.json binds all6zero statements/6branch arms to the
+retained canonical maps, counters and exact Source expressions without another
+AST/scan/hash pass. No function gaps remain; repair-work-state has no counter gap.
+Blind2529 confirms every remaining disposition before queue advancement.
+The [preceding2515 report binding](https://github.com/pomazanbohdan/vida-stack-lite/blob/eb2a3b13d4630cdc3895f0a16103bb975b77b4ac/.agent/work/core-runtime-reactivation/WORK.md#latest-completed-public-entrypoint-measurement)
+retains its Source8d01ddc custody, raw F29/29 L137/153 S159/181 B126/148 and original
+artifacts. The repair removes sixteen zero statements and sixteen zero arms while
+adding three callables and preserving the complete current denominator. This is
+an input-changing correction, not a same-input benchmark or numeric PASS.
+
+### Public entrypoint remaining-counter dispositions
+
+All rows bind to2526's Source/test/tool/run-manifest/image identities immediately
+above and DIAG/public-cli-gap-map-v2527.json. Independent blind Luna2529 traces the
+actual producers, preceding guards, frozen declarations and public runtime policy;
+Root accepts these dispositions under TESTING's objective-skip rule. Counts and
+generated BLOCKED/nonexact outcome stay unchanged. No testable path remains in
+this bound contour; native Windows qualification is still OPEN.
+
+| Source and exact counters | Mapped expression/location | Causal prerequisite and disposition |
+| --- | --- | --- |
+| bin/scope.ts b1/1, s10 | `else throw new Error(scopeUsage)` at24 | Only declared nonrepeatable `--project-root`/`--repository` reach recordScopeOption; unknown/invalid-arity options fail at51 and repeatables route elsewhere. Reaching this arm requires a changed declaration/caller. Objective contract skip. |
+| bin/scope.ts b3/0, s13 | `if (!repeated)` at29 | Caller first checks the same declared repeatable set; private map has all three declared keys. Reaching absence requires a declaration/map invariant change. Objective contract skip. |
+| bin/scope.ts b18/0, s60 | `if (!repository)` at117 | Required/nonempty repository validation completes at33–36 before this read. Arguments cannot bypass it. Objective contract skip. |
+| bin/scope.ts b22/0, s67/68 | `typeof Bun === 'undefined'`, import/call at132–137 | Public native delivery embeds selected Bun; Source commands use the pin. Package SDK exports do not export this CLI. This branch requires an unsupported Node-owned scope invocation, not a supported public producer. Objective runtime-contract skip; reopen if that caller becomes supported. |
+| bin/vida-agent.ts b5/0, s15 | `if (!option)` at41 | The shipped recursively frozen instructions declaration contains required `--path` at index0. Arguments cannot remove it. Reopen on a changed declaration. Objective contract skip. |
+| bin/scope.ts b16/0 | `process.platform === 'win32' ? value.toLowerCase() : value` at105 | OPEN native-target GAP: Windows case folding needs a native Windows runner with attributable counter/capture/terminal custody. Linux and platform simulation do not qualify it. |
+
+There are exactly6zero statements and6zero arms, all listed. The Windows row
+permits queue advancement with that qualification GAP under the owner's existing
+objective-skip amendment; it is not declared unreachable or a platform waiver.
+No denominator removal, exact100, frozen/CRAP waiver, mutation kill or Runtime
+acceptance follows. Historical exact count stays17/46. Reopen affected rows on
+Source/declaration/runtime-contract drift or when native Windows evidence exists.
+The next active partition is bun-cli-toolchain, one contour and one producer only.
 
 ### Public wrapper and remaining-path repair packet
 
