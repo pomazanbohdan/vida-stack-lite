@@ -7,7 +7,7 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 ## Current sequential F/L/S/B cycle
 
 The active contour is **bun-development-controller only**; no new producer has
-started after completed2371. Session-handoff-v2 and final-assurance have completed all testable paths
+started after completed2377. Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
 waiver or mutation acceptance. Historical exact F/L/S/B remains17/46.
@@ -15,99 +15,46 @@ Root owns canonical edits, final checks, Git and the sole numeric producer.
 
 ### Current controller repair packet
 
-The active packet rejects persisted ready metadata without a passing
-qualification for its exact current package binding. Independent2342 found the
-missing consistency guard.2346 reproduces the missing inspection rejection on
-an actual prepared and verified controller; the original failed root/log stays
-retained. This is a confirmed product inspection/readiness defect, not an
-authorization, consumer-effect or Runtime acceptance finding. The inspector
-now reuses requireMatchingQualification before any child can be issued.
+The product inspector now rejects persisted ready metadata with missing,
+non-passing or foreign-bound qualification before a child can run.2346 reproduces
+the missing rejection on a real prepared/verified controller.2350 passes its
+regression and2349 independently reviews the fix. This establishes a component
+readiness defect, not human authorization, consumer effects or Runtime acceptance.
 
-The same single real CLI construction/qualification covers malformed metadata,
-missing/failed/foreign-bound ready qualifications, stored identity mismatch,
-unsupported commands and malformed target argv. It checks no new observation
-on refusal, exact metadata restoration, removed qualification scratch and
-complete parent/three nested child receipts. The stored identity fault is not
-a changed live target configuration. The public scope result names the actual
-selected Source path. Wrong-pin refusal now has a specific oracle.
-Pure parser/diagnostic/absent-root controls need no install. Metadata restoration
-uses completeOwnedCleanup to preserve primary and restoration errors together;
-failed negative fixtures are retained. One duplicate warm-inspect is removed.
-All fresh public inspect/binding/execution checks keep their integrity reads.
+One real CLI prepare/verify supports malformed metadata, ready consistency,
+stored identity, command/argv refusal and exact restoration controls. Complete
+parent/three nested child observations survive qualification-fixture removal.
+Primary and restoration errors use completeOwnedCleanup. Pure parser,
+diagnostic and absent-root controls need no install. The stored identity fault
+is not actual target-config drift; scope existence observes the selected target.
+The native child and parent main/exec check distinct execution locations while
+sharing the same construction.2373 strict100/lint and8cases/92expect calls pass;
+2374 independently finds no guard-order, custody or error-semantics regression.
 
-2350 scoped strict99 and configured zero-warning lint pass. The full affected
-test file passes8cases/91expect calls in28.30s after the fix.2344's earlier
-8case/86expect pass did not contain the readiness regression.2346's red failure
-is preserved, never counted as a kill or objective skip. These changed inputs
-do not establish a measured speedup. Complete selected-contour numeric evidence
-is still pending; no prior counter is promoted.
-Independent2349 finds no blocking defect in the fix, exact restoration or
-no-new-observation oracles.2351 documentation links/headings and diff checks pass.
+Two execution-image input defects are fixed. The default target now uses
+configuredTestRepositoryRoot and its existing captured caller owner. The existing
+filesystem-guide capture owner binds TESTING.md for this reader closure and
+omits it for unrelated readers.2358 tests a fresh four-file context;2359 reviews
+that fix.2365 reproduces missing guide capture,2366 passes23capture cases/
+39expect calls, strict20/lint;2368 reviews the guide-input correction. The premise
+check2364 reuses the retained image/SDK inventory, with no new AST/Source/hash pass.
 
-Packetb9fcd7706fcc3a43a65e890d7a827ce5d59b2d9d is committed with ordinary hooks
-(format529/strict536) and pushed normally in2353. The first complete stage2354
-at /workspace/contour-stage-tCOJJQ closes in4188.467742ms, native exit1,
-no signal/timeout/spawn error, complete capture/group and unchanged boot/image.
-It records7PASS/1FAIL: the controller fixture's package-relative target lacks
-agent-runtime.config.v1.yaml in the immutable image. The secondary missing-report
-publication error grants no numeric result; raw native FAIL remains retained.
-Run24cff2b8-633d-48ce-9950-594cb8649f24 and its original image are unchanged.
-2356 verifies/fsyncs the10240-byte non-cache scratch archive at
-/workspace/vida-functional-retention-tCOJJQ-a4DG4Q/archive.json.2355's mistaken
-non-UUID retention invocation rejects before effects and remains a separate log.
+Stages2354 and2362 retain their native7PASS/1FAIL, complete terminal/capture/group
+receipts, raw logs and original images. Verified non-cache archives remain at
+/workspace/vida-functional-retention-tCOJJQ-a4DG4Q/archive.json and
+/workspace/vida-functional-retention-MiqEDA-ou6s0K/archive.json. No failed or
+uncertain observation is replayed, counted as a kill or disposed by deletion.
+The [published2376 WORK checkpoint](https://github.com/pomazanbohdan/vida-stack-lite/blob/6a05da63d14fb0c5fe60ae87941761378796e836/.agent/work/core-runtime-reactivation/WORK.md#current-controller-repair-packet)
+retains every preceding diagnostic, failed premise, review and exact locator.
 
-The fixture now imports configuredTestRepositoryRoot, activating the existing
-captured consumer-context owner instead of reading the immutable image as a
-consumer. Its explicit target override is preserved. Scope existence compares
-the actual target filesystem, which can legitimately lack that Source path;
-the qualifier still creates and reports its own genuine new module.2358 passes
-strict100/configured lint and the selected native case42expect calls/29.76s
-against a fresh four-file context made from the maintained input list.2359
-independently confirms the causal fix and unchanged context/freshness guards.
-No runner rewrite, second capture owner, image mutation or timeout increase is
-introduced. Another complete stage requires this changed input packet first.
-
-Stage2362 on9cdd983d3c8bcfd5bc6a13ab9b94c4c261bc46ae at
-/workspace/contour-stage-MiqEDA also closes native exit1 with7PASS/1FAIL,
-4978.577087ms, complete capture/group and unchanged boot/image. The context fix
-reaches the next genuine prerequisite: TESTING.md is missing from the image.
-2367 verifies/fsyncs its10240-byte scratch archive at
-/workspace/vida-functional-retention-MiqEDA-ou6s0K/archive.json; originals remain.
-Neither failed stage yields new coverage or a mutation kill.
-
-The explicit premise in2364 compares the retained image manifest against the
-constructor's required files and its existing SDK formation inventory. Every
-declared SDK formation input is captured, but the fs-read TESTING.md is absent.
-No new AST, Source traversal or hash pass is used. The existing capture owner
-now includes that guide when its visited closure contains the controller test;
-unrelated scopes still omit it. The focused inert-reader test resolves this
-input-catalog defect before another full stage.2365 reproduces the missing guide
-digest;2366 passes23capture cases/39expect calls in1.038s, strict20/configured
-lint pass. Earlier2363 diagnostic syntax and2364 synthetic SDK-prerequisite
-failures are retained; they are not evidence of the guide assertion. The final
-capture control uses a focused import closure and runs no synthetic SDK producer.
-Independent2368 finds no material issue with capture ownership, bounds,
-deduplication or the unrelated-reader control.2369 documentation/diff checks pass.
-
-2371 completes the changed-input contour successfully; exact custody is below.
-Its report-only2372 map retains3missing functions,28statements and34branch arms.
-These are still OPEN, not objective skips or numeric closure. Existing counts
-have changed Source/geometry from the historical report; do not claim a paired
-coverage gain against that old denominator.
-
-The next checked packet adds a successful parent main/exec scope observation
-alongside the required native CLI child. The earlier child ran from the copied
-controller and did not visit the parent's execute/main counters. The two locations
-share one prepare/verify, without another SDK construction.2373 strict100/lint
-and8cases/92expect calls in32.38s pass. Independent2374 finds no guard-order,
-custody or error-semantics regression.
-2371 identifies inspectDevelopmentController as CC19. Move only the newly added
-ready-state invariant into requireReadyQualification at the same boundary,
-preserving the inspector's earlier ceiling and the unchanged new-callable10/10
-rule. This is a new invariant callable, not a reassignment of an old frozen role.
-The final report must establish its numeric values; no ceiling is raised and
-frozen correspondence/CRAP remain pending. Do not form another contour or call
-this one closed while its remaining testable/undispositioned paths are OPEN.
+2377 below measures the integrated packet. The new requireReadyQualification
+invariant has CC3/entryCRAP3; inspector returns to CC17. No ceiling is raised.
+This is a new invariant callable, not an old frozen-role reassignment; exhaustive
+frozen correspondence remains pending. Map2378 retains3missing functions,
+25statements and32branch arms. All are OPEN, not accepted objective skips.
+Keep this same contour active and group its remaining causal repairs before the
+next complete stage. Historical17/46 exact and global freshness remain distinct
+from this BLOCKED current result.
 
 ### Preceding measured repair packet
 
@@ -199,6 +146,26 @@ lifecycle, TESTING, the plan and backlog; no second authority is created.
 ## Latest measurement custody
 
 ### Latest completed development-controller measurement
+
+Stage2377 /workspace/contour-stage-UmDDqM runs on
+Source6a05da63d14fb0c5fe60ae87941761378796e836,
+run55b7ec0b-1bc3-40c1-ba3f-b33f014c21b5. It completes in34571.694678ms,
+exit0 with no signal/timeout/spawn error, complete capture and observed group
+closure, unchanged boot/image and one automatic paired import. Native8PASS/
+0FAIL/92expect calls in29.36s. Raw **F59/62 L229/246 S253/278 B254/286** remains
+BLOCKED/nonexact. MaxCC/entryCRAP17 and new invariant3/3 are diagnostic only.
+Frozen correspondence/CRAP and mutation remain deferred with unchanged ceilings.
+
+Image /workspace/.vida-quality-inputs/812734473c01b5169e90c5a6947b98f246f502c9/repository
+has manifest14e45056e29fa3f0d12e0fc6539c6cb23995fab97b5c92a10b21a34ca8f316f0.
+Map2378 reuses the complete retained report/geometry, Source fingerprint
+f251d18af1902b00dfc933432835ca523610686c4cd61534c22a7f687f8a0b47 and test fingerprint
+d79dda4da60998b9e9fbce8efba66673602339bc8cdefae305d6c6463469efe1.
+2378 verifies/fsyncs the10240-byte non-cache archive at
+/workspace/vida-functional-retention-UmDDqM-2lzRuJ/archive.json; originals remain.
+No counts are promoted to exact100, frozen acceptance or mutation evidence.
+
+### Preceding completed development-controller measurement
 
 Stage2371 /workspace/contour-stage-D5i6dJ runs on
 Sourceb452185c90c00249388f40eb71b6c421b2d9509a,
