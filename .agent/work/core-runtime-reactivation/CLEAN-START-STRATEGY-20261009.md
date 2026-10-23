@@ -19,6 +19,10 @@ remain BLOCKED/nonexact; their exact bindings are in WORK.
 The owner's Bun1.4.4 update changes the execution pin; historical1.4.3 measurements
 keep their original binding.2398 completes fresh current-runtime admission,
 automatic SDK readiness and selected-contour coverage through the existing owner.
+The subsequent feature-adoption packet replaces Oxfmt with native bun fmt,
+selects native check/format explicitly and adopts typed SQLite reader handling.
+After its focused checks and publication, qualify the changed input closure once
+through that same stage; do not reuse2398 as proof of the new package/type bytes.
 The current packet extends the persisted ready/qualification correction with
 grouped rejected child-adapter, filesystem and CLI refusal controls. Independent
 readers review remaining I/O and CLI prerequisites before one complete changed-

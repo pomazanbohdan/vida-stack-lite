@@ -54,7 +54,7 @@ function run(): number {
       `${JSON.stringify(createCompilerProject(packageRoot, repositoryRoot, rootNames), null, 2)}\n`,
       { flag: 'wx', mode: 0o600 },
     );
-    const result = spawnSync(process.execPath, ['check', '--project', configPath, '--no-pretty'], {
+    const result = spawnSync(process.execPath, ['check', '--no-script', '--project', configPath, '--no-pretty'], {
       cwd: packageRoot,
       encoding: 'utf8',
       windowsHide: true,

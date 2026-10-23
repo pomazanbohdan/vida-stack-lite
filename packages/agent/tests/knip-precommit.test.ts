@@ -53,6 +53,27 @@ test('accepts the locked native lint helper nested under its wrapper without a f
   }
 });
 
+test('native formatter and checker bypass same-named package scripts without changing the index', async () => {
+  const root = fixture(undefined, {
+    fmt: 'bun -e "throw new Error(\'shadow formatter must not run\')"',
+    check: 'bun -e "throw new Error(\'shadow checker must not run\')"',
+  });
+  let completed = false;
+  try {
+    const index = readFileSync(path.join(root, '.git/index'));
+    let guarded = false;
+    await check(root, () => {
+      guarded = true;
+    });
+    expect(guarded).toBe(true);
+    expect(readFileSync(path.join(root, '.git/index'))).toEqual(index);
+    completed = true;
+  } finally {
+    if (completed) rmSync(root, { recursive: true, force: true });
+    else console.warn(`Retained native command shadow fixture: ${root}`);
+  }
+});
+
 test('accepts a clean staged fixture while preserving a broken unstaged version', async () => {
   const root = fixture();
   try {

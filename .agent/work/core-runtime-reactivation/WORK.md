@@ -43,6 +43,57 @@ and captured dist/sdk-formation.json both declare CandidateSdkTestInputs/v1,
 purpose development-tests and bun_version1.4.4; the native run manifest also
 declares1.4.4. No parallel collector or manual receipt rewrite is needed.
 
+### Bun1.4.4 feature adoption
+
+The owner's follow-up requests release-wide applicable adoption. The complete
+116500-character retained official article is reviewed with bounded Luna studies
+2402/2403; the maintained [adoption matrix](../../../packages/agent/docs/research/agent-framework-reference-registry.md#bun144-adoption--2026-10-23)
+records implemented, inherited and inapplicable features. Sequence-verifiable-units
+keeps compatibility, Source migration and verification separate; test-behavior-
+not-implementation preserves actual staged-byte and SQL-result assertions.
+No broad runtime/DB cutover, release publication, stronger cache trust or altered
+coverage budgets is introduced.
+
+2404 confirms native bun fmt accepts the existing .oxfmtrc.json and all506selected
+package files already pass unchanged. No mass formatting is needed. The staged
+owner must keep its raw captured tree and check-only behavior; bun fmt --staged
+would rewrite/re-stage the index and is incompatible with this contract.
+Public format/check/list scripts, staged checks and fixtures now use native Bun
+fmt with the same scopes. Remove Oxfmt and its20exclusive lock entries without
+changing other package rows.2405's normal lock-only removal proposed Babel
+rehoisting and was rejected before canonical integration;2406's minimal lock
+passes frozen offline lock-only validation. No shared install or unrelated
+dependency update is used to remove the formatter.
+
+Native checker/formatter gates use --no-script. The throwing same-named script
+fixture passes while preserving the exact Git index. Knip registers only those
+actual native commands; configuration hints remain errors.2418's full hook
+regressions pass14cases/51expect calls in7.72s, including malformed staged input,
+floating promises, focused tests and broken unstaged bytes.2417 independently
+finds no correctness/style blocker.2415 checks all537maintained TS files with
+0diagnostics;2414 scoped strict115/zero-warning lint passes.2419 qualifies native
+formatter semantic checking and the public format-check route.
+Its final native toolchain/SQLite run passes97cases/107expect calls in2.50s;
+together with the14hook and3signal cases these are114distinct passing targeted
+cases. The shadow fixture's native-command registration now follows its actual
+script map, preserving configuration-hint enforcement rather than suppressing it.
+
+The native declaration probe2408 exits0 but emits no files even with declaration/
+emitDeclarationOnly enabled. Preserve the TypeScript declaration-emission owner.
+Official @types/bun1.4.4 metadata supports stmt.reader; update exactly @types/bun
+and bun-types, preserving other locked rows and retaining old installed type
+directories in the exact2412 owner outside measured images. SQLite uses reader
+before allocating column metadata, retaining one execution, RETURNING effects,
+large integers, transactions and finalize. New Subprocess.signalCode typing also
+includes numbers; retain its native type/raw value without accepting non-null
+signals.2415's3signal/receipt controls pass, including numeric0/9refusals and no
+reissue of the synthetic observed child. No kill-rule or schema relaxation.
+
+Original failed static/fixture probes2408/2409/2413/2414 and their roots/logs
+remain retained. They resolve through the later exact results above; no unchanged
+failure is replayed. Root retains all edits, final checks, Git and the one
+selected coverage stage after the checked Source packet.
+
 ### Current controller repair packet
 
 The product inspector now rejects persisted ready metadata with missing,

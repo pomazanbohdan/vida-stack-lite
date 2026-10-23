@@ -28,7 +28,7 @@ const config = {
       // POSIX FIFO utility and Bun's built-in check subcommand are not npm binaries.
       // These exact exceptions do not suppress files, exports or dependencies.
       // Native Linux image isolation is a host capability, not an npm binary.
-      ignoreBinaries: ['mkfifo', 'check', 'bwrap'],
+      ignoreBinaries: ['mkfifo', 'check', 'fmt', 'bwrap'],
       entry: [
         'bin/scope.ts',
         'bin/development-controller.ts',

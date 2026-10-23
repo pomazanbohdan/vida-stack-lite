@@ -699,6 +699,8 @@ describe('mutation execution receipts', () => {
         execution_identity: { ...identity, cwd: '/tmp/foreign/sandbox-abc', package_root: '/tmp/foreign/sandbox-abc' },
       },
       { timed_out: true },
+      { signal: 9 },
+      { signal: 0 },
       { spawn_error: 'ENOENT' },
       { process_custody: { pid: 54321, terminationObserved: false, unrefCalled: true, attempts: [] } },
     ]) {
@@ -1077,6 +1079,29 @@ describe('mutation execution receipts', () => {
     expect(typeof result.processCustody?.pid).toBe('number');
     expect(result.exitCode).not.toBeNull();
     expect(result.spawnError).toBeNull();
+  });
+
+  test('retains an observed numeric Bun signal without claiming a clean completion', async () => {
+    const attempts: string[] = [];
+    const result = await settleTimedOutChild(
+      {
+        pid: 32123,
+        exited: Promise.resolve(137),
+        signalCode: 9,
+        kill() {
+          attempts.push('kill');
+          return true;
+        },
+        unref() {
+          attempts.push('unref');
+        },
+      },
+      5,
+      5,
+    );
+    expect(result).toMatchObject({ exitCode: 137, signal: 9, timedOut: true, spawnError: null });
+    expect(result.processCustody?.terminationObserved).toBe(true);
+    expect(attempts).toEqual([]);
   });
 
   test('returns bounded unknown custody and unreferences an unobserved child', async () => {

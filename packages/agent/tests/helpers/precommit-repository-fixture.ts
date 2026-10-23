@@ -5,7 +5,7 @@ import path from 'node:path';
 import { runPreCommit } from '../../tooling/knip-precommit.js';
 
 const packageRoot = path.resolve(import.meta.dirname, '../..');
-const tools = ['knip', 'oxfmt', 'oxlint', 'oxlint-tsgolint', 'typescript'] as const;
+const tools = ['knip', 'oxlint', 'oxlint-tsgolint', 'typescript'] as const;
 
 export function fixtureGit(root: string, args: readonly string[]): string {
   const result = spawnSync('git', [...args], { cwd: root, encoding: 'utf8' });
@@ -16,7 +16,8 @@ export function fixtureGit(root: string, args: readonly string[]): string {
 export function formatPrecommitFixture(root: string, files: readonly string[]): void {
   const pkg = path.join(root, 'packages/agent');
   const result = spawnSync(process.execPath, [
-    path.join(packageRoot, 'node_modules/oxfmt/bin/oxfmt'),
+    'fmt',
+    '--no-script',
     '--config',
     path.join(pkg, '.oxfmtrc.json'),
     ...files.map((file) => path.join(pkg, file)),
@@ -24,7 +25,10 @@ export function formatPrecommitFixture(root: string, files: readonly string[]): 
   if (result.status !== 0 || result.error || result.signal) throw new Error('Cannot format fixture configuration');
 }
 
-export function createPrecommitFixture(entries: readonly string[] = ['src/index.ts']): string {
+export function createPrecommitFixture(
+  entries: readonly string[] = ['src/index.ts'],
+  nativeCommandScripts: Partial<Record<'fmt' | 'check', string>> = {},
+): string {
   const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'vida-knip-gate-')));
   const manifest = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')) as {
     dependencies: Record<string, string>;
@@ -52,7 +56,14 @@ export function createPrecommitFixture(entries: readonly string[] = ['src/index.
       dependencies,
       engines: manifest.engines,
       packageManager: manifest.packageManager,
-      scripts: { knip: 'knip', format: 'oxfmt', lint: 'oxlint', typed: 'tsgolint', typecheck: 'tsc' },
+      scripts: {
+        knip: 'knip',
+        format: 'bun fmt --no-script',
+        lint: 'oxlint',
+        typed: 'tsgolint',
+        typecheck: 'bun check',
+        ...nativeCommandScripts,
+      },
     }),
   );
   writeFileSync(path.join(pkg, '.bun-version'), readFileSync(path.join(packageRoot, '.bun-version')));
@@ -78,7 +89,7 @@ export function createPrecommitFixture(entries: readonly string[] = ['src/index.
     `export default {
   workspaces: {
     '.': { entry: [], project: [] },
-    'packages/agent': { entry: ${JSON.stringify(entries)}, project: ['src/**/*.ts'] },
+    'packages/agent': { entry: ${JSON.stringify(entries)}, project: ['src/**/*.ts'], ignoreBinaries: ${JSON.stringify(['fmt', 'check'].filter((name) => !(name in nativeCommandScripts)))} },
   },
 };
 `,

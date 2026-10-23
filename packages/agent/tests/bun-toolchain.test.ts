@@ -1555,7 +1555,7 @@ test('every public developer script enters the pinned bootstrap without recursio
     for (const [, bunHost, dependency] of script.matchAll(/\bbun run (--bun )?([\w:-]+)/g)) {
       assert.ok(dependency, 'nested pinned command must include a task name');
       if (bunHost) {
-        const binaryOwners: Record<string, string> = { oxfmt: 'oxfmt', stryker: '@stryker-mutator/core' };
+        const binaryOwners: Record<string, string> = { stryker: '@stryker-mutator/core' };
         const owner = binaryOwners[dependency];
         assert.ok(owner, `Bun-hosted binary ${dependency} must have a declared owner`);
         assert.equal(manifest.scripts[dependency], undefined, 'a binary leaf must not hide an unpinned script');

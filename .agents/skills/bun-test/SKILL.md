@@ -703,7 +703,7 @@ For expected rejection identity, await `rejectionReason` from the same helper
 and then assert the returned error. Do not await a Bun matcher typed as returning
 void; removing that await alone does not establish operation completion before
 fixture cleanup. Format only the changed TypeScript files with the existing
-package-pinned oxfmt owner before staging. The normal hook still owns the complete
+package-pinned `bun fmt --no-script` owner before staging. The normal hook still owns the complete
 captured static checks; a local preflight never replaces or bypasses it.
 For descriptor/image regressions, exercise the actual capture with a Proxy
 rather than replacing a module whose import route may change. Assert the returned

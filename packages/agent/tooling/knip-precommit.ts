@@ -79,14 +79,13 @@ interface Lockfile {
 
 interface Toolchain {
   readonly knip: string;
-  readonly oxfmt: string;
   readonly oxlint: string;
   readonly tsgolintNative: string;
 }
 
-type InstalledToolMetadata = Partial<
-  Pick<typeof import('oxfmt/package.json') | typeof import('oxlint/package.json'), 'version'>
-> & { bin?: string | Record<string, string> };
+type InstalledToolMetadata = Partial<Pick<typeof import('oxlint/package.json'), 'version'>> & {
+  bin?: string | Record<string, string>;
+};
 
 function lockedToolVersion(name: string, manifest: PackageManifest, lock: Lockfile): string {
   const expected = manifest.devDependencies?.[name] ?? manifest.dependencies?.[name];
@@ -172,7 +171,6 @@ function toolchain(root: string, manifest: PackageManifest): Toolchain {
   installedTool(root, 'typescript', manifest, lock);
   return {
     knip: installedTool(root, 'knip', manifest, lock, 'knip-bun'),
-    oxfmt: installedTool(root, 'oxfmt', manifest, lock),
     ...oxlintToolchain(root, manifest, lock),
   };
 }
@@ -227,7 +225,8 @@ function runStaticGates(
   execute(
     bunExecutable,
     [
-      tools.oxfmt,
+      'fmt',
+      '--no-script',
       '--config',
       path.join(pkg, '.oxfmtrc.json'),
       '--check',
@@ -246,7 +245,7 @@ function runStaticGates(
     flag: 'wx',
     mode: 0o600,
   });
-  execute(bunExecutable, ['check', '--project', configPath, '--no-pretty'], pkg, env);
+  execute(bunExecutable, ['check', '--no-script', '--project', configPath, '--no-pretty'], pkg, env);
   executeOxlint(pkg, bunExecutable, env, tools.oxlint, tools.tsgolintNative);
 }
 

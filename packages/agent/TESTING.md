@@ -246,7 +246,7 @@ nor a positive testcase assertion count establishes the throwing matcher's cause
 For exact rejection identity, await the existing `rejectionReason` helper before
 asserting the returned error and disposing of fixtures. A Bun matcher typed as
 returning void is not an awaitable completion boundary. Format changed TypeScript
-files with the pinned oxfmt owner before staging, then run the unchanged normal
+files with pinned `bun fmt --no-script` before staging, then run the unchanged normal
 hook. Keep full captured static checks there; do not repeat full suites to fix a
 formatting or matcher-typing failure.
 
@@ -1009,7 +1009,14 @@ Missing function/file/statement coverage stays uncovered. Keep source-fingerprin
 checks, exact function mapping and nested statement ownership. A clean lint or
 type result for the gate does not prove that product coverage or CRAP passed.
 
-The precommit checks use pinned Bun, Bun-hosted Knip and Oxfmt `--check`, one strict TypeScript program with `--noEmit` for every maintained staged TS root, including Source, CLI/tooling, native tests and helpers, type-aware Oxlint with its locked native tsgolint helper and the shared AST guard for focused tests. Knip runs once with all-code workspace/test entries, zero allowed issues, and configuration/tag hints treated as errors. Do not use production/strict mode to drop tests or dev dependencies, blanket ignores, issue baselines, cache-based freshness, autofix, or `--no-exit-code`. Public SDK entry exports remain supported API roots.
+The precommit checks use pinned Bun, Bun-hosted Knip and native `bun fmt --no-script --check`, one strict TypeScript program with `--noEmit` for every maintained staged TS root, including Source, CLI/tooling, native tests and helpers, type-aware Oxlint with its locked native tsgolint helper and the shared AST guard for focused tests. Knip runs once with all-code workspace/test entries, zero allowed issues, and configuration/tag hints treated as errors. Do not use production/strict mode to drop tests or dev dependencies, blanket ignores, issue baselines, cache-based freshness, autofix, or `--no-exit-code`. Public SDK entry exports remain supported API roots.
+
+The built-in formatter keeps the existing .oxfmtrc.json options and explicit file
+scopes without the Oxfmt package. Native formatter and checker invocations use
+`--no-script`; same-named package scripts cannot replace these gates. Never use
+`bun fmt --staged` in the hook: it rewrites/re-stages inputs, whereas this owner
+checks the captured raw tree and preserves the live index. Declaration formation
+still needs `tsc --emitDeclarationOnly`: the native checker does not emit `.d.ts`.
 
 Resolve the native tsgolint optional dependency from its installed wrapper's
 package metadata, supporting both hoisted and Bun isolated dependency layouts.

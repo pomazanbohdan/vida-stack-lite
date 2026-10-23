@@ -204,8 +204,7 @@ function execute(database: Database, input: string | SqliteStatement): SqliteRes
   const parsed = statement(input);
   const query = database.prepare<unknown, SQLQueryBindings[]>(parsed.sql);
   try {
-    const columns = [...query.columnNames];
-    if (columns.length === 0) {
+    if (!query.reader) {
       const changes = query.run(...parsed.bindings);
       const kind = sqliteStatementKind(parsed.sql);
       if (kind !== 'other') {
@@ -227,6 +226,7 @@ function execute(database: Database, input: string | SqliteStatement): SqliteRes
         lastInsertRowid: BigInt(changes.lastInsertRowid),
       };
     }
+    const columns = [...query.columnNames];
     const values = query.values(...parsed.bindings);
     const columnTypes = query.declaredTypes.map((type) => type ?? '');
     const rows = values.map((values) => resultRow(values, columns));

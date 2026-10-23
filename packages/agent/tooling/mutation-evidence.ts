@@ -54,7 +54,7 @@ export type ProcessCustody = {
 };
 export type MutationProcessResult = {
   exitCode: number | null;
-  signal: NodeJS.Signals | null;
+  signal: Bun.Subprocess['signalCode'];
   spawnError: string | null;
   timedOut: boolean;
   processCustody: ProcessCustody | null;
