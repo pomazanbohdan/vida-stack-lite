@@ -1316,6 +1316,21 @@ restoration; this fixture does not establish native SDK formation.
 
 ### Controller child observations
 
+`tests/coverage-cli-child.test.ts` qualifies the focused CLI coverage protocol
+with one real captured preload and an inert instrumented entry, not a production
+controller coverage claim. The parent test loads its assigned file; the separate
+native CLI receipt loads the entry without claiming that test. Require the real
+denial terminal and demonstrate newly visited statements through the existing
+canonical merger. Use copied proof files for stale/foreign PID, argv, environment,
+manifest, input, output and malformed-counter refusals; never rewrite the original
+native observation to author an accepted counter. Reject missing/duplicate proof,
+full/v3 selections, failed parents, symlink/hardlink and oversized files.
+Synthetic observer failures test capture retention without supplying accepted
+native history. A real invalid-UTF-8 child must preserve its original raw byte
+even though no counter receipt exists; complete output alone cannot admit it.
+The native parent/child environment join and unset/default controls cover direct
+CLI semantics separately from Bun Test's normalized environment digest.
+
 Decode Buffer and Uint8Array diagnostic streams through the existing UTF-8
 output owner before redaction and the 4096-character cap. Respect byte-view
 offset/length; never decode its entire backing storage. Preserve byte-exact raw

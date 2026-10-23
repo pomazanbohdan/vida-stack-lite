@@ -24,6 +24,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertCoverageSnapshotBytes, validateCapturedFocusedShardCounters } from './bun-coverage-report-validator.js';
 import { executionBudget } from '../bin/bun.ts';
 import { assertPublishedFixtureChildren, assertPublishedFixtureProcess } from './published-coverage-inputs.js';
+import { cliCoverageChildMaps } from './coverage-cli-child.ts';
 import {
   historicalInventoryChildId,
   historicalReferenceJUnit,
@@ -548,6 +549,8 @@ function capturedCoverageShardReceipts(invocation: CoverageShardInvocation, term
     } catch {
       reportRejected('Coverage shard process receipt is not valid JSON: ' + name);
     }
+    if (typeof raw === 'object' && raw !== null && 'cli_children' in raw)
+      reportRejected('Coverage shards cannot carry serial CLI child counters.');
     const receipt = decodeCoverageShardProcessEvidence(raw);
     if (
       !receipt ||
@@ -1795,6 +1798,21 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
         if (typeof report.pid !== 'number' || !Number.isSafeInteger(report.pid) || report.pid < 1)
           reportRejected('Invalid coverage report process identity.');
         requireSnapshotReceipt(report, manifest, expectedReceipt, name);
+        childCoverageMaps.push(
+          ...cliCoverageChildMaps(
+            {
+              root,
+              snapshot: path.join(root, manifest.snapshot_directory),
+              directory: reportDirectory,
+              manifest,
+              manifest_sha256: manifestDigest,
+            },
+            report.cli_children,
+            report.pid,
+            outcome.status!,
+            (rows) => snapshotLoadedPaths(rows, expectedReceipt.loaded_inputs, name + '.cli'),
+          ),
+        );
         if (historicalJUnitBytes && publishedFixture && fixtureRoot) {
           if (historicalInventory) throw new Error('Historical inventory has duplicate process observations.');
           historicalInventory = {

@@ -194,6 +194,44 @@ remain controlling; no controller-cache or process-global fixture is adopted.
 2458's report is relocated from the reader's mistaken literal DIAG subdirectory
 to the current DIAG owner; other contents of that subdirectory remain untouched.
 
+### Focused CLI child counter protocol
+
+The repair adds one parent-validated non-test CLI receipt through the current
+preload, observer and runner. Activation requires the exact serial v2 controller
+selection and original missing-option invocation. Reuse the captured instrumented
+artifact and canonical merger; the parent still proves its selected test loaded.
+The child binds launch/manifest/runtime/input/environment identity, native PID,
+terminal and raw output files before counters can be admitted. Child exit1 is
+the asserted blocked envelope and never a mutation kill.
+
+Blind Luna2474 finds Bun Test environment-default normalization unsuitable for
+this direct CLI. Root replaces it with exact sorted string-entry hashing and
+unset/default controls. Review2481 identifies UTF-8 capture's loss of original
+bytes. Root captures native Buffers, retains those bytes and returns the original
+UTF-8 text shape to the caller. Native invalid-UTF-8 output is retained and its
+absent receipt refuses. Final blind review2484 finds no blocker in these corrected
+capture/return paths. Three redundant API narration comments are removed.
+
+2476 passes strict24 test-closure and199 tooling files plus zero-warning lint.
+2477's initial native protocol test passes2cases/72expect calls.2479 runs the
+existing preload lifecycle controls and new tests together,13PASS/1FAIL. The
+failure is the synthetic control's trailing-slash root mismatch before launch,
+not a product failure; its original root/log remain retained. Normalizing that
+private context resolves the control.2482 passes scoped strict24/lint and all
+3new cases/153expect calls in1.082s, including the native CLI join, synthetic
+capture failures, actual invalid UTF-8 bytes and copied-proof negative controls.
+The unchanged11preload lifecycle cases passed2479 and need no duplicate run.
+Original2475/2478 static failures and their exclusive logs remain attributable.
+
+Model the Domain keeps the separate launch, native terminal, non-test receipt
+and parent observation explicit. Sequence Work into Verifiable Units keeps
+strict/lint, bounded native controls, independent review and one final changed-
+input stage in that order. No new AST/inventory, dependency install, SDK build,
+numeric producer or counter qualification occurs in these protocol controls.
+Ordinary commit hook2487 rejects one unused public type export. Root makes the
+observer's internal type private; no suppression or hook bypass is used.
+Publication and the complete selected-contour measurement remain next.
+
 ### Current controller defensive dispositions
 
 Independent review2455 quotes the mapped expressions and preceding guards.
@@ -207,24 +245,34 @@ The image/manifest below binds runtime/configuration.2455 reviewed2448's same
 Source geometry; the subsequent test-only observation/cleanup packet changes none
 of these causal contracts. Map2463 confirms all four remain zero.
 
-| Exact counter and expression                                                                                     | Objective prerequisite and reopen trigger                                                                                                                                 |
-| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| b1arm0/s2, requireRuntimeConfigModule76–77: `if (!isRecord(value)                                                |                                                                                                                                                                           | typeof value.readRuntimeConfigIdentityForObservation !== 'function')` | Fixed executing-package import supplies its declared callable; public inputs cannot select a different module. Reopen for a supported alternate/injectable module or qualified seam for that exact import. Preserve the API guard. |
-| b15arm0/s20, requiredOption192: `if (!value) throw new Error('Required controller option is missing.');`         | Full per-mode required lists are checked by validateControllerOptions before every helper call. Reopen if a caller bypasses validation or the required contract changes.  |
-| b19arm1, readQualification215: `output.trim().split(/\r?\n/).at(-1) ?? ''`                                       | Native string split always produces at least one string, including empty input; the nullish operand is unreachable. Reopen if the native string/split contract changes.   |
-| b106arm1/s263/f57, main702–704: final `: (() => { throw new Error('Controller action is not valid here.'); })()` | Parser admits four actions, exec returns, and all other actions match preceding branches. Reopen if a new admitted mode lacks a branch or action can enter after parsing. |
+| Exact counter and expression                                                                                                                 | Objective prerequisite and reopen trigger                                                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| b1arm0/s2, requireRuntimeConfigModule76–77: `if (!isRecord(value) \|\| typeof value.readRuntimeConfigIdentityForObservation !== 'function')` | Fixed executing-package import supplies its declared callable; public inputs cannot select a different module. Reopen for a supported alternate/injectable module or qualified seam for that exact import. Preserve the API guard. |
+| b15arm0/s20, requiredOption192: `if (!value) throw new Error('Required controller option is missing.');`                                     | Full per-mode required lists are checked by validateControllerOptions before every helper call. Reopen if a caller bypasses validation or the required contract changes.                                                           |
+| b19arm1, readQualification215: `output.trim().split(/\r?\n/).at(-1) ?? ''`                                                                   | Native string split always produces at least one string, including empty input; the nullish operand is unreachable. Reopen if the native string/split contract changes.                                                            |
+| b106arm1/s263/f57, main702–704: final `: (() => { throw new Error('Controller action is not valid here.'); })()`                             | Parser admits four actions, exec returns, and all other actions match preceding branches. Reopen if a new admitted mode lacks a branch or action can enter after parsing.                                                          |
+
+Blind Luna2483 independently reviews the same current Source and retained map.
+Root accepts these additional contract dispositions against the2461 binding.
+
+| Counter and mapped expression                                            | Causal prerequisite and reopen trigger                                                                                                                                                                        |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| b25arm1, errorMessage236, `value instanceof Error ? value.message : ...` | Sole entry catch receives main's rejection. Supported CLI operations produce Error objects and expose no non-Error rejection seam. Reopen for a supported non-Error producer or top-level injection boundary. |
+| b26arm0, errorMessage236, `typeof value === 'string' ? value : ...`      | Requires a thrown string from that same producer. Reopen if an admitted operation supplies one.                                                                                                               |
+| b26arm1, errorMessage236, `'Unknown failure'`                            | Requires a non-Error, non-string rejection. Reopen if a supported producer can supply it.                                                                                                                     |
+| b113arm0/s271, direct entry725–726, `typeof Bun === 'undefined'`         | Non-Bun Source execution is outside the package-selected Bun tooling contract. Reopen if that direct-entry runtime becomes supported.                                                                         |
 
 These dispositions do not add hits, alter denominators or qualify numeric PASS.
-Actual CLI entry/catch/Error formatting remains testable and OPEN; Windows engine
-arms remain native-target evidence gaps. Non-Error formatting and legacy non-Bun
-entry need their own current disposition before queue advancement. The contour
-therefore remains active. The next coherent implementation is a parent-validated
-non-test CLI-child counter receipt through the existing preload/observer/runner
-owners, retaining the ordinary test-loaded receipt and expected blocked exit1.
-Validate native entry identity/load, run/parent/PID/runtime/argv/output bindings,
-unique terminal custody, exact sparse-map shapes and one-time counter merge;
-missing or mismatched proof stays UNKNOWN. No child protocol is yet implemented,
-no second producer starts and no current measurement is claimed for future bytes.
+Actual CLI entry/catch/Error formatting remains testable and OPEN until its
+complete stage.2483 separately leaves b76arm0 at505 and b81arm0 at569 OPEN as
+native Windows evidence gaps. Both map the `process.platform === 'win32'`
+alternative `'bun.exe'` in prepareDevelopmentController/inspectDevelopmentController.
+The current Linux environment supplies no native Windows qualification; platform
+simulation would not close it. A native Windows maintained-controller run is
+required. The contour remains active pending the new measurement and those gaps.
+The implemented non-test CLI-child protocol above retains the ordinary
+test-loaded receipt and expected blocked exit1. Its focused controls establish
+protocol behavior, not a new controller measurement.
 
 The product inspector now rejects persisted ready metadata with missing,
 non-passing or foreign-bound qualification before a child can run.2346 reproduces
@@ -289,6 +337,35 @@ The real CLI child proves its blocked envelope;2392 confirms its child execution
 does not increment the parent Source entry/catch/errorMessage counters. This remains
 an attribution GAP, never an accepted skip. stageMarker's diagnostics-disabled arm
 also remains testable and OPEN. No denominator, frozen ceiling or mutation rule changes.
+
+### Three-hour execution audit,2026-10-23 03:43–06:43UTC
+
+Reuse complete stages2446/2461, map2463 and native CLI prerequisite2467. Grouped
+construction, reader-fault and restoration assertions visit actual missing paths;
+cache reload cannot restore the ESM namespace, so no global process/cache fixture
+is adopted. The selected next unit is child-process counter attribution using
+the existing artifact, not another collection or repeated full contour run.
+
+Scoped strict/lint then cheap native protocol controls, independent read-only
+review and one final stage remains the selected sequence. The preceding shared
+construction cases take29.58–39.25s while the inert CLI protocol control takes
+about1s; different scopes and inputs establish no speedup. Running a full stage
+after every assertion would repeat preparation without qualifying unfinished
+code. Wider numeric pools have neither resource custody nor a matched measured
+benefit. Root plus bounded blind readers retains one writer and one producer;
+token/tool-call savings are unmeasured. Existing stream/hash/projection owners
+are reused. The confirmed environment and raw-capture defects are fixed above.
+
+Disk2472 samples the checkout/evidence filesystem once at06:43:06UTC with
+23,005,679,616available bytes and scratch with3,245,117,440. Both meet the unchanged
+2,147,483,648floor plus prior67,108,864reserve. Its36exact cleanup-target records
+reuse the existing inventory. /proc/117/cwd and/proc/168/cwd remain EACCES, so
+unknown live custody defers deletion before descendant/link/mount scans. Nothing
+is deleted,0bytes reclaimed and no resource GAP claimed.2472 retains exact paths,
+identities and deferrals; no second automation or broad scan is started.
+The existing audit timer's prompt now applies poteto-mode and current single-
+contour/artifact/custody rules. Its ID, three-hour schedule and enabled state
+remain unchanged, verified through the automation owner's readback.
 
 ### Three-hour execution audit,2026-10-23 00:39–03:39UTC
 

@@ -39,11 +39,13 @@ same contour's optional copy-list observation passes focused checks and independ
 review with full setup restoration;2461 measures its omission branch after6588f1f
 publication. Four defensive objective dispositions are bound in WORK without
 changing counts or permitting queue advancement while other paths remain OPEN.
-CLI attribution remains next through the existing coverage owners: qualify a
-non-test child receipt and exact parent merge, preserving the expected denial
-exit1 and every ordinary test-loaded receipt requirement. Cache/exit-state
-fixtures do not replace that custody; native prerequisites and negative controls
-precede the next full selected-contour measurement.
+The non-test CLI child receipt and exact parent merge now pass native protocol
+and negative controls through the existing coverage owners. They preserve the
+expected denial exit1 and every ordinary test-loaded receipt requirement.
+Publish the reviewed packet before the single complete changed-input stage.
+Use that report to bind remaining reviewed dispositions and actual entry/catch
+counts; protocol controls alone do not qualify the contour. Cache/exit-state
+fixtures do not replace child custody.
 WORK binds the correction/review and native CLI loader prerequisites;
 first-import/query fixtures may not assume suite ordering.
 The configured-caller and filesystem-guide capture defects are repaired. WORK

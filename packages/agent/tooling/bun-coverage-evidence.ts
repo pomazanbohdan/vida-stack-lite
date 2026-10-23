@@ -124,6 +124,7 @@ export const coverageToolInputs: string[] = [
   'package.json',
   'tooling/bun-coverage-evidence.ts',
   'tooling/coverage-instrumented-sources.ts',
+  'tooling/coverage-cli-child.ts',
   'tooling/source-instrumentation.ts',
   'tooling/coverage-gate.ts',
   'tooling/bun-coverage-preload.ts',

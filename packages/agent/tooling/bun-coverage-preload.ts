@@ -1,5 +1,4 @@
 import { randomUUID, createHash } from 'node:crypto';
-import { afterAll } from 'bun:test';
 import { fileURLToPath } from 'node:url';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -18,6 +17,13 @@ import {
   readInstrumentedArtifact,
   type InstrumentedSourceDigest,
 } from './coverage-instrumented-sources.ts';
+import {
+  createCliCoverageObserver,
+  focusedControllerCliCoverage,
+  readCliCoverageLaunch,
+  writeCliCoverageReceipt,
+  type CliCoverageContext,
+} from './coverage-cli-child.ts';
 
 type FileCoverageData = import('istanbul-lib-instrument').FileCoverageData;
 type SourceDigest = { path: string; sha256: string };
@@ -72,7 +78,8 @@ const reportDirectory = process.env.VIDA_BUN_COVERAGE_REPORT_DIRECTORY;
 const snapshotDirectory = process.env.VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY;
 if (!manifestPath || !reportDirectory || !snapshotDirectory)
   throw new Error('Bun coverage preload requires a run manifest, snapshot and report directory.');
-const manifestValue: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
+const manifestBytes = readFileSync(manifestPath);
+const manifestValue: unknown = JSON.parse(manifestBytes.toString('utf8'));
 if (!isRecord(manifestValue)) throw new Error('Bun coverage manifest must be an object.');
 const manifest = manifestValue as RunManifest;
 const preverifiedBootstrap = new Map<string, SourceDigest>();
@@ -245,6 +252,7 @@ const bootstrapInputs = [
   'tooling/maintained-source-inventory.ts',
   'tooling/published-coverage-inputs.ts',
   'tooling/fixture-child-observation.ts',
+  'tooling/coverage-cli-child.ts',
   ...(manifest.schema === 'VidaBunCoverageRun/v3'
     ? ['tooling/coverage-shard-evidence.ts', 'tooling/coverage-counters.ts']
     : []),
@@ -254,6 +262,18 @@ const bootstrapInputs = [
   if (!preverifiedBootstrap.has(file)) snapshotBytes(file, expectedHash);
   return { path: file, sha256: expectedHash };
 });
+const cliContext: CliCoverageContext = {
+  root,
+  snapshot: snapshotRoot,
+  directory: reportDirectory,
+  manifest,
+  manifest_sha256: digest(manifestBytes),
+};
+const cliLaunch = readCliCoverageLaunch(cliContext);
+const cliObserver =
+  !cliLaunch && focusedControllerCliCoverage(manifest)
+    ? createCliCoverageObserver(cliContext, await import('node:child_process'))
+    : undefined;
 // Fixture children are subjects; observe direct APIs without granting counters
 // or replacing any published command/input/environment.
 const fixtureObserver = fixture
@@ -264,13 +284,14 @@ const fixtureObserver = fixture
       maxOutputBytes: 32 * 1024 * 1024,
     })
   : undefined;
-if (fixtureObserver) {
+if (fixtureObserver || cliObserver) {
   const actual = await import('node:child_process');
   const { mock } = await import('bun:test');
+  const observed = { ...fixtureObserver?.apis, ...(cliObserver ? { spawnSync: cliObserver.spawnSync } : {}) };
   await mock.module('node:child_process', () => ({
     ...actual,
-    ...fixtureObserver.apis,
-    default: { ...actual.default, ...fixtureObserver.apis },
+    ...observed,
+    default: { ...actual.default, ...observed },
   }));
 }
 // Import the JSON adapter only after its captured bootstrap bytes have been verified.
@@ -460,70 +481,87 @@ function requireSelectedTestsLoaded() {
 }
 
 let finalized = false;
-// Bun test skips process exit listeners; a preload hook runs after all files.
-afterAll(() => {
-  if (finalized) return;
-  finalized = true;
-  try {
-    mkdirSync(reportDirectory, { recursive: true });
-    const shardId = process.env.VIDA_BUN_COVERAGE_SHARD_ID;
-    if (!shardId) throw new Error('Coverage child has no shard identity.');
-    const fileName = `${manifest.run_id}.${shardId}.${process.pid}.${randomUUID()}.json`;
-    const target = path.join(reportDirectory, fileName);
-    const temporary = target + '.tmp';
-    requireSelectedTestsLoaded();
-    const invocation =
-      manifest.schema === 'VidaBunCoverageRun/v3'
-        ? manifest.shard_invocations?.find((entry) => entry.shard_id === shardId)
-        : undefined;
-    const assignedTests = manifest.schema === 'VidaBunCoverageRun/v3' ? shardAssignedTests : undefined;
-    const report = {
-      schema: manifest.schema === 'VidaBunCoverageRun/v3' ? 'VidaBunCoverageProcess/v2' : 'VidaBunCoverageProcess/v1',
-      run_id: manifest.run_id,
-      shard_id: shardId,
-      pid: process.pid,
-      source_fingerprint: manifest.source_fingerprint,
-      test_fingerprint: manifest.test_fingerprint,
-      test_selection: manifest.test_selection,
-      tool_fingerprint: manifest.tool_fingerprint,
-      module_inputs: manifest.module_inputs,
-      loaded_inputs: loadedInputReceipt(),
-      ...(fixture
-        ? {
-            published_fixture: fixture,
-            fixture_children: fixtureObserver?.finish(),
-            loaded_fixture_inputs: [...loadedFixtureInputs]
-              .map(([file, sha256]) => ({ root_id: 'published_fixture', path: file, sha256 }))
-              .sort((left, right) => left.path.localeCompare(right.path)),
-          }
-        : {}),
-      external_module_inputs: [...externalModules]
-        .map(([file, sha256]) => ({ path: file, sha256, classification: 'live-generated-local-module' }))
-        .sort((left, right) => left.path.localeCompare(right.path)),
-      preload_input: { path: 'tooling/bun-coverage-preload.ts', sha256: preloadDigest },
-      active_argv: invocation?.argv ?? manifest.active_argv,
-      execution_scope: manifest.execution_scope,
-      runtime_executable_sha256: manifest.runtime_executable_sha256,
-      ...(manifest.schema === 'VidaBunCoverageRun/v3'
-        ? {
-            assignment_plan_sha256: manifest.assignment_plan_sha256,
-            assigned_tests: assignedTests,
-            shard_selection_sha256: process.env.VIDA_BUN_COVERAGE_SHARD_SELECTION_SHA256,
-            cwd: process.cwd(),
-            environment_sha256: invocation?.environment_sha256,
-            output_paths_sha256:
-              invocation && coverageOutputPathsSha256ForReceipt
-                ? coverageOutputPathsSha256ForReceipt(invocation.output_paths)
-                : undefined,
-          }
-        : {}),
-      sources: manifest.sources,
-      coverage: Object.fromEntries([...loadedFiles].sort().map((file) => [file, coverage[file]])),
-    };
-    writeFileSync(temporary, JSON.stringify(report) + '\n', { flag: 'wx', mode: 0o600 });
-    renameSync(temporary, target);
-  } catch (error) {
-    process.stderr.write('Bun coverage child report failed: ' + String(error) + '\n');
-    throw error;
-  }
-});
+if (cliLaunch) {
+  process.once('exit', (code) => {
+    writeCliCoverageReceipt(
+      cliContext,
+      cliLaunch,
+      {
+        loaded_inputs: loadedInputReceipt(),
+        external_module_inputs: [...externalModules].map(([file, sha256]) => ({ path: file, sha256 })),
+        coverage: Object.fromEntries([...loadedFiles].sort().map((file) => [file, coverage[file]])),
+      },
+      code,
+    );
+  });
+} else {
+  // Bun test skips process exit listeners; a preload hook runs after all files.
+  const { afterAll } = await import('bun:test');
+  afterAll(() => {
+    if (finalized) return;
+    finalized = true;
+    try {
+      mkdirSync(reportDirectory, { recursive: true });
+      const shardId = process.env.VIDA_BUN_COVERAGE_SHARD_ID;
+      if (!shardId) throw new Error('Coverage child has no shard identity.');
+      const fileName = `${manifest.run_id}.${shardId}.${process.pid}.${randomUUID()}.json`;
+      const target = path.join(reportDirectory, fileName);
+      const temporary = target + '.tmp';
+      requireSelectedTestsLoaded();
+      const invocation =
+        manifest.schema === 'VidaBunCoverageRun/v3'
+          ? manifest.shard_invocations?.find((entry) => entry.shard_id === shardId)
+          : undefined;
+      const assignedTests = manifest.schema === 'VidaBunCoverageRun/v3' ? shardAssignedTests : undefined;
+      const report = {
+        schema: manifest.schema === 'VidaBunCoverageRun/v3' ? 'VidaBunCoverageProcess/v2' : 'VidaBunCoverageProcess/v1',
+        run_id: manifest.run_id,
+        shard_id: shardId,
+        pid: process.pid,
+        source_fingerprint: manifest.source_fingerprint,
+        test_fingerprint: manifest.test_fingerprint,
+        test_selection: manifest.test_selection,
+        tool_fingerprint: manifest.tool_fingerprint,
+        module_inputs: manifest.module_inputs,
+        ...(cliObserver ? { cli_children: cliObserver.finish() } : {}),
+        loaded_inputs: loadedInputReceipt(),
+        ...(fixture
+          ? {
+              published_fixture: fixture,
+              fixture_children: fixtureObserver?.finish(),
+              loaded_fixture_inputs: [...loadedFixtureInputs]
+                .map(([file, sha256]) => ({ root_id: 'published_fixture', path: file, sha256 }))
+                .sort((left, right) => left.path.localeCompare(right.path)),
+            }
+          : {}),
+        external_module_inputs: [...externalModules]
+          .map(([file, sha256]) => ({ path: file, sha256, classification: 'live-generated-local-module' }))
+          .sort((left, right) => left.path.localeCompare(right.path)),
+        preload_input: { path: 'tooling/bun-coverage-preload.ts', sha256: preloadDigest },
+        active_argv: invocation?.argv ?? manifest.active_argv,
+        execution_scope: manifest.execution_scope,
+        runtime_executable_sha256: manifest.runtime_executable_sha256,
+        ...(manifest.schema === 'VidaBunCoverageRun/v3'
+          ? {
+              assignment_plan_sha256: manifest.assignment_plan_sha256,
+              assigned_tests: assignedTests,
+              shard_selection_sha256: process.env.VIDA_BUN_COVERAGE_SHARD_SELECTION_SHA256,
+              cwd: process.cwd(),
+              environment_sha256: invocation?.environment_sha256,
+              output_paths_sha256:
+                invocation && coverageOutputPathsSha256ForReceipt
+                  ? coverageOutputPathsSha256ForReceipt(invocation.output_paths)
+                  : undefined,
+            }
+          : {}),
+        sources: manifest.sources,
+        coverage: Object.fromEntries([...loadedFiles].sort().map((file) => [file, coverage[file]])),
+      };
+      writeFileSync(temporary, JSON.stringify(report) + '\n', { flag: 'wx', mode: 0o600 });
+      renameSync(temporary, target);
+    } catch (error) {
+      process.stderr.write('Bun coverage child report failed: ' + String(error) + '\n');
+      throw error;
+    }
+  });
+}

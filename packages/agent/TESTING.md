@@ -2567,7 +2567,8 @@ appear there. Generated local modules outside `src`, `bin`, `tests` and `tooling
 may load live bytes; the receipt classifies and hashes those bytes separately.
 The runner process itself remains checkout-loaded and fingerprinted. The captured
 preload is passed as a Bun CLI option, so test-spawned child processes do not
-inherit the coverage preload. Installed
+inherit the coverage preload. The sole serial focused controller exception below
+adds its captured preload explicitly. Installed
 npm dependencies, Bun runtime files, non-module filesystem reads, generated
 resources and inherited environment are outside byte-snapshot custody. Published
 baseline environment and Bun config files are captured and supplied from the
@@ -2585,6 +2586,33 @@ receiving ordinary Istanbul function counters; getters/setters, static, async
 and generator methods remain in the Babel inventory. Missing or ambiguous
 function mapping still denies admission. Do not exclude private methods, infer
 function execution from statement counters or replace them with field closures.
+
+### Focused controller CLI counter custody
+
+Only the serial v2 focused `bun-development-controller` selection, with its one
+declared Source and test, may carry `cli_children`. The preload observes exactly
+one native missing-option `inspect` invocation with unchanged flags, cwd and
+4000ms child bound. It explicitly loads the captured preload for that child and
+reuses the existing instrumented artifact. No additional AST/inventory pass or
+build is part of this attribution.
+
+`coverage-cli-child.ts` binds an exclusive launch ID, parent/native child PIDs,
+original/effective argv, captured entry/preload, manifest, runtime and input
+fingerprints. Direct CLI environment hashing binds every string entry exactly;
+it does not substitute Bun Test defaults for absent NODE_ENV or TZ. Capture uses
+native Buffer output, preserves the original stdout/stderr bytes and terminal
+sidecar before receipt admission, and returns the originally requested UTF-8
+strings to the test. Launch errors, signal/timeout, unavailable capture or absent
+receipts retain their evidence and cannot contribute counters.
+
+The expected child exit1 is a tested blocked envelope, admitted only with a
+passing parent suite, empty stdout, exact decoded stderr and complete native
+capture. Its separate non-test receipt claims no assigned-test load. The parent
+still proves every selected test loaded from its snapshot. Validate the child's
+loaded inputs, bounded no-follow proof files and unique sparse Source map before
+the existing canonical geometry/counter validator and merge. Full/published and
+v3 shard receipts cannot carry this extension. It grants neither parallel
+activation nor mutation kills, and changes no denominator or numeric gate.
 
 Use deterministic seeds. Record platform skips as GAPs. A descriptor simulation does not qualify a native OS target. Do not create a benchmark, ROI or token-accounting lane to score a correction.
 
