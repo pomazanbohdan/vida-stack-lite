@@ -763,12 +763,18 @@ export function runPinnedBun(args: readonly string[], options: BunOptions = {}):
   return result.status;
 }
 
-if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+export function main({
+  args = process.argv.slice(2),
+  exit = process,
+}: {
+  args?: readonly string[];
+  exit?: Partial<Pick<NodeJS.Process, 'exitCode'>>;
+} = {}): void {
   try {
-    if (process.argv.length === 3 && process.argv[2] === '--sync-pin') {
+    if (args.length === 1 && args[0] === '--sync-pin') {
       console.log(syncPin() ? 'Bun manifest mirrors synchronized.' : 'Bun manifest mirrors already current.');
     } else {
-      process.exitCode = runPinnedBun(process.argv.slice(2), {
+      exit.exitCode = runPinnedBun(args, {
         diagnostics: process.env.VIDA_PIPELINE_DIAGNOSTICS === 'true',
       });
     }
@@ -776,6 +782,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const message = errorProperty(error, 'message');
     console.error(typeof message === 'string' ? message : String(error));
     const exitCode = errorProperty(error, 'exitCode');
-    process.exitCode = typeof exitCode === 'number' ? exitCode : 1;
+    exit.exitCode = typeof exitCode === 'number' ? exitCode : 1;
   }
 }
+
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) main();

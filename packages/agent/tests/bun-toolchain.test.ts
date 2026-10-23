@@ -24,6 +24,7 @@ import {
   commandOutcomeUnknown,
   requireTerminalCommand,
   findNpmCli,
+  main,
   pinnedEnvironment,
   readPin,
   resolvePinnedBun,
@@ -95,6 +96,17 @@ function success(stdout = ''): CommandResult {
   return { status: 0, signal: null, stdout };
 }
 
+function retainFailedFixture(run: (value: ReturnType<typeof fixture>) => void): void {
+  const value = fixture();
+  try {
+    run(value);
+  } catch (error: unknown) {
+    temporaryRoots.delete(value.root);
+    console.error('Retained failed toolchain gap fixture: ' + value.root);
+    throw error;
+  }
+}
+
 function assertVersionProbe(call: LauncherCall | undefined, root: string, env: NodeJS.ProcessEnv): void {
   assert.ok(call);
   assert.deepEqual(call.argv, ['--version']);
@@ -111,6 +123,234 @@ test('one pin owns the checked package metadata', () => {
   assert.match(pin, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
   assert.equal(Bun.version, pin, 'toolchain tests must run under the selected pinned Bun');
   assert.doesNotThrow(() => checkManifest(path.resolve(import.meta.dirname, '..'), pin));
+});
+
+test('current toolchain gaps: ambient helper defaults preserve caller state', () => {
+  retainFailedFixture(({ root, pin }) => {
+    assert.deepEqual(standaloneRuntime(), standaloneRuntime(process.env));
+    assert.ok(JSON.stringify(standaloneEnvironment()) === JSON.stringify(standaloneEnvironment(process.env)));
+    const before = { ...process.env };
+    assert.ok(
+      JSON.stringify(pinnedEnvironment(process.execPath, undefined, root)) ===
+        JSON.stringify(pinnedEnvironment(process.execPath, process.env, root)),
+    );
+    assert.ok(JSON.stringify(process.env) === JSON.stringify(before), 'default helpers changed ambient variables');
+    const resolveNpm = (implicit: boolean): string => {
+      try {
+        return implicit ? findNpmCli() : findNpmCli(process.execPath);
+      } catch (error: unknown) {
+        assert.ok(error instanceof Error);
+        assert.equal(error.message, 'Pinned Bun bootstrap requires Node.js with npm installed.');
+        return error.message;
+      }
+    };
+    assert.equal(resolveNpm(true), resolveNpm(false));
+    assert.equal(resolvePinnedBun(), process.execPath);
+    assert.equal(readPin(), pin);
+    const budget = executionBudget(10_000, 0);
+    assert.ok(budget.remaining() > 0 && budget.remaining() <= 10_000);
+    const child = budget.child(5_000);
+    assert.ok(child.deadline <= budget.deadline);
+    assert.ok(child.remaining() > 0 && child.remaining() <= 4_000);
+  });
+});
+
+test('current toolchain gaps: pin sync repairs absent engines and preserves CRLF', () => {
+  retainFailedFixture(({ root, pin }) => {
+    const file = path.join(root, 'package.json');
+    writeFileSync(file, '{\r\n  "name": "fixture",\r\n  "packageManager": "bun@0.0.0"\r\n}\r\n');
+    assert.throws(() => checkManifest(root, pin), /Bun manifest mirrors differ/);
+    assert.equal(syncPin(root), true);
+    const bytes = readFileSync(file, 'utf8');
+    assert.ok(bytes.includes('\r\n'));
+    assert.equal(bytes.replaceAll('\r\n', '').includes('\n'), false);
+    const manifest: unknown = JSON.parse(bytes);
+    assert.ok(typeof manifest === 'object' && manifest !== null);
+    assert.equal(Reflect.get(manifest, 'packageManager'), `bun@${pin}`);
+    assert.deepEqual(Reflect.get(manifest, 'engines'), { bun: pin });
+    assert.doesNotThrow(() => checkManifest(root, pin));
+    assert.equal(syncPin(root), false);
+  });
+});
+
+test('current toolchain gaps: a missing probe PID stays unknown without a cleanup attempt', () => {
+  retainFailedFixture(({ root }) => {
+    let cleanupCalls = 0;
+    assert.throws(
+      () =>
+        resolvePinnedBun({
+          root,
+          executable: path.join(root, 'selected-bun'),
+          spawn: () => ({ status: null, error: systemError('ETIMEDOUT') }),
+          cleanup: () => {
+            cleanupCalls++;
+            return { status: 0 };
+          },
+        }),
+      (error: unknown) => {
+        assert.ok(error instanceof Error);
+        assert.match(error.message, /Cleanup outcome: unknown/);
+        assert.equal(error.message.includes('cleanup was attempted'), false);
+        return true;
+      },
+    );
+    assert.equal(cleanupCalls, 0);
+    assert.throws(
+      () => resolvePinnedBun({ root, executable: path.join(root, 'selected-bun'), spawn: () => ({ status: 0 }) }),
+      /Resolved Bun is ; .bun-version requires/,
+    );
+  });
+});
+
+test('current toolchain gaps: failed PATH probe resolves through the adjacent exact npm CLI', () => {
+  retainFailedFixture(({ root, pin }) => {
+    const directory = path.join(root, 'PATH Bun');
+    mkdirSync(directory);
+    const candidate = path.join(directory, process.platform === 'win32' ? 'bun.exe' : 'bun');
+    writeFileSync(candidate, 'inert PATH candidate');
+    const node = path.join(root, 'node-fixture');
+    writeFileSync(node, 'inert node path; never executed');
+    const npm = path.join(root, 'node_modules/npm/bin/npm-cli.js');
+    mkdirSync(path.dirname(npm), { recursive: true });
+    writeFileSync(npm, 'inert npm path; never executed');
+    const selected = path.join(root, 'resolved-bun');
+    const calls: LauncherCall[] = [];
+    const resolved = resolvePinnedBun({
+      root,
+      node,
+      env: { PATH: directory, PATHEXT: '.exe' },
+      spawn(command, argv, options) {
+        calls.push({ command, argv, options });
+        if (calls.length === 1) return { status: null, error: systemError('EACCES') };
+        return success(calls.length === 2 ? selected : pin);
+      },
+    });
+    assert.equal(resolved, selected);
+    assert.equal(calls.length, 3);
+    assert.equal(calls[0]?.command, realpathSync(candidate));
+    assert.deepEqual(calls[0]?.argv, ['--version']);
+    assert.equal(calls[1]?.command, node);
+    assert.deepEqual(calls[1]?.argv, [
+      npm,
+      'exec',
+      '--yes',
+      '--package',
+      `bun@${pin}`,
+      '--',
+      'bun',
+      '-e',
+      'process.stdout.write(process.execPath)',
+    ]);
+    assert.equal(calls[2]?.command, selected);
+    assert.deepEqual(calls[2]?.argv, ['--version']);
+  });
+});
+
+test('current toolchain gaps: supplied coverage budget stays authoritative and default root is retained', () => {
+  retainFailedFixture(({ root, pin }) => {
+    const calls: LauncherCall[] = [];
+    const budget = executionBudget(10_000, 1_000);
+    assert.equal(
+      runPinnedBun(['tooling/run-bun-coverage.ts'], {
+        root,
+        cwd: root,
+        budget,
+        executable: path.join(root, 'coverage-bun'),
+        spawn(command, argv, options) {
+          calls.push({ command, argv, options });
+          return success(calls.length === 1 ? pin : '');
+        },
+      }),
+      0,
+    );
+    assert.equal(calls.length, 2);
+    assert.deepEqual(calls[1]?.argv, ['tooling/run-bun-coverage.ts']);
+    const timeout = calls[1]?.options.timeout;
+    assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 9_000);
+    assert.equal(calls[1]?.options.env?.VIDA_COVERAGE_REVIEW_CLOCK_POLICY, undefined);
+    calls.length = 0;
+    assert.equal(
+      runPinnedBun(['--version'], {
+        executable: process.execPath,
+        spawn(command, argv, options) {
+          calls.push({ command, argv, options });
+          return success(calls.length === 1 ? pin : '');
+        },
+      }),
+      0,
+    );
+    assert.equal(path.resolve(String(calls[0]?.options.cwd)), path.resolve(import.meta.dirname, '..'));
+    assert.equal(calls[1]?.options.cwd, process.cwd());
+  });
+});
+
+test('current toolchain gaps: callable main keeps idempotent sync and precise failure envelopes', () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const pin = readPin(root);
+  assert.doesNotThrow(() => checkManifest(root, pin));
+  const file = path.join(root, 'package.json');
+  const before = readFileSync(file, 'utf8');
+  const output: unknown[][] = [];
+  const errors: unknown[][] = [];
+  const log = spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+    output.push(args);
+  });
+  const errorLog = spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+    errors.push(args);
+  });
+  const savedArgv = process.argv;
+  try {
+    process.argv = [savedArgv[0]!, path.join(root, 'bin/bun.ts'), '--sync-pin'];
+    main();
+    assert.deepEqual(output, [['Bun manifest mirrors already current.']]);
+    assert.equal(syncPin(), false);
+    for (const [failure, message, status] of [
+      [Object.assign(new Error('fixture read failure'), { exitCode: 23 }), 'fixture read failure', 23],
+      [17, '17', 1],
+    ] as const) {
+      const read = spyOn(fs, 'readFileSync').mockImplementation(() => {
+        throw failure;
+      });
+      const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+      try {
+        main({ args: ['--version'], exit });
+      } finally {
+        read.mockRestore();
+      }
+      assert.equal(exit.exitCode, status);
+      assert.deepEqual(errors.at(-1), [message]);
+    }
+  } finally {
+    process.argv = savedArgv;
+    log.mockRestore();
+    errorLog.mockRestore();
+  }
+  assert.equal(readFileSync(file, 'utf8'), before);
+});
+
+test('current toolchain gaps: canonical native version dispatch uses the selected pin', () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const child = spawnSync(
+    process.execPath,
+    [
+      '--no-env-file',
+      '--no-install',
+      '--config=' + path.join(root, 'bunfig.toml'),
+      path.join(root, 'bin/bun.ts'),
+      '--version',
+    ],
+    {
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 4000,
+    },
+  );
+  assert.equal(child.error, undefined);
+  assert.equal(child.signal, null);
+  assert.equal(child.status, 0, child.stderr);
+  assert.equal(child.stdout, readPin(root) + '\n');
+  assert.equal(child.stderr, '');
+  assert.equal(runPinnedBun(['--version']), 0);
 });
 
 test('direct CLI entrypoint handles idempotent pin sync and an expired launch deadline', () => {
@@ -1632,15 +1872,19 @@ test('an uncertain timed-out PATH probe cannot start an npm resolution retry', (
   const directory = path.join(root, 'PATH Bun');
   mkdirSync(directory);
   writeFileSync(path.join(directory, process.platform === 'win32' ? 'bun.exe' : 'bun'), 'fixture');
+  const node = path.join(root, 'node-fixture');
+  writeFileSync(node, 'inert node path; never executed');
   let calls = 0;
   assert.throws(
     () =>
       runPinnedBun([], {
         root,
+        node,
         env: { PATH: directory, PATHEXT: '.exe' },
         cleanup: () => ({ status: 1 }),
-        spawn: () => {
+        spawn: (command) => {
           calls++;
+          assert.equal(command, realpathSync(path.join(directory, process.platform === 'win32' ? 'bun.exe' : 'bun')));
           return { pid: 31337, status: null, error: systemError('ETIMEDOUT') };
         },
       }),
@@ -2128,7 +2372,7 @@ test('bounded child diagnostics report the exact stage and terminal status', () 
       () => ({ status: 0, signal: null }),
       'fixture',
       [],
-      { env: {}, diagnostics: true },
+      { env: {}, diagnostics: true, timeout: 100 },
       'diagnostic fixture',
     );
     assert.equal(result.status, 0);
@@ -2140,6 +2384,8 @@ test('bounded child diagnostics report the exact stage and terminal status', () 
     assert.ok(typeof diagnostic === 'object' && diagnostic !== null && !Array.isArray(diagnostic));
     assert.equal(Reflect.get(diagnostic, 'stage'), 'diagnostic fixture');
     assert.equal(Reflect.get(diagnostic, 'status'), 0);
+    const timeout: unknown = Reflect.get(diagnostic, 'timeout_ms');
+    assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 100);
     assert.equal(typeof Reflect.get(diagnostic, 'elapsed_ms'), 'number');
     assert.equal(typeof Reflect.get(diagnostic, 'child_elapsed_ms'), 'number');
   } finally {

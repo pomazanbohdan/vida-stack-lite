@@ -25,7 +25,7 @@ Root owns canonical edits, final checks, Git and the sole numeric producer.
 Active scope is bin/bun.ts with tests/bun-toolchain.test.ts and
 tests/bun-cache-routing.test.ts. Its oldcdc7acf2 report locator in the retired
 1927d736 image is absent. Historical counters are navigation only; no archived
-operation is replayed and no current numeric evidence is claimed yet.
+operation is replayed. Current2538 custody is recorded below.
 
 Blind Luna2530 identifies a Source defect: syncPin's finally unlinks a colliding
 temporary pathname even if exclusive open failed before acquisition.2531 proves
@@ -64,6 +64,79 @@ descriptor identity and missing staged pathname. Both use real fixture handles,
 preserve the target manifest and close the native descriptor; they grant no
 production effect or UNKNOWN reconciliation. Source behavior is unchanged from
 ac594c3. Keep existing ceilings and one numeric owner.
+
+### Latest completed toolchain measurement
+
+2538 runs the full selected two-file contour on
+d5aef6516454834545c6c8ad7ae47985d4e93364, stage `/workspace/contour-stage-Pr8TX4`,
+run0ade538a-91a7-4efe-ad0f-8c2ddec33c3c. All89tests pass with0failures in6.22s;
+stage elapsed10418.111085ms. Raw **F43/43 L281/291 S317/329 B373/417** remains
+BLOCKED/nonexact. Max CC/entry CRAP34 is report navigation, not frozen acceptance.
+Exit0/null signal, no timeout/spawn error, full capture, closed process/group and
+unchanged boot/image inputs all pass. Existing paired import completes once,
+1296attempts. Global historical exact count remains17/46.
+
+Image `/workspace/.vida-quality-inputs/49ce308cb68f158b3a044c497ff47da5f4433021/repository`,
+manifest SHA256e6ecd12cc6cefef409b3a0c0f3b510836d09e86941d59173f8e8bb0bb2ecc8d7.
+Package report is
+`coverage/bun-unified/diagnostics/0ade538a-91a7-4efe-ad0f-8c2ddec33c3c.focused-coverage.json`;
+run-manifest SHA256ab390c08a8e080ad94da1846cdfa2e7fb55ab022f00eb34aae64d3bddcc98826.
+Source fingerprinte159e713e9d9cd125ced98dc3de188542610b49f29626cf1e80df7e4498f4678,
+test0fd2a5a8fd12521a25a31c6c2a79d0d6e63464fdab6de7c028ac182c6008c4e6,
+tool469fd6c2b36031d891a57df25b10212d18ea858b61092247dde23900ada15ebf.
+Original logs/receipts/image/report remain unchanged.2540 verifies/fsyncs the
+38369280-byte non-cache scratch archive at
+`/workspace/vida-functional-retention-Pr8TX4-k1UYMU/archive.json`; originals remain.
+2539 maps all12zero statements/44zero branch arms through retained canonical
+maps/counters only, without AST/scan/hash passes. No function gaps remain. Blind
+2541/2542 split defaults/timeouts from resolver/runtime prerequisites before the
+next complete repair packet;2530 checks bounded native wrapper custody design.
+
+### Toolchain gap repair before the next full stage
+
+Root batches all currently identified supported parent/default paths before one
+new full contour stage. Blind2541/2542 map exact2539 operands rather than nearby
+predicates. They correct two fixture premises: the previous timed-out PATH case
+actually selected Bun's host probe without an explicit node path, and per-call
+environment values cannot change module-level inherited clocks. The PATH control
+now has an inert explicit node path and asserts the actual candidate command;
+the independent non-timeout case uses a real adjacent npm CLI layout and asserts
+all three exact resolution calls without executing Node/npm.
+
+The packet also covers ambient helper defaults without printing environment
+values, absent manifest engines, CRLF-preserving repair, no-PID timeout with no
+cleanup claim, empty version output, default budget methods, finite diagnostics,
+the supplied coverage budget and default package root. New failed fixture roots
+remain retained. Source main becomes callable with a local exit owner while its
+direct-entry predicate, one-argument sync dispatch, output and numeric error-code
+fallback stay unchanged. New main has prospective CC/CRAP10/10; retained ceilings
+are unchanged. Its default-root sync test first proves mirrors already match,
+then checks unchanged Source bytes; it cannot repair Source as a fixture.
+
+Only the exact v2 toolchain selection gains one canonical native version child.
+Reuse the captured preload, instrumented Source and existing sparse merge; bind
+plain stdout to digest-checked captured pin bytes. Missing pin, a digest-correct
+noncanonical version line, partial/foreign/full/v3 selections and all existing
+receipt/capture/counter corruptions deny. Other copied-wrapper and fresh-start
+children remain behavioral evidence, without counter admission.
+
+2530's independent review finds and Root corrects the synthetic toolchain
+fixture's wrong public contour ID before tests.2544 strict133 passes; lint rejects
+an unsafe inferred Reflect.get value before runtime.2545 strict/lint pass and
+8of9affected controls pass; the retained failure is the default-root oracle's
+trailing slash, not a launcher defect. Normalize only that comparison.2546
+strict133/lint and the corrected control pass; all16protocol/preload lifecycle
+cases pass with481expect calls in9.47s. Original diagnostics and failed root
+`/home/agent/.cache/vida-cloud-tooling/tmp/runtime-bun-pin-bQrXGo` stay retained.
+These different scopes/timings establish no measured speedup or token saving.
+
+Sequence Work into Verifiable Units selects bounded static, grouped behavioral
+controls, independent review, ordinary publication and one final changed-input
+stage. No duplicate full suite, AST/scan/hash pass, increased budget, native
+Windows simulation or second numeric producer is introduced. The fresh finite
+ancestor clock prerequisite needs a fresh native import and matching admissible
+counter custody; per-call environment mutation is not a substitute. Retain that
+GAP explicitly if it remains in the final bound zero-counter map.
 
 ### Public entrypoint correction packet
 

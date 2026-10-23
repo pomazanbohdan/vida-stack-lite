@@ -2589,7 +2589,7 @@ function execution from statement counters or replace them with field closures.
 
 ### Focused controller CLI counter custody
 
-Only two serial v2 focused selections may carry `cli_children`:
+Only three serial v2 focused selections may carry `cli_children`:
 
 - `bun-development-controller`, with its one declared Source and test, observes
   one native missing-option `inspect` invocation.
@@ -2597,6 +2597,10 @@ Only two serial v2 focused selections may carry `cli_children`:
   tests, observes exactly three canonical native invocations: `bin/vida-agent.ts
   --help`, `bin/scope.ts` without arguments and `bin/repair-work-state.ts` without
   arguments. Other children remain ordinary launches without counter admission.
+- `bun-cli-toolchain`, with exactly `bin/bun.ts` and its two declared tests,
+  observes one canonical native `bin/bun.ts --version` invocation. Its stdout
+  must equal the exact stable pin line from the digest-bound captured
+  `.bun-version`; stderr is empty and exit status is0.
 
 Each case preserves its original flags, cwd, environment and 4000ms child bound.
 The preload explicitly loads the captured preload for that child and reuses the

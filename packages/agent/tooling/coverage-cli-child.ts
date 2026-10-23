@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { closeSync, mkdirSync, writeFileSync } from 'node:fs';
+import { closeSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { SpawnSyncReturns } from 'node:child_process';
 import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
@@ -116,6 +116,21 @@ function samePaths(actual: readonly string[] | undefined, expected: readonly str
 
 function cliSubject(manifest: CliCoverageManifest) {
   if (focusedControllerCliCoverage(manifest)) return { source, argument: 'inspect', exit_code: 1 };
+  const toolchainSources = ['bin/bun.ts'];
+  const toolchainTests = ['tests/bun-toolchain.test.ts', 'tests/bun-cache-routing.test.ts'];
+  if (
+    manifest.schema === 'VidaBunCoverageRun/v2' &&
+    manifest.test_selection.mode === 'focused-diagnostic' &&
+    manifest.test_selection.contour === 'bun-cli-toolchain' &&
+    samePaths(
+      manifest.sources.map((row) => row.path),
+      toolchainSources,
+    ) &&
+    samePaths(manifest.test_selection.sources, toolchainSources) &&
+    samePaths(manifest.tests, toolchainTests) &&
+    samePaths(manifest.test_selection.tests, toolchainTests)
+  )
+    return { source: 'bin/bun.ts', argument: '--version', exit_code: 0 };
   if (
     manifest.schema === 'VidaBunCoverageRun/v2' &&
     manifest.test_selection.mode === 'focused-diagnostic' &&
@@ -137,9 +152,9 @@ type CliSubject = { source: string; argument?: string; exit_code: number };
 function cliSubjects(manifest: CliCoverageManifest): CliSubject[] {
   const subject = cliSubject(manifest);
   if (!subject) return [];
-  return subject.source === source
-    ? [subject]
-    : [subject, { source: 'bin/scope.ts', exit_code: 1 }, { source: 'bin/repair-work-state.ts', exit_code: 1 }];
+  return subject.source === 'bin/vida-agent.ts'
+    ? [subject, { source: 'bin/scope.ts', exit_code: 1 }, { source: 'bin/repair-work-state.ts', exit_code: 1 }]
+    : [subject];
 }
 
 function launchSubject(context: CliCoverageContext, entry: unknown): CliSubject {
@@ -554,6 +569,15 @@ export function cliCoverageChildMaps(
           help.commands.length > 0 &&
           help.commands.every((command) => typeof command === 'string'),
       );
+    } else if (subject.source === 'bin/bun.ts') {
+      assert.equal(stderr.length, 0);
+      const pinInput = context.manifest.tool_inputs.find((entry) => entry.path === '.bun-version');
+      assert.ok(pinInput, 'Captured Bun pin is missing.');
+      const pinBytes = readFileSync(path.join(context.snapshot, '.bun-version'));
+      assert.equal(sha256(pinBytes), pinInput.sha256, 'Captured Bun pin bytes differ.');
+      const pin = pinBytes.toString('utf8').trim();
+      assert.match(pin, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u);
+      assert.deepEqual(stdout, Buffer.from(pin + '\n'));
     } else {
       assert.equal(stdout.length, 0);
       assert.deepEqual(

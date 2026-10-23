@@ -258,6 +258,12 @@ No build, package copy or installation is required. These are development CLI
 and package-schema checks, not native formation or installed Runtime acceptance.
 The coverage preload does not propagate to spawned CLI children, so their
 behavioral assertions do not establish instrumented function execution.
+The exact focused selections in
+[TESTING's CLI custody contract](../../TESTING.md#focused-controller-cli-counter-custody)
+are the bounded exception. Toolchain's canonical version child binds its plain
+stdout to the captured pin, with missing-pin and noncanonical-output refusals.
+Other copied-wrapper and fresh-start environment children remain behavioral
+controls; they do not contribute measured counters.
 
 CLEAR and public CLI fixture runners share the synchronous child-outcome
 classifier. An error, signal or missing integer status is UNKNOWN: fail the

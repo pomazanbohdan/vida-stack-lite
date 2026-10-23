@@ -180,24 +180,25 @@ test('CLI observer preserves terminal and capture failures before refusing absen
   }
 });
 
-test.each(['controller', 'public'] as const)(
+test.each(['controller', 'public', 'toolchain'] as const)(
   'focused %s CLI counters require native custody and canonical counter validation',
   (variant) => {
-    const entry = variant === 'controller' ? sourceFile : 'bin/vida-agent.ts';
-    const selectedSources =
-      variant === 'controller' ? [sourceFile] : ['bin/repair-work-state.ts', 'bin/scope.ts', entry];
+    const entry = variant === 'controller' ? sourceFile : variant === 'toolchain' ? 'bin/bun.ts' : 'bin/vida-agent.ts';
+    const selectedSources = variant === 'public' ? ['bin/repair-work-state.ts', 'bin/scope.ts', entry] : [entry];
     const selectedTests =
       variant === 'controller'
         ? [testFile]
-        : [
-            'tests/scope-help-parity.test.ts',
-            'tests/scoped-source-snapshot.test.ts',
-            'tests/run-entrypoint.test.ts',
-            'tests/automatic-work-absorption.test.ts',
-            'tests/admitted-runtime-canonical-intake.test.ts',
-          ];
+        : variant === 'toolchain'
+          ? ['tests/bun-toolchain.test.ts', 'tests/bun-cache-routing.test.ts']
+          : [
+              'tests/scope-help-parity.test.ts',
+              'tests/scoped-source-snapshot.test.ts',
+              'tests/run-entrypoint.test.ts',
+              'tests/automatic-work-absorption.test.ts',
+              'tests/admitted-runtime-canonical-intake.test.ts',
+            ];
     const expectedExit = variant === 'controller' ? 1 : 0;
-    const argument = variant === 'controller' ? 'inspect' : '--help';
+    const argument = variant === 'controller' ? 'inspect' : variant === 'toolchain' ? '--version' : '--help';
     const expectedOutput =
       variant === 'controller'
         ? {
@@ -205,10 +206,12 @@ test.each(['controller', 'public'] as const)(
             code: 'GAP-DEVELOPMENT-CONTROLLER-001',
             message: 'Required controller option is missing.',
           }
-        : { schema: 'VidaAgentCommandResult/v1', status: 'help', commands: ['help'] };
+        : variant === 'toolchain'
+          ? Bun.version
+          : { schema: 'VidaAgentCommandResult/v1', status: 'help', commands: ['help'] };
     const subjects = [
       { entry, args: [argument], exit: expectedExit, output: expectedOutput },
-      ...(variant === 'controller'
+      ...(variant !== 'public'
         ? []
         : [
             {
@@ -252,9 +255,11 @@ test.each(['controller', 'public'] as const)(
               '  }',
               '}',
             ].join('\n')
-          : 'export function hit() { return 7; }\nif (import.meta.main) console.log(' +
-            JSON.stringify(JSON.stringify(expectedOutput)) +
-            ');\n';
+          : variant === 'toolchain'
+            ? 'export function hit() { return 7; }\nif (import.meta.main) console.log(Bun.version);\n'
+            : 'export function hit() { return 7; }\nif (import.meta.main) console.log(' +
+              JSON.stringify(JSON.stringify(expectedOutput)) +
+              ');\n';
       const inputs = new Map(capturedTools);
       for (const selected of selectedSources) {
         const subject = subjects.find((row) => row.entry === selected);
@@ -296,7 +301,9 @@ test.each(['controller', 'public'] as const)(
               ])}, {encoding:"utf8",windowsHide:true,timeout:4000});`,
               `  expect(child${index}.error).toBeUndefined(); expect(child${index}.signal).toBeNull(); expect(child${index}.status).toBe(${subject.exit});`,
               `  expect(child${index}.${subject.exit === 1 ? 'stdout' : 'stderr'}).toBe("");`,
-              `  expect(JSON.parse(child${index}.${subject.exit === 1 ? 'stderr' : 'stdout'})).toEqual(${JSON.stringify(subject.output)});`,
+              variant === 'toolchain'
+                ? `  expect(child${index}.stdout).toBe(${JSON.stringify(Bun.version + '\n')});`
+                : `  expect(JSON.parse(child${index}.${subject.exit === 1 ? 'stderr' : 'stdout'})).toEqual(${JSON.stringify(subject.output)});`,
             ]),
             '});',
           ].join('\n'),
@@ -363,7 +370,12 @@ test.each(['controller', 'public'] as const)(
         module_inputs: capturedModuleInputs({ sources, test_inputs: testInputs, tool_inputs: toolInputs }),
         test_selection: {
           mode: 'focused-diagnostic',
-          contour: variant === 'controller' ? 'bun-development-controller' : 'bun-cli-public-entrypoints',
+          contour:
+            variant === 'controller'
+              ? 'bun-development-controller'
+              : variant === 'toolchain'
+                ? 'bun-cli-toolchain'
+                : 'bun-cli-public-entrypoints',
           sources: selectedSources,
           tests,
         },
@@ -404,7 +416,11 @@ test.each(['controller', 'public'] as const)(
       expect(result.signal).toBeNull();
       expect(result.status, result.stderr).toBe(0);
       expect(result.stderr).toContain(
-        variant === 'controller' ? 'Ran 1 test across 1 file.' : 'Ran 5 tests across 5 files.',
+        variant === 'controller'
+          ? 'Ran 1 test across 1 file.'
+          : variant === 'toolchain'
+            ? 'Ran 2 tests across 2 files.'
+            : 'Ran 5 tests across 5 files.',
       );
       const reportFiles = readdirSync(directory).filter((file) => file.endsWith('.json'));
       expect(reportFiles).toHaveLength(1);
@@ -581,6 +597,20 @@ test.each(['controller', 'public'] as const)(
       negative('changed-output', (ctx, row) =>
         writeFileSync(path.join(ctx.directory, String(record(row.stderr).path)), '{}'),
       );
+      if (variant === 'toolchain') {
+        negative('noncanonical-version-line', (ctx, row) => {
+          const ref = record(row.stdout);
+          const bytes = Buffer.from(Bun.version + '\nextra\n');
+          writeFileSync(path.join(ctx.directory, String(ref.path)), bytes);
+          ref.sha256 = sha256(bytes);
+          ref.bytes = bytes.length;
+        });
+        const withoutPin = {
+          ...context,
+          manifest: { ...manifest, tool_inputs: manifest.tool_inputs.filter((item) => item.path !== '.bun-version') },
+        };
+        expect(() => admit(withoutPin, report.cli_children)).toThrow('Captured Bun pin is missing.');
+      }
       for (const kind of ['symlink', 'hardlink'])
         negative(kind, (ctx, row) => {
           const target = path.join(ctx.directory, String(record(row.receipt).path));
