@@ -31,9 +31,11 @@ import {
   cliCoverageChildMaps,
   cliCoverageEnvironmentSha256,
   createCliCoverageObserver,
+  assertRunOperationModulesLoaded,
   focusedCliCoverage,
   focusedControllerCliCoverage,
   preparedCliInputRoles,
+  preparedCliOutputHasRepositorySourceWriter,
   type CliCoverageContext,
 } from '../tooling/coverage-cli-child.ts';
 import { createPreparedReadCapture } from '../tooling/coverage-cli-prepared-inputs.ts';
@@ -51,6 +53,40 @@ function record(value: unknown): Record<string, unknown> {
   assert.ok(typeof value === 'object' && value !== null && !Array.isArray(value));
   return value as Record<string, unknown>;
 }
+
+test('prepared CLI writer classification follows action mutation scope', () => {
+  assert.equal(
+    preparedCliOutputHasRepositorySourceWriter({ next_actions: [{ action: { mutation_scope: 'none' } }] }),
+    false,
+  );
+  assert.equal(
+    preparedCliOutputHasRepositorySourceWriter({ next_actions: [{ action: { mutation_scope: 'repository_source' } }] }),
+    true,
+  );
+  assert.throws(
+    () =>
+      preparedCliOutputHasRepositorySourceWriter({
+        next_actions: [{ action: { mutation_scope: 'repository_source' } }, { action: { mutation_scope: 'unknown' } }],
+      }),
+    /Prepared CLI action mutation scope is invalid/u,
+  );
+});
+
+test('issue-wave module loading requires admission only for source writers', () => {
+  const noWriter = { next_actions: [{ action: { mutation_scope: 'none' } }] };
+  const writer = { next_actions: [{ action: { mutation_scope: 'repository_source' } }] };
+  const databaseOnly = new Set(['bin/workspace-database-cli.ts']);
+  const writerModules = new Set([...databaseOnly, 'src/orchestration/local-work-admission.ts']);
+
+  assertRunOperationModulesLoaded('run-issue-wave', noWriter, databaseOnly);
+  expect(() => assertRunOperationModulesLoaded('run-issue-wave', writer, databaseOnly)).toThrow(
+    'Prepared run operation module was not loaded (run-issue-wave): src/orchestration/local-work-admission.ts',
+  );
+  assertRunOperationModulesLoaded('run-issue-wave', writer, writerModules);
+  expect(() => assertRunOperationModulesLoaded('run-admission-prepared', noWriter, databaseOnly)).toThrow(
+    'Prepared run operation module was not loaded (run-admission-prepared): src/orchestration/local-work-admission.ts',
+  );
+});
 
 function seedPreparedFixture(
   fixtureRoot: string,
@@ -786,7 +822,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             schema: 'VidaAgentRunResult/v1',
             status: 'prepared',
             state_version: { revision: 1, digest: initialJournalDigest },
-            next_actions: [{ request }],
+            next_actions: [{ request, action: { mutation_scope: 'none' } }],
             issued_actions: [],
           };
           const admittedIntake = seedPreparedFixture(fixtureRoot, workId);
@@ -940,7 +976,8 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                     '}',
                     'if (import.meta.main) {',
                     '  if (process.argv.includes("--issue-wave")) {',
-                    '    await import("./workspace-database-cli.ts"); await import("../src/orchestration/local-work-admission.ts");',
+                    '    await import("./workspace-database-cli.ts");',
+                    '    if(fixture.preparedOutput.next_actions.some((row)=>row.action.mutation_scope==="repository_source")) await import("../src/orchestration/local-work-admission.ts");',
                     '    const root=process.argv[process.argv.indexOf("--project-root")+1]; const workId=process.argv[process.argv.indexOf("--work-id")+1];',
                     '    read(path.join(root,"agent-runtime.config.v1.yaml")); read(path.join(root,".agent/runtime-initialization.v1.json"));',
                     '    const intake=JSON.parse(read(path.join(root,".agent/work",workId,"local-session-intake.v1.json")).toString()); read(path.join(root,"selected.txt"));',

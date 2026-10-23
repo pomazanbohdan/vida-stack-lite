@@ -450,6 +450,38 @@ function checkedLaunch(context: CliCoverageContext, value: unknown): CliChildLau
   return checkedPrepared ? { ...checkedRow, prepared: checkedPrepared } : checkedRow;
 }
 
+export function preparedCliOutputHasRepositorySourceWriter(value: unknown): boolean {
+  const preparedOutput = proofRecord(value);
+  const nextActions = preparedOutput.next_actions;
+  assert.ok(Array.isArray(nextActions), 'Prepared CLI ready actions are invalid.');
+  let hasRepositorySourceWriter = false;
+  for (const value of nextActions) {
+    const nextAction = proofRecord(value);
+    const action = proofRecord(nextAction.action);
+    assert.ok(
+      action.mutation_scope === 'none' || action.mutation_scope === 'repository_source',
+      'Prepared CLI action mutation scope is invalid.',
+    );
+    hasRepositorySourceWriter ||= action.mutation_scope === 'repository_source';
+  }
+  return hasRepositorySourceWriter;
+}
+
+export function assertRunOperationModulesLoaded(
+  role: string,
+  preparedOutput: unknown,
+  loaded: ReadonlySet<string>,
+): void {
+  const operationModules = ['bin/workspace-database-cli.ts'];
+  if (
+    role === 'run-admission-prepared' ||
+    (role === 'run-issue-wave' && preparedCliOutputHasRepositorySourceWriter(preparedOutput))
+  )
+    operationModules.push('src/orchestration/local-work-admission.ts');
+  for (const file of operationModules)
+    assert.ok(loaded.has(file), `Prepared run operation module was not loaded (${role}): ${file}`);
+}
+
 function checkedPreparedBinding(context: CliCoverageContext, value: unknown, issueId: string): CliPreparedBinding {
   const binding = proofRecord(value);
   assert.equal(typeof binding.id, 'string');
@@ -484,6 +516,7 @@ function checkedPreparedBinding(context: CliCoverageContext, value: unknown, iss
   assert.equal(preparedOutput.schema, 'VidaAgentRunResult/v1');
   assert.equal(preparedOutput.status, 'prepared');
   assert.ok(Array.isArray(preparedOutput.next_actions) && preparedOutput.next_actions.length > 0);
+  preparedCliOutputHasRepositorySourceWriter(preparedOutput);
   const readyActionIds: string[] = [];
   for (const value of preparedOutput.next_actions) {
     const action = proofRecord(value);
@@ -1571,8 +1604,7 @@ export function cliCoverageChildMaps(
       assert.ok(!loaded.has('bin/workspace-database-cli.ts'), 'Run help loaded operation-only runtime modules.');
     }
     if (runOperationRoles.has(subject.role))
-      for (const file of ['bin/workspace-database-cli.ts', 'src/orchestration/local-work-admission.ts'])
-        assert.ok(loaded.has(file), 'Prepared run operation module was not loaded: ' + file);
+      assertRunOperationModulesLoaded(subject.role, launch.prepared?.prepared_output, loaded);
     if (subject.role === 'run-issue-wave')
       for (const file of ['src/host-state.ts', 'src/config/workspace-database-raw.ts'])
         assert.ok(loaded.has(file), 'Issue SQL observation module was not captured: ' + file);
