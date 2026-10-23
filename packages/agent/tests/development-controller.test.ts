@@ -12,6 +12,7 @@ import {
   realpathSync,
   existsSync,
   readdirSync,
+  lstatSync,
 } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -19,6 +20,7 @@ import { spawnSync } from 'node:child_process';
 import {
   prepareDevelopmentController,
   inspectDevelopmentController,
+  verifyDevelopmentController,
   executeDevelopmentController,
   developmentControllerChildDiagnostic,
   developmentControllerBinding,
@@ -27,6 +29,8 @@ import {
 import { readPortableLock } from '../bin/install.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { configuredTestRepositoryRoot } from './configured-context.ts';
+import * as controllerObservation from '../bin/development-controller-observation.ts';
+import { initializeProject } from '../bin/init.ts';
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const sourceRoot = process.env.VIDA_CONTROLLER_TEST_TARGET ?? configuredTestRepositoryRoot();
@@ -292,6 +296,122 @@ test('qualified development controller preserves Source identity and accepts a s
         executeDevelopmentController({ controllerRoot, command: 'run', args: ['--project-root', sourceRoot] }),
       ).rejects.toThrow('qualified'),
     );
+    const preparedBytes = readFileSync(stateFile);
+    const observationRoot = path.join(controllerRoot, 'observations');
+    const preparedRuns = readdirSync(observationRoot).sort();
+    const preparedObservationPaths = readdirSync(observationRoot, { recursive: true }).map(String).sort();
+    assert.ok(preparedObservationPaths.length <= 64, 'bounded private observation fixture');
+    const preparedObservationBytes = new Map(
+      preparedObservationPaths.flatMap((relative) => {
+        const file = path.join(observationRoot, relative);
+        return lstatSync(file).isFile() ? [[relative, readFileSync(file)] as const] : [];
+      }),
+    );
+    const foreignFixture = path.join(scratch, 'foreign-qualification');
+    const wrongPrefix = path.join(controllerRoot, 'unqualified-fixture');
+    for (const root of [foreignFixture, wrongPrefix]) {
+      mkdirSync(root);
+      writeFileSync(path.join(root, 'retained.txt'), 'qualification ownership sentinel\n');
+    }
+    const qualificationInput = {
+      schema: 'DevelopmentControllerQualification/v1',
+      status: 'pass',
+      package_binding: prepared.package_binding.digest,
+      checks: [],
+      fixture_root: foreignFixture,
+    };
+    const childCases: readonly {
+      result: ReturnType<typeof controllerObservation.invokeObservedControllerChild>;
+      error: RegExp | typeof SyntaxError;
+    }[] = [
+      {
+        result: {
+          status: null,
+          signal: 'SIGKILL',
+          stdout: null,
+          stderr: 'token=private-value',
+          error: new Error('child stopped'),
+          observation_complete: false,
+        },
+        error: /child_failure_effects_unknown/,
+      },
+      {
+        result: { status: 2, signal: null, stdout: null, stderr: 'refused', observation_complete: true },
+        error: /Development controller child failed/,
+      },
+      {
+        result: { status: 0, signal: null, stdout: '{}', stderr: null, observation_complete: false },
+        error: /observation is incomplete/,
+      },
+      {
+        result: { status: 0, signal: null, stdout: null, stderr: null, observation_complete: true },
+        error: SyntaxError,
+      },
+      {
+        result: { status: 0, signal: null, stdout: '{}', stderr: null, observation_complete: true },
+        error: /qualification metadata is malformed/,
+      },
+      {
+        result: {
+          status: 0,
+          signal: null,
+          stdout: new Uint8Array(Buffer.from(JSON.stringify({ ...qualificationInput, status: 'failed' }))),
+          stderr: null,
+          observation_complete: true,
+        },
+        error: /qualification did not establish/,
+      },
+      ...[foreignFixture, wrongPrefix].map((fixture_root) => ({
+        result: {
+          status: 0,
+          signal: null,
+          stdout: JSON.stringify({ ...qualificationInput, fixture_root }),
+          stderr: null,
+          observation_complete: true,
+        },
+        error: /fixture ownership differs/,
+      })),
+    ];
+    const envKeys = ['NODE_OPTIONS', 'VIDA_CONTROLLER_OBSERVATION_FAULT_FIXTURE', 'VIDA_CONTROLLER_TEST_FORWARD'];
+    const savedEnvironment = envKeys.map((key) => [key, process.env[key]] as const);
+    process.env.NODE_OPTIONS = '--no-warnings';
+    process.env.VIDA_CONTROLLER_OBSERVATION_FAULT_FIXTURE = 'must-be-stripped';
+    process.env.VIDA_CONTROLLER_TEST_FORWARD = 'retained';
+    try {
+      for (const { result, error } of childCases) {
+        let calls = 0;
+        let observedEnvironment: NodeJS.ProcessEnv | undefined;
+        const child = spyOn(controllerObservation, 'invokeObservedControllerChild').mockImplementation((input) => {
+          calls += 1;
+          observedEnvironment = input.env;
+          return result;
+        });
+        try {
+          await assert.rejects(verifyDevelopmentController({ controllerRoot }), error);
+          expect(calls).toBe(1);
+          assert.ok(observedEnvironment);
+          expect(observedEnvironment.NODE_OPTIONS).toBeUndefined();
+          expect(observedEnvironment.VIDA_CONTROLLER_OBSERVATION_FAULT_FIXTURE).toBeUndefined();
+          expect(observedEnvironment.VIDA_CONTROLLER_TEST_FORWARD).toBe('retained');
+          expect(readFileSync(stateFile)).toEqual(preparedBytes);
+          expect(readdirSync(observationRoot).sort()).toEqual(preparedRuns);
+          expect(readdirSync(observationRoot, { recursive: true }).map(String).sort()).toEqual(
+            preparedObservationPaths,
+          );
+          for (const [relative, bytes] of preparedObservationBytes)
+            expect(readFileSync(path.join(observationRoot, relative))).toEqual(bytes);
+          for (const root of [foreignFixture, wrongPrefix])
+            expect(readFileSync(path.join(root, 'retained.txt'), 'utf8')).toBe('qualification ownership sentinel\n');
+        } finally {
+          child.mockRestore();
+        }
+      }
+    } finally {
+      for (const [key, value] of savedEnvironment) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
     const output: string[] = [];
     let verifyOutput = '';
     let inspectOutput = '';
@@ -521,6 +641,56 @@ test('qualified development controller preserves Source identity and accepts a s
       expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('current vida-agent candidate'),
     );
     writeFileSync(manifestFile, manifest);
+    await withRestoredControllerMetadata(manifestFile, async () => {
+      for (const value of [null, [], { name: 42 }, { version: 42 }]) {
+        writeFileSync(manifestFile, JSON.stringify(value));
+        await assert.rejects(inspectDevelopmentController({ controllerRoot }), /package manifest is malformed/);
+      }
+    });
+    const outsideDependency = path.join(ready.package_root, 'node_modules/controller-outside-link');
+    symlinkSync(foreignFixture, outsideDependency, process.platform === 'win32' ? 'junction' : 'dir');
+    let linkFailure: { error: unknown } | undefined;
+    try {
+      await assert.rejects(inspectDevelopmentController({ controllerRoot }), /dependency link escapes/);
+      expect(readFileSync(path.join(foreignFixture, 'retained.txt'), 'utf8')).toBe(
+        'qualification ownership sentinel\n',
+      );
+    } catch (error) {
+      linkFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            unlinkSync(outsideDependency);
+          },
+        ],
+        linkFailure,
+      );
+    }
+    if (process.platform !== 'win32') {
+      const socketFile = path.join(ready.package_root, 'bin/io.sock');
+      const listener = Bun.listen({ unix: socketFile, socket: { data() {} } });
+      let socketFailure: { error: unknown } | undefined;
+      try {
+        await assert.rejects(inspectDevelopmentController({ controllerRoot }), /unsupported filesystem entry/);
+      } catch (error) {
+        socketFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              listener.stop(true);
+            },
+            () => {
+              if (existsSync(socketFile)) unlinkSync(socketFile);
+            },
+          ],
+          socketFailure,
+        );
+      }
+    }
     const pinFile = path.join(ready.package_root, '.bun-version');
     const pin = readFileSync(pinFile);
     writeFileSync(pinFile, '1.4.1\n');
@@ -536,6 +706,9 @@ test('qualified development controller preserves Source identity and accepts a s
     writeFileSync(depFile, '{}');
     await Promise.resolve(expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('drift'));
     writeFileSync(depFile, dep);
+    expect((await inspectDevelopmentController({ controllerRoot })).package_binding.digest).toBe(
+      ready.package_binding.digest,
+    );
     completed = true;
   } finally {
     if (completed && process.env.VIDA_CONTROLLER_DIAGNOSTICS !== 'true') cleanupOwnedFixture(scratch);
@@ -570,6 +743,83 @@ test('development controller rejects an active selector and an overlapping or li
         }),
       ).rejects.toThrow('outside'),
     );
+    completed = true;
+  } finally {
+    if (completed) cleanupOwnedFixture(scratch);
+    else console.error(`Retained failed or uncertain controller fixture: ${scratch}`);
+  }
+});
+
+test('controller inspection rejects a physical file and preserves nonmissing path errors', async () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-file-'));
+  let completed = false;
+  try {
+    const file = path.join(scratch, 'file');
+    writeFileSync(file, 'not a controller directory\n');
+    await assert.rejects(inspectDevelopmentController({ controllerRoot: file }), /linked directory/);
+    expect(readFileSync(file, 'utf8')).toBe('not a controller directory\n');
+    await assert.rejects(
+      inspectDevelopmentController({ controllerRoot: './relative-controller' }),
+      /physical directories/,
+    );
+    completed = true;
+  } finally {
+    if (completed) cleanupOwnedFixture(scratch);
+    else console.error(`Retained failed or uncertain controller fixture: ${scratch}`);
+  }
+});
+
+test('controller rejects a native initialized portable bundle before construction', async () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-portable-'));
+  let completed = false;
+  try {
+    const target = path.join(scratch, 'target');
+    mkdirSync(target);
+    const initialized = await initializeProject({
+      projectRoot: target,
+      repository: 'controller-portable-fixture',
+      projectMappings: ['agent=.'],
+    });
+    expect(initialized.status).toBe('initialized');
+    const controllerRoot = path.join(scratch, 'controller');
+    await assert.rejects(
+      prepareDevelopmentController({ target, controllerRoot }),
+      /restricted to the Source logical packages\/agent bundle/,
+    );
+    expect(existsSync(controllerRoot)).toBe(false);
+    completed = true;
+  } finally {
+    if (completed) cleanupOwnedFixture(scratch);
+    else console.error(`Retained failed or uncertain controller fixture: ${scratch}`);
+  }
+});
+
+test('controller CLI emits its blocked envelope before constructing a controller', () => {
+  const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-cli-error-'));
+  let completed = false;
+  try {
+    const child = spawnSync(
+      process.execPath,
+      [
+        '--no-env-file',
+        '--no-install',
+        '--config=' + path.join(packageRoot, 'bunfig.toml'),
+        path.join(packageRoot, 'bin/development-controller.ts'),
+        'inspect',
+      ],
+      { encoding: 'utf8', windowsHide: true, timeout: 4000 },
+    );
+    writeFileSync(path.join(scratch, 'stdout.log'), child.stdout ?? '');
+    writeFileSync(path.join(scratch, 'stderr.log'), child.stderr ?? '');
+    expect(child.error).toBeUndefined();
+    expect(child.signal).toBeNull();
+    expect(child.status).toBe(1);
+    expect(child.stdout).toBe('');
+    expect(JSON.parse(child.stderr)).toEqual({
+      status: 'blocked',
+      code: 'GAP-DEVELOPMENT-CONTROLLER-001',
+      message: 'Required controller option is missing.',
+    });
     completed = true;
   } finally {
     if (completed) cleanupOwnedFixture(scratch);

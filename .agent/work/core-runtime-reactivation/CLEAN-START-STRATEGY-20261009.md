@@ -16,10 +16,12 @@ The active contour is **bun-development-controller**, selected after
 session-handoff-v2 and final-assurance completed all testable paths and bound
 their remaining independent objective dispositions. Both raw coverage outcomes
 remain BLOCKED/nonexact; their exact bindings are in WORK.
-The current packet fixes persisted ready/qualification consistency and groups
-its controller refusal, restoration and retained-observation controls before
-the sole complete contour stages.2377 has a complete BLOCKED/nonexact result;
-its remaining testable and undispositioned paths stay in this active lane.
+The current packet extends the persisted ready/qualification correction with
+grouped rejected child-adapter, filesystem and CLI refusal controls. Independent
+readers review remaining I/O and CLI prerequisites before one complete changed-
+input stage; cheap controls precede the shared real construction/qualification.
+2377 remains the latest completed BLOCKED/nonexact measurement until that stage
+closes. Its testable and undispositioned paths stay in this active lane.
 The configured-caller and filesystem-guide capture defects are repaired. WORK
 owns current metrics, red/green, reviews and exact evidence; no next contour opens.
 The original three-Source bun-session-handoff remains retired

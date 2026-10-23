@@ -6,8 +6,9 @@ DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-block
 
 ## Current sequential F/L/S/B cycle
 
-The active contour is **bun-development-controller only**; no new producer has
-started after completed2377. Session-handoff-v2 and final-assurance have completed all testable paths
+The active contour is **bun-development-controller only**;2377 remains the latest
+completed measurement while the checked fault-control packet awaits its sole stage.
+Session-handoff-v2 and final-assurance have completed all testable paths
 in2306 and2330. Their remaining counters have independent objective dispositions
 bound below. This permits queue advancement, not exact100, numeric PASS, a frozen
 waiver or mutation acceptance. Historical exact F/L/S/B remains17/46.
@@ -55,6 +56,53 @@ frozen correspondence remains pending. Map2378 retains3missing functions,
 Keep this same contour active and group its remaining causal repairs before the
 next complete stage. Historical17/46 exact and global freshness remain distinct
 from this BLOCKED current result.
+
+2382/2383 independently review every retained I/O/CLI gap before the next stage.
+Root integrates eight rejected child-adapter results around the existing prepared
+controller, with exact metadata and observation path/byte afterimages, environment
+filtering, adapter restoration and foreign-file sentinels. Synthetic rejected DTOs
+prove boundary refusal only, never native observations or accepted readiness.
+Real malformed manifests, an escaping dependency link and a Unix socket test
+filesystem refusals; final healthy inspection proves restoration. Native portable
+initialization and a missing-option CLI child test early refusals without another
+controller construction. No product defect is established by this packet.
+2388 independently finds no blocking issue.2387 passes strict103/zero-warning lint
+and3cheap cases;2389 passes the final11cases/198expect calls in46.67s under unchanged
+deadlines. Original2385/2386 checks remain retained. The whole-file functional run
+is not numeric qualification; one changed-input stage follows the checked commit.
+
+Fixed-layout lock absence, construction-time copy/lock drift, actual install-lock
+effects and native Windows arms remain prerequisite GAPs.2383's proposed defensive
+CLI dispositions are review candidates, not accepted skips or visited counters.
+The real CLI child proves its blocked envelope; parent counter attribution still
+requires the numeric report. No denominator, frozen ceiling or mutation rule changes.
+
+### Three-hour execution audit,2026-10-23 00:39–03:39UTC
+
+Five published packets in this window fix ready qualification consistency, the
+configured caller, missing guide capture and invariant ownership, then reconcile
+the latest report. Reuse stages2354/2362/2371/2377, retained terminal/capture/group
+receipts, map2378 and the generated projection; no duplicate suite or geometry/
+AST/hash pass is needed to rediscover their outcomes. The current bounded readers
+separate publicly reachable faults from unsupported Source mutation/platform gaps.
+
+Selected order: scoped strict/lint, cheap refusal controls, grouped native fixture
+checks, independent review and one complete changed-input stage.2387's three cheap
+cases complete in963ms;2389's full11cases take46.67s. These are different workloads,
+not a matched speed comparison. Per-assertion full stages would repeat install,
+qualification, image formation and publication; wider writers/suites have no
+qualified resource or measured speed basis. Root plus two bounded mechanism readers
+and one final reader preserves one integrator and numeric owner. No token/tool-call
+savings are claimed without telemetry. Runner reads/hashes/capture keep their
+existing owner; no confirmed new runner defect warrants a speculative rewrite.
+
+Disk2384 observes24,224,432,128available durable bytes and5,213,634,560scratch
+bytes once per filesystem, above2147483648 and the prior64MiB reserve. Its30exact
+candidate records reuse2338/2264/inventory1707/audit1977/retirement2144/disk2154.
+/workspace/.vida-retained is absent. /proc/117/cwd and/proc/168/cwd remain EACCES;
+unknown live custody defers destructive cleanup before another broad reference,
+mount/link walk. No target is deleted and0bytes are claimed reclaimed. No second
+automation, image producer, floor change or protected evidence deletion occurs.
 
 ### Preceding measured repair packet
 

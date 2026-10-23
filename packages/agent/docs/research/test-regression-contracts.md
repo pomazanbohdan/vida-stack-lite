@@ -1277,6 +1277,19 @@ The qualification's own Source fixture still proves the actual new-bin report.
 Capture its fs-read TESTING.md through the existing guide-input owner, including
 an imported controller-reader closure; unrelated scopes retain no guide input.
 
+Exercise rejected child-adapter results against the same prepared controller:
+unknown effects, terminal failure, incomplete observation, empty/malformed output,
+non-passing qualification and foreign fixture ownership. Synthetic rejected DTOs
+are boundary fault injection, never native receipts or accepted readiness history.
+Require one adapter call, filtered child environment, exact unchanged controller
+metadata and observation paths/bytes, and untouched foreign ownership sentinels.
+Restore the adapter and environment before genuine qualification and execution.
+Use real private manifest, escaping dependency link and Unix socket entries for
+filesystem refusal controls, then prove healthy inspection after restoration.
+Use native initialization for alternate portable-bundle refusal and an isolated
+CLI missing-option invocation for its exact blocked envelope; neither constructs
+a controller. Native Windows arms require their own target evidence.
+
 ### Controller child observations
 
 Decode Buffer and Uint8Array diagnostic streams through the existing UTF-8
