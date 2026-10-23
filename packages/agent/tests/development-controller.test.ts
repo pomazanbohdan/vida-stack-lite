@@ -26,9 +26,10 @@ import {
 } from '../bin/development-controller.ts';
 import { readPortableLock } from '../bin/install.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
+import { configuredTestRepositoryRoot } from './configured-context.ts';
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
-const sourceRoot = process.env.VIDA_CONTROLLER_TEST_TARGET ?? path.resolve(import.meta.dirname, '../../..');
+const sourceRoot = process.env.VIDA_CONTROLLER_TEST_TARGET ?? configuredTestRepositoryRoot();
 
 function cleanupOwnedFixture(scratch: string): void {
   const tempRoot = realpathSync(tmpdir());
@@ -458,7 +459,12 @@ test('qualified development controller preserves Source identity and accepts a s
     }
     expect(invokedOutput.schema).toBe('ScopedSourceSnapshot/v1');
     expect(invokedOutput).toMatchObject({
-      entries: [{ path: 'packages/agent/bin/development-controller.ts', exists: true }],
+      entries: [
+        {
+          path: 'packages/agent/bin/development-controller.ts',
+          exists: existsSync(path.join(sourceRoot, 'packages/agent/bin/development-controller.ts')),
+        },
+      ],
     });
     console.log(JSON.stringify({ operation: 'warm-controller-exec', elapsed_ms: performance.now() - execStarted }));
     await Promise.resolve(

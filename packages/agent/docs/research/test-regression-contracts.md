@@ -1270,6 +1270,10 @@ cleanup accumulator, retaining both primary and restoration failures. Check
 qualification-fixture removal while parent and all declared nested receipts
 remain complete. Parser, diagnostics and absent/dangling-root checks require
 no controller construction. These component controls grant no Runtime acceptance.
+Resolve the default target through configuredTestRepositoryRoot so immutable
+image tests use their captured consumer context. Preserve the explicit controller
+target override and compare scope existence with the selected target filesystem.
+The qualification's own Source fixture still proves the actual new-bin report.
 
 ### Controller child observations
 

@@ -44,6 +44,29 @@ is still pending; no prior counter is promoted.
 Independent2349 finds no blocking defect in the fix, exact restoration or
 no-new-observation oracles.2351 documentation links/headings and diff checks pass.
 
+Packetb9fcd7706fcc3a43a65e890d7a827ce5d59b2d9d is committed with ordinary hooks
+(format529/strict536) and pushed normally in2353. The first complete stage2354
+at /workspace/contour-stage-tCOJJQ closes in4188.467742ms, native exit1,
+no signal/timeout/spawn error, complete capture/group and unchanged boot/image.
+It records7PASS/1FAIL: the controller fixture's package-relative target lacks
+agent-runtime.config.v1.yaml in the immutable image. The secondary missing-report
+publication error grants no numeric result; raw native FAIL remains retained.
+Run24cff2b8-633d-48ce-9950-594cb8649f24 and its original image are unchanged.
+2356 verifies/fsyncs the10240-byte non-cache scratch archive at
+/workspace/vida-functional-retention-tCOJJQ-a4DG4Q/archive.json.2355's mistaken
+non-UUID retention invocation rejects before effects and remains a separate log.
+
+The fixture now imports configuredTestRepositoryRoot, activating the existing
+captured consumer-context owner instead of reading the immutable image as a
+consumer. Its explicit target override is preserved. Scope existence compares
+the actual target filesystem, which can legitimately lack that Source path;
+the qualifier still creates and reports its own genuine new module.2358 passes
+strict100/configured lint and the selected native case42expect calls/29.76s
+against a fresh four-file context made from the maintained input list.2359
+independently confirms the causal fix and unchanged context/freshness guards.
+No runner rewrite, second capture owner, image mutation or timeout increase is
+introduced. Another complete stage requires this changed input packet first.
+
 ### Preceding measured repair packet
 
 The checked Source packet662cd74101016b8d436e31d8275f3c3f6a020983 is published.

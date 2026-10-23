@@ -38,7 +38,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-lifecycle-state | 29/29 · 184/184 · 193/193 · 129/129 | 21 / 21 | 521/877 (fail; raw runner Killed; unqualified) | BLOCKED | open / unknown | 21 / 21 | open / unknown |
 | bun-final-assurance | 95/95 · 325/325 · 364/364 · 304/305 | 32 / 32 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-runtime-initialization | 16/16 · 84/84 · 95/95 · 53/53 | 9 / 9 | 164/164 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
-| bun-development-controller | 49/62 · 180/243 · 192/273 · 194/282 | 17 / 132 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-development-controller | 49/62 · 180/243 · 192/273 · 194/282 | 17 / 132 | unknown | coverage/failed/unknown-or-partial | open / unknown | unknown | open / unknown |
 | bun-cli-public-entrypoints | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-cli-toolchain | 40/40 · 262/272 · 295/307 · 359/403 | 34 / 34 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-init | 84/84 · 309/326 · 329/353 · 172/211 | 12 / 12 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
@@ -1171,6 +1171,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | eece280a-7776-4947-be83-8800a7de9b10 | not-captured | 2026-10-16T09:25:05.440Z | FAIL; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/eece280a-7776-4947-be83-8800a7de9b10.json |
 | coverage | da97c16c-3f3d-47ed-ab1d-e4ccec2f03f4 | 708c1531020f886046d8d86e20a774eb86d6259b | 2026-10-16T11:15:30.024Z | focused-diagnostic; owner accepted locally; selection bound | 49/62 · 180/243 · 192/273 · 194/282 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/da97c16c-3f3d-47ed-ab1d-e4ccec2f03f4.focused-coverage.json |
 | coverage-outcome | da97c16c-3f3d-47ed-ab1d-e4ccec2f03f4 | not-captured | 2026-10-16T11:15:30.033Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/da97c16c-3f3d-47ed-ab1d-e4ccec2f03f4.json |
+| stage-outcome | contour-stage-tCOJJQ | b9fcd7706fcc3a43a65e890d7a827ce5d59b2d9d | 2026-10-23T00:58:22.074Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-tCOJJQ/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
