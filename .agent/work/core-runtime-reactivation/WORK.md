@@ -3737,11 +3737,30 @@ Producer concurrency remains one. Read-only reviewers wrote separate reports;
 no tests or producer overlapped. Aggregate tool-call/token counts are not
 provided by retained receipts and remain unmeasured.
 
-The next authorized step is one pinned changed-input coverage stage from the
-clean committed Source, after ordinary hooks and push. Retain terminal/capture/
-group receipts and let the existing projection owner update metrics. Until
-that stage completes, this packet contributes no numeric qualification: the
-historical exact F/L/S/B count remains 17/46, and `bun-cli-run` remains BLOCKED.
+Exactly one pinned changed-input coverage stage ran after commit and push from
+clean Source `0dac178d1aa662d72bb542615a3dbc94ce85d337`. Stage directory
+`/workspace/contour-stage-o7eqon` retains `launch.json`, `request.json`,
+`execution.json`, `publication.json`, `stdout.log` (7,977 bytes) and
+`stderr.log` (14,093 bytes). Run
+`9478829c-05f9-4d80-8e98-ec4ebd350ee5` exited 0 in 175,671.79 ms under the
+unchanged 330,000 ms timeout: no signal/timeout, complete capture, closed
+process group, unchanged boot and image inputs, and published report. The
+immutable image binds source tree
+`98735bc0d934efd9ac6a6e30d13e50d611871f61`, input fingerprint
+`924f2cb8c90a449f44fd75a03f50713788ccd500c816a9875999a134cb2ed0be`, and
+manifest digest `64e4465d91b15dbb29d1fbf5f0755b1f31907345ba32ef613af15fb02b0e2faf`.
+The report is
+`/workspace/.vida-quality-inputs/3c7fab827f9078c5f86f6056e605171098056f2b/repository/packages/agent/coverage/bun-unified/diagnostics/9478829c-05f9-4d80-8e98-ec4ebd350ee5.focused-coverage.json`.
+
+The existing projection owner generated the updated projection: F 328/557,
+L 1507/2863, S 1605/3143, B 1876/3663; its attempt count is 1,367. The prior
+key404 report was F 317/557, L 1465/2863, S 1559/3143, B 1841/3663; this
+distinct-image delta is +11/+42/+46/+35, not a maximum or qualification. CC 501
+and entry CRAP 992 remain diagnostic observations; the outcome is still
+BLOCKED and the report is focused diagnostic evidence. No objective skip,
+exact-coverage closure, frozen CRAP, mutation result, or numeric qualification
+was added. Historical exact F/L/S/B remains 17/46. Do not repeat this stage or
+replay any archive; continue at the next zero from the newly projected report.
 
 ## Owners and acceptance boundaries
 
