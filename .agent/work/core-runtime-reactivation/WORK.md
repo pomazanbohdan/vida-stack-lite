@@ -3643,6 +3643,34 @@ pushed, run exactly one current producer over these changed inputs; retain its
 native terminal/capture/group receipts and let the existing projection owner
 update metrics. Until that report exists, key404 has no numeric credit.
 
+### Key404 current-producer result — 2026-10-24
+
+After `af780d59bde9b37d7d2254b81ab07db72e9d275e` was pushed, exactly one
+pinned `bun-cli-run` coverage stage ran in `/workspace/contour-stage-uo5lLl`.
+Run `09904808-e029-473d-92bd-2c312c65d05c` terminated in 178,835.03 ms under
+the unchanged 330,000 ms limit: exit 0, no signal or timeout, owned process
+group termination observed, complete untruncated capture, unchanged immutable
+image inputs, and successful publication. The retained stdout/stderr sizes are
+7,978 and 13,987 bytes, with SHA-256 values
+`9fc146d1cbff8a6ef0311f52d79a22f12eed6997dd4a64f3567c8c0831e1fccc` and
+`bd2384edd12af600b5f800f7b1933721abb3110c366aed5f321cce3ec0f7f1c2`. The
+stage's launch/request/execution/publication receipts and scratch remain at
+the exact stage path. The immutable image manifest SHA-256 is
+`4fd30296b62314b8da70849344fbdfaeb3f8a4c5bee640350f243724686d8768`, bound to
+source tree `8b3f586188164c5a54f073e0a796ff8ca7d9cf2d` and input fingerprint
+`32d4c789016bc585d072c041599fc3e71ed53497dee91284a3b32eaced82939b`.
+
+The published report is
+`/workspace/.vida-quality-inputs/bb5c74d25b801b43f3edd8280bc81c608b5ee9c0/repository/packages/agent/coverage/bun-unified/diagnostics/09904808-e029-473d-92bd-2c312c65d05c.focused-coverage.json`.
+It records focused-diagnostic scope and `full_qualification: false`; the
+producer reports 317/557 functions, 1465/2863 lines, 1559/3143 statements and
+1841/3663 branches, with CC 501 and entry CRAP 992. The operation is still
+BLOCKED. The existing projection owner updated `CONTOUR-STATUS`; no coverage
+number was edited by Root. This stage gives the changed tests a current bound
+diagnostic only; it does not close `bun-cli-run`, exact F/L/S/B, or any frozen
+complexity or mutation gate. Continue with the next zero from this new report
+using the same design-first, bounded-test, review, and one-stage sequence.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
