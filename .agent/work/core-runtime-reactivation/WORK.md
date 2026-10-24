@@ -7086,16 +7086,32 @@ check passed in 27 ms. Blind read-only Luna confirmed the new path reaches both
 nullish arms and that template provenance, installed inventory and no-write
 snapshots are valid; its receipt is
 `DIAG/bun-cli-run-key453-review-20261024-01.md`. No product code or coverage
-denominator changed. One changed-input stage remains after ordinary commit
-hooks and push.
+denominator changed.
 
-### Three-hour execution comparison, 2026-10-24 12:52–15:52 UTC
+The sole changed-input stage completed at `/workspace/contour-stage-7MmvS1` for
+commit `e4d5c708374b37f2ff88f9185fd7b59d433fe858`. Run
+`b0a68fe7-a459-4326-9522-e17df0257da6` exited 0 in 221,695.987 ms, with complete
+untruncated capture, observed process-group closure, unchanged boot/image, and
+published coverage. The image binds source tree
+`6637592c3782fc16c6c5a0b3c492b509c8b673f4`, fingerprint
+`99aff9ba17fbd5dd7a6d2f866535942c9199875fb0a6dd10c5af445df376a8fb`, and
+manifest SHA-256 `7d2643f1e4cc86f9a47cf2db82474811c9de7d32a4978c38dd5b552c02e43988`.
+Its report is
+`/workspace/.vida-quality-inputs/455f37a27b4d00b10660d230cbcaa3f341e8e36a/repository/packages/agent/coverage/bun-unified/diagnostics/b0a68fe7-a459-4326-9522-e17df0257da6.focused-coverage.json`.
 
-Ten one-worker changed-input stages have terminal receipts in this window:
+The selected run passed 127 tests, 2,528 expectations, and 0 failures in
+214.76 seconds. ID161 and ID162 moved from `[16,0]` to `[18,1]`, exercising each
+null old hash/size arm. Projection now reads F441/555, L2024/2860, S2174/3138,
+B2544/3660: denominators unchanged, maxima 501, operation still `BLOCKED`; no
+contour is closed and no qualification is claimed.
+
+### Three-hour execution comparison, 2026-10-24 13:10–16:10 UTC
+
+Eleven one-worker changed-input stages have terminal receipts in this window:
 Key434 258,991.524 ms, Key436 208,820.746 ms, Key438 208,414.802 ms,
 Key439 236,747.830 ms, Key442 206,242.701 ms, Key444 233,443.841 ms,
-Key445 202,793.193 ms, Key450 199,063.248 ms, Key451 228,950.409 ms, and Key452
-228,520.523 ms. The
+Key445 202,793.193 ms, Key450 199,063.248 ms, Key451 228,950.409 ms, Key452
+228,520.523 ms, and Key453 221,695.987 ms. The
 observed range is 199,063.248–258,991.524 ms. Source commits, inputs, test counts, and host/cache
 conditions differ, so these receipts give a one-worker cost range only; they do
 not establish a speedup, regression, limiter, or controlled check-order result.
@@ -7104,7 +7120,7 @@ inconclusive.
 
 | Check order and producer parallelism | Evidence and decision |
 | --- | --- |
-| Reuse the current report, review causal prerequisites, batch the reachable boundary cases, run the coverage-gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | All ten terminal stages above and Key452 use this order. Key451 exposed a coverage-mode registration gate; focused commands set `AGENT_RUNTIME_V8_COVERAGE=1` before filtering. The final Key452 target took 1.96 seconds with harness startup; static checks were below one second where timed. |
+| Reuse the current report, review causal prerequisites, batch the reachable boundary cases, run the coverage-gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | All eleven terminal stages above use this order. Key451 exposed a coverage-mode registration gate; focused commands set `AGENT_RUNTIME_V8_COVERAGE=1` before filtering. The final Key452 target took 1.96 seconds and the final Key453 target 2.10 seconds including harness startup; static checks were below one second where timed. |
 | Run a full stage before reviewing each gap or for each subfix, at 1x PARALLEL | No matched trial measured this ordering. The observed full-stage range is about 199–259 seconds per run, so premature runs would repeat that work; the avoided time is an estimate, not a measurement. Key446–448 objective skips correctly required no stage and changed no counters. |
 | Run two or four full numeric stages concurrently | No qualified run measured this option. It conflicts with TESTING's single producer and has no comparable speed, resource or correctness evidence. Keep numeric parallelism at one. |
 
@@ -7113,6 +7129,20 @@ unbounded jq selection accidentally emitted the full coverage map; the tool
 reported 560,673 original output tokens and 1,194,115 omitted bytes before
 truncation. This is output-surface metadata, not model-token consumption, and no
 conclusion above relies on that dump. The follow-up query selected four branch
-IDs only. The prior single disk receipt and admission threshold remain current;
-this audit did not repeat disk checks or cleanup. The existing timer and its
-schedule remain unchanged.
+IDs only. Two later audit commands also exceeded the intended output bound: a
+`git diff` included the producer-owned one-line projection (tool metadata:
+2,002,723 original output tokens and 6,986,315 omitted bytes before truncation),
+and an unfiltered process listing returned 730 zombie rows (8,377 original
+output tokens before truncation). Neither output was used as evidence; follow-up
+queries used diff statistics/WORK-only hunks and a single-line process
+aggregate. These values describe tool output metadata, not model-token usage.
+
+The bounded process aggregate found 730 zombie records, all adopted by PID 1,
+with ages from 12,327 to 552,592 seconds. The youngest predates this three-hour
+window; there was no live coverage producer when checked. These are historical
+host-level defunct processes with no live parent in this workspace, so this
+cycle cannot reap them and did not signal PID 1. Key453's own receipt records
+observed process-group closure. Host init/runtime reaping is an external
+resource GAP, not a coverage result. The prior single disk receipt and
+admission threshold remain current; this audit did not repeat disk checks or
+cleanup. The existing timer and its schedule remain unchanged.
