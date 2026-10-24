@@ -6583,3 +6583,40 @@ There were no staged user changes to disturb. The Key439 packet is limited to
 the existing test, its two documentation owners, WORK and append-only decisions;
 the current contour projection remains producer-owned and excluded from this
 commit.
+
+### Key439 changed-input coverage stage terminal
+
+The Key439 packet was committed with ordinary hooks and pushed to `main` as
+`a096c9aca98604cf5de96eabca1543cc70b1cb2d`. The formatter and Source type
+hooks passed (537 formatted files; 544 checked files). The normal push completed.
+
+The existing serial producer ran once on the pushed source at
+`/workspace/contour-stage-JtMRmP` and closed normally: run
+`13c3c6fb-9644-4b06-b4ca-890e30c764cb`, exit 0, no signal/spawn error/timeout,
+complete capture, closed process group, unchanged boot and unchanged immutable
+image. Source tree is `fa587ed961475ae5b638d5fa78f3f562e9587e41`; input
+fingerprint is `9b1a7947f4559360ef9d692c82b00efe0b76b7130785edc705820ea0be5df8a4`.
+The native producer receipts are retained at `/workspace/contour-stage-JtMRmP`
+and the root capture is `DIAG/bun-cli-run-key439-stage-20261024-01.log`.
+
+The stage ran one worker. Its selected tests completed 127/127 with 0 failures
+and 2,454 expectations in 231.22 seconds; total stage elapsed time was
+236,747.830 ms. The prior projection was F441/555, L2010/2860, S2159/3138,
+B2516/3660; the producer's current projection is F441/555, L2011/2860,
+S2160/3138, B2517/3660. The exact branch added by Key439 is covered at
+`bin/run.ts:3785` (branch IDs 441 `[1,3]`, 442 `[4,3,3]`). `max_cc` and
+`max_entry_crap` remain 501, the contour operation remains BLOCKED, and full
+qualification remains pending. No denominator or frozen-budget policy changed.
+
+The recent complete-stage measurements are Key434 258,991.524 ms, Key436
+208,820.746 ms, Key438 208,414.802 ms, and Key439 236,747.830 ms; every stage
+used 1x PARALLEL with differing commits and selected-test counts. These do not
+control cache/host state or equivalent test work, so they do not establish a
+throughput gain or justify raising concurrency. Per-run API token billing and a
+platform-wide tool-call total are unavailable; none is inferred.
+
+The next current-report gap candidate is `bin/run.ts:1226`, branch ID113
+(`[0,10]`): `requireRunString` receives parsed documentation-checkpoint fields.
+Its reachability disposition is pending blind read-only review. The earlier
+report-bound skip decisions for IDs55/58/59 and ID98 remain unchanged and add
+no hits. No second full stage, CRAP or mutation run was started.
