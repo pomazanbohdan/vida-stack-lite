@@ -7374,3 +7374,35 @@ one-worker terminal stages (Keys439, 442, 444, 445, 450, 451, 452, 453, 454,
 measured historical cost range, not a speedup comparison. The same
 check-before-stage order remains the measured choice; first-stage ordering and
 parallel full runs remain hypotheses or unqualified options as noted above.
+
+### Key457 next branch plan — selector absent with empty cutover root
+
+The accepted Key456 report makes ID185 the next confirmed uncovered arm in the
+same `bun-cli-run` contour: `bin/run.ts:1788`, hits `[1,0]`. Its false arm is
+reachable when `active-runtime-selector.v1.json` is absent while `.agent/cutover`
+exists and is empty; `activeSelector` then returns `null`. A blind Luna read-only
+analysis of the exact report and source confirmed the public-inspection route
+and distinguishes this from an absent cutover root or a nonempty cutover root.
+
+The next packet reuses the staged selector fixture after its current assertions.
+It temporarily detaches the fixture-owned selector and cutover tree, creates
+only an empty `.agent/cutover`, invokes exported `run(args)` with read-only
+inspection, then restores the selector and cutover bytes under `finally`. The
+case must assert selector absence and an empty cutover directory before and
+after inspection, `session_absent`, an unchanged Host projection, and exact
+selector/cutover afterimages after restoration. The fixture owner has no
+consumer effects. This branch is reachable, so no objective skip is proposed.
+
+The packet's checks are complete: the named target passed 1/1 with 67
+expectations; scoped strict TypeScript passed for all 510 test files; pinned
+Oxlint, one-file format, and the focused documentation check passed. The
+independent blind review found no must-fix issue. Its report is
+`DIAG/bun-cli-run-key457-blind-review-20261024-01.md`; the bounded branch
+analysis is `DIAG/bun-cli-run-key457-id185-blind-analysis-20261024-01.md`.
+The review confirms that the assertions bind the exact empty-cutover false arm,
+the selector and directory afterimages, and unchanged Host projection. No tests
+were run by the reviewer. The remaining sequence is ordinary commit and push,
+then one changed-input stage at one producer. The previous Key456 stage is
+terminal and committed; no second producer is active. Source/report reads stay
+bounded to ID185 and the existing fixture. No disk survey or cleanup is
+repeated.

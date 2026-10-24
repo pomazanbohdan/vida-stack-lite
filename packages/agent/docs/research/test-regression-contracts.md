@@ -420,6 +420,12 @@ public inspection path's exact release-proof refusal. Restore the original
 lock and receipt and compare their bytes plus the selector, journal, cutoff and
 Host database afterimages. The admission shortcut does not cover that reader,
 and this inspection grants no mutation or Runtime authority.
+
+With no active selector and an existing empty `.agent/cutover` directory, call
+the exported public inspection path and require the session-absent diagnosis.
+Assert the selector remains absent, the cutover directory remains empty, and
+the Host projection remains equal to its before-image. A missing cutover
+directory and a nonempty cutover directory exercise different branches.
 For forward documentation authority, keep a CLEAR checkpoint schema- and digest-
 valid while pointing its receipt at a contained readable baseline path under a
 different work directory; assert the exact work/path mismatch refusal and

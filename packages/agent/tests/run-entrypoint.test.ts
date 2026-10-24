@@ -8681,6 +8681,43 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(
               afterDatabaseInspection,
             );
+            const cutoverRoot = path.join(root, '.agent', 'cutover');
+            const retainedCutoverRoot = path.join(root, `.fixture-cutover-retained-${randomUUID()}`);
+            const retainedSelectorPath = path.join(root, `.fixture-selector-retained-${randomUUID()}`);
+            const cutoverBeforeInspection = snapshotAuthorityFixture(cutoverRoot);
+            let cutoverMoved = false;
+            let selectorMoved = false;
+            let emptyCutoverCreated = false;
+            try {
+              renameSync(cutoverRoot, retainedCutoverRoot);
+              cutoverMoved = true;
+              renameSync(selectorPath, retainedSelectorPath);
+              selectorMoved = true;
+              mkdirSync(cutoverRoot);
+              emptyCutoverCreated = true;
+              expect(readdirSync(cutoverRoot)).toEqual([]);
+              expect(existsSync(selectorPath)).toBe(false);
+              const inspectedWithoutSelector = requireRecord(
+                await withPackageIdentity(() => run([...inspectArgs, '--inspect', 'true'])),
+                'empty cutover public inspection',
+              );
+              expect(inspectedWithoutSelector).toMatchObject({
+                schema: 'VidaLocalSessionInspection/v1',
+                status: 'inspected',
+              });
+              expect(inspectedWithoutSelector.diagnosis).toMatchObject({ reason: 'session_absent' });
+              expect(readdirSync(cutoverRoot)).toEqual([]);
+              expect(existsSync(selectorPath)).toBe(false);
+              expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(
+                afterDatabaseInspection,
+              );
+            } finally {
+              if (emptyCutoverCreated) rmSync(cutoverRoot, { recursive: true, force: true });
+              if (cutoverMoved) renameSync(retainedCutoverRoot, cutoverRoot);
+              if (selectorMoved) renameSync(retainedSelectorPath, selectorPath);
+            }
+            expect(snapshotAuthorityFixture(cutoverRoot)).toEqual(cutoverBeforeInspection);
+            expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
             expect(fixture.invoke(stagedAdmitted.admissionArgs, 0).runtime_selector_observed).toBe(true);
             for (const changed of [
               { cutover_id: 'other-generation' },
