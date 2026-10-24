@@ -2608,7 +2608,7 @@ function assertUnpreparedRecoveryHostStable(file: string, before: ReturnType<typ
 }
 
 /** @template T @param {T | null} operation @returns {T} */
-function requireRecoveryOperation<T>(operation: T | null): T {
+export function requireRecoveryOperation<T>(operation: T | null): T {
   if (operation === null) throw Error('Recovery review operation is unavailable');
   return operation;
 }

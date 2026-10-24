@@ -55,6 +55,7 @@ import {
   isResearchSourceReference,
   repairAuthority,
   requireNoCompletedReadonlyRelease,
+  requireRecoveryOperation,
   run,
   writeDurable,
 } from '../bin/run.ts';
@@ -644,6 +645,15 @@ test('research source reference guards the JSON record and source_id string type
   ];
 
   for (const [label, value, expected] of cases) assert.equal(isResearchSourceReference(value), expected, label);
+});
+
+test('recovery operation guard returns a retained operation and rejects a missing one', () => {
+  const operation = Object.freeze({ operation_id: 'recovery-1' });
+  assert.equal(requireRecoveryOperation(operation), operation);
+  assert.throws(
+    () => requireRecoveryOperation(null),
+    (error: unknown) => error instanceof Error && error.message === 'Recovery review operation is unavailable',
+  );
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {

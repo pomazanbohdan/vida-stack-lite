@@ -5060,6 +5060,35 @@ to the existing `bin/run.ts` function/branch counters and first zero-callable
 names. Record this as audit output waste; do not repeat a full coverage-map
 dump.
 
+#### Key423 recovery-operation guard
+
+The next zero callable from the report was `requireRecoveryOperation` in
+`bin/run.ts`, called only by the historical recovery-review route. The bounded
+native Luna follow-up confirmed a supported nullable result: historical
+inspection re-reads `store.inspectOperation()` after the retained-operation
+check, and that row may disappear between reads. The guard then throws the
+exact recovery-review error; the caller's `finally` still closes the route.
+This is a race-safe fail-closed boundary, not an objective skip. The packet
+exports the helper for the existing internal test import and adds one focused
+test: a retained operation is returned by identity, while `null` throws an
+`Error` with the exact message. It does not simulate the interleaving itself
+or claim the public race integration; building that fixture would require
+additional scheduling control solely to force this trivial guard edge.
+
+Independent blind native Luna review
+(`DIAG/bun-cli-run-key423-review-20261024-01.md`) confirmed the assertions,
+caller closure behavior, absence of duplicate guard logic, and no observed
+package API expansion; no must-fix was found. Scoped checks passed before the
+target: package-pinned Bun 1.4.4 format check for both changed files, strict
+`tests/tsconfig.json` check across 510 files, and locked Oxlint. The focused
+test then passed on package-pinned Bun 1.4.4 (1 pass, 53 filtered, 0 failed,
+1.235 s). Receipts are `DIAG/bun-cli-run-key423-format-20261024-01.log`,
+`DIAG/bun-cli-run-key423-typecheck-20261024-01.log`,
+`DIAG/bun-cli-run-key423-lint-20261024-01.log`, and
+`DIAG/bun-cli-run-key423-target-20261024-01.log`. This is static and focused
+test evidence only; the commit, one current-producer stage, and resulting
+coverage disposition remain pending.
+
 ### Recent execution cost and order comparison
 
 Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422 were 182,091.09 /
