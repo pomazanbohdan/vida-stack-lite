@@ -5276,6 +5276,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       'forward-payload-manifest-digest',
       'forward-installed-bundle-inventory-mismatch',
       'forward-installed-bundle-symlink',
+      'forward-parent-cutoff-drift',
       ...(process.platform === 'win32' ? [] : (['forward-installed-bundle-unsupported-node'] as const)),
       'forward-documentation-path-refusal',
       'forward-documentation-baseline-path-non-string',
@@ -5324,6 +5325,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-payload-manifest-digest' ||
           scenario === 'forward-installed-bundle-inventory-mismatch' ||
           scenario === 'forward-installed-bundle-symlink' ||
+          scenario === 'forward-parent-cutoff-drift' ||
           scenario === 'forward-installed-bundle-unsupported-node' ||
           scenario === 'repair-default-installed-bundle' ||
           scenario === 'repair-installed-payload-drift' ||
@@ -5674,6 +5676,16 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               },
             )
           : null;
+        if (scenario === 'forward-parent-cutoff-drift') {
+          assert.ok(forwardFixture);
+          writeFileSync(
+            path.join(childRoot, 'cutoff-witness.json'),
+            record({
+              ...repairCutoff,
+              first_admitted_work_attempt: `fixture-repository/parent-cutoff-work/1/${'e'.repeat(64)}`,
+            }),
+          );
+        }
         if (scenario === 'forward-installed-bundle-inventory-mismatch')
           writeFileSync(path.join(root, 'vida-agent', 'bin', 'unlisted.mjs'), 'unlisted installed bundle file\n');
         if (scenario === 'forward-payload-manifest-digest') {
@@ -5860,6 +5872,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
           expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
         } else if (
+          scenario === 'forward-parent-cutoff-drift' ||
           scenario === 'forward-payload-manifest-digest' ||
           scenario === 'forward-installed-bundle-inventory-mismatch'
         ) {
@@ -5875,9 +5888,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(caught).toMatchObject({
             code: 'GAP-VIDA-RUN-SELECTOR-001',
             message:
-              scenario === 'forward-payload-manifest-digest'
-                ? 'Repair payload manifest drift.'
-                : 'Installed bundle inventory differs from forward manifest.',
+              scenario === 'forward-parent-cutoff-drift'
+                ? 'Forward parent selector or cutoff drift.'
+                : scenario === 'forward-payload-manifest-digest'
+                  ? 'Repair payload manifest drift.'
+                  : 'Installed bundle inventory differs from forward manifest.',
           });
           expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
           expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
