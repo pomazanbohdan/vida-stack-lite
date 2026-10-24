@@ -4482,9 +4482,101 @@ post-guard type-aware Oxlint check also passed for those files. Receipts:
 `DIAG/bun-cli-run-key415-format-check-20261024-04.log`, and
 `DIAG/bun-cli-run-key415-lint-20261024-08.log`.
 
-No numeric disposition is claimed before the one ordinary post-push coverage
-stage. Keep `bun-cli-run` open until the bound report is reviewed and each
-remaining path is covered or independently dispositioned under TESTING.
+#### Key415 bound coverage result
+
+After commit `1b076a78e2ce6510cbfc6da97d48bb9356bf7af8` was pushed, the ordinary
+coverage producer ran once from `/workspace/contour-stage-ANj2Am`. Native
+terminal capture and group closure completed without timeout; boot and image
+inputs were unchanged and the report was published. Run ID
+`460b83f1-cb44-481e-9856-b2c22f871589` took 191,756.33 ms, accounted for all
+1,389 attempts, and selected `bin/run.ts` with `run-entrypoint.test.ts` and
+`bun-cache-routing.test.ts`. The image is bound to source tree
+`afc631b0295ffd3a8b059002a2050a2020fc60cb`, input fingerprint
+`1b4a24c36d566ffa4e8d02a8c2a13b0a38c1b8024d01f9b84a143236c68f692c`, and
+manifest SHA-256
+`6db09a5207b19bbf1529635bab58570dca608703f3aa86eef9598f2b6a2a9eac`.
+The exact image path, manifest, and report are retained in the native outcome:
+`/workspace/.vida-quality-inputs/5d890bed2cda533135a68291cf0b848f8e2c84f0`.
+
+The report is a bound focused diagnostic, not full qualification:
+F/L/S/B = 397/555 functions, 1841/2859 lines, 1955/3138 statements, and
+2251/3661 branches. `full_qualification=false`; frozen-budget qualification is
+pending; operation outcome is `BLOCKED`, `quality_complete=false`, and
+`resource_safe_to_advance=false`, with no unattempted items, report rejection,
+timeout, or producer error. Projection was updated by the producer in
+`CONTOUR-STATUS.md`. The original artifacts are
+`/workspace/vida-stack-lite/.agent/work/core-runtime-reactivation/DIAG/bun-cli-run-key415-stage-20261024-01.log`,
+`/workspace/.vida-quality-inputs/5d890bed2cda533135a68291cf0b848f8e2c84f0/repository/packages/agent/coverage/bun-unified/diagnostics/460b83f1-cb44-481e-9856-b2c22f871589.focused-coverage.json`,
+and the sibling `diagnostics/operation-outcomes/460b83f1-cb44-481e-9856-b2c22f871589.json`.
+
+The report-order next zero entries are nine closures at `forwardPolicyAuthority`
+lines 1360–1412: parsing changelog lines, finding the changed policy,
+filtering policy events, selecting CLEAR checkpoint names and records,
+filtering document events, and pairing baseline/closeout/document proofs. A
+read-only design review found the public recursive-parent route reachable with
+the existing real policy-transition and CLEAR fixture; it found no objective
+skip basis. The focused Key416 test now passes through that reader route, but
+the next bound coverage report has not published, so no coverage closure is
+claimed. `bun-cli-run` remains open; do not advance to frozen CC/CRAP or
+mutation.
+
+#### Key416 historical-parent route packet
+
+Key416 extends the existing admitted-transition integration fixture instead of
+adding another package copy or running a wider suite. The test now builds an
+intermediate forward generation with a policy and documentation change, then
+an outer launcher-only generation. It obtains the current policy transition
+through the public plan/apply/resume route, forms a baseline and closeout for
+the historical documentation edit, and checks both the historical parent
+route and the outer selected generation through `forwardUpdateAuthority`.
+The read-only snapshots include `.agent` state, SQLite bytes, policy,
+changelog, launcher, documentation and candidate inputs; a passing result is a
+specific null-authority disposition with those bytes unchanged. The only
+hand-authored changelog record is a schema-valid historical documentation
+event paired with the actual policy transition actor/pointer; the test does
+not claim an approval or exercise consumer effects.
+
+The focused target passed once after the fixture corrections:
+`DIAG/bun-cli-run-key416-target-20261024-05.log` (Bun 1.4.4, 1 pass, 105
+filtered, 19 assertions, 5,118.82 ms test case / 6.56 s process). The adjacent
+helper-control target also passed:
+`DIAG/bun-cli-run-key416-target-20261024-06.log` (1 pass, 105 filtered, 51
+assertions, 112.68 ms test case / 1.443 s process). These are one-worker
+measurements; they do not establish a parallelism or order speedup.
+
+Four earlier attempts exposed fixture-construction mistakes, not product
+failures, and their retained roots remain untouched outside the authorized
+cleanup paths: missing historical `maintenance-lock.v1.json`
+(`DIAG/bun-cli-run-key416-target-20261024-01.log`,
+`/home/agent/.cache/vida-cloud-tooling/tmp/policy-lKEoPg`); forward parent / overlay
+tuple mismatch (`...target-20261024-02.log`,
+`/home/agent/.cache/vida-cloud-tooling/tmp/policy-xRkOwW`); mismatched baseline
+and current policy while reusing the first CLEAR pair (`...target-20261024-03.log`,
+`/home/agent/.cache/vida-cloud-tooling/tmp/policy-AEPCTB`); and a historical
+document event dated before its baseline, rejected by
+`GAP-DOCUMENTATION-CHANGELOG-001` (`...target-20261024-04.log`,
+`/home/agent/.cache/vida-cloud-tooling/tmp/policy-0LH0Zd`). Each corrected
+attempt reached the specific next setup gate; only attempt 05 passed the full
+target. No runtime/loader/DB cutover or consumer effect occurred.
+
+The final scoped gates passed on the changed test/fixture packet:
+`DIAG/bun-cli-run-key416-format-check-20261024-01.log`,
+`...key416-strict-20261024-01.log` (104 TypeScript files, 426.11 ms), and
+`...key416-lint-20261024-01.log` (three changed files, zero warnings). The
+documentation checker passed after this WORK update: 2 selected documents,
+11 local links, and no failures (`DIAG/bun-cli-run-key416-docs-20261024-02.log`).
+read-only Luna design and final code reviews are recorded in
+`DIAG/bun-cli-run-key416-design-review-20261024-01.md` and
+`DIAG/bun-cli-run-key416-final-review-20261024-01.md`. The final review
+confirms the recursive historical route and internal fixture bindings, with
+no objective skip basis. The history document event is deliberately
+fixture-authored: this packet verifies the persisted-record reader, not that
+the transition writer emits that record shape. Its no-write snapshots cover the named authority,
+database, policy, changelog, launcher, document and candidate inputs, so this
+is path-bounded no-write evidence rather than a claim about every copied file
+or metadata field. No Key416 coverage closure is claimed before the next
+post-commit producer outcome. The current generated projection remains solely
+the Key415 stage result above.
 
 ### Recent execution cost and order comparison
 
